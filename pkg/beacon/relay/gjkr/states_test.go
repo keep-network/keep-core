@@ -76,10 +76,10 @@ func TestFullStateTransitions(t *testing.T) {
 	// Check whether all group public keys are the same, and they have no
 	// disqualified or inactive  members.
 	for _, result := range results {
-		if len(result.Inactive) != 0 {
+		if len(result.Group.InactiveMemberIDs()) != 0 {
 			t.Errorf("expected no IA members\n[%v]", result)
 		}
-		if len(result.Disqualified) != 0 {
+		if len(result.Group.DisqualifiedMemberIDs()) != 0 {
 			t.Errorf("expected no DQ members\n[%v]", result)
 		}
 		if !result.Equals(results[0]) {

@@ -8,6 +8,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
 
+var defaultMemberList = []group.MemberIndex{1, 2, 3, 4, 5, 6, 7}
+
 func TestResultEquals(t *testing.T) {
 	key1 := new(bn256.G2).ScalarBaseMult(big.NewInt(12))
 	key2 := new(bn256.G2).ScalarBaseMult(big.NewInt(13))
@@ -48,23 +50,23 @@ func TestResultEquals(t *testing.T) {
 			expectedResult: false,
 		},
 		"disqualified - equal": {
-			result1:        &Result{Disqualified: []group.MemberIndex{1, 2, 3}},
-			result2:        &Result{Disqualified: []group.MemberIndex{1, 2, 3}},
+			result1:        newDKGResult(3, []group.MemberIndex{1, 2, 3}, nil),
+			result2:        newDKGResult(3, []group.MemberIndex{1, 2, 3}, nil),
 			expectedResult: true,
 		},
 		"disqualified - not equal": {
-			result1:        &Result{Disqualified: []group.MemberIndex{1, 2, 3}},
-			result2:        &Result{Disqualified: []group.MemberIndex{1, 4, 3}},
+			result1:        newDKGResult(3, []group.MemberIndex{1, 2, 3}, nil),
+			result2:        newDKGResult(3, []group.MemberIndex{1, 4, 3}, nil),
 			expectedResult: false,
 		},
 		"inactive - equal": {
-			result1:        &Result{Inactive: []group.MemberIndex{3, 2, 1}},
-			result2:        &Result{Inactive: []group.MemberIndex{3, 2, 1}},
+			result1:        newDKGResult(3, nil, []group.MemberIndex{3, 2, 1}),
+			result2:        newDKGResult(3, nil, []group.MemberIndex{3, 2, 1}),
 			expectedResult: true,
 		},
 		"inactive - not equal": {
-			result1:        &Result{Inactive: []group.MemberIndex{1, 2, 3}},
-			result2:        &Result{Inactive: []group.MemberIndex{1, 2}},
+			result1:        newDKGResult(3, nil, []group.MemberIndex{1, 2, 3}),
+			result2:        newDKGResult(3, nil, []group.MemberIndex{1, 2}),
 			expectedResult: false,
 		},
 	}
@@ -78,6 +80,31 @@ func TestResultEquals(t *testing.T) {
 			}
 		})
 	}
+}
+
+func initalizeGroup(
+	dishonestThreshold int,
+	disqualifiedMembers []group.MemberIndex,
+	inactiveMembers []group.MemberIndex,
+) *group.Group {
+	group := group.NewDkgGroup(dishonestThreshold, defaultMemberList)
+
+	for _, disqualified := range disqualifiedMembers {
+		group.MarkMemberAsDisqualified(disqualified)
+	}
+	for _, inactive := range inactiveMembers {
+		group.MarkMemberAsInactive(inactive)
+	}
+	return group
+}
+
+func newDKGResult(
+	dishonestThreshold int,
+	disqualifiedMembers []group.MemberIndex,
+	inactiveMembers []group.MemberIndex,
+) *Result {
+	group := initalizeGroup(dishonestThreshold, disqualifiedMembers, inactiveMembers)
+	return &Result{Group: group}
 }
 
 func TestPublicKeysEqual(t *testing.T) {

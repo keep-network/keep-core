@@ -42,6 +42,11 @@ func (g *Group) MemberIDs() []MemberIndex {
 	return g.memberIDs
 }
 
+// GroupSize returns the full size of the group, including IA and DQ members.
+func (g *Group) GroupSize() int {
+	return len(g.memberIDs)
+}
+
 // DishonestThreshold returns value of the dishonest members threshold as set
 // for the group.
 func (g *Group) DishonestThreshold() int {

@@ -21,8 +21,9 @@ type signingState = state.State
 //
 // State is part of phase 13 of the protocol.
 type resultSigningState struct {
-	channel net.BroadcastChannel
-	handle  chain.Handle
+	channel      net.BroadcastChannel
+	relayChain   relayChain.Interface
+	blockCounter chain.BlockCounter
 
 	member *SigningMember
 
@@ -35,7 +36,7 @@ type resultSigningState struct {
 func (rss *resultSigningState) ActiveBlocks() int { return 3 }
 
 func (rss *resultSigningState) Initiate() error {
-	message, err := rss.member.SignDKGResult(rss.result, rss.handle)
+	message, err := rss.member.SignDKGResult(rss.result, rss.relayChain)
 	if err != nil {
 		return err
 	}
@@ -84,7 +85,8 @@ func (rss *resultSigningState) Next() signingState {
 	// set up the verification state, phase 13 part 2
 	return &signaturesVerificationState{
 		channel:           rss.channel,
-		handle:            rss.handle,
+		relayChain:        rss.relayChain,
+		blockCounter:      rss.blockCounter,
 		member:            rss.member,
 		requestID:         rss.requestID,
 		result:            rss.result,
@@ -104,8 +106,9 @@ func (rss *resultSigningState) MemberIndex() group.MemberIndex {
 //
 // State is part of phase 13 of the protocol.
 type signaturesVerificationState struct {
-	channel net.BroadcastChannel
-	handle  chain.Handle
+	channel      net.BroadcastChannel
+	relayChain   relayChain.Interface
+	blockCounter chain.BlockCounter
 
 	member *SigningMember
 
@@ -134,12 +137,13 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 
 func (svs *signaturesVerificationState) Next() signingState {
 	return &resultSubmissionState{
-		channel:    svs.channel,
-		handle:     svs.handle,
-		member:     NewSubmittingMember(svs.member.index),
-		requestID:  svs.requestID,
-		result:     svs.result,
-		signatures: svs.validSignatures,
+		channel:      svs.channel,
+		relayChain:   svs.relayChain,
+		blockCounter: svs.blockCounter,
+		member:       NewSubmittingMember(svs.member.index),
+		requestID:    svs.requestID,
+		result:       svs.result,
+		signatures:   svs.validSignatures,
 	}
 
 }
@@ -149,12 +153,13 @@ func (svs *signaturesVerificationState) MemberIndex() group.MemberIndex {
 }
 
 // resultSubmissionState is the state during which group members submit the dkg
-// result to the chain.
+// result to the chain. This state concludes the DKG protocol.
 //
-// State covers phase 14 of the protocol.
+// State covers, the final phase, phase 14 of the protocol.
 type resultSubmissionState struct {
-	channel net.BroadcastChannel
-	handle  chain.Handle
+	channel      net.BroadcastChannel
+	relayChain   relayChain.Interface
+	blockCounter chain.BlockCounter
 
 	member *SubmittingMember
 
@@ -170,7 +175,8 @@ func (rss *resultSubmissionState) Initiate() error {
 		rss.requestID,
 		rss.result,
 		rss.signatures,
-		rss.handle,
+		rss.relayChain,
+		rss.blockCounter,
 	)
 }
 
@@ -179,6 +185,7 @@ func (rss *resultSubmissionState) Receive(msg net.Message) error {
 }
 
 func (rss *resultSubmissionState) Next() signingState {
+	// returning nil represents this is the final state
 	return nil
 }
 

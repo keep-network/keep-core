@@ -18,9 +18,6 @@ type SubmittingMember struct {
 	// Represents the member's position for submission.
 	index group.MemberIndex
 
-	// Group to which this member belongs.
-	group *group.Group
-
 	// Predefined step for each submitting window. The value is used to determine
 	// the eligible submitting member.
 	blockStep uint64
@@ -31,7 +28,8 @@ func NewSubmittingMember(
 	memberIndex group.MemberIndex,
 ) *SubmittingMember {
 	return &SubmittingMember{
-		index: memberIndex,
+		index:     memberIndex,
+		blockStep: 3, // TODO: this should be on-chain parameter!
 	}
 }
 
@@ -59,11 +57,11 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	requestID *big.Int,
 	result *relayChain.DKGResult,
 	signatures map[group.MemberIndex]operator.Signature,
-	chainHandle chain.Handle,
+	chainRelay relayChain.Interface,
+	blockCounter chain.BlockCounter,
 ) error {
 	onSubmittedResultChan := make(chan *event.DKGResultSubmission)
 
-	chainRelay := chainHandle.ThresholdRelay()
 	subscription, err := chainRelay.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			onSubmittedResultChan <- event
@@ -101,10 +99,6 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	}
 
 	// Wait until the current member is eligible to submit the result.
-	blockCounter, err := chainHandle.BlockCounter()
-	if err != nil {
-		return returnWithError(err)
-	}
 	eligibleToSubmitWaiter, err := sm.waitForSubmissionEligibility(blockCounter)
 	if err != nil {
 		return returnWithError(
@@ -122,6 +116,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
+			fmt.Printf("[member:%v] Publishing DKG result...\n", sm.index)
 			chainRelay.SubmitDKGResult(
 				requestID,
 				sm.index,
@@ -132,11 +127,15 @@ func (sm *SubmittingMember) SubmitDKGResult(
 					dkgResultPublishedEvent *event.DKGResultSubmission,
 					err error,
 				) {
-					errorChannel <- nil
+					errorChannel <- err
 				})
 			return <-errorChannel
 		case publishedResultEvent := <-onSubmittedResultChan:
 			if publishedResultEvent.RequestID.Cmp(requestID) == 0 {
+				fmt.Printf(
+					"[member:%v] DKG result published by other member, leaving.\n",
+					sm.index,
+				)
 				// A result has been submitted by other member. Leave without
 				// publishing the result.
 				return returnWithError(nil)

@@ -25,12 +25,6 @@ contract KeepGroupImplV1 is Ownable {
     // TODO: Rename to DkgResultSubmittedEvent
     // TODO: Add memberIndex
     event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey); 
-    
-    event DkgResultVoteEvent(uint256 requestId, uint256 memberIndex, bytes32 resultHash);
-
-    // Legacy code moved from Random Beacon contract
-    // TODO: refactor according to the Phase 14
-    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID);
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -227,7 +221,7 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
+     * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
      * @param index claimed index of the staker. We pass this for gas efficiency purposes.
      * @param requestId Relay request ID assosciated with DKG protocol execution.
      * @param groupPubKey Group public key generated as a result of protocol execution.
@@ -259,10 +253,22 @@ contract KeepGroupImplV1 is Ownable {
             "There should be enough valid tickets submitted to form a group."
         );
 
+        // TODO: This is just a temporary implementation for the sake of
+        // development of the off-chain part.
+
         _requestIdToDkgResult[requestId] = DkgResult(groupPubKey, disqualified, inactive);
         _dkgResultPublished[requestId] = true;
   
         emit DkgResultPublishedEvent(requestId, groupPubKey);
+
+        _groups.push(Group(groupPubKey, block.number));
+
+        address[] memory members = orderedParticipants();
+        for (uint i = 0; i < _groupSize; i++) {
+            _groupMembers[groupPubKey].push(members[i]);
+        }
+
+        emit OnGroupRegistered(groupPubKey);
     }
 
     /**
@@ -284,22 +290,6 @@ contract KeepGroupImplV1 is Ownable {
         bytes32 resultHash
     ) public {
         // TODO: Implement
-    }
-
-    // Legacy code moved from Random Beacon contract
-    // TODO: refactor according to the Phase 14
-    function submitGroupPublicKey(bytes memory groupPublicKey, uint256 requestID) public {
-
-        // TODO: Remove this section once dispute logic is implemented,
-        // implement conflict resolution logic described in Phase 14,
-        // make sure only valid members are stored.
-        _groups.push(Group(groupPublicKey, block.number));
-        address[] memory members = orderedParticipants();
-        for (uint i = 0; i < _groupSize; i++) {
-            _groupMembers[groupPublicKey].push(members[i]);
-        }
-        emit OnGroupRegistered(groupPublicKey);
-        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID);
     }
 
     /**

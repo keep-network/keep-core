@@ -30,7 +30,7 @@ func TestAcceptValidSignatureHashMessage(t *testing.T) {
 	member := members[0]
 	member2 := members[1]
 
-	message2, err := member2.SignDKGResult(dkgResult, chainHandle)
+	message2, err := member2.SignDKGResult(dkgResult, chainHandle.ThresholdRelay())
 
 	state := &resultSigningState{
 		member:            member,
@@ -78,7 +78,7 @@ func TestDoNotAcceptMessageWithSwappedKey(t *testing.T) {
 		signatureMessages: make([]*DKGResultHashSignatureMessage, 0),
 	}
 
-	message2, err := member2.SignDKGResult(dkgResult, chainHandle)
+	message2, err := member2.SignDKGResult(dkgResult, chainHandle.ThresholdRelay())
 
 	state.Receive(&mockSignatureMessage{
 		message2,

@@ -10,6 +10,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // Initialize kicks off the random beacon by initializing internal state,
@@ -19,6 +20,7 @@ import (
 func Initialize(
 	ctx context.Context,
 	stakingID string,
+	operatorPrivateKey *operator.PrivateKey,
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
 	stakeMonitor chain.StakeMonitor,
@@ -34,7 +36,13 @@ func Initialize(
 		return err
 	}
 
-	node := relay.NewNode(staker, netProvider, blockCounter, chainConfig)
+	node := relay.NewNode(
+		staker,
+		operatorPrivateKey,
+		netProvider,
+		blockCounter,
+		chainConfig,
+	)
 
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
 		fmt.Printf("New relay entry requested [%+v]\n", request)
