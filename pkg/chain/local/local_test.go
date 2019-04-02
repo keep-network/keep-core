@@ -194,57 +194,23 @@ func TestLocalOnRelayEntryGenerated(t *testing.T) {
 
 	defer subscription.Unsubscribe()
 
-	expectedRequestID := big.NewInt(42)
-	expectedValue := big.NewInt(19)
-	expectedGroupPubKey := []byte("1")
-	expectedSeed := big.NewInt(30)
-	expectedBlockNumber := uint64(123)
+	expectedEntry := &event.Entry{
+		RequestID:   big.NewInt(42),
+		Value:       big.NewInt(19),
+		GroupPubKey: []byte("1"),
+		Seed:        big.NewInt(30),
+		BlockNumber: uint64(123),
+	}
 
-	chainHandle.SubmitRelayEntry(
-		&event.Entry{
-			RequestID:   expectedRequestID,
-			Value:       expectedValue,
-			GroupPubKey: expectedGroupPubKey,
-			Seed:        expectedSeed,
-			BlockNumber: expectedBlockNumber,
-		},
-	)
+	chainHandle.SubmitRelayEntry(expectedEntry)
 
 	select {
 	case event := <-eventFired:
-		if event.RequestID.Cmp(expectedRequestID) != 0 {
+		if !reflect.DeepEqual(event, expectedEntry) {
 			t.Fatalf(
-				"Unexpected relay entry request id\nExpected: [%v]\nActual:   [%v]",
-				expectedRequestID,
-				event.RequestID.Int64(),
-			)
-		}
-		if event.Value.Cmp(expectedValue) != 0 {
-			t.Fatalf(
-				"Unexpected relay entry value\nExpected: [%v]\nActual:   [%v]",
-				expectedValue,
-				event.Value.Int64(),
-			)
-		}
-		if len(event.GroupPubKey) != 1 {
-			t.Fatalf(
-				"Unexpected relay entry group pub key length\nExpected: [%v]\nActual:   [%v]",
-				1,
-				len(event.GroupPubKey),
-			)
-		}
-		if event.Seed.Cmp(expectedSeed) != 0 {
-			t.Fatalf(
-				"Unexpected relay entry seed\nExpected: [%v]\nActual:   [%v]",
-				expectedSeed,
-				event.Seed.Int64(),
-			)
-		}
-		if event.BlockNumber != expectedBlockNumber {
-			t.Fatalf(
-				"Unexpected relay entry block number\nExpected: [%v]\nActual:   [%v]",
-				expectedBlockNumber,
-				event.BlockNumber,
+				"Unexpected relay entry\nExpected: [%v]\nActual:   [%v]",
+				expectedEntry,
+				event,
 			)
 		}
 	case <-ctx.Done():
