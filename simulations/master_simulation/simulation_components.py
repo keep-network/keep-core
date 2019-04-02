@@ -40,7 +40,7 @@ class Node:
     
     def Forking_MainLoop(self,env):
         while True:
-            print(str(self.id) + " Forking Main Loop" + " cycle="+str(self.cycle_count))
+            #print(str(self.id) + " Forking Main Loop" + " cycle="+str(self.cycle_count))
             yield self.env.process(self.Watching_RelayRequest(env))
         #env.process(self.Watching_RelayRequest(env))
         #env.process(self.Watching_RelayEntry(env))  
@@ -52,12 +52,12 @@ class Node:
     #join group
     def join_group(self, env, group_object):
         if group_object.group[self.id]:
-            print(self.id)
-            print("Node# = "+ str(self.id) + "joining group")
+            #print(self.id)
+            #print("Node# = "+ str(self.id) + "joining group")
             group_object.connect(self.id)
             yield env.timeout(1)
         else:
-            print("Node# = "+ str(self.id) +" did not join group")
+            #print("Node# = "+ str(self.id) +" did not join group")
             yield env.timeout(1)
 
 def min_index(ticket_array, group_size):
@@ -142,9 +142,9 @@ class Group:
     def disconnect(self, node_id):
         self.member_check[node_id] = 0
 
-    def is_ready(self,env, failed_nodes):
+    def is_ready(self, env, failed_nodes):
         while True:
-            print(len(self.member_check))
+            print(sum(self.member_check - np.array(failed_nodes) - self.group))
             if sum(self.member_check - np.array(failed_nodes) - self.group)> self.node_failure_threshold:
                 print("group is active")
                 self.status = "active"
@@ -155,33 +155,35 @@ class Group:
                 yield env.exit()
     
 
-def relay_entry(env, runs, group_object_array, node_object_array, sign_successes, failed_nodes):
-    entry_cycles = 0
-    sign_successes = []
-    while True:
-        entry_cycles += 1
-        print("run # = "+str(entry_cycles))
-        group = group_object_array[np.random.randint(0,runs-1)] #picks the group id to perform the signature
-        for node in node_object_array:
-            yield env.process(node.join_group(env, group))
-        print("checking if the group is ready")
-        print(np.array(failed_nodes[group.id]))
-        yield env.process(group.is_ready(env, failed_nodes[group.id])) #check if the group is ready
-        print("group ID" + str(group.id))
-        print(group.member_check)
-        print(group.group)
+def relay_entry(env, runs, group_object_array, node_object_array, sign_successes, nodes, node_failure_percent):
+    total_sign_successes = []
+    for failure_percent in node_failure_percent:
+        print("failure_percent = "+ str(failure_percent))
+        failed_nodes = node_failures(nodes, runs, failure_percent)
+        sign_successes = []
+        for i in range(runs):
+            #print("run # = "+str(entry_cycles))
+            group = group_object_array[np.random.randint(0,runs-1)] #picks the group id to perform the signature
+            for node in node_object_array:
+                yield env.process(node.join_group(env, group))
+            #print("checking if the group is ready")
+            #print(np.array(failed_nodes[group.id]))
+            yield env.process(group.is_ready(env, failed_nodes[group.id])) #check if the group is ready
+            #print("group ID" + str(group.id))
+            #print(group.member_check)
+            #print(group.group)
 
-        if group.status == "active":
-            print("group ready, begin signing")
-            sign_successes.append(1) # if ready add 1 to successfull signing events array
-            # add signing process here
-        else:
-            print("group not ready, signing failed")
-            sign_successes.append(0) # if not ready add 0 to successful signing events array
-        print(sign_successes)
-        print(sum(sign_successes))
+            if group.status == "active":
+                #print("group ready, begin signing")
+                sign_successes.append(1) # if ready add 1 to successfull signing events array
+                # add signing process here
+            else:
+                #print("group not ready, signing failed")
+                sign_successes.append(0) # if not ready add 0 to successful signing events array
+        total_sign_successes.append(sum(sign_successes))
 
-        if entry_cycles == runs : yield env.exit()
+        print(total_sign_successes)
+    yield env.exit()
         
 
 """ # Setup and start the simulation
