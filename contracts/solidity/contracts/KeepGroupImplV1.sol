@@ -61,7 +61,7 @@ contract KeepGroupImplV1 is Ownable {
 
     uint256 internal _activeGroupsThreshold = 1;
     // _groupExpirationTimeout is the time in block after which a group expires
-    uint256 internal _groupExpirationTimeout = 1;
+    uint256 internal _groupExpirationTimeout;
     // _expiredOffset is pointing to the first active group, it is also the
     // expired groups counter
     uint256 internal _expiredOffset = 0;
