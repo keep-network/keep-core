@@ -35,7 +35,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
-    await keepGroupImplViaProxy.initialize(stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, 1, 3, 4);
+    await keepGroupImplViaProxy.initialize(stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, 1, 3, 4, 1, 1);
   });
 
   it("should fail to update minimum stake by non owner", async function() {
