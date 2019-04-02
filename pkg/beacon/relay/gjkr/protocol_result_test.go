@@ -21,7 +21,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: groupPublicKey,
-					Group:          initalizeGroup(groupSize, []group.MemberIndex{}, []group.MemberIndex{}),
+					Group:          initializeGroup(groupSize, []group.MemberIndex{}, []group.MemberIndex{}),
 				}
 			},
 		},
@@ -30,7 +30,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: groupPublicKey,
-					Group:          initalizeGroup(groupSize, []group.MemberIndex{2}, []group.MemberIndex{}),
+					Group:          initializeGroup(groupSize, []group.MemberIndex{2}, []group.MemberIndex{}),
 				}
 			},
 		},
@@ -39,7 +39,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: groupPublicKey,
-					Group:          initalizeGroup(groupSize, []group.MemberIndex{}, []group.MemberIndex{3, 7}),
+					Group:          initializeGroup(groupSize, []group.MemberIndex{}, []group.MemberIndex{3, 7}),
 				}
 			},
 		},
@@ -49,7 +49,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: nil,
-					Group:          initalizeGroup(groupSize, []group.MemberIndex{2}, []group.MemberIndex{3, 7}),
+					Group:          initializeGroup(groupSize, []group.MemberIndex{2}, []group.MemberIndex{3, 7}),
 				}
 			},
 		},
@@ -58,7 +58,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: nil,
-					Group:          initalizeGroup(groupSize, nil, []group.MemberIndex{3, 5, 7}),
+					Group:          initializeGroup(groupSize, nil, []group.MemberIndex{3, 5, 7}),
 				}
 			},
 		},
@@ -67,7 +67,7 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: nil,
-					Group:          initalizeGroup(groupSize, []group.MemberIndex{3, 5, 7}, []group.MemberIndex{}),
+					Group:          initializeGroup(groupSize, []group.MemberIndex{3, 5, 7}, []group.MemberIndex{}),
 				}
 			},
 		},
@@ -134,7 +134,7 @@ func initializeFinalizingMembersGroup(threshold, groupSize int) ([]*FinalizingMe
 	return finalizingMembers, nil
 }
 
-func initalizeGroup(
+func initializeGroup(
 	groupSize int,
 	disqualifiedMembers []group.MemberIndex,
 	inactiveMembers []group.MemberIndex,
