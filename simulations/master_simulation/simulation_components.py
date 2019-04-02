@@ -28,8 +28,6 @@ class Node:
     #Connecting to Ethereum
     def Connect_Node(self, env):
         while True:
-            #self.node_failure_generator() 
-            #if self.node_status == "failed": yield self.env.timeout(1) #checks if the node has failed
             ethereum_conection_time = np.random.randint(1,100) #assumes a linear distribution 
             if ethereum_conection_time>=90:
                 #print (str(self.id) + " ethereum connection Failure" + "cycle=" + str(self.cycle_count))
@@ -42,8 +40,6 @@ class Node:
     
     def Forking_MainLoop(self,env):
         while True:
-            self.node_failure_generator()
-            if self.node_status == "failed": yield env.exit()
             print(str(self.id) + " Forking Main Loop" + " cycle="+str(self.cycle_count))
             yield self.env.process(self.Watching_RelayRequest(env))
         #env.process(self.Watching_RelayRequest(env))
@@ -51,14 +47,10 @@ class Node:
     
      # wait for relay request
     def Watching_RelayRequest(self, env):
-        #self.node_failure_generator()
-        #if self.node_status == "failed": yield env.exit()
         yield self.reconnect_event #stops watching if reconnect event is triggered 
 
     #join group
     def join_group(self, env, group_object):
-        #self.node_failure_generator()
-        #if self.node_status == "failed": yield env.exit()
         if group_object.group[self.id]:
             print(self.id)
             print("Node# = "+ str(self.id) + "joining group")
@@ -125,22 +117,21 @@ def group_distr(runs, nodes, group_members, cdf):
         print(group_distr_matrix[i])
     return total_group_distr, max_owned, group_distr_matrix
 
-def node_failure_modes(nodes, runs):
-# Calculates if a node has gone offline
-# https://livemap.pingdom.com/
-    timeout = np.random.rand(nodes, runs) < 0.15
-    return timeout
+def node_failures(nodes, runs, node_failure_percent):
+# pre-processes failed nodes
+    failed_nodes = np.random.rand(runs, nodes) < node_failure_percent
+    return failed_nodes
 
 class Group:
     #Group class
-    def __init__(self, env, identity, group_size, group_distr_matrix, node_failure_threshold_input):
+    def __init__(self, env, identity, nodes, group_distr_matrix, node_failure_threshold_input):
         self.cycle = 0
         self.tries = 0
         self.failures = 0
         self.current_member_count = 0
         self.status = ""
         self.id = identity
-        self.member_check = np.zeros(group_size) #tally of how many members are currently connected to the group
+        self.member_check = np.zeros(nodes) #tally of how many members are currently connected to the group
         self.group = np.array(group_distr_matrix[self.id]) > 0 # the group distribution
         self.signing_events =[]
         self.node_failure_threshold = node_failure_threshold_input #threshold number of group members not available to sign causing the group to be inactive
@@ -151,9 +142,10 @@ class Group:
     def disconnect(self, node_id):
         self.member_check[node_id] = 0
 
-    def is_ready(self,env):
+    def is_ready(self,env, failed_nodes):
         while True:
-            if sum(self.member_check - self.group)> self.node_failure_threshold:
+            print(len(self.member_check))
+            if sum(self.member_check - np.array(failed_nodes) - self.group)> self.node_failure_threshold:
                 print("group is active")
                 self.status = "active"
                 yield env.exit()
@@ -163,7 +155,7 @@ class Group:
                 yield env.exit()
     
 
-def relay_entry(env, runs, group_object_array, node_object_array, sign_successes):
+def relay_entry(env, runs, group_object_array, node_object_array, sign_successes, failed_nodes):
     entry_cycles = 0
     sign_successes = []
     while True:
@@ -173,7 +165,8 @@ def relay_entry(env, runs, group_object_array, node_object_array, sign_successes
         for node in node_object_array:
             yield env.process(node.join_group(env, group))
         print("checking if the group is ready")
-        yield env.process(group.is_ready(env)) #check if the group is ready
+        print(np.array(failed_nodes[group.id]))
+        yield env.process(group.is_ready(env, failed_nodes[group.id])) #check if the group is ready
         print("group ID" + str(group.id))
         print(group.member_check)
         print(group.group)
@@ -186,6 +179,7 @@ def relay_entry(env, runs, group_object_array, node_object_array, sign_successes
             print("group not ready, signing failed")
             sign_successes.append(0) # if not ready add 0 to successful signing events array
         print(sign_successes)
+        print(sum(sign_successes))
 
         if entry_cycles == runs : yield env.exit()
         
