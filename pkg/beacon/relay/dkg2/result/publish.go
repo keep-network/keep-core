@@ -28,6 +28,7 @@ func Publish(
 	relayChain relayChain.Interface,
 	blockCounter chain.BlockCounter,
 ) error {
+	privateKey, _ := relayChain.GetKeys()
 	initialState := &resultSigningState{
 		channel:           channel,
 		relayChain:        relayChain,
