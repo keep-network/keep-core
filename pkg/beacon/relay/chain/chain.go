@@ -102,6 +102,9 @@ type DistributedKeyGenerationInterface interface {
 type Interface interface {
 	// GetConfig returns the expected configuration of the threshold relay.
 	GetConfig() (*config.Chain, error)
+	// GetKeys returns the key pair used to attest for messages being sent to
+	// the chain.
+	GetKeys() (*operator.PrivateKey, *operator.PublicKey)
 
 	GroupInterface
 	RelayEntryInterface
