@@ -12,29 +12,26 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // NewNode returns an empty Node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
 func NewNode(
 	staker chain.Staker,
-	operatorPrivateKey *operator.PrivateKey,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
 	chainConfig *config.Chain,
 ) Node {
 	return Node{
-		Staker:             staker,
-		operatorPrivateKey: operatorPrivateKey,
-		netProvider:        netProvider,
-		blockCounter:       blockCounter,
-		chainConfig:        chainConfig,
-		stakeIDs:           make([]string, 100),
-		groupPublicKeys:    make([][]byte, 0),
-		seenPublicKeys:     make(map[string]bool),
-		myGroups:           make(map[string][]*membership),
-		pendingGroups:      make(map[string][]*membership),
+		Staker:          staker,
+		netProvider:     netProvider,
+		blockCounter:    blockCounter,
+		chainConfig:     chainConfig,
+		stakeIDs:        make([]string, 100),
+		groupPublicKeys: make([][]byte, 0),
+		seenPublicKeys:  make(map[string]bool),
+		myGroups:        make(map[string][]*membership),
+		pendingGroups:   make(map[string][]*membership),
 	}
 }
 

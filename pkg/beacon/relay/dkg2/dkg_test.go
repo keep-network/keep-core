@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
-	"github.com/keep-network/keep-core/pkg/operator"
 
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
@@ -32,11 +31,6 @@ func TestExecuteDKGLocal(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	privateKey, _, err := operator.GenerateKeyPair()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	executeDKG := func(playerIndex int) (*ThresholdSigner, error) {
 		broadcastChannel, err := networkProvider.ChannelFor("testing_channel")
 		if err != nil {
@@ -47,7 +41,6 @@ func TestExecuteDKGLocal(t *testing.T) {
 			requestID,
 			seed,
 			playerIndex,
-			privateKey,
 			groupSize,
 			threshold,
 			blockCounter,

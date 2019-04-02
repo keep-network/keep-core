@@ -24,6 +24,10 @@ func (ec *ethereumChain) ThresholdRelay() relaychain.Interface {
 	return ec
 }
 
+func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
+	return operator.EthereumKeyToOperatorKey(ec.accountKey)
+}
+
 func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 	groupSize, err := ec.keepGroupContract.GroupSize()
 	if err != nil {
