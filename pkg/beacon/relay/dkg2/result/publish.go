@@ -10,7 +10,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // Publish executes Phase 13 and 14 of DKG as a state machine. First, the
@@ -19,7 +18,6 @@ import (
 // our own result and added to the list of votes. Finally, we submit the result
 // along with everyone's votes.
 func Publish(
-	privateKey *operator.PrivateKey,
 	playerIndex group.MemberIndex,
 	requestID *big.Int,
 	dkgGroup *group.Group,

@@ -153,7 +153,6 @@ func createNode(
 		err := beacon.Initialize(
 			context,
 			stakingID,
-			operatorPrivateKey,
 			chainHandle.ThresholdRelay(),
 			chainCounter,
 			stakeMonitor,

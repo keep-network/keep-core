@@ -14,7 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // Node represents the current state of a relay node.
@@ -24,8 +23,6 @@ type Node struct {
 	// Staker is an on-chain identity that this node is using to prove its
 	// stake in the system.
 	Staker chain.Staker
-
-	operatorPrivateKey *operator.PrivateKey
 
 	// External interactors.
 	netProvider  net.Provider
@@ -100,7 +97,6 @@ func (n *Node) JoinGroupIfEligible(
 					entryRequestID,
 					entrySeed,
 					playerIndex,
-					n.operatorPrivateKey,
 					n.chainConfig.GroupSize,
 					n.chainConfig.Threshold,
 					n.blockCounter,
