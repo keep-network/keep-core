@@ -68,12 +68,6 @@ class Node:
             print("Node# = "+ str(self.id) +" did not join group")
             yield env.timeout(1)
 
-    def node_failure_generator(self):
-        failure = np.random.lognormal(1,0)
-        if failure < 0.5 or failure >1.5 :
-            self.node_status = "failed"
-        yield self.node_status
-
 def min_index(ticket_array, group_size):
     array = copy.deepcopy(ticket_array)
     group = sorted(array)[0:group_size] # generates a sorted list of min values of length = group size
