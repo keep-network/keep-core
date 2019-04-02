@@ -62,6 +62,14 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		)
 	}
 
+	resultPublicationBlockStep, err := ec.keepGroupContract.ResultPublicationBlockStep()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling ResultPublicationBlockStep: [%v]",
+			err,
+		)
+	}
+
 	minimumStake, err := ec.keepGroupContract.MinimumStake()
 	if err != nil {
 		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
@@ -83,6 +91,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout,
 		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout,
 		TicketChallengeTimeout:          ticketChallengeTimeout,
+		ResultPublicationBlockStep:      int(resultPublicationBlockStep),
 		MinimumStake:                    minimumStake,
 		TokenSupply:                     tokenSupply,
 		NaturalThreshold:                naturalThreshold,

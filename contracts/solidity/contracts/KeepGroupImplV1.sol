@@ -35,8 +35,9 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutInitial;
     uint256 internal _timeoutSubmission;
     uint256 internal _timeoutChallenge;
+    uint8 internal _resultPublicationBlockStep;
     uint256 internal _submissionStart;
-
+    
     uint256 internal _randomBeaconValue;
 
     uint256[] internal _tickets;
@@ -309,6 +310,8 @@ contract KeepGroupImplV1 is Ownable {
      * @param timeoutInitial Timeout in blocks after the initial ticket submission is finished.
      * @param timeoutSubmission Timeout in blocks after the reactive ticket submission is finished.
      * @param timeoutChallenge Timeout in blocks after the period where tickets can be challenged is finished.
+     * @param resultPublicationBlockStep Time in blocks after which member with 
+     * the given index is eligible to submit DKG result.
      */
     function initialize(
         address stakingProxy,
@@ -318,7 +321,8 @@ contract KeepGroupImplV1 is Ownable {
         uint256 groupSize,
         uint256 timeoutInitial,
         uint256 timeoutSubmission,
-        uint256 timeoutChallenge
+        uint256 timeoutChallenge,
+        uint8 resultPublicationBlockStep
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
@@ -331,6 +335,7 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutInitial = timeoutInitial;
         _timeoutSubmission = timeoutSubmission;
         _timeoutChallenge = timeoutChallenge;
+        _resultPublicationBlockStep = resultPublicationBlockStep;
     }
 
     /**
@@ -398,6 +403,14 @@ contract KeepGroupImplV1 is Ownable {
      */
     function ticketChallengeTimeout() public view returns (uint256) {
         return _timeoutChallenge;
+    }
+
+    /**
+     * @dev resultPublicationBlockStep is the duration (in blocks) after which
+     * member with the given index is eligible to submit DKG result.
+     */
+    function resultPublicationBlockStep() public view returns (uint8) {
+        return _resultPublicationBlockStep;
     }
 
     /**
