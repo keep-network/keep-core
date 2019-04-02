@@ -188,7 +188,6 @@ func TestLocalOnRelayEntryGenerated(t *testing.T) {
 			eventFired <- entry
 		},
 	)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -266,7 +265,6 @@ func TestLocalOnRelayEntryGeneratedUnsubscribed(t *testing.T) {
 			eventFired <- entry
 		},
 	)
-
 	if err != nil {
 		t.Fatal(err)
 	}
