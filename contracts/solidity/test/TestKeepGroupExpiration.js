@@ -41,8 +41,9 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
   let token, stakingProxy, minimumStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge,
+    groupExpirationTimeout, activeGroupsThreshold,
     keepRandomBeaconImplV1, keepRandomBeaconProxy,
-    keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy
+    keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, testGroupsNumber
 
   beforeEach(async () => {
     token = await KeepToken.new();
@@ -60,50 +61,62 @@ contract('TestKeepGroupExpiration', function(accounts) {
     timeoutInitial = 20;
     timeoutSubmission = 50;
     timeoutChallenge = 60;
+    groupExpirationTimeout = 1;
+    activeGroupsThreshold = 1;
 
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(
-      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
+      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, groupExpirationTimeout, activeGroupsThreshold
     );
 
-    for (var i = 1; i <= 7; i++)
+    testGroupsNumber = 7;
+
+    for (var i = 1; i <= testGroupsNumber; i++)
       await keepGroupImplV1.submitGroupPublicKey([i], i);
   });
 
   it("should be able to check if groups were added", async function() {
     let numberOfGroups = await keepGroupImplV1.numberOfGroups();
-    assert.equal(numberOfGroups.toString(), "7", "Number of groups not equal 7");
+    assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups not equals to number of test groups");
   });
 
-  it("should be able to check if groups expire", async function() {
+  it("should be able to check if one group expires", async function() {
     let before = await keepGroupImplV1.numberOfGroups();
-    assert.equal(before.toString(), "7", "Number of groups should be equal 7"); 
-    await keepGroupImplV1.selectGroup("1");
+    assert.equal(Number(before), testGroupsNumber, "Number of groups should be equal to the number of test groups"); 
+    mineBlocks(groupExpirationTimeout);
+    let tx = await keepGroupImplV1.selectGroup("1");
+    //console.log("Gas used for keepGroupImplV1.selectGroup(1) = ", tx.receipt.gasUsed);
     let after = await keepGroupImplV1.numberOfGroups();
-    assert.notEqual(after.toString(), "7", "Number of groups after `selectGroup()` should not be equal 7"); 
-    assert.notEqual(after.toString(), before.toString(), "Number of groups should not be equal");
+    assert.notEqual(Number(after), testGroupsNumber, "Number of groups after `selectGroup()` should not be equal to the number of test groups");
   });
 
-  it("should be able to check if last group is not expiring", async function() {
+  it("should be able to check if more than one group expires", async function() {
+    mineBlocks(groupExpirationTimeout);
     await keepGroupImplV1.selectGroup("1");
+    mineBlocks(groupExpirationTimeout);
     await keepGroupImplV1.selectGroup("1");
+    mineBlocks(groupExpirationTimeout);
     await keepGroupImplV1.selectGroup("1");
+    mineBlocks(groupExpirationTimeout);
     await keepGroupImplV1.selectGroup("1");
   
     let after = await keepGroupImplV1.numberOfGroups();
-    assert.equal(after.toString(), "1", "Number of groups should be equal 1");
+    assert.isBelow(Number(after), testGroupsNumber - 1, "Number of groups should be at least 2 below the test group numbers");
   });
 
-  it("should be able to survive this stress test", async function() {
-    for (var i = 1; i <= 100; i++)
+  it("nuber of groups should not be able to go below the active groups threshold", async function() {
+    for (var i = 1; i <= 10; i++)
       await keepGroupImplV1.submitGroupPublicKey([i], i);
 
-    for (var i = 1; i <= 111; i++)
-      await keepGroupImplV1.selectGroup(i);
+    for (var i = 1; i <= 20; i++) {
+      mineBlocks(groupExpirationTimeout);
+      let tx = await keepGroupImplV1.selectGroup(i);
+      //console.log("Gas used for keepGroupImplV1.selectGroup(i) = ", tx.receipt.gasUsed);
+    }
 
     let after = await keepGroupImplV1.numberOfGroups();
-    assert.equal(after.toString(), "1", "Number of groups should be equal 1");
+    assert.isAtLeast(Number(after), activeGroupsThreshold, "Number of groups should be equal to active groups threshold");
   });
 });
