@@ -249,6 +249,87 @@ func TestLocalOnRelayEntryGeneratedUnsubscribed(t *testing.T) {
 	}
 }
 
+func TestLocalOnRelayEntryRequested(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.Request)
+
+	subscription, err := chainHandle.OnRelayEntryRequested(
+		func(request *event.Request) {
+			eventFired <- request
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer subscription.Unsubscribe()
+
+	seed := big.NewInt(12345)
+
+	chainHandle.RequestRelayEntry(seed)
+
+	select {
+	case event := <-eventFired:
+		expectedRequestID := big.NewInt(0)
+		if event.RequestID.Cmp(expectedRequestID) != 0 {
+			t.Fatalf(
+				"Unexpected request id\nExpected: [%v]\nActual:   [%v]",
+				expectedRequestID,
+				event.RequestID,
+			)
+		}
+		if event.PreviousEntry != nil {
+			t.Fatalf(
+				"Unexpected previous entry\nExpected: [%v]\nActual:   [%v]",
+				nil,
+				event.PreviousEntry,
+			)
+		}
+		if event.Seed.Cmp(seed) != 0 {
+			t.Fatalf(
+				"Unexpected seed\nExpected: [%v]\nActual:   [%v]",
+				seed,
+				event.Seed,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
+func TestLocalOnRelayEntryRequestedUnsubscribed(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.Request)
+
+	subscription, err := chainHandle.OnRelayEntryRequested(
+		func(request *event.Request) {
+			eventFired <- request
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	subscription.Unsubscribe()
+
+	chainHandle.RequestRelayEntry(big.NewInt(42))
+
+	select {
+	case event := <-eventFired:
+		t.Fatalf("Event should have not been received due to the cancelled subscription: [%v]", event)
+	case <-ctx.Done():
+		// expected execution of goroutine
+	}
+}
+
 func TestLocalBlockHeightWaiter(t *testing.T) {
 	var tests = map[string]struct {
 		blockHeight      int
