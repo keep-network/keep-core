@@ -34,7 +34,12 @@ func Initialize(
 		return err
 	}
 
-	node := relay.NewNode(staker, netProvider, blockCounter, chainConfig)
+	node := relay.NewNode(
+		staker,
+		netProvider,
+		blockCounter,
+		chainConfig,
+	)
 
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
 		fmt.Printf("New relay entry requested [%+v]\n", request)

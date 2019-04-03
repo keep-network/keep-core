@@ -1,126 +1,88 @@
-package dkg2
+package gjkr
 
 import (
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-type keyGenerationState interface {
-	// activeBlocks returns the number of blocks during which the current state
-	// is active. Blocks are counted after the initiation process of the
-	// current state has completed.
-	activeBlocks() int
-
-	// initiate performs all the required calculations and sends out all the
-	// messages associated with the current state.
-	initiate() error
-
-	// receive is called each time a new message arrived. receive is expected to
-	// be called for all broadcast channel messages, including the member's own
-	// messages.
-	receive(msg net.Message) error
-
-	// nextState performs a state transition to the next state of the protocol.
-	// If the current state is the last one, nextState returns `nil`.
-	nextState() keyGenerationState
-
-	// memberID returns the ID of member associated with the current state.
-	memberID() gjkr.MemberID
-}
-
-func isMessageFromSelf(
-	state keyGenerationState,
-	message gjkr.ProtocolMessage,
-) bool {
-	if message.SenderID() == state.memberID() {
-		return true
-	}
-
-	return false
-}
-
-func isSenderAccepted(
-	filter gjkr.MessageFiltering,
-	message gjkr.ProtocolMessage,
-) bool {
-	return filter.IsSenderAccepted(message.SenderID())
-}
+type keyGenerationState = state.State
 
 // initializationState is the starting state of key generation; it waits for
 // activePeriod and then enters joinState. No messages are valid in this state.
 type initializationState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.LocalMember
+	member  *LocalMember
 }
 
-func (is *initializationState) activeBlocks() int { return 3 }
+func (is *initializationState) ActiveBlocks() int { return 3 }
 
-func (is *initializationState) initiate() error {
+func (is *initializationState) Initiate() error {
 	return nil
 }
 
-func (is *initializationState) receive(msg net.Message) error {
+func (is *initializationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (is *initializationState) nextState() keyGenerationState {
+func (is *initializationState) Next() keyGenerationState {
 	return &joinState{is.channel, is.member}
 }
 
-func (is *initializationState) memberID() gjkr.MemberID {
+func (is *initializationState) MemberIndex() group.MemberIndex {
 	return is.member.ID
 }
 
 // joinState is the state during which a member announces itself to the key
 // generation broadcast channel to initiate the distributed protocol.
-// `gjkr.JoinMessage`s are valid in this state.
+// `JoinMessage`s are valid in this state.
 type joinState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.LocalMember
+	member  *LocalMember
 }
 
-func (js *joinState) activeBlocks() int { return 3 }
+func (js *joinState) ActiveBlocks() int { return 3 }
 
-func (js *joinState) initiate() error {
-	return js.channel.Send(gjkr.NewJoinMessage(js.member.ID))
+func (js *joinState) Initiate() error {
+	return js.channel.Send(NewJoinMessage(js.member.ID))
 }
 
-func (js *joinState) receive(msg net.Message) error {
+func (js *joinState) Receive(msg net.Message) error {
 	switch joinMsg := msg.Payload().(type) {
-	case *gjkr.JoinMessage:
+	case *JoinMessage:
 		js.member.AddToGroup(joinMsg.SenderID())
 	}
 	return nil
 }
 
-func (js *joinState) nextState() keyGenerationState {
+func (js *joinState) Next() keyGenerationState {
 	return &ephemeralKeyPairGenerationState{
 		channel: js.channel,
 		member:  js.member.InitializeEphemeralKeysGeneration(),
 	}
 }
 
-func (js *joinState) memberID() gjkr.MemberID {
+func (js *joinState) MemberIndex() group.MemberIndex {
 	return js.member.ID
 }
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
 // public ephemeral keys generated for other members of the group.
-// `gjkr.EphemeralPublicKeyMessage`s are valid in this state.
+// `EphemeralPublicKeyMessage`s are valid in this state.
 //
 // State covers phase 1 of the protocol.
 type ephemeralKeyPairGenerationState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.EphemeralKeyPairGeneratingMember
+	member  *EphemeralKeyPairGeneratingMember
 
-	phaseMessages []*gjkr.EphemeralPublicKeyMessage
+	phaseMessages []*EphemeralPublicKeyMessage
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) activeBlocks() int { return 3 }
+func (ekpgs *ephemeralKeyPairGenerationState) ActiveBlocks() int { return 3 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) initiate() error {
+func (ekpgs *ephemeralKeyPairGenerationState) Initiate() error {
 	message, err := ekpgs.member.GenerateEphemeralKeyPair()
 	if err != nil {
 		return err
@@ -132,11 +94,11 @@ func (ekpgs *ephemeralKeyPairGenerationState) initiate() error {
 	return nil
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) receive(msg net.Message) error {
+func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
-	case *gjkr.EphemeralPublicKeyMessage:
-		if !isMessageFromSelf(ekpgs, phaseMessage) &&
-			isSenderAccepted(ekpgs.member, phaseMessage) {
+	case *EphemeralPublicKeyMessage:
+		if !group.IsMessageFromSelf(ekpgs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(ekpgs.member, phaseMessage) {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, phaseMessage)
 		}
 	}
@@ -144,7 +106,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) receive(msg net.Message) error {
 	return nil
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) nextState() keyGenerationState {
+func (ekpgs *ephemeralKeyPairGenerationState) Next() keyGenerationState {
 	return &symmetricKeyGenerationState{
 		channel:               ekpgs.channel,
 		member:                ekpgs.member.InitializeSymmetricKeyGeneration(),
@@ -152,7 +114,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) nextState() keyGenerationState {
 	}
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) memberID() gjkr.MemberID {
+func (ekpgs *ephemeralKeyPairGenerationState) MemberIndex() group.MemberIndex {
 	return ekpgs.member.ID
 }
 
@@ -163,50 +125,50 @@ func (ekpgs *ephemeralKeyPairGenerationState) memberID() gjkr.MemberID {
 // State covers phase 2 of the protocol.
 type symmetricKeyGenerationState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.SymmetricKeyGeneratingMember
+	member  *SymmetricKeyGeneratingMember
 
-	previousPhaseMessages []*gjkr.EphemeralPublicKeyMessage
+	previousPhaseMessages []*EphemeralPublicKeyMessage
 }
 
-func (skgs *symmetricKeyGenerationState) activeBlocks() int { return 0 }
+func (skgs *symmetricKeyGenerationState) ActiveBlocks() int { return 0 }
 
-func (skgs *symmetricKeyGenerationState) initiate() error {
+func (skgs *symmetricKeyGenerationState) Initiate() error {
 	skgs.member.MarkInactiveMembers(skgs.previousPhaseMessages)
 	return skgs.member.GenerateSymmetricKeys(skgs.previousPhaseMessages)
 }
 
-func (skgs *symmetricKeyGenerationState) receive(msg net.Message) error {
+func (skgs *symmetricKeyGenerationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (skgs *symmetricKeyGenerationState) nextState() keyGenerationState {
+func (skgs *symmetricKeyGenerationState) Next() keyGenerationState {
 	return &commitmentState{
 		channel: skgs.channel,
 		member:  skgs.member.InitializeCommitting(),
 	}
 }
 
-func (skgs *symmetricKeyGenerationState) memberID() gjkr.MemberID {
+func (skgs *symmetricKeyGenerationState) MemberIndex() group.MemberIndex {
 	return skgs.member.ID
 }
 
 // commitmentState is the state during which members compute their individual
 // shares and commitments to those shares. Two messages are valid in this state:
-// - `gjkr.PeerSharesMessage`
-// - `gjkr.MemberCommitmentsMessage`
+// - `PeerSharesMessage`
+// - `MemberCommitmentsMessage`
 //
 // State covers phase 3 of the protocol.
 type commitmentState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.CommittingMember
+	member  *CommittingMember
 
-	phaseSharesMessages      []*gjkr.PeerSharesMessage
-	phaseCommitmentsMessages []*gjkr.MemberCommitmentsMessage
+	phaseSharesMessages      []*PeerSharesMessage
+	phaseCommitmentsMessages []*MemberCommitmentsMessage
 }
 
-func (cs *commitmentState) activeBlocks() int { return 3 }
+func (cs *commitmentState) ActiveBlocks() int { return 3 }
 
-func (cs *commitmentState) initiate() error {
+func (cs *commitmentState) Initiate() error {
 	sharesMsg, commitmentsMsg, err := cs.member.CalculateMembersSharesAndCommitments()
 	if err != nil {
 		return err
@@ -223,16 +185,16 @@ func (cs *commitmentState) initiate() error {
 	return nil
 }
 
-func (cs *commitmentState) receive(msg net.Message) error {
+func (cs *commitmentState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
-	case *gjkr.PeerSharesMessage:
-		if !isMessageFromSelf(cs, phaseMessage) &&
-			isSenderAccepted(cs.member, phaseMessage) {
+	case *PeerSharesMessage:
+		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(cs.member, phaseMessage) {
 			cs.phaseSharesMessages = append(cs.phaseSharesMessages, phaseMessage)
 		}
 
-	case *gjkr.MemberCommitmentsMessage:
-		if !isMessageFromSelf(cs, phaseMessage) {
+	case *MemberCommitmentsMessage:
+		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) {
 			cs.phaseCommitmentsMessages = append(
 				cs.phaseCommitmentsMessages,
 				phaseMessage,
@@ -243,7 +205,7 @@ func (cs *commitmentState) receive(msg net.Message) error {
 	return nil
 }
 
-func (cs *commitmentState) nextState() keyGenerationState {
+func (cs *commitmentState) Next() keyGenerationState {
 	return &commitmentsVerificationState{
 		channel: cs.channel,
 		member:  cs.member.InitializeCommitmentsVerification(),
@@ -253,28 +215,28 @@ func (cs *commitmentState) nextState() keyGenerationState {
 	}
 }
 
-func (cs *commitmentState) memberID() gjkr.MemberID {
+func (cs *commitmentState) MemberIndex() group.MemberIndex {
 	return cs.member.ID
 }
 
 // commitmentsVerificationState is the state during which members validate
 // shares and commitments computed and published by other members in the
-// previous phase. `gjkr.SecretShareAccusationMessage`s are valid in this state.
+// previous phase. `SecretShareAccusationMessage`s are valid in this state.
 //
 // State covers phase 4 of the protocol.
 type commitmentsVerificationState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.CommitmentsVerifyingMember
+	member  *CommitmentsVerifyingMember
 
-	previousPhaseSharesMessages      []*gjkr.PeerSharesMessage
-	previousPhaseCommitmentsMessages []*gjkr.MemberCommitmentsMessage
+	previousPhaseSharesMessages      []*PeerSharesMessage
+	previousPhaseCommitmentsMessages []*MemberCommitmentsMessage
 
-	phaseAccusationsMessages []*gjkr.SecretSharesAccusationsMessage
+	phaseAccusationsMessages []*SecretSharesAccusationsMessage
 }
 
-func (cvs *commitmentsVerificationState) activeBlocks() int { return 3 }
+func (cvs *commitmentsVerificationState) ActiveBlocks() int { return 3 }
 
-func (cvs *commitmentsVerificationState) initiate() error {
+func (cvs *commitmentsVerificationState) Initiate() error {
 	cvs.member.MarkInactiveMembers(
 		cvs.previousPhaseSharesMessages,
 		cvs.previousPhaseCommitmentsMessages,
@@ -294,11 +256,11 @@ func (cvs *commitmentsVerificationState) initiate() error {
 	return nil
 }
 
-func (cvs *commitmentsVerificationState) receive(msg net.Message) error {
+func (cvs *commitmentsVerificationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
-	case *gjkr.SecretSharesAccusationsMessage:
-		if !isMessageFromSelf(cvs, phaseMessage) &&
-			isSenderAccepted(cvs.member, phaseMessage) {
+	case *SecretSharesAccusationsMessage:
+		if !group.IsMessageFromSelf(cvs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(cvs.member, phaseMessage) {
 			cvs.phaseAccusationsMessages = append(
 				cvs.phaseAccusationsMessages,
 				phaseMessage,
@@ -309,7 +271,7 @@ func (cvs *commitmentsVerificationState) receive(msg net.Message) error {
 	return nil
 }
 
-func (cvs *commitmentsVerificationState) nextState() keyGenerationState {
+func (cvs *commitmentsVerificationState) Next() keyGenerationState {
 	return &sharesJustificationState{
 		channel: cvs.channel,
 		member:  cvs.member.InitializeSharesJustification(),
@@ -318,7 +280,7 @@ func (cvs *commitmentsVerificationState) nextState() keyGenerationState {
 	}
 }
 
-func (cvs *commitmentsVerificationState) memberID() gjkr.MemberID {
+func (cvs *commitmentsVerificationState) MemberIndex() group.MemberIndex {
 	return cvs.member.ID
 }
 
@@ -329,14 +291,14 @@ func (cvs *commitmentsVerificationState) memberID() gjkr.MemberID {
 // State covers phase 5 of the protocol.
 type sharesJustificationState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.SharesJustifyingMember
+	member  *SharesJustifyingMember
 
-	previousPhaseAccusationsMessages []*gjkr.SecretSharesAccusationsMessage
+	previousPhaseAccusationsMessages []*SecretSharesAccusationsMessage
 }
 
-func (sjs *sharesJustificationState) activeBlocks() int { return 0 }
+func (sjs *sharesJustificationState) ActiveBlocks() int { return 0 }
 
-func (sjs *sharesJustificationState) initiate() error {
+func (sjs *sharesJustificationState) Initiate() error {
 	disqualifiedMembers, err := sjs.member.ResolveSecretSharesAccusationsMessages(
 		sjs.previousPhaseAccusationsMessages,
 	)
@@ -350,18 +312,18 @@ func (sjs *sharesJustificationState) initiate() error {
 	return nil
 }
 
-func (sjs *sharesJustificationState) receive(msg net.Message) error {
+func (sjs *sharesJustificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (sjs *sharesJustificationState) nextState() keyGenerationState {
+func (sjs *sharesJustificationState) Next() keyGenerationState {
 	return &qualificationState{
 		channel: sjs.channel,
 		member:  sjs.member.InitializeQualified(),
 	}
 }
 
-func (sjs *sharesJustificationState) memberID() gjkr.MemberID {
+func (sjs *sharesJustificationState) MemberIndex() group.MemberIndex {
 	return sjs.member.ID
 }
 
@@ -372,46 +334,46 @@ func (sjs *sharesJustificationState) memberID() gjkr.MemberID {
 // State covers phase 6 of the protocol.
 type qualificationState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.QualifiedMember
+	member  *QualifiedMember
 }
 
-func (qs *qualificationState) activeBlocks() int { return 0 }
+func (qs *qualificationState) ActiveBlocks() int { return 0 }
 
-func (qs *qualificationState) initiate() error {
+func (qs *qualificationState) Initiate() error {
 	qs.member.CombineMemberShares()
 	return nil
 }
 
-func (qs *qualificationState) receive(msg net.Message) error {
+func (qs *qualificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (qs *qualificationState) nextState() keyGenerationState {
+func (qs *qualificationState) Next() keyGenerationState {
 	return &pointsShareState{
 		channel: qs.channel,
 		member:  qs.member.InitializeSharing(),
 	}
 }
 
-func (qs *qualificationState) memberID() gjkr.MemberID {
+func (qs *qualificationState) MemberIndex() group.MemberIndex {
 	return qs.member.ID
 }
 
 // pointsShareState is the state during which group members calculate and
 // publish their public key share points.
-// `gjkr.MemberPublicKeySharePointsMessage`s are valid in this state.
+// `MemberPublicKeySharePointsMessage`s are valid in this state.
 //
 // State covers phase 7 of the protocol.
 type pointsShareState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.SharingMember // TODO: SharingMember should be renamed to PointsSharingMember
+	member  *SharingMember // TODO: SharingMember should be renamed to PointsSharingMember
 
-	phaseMessages []*gjkr.MemberPublicKeySharePointsMessage
+	phaseMessages []*MemberPublicKeySharePointsMessage
 }
 
-func (pss *pointsShareState) activeBlocks() int { return 3 }
+func (pss *pointsShareState) ActiveBlocks() int { return 3 }
 
-func (pss *pointsShareState) initiate() error {
+func (pss *pointsShareState) Initiate() error {
 	message := pss.member.CalculatePublicKeySharePoints()
 	if err := pss.channel.Send(message); err != nil {
 		return err
@@ -420,11 +382,11 @@ func (pss *pointsShareState) initiate() error {
 	return nil
 }
 
-func (pss *pointsShareState) receive(msg net.Message) error {
+func (pss *pointsShareState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
-	case *gjkr.MemberPublicKeySharePointsMessage:
-		if !isMessageFromSelf(pss, phaseMessage) &&
-			isSenderAccepted(pss.member, phaseMessage) {
+	case *MemberPublicKeySharePointsMessage:
+		if !group.IsMessageFromSelf(pss.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(pss.member, phaseMessage) {
 			pss.phaseMessages = append(pss.phaseMessages, phaseMessage)
 		}
 	}
@@ -432,7 +394,7 @@ func (pss *pointsShareState) receive(msg net.Message) error {
 	return nil
 }
 
-func (pss *pointsShareState) nextState() keyGenerationState {
+func (pss *pointsShareState) Next() keyGenerationState {
 	return &pointsValidationState{
 		channel: pss.channel,
 		member:  pss.member,
@@ -441,27 +403,27 @@ func (pss *pointsShareState) nextState() keyGenerationState {
 	}
 }
 
-func (pss *pointsShareState) memberID() gjkr.MemberID {
+func (pss *pointsShareState) MemberIndex() group.MemberIndex {
 	return pss.member.ID
 }
 
 // pointsValidationState is the state during which group members validate
 // public key share points published by other group members in the previous
-// state. `gjkr.PointsAccusationsMessage`s are valid in this state.
+// state. `PointsAccusationsMessage`s are valid in this state.
 //
 // State covers phase 8 of the protocol.
 type pointsValidationState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.SharingMember // TODO: split validation logic into PointsValidatingMember
+	member  *SharingMember // TODO: split validation logic into PointsValidatingMember
 
-	previousPhaseMessages []*gjkr.MemberPublicKeySharePointsMessage
+	previousPhaseMessages []*MemberPublicKeySharePointsMessage
 
-	phaseMessages []*gjkr.PointsAccusationsMessage
+	phaseMessages []*PointsAccusationsMessage
 }
 
-func (pvs *pointsValidationState) activeBlocks() int { return 3 }
+func (pvs *pointsValidationState) ActiveBlocks() int { return 3 }
 
-func (pvs *pointsValidationState) initiate() error {
+func (pvs *pointsValidationState) Initiate() error {
 	pvs.member.MarkInactiveMembers(pvs.previousPhaseMessages)
 	accusationMsg, err := pvs.member.VerifyPublicKeySharePoints(
 		pvs.previousPhaseMessages,
@@ -477,11 +439,11 @@ func (pvs *pointsValidationState) initiate() error {
 	return nil
 }
 
-func (pvs *pointsValidationState) receive(msg net.Message) error {
+func (pvs *pointsValidationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
-	case *gjkr.PointsAccusationsMessage:
-		if !isMessageFromSelf(pvs, phaseMessage) &&
-			isSenderAccepted(pvs.member, phaseMessage) {
+	case *PointsAccusationsMessage:
+		if !group.IsMessageFromSelf(pvs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(pvs.member, phaseMessage) {
 			pvs.phaseMessages = append(pvs.phaseMessages, phaseMessage)
 		}
 	}
@@ -489,7 +451,7 @@ func (pvs *pointsValidationState) receive(msg net.Message) error {
 	return nil
 }
 
-func (pvs *pointsValidationState) nextState() keyGenerationState {
+func (pvs *pointsValidationState) Next() keyGenerationState {
 	return &pointsJustificationState{
 		channel: pvs.channel,
 		member:  pvs.member.InitializePointsJustification(),
@@ -498,7 +460,7 @@ func (pvs *pointsValidationState) nextState() keyGenerationState {
 	}
 }
 
-func (pvs *pointsValidationState) memberID() gjkr.MemberID {
+func (pvs *pointsValidationState) MemberIndex() group.MemberIndex {
 	return pvs.member.ID
 }
 
@@ -509,14 +471,14 @@ func (pvs *pointsValidationState) memberID() gjkr.MemberID {
 // State covers phase 9 of the protocol.
 type pointsJustificationState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.PointsJustifyingMember
+	member  *PointsJustifyingMember
 
-	previousPhaseMessages []*gjkr.PointsAccusationsMessage
+	previousPhaseMessages []*PointsAccusationsMessage
 }
 
-func (pjs *pointsJustificationState) activeBlocks() int { return 0 }
+func (pjs *pointsJustificationState) ActiveBlocks() int { return 0 }
 
-func (pjs *pointsJustificationState) initiate() error {
+func (pjs *pointsJustificationState) Initiate() error {
 	disqualifiedMembers, err := pjs.member.ResolvePublicKeySharePointsAccusationsMessages(
 		pjs.previousPhaseMessages,
 	)
@@ -530,18 +492,18 @@ func (pjs *pointsJustificationState) initiate() error {
 	return nil
 }
 
-func (pjs *pointsJustificationState) receive(msg net.Message) error {
+func (pjs *pointsJustificationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (pjs *pointsJustificationState) nextState() keyGenerationState {
+func (pjs *pointsJustificationState) Next() keyGenerationState {
 	return &keyRevealState{
 		channel: pjs.channel,
 		member:  pjs.member.InitializeRevealing(),
 	}
 }
 
-func (pjs *pointsJustificationState) memberID() gjkr.MemberID {
+func (pjs *pointsJustificationState) MemberIndex() group.MemberIndex {
 	return pjs.member.ID
 }
 
@@ -552,14 +514,14 @@ func (pjs *pointsJustificationState) memberID() gjkr.MemberID {
 // State covers phase 10 of the protocol.
 type keyRevealState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.RevealingMember // TODO: Rename to KeyRevealingMember
+	member  *RevealingMember // TODO: Rename to KeyRevealingMember
 
-	phaseMessages []*gjkr.DisqualifiedEphemeralKeysMessage
+	phaseMessages []*DisqualifiedEphemeralKeysMessage
 }
 
-func (rs *keyRevealState) activeBlocks() int { return 1 }
+func (rs *keyRevealState) ActiveBlocks() int { return 1 }
 
-func (rs *keyRevealState) initiate() error {
+func (rs *keyRevealState) Initiate() error {
 	revealMsg, err := rs.member.RevealDisqualifiedMembersKeys()
 	if err != nil {
 		return err
@@ -572,11 +534,11 @@ func (rs *keyRevealState) initiate() error {
 	return nil
 }
 
-func (rs *keyRevealState) receive(msg net.Message) error {
+func (rs *keyRevealState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
-	case *gjkr.DisqualifiedEphemeralKeysMessage:
-		if !isMessageFromSelf(rs, phaseMessage) &&
-			isSenderAccepted(rs.member, phaseMessage) {
+	case *DisqualifiedEphemeralKeysMessage:
+		if !group.IsMessageFromSelf(rs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(rs.member, phaseMessage) {
 			rs.phaseMessages = append(rs.phaseMessages, phaseMessage)
 		}
 	}
@@ -584,7 +546,7 @@ func (rs *keyRevealState) receive(msg net.Message) error {
 	return nil
 }
 
-func (rs *keyRevealState) nextState() keyGenerationState {
+func (rs *keyRevealState) Next() keyGenerationState {
 	return &reconstructionState{
 		channel:               rs.channel,
 		member:                rs.member.InitializeReconstruction(),
@@ -592,7 +554,7 @@ func (rs *keyRevealState) nextState() keyGenerationState {
 	}
 }
 
-func (rs *keyRevealState) memberID() gjkr.MemberID {
+func (rs *keyRevealState) MemberIndex() group.MemberIndex {
 	return rs.member.ID
 }
 
@@ -603,14 +565,14 @@ func (rs *keyRevealState) memberID() gjkr.MemberID {
 // State covers phase 11 of the protocol.
 type reconstructionState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.ReconstructingMember
+	member  *ReconstructingMember
 
-	previousPhaseMessages []*gjkr.DisqualifiedEphemeralKeysMessage
+	previousPhaseMessages []*DisqualifiedEphemeralKeysMessage
 }
 
-func (rs *reconstructionState) activeBlocks() int { return 0 }
+func (rs *reconstructionState) ActiveBlocks() int { return 0 }
 
-func (rs *reconstructionState) initiate() error {
+func (rs *reconstructionState) Initiate() error {
 	rs.member.MarkInactiveMembers(rs.previousPhaseMessages)
 	if err := rs.member.ReconstructDisqualifiedIndividualKeys(
 		rs.previousPhaseMessages,
@@ -621,18 +583,18 @@ func (rs *reconstructionState) initiate() error {
 	return nil
 }
 
-func (rs *reconstructionState) receive(msg net.Message) error {
+func (rs *reconstructionState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (rs *reconstructionState) nextState() keyGenerationState {
+func (rs *reconstructionState) Next() keyGenerationState {
 	return &combinationState{
 		channel: rs.channel,
 		member:  rs.member.InitializeCombining(),
 	}
 }
 
-func (rs *reconstructionState) memberID() gjkr.MemberID {
+func (rs *reconstructionState) MemberIndex() group.MemberIndex {
 	return rs.member.ID
 }
 
@@ -643,28 +605,28 @@ func (rs *reconstructionState) memberID() gjkr.MemberID {
 // State covers phase 12 of the protocol.
 type combinationState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.CombiningMember
+	member  *CombiningMember
 }
 
-func (cs *combinationState) activeBlocks() int { return 0 }
+func (cs *combinationState) ActiveBlocks() int { return 0 }
 
-func (cs *combinationState) initiate() error {
+func (cs *combinationState) Initiate() error {
 	cs.member.CombineGroupPublicKey()
 	return nil
 }
 
-func (cs *combinationState) receive(msg net.Message) error {
+func (cs *combinationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (cs *combinationState) nextState() keyGenerationState {
+func (cs *combinationState) Next() keyGenerationState {
 	return &finalizationState{
 		channel: cs.channel,
 		member:  cs.member.InitializeFinalization(),
 	}
 }
 
-func (cs *combinationState) memberID() gjkr.MemberID {
+func (cs *combinationState) MemberIndex() group.MemberIndex {
 	return cs.member.ID
 }
 
@@ -675,35 +637,27 @@ func (cs *combinationState) memberID() gjkr.MemberID {
 // not execute that phase.
 type finalizationState struct {
 	channel net.BroadcastChannel
-	member  *gjkr.FinalizingMember
+	member  *FinalizingMember
 }
 
-func (fs *finalizationState) activeBlocks() int { return 0 }
+func (fs *finalizationState) ActiveBlocks() int { return 0 }
 
-func (fs *finalizationState) initiate() error {
+func (fs *finalizationState) Initiate() error {
 	return nil
 }
 
-func (fs *finalizationState) receive(msg net.Message) error {
+func (fs *finalizationState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (fs *finalizationState) nextState() keyGenerationState {
+func (fs *finalizationState) Next() keyGenerationState {
 	return nil
 }
 
-func (fs *finalizationState) memberID() gjkr.MemberID {
+func (fs *finalizationState) MemberIndex() group.MemberIndex {
 	return fs.member.ID
 }
 
-func (fs *finalizationState) result() *gjkr.Result {
+func (fs *finalizationState) result() *Result {
 	return fs.member.Result()
-}
-
-func (fs *finalizationState) thresholdSigner() *ThresholdSigner {
-	return &ThresholdSigner{
-		memberID:             fs.member.ID,
-		groupPublicKey:       fs.member.GroupPublicKey(),
-		groupPrivateKeyShare: fs.member.GroupPrivateKeyShare(),
-	}
 }

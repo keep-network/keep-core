@@ -1,7 +1,6 @@
 package local
 
 import (
-	"bytes"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -14,16 +13,15 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 type localChain struct {
 	relayConfig *relayconfig.Chain
-
-	groupRegistrationsMutex sync.Mutex
-	groupRegistrations      map[string][]byte
 
 	groupRelayEntriesMutex sync.Mutex
 	groupRelayEntries      map[string]*big.Int
@@ -56,6 +54,14 @@ func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 
 func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 	return c.stakeMonitor, nil
+}
+
+func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
+	privateKey, publicKey, err := operator.GenerateKeyPair()
+	if err != nil {
+		panic(err)
+	}
+	return privateKey, publicKey
 }
 
 func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
@@ -103,56 +109,6 @@ func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, erro
 	}
 
 	return selectedParticipants, nil
-}
-
-func (c *localChain) SubmitGroupPublicKey(
-	requestID *big.Int,
-	groupPublicKey []byte,
-) *async.GroupRegistrationPromise {
-	groupPubKey := requestID.String()
-
-	groupRegistrationPromise := &async.GroupRegistrationPromise{}
-	groupRegistration := &event.GroupRegistration{
-		GroupPublicKey: groupPublicKey,
-		RequestID:      requestID,
-		BlockNumber:    c.simulatedHeight,
-	}
-
-	c.groupRegistrationsMutex.Lock()
-	defer c.groupRegistrationsMutex.Unlock()
-	if existing, exists := c.groupRegistrations[groupPubKey]; exists {
-		if bytes.Compare(existing, groupPublicKey) != 0 {
-			err := fmt.Errorf(
-				"mismatched public key for [%s], submission failed; \n"+
-					"[%v] vs [%v]",
-				groupPubKey,
-				existing,
-				groupPublicKey,
-			)
-			fmt.Fprintf(os.Stderr, err.Error())
-
-			groupRegistrationPromise.Fail(err)
-		} else {
-			groupRegistrationPromise.Fulfill(groupRegistration)
-		}
-
-		return groupRegistrationPromise
-	}
-	c.groupRegistrations[groupPubKey] = groupPublicKey
-
-	groupRegistrationPromise.Fulfill(groupRegistration)
-
-	c.handlerMutex.Lock()
-	for _, handler := range c.groupRegisteredHandlers {
-		go func(handler func(groupRegistration *event.GroupRegistration), registration *event.GroupRegistration) {
-			handler(registration)
-		}(handler, groupRegistration)
-	}
-	c.handlerMutex.Unlock()
-
-	atomic.AddUint64(&c.simulatedHeight, 1)
-
-	return groupRegistrationPromise
 }
 
 func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise {
@@ -276,9 +232,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 			TokenSupply:                     tokenSupply,
 			NaturalThreshold:                naturalThreshold,
 		},
-		groupRegistrationsMutex:  sync.Mutex{},
 		groupRelayEntries:        make(map[string]*big.Int),
-		groupRegistrations:       make(map[string][]byte),
 		submittedResults:         make(map[*big.Int][]*relaychain.DKGResult),
 		relayEntryHandlers:       make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
@@ -316,9 +270,7 @@ func calculateGroupSelectionParameters(groupSize int, minimumStake *big.Int) (
 }
 
 // RequestRelayEntry simulates calling to start the random generation process.
-func (c *localChain) RequestRelayEntry(
-	seed *big.Int,
-) *async.RelayRequestPromise {
+func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise {
 	promise := &async.RelayRequestPromise{}
 
 	request := &event.Request{
@@ -355,9 +307,9 @@ func (c *localChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) {
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
 	requestID *big.Int,
-	participantIndex uint32,
+	participantIndex group.MemberIndex,
 	resultToPublish *relaychain.DKGResult,
-	signatures map[uint32][]byte,
+	signatures map[group.MemberIndex]operator.Signature,
 ) *async.DKGResultSubmissionPromise {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
@@ -377,9 +329,17 @@ func (c *localChain) SubmitDKGResult(
 
 	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
 
+	currentBlock, err := c.blockCounter.CurrentBlock()
+	if err != nil {
+		dkgResultPublicationPromise.Fail(fmt.Errorf("cannot read current block"))
+		return dkgResultPublicationPromise
+	}
+
 	dkgResultPublicationEvent := &event.DKGResultSubmission{
 		RequestID:      requestID,
+		MemberIndex:    uint32(participantIndex),
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
+		BlockNumber:    uint64(currentBlock),
 	}
 
 	c.handlerMutex.Lock()
@@ -390,7 +350,7 @@ func (c *localChain) SubmitDKGResult(
 	}
 	c.handlerMutex.Unlock()
 
-	err := dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
+	err = dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)
 	}

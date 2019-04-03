@@ -29,6 +29,10 @@ for pkg in gmp openssl llvm; do
   brew list $pkg &> /dev/null || brew install $pkg
 done
 
+export PATH="/usr/local/opt/llvm/bin:${PATH}"
+export LD_LIBRARY_PATH="/usr/local/opt/openssl/lib/:${LD_LIBRARY_PATH}"
+export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${LD_LIBRARY_PATH}"
+
 echo "Installing command line developer tools..."
 xcode-select --install || true
 
@@ -43,10 +47,6 @@ brew list npm &>/dev/null || brew install npm
 cd ../contracts/solidity && npm install && cd ../../scripts
 
 echo "Installing bn and it's dependencies..."
-echo "  As a part of installing bn the llvm compiler is needed.  Usually this takes a few minutes to install."
-for pkg in gmp openssl llvm ; do
-	brew list "$pkg" &>/dev/null || brew install "$pkg" 
-done
 ( 
 	cd ../..
 	if [ -d bn ] ; then
@@ -59,5 +59,11 @@ done
 	make
 	make install
 )
+
+echo "******************************************************************"
+echo "*** Please configure PATH, LD_LIBRARY_PATH, DYLD_LIBRARY_PATH  ***"
+echo "*** environment variables in your shell configuration file.    ***"
+echo "*** Ex. for bash shell - ~/.bash_profile, for zsh - ~/.zshrc   ***"
+echo "******************************************************************"
 
 echo "Ready to rock! See above for any extra environment-related instructions."

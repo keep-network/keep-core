@@ -1,76 +1,19 @@
 package gjkr
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
-
-func TestFilterInactiveMembers(t *testing.T) {
-	var tests = map[string]struct {
-		selfMemberID             MemberID
-		groupMembers             []MemberID
-		messageSenderIDs         []MemberID
-		expectedOperatingMembers []MemberID
-	}{
-		"all other members active": {
-			selfMemberID:             4,
-			groupMembers:             []MemberID{3, 2, 4, 5, 1, 9},
-			messageSenderIDs:         []MemberID{3, 2, 5, 9, 1},
-			expectedOperatingMembers: []MemberID{3, 2, 4, 5, 1, 9},
-		},
-		"all other members inactive": {
-			selfMemberID:             9,
-			groupMembers:             []MemberID{9, 1, 2, 3},
-			messageSenderIDs:         []MemberID{},
-			expectedOperatingMembers: []MemberID{9},
-		},
-		"some members inactive": {
-			selfMemberID:             3,
-			groupMembers:             []MemberID{3, 4, 5, 1, 2, 8},
-			messageSenderIDs:         []MemberID{1, 4, 2},
-			expectedOperatingMembers: []MemberID{3, 4, 1, 2},
-		},
-	}
-
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			group := &Group{
-				memberIDs: test.groupMembers,
-			}
-
-			filter := &inactiveMemberFilter{
-				selfMemberID:       test.selfMemberID,
-				group:              group,
-				phaseActiveMembers: make([]MemberID, 0),
-			}
-
-			for _, member := range test.messageSenderIDs {
-				filter.markMemberAsActive(member)
-			}
-
-			filter.flushInactiveMembers()
-
-			actual := filter.group.OperatingMemberIDs()
-			expected := test.expectedOperatingMembers
-
-			if !reflect.DeepEqual(actual, expected) {
-				t.Fatalf(
-					"unexpected active members\nexpected: %v\nactual:   %v\n",
-					expected,
-					actual,
-				)
-			}
-		})
-	}
-}
 
 func TestFilterSymmetricKeyGeneratingMembers(t *testing.T) {
 	member := (&LocalMember{
 		memberCore: &memberCore{
 			ID: 13,
-			group: &Group{
-				memberIDs: []MemberID{11, 12, 13, 14, 15},
-			},
+			group: group.NewDkgGroup(
+				1,
+				[]group.MemberIndex{11, 12, 13, 14, 15},
+			),
 		},
 	}).InitializeEphemeralKeysGeneration().
 		InitializeSymmetricKeyGeneration()
@@ -93,9 +36,10 @@ func TestFilterCommitmentsVefiryingMembers(t *testing.T) {
 	member := (&LocalMember{
 		memberCore: &memberCore{
 			ID: 93,
-			group: &Group{
-				memberIDs: []MemberID{91, 92, 93, 94, 95, 96},
-			},
+			group: group.NewDkgGroup(
+				1,
+				[]group.MemberIndex{91, 92, 93, 94, 95, 96},
+			),
 		},
 	}).InitializeEphemeralKeysGeneration().
 		InitializeSymmetricKeyGeneration().
@@ -137,9 +81,10 @@ func TestFilterSharingMembers(t *testing.T) {
 	member := (&LocalMember{
 		memberCore: &memberCore{
 			ID: 24,
-			group: &Group{
-				memberIDs: []MemberID{21, 22, 23, 24},
-			},
+			group: group.NewDkgGroup(
+				1,
+				[]group.MemberIndex{21, 22, 23, 24},
+			),
 		},
 	}).InitializeEphemeralKeysGeneration().
 		InitializeSymmetricKeyGeneration().
@@ -166,9 +111,10 @@ func TestFilterReconstructingMember(t *testing.T) {
 	member := (&LocalMember{
 		memberCore: &memberCore{
 			ID: 44,
-			group: &Group{
-				memberIDs: []MemberID{41, 42, 43, 44},
-			},
+			group: group.NewDkgGroup(
+				1,
+				[]group.MemberIndex{41, 42, 43, 44},
+			),
 		},
 	}).InitializeEphemeralKeysGeneration().
 		InitializeSymmetricKeyGeneration().
@@ -193,13 +139,13 @@ func TestFilterReconstructingMember(t *testing.T) {
 	assertNotAcceptFrom(member, 43, t)
 }
 
-func assertAcceptsFrom(member MessageFiltering, senderID MemberID, t *testing.T) {
+func assertAcceptsFrom(member group.MessageFiltering, senderID group.MemberIndex, t *testing.T) {
 	if !member.IsSenderAccepted(senderID) {
 		t.Errorf("member should accept messages from [%v]", senderID)
 	}
 }
 
-func assertNotAcceptFrom(member MessageFiltering, senderID MemberID, t *testing.T) {
+func assertNotAcceptFrom(member group.MessageFiltering, senderID group.MemberIndex, t *testing.T) {
 	if member.IsSenderAccepted(senderID) {
 		t.Errorf("member should not accept messages from [%v]", senderID)
 	}

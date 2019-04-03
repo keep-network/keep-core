@@ -1,13 +1,14 @@
-package dkg2
+package gjkr
 
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/local"
 )
@@ -32,9 +33,9 @@ func TestFullStateTransitions(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		member, err := gjkr.NewMember(
-			gjkr.MemberID(i+1),
-			make([]gjkr.MemberID, 0),
+		member, err := NewMember(
+			group.MemberIndex(i+1),
+			make([]group.MemberIndex, 0),
 			threshold,
 			seed,
 		)
@@ -42,7 +43,7 @@ func TestFullStateTransitions(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		Init(channel)
+		initializeChannel(channel)
 
 		channels[i] = channel
 		states[i] = &initializationState{channel, member}
@@ -63,7 +64,7 @@ func TestFullStateTransitions(t *testing.T) {
 	}
 
 	// Check whether all states are final and produced the same result.
-	results := make([]*gjkr.Result, groupSize)
+	results := make([]*Result, groupSize)
 	for i, state := range states {
 		finalState, ok := state.(*finalizationState)
 		if !ok {
@@ -73,20 +74,29 @@ func TestFullStateTransitions(t *testing.T) {
 		results[i] = finalState.member.Result()
 	}
 
-	// Check whether all group public keys are the same, and they are all
-	// successful without DQ or IA members.
+	// Check whether all group public keys are the same, and they have no
+	// disqualified or inactive  members.
 	for _, result := range results {
-		if !result.Success {
-			t.Errorf("unexpected failure result\n[%v]", result)
-		}
-		if len(result.Inactive) != 0 {
+		if len(result.Group.InactiveMemberIDs()) != 0 {
 			t.Errorf("expected no IA members\n[%v]", result)
 		}
-		if len(result.Disqualified) != 0 {
+		if len(result.Group.DisqualifiedMemberIDs()) != 0 {
 			t.Errorf("expected no DQ members\n[%v]", result)
 		}
-		if !result.Equals(results[0]) {
-			t.Errorf("different results\n[%v]\n[%v]", results[0], result)
+
+		if result.GroupPublicKey.String() != results[0].GroupPublicKey.String() {
+			t.Fatalf(
+				"Unexpected group public key\nExpected: [%v]\nActual:   [%v]\n",
+				result.GroupPublicKey,
+				results[0].GroupPublicKey,
+			)
+		}
+		if !reflect.DeepEqual(result.Group, results[0].Group) {
+			t.Fatalf(
+				"Unexpected group information\nExpected: [%v]\nActual:   [%v]\n",
+				result.Group,
+				results[0].Group,
+			)
 		}
 	}
 }
@@ -124,9 +134,9 @@ func doStateTransition(
 	// Once we have the message handler installed, we let all members to init
 	// the phase and send their messages if they want to.
 	for _, state := range states {
-		fmt.Printf("[member:%v, state:%T] Executing\n", state.memberID(), state)
+		fmt.Printf("[member:%v, state:%T] Executing\n", state.MemberIndex(), state)
 
-		if err := state.initiate(); err != nil {
+		if err := state.Initiate(); err != nil {
 			return nil, fmt.Errorf("initiate failed [%v]", err)
 		}
 	}
@@ -142,17 +152,17 @@ func doStateTransition(
 	nextStates := make([]keyGenerationState, len(states))
 	for i, state := range states {
 		for _, message := range phaseMessages {
-			if err := state.receive(message); err != nil {
+			if err := state.Receive(message); err != nil {
 				return nil, fmt.Errorf("receive failed [%v]", err)
 			}
 		}
 
-		next := state.nextState()
+		next := state.Next()
 
 		if next != nil {
 			fmt.Printf(
 				"[member:%v, state:%T] Successfully transitioned to the next state\n",
-				state.memberID(),
+				state.MemberIndex(),
 				state,
 			)
 		}
@@ -160,7 +170,7 @@ func doStateTransition(
 		nextStates[i] = next
 	}
 
-	// When there is no next phase to be exected, `nextState()` in
+	// When there is no next phase to be exected, `Next()` in
 	// `keyGenerationState` returns `nil`. To say that all states have
 	// executed completely, all `states` must be `nil`.
 	allCompleted := true

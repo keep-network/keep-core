@@ -2,7 +2,7 @@ package result
 
 import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
@@ -12,7 +12,7 @@ import (
 // It is expected to be broadcast within the group.
 type DKGResultHashSignatureMessage struct {
 	// Index of the sender in the group.
-	senderIndex gjkr.MemberID
+	senderIndex group.MemberIndex
 	// Hash of the DKG result preferred by the sender.
 	resultHash chain.DKGResultHash
 	// Signature over the DKG result hash calculated by the sender.
@@ -20,4 +20,9 @@ type DKGResultHashSignatureMessage struct {
 	// Public key of the sender. It will be used to verify the signature by
 	// the receiver.
 	publicKey *operator.PublicKey
+}
+
+// SenderID returns protocol-level identifier of the message sender.
+func (m *DKGResultHashSignatureMessage) SenderID() group.MemberIndex {
+	return m.senderIndex
 }

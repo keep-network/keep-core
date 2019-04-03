@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -18,28 +19,28 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	member := members[0]
+	firstMember := members[0]
 
-	disqualifiedSharingMember1 := MemberID(2)
-	disqualifiedSharingMember2 := MemberID(3)
-	disqualifiedNotSharingMember := MemberID(6)
-	member.group.MarkMemberAsDisqualified(disqualifiedSharingMember1)
-	member.group.MarkMemberAsDisqualified(disqualifiedSharingMember2)
-	member.group.MarkMemberAsDisqualified(disqualifiedNotSharingMember)
+	disqualifiedSharingMember1 := group.MemberIndex(2)
+	disqualifiedSharingMember2 := group.MemberIndex(3)
+	disqualifiedNotSharingMember := group.MemberIndex(6)
+	firstMember.group.MarkMemberAsDisqualified(disqualifiedSharingMember1)
+	firstMember.group.MarkMemberAsDisqualified(disqualifiedSharingMember2)
+	firstMember.group.MarkMemberAsDisqualified(disqualifiedNotSharingMember)
 
 	// Simulate a case where member is disqualified in Phase 5.
-	delete(member.receivedValidSharesS, disqualifiedNotSharingMember)
+	delete(firstMember.receivedValidSharesS, disqualifiedNotSharingMember)
 
-	expectedDisqualifiedKeys := map[MemberID]*ephemeral.PrivateKey{
-		disqualifiedSharingMember1: member.ephemeralKeyPairs[disqualifiedSharingMember1].PrivateKey,
-		disqualifiedSharingMember2: member.ephemeralKeyPairs[disqualifiedSharingMember2].PrivateKey,
+	expectedDisqualifiedKeys := map[group.MemberIndex]*ephemeral.PrivateKey{
+		disqualifiedSharingMember1: firstMember.ephemeralKeyPairs[disqualifiedSharingMember1].PrivateKey,
+		disqualifiedSharingMember2: firstMember.ephemeralKeyPairs[disqualifiedSharingMember2].PrivateKey,
 	}
 	expectedResult := &DisqualifiedEphemeralKeysMessage{
-		senderID:    member.ID,
+		senderID:    firstMember.ID,
 		privateKeys: expectedDisqualifiedKeys,
 	}
 
-	result, err := member.RevealDisqualifiedMembersKeys()
+	result, err := firstMember.RevealDisqualifiedMembersKeys()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,15 +102,15 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedDisqualifiedMemberIDs := make([]MemberID, 0)
+	expectedDisqualifiedMemberIDs := make([]group.MemberIndex, 0)
 	for _, disqualifiedMember := range disqualifiedMembers {
 		expectedDisqualifiedMemberIDs = append(expectedDisqualifiedMemberIDs, disqualifiedMember.ID)
 	}
 	expectedDisqualifiedMemberIDs = append(expectedDisqualifiedMemberIDs, invalidRevealingMember.ID)
-	if !reflect.DeepEqual(expectedDisqualifiedMemberIDs, member1.group.disqualifiedMemberIDs) {
+	if !reflect.DeepEqual(expectedDisqualifiedMemberIDs, member1.group.DisqualifiedMemberIDs()) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n",
 			expectedDisqualifiedMemberIDs,
-			member1.group.disqualifiedMemberIDs,
+			member1.group.DisqualifiedMemberIDs(),
 		)
 	}
 
@@ -165,11 +166,11 @@ func generateDisqualifiedEphemeralKeysMessages(
 func generateDisqualifiedMemberShares(
 	currentMember *ReconstructingMember,
 	otherMembers, disqualifiedMembers []*ReconstructingMember,
-) map[MemberID]map[MemberID]*big.Int {
-	disqualifiedMemberShares := make(map[MemberID]map[MemberID]*big.Int)
+) map[group.MemberIndex]map[group.MemberIndex]*big.Int {
+	disqualifiedMemberShares := make(map[group.MemberIndex]map[group.MemberIndex]*big.Int)
 
 	for _, disqualifiedMember := range disqualifiedMembers {
-		disqualifiedMemberShares[disqualifiedMember.ID] = make(map[MemberID]*big.Int)
+		disqualifiedMemberShares[disqualifiedMember.ID] = make(map[group.MemberIndex]*big.Int)
 		// Simulate message broadcasted by disqualified member in Phase 3.
 		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID)
 
@@ -197,7 +198,7 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 	threshold := 2
 	groupSize := 5
 
-	disqualifiedMembersIDs := []MemberID{3, 5}
+	disqualifiedMembersIDs := []group.MemberIndex{3, 5}
 
 	group, err := initializeReconstructingMembersGroup(threshold, groupSize)
 	if err != nil {
@@ -234,7 +235,7 @@ func TestReconstructIndividualPrivateKeys(t *testing.T) {
 	}
 }
 
-func contains(slice []MemberID, value MemberID) bool {
+func contains(slice []group.MemberIndex, value group.MemberIndex) bool {
 	for _, i := range slice {
 		if i == value {
 			return true
@@ -250,14 +251,14 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	disqualifiedMembersIDs := []int{4, 5} // m
 
 	reconstructedIndividualPrivateKeys := make( // z_m
-		map[MemberID]*big.Int,
+		map[group.MemberIndex]*big.Int,
 		len(disqualifiedMembersIDs),
 	)
 	reconstructedIndividualPrivateKeys[4] = big.NewInt(14) // z_4
 	reconstructedIndividualPrivateKeys[5] = big.NewInt(15) // z_5
 
 	expectedIndividualPublicKeys := make( // y_m = g^{z_m}
-		map[MemberID]*bn256.G2,
+		map[group.MemberIndex]*bn256.G2,
 		len(disqualifiedMembersIDs),
 	)
 	expectedIndividualPublicKeys[4] = new(bn256.G2).ScalarBaseMult(
@@ -370,7 +371,7 @@ func TestReconstructDisqualifiedIndividualKeys(t *testing.T) {
 
 	var disqualifiedEphemeralKeysMessages []*DisqualifiedEphemeralKeysMessage
 	for _, otherMember := range otherMembers {
-		revealedKeys := make(map[MemberID]*ephemeral.PrivateKey)
+		revealedKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 		for _, disqualifiedMember := range disqualifiedMembers {
 			revealedKeys[disqualifiedMember.ID] = otherMember.ephemeralKeyPairs[disqualifiedMember.ID].PrivateKey
 		}
@@ -463,11 +464,10 @@ func initializeReconstructingMembersGroup(
 // shares calculated by disqualified members for their peers and reveals them.
 func disqualifyMembers(
 	members []*ReconstructingMember,
-	disqualifiedMembersIDs []MemberID,
-) []*disqualifiedShares {
+	disqualifiedMembersIDs []group.MemberIndex) []*disqualifiedShares {
 	allDisqualifiedShares := make([]*disqualifiedShares, len(disqualifiedMembersIDs))
 	for i, disqualifiedMemberID := range disqualifiedMembersIDs {
-		sharesReceivedFromDisqualifiedMember := make(map[MemberID]*big.Int,
+		sharesReceivedFromDisqualifiedMember := make(map[group.MemberIndex]*big.Int,
 			len(members)-len(disqualifiedMembersIDs))
 		// for each group member
 		for _, m := range members {

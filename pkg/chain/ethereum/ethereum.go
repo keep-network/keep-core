@@ -13,13 +13,19 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
 func (ec *ethereumChain) ThresholdRelay() relaychain.Interface {
 	return ec
+}
+
+func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
+	return operator.EthereumKeyToOperatorKey(ec.accountKey)
 }
 
 func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
@@ -92,75 +98,6 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 // if the address is staked or not.
 func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 	return ec.keepGroupContract.HasMinimumStake(address)
-}
-
-func (ec *ethereumChain) SubmitGroupPublicKey(
-	requestID *big.Int,
-	groupPublicKey []byte,
-) *async.GroupRegistrationPromise {
-	groupRegistrationPromise := &async.GroupRegistrationPromise{}
-
-	failPromise := func(err error) {
-		failErr := groupRegistrationPromise.Fail(err)
-		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"failing promise because of [%v] failed with [%v]\n",
-				err,
-				failErr,
-			)
-		}
-	}
-
-	groupRegistered := make(chan *event.GroupRegistration)
-
-	subscription, err := ec.OnGroupRegistered(
-		func(groupRegistrationEvent *event.GroupRegistration) {
-			groupRegistered <- groupRegistrationEvent
-		})
-	if err != nil {
-		close(groupRegistered)
-		failPromise(err)
-		return groupRegistrationPromise
-	}
-
-	go func() {
-		for {
-			select {
-			case event, success := <-groupRegistered:
-				// Channel is closed when SubmitGroupPublicKey failed.
-				// When this happens, event is nil.
-				if !success {
-					return
-				}
-
-				if event.RequestID.Cmp(requestID) == 0 {
-					subscription.Unsubscribe()
-					close(groupRegistered)
-
-					err := groupRegistrationPromise.Fulfill(event)
-					if err != nil {
-						fmt.Fprintf(
-							os.Stderr,
-							"fulfilling promise failed with [%v]\n",
-							err,
-						)
-					}
-
-					return
-				}
-			}
-		}
-	}()
-
-	_, err = ec.keepGroupContract.SubmitGroupPublicKey(groupPublicKey, requestID)
-	if err != nil {
-		subscription.Unsubscribe()
-		close(groupRegistered)
-		failPromise(err)
-	}
-
-	return groupRegistrationPromise
 }
 
 func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
@@ -342,10 +279,10 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
 ) (subscription.EventSubscription, error) {
-	return ec.keepGroupContract.WatchSubmitGroupPublicKeyEvent(
+	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
 		func(
-			groupPublicKey []byte,
 			requestID *big.Int,
+			groupPublicKey []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupRegistration{
@@ -453,9 +390,9 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 
 func (ec *ethereumChain) SubmitDKGResult(
 	requestID *big.Int,
-	participantIndex uint32,
+	participantIndex group.MemberIndex,
 	result *relaychain.DKGResult,
-	signatures map[uint32][]byte,
+	signatures map[group.MemberIndex]operator.Signature,
 ) *async.DKGResultSubmissionPromise {
 	resultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
@@ -513,14 +450,53 @@ func (ec *ethereumChain) SubmitDKGResult(
 		}
 	}()
 
-	_, err = ec.keepGroupContract.SubmitDKGResult(requestID, result)
+	membersIndicesOnChainFormat, signaturesOnChainFormat, err :=
+		convertSignaturesToChainFormat(signatures)
 	if err != nil {
+		close(publishedResult)
+		failPromise(fmt.Errorf("converting signatures failed [%v]", err))
+		return resultPublicationPromise
+	}
+
+	if _, err = ec.keepGroupContract.SubmitDKGResult(
+		participantIndex.Int(),
+		requestID,
+		result,
+		signaturesOnChainFormat,
+		membersIndicesOnChainFormat,
+	); err != nil {
 		subscription.Unsubscribe()
 		close(publishedResult)
 		failPromise(err)
 	}
 
 	return resultPublicationPromise
+}
+
+// convertSignaturesToChainFormat converts signatures map to two slices. First
+// slice contains indices of members from the map, second slice is a slice of
+// concatenated signatures. Signatures and member indices are returned in the
+// matching order. It requires each signature to be exactly 65-byte long.
+func convertSignaturesToChainFormat(
+	signatures map[group.MemberIndex]operator.Signature,
+) ([]*big.Int, []byte, error) {
+	var membersIndices []*big.Int
+	var signaturesSlice []byte
+
+	for memberIndex, signature := range signatures {
+		if len(signatures[memberIndex]) != operator.SignatureSize {
+			return nil, nil, fmt.Errorf(
+				"invalid signature size for member [%v] got [%d]-bytes but required [%d]-bytes",
+				memberIndex,
+				len(signatures[memberIndex]),
+				operator.SignatureSize,
+			)
+		}
+		membersIndices = append(membersIndices, memberIndex.Int())
+		signaturesSlice = append(signaturesSlice, signature...)
+	}
+
+	return membersIndices, signaturesSlice, nil
 }
 
 // CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
@@ -536,24 +512,18 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 
 	// Encode DKG result to the format described by Solidity Contract Application
 	// Binary Interface (ABI).
-	boolType, err := abi.NewType("bool")
-	if err != nil {
-		return dkgResultHash, fmt.Errorf("bool type creation failed: [%v]", err)
-	}
 	bytesType, err := abi.NewType("bytes")
 	if err != nil {
 		return dkgResultHash, fmt.Errorf("bytes type creation failed: [%v]", err)
 	}
 
 	arguments := abi.Arguments{
-		{Type: boolType},
 		{Type: bytesType},
 		{Type: bytesType},
 		{Type: bytesType},
 	}
 
 	encodedDKGResult, err := arguments.Pack(
-		dkgResult.Success,
 		dkgResult.GroupPublicKey,
 		dkgResult.Disqualified,
 		dkgResult.Inactive,

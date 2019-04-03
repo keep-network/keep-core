@@ -55,8 +55,13 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
-    Group[] internal _groups;
+    struct Group {
+        bytes groupId;
+        uint registrationTime;
+    }
 
+    Group[] internal _groups;
+    
     mapping (bytes => address[]) internal _groupMembers;
 
     mapping (string => bool) internal _initialized;
@@ -236,11 +241,11 @@ contract KeepGroupImplV1 is Ownable {
         return iaBytes[memberIndex] != 0x00;
     }
     /**
-     * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
-     * @param index claimed index of the staker.
-     * @param requestId Relay request ID assosciated with DKG protocol execution. 
+     * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
+     * @param index claimed index of the staker. We pass this for gas efficiency purposes.
+     * @param requestId Relay request ID assosciated with DKG protocol execution.
      * @param groupPubKey Group public key generated as a result of protocol execution.
-     * @param disqualified bytes representing disqualified group members; 1 at the specific index 
+     * @param disqualified bytes representing disqualified group members; 1 at the specific index
      * means that the member has been disqualified. Indexes reflect positions of members in the
      * group, as outputted by the group selection protocol.
      * @param inactive bytes representing inactive group members; 1 at the specific index means
@@ -248,11 +253,10 @@ contract KeepGroupImplV1 is Ownable {
      * group, as outputted by the group selection protocol.
      * @param signatures concatination of signer resultHashes collected off-chain
      * @param positions indices of members corresponding to each signature
-     * @param inactive bytes representing inactive group members; 1 at the specific index means
      */
     function submitDkgResult(
         uint256 requestId,
-        uint256 index,
+        uint256 index,    
         bytes memory groupPubKey,
         bytes memory disqualified,
         bytes memory inactive,

@@ -5,7 +5,9 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -52,13 +54,6 @@ type GroupSelectionInterface interface {
 // GroupRegistrationInterface defines the subset of the relay chain interface
 // that pertains to relay group registration activities.
 type GroupRegistrationInterface interface {
-	// SubmitGroupPublicKey submits a public key to the blockchain, associated
-	// with a request with id requestID. On-chain errors are reported through
-	// the promise.
-	SubmitGroupPublicKey(
-		requestID *big.Int,
-		groupPublicKey []byte,
-	) *async.GroupRegistrationPromise
 	// OnGroupRegistered is a callback that is invoked when an on-chain
 	// notification of a new, valid group being registered is seen.
 	OnGroupRegistered(
@@ -78,13 +73,14 @@ type GroupInterface interface {
 // generation process.
 type DistributedKeyGenerationInterface interface {
 	// SubmitDKGResult sends DKG result to a chain, along with signatures over
-	// result hash from group participants supporting the result. Signatures map
-	// keys are participant's indices. Participants are indexed starting with 1.
+	// result hash from group participants supporting the result.
+	// Signatures over DKG result hash are collected in a map keyed by signer's
+	// member index.
 	SubmitDKGResult(
 		requestID *big.Int,
-		participantIndex uint32,
+		participantIndex group.MemberIndex,
 		dkgResult *DKGResult,
-		signatures map[uint32][]byte,
+		signatures map[group.MemberIndex]operator.Signature,
 	) *async.DKGResultSubmissionPromise
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.
@@ -106,6 +102,9 @@ type DistributedKeyGenerationInterface interface {
 type Interface interface {
 	// GetConfig returns the expected configuration of the threshold relay.
 	GetConfig() (*config.Chain, error)
+	// GetKeys returns the key pair used to attest for messages being sent to
+	// the chain.
+	GetKeys() (*operator.PrivateKey, *operator.PublicKey)
 
 	GroupInterface
 	RelayEntryInterface

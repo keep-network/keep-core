@@ -53,7 +53,7 @@ func Start(c *cli.Context) error {
 		config.LibP2P.Port = c.Int(portFlag)
 	}
 
-	staticKey, err := loadStaticKey(config.Ethereum.Account)
+	operatorPrivateKey, operatorPublicKey, err := loadStaticKey(config.Ethereum.Account)
 	if err != nil {
 		return fmt.Errorf("error loading static peer's key [%v]", err)
 	}
@@ -83,10 +83,13 @@ func Start(c *cli.Context) error {
 	}
 
 	ctx := context.Background()
+	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
+		operatorPrivateKey, operatorPublicKey,
+	)
 	netProvider, err := libp2p.Connect(
 		ctx,
 		config.LibP2P,
-		staticKey,
+		networkPrivateKey,
 		stakeMonitor,
 	)
 	if err != nil {
@@ -118,20 +121,20 @@ func Start(c *cli.Context) error {
 	}
 }
 
-func loadStaticKey(account ethereum.Account) (*key.NetworkPrivate, error) {
+func loadStaticKey(
+	account ethereum.Account,
+) (*operator.PrivateKey, *operator.PublicKey, error) {
 	ethereumKey, err := ethereum.DecryptKeyFile(
 		account.KeyFile,
 		account.KeyFilePassword,
 	)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, nil, fmt.Errorf(
 			"failed to read KeyFile: %s [%v]", account.KeyFile, err,
 		)
 	}
 
-	privKey, _ := key.OperatorKeyToNetworkKey(
-		operator.EthereumKeyToOperatorKey(ethereumKey),
-	)
+	privateKey, publicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
 
-	return privKey, nil
+	return privateKey, publicKey, nil
 }
