@@ -270,21 +270,33 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 
 	expectedRequest := &event.Request{
 		RequestID:     big.NewInt(0),
-		Payment:       big.NewInt(1),
 		PreviousEntry: nil,
 		Seed:          big.NewInt(42),
-		BlockNumber:   uint64(0),
 	}
 
-	chainHandle.RequestRelayEntry(big.NewInt(42))
+	chainHandle.RequestRelayEntry(expectedRequest.Seed)
 
 	select {
 	case event := <-eventFired:
-		if !reflect.DeepEqual(event, expectedRequest) {
+		if event.RequestID.Cmp(big.NewInt(0)) != 0 {
 			t.Fatalf(
-				"Unexpected relay entry request\nExpected: [%v]\nActual:   [%v]",
-				expectedRequest,
-				event,
+				"Unexpected relay entry request id\nExpected: [%v]\nActual:   [%v]",
+				expectedRequest.RequestID,
+				event.RequestID,
+			)
+		}
+		if event.PreviousEntry != nil {
+			t.Fatalf(
+				"Unexpected relay entry previous entry\nExpected: [%v]\nActual:   [%v]",
+				nil,
+				event.PreviousEntry,
+			)
+		}
+		if event.Seed.Cmp(expectedRequest.Seed) != 0 {
+			t.Fatalf(
+				"Unexpected relay entry seed\nExpected: [%v]\nActual:   [%v]",
+				expectedRequest.Seed,
+				event.Seed,
 			)
 		}
 	case <-ctx.Done():
