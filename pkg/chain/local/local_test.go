@@ -268,19 +268,19 @@ func TestLocalOnGroupRegistered(t *testing.T) {
 
 	defer subscription.Unsubscribe()
 
+	groupPublicKey := []byte("1")
+	requestID := big.NewInt(42)
+
 	expectedGroupRegistrationEvent := &event.GroupRegistration{
-		GroupPublicKey: []byte("1"),
-		RequestID:      big.NewInt(42),
+		GroupPublicKey: groupPublicKey,
+		RequestID:      requestID,
 	}
 
-	chainHandle.SubmitDKGResult(
-		big.NewInt(42),
-		1,
-		&relaychain.DKGResult{
-			GroupPublicKey: []byte("1"),
-		},
-		nil,
-	)
+	memberIndex := group.MemberIndex(1)
+	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := make(map[group.MemberIndex]operator.Signature)
+
+	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
 
 	select {
 	case event := <-eventFired:
