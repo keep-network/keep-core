@@ -38,7 +38,7 @@ class Node:
                 self.current_state = "connected"
                 yield self.env.process(self.Forking_MainLoop(env))
     
-    def Forking_MainLoop(self,env):
+    def Forking_MainLoop(self, env):
         while True:
             #print(str(self.id) + " Forking Main Loop" + " cycle="+str(self.cycle_count))
             yield self.env.process(self.Watching_RelayRequest(env))
