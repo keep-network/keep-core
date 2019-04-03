@@ -48,11 +48,6 @@ contract KeepGroupImplV1 is Ownable {
         uint256 virtualStakerIndex;
     }
 
-    struct Group {
-        bytes groupId;
-        uint registrationTime;
-    }
-
     mapping(uint256 => Proof) internal _proofs;
 
     struct Group {
