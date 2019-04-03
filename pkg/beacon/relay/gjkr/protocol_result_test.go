@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"reflect"
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -8,7 +9,7 @@ import (
 )
 
 func TestGenerateResult(t *testing.T) {
-	threshold := 4
+	threshold := 5
 	groupSize := 8
 
 	var tests = map[string]struct {
@@ -20,7 +21,12 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: groupPublicKey,
-					Group:          initalizeGroup(threshold, []group.MemberIndex{}, []group.MemberIndex{}),
+					Group: initializeGroup(
+						groupSize,
+						threshold,
+						[]group.MemberIndex{},
+						[]group.MemberIndex{},
+					),
 				}
 			},
 		},
@@ -29,7 +35,12 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: groupPublicKey,
-					Group:          initalizeGroup(threshold, []group.MemberIndex{2}, []group.MemberIndex{}),
+					Group: initializeGroup(
+						groupSize,
+						threshold,
+						[]group.MemberIndex{2},
+						[]group.MemberIndex{},
+					),
 				}
 			},
 		},
@@ -38,7 +49,12 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: groupPublicKey,
-					Group:          initalizeGroup(threshold, []group.MemberIndex{}, []group.MemberIndex{3, 7}),
+					Group: initializeGroup(
+						groupSize,
+						threshold,
+						[]group.MemberIndex{},
+						[]group.MemberIndex{3, 7},
+					),
 				}
 			},
 		},
@@ -48,7 +64,12 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: nil,
-					Group:          initalizeGroup(threshold, []group.MemberIndex{2}, []group.MemberIndex{3, 7}),
+					Group: initializeGroup(
+						groupSize,
+						threshold,
+						[]group.MemberIndex{2},
+						[]group.MemberIndex{3, 7},
+					),
 				}
 			},
 		},
@@ -57,7 +78,12 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: nil,
-					Group:          initalizeGroup(threshold, nil, []group.MemberIndex{3, 5, 7}),
+					Group: initializeGroup(
+						groupSize,
+						threshold,
+						nil,
+						[]group.MemberIndex{3, 5, 7},
+					),
 				}
 			},
 		},
@@ -66,7 +92,12 @@ func TestGenerateResult(t *testing.T) {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: nil,
-					Group:          initalizeGroup(threshold, []group.MemberIndex{3, 5, 7}, []group.MemberIndex{}),
+					Group: initializeGroup(
+						groupSize,
+						threshold,
+						[]group.MemberIndex{3, 5, 7},
+						[]group.MemberIndex{},
+					),
 				}
 			},
 		},
@@ -91,12 +122,33 @@ func TestGenerateResult(t *testing.T) {
 
 				resultToPublish := member.Result()
 
-				if !expectedResult.Equals(resultToPublish) {
-					t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedResult, resultToPublish)
+				if !publicKeysEqual(
+					expectedResult.GroupPublicKey,
+					resultToPublish.GroupPublicKey,
+				) {
+					t.Fatalf(
+						"Unexpected group public key\nExpected: [%v]\nActual:   [%v]\n",
+						expectedResult.GroupPublicKey,
+						resultToPublish.GroupPublicKey,
+					)
+				}
+				if !reflect.DeepEqual(expectedResult.Group, resultToPublish.Group) {
+					t.Fatalf(
+						"Unexpected group information\nExpected: [%v]\nActual:   [%v]\n",
+						expectedResult.Group,
+						resultToPublish.Group,
+					)
 				}
 			}
 		})
 	}
+}
+
+func publicKeysEqual(expectedKey *bn256.G2, actualKey *bn256.G2) bool {
+	if expectedKey != nil && actualKey != nil {
+		return expectedKey.String() == actualKey.String()
+	}
+	return expectedKey == actualKey
 }
 
 func initializeFinalizingMembersGroup(threshold, groupSize int) ([]*FinalizingMember, error) {
@@ -110,4 +162,24 @@ func initializeFinalizingMembersGroup(threshold, groupSize int) ([]*FinalizingMe
 		finalizingMembers = append(finalizingMembers, cm.InitializeFinalization())
 	}
 	return finalizingMembers, nil
+}
+
+func initializeGroup(
+	groupSize int,
+	threshold int,
+	disqualifiedMembers []group.MemberIndex,
+	inactiveMembers []group.MemberIndex,
+) *group.Group {
+	dkgGroup := group.NewEmptyDkgGroup(threshold)
+	for i := 1; i <= groupSize; i++ {
+		dkgGroup.RegisterMemberID(group.MemberIndex(i))
+	}
+
+	for _, disqualified := range disqualifiedMembers {
+		dkgGroup.MarkMemberAsDisqualified(disqualified)
+	}
+	for _, inactive := range inactiveMembers {
+		dkgGroup.MarkMemberAsInactive(inactive)
+	}
+	return dkgGroup
 }

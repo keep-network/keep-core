@@ -56,6 +56,14 @@ func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 	return c.stakeMonitor, nil
 }
 
+func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
+	privateKey, publicKey, err := operator.GenerateKeyPair()
+	if err != nil {
+		panic(err)
+	}
+	return privateKey, publicKey
+}
+
 func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }

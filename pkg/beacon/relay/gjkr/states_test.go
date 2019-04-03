@@ -3,6 +3,7 @@ package gjkr
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -82,8 +83,20 @@ func TestFullStateTransitions(t *testing.T) {
 		if len(result.Group.DisqualifiedMemberIDs()) != 0 {
 			t.Errorf("expected no DQ members\n[%v]", result)
 		}
-		if !result.Equals(results[0]) {
-			t.Errorf("different results\n[%v]\n[%v]", results[0], result)
+
+		if result.GroupPublicKey.String() != results[0].GroupPublicKey.String() {
+			t.Fatalf(
+				"Unexpected group public key\nExpected: [%v]\nActual:   [%v]\n",
+				result.GroupPublicKey,
+				results[0].GroupPublicKey,
+			)
+		}
+		if !reflect.DeepEqual(result.Group, results[0].Group) {
+			t.Fatalf(
+				"Unexpected group information\nExpected: [%v]\nActual:   [%v]\n",
+				result.Group,
+				results[0].Group,
+			)
 		}
 	}
 }
