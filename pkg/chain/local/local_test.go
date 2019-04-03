@@ -411,6 +411,53 @@ func TestLocalOnRelayEntryRequestedUnsubscribed(t *testing.T) {
 	}
 }
 
+func TestLocalOnDKGResultSubmitted(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.DKGResultSubmission)
+
+	subscription, err := chainHandle.OnDKGResultSubmitted(
+		func(request *event.DKGResultSubmission) {
+			eventFired <- request
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer subscription.Unsubscribe()
+
+	groupPublicKey := []byte("1")
+	requestID := big.NewInt(42)
+	memberIndex := group.MemberIndex(1)
+	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := make(map[group.MemberIndex]operator.Signature)
+
+	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
+
+	expectedResultSubmissionEvent := &event.DKGResultSubmission{
+		RequestID:      requestID,
+		MemberIndex:    uint32(memberIndex),
+		GroupPublicKey: groupPublicKey,
+	}
+
+	select {
+	case event := <-eventFired:
+		if !reflect.DeepEqual(event, expectedResultSubmissionEvent) {
+			t.Fatalf(
+				"Unexpected group result submission entry\nExpected: [%v]\nActual:   [%v]",
+				expectedResultSubmissionEvent,
+				event,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
 func TestLocalBlockHeightWaiter(t *testing.T) {
 	var tests = map[string]struct {
 		blockHeight      int
@@ -553,7 +600,7 @@ func TestLocalBlockWaiter(t *testing.T) {
 	}
 }
 
-func TestLocalIsDKGResultPublished(t *testing.T) {
+func TestLocalIsDKGResultSubmitted(t *testing.T) {
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 
 	submittedRequestID := big.NewInt(1)
@@ -713,7 +760,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 }
 
-func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
+func TestLocalOnDKGResultSubmittedUnsubscribe(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
