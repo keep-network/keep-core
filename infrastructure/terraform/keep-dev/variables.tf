@@ -197,8 +197,14 @@ variable "openvpn_parameters" {
 
 # deployment infrastructure
 
+variable "create_ci_publish_to_gcr_service_account" {
+  description = "Create ServiceAccount for CI to publish images to keep-dev GCR."
+  default     = true
+}
+
 variable "keel" {
   default {
+    name      = "helm-keel"
     namespace = "tiller"
     version   = "0.7.7"
   }

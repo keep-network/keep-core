@@ -184,10 +184,12 @@ module "openvpn" {
 }
 
 module "deployment_infrastructure" {
-  source  = "../../../../thesis/infrastructure/terraform/modules/gcp_pull_deploy"
-  project = "${module.project.project_id}"
+  source                                   = "../../../../thesis/infrastructure/terraform/modules/gcp_pull_deploy"
+  project                                  = "${module.project.project_id}"
+  create_ci_publish_to_gcr_service_account = "${var.create_ci_publish_to_gcr_service_account}"
 
   keel {
+    name      = "${var.keel["name"]}"
     namespace = "${var.keel["namespace"]}"
     version   = "${var.keel["version"]}"
   }
