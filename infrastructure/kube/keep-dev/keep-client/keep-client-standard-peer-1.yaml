@@ -22,7 +22,7 @@ metadata:
   labels:
     keel.sh/policy: all
     app: keep-client
-    type: bootstrap-peer-0
+    type: standard-peer-1
 spec:
   replicas: 1
   selector:
