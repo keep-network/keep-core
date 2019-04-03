@@ -274,10 +274,11 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 
 	select {
 	case event := <-eventFired:
-		if event.RequestID.Cmp(big.NewInt(0)) != 0 {
+		expectedRequestID := big.NewInt(0)
+		if event.RequestID.Cmp(expectedRequestID) != 0 {
 			t.Fatalf(
 				"Unexpected request id\nExpected: [%v]\nActual:   [%v]",
-				big.NewInt(0),
+				expectedRequestID,
 				event.RequestID,
 			)
 		}
