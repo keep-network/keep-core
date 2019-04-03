@@ -314,18 +314,19 @@ func TestLocalOnGroupRegisteredUnsubscribed(t *testing.T) {
 
 	subscription.Unsubscribe()
 
-	chainHandle.SubmitDKGResult(
-		big.NewInt(42),
-		1,
-		&relaychain.DKGResult{},
-		nil,
-	)
+	groupPublicKey := []byte("1")
+	requestID := big.NewInt(42)
+	memberIndex := group.MemberIndex(1)
+	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := make(map[group.MemberIndex]operator.Signature)
+
+	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
 
 	select {
 	case event := <-eventFired:
 		t.Fatalf("Event should have not been received due to the cancelled subscription: [%v]", event)
 	case <-ctx.Done():
-		// // expected execution of goroutine
+		// expected execution of goroutine
 	}
 }
 
