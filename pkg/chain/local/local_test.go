@@ -268,34 +268,30 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 
 	defer subscription.Unsubscribe()
 
-	expectedRequest := &event.Request{
-		RequestID:     big.NewInt(0),
-		PreviousEntry: nil,
-		Seed:          big.NewInt(42),
-	}
+	seed := big.NewInt(12345)
 
-	chainHandle.RequestRelayEntry(expectedRequest.Seed)
+	chainHandle.RequestRelayEntry(seed)
 
 	select {
 	case event := <-eventFired:
 		if event.RequestID.Cmp(big.NewInt(0)) != 0 {
 			t.Fatalf(
-				"Unexpected relay entry request id\nExpected: [%v]\nActual:   [%v]",
-				expectedRequest.RequestID,
+				"Unexpected request id\nExpected: [%v]\nActual:   [%v]",
+				big.NewInt(0),
 				event.RequestID,
 			)
 		}
 		if event.PreviousEntry != nil {
 			t.Fatalf(
-				"Unexpected relay entry previous entry\nExpected: [%v]\nActual:   [%v]",
+				"Unexpected previous entry\nExpected: [%v]\nActual:   [%v]",
 				nil,
 				event.PreviousEntry,
 			)
 		}
-		if event.Seed.Cmp(expectedRequest.Seed) != 0 {
+		if event.Seed.Cmp(seed) != 0 {
 			t.Fatalf(
-				"Unexpected relay entry seed\nExpected: [%v]\nActual:   [%v]",
-				expectedRequest.Seed,
+				"Unexpected seed\nExpected: [%v]\nActual:   [%v]",
+				seed,
 				event.Seed,
 			)
 		}
