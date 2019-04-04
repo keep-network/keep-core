@@ -304,24 +304,6 @@ contract KeepGroupImplV1 is Ownable {
         // TODO: Implement
     }
 
-    // Legacy code moved from Random Beacon contract
-    // TODO: refactor according to the Phase 14
-    function submitGroupPublicKey(bytes memory groupPublicKey, uint256 requestID) public {
-
-        // TODO: Remove this section once dispute logic is implemented,
-        // implement conflict resolution logic described in Phase 14,
-        // make sure only valid members are stored.
-        _groups.push(Group(groupPublicKey, block.number));
-        address[] memory members = orderedParticipants();
-        if (members.length > 0) {
-            for (uint i = 0; i < _groupSize; i++) {
-                _groupMembers[groupPublicKey].push(members[i]);
-            }
-        }
-        emit OnGroupRegistered(groupPublicKey);
-        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID);
-    }
-
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
@@ -480,6 +462,20 @@ contract KeepGroupImplV1 is Ownable {
     */
     function groupThreshold() public view returns(uint256) {
         return _groupThreshold;
+    }
+
+    /**
+     * @dev Adds a new group based on groupPublicKey.
+     * @param groupPublicKey is the identifier of the newly created group.
+     */
+    function groupAdd(bytes memory groupPublicKey) public {
+        _groups.push(Group(groupPublicKey, block.number));
+        address[] memory members = orderedParticipants();
+        if (members.length > 0) {
+            for (uint i = 0; i < _groupSize; i++) {
+                _groupMembers[groupPublicKey].push(members[i]);
+            }
+        }
     }
 
     /**

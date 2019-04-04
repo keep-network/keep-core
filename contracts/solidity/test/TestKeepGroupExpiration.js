@@ -72,7 +72,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     testGroupsNumber = 100;
 
     for (var i = 1; i <= testGroupsNumber; i++)
-      await keepGroupImplViaProxy.submitGroupPublicKey([i], i);
+      await keepGroupImplViaProxy.groupAdd([i]);
   });
 
   it("it should be able to count the number of active groups", async function() {
