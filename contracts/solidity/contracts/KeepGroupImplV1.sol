@@ -525,6 +525,7 @@ contract KeepGroupImplV1 is Ownable {
                 selectedGroup = previousEntry % activeGroupsNumber;
             } else break;
         }
+
         return _groups[_expiredOffset + selectedGroup].groupPubKey;
     }
 
