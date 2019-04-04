@@ -448,7 +448,7 @@ func TestLocalOnDKGResultSubmitted(t *testing.T) {
 	case event := <-eventFired:
 		if !reflect.DeepEqual(event, expectedResultSubmissionEvent) {
 			t.Fatalf(
-				"Unexpected group result submission entry\nExpected: [%v]\nActual:   [%v]",
+				"Unexpected DKG result submission event\nExpected: [%v]\nActual:   [%v]",
 				expectedResultSubmissionEvent,
 				event,
 			)
