@@ -228,6 +228,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 			TicketInitialSubmissionTimeout:  2,
 			TicketReactiveSubmissionTimeout: 3,
 			TicketChallengeTimeout:          4,
+			ResultPublicationBlockStep:      3,
 			MinimumStake:                    minimumStake,
 			TokenSupply:                     tokenSupply,
 			NaturalThreshold:                naturalThreshold,
