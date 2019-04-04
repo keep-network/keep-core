@@ -84,7 +84,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     mineBlocks(groupExpirationTimeout);
     await keepGroupImplViaProxy.selectGroup("1");
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
-    assert.notEqual(Number(numberOfGroups), testGroupsNumber, "Some groups should expire");
+    assert.Equal(Number(numberOfGroups), testGroupsNumber - 1, "Some groups should expire");
   });
 
   it("should be able to check if more than one group expires", async function() {
