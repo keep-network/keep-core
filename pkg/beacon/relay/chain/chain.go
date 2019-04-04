@@ -92,8 +92,9 @@ type DistributedKeyGenerationInterface interface {
 	IsDKGResultSubmitted(
 		requestID *big.Int,
 	) (bool, error)
-	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
-	// specific for the chain. Operation is performed off-chain.
+	// CalculateDKGResultHash calculates 256-bit hash of the DKG result in
+	// the standard specific to the chain.
+	// This operation is performed off-chain.
 	CalculateDKGResultHash(dkgResult *DKGResult) (DKGResultHash, error)
 	// SignDKGResultHash calculates a signature by using the operator's
 	// private key to sign the 256-bit hash of the DKG result.
