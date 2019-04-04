@@ -37,6 +37,9 @@ class Node(Agent):
             elif self.stake_status == "not staked":
                 self.generate_virtual_stakers()
 
+    def advance(self):
+        pass
+
     def generate_virtual_stakers(self):
         #add code here to create virtual staker distribution
         self.stake_status = "staked"
