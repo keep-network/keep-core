@@ -2,12 +2,15 @@ import Web3 from 'web3'
 import BigNumber from "bignumber.js"
 
 export function displayAmount(amount, decimals, precision) {
-  amount = new BigNumber(amount)
-  return amount.dividedBy(10**decimals).toFixed(precision)
+  if (amount) {
+    amount = new BigNumber(amount)
+    return amount.div(new BigNumber(10).pow(new BigNumber(decimals))).toFixed(precision)
+  }
 }
 
 export function formatAmount(amount, decimals) {
-  return amount * (10 ** decimals)
+  amount = new BigNumber(amount)
+  return amount.times(new BigNumber(10).pow(new BigNumber(decimals)))
 }
 
 export function sleep(ms) {
