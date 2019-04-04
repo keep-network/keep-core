@@ -496,6 +496,23 @@ contract KeepGroupImplV1 is Ownable {
     function selectGroup(uint256 previousEntry) public returns(bytes memory) {
         uint256 activeGroupsNumber = _groups.length - _expiredOffset;
         uint256 selectedGroup = previousEntry % activeGroupsNumber;
+
+    /**
+     * We selected a group based on the information about expired groups offset
+     * from the previous call of the function. Now we need to check whether the
+     * selected group did not expire in the meantime. To do that, we compare its
+     * registration block height and group expiration timeout against the
+     * current block number. If the group has expired we move the expired groups
+     * offset to the position of the selected expired group and we try to select
+     * the next group knowing that all groups before the one previously selected
+     * are expired and should not be taken into account. We do this until we
+     * find an active group or until we reach the minimum active groups
+     * threshold.
+     *
+     * This approach is more efficient than traversing all groups one by one
+     * starting from the previous value of expired groups offset since we can
+     * mark expired groups in batches, in a fewer number of steps.
+     */
         while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupExpirationTimeout < block.number) {
             if (activeGroupsNumber > _numberOfActiveGroups) {
                 if (selectedGroup == 0) {
