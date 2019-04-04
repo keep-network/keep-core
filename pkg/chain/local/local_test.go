@@ -458,6 +458,41 @@ func TestLocalOnDKGResultSubmitted(t *testing.T) {
 	}
 }
 
+func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.DKGResultSubmission)
+
+	subscription, err := chainHandle.OnDKGResultSubmitted(
+		func(event *event.DKGResultSubmission) {
+			eventFired <- event
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	subscription.Unsubscribe()
+
+	groupPublicKey := []byte("1")
+	requestID := big.NewInt(42)
+	memberIndex := group.MemberIndex(1)
+	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := make(map[group.MemberIndex]operator.Signature)
+
+	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
+
+	select {
+	case event := <-eventFired:
+		t.Fatalf("Event should have not been received due to the cancelled subscription: [%v]", event)
+	case <-ctx.Done():
+		// expected execution of goroutine
+	}
+}
+
 func TestLocalBlockHeightWaiter(t *testing.T) {
 	var tests = map[string]struct {
 		blockHeight      int
@@ -757,45 +792,6 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		t.Fatalf("unexpected event was emitted: %v", DKGResultSubmissionEvent)
 	case <-ctx.Done():
 		t.Logf("DKG result publication event not generated")
-	}
-}
-
-func TestLocalOnDKGResultSubmittedUnsubscribe(t *testing.T) {
-	ctx, cancel := newTestContext()
-	defer cancel()
-
-	localChain := Connect(10, 4, big.NewInt(200)).(*localChain)
-
-	chainHandle := localChain.ThresholdRelay()
-
-	DKGResultSubmissionChan := make(chan *event.DKGResultSubmission)
-	subscription, err := localChain.OnDKGResultSubmitted(
-		func(DKGResultSubmission *event.DKGResultSubmission) {
-			DKGResultSubmissionChan <- DKGResultSubmission
-		},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Unsubscribe from the event - from this point, callback should
-	// never be called.
-	subscription.Unsubscribe()
-
-	chainHandle.SubmitDKGResult(
-		big.NewInt(999),
-		1,
-		&relaychain.DKGResult{
-			GroupPublicKey: []byte{88},
-		},
-		nil, // TODO: Update test to include signatures
-	)
-
-	select {
-	case <-DKGResultSubmissionChan:
-		t.Fatalf("event should not be emitted - I have unsubscribed!")
-	case <-ctx.Done():
-		// ok
 	}
 }
 
