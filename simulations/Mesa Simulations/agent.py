@@ -58,29 +58,28 @@ class Virtial_Stakers(Agent):
         super().__init__(unique_id, model)
         self.id = unique_id
         self.owner = owner_id
-        self.
-
-    def step():
-        pass
-
-    # wait for relay request
-    def watching_relay_request(self, env):
-        pass
-
-    #join group
-    def join_group(self, env, group_object):
-        pass
+        self.status = "active"
 
 class Group(Agent):
     """ A Group """
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
+        self.active_members = []
+        self.last_signature = "none"
 
     def step():
-        pass
-    
-    def sign():
-        pass
+        """ At each step check how many members are still active """
+        self.active_members()
+
+    def register_members(self, virtual_staker_list):
+        """detect which members with winning tickets are active and add them to the list"""
+        
+    def sign(self, sign_threshold):
+        """Check if enough members are available to perform a signature using the sign_threshold, an then perform a signature"""
+        if len(self.active_members)<sign_threshold:
+            self.last_signature = "failed"
+        else:
+            self.last_signature = "success"
 
     def expire():
         pass
