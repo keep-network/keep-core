@@ -237,7 +237,7 @@ contract KeepGroupImplV1 is Ownable {
     }
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
-     * @param index claimed index of the staker. We pass this for gas efficiency purposes.
+     * @param memberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
      * @param requestId Relay request ID assosciated with DKG protocol execution.
      * @param groupPubKey Group public key generated as a result of protocol execution.
      * @param disqualified bytes representing disqualified group members; 1 at the specific index
@@ -251,7 +251,7 @@ contract KeepGroupImplV1 is Ownable {
      */
     function submitDkgResult(
         uint256 requestId,
-        uint256 index,    
+        uint256 memberIndex,
         bytes memory groupPubKey,
         bytes memory disqualified,
         bytes memory inactive,
@@ -259,7 +259,7 @@ contract KeepGroupImplV1 is Ownable {
         uint[] memory positions
     ) public {
         bytes32 resultHash = keccak256(abi.encodePacked(disqualified, inactive, groupPubKey));
-        require(eligibleSubmitter(index),"User not eligible");
+        require(eligibleSubmitter(memberIndex),"User not eligible");
         require(verifySignatures(signatures, positions, resultHash),"Could not verify");
         //change to selectedPArticipants() in full implmementation
         address[] memory members = orderedParticipants();
