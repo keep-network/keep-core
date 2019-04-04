@@ -36,7 +36,6 @@ class Node(Agent):
                 self.mainloop_status = "forked"
             elif self.stake_status == "not staked":
                 self.generate_virtual_stakers()
-        return
 
     def generate_virtual_stakers(self):
         #add code here to create virtual staker distribution
