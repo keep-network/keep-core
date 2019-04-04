@@ -39,21 +39,19 @@ function mineBlocks(blocks) {
 
 contract('TestKeepGroupExpiration', function(accounts) {
 
-  let token, stakingProxy, minimumStake, groupThreshold, groupSize,
+  let stakingProxy, minimumStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge,
-    groupExpirationTimeout, activeGroupsThreshold,
+    groupExpirationTimeout, activeGroupsThreshold, testGroupsNumber,
     keepRandomBeaconImplV1, keepRandomBeaconProxy,
-    keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, testGroupsNumber
+    keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy
 
   beforeEach(async () => {
-    token = await KeepToken.new();
-    
     // Initialize staking contract under proxy
     stakingProxy = await StakingProxy.new();
     
     keepRandomBeaconImplV1 = await KeepRandomBeaconImplV1.new();
     keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
-    
+
     // Initialize Keep Group contract
     minimumStake = 200000;
     groupThreshold = 15;
@@ -74,49 +72,47 @@ contract('TestKeepGroupExpiration', function(accounts) {
     testGroupsNumber = 7;
 
     for (var i = 1; i <= testGroupsNumber; i++)
-      await keepGroupImplV1.submitGroupPublicKey([i], i);
+      await keepGroupImplViaProxy.submitGroupPublicKey([i], i);
   });
 
   it("should be able to check if groups were added", async function() {
-    let numberOfGroups = await keepGroupImplV1.numberOfGroups();
+    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
     assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups not equals to number of test groups");
   });
 
   it("should be able to check if one group expires", async function() {
-    let before = await keepGroupImplV1.numberOfGroups();
+    let before = await keepGroupImplViaProxy.numberOfGroups();
     assert.equal(Number(before), testGroupsNumber, "Number of groups should be equal to the number of test groups"); 
     mineBlocks(groupExpirationTimeout);
-    let tx = await keepGroupImplV1.selectGroup("1");
-    //console.log("Gas used for keepGroupImplV1.selectGroup(1) = ", tx.receipt.gasUsed);
-    let after = await keepGroupImplV1.numberOfGroups();
+    let tx = await keepGroupImplViaProxy.selectGroup("1");
+    let after = await keepGroupImplViaProxy.numberOfGroups();
     assert.notEqual(Number(after), testGroupsNumber, "Number of groups after `selectGroup()` should not be equal to the number of test groups");
   });
 
   it("should be able to check if more than one group expires", async function() {
     mineBlocks(groupExpirationTimeout);
-    await keepGroupImplV1.selectGroup("1");
+    await keepGroupImplViaProxy.selectGroup("1");
     mineBlocks(groupExpirationTimeout);
-    await keepGroupImplV1.selectGroup("1");
+    await keepGroupImplViaProxy.selectGroup("1");
     mineBlocks(groupExpirationTimeout);
-    await keepGroupImplV1.selectGroup("1");
+    await keepGroupImplViaProxy.selectGroup("1");
     mineBlocks(groupExpirationTimeout);
-    await keepGroupImplV1.selectGroup("1");
+    await keepGroupImplViaProxy.selectGroup("1");
   
-    let after = await keepGroupImplV1.numberOfGroups();
+    let after = await keepGroupImplViaProxy.numberOfGroups();
     assert.isBelow(Number(after), testGroupsNumber - 1, "Number of groups should be at least 2 below the test group numbers");
   });
 
   it("number of groups should not be able to go below the active groups threshold", async function() {
     for (var i = 1; i <= 10; i++)
-      await keepGroupImplV1.submitGroupPublicKey([i], i);
+      await keepGroupImplViaProxy.submitGroupPublicKey([i], i);
 
     for (var i = 1; i <= 20; i++) {
       mineBlocks(groupExpirationTimeout);
-      let tx = await keepGroupImplV1.selectGroup(i);
-      //console.log("Gas used for keepGroupImplV1.selectGroup(i) = ", tx.receipt.gasUsed);
+      let tx = await keepGroupImplViaProxy.selectGroup(i);
     }
 
-    let after = await keepGroupImplV1.numberOfGroups();
+    let after = await keepGroupImplViaProxy.numberOfGroups();
     assert.isAtLeast(Number(after), activeGroupsThreshold, "Number of groups should be equal to active groups threshold");
   });
 });
