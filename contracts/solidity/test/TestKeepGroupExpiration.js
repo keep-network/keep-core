@@ -59,8 +59,8 @@ contract('TestKeepGroupExpiration', function(accounts) {
     timeoutInitial = 20;
     timeoutSubmission = 50;
     timeoutChallenge = 60;
-    groupExpirationTimeout = 1;
-    numberOfActiveGroups = 1;
+    groupExpirationTimeout = 300;
+    numberOfActiveGroups = 5;
 
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
@@ -69,7 +69,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, groupExpirationTimeout, numberOfActiveGroups
     );
 
-    testGroupsNumber = 7;
+    testGroupsNumber = 100;
 
     for (var i = 1; i <= testGroupsNumber; i++)
       await keepGroupImplViaProxy.submitGroupPublicKey([i], i);
