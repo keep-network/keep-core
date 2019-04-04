@@ -59,7 +59,7 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
-    uint256 internal _activeGroupsThreshold = 1;
+    uint256 internal _activeGroupsThreshold;
     // _groupExpirationTimeout is the time in block after which a group expires
     uint256 internal _groupExpirationTimeout;
     // _expiredOffset is pointing to the first active group, it is also the
@@ -309,8 +309,10 @@ contract KeepGroupImplV1 is Ownable {
         // make sure only valid members are stored.
         _groups.push(Group(groupPublicKey, block.number));
         address[] memory members = orderedParticipants();
-        for (uint i = 0; i < _groupSize; i++) {
-            _groupMembers[groupPublicKey].push(members[i]);
+        if (members.length > 0) {
+            for (uint i = 0; i < _groupSize; i++) {
+                _groupMembers[groupPublicKey].push(members[i]);
+            }
         }
         emit OnGroupRegistered(groupPublicKey);
         emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID);
