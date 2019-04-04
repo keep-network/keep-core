@@ -75,7 +75,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
       await keepGroupImplViaProxy.submitGroupPublicKey([i], i);
   });
 
-  it("should be able to check if groups were added", async function() {
+  it("it should be able to count the number of active groups", async function() {
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
     assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups not equals to number of test groups");
   });
