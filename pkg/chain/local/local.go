@@ -399,3 +399,10 @@ func (c *localChain) CalculateDKGResultHash(
 
 	return dkgResultHash, nil
 }
+
+func (c *localChain) SignDKGResultHash(
+	resultHash relaychain.DKGResultHash,
+) ([]byte, error) {
+	privateKey, _ := c.GetKeys()
+	return operator.Sign(resultHash[:], privateKey)
+}

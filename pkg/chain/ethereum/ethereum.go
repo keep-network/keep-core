@@ -548,3 +548,10 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 
 	return dkgResultHash, nil
 }
+
+func (ec *ethereumChain) SignDKGResultHash(
+	resultHash relaychain.DKGResultHash,
+) ([]byte, error) {
+	privateKey, _ := ec.GetKeys()
+	return operator.Sign(resultHash[:], privateKey)
+}

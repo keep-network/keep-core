@@ -95,6 +95,10 @@ type DistributedKeyGenerationInterface interface {
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
 	CalculateDKGResultHash(dkgResult *DKGResult) (DKGResultHash, error)
+	// SignDKGResultHash calculates a signature by using the operator's
+	// private key to sign the 256-bit hash of the DKG result.
+	// This operation is performed off-chain.
+	SignDKGResultHash(DKGResultHash) ([]byte, error)
 }
 
 // Interface represents the interface that the relay expects to interact with
