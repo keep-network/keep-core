@@ -18,7 +18,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     implV1 = await KeepRandomBeaconImplV1.new();
     proxy = await Proxy.new(implV1.address);
     implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
-    keepGroup = await KeepGroup.new()
+    keepGroup = await KeepGroup.new();
     await implViaProxy.initialize(100, duration.days(30), bls.previousEntry, bls.groupPubKey, keepGroup.address);
   });
 
@@ -83,7 +83,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     let receiverStartBalance = web3.utils.fromWei(await web3.eth.getBalance(account_three), 'ether');
     await implViaProxy.finishWithdrawal(account_three, {from: account_one});
     let receiverEndBalance = web3.utils.fromWei(await web3.eth.getBalance(account_three), 'ether');
-    assert(receiverEndBalance > receiverStartBalance, "Receiver updated balance should include received ether.");
+    assert(Number(receiverEndBalance) > Number(receiverStartBalance), "Receiver updated balance should include received ether.");
 
     let contractEndBalance = await web3.eth.getBalance(implViaProxy.address);
     assert.equal(contractEndBalance, contractStartBalance - amount, "Keep Random Beacon contract should send all ether.");
