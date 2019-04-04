@@ -49,4 +49,13 @@ contract StakeDelegatable {
     function operatorsOf(address _address) public view returns (address[] memory) {
         return ownerOperators[_address];
     }
+
+    /**
+     * @dev Gets the stake owner for the specified operator address.
+     * @return Stake owner address.
+     */
+    function ownerOf(address _operator) public view returns (address) {
+        return operatorToOwner[_operator];
+    }
+
 }
