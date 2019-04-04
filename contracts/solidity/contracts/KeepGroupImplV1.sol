@@ -51,7 +51,7 @@ contract KeepGroupImplV1 is Ownable {
     mapping(uint256 => Proof) internal _proofs;
 
     struct Group {
-        bytes groupId;
+        bytes groupPubKey;
         uint registrationTime;
     }
 
@@ -497,7 +497,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param previousEntry Previous random beacon value.
      */
     function selectGroup(uint256 previousEntry) public view returns(bytes memory) {
-        return _groups[previousEntry % _groups.length].groupId;
+        return _groups[previousEntry % _groups.length].groupPubKey;
     }
 
     /**
