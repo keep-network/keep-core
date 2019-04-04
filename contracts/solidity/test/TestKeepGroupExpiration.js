@@ -80,25 +80,34 @@ contract('TestKeepGroupExpiration', function(accounts) {
     assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups not equals to number of test groups");
   });
 
-  it("should be able to check if one group is marked as expired", async function() {
-    mineBlocks(groupExpirationTimeout);
-    await keepGroupImplViaProxy.selectGroup("1");
+  it("should be able to check if at least one group is marked as expired", async function() {
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
-    assert.Equal(Number(numberOfGroups), testGroupsNumber - 1, "Some groups should be marked as expired");
+    
+    for (var i = 1; i <= testGroupsNumber; i++) {
+      mineBlocks(groupExpirationTimeout);
+      await keepGroupImplViaProxy.selectGroup("1");
+      numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
+
+      if (Number(numberOfGroups) < testGroupsNumber)
+        break;
+    }
+
+    assert.notEqual(Number(numberOfGroups), testGroupsNumber, "Some groups should be marked as expired");
   });
 
-  it("should be able to check if more than one group is marked as expired", async function() {
-    mineBlocks(groupExpirationTimeout);
-    await keepGroupImplViaProxy.selectGroup("1");
-    mineBlocks(groupExpirationTimeout);
-    await keepGroupImplViaProxy.selectGroup("1");
-    mineBlocks(groupExpirationTimeout);
-    await keepGroupImplViaProxy.selectGroup("1");
-    mineBlocks(groupExpirationTimeout);
-    await keepGroupImplViaProxy.selectGroup("1");
-  
+  it("should be able to check that groups are marked as expired except the minimal active groups number", async function() {
     let after = await keepGroupImplViaProxy.numberOfGroups();
-    assert.isBelow(Number(after), testGroupsNumber - 1, "Number of groups should be at least 2 below the test group numbers");
+
+    for (var i = 1; i <= testGroupsNumber; i++) {
+      mineBlocks(groupExpirationTimeout);
+      await keepGroupImplViaProxy.selectGroup("1");
+      after = await keepGroupImplViaProxy.numberOfGroups();
+
+      if (Number(after) == numberOfActiveGroups)
+        break;
+    }
+    
+    assert.equal(Number(after), numberOfActiveGroups, "Number of groups should be at least 2 below the test group numbers");
   });
 
   it("number of groups should not be able to go below the active groups threshold", async function() {
