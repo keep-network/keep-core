@@ -67,21 +67,22 @@ class Group(Agent):
         self.active_members = []
         self.last_signature = "none"
 
-    def step():
+    def step(self):
         """ At each step check how many members are still active """
-        self.active_members()
+        pass
 
     def register_members(self, virtual_staker_list):
         """detect which members with winning tickets are active and add them to the list"""
+        pass
         
     def sign(self, sign_threshold):
-        """Check if enough members are available to perform a signature using the sign_threshold, an then perform a signature"""
+        """Check if enough members are available to perform a signature using the sign_threshold, and then perform a signature"""
         if len(self.active_members)<sign_threshold:
             self.last_signature = "failed"
         else:
             self.last_signature = "success"
 
-    def expire():
+    def expire(self):
         pass
 
 class Beacon_Model(Model):
