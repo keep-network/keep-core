@@ -529,7 +529,7 @@ contract KeepGroupImplV1 is Ownable {
         return _groups[_expiredOffset + selectedGroup].groupPubKey;
     }
 
-    /** test
+    /**
      * @dev Gets version of the current implementation.
     */
     function version() public pure returns (string memory) {
