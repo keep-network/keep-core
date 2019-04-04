@@ -41,7 +41,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
   let stakingProxy, minimumStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge,
-    groupExpirationTimeout, activeGroupsThreshold, testGroupsNumber,
+    groupExpirationTimeout, numberOfActiveGroups, testGroupsNumber,
     keepRandomBeaconImplV1, keepRandomBeaconProxy,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy
 
@@ -60,13 +60,13 @@ contract('TestKeepGroupExpiration', function(accounts) {
     timeoutSubmission = 50;
     timeoutChallenge = 60;
     groupExpirationTimeout = 1;
-    activeGroupsThreshold = 1;
+    numberOfActiveGroups = 1;
 
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(
-      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, groupExpirationTimeout, activeGroupsThreshold
+      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, groupExpirationTimeout, numberOfActiveGroups
     );
 
     testGroupsNumber = 7;
@@ -113,6 +113,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
     }
 
     let after = await keepGroupImplViaProxy.numberOfGroups();
-    assert.isAtLeast(Number(after), activeGroupsThreshold, "Number of groups should be equal to active groups threshold");
+    assert.isAtLeast(Number(after), numberOfActiveGroups, "Number of groups should be equal to active groups threshold");
   });
 });

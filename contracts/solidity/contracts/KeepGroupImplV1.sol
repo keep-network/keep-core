@@ -59,9 +59,9 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
-    // _activeGroupsThreshold is the minimal number of groups that should not
+    // _numberOfActiveGroups is the minimal number of groups that should not
     // expired to protect the minimal network throughput
-    uint256 internal _activeGroupsThreshold;
+    uint256 internal _numberOfActiveGroups;
  
     // _groupExpirationTimeout is the time in block after which a group expires
     uint256 internal _groupExpirationTimeout;
@@ -339,7 +339,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param timeoutInitial Timeout in blocks after the initial ticket submission is finished.
      * @param timeoutSubmission Timeout in blocks after the reactive ticket submission is finished.
      * @param timeoutChallenge Timeout in blocks after the period where tickets can be challenged is finished.
-     * @param activeGroupsThreshold is the minimal number of groups that cannot be marked as expired.
+     * @param numberOfActiveGroups is the minimal number of groups that cannot be marked as expired.
      * @param groupExpirationTimeout is the time in block after which a group expires.
      */
     function initialize(
@@ -352,7 +352,7 @@ contract KeepGroupImplV1 is Ownable {
         uint256 timeoutSubmission,
         uint256 timeoutChallenge,
         uint256 groupExpirationTimeout,
-        uint256 activeGroupsThreshold
+        uint256 numberOfActiveGroups
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
@@ -366,7 +366,7 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutSubmission = timeoutSubmission;
         _timeoutChallenge = timeoutChallenge;
         _groupExpirationTimeout = groupExpirationTimeout;
-        _activeGroupsThreshold = activeGroupsThreshold;
+        _numberOfActiveGroups = numberOfActiveGroups;
     }
 
     /**
@@ -497,7 +497,7 @@ contract KeepGroupImplV1 is Ownable {
         uint256 activeGroupsNumber = _groups.length - _expiredOffset;
         uint256 selectedGroup = previousEntry % activeGroupsNumber;
         while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupExpirationTimeout < block.number) {
-            if (activeGroupsNumber > _activeGroupsThreshold) {
+            if (activeGroupsNumber > _numberOfActiveGroups) {
                 if (selectedGroup == 0) {
                     _expiredOffset++;
                     activeGroupsNumber--;
