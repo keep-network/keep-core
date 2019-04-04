@@ -258,9 +258,11 @@ contract KeepGroupImplV1 is Ownable {
         bytes memory signatures,
         uint[] memory positions
     ) public {
-        bytes32 resultHash = keccak256(abi.encodePacked(disqualified, inactive, groupPubKey));
         require(eligibleSubmitter(memberIndex),"User not eligible");
-        require(verifySignatures(signatures, positions, resultHash),"Could not verify");
+
+        bytes32 resultHash = keccak256(abi.encodePacked(disqualified, inactive, groupPubKey));
+        verifySignatures(signatures, positions, resultHash);
+
         //change to selectedPArticipants() in full implmementation
         address[] memory members = orderedParticipants();
         //TODO: check IA/DQ length match members
