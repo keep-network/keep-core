@@ -37,9 +37,11 @@ contract KeepGroupImplV1 is Ownable {
 
     uint256[] internal _tickets;
     bytes[] internal _submissions;
-    //check if DkgResult has been published (uint256: given requestID)
+
+    // Store DKG result by corresponding requestID.
     mapping (uint256 => bool) internal _dkgResultPublished;
-    //checks if a user has submitted a result (bytes32: unique hash for voting scenario)
+
+    // Store unique hash of a member who submitted DKG result.
     mapping (bytes32 => bool) internal _submittedDkg;
 
     struct Proof {
@@ -79,7 +81,7 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Submit ticket to request to participate in a new candidate group.
+     * @dev Submits ticket to request to participate in a new candidate group.
      * @param ticketValue Result of a pseudorandom function with input values of
      * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
      * @param stakerValue Staker-specific value. Currently uint representation of staker address.
@@ -216,8 +218,8 @@ contract KeepGroupImplV1 is Ownable {
         return passedCheapCheck && ticketValue == expected;
     }
 
-    /** 
-     * @dev Check if member is inactive.
+    /**
+     * @dev Checks if member is disqualified.
      * @param dqBytes bytes representing disqualified members.
      * @param memberIndex position of the member to check.
      * @return true if staker is inactive, false otherwise.
@@ -226,8 +228,8 @@ contract KeepGroupImplV1 is Ownable {
         return dqBytes[memberIndex] != 0x00;
     }
 
-     /** 
-     * @dev Check if member is inactive.
+     /**
+     * @dev Checks if member is inactive.
      * @param iaBytes bytes representing inactive members.
      * @param memberIndex position of the member to check.
      * @return true if staker is inactive, false otherwise.
@@ -235,10 +237,11 @@ contract KeepGroupImplV1 is Ownable {
     function _isInactive(bytes memory iaBytes, uint256 memberIndex) internal pure returns (bool){
         return iaBytes[memberIndex] != 0x00;
     }
+
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
      * @param memberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
-     * @param requestId Relay request ID assosciated with DKG protocol execution.
+     * @param requestId Relay request ID associated with DKG protocol execution.
      * @param groupPubKey Group public key generated as a result of protocol execution.
      * @param disqualified bytes representing disqualified group members; 1 at the specific index
      * means that the member has been disqualified. Indexes reflect positions of members in the
@@ -246,7 +249,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param inactive bytes representing inactive group members; 1 at the specific index means
      * that the member has been marked as inactive. Indexes reflect positions of members in the
      * group, as outputted by the group selection protocol.
-     * @param signatures concatination of signer resultHashes collected off-chain
+     * @param signatures Concatenation of signer resultHashes collected off-chain
      * @param positions indices of members corresponding to each signature
      */
     function submitDkgResult(
@@ -258,57 +261,59 @@ contract KeepGroupImplV1 is Ownable {
         bytes memory signatures,
         uint[] memory positions
     ) public {
-        require(eligibleSubmitter(memberIndex),"User not eligible");
+        require(eligibleSubmitter(memberIndex), "User is not eligible to submit the result.");
 
         bytes32 resultHash = keccak256(abi.encodePacked(disqualified, inactive, groupPubKey));
         verifySignatures(signatures, positions, resultHash);
 
-        //change to selectedPArticipants() in full implmementation
+        // TODO: change to selectedParticipants() in full implementation
         address[] memory members = orderedParticipants();
-        //TODO: check IA/DQ length match members
+        // TODO: check IA/DQ length match members
         for (uint i = 0; i < positions.length; i++) {
             if(!_isInactive(inactive, i) &&
                 !_isDisqualified(disqualified, i)){
                 _groupMembers[groupPubKey].push(members[i]);
             }
         }
-        //TODO: we should minimum of H participants
+        // TODO: we should minimum of H participants
         _groups.push(Group(groupPubKey, block.number));
-        //TODO: punish/reward logic
+        // TODO: punish/reward logic
         cleanup();
         _dkgResultPublished[requestId] = true;
         emit DkgResultPublishedEvent(requestId, groupPubKey);
     }
 
     /**
-    * @dev takes signed hash and corresponding signatures. Adds valid signers to _signers[].
-    * @param signatures concatination of user-generated signatures.
-    * @param resultHash the result hash signed by the users.
-    * @param indices indices of members corresponding to each signature.
+    * @dev Verifies that provided members signatures of the DKG result are produced
+    * by the members stored previously on-chain in the order of their ticket values.
+    * @param signatures Concatenation of user-generated signatures.
+    * @param resultHash The result hash signed by the users.
+    * @param indices Indices of members corresponding to each signature.
     */
     function verifySignatures(bytes memory signatures, uint256[] memory indices, bytes32 resultHash) internal returns (bool) {
-        bytes memory current; //current signature to be checked
-        uint256[] memory ordered = orderedTickets();
-        uint256 submissionCount = signatures.length / 65;
-        require(signatures.length >= 65, "signature too short");
-        require(signatures.length % 65 == 0, "Bad signatures submission");
-        require(submissionCount == indices.length, "Number of signatures and indices don't match");
 
+        uint256 submissionCount = signatures.length / 65;
+        require(signatures.length >= 65, "Signatures bytes array is too short.");
+        require(signatures.length % 65 == 0, "Signatures in the bytes array should be 65 bytes long.");
+        require(submissionCount == indices.length, "Number of signatures and indices don't match.");
+
+        bytes memory current; // Current signature to be checked.
+        uint256[] memory ordered = orderedTickets();
         for(uint i = 0; i < submissionCount; i++){
             bytes32 submitterId = keccak256(abi.encodePacked(msg.sender, _randomBeaconValue, indices[i]));
-            
-            require(indices[i] > 0, "Index should be greater than zero");
-            require(!_submittedDkg[submitterId],"Participant at index already submitted a result");
+
+            require(indices[i] > 0, "Index should be greater than zero.");
+            require(!_submittedDkg[submitterId], "Participant at index already submitted a result.");
             _submittedDkg[submitterId] = true;
-            current = signatures.slice(65*i, 65);           
+            current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
-            require(indices[i] <= ordered.length,"Provided index is out of acceptable tickets bound");
+            require(indices[i] <= ordered.length, "Provided index is out of acceptable tickets bound.");
             require(
                 _proofs[ordered[indices[i] - 1]].sender == recoveredAddress,
-                "Signer and recovered address at provided index don't match"
+                "Signer and recovered address at provided index don't match."
             );
-        }       
+        }
         return true;
     }
 
@@ -362,15 +367,15 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutChallenge = timeoutChallenge;
     }
 
-     /** 
-     * @dev Check if submitter is eligible to submit.
-     * @param index the claimed index of the submitter.
+     /**
+     * @dev Checks if submitter is eligible to submit.
+     * @param memberIndex The claimed index of the submitter.
      * @return true if the submitter is eligible. False otherwise.
      */
-    function eligibleSubmitter(uint index) public view returns (bool){
+    function eligibleSubmitter(uint memberIndex) public view returns (bool){
         uint256[] memory ordered = orderedTickets();
-        require(_proofs[ordered[index - 1]].sender == msg.sender, "index does not match sender address");
-        require(index > 0, "index must be greater than 0");
+        require(_proofs[ordered[memberIndex - 1]].sender == msg.sender, "Member index does not match sender address.");
+        require(memberIndex > 0, "Member index must be greater than 0.");
         return true;
     }
 
