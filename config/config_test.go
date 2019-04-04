@@ -1,20 +1,33 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
 )
 
+const ethPasswordEnvVariable = "KEEP_ETHEREUM_ACCOUNT_KEYFILEPASSWORD"
+const ethAccountEnvVariable = "KEEP_ETHEREUM_ACCOUNT_ADDRESS"
+const ethKeyfileEnvVariable = "KEEP_ETHEREUM_ACCOUNT_KEYFILE"
+const ethRandomBeaconContractEnvVariable = "KEEP_ETHEREUM_CONTRACTADDRESSES_KEEPRANDOMBEACON"
+const ethKeepGroupContractEnvVariable = "KEEP_ETHEREUM_CONTRACTADDRESSES_KEEPGROUP"
+const ethStakingProxyContractEnvVariable = "KEEP_ETHEREUM_CONTRACTADDRESSES_STAKINGPROXY"
+const ethURLEnvVariable = "KEEP_ETHEREUM_URL"
+const ethURLRPCEnvVariable = "KEEP_ETHEREUM_URLRPC"
+const libp2pPortEnvVariable = "KEEP_LIBP2P_PORT"
+const libp2pPeersEnvVariable = "KEEP_LIBP2P_PEERS"
+const libp2pSeedEnvVariable = "KEEP_LIBP2P_SEED"
+
 func TestReadConfig(t *testing.T) {
 	// check password env variable
-	err := os.Setenv("KEEP_ETHEREUM_PASSWORD", "not-my-password")
+	err := os.Setenv(ethPasswordEnvVariable, "not-my-password")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ethEnvPassword, ok := os.LookupEnv(ethPasswordEnvVariable); ok {
+	if ethEnvPassword, ok := os.LookupEnv("KEEP_ETHEREUM_PASSWORD"); ok {
 		if ethEnvPassword != "not-my-password" {
-			t.Fatalf("Environment variable [%s] doesn't match!", ethPasswordEnvVariable)
+			t.Fatalf("Environment variable [%s] doesn't match!", "KEEP_ETHEREUM_PASSWORD")
 		}
 	}
 	// check we can read the test config file
@@ -124,6 +137,10 @@ func TestEnvReadConfig(t *testing.T) {
 			err,
 		)
 	}
+
+	fmt.Println(cfg.Ethereum.ContractAddresses)
+	fmt.Println(cfg.LibP2P.Port)
+
 	// test that config file variables return overrides
 	var envConfigOverrideTests = map[string]struct {
 		readValueFunc func(*Config) interface{}
