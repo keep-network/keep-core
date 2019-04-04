@@ -66,7 +66,7 @@ class StakingForm extends Component {
     if (action === 'stake') {
       web3.token.approveAndCall(stakingContractAddress, formatAmount(amount, 18), "", {from: web3.yourAddress, gas: 150000})
     } else if (action === 'unstake') {
-      web3.stakingContract.initiateUnstake(formatAmount(amount, 18), {from: web3.yourAddress, gas: 150000})
+      await web3.stakingContract.methods.initiateUnstake(web3.utils.toBN(formatAmount(amount, 18)).toString(), web3.yourAddress).send({from: web3.yourAddress})
     }
   }
 

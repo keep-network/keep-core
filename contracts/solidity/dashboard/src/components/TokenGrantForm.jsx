@@ -1,5 +1,4 @@
 import moment from 'moment'
-import Web3 from 'web3'
 import React, { Component } from 'react'
 import { Button, Form, FormGroup,
   FormControl, ControlLabel, Col, HelpBlock, Checkbox } from 'react-bootstrap'
@@ -47,7 +46,8 @@ class TokenGrantForm extends Component {
   }
 
   validateBeneficiary() {
-    if (Web3.utils.isAddress(this.state.beneficiary)) return 'success'
+    const { web3 } = this.props
+    if (web3.utils && web3.utils.isAddress(this.state.beneficiary)) return 'success'
     else return 'error'
   }
 

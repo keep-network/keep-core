@@ -15,13 +15,37 @@ export function sleep(ms) {
 }
 
 export function getWeb3() {
-  return new Promise(resolve => {
-    window.addEventListener('load', function() {
-      let web3 = window.web3
-      if (typeof web3 !== 'undefined') {
-        resolve(new Web3(web3.currentProvider));
+  return new Promise((resolve, reject) => {
+    // Wait for loading completion to avoid race conditions with web3 injection timing.
+    window.addEventListener("load", async () => {
+      // Modern dapp browsers...
+      if (window.ethereum) {
+        const web3 = new Web3(window.ethereum);
+        try {
+          // Request account access if needed
+          await window.ethereum.enable();
+          // Acccounts now exposed
+          resolve(web3);
+        } catch (error) {
+          reject(error);
+        }
       }
-      resolve(null)
-    })
+      // Legacy dapp browsers...
+      else if (window.web3) {
+        // Use Mist/MetaMask's provider.
+        const web3 = window.web3;
+        console.log("Injected web3 detected.");
+        resolve(web3);
+      }
+      // Fallback to localhost; use dev console port by default...
+      else {
+        const provider = new Web3.providers.HttpProvider(
+          "http://127.0.0.1:9545"
+        );
+        const web3 = new Web3(provider);
+        console.log("No web3 instance injected, using Local web3.");
+        resolve(web3);
+      }
+    });
   })
 }

@@ -1,4 +1,3 @@
-import Web3 from 'web3'
 import BigNumber from "bignumber.js"
 import React, { Component } from 'react'
 import { Pie } from 'react-chartjs-2'
@@ -39,7 +38,9 @@ class Main extends Component {
         networkType: undefined,
         token: undefined,
         stakingContract: undefined,
-        grantContract: undefined
+        grantContract: undefined,
+        utils: undefined,
+        eth: undefined
       }
     }
     this.state.chartData = {}
@@ -69,7 +70,9 @@ class Main extends Component {
         networkType: await web3.eth.net.getNetworkType(),
         token: contracts.token,
         stakingContract: contracts.stakingContract,
-        grantContract: contracts.grantContract
+        grantContract: contracts.grantContract,
+        utils: web3.utils,
+        eth: web3.eth
       }
     })
 
@@ -217,22 +220,22 @@ class Main extends Component {
     const grantContract = this.state.web3.grantContract
 
     // Balances
-    const tokenBalance = displayAmount(await token.balanceOf(this.state.web3.yourAddress), 18, 3)
-    const stakeBalance = displayAmount(await stakingContract.stakeBalanceOf(this.state.web3.yourAddress), 18, 3)
-    const grantBalance = displayAmount(await grantContract.balanceOf(this.state.web3.yourAddress), 18, 3)
-    const grantStakeBalance = displayAmount(await grantContract.stakeBalanceOf(this.state.web3.yourAddress), 18, 3)
+    const tokenBalance = displayAmount(await token.methods.balanceOf(this.state.web3.yourAddress).call(), 18, 3)
+    const stakeBalance = displayAmount(await stakingContract.methods.stakeBalanceOf(this.state.web3.yourAddress).call(), 18, 3)
+    const grantBalance = displayAmount(await grantContract.methods.balanceOf(this.state.web3.yourAddress).call(), 18, 3)
+    const grantStakeBalance = displayAmount(await grantContract.methods.stakeBalanceOf(this.state.web3.yourAddress).call(), 18, 3)
     const totalAvailableToStake = parseInt(tokenBalance, 10) + parseInt(grantBalance, 10)
     const totalAvailableToUnstake = parseInt(stakeBalance, 10) + parseInt(grantStakeBalance, 10)
 
     // Unstake withdrawals
-    const withdrawalIndexes = await stakingContract.getWithdrawals(this.state.web3.yourAddress)
-    const withdrawalDelay = (await stakingContract.withdrawalDelay()).toNumber()
+    const withdrawalIndexes = await stakingContract.methods.getWithdrawals(this.state.web3.yourAddress).call()
+    const withdrawalDelay = (await stakingContract.methods.stakeWithdrawalDelay().call()).toNumber()
     let withdrawals = []
     let withdrawalsTotal = new BigNumber(0)
 
     for(let i=0; i < withdrawalIndexes.length; i++) {
       const withdrawalId = withdrawalIndexes[i].toNumber()
-      const withdrawal = await stakingContract.getWithdrawal(withdrawalId)
+      const withdrawal = await stakingContract.methods.getWithdrawal(withdrawalId).call()
       const withdrawalAmount = displayAmount(withdrawal[1], 18, 3)
       withdrawalsTotal = withdrawalsTotal.plus(withdrawal[1])
       const availableAt = moment(withdrawal[2].toNumber()*1000).add(withdrawalDelay, 'seconds')
@@ -254,30 +257,30 @@ class Main extends Component {
     withdrawalsTotal = displayAmount(withdrawalsTotal, 18, 3)
 
     // Token Grants
-    const grantIndexes = await grantContract.getGrants(this.state.web3.yourAddress)
+    const grantIndexes = await grantContract.methods.getGrants(this.state.web3.yourAddress).call()
     let grantedToYou = []
     let grantedByYou = []
 
     for(let i=0; i < grantIndexes.length; i++) {
-      const grant = await grantContract.grants(grantIndexes[i].toNumber())
-      const grantedAmount = await grantContract.grantedAmount(grantIndexes[i].toNumber())
+      const grant = await grantContract.methods.grants(grantIndexes[i].toNumber()).call()
+      const grantedAmount = await grantContract.methods.grantedAmount(grantIndexes[i].toNumber()).call()
       const data = {
-        'owner': Web3.utils.toChecksumAddress(grant[0]),
-        'beneficiary': Web3.utils.toChecksumAddress(grant[1]),
+        'owner': this.state.web3.utils.toChecksumAddress(grant[0]),
+        'beneficiary': this.state.web3.utils.toChecksumAddress(grant[1]),
         'locked': grant[2],
         'revoked': grant[3],
         'revocable': grant[4],
         'amount': grant[5],
         'grantedAmount': grantedAmount,
-        'end': grant[6].plus(grant[7]),
+        'end': grant[6].add(grant[7]),
         'start': grant[7],
         'cliff': grant[8],
         'released': grant[9],
         'decimals': 18,
         'symbol': 'KEEP',
         'formatted': {
-          'amount': displayAmount(grant[5].toNumber(), 18, 3),
-          'end': moment(((grant[6].plus(grant[7])).toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
+          'amount': displayAmount(grant[5], 18, 3),
+          'end': moment((grant[6].add(grant[7])).mul(1000)).format("MMMM Do YYYY, h:mm:ss a"),
           'start': moment((grant[7].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
           'cliff': moment((grant[8].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
           'released': grant[9].toNumber()
