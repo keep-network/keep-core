@@ -339,6 +339,8 @@ contract KeepGroupImplV1 is Ownable {
      * @param timeoutInitial Timeout in blocks after the initial ticket submission is finished.
      * @param timeoutSubmission Timeout in blocks after the reactive ticket submission is finished.
      * @param timeoutChallenge Timeout in blocks after the period where tickets can be challenged is finished.
+     * @param activeGroupsThreshold is the minimal number of groups that cannot be marked as expired.
+     * @param groupExpirationTimeout is the time in block after which a group expires.
      */
     function initialize(
         address stakingProxy,
