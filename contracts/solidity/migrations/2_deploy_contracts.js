@@ -20,8 +20,8 @@ const groupSize = 5;
 const timeoutInitial = 4;
 const timeoutSubmission = 4;
 const timeoutChallenge = 4;
-const groupExpirationTimeout = 1;
-const numberOfActiveGroups = 1;
+const groupExpirationTimeout = 300;
+const numberOfActiveGroups = 5;
 
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
