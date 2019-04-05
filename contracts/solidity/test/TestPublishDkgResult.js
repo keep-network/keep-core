@@ -113,7 +113,7 @@ contract('TestPublishDkgResult', function(accounts) {
       else signatures += signature.slice(2, signature.length);
     }
 
-    await keepGroupImplViaProxy.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, positions)
+    await keepGroupImplViaProxy.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, {from: selectedParticipants[0]})
     let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
     assert.equal(submitted, true, "DkgResult should should be submitted");
   });
