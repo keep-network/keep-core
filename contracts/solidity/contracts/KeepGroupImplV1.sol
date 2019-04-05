@@ -32,8 +32,8 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutSubmission;
     uint256 internal _timeoutChallenge;
     uint256 internal _submissionStart;
-
     uint256 internal _randomBeaconValue;
+    uint256 internal _dkgVoteTimeout;
 
     uint256[] internal _tickets;
     bytes[] internal _submissions;
@@ -352,7 +352,8 @@ contract KeepGroupImplV1 is Ownable {
         uint256 groupSize,
         uint256 timeoutInitial,
         uint256 timeoutSubmission,
-        uint256 timeoutChallenge
+        uint256 timeoutChallenge,
+        uint256 dkgVoteTimeout
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
@@ -365,6 +366,7 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutInitial = timeoutInitial;
         _timeoutSubmission = timeoutSubmission;
         _timeoutChallenge = timeoutChallenge;
+        _dkgVoteTimeout = dkgVoteTimeout;
     }
 
      /**
@@ -376,7 +378,16 @@ contract KeepGroupImplV1 is Ownable {
         uint256[] memory selected = selectedTickets();
         require(_proofs[selected[memberIndex - 1]].sender == msg.sender, "Member index does not match sender address.");
         require(memberIndex > 0, "Member index must be greater than 0.");
-        return true;
+        require(block.number <= _submissionStart + _dkgVoteTimeout, "voting period is over");
+        if(memberIndex == 1) return true;
+
+        uint T_init = _submissionStart + _timeoutChallenge;
+        uint T_step = 2; //time between eligibility increments Placeholder
+        uint T_dkg = 2 * (T_step);//time approximation for off-chain DKG.
+
+        require(block.number > T_init, "Ticket submission challenge period must be over.");
+
+        return(block.number >= ((T_init + (T_dkg)) + ((memberIndex-2) * T_step)));
     }
 
     /**
