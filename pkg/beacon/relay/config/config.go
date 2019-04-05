@@ -12,15 +12,15 @@ type Chain struct {
 	// TicketInitialSubmissionTimeout is the duration (in blocks) the staker has to submit
 	// tickets that fall under the natural threshold to satisfy the initial
 	// ticket timeout (see group selection, phase 2a).
-	TicketInitialSubmissionTimeout int
+	TicketInitialSubmissionTimeout uint8
 	// TicketReactiveSubmissionTimeout is the duration (in blocks) the staker has to
 	// submit any tickets that did not fall under the natural threshold. This
 	// final chance to submit tickets is called reactive ticket submission
 	// (defined in the group selection algorithm, 2b).
-	TicketReactiveSubmissionTimeout int // TODO: this should be uint8
+	TicketReactiveSubmissionTimeout uint8
 	// TicketChallengeTimeout is the duration (in blocks) the staker has to
 	// submit any challenges for tickets that fail any checks.
-	TicketChallengeTimeout int // TODO: this should be uint8
+	TicketChallengeTimeout uint8
 	// ResultPublicationBlockStep is the duration (in blocks) that has to pass
 	// before group member with the given index is eligible to submit the
 	// result.
