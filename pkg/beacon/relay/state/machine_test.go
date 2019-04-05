@@ -13,11 +13,11 @@ import (
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 )
 
-var testLog map[int][]string
+var testLog map[uint64][]string
 var blockCounter chain.BlockCounter
 
 func TestExecute(t *testing.T) {
-	testLog = make(map[int][]string)
+	testLog = make(map[uint64][]string)
 
 	localChain := chainLocal.Connect(10, 5, big.NewInt(200))
 	blockCounter, _ = localChain.BlockCounter()
@@ -58,7 +58,7 @@ func TestExecute(t *testing.T) {
 		t.Errorf("state is not final [%v]", finalState)
 	}
 
-	expectedTestLog := map[int][]string{
+	expectedTestLog := map[uint64][]string{
 		1: []string{
 			"1-state.testState1-initiate",
 			"1-state.testState1-receive-message_1",
@@ -95,7 +95,7 @@ type testState1 struct {
 	channel     net.BroadcastChannel
 }
 
-func (ts testState1) ActiveBlocks() int { return 2 }
+func (ts testState1) ActiveBlocks() uint64 { return 2 }
 func (ts testState1) Initiate() error {
 	addToTestLog(ts, "initiate")
 	return nil
@@ -114,7 +114,7 @@ type testState2 struct {
 	testState1
 }
 
-func (ts testState2) ActiveBlocks() int { return 2 }
+func (ts testState2) ActiveBlocks() uint64 { return 2 }
 func (ts testState2) Initiate() error {
 	addToTestLog(ts, "initiate")
 	return nil
@@ -133,7 +133,7 @@ type testState3 struct {
 	testState2
 }
 
-func (ts testState3) ActiveBlocks() int { return 2 }
+func (ts testState3) ActiveBlocks() uint64 { return 2 }
 
 func (ts testState3) Initiate() error {
 	addToTestLog(ts, "initiate")
@@ -155,7 +155,7 @@ type testState4 struct {
 	testState3
 }
 
-func (ts testState4) ActiveBlocks() int { return 2 }
+func (ts testState4) ActiveBlocks() uint64 { return 2 }
 func (ts testState4) Initiate() error {
 	addToTestLog(ts, "initiate")
 	return nil

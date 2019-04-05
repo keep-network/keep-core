@@ -95,7 +95,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout,
 		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout,
 		TicketChallengeTimeout:          ticketChallengeTimeout,
-		ResultPublicationBlockStep:      int(resultPublicationBlockStep),
+		ResultPublicationBlockStep:      resultPublicationBlockStep,
 		MinimumStake:                    minimumStake,
 		TokenSupply:                     tokenSupply,
 		NaturalThreshold:                naturalThreshold,

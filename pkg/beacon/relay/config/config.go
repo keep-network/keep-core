@@ -17,10 +17,10 @@ type Chain struct {
 	// submit any tickets that did not fall under the natural threshold. This
 	// final chance to submit tickets is called reactive ticket submission
 	// (defined in the group selection algorithm, 2b).
-	TicketReactiveSubmissionTimeout int
+	TicketReactiveSubmissionTimeout int // TODO: this should be uint8
 	// TicketChallengeTimeout is the duration (in blocks) the staker has to
 	// submit any challenges for tickets that fail any checks.
-	TicketChallengeTimeout int
+	TicketChallengeTimeout int // TODO: this should be uint8
 	// ResultPublicationBlockStep is the duration (in blocks) that has to pass
 	// before group member with the given index is eligible to submit the
 	// result.
@@ -28,7 +28,7 @@ type Chain struct {
 	// T_dkg + (N-1) * T_step
 	// where T_dkg is time for phases 1-12 to complete and T_step is the result
 	// publication block step.
-	ResultPublicationBlockStep int
+	ResultPublicationBlockStep uint8
 	// MinimumStake is an on-chain value representing the minimum necessary
 	// amount a client must lock up to submit a single ticket
 	MinimumStake *big.Int

@@ -155,10 +155,10 @@ func (sm *SubmittingMember) SubmitDKGResult(
 // away, each following member is eligible after pre-defined block step.
 func (sm *SubmittingMember) waitForSubmissionEligibility(
 	blockCounter chain.BlockCounter,
-	blockStep int,
-) (<-chan int, error) {
+	blockStep uint8,
+) (<-chan uint64, error) {
 	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
-		(int(sm.index) - 1) * blockStep, // T_init + (member_index - 1) * T_step
+		(uint64(sm.index) - 1) * uint64(blockStep), // T_init + (member_index - 1) * T_step
 	)
 	if err != nil {
 		return nil, fmt.Errorf("block waiter failure [%v]", err)

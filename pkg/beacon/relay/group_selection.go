@@ -47,14 +47,14 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 
 	submissionTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketReactiveSubmissionTimeout,
+		uint64(n.chainConfig.TicketReactiveSubmissionTimeout),
 	)
 	if err != nil {
 		return err
 	}
 
 	challengeTimeout, err := blockCounter.BlockWaiter(
-		n.chainConfig.TicketChallengeTimeout,
+		uint64(n.chainConfig.TicketChallengeTimeout),
 	)
 	if err != nil {
 		return err
