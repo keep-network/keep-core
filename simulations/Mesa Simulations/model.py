@@ -10,13 +10,16 @@ class Beacon_Model(Model):
         self.schedule = SimultaneousActivation(self)
         self.relay_request = []
 
+        #create relay trigger
+        relay_trigger = agent.Relay_Trigger(1,self)
+        self.schedule.add(relay_trigger)
+
         #create nodes
         for i in range(nodes):
-            node = agent.Node(i, self, token_distribution[i])
+            node = agent.Node(i, self, tickets,  )
             self.schedule.add(node)
         
     def step(self):
         '''Advance the model by one step'''
         #generate relay requests
-        self.relay_request.append(bool(np.random.randint(0,1))
         self.schedule.step()

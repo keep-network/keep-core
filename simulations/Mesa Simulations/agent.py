@@ -12,16 +12,17 @@ class Node(Agent):
     token_amount: int value of tokens staked by node
     node_status: status of node can be - not connected, connected
     """
-    def __init__(self, unique_id, model, token_amt):
+    def __init__(self, unique_id, model, tickets, relay_request):
         super().__init__(unique_id, model)
         self.id = unique_id
-        self.token_amount = token_amt
+        self.num_tickets = 
         self.ticket_list = []
         self.connection_status = "not connected" #change later to event - currently used for node failure process
         self.mainloop_status = "not forked"
         self.stake_status = "not staked"
         self.connection_delay = np.random.randint(0,100) #uniform randomly assigned connection delay step value
         self.mainloop_fork_delay = np.random.randint(0,100) #uniform randomly assigned connection delay step value
+        self.relay = relay_request #relay request object used to trigger the generation of tickets
     
     def step(self):
         #connect to chain
@@ -38,13 +39,17 @@ class Node(Agent):
             elif self.stake_status == "not staked":
                 self.generate_tickets()
 
+        if self.stake_status = "staked" and self.relay.triggered
+
+
+
     def advance(self):
         pass
 
-    def generate_tickets(self, stake_amount):
+    def generate_tickets(self):
         #add code here to create virtual staker distribution
         self.stake_status = "staked"
-        self.ticket_list.append(np.random.random_sample(self.token_amount/stake_amount))
+        self.ticket_list.append(np.random.random_sample(self.num_tickets))
         
     def node_disconnect(self):
         # disconnect the node from the network; causes it to go through the entire reconnection sequence in the next step
@@ -77,3 +82,12 @@ class Group(Agent):
 
     def expire(self):
         pass
+
+class Relay_Trigger(Agent):
+    def __init__(self, unique_id, model):
+        super().__init__(unique_id, model)
+        self.trigger = False
+
+    def step():
+        self.trigger = bool(np.random.randint(0,1)
+
