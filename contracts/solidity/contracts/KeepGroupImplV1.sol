@@ -126,6 +126,12 @@ contract KeepGroupImplV1 is Ownable {
         );
 
         uint256[] memory ordered = orderedTickets();
+
+        require(
+            ordered.length >= _groupSize,
+            "The number of submitted tickets is less than specified group size."
+        );
+
         uint256[] memory selected = new uint256[](_groupSize);
 
         for (uint i = 0; i < _groupSize; i++) {
@@ -162,6 +168,12 @@ contract KeepGroupImplV1 is Ownable {
         );
 
         uint256[] memory ordered = orderedTickets();
+
+        require(
+            ordered.length >= _groupSize,
+            "The number of submitted tickets is less than specified group size."
+        );
+
         address[] memory selected = new address[](_groupSize);
 
         for (uint i = 0; i < _groupSize; i++) {
