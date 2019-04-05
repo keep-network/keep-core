@@ -16,7 +16,7 @@ contract('TestKeepGroupSelection', function(accounts) {
 
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     randomBeaconValue,
-    timeoutInitial, timeoutSubmission, timeoutChallenge,
+    timeoutInitial, timeoutSubmission, timeoutChallenge, dkgSubmissionTimeout,
     keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy,
     owner = accounts[0], magpie = accounts[1], signature, delegation,
@@ -45,6 +45,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     timeoutInitial = 20;
     timeoutSubmission = 50;
     timeoutChallenge = 60;
+    dkgSubmissionTimeout = 300;
 
     randomBeaconValue = bls.groupSignature;
 
@@ -52,7 +53,8 @@ contract('TestKeepGroupSelection', function(accounts) {
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(
-      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
+      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold,
+      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, dkgSubmissionTimeout
     );
 
     await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address);
