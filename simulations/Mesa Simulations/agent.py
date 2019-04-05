@@ -36,7 +36,7 @@ class Node(Agent):
             elif self.mainloop_fork_delay == "not forked":
                 self.mainloop_status = "forked"
             elif self.stake_status == "not staked":
-                self.generate_virtual_stakers()
+                self.generate_tickets()
 
     def advance(self):
         pass
