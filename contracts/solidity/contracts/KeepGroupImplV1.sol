@@ -31,9 +31,10 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutInitial;
     uint256 internal _timeoutSubmission;
     uint256 internal _timeoutChallenge;
+    uint256 internal _timeoutDKG;
+    uint256 internal _timeoutDKGSubmission;
     uint256 internal _submissionStart;
     uint256 internal _randomBeaconValue;
-    uint256 internal _dkgSubmissionTimeout;
 
     uint256[] internal _tickets;
     bytes[] internal _submissions;
@@ -355,6 +356,8 @@ contract KeepGroupImplV1 is Ownable {
      * @param timeoutInitial Timeout in blocks after the initial ticket submission is finished.
      * @param timeoutSubmission Timeout in blocks after the reactive ticket submission is finished.
      * @param timeoutChallenge Timeout in blocks after the period where tickets can be challenged is finished.
+     * @param timeoutDKG Timeout in blocks after which DKG must be complete and its result to be published.
+     * @param timeoutDKGSubmission Timeout in blocks after DKG results submission is finished.
      */
     function initialize(
         address stakingProxy,
@@ -365,7 +368,8 @@ contract KeepGroupImplV1 is Ownable {
         uint256 timeoutInitial,
         uint256 timeoutSubmission,
         uint256 timeoutChallenge,
-        uint256 dkgSubmissionTimeout
+        uint256 timeoutDKG,
+        uint256 timeoutDKGSubmission
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
@@ -378,7 +382,8 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutInitial = timeoutInitial;
         _timeoutSubmission = timeoutSubmission;
         _timeoutChallenge = timeoutChallenge;
-        _dkgSubmissionTimeout = dkgSubmissionTimeout;
+        _timeoutDKG = timeoutDKG;
+        _timeoutDKGSubmission = timeoutDKGSubmission;
     }
 
      /**
@@ -390,13 +395,12 @@ contract KeepGroupImplV1 is Ownable {
         uint256[] memory selected = selectedTickets();
         require(_proofs[selected[memberIndex - 1]].sender == msg.sender, "Member index does not match sender address.");
         require(memberIndex > 0, "Member index must be greater than 0.");
-        require(block.number <= _submissionStart + _dkgSubmissionTimeout, "DKG submission period is over.");
+        require(block.number <= _submissionStart + _timeoutDKGSubmission, "DKG submission period is over.");
 
         uint T_init = _submissionStart + _timeoutChallenge;
         uint T_step = 2; //time between eligibility increments Placeholder
-        uint T_dkg = 2 * (T_step);//time approximation for off-chain DKG.
 
-        return(block.number >= ((T_init + (T_dkg)) + ((memberIndex-2) * T_step)));
+        return(block.number >= (T_init + _timeoutDKG + (memberIndex-2) * T_step));
     }
 
     /**
