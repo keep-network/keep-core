@@ -16,6 +16,7 @@ class Node(Agent):
         super().__init__(unique_id, model)
         self.id = unique_id
         self.token_amount = token_amt
+        self.ticket_list = []
         self.connection_status = "not connected" #change later to event - currently used for node failure process
         self.mainloop_status = "not forked"
         self.stake_status = "not staked"
@@ -40,27 +41,17 @@ class Node(Agent):
     def advance(self):
         pass
 
-    def generate_virtual_stakers(self):
+    def generate_tickets(self, stake_amount):
         #add code here to create virtual staker distribution
         self.stake_status = "staked"
-
+        self.ticket_list.append(np.random.random_sample(self.token_amount/stake_amount))
+        
     def node_disconnect(self):
         # disconnect the node from the network; causes it to go through the entire reconnection sequence in the next step
         self.connection_status = "not connected"
         self.mainloop_status = "not forked"
         self.stake_status = "not staked"
 
-class Virtial_Stakers(Agent):
-    """ Virtual Stakers aka Tickets 
-    Attributes:
-    unique_id: unique int
-    owner_id = id of the node that owns this virtual staker
-    """
-    def __init__(self, unique_id, model, owner_id):
-        super().__init__(unique_id, model)
-        self.id = unique_id
-        self.owner = owner_id
-        self.status = "active"
 
 class Group(Agent):
     """ A Group """
