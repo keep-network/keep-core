@@ -298,7 +298,7 @@ contract KeepGroupImplV1 is Ownable {
         require(submissionCount == indices.length, "Number of signatures and indices don't match.");
 
         bytes memory current; // Current signature to be checked.
-        uint256[] memory ordered = orderedTickets();
+        uint256[] memory selected = selectedTickets();
         for(uint i = 0; i < submissionCount; i++){
             bytes32 submitterId = keccak256(abi.encodePacked(msg.sender, _randomBeaconValue, indices[i]));
 
@@ -308,9 +308,9 @@ contract KeepGroupImplV1 is Ownable {
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
-            require(indices[i] <= ordered.length, "Provided index is out of acceptable tickets bound.");
+            require(indices[i] <= selected.length, "Provided index is out of acceptable tickets bound.");
             require(
-                _proofs[ordered[indices[i] - 1]].sender == recoveredAddress,
+                _proofs[selected[indices[i] - 1]].sender == recoveredAddress,
                 "Signer and recovered address at provided index don't match."
             );
         }
@@ -373,8 +373,8 @@ contract KeepGroupImplV1 is Ownable {
      * @return true if the submitter is eligible. False otherwise.
      */
     function eligibleSubmitter(uint memberIndex) public view returns (bool){
-        uint256[] memory ordered = orderedTickets();
-        require(_proofs[ordered[memberIndex - 1]].sender == msg.sender, "Member index does not match sender address.");
+        uint256[] memory selected = selectedTickets();
+        require(_proofs[selected[memberIndex - 1]].sender == msg.sender, "Member index does not match sender address.");
         require(memberIndex > 0, "Member index must be greater than 0.");
         return true;
     }

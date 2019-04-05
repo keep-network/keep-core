@@ -1,5 +1,6 @@
 import { duration } from './helpers/increaseTime';
 import {bls} from './helpers/data';
+import mineBlocks from './helpers/mineBlocks';
 import generateTickets from './helpers/generateTickets';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
@@ -45,7 +46,7 @@ contract('TestPublishDkgResult', function(accounts) {
     // Initialize Keep Group contract
     minimumStake = 200000;
     groupThreshold = 15;
-    groupSize = 75;
+    groupSize = 20;
     timeoutInitial = 20;
     timeoutSubmission = 100;
     timeoutChallenge = 60;
@@ -84,22 +85,26 @@ contract('TestPublishDkgResult', function(accounts) {
 
   it("should generate signatures and submit a correct result", async function() {
 
-    for(let i = 0; i < 5; i++) {
+    for(let i = 0; i < groupSize; i++) {
       await keepGroupImplViaProxy.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
     }
-    for(let i = 0; i < 2; i++) {
+
+    for(let i = 0; i < groupSize; i++) {
       await keepGroupImplViaProxy.submitTicket(tickets2[i].value, operator2, tickets2[i].virtualStakerIndex, {from: operator2});
     }
-    for(let i = 0; i < 1; i++) {
+
+    for(let i = 0; i < groupSize; i++) {
       await keepGroupImplViaProxy.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
     }
 
-    let orderedParticipants = await keepGroupImplViaProxy.orderedParticipants.call()
+    mineBlocks(timeoutSubmission);
+
+    let selectedParticipants = await keepGroupImplViaProxy.selectedParticipants();
 
     let positions = [];
     let signatures;
-    for(let i = 0; i < orderedParticipants.length; i++) {
-      let callerIndex = accounts.indexOf(orderedParticipants[i]);
+    for(let i = 0; i < selectedParticipants.length; i++) {
+      let callerIndex = accounts.indexOf(selectedParticipants[i]);
       let signature = await web3.eth.sign(resultHash, accounts[callerIndex]);
       positions.push(i+1);
       if (signatures == undefined) signatures = signature
