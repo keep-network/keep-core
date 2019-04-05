@@ -391,13 +391,10 @@ contract KeepGroupImplV1 is Ownable {
         require(_proofs[selected[memberIndex - 1]].sender == msg.sender, "Member index does not match sender address.");
         require(memberIndex > 0, "Member index must be greater than 0.");
         require(block.number <= _submissionStart + _dkgSubmissionTimeout, "DKG submission period is over.");
-        if(memberIndex == 1) return true;
 
         uint T_init = _submissionStart + _timeoutChallenge;
         uint T_step = 2; //time between eligibility increments Placeholder
         uint T_dkg = 2 * (T_step);//time approximation for off-chain DKG.
-
-        require(block.number > T_init, "Ticket submission challenge period must be over.");
 
         return(block.number >= ((T_init + (T_dkg)) + ((memberIndex-2) * T_step)));
     }
