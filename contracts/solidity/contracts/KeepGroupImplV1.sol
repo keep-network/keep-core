@@ -33,7 +33,9 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutChallenge;
     uint256 internal _timeoutDKG;
     uint256 internal _timeoutDKGSubmission;
+    uint256 internal _resultPublicationBlockStep;
     uint256 internal _submissionStart;
+
     uint256 internal _randomBeaconValue;
 
     uint256[] internal _tickets;
@@ -358,6 +360,8 @@ contract KeepGroupImplV1 is Ownable {
      * @param timeoutChallenge Timeout in blocks after the period where tickets can be challenged is finished.
      * @param timeoutDKG Timeout in blocks after which DKG must be complete and its result to be published.
      * @param timeoutDKGSubmission Timeout in blocks after DKG results submission is finished.
+     * @param resultPublicationBlockStep Time in blocks after which member with the given index is eligible
+     * to submit DKG result.
      */
     function initialize(
         address stakingProxy,
@@ -369,7 +373,8 @@ contract KeepGroupImplV1 is Ownable {
         uint256 timeoutSubmission,
         uint256 timeoutChallenge,
         uint256 timeoutDKG,
-        uint256 timeoutDKGSubmission
+        uint256 timeoutDKGSubmission,
+        uint256 resultPublicationBlockStep
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
@@ -384,6 +389,7 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutChallenge = timeoutChallenge;
         _timeoutDKG = timeoutDKG;
         _timeoutDKGSubmission = timeoutDKGSubmission;
+        _resultPublicationBlockStep = resultPublicationBlockStep;
     }
 
      /**
@@ -398,9 +404,8 @@ contract KeepGroupImplV1 is Ownable {
         require(block.number <= _submissionStart + _timeoutDKGSubmission, "DKG submission period is over.");
 
         uint T_init = _submissionStart + _timeoutChallenge;
-        uint T_step = 2; //time between eligibility increments Placeholder
 
-        return(block.number >= (T_init + _timeoutDKG + (memberIndex-2) * T_step));
+        return(block.number >= (T_init + _timeoutDKG + (memberIndex-2) * _resultPublicationBlockStep));
     }
 
     /**
@@ -468,6 +473,14 @@ contract KeepGroupImplV1 is Ownable {
      */
     function ticketChallengeTimeout() public view returns (uint256) {
         return _timeoutChallenge;
+    }
+
+    /**
+     * @dev resultPublicationBlockStep is the duration (in blocks) after which
+     * member with the given index is eligible to submit DKG result.
+     */
+    function resultPublicationBlockStep() public view returns (uint256) {
+        return _resultPublicationBlockStep;
     }
 
     /**

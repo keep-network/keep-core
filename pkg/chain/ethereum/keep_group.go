@@ -167,6 +167,10 @@ func (kg *keepGroup) TicketChallengeTimeout() (int, error) {
 	return int(ticketChallengeTimeout.Int64()), nil
 }
 
+func (kg *keepGroup) ResultPublicationBlockStep() (*big.Int, error) {
+	return kg.caller.ResultPublicationBlockStep(kg.callerOpts)
+}
+
 func (kg *keepGroup) MinimumStake() (*big.Int, error) {
 	return kg.caller.MinimumStake(kg.callerOpts)
 }

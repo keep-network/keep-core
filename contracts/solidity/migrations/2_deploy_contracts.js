@@ -22,6 +22,7 @@ const timeoutSubmission = 4;
 const timeoutChallenge = 4;
 const timeoutDKG = 4;
 const timeoutDKGSubmission = 4;
+const resultPublicationBlockStep = 3;
 
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
@@ -44,7 +45,7 @@ module.exports = async function(deployer) {
   const keepGroup = await KeepGroupImplV1.at(KeepGroup.address);
   await keepGroup.initialize(
     StakingProxy.address, KeepRandomBeacon.address, minStake, groupThreshold, groupSize,
-    timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, timeoutDKGSubmission
+    timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, timeoutDKGSubmission, resultPublicationBlockStep
   );
   // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
   await keepRandomBeacon.initialize(

@@ -228,6 +228,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 			TicketInitialSubmissionTimeout:  2,
 			TicketReactiveSubmissionTimeout: 3,
 			TicketChallengeTimeout:          4,
+			ResultPublicationBlockStep:      3,
 			MinimumStake:                    minimumStake,
 			TokenSupply:                     tokenSupply,
 			NaturalThreshold:                naturalThreshold,
@@ -342,11 +343,23 @@ func (c *localChain) SubmitDKGResult(
 		BlockNumber:    uint64(currentBlock),
 	}
 
+	groupRegistrationEvent := &event.GroupRegistration{
+		GroupPublicKey: resultToPublish.GroupPublicKey[:],
+		RequestID:      requestID,
+		BlockNumber:    uint64(currentBlock),
+	}
+
 	c.handlerMutex.Lock()
 	for _, handler := range c.resultSubmissionHandlers {
 		go func(handler func(*event.DKGResultSubmission), dkgResultPublication *event.DKGResultSubmission) {
 			handler(dkgResultPublicationEvent)
 		}(handler, dkgResultPublicationEvent)
+	}
+
+	for _, handler := range c.groupRegisteredHandlers {
+		go func(handler func(*event.GroupRegistration), groupRegistration *event.GroupRegistration) {
+			handler(groupRegistrationEvent)
+		}(handler, groupRegistrationEvent)
 	}
 	c.handlerMutex.Unlock()
 

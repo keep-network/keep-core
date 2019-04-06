@@ -3,21 +3,21 @@
 # Provider Initialization Example
 
 [ethereum]
-  URL                = "ws://10.102.100.98:8546"
-  URLRPC             = "http://10.102.100.98:8545"
+  URL                = "ws://eth-tx-node.default.svc.cluster.local:8546"
+  URLRPC             = "http://eth-tx-node.default.svc.cluster.local:8545"
 
 [ethereum.account]
-  Address            = "0x5772807fb7cc8a641dfd96f3af8d1489954ee4b0"
+  Address            = "0xC1382cAf9DA1B1EdA32b570A9F6C81C4DB067020"
   KeyFile            = "/mnt/eth-data/eth-keyfile"
 
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0xb913b3d6E14B51e45062113C2e7b6d83955a231A"
+  KeepRandomBeacon = "0x439f517ccb968e5cb4Bb48B6888645C57906B084"
   # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0xAA8EBDedE631f8a38F8F27475B724acdbf7A3b1c"
+  KeepGroup = "0xAb5D2d616EB717cA527a946517eA70Fdc3e3D55b"
   # StakingProxy
-  Staking = "0x22DEe6b2d61Afa48EFeFc494780a501Ab1605d44"
+  Staking = "0xca59725bC84196e90BBE295460Ae90f11164Fe13"
 
 [LibP2P]
-  Peers = ["/ip4/10.102.100.142/tcp/3919/ipfs/16Uiu2HAkzJ9a9DNJs1q82EHDYUZgFwuhAhBG2eijoDrQFhqJ8yAC"]
+  Peers = ["/ip4/10.102.100.142/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r"]
   Port = 3925
