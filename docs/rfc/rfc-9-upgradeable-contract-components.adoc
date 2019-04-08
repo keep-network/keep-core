@@ -1,0 +1,311 @@
+:toc: macro
+
+= RFC 9: Upgrading contracts by separate components
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+Securely upgradeable work contracts
+are important for protecting stakers' tokens.
+However, deploying a new contract on every upgrade,
+which stakers will then individually authorize,
+makes migrating between implementations difficult.
+Common ways of upgrading contracts,
+such as the "eternal storage" pattern,
+are incompatible with individual upgrade authorization.
+
+=== Current Functionality
+
+The current design for upgrading work contracts
+is to deploy a new version on every upgrade,
+and wait for stakers to start operating on it.
+Older versions would by necessity keep existing
+in parallel with newer ones,
+and migrating state between versions
+is difficult if not impossible.
+It is possible that the difficulty of migration
+would lead customers to prefer the old version with established state.
+
+== Proposal
+
+The eternal storage pattern can be implemented
+on individually authorizable work contracts
+by dividing the contracts into a security-critical back-end
+and a front-end which provides services to customers.
+A single front-end contract
+can abstract over multiple different back-end contracts,
+permitting secure upgrades with reduced or minimal disruption to customers.
+
+=== Goal
+
+This RFC seeks to provide a method for upgrading contracts securely,
+maintaining individual staker authorization for all contracts
+so any contract touching staked tokens
+must be pre-approved by the respective staker or their appointed agent.
+The upgrade process should permit gradual improvements
+without disrupting users or stakers,
+and it should deal gracefully with major changes.
+
+=== Implementation
+
+For each service provided on the Keep network,
+the security-critical components are identified
+and separated from the rest of the contract
+as a _back-end_ contract.
+The _front-end_ contract
+can abstract over multiple different versions of the back-end,
+presenting a unified interface to customers.
+Behind that interface,
+security-critical elements are delegated to back-end contracts.
+
+==== Back-end
+
+The back-end contracts handle all operations
+that may have an impact on staked tokens.
+
+Each back-end contract is an independent "microservice",
+keeping its own state on security-critical data.
+The backend contracts provide simplified functionality
+that is stripped to the minimum necessary
+for security and correct incentives.
+
+Each backend contract is associated with one or more front-end contracts
+the backend contract provides functionality for.
+Only these specified frontend contracts
+may use the backend contract's interface.
+When the interface is designed,
+the frontend contract must be treated as untrusted
+and the backend must maintain correctness
+regardless of the frontend input.
+
+When a backend contract performs a service,
+it is paid for the service provided.
+The payment is distributed according to the backend's own rules.
+
+==== Front-end
+
+Front-end contracts use the basic functionality
+performed by backend contracts,
+to provide useful services to customers.
+
+Front-end contracts receive requests for services from customers,
+and divide the provided service to backend and frontend components.
+Elements that are critical for security and incentives
+are delegated to a backend contract,
+while other parts of the work are performed in the frontend.
+
+Frontend contracts can use
+multiple different versions of back-end contracts
+to perform the backend functions.
+The frontend keeps shared state which is not security-critical.
+
+==== Back-end upgrades
+
+A backend contract is upgraded by deploying a new version,
+and adding it to the available backends of a frontend contract.
+As stakers authorize the new backend,
+the frontend can gradually migrate
+to use the new backend over older versions.
+
+Backend contracts can be upgraded
+without losing frontend contract state,
+but critical state is held within the backend contract
+and cannot be migrated.
+
+==== Front-end upgrades
+
+Because backend contracts are designed
+to be independent of frontend contract security and correctness,
+there is much more leeway to upgrade frontends.
+
+Frontend contracts can be directly upgradeable,
+e.g. with the eternal storage pattern;
+they may be immutable,
+only accepting new backend versions;
+or they may implement a similar pattern
+in the direction of customers,
+unifying core functionality
+between immutable public interface contracts.
+
+Because backend contracts can serve multiple frontends,
+immutable frontend contracts can be upgraded
+by deploying the new frontend version,
+along with a new backend version
+which can serve both the new and the old frontend.
+The old frontend can migrate work onto the new backend,
+remaining perfectly functional while the new frontend is spun up.
+
+==== Staking contract upgrades
+
+Staking contracts can be upgraded
+by deploying a new version and waiting for stakers to migrate
+by withdrawing their stakes on the old contract
+and staking them again on the new one.
+Migrating between staking contracts requires
+waiting the unstaking period
+and suffering the associated opportunity cost,
+but staking partial amounts can mitigate the impact
+as overall network revenue is not expected to change.
+
+Each backend contract needs to identify
+which staking contracts it accepts.
+When a new staking contract is deployed,
+all backend contracts need to be upgraded
+to a version recognizing the new staking contract,
+either exclusively or in addition to the old one.
+When a sufficient amount of time has elapsed
+and stakers have had the opportunity to migrate,
+support for the old staking contract can be dropped.
+
+=== Limitations
+
+Untrusted frontend contracts mean
+that security-critical state must be kept in the backend.
+If the network service has complex security needs,
+the backend may have to implement most of the work logic.
+
+Security-critical state cannot be migrated between backends;
+a new backend has to start from a blank slate.
+Inherently long-running operations
+present a limit to how rapidly the system can be upgraded.
+
+=== Example: Random Beacon
+
+The random beacon generates random numbers in response to requests,
+using BLS threshold signatures on some specific input.
+The signatures are generated by signing groups
+that have been created using random sortition
+from all eligible and active stakers.
+Rewards and punishments are used to incentivize correct behavior.
+
+To split the random beacon into a frontend-backend design,
+the security-critical elements need to be identified.
+
+In this case the backend needs to handle
+group creation and expiration,
+BLS signature verification,
+and incentives.
+
+Handling entry requests and pricing;
+determining the signing input for generating new entries;
+calling callbacks;
+and requesting the creation of new groups
+are responsibilities that are not critical for beacon integrity
+from the perspective of the stakers.
+These can be performed by the front-end
+without individual staker authorization of upgrades.
+
+==== Back-end
+
+The back-end for the random beacon
+provides the following interface to the front-end:
+
+`create_group(payment)`::
+Create a new group when requested by the front-end,
+selecting members using pseudorandom sortition,
+and performing DKG.
+The back-end does not accept input from the front-end,
+but instead uses its own pseudorandom seed,
+to ensure that group composition cannot be manipulated.
+`payment` must exceed a minimum amount
+and is used to cover gas fees and to reward stakers.
+
+`sign(entry_id, group_input, signing_input, payment)`::
+Use `group_input` to select a signing group,
+and generate a valid BLS threshold signature for `signing_input`.
+Once generated, use `payment` to reward stakers.
+`payment` must exceed a set minimum value
+that covers necessary gas fees.
+When the entry is created,
+the back-end calls the front-end contract with the new entry,
+using `entry_id` to identify the entry.
+
+Behind this interface,
+the back-end contract tracks its own groups, their members
+and their threshold public keys.
+The front-end contract trusts the back-end contract
+to only provide valid entries when given specific inputs.
+Alternatively the back-end could provide
+the associated public key so the entry can be validated,
+but even then the back-end needs to be trusted
+to provide a public key corresponding to a random valid group.
+
+==== Front-end
+
+The front-end for the random beacon
+handles customer-facing features and ties the back-ends together.
+The interface of the front-end towards the back-end is:
+
+`group_created(n_groups)`::
+The call to `create_group()` has finished
+(successfully or unsuccessfully)
+and expired groups have been removed.
+The backend now has `n_groups` active.
+
+`entry_created(entry_id, entry)`::
+The previous call for the backend to `sign(entry_id, ...)`
+completed successfully,
+resulting in the new `entry`.
+
+The front-end keeps a list of back-ends
+along with the number of active groups in each.
+
+When receiving a request,
+the front-end determines what values should be
+the group selection input
+and the signing input.
+The group selection input is used to select a backend,
+weighted by the number of active groups on each,
+to serve the request.
+
+When the backend is determined,
+the group selection input and signing input are passed to it
+along with an appropriate payment.
+When the backend returns a valid entry with `entry_created(...)`,
+the front-end stores it and calls the customer-specified callback.
+
+If a new group should be created,
+the frontend determines which backend should create one
+(the most recent one, or a random one weighted by recent-ness),
+and calls `create_group()` on the selected backend
+with an appropriate payment.
+Once the backend has finished DKG and expired old groups,
+it returns the new number of active groups using `group_created(n_groups)`.
+
+Unlike the backend which needs to maintain integrity
+for arbitrary, malicious inputs,
+the frontend relies heavily on trusting the backend contracts.
+This is acceptable because the back-ends are known, unchangeable code,
+and the front-end only has access to what customers have paid for entries;
+boycotting a compromised or malfunctioning frontend
+and deploying a new one
+is sufficient to mitigate attacks or errors.
+
+== Future Work
+
+An exact architecture for front-end contract upgrades
+is not specified.
+The front-end upgrade process should be resilient to minor compromise
+and relying on a global master key may be undesirable
+as a single point of failure.
+
+For greater assurance towards customers,
+the front-ends could be made immutable
+in a manner similar to the back-ends.
+When a customer uses a specific frontend to request an entry,
+they could trust that only that frontend
+and its associated backends
+will be involved in the generation of their entry.
+However, this would reduce the ability to maintain
+a global "canonical" chain of entries,
+each linked to the previous ones.
+
+[bibliography]
+== Related Links
+
+- [System upgrade handling](https://github.com/keep-network/keep-core/issues/133)
+- [Specify contract upgrade scheme](https://github.com/keep-network/keep-core/issues/725)
+- [RFC 4: Secure upgrades for contracts operating staked balances](https://github.com/keep-network/keep-core/pull/446)
