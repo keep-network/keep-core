@@ -15,6 +15,7 @@ class Node(Agent):
     def __init__(self, unique_id, model, tickets):
         super().__init__(unique_id, model)
         self.id = unique_id
+        self.type = "node"
         self.num_tickets = tickets
         self.ticket_list = []
         self.connection_status = "not connected" #change later to event - currently used for node failure process
@@ -22,6 +23,7 @@ class Node(Agent):
         self.stake_status = "not staked"
         self.connection_delay = np.random.randint(0,100) #uniform randomly assigned connection delay step value
         self.mainloop_fork_delay = np.random.randint(0,100) #uniform randomly assigned connection delay step value
+        self.time = self.model.time
     
     def step(self):
         #connect to chain
@@ -43,7 +45,7 @@ class Node(Agent):
             self.generate_tickets()
 
     def generate_tickets(self):
-        #add code here to create virtual staker distribution
+        #generates tickets using the uniform distribution
         self.stake_status = "staked"
         self.ticket_list.append(np.random.random_sample(self.num_tickets))
         
@@ -58,10 +60,13 @@ class Group(Agent):
     """ A Group """
     def __init__(self, unique_id, model, members, expiry, sign_threshold):
         super().__init__(unique_id, model)
+        self.id = unique_id
+        self.type = "group"
         self.members = members
         self.last_signature = "none"
         self.status = "Active"
         self.expiry = expiry # of steps before expiration
+        self.time = self.model.time
 
     def step(self):
         """ At each step check if the group as expired """
