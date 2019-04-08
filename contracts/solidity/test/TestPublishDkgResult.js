@@ -105,8 +105,7 @@ contract('TestPublishDkgResult', function(accounts) {
     let positions = [];
     let signatures;
     for(let i = 0; i < selectedParticipants.length; i++) {
-      let callerIndex = accounts.indexOf(selectedParticipants[i]);
-      let signature = await web3.eth.sign(resultHash, accounts[callerIndex]);
+      let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
       positions.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
