@@ -15,7 +15,7 @@ class Node(Agent):
     def __init__(self, unique_id, model, tickets, relay_request):
         super().__init__(unique_id, model)
         self.id = unique_id
-        self.num_tickets = 
+        self.num_tickets = tickets
         self.ticket_list = []
         self.connection_status = "not connected" #change later to event - currently used for node failure process
         self.mainloop_status = "not forked"
@@ -39,9 +39,8 @@ class Node(Agent):
             elif self.stake_status == "not staked":
                 self.generate_tickets()
 
-        if self.stake_status = "staked" and self.relay.triggered
-
-
+        if self.stake_status == "staked" and self.relay.trigger:
+            self.generate_tickets()
 
     def advance(self):
         pass
@@ -60,34 +59,17 @@ class Node(Agent):
 
 class Group(Agent):
     """ A Group """
-    def __init__(self, unique_id, model):
+    def __init__(self, unique_id, model, members, expiry, sign_threshold):
         super().__init__(unique_id, model)
-        self.active_members = []
+        self.members = members
         self.last_signature = "none"
+        self.status = "Active"
+        self.expiry = expiry # of steps before expiration
 
     def step(self):
-        """ At each step check how many members are still active """
-        pass
+        """ At each step check if the group as expired """
+        self.expiry -=1
+        if self.expiry == 0: 
+            self.status = "Expired"
 
-    def register_members(self, virtual_staker_list):
-        """detect which members with winning tickets are active and add them to the list"""
-        pass
-        
-    def sign(self, sign_threshold):
-        """Check if enough members are available to perform a signature using the sign_threshold, and then perform a signature"""
-        if len(self.active_members)<sign_threshold:
-            self.last_signature = "failed"
-        else:
-            self.last_signature = "success"
-
-    def expire(self):
-        pass
-
-class Relay_Trigger(Agent):
-    def __init__(self, unique_id, model):
-        super().__init__(unique_id, model)
-        self.trigger = False
-
-    def step():
-        self.trigger = bool(np.random.randint(0,1)
 

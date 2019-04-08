@@ -14,9 +14,12 @@ class Beacon_Model(Model):
         relay_trigger = agent.Relay_Trigger(1,self)
         self.schedule.add(relay_trigger)
 
+        #create ticket distribution
+        tickets = np.ones(nodes)*10 #this can be any distribution we decide
+
         #create nodes
         for i in range(nodes):
-            node = agent.Node(i, self, tickets,  )
+            node = agent.Node(i, self, tickets[i], relay_trigger)
             self.schedule.add(node)
         
     def step(self):
