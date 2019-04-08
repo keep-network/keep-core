@@ -19,7 +19,7 @@ jobs:
       - run:
           name: Generate solidity docs
           command: |
-            BRANCH=$(sed -e 's/\//\\\//g' <<< $CIRCLE_BRANCH)
+            BRANCH=$(echo $CIRCLE_BRANCH | sed -e 's/\//\\\//g')
             echo "Add baseUrl http://docs.keep.network/$BRANCH/solidity/ to .doxityrc"
             sed -i '2i "baseUrl": "http://docs.keep.network/'$BRANCH'/solidity/",' contracts/solidity/docs/.doxityrc
             echo "Add link prefix /$BRANCH/solidity to .doxityrc"
