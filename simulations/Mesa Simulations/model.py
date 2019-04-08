@@ -5,17 +5,20 @@ import numpy as np
 
 class Beacon_Model(Model):
     """The model"""
-    def __init__(self, nodes, ticket_distribution, active_group_threshold, group_size, signature_threshold, group_expiry):
+    def __init__(self, nodes, ticket_distribution, active_group_threshold, group_size, signature_threshold, group_expiry, group_formation_threshold):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
         self.active_groups = []
+        self.active_nodes = []
         self.active_group_threshold = active_group_threshold
         self.signature_threshold = signature_threshold
         self.group_size = group_size
         self.ticket_distribution = ticket_distribution
         self.newest_group_id = 0
         self.group_expiry = group_expiry
+        self.bootstrap_complete = False # indicates when the initial active group list bootstrap is complete
+        self.group_formation_threshold = group_formation_threshold # min nodes required to form a group
         self.timer = 0
 
         #create nodes
@@ -23,14 +26,17 @@ class Beacon_Model(Model):
             node = agent.Node(i, self, self.ticket_distribution[i])
             self.schedule.add(node)
 
-        #bootstrap active groups
-        for i in range(active_group_threshold):
-            self.active_groups.append(self.group_registration())
-            #print(self.active_groups[i].id)
-
 
     def step(self):
         '''Advance the model by one step'''
+        #bootstrap active groups as nodes become available. Can only happen once enough nodes are online
+        if self.bootstrap_complete = False:
+            if len(self.active_nodes)>
+            for i in range(self.active_group_threshold):
+                self.active_groups.append(self.group_registration())
+                #print(self.active_groups[i].id)
+            
+
         #check how many active groups are available
         self.refresh_active_list()
         print('number of active groups = ' + str(len(self.active_groups)))
@@ -99,6 +105,14 @@ class Beacon_Model(Model):
                 temp_list.append(group)
         
         self.active_groups = temp_list
+
+    def refresh_connected_nodes_list(self):
+        temp_active_node_list = []
+        for agent in self.schedule.agents:
+            if agent.type == "node":
+                if agent.connection_status == "forked": 
+                    temp_active_node_list.append(agent) #adds the node to the active list only if it is in the forked state
+        self.active_nodes = temp_active_node_list
 
 
 

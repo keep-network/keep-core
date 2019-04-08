@@ -40,6 +40,9 @@ class Node(Agent):
             elif self.stake_status == "not staked":
                 self.generate_tickets()
 
+        #simulate node failure
+        
+
     def advance(self):
         if self.model.relay_request:
             self.generate_tickets()
