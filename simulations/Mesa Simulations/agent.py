@@ -12,7 +12,7 @@ class Node(Agent):
     token_amount: int value of tokens staked by node
     node_status: status of node can be - not connected, connected
     """
-    def __init__(self, unique_id, model, tickets, relay_request):
+    def __init__(self, unique_id, model, tickets):
         super().__init__(unique_id, model)
         self.id = unique_id
         self.num_tickets = tickets
@@ -22,7 +22,6 @@ class Node(Agent):
         self.stake_status = "not staked"
         self.connection_delay = np.random.randint(0,100) #uniform randomly assigned connection delay step value
         self.mainloop_fork_delay = np.random.randint(0,100) #uniform randomly assigned connection delay step value
-        self.relay = relay_request #relay request object used to trigger the generation of tickets
     
     def step(self):
         #connect to chain
@@ -39,11 +38,9 @@ class Node(Agent):
             elif self.stake_status == "not staked":
                 self.generate_tickets()
 
-        if self.stake_status == "staked" and self.relay.trigger:
-            self.generate_tickets()
-
     def advance(self):
-        pass
+        if self.model.relay_request:
+            self.generate_tickets()
 
     def generate_tickets(self):
         #add code here to create virtual staker distribution
@@ -72,4 +69,5 @@ class Group(Agent):
         if self.expiry == 0: 
             self.status = "Expired"
 
+        
 
