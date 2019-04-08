@@ -28,10 +28,6 @@ class Beacon_Model(Model):
             self.active_groups.append(self.group_registration())
             print(self.active_groups[i].id)
 
-        #add groups to the scheduler
-        for group in self.active_groups:
-            self.schedule.add(group)
-
 
     def step(self):
         '''Advance the model by one step'''
@@ -39,10 +35,16 @@ class Beacon_Model(Model):
         self.refresh_active_list()
         print(len(self.active_groups))
         #generate relay requests
-        self.relay_request = bool(np.random.randint(0,1))
+        self.relay_request = np.random.choice([True,False])
 
         if self.relay_request:
-            print(self.active_groups[np.random.randint(len(self.active_groups))]) # print a random group from the active list- change this to signing mechanism later
+            try:
+                print('selecting group at random')
+                print(self.active_groups[np.random.randint(len(self.active_groups))]) # print a random group from the active list- change this to signing mechanism later
+            except:
+                print('no active groups available')
+
+            print('registering new group')
             self.group_registration()
         else:
             print("No relay request")
@@ -81,6 +83,9 @@ class Beacon_Model(Model):
         #create a group agent which can track expiry, sign, etc
         group_object = agent.Group(self.newest_group_id, self, group_members, self.group_expiry, self.signature_threshold)
 
+        #add group to schedule
+        self.schedule.add(group_object)
+
         return group_object
 
     def refresh_active_list(self):
@@ -91,6 +96,8 @@ class Beacon_Model(Model):
                 temp_list.append(group)
         
         self.active_groups = temp_list
+
+
 
 
 
