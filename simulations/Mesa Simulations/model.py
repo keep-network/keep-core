@@ -12,7 +12,7 @@ class Beacon_Model(Model):
         self.active_groups = []
         self.active_group_threshold = active_group_threshold
         self.group_size = group_size
-        self.time = 0
+        self.timer = 0
 
         #create ticket distribution
         tickets = np.ones(nodes)*10 #this can be any distribution we decide
@@ -36,7 +36,7 @@ class Beacon_Model(Model):
             self.group_registration()
         else:
             print("No relay request")
-        self.time += 1
+        self.timer += 1
 
         #advance the agents
         self.schedule.step()
@@ -54,7 +54,7 @@ class Beacon_Model(Model):
         # make each node generate tickets and save them to a list
         for node in node_list:
             node.generate_tickets()
-            ticket_list.append(node.ticket_list[self.time])
+            ticket_list.append(node.ticket_list[self.timer])
 
         #iteratively add group members by lowest value
         while len(group_members) < self.group_size:

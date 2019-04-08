@@ -23,7 +23,7 @@ class Node(Agent):
         self.stake_status = "not staked"
         self.connection_delay = np.random.randint(0,100) #uniform randomly assigned connection delay step value
         self.mainloop_fork_delay = np.random.randint(0,100) #uniform randomly assigned connection delay step value
-        self.time = self.model.time
+        self.timer = self.model.timer
     
     def step(self):
         #connect to chain
@@ -66,7 +66,7 @@ class Group(Agent):
         self.last_signature = "none"
         self.status = "Active"
         self.expiry = expiry # of steps before expiration
-        self.time = self.model.time
+        self.timer = self.model.timer
 
     def step(self):
         """ At each step check if the group as expired """
