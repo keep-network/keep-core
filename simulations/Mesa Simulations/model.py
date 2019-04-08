@@ -32,6 +32,7 @@ class Beacon_Model(Model):
     def step(self):
         '''Advance the model by one step'''
         #check how many active groups are available
+        self.refresh_active_list()
         print(len(self.active_groups))
         #generate relay requests
         self.relay_request = bool(np.random.randint(0,1))
@@ -78,8 +79,16 @@ class Beacon_Model(Model):
 
         return group_object
 
-    def refresh_active_list():
+    def refresh_active_list(self):
+        temp_list = []
+
+        for group in self.active_groups:
+            if group.status == "Active":
+                temp_list.append(group)
         
+        self.active_groups = temp_list
+
+
 
         
 
