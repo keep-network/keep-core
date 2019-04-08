@@ -67,6 +67,7 @@ class Group(Agent):
         self.status = "Active"
         self.expiry = expiry # of steps before expiration
         self.timer = self.model.timer
+        self.model.newest_group_id +=1
 
     def step(self):
         """ At each step check if the group as expired """

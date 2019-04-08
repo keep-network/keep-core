@@ -5,26 +5,34 @@ import numpy as np
 
 class Beacon_Model(Model):
     """The model"""
-    def __init__(self, nodes, ticket_distribution, active_group_threshold, group_size):
+    def __init__(self, nodes, ticket_distribution, active_group_threshold, group_size, signature_threshold):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
         self.active_groups = []
         self.active_group_threshold = active_group_threshold
+        self.signature_threshold = signature_threshold
         self.group_size = group_size
+        self.ticket_distribution = ticket_distribution
+        self.newest_group_id = 0
+        self.group_expiry = 10 #steps
         self.timer = 0
 
         #create nodes
         for i in range(nodes):
-            node = agent.Node(i, self, ticket_distribution[i])
+            node = agent.Node(i, self, self.ticket_distribution[i])
             self.schedule.add(node)
 
         #bootstrap active groups
         for i in range(active_group_threshold):
-            self.group_registration()
+            self.active_groups.append(self.group_registration())
+            print(self.active_groups[i].id)
+
 
     def step(self):
         '''Advance the model by one step'''
+        #check how many active groups are available
+        print(len(self.active_groups))
         #generate relay requests
         self.relay_request = bool(np.random.randint(0,1))
 
@@ -43,24 +51,32 @@ class Beacon_Model(Model):
         ticket_list = []
         group_members = []
 
+
         # find all the agents that are nodes and add them to a list
         for i in self.schedule.agents:
             if i.type == "node":
                 node_list.append(i)
 
         # make each node generate tickets and save them to a list
+        max_tickets = int(max(self.ticket_distribution))
         for node in node_list:
+            adjusted_ticket_list = []
             node.generate_tickets()
-            ticket_list.append(node.ticket_list[self.timer])
+            adjusted_ticket_list = np.concatenate([node.ticket_list[self.newest_group_id],np.ones(int(max_tickets)-len(node.ticket_list[self.newest_group_id]))])  #adds 2's the ends of the list so that the 2D array can have equal length rows
+            ticket_list.append(adjusted_ticket_list)
 
         #iteratively add group members by lowest value
         while len(group_members) <= self.group_size:
+
             min_index = np.where(ticket_list == np.min(ticket_list)) # find the index of the minimum value in the array
             for i,index in enumerate(min_index[0]): #if there are repeated values, iterate through and add the indexes to the group
                 group_members.append(index)
                 ticket_list[index][min_index[1][i]] = 2 # Set the value of the ticket to a high value so it doesn't get counted again
+        
+        #create a group agent which can track expiry, sign, etc
+        group_object = agent.Group(self.newest_group_id, self, group_members, self.group_expiry, self.signature_threshold)
 
-        return group_members
+        return group_object
 
         
 
