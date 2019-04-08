@@ -16,7 +16,7 @@ class Node(Agent):
         super().__init__(unique_id, model)
         self.id = unique_id
         self.type = "node"
-        self.num_tickets = tickets
+        self.num_tickets = int(tickets)
         self.ticket_list = []
         self.connection_status = "not connected" #change later to event - currently used for node failure process
         self.mainloop_status = "not forked"

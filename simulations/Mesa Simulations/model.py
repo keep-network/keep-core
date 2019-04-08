@@ -5,7 +5,7 @@ import numpy as np
 
 class Beacon_Model(Model):
     """The model"""
-    def __init__(self, nodes, token_distribution, active_group_threshold, group_size):
+    def __init__(self, nodes, ticket_distribution, active_group_threshold, group_size):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
@@ -14,12 +14,9 @@ class Beacon_Model(Model):
         self.group_size = group_size
         self.timer = 0
 
-        #create ticket distribution
-        tickets = np.ones(nodes)*10 #this can be any distribution we decide
-
         #create nodes
         for i in range(nodes):
-            node = agent.Node(i, self, tickets[i])
+            node = agent.Node(i, self, ticket_distribution[i])
             self.schedule.add(node)
 
         #bootstrap active groups
@@ -57,7 +54,7 @@ class Beacon_Model(Model):
             ticket_list.append(node.ticket_list[self.timer])
 
         #iteratively add group members by lowest value
-        while len(group_members) < self.group_size:
+        while len(group_members) <= self.group_size:
             min_index = np.where(ticket_list == np.min(ticket_list)) # find the index of the minimum value in the array
             for i,index in enumerate(min_index[0]): #if there are repeated values, iterate through and add the indexes to the group
                 group_members.append(index)
