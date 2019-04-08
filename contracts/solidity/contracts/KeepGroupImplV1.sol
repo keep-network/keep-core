@@ -31,7 +31,7 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutInitial;
     uint256 internal _timeoutSubmission;
     uint256 internal _timeoutChallenge;
-    uint256 internal _timeoutDKG;
+    uint256 internal _timeDKG;
     uint256 internal _resultPublicationBlockStep;
     uint256 internal _submissionStart;
     uint256 internal _randomBeaconValue;
@@ -43,6 +43,8 @@ contract KeepGroupImplV1 is Ownable {
     mapping (uint256 => bool) internal _dkgResultPublished;
 
     // Store unique hash of a member who submitted DKG result.
+    // The unique hash is made of submitter member index, address
+    // and the last random beacon value.
     mapping (bytes32 => bool) internal _submittedDkg;
 
     struct Proof {
@@ -253,7 +255,7 @@ contract KeepGroupImplV1 is Ownable {
 
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
-     * @param memberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
+     * @param submitterMemberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
      * @param requestId Relay request ID associated with DKG protocol execution.
      * @param groupPubKey Group public key generated as a result of protocol execution.
      * @param disqualified bytes representing disqualified group members; 1 at the specific index
@@ -263,26 +265,26 @@ contract KeepGroupImplV1 is Ownable {
      * that the member has been marked as inactive. Indexes reflect positions of members in the
      * group, as outputted by the group selection protocol.
      * @param signatures Concatenation of signer resultHashes collected off-chain
-     * @param positions indices of members corresponding to each signature
+     * @param signingMembersIndexes indices of members corresponding to each signature
      */
     function submitDkgResult(
         uint256 requestId,
-        uint256 memberIndex,
+        uint256 submitterMemberIndex,
         bytes memory groupPubKey,
         bytes memory disqualified,
         bytes memory inactive,
         bytes memory signatures,
-        uint[] memory positions
+        uint[] memory signingMembersIndexes
     ) public {
-        require(eligibleSubmitter(memberIndex), "User is not eligible to submit the result.");
+        require(eligibleSubmitter(submitterMemberIndex), "User is not eligible to submit the result.");
 
         bytes32 resultHash = keccak256(abi.encodePacked(disqualified, inactive, groupPubKey));
-        verifySignatures(signatures, positions, resultHash);
+        verifySignatures(signatures, signingMembersIndexes, resultHash);
 
         // TODO: change to selectedParticipants() in full implementation
         address[] memory members = selectedParticipants();
         // TODO: check IA/DQ length match members
-        for (uint i = 0; i < positions.length; i++) {
+        for (uint i = 0; i < signingMembersIndexes.length; i++) {
             if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i)) {
                 _groupMembers[groupPubKey].push(members[i]);
             }
@@ -355,7 +357,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param timeoutInitial Timeout in blocks after the initial ticket submission is finished.
      * @param timeoutSubmission Timeout in blocks after the reactive ticket submission is finished.
      * @param timeoutChallenge Timeout in blocks after the period where tickets can be challenged is finished.
-     * @param timeoutDKG Timeout in blocks after which DKG must be complete and its result to be published.
+     * @param timeDKG Timeout in blocks after DKG result is complete and ready to be published.
      * @param resultPublicationBlockStep Time in blocks after which member with the given index is eligible
      * to submit DKG result.
      */
@@ -368,7 +370,7 @@ contract KeepGroupImplV1 is Ownable {
         uint256 timeoutInitial,
         uint256 timeoutSubmission,
         uint256 timeoutChallenge,
-        uint256 timeoutDKG,
+        uint256 timeDKG,
         uint256 resultPublicationBlockStep
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
@@ -382,7 +384,7 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutInitial = timeoutInitial;
         _timeoutSubmission = timeoutSubmission;
         _timeoutChallenge = timeoutChallenge;
-        _timeoutDKG = timeoutDKG;
+        _timeDKG = timeDKG;
         _resultPublicationBlockStep = resultPublicationBlockStep;
     }
 
@@ -397,7 +399,7 @@ contract KeepGroupImplV1 is Ownable {
         require(_proofs[selected[memberIndex - 1]].sender == msg.sender, "Member index does not match sender address.");
         uint T_init = _submissionStart + _timeoutChallenge;
         require(block.number <= T_init + _resultPublicationBlockStep * _groupSize, "DKG submission period is over.");
-        return(block.number >= (T_init + _timeoutDKG + (memberIndex-1) * _resultPublicationBlockStep));
+        return(block.number >= (T_init + _timeDKG + (memberIndex-1) * _resultPublicationBlockStep));
     }
 
     /**

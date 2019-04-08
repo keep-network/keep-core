@@ -211,21 +211,21 @@ func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 }
 
 func (kg *keepGroup) SubmitDKGResult(
-	submitterIndex *big.Int,
+	submitterMemberIndex *big.Int,
 	requestID *big.Int,
 	result *relaychain.DKGResult,
 	signatures []byte,
-	membersIndex []*big.Int,
+	signingMembersIndexes []*big.Int,
 ) (*types.Transaction, error) {
 	return kg.transactor.SubmitDkgResult(
 		kg.transactorOpts,
-		submitterIndex,
+		submitterMemberIndex,
 		requestID,
 		result.GroupPublicKey,
 		result.Disqualified,
 		result.Inactive,
 		signatures,
-		membersIndex,
+		signingMembersIndexes,
 	)
 }
 
