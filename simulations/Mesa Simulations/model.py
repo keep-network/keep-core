@@ -5,7 +5,7 @@ import numpy as np
 
 class Beacon_Model(Model):
     """The model"""
-    def __init__(self, nodes, ticket_distribution, active_group_threshold, group_size, signature_threshold):
+    def __init__(self, nodes, ticket_distribution, active_group_threshold, group_size, signature_threshold, group_expiry):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
@@ -15,7 +15,7 @@ class Beacon_Model(Model):
         self.group_size = group_size
         self.ticket_distribution = ticket_distribution
         self.newest_group_id = 0
-        self.group_expiry = 10 #steps
+        self.group_expiry = group_expiry
         self.timer = 0
 
         #create nodes
@@ -77,6 +77,9 @@ class Beacon_Model(Model):
         group_object = agent.Group(self.newest_group_id, self, group_members, self.group_expiry, self.signature_threshold)
 
         return group_object
+
+    def refresh_active_list():
+        
 
         
 
