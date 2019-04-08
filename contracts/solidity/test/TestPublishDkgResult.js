@@ -16,8 +16,7 @@ contract('TestPublishDkgResult', function(accounts) {
   token, stakingProxy,
   stakingContract, minimumStake, groupThreshold, groupSize,
   randomBeaconValue, requestId,
-  timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, timeoutDKGSubmission,
-  resultPublicationBlockStep,
+  timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, resultPublicationBlockStep,
   keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
   keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
   owner = accounts[0], magpie = accounts[0], signature, delegation,
@@ -52,7 +51,6 @@ contract('TestPublishDkgResult', function(accounts) {
     timeoutSubmission = 100;
     timeoutChallenge = 60;
     timeoutDKG = 20;
-    timeoutDKGSubmission = 300;
     resultPublicationBlockStep = 3;
 
     randomBeaconValue = bls.groupSignature;
@@ -62,7 +60,7 @@ contract('TestPublishDkgResult', function(accounts) {
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold,
-      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, timeoutDKGSubmission, resultPublicationBlockStep
+      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, resultPublicationBlockStep
     );
 
     await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address);
@@ -102,8 +100,6 @@ contract('TestPublishDkgResult', function(accounts) {
       await keepGroupImplViaProxy.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
     }
 
-    mineBlocks(timeoutSubmission);
-
     let selectedParticipants = await keepGroupImplViaProxy.selectedParticipants();
 
     let positions = [];
@@ -115,6 +111,11 @@ contract('TestPublishDkgResult', function(accounts) {
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
     }
+
+    // Jump in time to when first member is eligible to submit,
+    let submissionStart = await keepGroupImplViaProxy.ticketSubmissionStartBlock();
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeoutDKG - currentBlock);
 
     await keepGroupImplViaProxy.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, {from: selectedParticipants[0]})
     let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);

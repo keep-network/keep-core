@@ -32,7 +32,6 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutSubmission;
     uint256 internal _timeoutChallenge;
     uint256 internal _timeoutDKG;
-    uint256 internal _timeoutDKGSubmission;
     uint256 internal _resultPublicationBlockStep;
     uint256 internal _submissionStart;
     uint256 internal _randomBeaconValue;
@@ -358,7 +357,6 @@ contract KeepGroupImplV1 is Ownable {
      * @param timeoutSubmission Timeout in blocks after the reactive ticket submission is finished.
      * @param timeoutChallenge Timeout in blocks after the period where tickets can be challenged is finished.
      * @param timeoutDKG Timeout in blocks after which DKG must be complete and its result to be published.
-     * @param timeoutDKGSubmission Timeout in blocks after DKG results submission is finished.
      * @param resultPublicationBlockStep Time in blocks after which member with the given index is eligible
      * to submit DKG result.
      */
@@ -372,7 +370,6 @@ contract KeepGroupImplV1 is Ownable {
         uint256 timeoutSubmission,
         uint256 timeoutChallenge,
         uint256 timeoutDKG,
-        uint256 timeoutDKGSubmission,
         uint256 resultPublicationBlockStep
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
@@ -387,7 +384,6 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutSubmission = timeoutSubmission;
         _timeoutChallenge = timeoutChallenge;
         _timeoutDKG = timeoutDKG;
-        _timeoutDKGSubmission = timeoutDKGSubmission;
         _resultPublicationBlockStep = resultPublicationBlockStep;
     }
 
@@ -400,11 +396,9 @@ contract KeepGroupImplV1 is Ownable {
         uint256[] memory selected = selectedTickets();
         require(_proofs[selected[memberIndex - 1]].sender == msg.sender, "Member index does not match sender address.");
         require(memberIndex > 0, "Member index must be greater than 0.");
-        require(block.number <= _submissionStart + _timeoutDKGSubmission, "DKG submission period is over.");
-
         uint T_init = _submissionStart + _timeoutChallenge;
-
-        return(block.number >= (T_init + _timeoutDKG + (memberIndex-2) * _resultPublicationBlockStep));
+        require(block.number <= T_init + _resultPublicationBlockStep * _groupSize, "DKG submission period is over.");
+        return(block.number >= (T_init + _timeoutDKG + (memberIndex-1) * _resultPublicationBlockStep));
     }
 
     /**

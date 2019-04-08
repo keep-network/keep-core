@@ -11,8 +11,7 @@ const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
 contract('TestKeepGroupViaProxy', function(accounts) {
 
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
-    timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, timeoutDKGSubmission,
-    resultPublicationBlockStep,
+    timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, resultPublicationBlockStep,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy,
     keepRandomBeaconImplV1, keepRandomBeaconProxy,
     account_one = accounts[0],
@@ -38,7 +37,6 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     timeoutSubmission = 100;
     timeoutChallenge = 60;
     timeoutDKG = 20;
-    timeoutDKGSubmission = 300;
     resultPublicationBlockStep = 3;
 
     keepGroupImplV1 = await KeepGroupImplV1.new();
@@ -46,8 +44,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold,
-      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, timeoutDKGSubmission,
-      resultPublicationBlockStep
+      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, resultPublicationBlockStep
     );
   });
 
