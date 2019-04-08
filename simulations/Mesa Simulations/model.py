@@ -26,14 +26,14 @@ class Beacon_Model(Model):
         #bootstrap active groups
         for i in range(active_group_threshold):
             self.active_groups.append(self.group_registration())
-            print(self.active_groups[i].id)
+            #print(self.active_groups[i].id)
 
 
     def step(self):
         '''Advance the model by one step'''
         #check how many active groups are available
         self.refresh_active_list()
-        print(len(self.active_groups))
+        print('number of active groups = ' + str(len(self.active_groups)))
         #generate relay requests
         self.relay_request = np.random.choice([True,False])
 
@@ -57,7 +57,6 @@ class Beacon_Model(Model):
         node_list = []
         ticket_list = []
         group_members = []
-
 
         # find all the agents that are nodes and add them to a list
         for i in self.schedule.agents:
@@ -85,6 +84,10 @@ class Beacon_Model(Model):
 
         #add group to schedule
         self.schedule.add(group_object)
+
+        #add group to active group list
+        self.active_groups.append(group_object)
+
 
         return group_object
 
