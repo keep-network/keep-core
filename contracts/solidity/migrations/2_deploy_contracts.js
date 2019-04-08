@@ -20,7 +20,7 @@ const groupSize = 5;
 const timeoutInitial = 4;
 const timeoutSubmission = 4;
 const timeoutChallenge = 4;
-const timeoutDKG = 4;
+const timeoutDKG = 3*8; // 3 blocks for each of the 8 phases of the GJKR
 const resultPublicationBlockStep = 3;
 
 module.exports = async function(deployer) {
