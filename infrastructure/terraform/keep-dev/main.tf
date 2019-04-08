@@ -183,7 +183,7 @@ module "openvpn" {
   }
 }
 
-module "deployment_infrastructure" {
+module "pull_deployment_infrastructure" {
   source                                   = "../../../../thesis/infrastructure/terraform/modules/gcp_pull_deploy"
   project                                  = "${module.project.project_id}"
   create_ci_publish_to_gcr_service_account = "${var.create_ci_publish_to_gcr_service_account}"
