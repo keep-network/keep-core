@@ -29,17 +29,22 @@ class Beacon_Model(Model):
 
     def step(self):
         '''Advance the model by one step'''
+        #check how many active nodes are available
+        self.refresh_connected_nodes_list
+
+
         #bootstrap active groups as nodes become available. Can only happen once enough nodes are online
-        if self.bootstrap_complete = False:
-            if len(self.active_nodes)>
-            for i in range(self.active_group_threshold):
-                self.active_groups.append(self.group_registration())
-                #print(self.active_groups[i].id)
+        if self.bootstrap_complete == False:
+            if len(self.active_nodes)> self.group_formation_threshold:
+                for i in range(self.active_group_threshold):
+                    self.active_groups.append(self.group_registration())
+                    #print(self.active_groups[i].id)
             
 
         #check how many active groups are available
         self.refresh_active_list()
         print('number of active groups = ' + str(len(self.active_groups)))
+        
         #generate relay requests
         self.relay_request = np.random.choice([True,False])
 
@@ -60,18 +65,12 @@ class Beacon_Model(Model):
         self.schedule.step()
 
     def group_registration(self):
-        node_list = []
         ticket_list = []
         group_members = []
 
-        # find all the agents that are nodes and add them to a list
-        for i in self.schedule.agents:
-            if i.type == "node":
-                node_list.append(i)
-
         # make each node generate tickets and save them to a list
         max_tickets = int(max(self.ticket_distribution))
-        for node in node_list:
+        for node in self.active_nodes:
             adjusted_ticket_list = []
             node.generate_tickets()
             adjusted_ticket_list = np.concatenate([node.ticket_list[self.newest_group_id],np.ones(int(max_tickets)-len(node.ticket_list[self.newest_group_id]))])  #adds 2's the ends of the list so that the 2D array can have equal length rows
