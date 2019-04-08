@@ -28,6 +28,10 @@ class Beacon_Model(Model):
             self.active_groups.append(self.group_registration())
             print(self.active_groups[i].id)
 
+        #add groups to the scheduler
+        for group in self.active_groups:
+            self.schedule.add(group)
+
 
     def step(self):
         '''Advance the model by one step'''

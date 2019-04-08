@@ -72,8 +72,12 @@ class Group(Agent):
     def step(self):
         """ At each step check if the group as expired """
         self.expiry -=1
+        print('group ID '+ str(self.id) + ' expiry ' + str(self.expiry))
         if self.expiry == 0: 
             self.status = "Expired"
+
+    def advance(self):
+        pass
 
         
 
