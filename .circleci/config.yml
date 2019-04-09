@@ -45,7 +45,7 @@ jobs:
           root: /tmp/docs
           paths:
             - solidity/*
-  build_image_test_go:
+  build_client_and_test_go:
     executor: docker-git
     steps:
       - setup_remote_docker:
@@ -69,7 +69,7 @@ jobs:
           root: /tmp/images
           paths:
             - keep-client
-  publish_image:
+  publish_client:
     executor: gcp-gcr/default
     steps:
       - attach_workspace:
@@ -150,15 +150,15 @@ workflows:
       - test_solidity
   build-test-publish:
     jobs:
-      - build_image_test_go:
+      - build_client_and_test_go:
           context: keep-dev
-      - publish_image:
+      - publish_client:
           filters:
             branches:
               only: master
           context: keep-dev
           requires:
-            - build_image_test_go
+            - build_client_and_test_go
   docs:
     jobs:
       - generate_docs_tex
