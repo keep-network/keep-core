@@ -49,7 +49,7 @@ class Node(Agent):
     def generate_tickets(self):
         #generates tickets using the uniform distribution
         self.stake_status = "staked"
-        self.ticket_list = np.random.random_sample(self.num_tickets))
+        self.ticket_list = np.random.random_sample(self.num_tickets)
         
     def node_disconnect(self):
         # disconnect the node from the network; causes it to go through the entire reconnection sequence in the next step

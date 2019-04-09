@@ -80,9 +80,7 @@ class Beacon_Model(Model):
             for node in self.active_nodes:
                 adjusted_ticket_list = []
                 node.generate_tickets()
-                print("node.ticket_list[self.newest_group_id]")
-                print(self.newest_group_id)
-                adjusted_ticket_list = np.concatenate([node.ticket_list[self.newest_group_id],np.ones(int(max_tickets)-len(node.ticket_list[self.newest_group_id]))])  #adds 2's the ends of the list so that the 2D array can have equal length rows
+                adjusted_ticket_list = np.concatenate([node.ticket_list,np.ones(int(max_tickets)-len(node.ticket_list))])  #adds 2's the ends of the list so that the 2D array can have equal length rows
                 ticket_list.append(adjusted_ticket_list)
 
             #iteratively add group members by lowest value
