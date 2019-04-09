@@ -45,39 +45,30 @@ jobs:
           root: /tmp/docs
           paths:
             - solidity/*
-  build_image:
+  build_image_test_go:
     executor: docker-git
     steps:
-      - checkout
       - setup_remote_docker:
           docker_layer_caching: true
+      - checkout
       - run:
           name: Run Docker build
           command: |
             docker build --target gobuild -t go-build-env .
             docker build -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client .
-            mkdir -p /tmp/images/keep-client/
-            docker save -o /tmp/images/keep-client/go-build-env.tar go-build-env
-            docker save -o /tmp/images/keep-client/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
-      - persist_to_workspace:
-          root: /tmp/images
-          paths:
-            - keep-client
-  test_go:
-    executor: docker-git
-    steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - attach_workspace:
-          at: /tmp/images
       - run:
-          name: Load keep-client gobuild image
+          name: Save keep-client image
           command: |
-            docker load -i /tmp/images/keep-client/go-build-env.tar
+            mkdir -p /tmp/images/keep-client/
+            docker save -o /tmp/images/keep-client/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
       - run:
           name: Run Go tests
           command: |
             docker run -w /go/src/github.com/keep-network/keep-core go-build-env go test ./.../
+      - persist_to_workspace:
+          root: /tmp/images
+          paths:
+            - keep-client
   publish_image:
     executor: gcp-gcr/default
     steps:
@@ -159,19 +150,15 @@ workflows:
       - test_solidity
   build-test-publish:
     jobs:
-      - build_image:
+      - build_image_test_go:
           context: keep-dev
-      - test_go:
-          requires:
-            - build_image
       - publish_image:
           filters:
             branches:
               only: master
           context: keep-dev
           requires:
-            - build_image
-            - test_go
+            - build_image_test_go
   docs:
     jobs:
       - generate_docs_tex
