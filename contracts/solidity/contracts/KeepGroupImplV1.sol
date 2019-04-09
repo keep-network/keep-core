@@ -278,12 +278,17 @@ contract KeepGroupImplV1 is Ownable {
     ) public {
         require(eligibleSubmitter(submitterMemberIndex), "User is not eligible to submit the result.");
 
+        require(
+            disqualified.length == signingMembersIndexes.length &&
+            inactive.length == signingMembersIndexes.length,
+            "Inactive and disqualified bytes arrays don't match the length of members array."
+        );
+
         bytes32 resultHash = keccak256(abi.encodePacked(disqualified, inactive, groupPubKey));
         verifySignatures(signatures, signingMembersIndexes, resultHash);
 
-        // TODO: change to selectedParticipants() in full implementation
         address[] memory members = selectedParticipants();
-        // TODO: check IA/DQ length match members
+
         for (uint i = 0; i < signingMembersIndexes.length; i++) {
             if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i)) {
                 _groupMembers[groupPubKey].push(members[i]);
