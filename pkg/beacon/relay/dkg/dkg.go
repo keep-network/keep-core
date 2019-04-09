@@ -19,6 +19,7 @@ func ExecuteDKG(
 	index int, // starts with 0
 	groupSize int,
 	threshold int,
+	startBlock uint64,
 	blockCounter chain.BlockCounter,
 	relayChain relayChain.Interface,
 	channel net.BroadcastChannel,
@@ -40,6 +41,7 @@ func ExecuteDKG(
 		channel,
 		threshold,
 		seed,
+		startBlock,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(

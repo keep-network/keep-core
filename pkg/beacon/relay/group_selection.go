@@ -82,7 +82,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			)
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
-		case <-challengeTimeout:
+		case currentBlock := <-challengeTimeout:
 			selectedParticipants, err := relayChain.GetSelectedParticipants()
 			if err != nil {
 				return fmt.Errorf(
@@ -103,6 +103,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				&groupselection.Result{SelectedStakers: selectedStakers},
 				entryRequestID,
 				entrySeed,
+				currentBlock,
 			)
 			return nil
 		}

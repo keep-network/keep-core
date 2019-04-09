@@ -12,8 +12,9 @@ import (
 
 // Execute runs the GJKR distributed key generation  protocol, given a
 // broadcast channel to mediate it, a block counter used for time tracking,
-// a player index to use in the group, and a group size and threshold. If
-// generation is successful, it returns a threshold group member who can
+// a player index to use in the group, threshold, and block height when DKG
+// protocol should start.
+// If generation is successful, it returns a threshold group member who can
 // participate in the group; if generation fails, it returns an error
 // representing what went wrong.
 func Execute(
@@ -22,6 +23,7 @@ func Execute(
 	channel net.BroadcastChannel,
 	threshold int,
 	seed *big.Int,
+	startBlock uint64,
 ) (*Result, error) {
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberIndex)
 
