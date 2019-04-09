@@ -7,7 +7,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/bls"
 
@@ -35,7 +35,7 @@ func Execute(
 	threshold int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	signer *dkg2.ThresholdSigner,
+	signer *dkg.ThresholdSigner,
 ) ([]byte, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
