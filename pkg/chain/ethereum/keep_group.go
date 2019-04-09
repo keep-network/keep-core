@@ -141,19 +141,19 @@ func (kg *keepGroup) GroupSize() (int, error) {
 	return int(groupSize.Int64()), nil
 }
 
-func (kg *keepGroup) TicketInitialSubmissionTimeout() (uint8, error) {
+func (kg *keepGroup) TicketInitialSubmissionTimeout() (*big.Int, error) {
 	return kg.caller.TicketInitialSubmissionTimeout(kg.callerOpts)
 }
 
-func (kg *keepGroup) TicketReactiveSubmissionTimeout() (uint8, error) {
+func (kg *keepGroup) TicketReactiveSubmissionTimeout() (*big.Int, error) {
 	return kg.caller.TicketReactiveSubmissionTimeout(kg.callerOpts)
 }
 
-func (kg *keepGroup) TicketChallengeTimeout() (uint8, error) {
+func (kg *keepGroup) TicketChallengeTimeout() (*big.Int, error) {
 	return kg.caller.TicketChallengeTimeout(kg.callerOpts)
 }
 
-func (kg *keepGroup) ResultPublicationBlockStep() (uint8, error) {
+func (kg *keepGroup) ResultPublicationBlockStep() (*big.Int, error) {
 	return kg.caller.ResultPublicationBlockStep(kg.callerOpts)
 }
 

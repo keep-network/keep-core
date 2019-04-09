@@ -32,12 +32,12 @@ contract KeepGroupImplV1 is Ownable {
     address internal _stakingProxy;
     address internal _randomBeacon;
 
-    uint8 internal _timeoutInitial;
-    uint8 internal _timeoutSubmission;
-    uint8 internal _timeoutChallenge;
+    uint256 internal _timeoutInitial;
+    uint256 internal _timeoutSubmission;
+    uint256 internal _timeoutChallenge;
     uint256 internal _submissionStart;
 
-    uint8 internal _resultPublicationBlockStep;
+    uint256 internal _resultPublicationBlockStep;
     
     uint256 internal _randomBeaconValue;
 
@@ -320,10 +320,10 @@ contract KeepGroupImplV1 is Ownable {
         uint256 minStake,
         uint256 groupThreshold,
         uint256 groupSize,
-        uint8 timeoutInitial,
-        uint8 timeoutSubmission,
-        uint8 timeoutChallenge,
-        uint8 resultPublicationBlockStep
+        uint256 timeoutInitial,
+        uint256 timeoutSubmission,
+        uint256 timeoutChallenge,
+        uint256 resultPublicationBlockStep
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
@@ -384,7 +384,7 @@ contract KeepGroupImplV1 is Ownable {
      * staker has to submit tickets that fall under the natural threshold
      * to satisfy the initial ticket timeout (see group selection, phase 2a).
      */
-    function ticketInitialSubmissionTimeout() public view returns (uint8) {
+    function ticketInitialSubmissionTimeout() public view returns (uint256) {
         return _timeoutInitial;
     }
 
@@ -394,7 +394,7 @@ contract KeepGroupImplV1 is Ownable {
      * threshold. This final chance to submit tickets is called reactive
      * ticket submission (defined in the group selection algorithm, 2b).
      */
-    function ticketReactiveSubmissionTimeout() public view returns (uint8) {
+    function ticketReactiveSubmissionTimeout() public view returns (uint256) {
         return _timeoutSubmission;
     }
 
@@ -402,7 +402,7 @@ contract KeepGroupImplV1 is Ownable {
      * @dev ticketChallengeTimeout is the duration (in blocks) the staker
      * has to submit any challenges for tickets that fail any checks.
      */
-    function ticketChallengeTimeout() public view returns (uint8) {
+    function ticketChallengeTimeout() public view returns (uint256) {
         return _timeoutChallenge;
     }
 
@@ -410,7 +410,7 @@ contract KeepGroupImplV1 is Ownable {
      * @dev resultPublicationBlockStep is the duration (in blocks) after which
      * member with the given index is eligible to submit DKG result.
      */
-    function resultPublicationBlockStep() public view returns (uint8) {
+    function resultPublicationBlockStep() public view returns (uint256) {
         return _resultPublicationBlockStep;
     }
 
