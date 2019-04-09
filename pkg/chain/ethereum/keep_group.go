@@ -141,30 +141,16 @@ func (kg *keepGroup) GroupSize() (int, error) {
 	return int(groupSize.Int64()), nil
 }
 
-func (kg *keepGroup) TicketInitialSubmissionTimeout() (int, error) {
-	ticketInitialSubmissionTimeout, err :=
-		kg.caller.TicketInitialSubmissionTimeout(kg.callerOpts)
-	if err != nil {
-		return -1, err
-	}
-	return int(ticketInitialSubmissionTimeout.Int64()), nil
+func (kg *keepGroup) TicketInitialSubmissionTimeout() (*big.Int, error) {
+	return kg.caller.TicketInitialSubmissionTimeout(kg.callerOpts)
 }
 
-func (kg *keepGroup) TicketReactiveSubmissionTimeout() (int, error) {
-	ticketReactiveSubmissionTimeout, err :=
-		kg.caller.TicketReactiveSubmissionTimeout(kg.callerOpts)
-	if err != nil {
-		return -1, err
-	}
-	return int(ticketReactiveSubmissionTimeout.Int64()), nil
+func (kg *keepGroup) TicketReactiveSubmissionTimeout() (*big.Int, error) {
+	return kg.caller.TicketReactiveSubmissionTimeout(kg.callerOpts)
 }
 
-func (kg *keepGroup) TicketChallengeTimeout() (int, error) {
-	ticketChallengeTimeout, err := kg.caller.TicketChallengeTimeout(kg.callerOpts)
-	if err != nil {
-		return -1, err
-	}
-	return int(ticketChallengeTimeout.Int64()), nil
+func (kg *keepGroup) TicketChallengeTimeout() (*big.Int, error) {
+	return kg.caller.TicketChallengeTimeout(kg.callerOpts)
 }
 
 func (kg *keepGroup) ResultPublicationBlockStep() (*big.Int, error) {

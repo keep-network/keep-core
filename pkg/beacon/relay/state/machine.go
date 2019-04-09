@@ -98,7 +98,7 @@ func (m *Machine) Execute() (State, error) {
 func stateTransition(
 	currentState State,
 	blockCounter chain.BlockCounter,
-) (<-chan int, error) {
+) (<-chan uint64, error) {
 	fmt.Printf(
 		"[member:%v, state:%T] Transitioning to a new state...\n",
 		currentState.MemberIndex(),
