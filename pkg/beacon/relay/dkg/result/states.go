@@ -33,7 +33,7 @@ type resultSigningState struct {
 	signatureMessages []*DKGResultHashSignatureMessage
 }
 
-func (rss *resultSigningState) ActiveBlocks() int { return 3 }
+func (rss *resultSigningState) ActiveBlocks() uint64 { return 3 }
 
 func (rss *resultSigningState) Initiate() error {
 	message, err := rss.member.SignDKGResult(rss.result, rss.relayChain)
@@ -119,7 +119,7 @@ type signaturesVerificationState struct {
 	validSignatures   map[group.MemberIndex]operator.Signature
 }
 
-func (svs *signaturesVerificationState) ActiveBlocks() int { return 0 }
+func (svs *signaturesVerificationState) ActiveBlocks() uint64 { return 0 }
 
 func (svs *signaturesVerificationState) Initiate() error {
 	signatures, err := svs.member.VerifyDKGResultSignatures(svs.signatureMessages)
@@ -168,7 +168,7 @@ type resultSubmissionState struct {
 	signatures map[group.MemberIndex]operator.Signature
 }
 
-func (rss *resultSubmissionState) ActiveBlocks() int { return 3 }
+func (rss *resultSubmissionState) ActiveBlocks() uint64 { return 3 }
 
 func (rss *resultSubmissionState) Initiate() error {
 	return rss.member.SubmitDKGResult(

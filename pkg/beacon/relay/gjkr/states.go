@@ -17,7 +17,7 @@ type initializationState struct {
 	member  *LocalMember
 }
 
-func (is *initializationState) ActiveBlocks() int { return 3 }
+func (is *initializationState) ActiveBlocks() uint64 { return 3 }
 
 func (is *initializationState) Initiate() error {
 	return nil
@@ -43,7 +43,7 @@ type joinState struct {
 	member  *LocalMember
 }
 
-func (js *joinState) ActiveBlocks() int { return 3 }
+func (js *joinState) ActiveBlocks() uint64 { return 3 }
 
 func (js *joinState) Initiate() error {
 	return js.channel.Send(NewJoinMessage(js.member.ID))
@@ -80,7 +80,7 @@ type ephemeralKeyPairGenerationState struct {
 	phaseMessages []*EphemeralPublicKeyMessage
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) ActiveBlocks() int { return 3 }
+func (ekpgs *ephemeralKeyPairGenerationState) ActiveBlocks() uint64 { return 3 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) Initiate() error {
 	message, err := ekpgs.member.GenerateEphemeralKeyPair()
@@ -130,7 +130,7 @@ type symmetricKeyGenerationState struct {
 	previousPhaseMessages []*EphemeralPublicKeyMessage
 }
 
-func (skgs *symmetricKeyGenerationState) ActiveBlocks() int { return 0 }
+func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 { return 0 }
 
 func (skgs *symmetricKeyGenerationState) Initiate() error {
 	skgs.member.MarkInactiveMembers(skgs.previousPhaseMessages)
@@ -166,7 +166,7 @@ type commitmentState struct {
 	phaseCommitmentsMessages []*MemberCommitmentsMessage
 }
 
-func (cs *commitmentState) ActiveBlocks() int { return 3 }
+func (cs *commitmentState) ActiveBlocks() uint64 { return 3 }
 
 func (cs *commitmentState) Initiate() error {
 	sharesMsg, commitmentsMsg, err := cs.member.CalculateMembersSharesAndCommitments()
@@ -234,7 +234,7 @@ type commitmentsVerificationState struct {
 	phaseAccusationsMessages []*SecretSharesAccusationsMessage
 }
 
-func (cvs *commitmentsVerificationState) ActiveBlocks() int { return 3 }
+func (cvs *commitmentsVerificationState) ActiveBlocks() uint64 { return 3 }
 
 func (cvs *commitmentsVerificationState) Initiate() error {
 	cvs.member.MarkInactiveMembers(
@@ -296,7 +296,7 @@ type sharesJustificationState struct {
 	previousPhaseAccusationsMessages []*SecretSharesAccusationsMessage
 }
 
-func (sjs *sharesJustificationState) ActiveBlocks() int { return 0 }
+func (sjs *sharesJustificationState) ActiveBlocks() uint64 { return 0 }
 
 func (sjs *sharesJustificationState) Initiate() error {
 	disqualifiedMembers, err := sjs.member.ResolveSecretSharesAccusationsMessages(
@@ -337,7 +337,7 @@ type qualificationState struct {
 	member  *QualifiedMember
 }
 
-func (qs *qualificationState) ActiveBlocks() int { return 0 }
+func (qs *qualificationState) ActiveBlocks() uint64 { return 0 }
 
 func (qs *qualificationState) Initiate() error {
 	qs.member.CombineMemberShares()
@@ -371,7 +371,7 @@ type pointsShareState struct {
 	phaseMessages []*MemberPublicKeySharePointsMessage
 }
 
-func (pss *pointsShareState) ActiveBlocks() int { return 3 }
+func (pss *pointsShareState) ActiveBlocks() uint64 { return 3 }
 
 func (pss *pointsShareState) Initiate() error {
 	message := pss.member.CalculatePublicKeySharePoints()
@@ -421,7 +421,7 @@ type pointsValidationState struct {
 	phaseMessages []*PointsAccusationsMessage
 }
 
-func (pvs *pointsValidationState) ActiveBlocks() int { return 3 }
+func (pvs *pointsValidationState) ActiveBlocks() uint64 { return 3 }
 
 func (pvs *pointsValidationState) Initiate() error {
 	pvs.member.MarkInactiveMembers(pvs.previousPhaseMessages)
@@ -476,7 +476,7 @@ type pointsJustificationState struct {
 	previousPhaseMessages []*PointsAccusationsMessage
 }
 
-func (pjs *pointsJustificationState) ActiveBlocks() int { return 0 }
+func (pjs *pointsJustificationState) ActiveBlocks() uint64 { return 0 }
 
 func (pjs *pointsJustificationState) Initiate() error {
 	disqualifiedMembers, err := pjs.member.ResolvePublicKeySharePointsAccusationsMessages(
@@ -519,7 +519,7 @@ type keyRevealState struct {
 	phaseMessages []*DisqualifiedEphemeralKeysMessage
 }
 
-func (rs *keyRevealState) ActiveBlocks() int { return 1 }
+func (rs *keyRevealState) ActiveBlocks() uint64 { return 1 }
 
 func (rs *keyRevealState) Initiate() error {
 	revealMsg, err := rs.member.RevealDisqualifiedMembersKeys()
@@ -570,7 +570,7 @@ type reconstructionState struct {
 	previousPhaseMessages []*DisqualifiedEphemeralKeysMessage
 }
 
-func (rs *reconstructionState) ActiveBlocks() int { return 0 }
+func (rs *reconstructionState) ActiveBlocks() uint64 { return 0 }
 
 func (rs *reconstructionState) Initiate() error {
 	rs.member.MarkInactiveMembers(rs.previousPhaseMessages)
@@ -608,7 +608,7 @@ type combinationState struct {
 	member  *CombiningMember
 }
 
-func (cs *combinationState) ActiveBlocks() int { return 0 }
+func (cs *combinationState) ActiveBlocks() uint64 { return 0 }
 
 func (cs *combinationState) Initiate() error {
 	cs.member.CombineGroupPublicKey()
@@ -640,7 +640,7 @@ type finalizationState struct {
 	member  *FinalizingMember
 }
 
-func (fs *finalizationState) ActiveBlocks() int { return 0 }
+func (fs *finalizationState) ActiveBlocks() uint64 { return 0 }
 
 func (fs *finalizationState) Initiate() error {
 	return nil

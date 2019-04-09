@@ -35,7 +35,7 @@ func TestSubmitDKGResult(t *testing.T) {
 		3: operator.Signature{103},
 	}
 
-	tStep := uint64(config.ResultPublicationBlockStep)
+	tStep := config.ResultPublicationBlockStep
 
 	var tests = map[string]struct {
 		memberIndex     int
@@ -93,7 +93,7 @@ func TestSubmitDKGResult(t *testing.T) {
 			}
 
 			currentBlock, _ := blockCounter.CurrentBlock()
-			if uint64(currentBlock) < test.expectedTimeEnd {
+			if currentBlock < test.expectedTimeEnd {
 				t.Errorf(
 					"invalid current block\nexpected: >= %v\nactual:      %v\n",
 					test.expectedTimeEnd,
@@ -192,7 +192,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			tStep := uint64(config.ResultPublicationBlockStep)
+			tStep := config.ResultPublicationBlockStep
 
 			expectedBlockEnd1 := initialBlock + test.expectedDuration1(tStep)
 			expectedBlockEnd2 := initialBlock + test.expectedDuration2(tStep)
@@ -217,7 +217,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 				}
 
 				currentBlock, _ := blockCounter.CurrentBlock()
-				result1Chan <- uint64(currentBlock)
+				result1Chan <- currentBlock
 			}()
 
 			go func() {
@@ -235,7 +235,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 				}
 
 				currentBlock, _ := blockCounter.CurrentBlock()
-				result2Chan <- uint64(currentBlock)
+				result2Chan <- currentBlock
 			}()
 
 			if result1 := <-result1Chan; result1 != expectedBlockEnd1 {
@@ -260,5 +260,5 @@ func initChainHandle(threshold, groupSize int) (chain.Handle, uint64, error) {
 		return nil, 0, err
 	}
 
-	return chainHandle, uint64(<-initialBlockChan), nil
+	return chainHandle, <-initialBlockChan, nil
 }

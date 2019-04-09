@@ -10,7 +10,7 @@ type State interface {
 	// ActiveBlocks returns the number of blocks during which the current state
 	// is active. Blocks are counted after the initiation process of the
 	// current state has completed.
-	ActiveBlocks() int
+	ActiveBlocks() uint64
 
 	// Initiate performs all the required calculations and sends out all the
 	// messages associated with the current state.
