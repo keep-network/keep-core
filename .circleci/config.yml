@@ -57,14 +57,14 @@ jobs:
             docker build --target gobuild -t go-build-env .
             docker build -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client .
       - run:
+          name: Run Go tests
+          command: |
+            docker run -w /go/src/github.com/keep-network/keep-core go-build-env go test ./.../
+      - run:
           name: Save keep-client image
           command: |
             mkdir -p /tmp/images/keep-client/
             docker save -o /tmp/images/keep-client/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
-      - run:
-          name: Run Go tests
-          command: |
-            docker run -w /go/src/github.com/keep-network/keep-core go-build-env go test ./.../
       - persist_to_workspace:
           root: /tmp/images
           paths:
