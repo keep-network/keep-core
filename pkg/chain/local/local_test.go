@@ -199,7 +199,7 @@ func TestLocalOnRelayEntryGenerated(t *testing.T) {
 		Value:       big.NewInt(19),
 		GroupPubKey: []byte("1"),
 		Seed:        big.NewInt(30),
-		BlockNumber: uint64(123),
+		BlockNumber: 123,
 	}
 
 	chainHandle.SubmitRelayEntry(expectedEntry)
