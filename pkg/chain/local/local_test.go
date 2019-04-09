@@ -112,6 +112,13 @@ func TestLocalRequestRelayEntry(t *testing.T) {
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 	seed := big.NewInt(42)
+
+	groupPublicKey := []byte("1")
+	latestValue := big.NewInt(7)
+	localChainHandle := chainHandle.(*localChain)
+	localChainHandle.groups = append(localChainHandle.groups, groupPublicKey)
+	localChainHandle.latestValue = latestValue
+
 	relayRequestPromise := chainHandle.RequestRelayEntry(seed)
 
 	done := make(chan *event.Request)
@@ -351,6 +358,12 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 
 	seed := big.NewInt(12345)
 
+	groupPublicKey := []byte("1")
+	latestValue := big.NewInt(7)
+	localChainHandle := chainHandle.(*localChain)
+	localChainHandle.groups = append(localChainHandle.groups, groupPublicKey)
+	localChainHandle.latestValue = latestValue
+
 	chainHandle.RequestRelayEntry(seed)
 
 	select {
@@ -363,10 +376,10 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 				event.RequestID,
 			)
 		}
-		if event.PreviousEntry != nil {
+		if event.PreviousEntry.Cmp(latestValue) != 0 {
 			t.Fatalf(
 				"Unexpected previous entry\nExpected: [%v]\nActual:   [%v]",
-				nil,
+				latestValue,
 				event.PreviousEntry,
 			)
 		}
@@ -375,6 +388,13 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 				"Unexpected seed\nExpected: [%v]\nActual:   [%v]",
 				seed,
 				event.Seed,
+			)
+		}
+		if string(event.GroupPubKey) != string(groupPublicKey) {
+			t.Fatalf(
+				"Unexpected group public key\nExpected: [%v]\nActual:   [%v]",
+				event.GroupPubKey,
+				groupPublicKey,
 			)
 		}
 	case <-ctx.Done():
@@ -389,6 +409,12 @@ func TestLocalOnRelayEntryRequestedUnsubscribed(t *testing.T) {
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 
 	eventFired := make(chan *event.Request)
+
+	groupPublicKey := []byte("1")
+	latestValue := big.NewInt(7)
+	localChainHandle := chainHandle.(*localChain)
+	localChainHandle.groups = append(localChainHandle.groups, groupPublicKey)
+	localChainHandle.latestValue = latestValue
 
 	subscription, err := chainHandle.OnRelayEntryRequested(
 		func(request *event.Request) {

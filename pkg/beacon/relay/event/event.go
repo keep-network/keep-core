@@ -26,8 +26,8 @@ type Request struct {
 	Payment       *big.Int
 	PreviousEntry *big.Int
 	Seed          *big.Int
-
-	BlockNumber uint64
+	GroupPubKey   []byte
+	BlockNumber   uint64
 }
 
 // GroupTicketSubmission represents a group selection ticket submission event.

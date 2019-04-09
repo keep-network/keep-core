@@ -31,6 +31,8 @@ type localChain struct {
 	// execution.
 	submittedResults map[*big.Int][]*relaychain.DKGResult
 
+	groups [][]byte
+
 	handlerMutex             sync.Mutex
 	relayEntryHandlers       map[int]func(entry *event.Entry)
 	relayRequestHandlers     map[int]func(request *event.Request)
@@ -270,14 +272,26 @@ func calculateGroupSelectionParameters(groupSize int, minimumStake *big.Int) (
 	return tokenSupply, naturalThreshold
 }
 
+func nextGroupIndex(entry *big.Int, numberOfGroups *big.Int) *big.Int {
+	if numberOfGroups.Cmp(big.NewInt(0)) == 0 {
+		return big.NewInt(0)
+	}
+
+	return big.NewInt(0).Mod(entry, numberOfGroups)
+}
+
 // RequestRelayEntry simulates calling to start the random generation process.
 func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise {
 	promise := &async.RelayRequestPromise{}
+
+	numberOfGroups := big.NewInt(int64(len(c.groups)))
+	selectedIdx := nextGroupIndex(c.latestValue, numberOfGroups).Int64()
 
 	request := &event.Request{
 		RequestID:     big.NewInt(c.requestID),
 		Payment:       big.NewInt(1),
 		PreviousEntry: c.latestValue,
+		GroupPubKey:   c.groups[int(selectedIdx)],
 		Seed:          seed,
 	}
 	atomic.AddUint64(&c.simulatedHeight, 1)
@@ -342,6 +356,8 @@ func (c *localChain) SubmitDKGResult(
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
 		BlockNumber:    uint64(currentBlock),
 	}
+
+	c.groups = append(c.groups, resultToPublish.GroupPublicKey)
 
 	groupRegistrationEvent := &event.GroupRegistration{
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
