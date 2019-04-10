@@ -21,8 +21,8 @@ class Node(Agent):
         self.connection_status = "not connected" #change later to event - currently used for node failure process
         self.mainloop_status = "not forked"
         self.stake_status = "not staked"
-        self.connection_delay = np.random.randint(0,3) #uniform randomly assigned connection delay step value
-        self.mainloop_fork_delay = np.random.randint(0,3) #uniform randomly assigned connection delay step value
+        self.connection_delay = np.random.randint(0,1) #uniform randomly assigned connection delay step value
+        self.mainloop_fork_delay = np.random.randint(0,2) #uniform randomly assigned connection delay step value
         self.timer = self.model.timer
     
     def step(self):
@@ -41,8 +41,8 @@ class Node(Agent):
 
 
     def advance(self):
-        if self.model.relay_request:
-            self.generate_tickets()
+        pass
+        #print(str("node " + str(self.id) + "status " + self.mainloop_status ))
         #print("Mainloop fork delay = " + str(self.mainloop_fork_delay))
         #print("Mainloop_status = " + self.mainloop_status)
 
@@ -69,7 +69,7 @@ class Group(Agent):
         self.status = "Active"
         self.expiry = expiry # of steps before expiration
         self.timer = self.model.timer
-        self.model.newest_group_id +=1
+        self.model.newest_id +=1
 
     def step(self):
         """ At each step check if the group as expired """

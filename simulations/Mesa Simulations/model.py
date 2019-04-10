@@ -15,7 +15,7 @@ class Beacon_Model(Model):
         self.signature_threshold = signature_threshold
         self.group_size = group_size
         self.ticket_distribution = ticket_distribution
-        self.newest_group_id = 0
+        self.newest_id = 0
         self.group_expiry = group_expiry
         self.bootstrap_complete = False # indicates when the initial active group list bootstrap is complete
         self.group_formation_threshold = group_formation_threshold # min nodes required to form a group
@@ -24,12 +24,15 @@ class Beacon_Model(Model):
         #create nodes
         for i in range(nodes):
             node = agent.Node(i, self, self.ticket_distribution[i])
+            self.newest_id = i
             self.schedule.add(node)
+        self.newest_id +=1
 
 
     def step(self):
         '''Advance the model by one step'''
-        print("newest group id" + str(self.newest_group_id))
+        #print("newest group id" + str(self.newest_group_id))
+ 
         
         #check how many active nodes are available
         self.refresh_connected_nodes_list()
@@ -42,11 +45,15 @@ class Beacon_Model(Model):
                 for i in range(self.active_group_threshold):
                     self.active_groups.append(self.group_registration())
                     #print(self.active_groups[i].id)
+                self.bootstrap_complete = True
             
 
         #check how many active groups are available
         self.refresh_active_group_list()
         print('number of active groups = ' + str(len(self.active_groups)))
+        for agent in self.schedule.agents:
+            if agent.type == "group":
+                print("group ID "+str(agent.id)+ "status = " + agent.status + "steps to expiry = "+ str(agent.expiry))
         
         #generate relay requests
         self.relay_request = np.random.choice([True,False])
@@ -92,7 +99,8 @@ class Beacon_Model(Model):
                     ticket_list[index][min_index[1][i]] = 2 # Set the value of the ticket to a high value so it doesn't get counted again
             
             #create a group agent which can track expiry, sign, etc
-            group_object = agent.Group(self.newest_group_id, self, group_members, self.group_expiry, self.signature_threshold)
+            group_object = agent.Group(self.newest_id, self, group_members, self.group_expiry, self.signature_threshold)
+
 
             #add group to schedule
             self.schedule.add(group_object)
@@ -115,12 +123,16 @@ class Beacon_Model(Model):
         print("refreshing active nodes list")
         temp_active_node_list = []
         for agent in self.schedule.agents:
-            print("agent id = " + str(agent.id))
+            #print("agent id = " + str(agent.id))
             if agent.type == "node":
                 if agent.mainloop_status == "forked": 
-                    print("forked agent ID" + str(agent.id))
+                    #print("forked agent ID" + str(agent.id))
                     temp_active_node_list.append(agent) #adds the node to the active list only if it is in the forked state
         self.active_nodes = temp_active_node_list
+        #for node in self.active_nodes:
+            #print("in active node id" + str(node.id)+ " "+ node.mainloop_status)
+
+
 
 
 
