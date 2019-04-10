@@ -99,7 +99,10 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 			continue
 		}
 
-		for unseenBlockNumber := ebc.latestBlockHeight; unseenBlockNumber <= latestBlockNumber; unseenBlockNumber++ {
+		// We have already seen latestBlockHeight during the previous execution
+		// of receiveBlocks function and all handlers for latextBlockHeight
+		// were called. Now we start from the next block after it.
+		for unseenBlockNumber := ebc.latestBlockHeight + 1; unseenBlockNumber <= latestBlockNumber; unseenBlockNumber++ {
 			ebc.structMutex.Lock()
 			height := ebc.latestBlockHeight
 			ebc.latestBlockHeight++
