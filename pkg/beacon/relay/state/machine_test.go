@@ -31,10 +31,10 @@ func TestExecute(t *testing.T) {
 		blockCounter.WaitForBlockHeight(1)
 		channel.Send(&TestMessage{"message_1"})
 
-		blockCounter.WaitForBlockHeight(5)
+		blockCounter.WaitForBlockHeight(4)
 		channel.Send(&TestMessage{"message_2"})
 
-		blockCounter.WaitForBlockHeight(9)
+		blockCounter.WaitForBlockHeight(7)
 		channel.Send(&TestMessage{"message_3"})
 	}(blockCounter)
 
@@ -49,7 +49,7 @@ func TestExecute(t *testing.T) {
 
 	stateMachine := NewMachine(channel, blockCounter, initialState)
 
-	finalState, err := stateMachine.Execute()
+	finalState, endBlock, err := stateMachine.Execute(1)
 	if err != nil {
 		t.Errorf("unexpected error [%v]", err)
 	}
@@ -58,15 +58,19 @@ func TestExecute(t *testing.T) {
 		t.Errorf("state is not final [%v]", finalState)
 	}
 
+	if endBlock != 9 {
+		t.Errorf("unexpected end block [%v]", endBlock)
+	}
+
 	expectedTestLog := map[uint64][]string{
 		1: []string{
 			"1-state.testState1-initiate",
 			"1-state.testState1-receive-message_1",
 		},
-		4: []string{"1-state.testState2-initiate"},
-		5: []string{"1-state.testState2-receive-message_2"},
-		7: []string{"1-state.testState3-initiate"},
-		10: []string{
+		3: []string{"1-state.testState2-initiate"},
+		4: []string{"1-state.testState2-receive-message_2"},
+		5: []string{"1-state.testState3-initiate"},
+		7: []string{
 			"1-state.testState4-initiate",
 			"1-state.testState4-receive-message_3",
 		},

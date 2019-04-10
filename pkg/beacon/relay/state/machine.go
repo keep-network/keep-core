@@ -32,7 +32,7 @@ func NewMachine(
 
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
-func (m *Machine) Execute() (State, error) {
+func (m *Machine) Execute(startBlock uint64) (State, uint64, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
 	handler := net.HandleMessageFunc{
@@ -48,9 +48,25 @@ func (m *Machine) Execute() (State, error) {
 
 	currentState := m.initialState
 
-	blockWaiter, err := stateTransition(currentState, m.blockCounter)
+	fmt.Printf(
+		"[member:%v] Waiting for block %v to start execution...\n",
+		currentState.MemberIndex(),
+		startBlock,
+	)
+	err := m.blockCounter.WaitForBlockHeight(startBlock)
 	if err != nil {
-		return nil, err
+		return nil, 0, fmt.Errorf("failed to wait for the execution start block")
+	}
+
+	lastStateEndBlock := startBlock
+
+	blockWaiter, err := stateTransition(
+		currentState,
+		lastStateEndBlock,
+		m.blockCounter,
+	)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	for {
@@ -72,22 +88,28 @@ func (m *Machine) Execute() (State, error) {
 				)
 			}
 
-		case <-blockWaiter:
+		case endBlock := <-blockWaiter:
+			lastStateEndBlock = endBlock
 			nextState := currentState.Next()
 			if nextState == nil {
 				fmt.Printf(
-					"[member:%v, state:%T] Final state reached\n",
+					"[member:%v, state:%T] Final state reached at block [%v]\n",
 					currentState.MemberIndex(),
 					currentState,
+					lastStateEndBlock,
 				)
-				return currentState, nil
+				return currentState, lastStateEndBlock, nil
 			}
 
 			currentState = nextState
 
-			blockWaiter, err = stateTransition(currentState, m.blockCounter)
+			blockWaiter, err = stateTransition(
+				currentState,
+				lastStateEndBlock,
+				m.blockCounter,
+			)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 
 			continue
@@ -97,15 +119,22 @@ func (m *Machine) Execute() (State, error) {
 
 func stateTransition(
 	currentState State,
+	lastStateEndBlock uint64,
 	blockCounter chain.BlockCounter,
 ) (<-chan uint64, error) {
 	fmt.Printf(
-		"[member:%v, state:%T] Transitioning to a new state...\n",
+		"[member:%v, state:%T] Transitioning to a new state at block [%v]...\n",
 		currentState.MemberIndex(),
 		currentState,
+		lastStateEndBlock,
 	)
 
-	err := blockCounter.WaitForBlocks(1)
+	// We delay the initialization of the new state by one block to give all
+	// other coopearating state machines a chance to enter the new state.
+	// This is needed when, for example, during the initialization some
+	// state-specific messages are sent.
+	initiateDelay := lastStateEndBlock + 1
+	err := blockCounter.WaitForBlockHeight(initiateDelay)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to wait 1 block entering state [%T]: [%v]",
@@ -119,7 +148,9 @@ func stateTransition(
 		return nil, fmt.Errorf("failed to initiate new state [%v]", err)
 	}
 
-	blockWaiter, err := blockCounter.BlockWaiter(currentState.ActiveBlocks())
+	blockWaiter, err := blockCounter.BlockHeightWaiter(
+		initiateDelay + currentState.ActiveBlocks(),
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to initialize blockCounter.BlockWaiter state [%T]: [%v]",
