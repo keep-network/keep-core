@@ -104,7 +104,7 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 		// were called. Now we start from the next block after it.
 		for unseenBlockNumber := ebc.latestBlockHeight + 1; unseenBlockNumber <= latestBlockNumber; unseenBlockNumber++ {
 			ebc.structMutex.Lock()
-			height := ebc.latestBlockHeight
+			height := unseenBlockNumber
 			ebc.latestBlockHeight++
 			waiters := ebc.waiters[height]
 			delete(ebc.waiters, height)
