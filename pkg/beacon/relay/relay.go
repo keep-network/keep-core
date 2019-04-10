@@ -47,13 +47,14 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	previousEntry *big.Int,
 	seed *big.Int,
 	relayChain relaychain.RelayEntryInterface,
+	groupPubKey []byte,
 ) {
 	combinedEntryToSign := combineEntryToSign(
 		previousEntry.Bytes(),
 		seed.Bytes(),
 	)
 
-	memberships := n.membershipsForRequest(previousEntry)
+	memberships := n.myGroups[string(groupPubKey)]
 	if len(memberships) < 1 {
 		return
 	}
@@ -108,38 +109,4 @@ func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
 	combinedEntryToSign = append(combinedEntryToSign, previousEntry...)
 	combinedEntryToSign = append(combinedEntryToSign, seed...)
 	return combinedEntryToSign
-}
-
-func (n *Node) indexForNextGroup(previousValue *big.Int) *big.Int {
-	numberOfGroups := big.NewInt(int64(len(n.groupPublicKeys)))
-
-	return nextGroupIndex(previousValue, numberOfGroups)
-}
-
-func nextGroupIndex(entry *big.Int, numberOfGroups *big.Int) *big.Int {
-	if numberOfGroups.Cmp(&big.Int{}) == 0 {
-		return &big.Int{}
-	}
-
-	return (&big.Int{}).Mod(entry, numberOfGroups)
-}
-
-func (n *Node) membershipsForRequest(previousValue *big.Int) []*membership {
-	n.mutex.Lock()
-	defer n.mutex.Unlock()
-
-	nextGroup := n.indexForNextGroup(previousValue).Int64()
-	// Search our list of memberships to see if we have a member entries.
-	membershipsForRequest := make([]*membership, 0)
-	for _, memberships := range n.myGroups {
-		for _, membership := range memberships {
-			if membership.index == int(nextGroup) {
-				membershipsForRequest = append(
-					membershipsForRequest, membership,
-				)
-			}
-		}
-	}
-
-	return membershipsForRequest
 }
