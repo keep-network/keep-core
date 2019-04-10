@@ -67,9 +67,9 @@ func TestReadConfig(t *testing.T) {
 		"Ethereum.ContractAddresses": {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.ContractAddresses },
 			expectedValue: map[string]string{
-				"KeepRandomBeacon": "0x639deb0dd975af8e4cc91fe9053a37e4faf37649",
-				"KeepGroup":        "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
-				"StakingProxy":     "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+				"keeprandombeacon": "0x639deb0dd975af8e4cc91fe9053a37e4faf37649",
+				"keepgroup":        "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
+				"stakingproxy":     "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
 			},
 		},
 	}
@@ -87,7 +87,11 @@ func TestReadConfig(t *testing.T) {
 
 func TestEnvReadConfig(t *testing.T) {
 	// override config file settings with env variables
-	err := os.Setenv(ethURLEnvVariable, "ws://192.168.0.159:8546")
+	err := os.Setenv(ethPasswordEnvVariable, "not-my-password")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = os.Setenv(ethURLEnvVariable, "ws://192.168.0.159:8546")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,10 +127,16 @@ func TestEnvReadConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = os.Setenv(libp2pSeedEnvVariable, "0")
+	err = os.Setenv(libp2pSeedEnvVariable, "1")
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	// check environment
+	fmt.Println("config_test: ", ethPasswordEnvVariable, ":", os.Getenv(ethPasswordEnvVariable))
+	fmt.Println("config_test: ", libp2pPortEnvVariable, ":", os.Getenv(libp2pPortEnvVariable))
+	fmt.Println("config_test: ", libp2pPeersEnvVariable, ":", os.Getenv(libp2pPeersEnvVariable))
+	fmt.Println("config_test: ", libp2pSeedEnvVariable, ":", os.Getenv(libp2pSeedEnvVariable))
 
 	// check we can read the test config file
 	filepath := "../test/config.toml"
@@ -137,9 +147,6 @@ func TestEnvReadConfig(t *testing.T) {
 			err,
 		)
 	}
-
-	fmt.Println(cfg.Ethereum.ContractAddresses)
-	fmt.Println(cfg.LibP2P.Port)
 
 	// test that config file variables return overrides
 	var envConfigOverrideTests = map[string]struct {
@@ -169,9 +176,9 @@ func TestEnvReadConfig(t *testing.T) {
 		"Ethereum.ContractAddresses": {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.ContractAddresses },
 			expectedValue: map[string]string{
-				"KeepRandomBeacon": "0x639deb0dd975af8e4cc91fe9053a37e4faf37648",
-				"KeepGroup":        "0xcf64c2a367341170cb4e09cf8c0ed137d8473cec",
-				"StakingProxy":     "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCD",
+				"keeprandombeacon": "0x639deb0dd975af8e4cc91fe9053a37e4faf37648",
+				"keepgroup":        "0xcf64c2a367341170cb4e09cf8c0ed137d8473cec",
+				"stakingproxy":     "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCD",
 			},
 		},
 		"LibP2P.Port": {

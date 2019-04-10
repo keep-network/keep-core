@@ -60,11 +60,17 @@ func ReadConfig(filePath string) (*Config, error) {
 		file.NewSource(file.WithPath(filePath)),
 		// override from env variables
 		env.NewSource(env.WithStrippedPrefix("KEEP")),
-		// override with flags, strip prefix
+		// override env with flags
 		flag.NewSource(),
 	)
 	// scan the loaded configuration into our struct
 	config.Scan(configuration)
+	// check values
+	fmt.Printf("config.go Password: %s\n", configuration.Ethereum.Account.KeyFilePassword)
+	fmt.Printf("config.go Port: %d\n", configuration.LibP2P.Port)
+	fmt.Printf("config.go Peers: %s\n", configuration.LibP2P.Peers)
+	fmt.Printf("config.go Seed: %d\n", configuration.LibP2P.Seed)
+
 	// get the keyfile password via prompt or environment variable
 	if configuration.Ethereum.Account.KeyFilePassword == "prompt" {
 		var (
