@@ -125,7 +125,7 @@ contract KeepGroupImplV1 is Ownable {
     function selectedTickets() public view returns (uint256[] memory) {
 
         require(
-            block.number > _submissionStart + _timeoutChallenge,
+            block.number >= _submissionStart + _timeoutChallenge,
             "Ticket submission challenge period must be over."
         );
 
@@ -161,7 +161,7 @@ contract KeepGroupImplV1 is Ownable {
     function selectedParticipants() public view returns (address[] memory) {
 
         require(
-            block.number > _submissionStart + _timeoutChallenge,
+            block.number >= _submissionStart + _timeoutChallenge,
             "Ticket submission challenge period must be over."
         );
 
