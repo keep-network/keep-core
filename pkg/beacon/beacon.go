@@ -62,6 +62,7 @@ func Initialize(
 				entry.Value.Bytes(),
 				entry.RequestID,
 				entry.Seed,
+				entry.BlockNumber,
 			)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Tickets submission failed: [%v]\n", err)
