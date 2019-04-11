@@ -10,13 +10,11 @@ import (
 // the time between blocks will depend on the underlying implementation. See
 // LocalBlockCounter() for a local implementation.
 type BlockCounter interface {
-	// BlockWaiter returns a channel that will emit the current block height
-	// after the given number of blocks has elapsed and then immediately close.
-	BlockWaiter(numBlocks uint64) (<-chan uint64, error)
 	// WaitForBlockHeight blocks at the caller until the given block height is
 	// reached. If the number of blocks is zero or negative or if the given
 	// block height has been already reached, it returns immediately.
 	WaitForBlockHeight(blockNumber uint64) error
+
 	// BlockHeightWaiter returns a channel that will emit the block number after
 	// the given block height is reached and then immediately close.
 	// Reading from the returned channel immediately will effectively behave the

@@ -32,13 +32,6 @@ type block struct {
 	Number string
 }
 
-func (ebc *ethereumBlockCounter) BlockWaiter(
-	numBlocks uint64,
-) (<-chan uint64, error) {
-	notifyBlockHeight := ebc.latestBlockHeight + numBlocks
-	return ebc.BlockHeightWaiter(notifyBlockHeight)
-}
-
 func (ebc *ethereumBlockCounter) WaitForBlockHeight(blockNumber uint64) error {
 	waiter, err := ebc.BlockHeightWaiter(blockNumber)
 	if err != nil {

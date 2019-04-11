@@ -153,7 +153,7 @@ func stateTransition(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to initialize blockCounter.BlockWaiter state [%T]: [%v]",
+			"failed to initialize block height waiter at state [%T]: [%v]",
 			currentState,
 			err,
 		)
