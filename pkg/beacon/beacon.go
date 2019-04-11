@@ -49,6 +49,7 @@ func Initialize(
 			request.PreviousEntry,
 			request.Seed,
 			relayChain,
+			request.BlockNumber,
 		)
 	})
 

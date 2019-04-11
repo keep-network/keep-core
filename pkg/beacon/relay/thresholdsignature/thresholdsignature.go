@@ -36,6 +36,7 @@ func Execute(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	signer *dkg.ThresholdSigner,
+	startBlock uint64,
 ) ([]byte, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
@@ -58,7 +59,8 @@ func Execute(
 		signer.MemberID(),
 	)
 
-	err := blockCounter.WaitForBlocks(setupBlocks)
+	setupDelay := startBlock + setupBlocks
+	err := blockCounter.WaitForBlockHeight(setupDelay)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to wait %d blocks entering threshold setup: [%v]",
@@ -80,7 +82,7 @@ func Execute(
 		return nil, err
 	}
 
-	blockWaiter, err := blockCounter.BlockWaiter(signatureBlocks)
+	blockWaiter, err := blockCounter.BlockHeightWaiter(setupDelay + signatureBlocks)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +117,13 @@ func Execute(
 					seenShares[signatureShareMsg.senderID] = share
 				}
 			}
-		case <-blockWaiter:
+		case endBlock := <-blockWaiter:
+			fmt.Printf(
+				"[member:%v] Stopped receiving signature shares at block [%v]\n",
+				signer.MemberID(),
+				endBlock,
+			)
+
 			// put all seen shares into a slice and complete the signature
 			seenSharesSlice := make([]*bls.SignatureShare, 0)
 			for memberID, share := range seenShares {
