@@ -15,15 +15,6 @@ type localBlockCounter struct {
 
 var blockTime = time.Duration(500 * time.Millisecond)
 
-func (lbc *localBlockCounter) WaitForBlocks(numBlocks uint64) error {
-	waiter, err := lbc.BlockWaiter(numBlocks)
-	if err != nil {
-		return err
-	}
-	<-waiter
-	return nil
-}
-
 func (lbc *localBlockCounter) BlockWaiter(numBlocks uint64) (<-chan uint64, error) {
 	notifyBlockHeight := lbc.blockHeight + numBlocks
 	return lbc.BlockHeightWaiter(notifyBlockHeight)
