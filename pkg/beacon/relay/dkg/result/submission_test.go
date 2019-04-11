@@ -63,7 +63,7 @@ func TestSubmitDKGResult(t *testing.T) {
 			}
 
 			// Reinitialize chain to reset block counter
-			chainHandle, _, err := initChainHandle(threshold, groupSize)
+			chainHandle, initialBlock, err := initChainHandle(threshold, groupSize)
 			if err != nil {
 				t.Fatalf("chain initialization failed [%v]", err)
 			}
@@ -87,6 +87,7 @@ func TestSubmitDKGResult(t *testing.T) {
 				signatures,
 				relayChain,
 				blockCounter,
+				initialBlock,
 			)
 			if err != nil {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", "", err)
@@ -211,6 +212,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 					signatures,
 					chainHandle.ThresholdRelay(),
 					blockCounter,
+					initialBlock,
 				)
 				if err != nil {
 					t.Fatal(err)
@@ -229,6 +231,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 					signatures,
 					chainHandle.ThresholdRelay(),
 					blockCounter,
+					initialBlock,
 				)
 				if err != nil {
 					t.Fatal(err)

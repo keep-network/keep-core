@@ -88,15 +88,16 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 func (rss *resultSigningState) Next() signingState {
 	// set up the verification state, phase 13 part 2
 	return &signaturesVerificationState{
-		channel:                rss.channel,
-		relayChain:             rss.relayChain,
-		blockCounter:           rss.blockCounter,
-		member:                 rss.member,
-		requestID:              rss.requestID,
-		result:                 rss.result,
-		signatureMessages:      rss.signatureMessages,
-		validSignatures:        make(map[group.MemberIndex]operator.Signature),
-		verificationStartBlock: rss.signingStartBlock + rss.ActiveBlocks(),
+		channel:           rss.channel,
+		relayChain:        rss.relayChain,
+		blockCounter:      rss.blockCounter,
+		member:            rss.member,
+		requestID:         rss.requestID,
+		result:            rss.result,
+		signatureMessages: rss.signatureMessages,
+		validSignatures:   make(map[group.MemberIndex]operator.Signature),
+		verificationStartBlock: rss.signingStartBlock + rss.DelayBlocks() +
+			rss.ActiveBlocks(),
 	}
 
 }
@@ -146,14 +147,15 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 
 func (svs *signaturesVerificationState) Next() signingState {
 	return &resultSubmissionState{
-		channel:              svs.channel,
-		relayChain:           svs.relayChain,
-		blockCounter:         svs.blockCounter,
-		member:               NewSubmittingMember(svs.member.index),
-		requestID:            svs.requestID,
-		result:               svs.result,
-		signatures:           svs.validSignatures,
-		submissionStartBlock: svs.verificationStartBlock + svs.ActiveBlocks(),
+		channel:      svs.channel,
+		relayChain:   svs.relayChain,
+		blockCounter: svs.blockCounter,
+		member:       NewSubmittingMember(svs.member.index),
+		requestID:    svs.requestID,
+		result:       svs.result,
+		signatures:   svs.validSignatures,
+		submissionStartBlock: svs.verificationStartBlock + svs.DelayBlocks() +
+			svs.ActiveBlocks(),
 	}
 
 }
