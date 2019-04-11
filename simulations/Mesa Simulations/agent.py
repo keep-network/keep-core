@@ -12,7 +12,7 @@ class Node(Agent):
     token_amount: int value of tokens staked by node
     node_status: status of node can be - not connected, connected
     """
-    def __init__(self, unique_id, model, tickets):
+    def __init__(self, unique_id, model, tickets, failure_percent, death_percent):
         super().__init__(unique_id, model)
         self.id = unique_id
         self.type = "node"
@@ -24,6 +24,10 @@ class Node(Agent):
         self.connection_delay = np.random.randint(0,1) #uniform randomly assigned connection delay step value
         self.mainloop_fork_delay = np.random.randint(0,2) #uniform randomly assigned connection delay step value
         self.timer = self.model.timer
+        self.node_failure_percent = failure_percent
+        self.node_death_percent = death_percent
+        self.failure = False
+        self.death = False
     
     def step(self):
         #connect to chain
@@ -38,10 +42,13 @@ class Node(Agent):
                 self.mainloop_status = "forked"
             
         #simulate node failure
-
+        self.failure = np.random.randint(0,100) < self.node_failure_percent
+        self.death = np.random.randint (0,1000) < self.node_death_percent
 
     def advance(self):
-        pass
+        if self.failure or self.death:
+            self.node_disconnect()
+
         #print(str("node " + str(self.id) + "status " + self.mainloop_status ))
         #print("Mainloop fork delay = " + str(self.mainloop_fork_delay))
         #print("Mainloop_status = " + self.mainloop_status)
@@ -56,11 +63,13 @@ class Node(Agent):
         self.connection_status = "not connected"
         self.mainloop_status = "not forked"
         self.stake_status = "not staked"
+        if self.death == False: # does not reset the failure trigger if the death trigger is true
+            self.failure = False
 
 
 class Group(Agent):
     """ A Group """
-    def __init__(self, unique_id, model, members, expiry, sign_threshold):
+    def __init__(self, unique_id, model, members, expiry):
         super().__init__(unique_id, model)
         self.id = unique_id
         self.type = "group"

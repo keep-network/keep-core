@@ -5,14 +5,16 @@ import numpy as np
 
 class Beacon_Model(Model):
     """The model"""
-    def __init__(self, nodes, ticket_distribution, active_group_threshold, group_size, signature_threshold, group_expiry, group_formation_threshold):
+    def __init__(self, nodes, ticket_distribution, active_group_threshold, 
+    group_size, signature_threshold, group_expiry, 
+    group_formation_threshold, node_failure_percent, node_death_percent):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
         self.active_groups = []
         self.active_nodes = []
         self.active_group_threshold = active_group_threshold # number of groups that will always be maintained in an active state
-        self.signature_threshold = signature_threshold
+        self.signature_threshold = signature_threshold # threshold below which a signature cannot occur
         self.group_size = group_size
         self.ticket_distribution = ticket_distribution
         self.newest_id = 0
@@ -23,7 +25,7 @@ class Beacon_Model(Model):
 
         #create nodes
         for i in range(nodes):
-            node = agent.Node(i, self, self.ticket_distribution[i])
+            node = agent.Node(i, self, self.ticket_distribution[i], node_failure_percent, node_death_percent)
             self.newest_id = i
             self.schedule.add(node)
         self.newest_id +=1
@@ -57,18 +59,19 @@ class Beacon_Model(Model):
         
         #generate relay requests
         self.relay_request = np.random.choice([True,False])
+        print("relay request recieved? = "+ str(self.relay_request))
 
         if self.relay_request:
             try:
-                print('selecting group at random')
-                print(self.active_groups[np.random.randint(len(self.active_groups))]) # print a random group from the active list- change this to signing mechanism later
+                print('     selecting group at random')
+                self.signature_process(self.active_groups[np.random.randint(len(self.active_groups))]) # print a random group from the active list- change this to signing mechanism later
             except:
-                print('no active groups available')
+                print('     no active groups available')
 
-            print('registering new group')
+            print('     registering new group')
             self.group_registration()
         else:
-            print("No relay request")
+            print("     No relay request")
         self.timer += 1
 
         #advance the agents
@@ -79,7 +82,7 @@ class Beacon_Model(Model):
         group_members = []
 
         if len(self.active_nodes)<self.group_formation_threshold:
-            print("Not enough nodes to register a group")
+            print("             Not enough nodes to register a group")
 
         else:
             # make each node generate tickets and save them to a list
@@ -95,11 +98,11 @@ class Beacon_Model(Model):
 
                 min_index = np.where(ticket_list == np.min(ticket_list)) # find the index of the minimum value in the array
                 for i,index in enumerate(min_index[0]): #if there are repeated values, iterate through and add the indexes to the group
-                    group_members.append(index)
+                    group_members.append(self.active_nodes[index])
                     ticket_list[index][min_index[1][i]] = 2 # Set the value of the ticket to a high value so it doesn't get counted again
             
             #create a group agent which can track expiry, sign, etc
-            group_object = agent.Group(self.newest_id, self, group_members, self.group_expiry, self.signature_threshold)
+            group_object = agent.Group(self.newest_id, self, group_members, self.group_expiry)
 
 
             #add group to schedule
@@ -131,6 +134,23 @@ class Beacon_Model(Model):
         self.active_nodes = temp_active_node_list
         #for node in self.active_nodes:
             #print("in active node id" + str(node.id)+ " "+ node.mainloop_status)
+
+    def signature_process(self, group):
+        print("Starting signature process:")
+        print("     Checking for active nodes in randomly selected group")
+        active_count = []
+        for node in group.members:
+            active_count.append(node.mainloop_status=="forked") 
+        
+        print(sum(active_count))
+
+        if sum(active_count)> self.signature_threshold: 
+            print("         signature successful")
+        else:
+            print("         signature unsuccessful")
+
+
+
 
 
 
