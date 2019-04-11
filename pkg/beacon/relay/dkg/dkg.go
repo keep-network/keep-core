@@ -35,7 +35,7 @@ func ExecuteDKG(
 		)
 	}
 
-	gjkrResult, err := gjkr.Execute(
+	gjkrResult, gjkrEndBlock, err := gjkr.Execute(
 		playerIndex,
 		blockCounter,
 		channel,
@@ -59,6 +59,7 @@ func ExecuteDKG(
 		channel,
 		relayChain,
 		blockCounter,
+		gjkrEndBlock,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(

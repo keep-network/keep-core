@@ -25,6 +25,7 @@ func Publish(
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
 	blockCounter chain.BlockCounter,
+	startBlock uint64,
 ) error {
 	privateKey, _ := relayChain.GetKeys()
 	initialState := &resultSigningState{
@@ -41,7 +42,7 @@ func Publish(
 
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)
 
-	lastState, err := stateMachine.Execute()
+	lastState, _, err := stateMachine.Execute(startBlock)
 	if err != nil {
 		return err
 	}

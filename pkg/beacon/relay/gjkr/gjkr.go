@@ -24,7 +24,7 @@ func Execute(
 	threshold int,
 	seed *big.Int,
 	startBlock uint64,
-) (*Result, error) {
+) (*Result, uint64, error) {
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberIndex)
 
 	member, err := NewMember(
@@ -34,7 +34,7 @@ func Execute(
 		seed,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create a new member [%v]", err)
+		return nil, 0, fmt.Errorf("cannot create a new member [%v]", err)
 	}
 
 	initializeChannel(channel)
@@ -46,14 +46,17 @@ func Execute(
 
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)
 
-	lastState, err := stateMachine.Execute()
+	lastState, endBlock, err := stateMachine.Execute(startBlock)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {
-		return nil, fmt.Errorf("execution ended on state %T", lastState)
+		return nil, 0, fmt.Errorf("execution ended on state %T", lastState)
 	}
 
-	return finalizationState.result(), nil
+	return finalizationState.result(), endBlock, nil
 }
 
 // initializeChannel initializes a given broadcast channel to be able to
