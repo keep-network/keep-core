@@ -99,6 +99,7 @@ type testState1 struct {
 	channel     net.BroadcastChannel
 }
 
+func (ts testState1) DelayBlocks() uint64  { return 0 }
 func (ts testState1) ActiveBlocks() uint64 { return 2 }
 func (ts testState1) Initiate() error {
 	addToTestLog(ts, "initiate")
@@ -118,6 +119,7 @@ type testState2 struct {
 	testState1
 }
 
+func (ts testState2) DelayBlocks() uint64  { return 0 }
 func (ts testState2) ActiveBlocks() uint64 { return 2 }
 func (ts testState2) Initiate() error {
 	addToTestLog(ts, "initiate")
@@ -137,6 +139,7 @@ type testState3 struct {
 	testState2
 }
 
+func (ts testState3) DelayBlocks() uint64  { return 0 }
 func (ts testState3) ActiveBlocks() uint64 { return 2 }
 
 func (ts testState3) Initiate() error {
@@ -159,6 +162,7 @@ type testState4 struct {
 	testState3
 }
 
+func (ts testState4) DelayBlocks() uint64  { return 0 }
 func (ts testState4) ActiveBlocks() uint64 { return 2 }
 func (ts testState4) Initiate() error {
 	addToTestLog(ts, "initiate")

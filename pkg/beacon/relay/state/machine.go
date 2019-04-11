@@ -133,7 +133,7 @@ func stateTransition(
 	// other coopearating state machines a chance to enter the new state.
 	// This is needed when, for example, during the initialization some
 	// state-specific messages are sent.
-	initiateDelay := lastStateEndBlock + 1
+	initiateDelay := lastStateEndBlock + currentState.DelayBlocks()
 	err := blockCounter.WaitForBlockHeight(initiateDelay)
 	if err != nil {
 		return nil, fmt.Errorf(

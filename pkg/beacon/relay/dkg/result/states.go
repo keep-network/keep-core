@@ -35,6 +35,8 @@ type resultSigningState struct {
 	signingStartBlock uint64
 }
 
+func (rss *resultSigningState) DelayBlocks() uint64 { return 1 }
+
 func (rss *resultSigningState) ActiveBlocks() uint64 { return 3 }
 
 func (rss *resultSigningState) Initiate() error {
@@ -124,6 +126,8 @@ type signaturesVerificationState struct {
 	verificationStartBlock uint64
 }
 
+func (svs *signaturesVerificationState) DelayBlocks() uint64 { return 0 }
+
 func (svs *signaturesVerificationState) ActiveBlocks() uint64 { return 0 }
 
 func (svs *signaturesVerificationState) Initiate() error {
@@ -175,6 +179,8 @@ type resultSubmissionState struct {
 
 	submissionStartBlock uint64
 }
+
+func (rss *resultSubmissionState) DelayBlocks() uint64 { return 1 }
 
 func (rss *resultSubmissionState) ActiveBlocks() uint64 { return 3 }
 

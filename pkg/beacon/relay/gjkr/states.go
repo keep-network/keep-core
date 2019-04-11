@@ -17,6 +17,8 @@ type initializationState struct {
 	member  *LocalMember
 }
 
+func (is *initializationState) DelayBlocks() uint64 { return 1 }
+
 func (is *initializationState) ActiveBlocks() uint64 { return 3 }
 
 func (is *initializationState) Initiate() error {
@@ -42,6 +44,8 @@ type joinState struct {
 	channel net.BroadcastChannel
 	member  *LocalMember
 }
+
+func (js *joinState) DelayBlocks() uint64 { return 1 }
 
 func (js *joinState) ActiveBlocks() uint64 { return 3 }
 
@@ -79,6 +83,8 @@ type ephemeralKeyPairGenerationState struct {
 
 	phaseMessages []*EphemeralPublicKeyMessage
 }
+
+func (ekpgs *ephemeralKeyPairGenerationState) DelayBlocks() uint64 { return 1 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) ActiveBlocks() uint64 { return 3 }
 
@@ -130,6 +136,8 @@ type symmetricKeyGenerationState struct {
 	previousPhaseMessages []*EphemeralPublicKeyMessage
 }
 
+func (skgs *symmetricKeyGenerationState) DelayBlocks() uint64 { return 0 }
+
 func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 { return 0 }
 
 func (skgs *symmetricKeyGenerationState) Initiate() error {
@@ -165,6 +173,8 @@ type commitmentState struct {
 	phaseSharesMessages      []*PeerSharesMessage
 	phaseCommitmentsMessages []*MemberCommitmentsMessage
 }
+
+func (cs *commitmentState) DelayBlocks() uint64 { return 1 }
 
 func (cs *commitmentState) ActiveBlocks() uint64 { return 3 }
 
@@ -234,6 +244,8 @@ type commitmentsVerificationState struct {
 	phaseAccusationsMessages []*SecretSharesAccusationsMessage
 }
 
+func (cvs *commitmentsVerificationState) DelayBlocks() uint64 { return 1 }
+
 func (cvs *commitmentsVerificationState) ActiveBlocks() uint64 { return 3 }
 
 func (cvs *commitmentsVerificationState) Initiate() error {
@@ -296,6 +308,8 @@ type sharesJustificationState struct {
 	previousPhaseAccusationsMessages []*SecretSharesAccusationsMessage
 }
 
+func (sjs *sharesJustificationState) DelayBlocks() uint64 { return 0 }
+
 func (sjs *sharesJustificationState) ActiveBlocks() uint64 { return 0 }
 
 func (sjs *sharesJustificationState) Initiate() error {
@@ -337,6 +351,8 @@ type qualificationState struct {
 	member  *QualifiedMember
 }
 
+func (qs *qualificationState) DelayBlocks() uint64 { return 0 }
+
 func (qs *qualificationState) ActiveBlocks() uint64 { return 0 }
 
 func (qs *qualificationState) Initiate() error {
@@ -370,6 +386,8 @@ type pointsShareState struct {
 
 	phaseMessages []*MemberPublicKeySharePointsMessage
 }
+
+func (pss *pointsShareState) DelayBlocks() uint64 { return 1 }
 
 func (pss *pointsShareState) ActiveBlocks() uint64 { return 3 }
 
@@ -420,6 +438,8 @@ type pointsValidationState struct {
 
 	phaseMessages []*PointsAccusationsMessage
 }
+
+func (pvs *pointsValidationState) DelayBlocks() uint64 { return 1 }
 
 func (pvs *pointsValidationState) ActiveBlocks() uint64 { return 3 }
 
@@ -476,6 +496,8 @@ type pointsJustificationState struct {
 	previousPhaseMessages []*PointsAccusationsMessage
 }
 
+func (pjs *pointsJustificationState) DelayBlocks() uint64 { return 0 }
+
 func (pjs *pointsJustificationState) ActiveBlocks() uint64 { return 0 }
 
 func (pjs *pointsJustificationState) Initiate() error {
@@ -519,7 +541,9 @@ type keyRevealState struct {
 	phaseMessages []*DisqualifiedEphemeralKeysMessage
 }
 
-func (rs *keyRevealState) ActiveBlocks() uint64 { return 1 }
+func (rs *keyRevealState) DelayBlocks() uint64 { return 1 }
+
+func (rs *keyRevealState) ActiveBlocks() uint64 { return 3 }
 
 func (rs *keyRevealState) Initiate() error {
 	revealMsg, err := rs.member.RevealDisqualifiedMembersKeys()
@@ -570,6 +594,8 @@ type reconstructionState struct {
 	previousPhaseMessages []*DisqualifiedEphemeralKeysMessage
 }
 
+func (rs *reconstructionState) DelayBlocks() uint64 { return 0 }
+
 func (rs *reconstructionState) ActiveBlocks() uint64 { return 0 }
 
 func (rs *reconstructionState) Initiate() error {
@@ -608,6 +634,8 @@ type combinationState struct {
 	member  *CombiningMember
 }
 
+func (cs *combinationState) DelayBlocks() uint64 { return 0 }
+
 func (cs *combinationState) ActiveBlocks() uint64 { return 0 }
 
 func (cs *combinationState) Initiate() error {
@@ -639,6 +667,8 @@ type finalizationState struct {
 	channel net.BroadcastChannel
 	member  *FinalizingMember
 }
+
+func (fs *finalizationState) DelayBlocks() uint64 { return 0 }
 
 func (fs *finalizationState) ActiveBlocks() uint64 { return 0 }
 

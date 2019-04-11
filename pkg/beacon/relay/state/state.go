@@ -7,6 +7,12 @@ import (
 
 // State is and interface against which relay states should be implemented.
 type State interface {
+	// DelayBlocks returns the number of blocks for which the current state
+	// initialization is delayed. We delay the initialization to give all other
+	// cooperating state machines (e.g. those running on other clients)
+	// a chance to enter the new state.
+	DelayBlocks() uint64
+
 	// ActiveBlocks returns the number of blocks during which the current state
 	// is active. Blocks are counted after the initiation process of the
 	// current state has completed.
