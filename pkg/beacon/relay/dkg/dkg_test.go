@@ -23,6 +23,8 @@ func TestExecuteDKGLocal(t *testing.T) {
 	requestID := big.NewInt(13)
 	seed := big.NewInt(8)
 
+	startBlock := uint64(2)
+
 	networkProvider := netLocal.Connect()
 	chainHandle := chainLocal.Connect(groupSize, threshold, big.NewInt(200))
 
@@ -43,6 +45,7 @@ func TestExecuteDKGLocal(t *testing.T) {
 			playerIndex,
 			groupSize,
 			threshold,
+			startBlock,
 			blockCounter,
 			chainHandle.ThresholdRelay(),
 			broadcastChannel,
