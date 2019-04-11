@@ -31,6 +31,8 @@ type resultSigningState struct {
 	result    *relayChain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
+
+	signingStartBlock uint64
 }
 
 func (rss *resultSigningState) ActiveBlocks() uint64 { return 3 }
@@ -84,14 +86,15 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 func (rss *resultSigningState) Next() signingState {
 	// set up the verification state, phase 13 part 2
 	return &signaturesVerificationState{
-		channel:           rss.channel,
-		relayChain:        rss.relayChain,
-		blockCounter:      rss.blockCounter,
-		member:            rss.member,
-		requestID:         rss.requestID,
-		result:            rss.result,
-		signatureMessages: rss.signatureMessages,
-		validSignatures:   make(map[group.MemberIndex]operator.Signature),
+		channel:                rss.channel,
+		relayChain:             rss.relayChain,
+		blockCounter:           rss.blockCounter,
+		member:                 rss.member,
+		requestID:              rss.requestID,
+		result:                 rss.result,
+		signatureMessages:      rss.signatureMessages,
+		validSignatures:        make(map[group.MemberIndex]operator.Signature),
+		verificationStartBlock: rss.signingStartBlock + rss.ActiveBlocks(),
 	}
 
 }
@@ -117,6 +120,8 @@ type signaturesVerificationState struct {
 
 	signatureMessages []*DKGResultHashSignatureMessage
 	validSignatures   map[group.MemberIndex]operator.Signature
+
+	verificationStartBlock uint64
 }
 
 func (svs *signaturesVerificationState) ActiveBlocks() uint64 { return 0 }
@@ -137,13 +142,14 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 
 func (svs *signaturesVerificationState) Next() signingState {
 	return &resultSubmissionState{
-		channel:      svs.channel,
-		relayChain:   svs.relayChain,
-		blockCounter: svs.blockCounter,
-		member:       NewSubmittingMember(svs.member.index),
-		requestID:    svs.requestID,
-		result:       svs.result,
-		signatures:   svs.validSignatures,
+		channel:              svs.channel,
+		relayChain:           svs.relayChain,
+		blockCounter:         svs.blockCounter,
+		member:               NewSubmittingMember(svs.member.index),
+		requestID:            svs.requestID,
+		result:               svs.result,
+		signatures:           svs.validSignatures,
+		submissionStartBlock: svs.verificationStartBlock + svs.ActiveBlocks(),
 	}
 
 }
@@ -166,6 +172,8 @@ type resultSubmissionState struct {
 	requestID  *big.Int
 	result     *relayChain.DKGResult
 	signatures map[group.MemberIndex]operator.Signature
+
+	submissionStartBlock uint64
 }
 
 func (rss *resultSubmissionState) ActiveBlocks() uint64 { return 3 }
@@ -177,6 +185,7 @@ func (rss *resultSubmissionState) Initiate() error {
 		rss.signatures,
 		rss.relayChain,
 		rss.blockCounter,
+		rss.submissionStartBlock,
 	)
 }
 

@@ -36,6 +36,7 @@ func Publish(
 		requestID:         requestID,
 		result:            convertResult(result, dkgGroup.GroupSize()),
 		signatureMessages: make([]*DKGResultHashSignatureMessage, 0),
+		signingStartBlock: startBlock,
 	}
 
 	initializeChannel(channel)

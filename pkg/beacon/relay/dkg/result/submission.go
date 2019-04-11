@@ -54,6 +54,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	signatures map[group.MemberIndex]operator.Signature,
 	chainRelay relayChain.Interface,
 	blockCounter chain.BlockCounter,
+	startBlock uint64,
 ) error {
 	config, err := chainRelay.GetConfig()
 	if err != nil {
@@ -98,12 +99,14 @@ func (sm *SubmittingMember) SubmitDKGResult(
 
 	// Someone who was ahead of us in the queue published the result. Giving up.
 	if alreadyPublished {
+		fmt.Printf(">>> result already submitted...\n")
 		return returnWithError(nil)
 	}
 
 	// Wait until the current member is eligible to submit the result.
 	eligibleToSubmitWaiter, err := sm.waitForSubmissionEligibility(
 		blockCounter,
+		startBlock,
 		config.ResultPublicationBlockStep,
 	)
 	if err != nil {
@@ -155,14 +158,23 @@ func (sm *SubmittingMember) SubmitDKGResult(
 // away, each following member is eligible after pre-defined block step.
 func (sm *SubmittingMember) waitForSubmissionEligibility(
 	blockCounter chain.BlockCounter,
+	startBlock uint64,
 	blockStep uint64,
 ) (<-chan uint64, error) {
-	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
-		(uint64(sm.index) - 1) * blockStep, // T_init + (member_index - 1) * T_step
+	// T_init + (member_index - 1) * T_step
+	blockWaitTime := (uint64(sm.index) - 1) * blockStep
+
+	eligibleBlockHeight := startBlock + blockWaitTime
+	fmt.Printf(
+		"[member:%v] Waiting for block [%v] to publish...\n",
+		sm.index,
+		eligibleBlockHeight,
 	)
+
+	waiter, err := blockCounter.BlockHeightWaiter(eligibleBlockHeight)
 	if err != nil {
-		return nil, fmt.Errorf("block waiter failure [%v]", err)
+		return nil, fmt.Errorf("block height waiter failure [%v]", err)
 	}
 
-	return eligibleToSubmitWaiter, err
+	return waiter, err
 }
