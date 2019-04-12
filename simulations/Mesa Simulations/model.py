@@ -42,13 +42,16 @@ class Beacon_Model(Model):
 
 
         #bootstrap active groups as nodes become available. Can only happen once enough nodes are online
+        temp_bootstrap_groups = []
         if self.bootstrap_complete == False:
-            if len(self.active_nodes)> self.group_formation_threshold:
+            print("bootstrapping active groups")
+            if len(self.active_nodes)>=self.group_formation_threshold:
                 for i in range(self.active_group_threshold):
-                    self.active_groups.append(self.group_registration())
+                    
+                    temp_bootstrap_groups.append(self.group_registration())
                     #print(self.active_groups[i].id)
                 self.bootstrap_complete = True
-            
+            self.active_groups = temp_bootstrap_groups
 
         #check how many active groups are available
         self.refresh_active_group_list()
@@ -144,7 +147,7 @@ class Beacon_Model(Model):
         
         print(sum(active_count))
 
-        if sum(active_count)> self.signature_threshold: 
+        if sum(active_count)>= self.signature_threshold: 
             print("         signature successful")
         else:
             print("         signature unsuccessful")
