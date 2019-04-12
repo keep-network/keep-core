@@ -64,8 +64,11 @@ func TestExecuteBlockHandlerOnlyOnce(t *testing.T) {
 	}
 
 	go func() {
+		blockCounter.subscriptionChannel <- block{Number: "1"}
+		blockCounter.subscriptionChannel <- block{Number: "2"}
 		blockCounter.subscriptionChannel <- block{Number: "2"}
 		blockCounter.subscriptionChannel <- block{Number: "3"}
+		blockCounter.subscriptionChannel <- block{Number: "4"}
 	}()
 
 	go blockCounter.receiveBlocks()
