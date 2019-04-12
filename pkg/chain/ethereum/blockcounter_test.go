@@ -23,6 +23,7 @@ func TestWaitForNewMinedBlock(t *testing.T) {
 	}
 
 	go func() {
+		blockCounter.subscriptionChannel <- block{Number: "1"}
 		blockCounter.subscriptionChannel <- block{Number: "2"}
 	}()
 
