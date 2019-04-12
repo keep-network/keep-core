@@ -22,6 +22,7 @@ class Beacon_Model(Model):
         self.bootstrap_complete = False # indicates when the initial active group list bootstrap is complete
         self.group_formation_threshold = group_formation_threshold # min nodes required to form a group
         self.timer = 0
+        self.unsuccessful_signature_events = []
 
         #create nodes
         for i in range(nodes):
@@ -149,8 +150,10 @@ class Beacon_Model(Model):
 
         if sum(active_count)>= self.signature_threshold: 
             print("         signature successful")
+            self.unsuccessful_signature_events.append(0)
         else:
             print("         signature unsuccessful")
+            self.unsuccessful_signature_events.append(1)
 
 
 
