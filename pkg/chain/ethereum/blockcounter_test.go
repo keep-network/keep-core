@@ -12,9 +12,9 @@ func TestWaitForNewMinedBlock(t *testing.T) {
 	defer cancel()
 
 	blockCounter := &ethereumBlockCounter{
-		latestBlockHeight:   uint64(1),
-		waiters:             make(map[uint64][]chan uint64),
-		subscriptionChannel: make(chan block),
+		latestBlockHeightSeen: uint64(1),
+		waiters:               make(map[uint64][]chan uint64),
+		subscriptionChannel:   make(chan block),
 	}
 
 	block2Waiter, err := blockCounter.BlockHeightWaiter(2)
@@ -47,9 +47,9 @@ func TestExecuteBlockHandlerOnlyOnce(t *testing.T) {
 	defer cancel()
 
 	blockCounter := &ethereumBlockCounter{
-		latestBlockHeight:   uint64(1),
-		waiters:             make(map[uint64][]chan uint64),
-		subscriptionChannel: make(chan block),
+		latestBlockHeightSeen: uint64(1),
+		waiters:               make(map[uint64][]chan uint64),
+		subscriptionChannel:   make(chan block),
 	}
 
 	block2Waiter, err := blockCounter.BlockHeightWaiter(2)
