@@ -58,11 +58,11 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 		return nil, 0, fmt.Errorf("failed to wait for the execution start block")
 	}
 
-	lastStateEndBlock := startBlockHeight
+	lastStateEndBlockHeight := startBlockHeight
 
 	blockWaiter, err := stateTransition(
 		currentState,
-		lastStateEndBlock,
+		lastStateEndBlockHeight,
 		m.blockCounter,
 	)
 	if err != nil {
@@ -89,23 +89,23 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 			}
 
 		case endBlock := <-blockWaiter:
-			lastStateEndBlock = endBlock
+			lastStateEndBlockHeight = endBlock
 			nextState := currentState.Next()
 			if nextState == nil {
 				fmt.Printf(
 					"[member:%v, state:%T] Final state reached at block [%v]\n",
 					currentState.MemberIndex(),
 					currentState,
-					lastStateEndBlock,
+					lastStateEndBlockHeight,
 				)
-				return currentState, lastStateEndBlock, nil
+				return currentState, lastStateEndBlockHeight, nil
 			}
 
 			currentState = nextState
 
 			blockWaiter, err = stateTransition(
 				currentState,
-				lastStateEndBlock,
+				lastStateEndBlockHeight,
 				m.blockCounter,
 			)
 			if err != nil {
@@ -119,21 +119,21 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 
 func stateTransition(
 	currentState State,
-	lastStateEndBlock uint64,
+	lastStateEndBlockHeight uint64,
 	blockCounter chain.BlockCounter,
 ) (<-chan uint64, error) {
 	fmt.Printf(
 		"[member:%v, state:%T] Transitioning to a new state at block [%v]...\n",
 		currentState.MemberIndex(),
 		currentState,
-		lastStateEndBlock,
+		lastStateEndBlockHeight,
 	)
 
 	// We delay the initialization of the new state by one block to give all
 	// other coopearating state machines a chance to enter the new state.
 	// This is needed when, for example, during the initialization some
 	// state-specific messages are sent.
-	initiateDelay := lastStateEndBlock + currentState.DelayBlocks()
+	initiateDelay := lastStateEndBlockHeight + currentState.DelayBlocks()
 	err := blockCounter.WaitForBlockHeight(initiateDelay)
 	if err != nil {
 		return nil, fmt.Errorf(

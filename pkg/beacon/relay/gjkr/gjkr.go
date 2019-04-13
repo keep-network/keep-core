@@ -46,7 +46,7 @@ func Execute(
 
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)
 
-	lastState, endBlock, err := stateMachine.Execute(startBlockHeight)
+	lastState, endBlockHeight, err := stateMachine.Execute(startBlockHeight)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -56,7 +56,7 @@ func Execute(
 		return nil, 0, fmt.Errorf("execution ended on state %T", lastState)
 	}
 
-	return finalizationState.result(), endBlock, nil
+	return finalizationState.result(), endBlockHeight, nil
 }
 
 // initializeChannel initializes a given broadcast channel to be able to

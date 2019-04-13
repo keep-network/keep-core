@@ -117,11 +117,11 @@ func Execute(
 					seenShares[signatureShareMsg.senderID] = share
 				}
 			}
-		case endBlock := <-blockWaiter:
+		case endBlockHeight := <-blockWaiter:
 			fmt.Printf(
 				"[member:%v] Stopped receiving signature shares at block [%v]\n",
 				signer.MemberID(),
-				endBlock,
+				endBlockHeight,
 			)
 
 			// put all seen shares into a slice and complete the signature

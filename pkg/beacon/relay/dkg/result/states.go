@@ -32,7 +32,7 @@ type resultSigningState struct {
 
 	signatureMessages []*DKGResultHashSignatureMessage
 
-	signingStartBlock uint64
+	signingStartBlockHeight uint64
 }
 
 func (rss *resultSigningState) DelayBlocks() uint64 { return 1 }
@@ -96,7 +96,8 @@ func (rss *resultSigningState) Next() signingState {
 		result:            rss.result,
 		signatureMessages: rss.signatureMessages,
 		validSignatures:   make(map[group.MemberIndex]operator.Signature),
-		verificationStartBlock: rss.signingStartBlock + rss.DelayBlocks() +
+		verificationStartBlockHeight: rss.signingStartBlockHeight +
+			rss.DelayBlocks() +
 			rss.ActiveBlocks(),
 	}
 
@@ -124,7 +125,7 @@ type signaturesVerificationState struct {
 	signatureMessages []*DKGResultHashSignatureMessage
 	validSignatures   map[group.MemberIndex]operator.Signature
 
-	verificationStartBlock uint64
+	verificationStartBlockHeight uint64
 }
 
 func (svs *signaturesVerificationState) DelayBlocks() uint64 { return 0 }
@@ -154,7 +155,8 @@ func (svs *signaturesVerificationState) Next() signingState {
 		requestID:    svs.requestID,
 		result:       svs.result,
 		signatures:   svs.validSignatures,
-		submissionStartBlock: svs.verificationStartBlock + svs.DelayBlocks() +
+		submissionStartBlockHeight: svs.verificationStartBlockHeight +
+			svs.DelayBlocks() +
 			svs.ActiveBlocks(),
 	}
 
@@ -179,7 +181,7 @@ type resultSubmissionState struct {
 	result     *relayChain.DKGResult
 	signatures map[group.MemberIndex]operator.Signature
 
-	submissionStartBlock uint64
+	submissionStartBlockHeight uint64
 }
 
 func (rss *resultSubmissionState) DelayBlocks() uint64 { return 1 }
@@ -193,7 +195,7 @@ func (rss *resultSubmissionState) Initiate() error {
 		rss.signatures,
 		rss.relayChain,
 		rss.blockCounter,
-		rss.submissionStartBlock,
+		rss.submissionStartBlockHeight,
 	)
 }
 

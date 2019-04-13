@@ -29,14 +29,14 @@ func Publish(
 ) error {
 	privateKey, _ := relayChain.GetKeys()
 	initialState := &resultSigningState{
-		channel:           channel,
-		relayChain:        relayChain,
-		blockCounter:      blockCounter,
-		member:            NewSigningMember(playerIndex, dkgGroup, privateKey),
-		requestID:         requestID,
-		result:            convertResult(result, dkgGroup.GroupSize()),
-		signatureMessages: make([]*DKGResultHashSignatureMessage, 0),
-		signingStartBlock: startBlockHeight,
+		channel:                 channel,
+		relayChain:              relayChain,
+		blockCounter:            blockCounter,
+		member:                  NewSigningMember(playerIndex, dkgGroup, privateKey),
+		requestID:               requestID,
+		result:                  convertResult(result, dkgGroup.GroupSize()),
+		signatureMessages:       make([]*DKGResultHashSignatureMessage, 0),
+		signingStartBlockHeight: startBlockHeight,
 	}
 
 	initializeChannel(channel)

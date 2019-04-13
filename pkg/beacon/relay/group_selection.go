@@ -30,7 +30,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	beaconValue []byte,
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
-	startBlock uint64,
+	startBlockHeight uint64,
 ) error {
 	availableStake, err := n.Staker.Stake()
 	if err != nil {
@@ -48,14 +48,14 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 
 	submissionTimeout, err := blockCounter.BlockHeightWaiter(
-		startBlock + n.chainConfig.TicketReactiveSubmissionTimeout,
+		startBlockHeight + n.chainConfig.TicketReactiveSubmissionTimeout,
 	)
 	if err != nil {
 		return err
 	}
 
 	challengeTimeout, err := blockCounter.BlockHeightWaiter(
-		startBlock + n.chainConfig.TicketChallengeTimeout,
+		startBlockHeight + n.chainConfig.TicketChallengeTimeout,
 	)
 	if err != nil {
 		return err
@@ -83,7 +83,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			)
 		case <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
-		case challengeEndBlock := <-challengeTimeout:
+		case challengeEndBlockHeight := <-challengeTimeout:
 			selectedParticipants, err := relayChain.GetSelectedParticipants()
 			if err != nil {
 				return fmt.Errorf(
@@ -104,7 +104,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				&groupselection.Result{SelectedStakers: selectedStakers},
 				entryRequestID,
 				entrySeed,
-				challengeEndBlock,
+				challengeEndBlockHeight,
 			)
 			return nil
 		}

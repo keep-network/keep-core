@@ -49,7 +49,7 @@ func TestExecute(t *testing.T) {
 
 	stateMachine := NewMachine(channel, blockCounter, initialState)
 
-	finalState, endBlock, err := stateMachine.Execute(1)
+	finalState, endBlockHeight, err := stateMachine.Execute(1)
 	if err != nil {
 		t.Errorf("unexpected error [%v]", err)
 	}
@@ -58,8 +58,8 @@ func TestExecute(t *testing.T) {
 		t.Errorf("state is not final [%v]", finalState)
 	}
 
-	if endBlock != 9 {
-		t.Errorf("unexpected end block [%v]", endBlock)
+	if endBlockHeight != 9 {
+		t.Errorf("unexpected end block [%v]", endBlockHeight)
 	}
 
 	expectedTestLog := map[uint64][]string{
