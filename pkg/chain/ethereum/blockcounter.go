@@ -84,7 +84,7 @@ func (ebc *ethereumBlockCounter) CurrentBlock() (uint64, error) {
 }
 
 // receiveBlocks gets each new block back from Geth and extracts the
-// block height (topBlockNumber) form it.  For each block height that is being
+// block height (topBlockNumber) form it. For each block height that is being
 // waited on a message will be sent.
 func (ebc *ethereumBlockCounter) receiveBlocks() {
 	for block := range ebc.subscriptionChannel {
@@ -95,7 +95,7 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 		}
 
 		// receivedBlockHeight is the current blockchain height as just
-		// received in the notification. lastestBlockHeightSeen is the
+		// received in the notification. latestBlockHeightSeen is the
 		// blockchain height as observed in the previous invocation of
 		// receiveBlocks()
 		//
@@ -177,7 +177,7 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 			)
 	}
 
-	startupBlockNumber, err := strconv.ParseInt(startupBlock.Number, 0, 32)
+	startupBlockHeight, err := strconv.ParseInt(startupBlock.Number, 0, 32)
 	if err != nil {
 		return nil,
 			fmt.Errorf(
@@ -187,7 +187,7 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	}
 
 	blockCounter := &ethereumBlockCounter{
-		latestBlockHeightSeen: uint64(startupBlockNumber),
+		latestBlockHeightSeen: uint64(startupBlockHeight),
 		waiters:               make(map[uint64][]chan uint64),
 		config:                ec,
 		subscriptionChannel:   make(chan block),
