@@ -137,7 +137,8 @@ func stateTransition(
 	err := blockCounter.WaitForBlockHeight(initiateDelay)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to wait 1 block entering state [%T]: [%v]",
+			"failed to wait [%v] blocks entering state [%T]: [%v]",
+			currentState.DelayBlocks(),
 			currentState,
 			err,
 		)
