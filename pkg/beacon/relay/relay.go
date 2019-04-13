@@ -47,7 +47,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	previousEntry *big.Int,
 	seed *big.Int,
 	relayChain relaychain.RelayEntryInterface,
-	startBlock uint64,
+	startBlockHeight uint64,
 ) {
 	combinedEntryToSign := combineEntryToSign(
 		previousEntry.Bytes(),
@@ -67,7 +67,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				n.blockCounter,
 				signer.channel,
 				signer.member,
-				startBlock,
+				startBlockHeight,
 			)
 			if err != nil {
 				fmt.Fprintf(

@@ -23,7 +23,7 @@ func Execute(
 	channel net.BroadcastChannel,
 	threshold int,
 	seed *big.Int,
-	startBlock uint64,
+	startBlockHeight uint64,
 ) (*Result, uint64, error) {
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberIndex)
 
@@ -46,7 +46,7 @@ func Execute(
 
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)
 
-	lastState, endBlock, err := stateMachine.Execute(startBlock)
+	lastState, endBlock, err := stateMachine.Execute(startBlockHeight)
 	if err != nil {
 		return nil, 0, err
 	}

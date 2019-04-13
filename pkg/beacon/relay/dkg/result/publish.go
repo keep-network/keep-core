@@ -25,7 +25,7 @@ func Publish(
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
 	blockCounter chain.BlockCounter,
-	startBlock uint64,
+	startBlockHeight uint64,
 ) error {
 	privateKey, _ := relayChain.GetKeys()
 	initialState := &resultSigningState{
@@ -36,14 +36,14 @@ func Publish(
 		requestID:         requestID,
 		result:            convertResult(result, dkgGroup.GroupSize()),
 		signatureMessages: make([]*DKGResultHashSignatureMessage, 0),
-		signingStartBlock: startBlock,
+		signingStartBlock: startBlockHeight,
 	}
 
 	initializeChannel(channel)
 
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)
 
-	lastState, _, err := stateMachine.Execute(startBlock)
+	lastState, _, err := stateMachine.Execute(startBlockHeight)
 	if err != nil {
 		return err
 	}

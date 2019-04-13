@@ -32,7 +32,7 @@ func NewMachine(
 
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
-func (m *Machine) Execute(startBlock uint64) (State, uint64, error) {
+func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
 	handler := net.HandleMessageFunc{
@@ -51,14 +51,14 @@ func (m *Machine) Execute(startBlock uint64) (State, uint64, error) {
 	fmt.Printf(
 		"[member:%v] Waiting for block %v to start execution...\n",
 		currentState.MemberIndex(),
-		startBlock,
+		startBlockHeight,
 	)
-	err := m.blockCounter.WaitForBlockHeight(startBlock)
+	err := m.blockCounter.WaitForBlockHeight(startBlockHeight)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to wait for the execution start block")
 	}
 
-	lastStateEndBlock := startBlock
+	lastStateEndBlock := startBlockHeight
 
 	blockWaiter, err := stateTransition(
 		currentState,

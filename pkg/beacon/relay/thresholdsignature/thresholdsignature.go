@@ -36,7 +36,7 @@ func Execute(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	signer *dkg.ThresholdSigner,
-	startBlock uint64,
+	startBlockHeight uint64,
 ) ([]byte, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
@@ -59,7 +59,7 @@ func Execute(
 		signer.MemberID(),
 	)
 
-	setupDelay := startBlock + setupBlocks
+	setupDelay := startBlockHeight + setupBlocks
 	err := blockCounter.WaitForBlockHeight(setupDelay)
 	if err != nil {
 		return nil, fmt.Errorf(
