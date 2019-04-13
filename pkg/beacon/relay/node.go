@@ -101,7 +101,6 @@ func (n *Node) JoinGroupIfEligible(
 					n.chainConfig.GroupSize,
 					n.chainConfig.Threshold,
 					dkgStartBlockHeight,
-
 					n.blockCounter,
 					relayChain,
 					broadcastChannel,
