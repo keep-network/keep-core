@@ -85,21 +85,20 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		return err
 	}
 
-	// Check if any result has already been published to the chain with current
+	// Check if any result has already been submitted to the chain with current
 	// request ID.
-	alreadyPublished, err := chainRelay.IsDKGResultSubmitted(requestID)
+	alreadySubmitted, err := chainRelay.IsDKGResultSubmitted(requestID)
 	if err != nil {
 		return returnWithError(
 			fmt.Errorf(
-				"could not check if the result is already published [%v]",
+				"could not check if the result is already submitted [%v]",
 				err,
 			),
 		)
 	}
 
-	// Someone who was ahead of us in the queue published the result. Giving up.
-	if alreadyPublished {
-		fmt.Printf(">>> result already submitted...\n")
+	// Someone who was ahead of us in the queue submitted the result. Giving up.
+	if alreadySubmitted {
 		return returnWithError(nil)
 	}
 
@@ -166,7 +165,7 @@ func (sm *SubmittingMember) waitForSubmissionEligibility(
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
 	fmt.Printf(
-		"[member:%v] Waiting for block [%v] to publish...\n",
+		"[member:%v] Waiting for block [%v] to submit...\n",
 		sm.index,
 		eligibleBlockHeight,
 	)
