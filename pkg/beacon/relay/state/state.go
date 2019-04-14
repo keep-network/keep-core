@@ -34,3 +34,28 @@ type State interface {
 	// MemberIndex returns the index of member associated with the current state.
 	MemberIndex() group.MemberIndex
 }
+
+// SilentStateDelayBlocks is a delay in blocks for a state that do not
+// exchange any network messages as a part of its execution.
+//
+// There is no delay before such state enters initialization.
+const SilentStateDelayBlocks = 0
+
+// SilentStateActiveBlocks is a number of blocks for which a state that do not
+// exchange any network messages as a part of its execution should be active.
+//
+// Such state is active only for a time needed to perform required computations
+// and not any longer.
+const SilentStateActiveBlocks = 0
+
+// MessagingStateDelayBlocks is a delay in blocks for a state exchanging
+// network messages as a part of its execution.
+//
+// One block is given for all state machines cooperating over the network
+// so that they can enter the given state before any message for this
+// state is sent. This way we make sure that no messages are dropped.
+const MessagingStateDelayBlocks = 1
+
+// MessagingStateActiveBlocks is a number of blocks for which a state
+// exchanging network messages as a part of its execution should be active.
+const MessagingStateActiveBlocks = 3
