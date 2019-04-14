@@ -284,7 +284,7 @@ contract KeepGroupImplV1 is Ownable {
             "Inactive and disqualified bytes arrays don't match the length of members array."
         );
 
-        bytes32 resultHash = keccak256(abi.encodePacked(disqualified, inactive, groupPubKey));
+        bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
         verifySignatures(signatures, signingMembersIndexes, resultHash);
 
         address[] memory members = selectedParticipants();

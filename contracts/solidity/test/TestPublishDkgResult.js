@@ -28,7 +28,7 @@ contract('TestPublishDkgResult', function(accounts) {
   inactive = '0x0000000000000000000000000000000000000000'
   groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000"
 
-  resultHash = web3.utils.soliditySha3(disqualified, inactive, groupPubKey);
+  resultHash = web3.utils.soliditySha3(groupPubKey, disqualified, inactive);
 
   beforeEach(async () => {
     token = await KeepToken.new();
