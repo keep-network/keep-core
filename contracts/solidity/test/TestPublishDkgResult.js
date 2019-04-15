@@ -28,6 +28,7 @@ contract('TestPublishDkgResult', function(accounts) {
   token, stakingProxy, stakingContract, randomBeaconValue, requestId,
   keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
   keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
+  submissionStart, selectedParticipants, signatures, positions = [],
   owner = accounts[0], magpie = accounts[0],
   operator1 = accounts[0], tickets1,
   operator2 = accounts[1], tickets2,
@@ -85,22 +86,21 @@ contract('TestPublishDkgResult', function(accounts) {
     for(let i = 0; i < groupSize; i++) {
       await keepGroupImplViaProxy.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
     }
-  });
 
-  it("should generate signatures and submit a correct result", async function() {
-    let selectedParticipants = await keepGroupImplViaProxy.selectedParticipants();
+    submissionStart = await keepGroupImplViaProxy.ticketSubmissionStartBlock();
+    selectedParticipants = await keepGroupImplViaProxy.selectedParticipants();
 
-    let positions = [];
-    let signatures;
     for(let i = 0; i < selectedParticipants.length; i++) {
       let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
       positions.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
     }
+  });
 
-    // Jump in time to when first member is eligible to submit
-    let submissionStart = await keepGroupImplViaProxy.ticketSubmissionStartBlock();
+  it("should be able to submit correct result as first member after DKG finished.", async function() {
+
+    // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeoutDKG - currentBlock);
 
@@ -109,11 +109,31 @@ contract('TestPublishDkgResult', function(accounts) {
     assert.equal(submitted, true, "DkgResult should should be submitted");
   });
 
-  it("should reject the result with invalid signature", async function() {
-    let selectedParticipants = await keepGroupImplViaProxy.selectedParticipants();
 
-    let positions = [];
-    let signatures;
+  it("should only be able to submit result at eligible block time based on member index.", async function() {
+
+    let submitterMemberIndex = 5;
+    let submitter = selectedParticipants[submitterMemberIndex-1]
+
+    // Submitter is not eligible to submit at this point
+    await expectThrow(keepGroupImplViaProxy.submitDkgResult(
+      requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, 
+      {from: submitter})
+    );
+
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeoutDKG - currentBlock + (submitterMemberIndex-1)*resultPublicationBlockStep);
+
+    await keepGroupImplViaProxy.submitDkgResult(requestId, submitterMemberIndex, groupPubKey, disqualified, inactive, signatures, positions, {from: submitter})
+    let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
+    assert.equal(submitted, true, "DkgResult should should be submitted");
+  });
+
+  it("should reject the result with invalid signature", async function() {
+
+    positions = [];
+    signatures = undefined;
 
     let lastParticipantIdx = selectedParticipants.length - 1
 
