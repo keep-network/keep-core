@@ -54,7 +54,7 @@ func TestExecute(t *testing.T) {
 		t.Errorf("unexpected error [%v]", err)
 	}
 
-	if _, ok := finalState.(*testState4); !ok {
+	if _, ok := finalState.(*testState5); !ok {
 		t.Errorf("state is not final [%v]", finalState)
 	}
 
@@ -75,6 +75,9 @@ func TestExecute(t *testing.T) {
 		},
 		7: []string{
 			"1-state.testState4-receive-message_3",
+		},
+		8: []string{
+			"1-state.testState5-initiate",
 		},
 	}
 
@@ -177,8 +180,28 @@ func (ts testState4) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState4) Next() State                    { return nil }
+func (ts testState4) Next() State                    { return &testState5{ts} }
 func (ts testState4) MemberIndex() group.MemberIndex { return ts.memberIndex }
+
+type testState5 struct {
+	testState4
+}
+
+func (ts testState5) DelayBlocks() uint64  { return 0 }
+func (ts testState5) ActiveBlocks() uint64 { return 0 }
+func (ts testState5) Initiate() error {
+	addToTestLog(ts, "initiate")
+	return nil
+}
+func (ts testState5) Receive(msg net.Message) error {
+	addToTestLog(
+		ts,
+		fmt.Sprintf("receive-%v", msg.Payload().(*TestMessage).content),
+	)
+	return nil
+}
+func (ts testState5) Next() State                    { return nil }
+func (ts testState5) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type TestMessage struct {
 	content string
