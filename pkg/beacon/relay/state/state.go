@@ -11,6 +11,10 @@ type State interface {
 	// initialization is delayed. We delay the initialization to give all other
 	// cooperating state machines (e.g. those running on other clients)
 	// a chance to enter the new state.
+	//
+	// State machine moves to the new state immediately after the active blocks
+	// time of the previous state has been reached but waits with the
+	// initialization of the new state before delay blocks timeout is reached.
 	DelayBlocks() uint64
 
 	// ActiveBlocks returns the number of blocks during which the current state
