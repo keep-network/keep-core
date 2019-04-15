@@ -2,6 +2,7 @@ import { duration } from './helpers/increaseTime';
 import {bls} from './helpers/data';
 import mineBlocks from './helpers/mineBlocks';
 import generateTickets from './helpers/generateTickets';
+import stakeDelegate from './helpers/stakeDelegate';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
@@ -26,7 +27,7 @@ contract('TestPublishDkgResult', function(accounts) {
   token, stakingProxy, stakingContract, randomBeaconValue, requestId,
   keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
   keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
-  owner = accounts[0], magpie = accounts[0], signature, delegation,
+  owner = accounts[0], magpie = accounts[0],
   operator1 = accounts[0], tickets1,
   operator2 = accounts[1], tickets2,
   operator3 = accounts[2], tickets3;
@@ -64,24 +65,13 @@ contract('TestPublishDkgResult', function(accounts) {
     await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address);
     await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
-    // Stake delegate tokens to operator1
-    signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator1)).substr(2), 'hex');
-    delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
-    await token.approveAndCall(stakingContract.address, minimumStake*2000, delegation, {from: owner});
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake*2000)
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake*2000)
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake*3000)
+
     tickets1 = generateTickets(randomBeaconValue, operator1, 2000);
-
-    // Stake delegate tokens to operator2
-    signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator2)).substr(2), 'hex');
-    delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
-    await token.approveAndCall(stakingContract.address, minimumStake*2000, delegation, {from: owner});
     tickets2 = generateTickets(randomBeaconValue, operator2, 2000);
-
-    // Stake delegate tokens to operator3
-    signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator3)).substr(2), 'hex');
-    delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
-    await token.approveAndCall(stakingContract.address, minimumStake*3000, delegation, {from: owner});
     tickets3 = generateTickets(randomBeaconValue, operator3, 3000);
-
   })
 
   it("should generate signatures and submit a correct result", async function() {
