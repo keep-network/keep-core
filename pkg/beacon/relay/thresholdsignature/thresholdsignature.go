@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/bls"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -16,8 +17,8 @@ import (
 )
 
 const (
-	setupBlocks     = 1
-	signatureBlocks = 2
+	setupBlocks     = state.MessagingStateDelayBlocks
+	signatureBlocks = state.MessagingStateActiveBlocks
 )
 
 // Init initializes a given broadcast channel to be able to perform distributed
@@ -54,12 +55,13 @@ func Execute(
 	channel.Recv(handler)
 	defer channel.UnregisterRecv(handler.Type)
 
+	setupDelay := startBlockHeight + setupBlocks
 	fmt.Printf(
-		"[member:%v] Waiting for other group members to enter signing state...\n",
+		"[member:%v] Waiting for block [%v] to start threshold signing...\n",
 		signer.MemberID(),
+		setupDelay,
 	)
 
-	setupDelay := startBlockHeight + setupBlocks
 	err := blockCounter.WaitForBlockHeight(setupDelay)
 	if err != nil {
 		return nil, fmt.Errorf(
