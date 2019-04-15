@@ -159,9 +159,13 @@ type commitmentState struct {
 	phaseCommitmentsMessages []*MemberCommitmentsMessage
 }
 
-func (cs *commitmentState) DelayBlocks() uint64 { return 1 }
+func (cs *commitmentState) DelayBlocks() uint64 {
+	return state.MessagingStateDelayBlocks
+}
 
-func (cs *commitmentState) ActiveBlocks() uint64 { return 3 }
+func (cs *commitmentState) ActiveBlocks() uint64 {
+	return state.MessagingStateActiveBlocks
+}
 
 func (cs *commitmentState) Initiate() error {
 	sharesMsg, commitmentsMsg, err := cs.member.CalculateMembersSharesAndCommitments()
