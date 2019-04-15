@@ -103,7 +103,6 @@ variable "nat_gateway_ip_address_type" {
 }
 
 # helm provider
-
 variable "tiller_namespace_name" {
   default = "tiller"
 }
@@ -196,7 +195,6 @@ variable "openvpn_parameters" {
 }
 
 # deployment infrastructure
-
 variable "create_ci_publish_to_gcr_service_account" {
   description = "Create ServiceAccount for CI to publish images to keep-dev GCR."
   default     = true
