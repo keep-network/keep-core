@@ -5,13 +5,7 @@ import numpy as np
 class Node(Agent):
     """ Node: One hardware device used to stake tokens on the network. 
     Each node will create virtual stakers proportional to
-    the number of tokens owned by the node 
-    
-    Attributes:
-    unique_id: unique int
-    token_amount: int value of tokens staked by node
-    node_status: status of node can be - not connected, connected
-    """
+    the number of tokens owned by the node """
     def __init__(self, unique_id, node_id, model, tickets, failure_percent, death_percent):
         super().__init__(unique_id, model)
         self.id = unique_id
@@ -80,6 +74,7 @@ class Group(Agent):
         self.expiry = expiry # of steps before expiration
         self.timer = self.model.timer
         self.model.newest_id +=1
+        self.model.newest_group_id +=1
 
     def step(self):
         """ At each step check if the group as expired """
@@ -96,12 +91,14 @@ class Group(Agent):
 
 
 class Signature(Agent):
-    def __init__(self, unique_id, model, group_object):
+    def __init__(self, unique_id, signature_id, model, group_object):
         super().__init__(unique_id, model)
         self.group = group_object
         self.delay = np.random.poisson(6) #delay between when it is triggered and when it hits the chain
         self.start_signature_process = False
         self.end_signature_process = False
+        self.model.newest_id +=1
+        self.model.newest_signature_id +=1
 
     def step(self):
         if not self.end_signature_process: 
