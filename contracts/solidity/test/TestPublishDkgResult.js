@@ -12,11 +12,18 @@ const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
 
 
 contract('TestPublishDkgResult', function(accounts) {
+
+  const minimumStake = 200000;
+  const groupThreshold = 15;
+  const groupSize = 20;
+  const timeoutInitial = 20;
+  const timeoutSubmission = 100;
+  const timeoutChallenge = 60;
+  const timeoutDKG = 20;
+  const resultPublicationBlockStep = 3;
+
   let disqualified, inactive, resultHash,
-  token, stakingProxy,
-  stakingContract, minimumStake, groupThreshold, groupSize,
-  randomBeaconValue, requestId,
-  timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, resultPublicationBlockStep,
+  token, stakingProxy, stakingContract, randomBeaconValue, requestId,
   keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
   keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
   owner = accounts[0], magpie = accounts[0], signature, delegation,
@@ -44,17 +51,6 @@ contract('TestPublishDkgResult', function(accounts) {
     keepRandomBeaconImplViaProxy = await KeepRandomBeaconImplV1.at(keepRandomBeaconProxy.address);
 
     // Initialize Keep Group contract
-    minimumStake = 200000;
-    groupThreshold = 15;
-    groupSize = 20;
-    timeoutInitial = 20;
-    timeoutSubmission = 100;
-    timeoutChallenge = 60;
-    timeoutDKG = 20;
-    resultPublicationBlockStep = 3;
-
-    randomBeaconValue = bls.groupSignature;
-
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
@@ -62,6 +58,8 @@ contract('TestPublishDkgResult', function(accounts) {
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold,
       groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, resultPublicationBlockStep
     );
+
+    randomBeaconValue = bls.groupSignature;
 
     await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address);
     await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
