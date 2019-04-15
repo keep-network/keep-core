@@ -27,7 +27,6 @@ module.exports = async function() {
         'BlockNumber:' + requestEntry.receipt.blockNumber + '\n' +
         'TotalGas:' + requestEntry.receipt.cumulativeGasUsed + '\n' +
         'TransactionHash:' + requestEntry.receipt.transactionHash + '\n' +
-        'RelayEntrySeed:' + BigInt(parseInt(relayEntrySeed.toString('hex'), 16)) + '\n' +
         '--------------------------'
       );
     }
