@@ -139,21 +139,8 @@ class Beacon_Model(Model):
         #for node in self.active_nodes:
             #print("in active node id" + str(node.id)+ " "+ node.mainloop_status)
 
-    def signature_process(self, group):
-        print("Starting signature process:")
-        print("     Checking for active nodes in randomly selected group")
-        active_count = []
-        for node in group.members:
-            active_count.append(node.mainloop_status=="forked") 
-        
-        print(sum(active_count))
 
-        if sum(active_count)>= self.signature_threshold: 
-            print("         signature successful")
-            self.unsuccessful_signature_events.append(0)
-        else:
-            print("         signature unsuccessful")
-            self.unsuccessful_signature_events.append(1)
+    
 
 
 

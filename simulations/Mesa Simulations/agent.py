@@ -96,27 +96,30 @@ class Signature(Agent):
         self.group = group_object
         self.delay = np.random.poisson(6) #delay between when it is triggered and when it hits the chain
         self.start_signature_process = False
+        self.end_signature_process = False
 
     def step(self):
-        if not self.start_signature_process:
-            print("Starting signature process:")
-            self.start_signature_process =True
-        elif self.delay <=0:
-            print("     Checking for active nodes in randomly selected group")
-            active_count = []
-            for node in self.group.members:
-                active_count.append(node.mainloop_status=="forked") 
-            
-            print(sum(active_count))
+        if not self.end_signature_process: 
+            if not self.start_signature_process:
+                print("Starting signature process:")
+                self.start_signature_process =True
+            elif self.delay <=0:
+                print("     Checking for active nodes in randomly selected group")
+                active_count = []
+                for node in self.group.members:
+                    active_count.append(node.mainloop_status=="forked") 
+                
+                print(sum(active_count))
 
-            if sum(active_count)>= self.model.signature_threshold: 
-                print("         signature successful")
-                self.model.unsuccessful_signature_events.append(0)
+                if sum(active_count)>= self.model.signature_threshold: 
+                    print("         signature successful")
+                    self.model.unsuccessful_signature_events.append(0)
+                else:
+                    print("         signature unsuccessful")
+                    self.model.unsuccessful_signature_events.append(1)
+                self.end_signature_process = True
             else:
-                print("         signature unsuccessful")
-                self.model.unsuccessful_signature_events.append(1)
-        else:
-            self.delay -=1
+                self.delay -=1
 
 
         
