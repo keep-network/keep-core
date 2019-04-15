@@ -10,33 +10,6 @@ import (
 
 type keyGenerationState = state.State
 
-// initializationState is the starting state of key generation; it waits for
-// activePeriod and then enters joinState. No messages are valid in this state.
-type initializationState struct {
-	channel net.BroadcastChannel
-	member  *LocalMember
-}
-
-func (is *initializationState) DelayBlocks() uint64 { return 1 }
-
-func (is *initializationState) ActiveBlocks() uint64 { return 3 }
-
-func (is *initializationState) Initiate() error {
-	return nil
-}
-
-func (is *initializationState) Receive(msg net.Message) error {
-	return nil
-}
-
-func (is *initializationState) Next() keyGenerationState {
-	return &joinState{is.channel, is.member}
-}
-
-func (is *initializationState) MemberIndex() group.MemberIndex {
-	return is.member.ID
-}
-
 // joinState is the state during which a member announces itself to the key
 // generation broadcast channel to initiate the distributed protocol.
 // `JoinMessage`s are valid in this state.

@@ -39,7 +39,7 @@ func Execute(
 
 	initializeChannel(channel)
 
-	initialState := &initializationState{
+	initialState := &joinState{
 		channel: channel,
 		member:  member,
 	}
