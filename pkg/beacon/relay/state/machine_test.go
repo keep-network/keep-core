@@ -58,7 +58,7 @@ func TestExecute(t *testing.T) {
 		t.Errorf("state is not final [%v]", finalState)
 	}
 
-	if endBlockHeight != 9 {
+	if endBlockHeight != 8 {
 		t.Errorf("unexpected end block [%v]", endBlockHeight)
 	}
 
@@ -69,9 +69,11 @@ func TestExecute(t *testing.T) {
 		},
 		3: []string{"1-state.testState2-initiate"},
 		4: []string{"1-state.testState2-receive-message_2"},
-		5: []string{"1-state.testState3-initiate"},
-		7: []string{
+		6: []string{
+			"1-state.testState3-initiate",
 			"1-state.testState4-initiate",
+		},
+		7: []string{
 			"1-state.testState4-receive-message_3",
 		},
 	}
@@ -139,8 +141,8 @@ type testState3 struct {
 	testState2
 }
 
-func (ts testState3) DelayBlocks() uint64  { return 0 }
-func (ts testState3) ActiveBlocks() uint64 { return 2 }
+func (ts testState3) DelayBlocks() uint64  { return 1 }
+func (ts testState3) ActiveBlocks() uint64 { return 0 }
 
 func (ts testState3) Initiate() error {
 	addToTestLog(ts, "initiate")
