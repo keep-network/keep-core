@@ -12,10 +12,11 @@ class Node(Agent):
     token_amount: int value of tokens staked by node
     node_status: status of node can be - not connected, connected
     """
-    def __init__(self, unique_id, model, tickets, failure_percent, death_percent):
+    def __init__(self, unique_id, node_id, model, tickets, failure_percent, death_percent):
         super().__init__(unique_id, model)
         self.id = unique_id
         self.type = "node"
+        self.node_id = node_id
         self.num_tickets = int(tickets)
         self.ticket_list = []
         self.connection_status = "not connected" #change later to event - currently used for node failure process
@@ -69,7 +70,7 @@ class Node(Agent):
 
 class Group(Agent):
     """ A Group """
-    def __init__(self, unique_id, model, members, expiry):
+    def __init__(self, unique_id, group_id, model, members, expiry):
         super().__init__(unique_id, model)
         self.id = unique_id
         self.type = "group"
@@ -89,6 +90,10 @@ class Group(Agent):
 
     def advance(self):
         pass
+
+    def calculate_ownership_distr(self):
+        pass
+
 
 class Signature(Agent):
     def __init__(self, unique_id, model, group_object):

@@ -26,7 +26,7 @@ class Beacon_Model(Model):
 
         #create nodes
         for i in range(nodes):
-            node = agent.Node(i, self, self.ticket_distribution[i], node_failure_percent, node_death_percent)
+            node = agent.Node(i, i, self, self.ticket_distribution[i], node_failure_percent, node_death_percent)
             self.newest_id = i
             self.schedule.add(node)
         self.newest_id +=1
@@ -34,7 +34,6 @@ class Beacon_Model(Model):
 
     def step(self):
         '''Advance the model by one step'''
-        #print("newest group id" + str(self.newest_group_id))
  
         
         #check how many active nodes are available
