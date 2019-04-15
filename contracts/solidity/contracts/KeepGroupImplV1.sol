@@ -39,7 +39,7 @@ contract KeepGroupImplV1 is Ownable {
     uint256[] internal _tickets;
     bytes[] internal _submissions;
 
-    // Store DKG result by corresponding requestID.
+    // Store whether DKG result was published for the corresponding requestID.
     mapping (uint256 => bool) internal _dkgResultPublished;
 
     struct Proof {
@@ -232,7 +232,7 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Checks if member is disqualified.
      * @param dqBytes bytes representing disqualified members.
      * @param memberIndex position of the member to check.
-     * @return true if staker is inactive, false otherwise.
+     * @return true if staker is disqualified, false otherwise.
      */
     function _isDisqualified(bytes memory dqBytes, uint256 memberIndex) internal pure returns (bool){
         return dqBytes[memberIndex] != 0x00;
@@ -259,8 +259,8 @@ contract KeepGroupImplV1 is Ownable {
      * @param inactive bytes representing inactive group members; 1 at the specific index means
      * that the member has been marked as inactive. Indexes reflect positions of members in the
      * group, as outputted by the group selection protocol.
-     * @param signatures Concatenation of signer resultHashes collected off-chain
-     * @param signingMembersIndexes indices of members corresponding to each signature
+     * @param signatures Concatenation of signed resultHashes collected off-chain.
+     * @param signingMembersIndexes indices of members corresponding to each signature.
      */
     function submitDkgResult(
         uint256 requestId,
