@@ -42,11 +42,6 @@ contract KeepGroupImplV1 is Ownable {
     // Store DKG result by corresponding requestID.
     mapping (uint256 => bool) internal _dkgResultPublished;
 
-    // Store unique hash of a member who submitted DKG result.
-    // The unique hash is made of submitter member index, address
-    // and the last random beacon value.
-    mapping (bytes32 => bool) internal _submittedDkg;
-
     struct Proof {
         address sender;
         uint256 stakerValue;
@@ -283,6 +278,11 @@ contract KeepGroupImplV1 is Ownable {
             "Inactive and disqualified bytes arrays don't match the group size."
         );
 
+        require(
+            !_dkgResultPublished[requestId], 
+            "DKG result for this request ID already published."
+        );
+
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
         verifySignatures(signatures, signingMembersIndexes, resultHash);
 
@@ -308,7 +308,7 @@ contract KeepGroupImplV1 is Ownable {
     * @param resultHash The result hash signed by the users.
     * @param indices Indices of members corresponding to each signature.
     */
-    function verifySignatures(bytes memory signatures, uint256[] memory indices, bytes32 resultHash) internal returns (bool) {
+    function verifySignatures(bytes memory signatures, uint256[] memory indices, bytes32 resultHash) internal view returns (bool) {
 
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Signatures bytes array is too short.");
@@ -318,12 +318,8 @@ contract KeepGroupImplV1 is Ownable {
         bytes memory current; // Current signature to be checked.
         uint256[] memory selected = selectedTickets();
         for(uint i = 0; i < signaturesCount; i++){
-            bytes32 submitterId = keccak256(abi.encodePacked(msg.sender, _randomBeaconValue, indices[i]));
-
             require(indices[i] > 0, "Index should be greater than zero.");
             require(indices[i] <= selected.length, "Provided index is out of acceptable tickets bound.");
-            require(!_submittedDkg[submitterId], "Participant at index already submitted a result.");
-            _submittedDkg[submitterId] = true;
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
