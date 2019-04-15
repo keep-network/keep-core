@@ -279,9 +279,8 @@ contract KeepGroupImplV1 is Ownable {
         require(eligibleSubmitter(submitterMemberIndex), "User is not eligible to submit the result.");
 
         require(
-            disqualified.length == signingMembersIndexes.length &&
-            inactive.length == signingMembersIndexes.length,
-            "Inactive and disqualified bytes arrays don't match the length of members array."
+            disqualified.length == _groupSize && inactive.length == _groupSize,
+            "Inactive and disqualified bytes arrays don't match the group size."
         );
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
