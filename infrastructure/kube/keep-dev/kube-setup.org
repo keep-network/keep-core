@@ -423,12 +423,13 @@ kubectl describe configmaps keep-client-bootstrap-peer-0
 
 #+RESULTS:
 #+begin_example
-Fri Mar 29 19:29:09 UTC 2019
+Mon Apr 15 14:13:51 UTC 2019
 sthompson22
 Name:         keep-client-bootstrap-peer-0
 Namespace:    default
 Labels:       <none>
-Annotations:  <none>
+Annotations:  kubectl.kubernetes.io/last-applied-configuration:
+                {"apiVersion":"v1","data":{"eth-keyfile":"{\"address\":\"a86c468475ef9c2ce851ea4125424672c3f7e0c8\",\"crypto\":{\"cipher\":\"aes-128-ctr\"...
 
 Data
 ====
@@ -451,11 +452,11 @@ keep-client-config.toml:
 
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x439f517ccb968e5cb4Bb48B6888645C57906B084"
+  KeepRandomBeacon = "0x9d28652e7777946a5Cf1E738E38024cb14993be9"
   # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0xAb5D2d616EB717cA527a946517eA70Fdc3e3D55b"
+  KeepGroup = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
   # StakingProxy
-  Staking = "0xca59725bC84196e90BBE295460Ae90f11164Fe13"
+  Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
 # Bootstrap node creating a new network.
   [LibP2P]
@@ -479,9 +480,9 @@ kubectl create configmap keep-client-bootstrap-peer-0 \
 #+END_SRC
 
 #+RESULTS:
-: Fri Mar 15 18:05:39 UTC 2019
+: Mon Apr 15 14:13:01 UTC 2019
 : sthompson22
-: configmap/keep-bootstrap-peer-0x946703d984f3c250d5311424426ff166d49b3683 configured
+: configmap/keep-client-bootstrap-peer-0 configured
 
 ***** Delete
 **** DONE keep-client-standard-peer-0
@@ -510,7 +511,7 @@ kubectl describe configmaps keep-client-standard-peer-0
 
 #+RESULTS:
 #+begin_example
-Sun Mar 31 17:56:33 UTC 2019
+Mon Apr 15 14:14:12 UTC 2019
 sthompson22
 Name:         keep-client-standard-peer-0
 Namespace:    default
@@ -539,11 +540,11 @@ keep-client-config.toml:
 
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x439f517ccb968e5cb4Bb48B6888645C57906B084"
+  KeepRandomBeacon = "0x9d28652e7777946a5Cf1E738E38024cb14993be9"
   # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0xAb5D2d616EB717cA527a946517eA70Fdc3e3D55b"
+  KeepGroup = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
   # StakingProxy
-  Staking = "0xca59725bC84196e90BBE295460Ae90f11164Fe13"
+  Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
 [LibP2P]
   Peers = ["/ip4/10.102.100.142/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r"]
@@ -566,7 +567,7 @@ kubectl create configmap keep-client-standard-peer-0 \
 #+END_SRC
 
 #+RESULTS:
-: Sun Mar 31 17:56:26 UTC 2019
+: Mon Apr 15 14:13:16 UTC 2019
 : sthompson22
 : configmap/keep-client-standard-peer-0 configured
 
@@ -597,12 +598,13 @@ kubectl describe configmaps keep-client-standard-peer-1
 
 #+RESULTS:
 #+begin_example
-Sun Mar 31 18:10:23 UTC 2019
+Mon Apr 15 14:14:25 UTC 2019
 sthompson22
 Name:         keep-client-standard-peer-1
 Namespace:    default
 Labels:       <none>
-Annotations:  <none>
+Annotations:  kubectl.kubernetes.io/last-applied-configuration:
+                {"apiVersion":"v1","data":{"eth-keyfile":"{\"address\":\"c1382caf9da1b1eda32b570a9f6c81c4db067020\",\"crypto\":{\"cipher\":\"aes-128-ctr\"...
 
 Data
 ====
@@ -625,11 +627,11 @@ keep-client-config.toml:
 
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x439f517ccb968e5cb4Bb48B6888645C57906B084"
+  KeepRandomBeacon = "0x9d28652e7777946a5Cf1E738E38024cb14993be9"
   # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0xAb5D2d616EB717cA527a946517eA70Fdc3e3D55b"
+  KeepGroup = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
   # StakingProxy
-  Staking = "0xca59725bC84196e90BBE295460Ae90f11164Fe13"
+  Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
 [LibP2P]
   Peers = ["/ip4/10.102.100.142/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r"]
@@ -638,23 +640,23 @@ keep-client-config.toml:
 Events:  <none>
 #+end_example
 
-***** TODO Update
+***** DONE Update
 #+BEGIN_SRC sh :results pp
 date -u
 whoami
 
 kubectl create configmap keep-client-standard-peer-1 \
   --from-file=eth-keyfile=./keep-client/keyfiles/UTC--2019-03-27T19-05-21.389836600Z--c1382caf9da1b1eda32b570a9f6c81c4db067020 \
-  --from-file=keep-client-config.toml=./keep-client/config/keep-client-standard-peer-1.toml
+  --from-file=keep-client-config.toml=./keep-client/config/keep-client-standard-peer-1.toml \
   --dry-run \
   --save-config \
   -o yaml | kubectl apply -f -
 #+END_SRC
 
 #+RESULTS:
-: Fri Mar 15 18:14:04 UTC 2019
+: Mon Apr 15 14:13:25 UTC 2019
 : sthompson22
-: configmap/keep-standard-peer-0x415650a368157dec773cc556965856188c6ca84a configured
+: configmap/keep-client-standard-peer-1 configured
 
 ***** Delete
 **** DONE keep-client-standard-peer-2
@@ -683,12 +685,13 @@ kubectl describe configmaps keep-client-standard-peer-2
 
 #+RESULTS:
 #+begin_example
-Sun Mar 31 18:15:12 UTC 2019
+Mon Apr 15 14:14:44 UTC 2019
 sthompson22
 Name:         keep-client-standard-peer-2
 Namespace:    default
 Labels:       <none>
-Annotations:  <none>
+Annotations:  kubectl.kubernetes.io/last-applied-configuration:
+                {"apiVersion":"v1","data":{"eth-keyfile":"{\"address\":\"6226b7c97fdec78776e2898671541cc55387e743\",\"crypto\":{\"cipher\":\"aes-128-ctr\"...
 
 Data
 ====
@@ -711,11 +714,11 @@ keep-client-config.toml:
 
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x439f517ccb968e5cb4Bb48B6888645C57906B084"
+  KeepRandomBeacon = "0x9d28652e7777946a5Cf1E738E38024cb14993be9"
   # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0xAb5D2d616EB717cA527a946517eA70Fdc3e3D55b"
+  KeepGroup = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
   # StakingProxy
-  Staking = "0xca59725bC84196e90BBE295460Ae90f11164Fe13"
+  Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
 [LibP2P]
   Peers = ["/ip4/10.102.100.142/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r"]
@@ -723,23 +726,23 @@ keep-client-config.toml:
 Events:  <none>
 #+end_example
 
-***** TODO Update
+***** DONE Update
 #+BEGIN_SRC sh :results pp
 date -u
 whoami
 
 kubectl create configmap keep-client-standard-peer-2 \
   --from-file=eth-keyfile=./keep-client/keyfiles/UTC--2019-03-27T19-05-22.755015200Z--6226b7c97fdec78776e2898671541cc55387e743 \
-  --from-file=keep-client-config.toml=./keep-client/config/keep-client-standard-peer-2.toml
+  --from-file=keep-client-config.toml=./keep-client/config/keep-client-standard-peer-2.toml \
   --dry-run \
   --save-config \
   -o yaml | kubectl apply -f -
 #+END_SRC
 
 #+RESULTS:
-: Fri Mar 15 18:18:44 UTC 2019
+: Mon Apr 15 14:13:33 UTC 2019
 : sthompson22
-: configmap/keep-standard-peer-0xca006d1947dbd8df153750fabd13cae3c5f0870e configured
+: configmap/keep-client-standard-peer-2 configured
 
 ***** Delete
 **** DONE keep-client-standard-peer-3
@@ -768,15 +771,19 @@ kubectl describe configmaps keep-client-standard-peer-3
 
 #+RESULTS:
 #+begin_example
-Sun Mar 31 18:18:03 UTC 2019
+Mon Apr 15 14:14:52 UTC 2019
 sthompson22
 Name:         keep-client-standard-peer-3
 Namespace:    default
 Labels:       <none>
-Annotations:  <none>
+Annotations:  kubectl.kubernetes.io/last-applied-configuration:
+                {"apiVersion":"v1","data":{"eth-keyfile":"{\"address\":\"717d11e8f02c1dc1022327499ef50b45b39d01a4\",\"crypto\":{\"cipher\":\"aes-128-ctr\"...
 
 Data
 ====
+eth-keyfile:
+----
+{"address":"717d11e8f02c1dc1022327499ef50b45b39d01a4","crypto":{"cipher":"aes-128-ctr","ciphertext":"ad8b3c57bb91a740e368c7a94256fec3ac4114f39b4841346377658f0bcd68a0","cipherparams":{"iv":"f7284c3ab1e54c27e4d0bcf76af07b40"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"85fcc46df6ffc279dfc52008ee856ab659d80151f7530bfa754d3a256b33eb14"},"mac":"fc468425da42307fad8b57b5827ef9ab5d82d28fdf1d31e76c888ce7e1525d17"},"id":"4a654dbb-31cb-4707-8628-9ee97aa56624","version":3}
 keep-client-config.toml:
 ----
 # This is a TOML configuration file for DKG, P2P networking and connection to Ethereum
@@ -793,39 +800,36 @@ keep-client-config.toml:
 
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x439f517ccb968e5cb4Bb48B6888645C57906B084"
+  KeepRandomBeacon = "0x9d28652e7777946a5Cf1E738E38024cb14993be9"
   # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0xAb5D2d616EB717cA527a946517eA70Fdc3e3D55b"
+  KeepGroup = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
   # StakingProxy
-  Staking = "0xca59725bC84196e90BBE295460Ae90f11164Fe13"
+  Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
 [LibP2P]
   Peers = ["/ip4/10.102.100.142/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r"]
   Port = 3924
 
-eth-keyfile:
-----
-{"address":"717d11e8f02c1dc1022327499ef50b45b39d01a4","crypto":{"cipher":"aes-128-ctr","ciphertext":"ad8b3c57bb91a740e368c7a94256fec3ac4114f39b4841346377658f0bcd68a0","cipherparams":{"iv":"f7284c3ab1e54c27e4d0bcf76af07b40"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"85fcc46df6ffc279dfc52008ee856ab659d80151f7530bfa754d3a256b33eb14"},"mac":"fc468425da42307fad8b57b5827ef9ab5d82d28fdf1d31e76c888ce7e1525d17"},"id":"4a654dbb-31cb-4707-8628-9ee97aa56624","version":3}
 Events:  <none>
 #+end_example
 
-***** TODO Update
+***** DONE Update
 #+BEGIN_SRC sh :results pp
 date -u
 whoami
 
 kubectl create configmap keep-client-standard-peer-3 \
   --from-file=eth-keyfile=./keep-client/keyfiles/UTC--2019-03-27T19-05-24.156246300Z--717d11e8f02c1dc1022327499ef50b45b39d01a4 \
-  --from-file=keep-client-config.toml=./keep-client/config/keep-client-standard-peer-3.toml
+  --from-file=keep-client-config.toml=./keep-client/config/keep-client-standard-peer-3.toml \
   --dry-run \
   --save-config \
   -o yaml | kubectl apply -f -
 #+END_SRC
 
 #+RESULTS:
-: Fri Mar 15 18:19:46 UTC 2019
+: Mon Apr 15 14:13:41 UTC 2019
 : sthompson22
-: configmap/keep-standard-peer-0x5772807fb7cc8a641dfd96f3af8d1489954ee4b0 configured
+: configmap/keep-client-standard-peer-3 configured
 
 ***** Delete
 *** DONE Secrets
