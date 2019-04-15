@@ -32,7 +32,8 @@ contract('TestPublishDkgResult', function(accounts) {
   owner = accounts[0], magpie = accounts[0],
   operator1 = accounts[0], tickets1,
   operator2 = accounts[1], tickets2,
-  operator3 = accounts[2], tickets3;
+  operator3 = accounts[2], tickets3,
+  operator4 = accounts[3];
   requestId = 0;
   disqualified = '0x0000000000000000000000000000000000000000'
   inactive = '0x0000000000000000000000000000000000000000'
@@ -128,6 +129,13 @@ contract('TestPublishDkgResult', function(accounts) {
     await keepGroupImplViaProxy.submitDkgResult(requestId, submitterMemberIndex, groupPubKey, disqualified, inactive, signatures, positions, {from: submitter})
     let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
     assert.equal(submitted, true, "DkgResult should should be submitted");
+  });
+
+  it("should not be able to submit if submitter was not selected to be part of the group.", async function() {
+    await expectThrow(keepGroupImplViaProxy.submitDkgResult(
+      requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, 
+      {from: operator4})
+    );
   });
 
   it("should reject the result with invalid signature", async function() {

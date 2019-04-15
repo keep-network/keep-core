@@ -288,7 +288,7 @@ contract KeepGroupImplV1 is Ownable {
 
         address[] memory members = selectedParticipants();
 
-        for (uint i = 0; i < signingMembersIndexes.length; i++) {
+        for (uint i = 0; i < _groupSize; i++) {
             if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i)) {
                 _groupMembers[groupPubKey].push(members[i]);
             }
