@@ -10,7 +10,7 @@ module.exports = async function() {
     let crypto = require("crypto");
     let KeepRandomBeaconContractAddress = await KeepRandomBeacon.at(keepRandomBeaconProxy.address);
 
-    // Generate 32 bit sort of random number
+    // Generate 32 byte sort of random number
     try {
       relayEntrySeed = crypto.randomBytes(32);
     }
