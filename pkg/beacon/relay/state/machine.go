@@ -88,8 +88,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 				)
 			}
 
-		case endBlock := <-blockWaiter:
-			lastStateEndBlockHeight = endBlock
+		case lastStateEndBlockHeight := <-blockWaiter:
 			nextState := currentState.Next()
 			if nextState == nil {
 				fmt.Printf(
