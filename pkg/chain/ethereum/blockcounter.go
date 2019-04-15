@@ -21,11 +21,11 @@ const (
 )
 
 type ethereumBlockCounter struct {
-	structMutex           sync.Mutex
-	latestBlockHeightSeen uint64
-	subscriptionChannel   chan block
-	config                *ethereumChain
-	waiters               map[uint64][]chan uint64
+	structMutex         sync.Mutex
+	latestBlockHeight   uint64
+	subscriptionChannel chan block
+	config              *ethereumChain
+	waiters             map[uint64][]chan uint64
 }
 
 type block struct {
@@ -44,7 +44,7 @@ func (ebc *ethereumBlockCounter) WaitForBlocks(numBlocks uint64) error {
 func (ebc *ethereumBlockCounter) BlockWaiter(
 	numBlocks uint64,
 ) (<-chan uint64, error) {
-	notifyBlockHeight := ebc.latestBlockHeightSeen + numBlocks
+	notifyBlockHeight := ebc.latestBlockHeight + numBlocks
 	return ebc.BlockHeightWaiter(notifyBlockHeight)
 }
 
@@ -65,7 +65,7 @@ func (ebc *ethereumBlockCounter) BlockHeightWaiter(
 	ebc.structMutex.Lock()
 	defer ebc.structMutex.Unlock()
 
-	if blockNumber <= ebc.latestBlockHeightSeen {
+	if blockNumber <= ebc.latestBlockHeight {
 		go func() { newWaiter <- blockNumber }()
 	} else {
 		waiterList, exists := ebc.waiters[blockNumber]
@@ -80,7 +80,7 @@ func (ebc *ethereumBlockCounter) BlockHeightWaiter(
 }
 
 func (ebc *ethereumBlockCounter) CurrentBlock() (uint64, error) {
-	return ebc.latestBlockHeightSeen, nil
+	return ebc.latestBlockHeight, nil
 }
 
 // receiveBlocks gets each new block back from Geth and extracts the
@@ -97,13 +97,13 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 		// receivedBlockHeight is the current blockchain height as just
 		// received in the notification. latestBlockHeightSeen is the
 		// blockchain height as observed in the previous invocation of
-		// receiveBlocks()
+		// receiveBlocks().
 		//
 		// If we have already received notification about this block,
 		// we do nothing. All handlers were already called for this block
 		// height.
 		receivedBlockHeight := uint64(topBlockNumber)
-		if receivedBlockHeight == ebc.latestBlockHeightSeen {
+		if receivedBlockHeight == ebc.latestBlockHeight {
 			continue
 		}
 
@@ -111,10 +111,10 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 		// execution of receiveBlocks() function and all handlers for
 		// latestBlockHeightSeen were called. Now we start from the next block
 		// after it and that's latestBlockHeightSeen + 1.
-		for unseenBlockNumber := ebc.latestBlockHeightSeen + 1; unseenBlockNumber <= receivedBlockHeight; unseenBlockNumber++ {
+		for unseenBlockNumber := ebc.latestBlockHeight + 1; unseenBlockNumber <= receivedBlockHeight; unseenBlockNumber++ {
 			ebc.structMutex.Lock()
 			height := unseenBlockNumber
-			ebc.latestBlockHeightSeen++
+			ebc.latestBlockHeight++
 			waiters := ebc.waiters[height]
 			delete(ebc.waiters, height)
 			ebc.structMutex.Unlock()
@@ -187,10 +187,10 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	}
 
 	blockCounter := &ethereumBlockCounter{
-		latestBlockHeightSeen: uint64(startupBlockHeight),
-		waiters:               make(map[uint64][]chan uint64),
-		config:                ec,
-		subscriptionChannel:   make(chan block),
+		latestBlockHeight:   uint64(startupBlockHeight),
+		waiters:             make(map[uint64][]chan uint64),
+		config:              ec,
+		subscriptionChannel: make(chan block),
 	}
 
 	go blockCounter.receiveBlocks()
