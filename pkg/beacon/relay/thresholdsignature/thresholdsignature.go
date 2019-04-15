@@ -3,6 +3,7 @@ package thresholdsignature
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -73,6 +74,7 @@ func Execute(
 
 	fmt.Printf("[member:%v] Sending signature share...\n", signer.MemberID())
 
+	seenSharesMutex := sync.Mutex{}
 	seenShares := make(map[group.MemberIndex]*bn256.G1)
 	share := signer.CalculateSignatureShare(bytes)
 
@@ -116,7 +118,9 @@ func Execute(
 						err,
 					)
 				} else {
+					seenSharesMutex.Lock()
 					seenShares[signatureShareMsg.senderID] = share
+					seenSharesMutex.Unlock()
 				}
 			}
 		case endBlockHeight := <-blockWaiter:
