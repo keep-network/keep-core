@@ -25,16 +25,14 @@ spec:
     type: tx
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: eth-tx-node
+  namespace: default
 spec:
-  serviceName: eth-tx-node
-  replicas: 1
-  updateStrategy:
+  replicas: 3
+  strategy:
     type: RollingUpdate
-    rollingUpdate:
-      partition: 0
   selector:
     matchLabels:
       app: geth
@@ -54,9 +52,6 @@ spec:
         - containerPort: 8545
         - containerPort: 8546
         - containerPort: 30303
-        volumeMounts:
-        - name: eth-tx-node
-          mountPath: /mnt/eth-data
         env:
         - name: INSTANCE_NAME
           valueFrom:
@@ -71,7 +66,7 @@ spec:
             fieldRef:
               fieldPath: status.podIP
         - name: NETWORKID
-          value: "9384767738"
+          value: "1101"
         - name: WS_SERVER
           value: ws://eth-dashboard.default.svc.cluster.local:3000
         - name: WS_SECRET
@@ -82,18 +77,5 @@ spec:
           value: network_1
         - name: BOOTNODE_PUBLIC_IP
           value: eth-dashboard.default.svc.cluster.local
-        - name: HOSTVOLUME
-          value: /mnt/eth-data
         - name: ETH_IPC_PATH
-          value: $(HOSTVOLUME)/geth.ipc
-        volumeMounts:
-        - name: eth-tx-node
-          mountPath: /mnt/eth-data
-  volumeClaimTemplates:
-    - metadata:
-        name: eth-tx-node
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 5Gi
+          value: /tmp/geth.ipc
