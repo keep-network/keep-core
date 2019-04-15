@@ -124,7 +124,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
-			fmt.Printf("[member:%v] Publishing DKG result...\n", sm.index)
+			fmt.Printf("[member:%v] Submitting DKG result...\n", sm.index)
 			chainRelay.SubmitDKGResult(
 				requestID,
 				sm.index,
@@ -141,7 +141,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		case publishedResultEvent := <-onSubmittedResultChan:
 			if publishedResultEvent.RequestID.Cmp(requestID) == 0 {
 				fmt.Printf(
-					"[member:%v] DKG result published by other member, leaving.\n",
+					"[member:%v] DKG result submitted by other member, leaving.\n",
 					sm.index,
 				)
 				// A result has been submitted by other member. Leave without
