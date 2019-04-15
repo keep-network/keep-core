@@ -41,7 +41,6 @@ class Beacon_Model(Model):
         self.refresh_connected_nodes_list()
         print("Number of nodes in the forked state = " + str(len(self.active_nodes)))
 
-
         #bootstrap active groups as nodes become available. Can only happen once enough nodes are online
         temp_bootstrap_groups = []
         if self.bootstrap_complete == False:

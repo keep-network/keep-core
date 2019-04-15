@@ -75,6 +75,7 @@ class Group(Agent):
         self.timer = self.model.timer
         self.model.newest_id +=1
         self.model.newest_group_id +=1
+        self.ownership_distr = np.zeros(self.model.num_nodes) #captures the node distribution for
 
     def step(self):
         """ At each step check if the group as expired """
@@ -87,7 +88,10 @@ class Group(Agent):
         pass
 
     def calculate_ownership_distr(self):
-        pass
+        for node in self.members:
+            self.ownership_distr[self.timer][node.node_id] +=1 # increments by 1 for each node index everytime it exists in the member list, at each step
+
+
 
 
 class Signature(Agent):
