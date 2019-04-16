@@ -182,3 +182,21 @@ module "openvpn" {
     gke_master_ipv4_cidr_address  = "${var.openvpn_parameters["gke_master_ipv4_cidr_address"]}"
   }
 }
+
+module "pull_deployment_infrastructure" {
+  source                                   = "git@github.com:thesis/infrastructure.git//terraform/modules/gcp_pull_deploy"
+  project                                  = "${module.project.project_id}"
+  create_ci_publish_to_gcr_service_account = "${var.create_ci_publish_to_gcr_service_account}"
+
+  keel {
+    name      = "${var.keel["name"]}"
+    namespace = "${var.keel["namespace"]}"
+    version   = "${var.keel["version"]}"
+  }
+
+  keel_parameters {
+    helm_provider_enabled = "${var.keel_parameters["helm_provider_enabled"]}"
+    rbac_install_enabled  = "${var.keel_parameters["rbac_install_enabled"]}"
+    gcr_enabled           = "${var.keel_parameters["gcr_enabled"]}"
+  }
+}
