@@ -30,6 +30,8 @@ contract KeepGroupImplV1 is Ownable {
     // TODO: refactor according to the Phase 14
     event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID);
 
+    event testAddEvent(uint256 c);                                                                                       //<----------
+
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
     uint256 internal _minStake;
@@ -60,15 +62,23 @@ contract KeepGroupImplV1 is Ownable {
     mapping(uint256 => Proof) internal _proofs;
 
     // _numberOfActiveGroups is the minimal number of groups that should not
-    // expired to protect the minimal network throughput
+    // expired to protect the minimal network throughput.
     uint256 internal _numberOfActiveGroups;
  
-    // _groupExpirationTimeout is the time in block after which a group expires
+    // _groupExpirationTimeout is the time in block after which a group expires.
     uint256 internal _groupExpirationTimeout;
  
     // _expiredOffset is pointing to the first active group, it is also the
-    // expired groups counter
+    // expired groups counter.
     uint256 internal _expiredOffset = 0;
+
+    // _deletedOffset is pointing to the first not deleted offset, it is also
+    // the deleted groups counter.
+    uint256 internal _deletedOffset = 0;
+
+    // _expirationThreshold is the number after which batch of groups should be
+    // deleted. It is used only by selectGroupV3.
+    uint256 internal _expirationThreshold = 50;
 
     struct Group {
         bytes groupPubKey;
@@ -501,6 +511,112 @@ contract KeepGroupImplV1 is Ownable {
      */
     function numberOfGroups() public view returns(uint256) {
         return _groups.length - _expiredOffset;
+    }
+
+    /*
+     * Unmodified selectGroup without deletion. Used for reference purposes.
+     */
+    function selectGroupV0(uint256 previousEntry) public returns(bytes memory) {
+        uint256 activeGroupsNumber = _groups.length - _expiredOffset;
+        uint256 selectedGroup = previousEntry % activeGroupsNumber;
+
+        while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupExpirationTimeout < block.number) {
+            if (activeGroupsNumber > _numberOfActiveGroups) {
+                if (selectedGroup == 0) {
+                    _expiredOffset++;
+                    activeGroupsNumber--;
+                } else {
+                    _expiredOffset += selectedGroup;
+                    activeGroupsNumber -= selectedGroup;
+                }
+                selectedGroup = previousEntry % activeGroupsNumber;
+            } else break;
+        }
+
+        return _groups[_expiredOffset + selectedGroup].groupPubKey;
+    }
+
+    /*
+     * First selectGroup with deletion implementation. Expired groups are
+     * deleted while marked expired.
+     */
+    function selectGroupV1(uint256 previousEntry) public returns(bytes memory) {
+        uint256 activeGroupsNumber = _groups.length - _expiredOffset;
+        uint256 selectedGroup = previousEntry % activeGroupsNumber;
+     
+        while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupExpirationTimeout < block.number) {
+            if (activeGroupsNumber > _numberOfActiveGroups) {
+                if (selectedGroup == 0) {
+                    delete _groups[_expiredOffset];
+                    _expiredOffset++;
+                    activeGroupsNumber--;
+                } else {
+                    for (uint i = 1; i <= selectedGroup; i++)
+                        delete _groups[_expiredOffset++];
+                    activeGroupsNumber -= selectedGroup;
+                }
+                selectedGroup = previousEntry % activeGroupsNumber;
+            } else break;
+        }
+
+        return _groups[_expiredOffset + selectedGroup].groupPubKey;
+    }
+
+    /*
+     * Second selectGroup with deletion implementation. Expired groups are
+     * deleted in a single batch after an active group is found.
+     */
+    function selectGroupV2(uint256 previousEntry) public returns(bytes memory) {
+        uint256 activeGroupsNumber = _groups.length - _expiredOffset;
+        uint256 selectedGroup = previousEntry % activeGroupsNumber;
+        uint256 oldOffset = _expiredOffset;
+
+        while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupExpirationTimeout < block.number) {
+            if (activeGroupsNumber > _numberOfActiveGroups) {
+                if (selectedGroup == 0) {
+                    _expiredOffset++;
+                    activeGroupsNumber--;
+                } else {
+                    _expiredOffset += selectedGroup;
+                    activeGroupsNumber -= selectedGroup;
+                }
+                selectedGroup = previousEntry % activeGroupsNumber;
+            } else break;
+        }
+
+        for (; oldOffset < _expiredOffset; oldOffset++)
+            delete _groups[oldOffset];
+
+        return _groups[_expiredOffset + selectedGroup].groupPubKey;
+    }
+
+    /*
+     * Third selectGroup with deletion implementation. Expired groups are
+     * deleted in a single batch after an active group is found and when an 
+     * expirationThreshold is satisfied.
+     */
+    function selectGroupV3(uint256 previousEntry, uint256 expirationThreshold) public returns(bytes memory) {
+        uint256 activeGroupsNumber = _groups.length - _expiredOffset;
+        uint256 selectedGroup = previousEntry % activeGroupsNumber;
+
+        while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupExpirationTimeout < block.number) {
+            if (activeGroupsNumber > _numberOfActiveGroups) {
+                if (selectedGroup == 0) {
+                    _expiredOffset++;
+                    activeGroupsNumber--;
+                } else {
+                    _expiredOffset += selectedGroup;
+                    activeGroupsNumber -= selectedGroup;
+                }
+                selectedGroup = previousEntry % activeGroupsNumber;
+            } else break;
+        }
+
+        if (_expiredOffset - _deletedOffset > expirationThreshold)
+            for (uint i = 0; i < expirationThreshold; i++)
+                delete _groups[_deletedOffset++];
+
+        return _groups[_expiredOffset + selectedGroup].groupPubKey;
     }
 
     /**
