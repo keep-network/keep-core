@@ -114,9 +114,9 @@ class Signature(Agent):
                 self.start_signature_process =True
             elif self.delay <=0:
                 print("     Checking for active nodes in randomly selected group")
-                active_count = []
+                active_count = np.zeros(self.model.num_nodes)
                 for node in self.group.members:
-                    active_count.append(node.mainloop_status=="forked") 
+                    active_count[node.id] = (node.mainloop_status=="forked") #adds 1 to the index matching the node id if the node is active
                 
                 print(sum(active_count))
 
