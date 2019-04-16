@@ -71,7 +71,9 @@ class Beacon_Model(Model):
         if self.relay_request:
             try:
                 print('     selecting group at random')
-                signature = agent.Signature(self.newest_id, self.newest_signature_id, self, self.active_groups[np.random.randint(len(self.active_groups))]) # print a random group from the active list- change this to signing mechanism later
+                try:
+                    signature = agent.Signature(self.newest_id, self.newest_signature_id, self, self.active_groups[np.random.randint(len(self.active_groups))]) # print a random group from the active list- change this to signing mechanism later
+                except Exception as e: print(e)
                 self.schedule.add(signature)
             except:
                 print('     no active groups available')
@@ -84,6 +86,7 @@ class Beacon_Model(Model):
 
         #advance the agents
         self.schedule.step()
+
 
     def group_registration(self):
         ticket_list = []

@@ -76,7 +76,7 @@ class Group(Agent):
         self.timer = self.model.timer
         self.model.newest_id +=1
         self.model.newest_group_id +=1
-        self.ownership_distr = np.zeros(self.model.num_nodes) #captures the node distribution for
+        self.ownership_distr = self.calculate_ownership_distr()
 
     def step(self):
         """ At each step check if the group as expired """
@@ -85,15 +85,15 @@ class Group(Agent):
         if self.expiry == 0: 
             self.status = "Expired"
         
-        self.calculate_ownership_distr()
 
     def advance(self):
         pass
 
     def calculate_ownership_distr(self):
-        #temp_distr = np.zeros(self.model.num_nodes)
+        temp_distr = np.zeros(self.model.num_nodes)
         for node in self.members:    
-            self.ownership_distr[node.node_id] +=1 # increments by 1 for each node index everytime it exists in the member list, at each step
+            temp_distr[node.node_id] +=1 # increments by 1 for each node index everytime it exists in the member list, at each step
+        return temp_distr
 
 class Signature(Agent):
     def __init__(self, unique_id, signature_id, model, group_object):
@@ -104,6 +104,7 @@ class Signature(Agent):
         self.delay = np.random.poisson(self.model.signature_delay) #delay between when it is triggered and when it hits the chain
         self.start_signature_process = False
         self.end_signature_process = False
+        self.ownership_distr = self.calculate_ownership_distr()
         self.model.newest_id +=1
         self.model.newest_signature_id +=1
 
@@ -133,6 +134,12 @@ class Signature(Agent):
 
     def advance(self):
         pass
+
+    def calculate_ownership_distr(self):
+        temp_distr = np.zeros(self.model.num_nodes)
+        for node in self.group.members:    
+            temp_distr[node.node_id] +=1 # increments by 1 for each node index everytime it exists in the member list, at each step
+        return temp_distr
 
 
         
