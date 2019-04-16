@@ -35,5 +35,7 @@ main.test
 keystore
 keep_accounts
 
-# Ipython Notebook Checkpoints
+# Python and IPython
 *.ipynb_checkpoints
+__pycache__
+*.pyc
