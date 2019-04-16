@@ -25,6 +25,8 @@ class Beacon_Model(Model):
         self.group_formation_threshold = group_formation_threshold # min nodes required to form a group
         self.timer = 0
         self.unsuccessful_signature_events = []
+        self.datacollector = DataCollector(
+            agent_reporters={"Ownership_distribution": "ownership_distr"})  # Collect ownership distributions for groups
 
         #create nodes
         for i in range(nodes):

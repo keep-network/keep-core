@@ -83,6 +83,8 @@ class Group(Agent):
         #print('group ID '+ str(self.id) + ' expiry ' + str(self.expiry))
         if self.expiry == 0: 
             self.status = "Expired"
+        
+        self.calculate_ownership_distr()
 
     def advance(self):
         pass
@@ -90,8 +92,6 @@ class Group(Agent):
     def calculate_ownership_distr(self):
         for node in self.members:
             self.ownership_distr[self.timer][node.node_id] +=1 # increments by 1 for each node index everytime it exists in the member list, at each step
-
-
 
 
 class Signature(Agent):
