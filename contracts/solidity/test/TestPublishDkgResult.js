@@ -4,6 +4,7 @@ import mineBlocks from './helpers/mineBlocks';
 import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
 import expectThrow from './helpers/expectThrow';
+import shuffleArray from './helpers/shuffle';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
@@ -110,6 +111,30 @@ contract('TestPublishDkgResult', function(accounts) {
     assert.equal(submitted, true, "DkgResult should should be submitted");
   });
 
+  it("should be able to submit correct result with unordered signatures and indexes.", async function() {
+
+    let unorderedSigningMembersIndexes = [];
+    for (let i = 0; i < selectedParticipants.length; i++) {
+      unorderedSigningMembersIndexes[i] = i + 1;
+    }
+
+    unorderedSigningMembersIndexes = shuffleArray(unorderedSigningMembersIndexes);
+    let unorderedSignatures;
+
+    for(let i = 0; i < selectedParticipants.length; i++) {
+      let signature = await web3.eth.sign(resultHash, selectedParticipants[unorderedSigningMembersIndexes[i] - 1]);
+      if (unorderedSignatures == undefined) unorderedSignatures = signature
+      else unorderedSignatures += signature.slice(2, signature.length);
+    }
+
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeoutDKG - currentBlock);
+
+    await keepGroupImplViaProxy.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
+    let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
+    assert.equal(submitted, true, "DkgResult should should be submitted");
+  });
 
   it("should only be able to submit result at eligible block time based on member index.", async function() {
 
