@@ -138,8 +138,8 @@ func (sm *SubmittingMember) SubmitDKGResult(
 					errorChannel <- err
 				})
 			return <-errorChannel
-		case publishedResultEvent := <-onSubmittedResultChan:
-			if publishedResultEvent.RequestID.Cmp(requestID) == 0 {
+		case submittedResultEvent := <-onSubmittedResultChan:
+			if submittedResultEvent.RequestID.Cmp(requestID) == 0 {
 				fmt.Printf(
 					"[member:%v] DKG result submitted by other member, leaving.\n",
 					sm.index,
