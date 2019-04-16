@@ -138,22 +138,33 @@ contract('TestPublishDkgResult', function(accounts) {
 
   it("should only be able to submit result at eligible block time based on member index.", async function() {
 
-    let submitterMemberIndex = 5;
-    let submitter = selectedParticipants[submitterMemberIndex-1]
+    let submitter1MemberIndex = 4;
+    let submitter2MemberIndex = 5;
+    let submitter1 = selectedParticipants[submitter1MemberIndex - 1];
+    let submitter2 = selectedParticipants[submitter2MemberIndex - 1];
+    let eligibleBlockForSubmitter1 = submissionStart.toNumber() + timeoutChallenge + timeoutDKG + (submitter1MemberIndex-1)*resultPublicationBlockStep;
+    let eligibleBlockForSubmitter2 = submissionStart.toNumber() + timeoutChallenge + timeoutDKG + (submitter2MemberIndex-1)*resultPublicationBlockStep;
 
-    // Submitter is not eligible to submit at this point
+    // Jump in time to when submitter 1 becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(eligibleBlockForSubmitter1 - currentBlock);
+
+    assert.equal(await keepGroupImplViaProxy.eligibleSubmitter.call(submitter1MemberIndex, {from: submitter1}), true, "Submitter 1 should be eligible to submit the result");
+    assert.equal(await keepGroupImplViaProxy.eligibleSubmitter.call(submitter2MemberIndex, {from: submitter2}), false, "Submitter 2 should not be eligible to submit the result");
+
+    // Should throw if non eligible submitter 2 tries to submit
     await expectThrow(keepGroupImplViaProxy.submitDkgResult(
-      requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, 
-      {from: submitter})
+      requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, positions, 
+      {from: submitter2})
     );
 
-    // Jump in time to when submitter becomes eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeoutDKG - currentBlock + (submitterMemberIndex-1)*resultPublicationBlockStep);
+    // Jump in time to when submitter 2 becomes eligible to submit
+    currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(eligibleBlockForSubmitter2 - currentBlock);
 
-    await keepGroupImplViaProxy.submitDkgResult(requestId, submitterMemberIndex, groupPubKey, disqualified, inactive, signatures, positions, {from: submitter})
+    await keepGroupImplViaProxy.submitDkgResult(requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, positions, {from: submitter2})
     let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
-    assert.equal(submitted, true, "DkgResult should should be submitted");
+    assert.equal(submitted, true, "DkgResult should be submitted");
   });
 
   it("should not be able to submit if submitter was not selected to be part of the group.", async function() {
