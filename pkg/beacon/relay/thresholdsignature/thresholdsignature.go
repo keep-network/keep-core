@@ -3,12 +3,14 @@ package thresholdsignature
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/bls"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -16,8 +18,8 @@ import (
 )
 
 const (
-	setupBlocks     = 1
-	signatureBlocks = 2
+	setupBlocks     = state.MessagingStateDelayBlocks
+	signatureBlocks = state.MessagingStateActiveBlocks
 )
 
 // Init initializes a given broadcast channel to be able to perform distributed
@@ -36,6 +38,7 @@ func Execute(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	signer *dkg.ThresholdSigner,
+	startBlockHeight uint64,
 ) ([]byte, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
@@ -53,12 +56,14 @@ func Execute(
 	channel.Recv(handler)
 	defer channel.UnregisterRecv(handler.Type)
 
+	setupDelay := startBlockHeight + setupBlocks
 	fmt.Printf(
-		"[member:%v] Waiting for other group members to enter signing state...\n",
+		"[member:%v] Waiting for block [%v] to start threshold signing...\n",
 		signer.MemberID(),
+		setupDelay,
 	)
 
-	err := blockCounter.WaitForBlocks(setupBlocks)
+	err := blockCounter.WaitForBlockHeight(setupDelay)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to wait %d blocks entering threshold setup: [%v]",
@@ -69,6 +74,7 @@ func Execute(
 
 	fmt.Printf("[member:%v] Sending signature share...\n", signer.MemberID())
 
+	seenSharesMutex := sync.Mutex{}
 	seenShares := make(map[group.MemberIndex]*bn256.G1)
 	share := signer.CalculateSignatureShare(bytes)
 
@@ -80,7 +86,7 @@ func Execute(
 		return nil, err
 	}
 
-	blockWaiter, err := blockCounter.BlockWaiter(signatureBlocks)
+	blockWaiter, err := blockCounter.BlockHeightWaiter(setupDelay + signatureBlocks)
 	if err != nil {
 		return nil, err
 	}
@@ -112,10 +118,18 @@ func Execute(
 						err,
 					)
 				} else {
+					seenSharesMutex.Lock()
 					seenShares[signatureShareMsg.senderID] = share
+					seenSharesMutex.Unlock()
 				}
 			}
-		case <-blockWaiter:
+		case endBlockHeight := <-blockWaiter:
+			fmt.Printf(
+				"[member:%v] Stopped receiving signature shares at block [%v]\n",
+				signer.MemberID(),
+				endBlockHeight,
+			)
+
 			// put all seen shares into a slice and complete the signature
 			seenSharesSlice := make([]*bls.SignatureShare, 0)
 			for memberID, share := range seenShares {
