@@ -67,6 +67,7 @@ class Group(Agent):
     def __init__(self, unique_id, group_id, model, members, expiry):
         super().__init__(unique_id, model)
         self.id = unique_id
+        self.group_id = group_id
         self.type = "group"
         self.members = members
         self.last_signature = "none"
@@ -90,15 +91,17 @@ class Group(Agent):
         pass
 
     def calculate_ownership_distr(self):
-        for node in self.members:
-            self.ownership_distr[self.timer][node.node_id] +=1 # increments by 1 for each node index everytime it exists in the member list, at each step
-
+        #temp_distr = np.zeros(self.model.num_nodes)
+        for node in self.members:    
+            self.ownership_distr[node.node_id] +=1 # increments by 1 for each node index everytime it exists in the member list, at each step
 
 class Signature(Agent):
     def __init__(self, unique_id, signature_id, model, group_object):
         super().__init__(unique_id, model)
         self.group = group_object
-        self.delay = np.random.poisson(6) #delay between when it is triggered and when it hits the chain
+        self.id = unique_id
+        self.type = "signature"
+        self.delay = np.random.poisson(self.model.signature_delay) #delay between when it is triggered and when it hits the chain
         self.start_signature_process = False
         self.end_signature_process = False
         self.model.newest_id +=1
@@ -107,7 +110,7 @@ class Signature(Agent):
     def step(self):
         if not self.end_signature_process: 
             if not self.start_signature_process:
-                print("Starting signature process:")
+                print("Starting signature process for signature ID = "+ str(self.id))
                 self.start_signature_process =True
             elif self.delay <=0:
                 print("     Checking for active nodes in randomly selected group")
@@ -125,7 +128,11 @@ class Signature(Agent):
                     self.model.unsuccessful_signature_events.append(1)
                 self.end_signature_process = True
             else:
+                print("Signature ID " + str(self.id) + " Delay = "+str(self.delay))
                 self.delay -=1
+
+    def advance(self):
+        pass
 
 
         

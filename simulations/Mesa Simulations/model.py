@@ -2,12 +2,14 @@ from mesa import Model
 from mesa.time import SimultaneousActivation
 import agent
 import numpy as np
+from mesa.datacollection import DataCollector
 
 class Beacon_Model(Model):
     """The model"""
     def __init__(self, nodes, ticket_distribution, active_group_threshold, 
     group_size, signature_threshold, group_expiry, 
-    group_formation_threshold, node_failure_percent, node_death_percent):
+    group_formation_threshold, node_failure_percent, node_death_percent,
+    signature_delay):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
@@ -25,6 +27,7 @@ class Beacon_Model(Model):
         self.group_formation_threshold = group_formation_threshold # min nodes required to form a group
         self.timer = 0
         self.unsuccessful_signature_events = []
+        self.signature_delay = signature_delay
         self.datacollector = DataCollector(
             agent_reporters={"Ownership_distribution": "ownership_distr"})  # Collect ownership distributions for groups
 
@@ -38,6 +41,7 @@ class Beacon_Model(Model):
 
     def step(self):
         '''Advance the model by one step'''
+        print("step # = " + str(self.timer))
  
         #check how many active nodes are available
         self.refresh_connected_nodes_list()
@@ -56,9 +60,9 @@ class Beacon_Model(Model):
         #check how many active groups are available
         self.refresh_active_group_list()
         print('number of active groups = ' + str(len(self.active_groups)))
-        for agent in self.schedule.agents:
-            if agent.type == "group":
-                print("group ID "+str(agent.group_id)+ "status = " + agent.status + "steps to expiry = "+ str(agent.expiry))
+        for group in self.schedule.agents:
+            if group.type == "group":
+                print("group ID "+str(group.group_id)+ "status = " + group.status + "steps to expiry = "+ str(group.expiry))
         
         #generate relay requests
         self.relay_request = np.random.choice([True,False])
@@ -67,7 +71,8 @@ class Beacon_Model(Model):
         if self.relay_request:
             try:
                 print('     selecting group at random')
-                agent.Signature(self.newest_id, self.newest_signature_id, self, self.active_groups[np.random.randint(len(self.active_groups))]) # print a random group from the active list- change this to signing mechanism later
+                signature = agent.Signature(self.newest_id, self.newest_signature_id, self, self.active_groups[np.random.randint(len(self.active_groups))]) # print a random group from the active list- change this to signing mechanism later
+                self.schedule.add(signature)
             except:
                 print('     no active groups available')
 
