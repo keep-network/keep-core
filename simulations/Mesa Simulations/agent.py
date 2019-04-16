@@ -105,6 +105,7 @@ class Signature(Agent):
         self.start_signature_process = False
         self.end_signature_process = False
         self.ownership_distr = []
+        self.signature_success = False
         self.model.newest_id +=1
         self.model.newest_signature_id +=1
 
@@ -128,6 +129,7 @@ class Signature(Agent):
                 if sum(active_count)>= self.model.signature_threshold: 
                     print("         signature successful")
                     self.model.unsuccessful_signature_events.append(0)
+                    self.signature_success = True
                 else:
                     print("         signature unsuccessful")
                     self.model.unsuccessful_signature_events.append(1)
