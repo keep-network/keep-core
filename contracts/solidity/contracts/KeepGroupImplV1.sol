@@ -284,11 +284,11 @@ contract KeepGroupImplV1 is Ownable {
         );
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
-        bool[] memory verified = verifySignatures(signatures, signingMembersIndexes, resultHash);
+        verifySignatures(signatures, signingMembersIndexes, resultHash);
         address[] memory members = selectedParticipants();
 
         for (uint i = 0; i < _groupSize; i++) {
-            if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i) && verified[i]) {
+            if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i)) {
                 _groupMembers[groupPubKey].push(members[i]);
             }
         }
@@ -313,18 +313,16 @@ contract KeepGroupImplV1 is Ownable {
         bytes memory signatures,
         uint256[] memory indices,
         bytes32 resultHash
-    ) internal view returns (bool[] memory) {
+    ) internal view returns (bool) {
 
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Signatures bytes array is too short.");
         require(signatures.length % 65 == 0, "Signatures in the bytes array should be 65 bytes long.");
         require(signaturesCount == indices.length, "Number of signatures and indices don't match.");
+        require(signaturesCount >= _groupThreshold, "Number of signatures is below honest majority threshold.");
 
         bytes memory current; // Current signature to be checked.
         uint256[] memory selected = selectedTickets();
-
-        bool[] memory verified = new bool[](signaturesCount);
-        uint256 honestParticipants = 0;
 
         for(uint i = 0; i < signaturesCount; i++){
             require(indices[i] > 0, "Index should be greater than zero.");
@@ -332,20 +330,13 @@ contract KeepGroupImplV1 is Ownable {
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
-            if (_proofs[selected[indices[i] - 1]].sender == recoveredAddress) {
-                verified[i] = true;
-                honestParticipants++;
-            } else {
-                verified[i] = false;
-            }
+            require(
+                _proofs[selected[indices[i] - 1]].sender == recoveredAddress,
+                "Invalid signature. Signer and recovered address at provided index don't match."
+            );
         }
 
-        require(
-            honestParticipants >= _groupThreshold,
-            "Not enough honest participants with valid signatures received."
-        );
-
-        return verified;
+        return true;
     }
 
     /**

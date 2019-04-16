@@ -142,22 +142,21 @@ contract('TestPublishDkgResult', function(accounts) {
 
     positions = [];
     signatures = undefined;
+    let lastParticipantIdx = groupThreshold - 1;
 
     // Create less than minimum amount of valid signatures
-    for(let i = 0; i < groupThreshold - 1; i++) {
+    for(let i = 0; i < lastParticipantIdx; i++) {
       let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
       positions.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
     }
 
-    // Fill in the rest with invalid signatures
-    for(let i = groupThreshold - 1; i < groupSize; i++) {
-      let nonsenseHash = web3.utils.soliditySha3("ducky duck");
-      let invalidSignature = await web3.eth.sign(nonsenseHash, selectedParticipants[i]);
-      signatures += invalidSignature.slice(2, invalidSignature.length);
-      positions.push(i);
-    }
+    // Add invalid signature as the last one
+    let nonsenseHash = web3.utils.soliditySha3("ducky duck");
+    let invalidSignature = await web3.eth.sign(nonsenseHash, selectedParticipants[lastParticipantIdx]);
+    signatures += invalidSignature.slice(2, invalidSignature.length);
+    positions.push(lastParticipantIdx);
 
     // Jump in time to when first member is eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
@@ -180,14 +179,6 @@ contract('TestPublishDkgResult', function(accounts) {
       positions.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
-    }
-
-    // Fill in the rest with invalid signatures
-    for(let i = groupThreshold; i < groupSize; i++) {
-      let nonsenseHash = web3.utils.soliditySha3("ducky duck");
-      let invalidSignature = await web3.eth.sign(nonsenseHash, selectedParticipants[i]);
-      signatures += invalidSignature.slice(2, invalidSignature.length);
-      positions.push(i);
     }
 
     // Jump in time to when first member is eligible to submit
