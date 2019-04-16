@@ -284,16 +284,15 @@ contract KeepGroupImplV1 is Ownable {
         );
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
-        verifySignatures(signatures, signingMembersIndexes, resultHash);
-
+        bool[] memory verified = verifySignatures(signatures, signingMembersIndexes, resultHash);
         address[] memory members = selectedParticipants();
 
         for (uint i = 0; i < _groupSize; i++) {
-            if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i)) {
+            if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i) && verified[i]) {
                 _groupMembers[groupPubKey].push(members[i]);
             }
         }
-        // TODO: we should minimum of H participants
+
         _groups.push(Group(groupPubKey, block.number));
         // TODO: punish/reward logic
         cleanup();
@@ -303,12 +302,18 @@ contract KeepGroupImplV1 is Ownable {
 
     /**
     * @dev Verifies that provided members signatures of the DKG result are produced
-    * by the members stored previously on-chain in the order of their ticket values.
+    * by the members stored previously on-chain in the order of their ticket values
+    * and returns indices of members with a boolean value of their signature validity.
     * @param signatures Concatenation of user-generated signatures.
     * @param resultHash The result hash signed by the users.
     * @param indices Indices of members corresponding to each signature.
+    * @return Array of member indices with a boolean value of their signature validity.
     */
-    function verifySignatures(bytes memory signatures, uint256[] memory indices, bytes32 resultHash) internal view returns (bool) {
+    function verifySignatures(
+        bytes memory signatures,
+        uint256[] memory indices,
+        bytes32 resultHash
+    ) internal view returns (bool[] memory) {
 
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Signatures bytes array is too short.");
@@ -317,18 +322,30 @@ contract KeepGroupImplV1 is Ownable {
 
         bytes memory current; // Current signature to be checked.
         uint256[] memory selected = selectedTickets();
+
+        bool[] memory verified = new bool[](signaturesCount);
+        uint256 honestParticipants = 0;
+
         for(uint i = 0; i < signaturesCount; i++){
             require(indices[i] > 0, "Index should be greater than zero.");
             require(indices[i] <= selected.length, "Provided index is out of acceptable tickets bound.");
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
-            require(
-                _proofs[selected[indices[i] - 1]].sender == recoveredAddress,
-                "Signer and recovered address at provided index don't match."
-            );
+            if (_proofs[selected[indices[i] - 1]].sender == recoveredAddress) {
+                verified[i] = true;
+                honestParticipants++;
+            } else {
+                verified[i] = false;
+            }
         }
-        return true;
+
+        require(
+            honestParticipants >= _groupThreshold,
+            "Not enough honest participants with valid signatures received."
+        );
+
+        return verified;
     }
 
     /**

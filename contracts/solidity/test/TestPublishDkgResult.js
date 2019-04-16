@@ -138,29 +138,28 @@ contract('TestPublishDkgResult', function(accounts) {
     );
   });
 
-  it("should reject the result with invalid signature", async function() {
+  it("should reject the result without minimum number of valid signatures", async function() {
 
     positions = [];
     signatures = undefined;
 
-    let lastParticipantIdx = selectedParticipants.length - 1
-
-    // Set all signatures but the last one
-    for(let i = 0; i < lastParticipantIdx; i++) {
+    // Create less than minimum amount of valid signatures
+    for(let i = 0; i < groupThreshold - 1; i++) {
       let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
       positions.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
     }
 
-    // Add invalid signature as the last one
-    let nonsenseHash = web3.utils.soliditySha3("ducky duck");
-    let invalidSignature = await web3.eth.sign(nonsenseHash, selectedParticipants[lastParticipantIdx]);
-    signatures += invalidSignature.slice(2, invalidSignature.length);
-    positions.push(lastParticipantIdx);
+    // Fill in the rest with invalid signatures
+    for(let i = groupThreshold - 1; i < groupSize; i++) {
+      let nonsenseHash = web3.utils.soliditySha3("ducky duck");
+      let invalidSignature = await web3.eth.sign(nonsenseHash, selectedParticipants[i]);
+      signatures += invalidSignature.slice(2, invalidSignature.length);
+      positions.push(i);
+    }
 
     // Jump in time to when first member is eligible to submit
-    let submissionStart = await keepGroupImplViaProxy.ticketSubmissionStartBlock();
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeoutDKG - currentBlock);
 
@@ -168,5 +167,38 @@ contract('TestPublishDkgResult', function(accounts) {
       requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, 
       {from: selectedParticipants[0]})
     );
+  });
+
+  it("should be able to submit the result with minimum number of valid signatures", async function() {
+
+    positions = [];
+    signatures = undefined;
+
+    // Create minimum amount of valid signatures
+    for(let i = 0; i < groupThreshold; i++) {
+      let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
+      positions.push(i+1);
+      if (signatures == undefined) signatures = signature
+      else signatures += signature.slice(2, signature.length);
+    }
+
+    // Fill in the rest with invalid signatures
+    for(let i = groupThreshold; i < groupSize; i++) {
+      let nonsenseHash = web3.utils.soliditySha3("ducky duck");
+      let invalidSignature = await web3.eth.sign(nonsenseHash, selectedParticipants[i]);
+      signatures += invalidSignature.slice(2, invalidSignature.length);
+      positions.push(i);
+    }
+
+    // Jump in time to when first member is eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeoutDKG - currentBlock);
+
+    await keepGroupImplViaProxy.submitDkgResult(
+      requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, 
+      {from: selectedParticipants[0]})
+    let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
+    assert.equal(submitted, true, "DkgResult should should be submitted");
+
   });
 })
