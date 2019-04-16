@@ -104,7 +104,7 @@ class Signature(Agent):
         self.delay = np.random.poisson(self.model.signature_delay) #delay between when it is triggered and when it hits the chain
         self.start_signature_process = False
         self.end_signature_process = False
-        self.ownership_distr = self.calculate_ownership_distr()
+        self.ownership_distr = []
         self.model.newest_id +=1
         self.model.newest_signature_id +=1
 
@@ -114,12 +114,16 @@ class Signature(Agent):
                 print("Starting signature process for signature ID = "+ str(self.id))
                 self.start_signature_process =True
             elif self.delay <=0:
+                temp_distr = np.zeros(self.model.num_nodes)
                 print("     Checking for active nodes in randomly selected group")
                 active_count = np.zeros(self.model.num_nodes)
                 for node in self.group.members:
-                    active_count[node.id] = (node.mainloop_status=="forked") #adds 1 to the index matching the node id if the node is active
-                
+                    active_count[node.node_id] = (node.mainloop_status=="forked") #adds 1 to the index matching the node id if the node is active
+                    temp_distr[node.node_id] += (node.mainloop_status=="forked") #counts the node in the group distr only if it's active
+
                 print(sum(active_count))
+                self.ownership_distr = temp_distr
+
 
                 if sum(active_count)>= self.model.signature_threshold: 
                     print("         signature successful")
@@ -134,12 +138,6 @@ class Signature(Agent):
 
     def advance(self):
         pass
-
-    def calculate_ownership_distr(self):
-        temp_distr = np.zeros(self.model.num_nodes)
-        for node in self.group.members:    
-            temp_distr[node.node_id] +=1 # increments by 1 for each node index everytime it exists in the member list, at each step
-        return temp_distr
 
 
         
