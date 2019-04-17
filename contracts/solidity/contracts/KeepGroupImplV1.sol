@@ -35,8 +35,9 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutInitial;
     uint256 internal _timeoutSubmission;
     uint256 internal _timeoutChallenge;
-    uint8 internal _resultPublicationBlockStep;
     uint256 internal _submissionStart;
+
+    uint256 internal _resultPublicationBlockStep;
     
     uint256 internal _randomBeaconValue;
 
@@ -124,7 +125,7 @@ contract KeepGroupImplV1 is Ownable {
     function selectedTickets() public view returns (uint256[] memory) {
 
         require(
-            block.number > _submissionStart + _timeoutChallenge,
+            block.number >= _submissionStart + _timeoutChallenge,
             "Ticket submission challenge period must be over."
         );
 
@@ -160,7 +161,7 @@ contract KeepGroupImplV1 is Ownable {
     function selectedParticipants() public view returns (address[] memory) {
 
         require(
-            block.number > _submissionStart + _timeoutChallenge,
+            block.number >= _submissionStart + _timeoutChallenge,
             "Ticket submission challenge period must be over."
         );
 
@@ -322,7 +323,7 @@ contract KeepGroupImplV1 is Ownable {
         uint256 timeoutInitial,
         uint256 timeoutSubmission,
         uint256 timeoutChallenge,
-        uint8 resultPublicationBlockStep
+        uint256 resultPublicationBlockStep
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
@@ -409,7 +410,7 @@ contract KeepGroupImplV1 is Ownable {
      * @dev resultPublicationBlockStep is the duration (in blocks) after which
      * member with the given index is eligible to submit DKG result.
      */
-    function resultPublicationBlockStep() public view returns (uint8) {
+    function resultPublicationBlockStep() public view returns (uint256) {
         return _resultPublicationBlockStep;
     }
 

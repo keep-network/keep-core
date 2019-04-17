@@ -34,3 +34,8 @@ main.test
 # keys
 keystore
 keep_accounts
+
+# Python and IPython
+*.ipynb_checkpoints
+__pycache__
+*.pyc

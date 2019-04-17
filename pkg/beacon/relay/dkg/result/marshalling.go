@@ -2,7 +2,7 @@ package result
 
 import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2/result/gen/pb"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result/gen/pb"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/operator"
 )

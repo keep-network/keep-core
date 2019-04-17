@@ -46,7 +46,7 @@ func TestFullStateTransitions(t *testing.T) {
 		initializeChannel(channel)
 
 		channels[i] = channel
-		states[i] = &initializationState{channel, member}
+		states[i] = &joinState{channel, member}
 	}
 
 	// Perform all possible state transitions.
