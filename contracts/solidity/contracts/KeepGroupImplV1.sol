@@ -271,7 +271,7 @@ contract KeepGroupImplV1 is Ownable {
         bytes memory signatures,
         uint[] memory signingMembersIndexes
     ) public {
-        require(eligibleSubmitter(submitterMemberIndex), "User is not eligible to submit the result.");
+        validateSubmitter(submitterMemberIndex);
 
         require(
             disqualified.length == _groupSize && inactive.length == _groupSize,
@@ -401,13 +401,12 @@ contract KeepGroupImplV1 is Ownable {
      * @param submitterMemberIndex The claimed index of the submitter.
      * @return true if the submitter is eligible. False otherwise.
      */
-    function eligibleSubmitter(uint submitterMemberIndex) public view returns (bool){
+    function validateSubmitter(uint submitterMemberIndex) public view {
         uint256[] memory selected = selectedTickets();
         require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
         require(_proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
         uint T_init = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG;
-        require(block.number <= T_init + _resultPublicationBlockStep * _groupSize, "DKG submission period is over.");
-        return(block.number >= (T_init + (submitterMemberIndex-1) * _resultPublicationBlockStep));
+        require(block.number >= (T_init + (submitterMemberIndex-1) * _resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
     }
 
     /**

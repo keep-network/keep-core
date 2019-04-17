@@ -149,9 +149,6 @@ contract('TestPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(eligibleBlockForSubmitter1 - currentBlock);
 
-    assert.equal(await keepGroupImplViaProxy.eligibleSubmitter.call(submitter1MemberIndex, {from: submitter1}), true, "Submitter 1 should be eligible to submit the result");
-    assert.equal(await keepGroupImplViaProxy.eligibleSubmitter.call(submitter2MemberIndex, {from: submitter2}), false, "Submitter 2 should not be eligible to submit the result");
-
     // Should throw if non eligible submitter 2 tries to submit
     await expectThrow(keepGroupImplViaProxy.submitDkgResult(
       requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
