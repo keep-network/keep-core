@@ -100,7 +100,7 @@ the share must be broadcast to the other members
 in a message containing:
 
 * the signature share `Share_j`
-* the sender `P_j`'s member index `j`;
+* the member index `j` of the sender `P_j`;
 
 When `P_i` receives a signature share `Share_j` broadcast by `P_j`,
 the share can be verified by `blsVerify(Share_j, y_j, Input_e)`.

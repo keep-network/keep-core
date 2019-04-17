@@ -2,6 +2,12 @@
 
 = RFC 10: Punishing invalid signature shares
 
+.DRAFT
+****
+NOTE: This RFC is in draft form. It has not yet been approved for
+implementation.
+****
+
 :icons: font
 :numbered:
 toc::[]
@@ -16,6 +22,13 @@ and invalid signature shares rejected,
 the major DOS attack vector is closed.
 It is possible to additionally validate signature shares on-chain
 and thus punish operators who broadcast invalid shares.
+
+Without on-chain verification and punishment,
+operators can broadcast invalid shares to others without consequences.
+While broadcasting invalid shares doesn't present a DOS attack opportunity
+when operators validate the signature shares they receive from others
+and drop invalid shares,
+it is generally undesirable to leave opportunities for nuisance misbehavior.
 
 == Proposal
 
@@ -153,7 +166,7 @@ this is used to prevent replay attacks
 and to retrieve the information of `Group_k`.
 if the message is used in a misbehavior proof.
 * the signature share `Share_j`
-* the sender `P_j`'s member index `j`;
+* the member index `j` of the sender `P_j`;
 `P_j` and their _operator ECDSA public key_
 can be identified from `Group_k` and `j`,
 but `P_j` cannot be identified from `Group_k` and the operator key.
@@ -244,3 +257,5 @@ for delays in signing or failures to produce a signature altogether.
 
 [bibliography]
 == Related Links
+
+* link:rfc-8-beacon-signature-share-verification.adoc[RFC 8: Beacon signature share verification]
