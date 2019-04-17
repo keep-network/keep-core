@@ -405,9 +405,9 @@ contract KeepGroupImplV1 is Ownable {
         uint256[] memory selected = selectedTickets();
         require(memberIndex > 0, "Member index must be greater than 0.");
         require(_proofs[selected[memberIndex - 1]].sender == msg.sender, "Member index does not match sender address.");
-        uint T_init = _submissionStart + _timeoutChallenge;
+        uint T_init = _submissionStart + _timeoutChallenge + _timeDKG;
         require(block.number <= T_init + _resultPublicationBlockStep * _groupSize, "DKG submission period is over.");
-        return(block.number >= (T_init + _timeDKG + (memberIndex-1) * _resultPublicationBlockStep));
+        return(block.number >= (T_init + (memberIndex-1) * _resultPublicationBlockStep));
     }
 
     /**
