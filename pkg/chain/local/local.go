@@ -20,6 +20,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
+var seedGroupPublicKey = []byte("seed to group public key")
+var seedRelayEntry = big.NewInt(123456789)
+
 type localChain struct {
 	relayConfig *relayconfig.Chain
 
@@ -244,6 +247,8 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		blockCounter:             bc,
 		stakeMonitor:             NewStakeMonitor(minimumStake),
 		tickets:                  make([]*relaychain.Ticket, 0),
+		latestValue:              seedRelayEntry,
+		groups:                   [][]byte{seedGroupPublicKey},
 	}
 }
 
@@ -272,27 +277,26 @@ func calculateGroupSelectionParameters(groupSize int, minimumStake *big.Int) (
 	return tokenSupply, naturalThreshold
 }
 
-func nextGroupIndex(entry *big.Int, numberOfGroups *big.Int) int {
-	if numberOfGroups.Cmp(new(big.Int)) == 0 {
+func selectGroup(entry *big.Int, numberOfGroups int) int {
+	if numberOfGroups == 0 {
 		return 0
 	}
 
-	return int(new(big.Int).Mod(entry, numberOfGroups).Int64())
+	return int(new(big.Int).Mod(entry, big.NewInt(int64(numberOfGroups))).Int64())
 }
 
 // RequestRelayEntry simulates calling to start the random generation process.
 func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise {
 	promise := &async.RelayRequestPromise{}
 
-	numberOfGroups := big.NewInt(int64(len(c.groups)))
-	selectedIdx := nextGroupIndex(c.latestValue, numberOfGroups)
+	selectedIdx := selectGroup(c.latestValue, len(c.groups))
 
 	request := &event.Request{
-		RequestID:     big.NewInt(c.requestID),
-		Payment:       big.NewInt(1),
-		PreviousEntry: c.latestValue,
-		GroupPubKey:   c.groups[selectedIdx],
-		Seed:          seed,
+		RequestID:      big.NewInt(c.requestID),
+		Payment:        big.NewInt(1),
+		PreviousEntry:  c.latestValue,
+		GroupPublicKey: c.groups[selectedIdx],
+		Seed:           seed,
 	}
 	atomic.AddUint64(&c.simulatedHeight, 1)
 	atomic.AddInt64(&c.requestID, 1)

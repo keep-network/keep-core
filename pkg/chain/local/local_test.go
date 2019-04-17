@@ -113,12 +113,6 @@ func TestLocalRequestRelayEntry(t *testing.T) {
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 	seed := big.NewInt(42)
 
-	groupPublicKey := []byte("1")
-	latestValue := big.NewInt(7)
-	localChainHandle := chainHandle.(*localChain)
-	localChainHandle.groups = append(localChainHandle.groups, groupPublicKey)
-	localChainHandle.latestValue = latestValue
-
 	relayRequestPromise := chainHandle.RequestRelayEntry(seed)
 
 	done := make(chan *event.Request)
@@ -358,12 +352,6 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 
 	seed := big.NewInt(12345)
 
-	groupPublicKey := []byte("1")
-	latestValue := big.NewInt(7)
-	localChainHandle := chainHandle.(*localChain)
-	localChainHandle.groups = append(localChainHandle.groups, groupPublicKey)
-	localChainHandle.latestValue = latestValue
-
 	chainHandle.RequestRelayEntry(seed)
 
 	select {
@@ -376,10 +364,10 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 				event.RequestID,
 			)
 		}
-		if event.PreviousEntry.Cmp(latestValue) != 0 {
+		if event.PreviousEntry.Cmp(seedRelayEntry) != 0 {
 			t.Fatalf(
 				"Unexpected previous entry\nExpected: [%v]\nActual:   [%v]",
-				latestValue,
+				seedRelayEntry,
 				event.PreviousEntry,
 			)
 		}
@@ -390,11 +378,11 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 				event.Seed,
 			)
 		}
-		if string(event.GroupPubKey) != string(groupPublicKey) {
+		if string(event.GroupPublicKey) != string(seedGroupPublicKey) {
 			t.Fatalf(
 				"Unexpected group public key\nExpected: [%v]\nActual:   [%v]",
-				event.GroupPubKey,
-				groupPublicKey,
+				event.GroupPublicKey,
+				seedGroupPublicKey,
 			)
 		}
 	case <-ctx.Done():
@@ -409,12 +397,6 @@ func TestLocalOnRelayEntryRequestedUnsubscribed(t *testing.T) {
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 
 	eventFired := make(chan *event.Request)
-
-	groupPublicKey := []byte("1")
-	latestValue := big.NewInt(7)
-	localChainHandle := chainHandle.(*localChain)
-	localChainHandle.groups = append(localChainHandle.groups, groupPublicKey)
-	localChainHandle.latestValue = latestValue
 
 	subscription, err := chainHandle.OnRelayEntryRequested(
 		func(request *event.Request) {
@@ -810,14 +792,14 @@ func TestNextGroupIndex(t *testing.T) {
 	for nextGroupIndexTest, test := range tests {
 		t.Run(nextGroupIndexTest, func(t *testing.T) {
 			bigPreviousEntry := big.NewInt(int64(test.previousEntry))
-			bigNumberOfGroups := big.NewInt(int64(test.numberOfGroups))
+			bigNumberOfGroups := test.numberOfGroups
 			expectedIndex := test.expectedIndex
 
-			actualIndex := nextGroupIndex(bigPreviousEntry, bigNumberOfGroups)
+			actualIndex := selectGroup(bigPreviousEntry, bigNumberOfGroups)
 
 			if actualIndex != expectedIndex {
 				t.Fatalf(
-					"\nexpected: [%v]\nactual:   [%v]\n",
+					"Unexpected group index selected\nexpected: [%v]\nactual:   [%v]\n",
 					expectedIndex,
 					actualIndex,
 				)

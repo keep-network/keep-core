@@ -270,12 +270,12 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			blockNumber uint64,
 		) {
 			handle(&event.Request{
-				RequestID:     requestID,
-				Payment:       payment,
-				PreviousEntry: previousEntry,
-				Seed:          seed,
-				GroupPubKey:   groupPublicKey,
-				BlockNumber:   blockNumber,
+				RequestID:      requestID,
+				Payment:        payment,
+				PreviousEntry:  previousEntry,
+				Seed:           seed,
+				GroupPublicKey: groupPublicKey,
+				BlockNumber:    blockNumber,
 			})
 		},
 		func(err error) error {

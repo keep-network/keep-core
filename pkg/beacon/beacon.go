@@ -49,7 +49,7 @@ func Initialize(
 			request.PreviousEntry,
 			request.Seed,
 			relayChain,
-			request.GroupPubKey,
+			request.GroupPublicKey,
 			request.BlockNumber,
 		)
 	})

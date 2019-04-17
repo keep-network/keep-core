@@ -44,7 +44,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	previousEntry *big.Int,
 	seed *big.Int,
 	relayChain relaychain.RelayEntryInterface,
-	groupPubKey []byte,
+	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) {
 	combinedEntryToSign := combineEntryToSign(
@@ -52,7 +52,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		seed.Bytes(),
 	)
 
-	memberships := n.myGroups[string(groupPubKey)]
+	memberships := n.myGroups[string(groupPublicKey)]
 	if len(memberships) < 1 {
 		return
 	}
