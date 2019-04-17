@@ -1,6 +1,3 @@
-import { duration } from './helpers/increaseTime';
-import exceptThrow from './helpers/expectThrow';
-import {bls} from './helpers/data';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
