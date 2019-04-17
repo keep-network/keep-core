@@ -22,7 +22,7 @@ contract('TestPublishDkgResult', function(accounts) {
   const timeoutInitial = 20;
   const timeoutSubmission = 100;
   const timeoutChallenge = 60;
-  const timeoutDKG = 20;
+  const timeDKG = 20;
   const resultPublicationBlockStep = 3;
 
   let disqualified, inactive, resultHash,
@@ -61,7 +61,7 @@ contract('TestPublishDkgResult', function(accounts) {
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold,
-      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeoutDKG, resultPublicationBlockStep
+      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
     );
 
     randomBeaconValue = bls.groupSignature;
@@ -104,7 +104,7 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeoutDKG - currentBlock);
+    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
     await keepGroupImplViaProxy.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, {from: selectedParticipants[0]})
     let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
@@ -129,7 +129,7 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeoutDKG - currentBlock);
+    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
     await keepGroupImplViaProxy.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
     let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
@@ -142,8 +142,8 @@ contract('TestPublishDkgResult', function(accounts) {
     let submitter2MemberIndex = 5;
     let submitter1 = selectedParticipants[submitter1MemberIndex - 1];
     let submitter2 = selectedParticipants[submitter2MemberIndex - 1];
-    let eligibleBlockForSubmitter1 = submissionStart.toNumber() + timeoutChallenge + timeoutDKG + (submitter1MemberIndex-1)*resultPublicationBlockStep;
-    let eligibleBlockForSubmitter2 = submissionStart.toNumber() + timeoutChallenge + timeoutDKG + (submitter2MemberIndex-1)*resultPublicationBlockStep;
+    let eligibleBlockForSubmitter1 = submissionStart.toNumber() + timeoutChallenge + timeDKG + (submitter1MemberIndex-1)*resultPublicationBlockStep;
+    let eligibleBlockForSubmitter2 = submissionStart.toNumber() + timeoutChallenge + timeDKG + (submitter2MemberIndex-1)*resultPublicationBlockStep;
 
     // Jump in time to when submitter 1 becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
@@ -196,7 +196,7 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Jump in time to when first member is eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeoutDKG - currentBlock);
+    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
     await expectThrow(keepGroupImplViaProxy.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, 
@@ -219,7 +219,7 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Jump in time to when first member is eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeoutDKG - currentBlock);
+    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
     await keepGroupImplViaProxy.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, 
