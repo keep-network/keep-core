@@ -58,6 +58,7 @@ func (n *Node) JoinGroupIfEligible(
 	groupSelectionResult *groupselection.Result,
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
+	dkgStartBlockHeight uint64,
 ) {
 	if !n.initializePendingGroup(entryRequestID.String()) {
 		// Failed to initialize; in progress for this entry.
@@ -99,6 +100,7 @@ func (n *Node) JoinGroupIfEligible(
 					playerIndex,
 					n.chainConfig.GroupSize,
 					n.chainConfig.Threshold,
+					dkgStartBlockHeight,
 					n.blockCounter,
 					relayChain,
 					broadcastChannel,

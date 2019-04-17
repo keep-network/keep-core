@@ -54,6 +54,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	signatures map[group.MemberIndex]operator.Signature,
 	chainRelay relayChain.Interface,
 	blockCounter chain.BlockCounter,
+	startBlockHeight uint64,
 ) error {
 	config, err := chainRelay.GetConfig()
 	if err != nil {
@@ -84,26 +85,27 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		return err
 	}
 
-	// Check if any result has already been published to the chain with current
+	// Check if any result has already been submitted to the chain with current
 	// request ID.
-	alreadyPublished, err := chainRelay.IsDKGResultSubmitted(requestID)
+	alreadySubmitted, err := chainRelay.IsDKGResultSubmitted(requestID)
 	if err != nil {
 		return returnWithError(
 			fmt.Errorf(
-				"could not check if the result is already published [%v]",
+				"could not check if the result is already submitted [%v]",
 				err,
 			),
 		)
 	}
 
-	// Someone who was ahead of us in the queue published the result. Giving up.
-	if alreadyPublished {
+	// Someone who was ahead of us in the queue submitted the result. Giving up.
+	if alreadySubmitted {
 		return returnWithError(nil)
 	}
 
 	// Wait until the current member is eligible to submit the result.
 	eligibleToSubmitWaiter, err := sm.waitForSubmissionEligibility(
 		blockCounter,
+		startBlockHeight,
 		config.ResultPublicationBlockStep,
 	)
 	if err != nil {
@@ -122,7 +124,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
-			fmt.Printf("[member:%v] Publishing DKG result...\n", sm.index)
+			fmt.Printf("[member:%v] Submitting DKG result...\n", sm.index)
 			chainRelay.SubmitDKGResult(
 				requestID,
 				sm.index,
@@ -136,10 +138,10 @@ func (sm *SubmittingMember) SubmitDKGResult(
 					errorChannel <- err
 				})
 			return <-errorChannel
-		case publishedResultEvent := <-onSubmittedResultChan:
-			if publishedResultEvent.RequestID.Cmp(requestID) == 0 {
+		case submittedResultEvent := <-onSubmittedResultChan:
+			if submittedResultEvent.RequestID.Cmp(requestID) == 0 {
 				fmt.Printf(
-					"[member:%v] DKG result published by other member, leaving.\n",
+					"[member:%v] DKG result submitted by other member, leaving.\n",
 					sm.index,
 				)
 				// A result has been submitted by other member. Leave without
@@ -155,14 +157,23 @@ func (sm *SubmittingMember) SubmitDKGResult(
 // away, each following member is eligible after pre-defined block step.
 func (sm *SubmittingMember) waitForSubmissionEligibility(
 	blockCounter chain.BlockCounter,
+	startBlockHeight uint64,
 	blockStep uint64,
 ) (<-chan uint64, error) {
-	eligibleToSubmitWaiter, err := blockCounter.BlockWaiter(
-		(uint64(sm.index) - 1) * blockStep, // T_init + (member_index - 1) * T_step
+	// T_init + (member_index - 1) * T_step
+	blockWaitTime := (uint64(sm.index) - 1) * blockStep
+
+	eligibleBlockHeight := startBlockHeight + blockWaitTime
+	fmt.Printf(
+		"[member:%v] Waiting for block [%v] to submit...\n",
+		sm.index,
+		eligibleBlockHeight,
 	)
+
+	waiter, err := blockCounter.BlockHeightWaiter(eligibleBlockHeight)
 	if err != nil {
-		return nil, fmt.Errorf("block waiter failure [%v]", err)
+		return nil, fmt.Errorf("block height waiter failure [%v]", err)
 	}
 
-	return eligibleToSubmitWaiter, err
+	return waiter, err
 }
