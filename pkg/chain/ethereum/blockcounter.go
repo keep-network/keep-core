@@ -22,33 +22,17 @@ const (
 
 type ethereumBlockCounter struct {
 	structMutex         sync.Mutex
-	latestBlockHeight   int
+	latestBlockHeight   uint64
 	subscriptionChannel chan block
 	config              *ethereumChain
-	waiters             map[int][]chan int
+	waiters             map[uint64][]chan uint64
 }
 
 type block struct {
 	Number string
 }
 
-func (ebc *ethereumBlockCounter) WaitForBlocks(numBlocks int) error {
-	waiter, err := ebc.BlockWaiter(numBlocks)
-	if err != nil {
-		return err
-	}
-	<-waiter
-	return nil
-}
-
-func (ebc *ethereumBlockCounter) BlockWaiter(
-	numBlocks int,
-) (<-chan int, error) {
-	notifyBlockHeight := ebc.latestBlockHeight + numBlocks
-	return ebc.BlockHeightWaiter(notifyBlockHeight)
-}
-
-func (ebc *ethereumBlockCounter) WaitForBlockHeight(blockNumber int) error {
+func (ebc *ethereumBlockCounter) WaitForBlockHeight(blockNumber uint64) error {
 	waiter, err := ebc.BlockHeightWaiter(blockNumber)
 	if err != nil {
 		return err
@@ -58,9 +42,9 @@ func (ebc *ethereumBlockCounter) WaitForBlockHeight(blockNumber int) error {
 }
 
 func (ebc *ethereumBlockCounter) BlockHeightWaiter(
-	blockNumber int,
-) (<-chan int, error) {
-	newWaiter := make(chan int)
+	blockNumber uint64,
+) (<-chan uint64, error) {
+	newWaiter := make(chan uint64)
 
 	ebc.structMutex.Lock()
 	defer ebc.structMutex.Unlock()
@@ -70,7 +54,7 @@ func (ebc *ethereumBlockCounter) BlockHeightWaiter(
 	} else {
 		waiterList, exists := ebc.waiters[blockNumber]
 		if !exists {
-			waiterList = make([]chan int, 0)
+			waiterList = make([]chan uint64, 0)
 		}
 
 		ebc.waiters[blockNumber] = append(waiterList, newWaiter)
@@ -79,12 +63,12 @@ func (ebc *ethereumBlockCounter) BlockHeightWaiter(
 	return newWaiter, nil
 }
 
-func (ebc *ethereumBlockCounter) CurrentBlock() (int, error) {
+func (ebc *ethereumBlockCounter) CurrentBlock() (uint64, error) {
 	return ebc.latestBlockHeight, nil
 }
 
 // receiveBlocks gets each new block back from Geth and extracts the
-// block height (topBlockNumber) form it.  For each block height that is being
+// block height (topBlockNumber) form it. For each block height that is being
 // waited on a message will be sent.
 func (ebc *ethereumBlockCounter) receiveBlocks() {
 	for block := range ebc.subscriptionChannel {
@@ -94,21 +78,33 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 			fmt.Printf("Error receiving a new block: %v", err)
 		}
 
-		latestBlockNumber := int(topBlockNumber)
-		if latestBlockNumber == ebc.latestBlockHeight {
+		// receivedBlockHeight is the current blockchain height as just
+		// received in the notification. latestBlockHeightSeen is the
+		// blockchain height as observed in the previous invocation of
+		// receiveBlocks().
+		//
+		// If we have already received notification about this block,
+		// we do nothing. All handlers were already called for this block
+		// height.
+		receivedBlockHeight := uint64(topBlockNumber)
+		if receivedBlockHeight == ebc.latestBlockHeight {
 			continue
 		}
 
-		for unseenBlockNumber := ebc.latestBlockHeight; unseenBlockNumber <= latestBlockNumber; unseenBlockNumber++ {
+		// We have already seen latestBlockHeightSeen during the previous
+		// execution of receiveBlocks() function and all handlers for
+		// latestBlockHeightSeen were called. Now we start from the next block
+		// after it and that's latestBlockHeightSeen + 1.
+		for unseenBlockNumber := ebc.latestBlockHeight + 1; unseenBlockNumber <= receivedBlockHeight; unseenBlockNumber++ {
 			ebc.structMutex.Lock()
-			height := ebc.latestBlockHeight
+			height := unseenBlockNumber
 			ebc.latestBlockHeight++
 			waiters := ebc.waiters[height]
 			delete(ebc.waiters, height)
 			ebc.structMutex.Unlock()
 
 			for _, waiter := range waiters {
-				go func(w chan int) { w <- height }(waiter)
+				go func(w chan uint64) { w <- height }(waiter)
 			}
 		}
 	}
@@ -165,7 +161,7 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 			)
 	}
 
-	startupBlockNumber, err := strconv.ParseInt(startupBlock.Number, 0, 32)
+	startupBlockHeight, err := strconv.ParseInt(startupBlock.Number, 0, 32)
 	if err != nil {
 		return nil,
 			fmt.Errorf(
@@ -175,8 +171,8 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	}
 
 	blockCounter := &ethereumBlockCounter{
-		latestBlockHeight:   int(startupBlockNumber),
-		waiters:             make(map[int][]chan int),
+		latestBlockHeight:   uint64(startupBlockHeight),
+		waiters:             make(map[uint64][]chan uint64),
 		config:              ec,
 		subscriptionChannel: make(chan block),
 	}

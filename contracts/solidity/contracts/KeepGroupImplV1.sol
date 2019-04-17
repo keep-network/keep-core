@@ -6,11 +6,13 @@ import "./StakingProxy.sol";
 import "./TokenStaking.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 
 contract KeepGroupImplV1 is Ownable {
 
     using SafeMath for uint256;
+    using BytesLib for bytes;
 
     event OnGroupRegistered(bytes groupPubKey);
 
@@ -23,12 +25,6 @@ contract KeepGroupImplV1 is Ownable {
     // TODO: Rename to DkgResultSubmittedEvent
     // TODO: Add memberIndex
     event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey); 
-    
-    event DkgResultVoteEvent(uint256 requestId, uint256 memberIndex, bytes32 resultHash);
-
-    // Legacy code moved from Random Beacon contract
-    // TODO: refactor according to the Phase 14
-    event SubmitGroupPublicKeyEvent(bytes groupPublicKey, uint256 requestID);
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -41,6 +37,8 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutChallenge;
     uint256 internal _submissionStart;
 
+    uint256 internal _resultPublicationBlockStep;
+    
     uint256 internal _randomBeaconValue;
 
     uint256[] internal _tickets;
@@ -138,7 +136,7 @@ contract KeepGroupImplV1 is Ownable {
     function selectedTickets() public view returns (uint256[] memory) {
 
         require(
-            block.number > _submissionStart + _timeoutChallenge,
+            block.number >= _submissionStart + _timeoutChallenge,
             "Ticket submission challenge period must be over."
         );
 
@@ -174,7 +172,7 @@ contract KeepGroupImplV1 is Ownable {
     function selectedParticipants() public view returns (address[] memory) {
 
         require(
-            block.number > _submissionStart + _timeoutChallenge,
+            block.number >= _submissionStart + _timeoutChallenge,
             "Ticket submission challenge period must be over."
         );
 
@@ -236,24 +234,28 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Submits result of DKG protocol. It is on-chain part of phase 13 of the protocol.
+     * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
+     * @param index claimed index of the staker. We pass this for gas efficiency purposes.
      * @param requestId Relay request ID assosciated with DKG protocol execution.
      * @param groupPubKey Group public key generated as a result of protocol execution.
-     * @param disqualified bytes representing disqualified group members; 1 at the specific index 
+     * @param disqualified bytes representing disqualified group members; 1 at the specific index
      * means that the member has been disqualified. Indexes reflect positions of members in the
      * group, as outputted by the group selection protocol.
      * @param inactive bytes representing inactive group members; 1 at the specific index means
      * that the member has been marked as inactive. Indexes reflect positions of members in the
      * group, as outputted by the group selection protocol.
+     * @param signatures concatenation of signer resultHashes collected off-chain. Ordering matters.
+     * @param membersIndex are the indices of members corresponding to each signature.
      */
     function submitDkgResult(
+        uint256 index,
         uint256 requestId,
-//        uint256 memberIndex, TODO: Add memberIndex 
         bytes memory groupPubKey,
         bytes memory disqualified,
-        bytes memory inactive
+        bytes memory inactive,
+        bytes memory signatures,
+        uint[] memory membersIndex
     ) public {
-
         require(
             block.number > _submissionStart + _timeoutChallenge,
             "Ticket submission challenge period must be over."
@@ -264,10 +266,22 @@ contract KeepGroupImplV1 is Ownable {
             "There should be enough valid tickets submitted to form a group."
         );
 
+        // TODO: This is just a temporary implementation for the sake of
+        // development of the off-chain part.
+
         _requestIdToDkgResult[requestId] = DkgResult(groupPubKey, disqualified, inactive);
         _dkgResultPublished[requestId] = true;
   
         emit DkgResultPublishedEvent(requestId, groupPubKey);
+
+        _groups.push(Group(groupPubKey, block.number));
+
+        address[] memory members = orderedParticipants();
+        for (uint i = 0; i < _groupSize; i++) {
+            _groupMembers[groupPubKey].push(members[i]);
+        }
+
+        emit OnGroupRegistered(groupPubKey);
     }
 
     /**
@@ -276,19 +290,6 @@ contract KeepGroupImplV1 is Ownable {
      */
     function isDkgResultSubmitted(uint256 requestId) public view returns(bool) {
         return _dkgResultPublished[requestId];
-    }
-
-    /*
-     * @dev Gets number of votes for each submitted DKG result hash. 
-     * @param requestId Relay request ID assosciated with DKG protocol execution.
-     * @return Hashes of submitted DKG results and number of votes for each hash.
-     */
-    function getDkgResultsVotes(uint256 requestId) public view returns (bytes32[] memory, uint256[] memory) {
-        // TODO: Implement
-        bytes32[] memory resultsHashes;
-        uint256[] memory resultsVotes;
-
-        return (resultsHashes, resultsVotes);
     }
 
     /*
@@ -303,24 +304,6 @@ contract KeepGroupImplV1 is Ownable {
     ) public {
         // TODO: Implement
     }
-
-    // Legacy code moved from Random Beacon contract		
-    // TODO: refactor according to the Phase 14		
-    function submitGroupPublicKey(bytes memory groupPublicKey, uint256 requestID) public {
-
-        // TODO: Remove this section once dispute logic is implemented,
-        // implement conflict resolution logic described in Phase 14,
-        // make sure only valid members are stored.
-        _groups.push(Group(groupPublicKey, block.number));
-        address[] memory members = orderedParticipants();
-        if (members.length > 0) {
-            for (uint i = 0; i < _groupSize; i++) {
-                _groupMembers[groupPublicKey].push(members[i]);
-            }
-        }
-        emit OnGroupRegistered(groupPublicKey);
-        emit SubmitGroupPublicKeyEvent(groupPublicKey, requestID);
-    }		
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -339,6 +322,8 @@ contract KeepGroupImplV1 is Ownable {
      * @param timeoutInitial Timeout in blocks after the initial ticket submission is finished.
      * @param timeoutSubmission Timeout in blocks after the reactive ticket submission is finished.
      * @param timeoutChallenge Timeout in blocks after the period where tickets can be challenged is finished.
+     * @param resultPublicationBlockStep Time in blocks after which member with 
+     * the given index is eligible to submit DKG result.
      * @param numberOfActiveGroups is the minimal number of groups that cannot be marked as expired.
      * @param groupExpirationTimeout is the time in block after which a group expires.
      */
@@ -351,8 +336,9 @@ contract KeepGroupImplV1 is Ownable {
         uint256 timeoutInitial,
         uint256 timeoutSubmission,
         uint256 timeoutChallenge,
-        uint256 groupExpirationTimeout,
-        uint256 numberOfActiveGroups
+        uint256 resultPublicationBlockStep,
+        uint256 numberOfActiveGroups,
+        uint256 groupExpirationTimeout
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
@@ -364,9 +350,10 @@ contract KeepGroupImplV1 is Ownable {
         _groupThreshold = groupThreshold;
         _timeoutInitial = timeoutInitial;
         _timeoutSubmission = timeoutSubmission;
-        _timeoutChallenge = timeoutChallenge;
-        _groupExpirationTimeout = groupExpirationTimeout;
+        _timeoutChallenge = timeoutChallenge;    
+        _resultPublicationBlockStep = resultPublicationBlockStep;
         _numberOfActiveGroups = numberOfActiveGroups;
+        _groupExpirationTimeout = groupExpirationTimeout;
     }
 
     /**
@@ -434,6 +421,14 @@ contract KeepGroupImplV1 is Ownable {
      */
     function ticketChallengeTimeout() public view returns (uint256) {
         return _timeoutChallenge;
+    }
+
+    /**
+     * @dev resultPublicationBlockStep is the duration (in blocks) after which
+     * member with the given index is eligible to submit DKG result.
+     */
+    function resultPublicationBlockStep() public view returns (uint256) {
+        return _resultPublicationBlockStep;
     }
 
     /**

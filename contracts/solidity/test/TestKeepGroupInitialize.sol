@@ -2,7 +2,7 @@ pragma solidity ^0.5.4;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
-import "./helpers/ThrowProxy.sol";
+import "../contracts/utils/ThrowProxy.sol";
 import "../contracts/KeepGroupImplV1.sol";
 
 
@@ -27,7 +27,7 @@ contract TestKeepGroupInitialize {
         ThrowProxy throwProxy = new ThrowProxy(address(keepGroupContract));
 
         // Prime the proxy
-        KeepGroupImplV1(address(throwProxy)).initialize(address(0), address(0), 200, 150, 200, 1, 1, 1, 1, 1);
+        KeepGroupImplV1(address(throwProxy)).initialize(address(0), address(0), 200, 150, 200, 1, 1, 1, 3, 1, 1);
 
         // Execute the call that is supposed to throw.
         // r will be false if it threw and true if it didn't.
@@ -36,7 +36,7 @@ contract TestKeepGroupInitialize {
     }
 
     function testInitialize() public {
-        keepGroupContract.initialize(address(stakingProxy), address(0), 200, 150, 200, 1, 1, 1, 1, 1);
+        keepGroupContract.initialize(address(stakingProxy), address(0), 200, 150, 200, 1, 1, 1, 3, 1, 1);
         Assert.equal(keepGroupContract.initialized(), true, "Should be initialized.");
     }
 

@@ -40,7 +40,7 @@ function mineBlocks(blocks) {
 contract('TestKeepGroupExpiration', function(accounts) {
 
   let stakingProxy, minimumStake, groupThreshold, groupSize,
-    timeoutInitial, timeoutSubmission, timeoutChallenge,
+    timeoutInitial, timeoutSubmission, timeoutChallenge, resultPublicationBlockStep,
     groupExpirationTimeout, numberOfActiveGroups, testGroupsNumber,
     keepRandomBeaconImplV1, keepRandomBeaconProxy,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy
@@ -59,6 +59,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     timeoutInitial = 20;
     timeoutSubmission = 50;
     timeoutChallenge = 60;
+    resultPublicationBlockStep = 3;
     groupExpirationTimeout = 300;
     numberOfActiveGroups = 5;
 
@@ -66,7 +67,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(
-      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, groupExpirationTimeout, numberOfActiveGroups
+      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, resultPublicationBlockStep, groupExpirationTimeout, numberOfActiveGroups
     );
 
     testGroupsNumber = 100;

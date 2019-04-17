@@ -102,7 +102,7 @@ echo "-- Starting geth..."
       --nodiscover \
       --port $GETHPORT --networkid $NETWORKID \
       --ws --wsaddr "0.0.0.0" --wsport $WSPORT --wsorigins "*" \
-      --rpc --rpcport $RPCPORT --rpcaddr $RPCHOST --rpccorsdomain "" \
+      --rpc --rpcport $RPCPORT --rpcaddr $RPCHOST --rpccorsdomain "" --rpcvhosts "*" \
       --rpcapi $RPCAPI \
       --identity $NODE_NAME \
       --syncmode "fast" \

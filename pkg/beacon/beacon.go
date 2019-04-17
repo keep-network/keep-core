@@ -34,7 +34,12 @@ func Initialize(
 		return err
 	}
 
-	node := relay.NewNode(staker, netProvider, blockCounter, chainConfig)
+	node := relay.NewNode(
+		staker,
+		netProvider,
+		blockCounter,
+		chainConfig,
+	)
 
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
 		fmt.Printf("New relay entry requested [%+v]\n", request)
@@ -44,6 +49,7 @@ func Initialize(
 			request.PreviousEntry,
 			request.Seed,
 			relayChain,
+			request.BlockNumber,
 		)
 	})
 
@@ -57,6 +63,7 @@ func Initialize(
 				entry.Value.Bytes(),
 				entry.RequestID,
 				entry.Seed,
+				entry.BlockNumber,
 			)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Tickets submission failed: [%v]\n", err)

@@ -9,6 +9,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
@@ -104,14 +106,47 @@ func TestSubmitTicketAndGetSelectedParticipants(t *testing.T) {
 	}
 }
 
+func TestLocalRequestRelayEntry(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+	seed := big.NewInt(42)
+	relayRequestPromise := chainHandle.RequestRelayEntry(seed)
+
+	done := make(chan *event.Request)
+	relayRequestPromise.OnSuccess(func(entry *event.Request) {
+		done <- entry
+	}).OnFailure(func(err error) {
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	select {
+	case entry := <-done:
+		if entry.Seed.Cmp(seed) != 0 {
+			t.Fatalf(
+				"Unexpected relay entry seed\nExpected: [%v]\nActual:  [%v]",
+				seed,
+				entry.Seed.Int64(),
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+
+}
+
 func TestLocalSubmitRelayEntry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+	requestID := int64(19)
 	relayEntryPromise := chainHandle.SubmitRelayEntry(
 		&event.Entry{
-			RequestID:   big.NewInt(int64(19)),
+			RequestID:   big.NewInt(requestID),
 			GroupPubKey: []byte("1"),
 		},
 	)
@@ -127,11 +162,10 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 	select {
 	case entry := <-done:
-		expected := int64(19)
-		if entry.RequestID.Int64() != expected {
+		if entry.RequestID.Int64() != requestID {
 			t.Fatalf(
-				"expected [%v], got [%v]",
-				expected,
+				"Unexpected relay entry request id\nExpected: [%v]\nActual:  [%v]",
+				requestID,
 				entry.RequestID.Int64(),
 			)
 		}
@@ -141,16 +175,330 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 }
 
+func TestLocalOnRelayEntryGenerated(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.Entry)
+
+	subscription, err := chainHandle.OnRelayEntryGenerated(
+		func(entry *event.Entry) {
+			eventFired <- entry
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer subscription.Unsubscribe()
+
+	expectedEntry := &event.Entry{
+		RequestID:   big.NewInt(42),
+		Value:       big.NewInt(19),
+		GroupPubKey: []byte("1"),
+		Seed:        big.NewInt(30),
+		BlockNumber: 123,
+	}
+
+	chainHandle.SubmitRelayEntry(expectedEntry)
+
+	select {
+	case event := <-eventFired:
+		if !reflect.DeepEqual(event, expectedEntry) {
+			t.Fatalf(
+				"Unexpected relay entry\nExpected: [%v]\nActual:   [%v]",
+				expectedEntry,
+				event,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
+func TestLocalOnRelayEntryGeneratedUnsubscribed(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.Entry)
+
+	subscription, err := chainHandle.OnRelayEntryGenerated(
+		func(entry *event.Entry) {
+			eventFired <- entry
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	subscription.Unsubscribe()
+
+	chainHandle.SubmitRelayEntry(
+		&event.Entry{},
+	)
+
+	select {
+	case event := <-eventFired:
+		t.Fatalf("Event should have not been received due to the cancelled subscription: [%v]", event)
+	case <-ctx.Done():
+		// expected execution of goroutine
+	}
+}
+
+func TestLocalOnGroupRegistered(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.GroupRegistration)
+
+	subscription, err := chainHandle.OnGroupRegistered(
+		func(entry *event.GroupRegistration) {
+			eventFired <- entry
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer subscription.Unsubscribe()
+
+	groupPublicKey := []byte("1")
+	requestID := big.NewInt(42)
+	memberIndex := group.MemberIndex(1)
+	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := make(map[group.MemberIndex]operator.Signature)
+
+	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
+
+	expectedGroupRegistrationEvent := &event.GroupRegistration{
+		GroupPublicKey: groupPublicKey,
+		RequestID:      requestID,
+	}
+
+	select {
+	case event := <-eventFired:
+		if !reflect.DeepEqual(event, expectedGroupRegistrationEvent) {
+			t.Fatalf(
+				"Unexpected group registration entry\nExpected: [%v]\nActual:   [%v]",
+				expectedGroupRegistrationEvent,
+				event,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
+func TestLocalOnGroupRegisteredUnsubscribed(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.GroupRegistration)
+
+	subscription, err := chainHandle.OnGroupRegistered(
+		func(entry *event.GroupRegistration) {
+			eventFired <- entry
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	subscription.Unsubscribe()
+
+	groupPublicKey := []byte("1")
+	requestID := big.NewInt(42)
+	memberIndex := group.MemberIndex(1)
+	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := make(map[group.MemberIndex]operator.Signature)
+
+	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
+
+	select {
+	case event := <-eventFired:
+		t.Fatalf("Event should have not been received due to the cancelled subscription: [%v]", event)
+	case <-ctx.Done():
+		// expected execution of goroutine
+	}
+}
+
+func TestLocalOnRelayEntryRequested(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.Request)
+
+	subscription, err := chainHandle.OnRelayEntryRequested(
+		func(request *event.Request) {
+			eventFired <- request
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer subscription.Unsubscribe()
+
+	seed := big.NewInt(12345)
+
+	chainHandle.RequestRelayEntry(seed)
+
+	select {
+	case event := <-eventFired:
+		expectedRequestID := big.NewInt(0)
+		if event.RequestID.Cmp(expectedRequestID) != 0 {
+			t.Fatalf(
+				"Unexpected request id\nExpected: [%v]\nActual:   [%v]",
+				expectedRequestID,
+				event.RequestID,
+			)
+		}
+		if event.PreviousEntry != nil {
+			t.Fatalf(
+				"Unexpected previous entry\nExpected: [%v]\nActual:   [%v]",
+				nil,
+				event.PreviousEntry,
+			)
+		}
+		if event.Seed.Cmp(seed) != 0 {
+			t.Fatalf(
+				"Unexpected seed\nExpected: [%v]\nActual:   [%v]",
+				seed,
+				event.Seed,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
+func TestLocalOnRelayEntryRequestedUnsubscribed(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.Request)
+
+	subscription, err := chainHandle.OnRelayEntryRequested(
+		func(request *event.Request) {
+			eventFired <- request
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	subscription.Unsubscribe()
+
+	chainHandle.RequestRelayEntry(big.NewInt(42))
+
+	select {
+	case event := <-eventFired:
+		t.Fatalf("Event should have not been received due to the cancelled subscription: [%v]", event)
+	case <-ctx.Done():
+		// expected execution of goroutine
+	}
+}
+
+func TestLocalOnDKGResultSubmitted(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.DKGResultSubmission)
+
+	subscription, err := chainHandle.OnDKGResultSubmitted(
+		func(request *event.DKGResultSubmission) {
+			eventFired <- request
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer subscription.Unsubscribe()
+
+	groupPublicKey := []byte("1")
+	requestID := big.NewInt(42)
+	memberIndex := group.MemberIndex(1)
+	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := make(map[group.MemberIndex]operator.Signature)
+
+	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
+
+	expectedResultSubmissionEvent := &event.DKGResultSubmission{
+		RequestID:      requestID,
+		MemberIndex:    uint32(memberIndex),
+		GroupPublicKey: groupPublicKey,
+	}
+
+	select {
+	case event := <-eventFired:
+		if !reflect.DeepEqual(event, expectedResultSubmissionEvent) {
+			t.Fatalf(
+				"Unexpected DKG result submission event\nExpected: [%v]\nActual:   [%v]",
+				expectedResultSubmissionEvent,
+				event,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
+func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.DKGResultSubmission)
+
+	subscription, err := chainHandle.OnDKGResultSubmitted(
+		func(event *event.DKGResultSubmission) {
+			eventFired <- event
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	subscription.Unsubscribe()
+
+	groupPublicKey := []byte("1")
+	requestID := big.NewInt(42)
+	memberIndex := group.MemberIndex(1)
+	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := make(map[group.MemberIndex]operator.Signature)
+
+	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
+
+	select {
+	case event := <-eventFired:
+		t.Fatalf("Event should have not been received due to the cancelled subscription: [%v]", event)
+	case <-ctx.Done():
+		// expected execution of goroutine
+	}
+}
+
 func TestLocalBlockHeightWaiter(t *testing.T) {
 	var tests = map[string]struct {
-		blockHeight      int
+		blockHeight      uint64
 		initialDelay     time.Duration
 		expectedWaitTime time.Duration
 	}{
-		"does not wait for negative block height": {
-			blockHeight:      -1,
-			expectedWaitTime: 0,
-		},
 		"returns immediately for genesis block": {
 			blockHeight:      0,
 			expectedWaitTime: 0,
@@ -213,77 +561,7 @@ func TestLocalBlockHeightWaiter(t *testing.T) {
 	}
 }
 
-func TestLocalBlockWaiter(t *testing.T) {
-	var tests = map[string]struct {
-		blockWait        int
-		expectedWaitTime time.Duration
-	}{
-		"does wait for a block": {
-			blockWait:        1,
-			expectedWaitTime: blockTime,
-		},
-		"does wait for two blocks": {
-			blockWait:        2,
-			expectedWaitTime: 2 * blockTime,
-		},
-		"does wait for three blocks": {
-			blockWait:        3,
-			expectedWaitTime: 3 * blockTime,
-		},
-		"does not wait for 0 blocks": {
-			blockWait:        0,
-			expectedWaitTime: 0,
-		},
-		"does not wait for negative number of blocks": {
-			blockWait:        -1,
-			expectedWaitTime: 0,
-		},
-	}
-
-	for testName, test := range tests {
-		test := test
-		t.Run(testName, func(t *testing.T) {
-			t.Parallel()
-			c := Connect(10, 4, big.NewInt(200))
-			countWait, err := c.BlockCounter()
-			if err != nil {
-				t.Fatalf("failed to set up block counter: [%v]", err)
-			}
-
-			start := time.Now().UTC()
-			countWait.WaitForBlocks(test.blockWait)
-			end := time.Now().UTC()
-
-			elapsed := end.Sub(start)
-
-			// Block waiter should wait for test.expectedWaitTime minus some
-			// margin at minimum; the margin is needed because clock is not
-			// always that precise. Setting it to 5ms for this test.
-			minMargin := time.Duration(5) * time.Millisecond
-			if elapsed < (test.expectedWaitTime - minMargin) {
-				t.Errorf(
-					"waited less than expected; expected [%v] at min, waited [%v]",
-					test.expectedWaitTime+minMargin,
-					elapsed,
-				)
-			}
-
-			// Block waiter should wait for test.expectedWaitTime plus some
-			// margin at maximum; the margin is the time needed for the return
-			// instructions to execute, setting it to 25ms for this test.
-			maxMargin := time.Duration(25) * time.Millisecond
-			if elapsed > (test.expectedWaitTime + maxMargin) {
-				t.Errorf(
-					"waited longer than expected; expected %v at max, waited %v",
-					test.expectedWaitTime,
-					elapsed,
-				)
-			}
-		})
-	}
-}
-
-func TestLocalIsDKGResultPublished(t *testing.T) {
+func TestLocalIsDKGResultSubmitted(t *testing.T) {
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 
 	submittedRequestID := big.NewInt(1)
@@ -334,16 +612,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	defer cancel()
 
 	// Initialize local chain.
-	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
-	localChain := &localChain{
-		submittedResults:         submittedResults,
-		resultSubmissionHandlers: make(map[int]func(event *event.DKGResultSubmission)),
-	}
+	localChain := Connect(10, 4, big.NewInt(200)).(*localChain)
+
 	chainHandle := localChain.ThresholdRelay()
 
 	// Channel for DKGResultSubmission events.
 	DKGResultSubmissionChan := make(chan *event.DKGResultSubmission)
-	localChain.OnDKGResultSubmitted(
+	chainHandle.OnDKGResultSubmitted(
 		func(DKGResultSubmission *event.DKGResultSubmission) {
 			DKGResultSubmissionChan <- DKGResultSubmission
 		},
@@ -355,15 +630,24 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	// Submit new result for request ID 1
 	requestID1 := big.NewInt(1)
+	memberIndex := uint32(1)
 	submittedResult11 := &relaychain.DKGResult{
 		GroupPublicKey: []byte{11},
 	}
 	expectedEvent1 := &event.DKGResultSubmission{
 		RequestID:      requestID1,
+		MemberIndex:    memberIndex,
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
+		BlockNumber:    0,
 	}
 
-	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil) // TODO: Update test to include signatures
+	signatures := map[group.MemberIndex]operator.Signature{
+		1: operator.Signature{101},
+		2: operator.Signature{102},
+		3: operator.Signature{103},
+	}
+
+	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -377,7 +661,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	select {
 	case DKGResultSubmissionEvent := <-DKGResultSubmissionChan:
 		if !reflect.DeepEqual(expectedEvent1, DKGResultSubmissionEvent) {
-			t.Fatalf("\nexpected: %v\nactual:   %v\n",
+			t.Fatalf("\nexpected: %+v\nactual:   %+v\n",
 				expectedEvent1,
 				DKGResultSubmissionEvent,
 			)
@@ -390,10 +674,11 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	requestID2 := big.NewInt(2)
 	expectedEvent2 := &event.DKGResultSubmission{
 		RequestID:      requestID2,
+		MemberIndex:    memberIndex,
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 	}
 
-	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11, nil) // TODO: Update test to include signatures
+	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID2],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -417,7 +702,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit already submitted result for request ID 1
-	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, nil) // TODO: Update test to include signatures
+	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
 		[]*relaychain.DKGResult{submittedResult11},
@@ -433,47 +718,6 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		t.Fatalf("unexpected event was emitted: %v", DKGResultSubmissionEvent)
 	case <-ctx.Done():
 		t.Logf("DKG result publication event not generated")
-	}
-}
-
-func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
-	ctx, cancel := newTestContext()
-	defer cancel()
-
-	localChain := &localChain{
-		submittedResults:         make(map[*big.Int][]*relaychain.DKGResult),
-		resultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
-	}
-	relay := localChain.ThresholdRelay()
-
-	DKGResultSubmissionChan := make(chan *event.DKGResultSubmission)
-	subscription, err := localChain.OnDKGResultSubmitted(
-		func(DKGResultSubmission *event.DKGResultSubmission) {
-			DKGResultSubmissionChan <- DKGResultSubmission
-		},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Unsubscribe from the event - from this point, callback should
-	// never be called.
-	subscription.Unsubscribe()
-
-	relay.SubmitDKGResult(
-		big.NewInt(999),
-		1,
-		&relaychain.DKGResult{
-			GroupPublicKey: []byte{88},
-		},
-		nil, // TODO: Update test to include signatures
-	)
-
-	select {
-	case <-DKGResultSubmissionChan:
-		t.Fatalf("event should not be emitted - I have unsubscribed!")
-	case <-ctx.Done():
-		// ok
 	}
 }
 

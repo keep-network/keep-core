@@ -1,0 +1,67 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keep-client-standard-peer-1
+  labels:
+    app: keep-client
+    type: standard-peer-1
+spec:
+  ports:
+  - port: 3923
+    targetPort: 3923
+    name: tcp-3923
+  selector:
+    app: keep-client
+    type: standard-peer-1
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: keep-client-standard-peer-1
+  labels:
+    keel.sh/policy: all
+    app: keep-client
+    type: standard-peer-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keep-client
+      type: standard-peer-1
+  template:
+    metadata:
+      labels:
+        app: keep-client
+        type: standard-peer-1
+    spec:
+      containers:
+      - name: keep-client-standard-peer-1
+        image: gcr.io/keep-dev-fe24/keep-client
+        ports:
+          - containerPort: 3923
+        env:
+          - name: KEEP_ETHEREUM_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: eth-account-passphrase
+                key: account-passphrase
+        volumeMounts:
+          - name: eth-keyfile
+            mountPath: /mnt/eth-data
+          - name: keep-client-config
+            mountPath: /mnt/keep-client
+        command: ["keep-client", "-config", "/mnt/keep-client/keep-client-config.toml", "start"]
+      volumes:
+      - name: eth-keyfile
+        configMap:
+          name: keep-client-standard-peer-1
+          items:
+            - key: eth-keyfile
+              path: eth-keyfile
+      - name: keep-client-config
+        configMap:
+          name: keep-client-standard-peer-1
+          items:
+            - key: keep-client-config.toml
+              path: keep-client-config.toml

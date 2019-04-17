@@ -141,30 +141,20 @@ func (kg *keepGroup) GroupSize() (int, error) {
 	return int(groupSize.Int64()), nil
 }
 
-func (kg *keepGroup) TicketInitialSubmissionTimeout() (int, error) {
-	ticketInitialSubmissionTimeout, err :=
-		kg.caller.TicketInitialSubmissionTimeout(kg.callerOpts)
-	if err != nil {
-		return -1, err
-	}
-	return int(ticketInitialSubmissionTimeout.Int64()), nil
+func (kg *keepGroup) TicketInitialSubmissionTimeout() (*big.Int, error) {
+	return kg.caller.TicketInitialSubmissionTimeout(kg.callerOpts)
 }
 
-func (kg *keepGroup) TicketReactiveSubmissionTimeout() (int, error) {
-	ticketReactiveSubmissionTimeout, err :=
-		kg.caller.TicketReactiveSubmissionTimeout(kg.callerOpts)
-	if err != nil {
-		return -1, err
-	}
-	return int(ticketReactiveSubmissionTimeout.Int64()), nil
+func (kg *keepGroup) TicketReactiveSubmissionTimeout() (*big.Int, error) {
+	return kg.caller.TicketReactiveSubmissionTimeout(kg.callerOpts)
 }
 
-func (kg *keepGroup) TicketChallengeTimeout() (int, error) {
-	ticketChallengeTimeout, err := kg.caller.TicketChallengeTimeout(kg.callerOpts)
-	if err != nil {
-		return -1, err
-	}
-	return int(ticketChallengeTimeout.Int64()), nil
+func (kg *keepGroup) TicketChallengeTimeout() (*big.Int, error) {
+	return kg.caller.TicketChallengeTimeout(kg.callerOpts)
+}
+
+func (kg *keepGroup) ResultPublicationBlockStep() (*big.Int, error) {
+	return kg.caller.ResultPublicationBlockStep(kg.callerOpts)
 }
 
 func (kg *keepGroup) MinimumStake() (*big.Int, error) {
@@ -207,15 +197,21 @@ func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 }
 
 func (kg *keepGroup) SubmitDKGResult(
+	submitterIndex *big.Int,
 	requestID *big.Int,
 	result *relaychain.DKGResult,
+	signatures []byte,
+	membersIndex []*big.Int,
 ) (*types.Transaction, error) {
 	return kg.transactor.SubmitDkgResult(
 		kg.transactorOpts,
+		submitterIndex,
 		requestID,
 		result.GroupPublicKey,
 		result.Disqualified,
 		result.Inactive,
+		signatures,
+		membersIndex,
 	)
 }
 
@@ -262,75 +258,6 @@ func (kg *keepGroup) WatchDKGResultPublishedEvent(
 				subscriptionMutex.Unlock()
 			case err := <-eventSubscription.Err():
 				fail(err)
-				return
-			}
-		}
-	}()
-
-	return subscription.NewEventSubscription(func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}), nil
-}
-
-// SubmitGroupPublicKey upon completion of a signature make the contract
-// call to put it on chain.
-func (kg *keepGroup) SubmitGroupPublicKey(
-	groupPublicKey []byte,
-	requestID *big.Int,
-) (*types.Transaction, error) {
-	return kg.transactor.SubmitGroupPublicKey(kg.transactorOpts, groupPublicKey, requestID)
-}
-
-// submitGroupPublicKeyEventFunc type of function called for
-// SubmitGroupPublicKeyEvent event.
-type submitGroupPublicKeyEventFunc func(
-	groupPublicKey []byte,
-	requestID *big.Int,
-	blockNumber uint64,
-)
-
-// WatchSubmitGroupPublicKeyEvent watches for event SubmitGroupPublicKeyEvent.
-func (kg *keepGroup) WatchSubmitGroupPublicKeyEvent(
-	success submitGroupPublicKeyEventFunc,
-	fail errorCallback,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.KeepGroupImplV1SubmitGroupPublicKeyEvent)
-	eventSubscription, err := kg.contract.WatchSubmitGroupPublicKeyEvent(
-		nil,
-		eventChan,
-	)
-	if err != nil {
-		close(eventChan)
-		return nil, fmt.Errorf(
-			"could not create watch for SubmitGroupPublicKeyEvent event: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.GroupPublicKey,
-					event.RequestID,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
 				return
 			}
 		}

@@ -12,6 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/urfave/cli"
 )
 
@@ -36,9 +37,9 @@ const (
 
 const smokeTestDescription = `The smoke-test command creates a local threshold
    group of the specified size and with the specified threshold and simulates a
-   distributed key generation process with an in-process broadcast channel and 
-   chain implementation. Once the process is complete, a threshold signature is 
-   executed, once again with an in-process broadcast channel and chain, and the 
+   distributed key generation process with an in-process broadcast channel and
+   chain implementation. Once the process is complete, a threshold signature is
+   executed, once again with an in-process broadcast channel and chain, and the
    final signature is verified by each member of the group.`
 
 func init() {
@@ -80,7 +81,14 @@ func SmokeTest(c *cli.Context) error {
 	context := context.Background()
 
 	for i := 0; i < groupSize; i++ {
-		createNode(context, chainHandle, groupSize, threshold)
+		operatorPrivateKey, _, err := operator.GenerateKeyPair()
+		if err != nil {
+			panic("failed to generate private key")
+		}
+
+		createNode(
+			context, operatorPrivateKey, chainHandle, groupSize, threshold,
+		)
 	}
 
 	// Give the nodes a sec to get going.
@@ -105,6 +113,7 @@ func SmokeTest(c *cli.Context) error {
 
 func createNode(
 	context context.Context,
+	operatorPrivateKey *operator.PrivateKey,
 	chainHandle chain.Handle,
 	groupSize int,
 	threshold int,

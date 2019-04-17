@@ -10,7 +10,7 @@ import (
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg2"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -40,7 +40,7 @@ type Node struct {
 }
 
 type membership struct {
-	member  *dkg2.ThresholdSigner
+	member  *dkg.ThresholdSigner
 	channel net.BroadcastChannel
 	index   int
 }
@@ -58,6 +58,7 @@ func (n *Node) JoinGroupIfEligible(
 	groupSelectionResult *groupselection.Result,
 	entryRequestID *big.Int,
 	entrySeed *big.Int,
+	dkgStartBlockHeight uint64,
 ) {
 	if !n.initializePendingGroup(entryRequestID.String()) {
 		// Failed to initialize; in progress for this entry.
@@ -93,12 +94,13 @@ func (n *Node) JoinGroupIfEligible(
 			}
 
 			go func() {
-				signer, err := dkg2.ExecuteDKG(
+				signer, err := dkg.ExecuteDKG(
 					entryRequestID,
 					entrySeed,
 					playerIndex,
 					n.chainConfig.GroupSize,
 					n.chainConfig.Threshold,
+					dkgStartBlockHeight,
 					n.blockCounter,
 					relayChain,
 					broadcastChannel,
@@ -195,7 +197,7 @@ func (n *Node) flushPendingGroup(requestID string) {
 // We overwrite our placeholder membership set by initializePendingGroup.
 func (n *Node) registerPendingGroup(
 	requestID string,
-	signer *dkg2.ThresholdSigner,
+	signer *dkg.ThresholdSigner,
 	channel net.BroadcastChannel,
 ) {
 	n.mutex.Lock()

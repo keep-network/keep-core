@@ -5,19 +5,16 @@ import (
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/member"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-// MemberID is a unique-in-group identifier of a member.
-type MemberID = member.Index
-
 type memberCore struct {
 	// ID of this group member.
-	ID MemberID
+	ID group.MemberIndex
 
 	// Group to which this member belongs.
-	group *Group
+	group *group.Group
 
 	// Evidence log provides access to messages from earlier protocol phases
 	// for the sake of compliant resolution.
@@ -43,7 +40,7 @@ type EphemeralKeyPairGeneratingMember struct {
 
 	// Ephemeral key pairs used to create symmetric keys,
 	// generated individually for each other group member.
-	ephemeralKeyPairs map[MemberID]*ephemeral.KeyPair
+	ephemeralKeyPairs map[group.MemberIndex]*ephemeral.KeyPair
 }
 
 // SymmetricKeyGeneratingMember represents one member in a distributed key
@@ -57,7 +54,7 @@ type SymmetricKeyGeneratingMember struct {
 	// generated individually for each other group member by ECDH'ing the
 	// broadcasted ephemeral public key intended for this member and the
 	// ephemeral private key generated for the other member.
-	symmetricKeys map[MemberID]ephemeral.SymmetricKey
+	symmetricKeys map[group.MemberIndex]ephemeral.SymmetricKey
 }
 
 // CommittingMember represents one member in a distributed key generation group,
@@ -94,10 +91,10 @@ type CommitmentsVerifyingMember struct {
 	//
 	// receivedValidSharesS are defined as `s_ji` and receivedValidSharesT are
 	// defined as `t_ji` across the protocol specification.
-	receivedValidSharesS, receivedValidSharesT map[MemberID]*big.Int
+	receivedValidSharesS, receivedValidSharesT map[group.MemberIndex]*big.Int
 	// Valid commitments to secret shares polynomial coefficients received from
 	// other group members.
-	receivedValidPeerCommitments map[MemberID][]*bn256.G1
+	receivedValidPeerCommitments map[group.MemberIndex][]*bn256.G1
 }
 
 // SharesJustifyingMember represents one member in a threshold key sharing group,
@@ -136,7 +133,7 @@ type SharingMember struct {
 	publicKeySharePoints []*bn256.G2
 	// Public key share points received from other group members which passed
 	// the validation. Defined as `A_jk` across the protocol documentation.
-	receivedValidPeerPublicKeySharePoints map[MemberID][]*bn256.G2
+	receivedValidPeerPublicKeySharePoints map[group.MemberIndex][]*bn256.G2
 }
 
 // PointsJustifyingMember represents one member in a threshold key sharing group,
@@ -169,12 +166,12 @@ type ReconstructingMember struct {
 	// Stored as `<m, z_m>`, where:
 	// - `m` is disqualified member's ID
 	// - `z_m` is reconstructed individual private key of member `m`
-	reconstructedIndividualPrivateKeys map[MemberID]*big.Int
+	reconstructedIndividualPrivateKeys map[group.MemberIndex]*big.Int
 	// Individual public keys calculated from reconstructed individual private keys.
 	// Stored as `<m, y_m>`, where:
 	// - `m` is disqualified member's ID
 	// - `y_m` is reconstructed individual public key of member `m`
-	reconstructedIndividualPublicKeys map[MemberID]*bn256.G2
+	reconstructedIndividualPublicKeys map[group.MemberIndex]*bn256.G2
 }
 
 // CombiningMember represents one member in a threshold sharing group who is
@@ -205,8 +202,8 @@ type FinalizingMember struct {
 // NewMember creates a new member in an initial state, ready to execute DKG
 // protocol.
 func NewMember(
-	memberID MemberID,
-	groupMembers []MemberID,
+	memberID group.MemberIndex,
+	groupMembers []group.MemberIndex,
 	dishonestThreshold int,
 	seed *big.Int,
 ) (*LocalMember, error) {
@@ -217,12 +214,7 @@ func NewMember(
 	return &LocalMember{
 		memberCore: &memberCore{
 			memberID,
-			&Group{
-				dishonestThreshold,
-				groupMembers,
-				[]MemberID{},
-				[]MemberID{},
-			},
+			group.NewDkgGroup(dishonestThreshold, groupMembers),
 			newDkgEvidenceLog(),
 			newProtocolParameters(seed),
 		},
@@ -230,7 +222,7 @@ func NewMember(
 }
 
 // AddToGroup adds the provided MemberID to the group
-func (mc *memberCore) AddToGroup(memberID MemberID) error {
+func (mc *memberCore) AddToGroup(memberID group.MemberIndex) error {
 	if err := memberID.Validate(); err != nil {
 		return fmt.Errorf("could not add the member ID to the group [%v]", err)
 	}
@@ -245,7 +237,7 @@ func (mc *memberCore) AddToGroup(memberID MemberID) error {
 func (lm *LocalMember) InitializeEphemeralKeysGeneration() *EphemeralKeyPairGeneratingMember {
 	return &EphemeralKeyPairGeneratingMember{
 		LocalMember:       lm,
-		ephemeralKeyPairs: make(map[MemberID]*ephemeral.KeyPair),
+		ephemeralKeyPairs: make(map[group.MemberIndex]*ephemeral.KeyPair),
 	}
 }
 
@@ -255,7 +247,7 @@ func (lm *LocalMember) InitializeEphemeralKeysGeneration() *EphemeralKeyPairGene
 func (ekgm *EphemeralKeyPairGeneratingMember) InitializeSymmetricKeyGeneration() *SymmetricKeyGeneratingMember {
 	return &SymmetricKeyGeneratingMember{
 		EphemeralKeyPairGeneratingMember: ekgm,
-		symmetricKeys:                    make(map[MemberID]ephemeral.SymmetricKey),
+		symmetricKeys:                    make(map[group.MemberIndex]ephemeral.SymmetricKey),
 	}
 }
 
@@ -270,9 +262,9 @@ func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting() *CommittingMemb
 func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVerifyingMember {
 	return &CommitmentsVerifyingMember{
 		CommittingMember:             cm,
-		receivedValidSharesS:         make(map[MemberID]*big.Int),
-		receivedValidSharesT:         make(map[MemberID]*big.Int),
-		receivedValidPeerCommitments: make(map[MemberID][]*bn256.G1),
+		receivedValidSharesS:         make(map[group.MemberIndex]*big.Int),
+		receivedValidSharesT:         make(map[group.MemberIndex]*big.Int),
+		receivedValidPeerCommitments: make(map[group.MemberIndex][]*bn256.G1),
 	}
 }
 
@@ -290,7 +282,7 @@ func (sjm *SharesJustifyingMember) InitializeQualified() *QualifiedMember {
 func (qm *QualifiedMember) InitializeSharing() *SharingMember {
 	return &SharingMember{
 		QualifiedMember:                       qm,
-		receivedValidPeerPublicKeySharePoints: make(map[MemberID][]*bn256.G2),
+		receivedValidPeerPublicKeySharePoints: make(map[group.MemberIndex][]*bn256.G2),
 	}
 }
 
@@ -308,8 +300,8 @@ func (sm *PointsJustifyingMember) InitializeRevealing() *RevealingMember {
 func (rm *RevealingMember) InitializeReconstruction() *ReconstructingMember {
 	return &ReconstructingMember{
 		RevealingMember:                    rm,
-		reconstructedIndividualPrivateKeys: make(map[MemberID]*big.Int),
-		reconstructedIndividualPublicKeys:  make(map[MemberID]*bn256.G2),
+		reconstructedIndividualPrivateKeys: make(map[group.MemberIndex]*big.Int),
+		reconstructedIndividualPublicKeys:  make(map[group.MemberIndex]*bn256.G2),
 	}
 }
 
@@ -347,26 +339,14 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G2 {
 
 // Result can be either the successful computation of a round of distributed key
 // generation, or a notification of failure.
-//
-// If the number of disqualified and inactive members is greater than half of the
-// configured dishonest threshold, the group is deemed too weak, and the result
-// is set to failure. Otherwise, it returns the generated group public key along
-// with the disqualified and inactive members.
+// It returns the generated group public key and a private key share of a group
+// key along with the disqualified and inactive members (as part of including the
+// group state). The group private key share is used for signing and should never
+// be revealed publicly.
 func (fm *FinalizingMember) Result() *Result {
 	return &Result{
-		GroupPublicKey: fm.groupPublicKey,              // nil if threshold not satisfied
-		Disqualified:   fm.group.disqualifiedMemberIDs, // DQ
-		Inactive:       fm.group.inactiveMemberIDs,     // IA
+		Group:                fm.group,
+		GroupPublicKey:       fm.groupPublicKey, // nil if threshold not satisfied
+		GroupPrivateKeyShare: fm.groupPrivateKeyShare,
 	}
-}
-
-// GroupPublicKey returns the full group public key.
-func (fm *FinalizingMember) GroupPublicKey() *bn256.G2 {
-	return fm.groupPublicKey
-}
-
-// GroupPrivateKeyShare returns member's private key share of a group key.
-// It is used for signing and should never be revealed publicly.
-func (fm *FinalizingMember) GroupPrivateKeyShare() *big.Int {
-	return fm.groupPrivateKeyShare
 }
