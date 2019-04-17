@@ -61,6 +61,20 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping (string => bool) internal _initialized;
 
+
+    /**
+     * @dev Checks if submitter is eligible to submit.
+     * @param submitterMemberIndex The claimed index of the submitter.
+     */
+    modifier onlyEligibleSubmitter(uint256 submitterMemberIndex) {
+        uint256[] memory selected = selectedTickets();
+        require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
+        require(_proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
+        uint T_init = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG;
+        require(block.number >= (T_init + (submitterMemberIndex-1) * _resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
+        _;
+    }
+
     /**
      * @dev Triggers the selection process of a new candidate group.
      */
@@ -270,8 +284,7 @@ contract KeepGroupImplV1 is Ownable {
         bytes memory inactive,
         bytes memory signatures,
         uint[] memory signingMembersIndexes
-    ) public {
-        validateSubmitter(submitterMemberIndex);
+    ) public onlyEligibleSubmitter(submitterMemberIndex) {
 
         require(
             disqualified.length == _groupSize && inactive.length == _groupSize,
@@ -394,19 +407,6 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutChallenge = timeoutChallenge;
         _timeDKG = timeDKG;
         _resultPublicationBlockStep = resultPublicationBlockStep;
-    }
-
-     /**
-     * @dev Checks if submitter is eligible to submit.
-     * @param submitterMemberIndex The claimed index of the submitter.
-     * @return true if the submitter is eligible. False otherwise.
-     */
-    function validateSubmitter(uint submitterMemberIndex) public view {
-        uint256[] memory selected = selectedTickets();
-        require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
-        require(_proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
-        uint T_init = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG;
-        require(block.number >= (T_init + (submitterMemberIndex-1) * _resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
     }
 
     /**
