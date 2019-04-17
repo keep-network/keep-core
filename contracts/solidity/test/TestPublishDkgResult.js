@@ -29,7 +29,7 @@ contract('TestPublishDkgResult', function(accounts) {
   token, stakingProxy, stakingContract, randomBeaconValue, requestId,
   keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
   keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
-  submissionStart, selectedParticipants, signatures, positions = [],
+  ticketSubmissionStartBlock, selectedParticipants, signatures, signingMemberIndices = [],
   owner = accounts[0], magpie = accounts[0],
   operator1 = accounts[0], tickets1,
   operator2 = accounts[1], tickets2,
@@ -89,12 +89,12 @@ contract('TestPublishDkgResult', function(accounts) {
       await keepGroupImplViaProxy.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
     }
 
-    submissionStart = await keepGroupImplViaProxy.ticketSubmissionStartBlock();
+    ticketSubmissionStartBlock = await keepGroupImplViaProxy.ticketSubmissionStartBlock();
     selectedParticipants = await keepGroupImplViaProxy.selectedParticipants();
 
     for(let i = 0; i < selectedParticipants.length; i++) {
       let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
-      positions.push(i+1);
+      signingMemberIndices.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
     }
@@ -104,9 +104,9 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeDKG - currentBlock);
+    mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
-    await keepGroupImplViaProxy.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, {from: selectedParticipants[0]})
+    await keepGroupImplViaProxy.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: selectedParticipants[0]})
     let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
     assert.equal(submitted, true, "DkgResult should should be submitted");
   });
@@ -129,7 +129,7 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeDKG - currentBlock);
+    mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
     await keepGroupImplViaProxy.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
     let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
@@ -142,8 +142,8 @@ contract('TestPublishDkgResult', function(accounts) {
     let submitter2MemberIndex = 5;
     let submitter1 = selectedParticipants[submitter1MemberIndex - 1];
     let submitter2 = selectedParticipants[submitter2MemberIndex - 1];
-    let eligibleBlockForSubmitter1 = submissionStart.toNumber() + timeoutChallenge + timeDKG + (submitter1MemberIndex-1)*resultPublicationBlockStep;
-    let eligibleBlockForSubmitter2 = submissionStart.toNumber() + timeoutChallenge + timeDKG + (submitter2MemberIndex-1)*resultPublicationBlockStep;
+    let eligibleBlockForSubmitter1 = ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG + (submitter1MemberIndex-1)*resultPublicationBlockStep;
+    let eligibleBlockForSubmitter2 = ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG + (submitter2MemberIndex-1)*resultPublicationBlockStep;
 
     // Jump in time to when submitter 1 becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
@@ -154,7 +154,7 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Should throw if non eligible submitter 2 tries to submit
     await expectThrow(keepGroupImplViaProxy.submitDkgResult(
-      requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, positions, 
+      requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: submitter2})
     );
 
@@ -162,28 +162,28 @@ contract('TestPublishDkgResult', function(accounts) {
     currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(eligibleBlockForSubmitter2 - currentBlock);
 
-    await keepGroupImplViaProxy.submitDkgResult(requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, positions, {from: submitter2})
+    await keepGroupImplViaProxy.submitDkgResult(requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: submitter2})
     let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
     assert.equal(submitted, true, "DkgResult should be submitted");
   });
 
   it("should not be able to submit if submitter was not selected to be part of the group.", async function() {
     await expectThrow(keepGroupImplViaProxy.submitDkgResult(
-      requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, 
+      requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, 
       {from: operator4})
     );
   });
 
   it("should reject the result without minimum number of valid signatures", async function() {
 
-    positions = [];
+    signingMemberIndices = [];
     signatures = undefined;
     let lastParticipantIdx = groupThreshold - 1;
 
     // Create less than minimum amount of valid signatures
     for(let i = 0; i < lastParticipantIdx; i++) {
       let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
-      positions.push(i+1);
+      signingMemberIndices.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
     }
@@ -192,37 +192,37 @@ contract('TestPublishDkgResult', function(accounts) {
     let nonsenseHash = web3.utils.soliditySha3("ducky duck");
     let invalidSignature = await web3.eth.sign(nonsenseHash, selectedParticipants[lastParticipantIdx]);
     signatures += invalidSignature.slice(2, invalidSignature.length);
-    positions.push(lastParticipantIdx);
+    signingMemberIndices.push(lastParticipantIdx);
 
     // Jump in time to when first member is eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeDKG - currentBlock);
+    mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
     await expectThrow(keepGroupImplViaProxy.submitDkgResult(
-      requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, 
+      requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );
   });
 
   it("should be able to submit the result with minimum number of valid signatures", async function() {
 
-    positions = [];
+    signingMemberIndices = [];
     signatures = undefined;
 
     // Create minimum amount of valid signatures
     for(let i = 0; i < groupThreshold; i++) {
       let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
-      positions.push(i+1);
+      signingMemberIndices.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
     }
 
     // Jump in time to when first member is eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(submissionStart.toNumber() + timeoutChallenge + timeDKG - currentBlock);
+    mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
     await keepGroupImplViaProxy.submitDkgResult(
-      requestId, 1, groupPubKey, disqualified, inactive, signatures, positions, 
+      requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
     assert.equal(submitted, true, "DkgResult should should be submitted");

@@ -33,7 +33,7 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _timeoutChallenge;
     uint256 internal _timeDKG;
     uint256 internal _resultPublicationBlockStep;
-    uint256 internal _submissionStart;
+    uint256 internal _ticketSubmissionStartBlock;
     uint256 internal _randomBeaconValue;
 
     uint256[] internal _tickets;
@@ -67,7 +67,7 @@ contract KeepGroupImplV1 is Ownable {
     function runGroupSelection(uint256 randomBeaconValue) public {
         require(msg.sender == _randomBeacon);
         cleanup();
-        _submissionStart = block.number;
+        _ticketSubmissionStartBlock = block.number;
         _randomBeaconValue = randomBeaconValue;
     }
 
@@ -91,7 +91,7 @@ contract KeepGroupImplV1 is Ownable {
         uint256 virtualStakerIndex
     ) public {
 
-        if (block.number > _submissionStart + _timeoutSubmission) {
+        if (block.number > _ticketSubmissionStartBlock + _timeoutSubmission) {
             revert("Ticket submission period is over.");
         }
 
@@ -119,7 +119,7 @@ contract KeepGroupImplV1 is Ownable {
     function selectedTickets() public view returns (uint256[] memory) {
 
         require(
-            block.number >= _submissionStart + _timeoutChallenge,
+            block.number >= _ticketSubmissionStartBlock + _timeoutChallenge,
             "Ticket submission challenge period must be over."
         );
 
@@ -161,7 +161,7 @@ contract KeepGroupImplV1 is Ownable {
     function selectedParticipants() public view returns (address[] memory) {
 
         require(
-            block.number >= _submissionStart + _timeoutChallenge,
+            block.number >= _ticketSubmissionStartBlock + _timeoutChallenge,
             "Ticket submission challenge period must be over."
         );
 
@@ -301,37 +301,37 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-    * @dev Verifies that provided members signatures of the DKG result are produced
+    * @dev Verifies that provided members signatures of the DKG result were produced
     * by the members stored previously on-chain in the order of their ticket values
     * and returns indices of members with a boolean value of their signature validity.
     * @param signatures Concatenation of user-generated signatures.
     * @param resultHash The result hash signed by the users.
-    * @param indices Indices of members corresponding to each signature.
+    * @param signingMemberIndices Indices of members corresponding to each signature.
     * @return Array of member indices with a boolean value of their signature validity.
     */
     function verifySignatures(
         bytes memory signatures,
-        uint256[] memory indices,
+        uint256[] memory signingMemberIndices,
         bytes32 resultHash
     ) internal view returns (bool) {
 
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Signatures bytes array is too short.");
         require(signatures.length % 65 == 0, "Signatures in the bytes array should be 65 bytes long.");
-        require(signaturesCount == indices.length, "Number of signatures and indices don't match.");
+        require(signaturesCount == signingMemberIndices.length, "Number of signatures and indices don't match.");
         require(signaturesCount >= _groupThreshold, "Number of signatures is below honest majority threshold.");
 
         bytes memory current; // Current signature to be checked.
         uint256[] memory selected = selectedTickets();
 
         for(uint i = 0; i < signaturesCount; i++){
-            require(indices[i] > 0, "Index should be greater than zero.");
-            require(indices[i] <= selected.length, "Provided index is out of acceptable tickets bound.");
+            require(signingMemberIndices[i] > 0, "Index should be greater than zero.");
+            require(signingMemberIndices[i] <= selected.length, "Provided index is out of acceptable tickets bound.");
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
             require(
-                _proofs[selected[indices[i] - 1]].sender == recoveredAddress,
+                _proofs[selected[signingMemberIndices[i] - 1]].sender == recoveredAddress,
                 "Invalid signature. Signer and recovered address at provided index don't match."
             );
         }
@@ -398,16 +398,16 @@ contract KeepGroupImplV1 is Ownable {
 
      /**
      * @dev Checks if submitter is eligible to submit.
-     * @param memberIndex The claimed index of the submitter.
+     * @param submitterMemberIndex The claimed index of the submitter.
      * @return true if the submitter is eligible. False otherwise.
      */
-    function eligibleSubmitter(uint memberIndex) public view returns (bool){
+    function eligibleSubmitter(uint submitterMemberIndex) public view returns (bool){
         uint256[] memory selected = selectedTickets();
-        require(memberIndex > 0, "Member index must be greater than 0.");
-        require(_proofs[selected[memberIndex - 1]].sender == msg.sender, "Member index does not match sender address.");
-        uint T_init = _submissionStart + _timeoutChallenge + _timeDKG;
+        require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
+        require(_proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
+        uint T_init = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG;
         require(block.number <= T_init + _resultPublicationBlockStep * _groupSize, "DKG submission period is over.");
-        return(block.number >= (T_init + (memberIndex-1) * _resultPublicationBlockStep));
+        return(block.number >= (T_init + (submitterMemberIndex-1) * _resultPublicationBlockStep));
     }
 
     /**
@@ -490,7 +490,7 @@ contract KeepGroupImplV1 is Ownable {
      * selection started.
      */
     function ticketSubmissionStartBlock() public view returns (uint256) {
-        return _submissionStart;
+        return _ticketSubmissionStartBlock;
     }
 
     /**
