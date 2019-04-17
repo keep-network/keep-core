@@ -76,6 +76,17 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Reverts if ticket challenge period is not over.
+     */
+    modifier whenTicketChallengeIsOver() {
+        require(
+            block.number >= _ticketSubmissionStartBlock + _timeoutChallenge,
+            "Ticket submission challenge period must be over."
+        );
+        _;
+    }
+
+    /**
      * @dev Triggers the selection process of a new candidate group.
      */
     function runGroupSelection(uint256 randomBeaconValue) public {
@@ -130,12 +141,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Gets selected tickets in ascending order.
      */
-    function selectedTickets() public view returns (uint256[] memory) {
-
-        require(
-            block.number >= _ticketSubmissionStartBlock + _timeoutChallenge,
-            "Ticket submission challenge period must be over."
-        );
+    function selectedTickets() public view whenTicketChallengeIsOver returns (uint256[] memory) {
 
         uint256[] memory ordered = orderedTickets();
 
@@ -172,12 +178,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
-    function selectedParticipants() public view returns (address[] memory) {
-
-        require(
-            block.number >= _ticketSubmissionStartBlock + _timeoutChallenge,
-            "Ticket submission challenge period must be over."
-        );
+    function selectedParticipants() public view whenTicketChallengeIsOver returns (address[] memory) {
 
         uint256[] memory ordered = orderedTickets();
 
