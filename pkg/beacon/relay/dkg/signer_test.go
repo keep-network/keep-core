@@ -1,4 +1,4 @@
-package dkg2
+package dkg
 
 import (
 	"math/big"

@@ -354,7 +354,7 @@ func (c *localChain) SubmitDKGResult(
 		RequestID:      requestID,
 		MemberIndex:    uint32(participantIndex),
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
-		BlockNumber:    uint64(currentBlock),
+		BlockNumber:    currentBlock,
 	}
 
 	c.groups = append(c.groups, resultToPublish.GroupPublicKey)
@@ -362,7 +362,7 @@ func (c *localChain) SubmitDKGResult(
 	groupRegistrationEvent := &event.GroupRegistration{
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
 		RequestID:      requestID,
-		BlockNumber:    uint64(currentBlock),
+		BlockNumber:    currentBlock,
 	}
 
 	c.handlerMutex.Lock()

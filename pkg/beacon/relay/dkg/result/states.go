@@ -31,9 +31,17 @@ type resultSigningState struct {
 	result    *relayChain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
+
+	signingStartBlockHeight uint64
 }
 
-func (rss *resultSigningState) ActiveBlocks() int { return 3 }
+func (rss *resultSigningState) DelayBlocks() uint64 {
+	return state.MessagingStateDelayBlocks
+}
+
+func (rss *resultSigningState) ActiveBlocks() uint64 {
+	return state.MessagingStateActiveBlocks
+}
 
 func (rss *resultSigningState) Initiate() error {
 	message, err := rss.member.SignDKGResult(rss.result, rss.relayChain)
@@ -92,6 +100,9 @@ func (rss *resultSigningState) Next() signingState {
 		result:            rss.result,
 		signatureMessages: rss.signatureMessages,
 		validSignatures:   make(map[group.MemberIndex]operator.Signature),
+		verificationStartBlockHeight: rss.signingStartBlockHeight +
+			rss.DelayBlocks() +
+			rss.ActiveBlocks(),
 	}
 
 }
@@ -117,9 +128,17 @@ type signaturesVerificationState struct {
 
 	signatureMessages []*DKGResultHashSignatureMessage
 	validSignatures   map[group.MemberIndex]operator.Signature
+
+	verificationStartBlockHeight uint64
 }
 
-func (svs *signaturesVerificationState) ActiveBlocks() int { return 0 }
+func (svs *signaturesVerificationState) DelayBlocks() uint64 {
+	return state.SilentStateDelayBlocks
+}
+
+func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
+	return state.SilentStateActiveBlocks
+}
 
 func (svs *signaturesVerificationState) Initiate() error {
 	signatures, err := svs.member.VerifyDKGResultSignatures(svs.signatureMessages)
@@ -144,6 +163,9 @@ func (svs *signaturesVerificationState) Next() signingState {
 		requestID:    svs.requestID,
 		result:       svs.result,
 		signatures:   svs.validSignatures,
+		submissionStartBlockHeight: svs.verificationStartBlockHeight +
+			svs.DelayBlocks() +
+			svs.ActiveBlocks(),
 	}
 
 }
@@ -166,9 +188,21 @@ type resultSubmissionState struct {
 	requestID  *big.Int
 	result     *relayChain.DKGResult
 	signatures map[group.MemberIndex]operator.Signature
+
+	submissionStartBlockHeight uint64
 }
 
-func (rss *resultSubmissionState) ActiveBlocks() int { return 3 }
+func (rss *resultSubmissionState) DelayBlocks() uint64 {
+	return state.SilentStateDelayBlocks
+}
+
+func (rss *resultSubmissionState) ActiveBlocks() uint64 {
+	// We do not exchange any messages in this phase. We publish result to the
+	// chain but it is an action blocking all group members for the same time
+	// - members exit when the first valid result is accepted by the chain.
+	// How long it takes depends on the block step and group size.
+	return state.SilentStateActiveBlocks
+}
 
 func (rss *resultSubmissionState) Initiate() error {
 	return rss.member.SubmitDKGResult(
@@ -177,6 +211,7 @@ func (rss *resultSubmissionState) Initiate() error {
 		rss.signatures,
 		rss.relayChain,
 		rss.blockCounter,
+		rss.submissionStartBlockHeight,
 	)
 }
 

@@ -7,10 +7,20 @@ import (
 
 // State is and interface against which relay states should be implemented.
 type State interface {
+	// DelayBlocks returns the number of blocks for which the current state
+	// initialization is delayed. We delay the initialization to give all other
+	// cooperating state machines (e.g. those running on other clients)
+	// a chance to enter the new state.
+	//
+	// State machine moves to the new state immediately after the active blocks
+	// time of the previous state has been reached but waits with the
+	// initialization of the new state before delay blocks timeout is reached.
+	DelayBlocks() uint64
+
 	// ActiveBlocks returns the number of blocks during which the current state
 	// is active. Blocks are counted after the initiation process of the
 	// current state has completed.
-	ActiveBlocks() int
+	ActiveBlocks() uint64
 
 	// Initiate performs all the required calculations and sends out all the
 	// messages associated with the current state.
@@ -28,3 +38,28 @@ type State interface {
 	// MemberIndex returns the index of member associated with the current state.
 	MemberIndex() group.MemberIndex
 }
+
+// SilentStateDelayBlocks is a delay in blocks for a state that do not
+// exchange any network messages as a part of its execution.
+//
+// There is no delay before such state enters initialization.
+const SilentStateDelayBlocks = 0
+
+// SilentStateActiveBlocks is a number of blocks for which a state that do not
+// exchange any network messages as a part of its execution should be active.
+//
+// Such state is active only for a time needed to perform required computations
+// and not any longer.
+const SilentStateActiveBlocks = 0
+
+// MessagingStateDelayBlocks is a delay in blocks for a state exchanging
+// network messages as a part of its execution.
+//
+// One block is given for all state machines cooperating over the network
+// so that they can enter the given state before any message for this
+// state is sent. This way we make sure that no messages are dropped.
+const MessagingStateDelayBlocks = 1
+
+// MessagingStateActiveBlocks is a number of blocks for which a state
+// exchanging network messages as a part of its execution should be active.
+const MessagingStateActiveBlocks = 3

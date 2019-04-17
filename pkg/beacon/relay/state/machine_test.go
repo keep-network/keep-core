@@ -13,11 +13,11 @@ import (
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 )
 
-var testLog map[int][]string
+var testLog map[uint64][]string
 var blockCounter chain.BlockCounter
 
 func TestExecute(t *testing.T) {
-	testLog = make(map[int][]string)
+	testLog = make(map[uint64][]string)
 
 	localChain := chainLocal.Connect(10, 5, big.NewInt(200))
 	blockCounter, _ = localChain.BlockCounter()
@@ -31,10 +31,10 @@ func TestExecute(t *testing.T) {
 		blockCounter.WaitForBlockHeight(1)
 		channel.Send(&TestMessage{"message_1"})
 
-		blockCounter.WaitForBlockHeight(5)
+		blockCounter.WaitForBlockHeight(4)
 		channel.Send(&TestMessage{"message_2"})
 
-		blockCounter.WaitForBlockHeight(9)
+		blockCounter.WaitForBlockHeight(7)
 		channel.Send(&TestMessage{"message_3"})
 	}(blockCounter)
 
@@ -49,26 +49,35 @@ func TestExecute(t *testing.T) {
 
 	stateMachine := NewMachine(channel, blockCounter, initialState)
 
-	finalState, err := stateMachine.Execute()
+	finalState, endBlockHeight, err := stateMachine.Execute(1)
 	if err != nil {
 		t.Errorf("unexpected error [%v]", err)
 	}
 
-	if _, ok := finalState.(*testState4); !ok {
+	if _, ok := finalState.(*testState5); !ok {
 		t.Errorf("state is not final [%v]", finalState)
 	}
 
-	expectedTestLog := map[int][]string{
+	if endBlockHeight != 8 {
+		t.Errorf("unexpected end block [%v]", endBlockHeight)
+	}
+
+	expectedTestLog := map[uint64][]string{
 		1: []string{
 			"1-state.testState1-initiate",
 			"1-state.testState1-receive-message_1",
 		},
-		4: []string{"1-state.testState2-initiate"},
-		5: []string{"1-state.testState2-receive-message_2"},
-		7: []string{"1-state.testState3-initiate"},
-		10: []string{
+		3: []string{"1-state.testState2-initiate"},
+		4: []string{"1-state.testState2-receive-message_2"},
+		6: []string{
+			"1-state.testState3-initiate",
 			"1-state.testState4-initiate",
+		},
+		7: []string{
 			"1-state.testState4-receive-message_3",
+		},
+		8: []string{
+			"1-state.testState5-initiate",
 		},
 	}
 
@@ -95,7 +104,8 @@ type testState1 struct {
 	channel     net.BroadcastChannel
 }
 
-func (ts testState1) ActiveBlocks() int { return 2 }
+func (ts testState1) DelayBlocks() uint64  { return 0 }
+func (ts testState1) ActiveBlocks() uint64 { return 2 }
 func (ts testState1) Initiate() error {
 	addToTestLog(ts, "initiate")
 	return nil
@@ -114,7 +124,8 @@ type testState2 struct {
 	testState1
 }
 
-func (ts testState2) ActiveBlocks() int { return 2 }
+func (ts testState2) DelayBlocks() uint64  { return 0 }
+func (ts testState2) ActiveBlocks() uint64 { return 2 }
 func (ts testState2) Initiate() error {
 	addToTestLog(ts, "initiate")
 	return nil
@@ -133,7 +144,8 @@ type testState3 struct {
 	testState2
 }
 
-func (ts testState3) ActiveBlocks() int { return 2 }
+func (ts testState3) DelayBlocks() uint64  { return 1 }
+func (ts testState3) ActiveBlocks() uint64 { return 0 }
 
 func (ts testState3) Initiate() error {
 	addToTestLog(ts, "initiate")
@@ -155,7 +167,8 @@ type testState4 struct {
 	testState3
 }
 
-func (ts testState4) ActiveBlocks() int { return 2 }
+func (ts testState4) DelayBlocks() uint64  { return 0 }
+func (ts testState4) ActiveBlocks() uint64 { return 2 }
 func (ts testState4) Initiate() error {
 	addToTestLog(ts, "initiate")
 	return nil
@@ -167,8 +180,28 @@ func (ts testState4) Receive(msg net.Message) error {
 	)
 	return nil
 }
-func (ts testState4) Next() State                    { return nil }
+func (ts testState4) Next() State                    { return &testState5{ts} }
 func (ts testState4) MemberIndex() group.MemberIndex { return ts.memberIndex }
+
+type testState5 struct {
+	testState4
+}
+
+func (ts testState5) DelayBlocks() uint64  { return 0 }
+func (ts testState5) ActiveBlocks() uint64 { return 0 }
+func (ts testState5) Initiate() error {
+	addToTestLog(ts, "initiate")
+	return nil
+}
+func (ts testState5) Receive(msg net.Message) error {
+	addToTestLog(
+		ts,
+		fmt.Sprintf("receive-%v", msg.Payload().(*TestMessage).content),
+	)
+	return nil
+}
+func (ts testState5) Next() State                    { return nil }
+func (ts testState5) MemberIndex() group.MemberIndex { return ts.memberIndex }
 
 type TestMessage struct {
 	content string
