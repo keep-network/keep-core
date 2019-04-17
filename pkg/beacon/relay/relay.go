@@ -64,7 +64,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				n.chainConfig.HonestThreshold(),
 				n.blockCounter,
 				signer.channel,
-				signer.member,
+				signer.signer,
 				startBlockHeight,
 			)
 			if err != nil {
@@ -83,7 +83,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				Value:         rightSizeSignature,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
-				GroupPubKey:   signer.member.GroupPublicKeyBytes(),
+				GroupPubKey:   signer.signer.GroupPublicKeyBytes(),
 				Seed:          seed,
 			}
 

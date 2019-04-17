@@ -37,7 +37,7 @@ type Node struct {
 }
 
 type membership struct {
-	member  *dkg.ThresholdSigner
+	signer  *dkg.ThresholdSigner
 	channel net.BroadcastChannel
 }
 
@@ -138,7 +138,7 @@ func (n *Node) RegisterGroup(signer *dkg.ThresholdSigner,
 
 	n.myGroups[groupPublicKey] = append(n.myGroups[groupPublicKey],
 		&membership{
-			member:  signer,
+			signer:  signer,
 			channel: channel,
 		})
 }
