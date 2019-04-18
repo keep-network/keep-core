@@ -86,6 +86,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
       after = await keepGroupImplViaProxy.numberOfGroups();
     }
     
-    assert.equal(Number(after), numberOfActiveGroups, "Number of groups should be at least 2 below the test group numbers");
+    assert.isAtLeast(Number(after), numberOfActiveGroups, "Number of groups should not fall below the threshold of active groups");
   });
 });
