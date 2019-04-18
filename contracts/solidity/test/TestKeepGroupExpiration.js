@@ -10,15 +10,19 @@ const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
 
 contract('TestKeepGroupExpiration', function(accounts) {
 
-  let stakingProxy, minimumStake, groupThreshold, groupSize,
+  let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, resultPublicationBlockStep,
     groupExpirationTimeout, numberOfActiveGroups, testGroupsNumber,
     keepRandomBeaconImplV1, keepRandomBeaconProxy,
-    keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy
+    keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy,
+    owner = accounts[0]
 
   beforeEach(async () => {
+    token = await KeepToken.new();
     // Initialize staking contract under proxy
     stakingProxy = await StakingProxy.new();
+    stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
+    await stakingProxy.authorizeContract(stakingContract.address, {from: owner})
     
     keepRandomBeaconImplV1 = await KeepRandomBeaconImplV1.new();
     keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
