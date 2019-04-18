@@ -8,11 +8,19 @@ const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol')
 const KeepGroupProxy = artifacts.require('./KeepGroup.sol');
 const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
 
+const minimumStake = 200000;
+const groupThreshold = 15;
+const groupSize = 20;
+const timeoutInitial = 20;
+const timeoutSubmission = 50;
+const timeoutChallenge = 60;
+const resultPublicationBlockStep = 3;
+const groupExpirationTimeout = 300;
+const activeGroupsThreshold = 5;
+
 contract('TestKeepGroupExpiration', function(accounts) {
 
-  let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
-    timeoutInitial, timeoutSubmission, timeoutChallenge, resultPublicationBlockStep,
-    groupExpirationTimeout, numberOfActiveGroups, testGroupsNumber,
+  let token, stakingProxy, stakingContract, testGroupsNumber,
     keepRandomBeaconImplV1, keepRandomBeaconProxy,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy,
     owner = accounts[0]
@@ -28,15 +36,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
     keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
 
     // Initialize Keep Group contract
-    minimumStake = 200000;
-    groupThreshold = 15;
-    groupSize = 20;
-    timeoutInitial = 20;
-    timeoutSubmission = 50;
-    timeoutChallenge = 60;
-    resultPublicationBlockStep = 3;
-    groupExpirationTimeout = 300;
-    numberOfActiveGroups = 5;
 
     keepGroupImplV1 = await KeepGroupImplV1.new();
     keepGroupProxy = await KeepGroupProxy.new(keepGroupImplV1.address);
@@ -45,7 +44,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await keepGroupImplViaProxy.initialize(
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake,
       groupThreshold, groupSize, timeoutInitial, timeoutSubmission,
-      timeoutChallenge, resultPublicationBlockStep, numberOfActiveGroups,
+      timeoutChallenge, resultPublicationBlockStep, activeGroupsThreshold,
       groupExpirationTimeout
     );
 
@@ -86,6 +85,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
       after = await keepGroupImplViaProxy.numberOfGroups();
     }
     
-    assert.isAtLeast(Number(after), numberOfActiveGroups, "Number of groups should not fall below the threshold of active groups");
+    assert.isAtLeast(Number(after), activeGroupsThreshold, "Number of groups should not fall below the threshold of active groups");
   });
 });
