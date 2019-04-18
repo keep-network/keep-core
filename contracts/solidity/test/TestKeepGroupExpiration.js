@@ -84,9 +84,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
       mineBlocks(groupExpirationTimeout);
       await keepGroupImplViaProxy.selectGroup((testGroupsNumber - 1) % i);
       after = await keepGroupImplViaProxy.numberOfGroups();
-
-      if (Number(after) == numberOfActiveGroups)
-        break;
     }
     
     assert.equal(Number(after), numberOfActiveGroups, "Number of groups should be at least 2 below the test group numbers");
