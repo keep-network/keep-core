@@ -57,9 +57,9 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
-    // _numberOfActiveGroups is the minimal number of groups that should not
+    // _activeGroupsThreshold is the minimal number of groups that should not
     // expired to protect the minimal network throughput
-    uint256 internal _numberOfActiveGroups;
+    uint256 internal _activeGroupsThreshold;
  
     // _groupExpirationTimeout is the time in block after which a group expires
     uint256 internal _groupExpirationTimeout;
@@ -324,7 +324,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param timeoutChallenge Timeout in blocks after the period where tickets can be challenged is finished.
      * @param resultPublicationBlockStep Time in blocks after which member with 
      * the given index is eligible to submit DKG result.
-     * @param numberOfActiveGroups is the minimal number of groups that cannot be marked as expired.
+     * @param activeGroupsThreshold is the minimal number of groups that cannot be marked as expired.
      * @param groupExpirationTimeout is the time in block after which a group expires.
      */
     function initialize(
@@ -337,7 +337,7 @@ contract KeepGroupImplV1 is Ownable {
         uint256 timeoutSubmission,
         uint256 timeoutChallenge,
         uint256 resultPublicationBlockStep,
-        uint256 numberOfActiveGroups,
+        uint256 activeGroupsThreshold,
         uint256 groupExpirationTimeout
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
@@ -352,7 +352,7 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutSubmission = timeoutSubmission;
         _timeoutChallenge = timeoutChallenge;    
         _resultPublicationBlockStep = resultPublicationBlockStep;
-        _numberOfActiveGroups = numberOfActiveGroups;
+        _activeGroupsThreshold = activeGroupsThreshold;
         _groupExpirationTimeout = groupExpirationTimeout;
     }
 
@@ -523,7 +523,7 @@ contract KeepGroupImplV1 is Ownable {
         * mark expired groups in batches, in a fewer number of steps.
         */
         while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupExpirationTimeout < block.number) {
-            if (activeGroupsNumber - selectedGroup - 1 > _numberOfActiveGroups) {
+            if (activeGroupsNumber - selectedGroup - 1 > _activeGroupsThreshold) {
                 _expiredOffset += ++selectedGroup;
                 activeGroupsNumber -= selectedGroup;
                 selectedGroup = previousEntry % activeGroupsNumber;
