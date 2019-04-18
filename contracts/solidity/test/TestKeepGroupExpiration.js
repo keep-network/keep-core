@@ -49,7 +49,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
       groupExpirationTimeout
     );
 
-    testGroupsNumber = 100;
+    testGroupsNumber = 10;
 
     for (var i = 1; i <= testGroupsNumber; i++)
       await keepGroupImplViaProxy.groupAdd([i]);
