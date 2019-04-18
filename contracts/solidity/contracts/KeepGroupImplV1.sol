@@ -481,7 +481,7 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Adds a new group based on groupPublicKey.
      * @param groupPublicKey is the identifier of the newly created group.
      */
-    function groupAdd(bytes memory groupPublicKey) public {
+    function registerNewGroup(bytes memory groupPublicKey) public {
         _groups.push(Group(groupPublicKey, block.number));
         address[] memory members = orderedParticipants();
         if (members.length > 0) {
