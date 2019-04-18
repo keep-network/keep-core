@@ -523,14 +523,9 @@ contract KeepGroupImplV1 is Ownable {
         * mark expired groups in batches, in a fewer number of steps.
         */
         while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _groupExpirationTimeout < block.number) {
-            if (activeGroupsNumber > _numberOfActiveGroups) {
-                if (selectedGroup == 0) {
-                    _expiredOffset++;
-                    activeGroupsNumber--;
-                } else {
-                    _expiredOffset += selectedGroup;
-                    activeGroupsNumber -= selectedGroup;
-                }
+            if (activeGroupsNumber - selectedGroup - 1 > _numberOfActiveGroups) {
+                _expiredOffset += ++selectedGroup;
+                activeGroupsNumber -= selectedGroup;
                 selectedGroup = previousEntry % activeGroupsNumber;
             } else break;
         }
