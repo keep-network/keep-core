@@ -1,0 +1,428 @@
+:toc: macro
+
+= RFC 11: Authorizations in the upgrade scheme
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+Securely upgradeable work contracts
+are important for protecting stakers' tokens.
+The current design for dividing work contracts
+into back-end and front-end components
+permits secure upgrades of backend contracts
+without interfering with frontend functionality.
+To gain the theoretical benefits from this scheme,
+it is necessary to specify how contract upgrades should be authorized,
+and by whom.
+
+=== Current Functionality
+
+In link:rfc-9-upgradeable-contract-components.adoc[RFC 9: Upgrading contracts by separate components],
+the division between backend and frontend contracts is established.
+Apart from the existing consensus
+that stakers should authorize each backend contract individually,
+there is no overarching design for secure contract upgrades yet.
+
+== Proposal
+
+To achieve secure upgrades, this RFC proposes a scheme
+where the upgrade process is centered on backend contracts,
+which tie all components of the network together.
+
+Backend contracts are subject to approval
+globally on a _master list_,
+in their respective _frontend contracts_,
+and individually from each staker in the _staking contract_.
+This provides multilayered protection
+against a variety of different risks.
+
+Other contracts such as frontends and staking contracts
+are hard-coded in backend contracts,
+so attackers are prevented from inserting arbitrary contracts of any type
+without needing to have separate approval processes
+for different contract types.
+
+Different keys are used in different parts of the upgrade process.
+The roles of global _Upgrade Master_ and _Panic Button_,
+frontend-specific _Backend Upgraders_,
+and staker-specific _Authorizers_,
+are used to divide the responsibilities
+and to provide resiliency against compromise of individual keys.
+A _Governance_ scheme can be used to rekey the roles
+to recover from non-catastrophic compromise.
+
+The multilayered approach permits upgrading staking contracts,
+or even the token itself,
+without disrupting user experience on the frontend.
+
+=== Goal
+
+The main goals are to provide a smooth upgrade path for future functionality,
+limiting the impact of single-key compromise,
+and protecting stakers' funds from ever being subject
+to code they haven't individually authorized.
+
+=== Roles
+
+==== Governance
+
+Governance is the final arbiter of authority in the Keep Network.
+While exact details of the implementation of Governance
+are out of scope for this RFC,
+the role of Governance in the upgrade process
+is to enable recovery from key compromise by rekeying other roles.
+
+Governance has the authority to change the addresses of
+the _Upgrade Master_, _Panic Button_,
+and the frontends' _Backend Upgraders_.
+
+The rekeying process should prioritize security over convenience
+to the greatest feasible extent,
+being unsuitable for ordinary upgrades
+but permitting recovery from partial system compromise
+under extraordinary circumstances.
+
+==== Upgrade Master
+
+The Upgrade Master maintains the global _master list_
+of approved backend contracts.
+Each backend contract must be approved by the Upgrade Master
+before it can be authorized by a staker
+or used by a frontend contract.
+
+The Upgrade Master can be rekeyed by _Governance_.
+
+==== Panic Button
+
+The Panic Button can disable malicious or malfunctioning contracts
+that have been previously approved by the Upgrade Master.
+When a contract is disabled by the Panic Button,
+its status on the _master list_ changes to reflect this,
+and it becomes ineligible to penalize stakers.
+Contracts disabled by the Panic Button can not be reactivated.
+
+The Panic Button can be rekeyed by _Governance_.
+
+==== Backend Upgrader
+
+Each frontend contract has a Backend Upgrader
+whose purpose is to manage backends for that specific frontend.
+The Backend Upgrader can add new backends
+to the frontend's backend list,
+and deprecate old ones.
+
+The Backend Upgraders can be rekeyed by _Governance_.
+
+==== Authorizer
+
+Each staker has an Authorizer
+whose purpose is to authorize backends the staker wishes to operate on.
+Authorized backends are permitted to impact the staker's staked tokens
+via punishments or rewards.
+
+The Authorizer cannot be rekeyed except by undelegating and redelegating.
+
+=== Lists of contracts
+
+==== Global
+
+A global master list is used to keep track of all backend contracts,
+ensuring that only Keep Org-approved backends are used,
+and enabling the panic button to disable backends in an emergency.
+
+===== Master list
+
+The master list contains all backend contracts of the Keep network.
+Each contract's status may be `NULL`, `APPROVED` or `DISABLED`.
+
+A status of `NULL` is the default
+and means that the backend has not been approved by the _Upgrade Master_.
+
+When the _Upgrade Master_ approves a backend contract,
+its status switches to `APPROVED` in the master list.
+Approved backends can be authorized by stakers to impact their stakes,
+and frontend contracts may utilize them.
+
+The _Panic Button_ can be used
+to set the status of an `APPROVED` contract to `DISABLED`.
+Backends disabled with the _Panic Button_ cannot be re-enabled.
+
+==== Backend contracts
+
+Backend contracts serve frontend contracts,
+and are responsible for all operations involving staked tokens.
+The requirement for stakers' funds to never be subject to
+code they haven't approved individually
+means that the frontend and staking contracts must be hard-coded.
+Backends are also aware of the token contract.
+
+===== Served frontends
+
+Each backend contract has a list
+of one or more frontend contracts it may serve.
+The _served frontends_ are hard-coded when the backend is deployed
+and can not be changed.
+
+===== Recognized staking contracts
+
+Each backend contract specifies one or more _staking contracts_ it recognizes.
+Every backend must recognize at least one staking contract.
+Recognized staking contracts are hard-coded and unchangeable.
+
+==== Frontend contracts
+
+Frontend contracts don't need to be aware of tokens or staking in any way.
+These functions are entirely intermediated by the backend contracts.
+A frontend only needs a list of which backends it uses.
+To permit system upgrades,
+the list of used backends can be updated with proper authorization.
+
+===== Used backends
+
+Each frontend contract has a list
+of zero or more backend contracts it may use.
+
+For each backend contract, the frontend stores:
+
+- the status of the backend
+- the chronological position of that backend by creation date
+
+Each backend contract has a status of `NULL`, `ACTIVE` or `DEPRECATED`.
+A status of `NULL` is the default
+and means that the frontend does not use the backend.
+A status of `ACTIVE` means the frontend actively uses the backend
+for performing work.
+`DEPRECATED` means that the frontend has previously used the backend
+and some operations may still be underway,
+but the backend should not be selected for creating new Keeps.
+
+A frontend contract is deployed with zero backend contracts,
+rendering the frontend inactive until at least one backend is activated.
+
+Each frontend has a _Backend Upgrader_
+who can activate or deprecate backend contracts.
+
+To activate a backend contract, the following conditions must apply:
+
+- the backend has been `APPROVED` on the _master list_
+- the frontend is included in the backend's _served contracts_
+- the backend's creation date is more recent
+than that of the most recent `ACTIVE` backend in the _used contracts_
+
+To deprecate a backend contract, the following conditions must apply:
+
+- the backend is `ACTIVE` in the _used contracts_
+- it is not the most recent (or only) backend in the _used contracts_
+
+If a backend has been `DISABLED` by the _Panic Button_,
+it is ineligible for work selection.
+
+==== Staking contracts
+
+Staking contracts hold staked tokens and enforce staking rules.
+They must permit authorized backend contracts
+to slash the stakes of misbehaving operators,
+but stakers must be protected from code they haven't authorized individually.
+
+For this purpose, each staking contract maintains a list
+of backends that have been authorized by each staker's _Authorizer_.
+The list of backends could also be maintained globally,
+removing the need for entry duplication
+when stakers on different staking contracts
+have the same Authorizer and operate on the same backend.
+However, maintaining the authorizations locally
+may be cheaper than cross-contract calls,
+and the scenario where gas would be saved is likely to be rare.
+
+(If _fully backed operation_ is used,
+it may not be necessary to have separate authorizations
+as stakes are explicitly allocated for each backend.)
+
+Staking contracts are also aware of the token contract by necessity.
+
+===== Authorized backends
+
+The _authorized backends_ are a mapping
+of `(authorizer_address, backend_address) -> status`.
+
+The status of a contract may be either `NULL` or `AUTHORIZED`.
+A status of `NULL` is the default and means the backend is not authorized.
+A status of `AUTHORIZED` means that the backend at `backend_address`
+may affect the stakes of those stakers
+who have assigned that `authorizer_address` as their _Authorizer_.
+
+To authorize a backend on a staking contract,
+the following conditions must apply:
+
+- the backend has been `APPROVED` on the _master list_
+- the backend recognizes the staking contract
+
+Once a backend has been authorized,
+authorization cannot be withdrawn by the staker.
+However, a backend that has been `DISABLED` by the _Panic Button_
+may not punish stakers.
+
+=== Upgrade processes
+
+==== Backend upgrade
+
+. Deploy the new backend contract
+. Approve the backend on the master list
+. Activate the backend on the frontend
+. Wait for stakers to authorize the backend
+. (Optional) Deprecate old backend contracts if needed
+
+==== New frontend
+
+. Deploy the new frontend contract
+. Deploy a new backend serving the new frontend
+  . Approve the backend on the master list
+  . Activate the backend on the frontend
+  . Wait for stakers to authorize the backend
+
+==== Staking contract upgrade
+
+. Deploy the new staking contract
+. Deploy new backend contracts recognizing the new staking contract
+  . Approve the backends on the master list
+  . Activate the backends on the frontends
+. Wait for stakers to migrate to the new staking contract
+. Wait for stakers to authorize the new backends
+
+==== Token upgrade
+
+The upgrade process makes it possible to even hard-fork the token
+without disrupting frontend user experience:
+
+. Deploy the new token contract
+. Deploy a migration contract
+that lets holders convert old tokens to new tokens
+. Deploy a new staking contract for the new tokens
+  . Deploy new backend contracts recognizing the new token and staking contract
+    . Approve the backends on the master list
+    . Activate the backends on the frontends
+. Wait for stakers to convert their tokens,
+stake on the new contract
+and authorize the new backends
+
+=== Resistance to compromise
+
+==== Individual keys
+
+===== Upgrade Master
+
+A compromised Upgrade Master can approve arbitrary backends.
+Because using those backends for a frontend
+requires the frontend's Backend Upgrader as well,
+the impact is limited to stakers being able to instantly unstake
+by authorizing a malicious backend
+which slashes their stakes
+and sends the tokens to an address controlled by the staker.
+
+===== Panic Button
+
+A compromised Panic Button can disable all backends
+and halt all network services.
+Recovery is impossible until Governance
+has rekeyed the Panic Button.
+
+This is inevitable due to the functionality of the Panic Button,
+but the impact could be mitigated
+by setting a cap on how many times the Panic Button can be invoked
+within a particular timeframe.
+However, such a cap would be overwhelmed
+by a mass approval of malicious contracts by the other roles.
+
+===== Backend Upgrader
+
+A compromised Backend Upgrader can activate arbitrary backends
+within the strict constraints of the upgrade process.
+Without compromise of the Upgrade Master
+to approve new malicious backends,
+it is unlikely that a compromised Backend Upgrader alone
+would have significant impact on the network.
+
+===== Authorizer
+
+If only the Authorizer of some staker is compromised,
+the attacker can authorize backends
+that have been approved by the Upgrade Master,
+and that recognize the contract that staker stakes on.
+
+This has a very limited negative impact
+unless the Upgrade Master has approved
+a faulty or malicious backend contract.
+
+==== Key combinations
+
+===== Upgrade Master + Backend Upgrader
+
+If a malicious backend can get globally approved,
+the impacted frontend can be completely subverted
+by deprecating all other backends
+and returning malicious values.
+While already existing operations should finish normally,
+the frontend can be rendered effectively useless for new requests.
+
+===== Upgrade Master + Authorizer
+
+Approving and authorizing a malicious backend
+permits theft of staked funds.
+
+=== Limitations
+
+Each backend upgrade requires participation
+from both the _Upgrade Master_ and the _Backend Upgrader_.
+This increases the exposure of these keys,
+leading to a higher risk of simultaneous compromise.
+
+== Future Work
+
+Frontend contracts could have upgradeable components
+for performing various sub-tasks.
+These components could be upgraded
+with a process similar to that of backend contracts
+except without staker involvement.
+
+Customers could optionally specify to the frontend
+which backend contract they want to serve their request.
+
+== Open Questions
+
+Some threats may be mitigated by allowing or requiring
+routine rekeying of the upgrade roles
+using the upgrade roles' own keys instead of relying on governance.
+This has not been investigated yet.
+Alternatively, each role could have a backup key in cold storage,
+usable as the first-line rekeying option.
+
+The governance process for recovery from key compromise is left open.
+Involving a significant fraction of stakers (e.g. 33-50%) 
+has the attractive property that
+an adversary capable of subverting the governance process
+would necessarily be powerful enough
+to subvert the honest majority assumption in individual Keeps.
+This means that rekeying is robust against attacks
+unless the network as a whole is compromised.
+
+It is not immediately clear whether frontends should
+completely block backends disabled with the panic button,
+or only deprecate them without regard for the normal limitations.
+
+Rate-limiting the Panic Button can help prevent total DoS
+if the panic button is ever compromised,
+but also permits flooding the system with malicious backends
+unless the Upgrade Master is similarly rate-limited.
+
+[bibliography]
+== Related Links
+
+- Flowdock Links
+- Other links
+- If you have publications, you can include them in bibliography style. If you
+  start your bullet with an id in _triple_ square brackets (e.g. `+[[[AAKE]]]+`),
+  you can reference it in the content body using regular cross-reference syntax
+  (e.g. `+<<AAKE>>+`).
