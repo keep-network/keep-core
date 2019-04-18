@@ -65,7 +65,7 @@ contract KeepGroupImplV1 is Ownable {
     uint256 internal _groupExpirationTimeout;
  
     // _expiredOffset is pointing to the first active group, it is also the
-    // expired groups counter
+    // expire groups counter
     uint256 internal _expiredOffset = 0;
 
     struct Group {
