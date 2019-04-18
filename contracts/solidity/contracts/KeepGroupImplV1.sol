@@ -503,8 +503,8 @@ contract KeepGroupImplV1 is Ownable {
      * @param previousEntry Previous random beacon value.
      */
     function selectGroup(uint256 previousEntry) public returns(bytes memory) {
-        uint256 activeGroupsNumber = _groups.length - _expiredOffset;
-        uint256 selectedGroup = previousEntry % activeGroupsNumber;
+        uint256 numberOfActiveGroups = _groups.length - _expiredOffset;
+        uint256 selectedGroup = previousEntry % numberOfActiveGroups;
 
         /**
         * We selected a group based on the information about expired groups offset
@@ -523,10 +523,10 @@ contract KeepGroupImplV1 is Ownable {
         * mark expired groups in batches, in a fewer number of steps.
         */
         while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _expirationTime < block.number) {
-            if (activeGroupsNumber - selectedGroup - 1 > _activeGroupsThreshold) {
+            if (numberOfActiveGroups - selectedGroup - 1 > _activeGroupsThreshold) {
                 _expiredOffset += ++selectedGroup;
-                activeGroupsNumber -= selectedGroup;
-                selectedGroup = previousEntry % activeGroupsNumber;
+                numberOfActiveGroups -= selectedGroup;
+                selectedGroup = previousEntry % numberOfActiveGroups;
             } else break;
         }
 
