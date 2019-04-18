@@ -65,7 +65,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     
     for (var i = 1; i <= testGroupsNumber; i++) {
       mineBlocks(groupExpirationTimeout);
-      await keepGroupImplViaProxy.selectGroup("1");
+      await keepGroupImplViaProxy.selectGroup((testGroupsNumber - 1) % i);
       numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
 
       if (Number(numberOfGroups) < testGroupsNumber)
@@ -80,7 +80,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     for (var i = 1; i <= testGroupsNumber; i++) {
       mineBlocks(groupExpirationTimeout);
-      await keepGroupImplViaProxy.selectGroup("1");
+      await keepGroupImplViaProxy.selectGroup((testGroupsNumber - 1) % i);
       after = await keepGroupImplViaProxy.numberOfGroups();
 
       if (Number(after) == numberOfActiveGroups)
