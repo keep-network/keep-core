@@ -64,16 +64,17 @@ func (c *channel) Recv(handler net.HandleMessageFunc) error {
 func (c *channel) UnregisterRecv(handlerType string) error {
 	c.messageHandlersMutex.Lock()
 	defer c.messageHandlersMutex.Unlock()
-
-	handlers := 0
+	// Important: This algorithm is memory-friendly (reorganizes handlers
+	// list in place) but changes order of handlers. In practice, we do not care
+	// about their order so we are fine.
+	removedCount := 0
 	for i, mh := range c.messageHandlers {
-		// filter out the handlerType
-		if mh.Type != handlerType {
-			c.messageHandlers[i] = mh
-			handlers++
+		if mh.Type == handlerType {
+			removedCount++
+			c.messageHandlers[i] = c.messageHandlers[len(c.messageHandlers)-removedCount]
 		}
 	}
-	c.messageHandlers = c.messageHandlers[:handlers]
+	c.messageHandlers = c.messageHandlers[:len(c.messageHandlers)-removedCount]
 
 	return nil
 }
@@ -231,6 +232,7 @@ func (c *channel) processContainerMessage(
 	proposedSender peer.ID,
 	message pb.NetworkMessage,
 ) error {
+	fmt.Printf("[NETWORK] Processing container message...\n")
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
 	unmarshaled, err := c.getUnmarshalingContainerByType(string(message.Type))
@@ -269,6 +271,7 @@ func (c *channel) processContainerMessage(
 	}
 
 	// Fire a message back to the protocol.
+	fmt.Printf("[NETWORK] Creating BasicMessage from sender [%v]...\n", senderIdentifier.id)
 	protocolMessage := internal.BasicMessage(
 		senderIdentifier.id,
 		unmarshaled,
