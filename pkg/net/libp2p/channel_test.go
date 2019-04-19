@@ -32,7 +32,6 @@ func TestRegisterAndFireHandler(t *testing.T) {
 	select {
 	case <-handlerFiredChan:
 		return
-
 	case <-ctx.Done():
 		t.Errorf("Expected handler not called")
 	}
