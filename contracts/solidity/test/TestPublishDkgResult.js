@@ -140,7 +140,6 @@ contract('TestPublishDkgResult', function(accounts) {
 
     let submitter1MemberIndex = 4;
     let submitter2MemberIndex = 5;
-    let submitter1 = selectedParticipants[submitter1MemberIndex - 1];
     let submitter2 = selectedParticipants[submitter2MemberIndex - 1];
     let eligibleBlockForSubmitter1 = ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG + (submitter1MemberIndex-1)*resultPublicationBlockStep;
     let eligibleBlockForSubmitter2 = ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG + (submitter2MemberIndex-1)*resultPublicationBlockStep;
@@ -171,7 +170,7 @@ contract('TestPublishDkgResult', function(accounts) {
     );
   });
 
-  it("should reject the result without minimum number of valid signatures", async function() {
+  it("should reject the result with invalid signatures.", async function() {
 
     signingMemberIndices = [];
     signatures = undefined;
@@ -223,6 +222,30 @@ contract('TestPublishDkgResult', function(accounts) {
       {from: selectedParticipants[0]})
     let submitted = await keepGroupImplViaProxy.isDkgResultSubmitted.call(requestId);
     assert.equal(submitted, true, "DkgResult should should be submitted");
+
+  });
+
+  it("should not be able to submit without minimum number of signatures", async function() {
+
+    signingMemberIndices = [];
+    signatures = undefined;
+
+    // Create less than minimum amount of valid signatures
+    for(let i = 0; i < groupThreshold - 1; i++) {
+      let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
+      signingMemberIndices.push(i+1);
+      if (signatures == undefined) signatures = signature
+      else signatures += signature.slice(2, signature.length);
+    }
+
+    // Jump in time to when first member is eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
+
+    await expectThrow(keepGroupImplViaProxy.submitDkgResult(
+      requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      {from: selectedParticipants[0]})
+    );
 
   });
 })

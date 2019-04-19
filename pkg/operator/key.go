@@ -52,7 +52,6 @@ func EthereumKeyToOperatorKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKe
 //
 // The produced signature is in the [R || S || V] format where V is 0 or 1.
 func Sign(hash []byte, privateKey *PrivateKey) (Signature, error) {
-
 	prefixedHash := crypto.Keccak256(
 		[]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%v", len(hash))),
 		hash,
