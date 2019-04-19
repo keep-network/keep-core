@@ -266,14 +266,16 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			payment *big.Int,
 			previousEntry *big.Int,
 			seed *big.Int,
+			groupPublicKey []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.Request{
-				RequestID:     requestID,
-				Payment:       payment,
-				PreviousEntry: previousEntry,
-				Seed:          seed,
-				BlockNumber:   blockNumber,
+				RequestID:      requestID,
+				Payment:        payment,
+				PreviousEntry:  previousEntry,
+				Seed:           seed,
+				GroupPublicKey: groupPublicKey,
+				BlockNumber:    blockNumber,
 			})
 		},
 		func(err error) error {

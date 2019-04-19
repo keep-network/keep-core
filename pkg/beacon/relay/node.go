@@ -33,16 +33,12 @@ type Node struct {
 	stakeIDs      []string
 	maxStakeIndex int
 
-	groupPublicKeys [][]byte
-	seenPublicKeys  map[string]bool
-	myGroups        map[string][]*membership
-	pendingGroups   map[string][]*membership
+	myGroups map[string][]*membership
 }
 
 type membership struct {
-	member  *dkg.ThresholdSigner
+	signer  *dkg.ThresholdSigner
 	channel net.BroadcastChannel
-	index   int
 }
 
 // JoinGroupIfEligible takes a threshold relay entry value and undergoes the
@@ -60,12 +56,6 @@ func (n *Node) JoinGroupIfEligible(
 	entrySeed *big.Int,
 	dkgStartBlockHeight uint64,
 ) {
-	if !n.initializePendingGroup(entryRequestID.String()) {
-		// Failed to initialize; in progress for this entry.
-		return
-	}
-	// Release control of this group if we error.
-	defer n.flushPendingGroup(entryRequestID.String())
 
 	for index, selectedStaker := range groupSelectionResult.SelectedStakers {
 		// If we are amongst those chosen, kick off an instance of DKG. We may
@@ -110,20 +100,14 @@ func (n *Node) JoinGroupIfEligible(
 					return
 				}
 
-				// TODO: we will refactor it into one method in another PR
-				n.registerPendingGroup(
-					entryRequestID.String(),
+				n.RegisterGroup(
 					signer,
 					broadcastChannel,
-				)
-				n.RegisterGroup(
-					entryRequestID.String(),
-					signer.GroupPublicKeyBytes(),
 				)
 			}()
 		}
 	}
-	// exit on signal
+
 	return
 }
 
@@ -143,89 +127,18 @@ func channelNameForGroup(group *groupselection.Result) string {
 }
 
 // RegisterGroup registers that a group was successfully created by the given
-// requestID, and its group public key is groupPublicKey.
-func (n *Node) RegisterGroup(requestID string, groupPublicKey []byte) {
+// groupPublicKey.
+func (n *Node) RegisterGroup(signer *dkg.ThresholdSigner,
+	channel net.BroadcastChannel) {
+
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	// If we've already registered a group for this request ID, no need to
-	// add to our list of known group public keys.
-	if _, exists := n.seenPublicKeys[requestID]; !exists {
-		n.seenPublicKeys[requestID] = true
-		n.groupPublicKeys = append(n.groupPublicKeys, groupPublicKey)
-	}
+	groupPublicKey := string(signer.GroupPublicKeyBytes())
 
-	if memberships, found := n.pendingGroups[requestID]; found {
-		for _, membership := range memberships {
-			membership.index = len(n.groupPublicKeys) - 1
-			n.myGroups[requestID] = append(n.myGroups[requestID], membership)
-		}
-		delete(n.pendingGroups, requestID)
-	}
-}
-
-// initializePendingGroup grabs ownership of an attempt at group creation for a
-// given goroutine. If it returns false, we're already in progress and failed to
-// initialize.
-func (n *Node) initializePendingGroup(requestID string) bool {
-	n.mutex.Lock()
-	defer n.mutex.Unlock()
-
-	// If the pending group exists, we're already active
-	if _, found := n.pendingGroups[requestID]; found {
-		return false
-	}
-
-	// Pending group does not exist, take control
-	n.pendingGroups[requestID] = nil
-
-	return true
-}
-
-// flushPendingGroup if group creation fails, we clean our references to creating
-// a group for a given request ID.
-func (n *Node) flushPendingGroup(requestID string) {
-	n.mutex.Lock()
-	defer n.mutex.Unlock()
-
-	if membership, found := n.pendingGroups[requestID]; found && membership == nil {
-		delete(n.pendingGroups, requestID)
-	}
-}
-
-// registerPendingGroup assigns a new membership for a given request ID.
-// We overwrite our placeholder membership set by initializePendingGroup.
-func (n *Node) registerPendingGroup(
-	requestID string,
-	signer *dkg.ThresholdSigner,
-	channel net.BroadcastChannel,
-) {
-	n.mutex.Lock()
-	defer n.mutex.Unlock()
-
-	if _, seen := n.seenPublicKeys[requestID]; seen {
-		groupPublicKey := signer.GroupPublicKeyBytes()
-		// Start at the end since it's likely the public key was closer to the
-		// end if it happened to come in before we had a chance to register it
-		// as pending.
-		existingIndex := len(n.groupPublicKeys) - 1
-		for index := existingIndex; index >= 0; index-- {
-			if bytes.Compare(n.groupPublicKeys[index], groupPublicKey[:]) == 0 {
-				existingIndex = index
-				break
-			}
-		}
-
-		n.myGroups[requestID] = append(n.myGroups[requestID], &membership{
-			index:   existingIndex,
-			member:  signer,
+	n.myGroups[groupPublicKey] = append(n.myGroups[groupPublicKey],
+		&membership{
+			signer:  signer,
 			channel: channel,
 		})
-		delete(n.pendingGroups, requestID)
-	} else {
-		n.pendingGroups[requestID] = append(n.pendingGroups[requestID], &membership{
-			member:  signer,
-			channel: channel,
-		})
-	}
 }
