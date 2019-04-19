@@ -176,14 +176,22 @@ func (lc *localChannel) Recv(handler net.HandleMessageFunc) error {
 func (lc *localChannel) UnregisterRecv(handlerType string) error {
 	lc.messageHandlersMutex.Lock()
 	defer lc.messageHandlersMutex.Unlock()
+
 	removedCount := 0
-	for i, mh := range lc.messageHandlers {
-		if mh.Type == handlerType {
+
+	// updated slice shares the same backing array and capacity as the original,
+	// so the storage is reused for the filtered slice.
+	updated := lc.messageHandlers[:0]
+
+	for _, mh := range lc.messageHandlers {
+		if mh.Type != handlerType {
+			updated = append(updated, mh)
+		} else {
 			removedCount++
-			lc.messageHandlers[i] = lc.messageHandlers[len(lc.messageHandlers)-removedCount]
 		}
 	}
-	lc.messageHandlers = lc.messageHandlers[:len(lc.messageHandlers)-removedCount]
+
+	lc.messageHandlers = updated[:len(lc.messageHandlers)-removedCount]
 
 	return nil
 }
