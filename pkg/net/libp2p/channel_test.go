@@ -69,6 +69,21 @@ func TestUnregisterHandler(t *testing.T) {
 			handlersUnregistered: []string{"a", "b", "c"},
 			handlersFired:        []string{},
 		},
+		"unregister two first registered handlers with the same type": {
+			handlersRegistered:   []string{"a", "a", "b", "c", "d"},
+			handlersUnregistered: []string{"a"},
+			handlersFired:        []string{"b", "c", "d"},
+		},
+		"unregister two last registered handlers with the same type": {
+			handlersRegistered:   []string{"a", "b", "c", "d", "d"},
+			handlersUnregistered: []string{"d"},
+			handlersFired:        []string{"a", "b", "c"},
+		},
+		"unregister various handlers with the same type": {
+			handlersRegistered:   []string{"a", "f", "b", "e", "c", "f", "e"},
+			handlersUnregistered: []string{"e", "f"},
+			handlersFired:        []string{"a", "b", "c"},
+		},
 	}
 
 	for testName, test := range tests {
