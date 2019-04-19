@@ -64,17 +64,22 @@ func (c *channel) Recv(handler net.HandleMessageFunc) error {
 func (c *channel) UnregisterRecv(handlerType string) error {
 	c.messageHandlersMutex.Lock()
 	defer c.messageHandlersMutex.Unlock()
-	// Important: This algorithm is memory-friendly (reorganizes handlers
-	// list in place) but changes order of handlers. In practice, we do not care
-	// about their order so we are fine.
+
 	removedCount := 0
-	for i, mh := range c.messageHandlers {
-		if mh.Type == handlerType {
+
+	// updated slice shares the same backing array and capacity as the original,
+	// so the storage is reused for the filtered slice.
+	updated := c.messageHandlers[:0]
+
+	for _, mh := range c.messageHandlers {
+		if mh.Type != handlerType {
+			updated = append(updated, mh)
+		} else {
 			removedCount++
-			c.messageHandlers[i] = c.messageHandlers[len(c.messageHandlers)-removedCount]
 		}
 	}
-	c.messageHandlers = c.messageHandlers[:len(c.messageHandlers)-removedCount]
+
+	c.messageHandlers = updated[:len(c.messageHandlers)-removedCount]
 
 	return nil
 }
