@@ -232,7 +232,6 @@ func (c *channel) processContainerMessage(
 	proposedSender peer.ID,
 	message pb.NetworkMessage,
 ) error {
-	fmt.Printf("[NETWORK] Processing container message...\n")
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
 	unmarshaled, err := c.getUnmarshalingContainerByType(string(message.Type))
@@ -271,7 +270,6 @@ func (c *channel) processContainerMessage(
 	}
 
 	// Fire a message back to the protocol.
-	fmt.Printf("[NETWORK] Creating BasicMessage from sender [%v]...\n", senderIdentifier.id)
 	protocolMessage := internal.BasicMessage(
 		senderIdentifier.id,
 		unmarshaled,
