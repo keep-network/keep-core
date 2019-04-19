@@ -2,9 +2,7 @@
 package byteutils
 
 import (
-	"crypto/sha256"
 	"fmt"
-	"math/big"
 )
 
 // LeftPadTo32Bytes appends zeros to bytes slice to make it exactly 32 bytes long
@@ -23,11 +21,4 @@ func LeftPadTo32Bytes(bytes []byte) ([]byte, error) {
 	result = append(result, bytes...)
 
 	return result, nil
-}
-
-// Sha256Sum calculates sha256 hash for passed `bytes` and converts it to `big.Int`.
-func Sha256Sum(bytes []byte) *big.Int {
-	hash := sha256.Sum256(bytes)
-
-	return new(big.Int).SetBytes(hash[:])
 }
