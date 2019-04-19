@@ -14,12 +14,14 @@ import (
 )
 
 const defaultConfigPath = "./config.toml"
+const defaultConsulPath = ""
 
 var (
 	version  string
 	revision string
 
 	configPath string
+	consulPath string
 )
 
 func main() {
@@ -53,6 +55,12 @@ func main() {
 			Destination: &configPath,
 			Usage:       "full path to the configuration file",
 		},
+		cli.StringFlag{
+			Name:        "consul,u",
+			Value:       defaultConsulPath,
+			Destination: &consulPath,
+			Usage:       "<ConsulServer>:<Port>",
+		},
 	}
 	app.Commands = []cli.Command{
 		cmd.SmokeTestCommand,
@@ -71,7 +79,7 @@ func main() {
 
 	cli.AppHelpTemplate = fmt.Sprintf(`%s
 ENVIRONMENT VARIABLES:
-   KEEP_ETHEREUM_PASSWORD    keep client password
+   KEEP_ETHEREUM_ACCOUNT_KEYFILEPASSWORD    keep client password
 
 `, cli.AppHelpTemplate)
 

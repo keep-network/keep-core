@@ -52,7 +52,7 @@ func init() {
 // request id. By default, it also waits until the associated relay entry is
 // generated and prints out the entry.
 func relayRequest(c *cli.Context) error {
-	cfg, err := config.ReadConfig(c.GlobalString("config"))
+	cfg, err := config.ReadConfig(c.GlobalString("config"), c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: [%v]", err)
 	}
@@ -137,7 +137,7 @@ func relayRequest(c *cli.Context) error {
 // submitGenesisRelayEntry submits genesis entry for the threshold relay,
 // kicking off protocol to create the first group.
 func submitGenesisRelayEntry(c *cli.Context) error {
-	cfg, err := config.ReadConfig(c.GlobalString("config"))
+	cfg, err := config.ReadConfig(c.GlobalString("config"), c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: [%v]", err)
 	}

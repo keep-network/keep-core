@@ -43,7 +43,7 @@ func init() {
 // Start starts a node; if it's not a bootstrap node it will get the Node.URLs
 // from the config file
 func Start(c *cli.Context) error {
-	config, err := config.ReadConfig(c.GlobalString("config"))
+	config, err := config.ReadConfig(c.GlobalString("config"), c.GlobalString("consul"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
