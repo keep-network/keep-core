@@ -87,6 +87,11 @@ func TestUnregisterHandler(t *testing.T) {
 			handlersUnregistered: []string{"e", "f"},
 			handlersFired:        []string{"a", "b", "c"},
 		},
+		"unregister handler not previously registered": {
+			handlersRegistered:   []string{"a", "b", "c"},
+			handlersUnregistered: []string{"z"},
+			handlersFired:        []string{"a", "b", "c"},
+		},
 	}
 
 	for testName, test := range tests {
