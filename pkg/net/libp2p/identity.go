@@ -50,12 +50,7 @@ func (i *identity) Marshal() ([]byte, error) {
 			return nil, err
 		}
 	}
-	if pubKey == nil {
-		return nil, fmt.Errorf(
-			"failed to generate public key with peerid %v",
-			i.id.Pretty(),
-		)
-	}
+
 	pubKeyBytes, err := pubKey.Bytes()
 	if err != nil {
 		return nil, err
