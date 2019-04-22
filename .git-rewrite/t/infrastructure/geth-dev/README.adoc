@@ -1,0 +1,28 @@
+= Build Geth Dev Image
+
+To build the docker image
+```
+docker build --pull --squash --no-cache --rm -t $DOCKER_ID_USER/geth-dev .
+```
+If you get a `SKIPPING OPTIONAL DEPENDENCY` warning during build you can
+ignore it. The optional dependency is only needed when running `Pm2` on OSX.
+
+You can list your new image with this command:
+```
+docker images |grep geth-dev
+```
+
+Push the image to Docker Hub:
+```
+docker push $DOCKER_ID_USER/geth-dev
+```
+
+Start a bash shell inside this Docker container:
+```
+docker run -it lispmeister/geth-dev
+```
+
+Check version of geth installed:
+```
+docker run --entrypoint="" --rm $DOCKER_ID_USER/geth-dev /geth version
+```

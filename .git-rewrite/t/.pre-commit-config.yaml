@@ -1,0 +1,23 @@
+repos:
+ - repo: https://github.com/keep-network/pre-commit-golang.git
+   rev: f31102b
+   hooks:
+    - id: go-imports
+    - id: go-vet
+    - id: go-lint
+ - repo: https://github.com/keep-network/pre-commit-hooks.git
+   rev: 63e729f
+   hooks:
+    - id: check-added-large-files
+ - repo: local
+   hooks:
+    - id: solium
+      name: Solidity linter
+      language: node
+      entry: solium
+      files: '\.sol$'
+      args:
+      - --dir=contracts/solidity/contracts/
+      - --config=contracts/solidity/.soliumrc.json
+      additional_dependencies:
+      - ethlint@1.2.3

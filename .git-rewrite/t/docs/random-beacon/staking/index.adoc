@@ -1,0 +1,370 @@
+= Staking
+
+The Keep network uses staking of tokens to enforce correct behavior.
+
+////
+TODO: Insert more proper introduction here?
+////
+
+== Basic description
+
+Anyone with at least a threshold amount of tokens (_Stake~min~_)
+can set them aside as collateral
+and earn the right to participate in network operations.
+_Stakers_ can earn rewards from contributing to the network,
+but if they misbehave their collateral can be taken away
+(_stake slashing_) as punishment.
+
+=== Stakers and roles
+
+A token owner may wish to stake in a variety of different ways,
+for security or efficiency reasons.
+To support different ways of staking,
+the network uses a single abstraction of a _staker_
+comprised of multiple separate _roles_:
+
+owner::
+Provides the tokens for the staker
+
+operator::
+Handles the day-to-day participation in the network operations
+
+magpie::
+Collects any rewards earned by the staker
+
+overseer::
+Authorizes contracts to protect against buggy or compromised upgrades
+
+The different roles can all be performed by the same address;
+they may be divided between different addresses controlled by the same person;
+or they may be different parties entirely,
+executing a sophisticated scheme of cold storage and third-party delegation.
+As far as the network is concerned,
+any of these arrangements simply forms a _staker_.
+
+staker::
+An abstraction representing the _owner_, _operator_, _magpie_ and _overseer_
+each performing their respective roles.
+
+=== Initiating staking
+
+Staking is initiated by the _owner_ choosing the amount of tokens to stake,
+and the _operator_, _magpie_ and _overseer_ addresses.
+The owner then creates a _staking agreement_ containing this information
+and transfers the tokens to the _staking contract_.
+The _staking contract_ processes the tokens and the information,
+and stores them in a _staker_ identity.
+Once created, the addresses of the roles cannot be changed.
+
+==== Staker ID
+
+Each _staker_ identity is associated with a unique _staker identifier_
+which is used to participate in the network.
+Because _staker identifiers_ are unique,
+the same address can perform any number of _roles_ in any number of _stakers_.
+When someone sends a message claiming to be a staker,
+two things are checked:
+the message must include a valid _staker ID_,
+and it must be signed by the key corresponding to the right _role_.
+
+==== Staker weight
+
+Each staker has a _staker weight_ of 1 or more,
+determined by the amount of tokens acting as their collateral.
+The _staker weight_ is calculated by
+dividing the _staked amount_ with the _minimum stake_, rounded down.
+Alternatively, the _staker weight_ is the number of separate stakers
+that could have been created with the staked tokens.
+Stakers with a higher weight get more opportunities
+to participate in the network,
+and are likely to earn more rewards.
+
+=== Contract authorization
+
+Before the staker can participate in the network,
+the _overseer_ must _authorize_ each _functionality contract_
+the staker wishes to use.
+It is necessary to introduce new functionality and to upgrade old contracts,
+but buggy or malicious _functionality contracts_ could be used
+to steal or destroy tokens by _slashing_ well-behaved stakers.
+The requirement for _authorization_ ensures that the owner's tokens are safe
+even if a contract upgrade is compromised,
+as long as the _overseer_ denies authorization to such contracts.
+
+Once a contract has been authorized,
+the authorization cannot be revoked.
+
+=== Operation
+
+The _operator_ provides _services_ in the network
+by following the protocols of authorized _functionality contracts_.
+When a staker performs an operation that requires on-chain transactions,
+the transaction must have a valid staker ID
+and to be signed by the _operator_ of that staker.
+
+Any number of operations may be active at once
+regardless of the _staked amount_ or _staker weight_.
+
+==== Rewards
+
+Stakers that provide services in the network
+will be rewarded at certain points.
+Rewards may be either tokens or the currency used to pay for network services.
+Rewards earned by a staker will be sent to the staker's _magpie_ address.
+
+=== Slashing
+
+If a staker violates the protocol of an operation
+in a way which can be proven on-chain,
+they will be penalized by having their stakes _slashed_.
+The maximum punishment that can be imposed from a single operation
+is equal to the _minimum stake_.
+
+When a staker gets slashed their _staker weight_ is updated accordingly
+and the new _staker weight_ takes effect from the moment the penalty is imposed.
+A staker who falls below the _minimum stake_ as a result of slashing
+is blocked from joining new operations
+but is still required to continue any unfinished operations.
+
+If a staker has joined multiple operations at once,
+they may accrue more punishments than their stake can cover.
+If a staker's remaining stake falls to or below zero,
+the staker is terminated and may not continue any operations.
+Any remaining penalties are nullified.
+
+==== Tattletales
+
+Some misbehavior cannot be caught by a contract alone
+and requires the cooperation of a third party _tattletale_.
+If a _tattletale_ presents proof of misbehavior by a staker,
+a part of the penalty will be awarded to the tattletale as a _tattletale reward_.
+////
+TODO: are tattletales required to be stakers (pay to magpie address)
+or can anyone act as a tattletale
+
+In the latter case,
+should there be different systems in place for staker/non-staker tattletales
+so staker tattletales receive the reward at the magpie
+while non-stakers receive it at their normal address
+////
+
+=== Unstaking
+
+When staking, the tokens used as collateral are locked
+until the staker announces their intention to stop staking,
+and for a period of time afterwards (_T~unstake~_).
+The purpose of this _unstaking period_ is to give operations time to finish
+before the collateral can be moved away.
+No new operations can be started or joined within the _unstaking period_
+but the staker is required to continue participating
+in any unfinished operations.
+
+==== Reclaiming tokens
+
+After the _unstaking period_ is over,
+the tokens can be _reclaimed_ and the _owner_ regains full control over them.
+// TODO: no penalty for reclaiming?
+When tokens are _reclaimed_ unfinished operations are aborted without penalty.
+// ODOT
+Either the _owner_ or the _operator_ can initiate the _unstaking period_
+or _reclaim_ the stakes for the owner.
+
+== Details
+
+=== Roles
+
+The staker is an abstraction comprising of four different roles,
+each with a clear scope of responsibility.
+The initial design included only the roles of the owner, operator and magpie;
+the overseer was added to take full advantage of the upgrade security plan.
+
+==== Owner
+
+The owner makes the decision to stake,
+provides the tokens for the staker,
+and chooses the addresses for the other roles.
+The owner can initiate unstaking and reclaim tokens,
+but these can also be performed by the operator.
+
+The role of the owner is designed to facilitate cold storage
+by minimizing the interaction necessary for staking.
+Initiating staking is the only operation
+where the owner's keys are absolutely required.
+
+==== Operator
+
+The operator address is tasked with participation in network operations,
+and represents the staker in most circumstances.
+
+Rewards and punishments are based solely on the operator's actions,
+and the operator can not only cause opportunity costs
+but can also lose the entire stake
+and possibly steal a significant fraction of it
+using only contracts functioning as intended.
+If the operator is a different party from the owner,
+a high level of trust is necessary.
+
+In addition to participating in the network
+via the authorized functionality contracts,
+the operator can also initiate unstaking
+and return previously staked tokens for the owner.
+
+==== Magpie
+
+The magpie is an entirely passive role.
+Rewards of tokens or currency are simply sent to the magpie address
+by the staking contract.
+
+The magpie role is separate from the owner and operator
+to provide flexibility in how to receive and use rewards
+without interfering with the owner's cold storage
+or the possible contractual relationship between the owner and operator.
+
+==== Overseer
+
+Because slashing stakes requires arbitrary access to stakers' accounts,
+explicit authorization is required
+for each contract before it may penalize stakers.
+This applies to contracts providing entirely new functionality,
+and to upgraded versions of previous contracts.
+
+The upgrade security plan is designed
+to limit the impact of upgrade key compromise
+and to provide a graceful recovery route
+while minimizing the impact to the rest of the network.
+The explicit authorization requirement prevents a compromised contract
+from stealing stakers' funds by exploiting the punishment interface.
+Instead, compromise of both the overseer and the contract is required.
+
+As a further security measure,
+the overseer can only authorize pre-approved contracts
+from a list maintained by the governance structure of the network.
+This ensures that the overseer cannot do damage
+in the absence of further compromise,
+except by withholding desired authorizations.
+
+The overseer role is separated from the owner and operator
+to facilitate cold storage for the former
+and to reduce the necessary privileges of the latter.
+
+If the owner were required to authorize each new contract and upgrade,
+it would present an unnecessary hindrance to effective cold storage schemes.
+Due to the two-factor nature of the overseer keys,
+the same level of protection is not necessarily required.
+
+On the other hand, separating the overseer from the operator
+reduces the latter's ability to profit from damaging the owner's interests.
+While even the operator has the ability
+to lose or steal the owner's tokens,
+it is restricted by the opportunities provided by the authorized contracts.
+Using the tattletale mechanism to transfer tokens is inefficient,
+but a compromised contract would not be subject to the same restrictions
+and could be used to transfer all of the staker's tokens to the attacker.
+
+===== Third party delegation
+
+The role of the overseer can be delegated to a third party,
+and it is expected that many would do so.
+
+Most owners and operators are unlikely to scrutinize each contract,
+or even to have the ability to do so effectively.
+Providing a convenient way to express one's choice to trust a third party
+would make centralization of such trust visible.
+
+A downside of convenient delegation is that requiring individual authorizations
+provides another source of friction and human judgment
+between compromise of single points of failure and actual loss of staker funds.
+An owner can avoid this fate
+by not assigning a third party as the overseer address.
+
+=== Contracts
+
+The data and methods below illustrate the design and its requirements
+but may not be exhaustive
+
+==== Token contract
+
+tokens[address] -> amount::
+The tokens held by each address
+
+transfer(recipient, amount)::
+Transfer a number of the caller's tokens to the recipient
++
+May be called by an address holding any number of tokens
+
+==== Staking contract
+
+staking_nonce::
+An integer incremented with each staker created,
+to ensure uniqueness of staker identifiers
+
+staker[staker_id] -> staker_info::
+The stakers, containing all the necessary information:
+* `amount` of staked tokens
+* `state` of the staker (`Active` or `Unstaking`)
+* `since` time of last change (staking or unstaking)
+* `owner` of the tokens
+* `operator` address performing operations
+* `magpie` address to send rewards to
+* `overseer` address to determine authorized contracts
+
+stake(amount, operator, magpie, overseer)::
+Initiate staking by specifying the addresses of the other roles
+and transferring at least _minimum stake_ tokens to the contract
++
+The caller is designated as the owner
++
+May be called by any address with at least _minimum stake_ tokens
+
+unstake(staker_id)::
+Initiate unstaking, start the unstaking period
+and stop the staker from joining any new operations
++
+May be called by either the owner or the operator of the staker
+
+return_tokens(staker_id)::
+Terminate a staker that has finished unstaking
+and return the staked tokens to the owner
++
+May be called by either the owner or the operator of the staker
+
+reward(staker_id, amount)::
+Reward a staker for correct operation
+and transfer currency or tokens to its magpie address
++
+May be called by a functionality contract
+
+slash(staker_id, amount)::
+Punish a staker for misbehavior and seize some of its tokens
++
+The seized tokens may be used in whathever way is specified by the contract
++
+May be called by a functionality contract authorized by the staker's overseer
+and not blocked by the panic button
+
+==== Authorization contract
+
+authorized[overseer] -> [contract_address]::
+The contracts authorized by each overseer
+
+blocked[contract] -> bool::
+The contracts blocked by the `panic()` method
+
+authorize(contract)::
+Method for adding a contract to the authorized list
+for all stakers using the caller as their overseer
++
+May be called by any address
+
+panic(contract)::
+Method for immediately and permanently revoking
+the authorizations of the named contract to penalize stakers
++
+Intended for use in situations where a severe vulnerability is discovered
+or the upgrade keys have been compromised,
+and the affected contract needs to be disabled to protect user funds
++
+May only be called by an address authorized by the governance structure
+
+==== Functionality contracts
+

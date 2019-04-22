@@ -1,0 +1,251 @@
+:toc: macro
+
+= Trapdoor Commitment Schemes
+
+toc::[]
+
+A commitment scheme allows a sender to commit to a message with 
+information-theoretic privacy. i.e., given the transcript of the commitment
+phase, the receiver, even with infinite computing power, cannot guess the 
+committed message better than at random. On the other hand, when it comes to
+opening the message, the sender is only computationally bound to the committed
+message. 
+
+Let's discuss how the simple commitment scheme works. Say the message is "Hello" 
+and for whatever reason, it should be kept private. However, we want to commit
+to this message, prove that we have it "in mind". We can just publish a hash of 
+that message as a proof, known also as a commitment. Whenever we want, we can 
+reveal the "Hello" message and prove we had decided on that message in the past 
+when the hash was published. 
+
+In this approach, the only thing needed for verification is the plaintext message
+and commitment. In trapdoor commitment scheme, for verification, we need the 
+plaintext message, commitment and decommitment key. Trapdoor scheme separates 
+what we are committing to and the key allowing for a verification of the commitment.
+
+A trapdoor commitment scheme is indistinguishable from randomness and it means 
+it is resistant to brute force attacks. It uses the decommitment key that the 
+committing party can send a verifier to make the verification possible.
+We send a commitment to verifier, that can happen at any time, and in future, 
+we send a decommitment key that lets to verify the commitment. 
+
+Another interesting property of trapdoor commitment schemes is that knowledge of 
+trapdoor allows to open a message in any possible way. 
+
+Using an analogy of lockable boxes, commitment scheme can be described as 
+locking the message in a steel box and passing it to receiver. A trapdoor 
+commitment is a box with a tiny secret door. If someone knows the secret door, 
+then this person is still able to change the committed message in the box, even 
+after the commitment phase. 
+
+There are three requirements for commitment schemes:
+
+* Hiding property - in the commit step, the receiver does not learn anything about 
+the committed value. He cannot distinguish a commitment to `0` from a commitment to `1`.
+* Binding property - the sender cannot change the committed value after the commit step. 
+This requirement has to be satisfied, even if the sender tries to cheat.
+* Viability - if both the sender and the receiver follow the protocol, the receiver 
+will always recover the committed value.
+
+== Pedersen commitment
+
+The Pedersen commitment requires to have two large primes `p` and `q` such
+that `q` divides `p - 1`, a `G~q~` which is a unique subgroup of `Z~p~` of order
+`q` and where `g` is a generator of `G~q~`. We can test whether `g` is a generator
+by checking if it meets the Euler's criterion: `g^q mod p == 1`.
+
+Then we choose a random `h` which is an element of `G~q~` and that `log~g~(h)` is
+unknown.
+
+```
+q <- is a prime
+p = 2q + 1 <- is a prime
+
+do
+    g = randomZ[2, q - 1]
+until g^q mod p == 1 <- g meets the Euler's criterion
+
+h = (g ^ randomZ[0, q - 1]) % q
+```
+
+=== Generating commitment
+To generate a commitment to a message `m`, we first need to map `m` into `Z~q~`
+(this mapped version will be denoted `s`).  We also need to select a random `t`
+from `Z~q~`. The value `t` is kept secret until the commitment verification 
+phase. Finally, the commitment is a result of `(g^s^ * h^t^) % q`.
+
+`INPUT: m`
+
+```
+t = randomZ[0, q - 1] 
+s = hash(m) % q
+
+commitment = [ (g ^ s) % q ] * [ (h ^ t) % q ] % q
+```
+
+=== Commitment verification
+The commitment verification is analogous to the commitment generation, because
+one needs to compare received `commitment` with a self-generated commitment
+using message `m` and disclosed `t` value. If both commitment values are the
+same, then we have a successful commitment verification.
+
+`INPUT: m, commitment, t`
+
+```
+s = hash(m) % q
+
+expectedCommitment  = [ (g ^ s) % q ] * [ (h ^ t) % q ] % q
+
+if commitment == expectedCommitment
+    return true
+else
+    return false
+```
+
+Pedersen commitment scheme has an unconditional hiding property, whereas the
+binding property depends on the difficulty of computing discrete logarithms.
+
+There is an arbitrary number of `(s', t')` pairs mapping to the same `commitment`
+value as the original pair `(s, t)`. So even if `log~g~(h)` is known to the
+adversary, brute-forcing giving an arbitrary number of results and no way to
+distinguish between them is what makes the scheme unconditionally hiding.
+
+Sender knowing discrete logarithm to the base `g` of `h` can change the message
+he committed to even after commitment has been published (but before `t` has
+been published) since it's possible to find another pair of `(s', t')`
+evaluating to the same commitment. 
+
+Note that `log~g~(h)` is a discrete logarithm problem and if we want to enable
+trapdoor, `log~g~(h)` must be known at the moment of choosing `g` and `h`.
+
+`log~g~(h)` is the trapdoor (our secret door) allowing to change the committed
+message. If one has committed to message `m` with `(s, t)`, then in order to
+change `s -> s'` (effectively `m -> m'`) and knowing `log~g~(h)`, she can compute:
+`t' = t + (s - s') / log~g~(h)`
+
+== Multi-trapdoor commitments
+
+We can use the described multi-trapdoor commitment scheme to achieve a 
+non-malleable trapdoor commitments. Say the adversary, after seeing a tuple of 
+commitments produced by honest parties, outputs his own tuple of committed 
+values. At this point the honest parties decommit their values and now the 
+adversary tries to decommit his values in a way that his messages are related to 
+the honest parties’ ones. Intuitively, we say that a commitment scheme is 
+non-malleable if the adversary fails at this game.
+
+Let `G` be a cyclic group of prime order `q` generated by `g`. We assume that 
+`G` is a group such that deciding Diffie-Hellman triplets is easy. More formally 
+we assume the existence of an efficient algorithm `DDHTest` which on input a 
+triplet `(g^a^, g^b^, g^c^)` of elements in `G` outputs `1` if and only if, 
+`c = ab mod q`.
+
+The master key generation algorithm selects a random `x` in `Z~q~` which will be 
+the master trapdoor. The master public key `PK` will be the pair `g, h` where 
+`h = g^x^` in `G`. Each commitment in the family will be identified by a specific 
+public key `pk` which is simply a randomly chosen element `e` in `Z~q~`. The 
+specific trapdoor `tk` of this scheme is the value `f~e~` in `G` such that 
+`f~e~^x+e^ = g`.
+
+To commit to a message `M` in `Z~q~` with public key `pk = e`, the sender runs 
+Pedersen's commitment with bases `g, h_e` where `h~e~ = h + g^e^`. I.e., it 
+selects a random `r` in `Z~q~` and computes `C(M) = g^M^ + h~e~^r^`. The commitment to 
+`M` is the value `C(M)`.
+
+To open a commitment, the sender reveals `M` and `F = g^r^`, The receiver accepts 
+the opening if `DDHTest(F, h + g^e^, A + g^-M^) = 1` 
+
+The way a non-malleable commitment scheme is constructed is as follows:
+
+==== Key Generation
+
+The public key of the non-malleable scheme includes three 
+elements: 
+
+1. the master public key `PK` for a a multi-trapdoor commitment scheme,
+2. the description of a one-time signature scheme,
+3. a collision-resistant hash function `H` from the set of verification keys 
+`vk` of the one-time signature scheme, to the set of public keys `pk` in the 
+multi-trapdoor commitment scheme determined by the master public key `PK`.
+The trapdoor of the scheme is `TK`, the master trapdoor of the multi-trapdoor 
+family.
+
+`Com` is a multi-trapdoor commitment scheme.
+
+==== Commitment Algorithm
+
+To commit to a message `M`, the sender chooses a key pair 
+`(sk,vk)` for a one-time signature scheme and computes `pk = H(vk)`. Then the 
+sender computes `[C(M),D(M)] = Com(PK,pk,M,r)` where `r` is chosen at random (as 
+prescribed by the definition of `Com`). The commitment string is `vk, C(M)`.
+To decommit the sender reveals `M, D(M)` and `sig`, where `sig` is the one-time 
+signature on `C(M)`.
+
+`INPUT: M, PK = (g, h)`
+
+```
+// generate a one-time signature key pair
+(vk, sk) <- OneTimeGen
+
+// generate a commitment public key from a one-time signature verification key
+pk = H(vk) % q
+
+// pick a random r
+r = (randomZ[0, q - 1])
+
+// evaluate a message digest
+digest = sha256(M) mod q
+
+he = h + g^pk
+commitment = g^digest + he^r
+
+sig = sk.sign(commitment)
+
+return (COM[vk, commitment], DEC[r, sig])
+```
+
+==== Verification Algorithm
+
+On input a commitment `vk, C(M)` , the receiver accepts the 
+decommitment `M,D(M),sig` if after computing `pk = H(vk)`, it holds that 
+`Ver(PK,pk,M,C(M),D(M)) = 1` and the signature is valid.
+
+The crucial trick here is the fact that the verification key `vk` is used to 
+determine the value `pk` used in the commitment scheme.
+
+`INPUT: M, PK = (g, h), COM = (vk, commitment), DEC = (r, sig)`
+
+```
+pk = H(vk) % q
+
+digest = sha256(M) mod q
+
+a = g^r 
+b = h + g^pk 
+c = commitment + g^(-digest) 
+
+// For G being a group of points on the elliptic curve, DDHTest is: 
+// pairing(a, b) == pairing(g, c)
+return DDHTest(a, b, c) == 1 && sig.isValid(pk, c)
+```
+
+
+== References
+
+* Gennaro R. (2004) Multi-trapdoor Commitments and their Applications to 
+Non-Malleable Protocols.
+
+* Delfs H., Knebl H. Introduction to Cryptography Principles and Applications
+(2015) Springer
+
+* Gennaro R., Goldfeder S., Narayanan A. (2016) Threshold-Optimal DSA/ECDSA 
+Signatures and an Application to Bitcoin Wallet Security. In: Manulis M., 
+Sadeghi AR., Schneider S. (eds) Applied Cryptography and Network Security. 
+ACNS 2016. Lecture Notes in Computer Science, vol 9696. Springer, Cham
+
+* Pedersen T.P. (1992) Non-Interactive and Information-Theoretic Secure 
+Verifiable Secret Sharing. In: Feigenbaum J. (eds) Advances in 
+Cryptology — CRYPTO ’91. CRYPTO 1991. Lecture Notes in Computer Science, 
+vol 576. Springer, Berlin, Heidelberg
+
+* Vitalik Buterin, Exploring Elliptic Curve Pairings 
+https://medium.com/@VitalikButerin/exploring-elliptic-curve-pairings-c73c1864e627

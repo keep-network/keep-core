@@ -1,0 +1,253 @@
+:toc: macro
+
+= RFC 2: Network Security Implementation
+
+:icons: font
+:numbered:
+toc::[]
+
+
+== Proposal
+In this document, we describe the implementation details of the Keep network 
+security mechanisms meeting requirements specified in 
+<<rfc-1-network-security-requirements.adoc#header,RFC 1>>.
+
+=== Goal
+
+Messages exchanged in the network must be attributable, maintain integrity,
+and must optionally be confidential.
+
+=== Implementation
+
+==== Network topology and application-level messaging
+
+It is important to understand the difference between the network topology 
+and communication between peers on the application level. Peers connect to 
+each other based on the rules defined by the underlying P2P network protocol. 
+Two peers exchanging messages on the application level do not necessarily 
+need to have a direct connection with each other on the network level. It is 
+possible that messages exchanged at the application level by two peers are 
+relayed by other peers on the network level.
+
+On the network level, we require all peers to prove their identity and minimum 
+stake when they establish a connection with each other. All peers monitor the 
+on-chain stake of peers they are connected to and are obligated to drop the 
+connection with the given peer if that peer's on-chain stake drops below the 
+required minimum. This requirement enforces that only peers with a minimum 
+stake are able to be a part of the network and this requirement is enforced by 
+all peers individually.
+
+Attributability, integrity and optional confidentiality of messages are 
+requirements enforced on the application level. Even if a message between two 
+peers was relayed by others, this message still needs to fulfil all of those 
+requirements. Since two peers exchanging messages do not necessarily need to 
+have a connection on the network level with each other, they also perform an 
+identity and stake check before the communication between them happens.
+
+==== Peer identification
+Each peer is identified by a static public key equal to the delegate key 
+associated with an on-chain stake. No two peers in the network are permitted 
+to have the same static public key.
+
+==== Network join protocol
+
+Keep publishes a list of recommended bootstrap peers but every other network 
+member can enable the bootstrap capability as well. The list contains addresses 
+of bootstrap peers and their static public keys. Bootstrap peers are just like 
+any other peers, but with the added capability of being able to handle network 
+join requests.
+
+The result of joining the network is inherently dependent on the bootstrap 
+peer's announced view of the network, that is why choosing a right bootstrap 
+peer is so important. Using a malicious bootstrap peer may lead to joining a 
+fake network if the malicious bootstrap peer and other fake network members can 
+prove the ownership of their on-chain stakes. Using a recommended but hacked 
+bootstrap peer may lead to not establishing connections with any other peers in 
+the network if the hacked bootstrap peer does not properly announce new peer's 
+presence.
+
+A peer wanting to connect to the network sends a network join request to one of 
+the bootstrap peers. Each peer wanting to join a network needs to provide a 
+proof of ownership of an on-chain identity with an associated stake. As part of 
+the network join handshake, the bootstrap peer will also provide proof of its 
+own stake.
+
+The procedure is as follows:
+
+1. Peer joining the network initiates the protocol by sending a network join 
+   request message containing randomly generated nonce `n_1`, an 8-byte (64-bit) 
+   unsigned integer, to the bootstrap peer. The message is signed with the 
+   peer's static private key.
+2. The bootstrap peer randomly generates nonce `n_2`, which is also an 8-byte 
+   unsigned integer, and computes a `challenge` which is the result of calling a 
+   cryptographic hash function `hash` on the concatenated bytes of `n1` and `n2` 
+   (referenced as `n1 || n2`). The bootstrap peer sends back `challenge,` `n_2` 
+   and signs the message with its static private key.
+3. The peer joining the network recomputes the challenge from `n_1` and `n_2`; 
+   if it matches the challenge sent by the bootstrap peer, it answers with a 
+   message containing the challenge. The message is signed with the peer's 
+   static private key.
+4. The bootstrap peer validates the challenge.
+
+```
+JOINING PEER                                      BOOTSTRAP PEER
+
+n_1 = random_nonce()
+Message { n_1 } ---->
+                                                  n_2 = random_nonce()
+                                                  challenge = hash(n_1 || n_2)                                  
+                                                  <---- Message { challenge, n_2 }
+challenge = hash(n_1 || n_2)
+Message {challenge} ---->
+```
+
+Message signature is checked for any message that is received. Any message with
+an invalid signature immediately aborts the protocol. If all signatures have 
+been valid and challenge response was as expected, both parties execute a check 
+for an on-chain stake of each other. If the peer joining the network has a 
+minimum stake, the bootstrap peer connects the peer to the network and announces 
+peer's presence. If the bootstrap peer has a minimum stake, peer joining the 
+network decides to connect to the bootstrap peer and becomes a part of the 
+network. Nonces and challenge generated during the handshake are discarded. 
+Otherwise, when at least one of the parties does not have a minimum stake, the 
+protocol is aborted. If the bootstrap peer had a deficient stake, the peer 
+joining the network may execute the protocol again with the next bootstrap peer.
+
+==== Network peer authorization protocol
+
+Once a peer has completed the network join protocol successfully, it is 
+connected to a bootstrap peer and is a full-fledged network member. It starts 
+discovering other peers in the network and connects to some of those according 
+to the peer discovery strategy implemented in the network. Before the peer 
+decides to connect to any other network member, the same nonce, challenge, and 
+stake check protocol must be executed between the peer and the new network 
+member it is connecting to. Peers decide to connect to each other only if they 
+both complete the protocol successfully and prove their on-chain minimum stakes. 
+This is a trust-no-one strategy which allows for even a corrupted network to 
+heal in the case of a malicious split brain event.
+
+==== Attributability and integrity of messages
+
+All messages in the network are signed with sender's private static key. Before 
+any two peers start exchanging messages, they need to agree on a common nonce 
+(8-byte unsigned integer) that will be used to track the order of messages as 
+well as to prevent replay and message-from-future attacks. The protocol is 
+similar to the one used to create a challenge:
+
+```
+PEER 1                                          PEER 2
+
+n_1 = random_nonce() 
+Message { n_1 } ---->
+                                                n_2 = random_nonce()
+                                                nonce = hash(n_1 || n_2).toInt
+                                                <---- Message { n_2 }
+nonce = hash(n_1 || n_2).toInt
+```
+
+Once peers agree on a common initial nonce they both execute a check for an 
+on-chain stake of the second party. If at least one of the peers does not have a 
+minimum stake, protocol is aborted and all messages from that peer are rejected.
+
+Nonces are tracked individually by all communicating peers; each peer maps all 
+other peers it communicates with to the current nonces they have maintained 
+with them. 
+
+Each message sent from a peer must have a nonce greater by one from the nonce of 
+the previous message. The nonce is included in a message in a way that makes it 
+a part of the content used to produce a signature. Nonce expires if two peers do 
+not communicate for a certain period of time. Nonce timeout is a parameter 
+tracked on-chain. Two peers need to execute the handshake protocol again to 
+initialize a new nonce if the previous one has expired. If the nonce has 
+exhausted (reached the maximum possible value), it should be set back to 0.
+
+All messages received from a given peer must contain nonces forming an ordered 
+sequence. If a peer receives a message with nonce less than or equal to the most 
+recent one for the given sender, the message is rejected and the sender is 
+informed about that. Due to the nature of the network, some messages can be lost 
+or delayed. Each peer has a cache of messages sent and received within a fixed 
+time window. If a received message has a nonce greater by more than one from the 
+currently expected nonce, that message is added to cache but it’s not accepted
+until the gap between the expected and message’s nonce is filled. There is a 
+fixed, short time limit under which the gap must be filled. If that does not 
+happen, the message is rejected and the sender is informed about this fact. 
+Message rejected notification contains a nonce of a message that was rejected as 
+well as the currently expected nonce. Sender, having the cache of messages sent 
+in the fixed time window resends all the messages starting from the one with 
+nonce expected by the receiver. If sender does not provide the missing messages 
+within a fixed timeout, receiver drops the connection.
+
+Sent and received messages cache window, time after a notification about 
+rejecting a message is sent as well as time after connection is droped if 
+expected messages were not delivered should be the same for all peers in the 
+network. These values are fixed and tracked on-chain as system constants which
+require a hard-fork-level event to change. 
+
+All peers in the network have a streaming view of the latest chain state that 
+notifies in an event-style when a given address falls below the minimum stake.
+
+If stake drops down below the required minimum for some peer, that peer's nonce 
+is discarded and all connections to that peer are dropped and any unprocessed 
+messages from that peer are immediately discarded. Once the peer increases 
+its stake so that it is above the required minimum, it must initialize its 
+connections with any disconnected peers once again in order to be able to 
+communicate with them.
+
+When peer receives a message it firsts check the signature. If it matches, then 
+peer validates the nonce. If the nonce is greater by one from the nonce included 
+in the previous message, then the message is accepted.
+
+==== Message Confidentiality
+
+Encryption is based on ephemeral keys generated individually for each protocol 
+execution. Only point-to-point communication can be encrypted. 
+
+Before the encrypted communication can happen, both involved peers generate a 
+symmetric key using 
+link:http://noiseprotocol.org/noise.html#interactive-handshake-patterns-fundamental[`Noise_XK`] 
+protocol. 
+
+Any of the communicating peers can reveal the symmetric key in order to publicly 
+publish a complaint about the other peer's message. In such case, the symmetric 
+key is considered as compromised and should not be used for further 
+communications.
+
+==== Message relay
+
+Two peers communicating on the application level do not necessarily need to 
+have a direct network-level connection with each other. It is possible messages 
+are relayed by other peers. Each peer relaying the message validates the message 
+signature against sender's key. If the signature is not valid, peer rejects the 
+message and drops the connection with the peer that relayed that message since 
+that peer is the one that tampered the message.
+
+Peer which tampered the message is blacklisted by the peer who received the 
+relayed, tampered message. Peer is blacklisted for a certain period of time, 
+tracked as an on-chain parameter. This time period is never shorter than the time 
+needed to re-transmit the message. During the time peer is blacklisted, all 
+connection attempts from that peer to the peer who blacklisted it are rejected.
+
+==== Group formation
+
+In the Keep network, peers may form groups selected to execute various protocols.
+The output of the group formation protocol is a list of on-chain addresses. When 
+peer joins a group, it broadcasts its public static key which is used by other 
+peers in the group to derive the on-chain address of that peer. All the peers in 
+the group must execute the handshake protocol described in the 
+<<Attributability and integrity of the network messages>> section. If two peers 
+executed that protocol before (even as a members of some other group), they  
+still use the same nonce and don't have to execute the protocol again. 
+
+[bibliography]
+== Related Links
+
+- Discussions on writing this document:
+https://www.flowdock.com/app/cardforcoin/tech/threads/Zc_bHNDU5eNJY8JHB22NfU2a9Bk
+
+- Noise Protocol documentation: http://noiseprotocol.org/noise.html
+
+- Noise Protocol variations matrix:
+https://latacora.singles/2018/07/18/factoring-the-noise.html
+
+- Lighting Network Noise implementation:
+https://github.com/lightningnetwork/lnd/tree/master/brontide
