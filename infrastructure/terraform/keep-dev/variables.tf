@@ -195,6 +195,7 @@ variable "openvpn_parameters" {
 }
 
 # deployment infrastructure
+## pull
 variable "create_ci_publish_to_gcr_service_account" {
   description = "Create ServiceAccount for CI to publish images to keep-dev GCR."
   default     = true
@@ -213,5 +214,22 @@ variable "keel_parameters" {
     helm_provider_enabled = true
     rbac_install_enabled  = true
     gcr_enabled           = true
+  }
+}
+
+## push
+
+# gcp_deploy
+variable "jumphost" {
+  default {
+    name = "keep-dev-jumphost"
+    tags = "public-subnet"
+  }
+}
+
+variable "utility_box" {
+  default {
+    name = "keep-dev-utility-box"
+    tags = "gke-subnet"
   }
 }
