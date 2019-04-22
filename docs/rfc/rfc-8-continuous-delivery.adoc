@@ -18,9 +18,7 @@ solution is targeted at development and test environments.  The requirements for
 utilizing the outlined approach in production will not be covered here. Our one
 and only service at this time is the keep-client.  The RFC will focus on the
 keep-client as a result, however the solution is applicable outside the
-keep-client.  Though this RFC will focus on cloud based continuous delivery there
-are elements that we can and should apply to local environments.  I will call
-those elements out.  This RFC requires a basic understanding of Kubernetes objects.
+keep-client.  This RFC requires a basic understanding of Kubernetes objects.
 
 
 == Background
@@ -205,7 +203,6 @@ will run this workflow/job to trigger a script that will:
 - stake in-use ETH accounts
 - update in-use keep-client ConfigMaps with new contract addresses
 
-_The described scripts can be targeted a local environment to do migration_
 
 === Limitations
 
