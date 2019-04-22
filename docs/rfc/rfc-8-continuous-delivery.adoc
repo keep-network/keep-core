@@ -199,8 +199,8 @@ Either a new workflow or new jobs to existing workflow will be added to the
 will run this workflow/job to trigger a script that will:
 
 - migrate all contracts if any are changed
-- unlock in-use ETH accounts
-- stake in-use ETH accounts
+- unlock ETH accounts (script needs to be faster)
+- stake ETH accounts (script needs to be faster)
 - update keep-client ConfigMaps with new contract addresses
 
 - Here we must implement an access point for Circle into the private Kubernetes
