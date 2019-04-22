@@ -183,7 +183,7 @@ truffle exec ./demo.js --network keep_dev (stake ETH accounts)
 
 To bring parts `Ethereum Contract Deployment` and `keep-client Configuration`
 into automated configuration such that they can be continuously deployed with
-the keep-client service.
+the already automated `keep-client service` deployment.
 
 === Goal
 
