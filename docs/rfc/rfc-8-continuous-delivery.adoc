@@ -202,6 +202,8 @@ will run this workflow/job to trigger a script that will:
 - unlock in-use ETH accounts
 - stake in-use ETH accounts
 - update in-use keep-client ConfigMaps with new contract addresses
+  - Here we must implement an access point for Circle into the private Kubernetes
+    cluster.  We can do this with the `gcp_push_deploy` Terraform module.
 
 
 === Limitations
