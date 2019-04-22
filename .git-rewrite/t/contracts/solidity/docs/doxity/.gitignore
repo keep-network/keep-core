@@ -1,7 +1,0 @@
-node_modules/
-public/
-pages/docs/*
-pages/index.md
-.gatsby-context.js
-.DS_Store
-config.toml
