@@ -13,7 +13,7 @@ Here we present a continuous delivery method for a service or services running
 in a Kubernetes cluster.  It is expected that one or more of these services
 has Ethereum contracts developed along side the service.  It is expected that
 there is a relationship between service and contract to a degree that we must
-ensure both service and contract and deployed continuously.  The entirety of the
+ensure both service and contract are deployed continuously.  The entirety of the
 solution is targeted at development and test environments.  The requirements for
 utilizing the outlined approach in production will not be covered here. Our one
 and only service at this time is the keep-client.  The RFC will focus on the
@@ -43,7 +43,6 @@ regardless of due-diligence.
 The keep-client service leans on a collection of Ethereum contracts that are in
 development alongside the service.  When contracts are changed they have to be
 deployed to the Ethereum network that the keep-clients are connecting to.
-
 
 This arrangement creates a dependency between the service service configuration and
 contract code on a couple levels:
@@ -205,6 +204,8 @@ will run this workflow/job to trigger a script that will:
 - unlock in-use ETH accounts
 - stake in-use ETH accounts
 - update in-use keep-client ConfigMaps with new contract addresses
+
+_The described scripts can be targeted a local environment to do migration_
 
 === Limitations
 
