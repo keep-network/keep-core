@@ -25,7 +25,7 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
 # libp2p
 [[override]]
   name = "github.com/libp2p/go-libp2p-peer"
-  revision = "9b0c59cc3369e1302b45f9861970356c223a858e"
+  revision = "9ccddf5f5d8318b00658dfbc06a4e32b16bae6a9"
 
 [[override]]
   name = "github.com/libp2p/go-libp2p-swarm"

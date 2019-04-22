@@ -481,14 +481,14 @@
   revision = "a60cde50df6872512892ca85019341d281f72a42"
 
 [[projects]]
-  digest = "1:98ba50b85540c26418d2be6ed040180eff0c0b990bdc91cc4fcb3124a5d0c0cb"
+  digest = "1:33710dd8ece1f40dc87aec93bcd3f4ab83807e048804a5be8027bc405dcdbf0d"
   name = "github.com/libp2p/go-libp2p-peer"
   packages = [
     ".",
     "peerset",
   ]
   pruneopts = ""
-  revision = "9b0c59cc3369e1302b45f9861970356c223a858e"
+  revision = "9ccddf5f5d8318b00658dfbc06a4e32b16bae6a9"
 
 [[projects]]
   digest = "1:1a2e37c37655416b2906e160ce40a0b3112015dfd8175aad63b64b0edeb6dfef"
