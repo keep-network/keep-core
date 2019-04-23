@@ -537,6 +537,9 @@ contract KeepGroupImplV1 is Ownable {
         return _groups[groupIndex].registrationBlockHeight;
     }
 
+    /**
+     * @dev Gets the value of expired offset.
+    */
     function getExpiredOffset() public view returns(uint256) {
         return _expiredOffset;
     }
