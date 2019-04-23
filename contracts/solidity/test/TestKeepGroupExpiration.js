@@ -81,6 +81,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     }
 
     assert.notEqual(Number(numberOfGroups), testGroupsNumber, "Some groups should be marked as expired");
+    checkExpired();
   });
 
   it("should be able to check that groups are marked as expired except the minimal active groups number", async function() {
@@ -95,5 +96,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
     }
     
     assert.isAtLeast(Number(after), activeGroupsThreshold, "Number of groups should not fall below the threshold of active groups");
+    checkExpired();
   });
 });
