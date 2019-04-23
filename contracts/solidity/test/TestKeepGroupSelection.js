@@ -16,12 +16,7 @@ contract('TestKeepGroupSelection', function(accounts) {
 
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     randomBeaconValue,
-<<<<<<< HEAD
-    timeoutInitial, timeoutSubmission, timeoutChallenge,
-    groupExpirationTimeout, numberOfActiveGroups,
-=======
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
->>>>>>> origin/master
     keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy,
     owner = accounts[0], magpie = accounts[1], signature, delegation,
