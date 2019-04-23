@@ -3,20 +3,20 @@ pragma solidity ^0.5.4;
 // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
 
 contract ThrowProxy {
-  address public target;
-  bytes data;
+    address public target;
+    bytes data;
 
-  constructor(address _target) public {
-    target = _target;
-  }
+    constructor(address _target) public {
+        target = _target;
+    }
 
-  //prime the data using the fallback function.
-  function() external payable {
-    data = msg.data;
-  }
+    //prime the data using the fallback function.
+    function() external payable {
+        data = msg.data;
+    }
 
-  function execute() public returns (bool) {
-    (bool result, ) = target.call(data);
-    return result;
-  }
+    function execute() public returns (bool) {
+        (bool result, ) = target.call(data);
+        return result;
+    }
 }
