@@ -469,8 +469,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 	}
 
 	if _, err = ec.keepGroupContract.SubmitDKGResult(
-		participantIndex.Int(),
 		requestID,
+		participantIndex.Int(),
 		result,
 		signaturesOnChainFormat,
 		membersIndicesOnChainFormat,
