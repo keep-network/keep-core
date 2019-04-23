@@ -532,14 +532,29 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Gets number of active groups.
+     * @dev Returns all active groups.
      */
-    function numberOfGroups() public view returns(uint256) {
-        return _groups.length;
+    function numberOfActiveGroups() public view returns(uint256) {
+        return _groups.length - _expiredOffset;
     }
 
     /**
-     * @dev Returns public key of a group from available groups using modulo operator.
+     * @dev Gets a block height from an oldest active group. 
+     * _expiredOffset is an index of an oldest active group in the _groups array.
+     */
+    function getOldestGroupBlockHeight() public view returns(uint256) {
+        return _groups[_expiredOffset].registrationBlockHeight;
+    }
+
+    /**
+     * @dev Set expired offset.
+    */
+    function setExpiredOffset(uint expiredOffset) public {
+        _expiredOffset = expiredOffset;
+    }
+
+    /**
+     * @dev Returns public key of a group from active groups using modulo operator.
      * @param previousEntry Previous random beacon value.
      */
     function selectGroup(uint256 previousEntry) public view returns(bytes memory) {

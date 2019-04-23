@@ -55,36 +55,52 @@ contract('TestKeepGroupExpiration', function(accounts) {
   });
 
   it("it should be able to count the number of active groups", async function() {
-    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
-    assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups not equals to number of test groups");
+    let numberOfActiveGroups = await keepGroupImplViaProxy.numberOfActiveGroups();
+    assert.equal(Number(numberOfActiveGroups), testGroupsNumber, "Number of groups not equals to number of test groups");
   });
 
   it("should be able to check if at least one group is marked as expired", async function() {
-    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
+    let numberOfActiveGroups = await keepGroupImplViaProxy.numberOfActiveGroups();
     
     for (var i = 1; i <= testGroupsNumber; i++) {
       mineBlocks(groupExpirationTimeout);
       await keepGroupImplViaProxy.selectGroup((testGroupsNumber - 1) % i);
-      numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
+      numberOfActiveGroups = await keepGroupImplViaProxy.numberOfActiveGroups();
 
-      if (Number(numberOfGroups) < testGroupsNumber)
+      if (Number(numberOfActiveGroups) < testGroupsNumber)
         break;
     }
 
-    assert.notEqual(Number(numberOfGroups), testGroupsNumber, "Some groups should be marked as expired");
+    assert.notEqual(Number(numberOfActiveGroups), testGroupsNumber, "Some groups should be marked as expired");
   });
 
   it("should be able to check that groups are marked as expired except the minimal active groups number", async function() {
     this.timeout(0);
 
-    let after = await keepGroupImplViaProxy.numberOfGroups();
+    let after = await keepGroupImplViaProxy.numberOfActiveGroups();
 
     for (var i = 1; i <= testGroupsNumber; i++) {
       mineBlocks(groupExpirationTimeout);
       await keepGroupImplViaProxy.selectGroup((testGroupsNumber - 1) % i);
-      after = await keepGroupImplViaProxy.numberOfGroups();
+      after = await keepGroupImplViaProxy.numberOfActiveGroups();
     }
     
     assert.isAtLeast(Number(after), activeGroupsThreshold, "Number of groups should not fall below the threshold of active groups");
   });
+
+
+  it("should get the offset by subtracting blocks height", async function() {
+    let expectedExpiredOffset = 3;
+
+    let registrationBlockHeightStart = await keepGroupImplViaProxy.getOldestGroupBlockHeight();
+
+    await keepGroupImplViaProxy.setExpiredOffset(expectedExpiredOffset);
+
+    let registrationBlockHeightOffset = await keepGroupImplViaProxy.getOldestGroupBlockHeight();
+
+    let actualOffset = registrationBlockHeightOffset.words[0] - registrationBlockHeightStart.words[0];
+
+    assert.equal(actualOffset, expectedExpiredOffset, "Expired offset should be equal to: " + expectedExpiredOffset);
+  });
+
 });
