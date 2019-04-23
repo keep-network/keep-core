@@ -542,7 +542,7 @@ contract KeepGroupImplV1 is Ownable {
 
     /**
      * @dev Gets the value of expired offset.
-    */
+     */
     function getExpiredOffset() public view returns(uint256) {
         return _expiredOffset;
     }
