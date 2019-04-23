@@ -35,7 +35,7 @@ func createIdentity(privateKey libp2pcrypto.PrivKey) (*identity, error) {
 }
 
 func (ni networkIdentity) String() string {
-	return peer.ID(ni).Pretty()
+	return peer.ID(ni).String()
 }
 
 func (i *identity) Marshal() ([]byte, error) {
