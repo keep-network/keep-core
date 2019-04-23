@@ -197,16 +197,16 @@ func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 }
 
 func (kg *keepGroup) SubmitDKGResult(
-	submitterMemberIndex *big.Int,
 	requestID *big.Int,
+	submitterMemberIndex *big.Int,
 	result *relaychain.DKGResult,
 	signatures []byte,
 	signingMembersIndexes []*big.Int,
 ) (*types.Transaction, error) {
 	return kg.transactor.SubmitDkgResult(
 		kg.transactorOpts,
-		submitterMemberIndex,
 		requestID,
+		submitterMemberIndex,
 		result.GroupPublicKey,
 		result.Disqualified,
 		result.Inactive,
