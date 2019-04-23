@@ -570,6 +570,21 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Gets a block height from an oldest active group. 
+     * _expiredOffset is an index of an oldest active group in the _groups array.
+     */
+    function getOldestGroupBlockHeight() public view returns(uint256) {
+        return _groups[_expiredOffset].registrationBlockHeight;
+    }
+
+    /**
+     * @dev Sets expired offset.
+     */
+    function setExpiredOffset(uint expiredOffset) public {
+        _expiredOffset = expiredOffset;
+    }
+
+    /**
      * @dev Returns public key of a group from active groups using modulo operator.
      * @param previousEntry Previous random beacon value.
      */

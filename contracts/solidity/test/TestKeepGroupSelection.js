@@ -58,8 +58,8 @@ contract('TestKeepGroupSelection', function(accounts) {
     keepGroupImplViaProxy = await KeepGroupImplV1.at(keepGroupProxy.address);
     await keepGroupImplViaProxy.initialize(
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold,
-      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-      numberOfActiveGroups, groupExpirationTimeout
+      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, numberOfActiveGroups, 
+      groupExpirationTimeout, timeDKG, resultPublicationBlockStep
     );
 
     await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address);

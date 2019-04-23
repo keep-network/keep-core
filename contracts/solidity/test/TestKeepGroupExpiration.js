@@ -17,6 +17,7 @@ const timeoutChallenge = 60;
 const resultPublicationBlockStep = 3;
 const groupExpirationTimeout = 300;
 const activeGroupsThreshold = 5;
+const timeDKG = 20;
 
 contract('TestKeepGroupExpiration', function(accounts) {
 
@@ -44,8 +45,8 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await keepGroupImplViaProxy.initialize(
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake,
       groupThreshold, groupSize, timeoutInitial, timeoutSubmission,
-      timeoutChallenge, resultPublicationBlockStep, activeGroupsThreshold,
-      groupExpirationTimeout
+      timeoutChallenge, activeGroupsThreshold, groupExpirationTimeout, timeDKG, 
+      resultPublicationBlockStep
     );
 
     testGroupsNumber = 10;
@@ -87,4 +88,19 @@ contract('TestKeepGroupExpiration', function(accounts) {
     
     assert.isAtLeast(Number(after), activeGroupsThreshold, "Number of groups should not fall below the threshold of active groups");
   });
+
+  it("should get the offset by subtracting blocks height", async function() {
+    let expectedExpiredOffset = 3;
+
+    let registrationBlockHeightStart = await keepGroupImplViaProxy.getOldestGroupBlockHeight();
+
+    await keepGroupImplViaProxy.setExpiredOffset(expectedExpiredOffset);
+
+    let registrationBlockHeightOffset = await keepGroupImplViaProxy.getOldestGroupBlockHeight();
+
+    let actualOffset = registrationBlockHeightOffset.words[0] - registrationBlockHeightStart.words[0];
+
+    assert.equal(actualOffset, expectedExpiredOffset, "Expired offset should be equal to: " + expectedExpiredOffset);
+  });
+
 });
