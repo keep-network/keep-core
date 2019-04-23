@@ -54,6 +54,15 @@ contract('TestKeepGroupExpiration', function(accounts) {
       await keepGroupImplViaProxy.registerNewGroup([i]);
   });
 
+  async function checkExpired() {
+    var currentBlockHeight = await web3.eth.getBlockNumber();
+    var expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
+    for (var i = 0; i < expiredOffset; i++) {
+      let groupRegistrationBlockHeight = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(i);
+      assert.isAtLeast(Number(currentBlockHeight - groupRegistrationBlockHeight), Number(groupExpirationTimeout));
+    }
+  };
+
   it("it should be able to count the number of active groups", async function() {
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
     assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups not equals to number of test groups");
