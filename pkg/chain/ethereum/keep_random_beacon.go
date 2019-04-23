@@ -141,6 +141,7 @@ type relayEntryRequestedFunc func(
 	payment *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
+	groupPublicKey []byte,
 	blockNumber uint64,
 )
 
@@ -179,6 +180,7 @@ func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
 					event.Payment,
 					event.PreviousEntry,
 					event.Seed,
+					event.GroupPublicKey,
 					event.Raw.BlockNumber,
 				)
 				subscriptionMutex.Unlock()

@@ -2,6 +2,7 @@ package state
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -36,7 +37,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
 	handler := net.HandleMessageFunc{
-		Type: fmt.Sprintf("dkg/%s", string(time.Now().UTC().UnixNano())),
+		Type: fmt.Sprintf("dkg/%s", strconv.FormatInt(time.Now().UTC().UnixNano(), 16)),
 		Handler: func(msg net.Message) error {
 			recvChan <- msg
 			return nil

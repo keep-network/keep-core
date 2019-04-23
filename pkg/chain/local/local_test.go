@@ -112,6 +112,7 @@ func TestLocalRequestRelayEntry(t *testing.T) {
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 	seed := big.NewInt(42)
+
 	relayRequestPromise := chainHandle.RequestRelayEntry(seed)
 
 	done := make(chan *event.Request)
@@ -363,10 +364,10 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 				event.RequestID,
 			)
 		}
-		if event.PreviousEntry != nil {
+		if event.PreviousEntry.Cmp(seedRelayEntry) != 0 {
 			t.Fatalf(
 				"Unexpected previous entry\nExpected: [%v]\nActual:   [%v]",
-				nil,
+				seedRelayEntry,
 				event.PreviousEntry,
 			)
 		}
@@ -375,6 +376,13 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 				"Unexpected seed\nExpected: [%v]\nActual:   [%v]",
 				seed,
 				event.Seed,
+			)
+		}
+		if string(event.GroupPublicKey) != string(seedGroupPublicKey) {
+			t.Fatalf(
+				"Unexpected group public key\nExpected: [%v]\nActual:   [%v]",
+				event.GroupPublicKey,
+				seedGroupPublicKey,
 			)
 		}
 	case <-ctx.Done():
@@ -756,4 +764,46 @@ func newTestContext(timeout ...time.Duration) (context.Context, context.CancelFu
 		defaultTimeout = timeout[0]
 	}
 	return context.WithTimeout(context.Background(), defaultTimeout)
+}
+
+func TestNextGroupIndex(t *testing.T) {
+	var tests = map[string]struct {
+		previousEntry  int
+		numberOfGroups int
+		expectedIndex  int
+	}{
+		"zero groups": {
+			previousEntry:  12,
+			numberOfGroups: 0,
+			expectedIndex:  0,
+		},
+		"fewer groups than the previous entry value": {
+			previousEntry:  13,
+			numberOfGroups: 4,
+			expectedIndex:  1,
+		},
+		"more groups than the previous entry value": {
+			previousEntry:  3,
+			numberOfGroups: 12,
+			expectedIndex:  3,
+		},
+	}
+
+	for nextGroupIndexTest, test := range tests {
+		t.Run(nextGroupIndexTest, func(t *testing.T) {
+			bigPreviousEntry := big.NewInt(int64(test.previousEntry))
+			bigNumberOfGroups := test.numberOfGroups
+			expectedIndex := test.expectedIndex
+
+			actualIndex := selectGroup(bigPreviousEntry, bigNumberOfGroups)
+
+			if actualIndex != expectedIndex {
+				t.Fatalf(
+					"Unexpected group index selected\nexpected: [%v]\nactual:   [%v]\n",
+					expectedIndex,
+					actualIndex,
+				)
+			}
+		})
+	}
 }

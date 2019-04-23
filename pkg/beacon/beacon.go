@@ -49,6 +49,7 @@ func Initialize(
 			request.PreviousEntry,
 			request.Seed,
 			relayChain,
+			request.GroupPublicKey,
 			request.BlockNumber,
 		)
 	})
@@ -73,11 +74,6 @@ func Initialize(
 
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
 		fmt.Printf("New group registered [%+v]\n", registration)
-
-		node.RegisterGroup(
-			registration.RequestID.String(),
-			registration.GroupPublicKey,
-		)
 	})
 
 	return nil

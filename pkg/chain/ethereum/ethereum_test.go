@@ -28,19 +28,19 @@ func TestCalculateDKGResultHash(t *testing.T) {
 			dkgResult: &relaychain.DKGResult{
 				GroupPublicKey: []byte{100},
 			},
-			expectedHash: "62f670bf6f172ab82df59082f8255ccae11e0fd956be902f5601a5c3a12ba1a5",
+			expectedHash: "f1918e8562236eb17adc8502332f4c9c82bc14e19bfc0aa10ab674ff75b3d2f3",
 		},
 		"dkg result has only disqualified provided": {
 			dkgResult: &relaychain.DKGResult{
 				Disqualified: []byte{1, 0, 1, 0},
 			},
-			expectedHash: "22c8e49873c2173ae650f7a241d2808d068ae0d3a5121bac41e8597bd70459f4",
+			expectedHash: "ddb76fe48db5426b0729b9b973ecf962f375fd5f453f404e26f8b4bec4c97760",
 		},
 		"dkg result has only inactive provided": {
 			dkgResult: &relaychain.DKGResult{
 				Inactive: []byte{0, 1, 1, 1},
 			},
-			expectedHash: "13cae25f320b3b54ba1b03faba0bb38e793b7289109e2ac00c30be39d40487a2",
+			expectedHash: "967ecff5d1dbe8e817013123a8fb1762edfcda5ad776d5a22a9ff1dbb274cf0e",
 		},
 		"dkg result has all parameters provided": {
 			dkgResult: &relaychain.DKGResult{
@@ -48,7 +48,7 @@ func TestCalculateDKGResultHash(t *testing.T) {
 				Disqualified:   []byte{1, 0, 1, 0},
 				Inactive:       []byte{0, 1, 1, 0},
 			},
-			expectedHash: "4e8b56086bfc0ceb8c59a546c2fd38e5becb77c0a38bd74f21c57c6499603180",
+			expectedHash: "a57664d91d1bbc7920ed3e658aea2060cf1105748f70eaabc434cfdfaf9d769a",
 		},
 		"dkg result has disqualified longer than 32 bytes": {
 			dkgResult: &relaychain.DKGResult{
@@ -61,7 +61,7 @@ func TestCalculateDKGResultHash(t *testing.T) {
 					1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
 				},
 			},
-			expectedHash: "d48bbfd2b4b22423d354a919f0f9b993a5e3fbd0c93cb6a68ec2e87709349900",
+			expectedHash: "22df70f7a92e04a2ab0e7266b836f34dcf38fe96d8a9d4ce67f14bfbcc1a926b",
 		},
 		"dkg result has group public key longer than 64 bytes": {
 			dkgResult: &relaychain.DKGResult{
@@ -76,7 +76,7 @@ func TestCalculateDKGResultHash(t *testing.T) {
 					27, 252, 25, 38, 201, 41, 127, 179, 75, 112,
 				},
 			},
-			expectedHash: "a79c258065c5e01c83afd0b581b47623d7e020e1f8288cb5c26d337fb5537adf",
+			expectedHash: "2a2f24baccd2f9bc371e08fff5bba43c7d4301d7d93fc97f2f93eb3cda28ddb6",
 		},
 	}
 

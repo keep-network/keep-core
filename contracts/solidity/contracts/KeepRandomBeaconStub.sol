@@ -11,8 +11,8 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 contract KeepRandomBeaconStub is Ownable {
 
     // These are the public events that are used by clients
-    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed); 
-    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, uint256 requestGroupPubKey, uint256 previousEntry);
+    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey); 
+    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry);
 
     uint256 internal _seq;
     uint256 internal _previousEntry;
@@ -51,11 +51,12 @@ contract KeepRandomBeaconStub is Ownable {
      */
     function requestRelayEntry(uint256 seed) public payable returns (uint256 requestID) {
         requestID = _seq++;
-        emit RelayEntryRequested(requestID, msg.value, _previousEntry, seed);
 
         // Return mocked data instead of interacting with relay.
         uint256 groupSignature = uint256(keccak256(abi.encodePacked(_previousEntry, block.timestamp, seed)));
-        uint256 groupPubKey = uint256(keccak256(abi.encodePacked(block.timestamp, uint(1))));
+        bytes memory groupPubKey = abi.encodePacked(keccak256(abi.encodePacked(block.timestamp, uint(1))));
+        
+        emit RelayEntryRequested(requestID, msg.value, _previousEntry, seed, groupPubKey);
         emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, _previousEntry);
 
         _previousEntry = groupSignature;

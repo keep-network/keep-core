@@ -22,12 +22,12 @@ type Entry struct {
 
 // Request represents a request for an entry in the threshold relay.
 type Request struct {
-	RequestID     *big.Int
-	Payment       *big.Int
-	PreviousEntry *big.Int
-	Seed          *big.Int
-
-	BlockNumber uint64
+	RequestID      *big.Int
+	Payment        *big.Int
+	PreviousEntry  *big.Int
+	Seed           *big.Int
+	GroupPublicKey []byte
+	BlockNumber    uint64
 }
 
 // GroupTicketSubmission represents a group selection ticket submission event.
