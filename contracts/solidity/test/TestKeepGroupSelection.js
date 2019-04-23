@@ -15,7 +15,7 @@ const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
 contract('TestKeepGroupSelection', function(accounts) {
 
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
-    randomBeaconValue, timeoutInitial, timeoutSubmission, timeoutChallenge,
+    randomBeaconValue, timeoutSubmission, timeoutChallenge,
     groupExpirationTimeout, numberOfActiveGroups,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
