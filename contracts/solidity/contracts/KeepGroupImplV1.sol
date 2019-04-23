@@ -532,7 +532,10 @@ contract KeepGroupImplV1 is Ownable {
 
         return _groups[_expiredOffset + selectedGroup].groupPubKey;
     }
-
+    /**
+     * @dev Gets the group registration block height.
+     * @param groupIndex is the index of the queried group.
+     */
     function getGroupRegistrationBlockHeight(uint256 groupIndex) public view returns(uint256) {
         return _groups[groupIndex].registrationBlockHeight;
     }
