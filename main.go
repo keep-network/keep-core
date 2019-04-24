@@ -8,7 +8,6 @@ import (
 	"path"
 	"time"
 
-	"github.com/dfinity/go-dfinity-crypto/bls"
 	"github.com/keep-network/keep-core/cmd"
 	"github.com/urfave/cli"
 )
@@ -28,10 +27,6 @@ func main() {
 	}
 	if revision == "" {
 		revision = "unknown"
-	}
-
-	if err := bls.Init(bls.CurveSNARK1); err != nil {
-		log.Fatal("Failed to initialize BLS.", err)
 	}
 
 	app := cli.NewApp()
