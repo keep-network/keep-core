@@ -14,6 +14,7 @@ const groupSize = 20;
 const timeoutInitial = 20;
 const timeoutSubmission = 50;
 const timeoutChallenge = 60;
+const timeDKG = 20;
 const resultPublicationBlockStep = 3;
 const groupExpirationTimeout = 300;
 const activeGroupsThreshold = 5;
@@ -44,7 +45,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await keepGroupImplViaProxy.initialize(
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake,
       groupThreshold, groupSize, timeoutInitial, timeoutSubmission,
-      timeoutChallenge, resultPublicationBlockStep, activeGroupsThreshold,
+      timeoutChallenge, timeDKG, resultPublicationBlockStep, activeGroupsThreshold,
       groupExpirationTimeout
     );
 
