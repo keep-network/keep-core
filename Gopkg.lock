@@ -275,14 +275,6 @@
   revision = "b497e2f366b8624394fb2e89c10ab607bebdde0b"
 
 [[projects]]
-  digest = "1:49ad34519824c6236d200b0f8d07a071a6cb32714f7dda837a2651cee3acd442"
-  name = "github.com/keep-network/paillier"
-  packages = ["."]
-  pruneopts = ""
-  revision = "79cb054ad9bbe9f6b7a433bb7e4f892e92e1f8b3"
-  source = "https://github.com/keep-network/paillier"
-
-[[projects]]
   digest = "1:083b726d999fff7a2fcd09b779598cddcb642628bc028e4cfe46e81b18bf0d26"
   name = "github.com/koron/go-ssdp"
   packages = ["."]
@@ -1018,7 +1010,6 @@
     "github.com/gogo/protobuf/sortkeys",
     "github.com/ipfs/go-datastore",
     "github.com/ipfs/go-datastore/sync",
-    "github.com/keep-network/paillier",
     "github.com/libp2p/go-addr-util",
     "github.com/libp2p/go-conn-security",
     "github.com/libp2p/go-libp2p",
