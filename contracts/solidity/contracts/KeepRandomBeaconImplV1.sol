@@ -33,6 +33,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     uint256 internal _pendingWithdrawal;
     address internal _groupContract;
     uint256 internal _previousEntry;
+    uint256 internal _relayRequestTimeout; 
 
     mapping (string => bool) internal _initialized;
 
@@ -70,6 +71,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _pendingWithdrawal = 0;
         _previousEntry = genesisEntry;
         _groupContract = groupContract;
+        _relayRequestTimeout = 10;
 
         // Create initial relay entry request. This will allow relayEntry to be called once
         // to trigger the creation of the first group. Requests are removed on successful
