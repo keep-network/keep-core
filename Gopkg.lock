@@ -42,14 +42,6 @@
   version = "v1.7.1"
 
 [[projects]]
-  digest = "1:b1ae6bfe8a7745c88b5a5aead860fe3b47cac38aaf26f01d06c9711f452462e0"
-  name = "github.com/dfinity/go-dfinity-crypto"
-  packages = ["bls"]
-  pruneopts = ""
-  revision = "1cfc23c8f712378febdf621f27e49dd67846e901"
-  source = "https://github.com/keep-network/go-dfinity-crypto.git"
-
-[[projects]]
   digest = "1:3c11702e3f6b0daf20996ef8adb0177c51ffb1b3326eebe373d27083e589cd3c"
   name = "github.com/ethereum/go-ethereum"
   packages = [
@@ -998,7 +990,6 @@
   input-imports = [
     "github.com/BurntSushi/toml",
     "github.com/btcsuite/btcd/btcec",
-    "github.com/dfinity/go-dfinity-crypto/bls",
     "github.com/ethereum/go-ethereum",
     "github.com/ethereum/go-ethereum/accounts/abi",
     "github.com/ethereum/go-ethereum/accounts/abi/bind",
