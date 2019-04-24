@@ -14,14 +14,14 @@ import (
 )
 
 const defaultConfigPath = "./config.toml"
-const defaultConsulPath = ""
+const defaultConsulHost = ""
 
 var (
 	version  string
 	revision string
 
 	configPath string
-	consulPath string
+	consulHost string
 )
 
 func main() {
@@ -56,10 +56,10 @@ func main() {
 			Usage:       "full path to the configuration file",
 		},
 		cli.StringFlag{
-			Name:        "consul,u",
-			Value:       defaultConsulPath,
-			Destination: &consulPath,
-			Usage:       "<ConsulServer>:<Port>",
+			Name:        "consulHost,u",
+			Value:       defaultConsulHost,
+			Destination: &consulHost,
+			Usage:       "<ConsulHost>:<Port>",
 		},
 	}
 	app.Commands = []cli.Command{

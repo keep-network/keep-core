@@ -38,19 +38,17 @@ var (
 )
 
 // ReadConfig reads in the configuration file in .toml format.
-// If consulServer is specified it will try to read configurations
+// If consulHost is specified it will try to read configurations
 // from a Consul server instead.
-func ReadConfig(filePath string, consulServer string) (*Config, error) {
+func ReadConfig(filePath string, consulHost string) (*Config, error) {
 	configuration := &Config{}
-	if consulServer != "" {
-		fmt.Printf("consulServer set: %s\n", consulServer)
-		if err := config.Load(consul.NewSource(consul.WithAddress(consulServer),
+	if consulHost != "" {
+		if err := config.Load(consul.NewSource(consul.WithAddress(consulHost),
 			consul.WithPrefix(""))); err != nil {
 			return nil, fmt.Errorf(
-				"unable to connect to Consul server [%s] error [%s]", consulServer, err)
+				"unable to connect to Consul server [%s] error [%s]", consulHost, err)
 		}
 	} else {
-		fmt.Printf("filePath set: %s\n", filePath)
 		if err := config.Load(file.NewSource(file.WithPath(filePath))); err != nil {
 			return nil, fmt.Errorf(
 				"unable to decode .toml file [%s] error [%s]", filePath, err)
@@ -63,11 +61,12 @@ func ReadConfig(filePath string, consulServer string) (*Config, error) {
 	//DEBUG: create a map of the configuration
 	// cMap := config.Map()
 	// fmt.Println("map: ", cMap)
+	// DEBUG: print parsed configurations
 	// fmt.Println("Ethereum.Account: ", configuration.Ethereum.Account)
 	// fmt.Println("LibP2P.Port: ", configuration.LibP2P.Port)
 	// fmt.Println("LibP2P.Seed: ", configuration.LibP2P.Seed)
 	// fmt.Println("LibP2P.Peers: ", configuration.LibP2P.Peers)
-	fmt.Println("Ethereum.ContractAddresses: ", configuration.Ethereum.ContractAddresses)
+	// fmt.Println("Ethereum.ContractAddresses: ", configuration.Ethereum.ContractAddresses)
 
 	envPassword := os.Getenv(ethPasswordEnvVariable)
 	if envPassword == "prompt" {
