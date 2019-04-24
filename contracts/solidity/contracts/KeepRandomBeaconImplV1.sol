@@ -24,7 +24,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     using BytesLib for bytes;
 
     // These are the public events that are used by clients
-    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed); 
+    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey); 
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     uint256 internal _requestCounter;
@@ -108,7 +108,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
         _requests[_requestCounter] = Request(msg.sender, msg.value, groupPubKey);
 
-        emit RelayEntryRequested(_requestCounter, msg.value, _previousEntry, seed);
+        emit RelayEntryRequested(_requestCounter, msg.value, _previousEntry, seed, groupPubKey);
         return _requestCounter;
     }
 
