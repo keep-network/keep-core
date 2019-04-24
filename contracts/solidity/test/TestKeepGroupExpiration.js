@@ -54,15 +54,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
       await keepGroupImplViaProxy.registerNewGroup([i]);
   });
 
-  async function checkExpired() {
-    var currentBlockHeight = await web3.eth.getBlockNumber();
-    var expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
-    for (var i = 0; i < expiredOffset; i++) {
-      let groupRegistrationBlockHeight = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(i);
-      assert.isAtLeast(Number(currentBlockHeight - groupRegistrationBlockHeight), Number(groupExpirationTimeout));
-    }
-  };
-
   it("it should be able to count the number of active groups", async function() {
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
     assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups not equals to number of test groups");
@@ -81,7 +72,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
     }
 
     assert.notEqual(Number(numberOfGroups), testGroupsNumber, "Some groups should be marked as expired");
-    checkExpired();
   });
 
   it("should be able to check that groups are marked as expired except the minimal active groups number", async function() {
@@ -96,7 +86,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
     }
     
     assert.isAtLeast(Number(after), activeGroupsThreshold, "Number of groups should not fall below the threshold of active groups");
-    checkExpired();
   });
 
   it("should be able to remove only the expired groups", async function() {
@@ -126,6 +115,5 @@ contract('TestKeepGroupExpiration', function(accounts) {
     }
 
     assert.isAtLeast(Number(after), activeGroupsThreshold, "Number of groups should not fall below the threshold of active groups");
-    checkExpired();
   });
 });
