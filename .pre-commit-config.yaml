@@ -1,12 +1,12 @@
 repos:
  - repo: https://github.com/keep-network/pre-commit-golang.git
-   rev: HEAD
+   rev: 47493cd
    hooks:
     - id: go-imports
     - id: go-vet
     - id: go-lint
  - repo: https://github.com/keep-network/pre-commit-hooks.git
-   rev: HEAD
+   rev: 63e729f
    hooks:
     - id: check-added-large-files
  - repo: local

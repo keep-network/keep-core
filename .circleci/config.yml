@@ -14,7 +14,7 @@ jobs:
       - image: circleci/node:8
     steps:
         - checkout
-        - run: sudo npm install -g ganache-cli@6.1.0
+        - run: sudo npm install -g ganache-cli@6.4.2
         - run:
             name: Running testrpc
             command: ganache-cli

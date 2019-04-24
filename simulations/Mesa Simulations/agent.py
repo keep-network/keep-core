@@ -122,11 +122,10 @@ class Signature(Agent):
                     active_count[node.node_id] = (node.mainloop_status=="forked") #adds 1 to the index matching the node id if the node is active
                     temp_distr[node.node_id] += (node.mainloop_status=="forked") #counts the node in the group distr only if it's active
 
-                print(sum(active_count))
                 self.ownership_distr = temp_distr
 
 
-                if sum(active_count)>= self.model.signature_threshold: 
+                if sum(active_count)>= self.model.signature_threshold: # Signature is only successfull if the number of active nodes is greater than the threshold set in the model
                     print("         signature successful")
                     self.model.unsuccessful_signature_events.append(0)
                     self.signature_success = True

@@ -2,11 +2,8 @@ package testutils
 
 import (
 	"fmt"
-	"math/big"
 	"reflect"
 	"testing"
-
-	crand "crypto/rand"
 )
 
 var byteArray = [10]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
@@ -110,20 +107,5 @@ func TestAssertBytesEqual(t *testing.T) {
 				)
 			}
 		})
-	}
-}
-
-func TestMockRandReader(t *testing.T) {
-	counter := big.NewInt(10)
-	mockRandReader := NewMockRandReader(counter)
-	for i := 0; i <= 5; i++ {
-		expectedNumber := new(big.Int).Add(counter, big.NewInt(int64(i)))
-		randomNumber, err := crand.Int(mockRandReader, big.NewInt(1000))
-		if err != nil {
-			t.Fatalf("unexpected error [%s]", err)
-		}
-		if randomNumber.Cmp(expectedNumber) != 0 {
-			t.Fatalf("generated random number %s doesn't match expected %s", randomNumber, expectedNumber)
-		}
 	}
 }
