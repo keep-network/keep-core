@@ -21,8 +21,8 @@ const timeoutInitial = 4;
 const timeoutSubmission = 4;
 const timeoutChallenge = 4;
 const resultPublicationBlockStep = 3;
-const numberOfActiveGroups = 5;
-const groupExpirationTimeout = 300;
+const activeGroupsThreshold = 5;
+const groupExpirationTime = 300;
 
 // timeDKG - Timeout in blocks after DKG result is complete and ready to be published.
 // 7 states with state.MessagingStateActiveBlocks which is set to 3
@@ -54,7 +54,7 @@ module.exports = async function(deployer) {
   await keepGroup.initialize(
     StakingProxy.address, KeepRandomBeacon.address, minStake, groupThreshold, 
     groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG,
-    resultPublicationBlockStep, numberOfActiveGroups, groupExpirationTimeout
+    resultPublicationBlockStep, activeGroupsThreshold, groupExpirationTime
   );
   // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
   await keepRandomBeacon.initialize(
