@@ -51,14 +51,14 @@ contract KeepGroupImplV1 is Ownable {
     mapping(uint256 => Proof) internal _proofs;
 
     // _activeGroupsThreshold is the minimal number of groups that should not
-    // expired to protect the minimal network throughput
+    // expire to protect the minimal network throughput
     uint256 internal _activeGroupsThreshold;
  
     // _expirationTime is the time in block after which a group expires
     uint256 internal _expirationTime;
  
     // _expiredOffset is pointing to the first active group, it is also the
-    // expire groups counter
+    // expired groups counter
     uint256 internal _expiredOffset = 0;
 
     struct Group {
