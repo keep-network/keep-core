@@ -55,8 +55,8 @@ contract KeepGroupImplV1 is Ownable {
     // It should be at leaset 1.
     uint256 internal _activeGroupsThreshold;
  
-    // _expirationTime is the time in block after which a group expires
-    uint256 internal _expirationTime;
+    // _activeTime is the time in block after which a group expires
+    uint256 internal _activeTime;
  
     // _expiredOffset is pointing to the first active group, it is also the
     // expired groups counter
@@ -395,7 +395,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param resultPublicationBlockStep Time in blocks after which member with the given index is eligible
      * to submit DKG result.
      * @param activeGroupsThreshold is the minimal number of groups that cannot be marked as expired.
-     * @param expirationTime is the time in block after which a group expires.
+     * @param activeTime is the time in block after which a group expires.
      */
     function initialize(
         address stakingProxy,
@@ -409,7 +409,7 @@ contract KeepGroupImplV1 is Ownable {
         uint256 timeDKG,
         uint256 resultPublicationBlockStep,
         uint256 activeGroupsThreshold,
-        uint256 expirationTime
+        uint256 activeTime
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
@@ -425,7 +425,7 @@ contract KeepGroupImplV1 is Ownable {
         _timeDKG = timeDKG;
         _resultPublicationBlockStep = resultPublicationBlockStep;
         _activeGroupsThreshold = activeGroupsThreshold;
-        _expirationTime = expirationTime;
+        _activeTime = activeTime;
     }
 
     /**
@@ -594,7 +594,7 @@ contract KeepGroupImplV1 is Ownable {
         * starting from the previous value of expired groups offset since we can
         * mark expired groups in batches, in a fewer number of steps.
         */
-        while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _expirationTime < block.number) {
+        while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _activeTime < block.number) {
             if (numberOfActiveGroups - selectedGroup - 1 > _activeGroupsThreshold) {
                 _expiredOffset += ++selectedGroup;
                 numberOfActiveGroups -= selectedGroup;
