@@ -117,31 +117,6 @@ contracts before clients due to client startup behavior.
 
 ```
 
-=== Sample keep-client Service Consul Configuration
-When operating in a Kubernetes cluster we can query client configurations from
-a Consul host. To provision configurations they are first loaded into the key-
-value store. The keep-client is then instructed via the `consulHost` commandline
-parameter to query Consul for its configuration.
-
-To fully automate deployment of new code on merge to master we need to auto-generate
-a configuration for each test keep-client and upload it to Consul.
-
-*Standard Peer*
-```
-#!/bin/sh
-	consul kv put ethereum '{"URL": "ws://192.168.0.150:8546", "URLRPC": "http://192.168.0.151:8545"}'
-	consul kv get ethereum
-
-	consul kv put ethereum/account '{"Address": "0xc2a56884538778bacd91aa5bf343bf882c5fb18c", "KeyFile": "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18c"}'
-	consul kv get ethereum/account
-
-	consul kv put ethereum/contractaddresses '{"KeepRandomBeacon": "0x639deb0dd975af8e4cc91fe9053a37e4faf37648", "KeepGroup": "0xcf64c2a367341170cb4e09cf8c0ed137d8473cec", "StakingProxy": "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCD"}'
-	consul kv get ethereum/contractaddresses
-
-	consul kv put libp2p '{"Port": 27002, "Peers": ["/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"], "Seed": 0}'
-	consul kv get libp2p
-```
-
 === Current Functionality
 
 We currently have a single cloud environment (`keep-dev`) that is in a mixed state of
@@ -223,17 +198,61 @@ To reiterate:  The implementation will aim to automate
 `Ethereum Contract Deployment` and `keep-client Configuration`.
 `keep-client service deployment` is already automated via Keel.
 
+==== Part 1: Contract Migration and ConfigMap Updates
+
 Either a new workflow or new jobs to existing workflow will be added to the
 `keep-core` circle config.  Before image publish on master merge Circle
 will run this workflow/job to trigger a script that will:
 
 - migrate all contracts if any are changed
-- unlock ETH accounts (script needs to be faster)
-- stake ETH accounts (script needs to be faster)
 - update keep-client ConfigMaps with new contract addresses
 
 - Here we must implement an access point for Circle into the private Kubernetes
   cluster.  We can do this with the `gcp_push_deploy` Terraform module.
+
+==== Sample keep-client Service Consul Configuration
+When operating in a Kubernetes cluster we can query client configurations from
+a Consul host. To provision configurations they are first loaded into the key-
+value store. The keep-client is then instructed via the `consulHost` commandline
+parameter to query Consul for its configuration.
+
+To fully automate deployment of new code on merge to master we need to auto-generate
+a configuration for each test keep-client and upload it to Consul.
+
+*Standard Peer*
+```
+#!/bin/sh
+  consul kv put ethereum '{"URL": "ws://192.168.0.150:8546", "URLRPC": "http://192.168.0.151:8545"}'
+  consul kv get ethereum
+
+  consul kv put ethereum/account '{"Address": "0xc2a56884538778bacd91aa5bf343bf882c5fb18c", "KeyFile": "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18c"}'
+  consul kv get ethereum/account
+
+  consul kv put ethereum/contractaddresses '{"KeepRandomBeacon": "0x639deb0dd975af8e4cc91fe9053a37e4faf37648", "KeepGroup": "0xcf64c2a367341170cb4e09cf8c0ed137d8473cec", "StakingProxy": "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCD"}'
+  consul kv get ethereum/contractaddresses
+
+  consul kv put libp2p '{"Port": 27002, "Peers": ["/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"], "Seed": 0}'
+  consul kv get libp2p
+```
+
+==== Part 2: ETH Account Preparation
+
+On each keep-client Kubernetes deployment we'll run an `InitContainer` that does
+the following:
+
+- unlock ETH account
+- stake ETH account
+
+The `InitContainer` will operate exclusively on the ETH account assigned to the
+`keep-client` being deployed.  If there are 100 `keep-client` Kubernetes
+deployments, there would be 100 `InitContainer` instances unlocking and staking
+for each of the assigned ETH accounts.  This is infinitely scalable (system
+resources aside) and reduces `unlock + stake` time to a ceiling of the time it
+takes to operate on a single account.
+
+For now we're going to bake a custom image for the init container with the script
+for doing unlock and stake.  This will be checked into the
+`keep-core/infrastructure/kube` directory.
 
 
 === Limitations
