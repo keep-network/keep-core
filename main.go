@@ -15,6 +15,7 @@ import (
 
 const defaultConfigPath = "./config.toml"
 const defaultConsulHost = ""
+const defaultID = ""
 
 var (
 	version  string
@@ -22,6 +23,7 @@ var (
 
 	configPath string
 	consulHost string
+	clientID   string
 )
 
 func main() {
@@ -60,6 +62,12 @@ func main() {
 			Value:       defaultConsulHost,
 			Destination: &consulHost,
 			Usage:       "<ConsulHost>:<Port>",
+		},
+		cli.StringFlag{
+			Name:        "id,i",
+			Value:       defaultID,
+			Destination: &clientID,
+			Usage:       "clientID",
 		},
 	}
 	app.Commands = []cli.Command{

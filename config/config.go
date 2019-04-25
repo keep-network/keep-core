@@ -40,11 +40,12 @@ var (
 // ReadConfig reads in the configuration file in .toml format.
 // If consulHost is specified it will try to read configurations
 // from a Consul server instead.
-func ReadConfig(filePath string, consulHost string) (*Config, error) {
+func ReadConfig(filePath string, consulHost string,
+	clientID string) (*Config, error) {
 	configuration := &Config{}
 	if consulHost != "" {
 		if err := config.Load(consul.NewSource(consul.WithAddress(consulHost),
-			consul.WithPrefix(""))); err != nil {
+			consul.WithPrefix(clientID), consul.StripPrefix(true))); err != nil {
 			return nil, fmt.Errorf(
 				"unable to connect to Consul server [%s] error [%s]", consulHost, err)
 		}

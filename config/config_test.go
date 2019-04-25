@@ -13,7 +13,7 @@ func TestReadConfig(t *testing.T) {
 	}
 
 	filepath := "../test/config.toml"
-	cfg, err := ReadConfig(filepath, "")
+	cfg, err := ReadConfig(filepath, "", "")
 	if err != nil {
 		t.Fatalf(
 			"failed to read test config: [%v]",
@@ -66,35 +66,9 @@ func TestConsulReadConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// put values into Consul KV database
-	// you need to be running a local Consul service for this to work
-	// get a new client
-	// client, err := api.NewClient(api.DefaultConfig())
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// // Get a handle to the KV API
-	// kv := client.KV()
-	// // PUT a new KV pair
-	// value := "{\"peers\": \"\"These are my peers\"\", \"port\": 27002, \"seed\": 1}"
-	//
-	// p := &api.KVPair{Key: "libp2p", Value: []byte(value)}
-	// _, err = kv.Put(p, nil)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	//
-	// // Lookup the pair
-	// pair, _, err := kv.Get("libp2p", nil)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Printf("KV: %v %s\n", pair.Key, pair.Value)
-	// // check values in Consul KV database
-
 	// check we can read the test config file
 	filepath := "../test/config.toml"
-	cfg, err := ReadConfig(filepath, "localhost:8500")
+	cfg, err := ReadConfig(filepath, "localhost:8500", "keep-client-standard-peer-0")
 	if err != nil {
 		t.Fatalf(
 			"failed to read test config: [%v]",
