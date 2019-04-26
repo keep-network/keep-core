@@ -8,7 +8,7 @@ executors:
     docker:
       - image: docker:18.06.0-ce-git
       - image: library/consul:1.4.4
-        command: [consul agent -dev]
+        command: [consul, agent, -dev]
 
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.0.4
