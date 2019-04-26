@@ -1,95 +1,179 @@
 package dkg
 
 import (
+	"context"
+	"crypto/rand"
+	"fmt"
 	"math/big"
 	"sync"
 	"testing"
+	"time"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/net"
 
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
-	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 )
 
-type result struct {
-	signer *ThresholdSigner
-	err    error
-}
-
-func TestExecuteDKGLocal(t *testing.T) {
+func TestExecute_HappyPath(t *testing.T) {
 	groupSize := 5
 	threshold := 3
 
-	requestID := big.NewInt(13)
-	seed := big.NewInt(8)
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		return msg
+	}
+	network := testutils.NewInterceptingNetwork(interceptor)
 
-	startBlockHeight := uint64(2)
-
-	networkProvider := netLocal.Connect()
-	chainHandle := chainLocal.Connect(groupSize, threshold, big.NewInt(200))
-
-	blockCounter, err := chainHandle.BlockCounter()
+	result, signers, err := executeDKG(groupSize, threshold, network)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	executeDKG := func(playerIndex int) (*ThresholdSigner, error) {
-		broadcastChannel, err := networkProvider.ChannelFor("testing_channel")
-		if err != nil {
-			t.Fatalf("cannot generate broadcast channel [%v]", err)
+	assertSignersCount(t, signers, groupSize)
+	assertSamePublicKey(t, result, signers)
+	// TODO: assert no DQ
+	// TODO: assert no IA
+	// TODO: assert key is valid
+}
+
+func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
+	groupSize := 5
+	threshold := 3
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		// drop commitment message from member 1
+		commitmentMsg, ok := msg.(*gjkr.MemberCommitmentsMessage)
+		if ok && commitmentMsg.SenderID() == group.MemberIndex(1) {
+			return nil
 		}
 
-		signer, err := ExecuteDKG(
-			requestID,
-			seed,
-			playerIndex,
-			groupSize,
-			threshold,
-			startBlockHeight,
-			blockCounter,
-			chainHandle.ThresholdRelay(),
-			broadcastChannel,
-		)
+		return msg
+	}
+	network := testutils.NewInterceptingNetwork(interceptor)
 
-		return signer, err
+	result, signers, err := executeDKG(groupSize, threshold, network)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	resultsChannel := make(chan *result, groupSize)
+	assertSignersCount(t, signers, groupSize)
+	assertSamePublicKey(t, result, signers)
+	// TODO: assert no DQ
+	// TODO: assert member 1 is IA
+	// TODO: assert key is valid
+}
+
+func assertSignersCount(
+	t *testing.T,
+	signers []*ThresholdSigner,
+	expectedCount int,
+) {
+	if len(signers) != expectedCount {
+		t.Errorf(
+			"Unexpected number of signers\nExpected: [%v]\nActual:   [%v]",
+			expectedCount,
+			len(signers),
+		)
+	}
+}
+
+func assertSamePublicKey(
+	t *testing.T,
+	result *event.DKGResultSubmission,
+	signers []*ThresholdSigner,
+) {
+	for _, signer := range signers {
+		testutils.AssertBytesEqual(
+			t,
+			result.GroupPublicKey,
+			signer.GroupPublicKeyBytes(),
+		)
+	}
+}
+
+func executeDKG(
+	groupSize int,
+	threshold int,
+	network testutils.InterceptingNetwork,
+) (*event.DKGResultSubmission, []*ThresholdSigner, error) {
+	minimumStake, requestID, seed, startBlockHeight, err := getDKGParameters()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	chainHandle := chainLocal.Connect(groupSize, threshold, minimumStake)
+	blockCounter, err := chainHandle.BlockCounter()
+	if err != nil {
+		return nil, nil, err
+	}
+	broadcastChannel, err := network.ChannelFor("dkg_test")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	signers := make([]*ThresholdSigner, groupSize)
+	resultChan := make(chan *event.DKGResultSubmission)
+	chainHandle.ThresholdRelay().OnDKGResultSubmitted(
+		func(event *event.DKGResultSubmission) {
+			resultChan <- event
+		},
+	)
 
 	var wg sync.WaitGroup
 	wg.Add(groupSize)
 	for i := 0; i < groupSize; i++ {
-		memberID := i
+		i := i // capture for goroutine
 		go func() {
-			signer, err := executeDKG(memberID)
-			resultsChannel <- &result{signer, err}
+			signer, _ := ExecuteDKG(
+				requestID,
+				seed,
+				i,
+				groupSize,
+				threshold,
+				startBlockHeight,
+				blockCounter,
+				chainHandle.ThresholdRelay(),
+				broadcastChannel,
+			)
+			signers[i] = signer
 			wg.Done()
 		}()
 	}
 	wg.Wait()
-	close(resultsChannel)
 
-	// read all results from the channel and put them into a slice
-	var resultsSlice []*result
-	for result := range resultsChannel {
-		resultsSlice = append(resultsSlice, result)
+	// We give 5 seconds so that OnDKGResultSubmitted async handler
+	// is fired. If it's not, than it means no result was published
+	// to the chain.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	select {
+	case result := <-resultChan:
+		return result, signers, nil
+	case <-ctx.Done():
+		return nil, signers, fmt.Errorf("No result published to the chain")
+	}
+}
+
+func getDKGParameters() (
+	minimumStake *big.Int,
+	requestID *big.Int,
+	seed *big.Int,
+	startBlockHeight uint64,
+	err error,
+) {
+	startBlockHeight = uint64(1)
+	minimumStake = big.NewInt(20)
+
+	requestID, err = rand.Int(rand.Reader, big.NewInt(10000))
+	if err != nil {
+		return
 	}
 
-	// assert no errors occured
-	for _, result := range resultsSlice {
-		if result.err != nil {
-			t.Errorf("unexpected error: [%v]", result.err)
-		}
-	}
+	seed, err = rand.Int(rand.Reader, big.NewInt(100000))
 
-	// assert all signers share the same group key
-	for i := 1; i < groupSize; i++ {
-		key0 := resultsSlice[0].signer.GroupPublicKeyBytes()
-		keyi := resultsSlice[i].signer.GroupPublicKeyBytes()
-
-		testutils.AssertBytesEqual(t, key0, keyi)
-	}
-
-	// TODO: Add verification of result submission when new Phase 14 is added to
-	// states machine.
+	return
 }
