@@ -80,7 +80,7 @@ jobs:
       - run:
           name: does this work at alllllllllllll
           command: |
-            ps aux
+            netstat -an
   publish_client:
     executor: gcp-gcr/default
     steps:
