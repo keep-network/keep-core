@@ -51,11 +51,15 @@ jobs:
           paths:
             - solidity/*
   build_client_and_test_go:
-    executor: docker-git
+    executor: docker-consul
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
+      - run:
+        name: Populate Consul cluster with test data
+        command: |
+          ./test/consul-config-test-setup.sh
       - run:
           name: Run Docker build
           command: |
@@ -74,13 +78,6 @@ jobs:
           root: /tmp/images
           paths:
             - keep-client
-  test_consul_kv:
-    executor: docker-consul
-    steps:
-      - run:
-          name: does this work at alllllllllllll
-          command: |
-            netstat -an
   publish_client:
     executor: gcp-gcr/default
     steps:
