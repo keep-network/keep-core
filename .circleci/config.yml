@@ -4,6 +4,11 @@ executors:
   docker-git:
     docker:
       - image: docker:18.06.0-ce-git
+  docker-consul:
+    docker:
+      - image: docker:18.06.0-ce-git
+      - image: library/consul:1.4.4
+        command: [consul]
 
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.0.4
@@ -69,6 +74,13 @@ jobs:
           root: /tmp/images
           paths:
             - keep-client
+  test_consul_kv:
+    executor: docker-consul
+    steps:
+      - run:
+          name: does this work at alllllllllllll
+          command: |
+            ps aux
   publish_client:
     executor: gcp-gcr/default
     steps:
@@ -150,6 +162,7 @@ workflows:
       - test_solidity
   build-test-publish:
     jobs:
+      - test_consul_kv
       - build_client_and_test_go:
           context: keep-dev
       - publish_client:
