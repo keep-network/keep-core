@@ -59,7 +59,7 @@ jobs:
       - run:
         name: Populate Consul cluster with test data
         command: |
-          ./test/consul-config-test-setup.sh
+            ./test/consul-config-test-setup.sh
       - run:
           name: Run Docker build
           command: |
