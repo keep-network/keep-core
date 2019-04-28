@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./DelayedWithdrawal.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./BLS.sol";
 
@@ -19,7 +20,7 @@ interface GroupContract {
  * up-to-date logic for threshold random number generation. Updated contracts
  * must inherit from this contract and have to be initialized under updated version name
  */
-contract KeepRandomBeaconImplV1 is Ownable {
+contract KeepRandomBeaconImplV1 is Ownable, DelayedWithdrawal {
 
     using BytesLib for bytes;
 
@@ -29,8 +30,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
     uint256 internal _requestCounter;
     uint256 internal _minPayment;
-    uint256 internal _withdrawalDelay;
-    uint256 internal _pendingWithdrawal;
     address internal _groupContract;
     uint256 internal _previousEntry;
 
@@ -110,25 +109,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
         emit RelayEntryRequested(_requestCounter, msg.value, _previousEntry, seed, groupPubKey);
         return _requestCounter;
-    }
-
-    /**
-     * @dev Initiate withdrawal of this contract balance to the owner.
-     */
-    function initiateWithdrawal() public onlyOwner {
-        _pendingWithdrawal = block.timestamp + _withdrawalDelay;
-    }
-
-    /**
-     * @dev Finish withdrawal of this contract balance to the owner.
-     */
-    function finishWithdrawal(address payable payee) public onlyOwner {
-        require(_pendingWithdrawal > 0, "Pending withdrawal timestamp must be set and be greater than zero.");
-        require(block.timestamp >= _pendingWithdrawal, "The current time must pass the pending withdrawal timestamp.");
-
-        // Reset pending withdrawal before sending to prevent re-entrancy attacks
-        _pendingWithdrawal = 0;
-        payee.transfer(address(this).balance);
     }
 
     /**
