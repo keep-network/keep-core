@@ -14,6 +14,8 @@ const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
 
 contract('TestKeepGroupSelection', function(accounts) {
 
+  const relayRequestTimeout = 10;
+
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     randomBeaconValue,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
@@ -58,7 +60,8 @@ contract('TestKeepGroupSelection', function(accounts) {
       groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
     );
 
-    await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address);
+    await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address,
+      relayRequestTimeout);
     await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     // Stake delegate tokens to operator1
