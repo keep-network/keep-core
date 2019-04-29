@@ -62,14 +62,9 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("should be able to check if at least one group is marked as expired", async function() {
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
     
-    for (var i = 1; i <= testGroupsNumber; i++) {
-      mineBlocks(groupExpirationTimeout);
-      await keepGroupImplViaProxy.selectGroup((testGroupsNumber - 1) % i);
-      numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
-
-      if (Number(numberOfGroups) < testGroupsNumber)
-        break;
-    }
+    mineBlocks(groupExpirationTime);
+    await keepGroupImplViaProxy.selectGroup(1);
+    numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
 
     assert.notEqual(Number(numberOfGroups), testGroupsNumber, "Some groups should be marked as expired");
   });
