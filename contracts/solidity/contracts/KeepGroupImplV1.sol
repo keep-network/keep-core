@@ -608,11 +608,15 @@ contract KeepGroupImplV1 is Ownable {
                 _expiredOffset += ++selectedGroup;
                 numberOfActiveGroups -= selectedGroup;
                 selectedGroup = previousEntry % numberOfActiveGroups;
-            } else break;
+            } else {
+                _expiredOffset = _groups.length - _activeGroupsThreshold;
+                numberOfActiveGroups = _activeGroupsThreshold;
+                return _groups[_expiredOffset].groupPubKey;
+            }
         }
-
         return _groups[_expiredOffset + selectedGroup].groupPubKey;
     }
+
     /**
      * @dev Gets the group registration block height.
      * @param groupIndex is the index of the queried group.
