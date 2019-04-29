@@ -82,8 +82,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     assert.isAtLeast(Number(after), activeGroupsThreshold, "Number of groups should not fall below the threshold of active groups");
   });
 
-  it("should be able to remove only the expired groups", async function() {
-    this.timeout(0);
+  it("it should be able to mark only a subset of groups as expired", async function() {
 
     let after = await keepGroupImplViaProxy.numberOfGroups();
 
@@ -92,22 +91,10 @@ contract('TestKeepGroupExpiration', function(accounts) {
     for (var i = 1; i <= testGroupsNumber; i++)
       await keepGroupImplViaProxy.registerNewGroup([i]);
 
+    await keepGroupImplViaProxy.selectGroup(1);
+
     after = await keepGroupImplViaProxy.numberOfGroups();
 
-    for (var i = 1; i <= testGroupsNumber*2; i++) {
-      await keepGroupImplViaProxy.selectGroup((testGroupsNumber*2 - 1) % i);
-      after = await keepGroupImplViaProxy.numberOfGroups();
-    }
-
     assert.isAtLeast(Number(after), testGroupsNumber, "Number of groups should not fall below the test groups number");
-
-    mineBlocks(groupExpirationTimeout*2);
-
-    for (var i = 1; i <= testGroupsNumber*2; i++) {
-      await keepGroupImplViaProxy.selectGroup((testGroupsNumber*2 - 1) % i);
-      after = await keepGroupImplViaProxy.numberOfGroups();
-    }
-
-    assert.isAtLeast(Number(after), activeGroupsThreshold, "Number of groups should not fall below the threshold of active groups");
   });
 });
