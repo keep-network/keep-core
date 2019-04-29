@@ -70,7 +70,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
   });
 
   it("should be able to check that groups are marked as expired except the minimal active groups number", async function() {
-    this.timeout(0);
 
     let after = await keepGroupImplViaProxy.numberOfGroups();
 
