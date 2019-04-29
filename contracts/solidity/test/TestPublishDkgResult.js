@@ -24,7 +24,7 @@ contract('TestPublishDkgResult', function(accounts) {
   const timeoutChallenge = 60;
   const timeDKG = 20;
   const resultPublicationBlockStep = 3;
-  const groupExpirationTimeout = 300;
+  const groupExpirationTime = 300;
   const activeGroupsThreshold = 5;
 
   let disqualified, inactive, resultHash,
@@ -64,7 +64,7 @@ contract('TestPublishDkgResult', function(accounts) {
     await keepGroupImplViaProxy.initialize(
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold,
       groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-      activeGroupsThreshold, groupExpirationTimeout
+      activeGroupsThreshold, groupExpirationTime
     );
 
     randomBeaconValue = bls.groupSignature;

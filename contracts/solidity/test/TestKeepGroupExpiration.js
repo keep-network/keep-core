@@ -16,7 +16,7 @@ const timeoutSubmission = 50;
 const timeoutChallenge = 60;
 const timeDKG = 20;
 const resultPublicationBlockStep = 3;
-const groupExpirationTimeout = 300;
+const groupExpirationTime = 300;
 const activeGroupsThreshold = 5;
 const testGroupsNumber = 10;
 
@@ -47,7 +47,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake,
       groupThreshold, groupSize, timeoutInitial, timeoutSubmission,
       timeoutChallenge, timeDKG, resultPublicationBlockStep, activeGroupsThreshold,
-      groupExpirationTimeout
+      groupExpirationTime
     );
 
     for (var i = 1; i <= testGroupsNumber; i++)
@@ -80,7 +80,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     let after = await keepGroupImplViaProxy.numberOfGroups();
 
     for (var i = 1; i <= testGroupsNumber; i++) {
-      mineBlocks(groupExpirationTimeout);
+      mineBlocks(groupExpirationTime);
       await keepGroupImplViaProxy.selectGroup((testGroupsNumber - 1) % i);
       after = await keepGroupImplViaProxy.numberOfGroups();
     }
@@ -93,7 +93,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     let after = await keepGroupImplViaProxy.numberOfGroups();
 
-    mineBlocks(groupExpirationTimeout*2);
+    mineBlocks(groupExpirationTime*2);
 
     for (var i = 1; i <= testGroupsNumber; i++)
       await keepGroupImplViaProxy.registerNewGroup([i]);
