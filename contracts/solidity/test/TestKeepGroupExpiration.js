@@ -50,16 +50,18 @@ contract('TestKeepGroupExpiration', function(accounts) {
       groupExpirationTime
     );
 
+  it("it should be able to count the number of active groups", async function() {
     for (var i = 1; i <= testGroupsNumber; i++)
       await keepGroupImplViaProxy.registerNewGroup([i]);
-  });
 
-  it("it should be able to count the number of active groups", async function() {
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
     assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups not equals to number of test groups");
   });
 
   it("should be able to check if at least one group is marked as expired", async function() {
+    for (var i = 1; i <= testGroupsNumber; i++)
+      await keepGroupImplViaProxy.registerNewGroup([i]);
+
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
     
     mineBlocks(groupExpirationTime);
@@ -70,6 +72,8 @@ contract('TestKeepGroupExpiration', function(accounts) {
   });
 
   it("should be able to check that groups are marked as expired except the minimal active groups number", async function() {
+    for (var i = 1; i <= testGroupsNumber; i++)
+      await keepGroupImplViaProxy.registerNewGroup([i]);
 
     let after = await keepGroupImplViaProxy.numberOfGroups();
 
@@ -83,6 +87,8 @@ contract('TestKeepGroupExpiration', function(accounts) {
   });
 
   it("it should be able to mark only a subset of groups as expired", async function() {
+    for (var i = 1; i <= testGroupsNumber; i++)
+      await keepGroupImplViaProxy.registerNewGroup([i]);
 
     let after = await keepGroupImplViaProxy.numberOfGroups();
 
