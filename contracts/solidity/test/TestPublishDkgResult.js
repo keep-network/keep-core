@@ -69,7 +69,8 @@ contract('TestPublishDkgResult', function(accounts) {
 
     randomBeaconValue = bls.groupSignature;
 
-    await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address);
+    await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address,
+      relayRequestTimeout);
     await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake*2000)

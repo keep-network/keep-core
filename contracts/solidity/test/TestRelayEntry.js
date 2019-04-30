@@ -6,9 +6,9 @@ const KeepGroupStub = artifacts.require('./KeepGroupStub.sol');
 
 
 contract('TestRelayEntry', function() {
+  const relayRequestTimeout = 10;
 
-  let keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy, relayEntryGeneratedEvent,
-    keepGroupStub;
+  let keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy, keepGroupStub;
 
   beforeEach(async () => {
 
@@ -18,10 +18,9 @@ contract('TestRelayEntry', function() {
     keepRandomBeaconImplViaProxy = await KeepRandomBeaconImplV1.at(keepRandomBeaconProxy.address);
 
     keepGroupStub = await KeepGroupStub.new();
-    await keepRandomBeaconImplViaProxy.initialize(1,1, bls.previousEntry, bls.groupPubKey, keepGroupStub.address);
+    await keepRandomBeaconImplViaProxy.initialize(1,1, bls.previousEntry, bls.groupPubKey, keepGroupStub.address,
+      relayRequestTimeout);
     await keepRandomBeaconImplViaProxy.requestRelayEntry(bls.seed, {value: 10});
-
-    relayEntryGeneratedEvent = keepRandomBeaconImplViaProxy.RelayEntryGenerated();
   });
 
   it("should not be able to submit invalid relay entry", async function() {
