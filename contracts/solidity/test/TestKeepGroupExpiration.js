@@ -53,8 +53,8 @@ contract('TestKeepGroupExpiration', function(accounts) {
     );
   });
 
-  async function testExpiration(expire, selected) {
-    await mineBlocks(expirationStepTime*expire);
+  async function testExpiration(steps, selected) {
+    await mineBlocks(expirationStepTime * steps);
     await keepGroupImplViaProxy.selectGroup(selected);
     let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
     return Number(expiredOffset);
