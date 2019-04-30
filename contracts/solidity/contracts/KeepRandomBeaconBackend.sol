@@ -10,7 +10,14 @@ import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 
-contract KeepGroupImplV1 is Ownable {
+/**
+ * @title KeepRandomBeaconBackend
+ * @dev Keep client facing contract for random beacon security-critical operations.
+ * Handles group creation and expiration, BLS signature verification and incentives.
+ * The contract is not upgradeable. New functionality can be implemented by deploying
+ * new versions following Keep client update and re-authorization by the stakers.
+ */
+contract KeepRandomBeaconBackend is Ownable {
 
     using SafeMath for uint256;
     using BytesLib for bytes;
@@ -370,7 +377,7 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Initialize Keep Group implementation contract with a linked Staking proxy contract.
+     * @dev Initialize the contract with a linked Staking proxy contract.
      * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
      * @param _randomBeacon Address of a random beacon contract that will be linked to this contract.
      * @param _minimumStake Minimum amount in KEEP that allows KEEP network client to participate in a group.

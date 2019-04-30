@@ -1,11 +1,11 @@
 const KeepRandomBeaconProxy = artifacts.require('KeepRandomBeacon.sol');
-const KeepGroup = artifacts.require("KeepGroupImplV1");
+const KeepRandomBeaconBackend = artifacts.require("KeepRandomBeaconBackend");
 const KeepRandomBeacon = artifacts.require("KeepRandomBeaconImplV1");
 
 module.exports = async function () {
 
   const keepRandomBeaconProxy = await KeepRandomBeaconProxy.deployed();
-  const keepGroup = await KeepGroup.deployed();
+  const keepRandomBeaconBackend = await KeepRandomBeaconBackend.deployed();
 
   async function printLastRelayEntry() {
     let contractRef = await KeepRandomBeacon.at(keepRandomBeaconProxy.address);
@@ -15,7 +15,7 @@ module.exports = async function () {
   }
 
   async function printNumberOfGroups() {
-    let groupsCount = await keepGroup.numberOfGroups();
+    let groupsCount = await keepRandomBeaconBackend.numberOfGroups();
 
     console.log('Number of active groups: ' + groupsCount.toString());
   }

@@ -8,7 +8,7 @@ const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
-const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
+const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackend.sol');
 
 
 contract('TestKeepGroupSelection', function(accounts) {
@@ -17,7 +17,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     randomBeaconValue,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
-    keepGroupImplV1,
+    keepRandomBeaconBackend,
     owner = accounts[0], magpie = accounts[1], signature, delegation,
     operator1 = accounts[2], tickets1,
     operator2 = accounts[3], tickets2,
@@ -37,7 +37,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
     keepRandomBeaconImplViaProxy = await KeepRandomBeaconImplV1.at(keepRandomBeaconProxy.address);
 
-    // Initialize Keep Group contract
+    // Initialize Keep Random Beacon backend contract
     minimumStake = 200000;
     groupThreshold = 15;
     groupSize = 20;
@@ -49,13 +49,13 @@ contract('TestKeepGroupSelection', function(accounts) {
 
     randomBeaconValue = bls.groupSignature;
 
-    keepGroupImplV1 = await KeepGroupImplV1.new();
-    await keepGroupImplV1.initialize(
+    keepRandomBeaconBackend = await KeepRandomBeaconBackend.new();
+    await keepRandomBeaconBackend.initialize(
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold,
       groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
     );
 
-    await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupImplV1.address);
+    await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepRandomBeaconBackend.address);
     await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     // Stake delegate tokens to operator1
@@ -79,29 +79,29 @@ contract('TestKeepGroupSelection', function(accounts) {
   });
 
   it("should be able to get staking weight", async function() {
-    assert.equal(web3.utils.toBN(2000).eq(await keepGroupImplV1.stakingWeight(operator1)), true, "Should have expected staking weight.");
-    assert.equal(web3.utils.toBN(3000).eq(await keepGroupImplV1.stakingWeight(operator3)), true, "Should have expected staking weight.");
+    assert.equal(web3.utils.toBN(2000).eq(await keepRandomBeaconBackend.stakingWeight(operator1)), true, "Should have expected staking weight.");
+    assert.equal(web3.utils.toBN(3000).eq(await keepRandomBeaconBackend.stakingWeight(operator3)), true, "Should have expected staking weight.");
   });
 
   it("should fail to get selected tickets before challenge period is over", async function() {
-    await exceptThrow(keepGroupImplV1.selectedTickets());
+    await exceptThrow(keepRandomBeaconBackend.selectedTickets());
   });
 
   it("should fail to get selected participants before challenge period is over", async function() {
-    await exceptThrow(keepGroupImplV1.selectedParticipants());
+    await exceptThrow(keepRandomBeaconBackend.selectedParticipants());
   });
 
   it("should be able to get selected tickets and participants after challenge period is over", async function() {
 
     for (let i = 0; i < groupSize*2; i++) {
-      await keepGroupImplV1.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
+      await keepRandomBeaconBackend.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
     }
 
     mineBlocks(timeoutChallenge);
-    let selectedTickets = await keepGroupImplV1.selectedTickets();
+    let selectedTickets = await keepRandomBeaconBackend.selectedTickets();
     assert.equal(selectedTickets.length, groupSize, "Should be trimmed to groupSize length.");
 
-    let selectedParticipants = await keepGroupImplV1.selectedParticipants();
+    let selectedParticipants = await keepRandomBeaconBackend.selectedParticipants();
     assert.equal(selectedParticipants.length, groupSize, "Should be trimmed to groupSize length.");
   });
 
@@ -109,19 +109,19 @@ contract('TestKeepGroupSelection', function(accounts) {
 
     let tickets = [];
 
-    await keepGroupImplV1.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
+    await keepRandomBeaconBackend.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
     tickets.push(tickets1[0].value);
 
-    await keepGroupImplV1.submitTicket(tickets2[0].value, operator2, tickets2[0].virtualStakerIndex, {from: operator2});
+    await keepRandomBeaconBackend.submitTicket(tickets2[0].value, operator2, tickets2[0].virtualStakerIndex, {from: operator2});
     tickets.push(tickets2[0].value);
 
-    await keepGroupImplV1.submitTicket(tickets3[0].value, operator3, tickets3[0].virtualStakerIndex, {from: operator3});
+    await keepRandomBeaconBackend.submitTicket(tickets3[0].value, operator3, tickets3[0].virtualStakerIndex, {from: operator3});
     tickets.push(tickets3[0].value);
 
     tickets = tickets.sort(function(a, b){return a-b}); // Sort numbers in ascending order
 
     // Test tickets ordering
-    let orderedTickets = await keepGroupImplV1.orderedTickets();
+    let orderedTickets = await keepRandomBeaconBackend.orderedTickets();
     assert.equal(orderedTickets[0].eq(tickets[0]), true, "Tickets should be in ascending order.");
     assert.equal(orderedTickets[1].eq(tickets[1]), true, "Tickets should be in ascending order.");
     assert.equal(orderedTickets[2].eq(tickets[2]), true, "Tickets should be in ascending order.");
@@ -129,25 +129,25 @@ contract('TestKeepGroupSelection', function(accounts) {
   });
 
   it("should be able to submit a ticket during ticket submission period", async function() {
-    await keepGroupImplV1.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
-    let proof = await keepGroupImplV1.getTicketProof(tickets1[0].value);
+    await keepRandomBeaconBackend.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
+    let proof = await keepRandomBeaconBackend.getTicketProof(tickets1[0].value);
     assert.equal(proof[1].eq(web3.utils.toBN(operator1)), true , "Should be able to get submitted ticket proof.");
     assert.equal(proof[2], tickets1[0].virtualStakerIndex, "Should be able to get submitted ticket proof.");
   });
 
   it("should be able to verify a ticket", async function() {
 
-    await keepGroupImplV1.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
+    await keepRandomBeaconBackend.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
 
-    assert.equal(await keepGroupImplV1.cheapCheck(
+    assert.equal(await keepRandomBeaconBackend.cheapCheck(
       operator1, operator1, 1
     ), true, "Should be able to verify a valid ticket.");
     
-    assert.equal(await keepGroupImplV1.costlyCheck(
+    assert.equal(await keepRandomBeaconBackend.costlyCheck(
       operator1, tickets1[0].value, operator1, tickets1[0].virtualStakerIndex
     ), true, "Should be able to verify a valid ticket.");
   
-    assert.equal(await keepGroupImplV1.costlyCheck(
+    assert.equal(await keepRandomBeaconBackend.costlyCheck(
       operator1, 0, operator1, tickets1[0].virtualStakerIndex
     ), false, "Should fail verifying invalid ticket.");
 

@@ -2,10 +2,10 @@ pragma solidity ^0.5.4;
 
 
 /**
- * @title KeepGroupStub
- * @dev A simplified Keep Group contract to help local development.
+ * @title KeepRandomBeaconBackendStub
+ * @dev A simplified Random Beacon backend contract to help local development.
  */
-contract KeepGroupStub {
+contract KeepRandomBeaconBackendStub {
 
     uint256 internal _randomBeaconValue;
 

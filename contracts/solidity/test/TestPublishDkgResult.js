@@ -10,7 +10,7 @@ const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
-const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
+const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackend.sol');
 
 
 contract('TestPublishDkgResult', function(accounts) {
@@ -27,7 +27,7 @@ contract('TestPublishDkgResult', function(accounts) {
   let disqualified, inactive, resultHash,
   token, stakingProxy, stakingContract, randomBeaconValue, requestId,
   keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
-  keepGroupImplV1, groupPubKey,
+  keepRandomBeaconBackend, groupPubKey,
   ticketSubmissionStartBlock, selectedParticipants, signatures, signingMemberIndices = [],
   owner = accounts[0], magpie = accounts[0],
   operator1 = accounts[0], tickets1,
@@ -54,16 +54,16 @@ contract('TestPublishDkgResult', function(accounts) {
     keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
     keepRandomBeaconImplViaProxy = await KeepRandomBeaconImplV1.at(keepRandomBeaconProxy.address);
 
-    // Initialize Keep Group contract
-    keepGroupImplV1 = await KeepGroupImplV1.new();
-    await keepGroupImplV1.initialize(
+    // Initialize Keep Random Beacon backend contract
+    keepRandomBeaconBackend = await KeepRandomBeaconBackend.new();
+    await keepRandomBeaconBackend.initialize(
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold,
       groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
     );
 
     randomBeaconValue = bls.groupSignature;
 
-    await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupImplV1.address);
+    await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepRandomBeaconBackend.address);
     await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake*2000)
@@ -75,19 +75,19 @@ contract('TestPublishDkgResult', function(accounts) {
     tickets3 = generateTickets(randomBeaconValue, operator3, 3000);
 
     for(let i = 0; i < groupSize; i++) {
-      await keepGroupImplV1.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
+      await keepRandomBeaconBackend.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
     }
 
     for(let i = 0; i < groupSize; i++) {
-      await keepGroupImplV1.submitTicket(tickets2[i].value, operator2, tickets2[i].virtualStakerIndex, {from: operator2});
+      await keepRandomBeaconBackend.submitTicket(tickets2[i].value, operator2, tickets2[i].virtualStakerIndex, {from: operator2});
     }
 
     for(let i = 0; i < groupSize; i++) {
-      await keepGroupImplV1.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
+      await keepRandomBeaconBackend.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
     }
 
-    ticketSubmissionStartBlock = await keepGroupImplV1.ticketSubmissionStartBlock();
-    selectedParticipants = await keepGroupImplV1.selectedParticipants();
+    ticketSubmissionStartBlock = await keepRandomBeaconBackend.ticketSubmissionStartBlock();
+    selectedParticipants = await keepRandomBeaconBackend.selectedParticipants();
 
     for(let i = 0; i < selectedParticipants.length; i++) {
       let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
@@ -103,8 +103,8 @@ contract('TestPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
-    await keepGroupImplV1.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: selectedParticipants[0]})
-    let submitted = await keepGroupImplV1.isDkgResultSubmitted.call(requestId);
+    await keepRandomBeaconBackend.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: selectedParticipants[0]})
+    let submitted = await keepRandomBeaconBackend.isDkgResultSubmitted.call(requestId);
     assert.equal(submitted, true, "DkgResult should should be submitted");
   });
 
@@ -128,8 +128,8 @@ contract('TestPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
-    await keepGroupImplV1.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
-    let submitted = await keepGroupImplV1.isDkgResultSubmitted.call(requestId);
+    await keepRandomBeaconBackend.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
+    let submitted = await keepRandomBeaconBackend.isDkgResultSubmitted.call(requestId);
     assert.equal(submitted, true, "DkgResult should should be submitted");
   });
 
@@ -146,7 +146,7 @@ contract('TestPublishDkgResult', function(accounts) {
     mineBlocks(eligibleBlockForSubmitter1 - currentBlock);
 
     // Should throw if non eligible submitter 2 tries to submit
-    await expectThrow(keepGroupImplV1.submitDkgResult(
+    await expectThrow(keepRandomBeaconBackend.submitDkgResult(
       requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: submitter2})
     );
@@ -155,13 +155,13 @@ contract('TestPublishDkgResult', function(accounts) {
     currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(eligibleBlockForSubmitter2 - currentBlock);
 
-    await keepGroupImplV1.submitDkgResult(requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: submitter2})
-    let submitted = await keepGroupImplV1.isDkgResultSubmitted.call(requestId);
+    await keepRandomBeaconBackend.submitDkgResult(requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: submitter2})
+    let submitted = await keepRandomBeaconBackend.isDkgResultSubmitted.call(requestId);
     assert.equal(submitted, true, "DkgResult should be submitted");
   });
 
   it("should not be able to submit if submitter was not selected to be part of the group.", async function() {
-    await expectThrow(keepGroupImplV1.submitDkgResult(
+    await expectThrow(keepRandomBeaconBackend.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, 
       {from: operator4})
     );
@@ -191,7 +191,7 @@ contract('TestPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
-    await expectThrow(keepGroupImplV1.submitDkgResult(
+    await expectThrow(keepRandomBeaconBackend.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );
@@ -214,10 +214,10 @@ contract('TestPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
-    await keepGroupImplV1.submitDkgResult(
+    await keepRandomBeaconBackend.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
-    let submitted = await keepGroupImplV1.isDkgResultSubmitted.call(requestId);
+    let submitted = await keepRandomBeaconBackend.isDkgResultSubmitted.call(requestId);
     assert.equal(submitted, true, "DkgResult should should be submitted");
 
   });
@@ -239,7 +239,7 @@ contract('TestPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
-    await expectThrow(keepGroupImplV1.submitDkgResult(
+    await expectThrow(keepRandomBeaconBackend.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );

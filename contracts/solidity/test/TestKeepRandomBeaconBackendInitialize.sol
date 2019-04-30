@@ -3,7 +3,7 @@ pragma solidity ^0.5.4;
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
 import "../contracts/utils/ThrowProxy.sol";
-import "../contracts/KeepGroupImplV1.sol";
+import "../contracts/KeepRandomBeaconBackend.sol";
 
 
 contract StakingProxyMock {
@@ -14,20 +14,20 @@ contract StakingProxyMock {
 }
 
 
-contract TestKeepGroupInitialize {
+contract TestKeepRandomBeaconBackendInitialize {
     // Create Staking proxy contract mock
     StakingProxyMock stakingProxy = new StakingProxyMock();
 
-    // Create KEEP Group Contract
-    KeepGroupImplV1 keepGroupContract = new KeepGroupImplV1();
+    // Create Keep Random Beacon Backend Contract
+    KeepRandomBeaconBackend keepRandomBeaconBackend = new KeepRandomBeaconBackend();
 
     function testCannotInitialize() public {
 
         // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
-        ThrowProxy throwProxy = new ThrowProxy(address(keepGroupContract));
+        ThrowProxy throwProxy = new ThrowProxy(address(keepRandomBeaconBackend));
 
         // Prime the proxy
-        KeepGroupImplV1(address(throwProxy)).initialize(address(0), address(0), 200, 150, 200, 1, 1, 1, 1, 1);
+        KeepRandomBeaconBackend(address(throwProxy)).initialize(address(0), address(0), 200, 150, 200, 1, 1, 1, 1, 1);
 
         // Execute the call that is supposed to throw.
         // r will be false if it threw and true if it didn't.
@@ -36,8 +36,8 @@ contract TestKeepGroupInitialize {
     }
 
     function testInitialize() public {
-        keepGroupContract.initialize(address(stakingProxy), address(0), 200, 150, 200, 1, 1, 1, 1, 1);
-        Assert.equal(keepGroupContract.initialized(), true, "Should be initialized.");
+        keepRandomBeaconBackend.initialize(address(stakingProxy), address(0), 200, 150, 200, 1, 1, 1, 1, 1);
+        Assert.equal(keepRandomBeaconBackend.initialized(), true, "Should be initialized.");
     }
 
 

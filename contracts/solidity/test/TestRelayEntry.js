@@ -2,13 +2,13 @@ import exceptThrow from './helpers/expectThrow';
 import {bls} from './helpers/data';
 const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
-const KeepGroupStub = artifacts.require('./KeepGroupStub.sol');
+const KeepRandomBeaconBackendStub = artifacts.require('./KeepRandomBeaconBackendStub.sol');
 
 
 contract('TestRelayEntry', function() {
 
   let keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy, relayEntryGeneratedEvent,
-    keepGroupStub;
+    keepRandomBeaconBackendStub;
 
   beforeEach(async () => {
 
@@ -17,8 +17,8 @@ contract('TestRelayEntry', function() {
     keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
     keepRandomBeaconImplViaProxy = await KeepRandomBeaconImplV1.at(keepRandomBeaconProxy.address);
 
-    keepGroupStub = await KeepGroupStub.new();
-    await keepRandomBeaconImplViaProxy.initialize(1,1, bls.previousEntry, bls.groupPubKey, keepGroupStub.address);
+    keepRandomBeaconBackendStub = await KeepRandomBeaconBackendStub.new();
+    await keepRandomBeaconImplViaProxy.initialize(1,1, bls.previousEntry, bls.groupPubKey, keepRandomBeaconBackendStub.address);
     await keepRandomBeaconImplViaProxy.requestRelayEntry(bls.seed, {value: 10});
 
     relayEntryGeneratedEvent = keepRandomBeaconImplViaProxy.RelayEntryGenerated();

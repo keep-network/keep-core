@@ -5,11 +5,11 @@ import exceptThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
 const Proxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
-const KeepGroup = artifacts.require('./KeepGroupStub.sol');
+const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackendStub.sol');
 
 contract('TestKeepRandomBeaconViaProxy', function(accounts) {
 
-  let implV1, proxy, implViaProxy, keepGroup,
+  let implV1, proxy, implViaProxy, keepRandomBeaconBackend,
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2];
@@ -18,8 +18,8 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     implV1 = await KeepRandomBeaconImplV1.new();
     proxy = await Proxy.new(implV1.address);
     implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
-    keepGroup = await KeepGroup.new()
-    await implViaProxy.initialize(100, duration.days(30), bls.previousEntry, bls.groupPubKey, keepGroup.address);
+    keepRandomBeaconBackend = await KeepRandomBeaconBackend.new()
+    await implViaProxy.initialize(100, duration.days(30), bls.previousEntry, bls.groupPubKey, keepRandomBeaconBackend.address);
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {

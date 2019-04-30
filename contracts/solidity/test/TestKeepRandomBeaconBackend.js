@@ -5,13 +5,13 @@ const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
-const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
+const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackend.sol');
 
-contract('TestKeepGroupViaProxy', function(accounts) {
+contract('TestKeepRandomBeaconBackend', function(accounts) {
 
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-    keepGroupImplV1,
+    keepRandomBeaconBackend,
     keepRandomBeaconImplV1, keepRandomBeaconProxy,
     account_one = accounts[0],
     account_two = accounts[1];
@@ -28,7 +28,7 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     keepRandomBeaconImplV1 = await KeepRandomBeaconImplV1.new(1,1);
     keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
 
-    // Initialize Keep Group contract
+    // Initialize Keep Random Beacon backend contract
     minimumStake = 200;
     groupThreshold = 150;
     groupSize = 200;
@@ -38,24 +38,24 @@ contract('TestKeepGroupViaProxy', function(accounts) {
     timeDKG = 20;
     resultPublicationBlockStep = 3;
 
-    keepGroupImplV1 = await KeepGroupImplV1.new();
-    await keepGroupImplV1.initialize(
+    keepRandomBeaconBackend = await KeepRandomBeaconBackend.new();
+    await keepRandomBeaconBackend.initialize(
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold,
       groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
     );
   });
 
   it("should fail to update minimum stake by non owner", async function() {
-    await exceptThrow(keepGroupImplV1.setMinimumStake(123, {from: account_two}));
+    await exceptThrow(keepRandomBeaconBackend.setMinimumStake(123, {from: account_two}));
   });
 
   it("should be able to update minimum stake by the owner", async function() {
-    await keepGroupImplV1.setMinimumStake(123);
-    let newMinStake = await keepGroupImplV1.minimumStake();
+    await keepRandomBeaconBackend.setMinimumStake(123);
+    let newMinStake = await keepRandomBeaconBackend.minimumStake();
     assert.equal(newMinStake, 123, "Should be able to get updated minimum stake.");
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
-    assert.equal(await keepGroupImplV1.initialized(), true, "Implementation contract should be initialized.");
+    assert.equal(await keepRandomBeaconBackend.initialized(), true, "Implementation contract should be initialized.");
   });
 });

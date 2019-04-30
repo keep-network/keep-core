@@ -13,13 +13,14 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
-// keepGroup connection information for interface to KeepGroup contract.
-type keepGroup struct {
-	caller          *abi.KeepGroupImplV1Caller
+// keepRandomBeaconBackend connection information for interface to
+// Keep Random Beacon backend contract.
+type keepRandomBeaconBackend struct {
+	caller          *abi.KeepRandomBeaconBackendCaller
 	callerOpts      *bind.CallOpts
-	transactor      *abi.KeepGroupImplV1Transactor
+	transactor      *abi.KeepRandomBeaconBackendTransactor
 	transactorOpts  *bind.TransactOpts
-	contract        *abi.KeepGroupImplV1
+	contract        *abi.KeepRandomBeaconBackend
 	contractAddress common.Address
 }
 
@@ -43,18 +44,18 @@ type keepGroup struct {
 // This is different from node.js/web3 code where a 'nil' is treated the same
 // as an empty filter.
 
-// NewKeepGroup creates the necessary connections and configurations
-// for accessing the KeepGroup contract.
-func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
-	contractAddressHex, exists := chainConfig.config.ContractAddresses["KeepGroup"]
+// NewKeepRandomBeaconBackend creates the necessary connections and configurations
+// for accessing the Keep Random Beacon backend contract.
+func newKeepRandomBeaconBackend(chainConfig *ethereumChain) (*keepRandomBeaconBackend, error) {
+	contractAddressHex, exists := chainConfig.config.ContractAddresses["KeepRandomBeaconBackend"]
 	if !exists {
 		return nil, fmt.Errorf(
-			"no address information for 'KeepGroup' in configuration",
+			"no address information for 'KeepRandomBeaconBackend' in configuration",
 		)
 	}
 	contractAddress := common.HexToAddress(contractAddressHex)
 
-	groupTransactor, err := abi.NewKeepGroupImplV1Transactor(
+	keepRandomBeaconBackendTransactor, err := abi.NewKeepRandomBeaconBackendTransactor(
 		contractAddress,
 		chainConfig.client,
 	)
@@ -84,7 +85,7 @@ func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
 		chainConfig.accountKey.PrivateKey,
 	)
 
-	groupCaller, err := abi.NewKeepGroupImplV1Caller(contractAddress, chainConfig.client)
+	keepRandomBeaconBackendCaller, err := abi.NewKeepRandomBeaconBackendCaller(contractAddress, chainConfig.client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to instantiate a KeepRelayBeaconCaller contract: [%v]",
@@ -96,7 +97,7 @@ func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
 		From: contractAddress,
 	}
 
-	groupContract, err := abi.NewKeepGroupImplV1(contractAddress, chainConfig.client)
+	keepRandomBeaconBackendContract, err := abi.NewKeepRandomBeaconBackend(contractAddress, chainConfig.client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to instantiate contract object: %s at address: [%v]",
@@ -105,25 +106,25 @@ func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
 		)
 	}
 
-	return &keepGroup{
-		transactor:      groupTransactor,
+	return &keepRandomBeaconBackend{
+		transactor:      keepRandomBeaconBackendTransactor,
 		transactorOpts:  optsTransactor,
-		caller:          groupCaller,
+		caller:          keepRandomBeaconBackendCaller,
 		callerOpts:      optsCaller,
-		contract:        groupContract,
+		contract:        keepRandomBeaconBackendContract,
 		contractAddress: contractAddress,
 	}, nil
 }
 
 // Initialized calls the contract and returns true if the contract
 // has had its Initialize method called.
-func (kg *keepGroup) Initialized() (bool, error) {
+func (kg *keepRandomBeaconBackend) Initialized() (bool, error) {
 	return kg.caller.Initialized(kg.callerOpts)
 }
 
-// GroupThreshold returns the group threshold.  This is the number
+// GroupThreshold returns the group threshold. This is the number
 // of members that have to report a value to create a new signature.
-func (kg *keepGroup) GroupThreshold() (int, error) {
+func (kg *keepRandomBeaconBackend) GroupThreshold() (int, error) {
 	requiredThresholdMembers, err := kg.caller.GroupThreshold(kg.callerOpts)
 	if err != nil {
 		return -1, err
@@ -133,7 +134,7 @@ func (kg *keepGroup) GroupThreshold() (int, error) {
 
 // GroupSize returns the number of members that are required
 // to form a group.
-func (kg *keepGroup) GroupSize() (int, error) {
+func (kg *keepRandomBeaconBackend) GroupSize() (int, error) {
 	groupSize, err := kg.caller.GroupSize(kg.callerOpts)
 	if err != nil {
 		return -1, err
@@ -141,43 +142,43 @@ func (kg *keepGroup) GroupSize() (int, error) {
 	return int(groupSize.Int64()), nil
 }
 
-func (kg *keepGroup) TicketInitialSubmissionTimeout() (*big.Int, error) {
+func (kg *keepRandomBeaconBackend) TicketInitialSubmissionTimeout() (*big.Int, error) {
 	return kg.caller.TicketInitialSubmissionTimeout(kg.callerOpts)
 }
 
-func (kg *keepGroup) TicketReactiveSubmissionTimeout() (*big.Int, error) {
+func (kg *keepRandomBeaconBackend) TicketReactiveSubmissionTimeout() (*big.Int, error) {
 	return kg.caller.TicketReactiveSubmissionTimeout(kg.callerOpts)
 }
 
-func (kg *keepGroup) TicketChallengeTimeout() (*big.Int, error) {
+func (kg *keepRandomBeaconBackend) TicketChallengeTimeout() (*big.Int, error) {
 	return kg.caller.TicketChallengeTimeout(kg.callerOpts)
 }
 
-func (kg *keepGroup) ResultPublicationBlockStep() (*big.Int, error) {
+func (kg *keepRandomBeaconBackend) ResultPublicationBlockStep() (*big.Int, error) {
 	return kg.caller.ResultPublicationBlockStep(kg.callerOpts)
 }
 
-func (kg *keepGroup) MinimumStake() (*big.Int, error) {
+func (kg *keepRandomBeaconBackend) MinimumStake() (*big.Int, error) {
 	return kg.caller.MinimumStake(kg.callerOpts)
 }
 
-func (kg *keepGroup) TokenSupply() (*big.Int, error) {
+func (kg *keepRandomBeaconBackend) TokenSupply() (*big.Int, error) {
 	return kg.caller.TokenSupply(kg.callerOpts)
 }
 
-func (kg *keepGroup) NaturalThreshold() (*big.Int, error) {
+func (kg *keepRandomBeaconBackend) NaturalThreshold() (*big.Int, error) {
 	return kg.caller.NaturalThreshold(kg.callerOpts)
 }
 
 // HasMinimumStake returns true if the specified address has sufficient
 // state to participate.
-func (kg *keepGroup) HasMinimumStake(
+func (kg *keepRandomBeaconBackend) HasMinimumStake(
 	address common.Address,
 ) (bool, error) {
 	return kg.caller.HasMinimumStake(kg.callerOpts, address)
 }
 
-func (kg *keepGroup) SubmitTicket(
+func (kg *keepRandomBeaconBackend) SubmitTicket(
 	ticket *relaychain.Ticket,
 ) (*types.Transaction, error) {
 	return kg.transactor.SubmitTicket(
@@ -188,15 +189,15 @@ func (kg *keepGroup) SubmitTicket(
 	)
 }
 
-func (kg *keepGroup) SelectedParticipants() ([]common.Address, error) {
+func (kg *keepRandomBeaconBackend) SelectedParticipants() ([]common.Address, error) {
 	return kg.caller.SelectedParticipants(kg.callerOpts)
 }
 
-func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
+func (kg *keepRandomBeaconBackend) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 	return kg.caller.IsDkgResultSubmitted(kg.callerOpts, requestID)
 }
 
-func (kg *keepGroup) SubmitDKGResult(
+func (kg *keepRandomBeaconBackend) SubmitDKGResult(
 	requestID *big.Int,
 	submitterMemberIndex *big.Int,
 	result *relaychain.DKGResult,
@@ -221,11 +222,11 @@ type dkgResultPublishedEventFunc func(
 	blockNumber uint64,
 )
 
-func (kg *keepGroup) WatchDKGResultPublishedEvent(
+func (kg *keepRandomBeaconBackend) WatchDKGResultPublishedEvent(
 	success dkgResultPublishedEventFunc,
 	fail errorCallback,
 ) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.KeepGroupImplV1DkgResultPublishedEvent)
+	eventChan := make(chan *abi.KeepRandomBeaconBackendDkgResultPublishedEvent)
 	eventSubscription, err := kg.contract.WatchDkgResultPublishedEvent(
 		nil,
 		eventChan,

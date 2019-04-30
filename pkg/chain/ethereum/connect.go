@@ -11,18 +11,18 @@ import (
 )
 
 type ethereumChain struct {
-	config                   Config
-	client                   *ethclient.Client
-	clientRPC                *rpc.Client
-	clientWS                 *rpc.Client
-	requestID                *big.Int
-	keepGroupContract        *keepGroup
-	keepRandomBeaconContract *KeepRandomBeacon
-	stakingContract          *staking
-	accountKey               *keystore.Key
+	config                           Config
+	client                           *ethclient.Client
+	clientRPC                        *rpc.Client
+	clientWS                         *rpc.Client
+	requestID                        *big.Int
+	keepRandomBeaconBackendContract  *keepRandomBeaconBackend
+	keepRandomBeaconContract         *KeepRandomBeacon
+	stakingContract                  *staking
+	accountKey                       *keystore.Key
 }
 
-// Connect makes the network connection to the Ethereum network.  Note: for
+// Connect makes the network connection to the Ethereum network. Note: for
 // other things to work correctly the configuration will need to reference a
 // websocket, "ws://", or local IPC connection.
 func Connect(cfg Config) (chain.Handle, error) {
@@ -69,11 +69,11 @@ func Connect(cfg Config) (chain.Handle, error) {
 	}
 	pv.keepRandomBeaconContract = keepRandomBeaconContract
 
-	keepGroupContract, err := newKeepGroup(pv)
+	keepRandomBeaconBackendContract, err := newKeepRandomBeaconBackend(pv)
 	if err != nil {
-		return nil, fmt.Errorf("error attaching to KeepGroup contract: [%v]", err)
+		return nil, fmt.Errorf("error attaching to keepRandomBeaconBackend contract: [%v]", err)
 	}
-	pv.keepGroupContract = keepGroupContract
+	pv.keepRandomBeaconBackendContract = keepRandomBeaconBackendContract
 
 	stakingContract, err := newStaking(pv)
 	if err != nil {
