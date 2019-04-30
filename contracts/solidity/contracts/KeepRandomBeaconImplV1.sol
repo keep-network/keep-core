@@ -3,7 +3,7 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./DelayedWithdrawal.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
-import "./BLS.sol";
+import "./cryptography/BLS.sol";
 
 
 interface GroupContract {

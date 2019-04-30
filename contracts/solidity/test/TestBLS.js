@@ -1,4 +1,4 @@
-const BLS = artifacts.require('./BLS.sol');
+const BLS = artifacts.require('./cryptography/BLS.sol');
 
 contract('TestBLS', function() {
 
