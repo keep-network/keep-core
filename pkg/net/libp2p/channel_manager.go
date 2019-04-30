@@ -31,6 +31,7 @@ func newChannelManager(
 		ctx,
 		p2phost,
 		pubsub.WithMessageSigning(true),
+		pubsub.WithStrictSignatureVerification(true),
 	)
 	if err != nil {
 		return nil, err
