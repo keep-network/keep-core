@@ -21,7 +21,7 @@ const activeGroupsThreshold = 5;
 const testGroupsNumber = 10;
 const expirationStepTime = groupExpirationTime / 10;
 
-contract('Print Expirations', function(accounts) {
+contract('Test Group Expirations', function(accounts) {
 
   let token, stakingProxy, stakingContract,
     keepRandomBeaconImplV1, keepRandomBeaconProxy,
