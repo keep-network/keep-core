@@ -81,7 +81,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("it should mark all groups as expired except activeGroupsThreshold #1", async function() {
     for (var i = 1; i <= testGroupsNumber; i++) {
       await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(8);
+      mineBlocks(28); // this plus the above should be equla to the expirationstepTime
     }
 
     let expiredOffset = await testExpiration(4, 0);
@@ -91,7 +91,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("it should mark all groups as expired except activeGroupsThreshold #2", async function() {
     for (var i = 1; i <= testGroupsNumber; i++) {
       await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(8);
+      mineBlocks(28); // this plus the above should be equla to the expirationstepTime
     }
 
     let expiredOffset = await testExpiration(7, 1);
@@ -101,7 +101,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("it should mark all groups as expired except activeGroupsThreshold #3", async function() {
     for (var i = 1; i <= testGroupsNumber; i++) {
       await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(8);
+      mineBlocks(28); // this plus the above should be equla to the expirationstepTime
     }
 
     let expiredOffset = await testExpiration(5, 2);
@@ -111,7 +111,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("it should mark all groups as expired except activeGroupsThreshold #4", async function() {
     for (var i = 1; i <= testGroupsNumber; i++) {
       await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(8);
+      mineBlocks(28); // this plus the above should be equla to the expirationstepTime
     }
 
     let expiredOffset = await testExpiration(4, 4);
@@ -121,7 +121,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("it should mark all groups as expired except activeGroupsThreshold #5", async function() {
     for (var i = 1; i <= testGroupsNumber; i++) {
       await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(8);
+      mineBlocks(28); // this plus the above should be equla to the expirationstepTime
     }
 
     let expiredOffset = await testExpiration(5, 5);
@@ -131,7 +131,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("it should mark all groups as expired except activeGroupsThreshold #6", async function() {
     for (var i = 1; i <= testGroupsNumber; i++) {
       await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(8);
+      mineBlocks(28); // this plus the above should be equla to the expirationstepTime
     }
 
     let expiredOffset = await testExpiration(6, 6);
