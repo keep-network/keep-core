@@ -229,7 +229,8 @@ variable "jumphost" {
 
 variable "utility_box" {
   default {
-    name = "keep-dev-utility-box"
-    tags = "gke-subnet"
+    name         = "keep-dev-utility-box"
+    tags         = "gke-subnet"
+    machine_type = "g1-small"
   }
 }
