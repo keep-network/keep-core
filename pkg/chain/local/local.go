@@ -212,6 +212,15 @@ func (c *localChain) OnGroupRegistered(
 	}), nil
 }
 
+func (c *localChain) IsGroupEligibleForRemoval(groupPublicKey []byte) (bool, error) {
+	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
+
+	// TODO: add code
+
+	return false, nil
+}
+
 func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }

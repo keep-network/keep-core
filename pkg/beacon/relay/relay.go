@@ -21,14 +21,15 @@ func NewNode(
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
 	chainConfig *config.Chain,
+	groupRegistry *GroupRegistry,
 ) Node {
 	return Node{
-		Staker:       staker,
-		netProvider:  netProvider,
-		blockCounter: blockCounter,
-		chainConfig:  chainConfig,
-		stakeIDs:     make([]string, 100),
-		myGroups:     make(map[string][]*membership),
+		Staker:        staker,
+		netProvider:   netProvider,
+		blockCounter:  blockCounter,
+		chainConfig:   chainConfig,
+		stakeIDs:      make([]string, 100),
+		groupRegistry: groupRegistry,
 	}
 }
 
@@ -52,7 +53,8 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		seed.Bytes(),
 	)
 
-	memberships := n.myGroups[string(groupPublicKey)]
+	memberships := n.groupRegistry.getGroup(string(groupPublicKey))
+
 	if len(memberships) < 1 {
 		return
 	}
