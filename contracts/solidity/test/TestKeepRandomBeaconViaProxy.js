@@ -19,7 +19,8 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     proxy = await Proxy.new(implV1.address);
     implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
     keepGroup = await KeepGroup.new();
-    await implViaProxy.initialize(100, duration.days(30), bls.previousEntry, bls.groupPubKey, keepGroup.address);
+    await implViaProxy.initialize(100, duration.days(30), bls.previousEntry, bls.groupPubKey, keepGroup.address,
+      relayRequestTimeout);
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
