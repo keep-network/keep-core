@@ -148,7 +148,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await keepGroupImplViaProxy.selectGroup(1);
     numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
 
-    assert.notEqual(Number(numberOfGroups), testGroupsNumber, "Some groups should be marked as expired");
+    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Some groups should be marked as expired");
   });
 
   it("should be able to check that groups are marked as expired except the minimal active groups number", async function() {
@@ -163,7 +163,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
       after = await keepGroupImplViaProxy.numberOfGroups();
     }
     
-    assert.isAtLeast(Number(after), activeGroupsThreshold, "Number of groups should not fall below the threshold of active groups");
+    assert.equal(Number(after), activeGroupsThreshold, "Number of groups should not fall below the threshold of active groups");
   });
 
   it("it should be able to mark only a subset of groups as expired", async function() {
@@ -181,6 +181,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     after = await keepGroupImplViaProxy.numberOfGroups();
 
-    assert.isAtLeast(Number(after), testGroupsNumber, "Number of groups should not fall below the test groups number");
+    assert.equal(Number(after), testGroupsNumber, "Number of groups should not fall below the test groups number");
   });
 });
