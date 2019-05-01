@@ -59,7 +59,7 @@ contract('Test Group Expirations', function(accounts) {
 
     for (var i = 1; i <= testGroupsNumber; i++) {
       await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(8);
+      mineBlocks(28); // this plus the above should take expirationStepTime in blocks
     }
     gs_counter++
     var different = false;
@@ -88,7 +88,7 @@ contract('Test Group Expirations', function(accounts) {
   async function printExpirations(select, expire, selected) {
     let gstx;
 
-    await mineBlocks(expirationStepTime*expire);
+    await mineBlocks(expirationStepTime * expire);
     switch(select) {
       case 0: gstx = await keepGroupImplViaProxy.selectGroupV0(selected); break;
       case 1: gstx = await keepGroupImplViaProxy.selectGroupV1(selected); break;
@@ -99,7 +99,7 @@ contract('Test Group Expirations', function(accounts) {
     var groups = "";
     let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
     
-    print_buffer[select] = print_buffer[select].concat("Expiration: " + Number(expirationStepTime*expire).toString() + " Selected: " + Number(selected).toString() + " expiredOffset: " + Number(expiredOffset).toString() + " Groups: " );
+    print_buffer[select] = print_buffer[select].concat("Expiration: " + Number(expire).toString() + " Selected: " + Number(selected).toString() + " expiredOffset: " + Number(expiredOffset).toString() + " Groups: " );
 
     for (var i = 0; i < testGroupsNumber; i++) {
       if (i >= expiredOffset)
