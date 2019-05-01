@@ -614,7 +614,8 @@ contract KeepGroupImplV1 is Ownable {
             } else {
                 _expiredOffset = _groups.length - _activeGroupsThreshold;
                 numberOfActiveGroups = _activeGroupsThreshold;
-                return _groups[_expiredOffset].groupPubKey;
+                selectedGroup = previousEntry % numberOfActiveGroups;
+                break;
             }
         }
         return _groups[_expiredOffset + selectedGroup].groupPubKey;
