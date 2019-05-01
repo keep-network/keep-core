@@ -607,7 +607,8 @@ contract KeepGroupImplV1 is Ownable {
             * - assuming selectedGroup = 3, then, we'll have 4-3-1=0 groups after the removal: [EEEEEEE]
             */
             if (numberOfActiveGroups - selectedGroup - 1 > _activeGroupsThreshold) {
-                _expiredOffset += ++selectedGroup;
+                selectedGroup++;
+                _expiredOffset += selectedGroup;
                 numberOfActiveGroups -= selectedGroup;
                 selectedGroup = previousEntry % numberOfActiveGroups;
             } else {
