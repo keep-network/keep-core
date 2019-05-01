@@ -1,17 +1,17 @@
 import { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
-const Proxy = artifacts.require('./KeepRandomBeacon.sol');
-const KeepRandomBeaconStub = artifacts.require('./KeepRandomBeaconStub.sol');
+const Proxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol');
+const KeepRandomBeaconFrontendStub = artifacts.require('./KeepRandomBeaconFrontendStub.sol');
 
-contract('TestKeepRandomBeaconStub', function(accounts) {
+contract('TestKeepRandomBeaconFrontendStub', function(accounts) {
 
   let implV1, proxy, implViaProxy, seed,
     account_one = accounts[0];
 
   beforeEach(async () => {
-    implV1 = await KeepRandomBeaconStub.new();
+    implV1 = await KeepRandomBeaconFrontendStub.new();
     proxy = await Proxy.new(implV1.address);
-    implViaProxy = await KeepRandomBeaconStub.at(proxy.address);
+    implViaProxy = await KeepRandomBeaconFrontendStub.at(proxy.address);
     await implViaProxy.initialize();
     seed = 123456789;
   });

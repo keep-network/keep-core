@@ -1,9 +1,9 @@
 import {bls} from './helpers/data';
 import increaseTime, { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
-const Proxy = artifacts.require('./KeepRandomBeacon.sol');
-const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
-const Upgrade = artifacts.require('./examples/KeepRandomBeaconUpgradeExample.sol');
+const Proxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol');
+const KeepRandomBeaconFrontendImplV1 = artifacts.require('./KeepRandomBeaconFrontendImplV1.sol');
+const Upgrade = artifacts.require('./examples/KeepRandomBeaconFrontendUpgradeExample.sol');
 const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackendStub.sol');
 
 
@@ -14,10 +14,10 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     account_two = accounts[1];
 
   beforeEach(async () => {
-    implV1 = await KeepRandomBeaconImplV1.new();
+    implV1 = await KeepRandomBeaconFrontendImplV1.new();
     implV2 = await Upgrade.new();
     proxy = await Proxy.new(implV1.address);
-    implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
+    implViaProxy = await KeepRandomBeaconFrontendImplV1.at(proxy.address);
     keepRandomBeaconBackend = await KeepRandomBeaconBackend.new()
     await implViaProxy.initialize(100, duration.days(0), bls.previousEntry, bls.groupPubKey, keepRandomBeaconBackend.address);
 

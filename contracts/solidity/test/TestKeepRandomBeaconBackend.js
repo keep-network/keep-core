@@ -3,8 +3,8 @@ import exceptThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
-const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
-const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
+const KeepRandomBeaconFrontendProxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol');
+const KeepRandomBeaconFrontendImplV1 = artifacts.require('./KeepRandomBeaconFrontendImplV1.sol');
 const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackend.sol');
 
 contract('TestKeepRandomBeaconBackend', function(accounts) {
@@ -12,7 +12,7 @@ contract('TestKeepRandomBeaconBackend', function(accounts) {
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     keepRandomBeaconBackend,
-    keepRandomBeaconImplV1, keepRandomBeaconProxy,
+    keepRandomBeaconFrontendImplV1, keepRandomBeaconFrontendProxy,
     account_one = accounts[0],
     account_two = accounts[1];
 
@@ -25,8 +25,8 @@ contract('TestKeepRandomBeaconBackend', function(accounts) {
     await stakingProxy.authorizeContract(stakingContract.address, {from: account_one})
 
     // Initialize Keep Random Beacon contract
-    keepRandomBeaconImplV1 = await KeepRandomBeaconImplV1.new(1,1);
-    keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
+    keepRandomBeaconFrontendImplV1 = await KeepRandomBeaconFrontendImplV1.new(1,1);
+    keepRandomBeaconFrontendProxy = await KeepRandomBeaconFrontendProxy.new(keepRandomBeaconFrontendImplV1.address);
 
     // Initialize Keep Random Beacon backend contract
     minimumStake = 200;
@@ -40,7 +40,7 @@ contract('TestKeepRandomBeaconBackend', function(accounts) {
 
     keepRandomBeaconBackend = await KeepRandomBeaconBackend.new();
     await keepRandomBeaconBackend.initialize(
-      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold,
+      stakingProxy.address, keepRandomBeaconFrontendProxy.address, minimumStake, groupThreshold,
       groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
     );
   });

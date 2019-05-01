@@ -14,13 +14,13 @@ interface GroupContract {
 
 
 /**
- * @title KeepRandomBeaconImplV1
+ * @title KeepRandomBeaconFrontendImplV1
  * @dev Initial version of implementation contract that works under Keep Random
  * Beacon proxy and allows upgradability. The purpose of the contract is to have
  * up-to-date logic for threshold random number generation. Updated contracts
  * must inherit from this contract and have to be initialized under updated version name
  */
-contract KeepRandomBeaconImplV1 is Ownable, DelayedWithdrawal {
+contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
 
     using BytesLib for bytes;
 
@@ -64,7 +64,7 @@ contract KeepRandomBeaconImplV1 is Ownable, DelayedWithdrawal {
     {
         require(!initialized(), "Contract is already initialized.");
         _minPayment = minPayment;
-        _initialized["KeepRandomBeaconImplV1"] = true;
+        _initialized["KeepRandomBeaconFrontendImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _previousEntry = genesisEntry;
@@ -81,7 +81,7 @@ contract KeepRandomBeaconImplV1 is Ownable, DelayedWithdrawal {
      * @dev Checks if this contract is initialized.
      */
     function initialized() public view returns (bool) {
-        return _initialized["KeepRandomBeaconImplV1"];
+        return _initialized["KeepRandomBeaconFrontendImplV1"];
     }
 
     /**

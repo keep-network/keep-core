@@ -6,8 +6,8 @@ import {bls} from './helpers/data';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
-const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
-const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
+const KeepRandomBeaconFrontendProxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol');
+const KeepRandomBeaconFrontendImplV1 = artifacts.require('./KeepRandomBeaconFrontendImplV1.sol');
 const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackend.sol');
 
 
@@ -16,7 +16,7 @@ contract('TestKeepGroupSelection', function(accounts) {
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     randomBeaconValue,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-    keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
+    keepRandomBeaconFrontendImplV1, keepRandomBeaconFrontendProxy, keepRandomBeaconFrontendImplViaProxy,
     keepRandomBeaconBackend,
     owner = accounts[0], magpie = accounts[1], signature, delegation,
     operator1 = accounts[2], tickets1,
@@ -33,9 +33,9 @@ contract('TestKeepGroupSelection', function(accounts) {
     await stakingProxy.authorizeContract(stakingContract.address, {from: owner})
 
     // Initialize Keep Random Beacon contract
-    keepRandomBeaconImplV1 = await KeepRandomBeaconImplV1.new();
-    keepRandomBeaconProxy = await KeepRandomBeaconProxy.new(keepRandomBeaconImplV1.address);
-    keepRandomBeaconImplViaProxy = await KeepRandomBeaconImplV1.at(keepRandomBeaconProxy.address);
+    keepRandomBeaconFrontendImplV1 = await KeepRandomBeaconFrontendImplV1.new();
+    keepRandomBeaconFrontendProxy = await KeepRandomBeaconFrontendProxy.new(keepRandomBeaconFrontendImplV1.address);
+    keepRandomBeaconFrontendImplViaProxy = await KeepRandomBeaconFrontendImplV1.at(keepRandomBeaconFrontendProxy.address);
 
     // Initialize Keep Random Beacon backend contract
     minimumStake = 200000;
@@ -51,12 +51,12 @@ contract('TestKeepGroupSelection', function(accounts) {
 
     keepRandomBeaconBackend = await KeepRandomBeaconBackend.new();
     await keepRandomBeaconBackend.initialize(
-      stakingProxy.address, keepRandomBeaconProxy.address, minimumStake, groupThreshold,
+      stakingProxy.address, keepRandomBeaconFrontendProxy.address, minimumStake, groupThreshold,
       groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
     );
 
-    await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepRandomBeaconBackend.address);
-    await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+    await keepRandomBeaconFrontendImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepRandomBeaconBackend.address);
+    await keepRandomBeaconFrontendImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     // Stake delegate tokens to operator1
     signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator1)).substr(2), 'hex');
