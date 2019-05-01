@@ -181,14 +181,12 @@ connection attempts from that peer to the peer who blacklisted it are rejected.
 
 ==== Group formation
 
-In the Keep network, peers may form groups selected to execute various protocols.
-The output of the group formation protocol is a list of on-chain addresses. When 
-peer joins a group, it broadcasts its public static key which is used by other 
-peers in the group to derive the on-chain address of that peer. All the peers in 
-the group must execute the handshake protocol described in the 
-<<Attributability and integrity of the network messages>> section. If two peers 
-executed that protocol before (even as a members of some other group), they  
-still use the same nonce and don't have to execute the protocol again. 
+In the Keep network, peers may form groups selected to execute various protocols. 
+The output of the group formation protocol is a list of on-chain addresses. 
+When peer joins a group, it includes its public static key in every single 
+message sent to the group. The public key is used by other peers in the group 
+to derive the on-chain address of that peer and check if the given peer is 
+eligible to join and communicate within the group.
 
 [bibliography]
 == Related Links
