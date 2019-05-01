@@ -10,6 +10,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	host "github.com/libp2p/go-libp2p-host"
 	peer "github.com/libp2p/go-libp2p-peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -20,6 +21,7 @@ type channel struct {
 
 	clientIdentity *identity
 	peerStore      peerstore.Peerstore
+	host           host.Host
 
 	pubsubMutex sync.Mutex
 	pubsub      *pubsub.PubSub
@@ -31,6 +33,11 @@ type channel struct {
 
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
+}
+
+// Only used for testing. Must be guarded with a mutex when used.
+func (c *channel) Host() host.Host {
+	return c.host
 }
 
 func (c *channel) Name() string {
