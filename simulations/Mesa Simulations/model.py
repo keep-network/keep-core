@@ -8,7 +8,7 @@ class Beacon_Model(Model):
     """The model"""
     def __init__(self, nodes, ticket_distribution, active_group_threshold, 
     group_size, signature_threshold, group_expiry, 
-    group_formation_threshold, node_failure_percent, node_death_percent,
+     node_failure_percent, node_death_percent,
     signature_delay):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
@@ -24,7 +24,7 @@ class Beacon_Model(Model):
         self.newest_signature_id = 0
         self.group_expiry = group_expiry
         self.bootstrap_complete = False # indicates when the initial active group list bootstrap is complete
-        self.group_formation_threshold = group_formation_threshold # min nodes required to form a group
+        self.group_formation_threshold = self.group_size # min nodes required to form a group
         self.timer = 0
         self.unsuccessful_signature_events = []
         self.signature_delay = signature_delay
@@ -65,7 +65,7 @@ class Beacon_Model(Model):
                 print("group ID "+str(group.group_id)+ "status = " + group.status + "steps to expiry = "+ str(group.expiry))
         
         #generate relay requests
-        self.relay_request = np.random.choice([True,False])
+        self.relay_request = np.random.choice([True,False]) # make this variable so it can be what-if'd
         print("relay request recieved? = "+ str(self.relay_request))
 
         if self.relay_request:
