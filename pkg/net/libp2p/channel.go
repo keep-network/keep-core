@@ -2,7 +2,6 @@ package libp2p
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -140,44 +139,6 @@ func (c *channel) envelopeProto(
 	}
 
 	return envelope.Marshal()
-}
-
-func (c *channel) sign(messageBytes []byte) ([]byte, error) {
-	return c.clientIdentity.privKey.Sign(messageBytes)
-}
-
-func (c *channel) verify(sender peer.ID, messageBytes []byte, signature []byte) error {
-	return verifyEnvelope(sender, messageBytes, signature)
-}
-
-func verifyEnvelope(sender peer.ID, messageBytes []byte, signature []byte) error {
-	pubKey, err := sender.ExtractPublicKey()
-	if err != nil {
-		return fmt.Errorf(
-			"failed to extract public key from peer [%v]",
-			sender,
-		)
-	}
-
-	ok, err := pubKey.Verify(messageBytes, signature)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to verify signature [0x%v] for sender [%v] with err [%v]",
-			hex.EncodeToString(signature),
-			sender.Pretty(),
-			err,
-		)
-	}
-
-	if !ok {
-		return fmt.Errorf(
-			"invalid signature [0x%v] on message from sender [%v] ",
-			hex.EncodeToString(signature),
-			sender.Pretty(),
-		)
-	}
-
-	return nil
 }
 
 func (c *channel) handleMessages(ctx context.Context) {
