@@ -128,74 +128,29 @@ heal in the case of a malicious split brain event.
 
 ==== Attributability and integrity of messages
 
-All messages in the network are signed with sender's private static key. Before 
-any two peers start exchanging messages, they need to agree on a common nonce 
-(8-byte unsigned integer) that will be used to track the order of messages as 
-well as to prevent replay and message-from-future attacks. The protocol is 
-similar to the one used to create a challenge:
+All messages in the network are signed with the sender's private static key. 
+Each message is uniquely identified by the sender's address and sequence number 
+incremented for each new message sent by that peer. The message identifier is 
+a part of the signed message content. Each peer in the network maintains a cache 
+of already seen messages for the time no shorter than the longest protocol 
+executed in the network. If a message with the given identifier has been already 
+seen by the given peer, the message is discarded. This behaviour applies both to 
+peers relaying a message and to peer which is the final message receiver.
 
-```
-PEER 1                                          PEER 2
-
-n_1 = random_nonce() 
-Message { n_1 } ---->
-                                                n_2 = random_nonce()
-                                                nonce = hash(n_1 || n_2).toInt
-                                                <---- Message { n_2 }
-nonce = hash(n_1 || n_2).toInt
-```
-
-Once peers agree on a common initial nonce they both execute a check for an 
-on-chain stake of the second party. If at least one of the peers does not have a 
-minimum stake, protocol is aborted and all messages from that peer are rejected.
-
-Nonces are tracked individually by all communicating peers; each peer maps all 
-other peers it communicates with to the current nonces they have maintained 
-with them. 
-
-Each message sent from a peer must have a nonce greater by one from the nonce of 
-the previous message. The nonce is included in a message in a way that makes it 
-a part of the content used to produce a signature. Nonce expires if two peers do 
-not communicate for a certain period of time. Nonce timeout is a parameter 
-tracked on-chain. Two peers need to execute the handshake protocol again to 
-initialize a new nonce if the previous one has expired. If the nonce has 
-exhausted (reached the maximum possible value), it should be set back to 0.
-
-All messages received from a given peer must contain nonces forming an ordered 
-sequence. If a peer receives a message with nonce less than or equal to the most 
-recent one for the given sender, the message is rejected and the sender is 
-informed about that. Due to the nature of the network, some messages can be lost 
-or delayed. Each peer has a cache of messages sent and received within a fixed 
-time window. If a received message has a nonce greater by more than one from the 
-currently expected nonce, that message is added to cache but it’s not accepted
-until the gap between the expected and message’s nonce is filled. There is a 
-fixed, short time limit under which the gap must be filled. If that does not 
-happen, the message is rejected and the sender is informed about this fact. 
-Message rejected notification contains a nonce of a message that was rejected as 
-well as the currently expected nonce. Sender, having the cache of messages sent 
-in the fixed time window resends all the messages starting from the one with 
-nonce expected by the receiver. If sender does not provide the missing messages 
-within a fixed timeout, receiver drops the connection.
-
-Sent and received messages cache window, time after a notification about 
-rejecting a message is sent as well as time after connection is droped if 
-expected messages were not delivered should be the same for all peers in the 
-network. These values are fixed and tracked on-chain as system constants which
-require a hard-fork-level event to change. 
+When a peer receives a message it first checks the signature. If it matches, 
+then peer validates uniqueness of the message ID. If a message with the given ID 
+was not seen before, then the message is accepted.
 
 All peers in the network have a streaming view of the latest chain state that 
 notifies in an event-style when a given address falls below the minimum stake.
 
-If stake drops down below the required minimum for some peer, that peer's nonce 
-is discarded and all connections to that peer are dropped and any unprocessed 
-messages from that peer are immediately discarded. Once the peer increases 
-its stake so that it is above the required minimum, it must initialize its 
-connections with any disconnected peers once again in order to be able to 
-communicate with them.
+If stake drops down below the required minimum for some peer, all connections 
+to that peer are dropped and any unprocessed messages from that peer are 
+immediately discarded. Once the peer increases its stake so that it is above 
+the required minimum, it must initialize its connections with any disconnected 
+peers once again in order to be able to communicate with them. In such case, all
+unprocessed messages should be sent again.
 
-When peer receives a message it firsts check the signature. If it matches, then 
-peer validates the nonce. If the nonce is greater by one from the nonce included 
-in the previous message, then the message is accepted.
 
 ==== Message Confidentiality
 
