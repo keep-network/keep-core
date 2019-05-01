@@ -394,7 +394,8 @@ contract KeepGroupImplV1 is Ownable {
      * @param timeDKG Timeout in blocks after DKG result is complete and ready to be published.
      * @param resultPublicationBlockStep Time in blocks after which member with the given index is eligible
      * to submit DKG result.
-     * @param activeGroupsThreshold is the minimal number of groups that cannot be marked as expired.
+     * @param activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
+     * needs to be greater than 0.
      * @param activeTime is the time in block after which a group expires.
      */
     function initialize(
@@ -413,6 +414,7 @@ contract KeepGroupImplV1 is Ownable {
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
+        require(activeGroupsThreshold > 0, "The minumum number of active groups needs to be more than zero.");
         _initialized["KeepGroupImplV1"] = true;
         _stakingProxy = stakingProxy;
         _randomBeacon = randomBeacon;
