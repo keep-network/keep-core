@@ -39,7 +39,7 @@ func (c *channel) Name() string {
 }
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
-	// Transform net.TaggedMarshaler to a protobuf message, sign, and wrap
+	// Transform net.TaggedMarshaler to a protobuf message, and wrap
 	// in an envelope.
 	envelopeBytes, err := c.envelopeProto(message)
 	if err != nil {
@@ -125,14 +125,9 @@ func (c *channel) sealEnvelope(
 	if err != nil {
 		return nil, err
 	}
-	signature, err := c.sign(messageBytes)
-	if err != nil {
-		return nil, err
-	}
 
 	return &pb.NetworkEnvelope{
-		Message:   messageBytes,
-		Signature: signature,
+		Message: messageBytes,
 	}, nil
 }
 
@@ -214,14 +209,6 @@ func (c *channel) handleMessages(ctx context.Context) {
 func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
 	var envelope pb.NetworkEnvelope
 	if err := proto.Unmarshal(pubsubMessage.Data, &envelope); err != nil {
-		return err
-	}
-
-	if err := c.verify(
-		pubsubMessage.GetFrom(),
-		envelope.GetMessage(),
-		envelope.GetSignature(),
-	); err != nil {
 		return err
 	}
 
