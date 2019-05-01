@@ -144,13 +144,12 @@ was not seen before, then the message is accepted.
 All peers in the network have a streaming view of the latest chain state that 
 notifies in an event-style when a given address falls below the minimum stake.
 
-If stake drops down below the required minimum for some peer, all connections 
-to that peer are dropped and any unprocessed messages from that peer are 
-immediately discarded. Once the peer increases its stake so that it is above 
-the required minimum, it must initialize its connections with any disconnected 
-peers once again in order to be able to communicate with them. In such case, all
-unprocessed messages should be sent again.
-
+If a peer's stake drops below the required minimum, all connections to that peer 
+are dropped and any unprocessed messages from that peer are immediately 
+discarded. Once the peer's stake returns to at or above the required minimum, 
+it must initialize its connections with any disconnected peers once again in 
+order to be able to communicate with them. All unprocessed messages will be 
+retried.
 
 ==== Message Confidentiality
 
@@ -183,9 +182,9 @@ connection attempts from that peer to the peer who blacklisted it are rejected.
 
 In the Keep network, peers may form groups selected to execute various protocols. 
 The output of the group formation protocol is a list of on-chain addresses. 
-When peer joins a group, it includes its public static key in every single 
+When a peer joins a group, it includes its public static key in every single 
 message sent to the group. The public key is used by other peers in the group 
-to derive the on-chain address of that peer and check if the given peer is 
+to derive the on-chain address of that peer, and check if the given peer is 
 eligible to join and communicate within the group.
 
 [bibliography]
