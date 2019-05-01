@@ -6,7 +6,7 @@ import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
 
 
-interface GroupContract {
+interface BackendContract {
     function runGroupSelection(uint256 randomBeaconValue) external;
     function numberOfGroups() external view returns(uint256);
     function selectGroup(uint256 previousEntry) external view returns(bytes memory);
@@ -30,7 +30,7 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
 
     uint256 internal _requestCounter;
     uint256 internal _minPayment;
-    address internal _groupContract;
+    address internal _backendContract;
     uint256 internal _previousEntry;
 
     mapping (string => bool) internal _initialized;
@@ -56,9 +56,9 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param genesisEntry Initial relay entry to create first group.
      * @param genesisGroupPubKey Group to respond to the initial relay entry request.
-     * @param groupContract Group contract linked to this contract.
+     * @param backendContract Backend contract linked to this contract.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, bytes memory genesisGroupPubKey, address groupContract)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, bytes memory genesisGroupPubKey, address backendContract)
         public
         onlyOwner
     {
@@ -68,7 +68,7 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _previousEntry = genesisEntry;
-        _groupContract = groupContract;
+        _backendContract = backendContract;
 
         // Create initial relay entry request. This will allow relayEntry to be called once
         // to trigger the creation of the first group. Requests are removed on successful
@@ -97,11 +97,11 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
         );
 
         require(
-            GroupContract(_groupContract).numberOfGroups() > 0,
+            BackendContract(_backendContract).numberOfGroups() > 0,
             "At least one group needed to serve the request."
         );
 
-        bytes memory groupPubKey = GroupContract(_groupContract).selectGroup(_previousEntry);
+        bytes memory groupPubKey = BackendContract(_backendContract).selectGroup(_previousEntry);
 
         _requestCounter++;
 
@@ -141,7 +141,7 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
         _previousEntry = groupSignature;
 
         emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);
-        GroupContract(_groupContract).runGroupSelection(groupSignature);
+        BackendContract(_backendContract).runGroupSelection(groupSignature);
     }
 
     /**
