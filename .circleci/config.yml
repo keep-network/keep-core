@@ -92,6 +92,7 @@ jobs:
           name: Migrate Contracts
           command: |
             export BUILD_TAG=$CIRCLE_SHA1
+            export TRUFFLE_NETWORK="keep_dev"
             contracts/solidity/scripts/circleci-migrate-contracts.sh
   publish_client:
     executor: gcp-gcr/default
