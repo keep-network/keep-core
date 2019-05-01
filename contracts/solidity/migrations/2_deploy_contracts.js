@@ -23,6 +23,7 @@ const timeoutChallenge = 4;
 const resultPublicationBlockStep = 3;
 const activeGroupsThreshold = 5;
 const groupExpirationTime = 300;
+const relayRequestTimeout = 10;
 
 // timeDKG - Timeout in blocks after DKG result is complete and ready to be published.
 // 7 states with state.MessagingStateActiveBlocks which is set to 3
