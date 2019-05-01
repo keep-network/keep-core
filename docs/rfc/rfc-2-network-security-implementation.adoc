@@ -37,12 +37,12 @@ required minimum. This requirement enforces that only peers with a minimum
 stake are able to be a part of the network and this requirement is enforced by 
 all peers individually.
 
-Attributability, integrity and optional confidentiality of messages are 
-requirements enforced on the application level. Even if a message between two 
-peers was relayed by others, this message still needs to fulfil all of those 
+Even if a message between two peers was relayed by others, this message still 
+needs to fulfil attributability, integrity, and optional confidentiality 
 requirements. Since two peers exchanging messages do not necessarily need to 
 have a connection on the network level with each other, they also perform an 
-identity and stake check before the communication between them happens.
+identity and stake check before the communication between them happens if such
+check is not already performed as a part of the protocol those two peers execute.
 
 ==== Peer identification
 Each peer is identified by a static public key equal to the delegate key 
