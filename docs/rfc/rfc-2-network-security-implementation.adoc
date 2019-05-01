@@ -196,3 +196,5 @@ still use the same nonce and don't have to execute the protocol again.
 - Discussions on writing this document:
 https://www.flowdock.com/app/cardforcoin/tech/threads/Zc_bHNDU5eNJY8JHB22NfU2a9Bk
 
+- libp2p security considerations:
+https://www.flowdock.com/app/cardforcoin/tech/threads/hKOcyS8EPmZ7PBvpnMQixy0di1e
