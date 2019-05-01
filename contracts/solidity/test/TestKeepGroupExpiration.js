@@ -16,10 +16,10 @@ const timeoutSubmission = 50;
 const timeoutChallenge = 60;
 const timeDKG = 20;
 const resultPublicationBlockStep = 3;
-const groupExpirationTime = 300;
+const groupActiveTime = 300;
 const activeGroupsThreshold = 5;
 const testGroupsNumber = 10;
-const expirationStepTime = groupExpirationTime / 10;
+const expirationStepTime = groupActiveTime / 10;
 const expectedOffset = 5;
 
 contract('TestKeepGroupExpiration', function(accounts) {
@@ -49,7 +49,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
       stakingProxy.address, keepRandomBeaconProxy.address, minimumStake,
       groupThreshold, groupSize, timeoutInitial, timeoutSubmission,
       timeoutChallenge, timeDKG, resultPublicationBlockStep, activeGroupsThreshold,
-      groupExpirationTime
+      groupActiveTime
     );
   });
 
@@ -71,10 +71,10 @@ contract('TestKeepGroupExpiration', function(accounts) {
   /* Following 6 tests are manualy derived from the analyisis of the aggressive group marking.
    * There are finetuned for the following parameters:
    *
-   *  groupExpirationTime = 300;
+   *  groupActiveTime = 300;
    *  activeGroupsThreshold = 5;
    *  testGroupsNumber = 10;
-   *  expirationStepTime = groupExpirationTime / 10;
+   *  expirationStepTime = groupActiveTime / 10;
    *
    * After every change of the above parameters the following tests will need to be updated.
    */
@@ -144,10 +144,9 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
     
-    mineBlocks(groupExpirationTime);
+    mineBlocks(groupActiveTime);
     await keepGroupImplViaProxy.selectGroup(1);
     numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
-
     assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Some groups should be marked as expired");
   });
 
@@ -158,7 +157,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     let after = await keepGroupImplViaProxy.numberOfGroups();
 
     for (var i = 1; i <= testGroupsNumber; i++) {
-      mineBlocks(groupExpirationTime);
+      mineBlocks(groupActiveTime);
       await keepGroupImplViaProxy.selectGroup((testGroupsNumber - 1) % i);
       after = await keepGroupImplViaProxy.numberOfGroups();
     }
@@ -172,7 +171,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     let after = await keepGroupImplViaProxy.numberOfGroups();
 
-    mineBlocks(groupExpirationTime*2);
+    mineBlocks(groupActiveTime*2);
 
     for (var i = 1; i <= testGroupsNumber; i++)
       await keepGroupImplViaProxy.registerNewGroup([i]);
