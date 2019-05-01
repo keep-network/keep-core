@@ -569,6 +569,71 @@ func TestLocalBlockHeightWaiter(t *testing.T) {
 	}
 }
 
+func TestLocalIsGroupEligibleForRemoval(t *testing.T) {
+
+	group1 := localGroup{
+		groupPublicKey:          []byte{'v'},
+		registrationBlockHeight: 1,
+	}
+
+	group2 := localGroup{
+		groupPublicKey:          []byte{'i'},
+		registrationBlockHeight: 2,
+	}
+
+	group3 := localGroup{
+		groupPublicKey:          []byte{'d'},
+		registrationBlockHeight: 3,
+	}
+
+	availableGroups := []localGroup{group1, group2, group3}
+
+	var tests = map[string]struct {
+		group          localGroup
+		expectedResult bool
+	}{
+		"found a first group": {
+			group: localGroup{
+				groupPublicKey:          []byte{'d'},
+				registrationBlockHeight: 3,
+			},
+			expectedResult: false,
+		},
+		"found a second group": {
+			group: localGroup{
+				groupPublicKey:          []byte{'v'},
+				registrationBlockHeight: 1,
+			},
+			expectedResult: false,
+		},
+		"group was not found, can be removed": {
+			group: localGroup{
+				groupPublicKey:          []byte{'z'},
+				registrationBlockHeight: 4,
+			},
+			expectedResult: true,
+		},
+	}
+
+	localChain := &localChain{
+		groups: availableGroups,
+	}
+	chainHandle := localChain.ThresholdRelay()
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualResult, err := chainHandle.IsGroupEligibleForRemoval(test.group.groupPublicKey)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if actualResult != test.expectedResult {
+				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
+			}
+		})
+	}
+}
+
 func TestLocalIsDKGResultSubmitted(t *testing.T) {
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 

@@ -1,6 +1,7 @@
 package local
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -23,6 +24,10 @@ import (
 var seedGroupPublicKey = []byte("seed to group public key")
 var seedRelayEntry = big.NewInt(123456789)
 
+type localGroup struct {
+	groupPublicKey          []byte
+	registrationBlockHeight uint
+}
 type localChain struct {
 	relayConfig *relayconfig.Chain
 
@@ -34,7 +39,7 @@ type localChain struct {
 	// execution.
 	submittedResults map[*big.Int][]*relaychain.DKGResult
 
-	groups [][]byte
+	groups []localGroup
 
 	handlerMutex             sync.Mutex
 	relayEntryHandlers       map[int]func(entry *event.Entry)
@@ -212,15 +217,6 @@ func (c *localChain) OnGroupRegistered(
 	}), nil
 }
 
-func (c *localChain) IsGroupEligibleForRemoval(groupPublicKey []byte) (bool, error) {
-	c.handlerMutex.Lock()
-	defer c.handlerMutex.Unlock()
-
-	// TODO: add code
-
-	return false, nil
-}
-
 func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }
@@ -234,6 +230,12 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		groupSize,
 		minimumStake,
 	)
+
+	currentBlock, _ := bc.CurrentBlock()
+	group := localGroup{
+		groupPublicKey:          seedGroupPublicKey,
+		registrationBlockHeight: uint(currentBlock),
+	}
 
 	return &localChain{
 		relayConfig: &relayconfig.Chain{
@@ -257,7 +259,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		stakeMonitor:             NewStakeMonitor(minimumStake),
 		tickets:                  make([]*relaychain.Ticket, 0),
 		latestValue:              seedRelayEntry,
-		groups:                   [][]byte{seedGroupPublicKey},
+		groups:                   []localGroup{group},
 	}
 }
 
@@ -304,7 +306,7 @@ func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 		RequestID:      big.NewInt(c.requestID),
 		Payment:        big.NewInt(1),
 		PreviousEntry:  c.latestValue,
-		GroupPublicKey: c.groups[selectedIdx],
+		GroupPublicKey: c.groups[selectedIdx].groupPublicKey,
 		Seed:           seed,
 	}
 	atomic.AddUint64(&c.simulatedHeight, 1)
@@ -321,6 +323,20 @@ func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 	promise.Fulfill(request)
 
 	return promise
+}
+
+// IsGroupEligibleForRemoval simulates a check if a group can be cleaned in off-chain
+func (c *localChain) IsGroupEligibleForRemoval(groupPublicKey []byte) (bool, error) {
+	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
+
+	for _, group := range c.groups {
+		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 // IsDKGResultPublished simulates check if the result was already submitted to a
@@ -370,7 +386,11 @@ func (c *localChain) SubmitDKGResult(
 		BlockNumber:    currentBlock,
 	}
 
-	c.groups = append(c.groups, resultToPublish.GroupPublicKey)
+	myGroup := localGroup{
+		groupPublicKey:          resultToPublish.GroupPublicKey,
+		registrationBlockHeight: uint(currentBlock),
+	}
+	c.groups = append(c.groups, myGroup)
 
 	groupRegistrationEvent := &event.GroupRegistration{
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
