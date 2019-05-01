@@ -52,7 +52,7 @@ contract KeepGroupImplV1 is Ownable {
 
     // _activeGroupsThreshold is the minimal number of groups that should not
     // expire to protect the minimal network throughput.
-    // It should be at leaset 1.
+    // It should be at least 1.
     uint256 internal _activeGroupsThreshold;
  
     // _activeTime is the time in block after which a group expires
