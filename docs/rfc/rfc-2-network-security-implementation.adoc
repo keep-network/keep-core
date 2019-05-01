@@ -154,13 +154,10 @@ unprocessed messages should be sent again.
 
 ==== Message Confidentiality
 
-Encryption is based on ephemeral keys generated individually for each protocol 
-execution. Only point-to-point communication can be encrypted. 
-
-Before the encrypted communication can happen, both involved peers generate a 
-symmetric key using 
-link:http://noiseprotocol.org/noise.html#interactive-handshake-patterns-fundamental[`Noise_XK`] 
-protocol. 
+Encryption is implemented on the application level and not on the network level. 
+To enable encryption, two parties perform ECDH handshake using standard network 
+messages ensuring attributability and integrity as described in the previous 
+section. 
 
 Any of the communicating peers can reveal the symmetric key in order to publicly 
 publish a complaint about the other peer's message. In such case, the symmetric 
@@ -199,10 +196,3 @@ still use the same nonce and don't have to execute the protocol again.
 - Discussions on writing this document:
 https://www.flowdock.com/app/cardforcoin/tech/threads/Zc_bHNDU5eNJY8JHB22NfU2a9Bk
 
-- Noise Protocol documentation: http://noiseprotocol.org/noise.html
-
-- Noise Protocol variations matrix:
-https://latacora.singles/2018/07/18/factoring-the-noise.html
-
-- Lighting Network Noise implementation:
-https://github.com/lightningnetwork/lnd/tree/master/brontide
