@@ -1,5 +1,5 @@
 #!/bin/bash
-if [[ -z $GOOGLE_PROJECT_NAME || -z $GOOGLE_PROJECT_ID || -z $BUILD_TAG || -z $GOOGLE_REGION || -z $GOOGLE_COMPUTE_ZONE_A ]]; then
+if [[ -z $GOOGLE_PROJECT_NAME || -z $GOOGLE_PROJECT_ID || -z $BUILD_TAG || -z $GOOGLE_REGION || -z $GOOGLE_COMPUTE_ZONE_A || -z $TRUFFLE_NETWORK ]]; then
   echo "one or more required variables are undefined"
   exit 1
 fi
@@ -26,6 +26,7 @@ scp -r contracts/solidity utilitybox:/tmp/$BUILD_TAG/
 # Run deployment
 ssh utilitybox << EOF
   gcloud container clusters get-credentials $GOOGLE_PROJECT_NAME --region $GOOGLE_REGION --internal-ip --project=$GOOGLE_PROJECT_ID
+
   nohup timeout 600 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
 
   geth  --exec "personal.unlockAccount(\"${ETHEREUM_KEEP_CONTRACT_ADDRESS}\", \"${ETHEREUM_KEEP_CONTRACT_ADDRESS_PASSPHRASE}\", 600)" attach http://localhost:8545
@@ -41,7 +42,7 @@ ssh utilitybox << EOF
   npm install babel-polyfill
 
   cp ./truffle_sample.js ./truffle.js
-  sudo truffle migrate --reset --network keep_dev
+  sudo truffle migrate --reset --network $TRUFFLE_NETWORK
 EOF
 
 ssh utilitybox rm -rf /tmp/$BUILD_TAG
