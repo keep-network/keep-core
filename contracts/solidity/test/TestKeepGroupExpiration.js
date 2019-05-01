@@ -68,74 +68,73 @@ contract('TestKeepGroupExpiration', function(accounts) {
     assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups not equals to number of test groups");
   });
 
-  /* Following 6 tests are manualy derived from the analyisis of the aggressive group marking.
-   * There are finetuned for the following parameters:
-   *
-   *  groupActiveTime = 300;
-   *  activeGroupsThreshold = 5;
-   *  testGroupsNumber = 10;
-   *  expirationStepTime = groupActiveTime / 10;
-   *
-   * After every change of the above parameters the following tests will need to be updated.
-   */
-  it("it should mark all groups as expired except activeGroupsThreshold #1", async function() {
+  // - we start with [AAAAAAAAAA]
+  // - threshold is equal 5
+  // - we mine as many blocks as needed to make groups [0, 4] expired
+  // - we select group at position 4 which is expired
+  // - we should end up with [EEEEEAAAAA]
+  it("should mark all groups as expired except active threshold when\
+ the selected group is right before of threshold section and it is expired", async function() {
+
     for (var i = 1; i <= testGroupsNumber; i++) {
-      await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(28); // this plus the above should be equla to the expirationstepTime
+      await keepGroupImplViaProxy.registerNewGroup([i]); // we do not care how many blocks it takes now
     }
 
-    let expiredOffset = await testExpiration(4, 0);
-    assert.equal(Number(expiredOffset), expectedOffset, "Expired offset should be equal expected expire offset");
+    let groupRegistrationBlock = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(4);
+    let currentBlock = await web3.eth.getBlockNumber();
+    if (currentBlock - groupRegistrationBlock <= groupActiveTime)
+      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
+
+    await keepGroupImplViaProxy.selectGroup(4) // 4 % 10 = 4
+    let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
+
+    assert.equal(expiredOffset, 5, "Unexpected expired offset")
   });
 
-  it("it should mark all groups as expired except activeGroupsThreshold #2", async function() {
+  // - we start with [AAAAAAAAAA]
+  // - threshold is equal 5
+  // - we mine as many blocks as needed to make groups [0, 5] expired
+  // - we select group at position 5 which is expired
+  // - we should end up with [EEEEEAAAAA]
+  it("should mark all groups as expired except active threshold when\
+ the selected group is right at the beginning of threshold section and it is expired", async function() {
+
     for (var i = 1; i <= testGroupsNumber; i++) {
-      await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(28); // this plus the above should be equla to the expirationstepTime
+      await keepGroupImplViaProxy.registerNewGroup([i]);
     }
 
-    let expiredOffset = await testExpiration(7, 1);
-    assert.equal(Number(expiredOffset), expectedOffset, "Expired offset should be equal expected expire offset");
+    let groupRegistrationBlock = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(5);
+    let currentBlock = await web3.eth.getBlockNumber();
+    if (currentBlock - groupRegistrationBlock <= groupActiveTime)
+      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
+
+    await keepGroupImplViaProxy.selectGroup(5) // 5 % 10 = 5
+    let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
+
+    assert.equal(expiredOffset, 5, "Unexpected expired offset")
   });
 
-  it("it should mark all groups as expired except activeGroupsThreshold #3", async function() {
+  // - we start with [AAAAAAAAAA]
+  // - threshold is equal 5
+  // - we mine as many blocks as needed to make groups [0, 6] expired
+  // - we select group at position 6 which is expired
+  // - we should end up with [EEEEEAAAAA]
+  it("should mark all groups as expired except active threshold when\
+ the selected group is right after the beginning of threshold section and it is expired", async function() {
+
     for (var i = 1; i <= testGroupsNumber; i++) {
-      await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(28); // this plus the above should be equla to the expirationstepTime
+      await keepGroupImplViaProxy.registerNewGroup([i]);
     }
 
-    let expiredOffset = await testExpiration(5, 2);
-    assert.equal(Number(expiredOffset), expectedOffset, "Expired offset should be equal expected expire offset");
-  });
+    let groupRegistrationBlock = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(6);
+    let currentBlock = await web3.eth.getBlockNumber();
+    if (currentBlock - groupRegistrationBlock <= groupActiveTime)
+      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
 
-  it("it should mark all groups as expired except activeGroupsThreshold #4", async function() {
-    for (var i = 1; i <= testGroupsNumber; i++) {
-      await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(28); // this plus the above should be equla to the expirationstepTime
-    }
+    await keepGroupImplViaProxy.selectGroup(6) // 6 % 10 = 6
+    let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
 
-    let expiredOffset = await testExpiration(4, 4);
-    assert.equal(Number(expiredOffset), expectedOffset, "Expired offset should be equal expected expire offset");
-  });
-
-  it("it should mark all groups as expired except activeGroupsThreshold #5", async function() {
-    for (var i = 1; i <= testGroupsNumber; i++) {
-      await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(28); // this plus the above should be equla to the expirationstepTime
-    }
-
-    let expiredOffset = await testExpiration(5, 5);
-    assert.equal(Number(expiredOffset), expectedOffset, "Expired offset should be equal expected expire offset");
-    });
-
-  it("it should mark all groups as expired except activeGroupsThreshold #6", async function() {
-    for (var i = 1; i <= testGroupsNumber; i++) {
-      await keepGroupImplViaProxy.registerNewGroup([i]); // 2 blocks
-      mineBlocks(28); // this plus the above should be equla to the expirationstepTime
-    }
-
-    let expiredOffset = await testExpiration(6, 6);
-    assert.equal(Number(expiredOffset), expectedOffset, "Expired offset should be equal expected expire offset");
+    assert.equal(expiredOffset, 5, "Unexpected expired offset");
   });
 
   it("should be able to check if at least one group is marked as expired", async function() {
