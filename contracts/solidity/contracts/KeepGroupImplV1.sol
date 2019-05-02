@@ -552,20 +552,6 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Adds a new group based on groupPublicKey.
-     * @param groupPublicKey is the identifier of the newly created group.
-     */
-    function registerNewGroup(bytes memory groupPublicKey) public {
-        _groups.push(Group(groupPublicKey, block.number));
-        address[] memory members = orderedParticipants();
-        if (members.length > 0) {
-            for (uint i = 0; i < _groupSize; i++) {
-                _groupMembers[groupPublicKey].push(members[i]);
-            }
-        }
-    }
-
-    /**
      * @dev Gets number of active groups.
      */
     function numberOfGroups() public view returns(uint256) {
@@ -623,21 +609,6 @@ contract KeepGroupImplV1 is Ownable {
             }
         }
         return _groups[_expiredOffset + selectedGroup].groupPubKey;
-    }
-
-    /**
-     * @dev Gets the group registration block height.
-     * @param groupIndex is the index of the queried group.
-     */
-    function getGroupRegistrationBlockHeight(uint256 groupIndex) public view returns(uint256) {
-        return _groups[groupIndex].registrationBlockHeight;
-    }
-
-    /**
-     * @dev Gets the value of expired offset.
-     */
-    function getExpiredOffset() public view returns(uint256) {
-        return _expiredOffset;
     }
 
     /**
