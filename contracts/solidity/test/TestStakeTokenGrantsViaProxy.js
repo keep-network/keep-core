@@ -53,7 +53,7 @@ contract('TestStakeTokenGrantsViaProxy', function(accounts) {
 
     // Owner of stakingProxy should be able to authorize a token grant contract
     await stakingProxy.authorizeContract(grantContract.address, {from: account_one})
-    assert.equal(await stakingProxy.isAuthorized(grantContract.address), true, "StakingProxy owner should be able to authorize a token grant contract.");
+    assert.isTrue(await stakingProxy.isAuthorized(grantContract.address), "StakingProxy owner should be able to authorize a token grant contract.");
 
     // Stake granted tokens
     await grantContract.stake(id, delegation, {from: account_two})
@@ -65,7 +65,7 @@ contract('TestStakeTokenGrantsViaProxy', function(accounts) {
 
     // Owner of stakingProxy should be able to deauthorize a token grant contract
     await stakingProxy.deauthorizeContract(grantContract.address, {from: account_one})
-    assert.equal(await stakingProxy.isAuthorized(grantContract.address), false, "StakingProxy owner should be able to deauthorize a token grant contract.");
+    assert.isFalse(await stakingProxy.isAuthorized(grantContract.address), "StakingProxy owner should be able to deauthorize a token grant contract.");
 
   });
 });

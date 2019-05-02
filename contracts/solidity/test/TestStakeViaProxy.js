@@ -31,7 +31,7 @@ contract('TestStakeViaProxy', function(accounts) {
 
     // Owner of stakingProxy should be able to authorize a staking contract
     await stakingProxy.authorizeContract(stakingContract.address, {from: owner})
-    assert.equal(await stakingProxy.isAuthorized(stakingContract.address), true, "StakingProxy owner should be able to authorize a staking contract.");
+    assert.isTrue(await stakingProxy.isAuthorized(stakingContract.address), "StakingProxy owner should be able to authorize a staking contract.");
 
     // Stake tokens using approveAndCall pattern
     await token.approveAndCall(stakingContract.address, stakingAmount, delegation, {from: owner});
