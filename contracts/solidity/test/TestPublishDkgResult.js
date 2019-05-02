@@ -26,6 +26,7 @@ contract('TestPublishDkgResult', function(accounts) {
   const resultPublicationBlockStep = 3;
   const groupExpirationTime = 300;
   const activeGroupsThreshold = 5;
+  const relayRequestTimeout = 10;
 
   let disqualified, inactive, resultHash,
   token, stakingProxy, stakingContract, randomBeaconValue, requestId,
