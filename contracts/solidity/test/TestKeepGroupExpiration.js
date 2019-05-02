@@ -173,19 +173,25 @@ contract('TestKeepGroupExpiration', function(accounts) {
     assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
-  it("should be able to check that groups are marked as expired except the minimal active groups number", async function() {
+  // - we start with [AAAAAAAAAA]
+  // - threshold is equal 5
+  // - we mine as many blocks as needed to mark all groups as expired
+  // - we select group at position 9 (testGroupsNumber - 1) which is expired
+  // - we should end up with [EEEEEAAAAA]
+  it("should mark all groups as expired except active threshold when\
+ selected the very last group", async function() {
     for (var i = 1; i <= testGroupsNumber; i++)
       await keepGroupImplViaProxy.registerNewGroup([i]);
 
-    let after = await keepGroupImplViaProxy.numberOfGroups();
+    mineBlocks(groupActiveTime * 10);
 
-    for (var i = 1; i <= testGroupsNumber; i++) {
-      mineBlocks(groupActiveTime);
-      await keepGroupImplViaProxy.selectGroup((testGroupsNumber - 1) % i);
-      after = await keepGroupImplViaProxy.numberOfGroups();
-    }
-    
-    assert.equal(Number(after), activeGroupsThreshold, "Number of groups should not fall below the threshold of active groups");
+    await keepGroupImplViaProxy.selectGroup(testGroupsNumber - 1); // 9
+
+    let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
+    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
+
+    assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
+    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
   it("it should be able to mark only a subset of groups as expired", async function() {
