@@ -20,6 +20,7 @@ type channelManager struct {
 	channels      map[string]*channel
 
 	pubsub *pubsub.PubSub
+	host   host.Host
 }
 
 func newChannelManager(
@@ -40,6 +41,7 @@ func newChannelManager(
 	return &channelManager{
 		channels:  make(map[string]*channel),
 		pubsub:    floodsub,
+		host:      p2phost,
 		peerStore: p2phost.Peerstore(),
 		identity:  identity,
 		ctx:       ctx,
@@ -82,6 +84,7 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		name:               name,
 		clientIdentity:     cm.identity,
 		peerStore:          cm.peerStore,
+		host:               cm.host,
 		pubsub:             cm.pubsub,
 		subscription:       sub,
 		messageHandlers:    make([]net.HandleMessageFunc, 0),
