@@ -77,7 +77,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
  the selected group is right before of threshold section and it is expired", async function() {
 
     for (var i = 1; i <= testGroupsNumber; i++) {
-      await keepGroupImplViaProxy.registerNewGroup([i]); // we do not care how many blocks it takes now
+      await keepGroupImplViaProxy.registerNewGroup([i]);
     }
 
     let groupRegistrationBlock = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(4);
