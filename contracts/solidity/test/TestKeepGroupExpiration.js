@@ -82,6 +82,8 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     let groupRegistrationBlock = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(4);
     let currentBlock = await web3.eth.getBlockNumber();
+    // If current block is larger than group registration block by group active time then
+    // it is not necessary to mine any blocks cause the group is already expired
     if (currentBlock - groupRegistrationBlock <= groupActiveTime)
       await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
 
@@ -105,6 +107,8 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     let groupRegistrationBlock = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(5);
     let currentBlock = await web3.eth.getBlockNumber();
+    // If current block is larger than group registration block by group active time then
+    // it is not necessary to mine any blocks cause the group is already expired
     if (currentBlock - groupRegistrationBlock <= groupActiveTime)
       await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
 
@@ -128,6 +132,8 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     let groupRegistrationBlock = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(6);
     let currentBlock = await web3.eth.getBlockNumber();
+    // If current block is larger than group registration block by group active time then
+    // it is not necessary to mine any blocks cause the group is already expired
     if (currentBlock - groupRegistrationBlock <= groupActiveTime)
       await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
 
