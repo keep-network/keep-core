@@ -19,8 +19,6 @@ const resultPublicationBlockStep = 3;
 const groupActiveTime = 300;
 const activeGroupsThreshold = 5;
 const testGroupsNumber = 10;
-const expirationStepTime = groupActiveTime / 10;
-const expectedOffset = 5;
 
 contract('TestKeepGroupExpiration', function(accounts) {
 
