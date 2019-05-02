@@ -11,8 +11,8 @@ contract('TestKeepRandomBeaconBackend', function(accounts) {
 
   let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-    keepRandomBeaconBackend,
-    keepRandomBeaconFrontendImplV1, keepRandomBeaconFrontendProxy,
+    backend,
+    frontendImplV1, frontendProxy,
     account_one = accounts[0],
     account_two = accounts[1];
 
@@ -25,8 +25,8 @@ contract('TestKeepRandomBeaconBackend', function(accounts) {
     await stakingProxy.authorizeContract(stakingContract.address, {from: account_one})
 
     // Initialize Keep Random Beacon contract
-    keepRandomBeaconFrontendImplV1 = await KeepRandomBeaconFrontendImplV1.new(1,1);
-    keepRandomBeaconFrontendProxy = await KeepRandomBeaconFrontendProxy.new(keepRandomBeaconFrontendImplV1.address);
+    frontendImplV1 = await KeepRandomBeaconFrontendImplV1.new(1,1);
+    frontendProxy = await KeepRandomBeaconFrontendProxy.new(frontendImplV1.address);
 
     // Initialize Keep Random Beacon backend contract
     minimumStake = 200;
@@ -38,24 +38,24 @@ contract('TestKeepRandomBeaconBackend', function(accounts) {
     timeDKG = 20;
     resultPublicationBlockStep = 3;
 
-    keepRandomBeaconBackend = await KeepRandomBeaconBackend.new();
-    await keepRandomBeaconBackend.initialize(
-      stakingProxy.address, keepRandomBeaconFrontendProxy.address, minimumStake, groupThreshold,
+    backend = await KeepRandomBeaconBackend.new();
+    await backend.initialize(
+      stakingProxy.address, frontendProxy.address, minimumStake, groupThreshold,
       groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
     );
   });
 
   it("should fail to update minimum stake by non owner", async function() {
-    await exceptThrow(keepRandomBeaconBackend.setMinimumStake(123, {from: account_two}));
+    await exceptThrow(backend.setMinimumStake(123, {from: account_two}));
   });
 
   it("should be able to update minimum stake by the owner", async function() {
-    await keepRandomBeaconBackend.setMinimumStake(123);
-    let newMinStake = await keepRandomBeaconBackend.minimumStake();
+    await backend.setMinimumStake(123);
+    let newMinStake = await backend.minimumStake();
     assert.equal(newMinStake, 123, "Should be able to get updated minimum stake.");
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
-    assert.equal(await keepRandomBeaconBackend.initialized(), true, "Implementation contract should be initialized.");
+    assert.equal(await backend.initialized(), true, "Implementation contract should be initialized.");
   });
 });
