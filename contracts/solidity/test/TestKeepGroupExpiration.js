@@ -6,7 +6,7 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
 const KeepGroupProxy = artifacts.require('./KeepGroup.sol');
-const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
+const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1Stub.sol');
 
 const minimumStake = 200000;
 const groupThreshold = 15;
