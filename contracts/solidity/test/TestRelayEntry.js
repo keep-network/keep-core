@@ -17,7 +17,8 @@ contract('TestRelayEntry', function() {
     frontend = await KeepRandomBeaconFrontendImplV1.at(frontendProxy.address);
 
     backend = await KeepRandomBeaconBackendStub.new();
-    await frontend.initialize(1,1, bls.previousEntry, bls.groupPubKey, backend.address);
+    backend.authorizeFrontendContract(frontend.address);
+    await frontend.initialize(1, 1, backend.address);
     await frontend.requestRelayEntry(bls.seed, {value: 10});
 
   });
@@ -28,13 +29,13 @@ contract('TestRelayEntry', function() {
     // Invalid signature
     let groupSignature = web3.utils.toBN('0x0fb34abfa2a9844a58776650e399bca3e08ab134e42595e03e3efc5a0472bcd8');
 
-    await exceptThrow(frontend.relayEntry(requestID, groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed));
+    await exceptThrow(backend.relayEntry(requestID, groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed));
   });
 
   it("should be able to submit valid relay entry", async function() {
     let requestID = 1;
 
-    await frontend.relayEntry(requestID, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+    await backend.relayEntry(requestID, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     assert.equal((await frontend.getPastEvents())[0].args['requestResponse'].toString(),
       bls.groupSignature.toString(), "Should emit event with successfully submitted groupSignature."

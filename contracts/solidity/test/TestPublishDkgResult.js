@@ -56,15 +56,15 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Initialize Keep Random Beacon backend contract
     backend = await KeepRandomBeaconBackend.new();
+    randomBeaconValue = bls.groupSignature;
     await backend.initialize(
       stakingProxy.address, frontendProxy.address, minimumStake, groupThreshold,
-      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
+      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
+      randomBeaconValue, bls.groupPubKey
     );
 
-    randomBeaconValue = bls.groupSignature;
-
-    await frontend.initialize(1,1, randomBeaconValue, bls.groupPubKey, backend.address);
-    await frontend.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+    await frontend.initialize(1, 1, backend.address);
+    await backend.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake*2000)
     await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake*2000)
@@ -104,8 +104,7 @@ contract('TestPublishDkgResult', function(accounts) {
     mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
     await backend.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: selectedParticipants[0]})
-    let submitted = await backend.isDkgResultSubmitted.call(requestId);
-    assert.equal(submitted, true, "DkgResult should should be submitted");
+    assert.isTrue(await backend.isDkgResultSubmitted.call(requestId), "DkgResult should should be submitted");
   });
 
   it("should be able to submit correct result with unordered signatures and indexes.", async function() {
@@ -129,8 +128,7 @@ contract('TestPublishDkgResult', function(accounts) {
     mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
 
     await backend.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
-    let submitted = await backend.isDkgResultSubmitted.call(requestId);
-    assert.equal(submitted, true, "DkgResult should should be submitted");
+    assert.isTrue(await backend.isDkgResultSubmitted.call(requestId), "DkgResult should should be submitted");
   });
 
   it("should only be able to submit result at eligible block time based on member index.", async function() {
@@ -156,8 +154,7 @@ contract('TestPublishDkgResult', function(accounts) {
     mineBlocks(eligibleBlockForSubmitter2 - currentBlock);
 
     await backend.submitDkgResult(requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: submitter2})
-    let submitted = await backend.isDkgResultSubmitted.call(requestId);
-    assert.equal(submitted, true, "DkgResult should be submitted");
+    assert.isTrue(await backend.isDkgResultSubmitted.call(requestId), "DkgResult should be submitted");
   });
 
   it("should not be able to submit if submitter was not selected to be part of the group.", async function() {
@@ -217,8 +214,7 @@ contract('TestPublishDkgResult', function(accounts) {
     await backend.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
-    let submitted = await backend.isDkgResultSubmitted.call(requestId);
-    assert.equal(submitted, true, "DkgResult should should be submitted");
+    assert.isTrue(await backend.isDkgResultSubmitted.call(requestId), "DkgResult should should be submitted");
 
   });
 

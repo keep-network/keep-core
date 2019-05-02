@@ -2,14 +2,11 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./DelayedWithdrawal.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
-import "./cryptography/BLS.sol";
 
 
 interface BackendContract {
-    function runGroupSelection(uint256 randomBeaconValue) external;
+    function requestRelayEntry(address from, uint256 seed) payable external returns (uint256 requestId);
     function numberOfGroups() external view returns(uint256);
-    function selectGroup(uint256 previousEntry) external view returns(bytes memory);
 }
 
 
@@ -22,26 +19,15 @@ interface BackendContract {
  */
 contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
 
-    using BytesLib for bytes;
-
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey); 
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
-    uint256 internal _requestCounter;
     uint256 internal _minPayment;
     address internal _backendContract;
     uint256 internal _previousEntry;
 
     mapping (string => bool) internal _initialized;
-
-    struct Request {
-        address sender;
-        uint256 payment;
-        bytes groupPubKey;
-    }
-
-    mapping(uint256 => Request) internal _requests;
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -54,11 +40,9 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
      * @dev Initialize Keep Random Beacon implementaion contract.
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
-     * @param genesisEntry Initial relay entry to create first group.
-     * @param genesisGroupPubKey Group to respond to the initial relay entry request.
      * @param backendContract Backend contract linked to this contract.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, bytes memory genesisGroupPubKey, address backendContract)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay, address backendContract)
         public
         onlyOwner
     {
@@ -67,14 +51,7 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
         _initialized["KeepRandomBeaconFrontendImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
-        _previousEntry = genesisEntry;
         _backendContract = backendContract;
-
-        // Create initial relay entry request. This will allow relayEntry to be called once
-        // to trigger the creation of the first group. Requests are removed on successful
-        // entries so genesis entry can only be called once.
-        _requestCounter++;
-        _requests[_requestCounter] = Request(msg.sender, 0, genesisGroupPubKey); 
     }
 
     /**
@@ -96,19 +73,19 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
             "Payment is less than required minimum."
         );
 
+        // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
+        // BackendContract(_backendContract).requestRelayEntry.value(msg.value)(msg.sender, seed);
+        return BackendContract(_backendContract).requestRelayEntry(msg.sender, seed);
+    }
+
+    function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {
         require(
-            BackendContract(_backendContract).numberOfGroups() > 0,
-            "At least one group needed to serve the request."
+            msg.sender == _backendContract,
+            "Only authorized backend contract can call relay entry."
         );
 
-        bytes memory groupPubKey = BackendContract(_backendContract).selectGroup(_previousEntry);
-
-        _requestCounter++;
-
-        _requests[_requestCounter] = Request(msg.sender, msg.value, groupPubKey);
-
-        emit RelayEntryRequested(_requestCounter, msg.value, _previousEntry, seed, groupPubKey);
-        return _requestCounter;
+        _previousEntry = groupSignature;
+        emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);
     }
 
     /**
@@ -124,24 +101,6 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
      */
     function minimumPayment() public view returns(uint256) {
         return _minPayment;
-    }
-
-    /**
-     * @dev Creates a new relay entry and stores the associated data on the chain.
-     * @param requestID The request that started this generation - to tie the results back to the request.
-     * @param groupSignature The generated random number.
-     * @param groupPubKey Public key of the group that generated the threshold signature.
-     */
-    function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {
-
-        require(_requests[requestID].groupPubKey.equalStorage(groupPubKey), "Provided group was not selected to produce entry for this request.");
-        require(BLS.verify(groupPubKey, abi.encodePacked(previousEntry, seed), bytes32(groupSignature)), "Group signature failed to pass BLS verification.");
-
-        delete _requests[requestID];
-        _previousEntry = groupSignature;
-
-        emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);
-        BackendContract(_backendContract).runGroupSelection(groupSignature);
     }
 
     /**

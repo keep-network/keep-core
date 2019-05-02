@@ -1,5 +1,4 @@
-import {bls} from './helpers/data';
-import increaseTime, { duration, increaseTimeTo } from './helpers/increaseTime';
+import { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
@@ -19,28 +18,29 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     frontendProxy = await KeepRandomBeaconFrontendProxy.new(frontendImplV1.address);
     frontend = await KeepRandomBeaconFrontendImplV1.at(frontendProxy.address);
     backend = await KeepRandomBeaconBackend.new()
-    await frontend.initialize(100, duration.days(30), bls.previousEntry, bls.groupPubKey, backend.address);
+    await backend.authorizeFrontendContract(frontendProxy.address)
+    await frontend.initialize(100, duration.days(30), backend.address);
   });
 
-  it("should be able to check if the implementation contract was initialized", async function() {
-    let result = await frontend.initialized();
-    assert.equal(result, true, "Implementation contract should be initialized.");
+  
+  it("should be able to check if the frontend contract was initialized", async function() {
+    assert.isTrue(await frontend.initialized(), "Frontend contract should be initialized.");
   });
 
   it("should fail to request relay entry with not enough ether", async function() {
     await exceptThrow(frontend.requestRelayEntry(0, {from: account_two, value: 99}));
   });
 
-  it("should be able to request relay entry via implementation contract with enough ether", async function() {
+  it("should be able to request relay with enough ether", async function() {
     await frontend.requestRelayEntry(0, {from: account_two, value: 100})
 
-    assert.equal((await frontend.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
+    assert.equal((await backend.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on backend contract.");
 
     let contractBalance = await web3.eth.getBalance(frontend.address);
-    assert.equal(contractBalance, 100, "Keep Random Beacon contract should receive ether.");
+    assert.equal(contractBalance, 100, "Keep Random Beacon frontend contract should receive ether.");
 
     let contractBalanceViaProxy = await web3.eth.getBalance(frontendProxy.address);
-    assert.equal(contractBalanceViaProxy, 100, "Keep Random Beacon contract new balance should be visible via frontendProxy.");
+    assert.equal(contractBalanceViaProxy, 100, "Keep Random Beacon frontend contract new balance should be visible via frontendProxy.");
 
   });
 
@@ -52,16 +52,16 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
       data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
-    assert.equal((await frontend.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the frontendProxy contract.");
+    assert.equal((await backend.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the backend contract.");
 
     let contractBalance = await web3.eth.getBalance(frontend.address);
-    assert.equal(contractBalance, 100, "Keep Random Beacon contract should receive ether.");
+    assert.equal(contractBalance, 100, "Keep Random Beacon frontend contract should receive ether.");
 
-    let contractBalanceViaProxy = await web3.eth.getBalance(frontendProxy.address);
-    assert.equal(contractBalanceViaProxy, 100, "Keep Random Beacon contract new balance should be visible via frontendProxy.");
+    let contractBalanceFrontend = await web3.eth.getBalance(frontendProxy.address);
+    assert.equal(contractBalanceFrontend, 100, "Keep Random Beacon contract new balance should be visible via frontendProxy.");
   });
 
-  it("owner should be able to withdraw ether from random beacon contract", async function() {
+  it("owner should be able to withdraw ether from random beacon backend contract", async function() {
 
     let amount = web3.utils.toWei('1', 'ether');
     await web3.eth.sendTransaction({
@@ -85,7 +85,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     let receiverEndBalance = web3.utils.fromWei(await web3.eth.getBalance(account_three), 'ether');
     assert(receiverEndBalance > receiverStartBalance, "Receiver updated balance should include received ether.");
 
-    let contractEndBalance = await web3.eth.getBalance(frontend.address);
+    let contractEndBalance = await web3.eth.getBalance(backend.address);
     assert.equal(contractEndBalance, contractStartBalance - amount, "Keep Random Beacon contract should send all ether.");
     let contractEndBalanceViaProxy = await web3.eth.getBalance(frontendProxy.address);
     assert.equal(contractEndBalanceViaProxy, contractStartBalance - amount, "Keep Random Beacon contract updated balance should be visible via frontendProxy.");

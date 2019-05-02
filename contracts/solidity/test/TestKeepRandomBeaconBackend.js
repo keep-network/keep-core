@@ -1,3 +1,4 @@
+import {bls} from './helpers/data';
 import { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
@@ -41,7 +42,8 @@ contract('TestKeepRandomBeaconBackend', function(accounts) {
     backend = await KeepRandomBeaconBackend.new();
     await backend.initialize(
       stakingProxy.address, frontendProxy.address, minimumStake, groupThreshold,
-      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
+      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
+      bls.groupSignature, bls.groupPubKey
     );
   });
 
@@ -56,6 +58,6 @@ contract('TestKeepRandomBeaconBackend', function(accounts) {
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
-    assert.equal(await backend.initialized(), true, "Implementation contract should be initialized.");
+    assert.isTrue(await backend.initialized(), "Implementation contract should be initialized.");
   });
 });

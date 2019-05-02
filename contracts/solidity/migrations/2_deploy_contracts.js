@@ -6,8 +6,8 @@ const StakingProxy = artifacts.require("./StakingProxy.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconFrontendImplV1 = artifacts.require("./KeepRandomBeaconFrontendImplV1.sol");
-const KeepRandomBeaconFrontendUpgradeExample = artifacts.require("./KeepRandomBeaconFrontendUpgradeExample.sol");
 const KeepRandomBeaconBackend = artifacts.require("./KeepRandomBeaconBackend.sol");
+const KeepRandomBeaconBackendStub = artifacts.require("./KeepRandomBeaconBackendStub.sol");
 const KeepRandomBeacon = artifacts.require("./KeepRandomBeaconFrontendProxy.sol");
 
 const withdrawalDelay = 86400; // 1 day
@@ -39,24 +39,26 @@ module.exports = async function(deployer) {
   await deployer.deploy(StakingProxy);
   await deployer.deploy(TokenStaking, KeepToken.address, StakingProxy.address, withdrawalDelay);
   await deployer.deploy(TokenGrant, KeepToken.address, StakingProxy.address, withdrawalDelay);
-  await deployer.link(BLS, KeepRandomBeaconFrontendImplV1);
-  await deployer.link(BLS, KeepRandomBeaconFrontendUpgradeExample);
+  await deployer.link(BLS, KeepRandomBeaconBackend);
+  await deployer.link(BLS, KeepRandomBeaconBackendStub);
+  await deployer.deploy(KeepRandomBeaconBackend);
   await deployer.deploy(KeepRandomBeaconFrontendImplV1);
   await deployer.deploy(KeepRandomBeacon, KeepRandomBeaconFrontendImplV1.address);
-  await deployer.deploy(KeepRandomBeaconBackend);
 
-  const keepRandomBeacon = await KeepRandomBeaconFrontendImplV1.at(KeepRandomBeacon.address);
+  const keepRandomBeaconFrontend = await KeepRandomBeaconFrontendImplV1.at(KeepRandomBeacon.address);
   const keepRandomBeaconBackend = await KeepRandomBeaconBackend.deployed();
+
+  // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
   await keepRandomBeaconBackend.initialize(
     StakingProxy.address, KeepRandomBeacon.address, minStake, groupThreshold, groupSize,
-    timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
-  );
-  // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
-  await keepRandomBeacon.initialize(
-    minPayment,
-    withdrawalDelay,
+    timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862'),
     "0x1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0",
+  );
+
+  await keepRandomBeaconFrontend.initialize(
+    minPayment,
+    withdrawalDelay,
     keepRandomBeaconBackend.address
   );
 };

@@ -8,7 +8,11 @@ import "./TokenStaking.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "./cryptography/BLS.sol";
 
+interface FrontendContract {
+    function relayEntry(uint256 requestID, uint256 requestResponse, bytes calldata requestGroupPubKey, uint256 previousEntry, uint256 seed) external;
+}
 
 /**
  * @title KeepRandomBeaconBackend
@@ -29,11 +33,16 @@ contract KeepRandomBeaconBackend is Ownable {
     // TODO: Add memberIndex
     event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey);
 
+    // These are the public events that are used by clients
+    event RelayEntryRequested(uint256 _requestID, uint256 _payment, uint256 _previousEntry, uint256 seed, bytes _groupPublicKey);
+    event RelayEntryGenerated(uint256 _requestID, uint256 _requestResponse, bytes _requestGroupPubKey, uint256 _previousEntry, uint256 _seed);
+
+    uint256 public requestCounter;
     uint256 public groupThreshold;
     uint256 public groupSize;
     uint256 public minimumStake;
     address public stakingProxy;
-    address public randomBeacon;
+    address public frontendContract;
 
     uint256 public ticketInitialSubmissionTimeout;
     uint256 public ticketReactiveSubmissionTimeout;
@@ -41,7 +50,7 @@ contract KeepRandomBeaconBackend is Ownable {
     uint256 public timeDKG;
     uint256 public resultPublicationBlockStep;
     uint256 public ticketSubmissionStartBlock;
-    uint256 public randomBeaconValue;
+    uint256 public previousEntry;
 
     uint256[] public tickets;
     bytes[] public submissions;
@@ -68,6 +77,13 @@ contract KeepRandomBeaconBackend is Ownable {
 
     bool public initialized;
 
+    struct Request {
+        address sender;
+        uint256 payment;
+        bytes groupPubKey;
+    }
+
+    mapping(uint256 => Request) public requests;
 
     /**
      * @dev Checks if submitter is eligible to submit.
@@ -96,11 +112,9 @@ contract KeepRandomBeaconBackend is Ownable {
     /**
      * @dev Triggers the selection process of a new candidate group.
      */
-    function runGroupSelection(uint256 _randomBeaconValue) public {
-        require(msg.sender == randomBeacon);
+    function runGroupSelection() internal {
         cleanup();
         ticketSubmissionStartBlock = block.number;
-        randomBeaconValue = _randomBeaconValue;
     }
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 4).
@@ -246,7 +260,7 @@ contract KeepRandomBeaconBackend is Ownable {
         uint256 virtualStakerIndex
     ) public view returns(bool) {
         bool passedCheapCheck = cheapCheck(staker, stakerValue, virtualStakerIndex);
-        uint256 expected = uint256(keccak256(abi.encodePacked(randomBeaconValue, stakerValue, virtualStakerIndex)));
+        uint256 expected = uint256(keccak256(abi.encodePacked(previousEntry, stakerValue, virtualStakerIndex)));
         return passedCheapCheck && ticketValue == expected;
     }
 
@@ -379,7 +393,7 @@ contract KeepRandomBeaconBackend is Ownable {
     /**
      * @dev Initialize the contract with a linked Staking proxy contract.
      * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
-     * @param _randomBeacon Address of a random beacon contract that will be linked to this contract.
+     * @param _frontendContract Address of a random beacon frontend contract that will be linked to this contract.
      * @param _minimumStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
      * @param _groupSize Size of a group in the threshold relay.
      * @param _groupThreshold Minimum number of interacting group members needed to produce a relay entry.
@@ -388,11 +402,13 @@ contract KeepRandomBeaconBackend is Ownable {
      * @param _ticketChallengeTimeout Timeout in blocks after the period where tickets can be challenged is finished.
      * @param _timeDKG Timeout in blocks after DKG result is complete and ready to be published.
      * @param _resultPublicationBlockStep Time in blocks after which member with the given index is eligible
+     * @param _genesisEntry Initial relay entry to create first group.
+     * @param _genesisGroupPubKey Group to respond to the initial relay entry request.
      * to submit DKG result.
      */
     function initialize(
         address _stakingProxy,
-        address _randomBeacon,
+        address _frontendContract,
         uint256 _minimumStake,
         uint256 _groupThreshold,
         uint256 _groupSize,
@@ -400,13 +416,15 @@ contract KeepRandomBeaconBackend is Ownable {
         uint256 _ticketReactiveSubmissionTimeout,
         uint256 _ticketChallengeTimeout,
         uint256 _timeDKG,
-        uint256 _resultPublicationBlockStep
+        uint256 _resultPublicationBlockStep,
+        uint256 _genesisEntry,
+        bytes memory _genesisGroupPubKey
     ) public onlyOwner {
         require(!initialized, "Contract is already initialized.");
         require(_stakingProxy != address(0x0), "Staking proxy address can't be zero.");
         initialized = true;
         stakingProxy = _stakingProxy;
-        randomBeacon = _randomBeacon;
+        frontendContract = _frontendContract;
         minimumStake = _minimumStake;
         groupSize = _groupSize;
         groupThreshold = _groupThreshold;
@@ -415,6 +433,13 @@ contract KeepRandomBeaconBackend is Ownable {
         ticketChallengeTimeout = _ticketChallengeTimeout;
         timeDKG = _timeDKG;
         resultPublicationBlockStep = _resultPublicationBlockStep;
+        previousEntry = _genesisEntry;
+
+        // Create initial relay entry request. This will allow relayEntry to be called once
+        // to trigger the creation of the first group. Requests are removed on successful
+        // entries so genesis entry can only be called once.
+        requestCounter++;
+        requests[requestCounter] = Request(msg.sender, 0, _genesisGroupPubKey);
     }
 
     /**
@@ -476,9 +501,8 @@ contract KeepRandomBeaconBackend is Ownable {
 
     /**
      * @dev Returns public key of a group from available groups using modulo operator.
-     * @param previousEntry Previous random beacon value.
      */
-    function selectGroup(uint256 previousEntry) public view returns(bytes memory) {
+    function selectGroup() public view returns(bytes memory) {
         return groups[previousEntry % groups.length].groupPubKey;
     }
 
@@ -503,4 +527,51 @@ contract KeepRandomBeaconBackend is Ownable {
         // TODO: cleanup DkgResults
     }
 
+    /**
+     * @dev Creates a request to generate a new relay entry, which will include a
+     * random number (by signing the previous entry's random number).
+     * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
+     * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
+     */
+    function requestRelayEntry(address from, uint256 seed) public payable returns (uint256) {
+
+        require(
+            msg.sender == frontendContract,
+            "Only authorized frontend contract can request relay entry."
+        );
+
+        require(
+            numberOfGroups() > 0,
+            "At least one group needed to serve the request."
+        );
+
+        bytes memory groupPubKey = selectGroup();
+
+        requestCounter++;
+
+        requests[requestCounter] = Request(from, msg.value, groupPubKey);
+
+        emit RelayEntryRequested(requestCounter, msg.value, previousEntry, seed, groupPubKey);
+        return requestCounter;
+    }
+
+    /**
+     * @dev Creates a new relay entry and stores the associated data on the chain.
+     * @param _requestID The request that started this generation - to tie the results back to the request.
+     * @param _groupSignature The generated random number.
+     * @param _groupPubKey Public key of the group that generated the threshold signature.
+     */
+    function relayEntry(uint256 _requestID, uint256 _groupSignature, bytes memory _groupPubKey, uint256 _previousEntry, uint256 _seed) public {
+
+        require(requests[_requestID].groupPubKey.equalStorage(_groupPubKey), "Provided group was not selected to produce entry for this request.");
+        require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
+
+        delete requests[_requestID];
+        previousEntry = _groupSignature;
+
+        emit RelayEntryGenerated(_requestID, _groupSignature, _groupPubKey, previousEntry, _seed);
+
+        FrontendContract(frontendContract).relayEntry(_requestID, _groupSignature, _groupPubKey, previousEntry, _seed);
+        runGroupSelection();
+    }
 }

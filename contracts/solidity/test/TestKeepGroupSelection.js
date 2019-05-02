@@ -52,11 +52,12 @@ contract('TestKeepGroupSelection', function(accounts) {
     backend = await KeepRandomBeaconBackend.new();
     await backend.initialize(
       stakingProxy.address, frontendProxy.address, minimumStake, groupThreshold,
-      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
+      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
+      randomBeaconValue, bls.groupPubKey
     );
 
-    await frontend.initialize(1,1, randomBeaconValue, bls.groupPubKey, backend.address);
-    await frontend.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+    await frontend.initialize(1, 1, backend.address);
+    await backend.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     // Stake delegate tokens to operator1
     signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator1)).substr(2), 'hex');
@@ -79,8 +80,8 @@ contract('TestKeepGroupSelection', function(accounts) {
   });
 
   it("should be able to get staking weight", async function() {
-    assert.equal(web3.utils.toBN(2000).eq(await backend.stakingWeight(operator1)), true, "Should have expected staking weight.");
-    assert.equal(web3.utils.toBN(3000).eq(await backend.stakingWeight(operator3)), true, "Should have expected staking weight.");
+    assert.isTrue(web3.utils.toBN(2000).eq(await backend.stakingWeight(operator1)), "Should have expected staking weight.");
+    assert.isTrue(web3.utils.toBN(3000).eq(await backend.stakingWeight(operator3)), "Should have expected staking weight.");
   });
 
   it("should fail to get selected tickets before challenge period is over", async function() {
@@ -122,16 +123,16 @@ contract('TestKeepGroupSelection', function(accounts) {
 
     // Test tickets ordering
     let orderedTickets = await backend.orderedTickets();
-    assert.equal(orderedTickets[0].eq(tickets[0]), true, "Tickets should be in ascending order.");
-    assert.equal(orderedTickets[1].eq(tickets[1]), true, "Tickets should be in ascending order.");
-    assert.equal(orderedTickets[2].eq(tickets[2]), true, "Tickets should be in ascending order.");
+    assert.isTrue(orderedTickets[0].eq(tickets[0]), "Tickets should be in ascending order.");
+    assert.isTrue(orderedTickets[1].eq(tickets[1]), "Tickets should be in ascending order.");
+    assert.isTrue(orderedTickets[2].eq(tickets[2]), "Tickets should be in ascending order.");
 
   });
 
   it("should be able to submit a ticket during ticket submission period", async function() {
     await backend.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
     let proof = await backend.getTicketProof(tickets1[0].value);
-    assert.equal(proof[1].eq(web3.utils.toBN(operator1)), true , "Should be able to get submitted ticket proof.");
+    assert.isTrue(proof[1].eq(web3.utils.toBN(operator1)), "Should be able to get submitted ticket proof.");
     assert.equal(proof[2], tickets1[0].virtualStakerIndex, "Should be able to get submitted ticket proof.");
   });
 
@@ -139,17 +140,17 @@ contract('TestKeepGroupSelection', function(accounts) {
 
     await backend.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
 
-    assert.equal(await backend.cheapCheck(
+    assert.isTrue(await backend.cheapCheck(
       operator1, operator1, 1
-    ), true, "Should be able to verify a valid ticket.");
+    ), "Should be able to verify a valid ticket.");
     
-    assert.equal(await backend.costlyCheck(
+    assert.isTrue(await backend.costlyCheck(
       operator1, tickets1[0].value, operator1, tickets1[0].virtualStakerIndex
-    ), true, "Should be able to verify a valid ticket.");
+    ), "Should be able to verify a valid ticket.");
   
-    assert.equal(await backend.costlyCheck(
+    assert.isFalse(await backend.costlyCheck(
       operator1, 0, operator1, tickets1[0].virtualStakerIndex
-    ), false, "Should fail verifying invalid ticket.");
+    ), "Should fail verifying invalid ticket.");
 
   });
 });
