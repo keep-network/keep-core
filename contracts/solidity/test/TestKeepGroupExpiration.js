@@ -53,11 +53,13 @@ contract('TestKeepGroupExpiration', function(accounts) {
     );
   });
 
-  async function testExpiration(steps, selected) {
-    await mineBlocks(expirationStepTime * steps);
-    await keepGroupImplViaProxy.selectGroup(selected);
-    let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
-    return Number(expiredOffset);
+  async function expireGroup(groupIndex) {
+    let groupRegistrationBlock = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(groupIndex);
+    let currentBlock = await web3.eth.getBlockNumber();
+    // If current block is larger than group registration block by group active time then
+    // it is not necessary to mine any blocks cause the group is already expired
+    if (currentBlock - groupRegistrationBlock <= groupActiveTime)
+      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
   }
 
   it("it should be able to count the number of active groups", async function() {
@@ -80,12 +82,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
       await keepGroupImplViaProxy.registerNewGroup([i]);
     }
 
-    let groupRegistrationBlock = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(4);
-    let currentBlock = await web3.eth.getBlockNumber();
-    // If current block is larger than group registration block by group active time then
-    // it is not necessary to mine any blocks cause the group is already expired
-    if (currentBlock - groupRegistrationBlock <= groupActiveTime)
-      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
+    await expireGroup(4);
 
     await keepGroupImplViaProxy.selectGroup(4) // 4 % 10 = 4
     let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
@@ -108,12 +105,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
       await keepGroupImplViaProxy.registerNewGroup([i]);
     }
 
-    let groupRegistrationBlock = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(5);
-    let currentBlock = await web3.eth.getBlockNumber();
-    // If current block is larger than group registration block by group active time then
-    // it is not necessary to mine any blocks cause the group is already expired
-    if (currentBlock - groupRegistrationBlock <= groupActiveTime)
-      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
+    await expireGroup(5);
 
     await keepGroupImplViaProxy.selectGroup(5) // 5 % 10 = 5
     let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
@@ -136,12 +128,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
       await keepGroupImplViaProxy.registerNewGroup([i]);
     }
 
-    let groupRegistrationBlock = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(6);
-    let currentBlock = await web3.eth.getBlockNumber();
-    // If current block is larger than group registration block by group active time then
-    // it is not necessary to mine any blocks cause the group is already expired
-    if (currentBlock - groupRegistrationBlock <= groupActiveTime)
-      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
+    await expireGroup(6);
 
     await keepGroupImplViaProxy.selectGroup(6) // 6 % 10 = 6
     let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
@@ -162,7 +149,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     for (var i = 1; i <= testGroupsNumber; i++)
       await keepGroupImplViaProxy.registerNewGroup([i]);
 
-    mineBlocks(groupActiveTime * 10);
+    await expireGroup(9);
 
     await keepGroupImplViaProxy.selectGroup(0);
 
@@ -183,7 +170,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     for (var i = 1; i <= testGroupsNumber; i++)
       await keepGroupImplViaProxy.registerNewGroup([i]);
 
-    mineBlocks(groupActiveTime * 10);
+    await expireGroup(9);
 
     await keepGroupImplViaProxy.selectGroup(testGroupsNumber - 1); // 9
 
@@ -204,7 +191,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     for (var i = 1; i <= testGroupsNumber; i++)
       await keepGroupImplViaProxy.registerNewGroup([i]);
 
-    mineBlocks(groupActiveTime * 10);
+    await expireGroup(9);
 
     await keepGroupImplViaProxy.selectGroup(testGroupsNumber); // 10
 
@@ -227,7 +214,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     let after = await keepGroupImplViaProxy.numberOfGroups();
 
-    mineBlocks(groupActiveTime*2);
+    await expireGroup(9);
 
     for (var i = 1; i <= testGroupsNumber; i++)
       await keepGroupImplViaProxy.registerNewGroup([i]);
