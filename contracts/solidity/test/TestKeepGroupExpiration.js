@@ -81,11 +81,11 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await expireGroup(4);
 
     await keepGroupImplViaProxy.selectGroup(4) // 4 % 10 = 4
+
     let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
+    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
-
-    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
     assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
@@ -100,11 +100,11 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await expireGroup(5);
 
     await keepGroupImplViaProxy.selectGroup(5) // 5 % 10 = 5
+
     let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
+    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
-
-    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
     assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
@@ -119,11 +119,11 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await expireGroup(6);
 
     await keepGroupImplViaProxy.selectGroup(6) // 6 % 10 = 6
+
     let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
+    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
-
-    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
     assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
