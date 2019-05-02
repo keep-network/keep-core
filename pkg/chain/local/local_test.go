@@ -578,57 +578,72 @@ func TestLocalIsGroupEligibleForRemoval(t *testing.T) {
 
 	group2 := localGroup{
 		groupPublicKey:          []byte{'i'},
-		registrationBlockHeight: 2,
+		registrationBlockHeight: 1,
 	}
 
 	group3 := localGroup{
 		groupPublicKey:          []byte{'d'},
-		registrationBlockHeight: 3,
+		registrationBlockHeight: 1,
 	}
 
 	availableGroups := []localGroup{group1, group2, group3}
 
 	var tests = map[string]struct {
-		group          localGroup
-		expectedResult bool
+		group           localGroup
+		expectedResult  bool
+		simulatedHeight uint64
 	}{
 		"found a first group": {
 			group: localGroup{
-				groupPublicKey:          []byte{'d'},
-				registrationBlockHeight: 3,
+				groupPublicKey: []byte{'d'},
 			},
-			expectedResult: false,
+			simulatedHeight: 3,
+			expectedResult:  false,
 		},
 		"found a second group": {
 			group: localGroup{
-				groupPublicKey:          []byte{'v'},
-				registrationBlockHeight: 1,
+				groupPublicKey: []byte{'v'},
 			},
-			expectedResult: false,
+			simulatedHeight: 4,
+			expectedResult:  false,
 		},
-		"group was not found, can be removed": {
+		"group was not found": {
 			group: localGroup{
-				groupPublicKey:          []byte{'z'},
-				registrationBlockHeight: 4,
+				groupPublicKey: []byte{'z'},
 			},
-			expectedResult: true,
+			simulatedHeight: 1,
+			expectedResult:  true,
+		},
+		"group was found and current block passed the expiration timeout": {
+			group: localGroup{
+				groupPublicKey: []byte{'d'},
+			},
+			simulatedHeight: 12,
+			expectedResult:  true,
+		},
+		"group was found and current block is the same as expiration timeout": {
+			group: localGroup{
+				groupPublicKey: []byte{'i'},
+			},
+			simulatedHeight: 11,
+			expectedResult:  false,
 		},
 	}
-
-	localChain := &localChain{
-		groups: availableGroups,
-	}
-	chainHandle := localChain.ThresholdRelay()
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
+			localChain := &localChain{
+				groups:          availableGroups,
+				simulatedHeight: test.simulatedHeight,
+			}
+			chainHandle := localChain.ThresholdRelay()
 			actualResult, err := chainHandle.IsGroupEligibleForRemoval(test.group.groupPublicKey)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			if actualResult != test.expectedResult {
-				t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
+				t.Fatalf("\nCheck for a group removal eligibility failed. \nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
 			}
 		})
 	}

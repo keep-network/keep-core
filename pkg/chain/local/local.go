@@ -23,10 +23,11 @@ import (
 
 var seedGroupPublicKey = []byte("seed to group public key")
 var seedRelayEntry = big.NewInt(123456789)
+var groupActiveTime = uint64(10)
 
 type localGroup struct {
 	groupPublicKey          []byte
-	registrationBlockHeight uint
+	registrationBlockHeight uint64
 }
 type localChain struct {
 	relayConfig *relayconfig.Chain
@@ -234,7 +235,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 	currentBlock, _ := bc.CurrentBlock()
 	group := localGroup{
 		groupPublicKey:          seedGroupPublicKey,
-		registrationBlockHeight: uint(currentBlock),
+		registrationBlockHeight: currentBlock,
 	}
 
 	return &localChain{
@@ -325,14 +326,22 @@ func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 	return promise
 }
 
-// IsGroupEligibleForRemoval simulates a check if a group can be cleaned in off-chain
+// IsGroupEligibleForRemoval simulates a check if a group can be cleaned on off-chain
 func (c *localChain) IsGroupEligibleForRemoval(groupPublicKey []byte) (bool, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
+	bc, _ := blockCounter()
+	bc.WaitForBlockHeight(c.simulatedHeight)
+	currentBlock, err := bc.CurrentBlock()
+
+	if err != nil {
+		return false, fmt.Errorf("could not determine current block: [%v]", err)
+	}
+
 	for _, group := range c.groups {
 		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
-			return false, nil
+			return group.registrationBlockHeight+groupActiveTime < currentBlock, nil
 		}
 	}
 
@@ -388,7 +397,7 @@ func (c *localChain) SubmitDKGResult(
 
 	myGroup := localGroup{
 		groupPublicKey:          resultToPublish.GroupPublicKey,
-		registrationBlockHeight: uint(currentBlock),
+		registrationBlockHeight: currentBlock,
 	}
 	c.groups = append(c.groups, myGroup)
 
