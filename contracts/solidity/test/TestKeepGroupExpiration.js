@@ -65,7 +65,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
       await keepGroupImplViaProxy.registerNewGroup([i]);
 
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
-    assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups not equals to number of test groups");
+    assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups is not equal to number of test groups");
   });
 
   // - we start with [AAAAAAAAAA]
@@ -93,7 +93,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
 
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
-    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups not equals to active groups threshold");
+    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
   // - we start with [AAAAAAAAAA]
@@ -121,7 +121,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
 
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
-    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups not equals to active groups threshold");
+    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
   // - we start with [AAAAAAAAAA]
@@ -149,7 +149,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
 
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
-    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups not equals to active groups threshold");
+    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
   it("should be able to check if at least one group is marked as expired", async function() {
