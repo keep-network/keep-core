@@ -192,8 +192,6 @@ contract('TestKeepGroupExpiration', function(accounts) {
   // - we should end up with [EEEEEEEEEEAAAAAAAAAA]
   it("it should be able to mark only a subset of groups as expired", async function() {
 
-    let after = await keepGroupImplViaProxy.numberOfGroups();
-
     await expireGroup(9);
 
     for (var i = 1; i <= testGroupsNumber; i++)
@@ -201,7 +199,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     await keepGroupImplViaProxy.selectGroup(1);
 
-    after = await keepGroupImplViaProxy.numberOfGroups();
+    let after = await keepGroupImplViaProxy.numberOfGroups();
 
     assert.equal(Number(after), testGroupsNumber, "Number of groups should not fall below the test groups number");
   });
