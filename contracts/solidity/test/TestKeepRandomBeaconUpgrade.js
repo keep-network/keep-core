@@ -8,6 +8,7 @@ const KeepGroup = artifacts.require('./KeepGroupStub.sol');
 
 
 contract('TestKeepRandomBeaconUpgrade', function(accounts) {
+  const relayRequestTimeout = 10;
 
   let implV1, implV2, proxy, implViaProxy, impl2ViaProxy, keepGroup,
     account_one = accounts[0],
@@ -18,8 +19,9 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     implV2 = await Upgrade.new();
     proxy = await Proxy.new(implV1.address);
     implViaProxy = await KeepRandomBeaconImplV1.at(proxy.address);
-    keepGroup = await KeepGroup.new()
-    await implViaProxy.initialize(100, duration.days(0), bls.previousEntry, bls.groupPubKey, keepGroup.address);
+    keepGroup = await KeepGroup.new();
+    await implViaProxy.initialize(100, duration.days(0), bls.previousEntry, bls.groupPubKey, keepGroup.address, 
+      relayRequestTimeout);
 
     // Add a few calls that modify state so we can test later that eternal storage works as expected after upgrade
     await implViaProxy.requestRelayEntry(0, {from: account_two, value: 100});
@@ -41,7 +43,8 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     await proxy.upgradeTo(implV2.address);
     
     impl2ViaProxy = await Upgrade.at(proxy.address);
-    await impl2ViaProxy.initialize(100, duration.days(0), bls.previousEntry, bls.groupPubKey, keepGroup.address);
+    await impl2ViaProxy.initialize(100, duration.days(0), bls.previousEntry, bls.groupPubKey, keepGroup.address,
+      relayRequestTimeout);
 
     let result = await impl2ViaProxy.initialized();
     assert.equal(result, true, "Implementation contract should be initialized.");

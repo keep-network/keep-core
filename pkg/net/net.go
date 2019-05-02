@@ -65,7 +65,9 @@ type TaggedUnmarshaler interface {
 
 // BroadcastChannel represents a named pubsub channel. It allows Group Members
 // to send messages on the channel (via Send), and to access a low-level receive chan
-// that furnishes messages sent onto the BroadcastChannel.
+// that furnishes messages sent onto the BroadcastChannel. Messages are not
+// guaranteed to be ordered at the pubsub level, though they will be at the
+// underlying network protocol (ie. tcp, quic).
 type BroadcastChannel interface {
 	// Name returns the name of this broadcast channel.
 	Name() string
