@@ -76,7 +76,7 @@ func (n *Node) JoinGroupIfEligible(
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"Failed to get broadcastChannel for name %s with err: [%v].",
+					"Failed to get broadcastChannel for name %s with err: [%v].\n",
 					broadcastChannelName,
 					err,
 				)
@@ -96,7 +96,7 @@ func (n *Node) JoinGroupIfEligible(
 					broadcastChannel,
 				)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to execute dkg: [%v].", err)
+					fmt.Fprintf(os.Stderr, "Failed to execute dkg: [%v].\n", err)
 					return
 				}
 
