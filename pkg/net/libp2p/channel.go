@@ -169,7 +169,7 @@ func verifyEnvelope(sender peer.ID, messageBytes []byte, signature []byte) error
 		return fmt.Errorf(
 			"failed to verify signature [0x%v] for sender [%v] with err [%v]",
 			hex.EncodeToString(signature),
-			sender.Pretty(),
+			sender.String(),
 			err,
 		)
 	}
@@ -178,7 +178,7 @@ func verifyEnvelope(sender peer.ID, messageBytes []byte, signature []byte) error
 		return fmt.Errorf(
 			"invalid signature [0x%v] on message from sender [%v] ",
 			hex.EncodeToString(signature),
-			sender.Pretty(),
+			sender.String(),
 		)
 	}
 
