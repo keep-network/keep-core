@@ -35,14 +35,6 @@ message NetworkMessage {
   // Channel names are Keccak(StakingPubKey1 || ... || StakingPubKeyN) of
   // all valid group members.
   bytes channel = 5;
-
-  // Proof that the peer that sent this message knows the channel's name.
-  bytes channel_MAC = 6;
-
-  // Per RFC 2, Section 1.2.5: 
-  // The nonce is included in a message in a way that makes it a part of the
-  // content used to produce a signature.
-  bytes nonce = 7;
 }
 
 message Identity {
