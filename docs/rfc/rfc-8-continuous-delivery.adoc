@@ -177,9 +177,14 @@ It's worth noting that when contracts are deployed we need to do the following:
 Sample Commands:
 
 ```shell
-truffle migrate --reset --network keep_dev #migrate contracts
-truffle exec ./get-and-unlock-eth-accounts.js http://eth-tx-node.default.svc.cluster.local:8545 eth-account-passphrase --network keep_dev #unlock ETH accounts
-truffle exec ./demo.js --network keep_dev #stake ETH accounts
+# migrate contracts
+truffle migrate --reset --network keep_dev
+
+# unlock ETH accounts
+truffle exec ./get-and-unlock-eth-accounts.js http://eth-tx-node.default.svc.cluster.local:8545 eth-account-passphrase --network keep_dev
+
+# stake ETH accounts
+truffle exec ./demo.js --network keep_dev
 ```
 
 
