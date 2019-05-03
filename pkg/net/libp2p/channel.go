@@ -38,9 +38,8 @@ func (c *channel) Name() string {
 }
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
-	// Transform net.TaggedMarshaler to a protobuf message, and wrap
-	// in an envelope.
-	envelopeBytes, err := c.envelopeProto(message)
+	// Transform net.TaggedMarshaler to a protobuf message
+	messageBytes, err := c.messageProto(message)
 	if err != nil {
 		return err
 	}
@@ -49,7 +48,7 @@ func (c *channel) Send(message net.TaggedMarshaler) error {
 	defer c.pubsubMutex.Unlock()
 
 	// Publish the proto to the network
-	return c.pubsub.Publish(c.name, envelopeBytes)
+	return c.pubsub.Publish(c.name, messageBytes)
 }
 
 func (c *channel) Recv(handler net.HandleMessageFunc) error {
@@ -117,30 +116,6 @@ func (c *channel) messageProto(
 	}).Marshal()
 }
 
-func (c *channel) sealEnvelope(
-	message net.TaggedMarshaler,
-) (*pb.NetworkEnvelope, error) {
-	messageBytes, err := c.messageProto(message)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.NetworkEnvelope{
-		Message: messageBytes,
-	}, nil
-}
-
-func (c *channel) envelopeProto(
-	message net.TaggedMarshaler,
-) ([]byte, error) {
-	envelope, err := c.sealEnvelope(message)
-	if err != nil {
-		return nil, err
-	}
-
-	return envelope.Marshal()
-}
-
 func (c *channel) handleMessages(ctx context.Context) {
 	defer c.subscription.Cancel()
 
@@ -168,13 +143,8 @@ func (c *channel) handleMessages(ctx context.Context) {
 }
 
 func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
-	var envelope pb.NetworkEnvelope
-	if err := proto.Unmarshal(pubsubMessage.Data, &envelope); err != nil {
-		return err
-	}
-
 	var protoMessage pb.NetworkMessage
-	if err := proto.Unmarshal(envelope.Message, &protoMessage); err != nil {
+	if err := proto.Unmarshal(pubsubMessage.Data, &protoMessage); err != nil {
 		return err
 	}
 
