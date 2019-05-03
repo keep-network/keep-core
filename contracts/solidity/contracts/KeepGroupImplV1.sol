@@ -539,6 +539,21 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Checks if a group is registered and active. 
+     */
+    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
+        // TODO: shouldn't we start iterating from offset's index? (offset is introduced in Marcin's PR)
+        // TODO: add tests. Use Marcin's new functions for group registration when it's ready
+        for (uint i = 0; i < numberOfGroups(); i++) {
+            if (_groups[i].groupPubKey.equalStorage(groupPubKey)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @dev Returns public key of a group from available groups using modulo operator.
      * @param previousEntry Previous random beacon value.
      */

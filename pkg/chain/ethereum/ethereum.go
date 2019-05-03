@@ -379,7 +379,7 @@ func (ec *ethereumChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) 
 }
 
 func (ec *ethereumChain) IsGroupEligibleForRemoval(groupPublicKey []byte) (bool, error) {
-	return ec.keepRandomBeaconContract.IsGroupEligibleForRemoval(groupPublicKey)
+	return ec.keepGroupContract.IsGroupEligibleForRemoval(groupPublicKey)
 }
 
 func (ec *ethereumChain) OnDKGResultSubmitted(
