@@ -3,13 +3,11 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
-	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 // KeepRandomBeaconFrontend connection information for interface to the contract.
@@ -114,72 +112,4 @@ func (krb *KeepRandomBeaconFrontend) RequestRelayEntry(
 	newTransactorOptions := *krb.transactorOptions
 	newTransactorOptions.Value = big.NewInt(2)
 	return krb.transactor.RequestRelayEntry(&newTransactorOptions, seed)
-}
-
-// relayEntryRequestedFunc type of function called for
-// RelayEntryRequested event.
-type relayEntryRequestedFunc func(
-	requestID *big.Int,
-	payment *big.Int,
-	previousEntry *big.Int,
-	seed *big.Int,
-	groupPublicKey []byte,
-	blockNumber uint64,
-)
-
-// WatchRelayEntryRequested watches for event RelayEntryRequested.
-func (krb *KeepRandomBeaconFrontend) WatchRelayEntryRequested(
-	success relayEntryRequestedFunc,
-	fail errorCallback,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.KeepRandomBeaconFrontendImplV1RelayEntryRequested)
-	eventSubscription, err := krb.contract.WatchRelayEntryRequested(
-		nil,
-		eventChan,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for RelayEntryRequested events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.RequestID,
-					event.Payment,
-					event.PreviousEntry,
-					event.Seed,
-					event.GroupPublicKey,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }

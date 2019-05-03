@@ -359,3 +359,71 @@ func (kg *keepRandomBeaconBackend) WatchRelayEntryGenerated(
 
 	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
+
+// relayEntryRequestedFunc type of function called for
+// RelayEntryRequested event.
+type relayEntryRequestedFunc func(
+	requestID *big.Int,
+	payment *big.Int,
+	previousEntry *big.Int,
+	seed *big.Int,
+	groupPublicKey []byte,
+	blockNumber uint64,
+)
+
+// WatchRelayEntryRequested watches for event RelayEntryRequested.
+func (kg *keepRandomBeaconBackend) WatchRelayEntryRequested(
+	success relayEntryRequestedFunc,
+	fail errorCallback,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.KeepRandomBeaconBackendRelayEntryRequested)
+	eventSubscription, err := kg.contract.WatchRelayEntryRequested(
+		nil,
+		eventChan,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for RelayEntryRequested events: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event.RequestID,
+					event.Payment,
+					event.PreviousEntry,
+					event.Seed,
+					event.GroupPublicKey,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
