@@ -272,3 +272,90 @@ func (kg *keepRandomBeaconBackend) WatchDKGResultPublishedEvent(
 		close(eventChan)
 	}), nil
 }
+
+// SubmitRelayEntry submits a group signature for consideration.
+func (kg *keepRandomBeaconBackend) SubmitRelayEntry(
+	requestID *big.Int,
+	groupPubKey []byte,
+	previousEntry *big.Int,
+	groupSignature *big.Int,
+	seed *big.Int,
+) (*types.Transaction, error) {
+	return kg.transactor.RelayEntry(
+		kg.transactorOpts,
+		requestID,
+		groupSignature,
+		groupPubKey,
+		previousEntry,
+		seed,
+	)
+}
+
+// relayEntryGeneratedFunc type of function called for
+// RelayEntryGenerated event.
+type relayEntryGeneratedFunc func(
+	requestID *big.Int,
+	requestResponse *big.Int,
+	requestGroupPubKey []byte,
+	previousEntry *big.Int,
+	seed *big.Int,
+	blockNumber uint64,
+)
+
+
+// WatchRelayEntryGenerated watches for event.
+func (kg *keepRandomBeaconBackend) WatchRelayEntryGenerated(
+	success relayEntryGeneratedFunc,
+	fail errorCallback,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.KeepRandomBeaconBackendRelayEntryGenerated)
+	eventSubscription, err := kg.contract.WatchRelayEntryGenerated(
+		nil,
+		eventChan,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for RelayEntryGenerated event: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event.RequestID,
+					event.RequestResponse,
+					event.RequestGroupPubKey,
+					event.PreviousEntry,
+					event.Seed,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
