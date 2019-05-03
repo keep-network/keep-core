@@ -165,7 +165,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     }
 
     // TODO: implement this. THIS IS ONLY A STUB
-    function isGroupEligibleForRemoval(bytes memory groupPubKey) public view returns(bool) {
+    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
         return false;
     }
 

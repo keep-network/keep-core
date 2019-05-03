@@ -20,6 +20,19 @@ type ThresholdSigner struct {
 	groupPrivateKeyShare *big.Int
 }
 
+// NewThresholdSigner returns an empty ThresholdSigner
+func NewThresholdSigner(
+	memberIndex group.MemberIndex,
+	groupPublicKey *bn256.G2,
+	groupPrivateKeyShare *big.Int,
+) *ThresholdSigner {
+	return &ThresholdSigner{
+		memberIndex:          memberIndex,
+		groupPublicKey:       groupPublicKey,
+		groupPrivateKeyShare: groupPrivateKeyShare,
+	}
+}
+
 // MemberID returns GJKR MemberID represented by this ThresholdSigner.
 func (ts *ThresholdSigner) MemberID() group.MemberIndex {
 	return ts.memberIndex

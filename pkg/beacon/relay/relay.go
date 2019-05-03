@@ -53,14 +53,14 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		seed.Bytes(),
 	)
 
-	memberships := n.groupRegistry.getGroup(string(groupPublicKey))
+	memberships := n.groupRegistry.GetGroup(groupPublicKey)
 
 	if len(memberships) < 1 {
 		return
 	}
 
 	for _, signer := range memberships {
-		go func(signer *membership) {
+		go func(signer *Membership) {
 			signature, err := thresholdsignature.Execute(
 				combinedEntryToSign,
 				n.chainConfig.HonestThreshold(),

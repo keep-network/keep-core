@@ -14,12 +14,13 @@ import (
 type GroupRegistry struct {
 	mutex sync.Mutex
 
-	myGroups map[string][]*membership
+	myGroups map[string][]*Membership
 
-	relayChain relaychain.Interface
+	relayChain relaychain.GroupRegistrationInterface
 }
 
-type membership struct {
+// Membership represents a member of a group
+type Membership struct {
 	signer  *dkg.ThresholdSigner
 	channel net.BroadcastChannel
 }
@@ -27,16 +28,17 @@ type membership struct {
 // NewGroupRegistry returns an empty GroupRegistry.
 func NewGroupRegistry(
 	relayChain relaychain.Interface,
-) GroupRegistry {
-	return GroupRegistry{
-		myGroups:   make(map[string][]*membership),
+) *GroupRegistry {
+	return &GroupRegistry{
+		myGroups:   make(map[string][]*Membership),
 		relayChain: relayChain,
 	}
 }
 
 // RegisterGroup registers that a group was successfully created by the given
 // groupPublicKey.
-func (gr *GroupRegistry) RegisterGroup(signer *dkg.ThresholdSigner,
+func (gr *GroupRegistry) RegisterGroup(
+	signer *dkg.ThresholdSigner,
 	channel net.BroadcastChannel) {
 
 	gr.mutex.Lock()
@@ -45,30 +47,22 @@ func (gr *GroupRegistry) RegisterGroup(signer *dkg.ThresholdSigner,
 	groupPublicKey := string(signer.GroupPublicKeyBytes())
 
 	gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey],
-		&membership{
+		&Membership{
 			signer:  signer,
 			channel: channel,
 		})
 }
 
-// UnregisterGroup removes a group from myGroup array by a public key
-func (gr *GroupRegistry) UnregisterGroup(groupPublicKey string) {
-
+// GetGroup gets a group by a groupPublicKey
+func (gr *GroupRegistry) GetGroup(groupPublicKey []byte) []*Membership {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
-	delete(gr.myGroups, groupPublicKey)
+	return gr.myGroups[string(groupPublicKey)]
 }
 
-func (gr *GroupRegistry) getGroup(groupPublicKey string) []*membership {
-	gr.mutex.Lock()
-	defer gr.mutex.Unlock()
-
-	return gr.myGroups[groupPublicKey]
-}
-
-// RemoveExpiredGroups lookup for groups to be removed.
-func (gr *GroupRegistry) RemoveExpiredGroups() {
+// UnregisterDeletedGroups lookup for groups to be removed.
+func (gr *GroupRegistry) UnregisterDeletedGroups() {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
@@ -80,7 +74,7 @@ func (gr *GroupRegistry) RemoveExpiredGroups() {
 		}
 
 		if isGroupEligibleForRemoval {
-			gr.UnregisterGroup(publicKey)
+			delete(gr.myGroups, publicKey)
 		}
 	}
 }

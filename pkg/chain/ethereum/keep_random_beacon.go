@@ -147,7 +147,7 @@ type relayEntryRequestedFunc func(
 
 // IsGroupEligibleForRemoval checks wheather we can remove a group from a group array.
 func (krb *KeepRandomBeacon) IsGroupEligibleForRemoval(groupPublicKey []byte) (bool, error) {
-	return krb.caller.IsGroupEligibleForRemoval(krb.callerOptions, groupPublicKey)
+	return krb.caller.IsGroupRegistered(krb.callerOptions, groupPublicKey)
 }
 
 // WatchRelayEntryRequested watches for event RelayEntryRequested.
