@@ -17,7 +17,7 @@ type ethereumChain struct {
 	clientWS                         *rpc.Client
 	requestID                        *big.Int
 	keepRandomBeaconBackendContract  *keepRandomBeaconBackend
-	keepRandomBeaconContract         *KeepRandomBeacon
+	keepRandomBeaconFrontendContract *KeepRandomBeaconFrontend
 	stakingContract                  *staking
 	accountKey                       *keystore.Key
 }
@@ -60,14 +60,14 @@ func Connect(cfg Config) (chain.Handle, error) {
 		clientWS:  clientws,
 	}
 
-	keepRandomBeaconContract, err := newKeepRandomBeacon(pv)
+	keepRandomBeaconFrontendContract, err := newKeepRandomBeaconFrontend(pv)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error attaching to KeepRandomBeacon contract: [%v]",
+			"error attaching to KeepRandomBeaconFrontend contract: [%v]",
 			err,
 		)
 	}
-	pv.keepRandomBeaconContract = keepRandomBeaconContract
+	pv.keepRandomBeaconFrontendContract = keepRandomBeaconFrontendContract
 
 	keepRandomBeaconBackendContract, err := newKeepRandomBeaconBackend(pv)
 	if err != nil {

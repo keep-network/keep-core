@@ -11,8 +11,8 @@
 	KeyFile            = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
 
 [ethereum.ContractAddresses]
-	# Hex-encoded address of KeepRandomBeacon contract
-	KeepRandomBeacon = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+	# Hex-encoded address of KeepRandomBeaconFrontend contract
+	KeepRandomBeaconFrontend = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 	# Hex-encoded address of KeepRandomBeaconBackend contract
 	KeepRandomBeaconBackend = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 	# Hex-encoded address of StakingProxy contract

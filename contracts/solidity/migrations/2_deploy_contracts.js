@@ -5,10 +5,10 @@ const BLS = artifacts.require("./cryptography/BLS.sol");
 const StakingProxy = artifacts.require("./StakingProxy.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
+const KeepRandomBeaconFrontendProxy = artifacts.require("./KeepRandomBeaconFrontendProxy.sol");
 const KeepRandomBeaconFrontendImplV1 = artifacts.require("./KeepRandomBeaconFrontendImplV1.sol");
 const KeepRandomBeaconBackend = artifacts.require("./KeepRandomBeaconBackend.sol");
 const KeepRandomBeaconBackendStub = artifacts.require("./KeepRandomBeaconBackendStub.sol");
-const KeepRandomBeacon = artifacts.require("./KeepRandomBeaconFrontendProxy.sol");
 
 const withdrawalDelay = 86400; // 1 day
 const minPayment = 1;
@@ -43,14 +43,14 @@ module.exports = async function(deployer) {
   await deployer.link(BLS, KeepRandomBeaconBackendStub);
   await deployer.deploy(KeepRandomBeaconBackend);
   await deployer.deploy(KeepRandomBeaconFrontendImplV1);
-  await deployer.deploy(KeepRandomBeacon, KeepRandomBeaconFrontendImplV1.address);
+  await deployer.deploy(KeepRandomBeaconFrontendProxy, KeepRandomBeaconFrontendImplV1.address);
 
-  const keepRandomBeaconFrontend = await KeepRandomBeaconFrontendImplV1.at(KeepRandomBeacon.address);
+  const keepRandomBeaconFrontend = await KeepRandomBeaconFrontendImplV1.at(KeepRandomBeaconFrontendProxy.address);
   const keepRandomBeaconBackend = await KeepRandomBeaconBackend.deployed();
 
   // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
   await keepRandomBeaconBackend.initialize(
-    StakingProxy.address, KeepRandomBeacon.address, minStake, groupThreshold, groupSize,
+    StakingProxy.address, KeepRandomBeaconFrontendProxy.address, minStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862'),
     "0x1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0",

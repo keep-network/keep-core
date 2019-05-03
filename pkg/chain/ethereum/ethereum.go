@@ -209,7 +209,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
+	_, err = ec.keepRandomBeaconFrontendContract.SubmitRelayEntry(
 		newEntry.RequestID,
 		newEntry.GroupPubKey,
 		newEntry.PreviousEntry,
@@ -228,7 +228,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 func (ec *ethereumChain) OnRelayEntryGenerated(
 	handle func(entry *event.Entry),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
+	return ec.keepRandomBeaconFrontendContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
 			requestResponse *big.Int,
@@ -259,7 +259,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconContract.WatchRelayEntryRequested(
+	return ec.keepRandomBeaconFrontendContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
 			payment *big.Int,
@@ -364,7 +364,7 @@ func (ec *ethereumChain) RequestRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(seed.Bytes())
+	_, err = ec.keepRandomBeaconFrontendContract.RequestRelayEntry(seed.Bytes())
 	if err != nil {
 		subscription.Unsubscribe()
 		close(requestedEntry)

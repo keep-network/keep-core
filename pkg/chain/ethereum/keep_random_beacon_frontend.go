@@ -12,8 +12,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
-// KeepRandomBeacon connection information for interface to the contract.
-type KeepRandomBeacon struct {
+// KeepRandomBeaconFrontend connection information for interface to the contract.
+type KeepRandomBeaconFrontend struct {
 	caller            *abi.KeepRandomBeaconFrontendImplV1Caller
 	callerOptions     *bind.CallOpts
 	transactor        *abi.KeepRandomBeaconFrontendImplV1Transactor
@@ -22,13 +22,13 @@ type KeepRandomBeacon struct {
 	contractAddress   common.Address
 }
 
-// NewKeepRandomBeacon creates the necessary connections and configurations for
+// NewKeepRandomBeaconFrontend creates the necessary connections and configurations for
 // accessing the contract.
-func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) {
-	contractAddressHex, exists := chainConfig.config.ContractAddresses["KeepRandomBeacon"]
+func newKeepRandomBeaconFrontend(chainConfig *ethereumChain) (*KeepRandomBeaconFrontend, error) {
+	contractAddressHex, exists := chainConfig.config.ContractAddresses["KeepRandomBeaconFrontend"]
 	if !exists {
 		return nil, fmt.Errorf(
-			"no address information for 'KeepRandomBeacon' in configuration",
+			"no address information for 'KeepRandomBeaconFrontend' in configuration",
 		)
 	}
 	contractAddress := common.HexToAddress(contractAddressHex)
@@ -78,7 +78,7 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 		chainConfig.accountKey.PrivateKey,
 	)
 
-	randomBeaconContract, err := abi.NewKeepRandomBeaconFrontendImplV1(
+	randomBeaconFrontendContract, err := abi.NewKeepRandomBeaconFrontendImplV1(
 		contractAddress,
 		chainConfig.client,
 	)
@@ -90,24 +90,24 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 		)
 	}
 
-	return &KeepRandomBeacon{
+	return &KeepRandomBeaconFrontend{
 		caller:            beaconCaller,
 		callerOptions:     callerOptions,
 		transactor:        beaconTransactor,
 		transactorOptions: transactorOptions,
-		contract:          randomBeaconContract,
+		contract:          randomBeaconFrontendContract,
 		contractAddress:   contractAddress,
 	}, nil
 }
 
 // Initialized calls the contract and returns true if the contract has
 // had its Initialize method called.
-func (krb *KeepRandomBeacon) Initialized() (bool, error) {
+func (krb *KeepRandomBeaconFrontend) Initialized() (bool, error) {
 	return krb.caller.Initialized(krb.callerOptions)
 }
 
 // RequestRelayEntry requests a new entry in the threshold relay.
-func (krb *KeepRandomBeacon) RequestRelayEntry(
+func (krb *KeepRandomBeaconFrontend) RequestRelayEntry(
 	rawseed []byte,
 ) (*types.Transaction, error) {
 	seed := big.NewInt(0).SetBytes(rawseed)
@@ -117,7 +117,7 @@ func (krb *KeepRandomBeacon) RequestRelayEntry(
 }
 
 // SubmitRelayEntry submits a group signature for consideration.
-func (krb *KeepRandomBeacon) SubmitRelayEntry(
+func (krb *KeepRandomBeaconFrontend) SubmitRelayEntry(
 	requestID *big.Int,
 	groupPubKey []byte,
 	previousEntry *big.Int,
@@ -146,7 +146,7 @@ type relayEntryRequestedFunc func(
 )
 
 // WatchRelayEntryRequested watches for event RelayEntryRequested.
-func (krb *KeepRandomBeacon) WatchRelayEntryRequested(
+func (krb *KeepRandomBeaconFrontend) WatchRelayEntryRequested(
 	success relayEntryRequestedFunc,
 	fail errorCallback,
 ) (subscription.EventSubscription, error) {
@@ -214,7 +214,7 @@ type relayEntryGeneratedFunc func(
 )
 
 // WatchRelayEntryGenerated watches for event.
-func (krb *KeepRandomBeacon) WatchRelayEntryGenerated(
+func (krb *KeepRandomBeaconFrontend) WatchRelayEntryGenerated(
 	success relayEntryGeneratedFunc,
 	fail errorCallback,
 ) (subscription.EventSubscription, error) {
