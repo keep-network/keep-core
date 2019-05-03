@@ -33,7 +33,6 @@ ssh utilitybox << EOF
 
   cd /tmp/$BUILD_TAG/solidity
 
-  sudo apt install -y npm
   npm init -y
   sudo npm install -g truffle@5.0.7
   npm install openzeppelin-solidity
