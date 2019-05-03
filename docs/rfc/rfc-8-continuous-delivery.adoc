@@ -11,7 +11,7 @@ toc::[]
 
 Here we present a continuous delivery method for a service or services running
 in a Kubernetes cluster.  It is expected that one or more of these services
-has Ethereum contracts developed along side the service.  It is expected that
+has Ethereum contracts developed alongside the service.  It is expected that
 there is a relationship between service and contract to a degree that we must
 ensure both service and contract are deployed continuously.  The entirety of the
 solution is targeted at development and test environments.  The requirements for
@@ -42,7 +42,7 @@ The keep-client service leans on a collection of Ethereum contracts that are in
 development alongside the service.  When contracts are changed they have to be
 deployed to the Ethereum network that the keep-clients are connecting to.
 
-This arrangement creates a dependency between the service service configuration and
+This arrangement creates a dependency between the service configuration and
 contract code on a couple levels:
 
 1. keep-client configuration files require contract addresses.  These addresses
@@ -60,34 +60,6 @@ contracts before clients due to client startup behavior.
 
 === Sample keep-client Service Configuration File
 
-*Standard Peer*
-```
-# This is a TOML configuration file for DKG, P2P networking and connection to Ethereum
-
-# Provider Initialization Example
-
-[ethereum]
-  URL                = "ws://eth-host:ws-port"
-  URLRPC             = "http://eth-host:rpc-port"
-
-[ethereum.account]
-  Address            = "eth-address-keep-client-uses"
-  KeyFile            = "path/to/in-use/keyfile"
-
-[ethereum.ContractAddresses]
-  # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "address"
-  # Hex-encoded address of KeepGroup contract
-  KeepGroup = "address"
-  # StakingProxy
-  Staking = "address"
-
-[LibP2P]
-  Peers = ["comma separated list of bootstrap peers"]
-  Port = keep-client-port
-
-```
-
 *Bootstrap Peer*
 ```
 # This is a TOML configuration file for DKG, P2P networking and connection to Ethereum
@@ -99,16 +71,16 @@ contracts before clients due to client startup behavior.
   URLRPC             = "http://eth-host:rpc-port"
 
 [ethereum.account]
-  Address            = "eth-address-keep-client-uses"
+  Address            = "0x6299496199d99941193fdd2d717ef585f431ea05"
   KeyFile            = "path/to/in-use/keyfile"
 
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "address"
+  KeepRandomBeacon = "0x6299496199d9922193fdd2d717ef585f431er01"
   # Hex-encoded address of KeepGroup contract
-  KeepGroup = "address"
+  KeepGroup = "0x6299496449d11141193fdd2d717ef585f431er02"
   # StakingProxy
-  Staking = "address"
+  Staking = "0x6297776199d99942293fdd2d717ef585f431er03"
 
 # Bootstrap node creating a new network.
   [LibP2P]
@@ -116,6 +88,35 @@ contracts before clients due to client startup behavior.
   Port = keep-client-port
 
 ```
+
+*Standard Peer*
+```
+# This is a TOML configuration file for DKG, P2P networking and connection to Ethereum
+
+# Provider Initialization Example
+
+[ethereum]
+  URL                = "ws://eth-host:ws-port"
+  URLRPC             = "http://eth-host:rpc-port"
+
+[ethereum.account]
+  Address            = "0x6299496199d99941193fdd2d717ef585f431ea05"
+  KeyFile            = "path/to/in-use/keyfile"
+
+[ethereum.ContractAddresses]
+  # Hex-encoded address of KeepRandomBeacon contract
+  KeepRandomBeacon = "0x6299496199d9922193fdd2d717ef585f431er01"
+  # Hex-encoded address of KeepGroup contract
+  KeepGroup = "0x6299496449d11141193fdd2d717ef585f431er02"
+  # StakingProxy
+  Staking = "0x6297776199d99942293fdd2d717ef585f431er03"
+
+[LibP2P]
+  Peers = ["comma separated list of bootstrap peers"]
+  Port = keep-client-port
+
+```
+
 
 === Current Functionality
 
@@ -133,8 +134,9 @@ publish Keel checks Kubernetes deployments for annotations and matches labels se
 there for what should be deployed. On match Keel pulls the image and does a
 deployment.
 
-Keel Infrastructure: https://github.com/thesis/infrastructure/tree/master/terraform/modules/gcp_pull_deploy[Keel Terraform Module]
-`keep-dev` Keel Implementation: https://github.com/keep-network/keep-core/blob/master/infrastructure/terraform/keep-dev/main.tf#L186-L201[keep-dev Terraform main.tf]
+- Keel Infrastructure: https://github.com/thesis/infrastructure/tree/master/terraform/modules/gcp_pull_deploy[Keel Terraform Module]
+`keep-dev`
+- Keel Implementation: https://github.com/keep-network/keep-core/blob/master/infrastructure/terraform/keep-dev/main.tf#L186-L201[keep-dev Terraform main.tf]
 
 
 *keep-client Configuration:*
@@ -174,10 +176,10 @@ It's worth noting that when contracts are deployed we need to do the following:
 
 Sample Commands:
 
-```
-truffle migrate --reset --network keep_dev (migrate contracts)
-truffle exec ./get-and-unlock-eth-accounts.js http://eth-tx-node.default.svc.cluster.local:8545 eth-account-passphrase --network keep_dev (unlock ETH accounts)
-truffle exec ./demo.js --network keep_dev (stake ETH accounts)
+```shell
+truffle migrate --reset --network keep_dev #migrate contracts
+truffle exec ./get-and-unlock-eth-accounts.js http://eth-tx-node.default.svc.cluster.local:8545 eth-account-passphrase --network keep_dev #unlock ETH accounts
+truffle exec ./demo.js --network keep_dev #stake ETH accounts
 ```
 
 
