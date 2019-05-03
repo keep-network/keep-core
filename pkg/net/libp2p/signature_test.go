@@ -7,13 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	host "github.com/libp2p/go-libp2p-host"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
 // Integration test simulating malicious adversary tampering the network message
@@ -24,57 +21,91 @@ import (
 // rejected.
 func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 	var (
-		ctx     = context.Background()
-		payload = "I did know once, only I've sort of forgotten."
+		ctx           = context.Background()
+		honestPayload = "I did know once, only I've sort of forgotten."
+		// maliciousPayload = "You never can tell with bees."
 	)
 
 	connect := func(t *testing.T, a, b host.Host) {
 		pinfo := a.Peerstore().PeerInfo(a.ID())
-		err := b.Connect(ctx, pinfo)
+		err := b.Connect(context.Background(), pinfo)
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	peer1, err := createTestChannel(ctx, 8080)
+	honestPeer1, err := createTestChannel(ctx, 8080)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	peer2, err := createTestChannel(ctx, 8081)
+	honestPeer2, err := createTestChannel(ctx, 3030)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	connect(t, peer1.Host(), peer2.Host())
+	adversarialPeer, err := createTestChannel(ctx, 2020)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create the following network topology:
+	// honestPeer1 <-> adversarialPeer <-> honestPeer2
+	connect(t, honestPeer1.Host(), adversarialPeer.Host())
+	connect(t, honestPeer2.Host(), adversarialPeer.Host())
 	time.Sleep(time.Millisecond * 100)
 
 	// Create and publish message with a correct signature...
-	if err := peer1.Send(&testMessage{Payload: payload}); err != nil {
+	if err := honestPeer1.Send(&testMessage{Payload: honestPayload}); err != nil {
 		t.Fatal(err)
 	}
 
-	ensureNonMaliciousMessage := func(t *testing.T, msg *pubsub.Message) error {
-		var envelope pb.NetworkEnvelope
-		if err := proto.Unmarshal(msg.Data, &envelope); err != nil {
-			t.Fatal(err)
-		}
+	// Create a function which in a loop calls next, grabs the honest message,
+	// attempts to perturb it and then send it back on the broadcast channel.
+	// No one should receive that message. And they should check they don't get it
 
-		var protoMessage pb.NetworkMessage
-		if err := proto.Unmarshal(envelope.Message, &protoMessage); err != nil {
-			t.Fatal(err)
-		}
+	// for {
+	// 	msg, err := adversarialPeer.subscription.Next(context.Background())
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 		continue
+	// 	}
+	// 	var envelope pb.NetworkEnvelope
+	// 	if err := proto.Unmarshal(msg.Data, &envelope); err != nil {
+	// 		fmt.Println(err)
+	// 		continue
+	// 	}
+	// 	// somehow tamper with the message and broadcast this?
+	// }
 
-		unmarshaled, err := peer2.getUnmarshalingContainerByType(string(protoMessage.Type))
-		if err != nil {
-			t.Fatal(err)
-		}
+	// Check if the message with correct signature (from honestPeer1) has been
+	// properly delivered to honestPeer2, and the message with the incorrect
+	// signature has been dropped.
+	honestPeer2RecvChan := make(chan net.Message)
+	if err := honestPeer2.Recv(net.HandleMessageFunc{
+		Type: "test",
+		Handler: func(msg net.Message) error {
+			honestPeer2RecvChan <- msg
+			return nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
 
-		if err := unmarshaled.Unmarshal(protoMessage.GetPayload()); err != nil {
-			t.Fatal(err)
-		}
+	// Ensure that honestPeer1 drops the malicious message
+	honestPeer1RecvChan := make(chan net.Message)
+	if err := honestPeer1.Recv(net.HandleMessageFunc{
+		Type: "test",
+		Handler: func(msg net.Message) error {
+			honestPeer1RecvChan <- msg
+			return nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
 
-		testPayload, ok := unmarshaled.(*testMessage)
+	ensureNonMaliciousMessage := func(t *testing.T, msg net.Message) error {
+		testPayload, ok := msg.Payload().(*testMessage)
 		if !ok {
 			return fmt.Errorf(
 				"expected: payload type string\ngot:   payload type [%v]",
@@ -82,36 +113,31 @@ func TestRejectMessageWithUnexpectedSignature(t *testing.T) {
 			)
 		}
 
-		if payload != testPayload.Payload {
+		if honestPayload != testPayload.Payload {
 			return fmt.Errorf(
 				"expected: message payload [%s]\ngot:   payload [%s]",
-				payload,
+				honestPayload,
 				testPayload.Payload,
 			)
 		}
 		return nil
 	}
-	// Check if the message with correct signature (from peer1) has been
-	// properly delivered to peer2, and the message with the incorrect
-	// signature has been dropped.
+
 	for {
 		select {
-		// Ensure all messages are flushed before exiting
-		case <-time.After(2 * time.Second):
-			return
-		case <-ctx.Done():
-			t.Fatal(ctx.Err())
-		default:
-			msg, err := peer2.subscription.Next(ctx)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if msg.GetSignature() == nil {
-				t.Fatalf("expected signature in message")
-			}
+		case msg := <-honestPeer2RecvChan:
 			if err := ensureNonMaliciousMessage(t, msg); err != nil {
 				t.Fatal(err)
 			}
+
+		case msg := <-honestPeer1RecvChan:
+			if err := ensureNonMaliciousMessage(t, msg); err != nil {
+				t.Fatal(err)
+			}
+
+		// Ensure all messages are flushed before exiting
+		case <-time.After(2 * time.Second):
+			return
 		}
 	}
 }
