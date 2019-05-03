@@ -42,6 +42,8 @@ contract KeepGroupImplV1 is Ownable {
     // Store whether DKG result was published for the corresponding requestID.
     mapping (uint256 => bool) internal _dkgResultPublished;
 
+    bool internal _groupSelectionInProgress;
+
     struct Proof {
         address sender;
         uint256 stakerValue;
@@ -91,9 +93,15 @@ contract KeepGroupImplV1 is Ownable {
      */
     function runGroupSelection(uint256 randomBeaconValue) public {
         require(msg.sender == _randomBeacon);
-        cleanup();
-        _ticketSubmissionStartBlock = block.number;
-        _randomBeaconValue = randomBeaconValue;
+
+        uint256 latestDKGSubmission = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG + _groupSize * _resultPublicationBlockStep;
+
+        if (!_groupSelectionInProgress || block.number > latestDKGSubmission) {
+            cleanup();
+            _ticketSubmissionStartBlock = block.number;
+            _randomBeaconValue = randomBeaconValue;
+            _groupSelectionInProgress = true;
+        }
     }
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 4).
@@ -312,6 +320,8 @@ contract KeepGroupImplV1 is Ownable {
         cleanup();
         _dkgResultPublished[requestId] = true;
         emit DkgResultPublishedEvent(requestId, groupPubKey);
+
+        _groupSelectionInProgress = false;
     }
 
     /**
