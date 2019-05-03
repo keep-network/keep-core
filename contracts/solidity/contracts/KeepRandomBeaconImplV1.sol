@@ -33,6 +33,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     uint256 internal _pendingWithdrawal;
     address internal _groupContract;
     uint256 internal _previousEntry;
+    uint256 internal _relayRequestTimeout; 
 
     mapping (string => bool) internal _initialized;
 
@@ -58,8 +59,12 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param genesisEntry Initial relay entry to create first group.
      * @param genesisGroupPubKey Group to respond to the initial relay entry request.
      * @param groupContract Group contract linked to this contract.
+     * @param relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
+     * Blocks are counted from the moment relay request occur.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, bytes memory genesisGroupPubKey, address groupContract)
+    function initialize(
+        uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, 
+        bytes memory genesisGroupPubKey, address groupContract, uint256 relayRequestTimeout)
         public
         onlyOwner
     {
@@ -70,6 +75,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _pendingWithdrawal = 0;
         _previousEntry = genesisEntry;
         _groupContract = groupContract;
+        _relayRequestTimeout = relayRequestTimeout;
 
         // Create initial relay entry request. This will allow relayEntry to be called once
         // to trigger the creation of the first group. Requests are removed on successful
