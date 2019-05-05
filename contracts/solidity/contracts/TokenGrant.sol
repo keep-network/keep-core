@@ -315,4 +315,60 @@ contract TokenGrant is StakeDelegatable {
         token.safeTransfer(grants[_id].owner, refund);
         emit RevokedTokenGrant(_id);
     }
+
+    /**
+     * @dev Allows authorized address/contract to transfer token grant to a new address.
+     * @param _id Id of the grant to transfer the amount from.
+     * @param _beneficiary Beneficiary of the new grant to receive the amount.
+     * @param _amount Amount to transfer.
+     * @return Returns id of a new token grant with the transferred amount
+     */
+    function transfer(uint256 _id, address _beneficiary, uint256 _amount) public returns (uint256) {
+
+        // TODO: allowance/approval authorization for transfers
+        // i.e. require(authorizedManager == msg.sender, "Only address authorized by grant beneficiary can invoke transfer.");
+
+        uint256 available = grants[_id].amount.sub(grants[_id].released);
+        require(available >= _amount, "Must have available granted amount to transfer.");
+
+        uint256 unreleased = unreleasedAmount(_id);
+
+        // Remove amount from the source grant.
+        grants[_id].amount = grants[_id].amount.sub(_amount);
+
+        // If there are enough unreleased tokens to cover the required amount.
+        if (unreleased >= _amount) {
+
+            // Calculate the remaining unreleased amount.
+            uint256 remaining = unreleased.sub(_amount);
+
+            // Adjust start time to maintain remaining unreleased amount.
+            grants[_id].start = now.sub(remaining.mul(grants[_id].duration).div(unreleased + remaining));
+
+        } else {
+            // Reset vesting schedule so no unreleased amount is available.
+            grants[_id].start = now;
+            grants[_id].amount = grants[_id].amount.sub(grants[_id].released);
+            grants[_id].released = 0;
+        }
+
+        // Destination token grant.
+        uint256 newGrantId = numGrants++;
+        grants[newGrantId] = Grant(
+            grants[_id].owner,
+            _beneficiary,
+            grants[_id].staked,
+            false,
+            false,
+            _amount,
+            grants[_id].duration,
+            // Adjust start time to keep unreleased amount the same as in the source grant.
+            now.sub(unreleased.mul(grants[_id].duration).div(_amount)),
+            grants[_id].cliff,
+            0
+        );
+
+        emit CreatedTokenGrant(newGrantId);
+        return newGrantId;
+    }
 }
