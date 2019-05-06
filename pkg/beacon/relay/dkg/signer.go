@@ -20,7 +20,7 @@ type ThresholdSigner struct {
 	groupPrivateKeyShare *big.Int
 }
 
-// NewThresholdSigner returns an empty ThresholdSigner
+// NewThresholdSigner returns a new ThresholdSigner
 func NewThresholdSigner(
 	memberIndex group.MemberIndex,
 	groupPublicKey *bn256.G2,

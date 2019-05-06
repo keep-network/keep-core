@@ -595,16 +595,16 @@ func TestLocalIsGroupEligibleForRemoval(t *testing.T) {
 	}{
 		"found a first group": {
 			group: localGroup{
-				groupPublicKey: []byte{'d'},
+				groupPublicKey: group1.groupPublicKey,
 			},
-			simulatedHeight: 3,
+			simulatedHeight: group1.registrationBlockHeight + 2,
 			expectedResult:  false,
 		},
 		"found a second group": {
 			group: localGroup{
-				groupPublicKey: []byte{'v'},
+				groupPublicKey: group2.groupPublicKey,
 			},
-			simulatedHeight: 4,
+			simulatedHeight: group2.registrationBlockHeight + 3,
 			expectedResult:  false,
 		},
 		"group was not found": {
@@ -614,18 +614,18 @@ func TestLocalIsGroupEligibleForRemoval(t *testing.T) {
 			simulatedHeight: 1,
 			expectedResult:  true,
 		},
-		"group was found and current block passed the expiration timeout": {
+		"a third group was found and current block has passed the expiration timeout": {
 			group: localGroup{
-				groupPublicKey: []byte{'d'},
+				groupPublicKey: group3.groupPublicKey,
 			},
-			simulatedHeight: 12,
+			simulatedHeight: group3.registrationBlockHeight + groupActiveTime + 1,
 			expectedResult:  true,
 		},
-		"group was found and current block is the same as expiration timeout": {
+		"a second group was found and current block is the same as expiration timeout": {
 			group: localGroup{
-				groupPublicKey: []byte{'i'},
+				groupPublicKey: group2.groupPublicKey,
 			},
-			simulatedHeight: 11,
+			simulatedHeight: group2.registrationBlockHeight + groupActiveTime,
 			expectedResult:  false,
 		},
 	}

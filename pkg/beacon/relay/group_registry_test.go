@@ -40,13 +40,15 @@ func TestRegisterGroup(t *testing.T) {
 
 	if actual == nil {
 		t.Fatalf(
-			"\nexpecting a group, but nil was returned instead",
+			"Expecting a group, but nil was returned instead",
 		)
 	}
 
 	if len(actual) != 1 {
 		t.Fatalf(
-			"\nexpected: [%+v]\nactual:   [%+v]", 1, len(actual),
+			"Unexpected number of group memberships \nExpected: [%+v]\nActual:   [%+v]",
+			1,
+			len(actual),
 		)
 	}
 }
@@ -95,21 +97,21 @@ func TestUnregisterDeletedGroups(t *testing.T) {
 	group1 := gr.GetGroup(signer1.GroupPublicKeyBytes())
 	if group1 == nil {
 		t.Fatalf(
-			"\nexpecting a group, but nil was returned instead",
+			"Expecting a group, but nil was returned instead",
 		)
 	}
 
 	group2 := gr.GetGroup(signer2.GroupPublicKeyBytes())
 	if group2 != nil {
 		t.Fatalf(
-			"\ngroup2 was expected to be deleted, but is still present",
+			"Group2 was expected to be deleted, but is still present",
 		)
 	}
 
 	group3 := gr.GetGroup(signer3.GroupPublicKeyBytes())
 	if group3 == nil {
 		t.Fatalf(
-			"\nexpecting a group, but nil was returned instead",
+			"Expecting a group, but nil was returned instead",
 		)
 	}
 

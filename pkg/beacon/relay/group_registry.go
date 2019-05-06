@@ -10,7 +10,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// GroupRegistry represents a collection of Keep groups.
+// GroupRegistry represents a collection of Keep groups in which the given
+// client is a member.
 type GroupRegistry struct {
 	mutex sync.Mutex
 
@@ -27,7 +28,7 @@ type Membership struct {
 
 // NewGroupRegistry returns an empty GroupRegistry.
 func NewGroupRegistry(
-	relayChain relaychain.Interface,
+	relayChain relaychain.GroupRegistrationInterface,
 ) *GroupRegistry {
 	return &GroupRegistry{
 		myGroups:   make(map[string][]*Membership),
@@ -39,7 +40,8 @@ func NewGroupRegistry(
 // groupPublicKey.
 func (gr *GroupRegistry) RegisterGroup(
 	signer *dkg.ThresholdSigner,
-	channel net.BroadcastChannel) {
+	channel net.BroadcastChannel,
+) {
 
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
@@ -70,11 +72,12 @@ func (gr *GroupRegistry) UnregisterDeletedGroups() {
 		isGroupEligibleForRemoval, err := gr.relayChain.IsGroupEligibleForRemoval([]byte(publicKey))
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Group check eligibility failed: [%v]\n", err)
+			fmt.Fprintf(os.Stderr, "Group removal eligibility failed: [%v]\n", err)
 		}
 
 		if isGroupEligibleForRemoval {
 			delete(gr.myGroups, publicKey)
+			fmt.Printf("Unregistering a group which was removed on chain [%v]\n", publicKey)
 		}
 	}
 }
