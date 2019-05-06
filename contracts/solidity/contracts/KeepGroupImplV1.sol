@@ -597,14 +597,22 @@ contract KeepGroupImplV1 is Ownable {
                 _expiredOffset += selectedGroup;
                 numberOfActiveGroups -= selectedGroup;
                 selectedGroup = previousEntry % numberOfActiveGroups;
-            } else {
-                /* Number of groups that did not expire is less or equal _activeGroupsThreshold.
+             } else if (_groups.length > _activeGroupsThreshold) {
+                /* Number of groups that did not expire is less or equal _activeGroupsThreshold
+                 * and we have more groups than _activeGroupsThreshold (including those expired) groups.
                  * Hence, we maintain the minimum _activeGroupsThreshold of active groups and
                  * do not let any other groups to expire
                  */
                 _expiredOffset = _groups.length - _activeGroupsThreshold;
                 numberOfActiveGroups = _activeGroupsThreshold;
                 selectedGroup = previousEntry % numberOfActiveGroups;
+                break;
+            } else {
+                /* Number of groups that did not expire is less or equal _activeGroupsThreshold
+                 * and we have less than _activeGroupsThreshold (including those expired) groups.
+                 * Hence, we do nothing because we are under the threshold or exactly
+                 * at the threshold.
+                 */
                 break;
             }
         }
