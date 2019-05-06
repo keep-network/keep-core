@@ -49,10 +49,12 @@ contract('TestKeepGroupExpiration', function(accounts) {
       timeoutChallenge, timeDKG, resultPublicationBlockStep, activeGroupsThreshold,
       groupActiveTime
     );
-
-    for (var i = 1; i <= testGroupsNumber; i++)
-      await keepGroupImplViaProxy.registerNewGroup([i]);
   });
+
+  async function addGroups(numberOfGroups) {
+    for (var i = 1; i <= numberOfGroups; i++)
+      await keepGroupImplViaProxy.registerNewGroup([i]);
+  }
 
   async function expireGroup(groupIndex) {
     let groupRegistrationBlock = await keepGroupImplViaProxy.getGroupRegistrationBlockHeight(groupIndex);
@@ -64,6 +66,9 @@ contract('TestKeepGroupExpiration', function(accounts) {
   }
 
   it("it should be able to count the number of active groups", async function() {
+
+    await addGroups(testGroupsNumber);
+
     let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
     assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups is not equal to number of test groups");
   });
@@ -76,6 +81,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("should mark all groups as expired except active threshold when\
  the selected group is right before of threshold section and it is expired", async function() {
 
+    await addGroups(testGroupsNumber);
     await expireGroup(4);
 
     await keepGroupImplViaProxy.selectGroup(4) // 4 % 10 = 4
@@ -95,6 +101,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("should mark all groups as expired except active threshold when\
  the selected group is right at the beginning of threshold section and it is expired", async function() {
 
+    await addGroups(testGroupsNumber);
     await expireGroup(5);
 
     await keepGroupImplViaProxy.selectGroup(5) // 5 % 10 = 5
@@ -114,6 +121,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("should mark all groups as expired except active threshold when\
  the selected group is right after the beginning of threshold section and it is expired", async function() {
 
+    await addGroups(testGroupsNumber);
     await expireGroup(6);
 
     await keepGroupImplViaProxy.selectGroup(6) // 6 % 10 = 6
@@ -133,6 +141,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("should mark all groups as expired except active threshold when\
  selected the very first group", async function() {
 
+    await addGroups(testGroupsNumber);
     await expireGroup(9);
 
     await keepGroupImplViaProxy.selectGroup(0);
@@ -152,6 +161,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("should mark all groups as expired except active threshold when\
  selected the very last group", async function() {
 
+    await addGroups(testGroupsNumber);
     await expireGroup(9);
 
     await keepGroupImplViaProxy.selectGroup(testGroupsNumber - 1); // 9
@@ -171,6 +181,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   it("should mark all groups as expired except active threshold when\
  selected the one after the last group (modulo operation check)", async function() {
 
+    await addGroups(testGroupsNumber);
     await expireGroup(9);
 
     await keepGroupImplViaProxy.selectGroup(testGroupsNumber); // 10
@@ -190,6 +201,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   // - we should end up with [EEEEEEEEEEAAAAAAAAAA]
   it("it should be able to mark only a subset of groups as expired", async function() {
 
+    await addGroups(testGroupsNumber);
     await expireGroup(9);
 
     for (var i = 1; i <= testGroupsNumber; i++)
