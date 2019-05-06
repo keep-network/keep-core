@@ -213,4 +213,65 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     assert.equal(Number(after), testGroupsNumber, "Number of groups should not fall below the test groups number");
   });
+
+  // - we start with [A]
+  // - threshold is equal 5
+  // - we mine as many blocks as needed to mark the group as expired
+  // - we select group at position 0 which is expired
+  // - we should end up with [A]
+  it("should not mark group as expired when\
+ there is just one group and it is expired", async function() {
+
+    await addGroups(1);
+    await expireGroup(0) // indexed from 0
+
+    await keepGroupImplViaProxy.selectGroup(0);
+
+    let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
+    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
+
+    assert.equal(expiredOffset, 0, "Unexpected expired offset");
+    assert.equal(Number(numberOfGroups), 1, "Unexpected number of groups");
+  });
+
+  // - we start with [AAAA]
+  // - threshold is equal 5
+  // - we mine as many blocks as needed to mark all the groups as expired
+  // - we select group at position 0 which is expired
+  // - we should end up with [AAAA]
+  it("should not mark groups as expired when there is less groups than threshold\
+ and they are all expired ", async function() {
+    let groupsCount = activeGroupsThreshold - 1
+
+    await addGroups(groupsCount);
+    await expireGroup(groupsCount - 1) // indexed from 0
+
+    await keepGroupImplViaProxy.selectGroup(0);
+
+    let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
+    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
+
+    assert.equal(expiredOffset, 0, "Unexpected expired offset");
+    assert.equal(Number(numberOfGroups), groupsCount, "Unexpected number of groups");
+  });
+
+  // - we start with [AAAAA]
+  // - threshold is equal 5
+  // - we mine as many blocks as needed to mark all the groups as expired
+  // - we select group at position 0 which is expired
+  // - we should end up with [AAAAA]
+  it("should not mark groups as expired when there is threshold number of groups\
+ and they are all expired ", async function() {
+    let groupsCount = activeGroupsThreshold
+    await addGroups(groupsCount);
+    await expireGroup(groupsCount - 1) // indexed from 0
+
+    await keepGroupImplViaProxy.selectGroup(0);
+
+    let expiredOffset = await keepGroupImplViaProxy.getExpiredOffset();
+    let numberOfGroups = await keepGroupImplViaProxy.numberOfGroups();
+
+    assert.equal(expiredOffset, 0, "Unexpected expired offset");
+    assert.equal(Number(numberOfGroups), groupsCount, "Unexpected number of groups");
+  });
 });
