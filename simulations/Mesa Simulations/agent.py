@@ -102,7 +102,6 @@ class Signature(Agent):
         self.id = unique_id
         self.type = "signature"
         self.delay = np.random.poisson(self.model.signature_delay) #delay between when it is triggered and when it hits the chain
-        self.start_signature_process = False
         self.end_signature_process = False
         self.ownership_distr = []
         self.signature_success = False
@@ -111,10 +110,7 @@ class Signature(Agent):
 
     def step(self):
         if not self.end_signature_process: 
-            if not self.start_signature_process:
-                print("Starting signature process for signature ID = "+ str(self.id))
-                self.start_signature_process =True
-            elif self.delay <=0:
+            if self.delay <=0:
                 temp_distr = np.zeros(self.model.num_nodes)
                 print("     Checking for active nodes in randomly selected group")
                 active_count = np.zeros(self.model.num_nodes)
@@ -134,8 +130,9 @@ class Signature(Agent):
                     self.model.unsuccessful_signature_events.append(1)
                 self.end_signature_process = True
             else:
-                print("Signature ID " + str(self.id) + " Delay = "+str(self.delay))
+                print("Signature processing"
                 self.delay -=1
+                print("Signature ID " + str(self.id) + " Delay = "+str(self.delay))
 
     def advance(self):
         pass
