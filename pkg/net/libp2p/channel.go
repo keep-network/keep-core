@@ -313,6 +313,7 @@ func (c *channel) deliver(message net.Message) error {
 			if err := handler.Handler(msg); err != nil {
 				// TODO: handle error
 				fmt.Println(err)
+				return
 			}
 		}(message, handler)
 	}
