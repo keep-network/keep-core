@@ -582,38 +582,33 @@ contract KeepGroupImplV1 is Ownable {
         * starting from the previous value of expired groups offset since we can
         * mark expired groups in batches, in a fewer number of steps.
         */
-        while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _activeTime < block.number) {
-            /**
-            * We do -1 to see how many groups are available after the potential removal.
-            * For example:
-            * _groups = [EEEAAAA]
-            * - assuming selectedGroup = 0, then we'll have 4-0-1=3 groups after the removal: [EEEEAAA]
-            * - assuming selectedGroup = 1, then we'll have 4-1-1=2 groups after the removal: [EEEEEAA]
-            * - assuming selectedGroup = 2, then, we'll have 4-2-1=1 groups after the removal: [EEEEEEA]
-            * - assuming selectedGroup = 3, then, we'll have 4-3-1=0 groups after the removal: [EEEEEEE]
-            */
-            if (numberOfActiveGroups - selectedGroup - 1 > _activeGroupsThreshold) {
-                selectedGroup++;
-                _expiredOffset += selectedGroup;
-                numberOfActiveGroups -= selectedGroup;
-                selectedGroup = previousEntry % numberOfActiveGroups;
-             } else if (_groups.length > _activeGroupsThreshold) {
-                /* Number of groups that did not expire is less or equal _activeGroupsThreshold
-                 * and we have more groups than _activeGroupsThreshold (including those expired) groups.
-                 * Hence, we maintain the minimum _activeGroupsThreshold of active groups and
-                 * do not let any other groups to expire
-                 */
-                _expiredOffset = _groups.length - _activeGroupsThreshold;
-                numberOfActiveGroups = _activeGroupsThreshold;
-                selectedGroup = previousEntry % numberOfActiveGroups;
-                break;
-            } else {
-                /* Number of groups that did not expire is less or equal _activeGroupsThreshold
-                 * and we have less than _activeGroupsThreshold (including those expired) groups.
-                 * Hence, we do nothing because we are under the threshold or exactly
-                 * at the threshold.
-                 */
-                break;
+        if (numberOfActiveGroups > _activeGroupsThreshold) {
+            while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _activeTime < block.number) {
+                /**
+                * We do -1 to see how many groups are available after the potential removal.
+                * For example:
+                * _groups = [EEEAAAA]
+                * - assuming selectedGroup = 0, then we'll have 4-0-1=3 groups after the removal: [EEEEAAA]
+                * - assuming selectedGroup = 1, then we'll have 4-1-1=2 groups after the removal: [EEEEEAA]
+                * - assuming selectedGroup = 2, then, we'll have 4-2-1=1 groups after the removal: [EEEEEEA]
+                * - assuming selectedGroup = 3, then, we'll have 4-3-1=0 groups after the removal: [EEEEEEE]
+                */
+                if (numberOfActiveGroups - selectedGroup - 1 > _activeGroupsThreshold) {
+                    selectedGroup++;
+                    _expiredOffset += selectedGroup;
+                    numberOfActiveGroups -= selectedGroup;
+                    selectedGroup = previousEntry % numberOfActiveGroups;
+                } else {
+                    /* Number of groups that did not expire is less or equal _activeGroupsThreshold
+                    * and we have more groups than _activeGroupsThreshold (including those expired) groups.
+                    * Hence, we maintain the minimum _activeGroupsThreshold of active groups and
+                    * do not let any other groups to expire
+                    */
+                    _expiredOffset = _groups.length - _activeGroupsThreshold;
+                    numberOfActiveGroups = _activeGroupsThreshold;
+                    selectedGroup = previousEntry % numberOfActiveGroups;
+                    break;
+                }
             }
         }
         return _groups[_expiredOffset + selectedGroup].groupPubKey;
