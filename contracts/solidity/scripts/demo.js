@@ -1,6 +1,6 @@
 const KeepToken = artifacts.require("./KeepToken.sol");
 const StakingProxy = artifacts.require("./StakingProxy.sol");
-const TokenStaking = artifacts.require("./TokenStaking.sol");
+const Staking = artifacts.require("./Staking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 
 function formatAmount(amount, decimals) {
@@ -20,12 +20,12 @@ module.exports = async function() {
   const accounts = await getAccounts();
   const token = await KeepToken.deployed();
   const stakingProxy = await StakingProxy.deployed();
-  const tokenStaking = await TokenStaking.deployed();
+  const staking = await Staking.deployed();
   const tokenGrant = await TokenGrant.deployed();
 
   // Authorize contracts to work via proxy
-  if (!await stakingProxy.isAuthorized(tokenStaking.address)) {
-    stakingProxy.authorizeContract(tokenStaking.address);
+  if (!await stakingProxy.isAuthorized(staking.address)) {
+    stakingProxy.authorizeContract(staking.address);
   }
   if (!await stakingProxy.isAuthorized(tokenGrant.address)) {
     stakingProxy.authorizeContract(tokenGrant.address);
@@ -43,7 +43,7 @@ module.exports = async function() {
     let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
     staked = await token.approveAndCall(
-      tokenStaking.address, 
+      staking.address, 
       formatAmount(1000000, 18),
       delegation,
       {from: owner}

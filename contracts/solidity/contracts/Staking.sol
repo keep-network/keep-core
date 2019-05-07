@@ -10,7 +10,7 @@ import "./utils/UintArrayUtils.sol";
  * A holder of the specified token can stake its tokens to this contract
  * and unstake after withdrawal delay is over.
  */
-contract TokenStaking is StakeDelegatable {
+contract Staking is StakeDelegatable {
 
     using UintArrayUtils for uint256[];
 

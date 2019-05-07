@@ -77,7 +77,7 @@ func Connect(cfg Config) (chain.Handle, error) {
 
 	stakingContract, err := newStaking(pv)
 	if err != nil {
-		return nil, fmt.Errorf("error attaching to TokenStaking contract: [%v]", err)
+		return nil, fmt.Errorf("error attaching to Staking contract: [%v]", err)
 	}
 	pv.stakingContract = stakingContract
 

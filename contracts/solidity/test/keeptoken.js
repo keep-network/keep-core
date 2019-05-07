@@ -2,7 +2,7 @@ import increaseTime, { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
+const Staking = artifacts.require('./Staking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 
@@ -19,7 +19,7 @@ contract('KeepToken', function(accounts) {
   beforeEach(async () => {
     token = await KeepToken.new();
     stakingProxy = await StakingProxy.new();
-    stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
+    stakingContract = await Staking.new(token.address, stakingProxy.address, duration.days(30));
     grantContract = await TokenGrant.new(token.address);
     await stakingProxy.authorizeContract(stakingContract.address);
     await stakingProxy.authorizeContract(grantContract.address);

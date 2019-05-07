@@ -20,7 +20,7 @@ type staking struct {
 	contractAddress common.Address
 }
 
-// NewTokenStaking creates the necessary connections and configurations for
+// NewStaking creates the necessary connections and configurations for
 // accessing the contract.
 func newStaking(chainConfig *ethereumChain) (*staking, error) {
 	contractAddressHex, exists := chainConfig.config.ContractAddresses["Staking"]

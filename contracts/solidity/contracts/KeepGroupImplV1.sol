@@ -4,7 +4,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./StakingProxy.sol";
-import "./TokenStaking.sol";
+import "./Staking.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
@@ -123,7 +123,7 @@ contract KeepGroupImplV1 is Ownable {
         // Invalid tickets are rejected and their senders penalized.
         if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
             // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-            TokenStaking stakingContract = TokenStaking(_stakingContract);
+            Staking stakingContract = TokenStaking(_stakingContract);
             stakingContract.authorizedTransferFrom(msg.sender, address(this), _minStake);
         } else {
             _tickets.push(ticketValue);

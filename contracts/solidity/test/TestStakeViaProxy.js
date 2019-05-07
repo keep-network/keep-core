@@ -2,7 +2,7 @@ import { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
+const Staking = artifacts.require('./Staking.sol');
 
 contract('TestStakeViaProxy', function(accounts) {
 
@@ -16,7 +16,7 @@ contract('TestStakeViaProxy', function(accounts) {
 
   it("should stake and unstake via staking proxy contract", async function() {
     stakingProxy = await StakingProxy.new();
-    stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
+    stakingContract = await Staking.new(token.address, stakingProxy.address, duration.days(30));
 
     let stakingAmount = 10000000;
 

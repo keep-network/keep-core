@@ -7,7 +7,7 @@ import expectThrow from './helpers/expectThrow';
 import shuffleArray from './helpers/shuffle';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
+const Staking = artifacts.require('./Staking.sol');
 const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
 const KeepGroupProxy = artifacts.require('./KeepGroup.sol');
@@ -48,7 +48,7 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Initialize staking contract under proxy
     stakingProxy = await StakingProxy.new();
-    stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
+    stakingContract = await Staking.new(token.address, stakingProxy.address, duration.days(30));
     await stakingProxy.authorizeContract(stakingContract.address, {from: owner})
 
     // Initialize Keep Random Beacon contract

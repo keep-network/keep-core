@@ -3,7 +3,7 @@ const ModUtils = artifacts.require("./utils/ModUtils.sol");
 const AltBn128 = artifacts.require("./AltBn128.sol");
 const BLS = artifacts.require("./BLS.sol");
 const StakingProxy = artifacts.require("./StakingProxy.sol");
-const TokenStaking = artifacts.require("./TokenStaking.sol");
+const Staking = artifacts.require("./Staking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconImplV1 = artifacts.require("./KeepRandomBeaconImplV1.sol");
 const KeepRandomBeaconUpgradeExample = artifacts.require("./KeepRandomBeaconUpgradeExample.sol");
@@ -39,7 +39,7 @@ module.exports = async function(deployer) {
   await deployer.deploy(BLS);
   await deployer.deploy(KeepToken);
   await deployer.deploy(StakingProxy);
-  await deployer.deploy(TokenStaking, KeepToken.address, StakingProxy.address, withdrawalDelay);
+  await deployer.deploy(Staking, KeepToken.address, StakingProxy.address, withdrawalDelay);
   await deployer.deploy(TokenGrant, KeepToken.address);
   await deployer.link(BLS, KeepRandomBeaconImplV1);
   await deployer.link(BLS, KeepRandomBeaconUpgradeExample);
