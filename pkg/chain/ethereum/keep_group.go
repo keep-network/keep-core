@@ -196,7 +196,7 @@ func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 	return kg.caller.IsDkgResultSubmitted(kg.callerOpts, requestID)
 }
 
-// IsGroupRegistered checks wheather we can remove a group from a group array.
+// Checks if a group with the given public key is registered on-chain.
 func (kg *keepGroup) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 	return kg.caller.IsGroupRegistered(kg.callerOpts, groupPublicKey)
 }

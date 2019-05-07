@@ -59,8 +59,7 @@ type GroupRegistrationInterface interface {
 	OnGroupRegistered(
 		func(groupRegistration *event.GroupRegistration),
 	) (subscription.EventSubscription, error)
-	// IsGroupRegistered checks wheather we can remove a group from a
-	// group array.
+	// Checks if a group with the given public key is registered on-chain.
 	IsGroupRegistered(groupPublicKey []byte) (bool, error)
 }
 
