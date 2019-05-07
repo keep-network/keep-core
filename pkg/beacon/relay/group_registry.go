@@ -69,13 +69,13 @@ func (gr *GroupRegistry) UnregisterDeletedGroups() {
 	defer gr.mutex.Unlock()
 
 	for publicKey := range gr.myGroups {
-		isGroupEligibleForRemoval, err := gr.relayChain.IsGroupEligibleForRemoval([]byte(publicKey))
+		isGroupRegistered, err := gr.relayChain.IsGroupRegistered([]byte(publicKey))
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Group removal eligibility failed: [%v]\n", err)
 		}
 
-		if isGroupEligibleForRemoval {
+		if !isGroupRegistered {
 			delete(gr.myGroups, publicKey)
 			fmt.Printf("Unregistering a group which was removed on chain [%v]\n", publicKey)
 		}

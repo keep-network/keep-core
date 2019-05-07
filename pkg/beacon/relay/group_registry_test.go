@@ -131,11 +131,11 @@ func (mgri *mockGroupRegistrationInterface) OnGroupRegistered(
 	panic("not implemented")
 }
 
-func (mgri *mockGroupRegistrationInterface) IsGroupEligibleForRemoval(groupPublicKey []byte) (bool, error) {
+func (mgri *mockGroupRegistrationInterface) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 	for _, groupToRemove := range mgri.groupsToRemove {
 		if bytes.Compare(groupToRemove, groupPublicKey) == 0 {
-			return true, nil
+			return false, nil
 		}
 	}
-	return false, nil
+	return true, nil
 }
