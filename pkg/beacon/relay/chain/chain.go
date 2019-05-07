@@ -59,6 +59,9 @@ type GroupRegistrationInterface interface {
 	OnGroupRegistered(
 		func(groupRegistration *event.GroupRegistration),
 	) (subscription.EventSubscription, error)
+	// IsGroupEligibleForRemoval checks wheather we can remove a group from a
+	// group array.
+	IsGroupEligibleForRemoval(groupPublicKey []byte) (bool, error)
 }
 
 // GroupInterface defines the subset of the relay chain interface that pertains
