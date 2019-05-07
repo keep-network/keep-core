@@ -539,7 +539,7 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Checks if a group is registered and active. 
+     * @dev Checks if a group with the given public key is registered. 
      */
     function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
         for (uint i = 0; i < numberOfGroups(); i++) {
