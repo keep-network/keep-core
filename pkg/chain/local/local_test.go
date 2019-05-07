@@ -569,6 +569,86 @@ func TestLocalBlockHeightWaiter(t *testing.T) {
 	}
 }
 
+func TestLocalIsGroupEligibleForRemoval(t *testing.T) {
+
+	group1 := localGroup{
+		groupPublicKey:          []byte{'v'},
+		registrationBlockHeight: 1,
+	}
+
+	group2 := localGroup{
+		groupPublicKey:          []byte{'i'},
+		registrationBlockHeight: 1,
+	}
+
+	group3 := localGroup{
+		groupPublicKey:          []byte{'d'},
+		registrationBlockHeight: 1,
+	}
+
+	availableGroups := []localGroup{group1, group2, group3}
+
+	var tests = map[string]struct {
+		group           localGroup
+		expectedResult  bool
+		simulatedHeight uint64
+	}{
+		"found a first group": {
+			group: localGroup{
+				groupPublicKey: group1.groupPublicKey,
+			},
+			simulatedHeight: group1.registrationBlockHeight + 2,
+			expectedResult:  false,
+		},
+		"found a second group": {
+			group: localGroup{
+				groupPublicKey: group2.groupPublicKey,
+			},
+			simulatedHeight: group2.registrationBlockHeight + 3,
+			expectedResult:  false,
+		},
+		"group was not found": {
+			group: localGroup{
+				groupPublicKey: []byte{'z'},
+			},
+			simulatedHeight: 1,
+			expectedResult:  true,
+		},
+		"a third group was found and current block has passed the expiration timeout": {
+			group: localGroup{
+				groupPublicKey: group3.groupPublicKey,
+			},
+			simulatedHeight: group3.registrationBlockHeight + groupActiveTime + 1,
+			expectedResult:  true,
+		},
+		"a second group was found and current block is the same as expiration timeout": {
+			group: localGroup{
+				groupPublicKey: group2.groupPublicKey,
+			},
+			simulatedHeight: group2.registrationBlockHeight + groupActiveTime,
+			expectedResult:  false,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			localChain := &localChain{
+				groups:          availableGroups,
+				simulatedHeight: test.simulatedHeight,
+			}
+			chainHandle := localChain.ThresholdRelay()
+			actualResult, err := chainHandle.IsGroupRegistered(test.group.groupPublicKey)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if actualResult != test.expectedResult {
+				t.Fatalf("\nCheck for a group removal eligibility failed. \nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
+			}
+		})
+	}
+}
+
 func TestLocalIsDKGResultSubmitted(t *testing.T) {
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 

@@ -170,7 +170,10 @@ contract KeepRandomBeaconImplV1 is Ownable {
         GroupContract(_groupContract).runGroupSelection(groupSignature);
     }
 
-    // TODO: select a new group to serve a pending relay request if the timeout passed
+    // TODO: implement this. THIS IS ONLY A STUB
+    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
+        return true;
+    }
 
     /**
      * @dev Gets the previous relay entry value.
