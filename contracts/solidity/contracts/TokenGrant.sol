@@ -3,6 +3,10 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
+/**
+ @dev Interface of recipient contract for approveAndCall pattern.
+*/
+interface grantRecipient { function receiveGrantApproval(uint256 _id, uint256 _value, address _tokenGrant, bytes calldata _extraData) external; }
 
 /**
  * @title TokenGrant
@@ -20,6 +24,7 @@ contract TokenGrant {
     event CreatedTokenGrant(uint256 id);
     event ReleasedTokenGrant(uint256 amount);
     event RevokedTokenGrant(uint256 id);
+    event Approval(uint256 id, address spender, uint256 value);
 
     struct Grant {
         address owner; // Creator of token grant.
@@ -48,6 +53,13 @@ contract TokenGrant {
     // available to be released to the beneficiary
     mapping(address => uint256) public balances;
 
+    // Allowance for token grant transfers.
+    mapping (uint256 => mapping (address => uint256)) private _allowed;
+
+    modifier onlyGrantBeneficiary(uint256 _id) {
+        require(grants[_id].beneficiary == msg.sender, "Only grant beneficiary can invoke this function.");
+        _;
+    }
 
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20 token.
@@ -99,6 +111,15 @@ contract TokenGrant {
     }
 
     /**
+     * @dev Gets grant beneficiary.
+     * @param _id ID of the token grant.
+     * @return Address of the grant beneficiary.
+     */
+    function grantBeneficiary(uint256 _id) public view returns (address) {
+        return grants[_id].beneficiary;
+    }
+
+    /**
      * @dev Gets grant ids of the specified address.
      * @param _beneficiaryOrCreator The address to query.
      * @return An uint256 array of grant IDs.
@@ -135,7 +156,7 @@ contract TokenGrant {
 
         uint256 id = numGrants++;
         grants[id] = Grant(msg.sender, _beneficiary, false, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0);
-        
+
         // Maintain a record to make it easier to query grants by creator.
         grantIndices[msg.sender].push(id);
 
@@ -202,6 +223,16 @@ contract TokenGrant {
     }
 
     /**
+     * @notice Calculates transferable balance.
+     * @dev Calculates amount that can be transferred (un-vested + vested) minus what user already released from the grant.
+     * @param _id Grant ID.
+     */
+    function transferableBalance(uint256 _id) public view returns (uint256) {
+        uint256 balance = grants[_id].amount;
+        return balance.sub(grants[_id].released);
+    }
+
+    /**
      * @notice Allows the creator of the token grant to revoke it. 
      * @dev Granted tokens that are already vested (releasable amount) remain so beneficiary can still release them
      * the rest are returned to the token grant creator.
@@ -227,30 +258,102 @@ contract TokenGrant {
     }
 
     /**
-     * @dev Allows authorized address/contract to transfer token grant to a new address.
+     * @notice Set allowance for other address and notify.
+     * Allows `_spender` to spend no more than `_value` tokens
+     * on your behalf and then ping the contract about it.
+     * @param _spender The address authorized to spend.
+     * @param _id Id of the token grant.
+     * @param _value The max amount they can spend.
+     * @param _extraData Extra information to send to the approved contract.
+     */
+    function approveAndCall(address _spender, uint256 _id, uint256 _value, bytes memory _extraData) public returns (bool) {
+        grantRecipient spender = grantRecipient(_spender);
+        if (approve(_id, _spender, _value)) {
+            spender.receiveGrantApproval(_id, _value, address(this), _extraData);
+            return true;
+        }
+    }
+
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens from the provided token grant.
+     * @param _id Id of the token grant.
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function approve(uint256 _id, address _spender, uint256 _value) 
+        public
+        onlyGrantBeneficiary(_id)
+        returns (bool)
+    {
+        require(transferableBalance(_id) >= _value, "Token grant doesn't have enough amount available to transfer.");
+        _approve(_id, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Transfer token grant to a new address.
      * @param _id Id of the grant to transfer the amount from.
-     * @param _beneficiary Beneficiary of the new grant to receive the amount.
-     * @param _amount Amount to transfer.
+     * @param _to Beneficiary of the new grant to receive the amount.
+     * @param _value Amount to transfer.
      * @return Returns id of a new token grant with the transferred amount
      */
-    function transfer(uint256 _id, address _beneficiary, uint256 _amount) public returns (uint256) {
+    function transfer(uint256 _id, address _to, uint256 _value)
+        public
+        onlyGrantBeneficiary(_id)
+        returns (uint256)
+    {
+        return _transfer(_id, _to, _value);
+    }
 
-        // TODO: allowance/approval authorization for transfers
-        // i.e. require(authorizedManager == msg.sender, "Only address authorized by grant beneficiary can invoke transfer.");
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens from the provided token grant.
+     * @param _id Id of the token grant.
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function _approve(uint256 _id, address _spender, uint256 _value) internal {
+        require(_spender != address(0), "Spender address can't be zero.");
+        _allowed[_id][_spender] = _value;
+        emit Approval(_id, _spender, _value);
+    }
 
-        uint256 available = grants[_id].amount.sub(grants[_id].released);
-        require(available >= _amount, "Must have available granted amount to transfer.");
+    /**
+     * @dev Transfer tokens from one address to another.
+     * @param _id Id of the token grant to send tokens from.
+     * @param _to The address which you want to transfer token grant to.
+     * @param _value The amount of tokens to be transferred.
+     * @return Returns id of a new token grant with the transferred amount
+     */
+    function transferFrom(uint256 _id, address _to, uint256 _value) public returns (uint256) {
+        uint256 newGrantId = _transfer(_id, _to, _value);
+
+        // Remove transferred balance from the allowed records.
+        // If amount wasn't approved for the msg.sender the whole transferFrom transaction will revert.
+        _approve(_id, msg.sender, _allowed[_id][msg.sender].sub(_value));
+        return newGrantId;
+    }
+
+    /**
+     * @dev Transfer token grant to a new address.
+     * @param _id Id of the grant to transfer the amount from.
+     * @param _to Beneficiary of the new grant to receive the amount.
+     * @param _value Amount to transfer.
+     * @return Returns id of a new token grant with the transferred amount
+     */
+    function _transfer(uint256 _id, address _to, uint256 _value) internal returns (uint256) {
+
+        require(transferableBalance(_id) >= _value, "Token grant doesn't have enough amount available to transfer.");
 
         uint256 unreleased = unreleasedAmount(_id);
 
         // Remove amount from the source grant.
-        grants[_id].amount = grants[_id].amount.sub(_amount);
+        grants[_id].amount = grants[_id].amount.sub(_value);
 
         // If there are enough unreleased tokens to cover the required amount.
-        if (unreleased >= _amount) {
+        if (unreleased >= _value) {
 
             // Calculate the remaining unreleased amount.
-            uint256 remaining = unreleased.sub(_amount);
+            uint256 remaining = unreleased.sub(_value);
 
             // Adjust start time to maintain remaining unreleased amount.
             grants[_id].start = now.sub(remaining.mul(grants[_id].duration).div(unreleased + remaining));
@@ -266,18 +369,24 @@ contract TokenGrant {
         uint256 newGrantId = numGrants++;
         grants[newGrantId] = Grant(
             grants[_id].owner,
-            _beneficiary,
+            _to,
             grants[_id].staked,
             false,
             false,
-            _amount,
+            _value,
             grants[_id].duration,
             // Adjust start time to keep unreleased amount the same as in the source grant.
-            now.sub(unreleased.mul(grants[_id].duration).div(_amount)),
+            now.sub(unreleased.mul(grants[_id].duration).div(_value)),
             grants[_id].cliff,
             0
         );
 
+        grantIndices[_to].push(newGrantId);
+
+        // Maintain an easy to query grant balance total.
+        balances[grants[_id].beneficiary] = balances[grants[_id].beneficiary].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+    
         emit CreatedTokenGrant(newGrantId);
         return newGrantId;
     }

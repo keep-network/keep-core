@@ -31,7 +31,11 @@ contract('TestTokenGrantsTransfer', function(accounts) {
   it("should be able to transfer token grants unvested amount.", async function() {
 
     let amountToTransfer = web3.utils.toBN(300);
-    let targetId = (await grantContract.transfer(sourceId, newBeneficiary, amountToTransfer, {from: account_one})).logs[0].args.id.toNumber();
+
+    // should fail to transfer if you're not beneficiary of the grant
+    await exceptThrow(grantContract.transfer(sourceId, newBeneficiary, amountToTransfer, {from: account_one}));
+
+    let targetId = (await grantContract.transfer(sourceId, newBeneficiary, amountToTransfer, {from: beneficiary})).logs[0].args.id.toNumber();
 
     let sourceGrant = await grantContract.getGrant(sourceId);
     assert.isTrue(sourceGrant[0].eq(amount.sub(amountToTransfer)), "Source grant should have correct amount removed.");
@@ -58,7 +62,7 @@ contract('TestTokenGrantsTransfer', function(accounts) {
     assert.isTrue(sourceGrantUnreleasedAmount.eq(web3.utils.toBN(300)), "Source grant should have the vested amount as unreleased.");
 
     // Execute the transfer.
-    let targetId = (await grantContract.transfer(sourceId, newBeneficiary, amountToTransfer, {from: account_one})).logs[0].args.id.toNumber();
+    let targetId = (await grantContract.transfer(sourceId, newBeneficiary, amountToTransfer, {from: beneficiary})).logs[0].args.id.toNumber();
 
     let sourceGrant = await grantContract.getGrant(sourceId);
     assert.isTrue(sourceGrant[0].eq(web3.utils.toBN(150)), "Source grant should have correct amount removed.");
@@ -79,7 +83,6 @@ contract('TestTokenGrantsTransfer', function(accounts) {
 
   it("should be able to transfer token grants from a partially released grants unvested balance.", async function() {
 
-
     // jump in time, half of the amount should be vested and releasable.
     await increaseTimeTo(await latestTime()+duration.days(15));
 
@@ -90,11 +93,11 @@ contract('TestTokenGrantsTransfer', function(accounts) {
 
     // Should fail to transfer since not enough amount left after grant release.
     let amountToTransfer = web3.utils.toBN(450);
-    await exceptThrow(grantContract.transfer(sourceId, newBeneficiary, amountToTransfer, {from: account_one}));
+    await exceptThrow(grantContract.transfer(sourceId, newBeneficiary, amountToTransfer, {from: beneficiary}));
 
     // Execute the transfer with lower amount.
     amountToTransfer = web3.utils.toBN(150);
-    let targetId = (await grantContract.transfer(sourceId, newBeneficiary, amountToTransfer, {from: account_one})).logs[0].args.id.toNumber();
+    let targetId = (await grantContract.transfer(sourceId, newBeneficiary, amountToTransfer, {from: beneficiary})).logs[0].args.id.toNumber();
 
     let sourceGrant = await grantContract.getGrant(sourceId);
     assert.isTrue(sourceGrant[0].eq(web3.utils.toBN(150)), "Source grant should have correct amount removed.");
