@@ -1,21 +1,24 @@
 pragma solidity ^0.5.4;
 
-import "./StakeDelegatable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
 
 /**
  * @title TokenGrant
  * @dev A token grant contract for a specified standard ERC20 token.
- * Has additional functionality to stake/unstake token grants.
  * Tokens are granted to the beneficiary via vesting scheme and can be
  * released gradually based on the vesting schedule cliff and vesting duration.
  * Optionally grant can be revoked by the token grant creator.
  */
-contract TokenGrant is StakeDelegatable {
+contract TokenGrant {
+    using SafeMath for uint256;
+    using SafeERC20 for ERC20;
+
+    ERC20 public token;
 
     event CreatedTokenGrant(uint256 id);
     event ReleasedTokenGrant(uint256 amount);
-    event InitiatedTokenGrantUnstake(uint256 id);
     event RevokedTokenGrant(uint256 id);
 
     struct Grant {
@@ -45,20 +48,14 @@ contract TokenGrant is StakeDelegatable {
     // available to be released to the beneficiary
     mapping(address => uint256) public balances;
 
-    // Token grants stake withdrawals.
-    mapping(uint256 => uint256) public stakeWithdrawalStart;
 
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20 token.
      * @param _tokenAddress address of a token that will be linked to this contract.
-     * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
-     * @param _delay withdrawal delay for unstake.
      */
-    constructor(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
+    constructor(address _tokenAddress) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20(_tokenAddress);
-        stakingProxy = StakingProxy(_stakingProxy);
-        stakeWithdrawalDelay = _delay;
     }
 
     /**
@@ -202,93 +199,6 @@ contract TokenGrant is StakeDelegatable {
     function unreleasedAmount(uint256 _id) public view returns (uint256) {
         uint256 released = grants[_id].released;
         return grantedAmount(_id).sub(released);
-    }
-
-    /**
-     * @notice Stake token grant.
-     * @dev Stakable token grant amount is the amount of vested tokens minus what user already released from the grant
-     * @param _id Grant ID.
-     * @param _extraData Data for stake delegation. This byte array must have the following values concatenated:
-     * Magpie address (20 bytes) where the rewards for participation are sent and the operator's ECDSA (65 bytes)
-     * signature of the address of the stake owner.
-     */
-    function stake(uint256 _id, bytes memory _extraData) public {
-
-        require(!grants[_id].staked, "Grant must not be staked.");
-        require(!grants[_id].revoked, "Grant must not be revoked.");
-    
-        require(grants[_id].beneficiary == msg.sender, "Only beneficiary of the grant can stake it.");
-        // Calculate available amount. Amount of vested tokens minus what user already released.
-        uint256 available = grants[_id].amount.sub(grants[_id].released);
-        require(available > 0, "Must have available granted amount to stake.");
-
-        require(_extraData.length == 85, "Stake delegation data must be provided.");
-
-        address magpie = _extraData.toAddress(0);
-        address operator = keccak256(abi.encodePacked(msg.sender)).toEthSignedMessageHash().recover(_extraData.slice(20, 65));
-        require(operatorToOwner[operator] == address(0), "Operator address is already in use.");
-
-        operatorToOwner[operator] = msg.sender;
-        magpieToOwner[magpie] = msg.sender;
-        ownerOperators[msg.sender].push(operator);
-
-        // Mark as staked. This also locks grant from releasing its balance.
-        grants[_id].staked = true;
-    
-        // Transfer tokens to beneficiary's grants stake balance.
-        stakeBalances[operator] = stakeBalances[operator].add(available);
-
-        if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitStakedEvent(operator, available);
-        }
-    }
-
-    /**
-     * @notice Initiate unstake of the token grant.
-     * @param _id Grant ID
-     */
-    function initiateUnstake(uint256 _id, address _operator) public {
-
-        address owner = operatorToOwner[_operator];
-        require(
-            msg.sender == _operator ||
-            msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
-        require(grants[_id].staked, "Grant must be staked.");
-        require(!grants[_id].revoked, "Grant must not be be revoked.");
-        require(stakeWithdrawalStart[_id] == 0, "Grant withdrawal start must not be already set.");
-
-        // Set token grant stake withdrawal start.
-        stakeWithdrawalStart[_id] = now;
-
-        // Calculate granted amount that was staked.
-        uint256 available = grants[_id].amount.sub(grants[_id].released);
-        require(available > 0, "Must have available granted amount to unstake.");
-
-        // Remove tokens from granted stake balance.
-        stakeBalances[_operator] = stakeBalances[_operator].sub(available);
-
-        emit InitiatedTokenGrantUnstake(_id);
-        if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitUnstakedEvent(_operator, available);
-        }
-    }
-
-    /**
-     * @notice Finish unstake of the token grant.
-     * @param _id Grant ID.
-     */
-    function finishUnstake(uint256 _id) public {
-
-        require(stakeWithdrawalStart[_id] > 0, "Grant withdrawal start must be set.");
-        require(grants[_id].staked, "Grant must be staked.");
-        require(!grants[_id].revoked, "Grant must not be be revoked.");
-        require(now >= stakeWithdrawalStart[_id].add(stakeWithdrawalDelay), "Grant withdrawal delay should be over.");
-
-        // Unstake grant.
-        grants[_id].staked = false;
-
-        // Unset stake withdrawal start.
-        stakeWithdrawalStart[_id] = 0;
     }
 
     /**

@@ -18,7 +18,7 @@ contract('TestStakeTokenGrantsViaProxy', function(accounts) {
 
   it("should stake and unstake granted tokens via staking proxy contract", async function() {
     stakingProxy = await StakingProxy.new();
-    grantContract = await TokenGrant.new(token.address, stakingProxy.address, duration.days(30));
+    grantContract = await TokenGrant.new(token.address);
 
     const proxyStakedEvent = stakingProxy.Staked();
     const proxyUnstakedEvent = stakingProxy.Unstaked();

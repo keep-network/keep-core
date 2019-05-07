@@ -20,7 +20,7 @@ contract('KeepToken', function(accounts) {
     token = await KeepToken.new();
     stakingProxy = await StakingProxy.new();
     stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
-    grantContract = await TokenGrant.new(token.address, stakingProxy.address, duration.days(30));
+    grantContract = await TokenGrant.new(token.address);
     await stakingProxy.authorizeContract(stakingContract.address);
     await stakingProxy.authorizeContract(grantContract.address);
   });

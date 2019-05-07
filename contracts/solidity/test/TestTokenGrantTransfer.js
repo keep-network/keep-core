@@ -17,7 +17,7 @@ contract('TestTokenGrantsTransfer', function(accounts) {
   beforeEach(async () => {
     token = await KeepToken.new();
     stakingProxy = await StakingProxy.new();
-    grantContract = await TokenGrant.new(token.address, stakingProxy.address, duration.days(30));
+    grantContract = await TokenGrant.new(token.address);
     amount = web3.utils.toBN(600);
     vestingDuration = duration.days(30);
     start = await latestTime();
