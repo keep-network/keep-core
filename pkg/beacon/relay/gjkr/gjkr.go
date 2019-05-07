@@ -12,8 +12,9 @@ import (
 
 // Execute runs the GJKR distributed key generation  protocol, given a
 // broadcast channel to mediate it, a block counter used for time tracking,
-// a player index to use in the group, and a group size and threshold. If
-// generation is successful, it returns a threshold group member who can
+// a player index to use in the group, threshold, and block height when DKG
+// protocol should start.
+// If generation is successful, it returns a threshold group member who can
 // participate in the group; if generation fails, it returns an error
 // representing what went wrong.
 func Execute(
@@ -22,7 +23,8 @@ func Execute(
 	channel net.BroadcastChannel,
 	threshold int,
 	seed *big.Int,
-) (*Result, error) {
+	startBlockHeight uint64,
+) (*Result, uint64, error) {
 	fmt.Printf("[member:0x%010v] Initializing member\n", memberIndex)
 
 	member, err := NewMember(
@@ -32,26 +34,29 @@ func Execute(
 		seed,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create a new member [%v]", err)
+		return nil, 0, fmt.Errorf("cannot create a new member [%v]", err)
 	}
 
 	initializeChannel(channel)
 
-	initialState := &initializationState{
+	initialState := &joinState{
 		channel: channel,
 		member:  member,
 	}
 
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)
 
-	lastState, err := stateMachine.Execute()
+	lastState, endBlockHeight, err := stateMachine.Execute(startBlockHeight)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {
-		return nil, fmt.Errorf("execution ended on state %T", lastState)
+		return nil, 0, fmt.Errorf("execution ended on state %T", lastState)
 	}
 
-	return finalizationState.result(), nil
+	return finalizationState.result(), endBlockHeight, nil
 }
 
 // initializeChannel initializes a given broadcast channel to be able to

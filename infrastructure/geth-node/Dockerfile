@@ -24,7 +24,7 @@ WORKDIR /root
 COPY testnet-account-passphrase.txt passphrase
 
 # define default for KEEP_ACCOUNTS
-ARG KEEP_ACCOUNTS=5
+ARG KEEP_ACCOUNTS=100
 # create mining account, KEEP_ACCOUNTS client accounts and generate genesis.json
 COPY genesis-template.json genesis-template.json
 COPY geth-init.sh geth-init.sh

@@ -6,9 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto/sha3"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -66,6 +65,14 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		)
 	}
 
+	resultPublicationBlockStep, err := ec.keepGroupContract.ResultPublicationBlockStep()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling ResultPublicationBlockStep: [%v]",
+			err,
+		)
+	}
+
 	minimumStake, err := ec.keepGroupContract.MinimumStake()
 	if err != nil {
 		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
@@ -84,9 +91,10 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 	return &relayconfig.Chain{
 		GroupSize:                       groupSize,
 		Threshold:                       threshold,
-		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout,
-		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout,
-		TicketChallengeTimeout:          ticketChallengeTimeout,
+		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout.Uint64(),
+		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout.Uint64(),
+		TicketChallengeTimeout:          ticketChallengeTimeout.Uint64(),
+		ResultPublicationBlockStep:      resultPublicationBlockStep.Uint64(),
 		MinimumStake:                    minimumStake,
 		TokenSupply:                     tokenSupply,
 		NaturalThreshold:                naturalThreshold,
@@ -257,14 +265,16 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			payment *big.Int,
 			previousEntry *big.Int,
 			seed *big.Int,
+			groupPublicKey []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.Request{
-				RequestID:     requestID,
-				Payment:       payment,
-				PreviousEntry: previousEntry,
-				Seed:          seed,
-				BlockNumber:   blockNumber,
+				RequestID:      requestID,
+				Payment:        payment,
+				PreviousEntry:  previousEntry,
+				Seed:           seed,
+				GroupPublicKey: groupPublicKey,
+				BlockNumber:    blockNumber,
 			})
 		},
 		func(err error) error {
@@ -459,8 +469,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 	}
 
 	if _, err = ec.keepGroupContract.SubmitDKGResult(
-		participantIndex.Int(),
 		requestID,
+		participantIndex.Int(),
 		result,
 		signaturesOnChainFormat,
 		membersIndicesOnChainFormat,
@@ -508,34 +518,9 @@ func convertSignaturesToChainFormat(
 func (ec *ethereumChain) CalculateDKGResultHash(
 	dkgResult *relaychain.DKGResult,
 ) (relaychain.DKGResultHash, error) {
-	dkgResultHash := relaychain.DKGResultHash{}
 
-	// Encode DKG result to the format described by Solidity Contract Application
-	// Binary Interface (ABI).
-	bytesType, err := abi.NewType("bytes")
-	if err != nil {
-		return dkgResultHash, fmt.Errorf("bytes type creation failed: [%v]", err)
-	}
+	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
+	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Disqualified, dkgResult.Inactive)
 
-	arguments := abi.Arguments{
-		{Type: bytesType},
-		{Type: bytesType},
-		{Type: bytesType},
-	}
-
-	encodedDKGResult, err := arguments.Pack(
-		dkgResult.GroupPublicKey,
-		dkgResult.Disqualified,
-		dkgResult.Inactive,
-	)
-	if err != nil {
-		return dkgResultHash, fmt.Errorf("encoding failed: [%v]", err)
-	}
-
-	// Calculate Keccak-256 hash.
-	hash := sha3.NewKeccak256()
-	hash.Write(encodedDKGResult)
-	hash.Sum(dkgResultHash[:0])
-
-	return dkgResultHash, nil
+	return relaychain.DKGResultHashFromBytes(hash)
 }

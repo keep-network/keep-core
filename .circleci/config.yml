@@ -1,11 +1,20 @@
-version: 2
+version: 2.1
+
+executors:
+  docker-git:
+    docker:
+      - image: docker:18.06.0-ce-git
+
+orbs:
+  gcp-gcr: circleci/gcp-gcr@0.0.4
+
 jobs:
   test_solidity:
     docker:
       - image: circleci/node:8
     steps:
         - checkout
-        - run: sudo npm install -g ganache-cli@6.1.0
+        - run: sudo npm install -g ganache-cli@6.4.2
         - run:
             name: Running testrpc
             command: ganache-cli
@@ -19,7 +28,7 @@ jobs:
       - run:
           name: Generate solidity docs
           command: |
-            BRANCH=$(sed -e 's/\//\\\//g' <<< $CIRCLE_BRANCH)
+            BRANCH=$(echo $CIRCLE_BRANCH | sed -e 's/\//\\\//g')
             echo "Add baseUrl http://docs.keep.network/$BRANCH/solidity/ to .doxityrc"
             sed -i '2i "baseUrl": "http://docs.keep.network/'$BRANCH'/solidity/",' contracts/solidity/docs/.doxityrc
             echo "Add link prefix /$BRANCH/solidity to .doxityrc"
@@ -37,21 +46,48 @@ jobs:
           paths:
             - solidity/*
   build_client_and_test_go:
-    docker:
-      - image: docker:17.05.0-ce-git
+    executor: docker-git
     steps:
-      - checkout
       - setup_remote_docker:
           docker_layer_caching: true
+      - checkout
       - run:
           name: Run Docker build
           command: |
-            docker build --target gobuild -t go_build_env .
-            docker build -t client .
+            docker build --target gobuild -t go-build-env .
+            docker build -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client .
       - run:
           name: Run Go tests
           command: |
-            docker run -w /go/src/github.com/keep-network/keep-core go_build_env go test ./.../
+            docker run -w /go/src/github.com/keep-network/keep-core go-build-env go test ./.../
+      - run:
+          name: Save keep-client image
+          command: |
+            mkdir -p /tmp/images/keep-client/
+            docker save -o /tmp/images/keep-client/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
+      - persist_to_workspace:
+          root: /tmp/images
+          paths:
+            - keep-client
+  publish_client:
+    executor: gcp-gcr/default
+    steps:
+      - attach_workspace:
+          at: /tmp/images
+      - run:
+          name: Load keep-client image
+          command: |
+            docker load -i /tmp/images/keep-client/keep-client.tar
+      - gcp-gcr/gcr-auth:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+      - gcp-gcr/push-image:
+          google-project-id: GOOGLE_PROJECT_ID
+          registry-url: $GCR_REGISTRY_URL
+          image: keep-client
+          tag: latest
   generate_docs_tex:
     docker:
       - image: keepnetwork/texlive:3
@@ -112,9 +148,17 @@ workflows:
   solidity:
     jobs:
       - test_solidity
-  go:
+  build-test-publish:
     jobs:
-      - build_client_and_test_go
+      - build_client_and_test_go:
+          context: keep-dev
+      - publish_client:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+          requires:
+            - build_client_and_test_go
   docs:
     jobs:
       - generate_docs_tex

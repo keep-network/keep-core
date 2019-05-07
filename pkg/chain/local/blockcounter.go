@@ -9,27 +9,13 @@ import (
 
 type localBlockCounter struct {
 	structMutex sync.Mutex
-	blockHeight int
-	waiters     map[int][]chan int
+	blockHeight uint64
+	waiters     map[uint64][]chan uint64
 }
 
 var blockTime = time.Duration(500 * time.Millisecond)
 
-func (lbc *localBlockCounter) WaitForBlocks(numBlocks int) error {
-	waiter, err := lbc.BlockWaiter(numBlocks)
-	if err != nil {
-		return err
-	}
-	<-waiter
-	return nil
-}
-
-func (lbc *localBlockCounter) BlockWaiter(numBlocks int) (<-chan int, error) {
-	notifyBlockHeight := lbc.blockHeight + numBlocks
-	return lbc.BlockHeightWaiter(notifyBlockHeight)
-}
-
-func (lbc *localBlockCounter) WaitForBlockHeight(blockNumber int) error {
+func (lbc *localBlockCounter) WaitForBlockHeight(blockNumber uint64) error {
 	waiter, err := lbc.BlockHeightWaiter(blockNumber)
 	if err != nil {
 		return err
@@ -39,9 +25,9 @@ func (lbc *localBlockCounter) WaitForBlockHeight(blockNumber int) error {
 }
 
 func (lbc *localBlockCounter) BlockHeightWaiter(
-	blockNumber int,
-) (<-chan int, error) {
-	newWaiter := make(chan int)
+	blockNumber uint64,
+) (<-chan uint64, error) {
+	newWaiter := make(chan uint64)
 
 	lbc.structMutex.Lock()
 	defer lbc.structMutex.Unlock()
@@ -51,7 +37,7 @@ func (lbc *localBlockCounter) BlockHeightWaiter(
 	} else {
 		waiterList, exists := lbc.waiters[blockNumber]
 		if !exists {
-			waiterList = make([]chan int, 0)
+			waiterList = make([]chan uint64, 0)
 		}
 
 		lbc.waiters[blockNumber] = append(waiterList, newWaiter)
@@ -60,7 +46,7 @@ func (lbc *localBlockCounter) BlockHeightWaiter(
 	return newWaiter, nil
 }
 
-func (lbc *localBlockCounter) CurrentBlock() (int, error) {
+func (lbc *localBlockCounter) CurrentBlock() (uint64, error) {
 	lbc.structMutex.Lock()
 	defer lbc.structMutex.Unlock()
 	return lbc.blockHeight, nil
@@ -81,7 +67,7 @@ func (lbc *localBlockCounter) count() {
 
 		if exists {
 			for _, waiter := range waiters {
-				go func(w chan int) { w <- height }(waiter)
+				go func(w chan uint64) { w <- height }(waiter)
 			}
 		}
 	}
@@ -91,7 +77,7 @@ func (lbc *localBlockCounter) count() {
 // designed to simply increase block height at a set time interval in the
 // background.
 func blockCounter() (chain.BlockCounter, error) {
-	counter := localBlockCounter{blockHeight: 0, waiters: make(map[int][]chan int)}
+	counter := localBlockCounter{blockHeight: 0, waiters: make(map[uint64][]chan uint64)}
 
 	go counter.count()
 

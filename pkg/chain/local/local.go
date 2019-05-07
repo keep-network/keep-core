@@ -20,6 +20,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
+var seedGroupPublicKey = []byte("seed to group public key")
+var seedRelayEntry = big.NewInt(123456789)
+
 type localChain struct {
 	relayConfig *relayconfig.Chain
 
@@ -30,6 +33,8 @@ type localChain struct {
 	// Map of submitted DKG Results. Key is a RequestID of the specific DKG
 	// execution.
 	submittedResults map[*big.Int][]*relaychain.DKGResult
+
+	groups [][]byte
 
 	handlerMutex             sync.Mutex
 	relayEntryHandlers       map[int]func(entry *event.Entry)
@@ -228,6 +233,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 			TicketInitialSubmissionTimeout:  2,
 			TicketReactiveSubmissionTimeout: 3,
 			TicketChallengeTimeout:          4,
+			ResultPublicationBlockStep:      3,
 			MinimumStake:                    minimumStake,
 			TokenSupply:                     tokenSupply,
 			NaturalThreshold:                naturalThreshold,
@@ -241,6 +247,8 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		blockCounter:             bc,
 		stakeMonitor:             NewStakeMonitor(minimumStake),
 		tickets:                  make([]*relaychain.Ticket, 0),
+		latestValue:              seedRelayEntry,
+		groups:                   [][]byte{seedGroupPublicKey},
 	}
 }
 
@@ -269,15 +277,26 @@ func calculateGroupSelectionParameters(groupSize int, minimumStake *big.Int) (
 	return tokenSupply, naturalThreshold
 }
 
+func selectGroup(entry *big.Int, numberOfGroups int) int {
+	if numberOfGroups == 0 {
+		return 0
+	}
+
+	return int(new(big.Int).Mod(entry, big.NewInt(int64(numberOfGroups))).Int64())
+}
+
 // RequestRelayEntry simulates calling to start the random generation process.
 func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise {
 	promise := &async.RelayRequestPromise{}
 
+	selectedIdx := selectGroup(c.latestValue, len(c.groups))
+
 	request := &event.Request{
-		RequestID:     big.NewInt(c.requestID),
-		Payment:       big.NewInt(1),
-		PreviousEntry: c.latestValue,
-		Seed:          seed,
+		RequestID:      big.NewInt(c.requestID),
+		Payment:        big.NewInt(1),
+		PreviousEntry:  c.latestValue,
+		GroupPublicKey: c.groups[selectedIdx],
+		Seed:           seed,
 	}
 	atomic.AddUint64(&c.simulatedHeight, 1)
 	atomic.AddInt64(&c.requestID, 1)
@@ -339,13 +358,15 @@ func (c *localChain) SubmitDKGResult(
 		RequestID:      requestID,
 		MemberIndex:    uint32(participantIndex),
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
-		BlockNumber:    uint64(currentBlock),
+		BlockNumber:    currentBlock,
 	}
+
+	c.groups = append(c.groups, resultToPublish.GroupPublicKey)
 
 	groupRegistrationEvent := &event.GroupRegistration{
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
 		RequestID:      requestID,
-		BlockNumber:    uint64(currentBlock),
+		BlockNumber:    currentBlock,
 	}
 
 	c.handlerMutex.Lock()

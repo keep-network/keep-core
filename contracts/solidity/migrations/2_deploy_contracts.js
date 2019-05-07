@@ -20,6 +20,16 @@ const groupSize = 5;
 const timeoutInitial = 4;
 const timeoutSubmission = 4;
 const timeoutChallenge = 4;
+const resultPublicationBlockStep = 3;
+const relayRequestTimeout = 10;
+
+// timeDKG - Timeout in blocks after DKG result is complete and ready to be published.
+// 7 states with state.MessagingStateActiveBlocks which is set to 3
+// 7 states with state.MessagingStateDelayBlocks which is set to 1
+// the rest of the states use state.SilentStateDelayBlocks and
+// state.SilentStateActiveBlocks which are both set to 0.
+const timeDKG = 7*(3+1);
+
 
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
@@ -41,7 +51,8 @@ module.exports = async function(deployer) {
   const keepRandomBeacon = await KeepRandomBeaconImplV1.at(KeepRandomBeacon.address);
   const keepGroup = await KeepGroupImplV1.at(KeepGroup.address);
   await keepGroup.initialize(
-    StakingProxy.address, KeepRandomBeacon.address, minStake, groupThreshold, groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge
+    StakingProxy.address, KeepRandomBeacon.address, minStake, groupThreshold, groupSize,
+    timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep
   );
   // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
   await keepRandomBeacon.initialize(
@@ -49,6 +60,7 @@ module.exports = async function(deployer) {
     withdrawalDelay,
     web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862'),
     "0x1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0",
-    KeepGroup.address
+    KeepGroup.address,
+    relayRequestTimeout
   );
 };

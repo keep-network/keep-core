@@ -65,15 +65,21 @@ func (c *channel) UnregisterRecv(handlerType string) error {
 	c.messageHandlersMutex.Lock()
 	defer c.messageHandlersMutex.Unlock()
 
-	handlers := 0
-	for i, mh := range c.messageHandlers {
-		// filter out the handlerType
+	removedCount := 0
+
+	// updated slice shares the same backing array and capacity as the original,
+	// so the storage is reused for the filtered slice.
+	updated := c.messageHandlers[:0]
+
+	for _, mh := range c.messageHandlers {
 		if mh.Type != handlerType {
-			c.messageHandlers[i] = mh
-			handlers++
+			updated = append(updated, mh)
+		} else {
+			removedCount++
 		}
 	}
-	c.messageHandlers = c.messageHandlers[:handlers]
+
+	c.messageHandlers = updated[:len(c.messageHandlers)-removedCount]
 
 	return nil
 }
@@ -163,7 +169,7 @@ func verifyEnvelope(sender peer.ID, messageBytes []byte, signature []byte) error
 		return fmt.Errorf(
 			"failed to verify signature [0x%v] for sender [%v] with err [%v]",
 			hex.EncodeToString(signature),
-			sender.Pretty(),
+			sender.String(),
 			err,
 		)
 	}
@@ -172,7 +178,7 @@ func verifyEnvelope(sender peer.ID, messageBytes []byte, signature []byte) error
 		return fmt.Errorf(
 			"invalid signature [0x%v] on message from sender [%v] ",
 			hex.EncodeToString(signature),
-			sender.Pretty(),
+			sender.String(),
 		)
 	}
 

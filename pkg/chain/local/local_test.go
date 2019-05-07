@@ -112,6 +112,7 @@ func TestLocalRequestRelayEntry(t *testing.T) {
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 	seed := big.NewInt(42)
+
 	relayRequestPromise := chainHandle.RequestRelayEntry(seed)
 
 	done := make(chan *event.Request)
@@ -199,7 +200,7 @@ func TestLocalOnRelayEntryGenerated(t *testing.T) {
 		Value:       big.NewInt(19),
 		GroupPubKey: []byte("1"),
 		Seed:        big.NewInt(30),
-		BlockNumber: uint64(123),
+		BlockNumber: 123,
 	}
 
 	chainHandle.SubmitRelayEntry(expectedEntry)
@@ -363,10 +364,10 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 				event.RequestID,
 			)
 		}
-		if event.PreviousEntry != nil {
+		if event.PreviousEntry.Cmp(seedRelayEntry) != 0 {
 			t.Fatalf(
 				"Unexpected previous entry\nExpected: [%v]\nActual:   [%v]",
-				nil,
+				seedRelayEntry,
 				event.PreviousEntry,
 			)
 		}
@@ -375,6 +376,13 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 				"Unexpected seed\nExpected: [%v]\nActual:   [%v]",
 				seed,
 				event.Seed,
+			)
+		}
+		if string(event.GroupPublicKey) != string(seedGroupPublicKey) {
+			t.Fatalf(
+				"Unexpected group public key\nExpected: [%v]\nActual:   [%v]",
+				event.GroupPublicKey,
+				seedGroupPublicKey,
 			)
 		}
 	case <-ctx.Done():
@@ -411,16 +419,94 @@ func TestLocalOnRelayEntryRequestedUnsubscribed(t *testing.T) {
 	}
 }
 
+func TestLocalOnDKGResultSubmitted(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.DKGResultSubmission)
+
+	subscription, err := chainHandle.OnDKGResultSubmitted(
+		func(request *event.DKGResultSubmission) {
+			eventFired <- request
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer subscription.Unsubscribe()
+
+	groupPublicKey := []byte("1")
+	requestID := big.NewInt(42)
+	memberIndex := group.MemberIndex(1)
+	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := make(map[group.MemberIndex]operator.Signature)
+
+	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
+
+	expectedResultSubmissionEvent := &event.DKGResultSubmission{
+		RequestID:      requestID,
+		MemberIndex:    uint32(memberIndex),
+		GroupPublicKey: groupPublicKey,
+	}
+
+	select {
+	case event := <-eventFired:
+		if !reflect.DeepEqual(event, expectedResultSubmissionEvent) {
+			t.Fatalf(
+				"Unexpected DKG result submission event\nExpected: [%v]\nActual:   [%v]",
+				expectedResultSubmissionEvent,
+				event,
+			)
+		}
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+}
+
+func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+
+	eventFired := make(chan *event.DKGResultSubmission)
+
+	subscription, err := chainHandle.OnDKGResultSubmitted(
+		func(event *event.DKGResultSubmission) {
+			eventFired <- event
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	subscription.Unsubscribe()
+
+	groupPublicKey := []byte("1")
+	requestID := big.NewInt(42)
+	memberIndex := group.MemberIndex(1)
+	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := make(map[group.MemberIndex]operator.Signature)
+
+	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
+
+	select {
+	case event := <-eventFired:
+		t.Fatalf("Event should have not been received due to the cancelled subscription: [%v]", event)
+	case <-ctx.Done():
+		// expected execution of goroutine
+	}
+}
+
 func TestLocalBlockHeightWaiter(t *testing.T) {
 	var tests = map[string]struct {
-		blockHeight      int
+		blockHeight      uint64
 		initialDelay     time.Duration
 		expectedWaitTime time.Duration
 	}{
-		"does not wait for negative block height": {
-			blockHeight:      -1,
-			expectedWaitTime: 0,
-		},
 		"returns immediately for genesis block": {
 			blockHeight:      0,
 			expectedWaitTime: 0,
@@ -483,77 +569,7 @@ func TestLocalBlockHeightWaiter(t *testing.T) {
 	}
 }
 
-func TestLocalBlockWaiter(t *testing.T) {
-	var tests = map[string]struct {
-		blockWait        int
-		expectedWaitTime time.Duration
-	}{
-		"does wait for a block": {
-			blockWait:        1,
-			expectedWaitTime: blockTime,
-		},
-		"does wait for two blocks": {
-			blockWait:        2,
-			expectedWaitTime: 2 * blockTime,
-		},
-		"does wait for three blocks": {
-			blockWait:        3,
-			expectedWaitTime: 3 * blockTime,
-		},
-		"does not wait for 0 blocks": {
-			blockWait:        0,
-			expectedWaitTime: 0,
-		},
-		"does not wait for negative number of blocks": {
-			blockWait:        -1,
-			expectedWaitTime: 0,
-		},
-	}
-
-	for testName, test := range tests {
-		test := test
-		t.Run(testName, func(t *testing.T) {
-			t.Parallel()
-			c := Connect(10, 4, big.NewInt(200))
-			countWait, err := c.BlockCounter()
-			if err != nil {
-				t.Fatalf("failed to set up block counter: [%v]", err)
-			}
-
-			start := time.Now().UTC()
-			countWait.WaitForBlocks(test.blockWait)
-			end := time.Now().UTC()
-
-			elapsed := end.Sub(start)
-
-			// Block waiter should wait for test.expectedWaitTime minus some
-			// margin at minimum; the margin is needed because clock is not
-			// always that precise. Setting it to 5ms for this test.
-			minMargin := time.Duration(5) * time.Millisecond
-			if elapsed < (test.expectedWaitTime - minMargin) {
-				t.Errorf(
-					"waited less than expected; expected [%v] at min, waited [%v]",
-					test.expectedWaitTime+minMargin,
-					elapsed,
-				)
-			}
-
-			// Block waiter should wait for test.expectedWaitTime plus some
-			// margin at maximum; the margin is the time needed for the return
-			// instructions to execute, setting it to 25ms for this test.
-			maxMargin := time.Duration(25) * time.Millisecond
-			if elapsed > (test.expectedWaitTime + maxMargin) {
-				t.Errorf(
-					"waited longer than expected; expected %v at max, waited %v",
-					test.expectedWaitTime,
-					elapsed,
-				)
-			}
-		})
-	}
-}
-
-func TestLocalIsDKGResultPublished(t *testing.T) {
+func TestLocalIsDKGResultSubmitted(t *testing.T) {
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 
 	submittedRequestID := big.NewInt(1)
@@ -713,45 +729,6 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 }
 
-func TestLocalOnDKGResultPublishedUnsubscribe(t *testing.T) {
-	ctx, cancel := newTestContext()
-	defer cancel()
-
-	localChain := Connect(10, 4, big.NewInt(200)).(*localChain)
-
-	chainHandle := localChain.ThresholdRelay()
-
-	DKGResultSubmissionChan := make(chan *event.DKGResultSubmission)
-	subscription, err := localChain.OnDKGResultSubmitted(
-		func(DKGResultSubmission *event.DKGResultSubmission) {
-			DKGResultSubmissionChan <- DKGResultSubmission
-		},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Unsubscribe from the event - from this point, callback should
-	// never be called.
-	subscription.Unsubscribe()
-
-	chainHandle.SubmitDKGResult(
-		big.NewInt(999),
-		1,
-		&relaychain.DKGResult{
-			GroupPublicKey: []byte{88},
-		},
-		nil, // TODO: Update test to include signatures
-	)
-
-	select {
-	case <-DKGResultSubmissionChan:
-		t.Fatalf("event should not be emitted - I have unsubscribed!")
-	case <-ctx.Done():
-		// ok
-	}
-}
-
 func TestCalculateDKGResultHash(t *testing.T) {
 	localChain := &localChain{}
 
@@ -787,4 +764,46 @@ func newTestContext(timeout ...time.Duration) (context.Context, context.CancelFu
 		defaultTimeout = timeout[0]
 	}
 	return context.WithTimeout(context.Background(), defaultTimeout)
+}
+
+func TestNextGroupIndex(t *testing.T) {
+	var tests = map[string]struct {
+		previousEntry  int
+		numberOfGroups int
+		expectedIndex  int
+	}{
+		"zero groups": {
+			previousEntry:  12,
+			numberOfGroups: 0,
+			expectedIndex:  0,
+		},
+		"fewer groups than the previous entry value": {
+			previousEntry:  13,
+			numberOfGroups: 4,
+			expectedIndex:  1,
+		},
+		"more groups than the previous entry value": {
+			previousEntry:  3,
+			numberOfGroups: 12,
+			expectedIndex:  3,
+		},
+	}
+
+	for nextGroupIndexTest, test := range tests {
+		t.Run(nextGroupIndexTest, func(t *testing.T) {
+			bigPreviousEntry := big.NewInt(int64(test.previousEntry))
+			bigNumberOfGroups := test.numberOfGroups
+			expectedIndex := test.expectedIndex
+
+			actualIndex := selectGroup(bigPreviousEntry, bigNumberOfGroups)
+
+			if actualIndex != expectedIndex {
+				t.Fatalf(
+					"Unexpected group index selected\nexpected: [%v]\nactual:   [%v]\n",
+					expectedIndex,
+					actualIndex,
+				)
+			}
+		})
+	}
 }

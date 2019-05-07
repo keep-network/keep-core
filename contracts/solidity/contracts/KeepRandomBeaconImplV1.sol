@@ -24,7 +24,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     using BytesLib for bytes;
 
     // These are the public events that are used by clients
-    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed); 
+    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey); 
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     uint256 internal _requestCounter;
@@ -33,6 +33,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     uint256 internal _pendingWithdrawal;
     address internal _groupContract;
     uint256 internal _previousEntry;
+    uint256 internal _relayRequestTimeout; 
 
     mapping (string => bool) internal _initialized;
 
@@ -58,8 +59,12 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param genesisEntry Initial relay entry to create first group.
      * @param genesisGroupPubKey Group to respond to the initial relay entry request.
      * @param groupContract Group contract linked to this contract.
+     * @param relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
+     * Blocks are counted from the moment relay request occur.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, bytes memory genesisGroupPubKey, address groupContract)
+    function initialize(
+        uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, 
+        bytes memory genesisGroupPubKey, address groupContract, uint256 relayRequestTimeout)
         public
         onlyOwner
     {
@@ -70,6 +75,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _pendingWithdrawal = 0;
         _previousEntry = genesisEntry;
         _groupContract = groupContract;
+        _relayRequestTimeout = relayRequestTimeout;
 
         // Create initial relay entry request. This will allow relayEntry to be called once
         // to trigger the creation of the first group. Requests are removed on successful
@@ -108,7 +114,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
         _requests[_requestCounter] = Request(msg.sender, msg.value, groupPubKey);
 
-        emit RelayEntryRequested(_requestCounter, msg.value, _previousEntry, seed);
+        emit RelayEntryRequested(_requestCounter, msg.value, _previousEntry, seed, groupPubKey);
         return _requestCounter;
     }
 
@@ -163,6 +169,8 @@ contract KeepRandomBeaconImplV1 is Ownable {
         emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);
         GroupContract(_groupContract).runGroupSelection(groupSignature);
     }
+
+    // TODO: select a new group to serve a pending relay request if the timeout passed
 
     /**
      * @dev Gets the previous relay entry value.
