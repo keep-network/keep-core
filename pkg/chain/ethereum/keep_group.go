@@ -196,8 +196,8 @@ func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 	return kg.caller.IsDkgResultSubmitted(kg.callerOpts, requestID)
 }
 
-// IsGroupEligibleForRemoval checks wheather we can remove a group from a group array.
-func (kg *keepGroup) IsGroupEligibleForRemoval(groupPublicKey []byte) (bool, error) {
+// IsGroupRegistered checks wheather we can remove a group from a group array.
+func (kg *keepGroup) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 	return kg.caller.IsGroupRegistered(kg.callerOpts, groupPublicKey)
 }
 

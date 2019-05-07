@@ -637,7 +637,7 @@ func TestLocalIsGroupEligibleForRemoval(t *testing.T) {
 				simulatedHeight: test.simulatedHeight,
 			}
 			chainHandle := localChain.ThresholdRelay()
-			actualResult, err := chainHandle.IsGroupEligibleForRemoval(test.group.groupPublicKey)
+			actualResult, err := chainHandle.IsGroupRegistered(test.group.groupPublicKey)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -378,8 +378,8 @@ func (ec *ethereumChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) 
 	return ec.keepGroupContract.IsDkgResultSubmitted(requestID)
 }
 
-func (ec *ethereumChain) IsGroupEligibleForRemoval(groupPublicKey []byte) (bool, error) {
-	return ec.keepGroupContract.IsGroupEligibleForRemoval(groupPublicKey)
+func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+	return ec.keepGroupContract.IsGroupRegistered(groupPublicKey)
 }
 
 func (ec *ethereumChain) OnDKGResultSubmitted(
