@@ -170,6 +170,11 @@ contract KeepRandomBeaconImplV1 is Ownable {
         GroupContract(_groupContract).runGroupSelection(groupSignature);
     }
 
+    // TODO: implement this. THIS IS ONLY A STUB
+    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
+        return true;
+    }
+
     /**
      * @dev Gets the previous relay entry value.
      */
