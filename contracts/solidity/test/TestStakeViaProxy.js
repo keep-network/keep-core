@@ -1,22 +1,24 @@
 import { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
+const TokenGrant = artifacts.require('./TokenGrant.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const Staking = artifacts.require('./Staking.sol');
 
 contract('TestStakeViaProxy', function(accounts) {
 
-  let token, stakingProxy, stakingContract,
+  let token, tokenGrant, stakingProxy, stakingContract,
     owner = accounts[0],
     operator = accounts[1];
 
   beforeEach(async () => {
     token = await KeepToken.new();
+    tokenGrant = await TokenGrant.new(token.address);
   });
 
   it("should stake and unstake via staking proxy contract", async function() {
     stakingProxy = await StakingProxy.new();
-    stakingContract = await Staking.new(token.address, stakingProxy.address, duration.days(30));
+    stakingContract = await Staking.new(token.address, tokenGrant.address, stakingProxy.address, duration.days(30));
 
     let stakingAmount = 10000000;
 

@@ -6,6 +6,7 @@ import stakeDelegate from './helpers/stakeDelegate';
 import expectThrow from './helpers/expectThrow';
 import shuffleArray from './helpers/shuffle';
 const KeepToken = artifacts.require('./KeepToken.sol');
+const TokenGrant = artifacts.require('./TokenGrant.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const Staking = artifacts.require('./Staking.sol');
 const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
@@ -27,7 +28,7 @@ contract('TestPublishDkgResult', function(accounts) {
   const relayRequestTimeout = 10;
 
   let disqualified, inactive, resultHash,
-  token, stakingProxy, stakingContract, randomBeaconValue, requestId,
+  token, tokenGrant, stakingProxy, stakingContract, randomBeaconValue, requestId,
   keepRandomBeaconImplV1, keepRandomBeaconProxy, keepRandomBeaconImplViaProxy,
   keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy, groupPubKey,
   ticketSubmissionStartBlock, selectedParticipants, signatures, signingMemberIndices = [],
@@ -45,10 +46,11 @@ contract('TestPublishDkgResult', function(accounts) {
 
   beforeEach(async () => {
     token = await KeepToken.new();
+    tokenGrant = await TokenGrant.new(token.address);
 
     // Initialize staking contract under proxy
     stakingProxy = await StakingProxy.new();
-    stakingContract = await Staking.new(token.address, stakingProxy.address, duration.days(30));
+    stakingContract = await Staking.new(token.address, tokenGrant.address, stakingProxy.address, duration.days(30));
     await stakingProxy.authorizeContract(stakingContract.address, {from: owner})
 
     // Initialize Keep Random Beacon contract

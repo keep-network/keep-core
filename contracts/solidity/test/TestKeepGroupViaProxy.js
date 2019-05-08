@@ -1,6 +1,7 @@
 import { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
+const TokenGrant = artifacts.require('./TokenGrant.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const Staking = artifacts.require('./Staking.sol');
 const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
@@ -10,7 +11,7 @@ const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
 
 contract('TestKeepGroupViaProxy', function(accounts) {
 
-  let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
+  let token, tokenGrant, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     keepGroupImplV1, keepGroupProxy, keepGroupImplViaProxy,
     keepRandomBeaconImplV1, keepRandomBeaconProxy,
@@ -19,10 +20,11 @@ contract('TestKeepGroupViaProxy', function(accounts) {
 
   beforeEach(async () => {
     token = await KeepToken.new();
+    tokenGrant = await TokenGrant.new(token.address);
 
     // Initialize staking contract under proxy
     stakingProxy = await StakingProxy.new();
-    stakingContract = await Staking.new(token.address, stakingProxy.address, duration.days(30));
+    stakingContract = await Staking.new(token.address, tokenGrant.address, stakingProxy.address, duration.days(30));
     await stakingProxy.authorizeContract(stakingContract.address, {from: account_one})
 
     // Initialize Keep Random Beacon contract

@@ -8,7 +8,7 @@ const StakingProxy = artifacts.require('./StakingProxy.sol');
 
 contract('KeepToken', function(accounts) {
 
-  let token, grantContract, stakingContract, stakingProxy,
+  let token, tokenGrant, stakingContract, stakingProxy,
     account_one = accounts[0],
     account_one_operator = accounts[1],
     account_one_magpie = accounts[2],
@@ -18,11 +18,11 @@ contract('KeepToken', function(accounts) {
 
   beforeEach(async () => {
     token = await KeepToken.new();
+    tokenGrant = await TokenGrant.new(token.address);
     stakingProxy = await StakingProxy.new();
-    stakingContract = await Staking.new(token.address, stakingProxy.address, duration.days(30));
-    grantContract = await TokenGrant.new(token.address);
+    stakingContract = await Staking.new(token.address, tokenGrant.address, stakingProxy.address, duration.days(30));
     await stakingProxy.authorizeContract(stakingContract.address);
-    await stakingProxy.authorizeContract(grantContract.address);
+    await stakingProxy.authorizeContract(tokenGrant.address);
   });
 
   it("should send tokens correctly", async function() {
@@ -125,8 +125,8 @@ contract('KeepToken', function(accounts) {
     let account_two_starting_balance = await token.balanceOf.call(account_one_operator);
 
     // Grant tokens
-    await token.approve(grantContract.address, amount, {from: account_one});
-    let id = await grantContract.grant(amount, account_two, vestingDuration, 
+    await token.approve(tokenGrant.address, amount, {from: account_one});
+    let id = await tokenGrant.grant(amount, account_two, vestingDuration, 
       start, cliff, revocable, {from: account_one}).then((result)=>{
       // Look for CreatedTokenGrant event in transaction receipt and get vesting id
       for (var i = 0; i < result.logs.length; i++) {
@@ -140,20 +140,20 @@ contract('KeepToken', function(accounts) {
     // Ending balances
     let account_one_ending_balance = await token.balanceOf.call(account_one);
     let account_two_ending_balance = await token.balanceOf.call(account_two);
-    let account_two_grant_balance = await grantContract.balanceOf.call(account_two);
+    let account_two_grant_balance = await tokenGrant.balanceOf.call(account_two);
 
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(amount)), true, "Amount should be transfered from sender balance");
     assert.equal(account_two_grant_balance.eq(amount), true, "Amount should be added to the beneficiary grant balance");
     assert.equal(account_two_ending_balance.eq(account_two_starting_balance), true, "Beneficiary main balance should stay unchanged");
 
     // Should not be able to release token grant (0 unreleased amount)
-    await exceptThrow(grantContract.release(id))
+    await exceptThrow(tokenGrant.release(id))
 
     // jump in time, third vesting duration
     await increaseTimeTo(await latestTime()+vestingDuration/3);
 
     // Should be able to release token grant unreleased amount
-    await grantContract.release(id)
+    await tokenGrant.release(id)
 
     // should release some of grant to the main balance
     account_two_ending_balance = await token.balanceOf.call(account_two);
@@ -161,13 +161,13 @@ contract('KeepToken', function(accounts) {
 
     // jump in time, full vesting duration
     await increaseTimeTo(await latestTime()+vestingDuration);
-    await grantContract.release(id);
+    await tokenGrant.release(id);
 
     // should release full grant amount to the main balance
     account_two_ending_balance = await token.balanceOf.call(account_two);
     assert.equal(account_two_ending_balance.eq(account_two_starting_balance.add(amount)), true, "Should release full grant amount to the main balance");
 
-    account_two_grant_balance = await grantContract.balanceOf.call(account_two);
+    account_two_grant_balance = await tokenGrant.balanceOf.call(account_two);
     assert.equal(account_two_grant_balance, 0, "Grant amount should become 0");
 
   });
@@ -180,8 +180,8 @@ contract('KeepToken', function(accounts) {
     let revocable = true;
 
     // Grant tokens
-    await token.approve(grantContract.address, amount, {from: account_one});
-    let id = await grantContract.grant(amount, account_two, vestingDuration, 
+    await token.approve(tokenGrant.address, amount, {from: account_one});
+    let id = await tokenGrant.grant(amount, account_two, vestingDuration, 
       start, cliff, revocable, {from: account_one}).then((result)=>{
       // Look for CreatedTokenGrant event in transaction receipt and get grant id
       for (var i = 0; i < result.logs.length; i++) {
@@ -196,41 +196,43 @@ contract('KeepToken', function(accounts) {
     let delegation = Buffer.concat([Buffer.from(account_two_magpie.substr(2), 'hex'), signature]);
 
     // should throw if stake granted tokens called by anyone except grant beneficiary
-    await exceptThrow(grantContract.stake(id, delegation));
+    await exceptThrow(tokenGrant.approveAndCall(stakingContract.address, id, amount, delegation));
 
-    // stake granted tokens can be only called by grant beneficiary
-    await grantContract.stake(id, delegation, {from: account_two});
-    let account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
-    assert.equal(account_two_operator_stake_balance.eq(amount), true, "Should stake grant amount");
+    // Stake token grant using approveAndCall pattern
+    await tokenGrant.approveAndCall(stakingContract.address, id, amount, delegation, {from: account_two})
+
+    assert.isTrue((await stakingContract.stakeBalanceOf.call(account_two_operator)).eq(amount), "Operator should have stakes grant balance updated.");
+    assert.isTrue((await tokenGrant.balanceOf(stakingContract.address)).eq(amount), "Staking contract should have granted tokens on its balance.");
 
     // should throw if initiate unstake called by anyone except grant beneficiary
-    await exceptThrow(grantContract.initiateUnstake(id, account_two_operator));
+    await exceptThrow(stakingContract.initiateUnstake(amount, account_two_operator));
 
     // Initiate unstake of granted tokens by grant beneficiary
-    let stakeWithdrawalId = await grantContract.initiateUnstake(id, account_two_operator, {from: account_two}).then((result)=>{
-      // Look for InitiatedTokenGrantUnstake event in transaction receipt and get stake withdrawal id
+    let stakeWithdrawalId = await stakingContract.initiateUnstake(amount, account_two_operator, {from: account_two}).then((result)=>{
+      // Look for InitiatedUnstake event in transaction receipt and get stake withdrawal id
       for (var i = 0; i < result.logs.length; i++) {
         var log = result.logs[i];
-        if (log.event == "InitiatedTokenGrantUnstake") {
+        if (log.event == "InitiatedUnstake") {
           return log.args.id.toNumber();
         }
       }
     });
 
     // should not be able to finish unstake before withdrawal delay is over
-    await exceptThrow(grantContract.finishUnstake(stakeWithdrawalId));
+    await exceptThrow(stakingContract.finishTokenGrantsUnstake(stakeWithdrawalId, amount, {from: account_two_operator}));
 
     // should not be able to release grant as its still locked for staking
-    await exceptThrow(grantContract.release(id));
+    await exceptThrow(tokenGrant.release(id));
 
     // jump in time over withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
-    await grantContract.finishUnstake(stakeWithdrawalId);
-    account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
-    assert.equal(account_two_operator_stake_balance.isZero(), true, "Stake grant amount should be 0");
+    await stakingContract.finishTokenGrantsUnstake(stakeWithdrawalId, amount, {from: account_two_operator})
+
+    assert.isTrue((await tokenGrant.balanceOf(account_two)).eq(amount), "Beneficiary should have granted tokens back.");
 
     // should be able to release 'releasable' granted amount as it's not locked for staking anymore
-    await grantContract.release(id);
+    let lastGrantId = (await tokenGrant.getGrants(account_two)).pop();
+    await tokenGrant.release(lastGrantId);
     let account_two_ending_balance = await token.balanceOf.call(account_two);
     assert.equal(account_two_ending_balance.gte(amount.div(web3.utils.toBN(2))), true, "Should have some released grant amount");
 
