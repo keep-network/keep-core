@@ -1,6 +1,6 @@
 pragma solidity ^0.5.4;
 
-import "./StakeDelegatable.sol";
+import "./mixins/StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
 
 
