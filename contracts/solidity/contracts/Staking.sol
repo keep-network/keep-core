@@ -5,15 +5,16 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "./utils/UintArrayUtils.sol";
 import "./StakingProxy.sol";
 import "./mixins/TokenStaking.sol";
+import "./mixins/TokenGrantStaking.sol";
 
 
 /**
  * @title Staking
- * @dev A staking contract for a specified standard ERC20 token.
+ * @dev A staking contract for a specified standard ERC20 token and token grant contracts.
  * A holder of the specified token can stake its tokens to this contract
  * and unstake after withdrawal delay is over.
  */
-contract Staking is TokenStaking {
+contract Staking is TokenStaking, TokenGrantStaking {
 
     using UintArrayUtils for uint256[];
 
@@ -37,12 +38,14 @@ contract Staking is TokenStaking {
     /**
      * @dev Creates a token staking contract for a provided Standard ERC20 token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
+     * @param _tokenGrantAddress Address of a token grant contract that will be linked to this contract.
      * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
      * @param _delay Withdrawal delay for unstake.
      */
-    constructor(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
+    constructor(address _tokenAddress, address _tokenGrantAddress, address _stakingProxy, uint256 _delay) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20(_tokenAddress);
+        tokenGrant = TokenGrant(_tokenGrantAddress);
         stakingProxy = StakingProxy(_stakingProxy);
         stakeWithdrawalDelay = _delay;
     }
@@ -53,13 +56,13 @@ contract Staking is TokenStaking {
      * @return An uint256 representing the amount staked by the passed address.
      */
     function stakeBalanceOf(address _address) public view returns (uint256 balance) {
-        return stakedBalances[_address];
+        return stakedBalances[_address] + stakedGrantsBalances[_address];
     }
 
     /**
      * @notice Initiates unstake of staked tokens and returns withdrawal request ID.
-     * You will be able to call `finishTokensUnstake()` with this ID and finish
-     * unstake once withdrawal delay is over.
+     * You will be able to call `finishTokensUnstake()` or `finishTokenGrantsUnstake()`
+     * with this ID and finish unstake once withdrawal delay is over.
      * @param _value The amount to be unstaked.
      * @param _staker Address of the stake owner or its operator.
      */
@@ -101,6 +104,31 @@ contract Staking is TokenStaking {
         if (_value == withdrawals[_id].amount) {
             // Cleanup withdrawal records.
             withdrawalIndices[staker].removeValue(_id);
+            delete withdrawals[_id];
+        }
+
+        emit FinishedUnstake(_id);
+    }
+
+    /**
+     * @notice Finishes unstake of the tokens grants of provided withdrawal request.
+     * You can only finish unstake once withdrawal delay is over for the request,
+     * otherwise the function will fail and remaining gas is returned.
+     * @param _id Withdrawal ID.
+     * @param _value Amount to withdraw.
+     */
+    function finishTokenGrantsUnstake(uint256 _id, uint256 _value)
+        public
+        onlyOwnerOrOperator(withdrawals[_id].staker)
+    {
+        require(now >= withdrawals[_id].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
+        require(_value <= withdrawals[_id].amount, "Can not withdraw more than unstaked amount.");
+
+        uint256 remaining = _transferUnstakedTokenGrants(withdrawals[_id].staker, _value);
+
+        if (remaining == 0) {
+            // Cleanup withdrawal records.
+            withdrawalIndices[withdrawals[_id].staker].removeValue(_id);
             delete withdrawals[_id];
         }
 
