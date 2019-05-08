@@ -46,6 +46,9 @@ contract TokenGrantStaking is StakeDelegatable {
         stakedGrantsBalances[operator] = stakedGrantsBalances[operator].add(_value);
         stakedGrants[operator].push(newGrantId);
         emit Staked(operator, _value);
+        if (address(stakingProxy) != address(0)) {
+            stakingProxy.emitStakedEvent(operator, _value);
+        }
     }
 
     function _transferUnstakedTokenGrants(address _operator, uint256 _value) internal returns (uint256){

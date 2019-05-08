@@ -43,6 +43,9 @@ contract TokenStaking is StakeDelegatable {
         // Maintain a record of the stake amount by the sender.
         stakedBalances[operator] = stakedBalances[operator].add(_value);
         emit Staked(operator, _value);
+        if (address(stakingProxy) != address(0)) {
+            stakingProxy.emitStakedEvent(operator, _value);
+        }
     }
 
     /**

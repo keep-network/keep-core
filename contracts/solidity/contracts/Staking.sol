@@ -3,7 +3,6 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "./utils/UintArrayUtils.sol";
-import "./StakingProxy.sol";
 import "./mixins/TokenStaking.sol";
 import "./mixins/TokenGrantStaking.sol";
 
@@ -20,8 +19,6 @@ contract Staking is TokenStaking, TokenGrantStaking {
 
     event InitiatedUnstake(uint256 id);
     event FinishedUnstake(uint256 id);
-
-    StakingProxy public stakingProxy;
 
     uint256 public stakeWithdrawalDelay;
 
