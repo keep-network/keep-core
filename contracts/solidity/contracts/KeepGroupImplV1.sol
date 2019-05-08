@@ -123,7 +123,7 @@ contract KeepGroupImplV1 is Ownable {
         // Invalid tickets are rejected and their senders penalized.
         if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
             // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-            Staking stakingContract = TokenStaking(_stakingContract);
+            Staking stakingContract = Staking(_stakingContract);
             stakingContract.authorizedTransferFrom(msg.sender, address(this), _minStake);
         } else {
             _tickets.push(ticketValue);

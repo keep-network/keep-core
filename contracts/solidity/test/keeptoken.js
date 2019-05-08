@@ -86,18 +86,18 @@ contract('KeepToken', function(accounts) {
       }
     })
 
-    let withdrawals = await stakingContract.getWithdrawals(account_one);
+    let withdrawals = await stakingContract.getWithdrawals(account_one_operator);
     assert.equal(withdrawals.length, 2, "Withdrawal records must present for the staker");
 
     // should not be able to finish unstake
-    await exceptThrow(stakingContract.finishUnstake(stakeWithdrawalId));
+    await exceptThrow(stakingContract.finishTokensUnstake(stakeWithdrawalId, stakingAmount/2), {from: account_one_operator});
 
     // jump in time, full withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
 
     // should be able to finish unstake
-    await stakingContract.finishUnstake(stakeWithdrawalId);
-    await stakingContract.finishUnstake(stakeWithdrawalId2);
+    await stakingContract.finishTokensUnstake(stakeWithdrawalId, stakingAmount/2, {from: account_one_operator});
+    await stakingContract.finishTokensUnstake(stakeWithdrawalId2, stakingAmount/2, {from: account_one_operator});
 
     withdrawals = await stakingContract.getWithdrawals(account_one);
     assert.equal(withdrawals.length, 0, "Withdrawal record must be cleared for the staker");

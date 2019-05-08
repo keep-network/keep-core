@@ -1,23 +1,28 @@
 pragma solidity ^0.5.4;
 
-import "./mixins/StakeDelegatable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "./utils/UintArrayUtils.sol";
+import "./StakingProxy.sol";
+import "./mixins/TokenStaking.sol";
 
 
 /**
- * @title TokenStaking
- * @dev A token staking contract for a specified standard ERC20 token.
+ * @title Staking
+ * @dev A staking contract for a specified standard ERC20 token.
  * A holder of the specified token can stake its tokens to this contract
  * and unstake after withdrawal delay is over.
  */
-contract Staking is StakeDelegatable {
+contract Staking is TokenStaking {
 
     using UintArrayUtils for uint256[];
 
-    event ReceivedApproval(uint256 _value);
-    event Staked(address indexed from, uint256 value);
     event InitiatedUnstake(uint256 id);
     event FinishedUnstake(uint256 id);
+
+    StakingProxy public stakingProxy;
+
+    uint256 public stakeWithdrawalDelay;
 
     struct Withdrawal {
         address staker;
@@ -43,63 +48,35 @@ contract Staking is StakeDelegatable {
     }
 
     /**
-     * @notice Receives approval of token transfer and stakes the approved ammount.
-     * @dev Makes sure provided token contract is the same one linked to this contract.
-     * @param _from The owner of the tokens who approved them to transfer.
-     * @param _value Approved amount for the transfer and stake.
-     * @param _token Token contract address.
-     * @param _extraData Data for stake delegation. This byte array must have the
-     * following values concatenated: Magpie address (20 bytes) where the rewards for participation
-     * are sent and the operator's ECDSA (65 bytes) signature of the address of the stake owner.
+     * @dev Gets the stake balance of the specified address.
+     * @param _address The address to query the balance of.
+     * @return An uint256 representing the amount staked by the passed address.
      */
-    function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
-        emit ReceivedApproval(_value);
-
-        require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
-        require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
-        require(_extraData.length == 85, "Stake delegation data must be provided.");
-
-        address magpie = _extraData.toAddress(0);
-        address operator = keccak256(abi.encodePacked(_from)).toEthSignedMessageHash().recover(_extraData.slice(20, 65));
-        require(operatorToOwner[operator] == address(0), "Operator address is already in use.");
-
-        operatorToOwner[operator] = _from;
-        magpieToOwner[magpie] = _from;
-        ownerOperators[_from].push(operator);
-
-        // Transfer tokens to this contract.
-        token.transferFrom(_from, address(this), _value);
-
-        // Maintain a record of the stake amount by the sender.
-        stakeBalances[operator] = stakeBalances[operator].add(_value);
-        emit Staked(operator, _value);
-        if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitStakedEvent(operator, _value);
-        }
+    function stakeBalanceOf(address _address) public view returns (uint256 balance) {
+        return stakedBalances[_address];
     }
 
     /**
      * @notice Initiates unstake of staked tokens and returns withdrawal request ID.
-     * You will be able to call `finishUnstake()` with this ID and finish
+     * You will be able to call `finishTokensUnstake()` with this ID and finish
      * unstake once withdrawal delay is over.
      * @param _value The amount to be unstaked.
-     * @param _operator Address of the stake operator.
+     * @param _staker Address of the stake owner or its operator.
      */
-    function initiateUnstake(uint256 _value, address _operator) public returns (uint256 id) {
-        address owner = operatorToOwner[_operator];
-        require(
-            msg.sender == _operator ||
-            msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
-        require(_value <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
+    function initiateUnstake(uint256 _value, address _staker)
+        public
+        onlyOwnerOrOperator(_staker)
+        returns (uint256 id)
+    {
 
-        stakeBalances[_operator] = stakeBalances[_operator].sub(_value);
+        require(_value <= stakeBalanceOf(_staker), "Staker must have enough tokens to unstake.");
 
         id = numWithdrawals++;
-        withdrawals[id] = Withdrawal(owner, _value, now);
-        withdrawalIndices[owner].push(id);
+        withdrawals[id] = Withdrawal(_staker, _value, now);
+        withdrawalIndices[_staker].push(id);
         emit InitiatedUnstake(id);
         if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitUnstakedEvent(owner, _value);
+            stakingProxy.emitUnstakedEvent(_staker, _value);
         }
         return id;
     }
@@ -109,20 +86,23 @@ contract Staking is StakeDelegatable {
      * You can only finish unstake once withdrawal delay is over for the request,
      * otherwise the function will fail and remaining gas is returned.
      * @param _id Withdrawal ID.
+     * @param _value Amount to withdraw.
      */
-    function finishUnstake(uint256 _id) public {
+    function finishTokensUnstake(uint256 _id, uint256 _value)
+        public
+        onlyOwnerOrOperator(withdrawals[_id].staker)
+    {
         require(now >= withdrawals[_id].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
+        require(_value <= withdrawals[_id].amount, "Can not withdraw more than unstaked amount.");
 
         address staker = withdrawals[_id].staker;
+        _transferUnstakedTokens(staker, _value);
 
-        // No need to call approve since msg.sender will be this staking contract.
-        token.safeTransfer(staker, withdrawals[_id].amount);
-
-        // Cleanup withdrawal index.
-        withdrawalIndices[staker].removeValue(_id);
-
-        // Cleanup withdrawal record.
-        delete withdrawals[_id];
+        if (_value == withdrawals[_id].amount) {
+            // Cleanup withdrawal records.
+            withdrawalIndices[staker].removeValue(_id);
+            delete withdrawals[_id];
+        }
 
         emit FinishedUnstake(_id);
     }
@@ -147,8 +127,8 @@ contract Staking is StakeDelegatable {
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 4).
     function authorizedTransferFrom(address from, address to, uint256 amount) public {
-        stakeBalances[from] = stakeBalances[from].sub(amount);
-        stakeBalances[to] = stakeBalances[to].add(amount);
+        stakedBalances[from] = stakedBalances[from].sub(amount);
+        stakedBalances[to] = stakedBalances[to].add(amount);
     }
 
 }
