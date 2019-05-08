@@ -105,6 +105,7 @@ func Execute(
 			case *SignatureShareMessage:
 				// Ignore our own share, we already have it.
 				if signatureShareMsg.senderID == signer.MemberID() {
+					fmt.Printf("[member:%v] Ignoring my own message (senderID = [%v])\n", signer.MemberID(), signatureShareMsg.senderID)
 					continue
 				}
 
@@ -119,6 +120,7 @@ func Execute(
 					)
 				} else {
 					seenSharesMutex.Lock()
+					fmt.Printf("[member:%v] Adding signature share from sender [%v] = [%v]\n", signer.MemberID(), signatureShareMsg.senderID, share)
 					seenShares[signatureShareMsg.senderID] = share
 					seenSharesMutex.Unlock()
 				}
@@ -137,10 +139,17 @@ func Execute(
 				seenSharesSlice = append(seenSharesSlice, signatureShare)
 			}
 
+			fmt.Printf("[member:%v] All seen shares:\n", signer.MemberID())
+			for _, share := range seenSharesSlice {
+				fmt.Printf("[member:%v] [I = %v, V = %v]\n", signer.MemberID(), share.I, share.V)
+			}
+
 			signature, err := signer.CompleteSignature(seenSharesSlice, threshold)
 			if err != nil {
 				return nil, err
 			}
+
+			fmt.Printf("[member:%v] Evaluated signature = [%v]\n", signer.MemberID(), signature)
 
 			return altbn128.G1Point{G1: signature}.Compress(), nil
 		}
@@ -152,5 +161,6 @@ func sendSignatureShare(
 	channel net.BroadcastChannel,
 	memberID group.MemberIndex,
 ) error {
+	fmt.Printf("[member:%v] Sending my signature share: [%v]\n", memberID, share)
 	return channel.Send(&SignatureShareMessage{memberID, share})
 }

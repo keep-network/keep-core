@@ -472,6 +472,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 		return resultPublicationPromise
 	}
 
+	fmt.Printf("Submitting DKG result for:\nrequestID = [%v]\nparticipantIndex = [%v]\nresult = [%v]\nsignatures = [%v]\nmemberIndices = [%v]\n", requestID, participantIndex.Int(), result, signaturesOnChainFormat, membersIndicesOnChainFormat)
+
 	if _, err = ec.keepGroupContract.SubmitDKGResult(
 		requestID,
 		participantIndex.Int(),

@@ -48,6 +48,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) {
+	fmt.Printf("If eligible, create relay entry for previous value = [%v] and seed = [%v]\n", previousEntry, seed)
 	combinedEntryToSign := combineEntryToSign(
 		previousEntry.Bytes(),
 		seed.Bytes(),
@@ -88,6 +89,8 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				GroupPubKey:   signer.signer.GroupPublicKeyBytes(),
 				Seed:          seed,
 			}
+
+			fmt.Printf("Submitting relay entry: [%+v]\n", newEntry)
 
 			relayChain.SubmitRelayEntry(
 				newEntry,

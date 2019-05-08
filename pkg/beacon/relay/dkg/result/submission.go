@@ -56,6 +56,8 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
+	fmt.Printf("[member:%v] Received following signatures supporting the result = [%v]\n", sm.index, signatures)
+
 	config, err := chainRelay.GetConfig()
 	if err != nil {
 		return fmt.Errorf(
