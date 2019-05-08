@@ -35,6 +35,18 @@ spec:
         app: keep-client
         type: bootstrap-peer-0
     spec:
+      initContainers:
+      - name: testing-init-container
+        image: gcr.io/keep-dev-fe24/keep-client-initcontainer
+        env:
+          - name: ETHEREUM_ACCOUNT
+            value: 0xA86c468475EF9C2ce851Ea4125424672C3F7e0C8
+          - name: ETHEREUM_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: eth-account-passphrase
+                key: account-passphrase
+        command: ["/tmp/unlock-and-stake-eth-account.sh"]
       containers:
       - name: keep-client-bootstrap-peer-0
         image: gcr.io/keep-dev-fe24/keep-client
