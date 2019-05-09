@@ -6,7 +6,7 @@ class Node(Agent):
     """ Node: One hardware device used to stake tokens on the network. 
     Each node will create virtual stakers proportional to
     the number of tokens owned by the node """
-    def __init__(self, unique_id, node_id, model, tickets, failure_percent, death_percent):
+    def __init__(self, unique_id, node_id, model, tickets, failure_percent, death_percent, node_connection_delay, node_mainloop_connection_delay):
         super().__init__(unique_id, model)
         self.id = unique_id
         self.type = "node"
@@ -16,8 +16,8 @@ class Node(Agent):
         self.connection_status = "not connected" #change later to event - currently used for node failure process
         self.mainloop_status = "not forked"
         self.stake_status = "not staked"
-        self.connection_delay = np.random.randint(0,5) #uniform randomly assigned connection delay step value
-        self.mainloop_fork_delay = np.random.randint(0,5) #uniform randomly assigned connection delay step value
+        self.connection_delay = np.random.randint(0,node_connection_delay) #uniform randomly assigned connection delay step value
+        self.mainloop_fork_delay = np.random.randint(0,node_mainloop_connection_delay) #uniform randomly assigned connection delay step value
         self.timer = self.model.timer
         self.node_failure_percent = failure_percent
         self.node_death_percent = death_percent

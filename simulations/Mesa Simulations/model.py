@@ -9,7 +9,7 @@ class Beacon_Model(Model):
     def __init__(self, nodes, ticket_distribution, active_group_threshold, 
     group_size, min_honest_threshold, group_expiry, 
      node_failure_percent, node_death_percent,
-    signature_delay, min_nodes):
+    signature_delay, min_nodes, node_connection_delay, node_mainloop_connection_delay):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
@@ -33,7 +33,7 @@ class Beacon_Model(Model):
 
         #create nodes
         for i in range(nodes):
-            node = agent.Node(i, i, self, self.ticket_distribution[i], node_failure_percent, node_death_percent)
+            node = agent.Node(i, i, self, self.ticket_distribution[i], node_failure_percent, node_death_percent, node_connection_delay, node_mainloop_connection_delay)
             self.newest_id = i
             self.schedule.add(node)
         self.newest_id +=1
