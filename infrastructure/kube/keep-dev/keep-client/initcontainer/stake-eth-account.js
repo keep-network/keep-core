@@ -30,11 +30,12 @@ async function stakeEthAccount() {
   let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator)).substr(2), 'hex');
   let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
-  if (!await stakingProxyContract.isAuthorized(tokenStakingContract.address)) {
-    stakingProxyContract.authorizeContract(tokenStakingContract.address);
+
+  if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address)) {
+    stakingProxyContract.methods.authorizeContract(tokenStakingContract.address);
   }
 
-  keepTokenContract.approveAndCall(
+  await keepTokenContract.approveAndCall(
     tokenStakingContract.address,
     formatAmount(1000000, 18),
     delegation,
