@@ -16,8 +16,8 @@ class Node(Agent):
         self.connection_status = "not connected" #change later to event - currently used for node failure process
         self.mainloop_status = "not forked"
         self.stake_status = "not staked"
-        self.connection_delay = np.random.randint(0,1) #uniform randomly assigned connection delay step value
-        self.mainloop_fork_delay = np.random.randint(0,2) #uniform randomly assigned connection delay step value
+        self.connection_delay = np.random.randint(0,5) #uniform randomly assigned connection delay step value
+        self.mainloop_fork_delay = np.random.randint(0,5) #uniform randomly assigned connection delay step value
         self.timer = self.model.timer
         self.node_failure_percent = failure_percent
         self.node_death_percent = death_percent
@@ -30,6 +30,7 @@ class Node(Agent):
             self.connection_delay -=1
         else:
             self.connection_status = "connected"
+            print(str("node "+str(self.node_id+" = connected")))
         #once connected fork the main loop
             if self.mainloop_fork_delay>0:
                 self.mainloop_fork_delay -=1
@@ -38,11 +39,14 @@ class Node(Agent):
             
         #simulate node failure
         self.failure = np.random.randint(0,100) < self.node_failure_percent
-        self.death = np.random.randint (0,1000) < self.node_death_percent
+        self.death = np.random.randint (0,100) < self.node_death_percent
 
-    def advance(self):
+        #disconnect the node if failure occurs
         if self.failure or self.death:
             self.node_disconnect()
+
+    def advance(self):
+        pass
 
         #print(str("node " + str(self.id) + "status " + self.mainloop_status ))
         #print("Mainloop fork delay = " + str(self.mainloop_fork_delay))
@@ -60,7 +64,7 @@ class Node(Agent):
         self.stake_status = "not staked"
         if self.death == False: # does not reset the failure trigger if the death trigger is true
             self.failure = False
-
+        print(str(self.node_id)+" = just Failed")
 
 class Group(Agent):
     """ A Group """
@@ -79,13 +83,12 @@ class Group(Agent):
         self.ownership_distr = self.calculate_ownership_distr()
 
     def step(self):
-        """ At each step check if the group as expired """
+        """ At each step check if the group has expired """
         self.expiry -=1
         #print('group ID '+ str(self.id) + ' expiry ' + str(self.expiry))
         if self.expiry == 0: 
             self.status = "Expired"
         
-
     def advance(self):
         pass
 
@@ -102,40 +105,39 @@ class Signature(Agent):
         self.id = unique_id
         self.type = "signature"
         self.delay = np.random.poisson(self.model.signature_delay) #delay between when it is triggered and when it hits the chain
-        self.end_signature_process = False
         self.ownership_distr = []
-        self.signature_success = False
-        self.model.newest_id +=1
-        self.model.newest_signature_id +=1
+        self.model.newest_id +=1 # increments the model agent ID by 1 after a new signature is created
+        self.model.newest_signature_id +=1 #increments the signature ID by one after a new signature is created
+        self.signature_process_complete = False
+        self.block_delay_complete = False
 
     def step(self):
-        if not self.end_signature_process: 
-            if self.delay <=0:
-                temp_distr = np.zeros(self.model.num_nodes)
-                print("     Checking for active nodes in randomly selected group")
-                active_count = np.zeros(self.model.num_nodes)
-                for node in self.group.members:
-                    active_count[node.node_id] = (node.mainloop_status=="forked") #adds 1 to the index matching the node id if the node is active
-                    temp_distr[node.node_id] += (node.mainloop_status=="forked") #counts the node in the group distr only if it's active
-
-                self.ownership_distr = temp_distr
-
-
-                if sum(active_count)>= self.model.signature_threshold: # Signature is only successfull if the number of active nodes is greater than the threshold set in the model
-                    print("         signature successful")
-                    self.model.unsuccessful_signature_events.append(0)
-                    self.signature_success = True
-                else:
-                    print("         signature unsuccessful")
-                    self.model.unsuccessful_signature_events.append(1)
-                self.end_signature_process = True
-            else:
-                print("Signature processing"
+        #signature
+        if not self.block_delay_complete:
+            if self.delay >0:
                 self.delay -=1
-                print("Signature ID " + str(self.id) + " Delay = "+str(self.delay))
+            else :
+                self.block_delay_complete = True
+        elif not self.signature_process_complete :
+            self.signature_process()
+            self.signature_process_complete = True
 
     def advance(self):
         pass
+
+    def signature_process(self):
+        # Calculates ownership data just before the signature is complete
+        temp_signature_distr = np.zeros(self.model.num_nodes)
+
+        self.model.refresh_connected_nodes_list()
+        for i,node_tickets in enumerate(self.group.ownership_distr): # checks if the node has a non-zero ownership, i is the node id
+            if node_tickets > 0:
+                for node in self.model.active_nodes:
+                    #print("active node ID = "+ str(node.node_id))
+                    if node.node_id == i : temp_signature_distr[i] = node_tickets
+        self.ownership_distr = temp_signature_distr
+
+
 
 
         

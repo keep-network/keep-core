@@ -7,16 +7,16 @@ from mesa.datacollection import DataCollector
 class Beacon_Model(Model):
     """The model"""
     def __init__(self, nodes, ticket_distribution, active_group_threshold, 
-    group_size, signature_threshold, group_expiry, 
+    group_size, min_honest_threshold, group_expiry, 
      node_failure_percent, node_death_percent,
-    signature_delay):
+    signature_delay, min_nodes):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
         self.active_groups = []
         self.active_nodes = []
         self.active_group_threshold = active_group_threshold # number of groups that will always be maintained in an active state
-        self.signature_threshold = signature_threshold # threshold below which a signature cannot occur
+        self.min_honest_threshold = min_honest_threshold # threshold below which a signature cannot occur
         self.group_size = group_size
         self.ticket_distribution = ticket_distribution
         self.newest_id = 0
@@ -24,7 +24,7 @@ class Beacon_Model(Model):
         self.newest_signature_id = 0
         self.group_expiry = group_expiry
         self.bootstrap_complete = False # indicates when the initial active group list bootstrap is complete
-        self.group_formation_threshold = self.group_size # min nodes required to form a group
+        self.group_formation_threshold = min_nodes # min nodes required to form a group
         self.timer = 0
         self.unsuccessful_signature_events = []
         self.signature_delay = signature_delay
@@ -59,10 +59,10 @@ class Beacon_Model(Model):
 
         #check how many active groups are available
         self.refresh_active_group_list()
-        print('number of active groups = ' + str(len(self.active_groups)))
-        for group in self.schedule.agents:
-            if group.type == "group":
-                print("group ID "+str(group.group_id)+ "status = " + group.status + "steps to expiry = "+ str(group.expiry))
+        #print('number of active groups = ' + str(len(self.active_groups)))
+        #for group in self.schedule.agents:
+            #if group.type == "group":
+                #print("group ID "+str(group.group_id)+ "status = " + group.status + "steps to expiry = "+ str(group.expiry))
         
         #generate relay requests
         self.relay_request = np.random.choice([True,False]) # make this variable so it can be what-if'd
@@ -72,7 +72,8 @@ class Beacon_Model(Model):
             try:
                 print('     selecting group at random')
                 try:
-                    signature = agent.Signature(self.newest_id, self.newest_signature_id, self, self.active_groups[np.random.randint(len(self.active_groups))]) # print a random group from the active list- change this to signing mechanism later
+                    # pick an active group from the active group list and create a signature object
+                    signature = agent.Signature(self.newest_id, self.newest_signature_id, self, self.active_groups[np.random.randint(len(self.active_groups))]) 
                 except Exception as e: print(e)
                 self.schedule.add(signature)
             except:
@@ -87,12 +88,11 @@ class Beacon_Model(Model):
         #advance the agents
         self.schedule.step()
 
-
     def group_registration(self):
         ticket_list = []
         group_members = []
 
-        if len(self.active_nodes)<self.group_formation_threshold:
+        if len(self.active_nodes)<self.group_formation_threshold: 
             print("             Not enough nodes to register a group")
 
         else:
@@ -139,6 +139,7 @@ class Beacon_Model(Model):
         for agent in self.schedule.agents:
             if agent.type == "node":
                 if agent.mainloop_status == "forked": 
+                    print(agent.node_id)
                     temp_active_node_list.append(agent) #adds the node to the active list only if it is in the forked state
         self.active_nodes = temp_active_node_list
 
