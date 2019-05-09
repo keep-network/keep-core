@@ -8,6 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupregistry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -34,7 +35,7 @@ func Initialize(
 		return err
 	}
 
-	groupRegistry := relay.NewGroupRegistry(relayChain)
+	groupRegistry := groupregistry.NewGroupRegistry(relayChain)
 
 	node := relay.NewNode(
 		staker,

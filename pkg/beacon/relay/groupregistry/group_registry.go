@@ -1,4 +1,4 @@
-package relay
+package groupregistry
 
 import (
 	"fmt"
@@ -22,8 +22,8 @@ type GroupRegistry struct {
 
 // Membership represents a member of a group
 type Membership struct {
-	signer  *dkg.ThresholdSigner
-	channel net.BroadcastChannel
+	Signer  *dkg.ThresholdSigner
+	Channel net.BroadcastChannel
 }
 
 // NewGroupRegistry returns an empty GroupRegistry.
@@ -50,8 +50,8 @@ func (gr *GroupRegistry) RegisterGroup(
 
 	gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey],
 		&Membership{
-			signer:  signer,
-			channel: channel,
+			Signer:  signer,
+			Channel: channel,
 		})
 }
 

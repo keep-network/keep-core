@@ -9,6 +9,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupregistry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -21,7 +22,7 @@ func NewNode(
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
 	chainConfig *config.Chain,
-	groupRegistry *GroupRegistry,
+	groupRegistry *groupregistry.GroupRegistry,
 ) Node {
 	return Node{
 		Staker:        staker,
@@ -60,13 +61,13 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	}
 
 	for _, signer := range memberships {
-		go func(signer *Membership) {
+		go func(signer *groupregistry.Membership) {
 			signature, err := thresholdsignature.Execute(
 				combinedEntryToSign,
 				n.chainConfig.HonestThreshold(),
 				n.blockCounter,
-				signer.channel,
-				signer.signer,
+				signer.Channel,
+				signer.Signer,
 				startBlockHeight,
 			)
 			if err != nil {
@@ -85,7 +86,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				Value:         rightSizeSignature,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
-				GroupPubKey:   signer.signer.GroupPublicKeyBytes(),
+				GroupPubKey:   signer.Signer.GroupPublicKeyBytes(),
 				Seed:          seed,
 			}
 
