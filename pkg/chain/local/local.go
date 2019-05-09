@@ -326,8 +326,8 @@ func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 	return promise
 }
 
-// IsGroupEligibleForRemoval simulates a check if a group can be cleaned on off-chain
-func (c *localChain) IsGroupEligibleForRemoval(groupPublicKey []byte) (bool, error) {
+// IsGroupRegistered simulates a check if a group can be cleaned on off-chain
+func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 

@@ -539,6 +539,19 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Checks if a group with the given public key is registered. 
+     */
+    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
+        for (uint i = 0; i < numberOfGroups(); i++) {
+            if (_groups[i].groupPubKey.equalStorage(groupPubKey)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @dev Returns public key of a group from available groups using modulo operator.
      * @param previousEntry Previous random beacon value.
      */
