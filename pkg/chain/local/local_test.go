@@ -742,13 +742,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID1],
+		localChain.submittedResults[requestID1.String()],
 		submittedResult11,
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID1,
 			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[requestID1],
+			localChain.submittedResults[requestID1.String()],
 		)
 	}
 	select {
@@ -773,13 +773,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID2],
+		localChain.submittedResults[requestID2.String()],
 		submittedResult11,
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID2,
 			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[requestID2],
+			localChain.submittedResults[requestID2.String()],
 		)
 	}
 	select {

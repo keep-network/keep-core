@@ -38,7 +38,7 @@ type localChain struct {
 	submittedResultsMutex sync.Mutex
 	// Map of submitted DKG Results. Key is a RequestID of the specific DKG
 	// execution.
-	submittedResults map[*big.Int]*relaychain.DKGResult
+	submittedResults map[string]*relaychain.DKGResult
 
 	groups []localGroup
 
@@ -251,7 +251,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 			NaturalThreshold:                naturalThreshold,
 		},
 		groupRelayEntries:        make(map[string]*big.Int),
-		submittedResults:         make(map[*big.Int]*relaychain.DKGResult),
+		submittedResults:         make(map[string]*relaychain.DKGResult),
 		relayEntryHandlers:       make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
 		groupRegisteredHandlers:  make(map[int]func(groupRegistration *event.GroupRegistration)),
@@ -354,7 +354,7 @@ func (c *localChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
-	return c.submittedResults[requestID] != nil, nil
+	return c.submittedResults[requestID.String()] != nil, nil
 }
 
 // SubmitDKGResult submits the result to a chain.
@@ -369,7 +369,7 @@ func (c *localChain) SubmitDKGResult(
 
 	dkgResultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
-	_, ok := c.submittedResults[requestID]
+	_, ok := c.submittedResults[requestID.String()]
 	if ok {
 		dkgResultPublicationPromise.Fail(fmt.Errorf(
 			"result for request ID [%v] already submitted",
@@ -378,7 +378,7 @@ func (c *localChain) SubmitDKGResult(
 		return dkgResultPublicationPromise
 	}
 
-	c.submittedResults[requestID] = resultToPublish
+	c.submittedResults[requestID.String()] = resultToPublish
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
