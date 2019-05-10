@@ -2,6 +2,7 @@ package local
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
@@ -662,20 +663,24 @@ func TestLocalIsDKGResultSubmitted(t *testing.T) {
 		submittedResult,
 	)
 
-	localChain := &localChain{
-		submittedResults: submittedResults,
-	}
-	chainHandle := localChain.ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(100)).ThresholdRelay()
+
+	chainHandle.SubmitDKGResult(
+		submittedRequestID,
+		group.MemberIndex(1),
+		submittedResult,
+		make(map[group.MemberIndex]operator.Signature),
+	)
 
 	var tests = map[string]struct {
 		requestID      *big.Int
 		expectedResult bool
 	}{
-		"matched": {
+		"result for the request ID submitted": {
 			requestID:      submittedRequestID,
 			expectedResult: true,
 		},
-		"not matched - different request ID": {
+		"result for the given request ID not yet submitted": {
 			requestID:      big.NewInt(3),
 			expectedResult: false,
 		},
@@ -738,7 +743,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID1],
-		[]*relaychain.DKGResult{submittedResult11},
+		submittedResult11,
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID1,
@@ -769,7 +774,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
 		localChain.submittedResults[requestID2],
-		[]*relaychain.DKGResult{submittedResult11},
+		submittedResult11,
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID2,
@@ -790,23 +795,20 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit already submitted result for request ID 1
-	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
-	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID1],
-		[]*relaychain.DKGResult{submittedResult11},
-	) {
-		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
-			requestID1,
-			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[requestID1],
-		)
-	}
-	select {
-	case DKGResultSubmissionEvent := <-DKGResultSubmissionChan:
-		t.Fatalf("unexpected event was emitted: %v", DKGResultSubmissionEvent)
-	case <-ctx.Done():
-		t.Logf("DKG result publication event not generated")
-	}
+	promise := chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
+	promise.OnSuccess(func(result *event.DKGResultSubmission) {
+		t.Fatalf("Should not be able to submit result for the given ID more than once")
+	})
+	promise.OnFailure(func(err error) {
+		expectedError := fmt.Errorf("result for request ID [1] already submitted")
+		if !reflect.DeepEqual(err, expectedError) {
+			t.Fatalf(
+				"Unexpected error\nExpected: [%v]\nActual:   [%v]\n",
+				expectedError,
+				err,
+			)
+		}
+	})
 }
 
 func TestCalculateDKGResultHash(t *testing.T) {
