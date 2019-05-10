@@ -4,14 +4,22 @@ executors:
   docker-git:
     docker:
       - image: docker:18.06.0-ce-git
+  docker-gcloud-cli:
+    docker:
+      - image: google/cloud-sdk:slim
+  docker-node:
+    docker:
+      - image: circleci/node:11
+  docker-thesis-buildpack:
+    docker:
+      - image: thesisco/docker-buildpack:bionic
 
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.0.4
 
 jobs:
   test_solidity:
-    docker:
-      - image: circleci/node:8
+    executor: docker-node
     steps:
         - checkout
         - run: sudo npm install -g ganache-cli@6.4.2
@@ -69,6 +77,23 @@ jobs:
           root: /tmp/images
           paths:
             - keep-client
+  migrate_contracts_keep_dev:
+    executor: docker-thesis-buildpack
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Set Gcloud Auth
+          command: |
+            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+      - run:
+          name: Migrate Contracts
+          command: |
+            export BUILD_TAG=$CIRCLE_SHA1
+            export TRUFFLE_NETWORK="keep_dev"
+            contracts/solidity/scripts/circleci-migrate-contracts.sh
   publish_client:
     executor: gcp-gcr/default
     steps:
@@ -148,10 +173,17 @@ workflows:
   solidity:
     jobs:
       - test_solidity
-  build-test-publish:
+  build_test_migrate_publish:
     jobs:
       - build_client_and_test_go:
           context: keep-dev
+      - migrate_contracts_keep_dev:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+          requires:
+            - build_client_and_test_go
       - publish_client:
           filters:
             branches:
