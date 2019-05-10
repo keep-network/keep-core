@@ -372,7 +372,7 @@ func (c *localChain) SubmitDKGResult(
 	_, ok := c.submittedResults[requestID.String()]
 	if ok {
 		dkgResultPublicationPromise.Fail(fmt.Errorf(
-			"result for request ID [%v] already submitted",
+			"result for request ID [%v] is already submitted",
 			requestID,
 		))
 		return dkgResultPublicationPromise
