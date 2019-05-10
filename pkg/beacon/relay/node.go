@@ -33,12 +33,7 @@ type Node struct {
 	stakeIDs      []string
 	maxStakeIndex int
 
-	myGroups map[string][]*membership
-}
-
-type membership struct {
-	signer  *dkg.ThresholdSigner
-	channel net.BroadcastChannel
+	groupRegistry *GroupRegistry
 }
 
 // JoinGroupIfEligible takes a threshold relay entry value and undergoes the
@@ -76,7 +71,7 @@ func (n *Node) JoinGroupIfEligible(
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"Failed to get broadcastChannel for name %s with err: [%v].",
+					"Failed to get broadcastChannel for name %s with err: [%v].\n",
 					broadcastChannelName,
 					err,
 				)
@@ -96,11 +91,11 @@ func (n *Node) JoinGroupIfEligible(
 					broadcastChannel,
 				)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to execute dkg: [%v].", err)
+					fmt.Fprintf(os.Stderr, "Failed to execute dkg: [%v].\n", err)
 					return
 				}
 
-				n.RegisterGroup(
+				n.groupRegistry.RegisterGroup(
 					signer,
 					broadcastChannel,
 				)
@@ -124,21 +119,4 @@ func channelNameForGroup(group *groupselection.Result) string {
 		sha256.Sum256(channelNameBytes),
 	)
 	return string(hashedChannelName.Bytes())
-}
-
-// RegisterGroup registers that a group was successfully created by the given
-// groupPublicKey.
-func (n *Node) RegisterGroup(signer *dkg.ThresholdSigner,
-	channel net.BroadcastChannel) {
-
-	n.mutex.Lock()
-	defer n.mutex.Unlock()
-
-	groupPublicKey := string(signer.GroupPublicKeyBytes())
-
-	n.myGroups[groupPublicKey] = append(n.myGroups[groupPublicKey],
-		&membership{
-			signer:  signer,
-			channel: channel,
-		})
 }

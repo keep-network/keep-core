@@ -378,6 +378,10 @@ func (ec *ethereumChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) 
 	return ec.keepGroupContract.IsDkgResultSubmitted(requestID)
 }
 
+func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+	return ec.keepGroupContract.IsGroupRegistered(groupPublicKey)
+}
+
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
