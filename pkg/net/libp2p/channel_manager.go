@@ -30,6 +30,7 @@ func newChannelManager(
 	floodsub, err := pubsub.NewFloodSub(
 		ctx,
 		p2phost,
+		pubsub.WithMessageAuthor(identity.id),
 		pubsub.WithMessageSigning(true),
 		pubsub.WithStrictSignatureVerification(true),
 	)

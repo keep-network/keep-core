@@ -1,6 +1,7 @@
 package libp2p
 
 import (
+	"encoding/hex"
 	"fmt"
 	"net"
 
@@ -430,5 +431,32 @@ func (ac *authenticatedConnection) verify(
 			actualSender,
 		)
 	}
-	return verifyEnvelope(actualSender, messageBytes, signatureBytes)
+
+	pubKey, err := actualSender.ExtractPublicKey()
+	if err != nil {
+		return fmt.Errorf(
+			"failed to extract public key from peer [%v]",
+			actualSender,
+		)
+	}
+
+	ok, err := pubKey.Verify(messageBytes, signatureBytes)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to verify signature [0x%v] for sender [%v] with err [%v]",
+			hex.EncodeToString(signatureBytes),
+			actualSender.Pretty(),
+			err,
+		)
+	}
+
+	if !ok {
+		return fmt.Errorf(
+			"invalid signature [0x%v] on message from sender [%v] ",
+			hex.EncodeToString(signatureBytes),
+			actualSender.Pretty(),
+		)
+	}
+
+	return nil
 }
