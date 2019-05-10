@@ -3,8 +3,10 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
 
+	ethereumabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -16,10 +18,10 @@ import (
 type KeepRandomBeacon struct {
 	caller            *abi.KeepRandomBeaconImplV1Caller
 	callerOptions     *bind.CallOpts
-	transactor        *abi.KeepRandomBeaconImplV1Transactor
-	transactorOptions *bind.TransactOpts
+	errorResolver     *errorResolver
 	contract          *abi.KeepRandomBeaconImplV1
 	contractAddress   common.Address
+	transactorOptions *bind.TransactOpts
 }
 
 // NewKeepRandomBeacon creates the necessary connections and configurations for
@@ -62,18 +64,6 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 	callerOptions := &bind.CallOpts{
 		From: contractAddress,
 	}
-
-	beaconTransactor, err := abi.NewKeepRandomBeaconImplV1Transactor(
-		contractAddress,
-		chainConfig.client,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to instantiate a KeepRelayBeaconTranactor contract: [%v]",
-			err,
-		)
-	}
-
 	transactorOptions := bind.NewKeyedTransactor(
 		chainConfig.accountKey.PrivateKey,
 	)
@@ -90,13 +80,18 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 		)
 	}
 
+	contractAbi, err := ethereumabi.JSON(strings.NewReader(abi.KeepRandomBeaconImplV1ABI))
+	if err != nil {
+		return nil, fmt.Errorf("failed to instantiate ABI: [%v]", err)
+	}
+
 	return &KeepRandomBeacon{
 		caller:            beaconCaller,
 		callerOptions:     callerOptions,
-		transactor:        beaconTransactor,
-		transactorOptions: transactorOptions,
+		errorResolver:     &errorResolver{chainConfig.client, &contractAbi, &contractAddress},
 		contract:          randomBeaconContract,
 		contractAddress:   contractAddress,
+		transactorOptions: transactorOptions,
 	}, nil
 }
 
@@ -113,7 +108,18 @@ func (krb *KeepRandomBeacon) RequestRelayEntry(
 	seed := big.NewInt(0).SetBytes(rawseed)
 	newTransactorOptions := *krb.transactorOptions
 	newTransactorOptions.Value = big.NewInt(2)
-	return krb.transactor.RequestRelayEntry(&newTransactorOptions, seed)
+	transaction, err := krb.contract.RequestRelayEntry(&newTransactorOptions, seed)
+
+	if err != nil {
+		return transaction, krb.errorResolver.ResolveError(
+			err,
+			nil,
+			"requestRelayEntry",
+			seed,
+		)
+	}
+
+	return transaction, err
 }
 
 // SubmitRelayEntry submits a group signature for consideration.
@@ -124,7 +130,7 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 	groupSignature *big.Int,
 	seed *big.Int,
 ) (*types.Transaction, error) {
-	return krb.transactor.RelayEntry(
+	transaction, err := krb.contract.RelayEntry(
 		krb.transactorOptions,
 		requestID,
 		groupSignature,
@@ -132,6 +138,21 @@ func (krb *KeepRandomBeacon) SubmitRelayEntry(
 		previousEntry,
 		seed,
 	)
+
+	if err != nil {
+		return transaction, krb.errorResolver.ResolveError(
+			err,
+			nil,
+			"relayEntry",
+			requestID,
+			groupSignature,
+			groupPubKey,
+			previousEntry,
+			seed,
+		)
+	}
+
+	return transaction, err
 }
 
 // relayEntryRequestedFunc type of function called for
