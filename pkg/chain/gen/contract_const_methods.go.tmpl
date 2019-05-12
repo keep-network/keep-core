@@ -1,0 +1,25 @@
+{{- $contract := . -}}
+{{- range $i, $method := .ConstMethods }}
+
+func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
+	{{$method.ParamDeclarations -}}
+	{{if $method.Payable -}} value *big.Int, {{- end -}}
+) ({{$method.ReturnTypes}} error) {
+	transaction, err := {{$contract.ShortVar}}.contract.{{$method.CapsName}}(
+		{{$contract.ShortVar}}.callerOptions,
+		{{$method.Params}}
+	)
+
+	if err != nil {
+		return transaction, {{$contract.ShortVar}}.errorResolver.ResolveError(
+			err,
+			nil,
+			"{{$method.LowerName}}",
+			{{$method.Params}}
+		)
+	}
+
+	return transaction, err
+}
+
+{{- end}}
