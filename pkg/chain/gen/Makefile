@@ -1,27 +1,23 @@
+solidity_dir=$(realpath ../../../contracts/solidity)
+solidity_files := $(wildcard ${solidity_dir}/contracts/*.sol)
 
-# In .../github.com/keep-network/keep-core/pkg/chain/gen
+abi_files := $(foreach file, $(solidity_files), abi/$(notdir $(basename $(file))).go)
 
-# Directory where the solidity contracts are.
-SOL_DIR=../../../contracts/solidity/contracts
+all: gen_abi_go
 
-# Relative directory where the Go code needs to go.  This is relative to the
-# ${SOL_DIR} directory.
-OP_DIR=../../../pkg/chain/gen
-GEN_DIR=../../../pkg/chain/gen/abi
+gen_abi_go: $(abi_files)
 
-generate_solidity_go:
-	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )
+gen_contract_go: $(contract_files)
 
-all:
-	( cd ${SOL_DIR} ; make -f ${OP_DIR}/Makefile gen_go )
-	( cd ${GEN_DIR} ; goimports -w *.go ; go build )
+abi/%.abi: ${solidity_dir}/contracts/%.sol
+	solc solidity-bytes-utils/=${solidity_dir}/node_modules/solidity-bytes-utils/ \
+		 openzeppelin-solidity/=${solidity_dir}/node_modules/openzeppelin-solidity/ \
+		 --allow-paths ${solidity_dir} \
+		 --overwrite \
+		 --abi \
+		 -o abi $<
 
-SOL=$(shell ls *.sol | sed -e 's/.sol/.go/' )
-
-gen_go:
-	make -f ${OP_DIR}/Makefile ${SOL}
-
-%.go : %.sol
-	( cd ${SOL_DIR} ; solc solidity-bytes-utils/=../node_modules/solidity-bytes-utils/ openzeppelin-solidity/=../node_modules/openzeppelin-solidity/ --allow-paths . --overwrite --abi -o . $<  )
-	( cd ${SOL_DIR} ; abigen --abi $*.abi --pkg abi --type $* --out ${GEN_DIR}/$@ )
-
+abi/%.go : abi/%.abi
+	abigen --abi $< --pkg abi --type $* --out $@
+	goimports -w $@
+	go build $@
