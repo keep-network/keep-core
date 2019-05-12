@@ -19,7 +19,7 @@ import (
 type keepGroup struct {
 	caller          *abi.KeepGroupImplV1Caller
 	callerOpts      *bind.CallOpts
-	errorResolver   *errorResolver
+	errorResolver   *ErrorResolver
 	transactor      *abi.KeepGroupImplV1Transactor
 	transactorOpts  *bind.TransactOpts
 	contract        *abi.KeepGroupImplV1
@@ -118,7 +118,7 @@ func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
 		transactorOpts:  optsTransactor,
 		caller:          groupCaller,
 		callerOpts:      optsCaller,
-		errorResolver:   &errorResolver{chainConfig.client, &contractAbi, &contractAddress},
+		errorResolver:   NewErrorResolver(chainConfig.client, &contractAbi, &contractAddress),
 		contract:        groupContract,
 		contractAddress: contractAddress,
 	}, nil

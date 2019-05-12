@@ -18,7 +18,7 @@ import (
 type KeepRandomBeacon struct {
 	caller            *abi.KeepRandomBeaconImplV1Caller
 	callerOptions     *bind.CallOpts
-	errorResolver     *errorResolver
+	errorResolver     *ErrorResolver
 	contract          *abi.KeepRandomBeaconImplV1
 	contractAddress   common.Address
 	transactorOptions *bind.TransactOpts
@@ -88,7 +88,7 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 	return &KeepRandomBeacon{
 		caller:            beaconCaller,
 		callerOptions:     callerOptions,
-		errorResolver:     &errorResolver{chainConfig.client, &contractAbi, &contractAddress},
+		errorResolver:     NewErrorResolver(chainConfig.client, &contractAbi, &contractAddress),
 		contract:          randomBeaconContract,
 		contractAddress:   contractAddress,
 		transactorOptions: transactorOptions,

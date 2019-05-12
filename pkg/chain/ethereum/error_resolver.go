@@ -28,21 +28,28 @@ func init() {
 	}
 }
 
-// errorResolver bundles up the bits needed to turn errors like "failed to
+// ErrorResolver bundles up the bits needed to turn errors like "failed to
 // estimate gas needed" that are triggered by contract reverts but don't include
 // revert causes into proper revert error messages from a contract by calling
 // the contract method without trying to commit it.
 //
 // It has one method, ResolveError, that does the heavy lifting.
-type errorResolver struct {
+type ErrorResolver struct {
 	client  *ethclient.Client
 	abi     *abi.ABI
 	address *common.Address
 }
 
-// Resolves the given transaction error to a standard error that, if available,
-// contains the error message the transaction produced when reverting.
-func (er *errorResolver) ResolveError(originalErr error, value *big.Int, methodName string, parameters ...interface{}) error {
+// NewErrorResolver returns an ErroResolver for the given Ethereum client,
+// contract ABI, and contract address combination.
+func NewErrorResolver(client *ethclient.Client, abi *abi.ABI, address *common.Address) *ErrorResolver {
+	return &ErrorResolver{client, abi, address}
+}
+
+// ResolveError resolves the given transaction error to a standard error that,
+// if available, contains the error message the transaction produced when
+// reverting.
+func (er *ErrorResolver) ResolveError(originalErr error, value *big.Int, methodName string, parameters ...interface{}) error {
 	packed, err := er.abi.Pack(methodName, parameters...)
 	msg := ethereum.CallMsg{To: er.address, Data: packed, Value: value}
 
