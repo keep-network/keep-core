@@ -17,9 +17,11 @@ const tokenStakingContractAbi = tokenStakingContractParsed.abi;
 const keepTokenContractAbi = keepTokenContractParsed.abi;
 
 // Set contracts
-const stakingProxyContract = new web3.eth.Contract(stakingProxyContractAbi, "0xD4A23BF413c0C11084C6D25BCA1Afb2305781E80");
-const tokenStakingContract = new web3.eth.Contract(tokenStakingContractAbi, "0x765E2963955b98E1789972277136D9D735c022e9");
-const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, "0xdc3C6306a34005d3Eba0777E558715Fc2e21C5ba");
+const stakingProxyContract = new web3.eth.Contract(stakingProxyContractAbi, "0x9F77E21dB16ef8218640Be6E62472B675366377f");
+const tokenStakingContract = new web3.eth.Contract(tokenStakingContractAbi, "0xeFB960Ca430F982c0b6650C3544fD8244A117407");
+const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, "0x67a6c635b967fDBDB313eF6C043117b6780f978E");
+
+const owner = "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB"
 
 // \heimdall aliens numbers
 function formatAmount(amount, decimals) {
@@ -28,17 +30,26 @@ function formatAmount(amount, decimals) {
 
 // Stake a target eth account
 async function stakeEthAccount() {
-  let owner = "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB";
   let magpie = "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB";
-  let operator = "0xA86c468475EF9C2ce851Ea4125424672C3F7e0C8";
+  let operator = "0xa924d3a62b2d515235e5de5d903c405cba7f0e86";
 
   let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator)).substr(2), 'hex');
   let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
+  console.log(signature)
+  console.log(delegation)
+
   try{
-    if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).send({from: owner})) {
-      stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: owner})
+    if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).send({from: owner}).then((receipt) => {
+        console.log("isAuthorized Transaction Receipt:")
+        console.log(receipt)
+    })) {
+      await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: owner}).then((receipt) => {
+        console.log("authorizeContract Transaction Receipt:")
+        console.log(receipt)
+      })
     }
+    console.log("stakingProxy/tokenStaking Contracts Authorized!")
   }
   catch(error) {
     console.error(error);
@@ -47,12 +58,28 @@ async function stakeEthAccount() {
   try {
     await keepTokenContract.methods.approveAndCall(
       tokenStakingContract.address,
-      formatAmount(500, 18),
-      delegation).send({from: owner, gas: 4712388})
+      formatAmount(1000000, 18),
+      delegation).send({from: owner, gas: 4712388}).then((receipt) => {
+        console.log("Account" + operator + "staked!");
+        console.log(receipt);
+      });
   }
   catch(error) {
     console.error(error);
   }
 };
 
+async function unlockEthAccount() {
+
+  try {
+    console.log("Unlocking account: " + owner);
+    await web3.eth.personal.unlockAccount(owner, "doughnut_armenian_parallel_firework_backbite_employer_singlet", 700);
+    console.log("Account: " + owner + " unlocked!");
+  }
+  catch(error) {
+    console.log(error);
+  }
+}
+
+unlockEthAccount();
 stakeEthAccount();
