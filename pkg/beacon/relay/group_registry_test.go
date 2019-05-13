@@ -53,7 +53,7 @@ func TestRegisterGroup(t *testing.T) {
 	}
 }
 
-func TestUnregisterDeletedGroups(t *testing.T) {
+func TestUnregisterStaleGroups(t *testing.T) {
 	mockChain := &mockGroupRegistrationInterface{
 		groupsToRemove: [][]byte{},
 	}
@@ -104,7 +104,7 @@ func TestUnregisterDeletedGroups(t *testing.T) {
 	group2 := gr.GetGroup(signer2.GroupPublicKeyBytes())
 	if group2 != nil {
 		t.Fatalf(
-			"Group2 was expected to be deleted, but is still present",
+			"Group2 was expected to be unregistered, but is still present",
 		)
 	}
 
@@ -131,11 +131,11 @@ func (mgri *mockGroupRegistrationInterface) OnGroupRegistered(
 	panic("not implemented")
 }
 
-func (mgri *mockGroupRegistrationInterface) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	for _, groupToRemove := range mgri.groupsToRemove {
 		if bytes.Compare(groupToRemove, groupPublicKey) == 0 {
-			return false, nil
+			return true, nil
 		}
 	}
-	return true, nil
+	return false, nil
 }
