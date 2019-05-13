@@ -179,8 +179,9 @@ workflows:
           context: keep-dev
       - migrate_contracts_keep_dev:
           filters:
-            branches:
-              only: master
+ # commenting to test on remote branch.
+ #           branches:
+ #             only: master
           context: keep-dev
           requires:
             - build_client_and_test_go
@@ -191,6 +192,7 @@ workflows:
           context: keep-dev
           requires:
             - build_client_and_test_go
+            - migrate_contracts_keep_dev
   docs:
     jobs:
       - generate_docs_tex
