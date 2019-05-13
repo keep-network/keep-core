@@ -569,6 +569,20 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
+     * @dev Gets the random beacon value for the group selection currently in progress.
+     */
+    function randomBeaconValue() public view returns(uint256) {
+        return _randomBeaconValue;
+    }
+
+    /**
+     * @dev Returns true if the group selection is in progress.
+     */
+    function groupSelectionInProgress() public view returns(bool) {
+        return _groupSelectionInProgress;
+    }
+
+    /**
      * @dev Checks if a group with the given public key is registered.
      */
     function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
