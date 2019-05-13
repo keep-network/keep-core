@@ -57,6 +57,14 @@ func (er *errorResolver) ResolveError(originalErr error, value *big.Int, methodN
 	//
 	// Current spec-ish @ https://github.com/ethereum/EIPs/issues/838#issuecomment-458919375
 	// Bless Ethereum's heart.
+	if len(response) < 4 {
+		return fmt.Errorf(
+			"response [%v] was not long enough to interpret while resolving original error [%v]",
+			response,
+			originalErr,
+		)
+	}
+
 	errorID, encodedReturns := response[0:3], response[4:]
 
 	errorMethod, err := errorABI.MethodById(errorID)
