@@ -77,7 +77,7 @@ async function unlockEthAccount() {
     console.log("Account: " + owner + " unlocked!");
   }
   catch(error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
