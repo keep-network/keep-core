@@ -33,7 +33,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     uint256 internal _pendingWithdrawal;
     address internal _groupContract;
     uint256 internal _previousEntry;
-    uint256 internal _relayRequestTimeout; 
+    uint256 internal _relayRequestTimeout;
 
     mapping (string => bool) internal _initialized;
 
@@ -63,11 +63,9 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * Blocks are counted from the moment relay request occur.
      */
     function initialize(
-        uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, 
-        bytes memory genesisGroupPubKey, address groupContract, uint256 relayRequestTimeout)
-        public
-        onlyOwner
-    {
+        uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry,
+        bytes memory genesisGroupPubKey, address groupContract, uint256 relayRequestTimeout
+    ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         _minPayment = minPayment;
         _initialized["KeepRandomBeaconImplV1"] = true;
@@ -81,7 +79,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
         // to trigger the creation of the first group. Requests are removed on successful
         // entries so genesis entry can only be called once.
         _requestCounter++;
-        _requests[_requestCounter] = Request(msg.sender, 0, genesisGroupPubKey); 
+        _requests[_requestCounter] = Request(msg.sender, 0, genesisGroupPubKey);
     }
 
     /**
@@ -170,11 +168,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
         GroupContract(_groupContract).runGroupSelection(groupSignature);
     }
 
-    // TODO: implement this. THIS IS ONLY A STUB
-    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
-        return true;
-    }
-
     /**
      * @dev Gets the previous relay entry value.
      */
@@ -183,8 +176,15 @@ contract KeepRandomBeaconImplV1 is Ownable {
     }
 
     /**
+     * Gets the timeout in blocks for a relay entry to appear on the chain.
+     */
+    function relayRequestTimeout() public view returns(uint256) {
+        return _relayRequestTimeout;
+    }
+
+    /**
      * @dev Gets version of the current implementation.
-    */
+     */
     function version() public pure returns (string memory) {
         return "V1";
     }

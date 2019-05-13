@@ -10,6 +10,10 @@ import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 
+interface KeepRandomBeaconContract {
+  function relayRequestTimeout() external view returns(uint256);
+}
+
 contract KeepGroupImplV1 is Ownable {
 
     using SafeMath for uint256;
@@ -559,16 +563,44 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Checks if a group with the given public key is registered.
+     * @dev Gets the cutoff time in blocks until which the given group is
+     * considered as an active group. The group may not be marked as expired
+     * even though its active time has passed if one of the rules inside
+     * `selectGroup` function are not met (e.g. minimum active group threshold).
+     * Hence, this value informs when the group may no longer be considered
+     * as active but it does not mean that the group will be immediatelly
+     * considered not as such.
      */
-    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
+    function groupActiveTime(Group memory group) internal view returns(uint256) {
+        return group.registrationBlockHeight + _activeTime;
+    }
+
+    /**
+     * @dev Gets the cutoff time in blocks after which the given group is
+     * considered as stale. Stale group is an expired group which is no longer
+     * performing any operations.
+     */
+    function groupStaleTime(Group memory group) internal view returns(uint256) {
+        return groupActiveTime(group) + KeepRandomBeaconContract(_randomBeacon).relayRequestTimeout();
+    }
+
+    /**
+     * @dev Checks if a group with the given public key is a stale group.
+     * Stale group is an expired group which is no longer performing any
+     * operations. It is important to understand that an expired group may
+     * still perform some operations for which it was selected when it was still
+     * active. We consider a group to be stale when it's expired and when its
+     * expiration time and potentially executed operation timeout are both in
+     * the past.
+     */
+    function isStaleGroup(bytes memory groupPubKey) public view returns(bool) {
         for (uint i = 0; i < numberOfGroups(); i++) {
             if (_groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                return true;
+                return groupStaleTime(_groups[i]) < block.number;
             }
         }
 
-        return false;
+        return true; // no group found, consider it as a stale group
     }
 
     /**
@@ -596,7 +628,7 @@ contract KeepGroupImplV1 is Ownable {
         * mark expired groups in batches, in a fewer number of steps.
         */
         if (numberOfActiveGroups > _activeGroupsThreshold) {
-            while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _activeTime < block.number) {
+            while (groupActiveTime(_groups[_expiredOffset + selectedGroup]) < block.number) {
                 /**
                 * We do -1 to see how many groups are available after the potential removal.
                 * For example:
