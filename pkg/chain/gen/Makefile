@@ -10,6 +10,10 @@ contract_files := $(foreach file, $(contract_candidates), contract/$(notdir $(su
 
 all: gen_contract_go
 
+clean:
+	rm -rf ${abi_files}
+	rm -rf ${contract_files}
+
 gen_abi_go: $(abi_files)
 
 gen_contract_go: $(contract_files)
