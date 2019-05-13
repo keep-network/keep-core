@@ -27,7 +27,13 @@ func newChannelManager(
 	identity *identity,
 	p2phost host.Host,
 ) (*channelManager, error) {
-	floodsub, err := pubsub.NewFloodSub(ctx, p2phost)
+	floodsub, err := pubsub.NewFloodSub(
+		ctx,
+		p2phost,
+		pubsub.WithMessageAuthor(identity.id),
+		pubsub.WithMessageSigning(true),
+		pubsub.WithStrictSignatureVerification(true),
+	)
 	if err != nil {
 		return nil, err
 	}

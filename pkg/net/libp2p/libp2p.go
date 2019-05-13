@@ -72,7 +72,7 @@ func (p *provider) ID() net.TransportIdentifier {
 func (p *provider) AddrStrings() []string {
 	multiaddrStrings := make([]string, 0, len(p.addrs))
 	for _, multiaddr := range p.addrs {
-		addrWithIdentity := fmt.Sprintf("%s/ipfs/%s", multiaddr.String(), p.identity.id.Pretty())
+		addrWithIdentity := fmt.Sprintf("%s/ipfs/%s", multiaddr.String(), p.identity.id.String())
 		multiaddrStrings = append(multiaddrStrings, addrWithIdentity)
 	}
 
@@ -87,7 +87,7 @@ func (p *provider) Peers() []string {
 		if peer == p.identity.id {
 			continue
 		}
-		peers = append(peers, peer.Pretty())
+		peers = append(peers, peer.String())
 	}
 	return peers
 }
