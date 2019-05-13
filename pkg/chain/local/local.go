@@ -25,10 +25,21 @@ var seedGroupPublicKey = []byte("seed to group public key")
 var seedRelayEntry = big.NewInt(123456789)
 var groupActiveTime = uint64(10)
 
+// Chain is an extention of chain.Handle interface which exposes
+// additional functions useful for testing.
+type Chain interface {
+	chain.Handle
+
+	// GetDKGResult returns DKG result submitted to the chain for the given
+	// request ID.
+	GetDKGResult(requestID *big.Int) *relaychain.DKGResult
+}
+
 type localGroup struct {
 	groupPublicKey          []byte
 	registrationBlockHeight uint64
 }
+
 type localChain struct {
 	relayConfig *relayconfig.Chain
 
@@ -224,7 +235,7 @@ func (c *localChain) ThresholdRelay() relaychain.Interface {
 
 // Connect initializes a local stub implementation of the chain interfaces
 // for testing.
-func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
+func Connect(groupSize int, threshold int, minimumStake *big.Int) Chain {
 	bc, _ := blockCounter()
 
 	tokenSupply, naturalThreshold := calculateGroupSelectionParameters(
@@ -442,6 +453,10 @@ func (c *localChain) OnDKGResultSubmitted(
 
 		delete(c.resultSubmissionHandlers, handlerID)
 	}), nil
+}
+
+func (c *localChain) GetDKGResult(requestID *big.Int) *relaychain.DKGResult {
+	return c.submittedResults[requestID.String()]
 }
 
 // CalculateDKGResultHash calculates a 256-bit hash of the DKG result.

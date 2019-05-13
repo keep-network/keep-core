@@ -9,7 +9,9 @@ import (
 	"testing"
 	"time"
 
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
@@ -82,7 +84,7 @@ func assertSignersCount(
 
 func assertSamePublicKey(
 	t *testing.T,
-	result *event.DKGResultSubmission,
+	result *relaychain.DKGResult,
 	signers []*ThresholdSigner,
 ) {
 	for _, signer := range signers {
@@ -98,7 +100,7 @@ func executeDKG(
 	groupSize int,
 	threshold int,
 	network testutils.InterceptingNetwork,
-) (*event.DKGResultSubmission, []*ThresholdSigner, error) {
+) (*relaychain.DKGResult, []*ThresholdSigner, error) {
 	minimumStake, requestID, seed, startBlockHeight, err := getDKGParameters()
 	if err != nil {
 		return nil, nil, err
@@ -151,8 +153,9 @@ func executeDKG(
 	defer cancel()
 
 	select {
-	case result := <-resultChan:
-		return result, signers, nil
+	case _ = <-resultChan:
+		// result was published to the chain, let's fetch it
+		return chainHandle.GetDKGResult(requestID), signers, nil
 	case <-ctx.Done():
 		return nil, signers, fmt.Errorf("No result published to the chain")
 	}
