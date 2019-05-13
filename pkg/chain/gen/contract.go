@@ -1,4 +1,4 @@
-//go:generate make
+//go:generate sh -c "SOLIDITY_DIR=../../../contracts/solidity make"
 // Code generation execution command requires the package to be set to `main`.
 package main
 
