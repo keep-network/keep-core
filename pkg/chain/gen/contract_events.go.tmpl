@@ -11,7 +11,7 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) Watch{{$event.CapsName}}(
 	{{$event.IndexedFilterDeclarations -}}
 ) (subscription.EventSubscription, error) {
 	eventChan := make(chan *abi.{{$contract.AbiClass}}{{$event.CapsName}})
-	eventSubscription, err := krb.contract.Watch{{$event.CapsName}}(
+	eventSubscription, err := {{$contract.ShortVar}}.contract.Watch{{$event.CapsName}}(
 		nil,
 		eventChan,
 		{{$event.IndexedFilters}}
