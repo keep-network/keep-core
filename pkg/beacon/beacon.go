@@ -34,11 +34,14 @@ func Initialize(
 		return err
 	}
 
+	groupRegistry := relay.NewGroupRegistry(relayChain)
+
 	node := relay.NewNode(
 		staker,
 		netProvider,
 		blockCounter,
 		chainConfig,
+		groupRegistry,
 	)
 
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
@@ -73,7 +76,8 @@ func Initialize(
 	})
 
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
-		fmt.Printf("New group registered [%+v]\n", registration)
+		fmt.Printf("New group registered on chain [%+v]\n", registration)
+		go groupRegistry.UnregisterDeletedGroups()
 	})
 
 	return nil

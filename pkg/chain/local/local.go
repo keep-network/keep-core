@@ -1,6 +1,7 @@
 package local
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -22,7 +23,12 @@ import (
 
 var seedGroupPublicKey = []byte("seed to group public key")
 var seedRelayEntry = big.NewInt(123456789)
+var groupActiveTime = uint64(10)
 
+type localGroup struct {
+	groupPublicKey          []byte
+	registrationBlockHeight uint64
+}
 type localChain struct {
 	relayConfig *relayconfig.Chain
 
@@ -32,9 +38,9 @@ type localChain struct {
 	submittedResultsMutex sync.Mutex
 	// Map of submitted DKG Results. Key is a RequestID of the specific DKG
 	// execution.
-	submittedResults map[*big.Int][]*relaychain.DKGResult
+	submittedResults map[string]*relaychain.DKGResult
 
-	groups [][]byte
+	groups []localGroup
 
 	handlerMutex             sync.Mutex
 	relayEntryHandlers       map[int]func(entry *event.Entry)
@@ -226,6 +232,12 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		minimumStake,
 	)
 
+	currentBlock, _ := bc.CurrentBlock()
+	group := localGroup{
+		groupPublicKey:          seedGroupPublicKey,
+		registrationBlockHeight: currentBlock,
+	}
+
 	return &localChain{
 		relayConfig: &relayconfig.Chain{
 			GroupSize:                       groupSize,
@@ -239,7 +251,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 			NaturalThreshold:                naturalThreshold,
 		},
 		groupRelayEntries:        make(map[string]*big.Int),
-		submittedResults:         make(map[*big.Int][]*relaychain.DKGResult),
+		submittedResults:         make(map[string]*relaychain.DKGResult),
 		relayEntryHandlers:       make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
 		groupRegisteredHandlers:  make(map[int]func(groupRegistration *event.GroupRegistration)),
@@ -248,7 +260,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		stakeMonitor:             NewStakeMonitor(minimumStake),
 		tickets:                  make([]*relaychain.Ticket, 0),
 		latestValue:              seedRelayEntry,
-		groups:                   [][]byte{seedGroupPublicKey},
+		groups:                   []localGroup{group},
 	}
 }
 
@@ -295,7 +307,7 @@ func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 		RequestID:      big.NewInt(c.requestID),
 		Payment:        big.NewInt(1),
 		PreviousEntry:  c.latestValue,
-		GroupPublicKey: c.groups[selectedIdx],
+		GroupPublicKey: c.groups[selectedIdx].groupPublicKey,
 		Seed:           seed,
 	}
 	atomic.AddUint64(&c.simulatedHeight, 1)
@@ -314,13 +326,35 @@ func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 	return promise
 }
 
+// IsGroupRegistered simulates a check if a group can be cleaned on off-chain
+func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
+
+	bc, _ := blockCounter()
+	bc.WaitForBlockHeight(c.simulatedHeight)
+	currentBlock, err := bc.CurrentBlock()
+
+	if err != nil {
+		return false, fmt.Errorf("could not determine current block: [%v]", err)
+	}
+
+	for _, group := range c.groups {
+		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
+			return group.registrationBlockHeight+groupActiveTime < currentBlock, nil
+		}
+	}
+
+	return true, nil
+}
+
 // IsDKGResultPublished simulates check if the result was already submitted to a
 // chain.
 func (c *localChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
-	return c.submittedResults[requestID] != nil, nil
+	return c.submittedResults[requestID.String()] != nil, nil
 }
 
 // SubmitDKGResult submits the result to a chain.
@@ -335,18 +369,16 @@ func (c *localChain) SubmitDKGResult(
 
 	dkgResultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
-	for publishedRequestID, publishedResults := range c.submittedResults {
-		if publishedRequestID.Cmp(requestID) == 0 {
-			for _, publishedResult := range publishedResults {
-				if publishedResult.Equals(resultToPublish) {
-					dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
-					return dkgResultPublicationPromise
-				}
-			}
-		}
+	_, ok := c.submittedResults[requestID.String()]
+	if ok {
+		dkgResultPublicationPromise.Fail(fmt.Errorf(
+			"result for request ID [%v] is already submitted",
+			requestID,
+		))
+		return dkgResultPublicationPromise
 	}
 
-	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
+	c.submittedResults[requestID.String()] = resultToPublish
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
@@ -361,7 +393,11 @@ func (c *localChain) SubmitDKGResult(
 		BlockNumber:    currentBlock,
 	}
 
-	c.groups = append(c.groups, resultToPublish.GroupPublicKey)
+	myGroup := localGroup{
+		groupPublicKey:          resultToPublish.GroupPublicKey,
+		registrationBlockHeight: currentBlock,
+	}
+	c.groups = append(c.groups, myGroup)
 
 	groupRegistrationEvent := &event.GroupRegistration{
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],

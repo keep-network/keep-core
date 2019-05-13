@@ -8,7 +8,7 @@ import "./BLS.sol";
 interface GroupContract {
     function runGroupSelection(uint256 randomBeaconValue) external;
     function numberOfGroups() external view returns(uint256);
-    function selectGroup(uint256 previousEntry) external view returns(bytes memory);
+    function selectGroup(uint256 previousEntry) external returns(bytes memory);
 }
 
 
@@ -170,7 +170,10 @@ contract KeepRandomBeaconImplV1 is Ownable {
         GroupContract(_groupContract).runGroupSelection(groupSignature);
     }
 
-    // TODO: select a new group to serve a pending relay request if the timeout passed
+    // TODO: implement this. THIS IS ONLY A STUB
+    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
+        return true;
+    }
 
     /**
      * @dev Gets the previous relay entry value.

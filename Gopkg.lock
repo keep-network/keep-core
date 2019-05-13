@@ -465,14 +465,14 @@
   revision = "a60cde50df6872512892ca85019341d281f72a42"
 
 [[projects]]
-  digest = "1:98ba50b85540c26418d2be6ed040180eff0c0b990bdc91cc4fcb3124a5d0c0cb"
+  digest = "1:33710dd8ece1f40dc87aec93bcd3f4ab83807e048804a5be8027bc405dcdbf0d"
   name = "github.com/libp2p/go-libp2p-peer"
   packages = [
     ".",
     "peerset",
   ]
   pruneopts = ""
-  revision = "9b0c59cc3369e1302b45f9861970356c223a858e"
+  revision = "9ccddf5f5d8318b00658dfbc06a4e32b16bae6a9"
 
 [[projects]]
   digest = "1:1a2e37c37655416b2906e160ce40a0b3112015dfd8175aad63b64b0edeb6dfef"
@@ -495,14 +495,14 @@
   version = "v0.0.1"
 
 [[projects]]
-  digest = "1:c8a189ed4576fcea40555e90d92be261940657022840f19e0cc085cccd1aa7c9"
+  digest = "1:343515b618d0af7196a3a76b42528d634eaf070b8a7e3a79b359709be3344d0b"
   name = "github.com/libp2p/go-libp2p-pubsub"
   packages = [
     ".",
     "pb",
   ]
   pruneopts = ""
-  revision = "f8276dc198de05a85607bd2f24f26fa61381a50e"
+  revision = "9f0263ae4ee591809366f5685e7fc1e5764a3280"
 
 [[projects]]
   digest = "1:68fd55a3a3e4abc02cc8689623b864b35db9a00ae5bd6d99863c54b60f6737d2"
