@@ -34,14 +34,14 @@ ssh utilitybox << EOF
   cd /tmp/$BUILD_TAG/solidity
 
   npm init -y
-  sudo npm install -g truffle@5.0.7
+  npm install truffle@5.0.7
   npm install openzeppelin-solidity
   npm install solidity-bytes-utils
   npm install babel-register
   npm install babel-polyfill
 
   cp ./truffle_sample.js ./truffle.js
-  sudo truffle migrate --reset --network $TRUFFLE_NETWORK
+  ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
 EOF
 
 ssh utilitybox rm -rf /tmp/$BUILD_TAG
