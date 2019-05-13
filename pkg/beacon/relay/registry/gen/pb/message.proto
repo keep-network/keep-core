@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option go_package = "pb";
+package registry;
+
+message MembershipMessage {
+    uint32 memberIndex = 1;
+    bytes groupPublicKey = 2;
+    string groupPrivateKeyShare = 3;
+    string channel = 4;
+}

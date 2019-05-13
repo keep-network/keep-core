@@ -1,4 +1,4 @@
-package groupregistry
+package registry
 
 import (
 	"bytes"
@@ -22,7 +22,7 @@ func TestRegisterGroup(t *testing.T) {
 		big.NewInt(1),
 	)
 
-	gr := &GroupRegistry{
+	gr := &Groups{
 		mutex:      sync.Mutex{},
 		myGroups:   make(map[string][]*Membership),
 		relayChain: chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay(),
@@ -58,7 +58,7 @@ func TestUnregisterDeletedGroups(t *testing.T) {
 		groupsToRemove: [][]byte{},
 	}
 
-	gr := &GroupRegistry{
+	gr := &Groups{
 		mutex:      sync.Mutex{},
 		myGroups:   make(map[string][]*Membership),
 		relayChain: mockChain,

@@ -15,9 +15,9 @@ import (
 // revealed. It also contains group's public key and ID of GJKR Member
 // represented by this ThresholdSigner instance.
 type ThresholdSigner struct {
-	memberIndex          group.MemberIndex
-	groupPublicKey       *bn256.G2
-	groupPrivateKeyShare *big.Int
+	MemberIndex          group.MemberIndex
+	GroupPublicKey       *bn256.G2
+	GroupPrivateKeyShare *big.Int
 }
 
 // NewThresholdSigner returns a new ThresholdSigner
@@ -27,27 +27,27 @@ func NewThresholdSigner(
 	groupPrivateKeyShare *big.Int,
 ) *ThresholdSigner {
 	return &ThresholdSigner{
-		memberIndex:          memberIndex,
-		groupPublicKey:       groupPublicKey,
-		groupPrivateKeyShare: groupPrivateKeyShare,
+		MemberIndex:          memberIndex,
+		GroupPublicKey:       groupPublicKey,
+		GroupPrivateKeyShare: groupPrivateKeyShare,
 	}
 }
 
 // MemberID returns GJKR MemberID represented by this ThresholdSigner.
 func (ts *ThresholdSigner) MemberID() group.MemberIndex {
-	return ts.memberIndex
+	return ts.MemberIndex
 }
 
 // GroupPublicKeyBytes returns group public key representation in bytes.
 func (ts *ThresholdSigner) GroupPublicKeyBytes() []byte {
-	altbn128GroupPublicKey := altbn128.G2Point{G2: ts.groupPublicKey}
+	altbn128GroupPublicKey := altbn128.G2Point{G2: ts.GroupPublicKey}
 	return altbn128GroupPublicKey.Compress()
 }
 
 // CalculateSignatureShare takes the message and calculates signer's signature
 // share over that message.
 func (ts *ThresholdSigner) CalculateSignatureShare(message []byte) *bn256.G1 {
-	return bls.Sign(ts.groupPrivateKeyShare, message)
+	return bls.Sign(ts.GroupPrivateKeyShare, message)
 }
 
 // CompleteSignature accepts signature shares from all group threshold signers

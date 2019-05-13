@@ -1,4 +1,4 @@
-package groupregistry
+package registry
 
 import (
 	"fmt"
@@ -10,9 +10,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// GroupRegistry represents a collection of Keep groups in which the given
+// Groups represents a collection of Keep groups in which the given
 // client is a member.
-type GroupRegistry struct {
+type Groups struct {
 	mutex sync.Mutex
 
 	myGroups map[string][]*Membership
@@ -29,8 +29,8 @@ type Membership struct {
 // NewGroupRegistry returns an empty GroupRegistry.
 func NewGroupRegistry(
 	relayChain relaychain.GroupRegistrationInterface,
-) *GroupRegistry {
-	return &GroupRegistry{
+) *Groups {
+	return &Groups{
 		myGroups:   make(map[string][]*Membership),
 		relayChain: relayChain,
 	}
@@ -38,7 +38,7 @@ func NewGroupRegistry(
 
 // RegisterGroup registers that a group was successfully created by the given
 // groupPublicKey.
-func (gr *GroupRegistry) RegisterGroup(
+func (gr *Groups) RegisterGroup(
 	signer *dkg.ThresholdSigner,
 	channel net.BroadcastChannel,
 ) {
@@ -56,7 +56,7 @@ func (gr *GroupRegistry) RegisterGroup(
 }
 
 // GetGroup gets a group by a groupPublicKey
-func (gr *GroupRegistry) GetGroup(groupPublicKey []byte) []*Membership {
+func (gr *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
@@ -64,7 +64,7 @@ func (gr *GroupRegistry) GetGroup(groupPublicKey []byte) []*Membership {
 }
 
 // UnregisterDeletedGroups lookup for groups to be removed.
-func (gr *GroupRegistry) UnregisterDeletedGroups() {
+func (gr *Groups) UnregisterDeletedGroups() {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 

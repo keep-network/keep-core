@@ -73,9 +73,9 @@ func TestSignAndComplete(t *testing.T) {
 
 			share, _ := new(big.Int).SetString(privateKeyShare, 10)
 			signers = append(signers, &ThresholdSigner{
-				memberIndex:          memberID,
-				groupPublicKey:       groupPublicKey,
-				groupPrivateKeyShare: share,
+				MemberIndex:          memberID,
+				GroupPublicKey:       groupPublicKey,
+				GroupPrivateKeyShare: share,
 			})
 		}
 
