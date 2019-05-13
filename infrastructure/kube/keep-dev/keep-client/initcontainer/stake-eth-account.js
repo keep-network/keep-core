@@ -41,15 +41,15 @@ async function stakeEthAccount() {
 
   try{
     if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).send({from: owner}).then((receipt) => {
-        console.log("isAuthorized Transaction Receipt:")
+        console.log("isAuthorized transaction receipt:")
         console.log(receipt)
     })) {
       await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: owner}).then((receipt) => {
-        console.log("authorizeContract Transaction Receipt:")
+        console.log("authorizeContract transaction receipt:")
         console.log(receipt)
       })
     }
-    console.log("stakingProxy/tokenStaking Contracts Authorized!")
+    console.log("stakingProxy/tokenStaking contracts authorized!")
   }
   catch(error) {
     console.error(error);
@@ -60,7 +60,7 @@ async function stakeEthAccount() {
       tokenStakingContract.address,
       formatAmount(1000000, 18),
       delegation).send({from: owner, gas: 4712388}).then((receipt) => {
-        console.log("Account" + operator + "staked!");
+        console.log("Account " + operator + " staked!");
         console.log(receipt);
       });
   }
