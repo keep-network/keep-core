@@ -1,6 +1,6 @@
 package main
 
-//go:generate make
+//go:generate sh -c "SOLIDITY_DIR=../../../contracts/solidity make"
 
 import (
 	"encoding/json"

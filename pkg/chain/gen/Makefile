@@ -1,4 +1,4 @@
-solidity_dir=$(realpath ../../../contracts/solidity)
+solidity_dir=$(realpath ${SOLIDITY_DIR})
 solidity_files := $(wildcard ${solidity_dir}/contracts/*.sol)
 
 abi_files := $(foreach file, $(solidity_files), abi/$(notdir $(basename $(file))).go)
