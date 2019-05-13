@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 // ABI for errors bubbled out from revert calls. Not used directly as errors are
@@ -35,15 +34,19 @@ func init() {
 //
 // It has one method, ResolveError, that does the heavy lifting.
 type ErrorResolver struct {
-	client  *ethclient.Client
-	abi     *abi.ABI
-	address *common.Address
+	contractCaller ethereum.ContractCaller
+	abi            *abi.ABI
+	address        *common.Address
 }
 
 // NewErrorResolver returns an ErroResolver for the given Ethereum client,
 // contract ABI, and contract address combination.
-func NewErrorResolver(client *ethclient.Client, abi *abi.ABI, address *common.Address) *ErrorResolver {
-	return &ErrorResolver{client, abi, address}
+func NewErrorResolver(
+	contractCaller ethereum.ContractCaller,
+	abi *abi.ABI,
+	address *common.Address,
+) *ErrorResolver {
+	return &ErrorResolver{contractCaller, abi, address}
 }
 
 // ResolveError resolves the given transaction error to a standard error that,
@@ -53,7 +56,7 @@ func (er *ErrorResolver) ResolveError(originalErr error, value *big.Int, methodN
 	packed, err := er.abi.Pack(methodName, parameters...)
 	msg := ethereum.CallMsg{To: er.address, Data: packed, Value: value}
 
-	response, err := er.client.CallContract(context.TODO(), msg, nil)
+	response, err := er.contractCaller.CallContract(context.TODO(), msg, nil)
 	if err != nil {
 		return fmt.Errorf("got error [%v] while resolving original error [%v]", err, originalErr)
 	}
