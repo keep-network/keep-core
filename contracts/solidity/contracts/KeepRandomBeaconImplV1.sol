@@ -8,7 +8,7 @@ import "./BLS.sol";
 interface GroupContract {
     function runGroupSelection(uint256 randomBeaconValue) external;
     function numberOfGroups() external view returns(uint256);
-    function selectGroup(uint256 previousEntry) external view returns(bytes memory);
+    function selectGroup(uint256 previousEntry) external returns(bytes memory);
 }
 
 

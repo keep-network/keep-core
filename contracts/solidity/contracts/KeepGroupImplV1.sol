@@ -20,7 +20,7 @@ contract KeepGroupImplV1 is Ownable {
 
     // TODO: Rename to DkgResultSubmittedEvent
     // TODO: Add memberIndex
-    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey); 
+    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey);
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -50,9 +50,21 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
+    // _activeGroupsThreshold is the minimal number of groups that should not
+    // expire to protect the minimal network throughput.
+    // It should be at least 1.
+    uint256 internal _activeGroupsThreshold;
+ 
+    // _activeTime is the time in block after which a group expires
+    uint256 internal _activeTime;
+ 
+    // _expiredOffset is pointing to the first active group, it is also the
+    // expired groups counter
+    uint256 internal _expiredOffset = 0;
+
     struct Group {
         bytes groupPubKey;
-        uint registrationTime;
+        uint registrationBlockHeight;
     }
 
     Group[] internal _groups;
@@ -382,6 +394,9 @@ contract KeepGroupImplV1 is Ownable {
      * @param timeDKG Timeout in blocks after DKG result is complete and ready to be published.
      * @param resultPublicationBlockStep Time in blocks after which member with the given index is eligible
      * to submit DKG result.
+     * @param activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
+     * needs to be greater than 0.
+     * @param activeTime is the time in block after which a group expires.
      */
     function initialize(
         address stakingProxy,
@@ -393,10 +408,13 @@ contract KeepGroupImplV1 is Ownable {
         uint256 timeoutSubmission,
         uint256 timeoutChallenge,
         uint256 timeDKG,
-        uint256 resultPublicationBlockStep
+        uint256 resultPublicationBlockStep,
+        uint256 activeGroupsThreshold,
+        uint256 activeTime
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
+        require(activeGroupsThreshold > 0, "The minumum number of active groups needs to be more than zero.");
         _initialized["KeepGroupImplV1"] = true;
         _stakingProxy = stakingProxy;
         _randomBeacon = randomBeacon;
@@ -408,6 +426,8 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutChallenge = timeoutChallenge;
         _timeDKG = timeDKG;
         _resultPublicationBlockStep = resultPublicationBlockStep;
+        _activeGroupsThreshold = activeGroupsThreshold;
+        _activeTime = activeTime;
     }
 
     /**
@@ -535,11 +555,11 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Gets number of active groups.
      */
     function numberOfGroups() public view returns(uint256) {
-        return _groups.length;
+        return _groups.length - _expiredOffset;
     }
 
     /**
-     * @dev Checks if a group with the given public key is registered. 
+     * @dev Checks if a group with the given public key is registered.
      */
     function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
         for (uint i = 0; i < numberOfGroups(); i++) {
@@ -552,11 +572,59 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Returns public key of a group from available groups using modulo operator.
+     * @dev Returns public key of a group from active groups using modulo operator.
      * @param previousEntry Previous random beacon value.
      */
-    function selectGroup(uint256 previousEntry) public view returns(bytes memory) {
-        return _groups[previousEntry % _groups.length].groupPubKey;
+    function selectGroup(uint256 previousEntry) public returns(bytes memory) {
+        uint256 numberOfActiveGroups = _groups.length - _expiredOffset;
+        uint256 selectedGroup = previousEntry % numberOfActiveGroups;
+
+        /**
+        * We selected a group based on the information about expired groups offset
+        * from the previous call of the function. Now we need to check whether the
+        * selected group did not expire in the meantime. To do that, we compare its
+        * registration block height and group expiration timeout against the
+        * current block number. If the group has expired we move the expired groups
+        * offset to the position of the selected expired group and we try to select
+        * the next group knowing that all groups before the one previously selected
+        * are expired and should not be taken into account. We do this until we
+        * find an active group or until we reach the minimum active groups
+        * threshold.
+        *
+        * This approach is more efficient than traversing all groups one by one
+        * starting from the previous value of expired groups offset since we can
+        * mark expired groups in batches, in a fewer number of steps.
+        */
+        if (numberOfActiveGroups > _activeGroupsThreshold) {
+            while (_groups[_expiredOffset + selectedGroup].registrationBlockHeight + _activeTime < block.number) {
+                /**
+                * We do -1 to see how many groups are available after the potential removal.
+                * For example:
+                * _groups = [EEEAAAA]
+                * - assuming selectedGroup = 0, then we'll have 4-0-1=3 groups after the removal: [EEEEAAA]
+                * - assuming selectedGroup = 1, then we'll have 4-1-1=2 groups after the removal: [EEEEEAA]
+                * - assuming selectedGroup = 2, then, we'll have 4-2-1=1 groups after the removal: [EEEEEEA]
+                * - assuming selectedGroup = 3, then, we'll have 4-3-1=0 groups after the removal: [EEEEEEE]
+                */
+                if (numberOfActiveGroups - selectedGroup - 1 > _activeGroupsThreshold) {
+                    selectedGroup++;
+                    _expiredOffset += selectedGroup;
+                    numberOfActiveGroups -= selectedGroup;
+                    selectedGroup = previousEntry % numberOfActiveGroups;
+                } else {
+                    /* Number of groups that did not expire is less or equal _activeGroupsThreshold
+                    * and we have more groups than _activeGroupsThreshold (including those expired) groups.
+                    * Hence, we maintain the minimum _activeGroupsThreshold of active groups and
+                    * do not let any other groups to expire
+                    */
+                    _expiredOffset = _groups.length - _activeGroupsThreshold;
+                    numberOfActiveGroups = _activeGroupsThreshold;
+                    selectedGroup = previousEntry % numberOfActiveGroups;
+                    break;
+                }
+            }
+        }
+        return _groups[_expiredOffset + selectedGroup].groupPubKey;
     }
 
     /**
