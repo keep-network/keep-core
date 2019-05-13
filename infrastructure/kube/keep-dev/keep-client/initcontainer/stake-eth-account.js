@@ -12,38 +12,47 @@ const stakingProxyContractParsed = JSON.parse(fs.readFileSync(stakingProxyContra
 const tokenStakingContractParsed = JSON.parse(fs.readFileSync(tokenStakingContractJsonFile));
 const keepTokenContractParsed = JSON.parse(fs.readFileSync(keepTokenContractJsonFile));
 
-const stakingProxyContractAbi = stakingProxyContractParsed.abi
-const tokenStakingContractAbi = tokenStakingContractParsed.abi
-const keepTokenContractAbi = keepTokenContractParsed.abi
+const stakingProxyContractAbi = stakingProxyContractParsed.abi;
+const tokenStakingContractAbi = tokenStakingContractParsed.abi;
+const keepTokenContractAbi = keepTokenContractParsed.abi;
 
 // Set contracts
-const stakingProxyContract = new web3.eth.Contract([stakingProxyContractAbi], 0xd51b7aEC4d83B187A7810E22f8DfAcbd84136451);
-const tokenStakingContract = new web3.eth.Contract([tokenStakingContractAbi], 0xAb23e60EE417940903c1a440c31E8FA29837cb43);
-const keepTokenContract = new web3.eth.Contract([keepTokenContractAbi], 0x9AF9C7d3B2720cBd8ea7088c3733eA3e797Ad402);
+const stakingProxyContract = new web3.eth.Contract(stakingProxyContractAbi, "0xD4A23BF413c0C11084C6D25BCA1Afb2305781E80");
+const tokenStakingContract = new web3.eth.Contract(tokenStakingContractAbi, "0x765E2963955b98E1789972277136D9D735c022e9");
+const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, "0xdc3C6306a34005d3Eba0777E558715Fc2e21C5ba");
 
 // \heimdall aliens numbers
 function formatAmount(amount, decimals) {
-  return web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals)))
+  return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex')
 }
 
 // Stake a target eth account
 async function stakeEthAccount() {
-  let owner = "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB"
-  let magpie = "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB"
-  let operator = "0xA86c468475EF9C2ce851Ea4125424672C3F7e0C8"
+  let owner = "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB";
+  let magpie = "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB";
+  let operator = "0xA86c468475EF9C2ce851Ea4125424672C3F7e0C8";
 
   let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator)).substr(2), 'hex');
   let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
-  if (!await stakingProxyContract.isAuthorized(tokenStakingContract.address)) {
-    stakingProxyContract.authorizeContract(tokenStakingContract.address);
+  try{
+    if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).send({from: owner})) {
+      stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: owner})
+    }
+  }
+  catch(error) {
+    console.error(error);
   }
 
-  //await keepTokenContract.approveAndCall(
-  //  tokenStakingContract.address,
-  //  formatAmount(1000000, 18),
-  //  delegation,
-  //  {from: owner});
-}
+  try {
+    await keepTokenContract.methods.approveAndCall(
+      tokenStakingContract.address,
+      formatAmount(500, 18),
+      delegation).send({from: owner, gas: 4712388})
+  }
+  catch(error) {
+    console.error(error);
+  }
+};
 
-stakeEthAccount()
+stakeEthAccount();
