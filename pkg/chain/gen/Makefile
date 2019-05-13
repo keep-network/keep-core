@@ -1,6 +1,11 @@
+# Environment provides the solidity directory as a potentially-relative path,
+# which we resolve. Then we resolve the Solidity files in a contracts/ directory
+# at that path.
 solidity_dir=$(realpath ${SOLIDITY_DIR})
 solidity_files := $(wildcard ${solidity_dir}/contracts/*.sol)
 
+# ABI bindings from abigen share the same base name as their Solidity
+# counterparts and are put in the abi/ subdirectory.
 abi_files := $(foreach file, $(solidity_files), abi/$(notdir $(basename $(file))).go)
 # *ImplV1.go files will get generated into first-class clean contract bindings.
 # The corresponding contract filenames will drop the ImplV1 and live in the
