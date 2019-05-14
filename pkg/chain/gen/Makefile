@@ -33,10 +33,6 @@ abi/%.abi: ${solidity_dir}/contracts/%.sol
 
 abi/%.go : abi/%.abi
 	abigen --abi $< --pkg abi --type $* --out $@
-	goimports -w $@
-	go build $@
 
 contract/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go
 	go run ./ $< $@
-	goimports -w $@
-	go build $@

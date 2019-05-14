@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,6 +14,7 @@ import (
 	"text/template"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"golang.org/x/tools/imports"
 )
 
 // The extracted name + payability of methods from ABI JSON.
@@ -103,15 +105,6 @@ func main() {
 		))
 	}
 
-	outputFile, err := os.Create(outputPath)
-	if err != nil {
-		panic(fmt.Sprintf(
-			"Failed to create Go file at [%v]: [%v].",
-			outputPath,
-			err,
-		))
-	}
-
 	templates, err := template.ParseGlob("*.go.tmpl")
 	if err != nil {
 		panic(fmt.Sprintf("Failed to parse templates: [%v].", err))
@@ -142,10 +135,19 @@ func main() {
 	abiClassName = abiClassName[0 : len(abiClassName)-4] // strip .abi
 	contractInfo := buildContractInfo(abiClassName, &abi, payableInfo)
 
-	err = templates.ExecuteTemplate(outputFile, "contract.go.tmpl", contractInfo)
+	buf, err := generateCode(outputPath, templates, &contractInfo)
 	if err != nil {
 		panic(fmt.Sprintf(
 			"Failed to generate Go file at [%v]: [%v].",
+			outputPath,
+			err,
+		))
+	}
+
+	// Save the promise code to a file.
+	if err := saveBufferToFile(buf, outputPath); err != nil {
+		panic(fmt.Sprintf(
+			"Failed to save Go file at [%v]: [%v].",
 			outputPath,
 			err,
 		))
@@ -286,4 +288,56 @@ func uppercaseFirst(str string) string {
 
 func lowercaseFirst(str string) string {
 	return strings.ToLower(str[0:1]) + str[1:]
+}
+
+// Generates a code from template and configuration.
+// Returns a buffered code.
+func generateCode(outFile string, tmpl *template.Template, info *contractInfo) (*bytes.Buffer, error) {
+	var buf bytes.Buffer
+
+	if err := tmpl.ExecuteTemplate(&buf, "contract.go.tmpl", info); err != nil {
+		return nil, fmt.Errorf(
+			"generating code for contract [%v] failed: [%v]",
+			info.AbiClass,
+			err,
+		)
+	}
+
+	if err := organizeImports(outFile, &buf); err != nil {
+		return nil, err
+	}
+
+	return &buf, nil
+}
+
+// Resolves imports in a code stored in a Buffer.
+func organizeImports(outFile string, buf *bytes.Buffer) error {
+	// Resolve imports
+	code, err := imports.Process(outFile, buf.Bytes(), nil)
+	if err != nil {
+		return fmt.Errorf("failed to find/resove imports [%v]", err)
+	}
+
+	// Write organized code to the buffer.
+	buf.Reset()
+	if _, err := buf.Write(code); err != nil {
+		return fmt.Errorf("cannot write code to buffer [%v]", err)
+	}
+
+	return nil
+}
+
+// Stores the Buffer `buf` content to a file in `filePath`
+func saveBufferToFile(buf *bytes.Buffer, filePath string) error {
+	file, err := os.Create(filePath)
+	defer file.Close()
+	if err != nil {
+		return fmt.Errorf("output file %s creation failed [%v]", filePath, err)
+	}
+
+	if _, err := buf.WriteTo(file); err != nil {
+		return fmt.Errorf("writing to output file %s failed [%v]", filePath, err)
+	}
+
+	return nil
 }
