@@ -1,12 +1,12 @@
 {{- $contract := . -}}
 {{- range $i, $event := .Events }}
 
-type {{$event.LowerName}}Func func(
+type {{$contract.FullVar}}{{$event.CapsName}}Func func(
     {{$event.ParamDeclarations -}}
 )
 
 func ({{$contract.ShortVar}} *{{$contract.Class}}) Watch{{$event.CapsName}}(
-	success {{$event.LowerName}}Func,
+	success {{$contract.FullVar}}{{$event.CapsName}}Func,
 	fail func(err error) error,
 	{{$event.IndexedFilterDeclarations -}}
 ) (subscription.EventSubscription, error) {

@@ -49,6 +49,7 @@ func init() {
 type contractInfo struct {
 	Class           string
 	AbiClass        string
+	FullVar         string
 	ShortVar        string
 	ConstMethods    []methodInfo
 	NonConstMethods []methodInfo
@@ -174,6 +175,7 @@ func buildContractInfo(
 	return contractInfo{
 		string(goClassName),
 		abiClassName,
+		lowercaseFirst(string(goClassName)),
 		string(shortVar),
 		constMethods,
 		nonConstMethods,
