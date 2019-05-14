@@ -119,7 +119,7 @@ contract('KeepToken', function(accounts) {
     let start = await latestTime();
     let cliff = duration.days(10);
     let revocable = true;
-    
+
     // Starting balances
     let account_one_starting_balance = await token.balanceOf.call(account_one);
     let account_two_starting_balance = await token.balanceOf.call(account_one_operator);
@@ -136,7 +136,7 @@ contract('KeepToken', function(accounts) {
         }
       }
     })
-    
+
     // Ending balances
     let account_one_ending_balance = await token.balanceOf.call(account_one);
     let account_two_ending_balance = await token.balanceOf.call(account_two);
@@ -191,7 +191,7 @@ contract('KeepToken', function(accounts) {
         }
       }
     })
-    
+
     let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
     let delegation = Buffer.concat([Buffer.from(account_two_magpie.substr(2), 'hex'), signature]);
 
