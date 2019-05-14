@@ -29,7 +29,7 @@ ssh utilitybox << EOF
 
   nohup timeout 600 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
 
-  geth --exec "personal.unlockAccount(\"${ETHEREUM_KEEP_CONTRACT_ADDRESS}\", \"${ETHEREUM_KEEP_CONTRACT_ADDRESS_PASSPHRASE}\", 600)" attach http://localhost:8545
+  geth --exec "personal.unlockAccount(\"${CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS}\", \"${CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD}\", 600)" attach http://localhost:8545
 
   cd /tmp/$BUILD_TAG/solidity
 
