@@ -181,7 +181,7 @@ contract('KeepToken', function(accounts) {
 
     // Grant tokens
     await token.approve(grantContract.address, amount, {from: account_one});
-    let id = await grantContract.grant(amount, account_two, vestingDuration, 
+    let id = await grantContract.grant(amount, account_two, vestingDuration,
       start, cliff, revocable, {from: account_one}).then((result)=>{
       // Look for CreatedTokenGrant event in transaction receipt and get grant id
       for (var i = 0; i < result.logs.length; i++) {
