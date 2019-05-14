@@ -24,7 +24,7 @@ type {{.Class}} struct {
 
 func New{{.Class}}(
     contractAddress common.Address,
-    accountKey keystore.Key,
+    accountKey *keystore.Key,
     backend bind.ContractBackend,
 ) (*{{.Class}}, error) {
 	callerOptions := &bind.CallOpts{
