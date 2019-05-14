@@ -34,8 +34,8 @@ abi/%.abi: ${solidity_dir}/contracts/%.sol
 abi/%.go : abi/%.abi
 	abigen --abi $< --pkg abi --type $* --out $@
 
-contract/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go
+contract/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go *.tmpl *.go
 	go run ./ $< $@
 
-contract/Staking%.go: abi/Staking%.abi abi/Staking%.go
+contract/Staking%.go: abi/Staking%.abi abi/Staking%.go *.tmpl *.go
 	go run ./ $< $@
