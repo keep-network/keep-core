@@ -1,8 +1,10 @@
-package ethereum
+package ethutil_test
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 )
 
 func TestKeyFileDecryption(t *testing.T) {
@@ -40,7 +42,7 @@ func TestKeyFileDecryption(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			_, err := DecryptKeyFile(test.keyFile, test.password)
+			_, err := ethutil.DecryptKeyFile(test.keyFile, test.password)
 			message := ""
 			if err != nil {
 				message = err.Error()
