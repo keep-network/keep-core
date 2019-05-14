@@ -12,7 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 )
 
-func TestDKGResultHashSignatureMessageRoundtrip(t *testing.T) {
+func TestMembershipMessageRoundtrip(t *testing.T) {
 	signer := dkg.NewThresholdSigner(
 		group.MemberIndex(2),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
