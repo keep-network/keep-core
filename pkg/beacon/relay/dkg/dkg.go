@@ -70,8 +70,8 @@ func ExecuteDKG(
 	}
 
 	return &ThresholdSigner{
-		MemberIndex:          playerIndex,
-		GroupPublicKey:       gjkrResult.GroupPublicKey,
-		GroupPrivateKeyShare: gjkrResult.GroupPrivateKeyShare,
+		memberIndex:          playerIndex,
+		groupPublicKey:       gjkrResult.GroupPublicKey,
+		groupPrivateKeyShare: gjkrResult.GroupPrivateKeyShare,
 	}, nil
 }

@@ -3,9 +3,13 @@ syntax = "proto3";
 option go_package = "pb";
 package registry;
 
-message MembershipMessage {
+message ThresholdSigner {
     uint32 memberIndex = 1;
     bytes groupPublicKey = 2;
     string groupPrivateKeyShare = 3;
-    string channel = 4;
+}
+
+message Membership {
+    bytes signer = 1;
+    string channel = 2;
 }

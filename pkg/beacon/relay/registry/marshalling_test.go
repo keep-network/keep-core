@@ -12,24 +12,24 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 )
 
-func TestMembershipMessageRoundtrip(t *testing.T) {
+func TestMembershipRoundtrip(t *testing.T) {
 	signer := dkg.NewThresholdSigner(
 		group.MemberIndex(2),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
 		big.NewInt(1),
 	)
 
-	membershipMessage := &Membership{
+	membership := &Membership{
 		Signer: signer,
 	}
 
 	unmarshaled := &Membership{}
 
-	err := pbutils.RoundTrip(membershipMessage, unmarshaled)
+	err := pbutils.RoundTrip(membership, unmarshaled)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(membershipMessage, unmarshaled) {
+	if !reflect.DeepEqual(membership, unmarshaled) {
 		t.Fatalf("unexpected content of unmarshaled message")
 	}
 }
