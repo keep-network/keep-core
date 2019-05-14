@@ -227,6 +227,7 @@ contract TokenGrant is StakeDelegatable {
         address magpie = _extraData.toAddress(0);
         address operator = keccak256(abi.encodePacked(msg.sender)).toEthSignedMessageHash().recover(_extraData.slice(20, 65));
         require(operatorToOwner[operator] == address(0), "Operator address is already in use.");
+        require(token.balanceOf(operator) == 0, "Operator should not have any KEEP tokens.");
 
         operatorToOwner[operator] = msg.sender;
         magpieToOwner[magpie] = msg.sender;
