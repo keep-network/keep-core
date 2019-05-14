@@ -1,4 +1,4 @@
-package ethereum_test
+package ethutil_test
 
 import (
 	"context"
@@ -7,10 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	chain "github.com/keep-network/keep-core/pkg/chain/ethereum"
 )
 
 var testABIMethods = map[string]abi.Method{
@@ -68,7 +69,7 @@ func (frc *fixedReturnCaller) CallContract(_ context.Context, _ ethereum.CallMsg
 }
 
 func TestErrorResolverHandlesErrorCall(t *testing.T) {
-	resolver := chain.NewErrorResolver(&erroringCaller{}, &testABI, &testAddress)
+	resolver := ethutil.NewErrorResolver(&erroringCaller{}, &testABI, &testAddress)
 
 	err := resolver.ResolveError(errOriginal, nil, "Test")
 	if err == nil {
@@ -86,7 +87,7 @@ func TestErrorResolverHandlesErrorCall(t *testing.T) {
 
 func TestErrorResolverHandlesShortResponses(t *testing.T) {
 	caller := &fixedReturnCaller{}
-	resolver := chain.NewErrorResolver(caller, &testABI, &testAddress)
+	resolver := ethutil.NewErrorResolver(caller, &testABI, &testAddress)
 
 	for returnLength := 0; returnLength < 4; returnLength++ {
 		caller.returnedBytes = make([]byte, returnLength)
@@ -103,7 +104,7 @@ func TestErrorResolverHandlesShortResponses(t *testing.T) {
 
 func TestErrorResolverHandlesUnknownMethodResponses(t *testing.T) {
 	caller := &fixedReturnCaller{[]byte{0, 0, 0, 1}}
-	resolver := chain.NewErrorResolver(caller, &testABI, &testAddress)
+	resolver := ethutil.NewErrorResolver(caller, &testABI, &testAddress)
 
 	err := resolver.ResolveError(errOriginal, nil, "Test")
 	assertErrorContains(
@@ -117,7 +118,7 @@ func TestErrorResolverHandlesUnknownMethodResponses(t *testing.T) {
 
 func TestErrorResolverHandlesBadParameterResponses(t *testing.T) {
 	caller := &fixedReturnCaller{[]byte{8, 195, 121, 160}}
-	resolver := chain.NewErrorResolver(caller, &testABI, &testAddress)
+	resolver := ethutil.NewErrorResolver(caller, &testABI, &testAddress)
 
 	// bad response length
 	err := resolver.ResolveError(errOriginal, nil, "Test")
@@ -168,7 +169,7 @@ func TestErrorResolverHandlesGoodErrorResponse(t *testing.T) {
 	caller.returnedBytes = append(caller.returnedBytes, buildingBlock[:]...)
 	caller.returnedBytes[len(caller.returnedBytes)-1] = 0
 
-	resolver := chain.NewErrorResolver(caller, &testABI, &testAddress)
+	resolver := ethutil.NewErrorResolver(caller, &testABI, &testAddress)
 	err := resolver.ResolveError(errOriginal, nil, "Test")
 	assertErrorContains(
 		t,
