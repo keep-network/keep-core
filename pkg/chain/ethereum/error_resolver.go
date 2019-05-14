@@ -52,6 +52,10 @@ func NewErrorResolver(
 // ResolveError resolves the given transaction error to a standard error that,
 // if available, contains the error message the transaction produced when
 // reverting.
+//
+// ResolveError achieves this by re-calling the transaction (not submitting it
+// for block inclusion, just calling it for itse results). `value` is the value
+// in gwei to send along with the simulated call.
 func (er *ErrorResolver) ResolveError(originalErr error, value *big.Int, methodName string, parameters ...interface{}) error {
 	packed, err := er.abi.Pack(methodName, parameters...)
 	msg := ethereum.CallMsg{To: er.address, Data: packed, Value: value}
