@@ -71,10 +71,31 @@ jobs:
       - run:
           name: Save keep-client image
           command: |
-            mkdir -p /tmp/images/keep-client/
-            docker save -o /tmp/images/keep-client/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
+            mkdir -p /tmp/docker-images/keep-client/
+            docker save -o /tmp/docker-images/keep-client/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
       - persist_to_workspace:
-          root: /tmp/images
+          root: /tmp/docker-images
+          paths:
+            - keep-client
+  build_initcontainer:
+    executor: docker-git
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Run Docker build
+          command: |
+            cd infrastructure/kube/keep-dev/keep-client/initcontainer
+            docker build -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer .
+      - run:
+          name: Save keep-client-initcontainer image
+          command: |
+            docker save -o /tmp/docker-images/keep-client/keep-client-initcontainer.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer
+      - persist_to_workspace:
+          root: /tmp/docker-images
           paths:
             - keep-client
   migrate_contracts_keep_dev:
@@ -94,15 +115,19 @@ jobs:
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK="keep_dev"
             contracts/solidity/scripts/circleci-migrate-contracts.sh
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - contracts
   publish_client:
     executor: gcp-gcr/default
     steps:
       - attach_workspace:
-          at: /tmp/images
+          at: /tmp/docker-images
       - run:
           name: Load keep-client image
           command: |
-            docker load -i /tmp/images/keep-client/keep-client.tar
+            docker load -i /tmp/docker-images/keep-client/keep-client.tar
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -177,6 +202,10 @@ workflows:
     jobs:
       - build_client_and_test_go:
           context: keep-dev
+      - build_initcontainer:
+          context: keep-dev
+          requires:
+            - migrate_contracts_keep_dev
       - migrate_contracts_keep_dev:
           filters:
             branches:
