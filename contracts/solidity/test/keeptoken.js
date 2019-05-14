@@ -233,6 +233,35 @@ contract('KeepToken', function(accounts) {
     await grantContract.release(id);
     let account_two_ending_balance = await token.balanceOf.call(account_two);
     assert.equal(account_two_ending_balance.gte(amount.div(web3.utils.toBN(2))), true, "Should have some released grant amount");
+  });
 
+  it("should not allow to stake to an operator who has KEEP tokens", async function() {
+    let amount = web3.utils.toBN(1000000000);
+    let vestingDuration = duration.days(60);
+    let start = await latestTime();
+    let cliff = duration.days(10);
+    let revocable = true;
+
+    // Grant tokens
+    await token.approve(grantContract.address, amount, {from: account_one});
+    let id = await grantContract.grant(amount, account_two, vestingDuration,
+      start, cliff, revocable, {from: account_one}).then((result)=>{
+      // Look for CreatedTokenGrant event in transaction receipt and get grant id
+      for (var i = 0; i < result.logs.length; i++) {
+        var log = result.logs[i];
+        if (log.event == "CreatedTokenGrant") {
+          return log.args.id.toNumber();
+        }
+      }
+    })
+
+    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
+    let delegation = Buffer.concat([Buffer.from(account_two_magpie.substr(2), 'hex'), signature]);
+
+    // Send KEEP tokens to the operator
+    await token.transfer(account_two_operator, amount, {from: account_one});
+
+    // should throw cause the operator has KEEP tokens
+    await exceptThrow(grantContract.stake(id, delegation, {from: account_two}));
   });
 });
