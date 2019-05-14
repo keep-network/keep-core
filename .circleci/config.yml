@@ -98,7 +98,7 @@ jobs:
           root: /tmp/docker-images
           paths:
             - keep-client
-  migrate_contracts_keep_dev:
+  migrate_contracts:
     executor: docker-thesis-buildpack
     steps:
       - setup_remote_docker:
@@ -113,7 +113,7 @@ jobs:
           name: Migrate Contracts
           command: |
             export BUILD_TAG=$CIRCLE_SHA1
-            export TRUFFLE_NETWORK="keep_dev"
+            export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
             contracts/solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
           root: /tmp
@@ -205,8 +205,8 @@ workflows:
       - build_initcontainer:
           context: keep-dev
           requires:
-            - migrate_contracts_keep_dev
-      - migrate_contracts_keep_dev:
+            - migrate_contracts
+      - migrate_contracts:
           filters:
             branches:
               only: master
