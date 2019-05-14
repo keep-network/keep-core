@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
+// The extracted name + payability of methods from ABI JSON.
 type methodPayableInfo struct {
 	Name    string
 	Payable bool
@@ -44,6 +45,7 @@ func init() {
 	}
 }
 
+// The following structs are sent into the templates for compilation.
 type contractInfo struct {
 	Class           string
 	AbiClass        string
@@ -78,6 +80,7 @@ type eventInfo struct {
 	IndexedFilterDeclarations string
 }
 
+// Main function. Expect <executable> [input.abi] [output.go] .
 func main() {
 	if len(os.Args) != 3 {
 		panic(fmt.Sprintf(
@@ -132,6 +135,8 @@ func main() {
 		))
 	}
 
+	// The name of the ABI binding Go class is the same as the filename of the
+	// ABI file, minus the extension.
 	abiClassName := path.Base(abiPath)
 	abiClassName = abiClassName[0 : len(abiClassName)-4] // strip .abi
 	contractInfo := buildContractInfo(abiClassName, &abi, payableInfo)
@@ -146,7 +151,11 @@ func main() {
 	}
 }
 
-func buildContractInfo(abiClassName string, abi *abi.ABI, payableInfo []methodPayableInfo) contractInfo {
+func buildContractInfo(
+	abiClassName string,
+	abi *abi.ABI,
+	payableInfo []methodPayableInfo,
+) contractInfo {
 	payableMethods := make(map[string]struct{})
 	for _, methodPayableInfo := range payableInfo {
 		if methodPayableInfo.Payable {
