@@ -2,7 +2,6 @@ package libp2p
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -39,9 +38,8 @@ func (c *channel) Name() string {
 }
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
-	// Transform net.TaggedMarshaler to a protobuf message, sign, and wrap
-	// in an envelope.
-	envelopeBytes, err := c.envelopeProto(message)
+	// Transform net.TaggedMarshaler to a protobuf message
+	messageBytes, err := c.messageProto(message)
 	if err != nil {
 		return err
 	}
@@ -50,7 +48,7 @@ func (c *channel) Send(message net.TaggedMarshaler) error {
 	defer c.pubsubMutex.Unlock()
 
 	// Publish the proto to the network
-	return c.pubsub.Publish(c.name, envelopeBytes)
+	return c.pubsub.Publish(c.name, messageBytes)
 }
 
 func (c *channel) Recv(handler net.HandleMessageFunc) error {
@@ -118,73 +116,6 @@ func (c *channel) messageProto(
 	}).Marshal()
 }
 
-func (c *channel) sealEnvelope(
-	message net.TaggedMarshaler,
-) (*pb.NetworkEnvelope, error) {
-	messageBytes, err := c.messageProto(message)
-	if err != nil {
-		return nil, err
-	}
-	signature, err := c.sign(messageBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.NetworkEnvelope{
-		Message:   messageBytes,
-		Signature: signature,
-	}, nil
-}
-
-func (c *channel) envelopeProto(
-	message net.TaggedMarshaler,
-) ([]byte, error) {
-	envelope, err := c.sealEnvelope(message)
-	if err != nil {
-		return nil, err
-	}
-
-	return envelope.Marshal()
-}
-
-func (c *channel) sign(messageBytes []byte) ([]byte, error) {
-	return c.clientIdentity.privKey.Sign(messageBytes)
-}
-
-func (c *channel) verify(sender peer.ID, messageBytes []byte, signature []byte) error {
-	return verifyEnvelope(sender, messageBytes, signature)
-}
-
-func verifyEnvelope(sender peer.ID, messageBytes []byte, signature []byte) error {
-	pubKey, err := sender.ExtractPublicKey()
-	if err != nil {
-		return fmt.Errorf(
-			"failed to extract public key from peer [%v]",
-			sender,
-		)
-	}
-
-	ok, err := pubKey.Verify(messageBytes, signature)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to verify signature [0x%v] for sender [%v] with err [%v]",
-			hex.EncodeToString(signature),
-			sender.String(),
-			err,
-		)
-	}
-
-	if !ok {
-		return fmt.Errorf(
-			"invalid signature [0x%v] on message from sender [%v] ",
-			hex.EncodeToString(signature),
-			sender.String(),
-		)
-	}
-
-	return nil
-}
-
 func (c *channel) handleMessages(ctx context.Context) {
 	defer c.subscription.Cancel()
 
@@ -215,21 +146,8 @@ func (c *channel) handleMessages(ctx context.Context) {
 }
 
 func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
-	var envelope pb.NetworkEnvelope
-	if err := proto.Unmarshal(pubsubMessage.Data, &envelope); err != nil {
-		return err
-	}
-
-	if err := c.verify(
-		pubsubMessage.GetFrom(),
-		envelope.GetMessage(),
-		envelope.GetSignature(),
-	); err != nil {
-		return err
-	}
-
 	var protoMessage pb.NetworkMessage
-	if err := proto.Unmarshal(envelope.Message, &protoMessage); err != nil {
+	if err := proto.Unmarshal(pubsubMessage.Data, &protoMessage); err != nil {
 		return err
 	}
 
