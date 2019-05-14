@@ -23,7 +23,7 @@ type {{.Class}} struct {
 func New{{.Class}}(
     contractAddress common.Address,
     accountKey keystore.Key,
-    client *ethclient.Client,
+    backend bind.ContractBackend,
 ) (*{{.Class}}, error) {
 	callerOptions := &bind.CallOpts{
 		From: contractAddress,
@@ -34,7 +34,7 @@ func New{{.Class}}(
 
 	randomBeaconContract, err := abi.New{{.AbiClass}}(
 		contractAddress,
-		client,
+		backend,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -54,7 +54,7 @@ func New{{.Class}}(
 		contractAddress:   contractAddress,
 		callerOptions:     callerOptions,
 		transactorOptions: transactorOptions,
-		errorResolver:     ethutil.NewErrorResolver(client, &contractAbi, &contractAddress),
+		errorResolver:     ethutil.NewErrorResolver(backend, &contractAbi, &contractAddress),
 	}, nil
 }
 
