@@ -290,6 +290,17 @@ contract TokenGrant is StakeDelegatable {
 
         // Unset stake withdrawal start.
         stakeWithdrawalStart[_id] = 0;
+
+        // Release operator
+        address operator = idToOperator[_id];
+        address owner = operatorToOwner[operator];
+        operatorToOwner[operator] = address(0);
+        for (uint256 i = 0; i < ownerOperators[owner].length; i++) {
+            if (ownerOperators[owner][i] == operator) {
+                delete ownerOperators[owner][i];
+                break;
+            }
+        }
     }
 
     /**
