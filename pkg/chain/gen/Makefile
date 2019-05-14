@@ -13,7 +13,7 @@ abi_files := $(foreach file, $(solidity_files), abi/$(notdir $(basename $(file))
 contract_candidates := $(filter %ImplV1.go, $(abi_files))
 contract_files := $(foreach file, $(contract_candidates), contract/$(notdir $(subst ImplV1,,$(basename $(file)))).go)
 
-all: gen_contract_go
+all: gen_contract_go gen_abi_go
 
 clean:
 	rm -rf ${abi_files}
