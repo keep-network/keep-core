@@ -200,7 +200,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Gets ticket proof.
      */
-    function getTicketProof(uint256 ticketValue) public view returns (address, uint256, uint256) {
+    function getTicketProof(uint256 ticketValue) public view returns (address sender, uint256 stakerValue, uint256 virtualStakerIndex) {
         return (
             _proofs[ticketValue].sender,
             _proofs[ticketValue].stakerValue,
