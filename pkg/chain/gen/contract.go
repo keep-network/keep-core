@@ -195,11 +195,15 @@ func buildMethodInfo(
 		paramDeclarations := ""
 		params := ""
 
-		for _, param := range method.Inputs {
+		for index, param := range method.Inputs {
 			goType := param.Type.Type.String()
+			paramName := param.Name
+			if paramName == "" {
+				paramName = fmt.Sprintf("arg%v", index)
+			}
 
-			paramDeclarations += fmt.Sprintf("%v %v,\n", param.Name, goType)
-			params += fmt.Sprintf("%v,\n", param.Name)
+			paramDeclarations += fmt.Sprintf("%v %v,\n", paramName, goType)
+			params += fmt.Sprintf("%v,\n", paramName)
 		}
 
 		returned := returnInfo{}
