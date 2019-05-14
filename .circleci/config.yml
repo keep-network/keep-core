@@ -125,7 +125,7 @@ jobs:
       - attach_workspace:
           at: /tmp/docker-images
       - run:
-          name: Load docker images
+          name: Load Docker images
           command: |
             docker load -i /tmp/docker-images/keep-client/keep-client.tar
             docker load -i /tmp/docker-images/keep-client/keep-client-initcontainer.tar
