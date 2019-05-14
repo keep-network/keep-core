@@ -269,6 +269,9 @@ func buildEventInfo(eventsByName map[string]abi.Event) []eventInfo {
 			}
 		}
 
+		paramDeclarations += "blockNumber uint64,\n"
+		paramExtractors += "event.Raw.BlockNumber,\n"
+
 		eventInfos = append(eventInfos, eventInfo{
 			uppercaseFirst(name),
 			lowercaseFirst(name),
