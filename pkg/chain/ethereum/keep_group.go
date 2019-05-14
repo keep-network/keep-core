@@ -3,8 +3,10 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
 
+	ethereumabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -17,6 +19,7 @@ import (
 type keepGroup struct {
 	caller          *abi.KeepGroupImplV1Caller
 	callerOpts      *bind.CallOpts
+	errorResolver   *ErrorResolver
 	transactor      *abi.KeepGroupImplV1Transactor
 	transactorOpts  *bind.TransactOpts
 	contract        *abi.KeepGroupImplV1
@@ -105,11 +108,17 @@ func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
 		)
 	}
 
+	contractAbi, err := ethereumabi.JSON(strings.NewReader(abi.KeepGroupImplV1ABI))
+	if err != nil {
+		return nil, fmt.Errorf("failed to instantiate ABI: [%v]", err)
+	}
+
 	return &keepGroup{
 		transactor:      groupTransactor,
 		transactorOpts:  optsTransactor,
 		caller:          groupCaller,
 		callerOpts:      optsCaller,
+		errorResolver:   NewErrorResolver(chainConfig.client, &contractAbi, &contractAddress),
 		contract:        groupContract,
 		contractAddress: contractAddress,
 	}, nil
@@ -180,12 +189,25 @@ func (kg *keepGroup) HasMinimumStake(
 func (kg *keepGroup) SubmitTicket(
 	ticket *relaychain.Ticket,
 ) (*types.Transaction, error) {
-	return kg.transactor.SubmitTicket(
+	transaction, err := kg.transactor.SubmitTicket(
 		kg.transactorOpts,
 		ticket.Value,
 		ticket.Proof.StakerValue,
 		ticket.Proof.VirtualStakerIndex,
 	)
+
+	if err != nil {
+		return transaction, kg.errorResolver.ResolveError(
+			err,
+			nil,
+			"submitTicket",
+			ticket.Value,
+			ticket.Proof.StakerValue,
+			ticket.Proof.VirtualStakerIndex,
+		)
+	}
+
+	return transaction, err
 }
 
 func (kg *keepGroup) SelectedParticipants() ([]common.Address, error) {
@@ -208,7 +230,7 @@ func (kg *keepGroup) SubmitDKGResult(
 	signatures []byte,
 	signingMembersIndexes []*big.Int,
 ) (*types.Transaction, error) {
-	return kg.transactor.SubmitDkgResult(
+	transaction, err := kg.transactor.SubmitDkgResult(
 		kg.transactorOpts,
 		requestID,
 		submitterMemberIndex,
@@ -218,6 +240,23 @@ func (kg *keepGroup) SubmitDKGResult(
 		signatures,
 		signingMembersIndexes,
 	)
+
+	if err != nil {
+		return transaction, kg.errorResolver.ResolveError(
+			err,
+			nil,
+			"submitDkgResult",
+			requestID,
+			submitterMemberIndex,
+			result.GroupPublicKey,
+			result.Disqualified,
+			result.Inactive,
+			signatures,
+			signingMembersIndexes,
+		)
+	}
+
+	return transaction, err
 }
 
 type dkgResultPublishedEventFunc func(
