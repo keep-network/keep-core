@@ -10,6 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 )
 
 type {{.Class}} struct {
@@ -17,7 +19,7 @@ type {{.Class}} struct {
 	contractAddress   common.Address
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
-	errorResolver     *ethereum.ErrorResolver
+	errorResolver     *ethutil.ErrorResolver
 }
 
 func New{{.Class}}(
@@ -54,7 +56,7 @@ func New{{.Class}}(
 		contractAddress:   contractAddress,
 		callerOptions:     callerOptions,
 		transactorOptions: transactorOptions,
-		errorResolver:     ethereum.NewErrorResolver(backend, &contractAbi, &contractAddress),
+		errorResolver:     ethutil.NewErrorResolver(backend, &contractAbi, &contractAddress),
 	}, nil
 }
 

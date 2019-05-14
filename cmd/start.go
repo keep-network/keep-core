@@ -7,6 +7,7 @@ import (
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -124,7 +125,7 @@ func Start(c *cli.Context) error {
 func loadStaticKey(
 	account ethereum.Account,
 ) (*operator.PrivateKey, *operator.PublicKey, error) {
-	ethereumKey, err := ethereum.DecryptKeyFile(
+	ethereumKey, err := ethutil.DecryptKeyFile(
 		account.KeyFile,
 		account.KeyFilePassword,
 	)
