@@ -594,7 +594,7 @@ contract KeepGroupImplV1 is Ownable {
      * the past.
      */
     function isStaleGroup(bytes memory groupPubKey) public view returns(bool) {
-        for (uint i = 0; i < numberOfGroups(); i++) {
+        for (uint i = 0; i < _groups.length; i++) {
             if (_groups[i].groupPubKey.equalStorage(groupPubKey)) {
                 bool isExpired = _expiredOffset > i;
                 bool isStale = groupStaleTime(_groups[i]) < block.number;

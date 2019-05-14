@@ -290,7 +290,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   // - we start with [AAAAAA]
   // - we check whether the first group is stale and assert it is not since
   //   an active group cannot be stale
-  it("should not mark group as stale if it is not expired", async function() {
+  it("should not mark group as stale if it is active", async function() {
     let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
@@ -301,6 +301,47 @@ contract('TestKeepGroupExpiration', function(accounts) {
     assert.equal(isStale, false, "Group should not be marked as stale");
   });
 
+  // - we start with [AAAAAAAAAAAAAAA]
+  // - we expire the first 10 groups so that we have [EEEEEEEEEEAAAAA]
+  // - we check whether any of active groups is stale and assert it's not
+  it("should not mark group as stale if it is active and \
+ there are other expired groups", async function() {
+    let groupsCount = 15
+    await addGroups(groupsCount);
+    await expireGroup(9); // expire first 10 groups (we index from 0)
+
+    await keepGroupImplViaProxy.selectGroup(0);
+
+    for (var i = 10; i < groupsCount; i++) {
+      let pubKey = await keepGroupImplViaProxy.getGroupPublicKey(i);
+      let isStale = await keepGroupImplViaProxy.isStaleGroup(pubKey);
+
+      assert.equal(isStale, false, "Group should not be marked as stale")
+    }
+  });
+
+  // - we start with [AAAAAAAAAAAAAAA]
+  // - we expire the first 10 groups so that we have [EEEEEEEEEEAAAAA]
+  // - we mine as many blocks as needed to mark expired groups as stale
+  // - we check whether any of active groups is stale and assert it's not
+  it("should not mark group as stale if it is active and \
+ there are other stale groups", async function() {
+    let groupsCount = 15
+    await addGroups(groupsCount);
+    await expireGroup(9); // expire first 10 groups (we index from 0)
+
+    await keepGroupImplViaProxy.selectGroup(0);
+
+    await mineBlocks(relayRequestTimeout);
+
+    for (var i = 10; i < groupsCount; i++) {
+      let pubKey = await keepGroupImplViaProxy.getGroupPublicKey(i);
+      let isStale = await keepGroupImplViaProxy.isStaleGroup(pubKey);
+
+      assert.equal(isStale, false, "Group should not be marked as stale")
+    }
+  });
+
   // - we start with [AAAAA]
   // - we mine as many blocks as needed to have all the groups qualify as stale
   // - we check whether the group at position 0 is stale
@@ -309,7 +350,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
   //   been marked as expired - `selectGroup` may decide not to mark group as
   //   expired even though it reached its expiration time (minimum threshold)
   it("should not mark group as stale if its expiration time passed but \
-  it is not marked as such", async function() {
+ it is not marked as such", async function() {
     let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
