@@ -59,7 +59,14 @@ type methodInfo struct {
 	Payable           bool
 	Params            string
 	ParamDeclarations string
-	ReturnTypes       string
+	Return            returnInfo
+}
+
+type returnInfo struct {
+	Multi        bool
+	Type         string
+	Declarations string
+	Vars         string
 }
 
 type eventInfo struct {
@@ -176,7 +183,6 @@ func buildMethodInfo(
 		_, payable := payableMethods[name]
 		paramDeclarations := ""
 		params := ""
-		returnTypes := ""
 
 		for _, param := range method.Inputs {
 			goType := param.Type.Type.String()
@@ -185,9 +191,27 @@ func buildMethodInfo(
 			params += fmt.Sprintf("%v,\n", param.Name)
 		}
 
-		for _, output := range method.Outputs {
-			goType := output.Type.Type.String()
-			returnTypes += fmt.Sprintf("%v, ", goType)
+		returned := returnInfo{}
+		if len(method.Outputs) > 1 {
+			returned.Multi = true
+			returned.Type = strings.Replace(name, "get", "", 1)
+
+			for _, output := range method.Outputs {
+				goType := output.Type.Type.String()
+
+				returned.Declarations += fmt.Sprintf(
+					"\t%v %v\n",
+					uppercaseFirst(output.Name),
+					goType,
+				)
+				returned.Vars += fmt.Sprintf("%v,", output.Name)
+			}
+		} else if len(method.Outputs) == 0 {
+			returned.Multi = false
+		} else {
+			returned.Multi = false
+			returned.Type = method.Outputs[0].Type.Type.String()
+			returned.Vars += "ret,"
 		}
 
 		info := methodInfo{
@@ -196,7 +220,7 @@ func buildMethodInfo(
 			payable,
 			params,
 			paramDeclarations,
-			returnTypes,
+			returned,
 		}
 
 		if method.Const {

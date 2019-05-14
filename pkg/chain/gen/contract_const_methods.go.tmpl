@@ -1,25 +1,30 @@
 {{- $contract := . -}}
 {{- range $i, $method := .ConstMethods }}
 
+{{- $returnTypeVar := print $method.Return.Type "," -}}
+{{- if $method.Return.Multi }}
+type {{$method.Return.Type}} struct {
+	{{$method.Return.Declarations}}
+}
+{{ else if eq $method.Return.Type "" -}}
+{{- $returnTypeVar = "" -}}
+{{- end -}}
+
 func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 	{{$method.ParamDeclarations -}}
 	{{if $method.Payable -}} value *big.Int, {{- end -}}
-) ({{$method.ReturnTypes}} error) {
-	transaction, err := {{$contract.ShortVar}}.contract.{{$method.CapsName}}(
+) ({{$returnTypeVar}} error) {
+	var ret {{$method.Return.Type}}
+	ret, err := {{$contract.ShortVar}}.contract.{{$method.CapsName}}(
 		{{$contract.ShortVar}}.callerOptions,
 		{{$method.Params}}
 	)
 
-	if err != nil {
-		return transaction, {{$contract.ShortVar}}.errorResolver.ResolveError(
-			err,
-			nil,
-			"{{$method.LowerName}}",
-			{{$method.Params}}
-		)
-	}
-
-	return transaction, err
+	{{ if $method.Return.Multi -}}
+	return ret, err
+	{{ else }}
+	return {{$method.Return.Vars}} err
+	{{ end -}}
 }
 
-{{- end}}
+{{end -}}
