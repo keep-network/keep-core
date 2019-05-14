@@ -79,9 +79,9 @@ async function stakeEthAccount() {
 async function unlockEthAccount() {
 
   try {
-    console.log("Unlocking account: " + contract_owner);
-    await web3.eth.personal.unlockAccount(contract_owner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSPHRASE, 700);
-    console.log("Account: " + contract_owner + " unlocked!");
+    console.log("Unlocking account: " + operator);
+    await web3.eth.personal.unlockAccount(operator, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSPHRASE, 700);
+    console.log("Account: " + operator + " unlocked!");
   }
   catch(error) {
     console.error(error);
