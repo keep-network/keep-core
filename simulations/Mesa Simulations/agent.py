@@ -30,12 +30,13 @@ class Node(Agent):
             self.connection_delay -=1
         else:
             self.connection_status = "connected"
-            print(str("node "+str(self.node_id+" = connected")))
+            #print(str("node "+str(self.node_id)+" = connected"))
         #once connected fork the main loop
             if self.mainloop_fork_delay>0:
                 self.mainloop_fork_delay -=1
             else: 
                 self.mainloop_status = "forked"
+                #print(str("node "+str(self.node_id)+" = forked"))
             
         #simulate node failure
         self.failure = np.random.randint(0,100) < self.node_failure_percent
@@ -64,7 +65,7 @@ class Node(Agent):
         self.stake_status = "not staked"
         if self.death == False: # does not reset the failure trigger if the death trigger is true
             self.failure = False
-        print(str(self.node_id)+" = just Failed")
+        #print(str(self.node_id)+" = just Failed")
 
 class Group(Agent):
     """ A Group """
@@ -103,6 +104,7 @@ class Signature(Agent):
         super().__init__(unique_id, model)
         self.group = group_object
         self.id = unique_id
+        self.signature_id = signature_id
         self.type = "signature"
         self.delay = np.random.poisson(self.model.signature_delay) #delay between when it is triggered and when it hits the chain
         self.ownership_distr = []
@@ -110,6 +112,7 @@ class Signature(Agent):
         self.model.newest_signature_id +=1 #increments the signature ID by one after a new signature is created
         self.signature_process_complete = False
         self.block_delay_complete = False
+        self.dominator_id = -1
 
     def step(self):
         #signature
@@ -128,6 +131,7 @@ class Signature(Agent):
     def signature_process(self):
         # Calculates ownership data just before the signature is complete
         temp_signature_distr = np.zeros(self.model.num_nodes)
+        ("Signature ID "+str(self.signature_id)+" performing signature")
 
         self.model.refresh_connected_nodes_list()
         for i,node_tickets in enumerate(self.group.ownership_distr): # checks if the node has a non-zero ownership, i is the node id
@@ -136,6 +140,13 @@ class Signature(Agent):
                     #print("active node ID = "+ str(node.node_id))
                     if node.node_id == i : temp_signature_distr[i] = node_tickets
         self.ownership_distr = temp_signature_distr
+        failed_list = np.array(self.group.ownership_distr)-np.array(self.ownership_distr)
+        dominator_value = (sum(failed_list) + max(self.ownership_distr))/sum(self.group.ownership_distr)*100 # adds the failed node virtual stakers and max node virtual stakers
+        
+        if dominator_value > self.model.max_malicious_threshold:
+            self.dominator_id = np.argmax(self.ownership_distr)
+            #print("dominator owner ID = " + str(self.dominator_id))
+
 
 
 
