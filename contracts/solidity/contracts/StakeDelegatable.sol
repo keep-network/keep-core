@@ -22,6 +22,7 @@ contract StakeDelegatable {
     StakingProxy public stakingProxy;
 
     uint256 public stakeWithdrawalDelay;
+    uint256 public minStake;
 
     // Stake balances.
     mapping(address => uint256) public stakeBalances;
