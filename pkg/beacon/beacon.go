@@ -9,6 +9,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/internal/log"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -24,6 +25,8 @@ func Initialize(
 	stakeMonitor chain.StakeMonitor,
 	netProvider net.Provider,
 ) error {
+	logger := log.NewLogger()
+
 	chainConfig, err := relayChain.GetConfig()
 	if err != nil {
 		return err
@@ -45,7 +48,7 @@ func Initialize(
 	)
 
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
-		fmt.Printf("New relay entry requested [%+v]\n", request)
+		logger.Info("New relay entry requested", log.Any("request", request))
 
 		go node.GenerateRelayEntryIfEligible(
 			request.RequestID,
@@ -58,7 +61,7 @@ func Initialize(
 	})
 
 	relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
-		fmt.Printf("New relay entry generated [%+v]\n", entry)
+		logger.Info("New relay entry generated", log.Any("entry", entry))
 
 		go func() {
 			err := node.SubmitTicketsForGroupSelection(
@@ -76,7 +79,10 @@ func Initialize(
 	})
 
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
-		fmt.Printf("New group registered on chain [%+v]\n", registration)
+		logger.Info(
+			"New group registered on chain",
+			log.Any("registration", registration),
+		)
 		go groupRegistry.UnregisterDeletedGroups()
 	})
 
