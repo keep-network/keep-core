@@ -19,26 +19,34 @@ Host utilitybox
 EOF
 
 # Copy migration artifacts over
+echo "<<<<<<START Prep Utility Box For Migration START<<<<<<"
+echo "ssh utilitybox rm -rf /tmp/$BUILD_TAG"
+echo "ssh utilitybox mkdir /tmp/$BUILD_TAG"
+echo "scp -r contracts/solidity utilitybox:/tmp/$BUILD_TAG/"
 ssh utilitybox rm -rf /tmp/$BUILD_TAG
 ssh utilitybox mkdir /tmp/$BUILD_TAG
 scp -r contracts/solidity utilitybox:/tmp/$BUILD_TAG/
+echo ">>>>>>FINISH Prep Utility Box For Migration FINISH>>>>>>"
 
 # Run migration
 ssh utilitybox << EOF
-  echo "<<<<<<START Download Kube Creds<<<<<<"
+  echo "<<<<<<START Download Kube Creds START<<<<<<"
+  echo "gcloud container clusters get-credentials $GOOGLE_PROJECT_NAME --region $GOOGLE_REGION --internal-ip --project=$GOOGLE_PROJECT_ID"
   gcloud container clusters get-credentials $GOOGLE_PROJECT_NAME --region $GOOGLE_REGION --internal-ip --project=$GOOGLE_PROJECT_ID
-  echo ">>>>>>FINISH Download Kube Creds>>>>>>"
+  echo ">>>>>>FINISH Download Kube Creds FINISH>>>>>>"
 
-  echo "<<<<<<START Port Forward eth-tx-node<<<<<<"
+  echo "<<<<<<START Port Forward eth-tx-node START<<<<<<"
+  echo "nohup timeout 600 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &"
+  echo "sleep 10s"
   nohup timeout 600 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
   sleep 10s
-  echo ">>>>>>FINISH Port Forward eth-tx-node>>>>>>"
+  echo ">>>>>>FINISH Port Forward eth-tx-node FINISH>>>>>>"
 
-  echo "<<<<<<START Unlock Contract Owner ETH Account<<<<<<"
+  echo "<<<<<<START Unlock Contract Owner ETH Account START<<<<<<"
   geth --exec "personal.unlockAccount(\"${CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS}\", \"${CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD}\", 600)" attach http://localhost:8545
-  echo ">>>>>>FINISH Unlock Contract Owner ETH Account>>>>>>"
+  echo ">>>>>>FINISH Unlock Contract Owner ETH Account FINISH>>>>>>"
 
-  echo "<<<<<<START Contract Migration<<<<<<"
+  echo "<<<<<<START Contract Migration START<<<<<<"
   cd /tmp/$BUILD_TAG/solidity
 
   npm init -y
@@ -50,14 +58,16 @@ ssh utilitybox << EOF
 
   cp ./truffle_sample.js ./truffle.js
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
-  echo ">>>>>>FINISH Contract Migration>>>>>>"
+  echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
 EOF
 
-echo "<<<<<<START Contract Copy<<<<<<"
+echo "<<<<<<START Contract Copy START<<<<<<"
+echo "scp utilitybox:/tmp/$BUILD_TAG/solidity/build/contracts/* /tmp/keep-client/contracts"
 scp utilitybox:/tmp/$BUILD_TAG/solidity/build/contracts/* /tmp/keep-client/contracts
 echo ">>>>>>FINISH Contract Copy>>>>>>"
 
-echo "<<<<<<START Migration Dir Cleanup<<<<<<"
+echo "<<<<<<START Migration Dir Cleanup START<<<<<<"
+echo "ssh utilitybox rm -rf /tmp/$BUILD_TAG"
 ssh utilitybox rm -rf /tmp/$BUILD_TAG
-echo ">>>>>>FINISH Contract Migration>>>>>>"
+echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
 
