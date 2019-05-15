@@ -24,6 +24,7 @@ import (
 var seedGroupPublicKey = []byte("seed to group public key")
 var seedRelayEntry = big.NewInt(123456789)
 var groupActiveTime = uint64(10)
+var relayRequestTimeout = uint64(8)
 
 type localGroup struct {
 	groupPublicKey          []byte
@@ -38,7 +39,7 @@ type localChain struct {
 	submittedResultsMutex sync.Mutex
 	// Map of submitted DKG Results. Key is a RequestID of the specific DKG
 	// execution.
-	submittedResults map[*big.Int][]*relaychain.DKGResult
+	submittedResults map[string]*relaychain.DKGResult
 
 	groups []localGroup
 
@@ -251,7 +252,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 			NaturalThreshold:                naturalThreshold,
 		},
 		groupRelayEntries:        make(map[string]*big.Int),
-		submittedResults:         make(map[*big.Int][]*relaychain.DKGResult),
+		submittedResults:         make(map[string]*relaychain.DKGResult),
 		relayEntryHandlers:       make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
 		groupRegisteredHandlers:  make(map[int]func(groupRegistration *event.GroupRegistration)),
@@ -326,8 +327,7 @@ func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 	return promise
 }
 
-// IsGroupRegistered simulates a check if a group can be cleaned on off-chain
-func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -341,7 +341,7 @@ func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 
 	for _, group := range c.groups {
 		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
-			return group.registrationBlockHeight+groupActiveTime < currentBlock, nil
+			return group.registrationBlockHeight+groupActiveTime+relayRequestTimeout < currentBlock, nil
 		}
 	}
 
@@ -354,7 +354,7 @@ func (c *localChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) {
 	c.submittedResultsMutex.Lock()
 	defer c.submittedResultsMutex.Unlock()
 
-	return c.submittedResults[requestID] != nil, nil
+	return c.submittedResults[requestID.String()] != nil, nil
 }
 
 // SubmitDKGResult submits the result to a chain.
@@ -369,18 +369,16 @@ func (c *localChain) SubmitDKGResult(
 
 	dkgResultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
-	for publishedRequestID, publishedResults := range c.submittedResults {
-		if publishedRequestID.Cmp(requestID) == 0 {
-			for _, publishedResult := range publishedResults {
-				if publishedResult.Equals(resultToPublish) {
-					dkgResultPublicationPromise.Fail(fmt.Errorf("result already submitted"))
-					return dkgResultPublicationPromise
-				}
-			}
-		}
+	_, ok := c.submittedResults[requestID.String()]
+	if ok {
+		dkgResultPublicationPromise.Fail(fmt.Errorf(
+			"result for request ID [%v] is already submitted",
+			requestID,
+		))
+		return dkgResultPublicationPromise
 	}
 
-	c.submittedResults[requestID] = append(c.submittedResults[requestID], resultToPublish)
+	c.submittedResults[requestID.String()] = resultToPublish
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
