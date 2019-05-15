@@ -47,4 +47,4 @@ ssh utilitybox << EOF
 EOF
 
 scp utilitybox:/tmp/$BUILD_TAG/contracts/solidity/build/contracts/* /tmp/contracts
-ssh utilitybox rm -rf /tmp/$BUILD_TAG
+#ssh utilitybox rm -rf /tmp/$BUILD_TAG
