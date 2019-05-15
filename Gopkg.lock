@@ -880,6 +880,36 @@
   revision = "5364a42fe4b5efa5967c11c8f9b0f049cac0c4a9"
 
 [[projects]]
+  digest = "1:e6ff7840319b6fda979a918a8801005ec2049abca62af19211d96971d8ec3327"
+  name = "go.uber.org/atomic"
+  packages = ["."]
+  pruneopts = ""
+  revision = "df976f2515e274675050de7b3f42545de80594fd"
+  version = "v1.4.0"
+
+[[projects]]
+  digest = "1:22c7effcb4da0eacb2bb1940ee173fac010e9ef3c691f5de4b524d538bd980f5"
+  name = "go.uber.org/multierr"
+  packages = ["."]
+  pruneopts = ""
+  revision = "3c4937480c32f4c13a875a1829af76c98ca3d40a"
+  version = "v1.1.0"
+
+[[projects]]
+  digest = "1:984e93aca9088b440b894df41f2043b6a3db8f9cf30767032770bfc4796993b0"
+  name = "go.uber.org/zap"
+  packages = [
+    ".",
+    "buffer",
+    "internal/bufferpool",
+    "internal/color",
+    "internal/exit",
+    "zapcore",
+  ]
+  pruneopts = ""
+  revision = "27376062155ad36be76b0f12cf1572a221d3a48c"
+
+[[projects]]
   branch = "master"
   digest = "1:cebc91a148c3d35354b53496d684130b149b607a4ba4feb035a0eb591284a96a"
   name = "golang.org/x/crypto"
@@ -1002,7 +1032,6 @@
     "github.com/ethereum/go-ethereum/crypto/secp256k1",
     "github.com/ethereum/go-ethereum/crypto/sha3",
     "github.com/ethereum/go-ethereum/ethclient",
-    "github.com/ethereum/go-ethereum/event",
     "github.com/ethereum/go-ethereum/rpc",
     "github.com/gogo/protobuf/io",
     "github.com/gogo/protobuf/proto",
@@ -1024,6 +1053,8 @@
     "github.com/multiformats/go-multiaddr",
     "github.com/pborman/uuid",
     "github.com/urfave/cli",
+    "go.uber.org/zap",
+    "go.uber.org/zap/zapcore",
     "golang.org/x/crypto/nacl/secretbox",
     "golang.org/x/crypto/sha3",
     "golang.org/x/crypto/ssh/terminal",
