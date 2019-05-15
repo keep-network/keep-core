@@ -72,7 +72,7 @@ jobs:
           name: Save keep-client image
           command: |
             mkdir -p /tmp/keep-client/docker-images
-            docker save -o /tmp/docker-images/keep-client/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
+            docker save -o /tmp/keep-client/docker-images/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
@@ -97,7 +97,7 @@ jobs:
       - run:
           name: Save keep-client-initcontainer image
           command: |
-            docker save -o /tmp/docker-images/keep-client/keep-client-initcontainer.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer
+            docker save -o /tmp/keep-client/docker-images/keep-client-initcontainer.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
