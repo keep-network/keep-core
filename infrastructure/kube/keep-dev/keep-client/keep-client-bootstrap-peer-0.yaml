@@ -39,9 +39,9 @@ spec:
       - name: testing-init-container
         image: gcr.io/keep-dev-fe24/keep-client-initcontainer
         env:
-          - name: ETHEREUM_ACCOUNT
+          - name: KEEP_CLIENT_ETH_ACCOUNT_ADDRESS
             value: 0xA86c468475EF9C2ce851Ea4125424672C3F7e0C8
-          - name: ETHEREUM_PASSWORD
+          - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: eth-account-passphrase
