@@ -3,20 +3,21 @@ from mesa.time import SimultaneousActivation
 import agent
 import numpy as np
 from mesa.datacollection import DataCollector
+import logging as log
 
 class Beacon_Model(Model):
     """The model"""
     def __init__(self, nodes, ticket_distribution, active_group_threshold, 
-    group_size, min_honest_threshold, group_expiry, 
+    group_size, max_malicious_threshold, group_expiry, 
      node_failure_percent, node_death_percent,
-    signature_delay, min_nodes, node_connection_delay, node_mainloop_connection_delay):
+    signature_delay, min_nodes, node_connection_delay, node_mainloop_connection_delay, log_filename, run_number):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
         self.active_groups = []
         self.active_nodes = []
         self.active_group_threshold = active_group_threshold # number of groups that will always be maintained in an active state
-        self.min_honest_threshold = min_honest_threshold # threshold below which a signature cannot occur
+        self.max_malicious_threshold = max_malicious_threshold # threshold above which a signature is deemed to be compromised, typically 51%
         self.group_size = group_size
         self.ticket_distribution = ticket_distribution
         self.newest_id = 0
@@ -31,6 +32,10 @@ class Beacon_Model(Model):
         self.datacollector = DataCollector(
             agent_reporters={"Ownership_distribution": "ownership_distr"})  # Collect ownership distributions for groups
 
+        #create log file
+        log.basicConfig(filename=log_filename + str(run_number), filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+
+
         #create nodes
         for i in range(nodes):
             node = agent.Node(i, i, self, self.ticket_distribution[i], node_failure_percent, node_death_percent, node_connection_delay, node_mainloop_connection_delay)
@@ -41,16 +46,16 @@ class Beacon_Model(Model):
 
     def step(self):
         '''Advance the model by one step'''
-        print("step # = " + str(self.timer))
+        log.debug("step # = " + str(self.timer))
  
         #check how many active nodes are available
         self.refresh_connected_nodes_list()
-        print("Number of nodes in the forked state = " + str(len(self.active_nodes)))
+        log.debug("Number of nodes in the forked state = " + str(len(self.active_nodes)))
 
         #bootstrap active groups as nodes become available. Can only happen once enough nodes are online
         temp_bootstrap_groups = []
         if self.bootstrap_complete == False:
-            print("bootstrapping active groups")
+            log.debug("bootstrapping active groups")
             if len(self.active_nodes)>=self.group_formation_threshold:
                 for i in range(self.active_group_threshold):
                     temp_bootstrap_groups.append(self.group_registration())
@@ -59,30 +64,26 @@ class Beacon_Model(Model):
 
         #check how many active groups are available
         self.refresh_active_group_list()
-        #print('number of active groups = ' + str(len(self.active_groups)))
-        #for group in self.schedule.agents:
-            #if group.type == "group":
-                #print("group ID "+str(group.group_id)+ "status = " + group.status + "steps to expiry = "+ str(group.expiry))
         
         #generate relay requests
         self.relay_request = np.random.choice([True,False]) # make this variable so it can be what-if'd
-        print("relay request recieved? = "+ str(self.relay_request))
+        log.debug("relay request recieved? = "+ str(self.relay_request))
 
         if self.relay_request:
             try:
-                print('     selecting group at random')
+                log.debug('     selecting group at random')
                 try:
                     # pick an active group from the active group list and create a signature object
                     signature = agent.Signature(self.newest_id, self.newest_signature_id, self, self.active_groups[np.random.randint(len(self.active_groups))]) 
                 except Exception as e: print(e)
                 self.schedule.add(signature)
             except:
-                print('     no active groups available')
+                log.debug('     no active groups available')
 
-            print('     registering new group')
+            log.debug('     registering new group')
             self.group_registration()
         else:
-            print("     No relay request")
+            log.debug("     No relay request")
         self.timer += 1
 
         #advance the agents
@@ -93,7 +94,7 @@ class Beacon_Model(Model):
         group_members = []
 
         if len(self.active_nodes)<self.group_formation_threshold: 
-            print("             Not enough nodes to register a group")
+            log.debug("             Not enough nodes to register a group")
 
         else:
             # make each node generate tickets and save them to a list
@@ -134,12 +135,11 @@ class Beacon_Model(Model):
         self.active_groups = temp_list
 
     def refresh_connected_nodes_list(self):
-        print("refreshing active nodes list")
+        log.debug("refreshing active nodes list")
         temp_active_node_list = []
         for agent in self.schedule.agents:
             if agent.type == "node":
                 if agent.mainloop_status == "forked": 
-                    print(agent.node_id)
                     temp_active_node_list.append(agent) #adds the node to the active list only if it is in the forked state
         self.active_nodes = temp_active_node_list
 
