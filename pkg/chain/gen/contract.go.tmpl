@@ -65,4 +65,4 @@ func New{{.Class}}(
 {{template "contract_const_methods.go.tmpl" .}}
 
 // ------ Events -------
-{{template "contract_events.go.tmpl" .}}
+{{template "contract_events.go.tmpl" . -}}
