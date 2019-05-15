@@ -5,6 +5,8 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 
+const minStake = 1;
+
 contract('TestStakeTokenGrantsViaProxy', function(accounts) {
 
   let token, stakingProxy, grantContract,
@@ -18,7 +20,7 @@ contract('TestStakeTokenGrantsViaProxy', function(accounts) {
 
   it("should stake and unstake granted tokens via staking proxy contract", async function() {
     stakingProxy = await StakingProxy.new();
-    grantContract = await TokenGrant.new(token.address, stakingProxy.address, duration.days(30));
+    grantContract = await TokenGrant.new(token.address, stakingProxy.address, duration.days(30), minStake);
 
     const proxyStakedEvent = stakingProxy.Staked();
     const proxyUnstakedEvent = stakingProxy.Unstaked();
