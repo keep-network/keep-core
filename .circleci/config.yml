@@ -231,6 +231,7 @@ workflows:
           requires:
             - build_client_and_test_go
             - build_initcontainer
+            - migrate_contracts
   docs:
     jobs:
       - generate_docs_tex
