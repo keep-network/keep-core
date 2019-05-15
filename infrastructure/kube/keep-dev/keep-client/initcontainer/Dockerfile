@@ -13,9 +13,12 @@ ENV ETH_HOSTNAME=$ETH_HOSTNAME
 ARG ETH_HOST_PORT
 ENV ETH_HOST_PORT=$ETH_HOST_PORT
 
-COPY ./StakingProxy.json /tmp/keep-client/contracts/StakingProxy.json
-COPY ./TokenStaking.json /tmp/keep-client/contracts/TokenStaking.json
-COPY ./KeepToken.json /tmp/keep-client/contracts/KeepToken.json
+ARG ETH_NETWORK_ID
+ENV ETH_NETWORK_ID=$ETH_NETWORK_ID
+
+COPY ./StakingProxy.json /tmp/StakingProxy.json
+COPY ./TokenStaking.json /tmp/TokenStaking.json
+COPY ./KeepToken.json /tmp/KeepToken.json
 
 COPY ./unlock-and-stake-eth-account.js /tmp/unlock-and-stake-eth-account.js
 

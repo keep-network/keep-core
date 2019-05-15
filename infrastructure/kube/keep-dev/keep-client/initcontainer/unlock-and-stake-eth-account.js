@@ -4,21 +4,21 @@ const web3 = new Web3(new Web3.providers.HttpProvider(process.env.ETH_HOSTNAME +
 
 // Contract setup
 // stakingProxy
-const stakingProxyContractJsonFile = "/tmp/keep-client/contracts/StakingProxy.json";
+const stakingProxyContractJsonFile = "/tmp/StakingProxy.json";
 const stakingProxyContractParsed = JSON.parse(fs.readFileSync(stakingProxyContractJsonFile));
 const stakingProxyContractAbi = stakingProxyContractParsed.abi;
 const stakingProxyContractAddress = stakingProxyContractParsed.networks[process.env.ETH_NETWORK_ID].address;
 const stakingProxyContract = new web3.eth.Contract(stakingProxyContractAbi, stakingProxyContractAddress);
 
 // tokenStaking
-const tokenStakingContractJsonFile = "/tmp/keep-client/contracts/TokenStaking.json";
+const tokenStakingContractJsonFile = "/tmp/TokenStaking.json";
 const tokenStakingContractParsed = JSON.parse(fs.readFileSync(tokenStakingContractJsonFile));
 const tokenStakingContractAbi = tokenStakingContractParsed.abi;
 const tokenStakingContractAddress = tokenStakingContractParsed.networks[process.env.ETH_NETWORK_ID].address;
 const tokenStakingContract = new web3.eth.Contract(tokenStakingContractAbi, tokenStakingContractAddress);
 
 // keepToken
-const keepTokenContractJsonFile = "/tmp/keep-client/contracts/KeepToken.json";
+const keepTokenContractJsonFile = "/tmp/KeepToken.json";
 const keepTokenContractParsed = JSON.parse(fs.readFileSync(keepTokenContractJsonFile));
 const keepTokenContractAbi = keepTokenContractParsed.abi;
 const keepTokenContractAddress = keepTokenContractParsed.networks[process.env.ETH_NETWORK_ID].address;
