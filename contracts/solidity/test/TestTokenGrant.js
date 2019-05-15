@@ -5,6 +5,8 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 
+const minStake = 1;
+
 contract('TestTokenGrants', function(accounts) {
 
   let token, grantContract, stakingProxy,
@@ -15,7 +17,7 @@ contract('TestTokenGrants', function(accounts) {
   beforeEach(async () => {
     token = await KeepToken.new();
     stakingProxy = await StakingProxy.new();
-    grantContract = await TokenGrant.new(token.address, stakingProxy.address, duration.days(30));
+    grantContract = await TokenGrant.new(token.address, stakingProxy.address, duration.days(30), minStake);
     amount = web3.utils.toBN(100);
     vestingDuration = duration.days(30);
     start = await latestTime();
