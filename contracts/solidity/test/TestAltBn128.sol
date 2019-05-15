@@ -1,7 +1,6 @@
 pragma solidity ^0.5.4;
 
 import "truffle/Assert.sol";
-import "../contracts/utils/ModUtils.sol";
 import "../contracts/utils/AltBn128.sol";
 
 contract TestAltBn128 {
