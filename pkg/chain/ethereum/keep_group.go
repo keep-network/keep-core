@@ -219,8 +219,8 @@ func (kg *keepGroup) IsDkgResultSubmitted(requestID *big.Int) (bool, error) {
 }
 
 // Checks if a group with the given public key is registered on-chain.
-func (kg *keepGroup) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
-	return kg.caller.IsGroupRegistered(kg.callerOpts, groupPublicKey)
+func (kg *keepGroup) IsStaleGroup(groupPublicKey []byte) (bool, error) {
+	return kg.caller.IsStaleGroup(kg.callerOpts, groupPublicKey)
 }
 
 func (kg *keepGroup) SubmitDKGResult(
