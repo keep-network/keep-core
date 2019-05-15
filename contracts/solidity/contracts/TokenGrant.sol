@@ -54,11 +54,12 @@ contract TokenGrant is StakeDelegatable {
      * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
      * @param _delay withdrawal delay for unstake.
      */
-    constructor(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
+    constructor(address _tokenAddress, address _stakingProxy, uint256 _delay, uint256 _minStake) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20(_tokenAddress);
         stakingProxy = StakingProxy(_stakingProxy);
         stakeWithdrawalDelay = _delay;
+        minStake = _minStake;
     }
 
     /**
