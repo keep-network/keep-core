@@ -221,7 +221,7 @@ contract TokenGrant is StakeDelegatable {
         require(grants[_id].beneficiary == msg.sender, "Only beneficiary of the grant can stake it.");
         // Calculate available amount. Amount of vested tokens minus what user already released.
         uint256 available = grants[_id].amount.sub(grants[_id].released);
-        require(available > 0, "Must have available granted amount to stake.");
+        require(available >= minStake, "Must have available granted amount to stake.");
 
         require(_extraData.length == 85, "Stake delegation data must be provided.");
 
