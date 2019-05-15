@@ -29,10 +29,7 @@ ssh utilitybox << EOF
 
   nohup timeout 600 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
 
-  port_forward_pid=$!
-
-  echo "port_forward_pid $port_forward_pid"
-  wait $port_forward_pid
+  sleep 10s
 
   geth --exec "personal.unlockAccount(\"${CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS}\", \"${CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD}\", 600)" attach http://localhost:8545
 
