@@ -1,6 +1,6 @@
 const fs = require('fs');
 const Web3 = require('web3');
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.ETHEREUM_HOSTNAME + ":" + process.env.ETHEREUM_HOST_PORT));
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT));
 
 // Contract setup
 // stakingProxy
@@ -24,7 +24,7 @@ const keepTokenContractAbi = keepTokenContractParsed.abi;
 const keepTokenContractAddress = keepTokenContractParsed.networks[process.env.ETH_NETWORK_ID].address;
 const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenContractAddress);
 
-// Ethereum account that contracts are migrated against
+// Eth account that contracts are migrated against
 const contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
 
 // Stake a target eth account

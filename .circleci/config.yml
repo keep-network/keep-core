@@ -89,7 +89,11 @@ jobs:
           name: Run Docker build
           command: |
             cd infrastructure/kube/keep-dev/keep-client/initcontainer
-            docker build -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer .
+            docker build \
+              --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
+              --build-arg ETH_HOST_PORT=$ETH_HOST_PORT \
+              --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
+              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer .
       - run:
           name: Save keep-client-initcontainer image
           command: |
