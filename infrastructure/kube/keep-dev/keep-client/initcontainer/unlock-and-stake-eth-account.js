@@ -24,15 +24,14 @@ const keepTokenContractAbi = keepTokenContractParsed.abi;
 const keepTokenContractAddress = keepTokenContractParsed.networks[process.env.ETH_NETWORK_ID].address;
 const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenContractAddress);
 
-// Eth account that contracts are migrated against
-const contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
+const operator = process.env.KEEP_CLIENT_ETH_ACCOUNT_ADDRESS;
 
 // Stake a target eth account
 async function stakeEthAccount() {
 
+  // Eth account that contracts are migrated against
+  let contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
   let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-  let operator = process.env.KEEP_CLIENT_ETH_ACCOUNT_ADDRESS;
-  let operator_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
 
   let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator)).substr(2), 'hex');
   let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
@@ -68,6 +67,8 @@ async function stakeEthAccount() {
 };
 
 async function unlockEthAccount() {
+
+  let operator_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
 
   try {
     console.log("Unlocking account: " + operator);
