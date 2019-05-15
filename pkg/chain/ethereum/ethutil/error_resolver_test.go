@@ -69,7 +69,8 @@ func (frc *fixedReturnCaller) CallContract(_ context.Context, _ ethereum.CallMsg
 }
 
 func TestErrorResolverHandlesErrorCall(t *testing.T) {
-	resolver := ethutil.NewErrorResolver(&erroringCaller{}, &testABI, &testAddress)
+	caller := &erroringCaller{}
+	resolver := ethutil.NewErrorResolver(caller, &testABI, &testAddress)
 
 	err := resolver.ResolveError(errOriginal, nil, "Test")
 	if err == nil {

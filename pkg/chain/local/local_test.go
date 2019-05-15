@@ -570,8 +570,7 @@ func TestLocalBlockHeightWaiter(t *testing.T) {
 	}
 }
 
-func TestLocalIsGroupEligibleForRemoval(t *testing.T) {
-
+func TestLocalIsGroupStale(t *testing.T) {
 	group1 := localGroup{
 		groupPublicKey:          []byte{'v'},
 		registrationBlockHeight: 1,
@@ -615,19 +614,24 @@ func TestLocalIsGroupEligibleForRemoval(t *testing.T) {
 			simulatedHeight: 1,
 			expectedResult:  true,
 		},
-		"a third group was found and current block has passed the expiration timeout": {
+		"a third group was found and current block has passed the expiration and operation timeout": {
 			group: localGroup{
 				groupPublicKey: group3.groupPublicKey,
 			},
-			simulatedHeight: group3.registrationBlockHeight + groupActiveTime + 1,
-			expectedResult:  true,
+			simulatedHeight: group3.registrationBlockHeight +
+				groupActiveTime +
+				relayRequestTimeout +
+				1,
+			expectedResult: true,
 		},
-		"a second group was found and current block is the same as expiration timeout": {
+		"a second group was found and current block is the same as an active time and operation timeout": {
 			group: localGroup{
 				groupPublicKey: group2.groupPublicKey,
 			},
-			simulatedHeight: group2.registrationBlockHeight + groupActiveTime,
-			expectedResult:  false,
+			simulatedHeight: group2.registrationBlockHeight +
+				groupActiveTime +
+				relayRequestTimeout,
+			expectedResult: false,
 		},
 	}
 
@@ -638,7 +642,7 @@ func TestLocalIsGroupEligibleForRemoval(t *testing.T) {
 				simulatedHeight: test.simulatedHeight,
 			}
 			chainHandle := localChain.ThresholdRelay()
-			actualResult, err := chainHandle.IsGroupRegistered(test.group.groupPublicKey)
+			actualResult, err := chainHandle.IsStaleGroup(test.group.groupPublicKey)
 			if err != nil {
 				t.Fatal(err)
 			}

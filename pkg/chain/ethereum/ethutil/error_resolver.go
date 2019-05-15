@@ -54,7 +54,7 @@ func NewErrorResolver(
 // reverting.
 //
 // ResolveError achieves this by re-calling the transaction (not submitting it
-// for block inclusion, just calling it for itse results). `value` is the value
+// for block inclusion, just calling it for its results). `value` is the value
 // in gwei to send along with the simulated call.
 func (er *ErrorResolver) ResolveError(originalErr error, value *big.Int, methodName string, parameters ...interface{}) error {
 	packed, err := er.abi.Pack(methodName, parameters...)
