@@ -74,14 +74,14 @@ jobs:
             mkdir -p /tmp/docker-images/keep-client/
             docker save -o /tmp/docker-images/keep-client/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
       - persist_to_workspace:
-          root: /tmp/docker-images
+          root: /tmp/keep-client
           paths:
-            - keep-client
+            - docker-images
   build_initcontainer:
     executor: docker-git
     steps:
       - attach_workspace:
-          at: /tmp
+          at: /tmp/keep-client
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
@@ -99,9 +99,9 @@ jobs:
           command: |
             docker save -o /tmp/docker-images/keep-client/keep-client-initcontainer.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer
       - persist_to_workspace:
-          root: /tmp/docker-images
+          root: /tmp/keep-client
           paths:
-            - keep-client
+            - docker-images
   migrate_contracts:
     executor: docker-thesis-buildpack
     steps:
@@ -120,19 +120,19 @@ jobs:
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
             contracts/solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
-          root: /tmp
+          root: /tmp/keep-client
           paths:
             - contracts
   publish_docker_images:
     executor: gcp-gcr/default
     steps:
       - attach_workspace:
-          at: /tmp/docker-images
+          at: /tmp/keep-client
       - run:
           name: Load Docker images
           command: |
-            docker load -i /tmp/docker-images/keep-client/keep-client.tar
-            docker load -i /tmp/docker-images/keep-client/keep-client-initcontainer.tar
+            docker load -i /tmp/keep-client/docker-images/keep-client.tar
+            docker load -i /tmp/keep-client/docker-images/keep-client-initcontainer.tar
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
