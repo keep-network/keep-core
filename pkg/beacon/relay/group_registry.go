@@ -64,21 +64,22 @@ func (gr *GroupRegistry) GetGroup(groupPublicKey []byte) []*Membership {
 }
 
 // UnregisterDeletedGroups lookup for groups to be removed.
+// Group is removed if it is considered as stale on-chain.
 func (gr *GroupRegistry) UnregisterDeletedGroups() {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
 	for publicKey := range gr.myGroups {
 		publicKeyBytes := []byte(publicKey)
-		isGroupRegistered, err := gr.relayChain.IsGroupRegistered(publicKeyBytes)
+		isStaleGroup, err := gr.relayChain.IsStaleGroup(publicKeyBytes)
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Group removal eligibility check failed: [%v]\n", err)
 		}
 
-		if !isGroupRegistered {
+		if isStaleGroup {
 			delete(gr.myGroups, publicKey)
-			fmt.Printf("Unregistering a group which was removed on chain [%+v]\n", publicKeyBytes)
+			fmt.Printf("Unregistering a stale group [%+v]\n", publicKeyBytes)
 		}
 	}
 }

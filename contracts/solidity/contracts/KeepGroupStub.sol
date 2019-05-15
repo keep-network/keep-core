@@ -19,7 +19,7 @@ contract KeepGroupStub {
     /**
      * @dev Gets number of active groups.
      */
-    function numberOfGroups() public view returns(uint256) {
+    function numberOfGroups() public pure returns(uint256) {
         return 1;
     }
 
