@@ -71,7 +71,7 @@ jobs:
       - run:
           name: Save keep-client image
           command: |
-            mkdir -p /tmp/docker-images/keep-client/
+            mkdir -p /tmp/keep-client/docker-images
             docker save -o /tmp/docker-images/keep-client/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
       - persist_to_workspace:
           root: /tmp/keep-client
@@ -118,6 +118,7 @@ jobs:
           command: |
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
+            mkdir -p /tmp/keep-client/contracts
             contracts/solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
           root: /tmp/keep-client
