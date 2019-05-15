@@ -21,7 +21,8 @@ var (
 	Error = zap.Error
 )
 
-// NewLogger returns a NewLogger which is primed for use in Development.
+// NewLogger returns an instance of Logger, which will annotate each message with the filename
+// and line number of the Logger's caller, while logging everything to standard error.
 // TODO: make this configurable
 func NewLogger() *Logger {
 	logger, err := zap.NewDevelopment(
