@@ -46,7 +46,7 @@ spec:
               secretKeyRef:
                 name: eth-account-passphrase
                 key: account-passphrase
-        command: ["/tmp/unlock-and-stake-eth-account.js"]
+        command: ["node", "/tmp/unlock-and-stake-eth-account.js"]
       containers:
       - name: keep-client-bootstrap-peer-0
         image: gcr.io/keep-dev-fe24/keep-client
