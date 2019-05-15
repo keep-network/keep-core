@@ -46,5 +46,5 @@ ssh utilitybox << EOF
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
 EOF
 
-scp utilitybox:/tmp/$BUILD_TAG/contracts/solidity/build/contracts/* /tmp/contracts
+scp utilitybox:/tmp/$BUILD_TAG/solidity/build/contracts/* /tmp/contracts
 #ssh utilitybox rm -rf /tmp/$BUILD_TAG
