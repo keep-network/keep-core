@@ -69,7 +69,7 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
 
 [[constraint]]
   name = "github.com/libp2p/go-libp2p-pubsub"
-  revision = "9f0263ae4ee591809366f5685e7fc1e5764a3280"
+  revision = "b962da55e5edbaaa9a2a3d8ba14876367c34ccd3"
 
 [[constraint]]
   name = "github.com/libp2p/go-libp2p"

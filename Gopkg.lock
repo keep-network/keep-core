@@ -495,14 +495,14 @@
   version = "v0.0.1"
 
 [[projects]]
-  digest = "1:343515b618d0af7196a3a76b42528d634eaf070b8a7e3a79b359709be3344d0b"
+  digest = "1:47546b01b321a13ba75d755f99e3af521b5ffbeb54a943c6b4d6f10b855f83c5"
   name = "github.com/libp2p/go-libp2p-pubsub"
   packages = [
     ".",
     "pb",
   ]
   pruneopts = ""
-  revision = "9f0263ae4ee591809366f5685e7fc1e5764a3280"
+  revision = "b962da55e5edbaaa9a2a3d8ba14876367c34ccd3"
 
 [[projects]]
   digest = "1:68fd55a3a3e4abc02cc8689623b864b35db9a00ae5bd6d99863c54b60f6737d2"
