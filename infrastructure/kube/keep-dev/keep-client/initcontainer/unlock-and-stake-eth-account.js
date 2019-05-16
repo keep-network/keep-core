@@ -1,6 +1,14 @@
 const fs = require('fs');
+
+const web3_options = {
+    defaultBlock: 'latest',
+    defaultGas: 4712388,
+    transactionBlockTimeout: 25,
+    transactionConfirmationBlocks: 3,
+    transactionPollingTimeout: 480
+}
 const Web3 = require('web3');
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT));
+const web3 = new Web3(new Web3.providers.HttpProvider(process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT), null, web3_options);
 
 // Contract setup
 // stakingProxy
@@ -39,12 +47,12 @@ async function stakeEthAccount() {
   let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
   try{
-    if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).send({from: contract_owner, gas: 4712388}).then((receipt) => {
+    if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call({from: contract_owner}).then((receipt) => {
         console.log("isAuthorized transaction receipt:")
         console.log(receipt)
         console.log("----------------------------------------")
     })) {
-      await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner, gas: 4712388}).then((receipt) => {
+      await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner}).then((receipt) => {
         console.log("authorizeContract transaction receipt:")
         console.log(receipt)
       })
@@ -60,7 +68,7 @@ async function stakeEthAccount() {
     await keepTokenContract.methods.approveAndCall(
       tokenStakingContract.address,
       formatAmount(1000000, 18),
-      delegation).send({from: contract_owner, gas: 4712388}).then((receipt) => {
+      delegation).send({from: contract_owner}).then((receipt) => {
         console.log("approveAndCall receipt:")
         console.log(receipt);
         console.log("Account " + operator + " staked!");
