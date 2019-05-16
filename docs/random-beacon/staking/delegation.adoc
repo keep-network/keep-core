@@ -275,6 +275,25 @@ which does not impose an opportunity cost when redelegating.
 Delegatees could be changed on the fly
 without interruption to active operations.
 
+==== Partial redelegation
+An _unconstrained_ redelegation model
+permits _partial redelegation_ of some fraction to a different operator
+without moving the entire stake.
+Stakes can be moved, divided and combined
+without waiting for the entire unstaking time.
+Instead, stake reorganization is either instant (with fast redelegation)
+or incurs the shorter _undelegating delay_ (with slow redelegation).
+
+If redelegation is _limited_,
+the owner can appoint a different operator for a particular staker
+as long as the entire staked amount is redelegated at once.
+Stakes can be moved around,
+but not divided or combined without unstaking and restaking.
+
+Depending on the design,
+redelegation can be _limited_ or _unconstrained_
+independently of whether it is _slow_ or _fast_.
+
 === Arguments for redelegation
 While easy redelegation appears attractive,
 it is not certain what important purpose it would actually serve
@@ -296,6 +315,7 @@ is to not have operator compromise.
 ==== Scalability
 Load-balancing operations across multiple computers
 is another conceivable argument for redelegation.
+
 However, blitzpantsing provides an initial load-balancing method
 that should be adequate for a relatively long time.
 If complete blitzpantsing were to be insufficient
@@ -303,9 +323,46 @@ to make it possible to operate a client
 on a single contemporary machine,
 assigning a new operator whenever necessary has some appeal.
 
-However, a better solution would be
-for the main operator to authorize a sub-operator address
-for each separate operation.
+Limited redelegation only enables
+load-balancing with a coarse form of round-robin scheduling
+as a large stake can be passed from operator to operator
+but not divided among multiple operators.
+In the long term, this has higher costs than blitzpantsing
+especially if redelegation is slow.
+
+Unconstrained redelegation makes it possible
+to perform blitzpantsing on existing stakes
+without unstaking and restaking.
+If redelegation is also fast,
+each minimum staker can further round-robin schedule their stakes.
+
+==== Sub-operators as an alternative load-balancing method
+An alternative load-balancing method would be
+for the main operator of a staker to appoint sub-operators for each operation,
+leaving only work selection duties for the main operator.
+This could even be combined with
+intermediate operator addresses for each work contract
+to divide work selection loads as well.
+
+With equal levels of blitzpantsing,
+using suboperators provides more effective load-balancing
+than round-robin scheduling.
+
+In both cases the current (main) operator performs all work selection,
+but with round-robin scheduling
+the current operator is also responsible for all active operations
+it has been selected for since the last redelegation.
+
+Work selection is expected to be
+significantly less complex and involved than the actual operations,
+so suboperators should have a major advantage
+even if intermediate operators for work selection are not used,
+or a single work contract is responsible for the entirety of the load.
+
+(This may change if staker indistinguishability is introduced
+and a ZKP-heavy method of proving available stake is required,
+but that scenario requires a different staking model
+so these considerations would not apply anyway.)
 
 ==== Reducing operator commitment
 If redelegation is not possible,
@@ -334,8 +391,20 @@ even with semi-indirect staking.
 Redelegation requires waiting for active operations to finish
 before the stake can be transferred to a different operator.
 
+Partial redelegation is easy to implement under this model
+as no tokens are actively used as collateral at the moment of redelegation.
+
 ==== Semi-indirect staking, leveraged operation, fast redelegation
-TBD
+The combination of leveraged operation and fast redelegation
+creates unique challenges.
+It must be possible to redelegate instantly,
+without missing opportunities in work selection,
+but ensuring that misbehavior is punishable
+requires tracking previous operators until all their operations finish.
+
+With limited redelegation this can be done
+by linking current and previous operators linearly under one staked sum.
+Unconstrained redelegation seems possible but prohibitively inconvenient.
 
 ==== Fully indirect staking, leveraged operation, fast redelegation
 TBD
@@ -346,7 +415,7 @@ turning fast redelegation with semi-indirect staking into a realistic option.
 The favorable cost characteristics of semi-indirect staking
 compensate slightly for the complexity of fully backed operation,
 while the latter removes the main downside of the former
-by unconstrained redelegation.
+by providing an easy method for unconstrained redelegation.
 
 Free stakes can be transferred to a different operator at any time,
 while locked stakes have to wait for operations to finish.
