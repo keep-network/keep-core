@@ -70,6 +70,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 					signer.ChannelName,
 					err,
 				)
+				return
 			}
 
 			signature, err := thresholdsignature.Execute(
