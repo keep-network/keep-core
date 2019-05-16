@@ -6,7 +6,7 @@ import "./BLS.sol";
 
 
 interface GroupContract {
-    function runGroupSelection(uint256 randomBeaconValue) external;
+    function runGroupSelection(uint256 randomBeaconValue, uint256 requestId, uint256 seed) external;
     function numberOfGroups() external view returns(uint256);
     function selectGroup(uint256 previousEntry) external returns(bytes memory);
 }
@@ -167,7 +167,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _previousEntry = groupSignature;
 
         emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);
-        GroupContract(_groupContract).runGroupSelection(groupSignature);
+        GroupContract(_groupContract).runGroupSelection(groupSignature, requestID, seed);
     }
 
     // TODO: implement this. THIS IS ONLY A STUB

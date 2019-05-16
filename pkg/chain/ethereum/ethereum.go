@@ -286,6 +286,32 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 	)
 }
 
+func (ec *ethereumChain) OnGroupSelectionStarted(
+	handle func(groupSelectionStart *event.GroupSelectionStart),
+) (subscription.EventSubscription, error) {
+	return ec.keepGroupContract.WatchGroupSelectionStarted(
+		func(
+			newEntry *big.Int,
+			requestID *big.Int,
+			seed *big.Int,
+			blockNumber uint64,
+		) {
+			handle(&event.GroupSelectionStart{
+				NewEntry:    newEntry,
+				RequestID:   requestID,
+				Seed:        seed,
+				BlockNumber: blockNumber,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf(
+				"watch group selection started failed with [%v]",
+				err,
+			)
+		},
+	)
+}
+
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
 ) (subscription.EventSubscription, error) {

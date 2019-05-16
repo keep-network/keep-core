@@ -57,17 +57,17 @@ func Initialize(
 		)
 	})
 
-	relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
-		fmt.Printf("New relay entry generated [%+v]\n", entry)
+	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
+		fmt.Printf("Group selection started [%+v]\n", event)
 
 		go func() {
 			err := node.SubmitTicketsForGroupSelection(
 				relayChain,
 				blockCounter,
-				entry.Value.Bytes(),
-				entry.RequestID,
-				entry.Seed,
-				entry.BlockNumber,
+				event.NewEntry.Bytes(),
+				event.RequestID,
+				event.Seed,
+				event.BlockNumber,
 			)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Tickets submission failed: [%v]\n", err)
