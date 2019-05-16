@@ -75,7 +75,7 @@ class Beacon_Model(Model):
                 try:
                     # pick an active group from the active group list and create a signature object
                     signature = agent.Signature(self.newest_id, self.newest_signature_id, self, self.active_groups[np.random.randint(len(self.active_groups))]) 
-                except Exception as e: print(e)
+                except Exception as e: log.warning(e)
                 self.schedule.add(signature)
             except:
                 log.debug('     no active groups available')
