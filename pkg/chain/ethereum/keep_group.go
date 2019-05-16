@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
@@ -19,7 +20,7 @@ import (
 type keepGroup struct {
 	caller          *abi.KeepGroupImplV1Caller
 	callerOpts      *bind.CallOpts
-	errorResolver   *ErrorResolver
+	errorResolver   *ethutil.ErrorResolver
 	transactor      *abi.KeepGroupImplV1Transactor
 	transactorOpts  *bind.TransactOpts
 	contract        *abi.KeepGroupImplV1
@@ -69,7 +70,7 @@ func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
 	}
 
 	if chainConfig.accountKey == nil {
-		key, err := DecryptKeyFile(
+		key, err := ethutil.DecryptKeyFile(
 			chainConfig.config.Account.KeyFile,
 			chainConfig.config.Account.KeyFilePassword,
 		)
@@ -118,7 +119,7 @@ func newKeepGroup(chainConfig *ethereumChain) (*keepGroup, error) {
 		transactorOpts:  optsTransactor,
 		caller:          groupCaller,
 		callerOpts:      optsCaller,
-		errorResolver:   NewErrorResolver(chainConfig.client, &contractAbi, &contractAddress),
+		errorResolver:   ethutil.NewErrorResolver(chainConfig.client, &contractAbi, &contractAddress),
 		contract:        groupContract,
 		contractAddress: contractAddress,
 	}, nil

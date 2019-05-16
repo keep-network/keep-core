@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
@@ -18,7 +19,7 @@ import (
 type KeepRandomBeacon struct {
 	caller            *abi.KeepRandomBeaconImplV1Caller
 	callerOptions     *bind.CallOpts
-	errorResolver     *ErrorResolver
+	errorResolver     *ethutil.ErrorResolver
 	contract          *abi.KeepRandomBeaconImplV1
 	contractAddress   common.Address
 	transactorOptions *bind.TransactOpts
@@ -36,7 +37,7 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 	contractAddress := common.HexToAddress(contractAddressHex)
 
 	if chainConfig.accountKey == nil {
-		key, err := DecryptKeyFile(
+		key, err := ethutil.DecryptKeyFile(
 			chainConfig.config.Account.KeyFile,
 			chainConfig.config.Account.KeyFilePassword,
 		)
@@ -88,7 +89,7 @@ func newKeepRandomBeacon(chainConfig *ethereumChain) (*KeepRandomBeacon, error) 
 	return &KeepRandomBeacon{
 		caller:            beaconCaller,
 		callerOptions:     callerOptions,
-		errorResolver:     NewErrorResolver(chainConfig.client, &contractAbi, &contractAddress),
+		errorResolver:     ethutil.NewErrorResolver(chainConfig.client, &contractAbi, &contractAddress),
 		contract:          randomBeaconContract,
 		contractAddress:   contractAddress,
 		transactorOptions: transactorOptions,
