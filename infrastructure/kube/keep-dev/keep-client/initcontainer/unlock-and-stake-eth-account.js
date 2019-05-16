@@ -24,13 +24,15 @@ const keepTokenContractAbi = keepTokenContractParsed.abi;
 const keepTokenContractAddress = keepTokenContractParsed.networks[process.env.ETH_NETWORK_ID].address;
 const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenContractAddress);
 
+// Eth account used by keep-client
 const operator = process.env.KEEP_CLIENT_ETH_ACCOUNT_ADDRESS;
+
+// Eth account that contracts are migrated against
+const contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
 // Stake a target eth account
 async function stakeEthAccount() {
 
-  // Eth account that contracts are migrated against
-  let contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
   let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
   let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator)).substr(2), 'hex');
@@ -66,18 +68,24 @@ async function stakeEthAccount() {
   }
 };
 
-async function unlockEthAccount() {
+async function unlockEthAccount(callback) {
 
   let operator_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
+  let contract_owner_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
 
   try {
-    console.log("Unlocking account: " + operator);
+    console.log("Unlocking operator account: " + operator);
     await web3.eth.personal.unlockAccount(operator, operator_eth_account_password, 700);
-    console.log("Account: " + operator + " unlocked!");
+    console.log("Operator account: " + operator + " unlocked!");
+
+    console.log("Unlocking contract_owner account: " + contract_owner);
+    await web3.eth.personal.unlockAccount(contract_owner, contract_owner_eth_account_password, 700);
+    console.log("Contract_owner account: " + contract_owner + " unlocked!");
   }
   catch(error) {
     console.error(error);
   }
+  callback();
 }
 
 // \heimdall aliens numbers
@@ -85,5 +93,4 @@ function formatAmount(amount, decimals) {
   return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex')
 }
 
-unlockEthAccount();
-stakeEthAccount();
+unlockEthAccount(stakeEthAccount);
