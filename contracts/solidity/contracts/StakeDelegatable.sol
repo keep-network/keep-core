@@ -26,6 +26,9 @@ contract StakeDelegatable {
     // Stake balances.
     mapping(address => uint256) public stakeBalances;
 
+    // Stake balances.
+    mapping(address => uint256) public initialStakeBalances;
+
     // Stake delegation mappings.
     mapping(address => address) public operatorToOwner;
     mapping(address => address) public magpieToOwner;
