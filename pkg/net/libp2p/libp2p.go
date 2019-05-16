@@ -12,6 +12,7 @@ import (
 
 	dstore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
+	"github.com/ipfs/go-ipfs/core/bootstrap"
 	addrutil "github.com/libp2p/go-addr-util"
 	libp2p "github.com/libp2p/go-libp2p"
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
@@ -197,32 +198,18 @@ func getListenAddrs(port int) ([]ma.Multiaddr, error) {
 }
 
 func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {
-	var waitGroup sync.WaitGroup
-
 	peerInfos, err := extractMultiAddrFromPeers(bootstrapPeers)
 	if err != nil {
 		return err
 	}
 
-	for _, peerInfo := range peerInfos {
-		if p.host.ID() == peerInfo.ID {
-			// We shouldn't bootstrap to ourself if we're the
-			// bootstrap node.
-			continue
-		}
-		waitGroup.Add(1)
-		go func(pi *peerstore.PeerInfo) {
-			defer waitGroup.Done()
-			if err := p.host.Connect(ctx, *pi); err != nil {
-				fmt.Println(err)
-				return
-			}
-		}(peerInfo)
-	}
-	waitGroup.Wait()
-
-	// Bootstrap the host
-	return p.routing.Bootstrap(ctx)
+	_, err = bootstrap.Bootstrap(
+		p.identity.id,
+		p.host,
+		p.routing,
+		bootstrap.BootstrapConfigWithPeers(peerInfos),
+	)
+	return err
 }
 
 func extractMultiAddrFromPeers(peers []string) ([]*peerstore.PeerInfo, error) {
