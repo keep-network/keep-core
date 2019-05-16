@@ -12,7 +12,9 @@ contract KeepGroupStub {
     /**
      * @dev Triggers the selection process of a new candidate group.
      */
-    function runGroupSelection(uint256 randomBeaconValue) public {
+    function runGroupSelection(uint256 randomBeaconValue, uint256 requestId, uint256 seed) public {
+        requestId;
+        seed;
         _randomBeaconValue = randomBeaconValue;
     }
 
