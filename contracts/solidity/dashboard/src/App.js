@@ -134,7 +134,7 @@ class Main extends Component {
                 {!isTokenHolder && !isOperator ?
                   <div className="signing">
                     <div className="alert alert-info m-5" role="alert">Sorry, looks like you don't have any tokens to stake.</div>
-                    <h3>Become and operator</h3>
+                    <h3>Become an operator</h3>
                     <p>
                       To become an operator you must have a mutual agreement with the stake owner. This is achieved by creating
                       a signature of the stake owner address and sending it to the owner. Using the signature the owner can initiate
