@@ -12,6 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -33,7 +34,7 @@ type Node struct {
 	stakeIDs      []string
 	maxStakeIndex int
 
-	groupRegistry *GroupRegistry
+	groupRegistry *registry.Groups
 }
 
 // JoinGroupIfEligible takes a threshold relay entry value and undergoes the
