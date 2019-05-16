@@ -4,22 +4,26 @@
 solidity_dir=$(realpath ${SOLIDITY_DIR})
 solidity_files := $(wildcard ${solidity_dir}/contracts/*.sol)
 
-# ABI bindings from abigen share the same base name as their Solidity
-# counterparts and are put in the abi/ subdirectory.
-abi_files := $(foreach file, $(solidity_files), abi/$(notdir $(basename $(file))).go)
-# *ImplV1.go files will get generated into first-class clean contract bindings.
-# The corresponding contract filenames will drop the ImplV1 and live in the
-# contract/ directory. Staking-related files are in a similar boat.
-contract_candidates := $(filter %ImplV1.go, $(abi_files)) $(filter abi/Staking%.go, $(abi_files))
-contract_files := $(foreach file, $(contract_candidates), contract/$(notdir $(subst ImplV1,,$(basename $(file)))).go)
+# Bare Solidity filenames without .sol or Solidity directory prefix.
+contract_stems := $(notdir $(basename $(solidity_files)))
+# Go abigen bindings in abi/ subdirectory with .go suffix, alongside solc ABI
+# files with .abi suffix.
+abi_files := $(addprefix abi/,$(addsuffix .abi,$(contract_stems)))
+abigen_files := $(addprefix abi/,$(addsuffix .go,$(contract_stems)))
+# *ImplV1.go files will get generated into clean Keep contract bindings, as will
+# the Staking*.go contract(s). The corresponding contract filenames will drop
+# the ImplV1, if it exists, and live in the contract/ directory.
+clean_contract_stems := $(filter %ImplV1,$(contract_stems)) $(filter Staking%,$(contract_stems))
+contract_files := $(addprefix contract/,$(addsuffix .go,$(subst ImplV1,,$(clean_contract_stems))))
 
 all: gen_contract_go gen_abi_go
 
 clean:
 	rm -rf ${abi_files}
+	rm -rf ${abigen_files}
 	rm -rf ${contract_files}
 
-gen_abi_go: $(abi_files)
+gen_abi_go: $(abigen_files)
 
 gen_contract_go: $(contract_files)
 
