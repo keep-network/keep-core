@@ -18,5 +18,5 @@
 	Port = 27001
 	Peers = ["/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"]
 
-[StateManagementData]
-	Dir = "./state_data"
+[Storage]
+	DataDir = "/my/secure/location"

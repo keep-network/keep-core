@@ -16,9 +16,9 @@ const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
 // Config is the top level config structure.
 type Config struct {
-	Ethereum            ethereum.Config
-	LibP2P              libp2p.Config
-	StateManagementData StateManagementData
+	Ethereum ethereum.Config
+	LibP2P   libp2p.Config
+	Storage  Storage
 }
 
 type node struct {
@@ -31,9 +31,9 @@ type bootstrap struct {
 	Seed int
 }
 
-// StateManagementData stores meta-info for state management
-type StateManagementData struct {
-	Dir string
+// Storage stores meta-info about keeping data on disk
+type Storage struct {
+	DataDir string
 }
 
 var (
@@ -78,8 +78,8 @@ func ReadConfig(filePath string) (*Config, error) {
 		return nil, fmt.Errorf("non-bootstrap node should have bootstrap URLs and a seed of 0")
 	}
 
-	if config.StateManagementData.Dir == "" {
-		return nil, fmt.Errorf("missing value for state management directory data")
+	if config.Storage.DataDir == "" {
+		return nil, fmt.Errorf("missing value for storage directory data")
 	}
 
 	return config, nil

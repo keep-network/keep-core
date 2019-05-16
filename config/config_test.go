@@ -48,8 +48,8 @@ func TestReadConfig(t *testing.T) {
 			},
 		},
 		"StateManagementData": {
-			readValueFunc: func(c *Config) interface{} { return c.StateManagementData.Dir },
-			expectedValue: "./state_data",
+			readValueFunc: func(c *Config) interface{} { return c.Storage.DataDir },
+			expectedValue: "/my/secure/location",
 		},
 	}
 
