@@ -3,6 +3,7 @@ package relay
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"os"
@@ -98,7 +99,7 @@ func (n *Node) JoinGroupIfEligible(
 
 				n.groupRegistry.RegisterGroup(
 					signer,
-					broadcastChannel,
+					broadcastChannelName,
 				)
 			}()
 		}
@@ -110,14 +111,15 @@ func (n *Node) JoinGroupIfEligible(
 // channelNameForGroup takes the selected stakers, and does the
 // following to construct the broadcastChannel name:
 // * concatenates all of the staker values
-// * returns the hashed concatenated values
+// * returns the hashed concatenated values in hexadecimal representation
 func channelNameForGroup(group *groupselection.Result) string {
 	var channelNameBytes []byte
 	for _, staker := range group.SelectedStakers {
 		channelNameBytes = append(channelNameBytes, staker...)
 	}
-	hashedChannelName := groupselection.SHAValue(
-		sha256.Sum256(channelNameBytes),
+	hexChannelName := hex.EncodeToString(
+		groupselection.SHAValue(sha256.Sum256(channelNameBytes)).Bytes(),
 	)
-	return string(hashedChannelName.Bytes())
+
+	return hexChannelName
 }

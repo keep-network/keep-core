@@ -11,7 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
-	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -28,13 +27,7 @@ func TestRegisterGroup(t *testing.T) {
 		relayChain: chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay(),
 	}
 
-	networkProvider := netLocal.Connect()
-	channel, err := networkProvider.ChannelFor("testChannel")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	gr.RegisterGroup(signer, channel)
+	gr.RegisterGroup(signer, "test_channel")
 
 	actual := gr.GetGroup(signer.GroupPublicKeyBytes())
 
@@ -64,12 +57,6 @@ func TestUnregisterStaleGroups(t *testing.T) {
 		relayChain: mockChain,
 	}
 
-	networkProvider := netLocal.Connect()
-	channel, err := networkProvider.ChannelFor("test")
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	signer1 := dkg.NewThresholdSigner(
 		group.MemberIndex(1),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
@@ -86,9 +73,11 @@ func TestUnregisterStaleGroups(t *testing.T) {
 		big.NewInt(3),
 	)
 
-	gr.RegisterGroup(signer1, channel)
-	gr.RegisterGroup(signer2, channel)
-	gr.RegisterGroup(signer3, channel)
+	channelName := "test_channel"
+
+	gr.RegisterGroup(signer1, channelName)
+	gr.RegisterGroup(signer2, channelName)
+	gr.RegisterGroup(signer3, channelName)
 
 	mockChain.markForRemoval(signer2.GroupPublicKeyBytes())
 

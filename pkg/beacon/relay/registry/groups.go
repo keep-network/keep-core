@@ -7,7 +7,6 @@ import (
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
-	"github.com/keep-network/keep-core/pkg/net"
 )
 
 // Groups represents a collection of Keep groups in which the given
@@ -22,8 +21,8 @@ type Groups struct {
 
 // Membership represents a member of a group
 type Membership struct {
-	Signer  *dkg.ThresholdSigner
-	Channel net.BroadcastChannel
+	Signer      *dkg.ThresholdSigner
+	ChannelName string
 }
 
 // NewGroupRegistry returns an empty GroupRegistry.
@@ -40,7 +39,7 @@ func NewGroupRegistry(
 // groupPublicKey.
 func (gr *Groups) RegisterGroup(
 	signer *dkg.ThresholdSigner,
-	channel net.BroadcastChannel,
+	channelName string,
 ) {
 
 	gr.mutex.Lock()
@@ -50,8 +49,8 @@ func (gr *Groups) RegisterGroup(
 
 	gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey],
 		&Membership{
-			Signer:  signer,
-			Channel: channel,
+			Signer:      signer,
+			ChannelName: channelName,
 		})
 }
 
