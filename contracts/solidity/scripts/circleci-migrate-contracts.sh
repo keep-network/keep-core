@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -e
+
 if [[ -z $GOOGLE_PROJECT_NAME || -z $GOOGLE_PROJECT_ID || -z $BUILD_TAG || -z $GOOGLE_REGION || -z $GOOGLE_COMPUTE_ZONE_A || -z $TRUFFLE_NETWORK ]]; then
   echo "one or more required variables are undefined"
   exit 1
