@@ -24,6 +24,7 @@ import (
 var seedGroupPublicKey = []byte("seed to group public key")
 var seedRelayEntry = big.NewInt(123456789)
 var groupActiveTime = uint64(10)
+var relayRequestTimeout = uint64(8)
 
 type localGroup struct {
 	groupPublicKey          []byte
@@ -344,8 +345,7 @@ func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 	return promise
 }
 
-// IsGroupRegistered simulates a check if a group can be cleaned on off-chain
-func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -359,7 +359,7 @@ func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 
 	for _, group := range c.groups {
 		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
-			return group.registrationBlockHeight+groupActiveTime < currentBlock, nil
+			return group.registrationBlockHeight+groupActiveTime+relayRequestTimeout < currentBlock, nil
 		}
 	}
 

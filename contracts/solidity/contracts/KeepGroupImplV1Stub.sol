@@ -27,6 +27,14 @@ contract KeepGroupImplV1Stub is KeepGroupImplV1 {
     }
 
     /**
+     * @dev Gets the public key of the group registered under the given index.
+     * @param groupIndex is the index of the queried group.
+     */
+    function getGroupPublicKey(uint256 groupIndex) public view returns(bytes memory) {
+        return _groups[groupIndex].groupPubKey;
+    }
+
+    /**
      * @dev Gets the value of expired offset.
      */
     function getExpiredOffset() public view returns(uint256) {

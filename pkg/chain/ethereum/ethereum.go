@@ -404,8 +404,8 @@ func (ec *ethereumChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) 
 	return ec.keepGroupContract.IsDkgResultSubmitted(requestID)
 }
 
-func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
-	return ec.keepGroupContract.IsGroupRegistered(groupPublicKey)
+func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
+	return ec.keepGroupContract.IsStaleGroup(groupPublicKey)
 }
 
 func (ec *ethereumChain) OnDKGResultSubmitted(
