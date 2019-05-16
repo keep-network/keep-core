@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 )
 
 func TestSign(t *testing.T) {
@@ -45,7 +45,7 @@ func TestSign(t *testing.T) {
 		},
 	}
 
-	key, err := ethereum.DecryptKeyFile(keyFile, keyPassword)
+	key, err := ethutil.DecryptKeyFile(keyFile, keyPassword)
 	if err != nil {
 		t.Fatalf("Failed to read key file [%s] [%v]\n", keyFile, err)
 	}
@@ -183,7 +183,7 @@ func TestPublicKeyToAddress(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 
-			key, err := ethereum.DecryptKeyFile(test.keyFile, test.keyPassword)
+			key, err := ethutil.DecryptKeyFile(test.keyFile, test.keyPassword)
 			if err != nil {
 				t.Fatalf("Failed to read key file [%s] [%v]\n", test.keyFile, err)
 				return
