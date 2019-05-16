@@ -75,11 +75,11 @@ async function unlockEthAccount(callback) {
 
   try {
     console.log("Unlocking operator account: " + operator);
-    await web3.eth.personal.unlockAccount(operator, operator_eth_account_password, 700);
+    await web3.eth.personal.unlockAccount(operator, operator_eth_account_password, 150000);
     console.log("Operator account: " + operator + " unlocked!");
 
     console.log("Unlocking contract_owner account: " + contract_owner);
-    await web3.eth.personal.unlockAccount(contract_owner, contract_owner_eth_account_password, 700);
+    await web3.eth.personal.unlockAccount(contract_owner, contract_owner_eth_account_password, 150000);
     console.log("Contract_owner account: " + contract_owner + " unlocked!");
   }
   catch(error) {
