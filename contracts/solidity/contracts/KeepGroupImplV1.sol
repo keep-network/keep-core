@@ -27,8 +27,8 @@ contract KeepGroupImplV1 is Ownable {
     event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey);
 
     // TODO: Remove requestId once Keep Client DKG is refactored to
-    // use randomBeaconValue as unique id.
-    event GroupSelectionStarted(uint256 randomBeaconValue, uint256 requestId, uint256 seed);
+    // use newEntry as unique id.
+    event GroupSelectionStarted(uint256 newEntry, uint256 requestId, uint256 seed);
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -111,7 +111,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Triggers the selection process of a new candidate group.
      */
-    function runGroupSelection(uint256 randomBeaconValue, uint256 requestId, uint256 seed) public {
+    function runGroupSelection(uint256 newEntry, uint256 requestId, uint256 seed) public {
         require(msg.sender == _randomBeacon);
 
         uint256 latestDKGSubmission = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG + _groupSize * _resultPublicationBlockStep;
@@ -119,9 +119,9 @@ contract KeepGroupImplV1 is Ownable {
         if (!_groupSelectionInProgress || block.number > latestDKGSubmission) {
             cleanup();
             _ticketSubmissionStartBlock = block.number;
-            _randomBeaconValue = randomBeaconValue;
+            _randomBeaconValue = newEntry;
             _groupSelectionInProgress = true;
-            emit GroupSelectionStarted(randomBeaconValue, requestId, seed);
+            emit GroupSelectionStarted(newEntry, requestId, seed);
         }
     }
 

@@ -354,7 +354,7 @@ func (kg *keepGroup) WatchGroupSelectionStarted(
 					return
 				}
 				success(
-					event.Value,
+					event.NewEntry,
 					event.RequestId,
 					event.Seed,
 					event.Raw.BlockNumber,
