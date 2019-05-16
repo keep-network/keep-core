@@ -1,4 +1,4 @@
-package relay
+package registry
 
 import (
 	"fmt"
@@ -9,9 +9,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 )
 
-// GroupRegistry represents a collection of Keep groups in which the given
+// Groups represents a collection of Keep groups in which the given
 // client is a member.
-type GroupRegistry struct {
+type Groups struct {
 	mutex sync.Mutex
 
 	myGroups map[string][]*Membership
@@ -21,15 +21,15 @@ type GroupRegistry struct {
 
 // Membership represents a member of a group
 type Membership struct {
-	signer      *dkg.ThresholdSigner
-	channelName string
+	Signer      *dkg.ThresholdSigner
+	ChannelName string
 }
 
 // NewGroupRegistry returns an empty GroupRegistry.
 func NewGroupRegistry(
 	relayChain relaychain.GroupRegistrationInterface,
-) *GroupRegistry {
-	return &GroupRegistry{
+) *Groups {
+	return &Groups{
 		myGroups:   make(map[string][]*Membership),
 		relayChain: relayChain,
 	}
@@ -37,7 +37,7 @@ func NewGroupRegistry(
 
 // RegisterGroup registers that a group was successfully created by the given
 // groupPublicKey.
-func (gr *GroupRegistry) RegisterGroup(
+func (gr *Groups) RegisterGroup(
 	signer *dkg.ThresholdSigner,
 	channelName string,
 ) {
@@ -49,13 +49,13 @@ func (gr *GroupRegistry) RegisterGroup(
 
 	gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey],
 		&Membership{
-			signer:      signer,
-			channelName: channelName,
+			Signer:      signer,
+			ChannelName: channelName,
 		})
 }
 
 // GetGroup gets a group by a groupPublicKey
-func (gr *GroupRegistry) GetGroup(groupPublicKey []byte) []*Membership {
+func (gr *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
@@ -63,8 +63,7 @@ func (gr *GroupRegistry) GetGroup(groupPublicKey []byte) []*Membership {
 }
 
 // UnregisterDeletedGroups lookup for groups to be removed.
-// Group is removed if it is considered as stale on-chain.
-func (gr *GroupRegistry) UnregisterDeletedGroups() {
+func (gr *Groups) UnregisterDeletedGroups() {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 

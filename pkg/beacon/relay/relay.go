@@ -9,6 +9,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -21,7 +22,7 @@ func NewNode(
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
 	chainConfig *config.Chain,
-	groupRegistry *GroupRegistry,
+	groupRegistry *registry.Groups,
 ) Node {
 	return Node{
 		Staker:        staker,
@@ -60,13 +61,13 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	}
 
 	for _, signer := range memberships {
-		go func(signer *Membership) {
-			channel, err := n.netProvider.ChannelFor(signer.channelName)
+		go func(signer *registry.Membership) {
+			channel, err := n.netProvider.ChannelFor(signer.ChannelName)
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
 					"could not create broadcast channel with name [%v]: [%v]\n",
-					signer.channelName,
+					signer.ChannelName,
 					err,
 				)
 			}
@@ -76,7 +77,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				n.chainConfig.HonestThreshold(),
 				n.blockCounter,
 				channel,
-				signer.signer,
+				signer.Signer,
 				startBlockHeight,
 			)
 			if err != nil {
@@ -95,7 +96,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				Value:         rightSizeSignature,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
-				GroupPubKey:   signer.signer.GroupPublicKeyBytes(),
+				GroupPubKey:   signer.Signer.GroupPublicKeyBytes(),
 				Seed:          seed,
 			}
 
