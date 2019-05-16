@@ -30,6 +30,6 @@ func TestMembershipRoundtrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(membership, unmarshaled) {
-		t.Fatalf("unexpected content of unmarshaled")
+		t.Fatalf("unexpected content of unmarshaled membership")
 	}
 }
