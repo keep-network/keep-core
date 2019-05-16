@@ -37,7 +37,7 @@ Provides the tokens for the staker
 operator::
 Handles the day-to-day participation in the network operations
 
-magpie::
+beneficiary::
 Collects any rewards earned by the staker
 
 authorizer::
@@ -51,15 +51,15 @@ As far as the network is concerned,
 any of these arrangements simply forms a _staker_.
 
 staker::
-An abstraction representing the _owner_, _operator_, _magpie_ and _authorizer_
+An abstraction representing the _owner_, _operator_, _beneficiary_ and _authorizer_
 each performing their respective roles.
 
-The roles of the _operator_, _magpie_ and _authorizer_
+The roles of the _operator_, _beneficiary_ and _authorizer_
 may also be called _delegatees_
 as they are appointed by the _owner_ or _delegator_.
 
 delegatee::
-The _operator_, _magpie_ or _authorizer_
+The _operator_, _beneficiary_ or _authorizer_
 
 delegator::
 The _owner_, contrasted to the _delegatees_
@@ -89,7 +89,7 @@ and the staked tokens quickly sold before the markets react.
 
 === Delegation
 _Delegation_ means the owner of staked tokens assigning the roles
-of _operator_, _magpie_ and _authorizer_
+of _operator_, _beneficiary_ and _authorizer_
 for participating in network operations.
 Only _delegated_ stakes can earn rewards.
 
@@ -192,7 +192,7 @@ The staking contract uses an abstraction of _staker_,
 a useful fiction similar to "limited-liability corporation".
 Each _staker_ has its own token balance,
 recorded in the _staking contract_
-alongside the addresses of its _owner_, _operator_, _magpie_ and _authorizer_.
+alongside the addresses of its _owner_, _operator_, _beneficiary_ and _authorizer_.
 
 ==== Semi-indirect staking
 In _semi-indirect staking_
