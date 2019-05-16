@@ -39,3 +39,6 @@ keep_accounts
 *.ipynb_checkpoints
 __pycache__
 *.pyc
+simulations/Mesa Simulations/Mesa_ABM_of_Random_Beacon.ipynb
+simulations/Mesa Simulations/group_failure_dominator_study.log0
+simulations/Mesa Simulations/master_sim.log0
