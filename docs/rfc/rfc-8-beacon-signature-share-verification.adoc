@@ -94,7 +94,7 @@ Invalid signature shares are rejected.
 
 ==== Verifying signature shares
 
-When `P_j` creates a signature share `Share_i`
+When `P_j` creates a signature share `Share_j`
 as a member of `Group_k` producing a threshold signature for `Entry_e`,
 the share must be broadcast to the other members
 in a message containing:
