@@ -122,6 +122,10 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
 
 # ipfs 
 [[override]]
+  name = "github.com/ipfs/go-ipfs"
+  revision = "ec19d4c54fe4ea3749245f6a22f8c29f48a42c4a"
+
+[[override]]
   name = "github.com/ipfs/go-datastore"
   revision = "b19d692f0b561c74eaf750e7b6d75fdab571890e"
 
