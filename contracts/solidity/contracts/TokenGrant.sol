@@ -237,6 +237,8 @@ contract TokenGrant is StakeDelegatable {
     
         // Transfer tokens to beneficiary's grants stake balance.
         stakeBalances[operator] = stakeBalances[operator].add(available);
+        // Set initialStakeBalances to track stake leftovers.
+        initialStakeBalances[operator] = available;
 
         if (address(stakingProxy) != address(0)) {
             stakingProxy.emitStakedEvent(operator, available);
@@ -265,7 +267,7 @@ contract TokenGrant is StakeDelegatable {
         require(available > 0, "Must have available granted amount to unstake.");
 
         // Remove tokens from granted stake balance.
-        stakeBalances[_operator] = stakeBalances[_operator].sub(available);
+        stakeBalances[_operator] = stakeBalances[_operator].sub(initialStakeBalances[_operator]);
 
         emit InitiatedTokenGrantUnstake(_id);
         if (address(stakingProxy) != address(0)) {
