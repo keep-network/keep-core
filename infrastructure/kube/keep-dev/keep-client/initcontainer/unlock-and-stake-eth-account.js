@@ -1,5 +1,3 @@
-const fs = require('fs');
-
 const web3_options = {
     defaultBlock: 'latest',
     defaultGas: 4712388,
@@ -9,6 +7,7 @@ const web3_options = {
 }
 const Web3 = require('web3');
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT), null, web3_options);
+const fs = require('fs');
 
 // Contract setup
 // stakingProxy
