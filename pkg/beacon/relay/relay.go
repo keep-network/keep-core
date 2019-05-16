@@ -61,11 +61,21 @@ func (n *Node) GenerateRelayEntryIfEligible(
 
 	for _, signer := range memberships {
 		go func(signer *Membership) {
+			channel, err := n.netProvider.ChannelFor(signer.channelName)
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"could not create broadcast channel with name [%v]: [%v]\n",
+					signer.channelName,
+					err,
+				)
+			}
+
 			signature, err := thresholdsignature.Execute(
 				combinedEntryToSign,
 				n.chainConfig.HonestThreshold(),
 				n.blockCounter,
-				signer.channel,
+				channel,
 				signer.signer,
 				startBlockHeight,
 			)

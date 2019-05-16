@@ -97,7 +97,7 @@ func (n *Node) JoinGroupIfEligible(
 
 				n.groupRegistry.RegisterGroup(
 					signer,
-					broadcastChannel,
+					broadcastChannelName,
 				)
 			}()
 		}
