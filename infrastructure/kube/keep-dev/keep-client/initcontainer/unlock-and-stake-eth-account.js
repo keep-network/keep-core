@@ -39,16 +39,18 @@ async function stakeEthAccount() {
   let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
   try{
-    if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).send({from: contract_owner}).then((receipt) => {
+    if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).send({from: contract_owner, gas: 4712388}).then((receipt) => {
         console.log("isAuthorized transaction receipt:")
         console.log(receipt)
+        console.log("----------------------------------------")
     })) {
-      await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner}).then((receipt) => {
+      await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner, gas: 4712388}).then((receipt) => {
         console.log("authorizeContract transaction receipt:")
         console.log(receipt)
       })
     }
     console.log("stakingProxy/tokenStaking contracts authorized!")
+    console.log("----------------------------------------")
   }
   catch(error) {
     console.error(error);
@@ -59,8 +61,9 @@ async function stakeEthAccount() {
       tokenStakingContract.address,
       formatAmount(1000000, 18),
       delegation).send({from: contract_owner, gas: 4712388}).then((receipt) => {
-        console.log("Account " + operator + " staked!");
+        console.log("approveAndCall receipt:")
         console.log(receipt);
+        console.log("Account " + operator + " staked!");
       });
   }
   catch(error) {
