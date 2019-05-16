@@ -9,7 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry/gen/pb"
 )
 
-// Marshal converts pb.ThresholdSigner to a dkg.ThresholdSigner.
+// Marshal converts ThresholdSigner to byte array.
 func (ts *ThresholdSigner) Marshal() ([]byte, error) {
 	return (&pb.ThresholdSigner{
 		MemberIndex:          uint32(ts.memberIndex),
@@ -18,27 +18,27 @@ func (ts *ThresholdSigner) Marshal() ([]byte, error) {
 	}).Marshal()
 }
 
-// Unmarshal converts a byte array back to ThresholdSigner
+// Unmarshal converts a byte array back to ThresholdSigner.
 func (ts *ThresholdSigner) Unmarshal(bytes []byte) error {
-	protoBuffThresholdSigner := pb.ThresholdSigner{}
-	if err := protoBuffThresholdSigner.Unmarshal(bytes); err != nil {
+	pbThresholdSigner := pb.ThresholdSigner{}
+	if err := pbThresholdSigner.Unmarshal(bytes); err != nil {
 		return err
 	}
 
-	groupPublicKeyBn256 := new(bn256.G2)
-	_, err := groupPublicKeyBn256.Unmarshal(protoBuffThresholdSigner.GroupPublicKey)
+	groupPublicKey := new(bn256.G2)
+	_, err := groupPublicKey.Unmarshal(pbThresholdSigner.GroupPublicKey)
 	if err != nil {
 		return err
 	}
 
 	privateKeyShare := new(big.Int)
-	privateKeyShare, ok := privateKeyShare.SetString(protoBuffThresholdSigner.GroupPrivateKeyShare, 10)
+	privateKeyShare, ok := privateKeyShare.SetString(pbThresholdSigner.GroupPrivateKeyShare, 10)
 	if !ok {
 		return fmt.Errorf("Error occured while converting a private key share to string")
 	}
 
-	ts.memberIndex = group.MemberIndex(protoBuffThresholdSigner.MemberIndex)
-	ts.groupPublicKey = groupPublicKeyBn256
+	ts.memberIndex = group.MemberIndex(pbThresholdSigner.MemberIndex)
+	ts.groupPublicKey = groupPublicKey
 	ts.groupPrivateKeyShare = privateKeyShare
 
 	return nil

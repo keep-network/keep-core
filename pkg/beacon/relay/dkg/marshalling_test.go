@@ -25,6 +25,6 @@ func TestThresholdSignerRoundtrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(thresholdSigner, unmarshaled) {
-		t.Fatalf("unexpected content of unmarshaled thresholdSigner message")
+		t.Fatalf("unexpected content of unmarshaled threshold signer")
 	}
 }
