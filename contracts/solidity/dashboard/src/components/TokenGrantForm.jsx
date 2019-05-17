@@ -11,28 +11,22 @@ const ERRORS = {
 }
 
 class TokenGrantForm extends Component {
-  constructor(props) {
-    super(props)
-    this.state = this.getInitialState()
-  }
 
-  getInitialState() {
-    return {
-      amount: 0,
-      beneficiary: "0x0",
-      duration: 1,
-      start: moment().unix(),
-      cliff: 1,
-      revocable: false,
-      formErrors: {
-        beneficiary: '',
-        amount: ''
-      },
-      hasError: false,
-      requestSent: false,
-      requestSuccess: false,
-      errorMsg: ERRORS.INVALID_AMOUNT
-    }
+  state = {
+    amount: 0,
+    beneficiary: "0x0",
+    duration: 1,
+    start: moment().unix(),
+    cliff: 1,
+    revocable: false,
+    formErrors: {
+      beneficiary: '',
+      amount: ''
+    },
+    hasError: false,
+    requestSent: false,
+    requestSuccess: false,
+    errorMsg: ERRORS.INVALID_AMOUNT
   }
 
   onChange = (e) => {

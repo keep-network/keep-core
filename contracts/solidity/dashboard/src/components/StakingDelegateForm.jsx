@@ -13,22 +13,16 @@ const ERRORS = {
 const RESET_DELAY = 3000 // 3 seconds
 
 class StakingDelegateForm extends Component {
-  constructor(props) {
-    super(props)
-    this.state = this.getInitialState()
-  }
 
-  getInitialState() {
-    return {
-      amount: 100,
-      operatorSignature: "",
-      operatorAddress: "",
-      magpie: "",
-      hasError: false,
-      requestSent: false,
-      requestSuccess: false,
-      errorMsg: ERRORS.INVALID_AMOUNT,
-    }
+  state = {
+    amount: 100,
+    operatorSignature: "",
+    operatorAddress: "",
+    magpie: "",
+    hasError: false,
+    requestSent: false,
+    requestSuccess: false,
+    errorMsg: ERRORS.INVALID_AMOUNT
   }
 
   onChange = (e) => {
@@ -45,7 +39,7 @@ class StakingDelegateForm extends Component {
       requestSuccess: true
     })
     window.setTimeout(() => {
-      this.setState(this.getInitialState())
+      this.setState(this.state)
     }, RESET_DELAY)
   }
 

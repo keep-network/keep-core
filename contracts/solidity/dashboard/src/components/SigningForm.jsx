@@ -12,20 +12,14 @@ const ERRORS = {
 const RESET_DELAY = 3000 // 3 seconds
 
 class SigningForm extends Component {
-  constructor(props) {
-    super(props)
-    this.state = this.getInitialState()
-  }
 
-  getInitialState() {
-    return {
-      address: "0x0",
-      signature: "",
-      hasError: false,
-      requestSent: false,
-      requestSuccess: false,
-      errorMsg: ERRORS.INVALID_AMOUNT,
-    }
+  state = {
+    address: "0x0",
+    signature: "",
+    hasError: false,
+    requestSent: false,
+    requestSuccess: false,
+    errorMsg: ERRORS.INVALID_AMOUNT
   }
 
   onChange = (e) => {
@@ -48,7 +42,7 @@ class SigningForm extends Component {
       requestSuccess: true
     })
     window.setTimeout(() => {
-      this.setState(this.getInitialState())
+      this.setState(this.state)
     }, RESET_DELAY)
   }
 
