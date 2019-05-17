@@ -19,9 +19,8 @@ contract_files := $(addprefix contract/,$(addsuffix .go,$(subst ImplV1,,$(clean_
 all: gen_contract_go gen_abi_go
 
 clean:
-	rm -rf ${abi_files}
-	rm -rf ${abigen_files}
-	rm -rf ${contract_files}
+	rm -r abi/*
+	rm -r contract/*
 
 gen_abi_go: $(abigen_files)
 
