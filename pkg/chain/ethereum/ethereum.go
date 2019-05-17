@@ -89,8 +89,8 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 	}
 
 	return &relayconfig.Chain{
-		GroupSize:                       groupSize,
-		Threshold:                       threshold,
+		GroupSize:                       int(groupSize.Int64()),
+		Threshold:                       int(threshold.Int64()),
 		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout.Uint64(),
 		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout.Uint64(),
 		TicketChallengeTimeout:          ticketChallengeTimeout.Uint64(),
@@ -123,7 +123,11 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 		}
 	}
 
-	_, err := ec.keepGroupContract.SubmitTicket(ticket)
+	_, err := ec.keepGroupContract.SubmitTicket(
+		ticket.Value,
+		ticket.Proof.StakerValue,
+		ticket.Proof.VirtualStakerIndex,
+	)
 	if err != nil {
 		failPromise(err)
 	}
@@ -209,11 +213,11 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
+	_, err = ec.keepRandomBeaconContract.RelayEntry(
 		newEntry.RequestID,
+		newEntry.Value,
 		newEntry.GroupPubKey,
 		newEntry.PreviousEntry,
-		newEntry.Value,
 		newEntry.Seed,
 	)
 	if err != nil {
@@ -315,7 +319,7 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
 ) (subscription.EventSubscription, error) {
-	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
+	return ec.keepGroupContract.WatchDkgResultPublishedEvent(
 		func(
 			requestID *big.Int,
 			groupPublicKey []byte,
@@ -390,7 +394,8 @@ func (ec *ethereumChain) RequestRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(seed.Bytes())
+	payment := big.NewInt(2) // FIXME hardcoded 2 gwei until we fill this in
+	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(seed, payment)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(requestedEntry)
@@ -411,7 +416,7 @@ func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
-	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
+	return ec.keepGroupContract.WatchDkgResultPublishedEvent(
 		func(requestID *big.Int, groupPubKey []byte, blockNumber uint64) {
 			handler(&event.DKGResultSubmission{
 				RequestID:      requestID,
@@ -498,10 +503,12 @@ func (ec *ethereumChain) SubmitDKGResult(
 		return resultPublicationPromise
 	}
 
-	if _, err = ec.keepGroupContract.SubmitDKGResult(
+	if _, err = ec.keepGroupContract.SubmitDkgResult(
 		requestID,
 		participantIndex.Int(),
-		result,
+		result.GroupPublicKey,
+		result.Disqualified,
+		result.Inactive,
 		signaturesOnChainFormat,
 		membersIndicesOnChainFormat,
 	); err != nil {
