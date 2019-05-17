@@ -4,15 +4,14 @@ import WithWeb3Context from './WithWeb3Context'
 
 class UndelegateStakeButton extends Component {
 
-  async undelegate(amount, operator) {
-    const { web3 } = this.props
+  undelegate = async () => {
+    const { web3, amount, operator} = this.props
     await web3.stakingContract.methods.initiateUnstake(amount, operator).send({from: web3.yourAddress})
   }
 
   render() {
-    const { amount, operator } = this.props
     return (
-      <Button bsSize="small" bsStyle="primary" onClick={()=>this.undelegate(amount, operator)}>Undelegate</Button>
+      <Button bsSize="small" bsStyle="primary" onClick={this.undelegate}>Undelegate</Button>
     )
   }
 }
