@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/watchtower"
 
 	dstore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
@@ -53,6 +54,8 @@ type provider struct {
 	host     host.Host
 	routing  *dht.IpfsDHT
 	addrs    []ma.Multiaddr
+
+	connectionGuard *watchtower.Guard
 }
 
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
@@ -137,6 +140,9 @@ func Connect(
 	if err := provider.bootstrap(ctx, config.Peers); err != nil {
 		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
 	}
+
+	// Instantiates and starts the connection management background process
+	provider.connectionGuard = watchtower.NewGuard(ctx, stakeMonitor, host)
 
 	return provider, nil
 }
