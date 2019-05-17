@@ -91,13 +91,13 @@ class SigningForm extends Component {
               name="address"
               value={address}
               onChange={this.onChange}
-              onKeyUp={this.onKeyUp}
               />
           </FormGroup>
           <Button
             bsStyle="primary"
             bsSize="large"
-            onClick={this.onClick}>
+            onClick={this.onClick}
+            type="submit">
             Sign
           </Button>
         </Form>
