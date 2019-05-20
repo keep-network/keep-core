@@ -270,9 +270,6 @@ contract TokenGrant is StakeDelegatable {
         stakeBalances[_operator] = stakeBalances[_operator].sub(available);
 
         emit InitiatedTokenGrantUnstake(_id);
-        if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitUnstakedEvent(_operator, available);
-        }
     }
 
     /**
@@ -297,6 +294,10 @@ contract TokenGrant is StakeDelegatable {
         address owner = operatorToOwner[operator];
         operatorToOwner[operator] = address(0);
         ownerOperators[owner].removeAddress(operator);
+
+        if (address(stakingProxy) != address(0)) {
+            stakingProxy.emitUnstakedEvent(operator, available);
+        }
     }
 
     /**
