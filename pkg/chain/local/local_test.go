@@ -2,6 +2,7 @@ package local
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
@@ -569,6 +570,90 @@ func TestLocalBlockHeightWaiter(t *testing.T) {
 	}
 }
 
+func TestLocalIsGroupStale(t *testing.T) {
+	group1 := localGroup{
+		groupPublicKey:          []byte{'v'},
+		registrationBlockHeight: 1,
+	}
+
+	group2 := localGroup{
+		groupPublicKey:          []byte{'i'},
+		registrationBlockHeight: 1,
+	}
+
+	group3 := localGroup{
+		groupPublicKey:          []byte{'d'},
+		registrationBlockHeight: 1,
+	}
+
+	availableGroups := []localGroup{group1, group2, group3}
+
+	var tests = map[string]struct {
+		group           localGroup
+		expectedResult  bool
+		simulatedHeight uint64
+	}{
+		"found a first group": {
+			group: localGroup{
+				groupPublicKey: group1.groupPublicKey,
+			},
+			simulatedHeight: group1.registrationBlockHeight + 2,
+			expectedResult:  false,
+		},
+		"found a second group": {
+			group: localGroup{
+				groupPublicKey: group2.groupPublicKey,
+			},
+			simulatedHeight: group2.registrationBlockHeight + 3,
+			expectedResult:  false,
+		},
+		"group was not found": {
+			group: localGroup{
+				groupPublicKey: []byte{'z'},
+			},
+			simulatedHeight: 1,
+			expectedResult:  true,
+		},
+		"a third group was found and current block has passed the expiration and operation timeout": {
+			group: localGroup{
+				groupPublicKey: group3.groupPublicKey,
+			},
+			simulatedHeight: group3.registrationBlockHeight +
+				groupActiveTime +
+				relayRequestTimeout +
+				1,
+			expectedResult: true,
+		},
+		"a second group was found and current block is the same as an active time and operation timeout": {
+			group: localGroup{
+				groupPublicKey: group2.groupPublicKey,
+			},
+			simulatedHeight: group2.registrationBlockHeight +
+				groupActiveTime +
+				relayRequestTimeout,
+			expectedResult: false,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			localChain := &localChain{
+				groups:          availableGroups,
+				simulatedHeight: test.simulatedHeight,
+			}
+			chainHandle := localChain.ThresholdRelay()
+			actualResult, err := chainHandle.IsStaleGroup(test.group.groupPublicKey)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if actualResult != test.expectedResult {
+				t.Fatalf("\nCheck for a group removal eligibility failed. \nexpected: %v\nactual:   %v\n", test.expectedResult, actualResult)
+			}
+		})
+	}
+}
+
 func TestLocalIsDKGResultSubmitted(t *testing.T) {
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 
@@ -582,20 +667,24 @@ func TestLocalIsDKGResultSubmitted(t *testing.T) {
 		submittedResult,
 	)
 
-	localChain := &localChain{
-		submittedResults: submittedResults,
-	}
-	chainHandle := localChain.ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(100)).ThresholdRelay()
+
+	chainHandle.SubmitDKGResult(
+		submittedRequestID,
+		group.MemberIndex(1),
+		submittedResult,
+		make(map[group.MemberIndex]operator.Signature),
+	)
 
 	var tests = map[string]struct {
 		requestID      *big.Int
 		expectedResult bool
 	}{
-		"matched": {
+		"result for the request ID submitted": {
 			requestID:      submittedRequestID,
 			expectedResult: true,
 		},
-		"not matched - different request ID": {
+		"result for the given request ID not yet submitted": {
 			requestID:      big.NewInt(3),
 			expectedResult: false,
 		},
@@ -657,13 +746,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID1],
-		[]*relaychain.DKGResult{submittedResult11},
+		localChain.submittedResults[requestID1.String()],
+		submittedResult11,
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID1,
 			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[requestID1],
+			localChain.submittedResults[requestID1.String()],
 		)
 	}
 	select {
@@ -688,13 +777,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID2],
-		[]*relaychain.DKGResult{submittedResult11},
+		localChain.submittedResults[requestID2.String()],
+		submittedResult11,
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
 			requestID2,
 			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[requestID2],
+			localChain.submittedResults[requestID2.String()],
 		)
 	}
 	select {
@@ -710,23 +799,20 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit already submitted result for request ID 1
-	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
-	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID1],
-		[]*relaychain.DKGResult{submittedResult11},
-	) {
-		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
-			requestID1,
-			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[requestID1],
-		)
-	}
-	select {
-	case DKGResultSubmissionEvent := <-DKGResultSubmissionChan:
-		t.Fatalf("unexpected event was emitted: %v", DKGResultSubmissionEvent)
-	case <-ctx.Done():
-		t.Logf("DKG result publication event not generated")
-	}
+	promise := chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
+	promise.OnSuccess(func(result *event.DKGResultSubmission) {
+		t.Fatalf("Should not be able to submit result for the given ID more than once")
+	})
+	promise.OnFailure(func(err error) {
+		expectedError := fmt.Errorf("result for request ID [1] already submitted")
+		if !reflect.DeepEqual(err, expectedError) {
+			t.Fatalf(
+				"Unexpected error\nExpected: [%v]\nActual:   [%v]\n",
+				expectedError,
+				err,
+			)
+		}
+	})
 }
 
 func TestCalculateDKGResultHash(t *testing.T) {

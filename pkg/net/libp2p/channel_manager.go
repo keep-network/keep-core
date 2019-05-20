@@ -6,8 +6,8 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net"
 	host "github.com/libp2p/go-libp2p-host"
-	"github.com/libp2p/go-libp2p-peerstore"
-	"github.com/libp2p/go-libp2p-pubsub"
+	peerstore "github.com/libp2p/go-libp2p-peerstore"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
 type channelManager struct {
@@ -27,13 +27,19 @@ func newChannelManager(
 	identity *identity,
 	p2phost host.Host,
 ) (*channelManager, error) {
-	gossipsub, err := pubsub.NewGossipSub(ctx, p2phost)
+	floodsub, err := pubsub.NewFloodSub(
+		ctx,
+		p2phost,
+		pubsub.WithMessageAuthor(identity.id),
+		pubsub.WithMessageSigning(true),
+		pubsub.WithStrictSignatureVerification(true),
+	)
 	if err != nil {
 		return nil, err
 	}
 	return &channelManager{
 		channels:  make(map[string]*channel),
-		pubsub:    gossipsub,
+		pubsub:    floodsub,
 		peerStore: p2phost.Peerstore(),
 		identity:  identity,
 		ctx:       ctx,

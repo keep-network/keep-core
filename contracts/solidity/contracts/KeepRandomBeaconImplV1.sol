@@ -8,7 +8,7 @@ import "./BLS.sol";
 interface GroupContract {
     function runGroupSelection(uint256 randomBeaconValue) external;
     function numberOfGroups() external view returns(uint256);
-    function selectGroup(uint256 previousEntry) external view returns(bytes memory);
+    function selectGroup(uint256 previousEntry) external returns(bytes memory);
 }
 
 
@@ -33,6 +33,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
     uint256 internal _pendingWithdrawal;
     address internal _groupContract;
     uint256 internal _previousEntry;
+    uint256 internal _relayRequestTimeout;
 
     mapping (string => bool) internal _initialized;
 
@@ -58,11 +59,13 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @param genesisEntry Initial relay entry to create first group.
      * @param genesisGroupPubKey Group to respond to the initial relay entry request.
      * @param groupContract Group contract linked to this contract.
+     * @param relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
+     * Blocks are counted from the moment relay request occur.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry, bytes memory genesisGroupPubKey, address groupContract)
-        public
-        onlyOwner
-    {
+    function initialize(
+        uint256 minPayment, uint256 withdrawalDelay, uint256 genesisEntry,
+        bytes memory genesisGroupPubKey, address groupContract, uint256 relayRequestTimeout
+    ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         _minPayment = minPayment;
         _initialized["KeepRandomBeaconImplV1"] = true;
@@ -70,12 +73,13 @@ contract KeepRandomBeaconImplV1 is Ownable {
         _pendingWithdrawal = 0;
         _previousEntry = genesisEntry;
         _groupContract = groupContract;
+        _relayRequestTimeout = relayRequestTimeout;
 
         // Create initial relay entry request. This will allow relayEntry to be called once
         // to trigger the creation of the first group. Requests are removed on successful
         // entries so genesis entry can only be called once.
         _requestCounter++;
-        _requests[_requestCounter] = Request(msg.sender, 0, genesisGroupPubKey); 
+        _requests[_requestCounter] = Request(msg.sender, 0, genesisGroupPubKey);
     }
 
     /**
@@ -172,8 +176,15 @@ contract KeepRandomBeaconImplV1 is Ownable {
     }
 
     /**
+     * Gets the timeout in blocks for a relay entry to appear on the chain.
+     */
+    function relayRequestTimeout() public view returns(uint256) {
+        return _relayRequestTimeout;
+    }
+
+    /**
      * @dev Gets version of the current implementation.
-    */
+     */
     function version() public pure returns (string memory) {
         return "V1";
     }

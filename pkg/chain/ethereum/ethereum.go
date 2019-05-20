@@ -6,9 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto/sha3"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -90,8 +89,8 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 	}
 
 	return &relayconfig.Chain{
-		GroupSize:                       groupSize,
-		Threshold:                       threshold,
+		GroupSize:                       int(groupSize.Int64()),
+		Threshold:                       int(threshold.Int64()),
 		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout.Uint64(),
 		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout.Uint64(),
 		TicketChallengeTimeout:          ticketChallengeTimeout.Uint64(),
@@ -124,7 +123,11 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 		}
 	}
 
-	_, err := ec.keepGroupContract.SubmitTicket(ticket)
+	_, err := ec.keepGroupContract.SubmitTicket(
+		ticket.Value,
+		ticket.Proof.StakerValue,
+		ticket.Proof.VirtualStakerIndex,
+	)
 	if err != nil {
 		failPromise(err)
 	}
@@ -210,11 +213,11 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconContract.SubmitRelayEntry(
+	_, err = ec.keepRandomBeaconContract.RelayEntry(
 		newEntry.RequestID,
+		newEntry.Value,
 		newEntry.GroupPubKey,
 		newEntry.PreviousEntry,
-		newEntry.Value,
 		newEntry.Seed,
 	)
 	if err != nil {
@@ -290,7 +293,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
 ) (subscription.EventSubscription, error) {
-	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
+	return ec.keepGroupContract.WatchDkgResultPublishedEvent(
 		func(
 			requestID *big.Int,
 			groupPublicKey []byte,
@@ -365,7 +368,8 @@ func (ec *ethereumChain) RequestRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(seed.Bytes())
+	payment := big.NewInt(2) // FIXME hardcoded 2 gwei until we fill this in
+	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(seed, payment)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(requestedEntry)
@@ -379,10 +383,14 @@ func (ec *ethereumChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) 
 	return ec.keepGroupContract.IsDkgResultSubmitted(requestID)
 }
 
+func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
+	return ec.keepGroupContract.IsStaleGroup(groupPublicKey)
+}
+
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
-	return ec.keepGroupContract.WatchDKGResultPublishedEvent(
+	return ec.keepGroupContract.WatchDkgResultPublishedEvent(
 		func(requestID *big.Int, groupPubKey []byte, blockNumber uint64) {
 			handler(&event.DKGResultSubmission{
 				RequestID:      requestID,
@@ -469,10 +477,12 @@ func (ec *ethereumChain) SubmitDKGResult(
 		return resultPublicationPromise
 	}
 
-	if _, err = ec.keepGroupContract.SubmitDKGResult(
-		participantIndex.Int(),
+	if _, err = ec.keepGroupContract.SubmitDkgResult(
 		requestID,
-		result,
+		participantIndex.Int(),
+		result.GroupPublicKey,
+		result.Disqualified,
+		result.Inactive,
 		signaturesOnChainFormat,
 		membersIndicesOnChainFormat,
 	); err != nil {
@@ -519,34 +529,9 @@ func convertSignaturesToChainFormat(
 func (ec *ethereumChain) CalculateDKGResultHash(
 	dkgResult *relaychain.DKGResult,
 ) (relaychain.DKGResultHash, error) {
-	dkgResultHash := relaychain.DKGResultHash{}
 
-	// Encode DKG result to the format described by Solidity Contract Application
-	// Binary Interface (ABI).
-	bytesType, err := abi.NewType("bytes")
-	if err != nil {
-		return dkgResultHash, fmt.Errorf("bytes type creation failed: [%v]", err)
-	}
+	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
+	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Disqualified, dkgResult.Inactive)
 
-	arguments := abi.Arguments{
-		{Type: bytesType},
-		{Type: bytesType},
-		{Type: bytesType},
-	}
-
-	encodedDKGResult, err := arguments.Pack(
-		dkgResult.GroupPublicKey,
-		dkgResult.Disqualified,
-		dkgResult.Inactive,
-	)
-	if err != nil {
-		return dkgResultHash, fmt.Errorf("encoding failed: [%v]", err)
-	}
-
-	// Calculate Keccak-256 hash.
-	hash := sha3.NewKeccak256()
-	hash.Write(encodedDKGResult)
-	hash.Sum(dkgResultHash[:0])
-
-	return dkgResultHash, nil
+	return relaychain.DKGResultHashFromBytes(hash)
 }

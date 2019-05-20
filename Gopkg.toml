@@ -24,91 +24,111 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
 
 # libp2p
 [[override]]
-  name = "github.com/libp2p/go-libp2p-record"
-  revision = "7a182bb5ae667ca5c930d807be14d0655afd3d57"
-
-[[override]]
-  name = "github.com/libp2p/go-libp2p-routing"
-  revision = "2d1a523bf3b6fbaeb3deac71a6e068fdb9ee0ab0"
-
-[[override]]
   name = "github.com/libp2p/go-libp2p-peer"
-  revision = "dd9b45c0649b38aebe65f98cb460676b4214a42c"
+  revision = "9ccddf5f5d8318b00658dfbc06a4e32b16bae6a9"
 
 [[override]]
   name = "github.com/libp2p/go-libp2p-swarm"
-  revision = "1f6ea5423e51605b2a900cb05bb6d29821dd9628"
+  revision = "22f358a2d09ac82ee9ff0774d06010913fa900ad"
+
+[[override]]
+  name = "github.com/libp2p/go-libp2p-routing"
+  revision = "efb912a4c564986aa9bb541a6c853919cc9a72a7"
+
+[[override]]
+  name = "github.com/libp2p/go-libp2p-routing-helpers"
+  revision = "cdb43d0f1c8733e4d869ac71b9d773ccc9a40a80"
+
+[[override]]
+  name = "github.com/libp2p/go-libp2p-pubsub-router"
+  revision = "41fb0d3d905a9180f775fcd11a322a17b5ec96d5"
 
 [[override]]
   name = "github.com/libp2p/go-libp2p-net"
-  revision = "c070e8fb6eade68612d96e0fbace731f89897d33"
-
-[[override]]
-  name = "github.com/libp2p/go-libp2p-transport"
-  revision = "bba5e63c9faea32bcb9b5416d70180bf2bc8033b"
-
-[[override]]
-  name = "github.com/libp2p/go-ws-transport"
-  revision = "ac3f59a8924f35d6403210da5287096dfde75bd2"
-
-[[constraint]]
-  name = "github.com/libp2p/go-libp2p-kad-dht"
-  revision = "2a91252c7c2853ee01d116076249c32e7d516a41"
-
-[[constraint]]
-  name = "github.com/libp2p/go-libp2p"
-  revision ="2787133b0469926b58dd819707cc4297a3ca7306"
-
-[[constraint]]
-  name = "github.com/libp2p/go-libp2p-peerstore"
-  revision = "2a27e91a67ceb5fd388064d0eefaf927e5b3c948"
+  revision = "a60cde50df6872512892ca85019341d281f72a42"
 
 [[constraint]]
   name = "github.com/libp2p/go-libp2p-crypto"
-  revision = "7240b40a3ddc47c4d17c15baabcbe45e5219171b"
+  revision = "e333f2201582e62b9f86d559aa9daa4ae3f41bec"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-kad-dht"
+  revision = "7246a3b0f44101f3ba99fb8b4eb6db542d7b8ba5"
+
+[[override]]
+  name = "github.com/libp2p/go-libp2p-record"
+  revision = "0f29df9dd657d87a8f1bd74020d39381a178ad19"
+
+[[override]]
+  name = "github.com/libp2p/go-libp2p-secio"
+  revision = "aa2813e066f68d5ce565bb007a043a2f69ac6148"
+
+[[override]]
+  name = "github.com/libp2p/go-libp2p-transport"
+  revision = "e8580c8a519d0fd04959a4ab25777d2819801447"
 
 [[constraint]]
   name = "github.com/libp2p/go-libp2p-pubsub"
-  revision = "107b3bdc9730f1b7ce294523e81dbffe3a639dcb"
+  revision = "b962da55e5edbaaa9a2a3d8ba14876367c34ccd3"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p"
+  revision ="f1888d98c45b435c65b030e92844479345bca7df"
+
+[[constraint]]
+  name = "github.com/libp2p/go-libp2p-peerstore"
+  revision = "e2df3e49eabf94552fd8e7140fbf0dcb8580ea02"
 
 [[constraint]]
   name = "github.com/libp2p/go-libp2p-connmgr"
-  revision = "9af270cbe3059a15af44e7f67b75d521e1fbd5e4"
+  revision = "808e1bf487d7768cbf3292a14e15b40406c1dc02"
+
+[[override]]
+  name = "github.com/libp2p/go-conn-security-multistream"
+  revision ="104c8a4422af6d10f488a14b64a43d7c92be0475"
 
 [[override]]
   name = "github.com/libp2p/go-libp2p-interface-connmgr"
-  revision ="61a030e46d8f6c82500b0992360d7a5c701d367a"
+  revision = "6a96ea29ac65d4ee4cc52c25ac41c036bbb7992a"
+
+[[override]]
+  name = "github.com/whyrusleeping/yamux"
+  revision = "5364a42fe4b5efa5967c11c8f9b0f049cac0c4a9"
+
+[[override]]
+  name = "github.com/whyrusleeping/go-smux-yamux"
+  revision = "c236ac3b526b56a52e271fb8f80d91bba484a38c"
 
 # multiformats
 [[override]]
   name = "github.com/multiformats/go-multihash"
-  revision = "8be2a682ab9f254311de1375145a2f78a809b07d"
+  revision = "8366cb240ab23e9810a2b420dc75c80ab990c39b"
 
 [[override]]
   name = "github.com/multiformats/go-multiaddr"
-  revision = "fe1c46f8be5af4aff4db286e08839295bd922efb"
+  revision = "0460aad0fe51f7aa64d3a3c17854dc25368f7ca2"
 
 [[override]]
   name = "github.com/multiformats/go-multiaddr-dns"
-  revision = "78f39e8892d4f8c5c9f18679cc06d0b40ecab8cf"
+  revision = "5cb3eac5069e1302a55689eb52dbc122f9d5283c"
 
 [[override]]
   name = "github.com/multiformats/go-multiaddr-net"
-  revision = "1cb9a0e8a6de3c8a10f6cee60d01d793603c4f7e"
+  revision = "c8d587e921c095d128ac4e0c0e87e54968725a4d"
 
 [[override]]
   name = "github.com/multiformats/go-multibase"
-  revision = "bb91b53e5695e699a86654d77d03db7bc7506d12"
+  revision = "f25b77813c0a9aac7c5169b9978277865da5e7c8"
 
 # ipfs 
 [[override]]
   name = "github.com/ipfs/go-datastore"
-  revision = "19b8f34d345ede2d054ee7645b61e9c169992d7f"
+  revision = "b19d692f0b561c74eaf750e7b6d75fdab571890e"
 
 [[override]]
   name = "github.com/ipfs/go-cid"
-  revision = "6e296c5c49ad84dc6a44af69fa1fe4e1245cd0cf"
-  
+  revision = "29a66d1820a34dcf38d57a7f6c7f707619fbedd3"
+
 # other
 [[override]]
   name = "github.com/gogo/protobuf"
@@ -119,24 +139,10 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
   name = "github.com/satori/go.uuid"
   revision = "36e9d2ebbde5e3f13ab2e25625fd453271d6522e"
 
-[[override]]
-  name = "github.com/whyrusleeping/yamux"
-  revision = "5364a42fe4b5efa5967c11c8f9b0f049cac0c4a9"
-
 [[constraint]]
   name = "github.com/urfave/cli"
   revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
   source = "https://github.com/keep-network/cli.git"
-
-[[constraint]]
-  name = "github.com/keep-network/paillier"
-  revision = "79cb054ad9bbe9f6b7a433bb7e4f892e92e1f8b3"
-  source = "https://github.com/keep-network/paillier"
-
-[[constraint]]
-  name = "github.com/dfinity/go-dfinity-crypto"
-  revision = "1cfc23c8f712378febdf621f27e49dd67846e901"
-  source = "https://github.com/keep-network/go-dfinity-crypto.git"
 
 [[constraint]]
   name = "github.com/ethereum/go-ethereum"

@@ -1,9 +1,7 @@
 FROM golang:1.11.4-alpine3.7 AS runtime
 
 ENV APP_NAME=keep-client \
-	BIN_PATH=/usr/local/bin \
-	LIB_DIR=/usr/local/lib/ \
-	INCLUDE_DIR=/usr/local/include/
+	BIN_PATH=/usr/local/bin
 
 RUN apk add --update --no-cache \
 	gmp \
@@ -14,25 +12,6 @@ RUN apk add --update --no-cache \
 	openssl-dev && \
 	rm -rf /var/cache/apk && mkdir /var/cache/apk && \
 	rm -rf /usr/share/man
-
-FROM runtime AS cbuild
-
-ENV BN_VERSION=1c96f7053ea1ebcdbe9f59ce46c79023ef6f8ba0
-
-RUN apk add --update --no-cache \
-	clang \
-	g++ \
-	git \
-	llvm \
-	make && \
-	rm -rf /var/cache/apk && mkdir /var/cache/apk && \
-	rm -rf /usr/share/man
-
-RUN git clone https://github.com/keep-network/bn /bn && \
-	cd /bn && \
-	git reset --hard $BN_VERSION && \
-	make install && make && \
-	rm -rf /bn
 
 FROM runtime AS gobuild
 
@@ -53,8 +32,6 @@ RUN apk add --update --no-cache \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
-COPY --from=cbuild $LIB_DIR $LIB_DIR
-COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
 COPY --from=ethereum/solc:0.5.4 /usr/bin/solc /usr/bin/solc
 
 RUN mkdir -p $APP_DIR
@@ -68,7 +45,6 @@ RUN dep ensure -v --vendor-only
 RUN cd vendor/github.com/gogo/protobuf/protoc-gen-gogoslick && go install .
 RUN cd vendor/github.com/ethereum/go-ethereum/cmd/abigen && go install .
 
-
 COPY ./contracts/solidity $APP_DIR/contracts/solidity
 RUN cd $APP_DIR/contracts/solidity && npm install
 
@@ -77,19 +53,18 @@ COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
 COPY ./pkg/beacon/relay/thresholdsignature/gen $APP_DIR/pkg/beacon/relay/thresholdsignature/gen
 COPY ./pkg/beacon/relay/gjkr/gen $APP_DIR/pkg/beacon/relay/gjkr/gen
 COPY ./pkg/beacon/relay/dkg/result/gen $APP_DIR/pkg/beacon/relay/dkg/result/gen
+COPY ./pkg/beacon/relay/registry/gen $APP_DIR/pkg/beacon/relay/registry/gen
 RUN go generate ./.../gen 
 
 COPY ./ $APP_DIR/
 RUN go generate ./pkg/gen
 
-RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o $APP_NAME ./ && \
+RUN GOOS=linux go build -a -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH
 
 FROM runtime
 
 COPY --from=gobuild $BIN_PATH/$APP_NAME $BIN_PATH
-COPY --from=cbuild $LIB_DIR $LIB_DIR
-COPY --from=cbuild $INCLUDE_DIR $INCLUDE_DIR
 
 # ENTRYPOINT cant handle ENV variables.
 ENTRYPOINT ["keep-client", "-config", "/keepclient/config.toml"]

@@ -1,0 +1,71 @@
+// Code generated - DO NOT EDIT.
+// This file is a generated binding and any manual changes will be lost.
+
+package contract
+
+import (
+	ethereumabi "github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
+	"github.com/keep-network/keep-core/pkg/subscription"
+)
+
+type {{.Class}} struct {
+	contract          *abi.{{.AbiClass}}
+	contractAddress   common.Address
+	callerOptions     *bind.CallOpts
+	transactorOptions *bind.TransactOpts
+	errorResolver     *ethutil.ErrorResolver
+}
+
+func New{{.Class}}(
+    contractAddress common.Address,
+    accountKey *keystore.Key,
+    backend bind.ContractBackend,
+) (*{{.Class}}, error) {
+	callerOptions := &bind.CallOpts{
+		From: contractAddress,
+	}
+	transactorOptions := bind.NewKeyedTransactor(
+		accountKey.PrivateKey,
+	)
+
+	randomBeaconContract, err := abi.New{{.AbiClass}}(
+		contractAddress,
+		backend,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to instantiate contract at address: %s [%v]",
+			contractAddress.String(),
+			err,
+		)
+	}
+
+	contractAbi, err := ethereumabi.JSON(strings.NewReader(abi.{{.AbiClass}}ABI))
+	if err != nil {
+		return nil, fmt.Errorf("failed to instantiate ABI: [%v]", err)
+	}
+
+	return &{{.Class}}{
+		contract:          randomBeaconContract,
+		contractAddress:   contractAddress,
+		callerOptions:     callerOptions,
+		transactorOptions: transactorOptions,
+		errorResolver:     ethutil.NewErrorResolver(backend, &contractAbi, &contractAddress),
+	}, nil
+}
+
+// ----- Non-const Methods ------
+{{template "contract_non_const_methods.go.tmpl" .}}
+
+// ----- Const Methods ------
+{{template "contract_const_methods.go.tmpl" .}}
+
+// ------ Events -------
+{{template "contract_events.go.tmpl" . -}}

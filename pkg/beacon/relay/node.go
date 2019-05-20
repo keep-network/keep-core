@@ -3,6 +3,7 @@ package relay
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -33,12 +35,7 @@ type Node struct {
 	stakeIDs      []string
 	maxStakeIndex int
 
-	myGroups map[string][]*membership
-}
-
-type membership struct {
-	signer  *dkg.ThresholdSigner
-	channel net.BroadcastChannel
+	groupRegistry *registry.Groups
 }
 
 // JoinGroupIfEligible takes a threshold relay entry value and undergoes the
@@ -76,7 +73,7 @@ func (n *Node) JoinGroupIfEligible(
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"Failed to get broadcastChannel for name %s with err: [%v].",
+					"Failed to get broadcastChannel for name %s with err: [%v].\n",
 					broadcastChannelName,
 					err,
 				)
@@ -96,13 +93,13 @@ func (n *Node) JoinGroupIfEligible(
 					broadcastChannel,
 				)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to execute dkg: [%v].", err)
+					fmt.Fprintf(os.Stderr, "Failed to execute dkg: [%v].\n", err)
 					return
 				}
 
-				n.RegisterGroup(
+				n.groupRegistry.RegisterGroup(
 					signer,
-					broadcastChannel,
+					broadcastChannelName,
 				)
 			}()
 		}
@@ -114,31 +111,15 @@ func (n *Node) JoinGroupIfEligible(
 // channelNameForGroup takes the selected stakers, and does the
 // following to construct the broadcastChannel name:
 // * concatenates all of the staker values
-// * returns the hashed concatenated values
+// * returns the hashed concatenated values in hexadecimal representation
 func channelNameForGroup(group *groupselection.Result) string {
 	var channelNameBytes []byte
 	for _, staker := range group.SelectedStakers {
 		channelNameBytes = append(channelNameBytes, staker...)
 	}
-	hashedChannelName := groupselection.SHAValue(
-		sha256.Sum256(channelNameBytes),
+	hexChannelName := hex.EncodeToString(
+		groupselection.SHAValue(sha256.Sum256(channelNameBytes)).Bytes(),
 	)
-	return string(hashedChannelName.Bytes())
-}
 
-// RegisterGroup registers that a group was successfully created by the given
-// groupPublicKey.
-func (n *Node) RegisterGroup(signer *dkg.ThresholdSigner,
-	channel net.BroadcastChannel) {
-
-	n.mutex.Lock()
-	defer n.mutex.Unlock()
-
-	groupPublicKey := string(signer.GroupPublicKeyBytes())
-
-	n.myGroups[groupPublicKey] = append(n.myGroups[groupPublicKey],
-		&membership{
-			signer:  signer,
-			channel: channel,
-		})
+	return hexChannelName
 }
