@@ -114,9 +114,10 @@ contract KeepGroupImplV1 is Ownable {
     function runGroupSelection(uint256 newEntry, uint256 requestId, uint256 seed) public {
         require(msg.sender == _randomBeacon);
 
-        uint256 latestDKGSubmission = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG + _groupSize * _resultPublicationBlockStep;
+        // dkgTimeout is the time after DKG is expected to be complete plus the expected period to submit the result.
+        uint256 dkgTimeout = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG + _groupSize * _resultPublicationBlockStep;
 
-        if (!_groupSelectionInProgress || block.number > latestDKGSubmission) {
+        if (!_groupSelectionInProgress || block.number > dkgTimeout) {
             cleanup();
             _ticketSubmissionStartBlock = block.number;
             _randomBeaconValue = newEntry;
