@@ -49,15 +49,15 @@ func (g *Guard) start(ctx context.Context) {
 			return
 		default:
 			for _, connectedPeer := range g.host.Network().Peers() {
-				go func(ctx context.Context, connectedPeer peer.ID) {
+				go func(ctx context.Context, inProcessPeer peer.ID) {
 					_, cancel := context.WithCancel(ctx)
 					defer cancel()
 
-					peerPublicKey, err := connectedPeer.ExtractPublicKey()
+					peerPublicKey, err := inProcessPeer.ExtractPublicKey()
 					if err != nil {
 						fmt.Printf(
 							"Failed to extract peer [%s] public key with error [%v]",
-							connectedPeer,
+							inProcessPeer,
 							err,
 						)
 						return
@@ -73,7 +73,7 @@ func (g *Guard) start(ctx context.Context) {
 						g.stakeMonitorLock.Unlock()
 						fmt.Printf(
 							"Failed to get stake information for peer [%s] with error [%v]",
-							connectedPeer,
+							inProcessPeer,
 							err,
 						)
 						return
@@ -81,7 +81,7 @@ func (g *Guard) start(ctx context.Context) {
 					g.stakeMonitorLock.Unlock()
 
 					if !hasMinimumStake {
-						connections := g.host.Network().ConnsToPeer(connectedPeer)
+						connections := g.host.Network().ConnsToPeer(inProcessPeer)
 						for _, connection := range connections {
 							connection.Close()
 						}
