@@ -15,16 +15,16 @@ This document specifies how applications integrate with Keep Network.
 
 a keep:: A keep is a smart contract.
 
-sMPC cluster:: A keep can have off-chain clients executing work for a keep. All 
-               the off-chain clients serving keeps form together sMPC cluster. 
-               sMPC cluster observes state of keeps and reacts appropriately. 
-               A keep does not directly talk to the cluster.
+sMPC cluster:: A keep can have off-chain clients executing work for a keep. 
+               Off-chain clients serving a keep together form an sMPC cluster. 
+               sMPC cluster observes state of a keep and reacts appropriately. 
 
-Keep Network:: Keep Network consists of all keeps, stakers, random beacon and 
-               sMPC cluster.
+Keep Network:: The Keep network consists of all stakers, all keeps and 
+               associated sMPC clusters, and the random beacon.
 
-KEEP:: KEEP is ERC20 token used as a stake which minimum value is a permit 
-       for operator to join KeepNetwork.
+KEEP:: KEEP is an ERC-20 work token used to stake in the Keep network. 
+       A minimum staked value is required for operator to join the network and 
+       fulfill requests.
 
 Keep Core:: Keep Core consist of a set of on-chain contracts and off-chain  
             client providing the functionality of random beacon
@@ -42,8 +42,8 @@ Bond:: Bond is a security instrument preventing network operators to collude
 
 
 === Goal
-The goal of this proposal is to specify the interface between  application and 
-keeps on a top of which the application is built. This proposal specifies 
+The goal of this proposal is to specify the interface between an application and 
+the keeps atop which the application is built. This proposal specifies 
 mechanism of creating and registering keeps. This proposal introduces two types
 of keeps: tECDSA keep and Bonded tECDSA keep. Those keeps are just the first
 two types of keeps which are going to be offered by Keep Network.
@@ -60,7 +60,7 @@ client should be a separate client than Keep tECDSA client:
 (The above snippet is just an example for the first keep type)
 
 Each operator is required to run Keep Core client. Running Keep tECDSA client is 
-optional.
+optional. Eventually, we hope other developers will build their own clients.
 
 ==== Bonding requirement
 
