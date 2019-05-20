@@ -149,6 +149,11 @@ The contract should also have the following discrete pieces of functionality:
 _magpie_ and creates a _delegation order_ containing this information.
 
 2. Both the _owner_ and _operator_ agree on the _delegation order_.
+Signature of the _owner_ address obtained from the _operator_ is enough to let
+the owner to delegate the tokens. Operator does not have to agree on the number
+of tokens delegated and operator's agreement on delegation is given in perpetuity
+_owner_ may transfer more tokens to the contract or not delegate all tokens in
+the first order.
 
 3. The contract receives the _delegation order_ and verifies the following (if
 any condition is unfulfilled, processing aborts):
