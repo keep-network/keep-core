@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -65,12 +66,14 @@ func (g *Guard) completedCheck(peer peer.ID) {
 // start executes the connection management background worker. If it receives a
 // signal to stop the execution of the client, it kills this task.
 func (g *Guard) start(ctx context.Context) {
-	// use a timer or you're gonna blow out the cpu
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		default:
+		case <-ticker.C:
 			for _, connectedPeer := range g.host.Network().Peers() {
 				if g.currentlyChecking(connectedPeer) {
 					continue
