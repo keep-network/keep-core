@@ -1,6 +1,6 @@
 :toc: macro
 
-= RFC 1: Keep Network Interface
+= RFC 12: Keep Network application interface
 
 :icons: font
 :numbered:
