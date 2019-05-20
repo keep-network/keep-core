@@ -37,14 +37,16 @@ tECDSA:: Threshold Elliptic Curve Digital Signature Algorithm.
 
 Bond:: Bond is a security instrument preventing network operators to collude 
        and act against agreed rules, for example to censor withdrawals or 
-       abscond with funds.
+       abscond with funds. Bond may get slashed or seized in case of malicious
+       behaviour of the operator.
 
 
 === Goal
 The goal of this proposal is to specify the interface between  application and 
 keeps on a top of which the application is built. This proposal specifies 
 mechanism of creating and registering keeps. This proposal introduces two types
-of keeps: tECDSA keep and Bonded tECDSA keep.
+of keeps: tECDSA keep and Bonded tECDSA keep. Those keeps are just the first
+two types of keeps which are going to be offered by Keep Network.
 
 ==== sMPC cluster requirements
 
@@ -54,6 +56,8 @@ client should be a separate client than Keep tECDSA client:
 ./keep-core
 ./keep-tecdsa 
 ```
+
+(The above snippet is just an example for the first keep type)
 
 Each operator is required to run Keep Core client. Running Keep tECDSA client is 
 optional.
