@@ -43,22 +43,22 @@ func NewGuard(
 	return guard
 }
 
-func (g *Guard) currentlyChecking(peerToCheck peer.ID) bool {
+func (g *Guard) currentlyChecking(peer peer.ID) bool {
 	g.peerCrossListLock.Lock()
-	_, inProcess := g.peerCrossList[peerToCheck]
+	_, inProcess := g.peerCrossList[peer]
 	g.peerCrossListLock.Unlock()
 	return inProcess
 }
 
-func (g *Guard) markAsChecking(peerToCheck peer.ID) {
+func (g *Guard) markAsChecking(peer peer.ID) {
 	g.peerCrossListLock.Lock()
-	g.peerCrossList[peerToCheck] = true
+	g.peerCrossList[peer] = true
 	g.peerCrossListLock.Unlock()
 }
 
-func (g *Guard) completedCheck(peerToCheck peer.ID) {
+func (g *Guard) completedCheck(peer peer.ID) {
 	g.peerCrossListLock.Lock()
-	g.peerCrossList[peerToCheck] = false
+	g.peerCrossList[peer] = false
 	g.peerCrossListLock.Unlock()
 }
 
