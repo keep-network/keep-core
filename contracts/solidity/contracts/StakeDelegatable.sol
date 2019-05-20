@@ -17,6 +17,7 @@ contract StakeDelegatable {
     using SafeERC20 for ERC20;
     using BytesLib for bytes;
     using ECDSA for bytes32;
+    using AddressArrayUtils for address[];
 
     ERC20 public token;
     StakingProxy public stakingProxy;

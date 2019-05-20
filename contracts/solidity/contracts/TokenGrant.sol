@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "./StakeDelegatable.sol";
+import "./utils/UintArrayUtils.sol";
 
 
 /**
@@ -295,12 +296,7 @@ contract TokenGrant is StakeDelegatable {
         address operator = idToOperator[_id];
         address owner = operatorToOwner[operator];
         operatorToOwner[operator] = address(0);
-        for (uint256 i = 0; i < ownerOperators[owner].length; i++) {
-            if (ownerOperators[owner][i] == operator) {
-                delete ownerOperators[owner][i];
-                break;
-            }
-        }
+        ownerOperators[owner].removeAddress(operator);
     }
 
     /**
