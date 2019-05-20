@@ -6,10 +6,13 @@ package watchtower
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/net/key"
 	host "github.com/libp2p/go-libp2p-host"
+	peer "github.com/libp2p/go-libp2p-peer"
 )
 
 // Guard contains the state necessary to make connection pruning decisions.
@@ -17,8 +20,6 @@ type Guard struct {
 	stakeMonitorLock sync.Mutex
 	stakeMonitor     chain.StakeMonitor
 
-	// networkLock sync.Mutex
-	// network     swarm.Dialer
 	host host.Host
 }
 
@@ -47,10 +48,46 @@ func (g *Guard) start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			// get the connected peers
-			// g.host.Peerstore().Peers()
-			// do the stake check
-			//
+			for _, connectedPeer := range g.host.Network().Peers() {
+				go func(ctx context.Context, connectedPeer peer.ID) {
+					_, cancel := context.WithCancel(ctx)
+					defer cancel()
+
+					peerPublicKey, err := connectedPeer.ExtractPublicKey()
+					if err != nil {
+						fmt.Printf(
+							"Failed to extract peer [%s] public key with error [%v]",
+							connectedPeer,
+							err,
+						)
+						return
+					}
+
+					g.stakeMonitorLock.Lock()
+					hasMinimumStake, err := g.stakeMonitor.HasMinimumStake(
+						key.NetworkPubKeyToEthAddress(
+							peerPublicKey.(*key.NetworkPublic),
+						),
+					)
+					if err != nil {
+						g.stakeMonitorLock.Unlock()
+						fmt.Printf(
+							"Failed to get stake information for peer [%s] with error [%v]",
+							connectedPeer,
+							err,
+						)
+						return
+					}
+					g.stakeMonitorLock.Unlock()
+
+					if !hasMinimumStake {
+						connections := g.host.Network().ConnsToPeer(connectedPeer)
+						for _, connection := range connections {
+							connection.Close()
+						}
+					}
+				}(ctx, connectedPeer)
+			}
 		}
 	}
 }
