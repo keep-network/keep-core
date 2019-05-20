@@ -21,6 +21,9 @@ type Guard struct {
 	stakeMonitor     chain.StakeMonitor
 
 	host host.Host
+
+	peerCrossListLock sync.Mutex
+	peerCrossList     map[peer.ID]bool
 }
 
 // NewGuard returns a new instance of Guard. Can only be called once.
@@ -32,11 +35,31 @@ func NewGuard(
 	host host.Host,
 ) *Guard {
 	guard := &Guard{
-		stakeMonitor: stakeMonitor,
-		host:         host,
+		stakeMonitor:  stakeMonitor,
+		host:          host,
+		peerCrossList: make(map[peer.ID]bool),
 	}
 	go guard.start(ctx)
 	return guard
+}
+
+func (g *Guard) currentlyChecking(peerToCheck peer.ID) bool {
+	g.peerCrossListLock.Lock()
+	_, inProcess := g.peerCrossList[peerToCheck]
+	g.peerCrossListLock.Unlock()
+	return inProcess
+}
+
+func (g *Guard) markAsChecking(peerToCheck peer.ID) {
+	g.peerCrossListLock.Lock()
+	g.peerCrossList[peerToCheck] = true
+	g.peerCrossListLock.Unlock()
+}
+
+func (g *Guard) completedCheck(peerToCheck peer.ID) {
+	g.peerCrossListLock.Lock()
+	g.peerCrossList[peerToCheck] = false
+	g.peerCrossListLock.Unlock()
 }
 
 // start executes the connection management background worker. If it receives a
@@ -49,9 +72,17 @@ func (g *Guard) start(ctx context.Context) {
 			return
 		default:
 			for _, connectedPeer := range g.host.Network().Peers() {
+				if g.currentlyChecking(connectedPeer) {
+					continue
+				} else {
+					g.markAsChecking(connectedPeer)
+				}
+
 				go func(ctx context.Context, inProcessPeer peer.ID) {
 					_, cancel := context.WithCancel(ctx)
 					defer cancel()
+
+					defer g.completedCheck(inProcessPeer)
 
 					peerPublicKey, err := inProcessPeer.ExtractPublicKey()
 					if err != nil {
