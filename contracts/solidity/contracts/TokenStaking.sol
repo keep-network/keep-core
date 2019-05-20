@@ -101,6 +101,7 @@ contract TokenStaking is StakeDelegatable {
         if (address(stakingProxy) != address(0)) {
             stakingProxy.emitUnstakedEvent(owner, _value);
         }
+        idToOperator[id] = _operator;
         return id;
     }
 
@@ -123,6 +124,12 @@ contract TokenStaking is StakeDelegatable {
 
         // Cleanup withdrawal record.
         delete withdrawals[_id];
+
+        // Release operator
+        address operator = idToOperator[_id];
+        address owner = operatorToOwner[operator];
+        operatorToOwner[operator] = address(0);
+        ownerOperators[owner].removeAddress(operator);
 
         emit FinishedUnstake(_id);
     }
