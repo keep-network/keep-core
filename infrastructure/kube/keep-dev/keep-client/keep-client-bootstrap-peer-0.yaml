@@ -36,7 +36,7 @@ spec:
         type: bootstrap-peer-0
     spec:
       initContainers:
-      - name: testing-init-container
+      - name: unlock-and-stake
         image: gcr.io/keep-dev-fe24/keep-client-initcontainer
         env:
           - name: KEEP_CLIENT_ETH_ACCOUNT_ADDRESS
