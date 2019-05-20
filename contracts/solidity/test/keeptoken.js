@@ -109,6 +109,21 @@ contract('KeepToken', function(accounts) {
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance), true, "Staking amount should be transfered to sender balance");
     assert.equal(account_one_operator_stake_balance.isZero(), true, "Staking amount should be removed from sender staking balance");
 
+    // Starting balances
+    account_one_starting_balance = await token.balanceOf.call(account_one);
+
+    signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_one), account_one_operator)).substr(2), 'hex');
+    data = Buffer.concat([Buffer.from(account_one_magpie.substr(2), 'hex'), signature]);
+
+    // Stake tokens using approveAndCall pattern
+    await token.approveAndCall(stakingContract.address, stakingAmount, '0x' + data.toString('hex'), {from: account_one});
+
+    // Ending balances
+    account_one_ending_balance = await token.balanceOf.call(account_one);
+    account_one_operator_stake_balance = await stakingContract.stakeBalanceOf.call(account_one_operator);
+
+    assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(stakingAmount)), true, "Staking amount should be transfered from sender balance for the second time");
+    assert.equal(account_one_operator_stake_balance.eq(stakingAmount), true, "Staking amount should be added to the sender staking balance for the second time");
   });
 
 
