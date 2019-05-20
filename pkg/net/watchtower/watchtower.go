@@ -87,41 +87,54 @@ func (g *Guard) start(ctx context.Context) {
 
 					defer g.completedCheck(inProcessPeer)
 
-					peerPublicKey, err := inProcessPeer.ExtractPublicKey()
-					if err != nil {
-						fmt.Printf(
-							"Failed to extract peer [%s] public key with error [%v]",
-							inProcessPeer,
-							err,
-						)
-						return
-					}
-
-					g.stakeMonitorLock.Lock()
-					hasMinimumStake, err := g.stakeMonitor.HasMinimumStake(
-						key.NetworkPubKeyToEthAddress(
-							peerPublicKey.(*key.NetworkPublic),
-						),
+					hasMinimumStake, err := g.validatePeerStake(
+						ctx, inProcessPeer,
 					)
 					if err != nil {
-						g.stakeMonitorLock.Unlock()
-						fmt.Printf(
-							"Failed to get stake information for peer [%s] with error [%v]",
-							inProcessPeer,
-							err,
-						)
+						fmt.Println(err)
 						return
 					}
-					g.stakeMonitorLock.Unlock()
 
 					if !hasMinimumStake {
-						connections := g.host.Network().ConnsToPeer(inProcessPeer)
-						for _, connection := range connections {
-							connection.Close()
-						}
+						g.disconnectPeer(inProcessPeer)
 					}
 				}(ctx, connectedPeer)
 			}
 		}
+	}
+}
+
+func (g *Guard) validatePeerStake(ctx context.Context, peer peer.ID) (bool, error) {
+	peerPublicKey, err := peer.ExtractPublicKey()
+	if err != nil {
+		return false, fmt.Errorf(
+			"Failed to extract peer [%s] public key with error [%v]",
+			peer,
+			err,
+		)
+	}
+
+	g.stakeMonitorLock.Lock()
+	hasMinimumStake, err := g.stakeMonitor.HasMinimumStake(
+		key.NetworkPubKeyToEthAddress(
+			peerPublicKey.(*key.NetworkPublic),
+		),
+	)
+	if err != nil {
+		g.stakeMonitorLock.Unlock()
+		return false, fmt.Errorf(
+			"Failed to get stake information for peer [%s] with error [%v]",
+			peer,
+			err,
+		)
+	}
+	g.stakeMonitorLock.Unlock()
+	return hasMinimumStake, nil
+}
+
+func (g *Guard) disconnectPeer(peer peer.ID) {
+	connections := g.host.Network().ConnsToPeer(peer)
+	for _, connection := range connections {
+		connection.Close()
 	}
 }
