@@ -167,6 +167,9 @@ current time,
   
 5. The _operator_ can now use this delegated stake for operating.
 
+6. Ability to increase the delegated stake can be implemented via undelegating
+and delegating stake again with the new amount.
+
 [#undelegating]
 ==== Undelegating a stake
 
