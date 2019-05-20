@@ -262,13 +262,6 @@ contract TokenGrant is StakeDelegatable {
         // Set token grant stake withdrawal start.
         stakeWithdrawalStart[_id] = now;
 
-        // Calculate granted amount that was staked.
-        uint256 available = grants[_id].amount.sub(grants[_id].released);
-        require(available > 0, "Must have available granted amount to unstake.");
-
-        // Remove tokens from granted stake balance.
-        stakeBalances[_operator] = stakeBalances[_operator].sub(available);
-
         emit InitiatedTokenGrantUnstake(_id);
     }
 
@@ -292,6 +285,14 @@ contract TokenGrant is StakeDelegatable {
         // Release operator
         address operator = idToOperator[_id];
         address owner = operatorToOwner[operator];
+
+        // Calculate granted amount that was staked.
+        uint256 available = grants[_id].amount.sub(grants[_id].released);
+        require(available > 0, "Must have available granted amount to unstake.");
+
+        // Remove tokens from granted stake balance.
+        stakeBalances[operator] = stakeBalances[operator].sub(available);
+
         operatorToOwner[operator] = address(0);
         ownerOperators[owner].removeAddress(operator);
 
