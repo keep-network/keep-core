@@ -1,3 +1,7 @@
+// Package watchtower is a packge with introduces Guard, a type that takes a
+// stakemonitor and libp2p host. The purpose of this package is to
+// continuously monitor the on-chain stake of a connected peer, and to
+// disconnect peers which fall below the minimum stake.
 package watchtower
 
 import (
@@ -8,9 +12,7 @@ import (
 	host "github.com/libp2p/go-libp2p-host"
 )
 
-// The watchtower takes a stakemonitor,
-// runs the monitor in a loop, checking all potential connections
-
+// Guard contains the state necessary to make connection pruning decisions.
 type Guard struct {
 	stakeMonitorLock sync.Mutex
 	stakeMonitor     chain.StakeMonitor
@@ -20,6 +22,9 @@ type Guard struct {
 	host host.Host
 }
 
+// NewGuard returns a new instance of Guard. Can only be called once.
+// Instantiating a new instance of Guard automatically runs the Guard instance in
+// the background for the lifetime of the client.
 func NewGuard(
 	ctx context.Context,
 	stakeMonitor chain.StakeMonitor,
@@ -29,11 +34,13 @@ func NewGuard(
 		stakeMonitor: stakeMonitor,
 		host:         host,
 	}
-	go guard.Start(ctx)
+	go guard.start(ctx)
 	return guard
 }
 
-func (g *Guard) Start(ctx context.Context) {
+// start executes the connection management background worker. If it receives a
+// signal to stop the execution of the client, it kills this task.
+func (g *Guard) start(ctx context.Context) {
 	// use a timer or you're gonna blow out the cpu
 	for {
 		select {
