@@ -1,4 +1,4 @@
-package relay
+package registry
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
-	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -22,19 +21,13 @@ func TestRegisterGroup(t *testing.T) {
 		big.NewInt(1),
 	)
 
-	gr := &GroupRegistry{
+	gr := &Groups{
 		mutex:      sync.Mutex{},
 		myGroups:   make(map[string][]*Membership),
 		relayChain: chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay(),
 	}
 
-	networkProvider := netLocal.Connect()
-	channel, err := networkProvider.ChannelFor("testChannel")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	gr.RegisterGroup(signer, channel)
+	gr.RegisterGroup(signer, "test_channel")
 
 	actual := gr.GetGroup(signer.GroupPublicKeyBytes())
 
@@ -53,21 +46,15 @@ func TestRegisterGroup(t *testing.T) {
 	}
 }
 
-func TestUnregisterDeletedGroups(t *testing.T) {
+func TestUnregisterStaleGroups(t *testing.T) {
 	mockChain := &mockGroupRegistrationInterface{
 		groupsToRemove: [][]byte{},
 	}
 
-	gr := &GroupRegistry{
+	gr := &Groups{
 		mutex:      sync.Mutex{},
 		myGroups:   make(map[string][]*Membership),
 		relayChain: mockChain,
-	}
-
-	networkProvider := netLocal.Connect()
-	channel, err := networkProvider.ChannelFor("test")
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	signer1 := dkg.NewThresholdSigner(
@@ -86,9 +73,11 @@ func TestUnregisterDeletedGroups(t *testing.T) {
 		big.NewInt(3),
 	)
 
-	gr.RegisterGroup(signer1, channel)
-	gr.RegisterGroup(signer2, channel)
-	gr.RegisterGroup(signer3, channel)
+	channelName := "test_channel"
+
+	gr.RegisterGroup(signer1, channelName)
+	gr.RegisterGroup(signer2, channelName)
+	gr.RegisterGroup(signer3, channelName)
 
 	mockChain.markForRemoval(signer2.GroupPublicKeyBytes())
 
@@ -104,7 +93,7 @@ func TestUnregisterDeletedGroups(t *testing.T) {
 	group2 := gr.GetGroup(signer2.GroupPublicKeyBytes())
 	if group2 != nil {
 		t.Fatalf(
-			"Group2 was expected to be deleted, but is still present",
+			"Group2 was expected to be unregistered, but is still present",
 		)
 	}
 
@@ -131,11 +120,11 @@ func (mgri *mockGroupRegistrationInterface) OnGroupRegistered(
 	panic("not implemented")
 }
 
-func (mgri *mockGroupRegistrationInterface) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	for _, groupToRemove := range mgri.groupsToRemove {
 		if bytes.Compare(groupToRemove, groupPublicKey) == 0 {
-			return false, nil
+			return true, nil
 		}
 	}
-	return true, nil
+	return false, nil
 }

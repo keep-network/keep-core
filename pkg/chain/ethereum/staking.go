@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 )
 
@@ -43,7 +44,7 @@ func newStaking(chainConfig *ethereumChain) (*staking, error) {
 	}
 
 	if chainConfig.accountKey == nil {
-		key, err := DecryptKeyFile(
+		key, err := ethutil.DecryptKeyFile(
 			chainConfig.config.Account.KeyFile,
 			chainConfig.config.Account.KeyFilePassword,
 		)
