@@ -155,7 +155,6 @@ any condition is unfulfilled, processing aborts):
   * _delegation order_ is signed by the owner declared in the delegation order,
   * _delegation order_ is signed by the operator declared in the delegation
     order,
-  * _operator_ does not have any KEEP tokens,
   * _magpie_ address is set,
   * _operator_ is not involved in another active delegating contract,
   * amount of delegated tokens is lower or equal to the owner staked tokens.
