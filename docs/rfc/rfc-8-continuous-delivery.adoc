@@ -27,11 +27,11 @@ There are *three* parts to deployments with keep-clients:
 
 *Service Code and Service Configuration:*
 
-Deploying manually is a pain in the ass. At a minimum there are 5 clients that
-need to be orchestrated with proper images and configurations.  It's possible to
-manage this manually at such a low number of clients though you run a non-trivial
-risk of human error and deployment step repetition as as result.  This has an
-adverse effect on both the engineering experience and time efficiency.
+Deploying manually is a pain in the ass, even at a few client deployments (5) the
+manual process is untenable.  It's possible to manage this manually at such a low
+number of clients though you run a non-trivial risk of human error and deployment
+step repetition as as result.  This has an adverse effect on both the engineering
+experience and time efficiency.
 
 When scaling the solution beyond 5 clients manual configuration becomes untenable
 regardless of due-diligence.
@@ -108,7 +108,7 @@ contracts before clients due to client startup behavior.
   KeepRandomBeacon = "0x6299496199d9922193fdd2d717ef585f431er01"
   # Hex-encoded address of KeepGroup contract
   KeepGroup = "0x6299496449d11141193fdd2d717ef585f431er02"
-  # StakingProxy
+  # Hex-encoded address of StakingProxy contract
   Staking = "0x6297776199d99942293fdd2d717ef585f431er03"
 
 [LibP2P]
@@ -153,8 +153,8 @@ keep-client ConfigMap:
 Configuration of the data that populates the ConfigMaps and ConfigMaps themselves
 are updated *manually*.
 
-Maintenance log and Kubernetes CRUD commands: https://github.com/keep-network/keep-core/blob/master/infrastructure/kube/keep-dev/kube-setup.org[kube-setup]
-keep-client config files: https://github.com/keep-network/keep-core/tree/master/infrastructure/kube/keep-dev/keep-client/config[keep-client.toml]
+- Maintenance log and Kubernetes CRUD commands: https://github.com/keep-network/keep-core/blob/master/infrastructure/kube/keep-dev/kube-setup.org[kube-setup]
+- keep-client config files: https://github.com/keep-network/keep-core/tree/master/infrastructure/kube/keep-dev/keep-client/config[keep-client.toml]
 
 *keep-client Consul Configuration:*
 Instead of deploying a keep-client-config.toml file as a ConfigMap we can
@@ -205,7 +205,7 @@ To reiterate:  The implementation will aim to automate
 `Ethereum Contract Deployment` and `keep-client Configuration`.
 `keep-client service deployment` is already automated via Keel.
 
-==== Part 1: Contract Migration and Consul Update
+==== Part 1: Contract Migration
 
 Either a new workflow or new jobs to existing workflow will be added to the
 `keep-core` circle config.  Before image publish on master merge Circle
@@ -213,44 +213,24 @@ will run this workflow/job to trigger a script that will:
 
 - migrate all contracts
 
-- Update Consul with fresh contract addresses
+- Copy compiled contract JSON to Circle and store in a Workspace for persistence
+  in the `InitContainer` image.
 
 - Here we must implement an access point for Circle into the private Kubernetes
   cluster.  We can do this with the `gcp_push_deploy` Terraform module.
-
-==== Sample keep-client Service Consul Configuration
-When operating in a Kubernetes cluster we can query client configurations from
-a Consul host. To provision configurations they are first loaded into the key-
-value store.
-
-To fully automate deployment of new code on merge to master we need to auto-generate
-a configuration for each test keep-client and upload it to Consul.
-
-*Standard Peer*
-```
-#!/bin/sh
-  consul kv put ethereum '{"URL": "ws://192.168.0.150:8546", "URLRPC": "http://192.168.0.151:8545"}'
-  consul kv get ethereum
-
-  consul kv put ethereum/account '{"Address": "0xc2a56884538778bacd91aa5bf343bf882c5fb18c", "KeyFile": "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18c"}'
-  consul kv get ethereum/account
-
-  consul kv put ethereum/contractaddresses '{"KeepRandomBeacon": "0x639deb0dd975af8e4cc91fe9053a37e4faf37648", "KeepGroup": "0xcf64c2a367341170cb4e09cf8c0ed137d8473cec", "StakingProxy": "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCD"}'
-  consul kv get ethereum/contractaddresses
-
-  consul kv put libp2p '{"Port": 27002, "Peers": ["/ip4/127.0.0.1/tcp/27001/ipfs/12D3KooWKRyzVWW6ChFjQjK4miCty85Niy49tpPV95XdKu1BcvMA"], "Seed": 0}'
-  consul kv get libp2p
-```
 
 ==== Part 2: keep-client Preparation
 
 On each keep-client Kubernetes deployment we'll run an `InitContainer` that does
 the following:
 
+- create ETH account
 - unlock ETH account
 - stake ETH account
-- query consul and fetch updated keep-client configuration data
-- write configuration file to a persistent volume
+- write contract addresses, ETH host/port, bootstrap peer addresses to config
+  template
+- write configuration file and ETH account keyfile to a persistent volume
+- mount configuration file / keyfile persistent volume to keep-client deployment
 
 The `InitContainer` will operate exclusively on the ETH account and assigned to the
 `keep-client` being deployed.  If there are 100 `keep-client` Kubernetes
@@ -259,17 +239,37 @@ for each of the assigned ETH accounts.  This is infinitely scalable (system
 resources aside) and reduces `unlock + stake` time to a ceiling of the time it
 takes to operate on a single account.
 
-The `InitContainer` will query consul and fetch updated configuration values since
-the last deployment.  The updated configuration values will be fed into a complete
-`keep-client` configuration template and stored in a Kubernetes persistent volume.
-This volume will be mounted to the `keep-client` deployment where the config can
-be passed via command line argument on service start.  The benefit to this approach
-is that we can maintain a *single set of keep configurations on consul*.  This will
-reduce up-front configuration time via Circle.
+The `InitContainer` will have a copy of each Keep contracts compiled JSON.  The
+files will be used to fetch contract ABI's for account staking and contract
+addresses for configuration file setup.  The updated configuration values will be
+fed into a complete `keep-client` configuration template and stored in a Kubernetes
+persistent volume.  This volume will be mounted to the `keep-client` deployment
+where the config can be passed via command line argument on service start.
 
-For now we're going to bake a custom image for the init container with the script
-for doing unlock and stake / Consul configuration.  This will be checked into the
-`keep-core/infrastructure/kube` directory.
+For now we're going to bake a custom image for the `InitContainer` with the script
+for doing ETH account creation, unlock and stake, and keep-client configuration.
+This will be checked into the `keep-core/infrastructure/kube` directory.
+
+==== A Note On Configuration Value Scope
+
+We provide configuration values via environment variables at two points in this
+process: Circle contexts and Kube deployment configuration files.
+
+We have *environment* and *client* properties. Where some N configuration values
+are of context/properties environment and some are of context/properties client.
+Environment properties
+
+An example:
+
+Using the *environment*/*client* context to organize configurations we can draw a
+line at where config values get populated.
+
+`ETH_HOSTNAME` is a property of the environment, where `KEEP_CLIENT_ETH_ACCOUNT`
+is a property of a client (because we’ve assigned it so).
+
+Environment context property `ETH_HOSTNAME` gets configured at the Circle context
+level and baked into the `InitCointainer` and `KEEP_CLIENT_ETH_ACCOUNT`
+gets configured on the Kube deployment.
 
 
 === Limitations
@@ -278,7 +278,6 @@ for doing unlock and stake / Consul configuration.  This will be checked into th
 - It requires Keel
 - It require CircleCI
 - It requires Truffle
-- It requires Consul
 - All contracts are migrated, can't be selective
 - No rollback mechanism if things go sideways
 - No order to which type of keep-client gets deployed first (bootstrap vs standard)
@@ -300,9 +299,9 @@ Open
 == Related Links
 
 - https://www.flowdock.com/app/cardforcoin/tech/threads/oa1X0y9kQqUBwxd4gwgdu7Rs5O2[Consul discussion]
-- https://www.flowdock.com/app/cardforcoin/keep/threads/zzxutnh8USazp5U8cC6lNIDu7gI[Contract Migration Automation]
+- https://www.flowdock.com/app/cardforcoin/keep/threads/zzxutnh8USazp5U8cC6lNIDu7gI[Contract Migration discussion]
+- https://www.flowdock.com/app/cardforcoin/tech/threads/LFkufyZX1RBawClTZp6kO0raeq0[Testing discussion]
 - Various Github Issues discussing one or more of the 3 deployment parts outlined here:
   - https://github.com/keep-network/keep-core/issues/721[CircleCI Config Work]
   - https://github.com/keep-network/keep-core/issues/618[keep-client Configs to ConfigMap]
   - https://github.com/keep-network/keep-core/issues/667[Keel implementation via Terraform]
-  -
