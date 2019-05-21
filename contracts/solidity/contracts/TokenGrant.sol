@@ -232,7 +232,6 @@ contract TokenGrant is StakeDelegatable {
         operatorToOwner[operator] = msg.sender;
         magpieToOwner[magpie] = msg.sender;
         ownerOperators[msg.sender].push(operator);
-        idToOperator[_id] = operator;
 
         // Mark as staked. This also locks grant from releasing its balance.
         grants[_id].staked = true;
@@ -263,14 +262,22 @@ contract TokenGrant is StakeDelegatable {
         stakeWithdrawalStart[_id] = now;
 
         emit InitiatedTokenGrantUnstake(_id);
+
+        // Calculate granted amount that was staked.
+        uint256 available = grants[_id].amount.sub(grants[_id].released);
+        require(available >= 0, "Must have available granted amount to unstake.");
+
+        if (address(stakingProxy) != address(0)) {
+            stakingProxy.emitUnstakedEvent(_operator, available);
+        }
     }
 
     /**
      * @notice Finish unstake of the token grant.
      * @param _id Grant ID.
      */
-    function finishUnstake(uint256 _id) public {
-
+    function finishUnstake(uint256 _id, address _operator) public {
+        // Who can run finishUnstake?
         require(stakeWithdrawalStart[_id] > 0, "Grant withdrawal start must be set.");
         require(grants[_id].staked, "Grant must be staked.");
         require(!grants[_id].revoked, "Grant must not be be revoked.");
@@ -282,23 +289,18 @@ contract TokenGrant is StakeDelegatable {
         // Unset stake withdrawal start.
         stakeWithdrawalStart[_id] = 0;
 
-        // Release operator
-        address operator = idToOperator[_id];
-        address owner = operatorToOwner[operator];
+        address owner = operatorToOwner[_operator];
 
         // Calculate granted amount that was staked.
         uint256 available = grants[_id].amount.sub(grants[_id].released);
-        require(available > 0, "Must have available granted amount to unstake.");
+        require(available >= 0, "Must have available granted amount to unstake.");
 
         // Remove tokens from granted stake balance.
-        stakeBalances[operator] = stakeBalances[operator].sub(available);
+        stakeBalances[_operator] = stakeBalances[_operator].sub(available);
 
-        operatorToOwner[operator] = address(0);
-        ownerOperators[owner].removeAddress(operator);
-
-        if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitUnstakedEvent(operator, available);
-        }
+        // Release operator
+        operatorToOwner[_operator] = address(0);
+        ownerOperators[owner].removeAddress(_operator);
     }
 
     /**
