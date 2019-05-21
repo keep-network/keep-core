@@ -41,19 +41,20 @@ const keepTokenContractAbi = keepTokenContractParsed.abi;
 const keepTokenContractAddress = keepTokenContractParsed.networks[process.env.ETH_NETWORK_ID].address;
 const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenContractAddress);
 
-// Eth account used by keep-client.  ENV VAR sourced from keep-client Kube deployment config.
-const operator = process.env.KEEP_CLIENT_ETH_ACCOUNT_ADDRESS;
-
 // Eth account that contracts are migrated against. ENV VAR sourced from Docker image.
 const contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
 // Stake a target eth account
 async function stakeEthAccount() {
 
+  let operator = await provisionOperatorAccount();
+  console.log("OPERATOR: " + operator);
+
   // ENV VAR sourced from Docker image.
   let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
   let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator)).substr(2), 'hex');
+  console.log("GOT SIG");
   let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
   try{
@@ -91,20 +92,55 @@ async function stakeEthAccount() {
   }
 };
 
-async function unlockEthAccount(callback) {
-
-  // ENV VARs sourced from keep-client Kube deployment config.
-  let operator_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
-  let contract_owner_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
+async function createEthAccount() {
 
   try {
-    console.log("Unlocking operator account: " + operator);
-    await web3.eth.personal.unlockAccount(operator, operator_eth_account_password, 150000);
-    console.log("Operator account " + operator + " unlocked!");
+    let eth_account = await web3.eth.accounts.create();
+    fs.writeFile("/tmp/eth_account_address", eth_account["address"], (error) => {
+      if (error) throw error;
+    });
+    return eth_account
+  }
+  catch(error) {
+    console.log(error)
+  }
+}
 
-    console.log("Unlocking contract_owner account: " + contract_owner);
-    await web3.eth.personal.unlockAccount(contract_owner, contract_owner_eth_account_password, 150000);
-    console.log("Contract_owner account " + contract_owner + " unlocked!");
+async function createEthAccountKeyfile(eth_account_private_key, eth_account_password) {
+
+  try {
+    let eth_account_keyfile = await web3.eth.accounts.encrypt(eth_account_private_key, eth_account_password);
+    fs.writeFile("/tmp/eth_account_keyfile", JSON.stringify(eth_account_keyfile), (error) => {
+      if (error) throw error;
+    });
+  }
+  catch(error) {
+    console.error(error)
+  }
+}
+
+async function unlockEthAccount(eth_account, eth_account_password) {
+
+  try {
+    console.log("Unlocking account: " + eth_account);
+    await web3.eth.personal.unlockAccount(eth_account, eth_account_password, 150000);
+    console.log("Account " + eth_account + " unlocked!");
+  }
+  catch(error) {
+    console.error(error);
+  }
+
+}
+
+async function provisionOperatorAccount() {
+
+  let operator_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
+
+  try {
+    let operator = await createEthAccount();
+    await createEthAccountKeyfile(operator["privateKey"], operator_eth_account_password);
+    await web3.eth.accounts.wallet.add(operator)
+    return operator["address"].toString();
   }
   catch(error) {
     console.error(error);
@@ -117,7 +153,9 @@ async function unlockEthAccount(callback) {
 in a particular format, this function facilitates that.
 */
 function formatAmount(amount, decimals) {
-  return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex')
+  return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
 }
 
-unlockEthAccount(stakeEthAccount);
+unlockEthAccount(contract_owner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
+stakeEthAccount();
+
