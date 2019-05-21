@@ -35,7 +35,7 @@ func Initialize(
 		return err
 	}
 
-	groupRegistry := registry.NewGroupRegistry(relayChain)
+	groupRegistry := registry.NewGroups(relayChain)
 
 	node := relay.NewNode(
 		staker,
