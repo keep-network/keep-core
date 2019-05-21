@@ -233,14 +233,14 @@ contract('KeepToken', function(accounts) {
     });
 
     // should not be able to finish unstake before withdrawal delay is over
-    await exceptThrow(grantContract.finishUnstake(stakeWithdrawalId));
+    await exceptThrow(grantContract.finishUnstake(stakeWithdrawalId, account_two_operator));
 
     // should not be able to release grant as its still locked for staking
     await exceptThrow(grantContract.release(id));
 
     // jump in time over withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
-    await grantContract.finishUnstake(stakeWithdrawalId);
+    await grantContract.finishUnstake(stakeWithdrawalId, account_two_operator);
     account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.isZero(), true, "Stake grant amount should be 0");
     assert.equal(await grantContract.operatorsOf.call(account_two), 0, "Operator should be released after finishing unstake");
@@ -298,14 +298,14 @@ contract('KeepToken', function(accounts) {
     });
 
     // should not be able to finish unstake before withdrawal delay is over
-    await exceptThrow(grantContract.finishUnstake(stakeWithdrawalId));
+    await exceptThrow(grantContract.finishUnstake(stakeWithdrawalId, account_two_operator));
 
     // should not be able to release grant as its still locked for staking
     await exceptThrow(grantContract.release(id));
 
     // jump in time over withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
-    await grantContract.finishUnstake(stakeWithdrawalId);
+    await grantContract.finishUnstake(stakeWithdrawalId, account_two_operator);
     account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.isZero(), true, "Stake grant amount should be 0");
     assert.equal(await grantContract.operatorsOf.call(account_two), 0, "Operator should be released after finishing unstake");
