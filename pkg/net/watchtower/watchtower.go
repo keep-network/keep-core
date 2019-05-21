@@ -79,27 +79,29 @@ func (g *Guard) start(ctx context.Context) {
 					continue
 				}
 
-				go func(ctx context.Context, inProcessPeer peer.ID) {
-					g.markAsChecking(inProcessPeer)
-					defer g.completedCheck(inProcessPeer)
-
-					newContext, cancel := context.WithTimeout(ctx, 10*time.Second)
-					defer cancel()
-
-					hasMinimumStake, err := g.validatePeerStake(
-						newContext, inProcessPeer,
-					)
-					if err != nil {
-						fmt.Println(err)
-						return
-					}
-
-					if !hasMinimumStake {
-						g.disconnectPeer(inProcessPeer)
-					}
-				}(ctx, connectedPeer)
+				go g.manageConnectionByStake(ctx, connectedPeer)
 			}
 		}
+	}
+}
+
+func (g *Guard) manageConnectionByStake(ctx context.Context, peer peer.ID) {
+	g.markAsChecking(peer)
+	defer g.completedCheck(peer)
+
+	newContext, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	hasMinimumStake, err := g.validatePeerStake(
+		newContext, peer,
+	)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	if !hasMinimumStake {
+		g.disconnectPeer(peer)
 	}
 }
 
