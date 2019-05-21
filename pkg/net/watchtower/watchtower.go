@@ -77,15 +77,14 @@ func (g *Guard) start(ctx context.Context) {
 			for _, connectedPeer := range g.host.Network().Peers() {
 				if g.currentlyChecking(connectedPeer) {
 					continue
-				} else {
-					g.markAsChecking(connectedPeer)
 				}
 
 				go func(ctx context.Context, inProcessPeer peer.ID) {
+					g.markAsChecking(inProcessPeer)
+					defer g.completedCheck(inProcessPeer)
+
 					_, cancel := context.WithCancel(ctx)
 					defer cancel()
-
-					defer g.completedCheck(inProcessPeer)
 
 					hasMinimumStake, err := g.validatePeerStake(
 						ctx, inProcessPeer,
