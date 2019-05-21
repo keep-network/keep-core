@@ -101,7 +101,7 @@ contract TokenStaking is StakeDelegatable {
         if (address(stakingProxy) != address(0)) {
             stakingProxy.emitUnstakedEvent(owner, _value);
         }
-        idToOperator[id] = _operator;
+
         return id;
     }
 
@@ -111,7 +111,7 @@ contract TokenStaking is StakeDelegatable {
      * otherwise the function will fail and remaining gas is returned.
      * @param _id Withdrawal ID.
      */
-    function finishUnstake(uint256 _id) public {
+    function finishUnstake(uint256 _id, address _operator) public {
         require(now >= withdrawals[_id].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
 
         address staker = withdrawals[_id].staker;
@@ -126,10 +126,9 @@ contract TokenStaking is StakeDelegatable {
         delete withdrawals[_id];
 
         // Release operator
-        address operator = idToOperator[_id];
-        address owner = operatorToOwner[operator];
-        operatorToOwner[operator] = address(0);
-        ownerOperators[owner].removeAddress(operator);
+        address owner = operatorToOwner[_operator];
+        operatorToOwner[_operator] = address(0);
+        ownerOperators[owner].removeAddress(_operator);
 
         emit FinishedUnstake(_id);
     }
