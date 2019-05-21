@@ -158,8 +158,7 @@ any condition is unfulfilled, processing aborts):
   * _operator_ does not have any KEEP tokens,
   * _magpie_ address is set,
   * _operator_ is not involved in another active delegating contract,
-  * amount of delegated tokens is lower or equal to the owner staked tokens,
-  * amount of delegated tokens is higher or equal to the minimum stake.
+  * amount of delegated tokens is lower or equal to the owner staked tokens.
 
 4. If all conditions are satisfied the contract processes the _delegation order_
 and sets the variables accordingly to the _delegation order_, and binds the

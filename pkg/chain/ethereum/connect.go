@@ -5,9 +5,12 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-core/pkg/chain/gen/contract"
 )
 
 type ethereumChain struct {
@@ -16,9 +19,9 @@ type ethereumChain struct {
 	clientRPC                *rpc.Client
 	clientWS                 *rpc.Client
 	requestID                *big.Int
-	keepGroupContract        *keepGroup
-	keepRandomBeaconContract *KeepRandomBeacon
-	stakingContract          *staking
+	keepGroupContract        *contract.KeepGroup
+	keepRandomBeaconContract *contract.KeepRandomBeacon
+	stakingContract          *contract.StakingProxy
 	accountKey               *keystore.Key
 }
 
@@ -60,7 +63,32 @@ func Connect(cfg Config) (chain.Handle, error) {
 		clientWS:  clientws,
 	}
 
-	keepRandomBeaconContract, err := newKeepRandomBeacon(pv)
+	if pv.accountKey == nil {
+		key, err := ethutil.DecryptKeyFile(
+			cfg.Account.KeyFile,
+			cfg.Account.KeyFilePassword,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to read KeyFile: %s: [%v]",
+				cfg.Account.KeyFile,
+				err,
+			)
+		}
+		pv.accountKey = key
+	}
+
+	address, err := addressForContract(cfg, "KeepRandomBeacon")
+	if err != nil {
+		return nil, fmt.Errorf("error resolving KeepRandomBeacon contract: [%v]", err)
+	}
+
+	keepRandomBeaconContract, err :=
+		contract.NewKeepRandomBeacon(
+			*address,
+			pv.accountKey,
+			pv.client,
+		)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error attaching to KeepRandomBeacon contract: [%v]",
@@ -69,17 +97,58 @@ func Connect(cfg Config) (chain.Handle, error) {
 	}
 	pv.keepRandomBeaconContract = keepRandomBeaconContract
 
-	keepGroupContract, err := newKeepGroup(pv)
+	address, err = addressForContract(cfg, "KeepGroup")
+	if err != nil {
+		return nil, fmt.Errorf("error resolving KeepGroup contract: [%v]", err)
+	}
+
+	keepGroupContract, err :=
+		contract.NewKeepGroup(
+			*address,
+			pv.accountKey,
+			pv.client,
+		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to KeepGroup contract: [%v]", err)
 	}
 	pv.keepGroupContract = keepGroupContract
 
-	stakingContract, err := newStaking(pv)
+	address, err = addressForContract(cfg, "Staking")
+	if err != nil {
+		return nil, fmt.Errorf("error resolving TokenStaking contract: [%v]", err)
+	}
+
+	stakingContract, err :=
+		contract.NewStakingProxy(
+			*address,
+			pv.accountKey,
+			pv.client,
+		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to TokenStaking contract: [%v]", err)
 	}
 	pv.stakingContract = stakingContract
 
 	return pv, nil
+}
+
+func addressForContract(cfg Config, contractName string) (*common.Address, error) {
+	addressString, exists := cfg.ContractAddresses["KeepRandomBeacon"]
+	if !exists {
+		return nil, fmt.Errorf(
+			"no address information for [%v] in configuration",
+			contractName,
+		)
+	}
+
+	if !common.IsHexAddress(addressString) {
+		return nil, fmt.Errorf(
+			"configured address [%v] for contract [%v] is not valid hex address",
+			addressString,
+			contractName,
+		)
+	}
+
+	address := common.HexToAddress(addressString)
+	return &address, nil
 }
