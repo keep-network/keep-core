@@ -83,11 +83,11 @@ func (g *Guard) start(ctx context.Context) {
 					g.markAsChecking(inProcessPeer)
 					defer g.completedCheck(inProcessPeer)
 
-					_, cancel := context.WithCancel(ctx)
+					newContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 					defer cancel()
 
 					hasMinimumStake, err := g.validatePeerStake(
-						ctx, inProcessPeer,
+						newContext, inProcessPeer,
 					)
 					if err != nil {
 						fmt.Println(err)
