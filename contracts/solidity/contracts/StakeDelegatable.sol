@@ -31,9 +31,6 @@ contract StakeDelegatable {
     mapping(address => address) public operatorToOwner;
     mapping(address => address) public magpieToOwner;
 
-    // Helper stake delegation mapping.
-    mapping(uint256 => address) public idToOperator;
-
     // List of operators for the stake owner.
     mapping(address => address[]) public ownerOperators;
 
