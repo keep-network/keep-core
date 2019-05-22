@@ -55,29 +55,29 @@ async function stakeEthAccount() {
   // ENV VAR sourced from Docker image.
   let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
-  let contract_owner_signed = await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator_account_address)
-  let contract_owner_signature = contract_owner_signed.signature
+  let contract_owner_signed = await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator_account_address);
+  let contract_owner_signature = contract_owner_signed.signature;
 
   let signature = Buffer.from(contract_owner_signature.substr(2), 'hex');
   let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
   try {
-    console.log("<<<<<<<<<<<< Checking if stakingProxy/tokenStaking Contracts Are Authorized >>>>>>>>>>>>")
+    console.log("<<<<<<<<<<<< Checking if stakingProxy/tokenStaking Contracts Are Authorized >>>>>>>>>>>>");
     if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call({from: contract_owner}))
     {
       console.log("Authorizing stakingProxy/tokenStaking Contracts")
       await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner}).then((receipt) => {
-      console.log(JSON.stringify(receipt))
+      console.log(JSON.stringify(receipt));
       })
     }
-    console.log("stakingProxy/tokenStaking Contracts Authorized!")
+    console.log("stakingProxy/tokenStaking Contracts Authorized!");
   }
   catch(error) {
     console.error(error);
-  }
+  };
 
   try {
-    console.log("<<<<<<<<<<<< Staking Account: " + operator_account_address + " >>>>>>>>>>>>")
+    console.log("<<<<<<<<<<<< Staking Account: " + operator_account_address + " >>>>>>>>>>>>");
     await keepTokenContract.methods.approveAndCall(
       tokenStakingContract.address,
       formatAmount(1000000, 18),
@@ -144,7 +144,6 @@ async function provisionOperatorAccount() {
   catch(error) {
     console.error(error);
   }
-  callback();
 };
 
 /*
