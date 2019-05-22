@@ -58,21 +58,23 @@ func TestResolveContractByName(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		address, err := addressForContract(config, test.queriedContractName)
-		if !reflect.DeepEqual(test.expectedContractAddress, address) {
-			t.Fatalf(
-				"Unexpected contract address\nExpected: [%v]\nActual:   [%v]\n",
-				test.expectedContractAddress,
-				address,
-			)
-		}
-		if !reflect.DeepEqual(test.expectedError, err) {
-			t.Fatalf(
-				"Unexpected error\nExpected: [%v]\nActual:   [%v]\n",
-				test.expectedError,
-				err,
-			)
-		}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			address, err := addressForContract(config, test.queriedContractName)
+			if !reflect.DeepEqual(test.expectedContractAddress, address) {
+				t.Fatalf(
+					"Unexpected contract address\nExpected: [%v]\nActual:   [%v]\n",
+					test.expectedContractAddress,
+					address,
+				)
+			}
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Fatalf(
+					"Unexpected error\nExpected: [%v]\nActual:   [%v]\n",
+					test.expectedError,
+					err,
+				)
+			}
+		})
 	}
 }
