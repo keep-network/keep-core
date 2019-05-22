@@ -95,7 +95,7 @@ async function createEthAccount(account_name) {
 
   try {
     let eth_account = await web3.eth.accounts.create();
-    fs.writeFile("/tmp/eth_account_address", eth_account["address"], (error) => {
+    fs.writeFile("/mnt/keep-client/config/eth_account_address", eth_account["address"], (error) => {
       if (error) throw error;
     });
     console.log(account_name + " Account "  + eth_account["address"] + " Created!");
@@ -110,7 +110,7 @@ async function createEthAccountKeyfile(eth_account_private_key, eth_account_pass
 
   try {
     let eth_account_keyfile = await web3.eth.accounts.encrypt(eth_account_private_key, eth_account_password);
-    fs.writeFile("/tmp/eth_account_keyfile", JSON.stringify(eth_account_keyfile), (error) => {
+    fs.writeFile("/mnt/keep-client/config/eth_account_keyfile", JSON.stringify(eth_account_keyfile), (error) => {
       if (error) throw error;
     });
   }
