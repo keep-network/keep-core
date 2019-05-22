@@ -57,6 +57,7 @@ func TestUnregisterStaleGroups(t *testing.T) {
 		mutex:      sync.Mutex{},
 		myGroups:   make(map[string][]*Membership),
 		relayChain: mockChain,
+		storage:    storage.NewStorage("../../../../data_storage"),
 	}
 
 	signer1 := dkg.NewThresholdSigner(
