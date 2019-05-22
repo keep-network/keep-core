@@ -46,7 +46,10 @@ spec:
               secretKeyRef:
                 name: eth-account-passphrase
                 key: account-passphrase
-        command: ["node", "/tmp/unlock-and-stake-eth-account.js"]
+        volumeMounts:
+          - name: keep-client-config-material
+            mountPath: /mnt/keep-client/config
+        command: ["node", "/tmp/create-unlock-stake-account.js"]
       containers:
       - name: keep-client-bootstrap-peer-0
         image: gcr.io/keep-dev-fe24/keep-client
@@ -59,12 +62,16 @@ spec:
                 name: eth-account-passphrase
                 key: account-passphrase
         volumeMounts:
+          - name: keep-client-config-material
+            mountPath: /mnt/keep-client/config
           - name: eth-keyfile
             mountPath: /mnt/eth-data
           - name: keep-client-config
             mountPath: /mnt/keep-client
         command: ["keep-client", "-config", "/mnt/keep-client/keep-client-config.toml", "start"]
       volumes:
+      - name: keep-client-config-material
+        hostpath: {}
       - name: eth-keyfile
         configMap:
           name: keep-client-bootstrap-peer-0
