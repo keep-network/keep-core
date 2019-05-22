@@ -5,13 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"strings"
 	"testing"
 	"time"
 
+	dstore "github.com/ipfs/go-datastore"
+	dssync "github.com/ipfs/go-datastore/sync"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/watchtower"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
+	inet "github.com/libp2p/go-libp2p-net"
+	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 )
 
 func TestProviderReturnsType(t *testing.T) {
@@ -230,10 +235,7 @@ func TestDisconnectPeerUnderMinStake(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// initiate two peers
-	// createNetworkPeer
-	// stakeNetworkPeer(peerAddress, minstake)
-
+	// initialize the first peer
 	bootstrapPeerPrivKey, bootstrapPeerPubKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
@@ -257,27 +259,29 @@ func TestDisconnectPeerUnderMinStake(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	bootstrapIdentity, err := createIdentity(bootstrapPeerPrivKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	// kick off the network
-	bootstrapPeerProvider, err := Connect(
+	bsHost, err := discoverAndListen(
 		ctx,
-		Config{Port: 2701, Seed: 60000},
-		bootstrapPeerPrivKey,
+		bootstrapIdentity,
+		8080,
 		stakeMonitor,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	bootstrapLocation := func(provider net.Provider) string {
-		for _, addr := range provider.AddrStrings() {
-			if strings.Contains(addr, "ip4") && strings.Contains(addr, "127.0.0.1") {
-				fmt.Println(addr)
-				return addr
-			}
-		}
-		panic("failed to get a bootstrap location")
-	}
+	bootstrapRouter := dht.NewDHT(ctx, bsHost, dssync.MutexWrap(dstore.NewMapDatastore()))
+	bootstrapHost := rhost.Wrap(bsHost, bootstrapRouter)
 
+	// set watchtower for bootstrap peer
+	_ = watchtower.NewGuard(ctx, stakeMonitor, bootstrapHost)
+
+	// initialize second peer
 	peerPrivKey, peerPubKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
@@ -303,39 +307,39 @@ func TestDisconnectPeerUnderMinStake(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	peerProvider, err := Connect(
+	peerHost, err := discoverAndListen(
 		ctx,
-		Config{Port: 2709, Peers: []string{bootstrapLocation(bootstrapPeerProvider)}},
-		peerPrivKey,
+		peerIdentity,
+		8081,
 		stakeMonitor,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := bootstrapPeerProvider.ChannelFor("test"); err != nil {
+
+	peerRouter := dht.NewDHT(ctx, peerHost, dssync.MutexWrap(dstore.NewMapDatastore()))
+	routedPeerHost := rhost.Wrap(peerHost, peerRouter)
+
+	// set watchtower for our second peer
+	_ = watchtower.NewGuard(ctx, stakeMonitor, peerHost)
+
+	// connect the two peers
+	pinfo := bootstrapHost.Peerstore().PeerInfo(bootstrapHost.ID())
+	fmt.Printf("bootstrap peer info %+v\n", pinfo)
+	if err := routedPeerHost.Connect(context.Background(), pinfo); err != nil {
+		// TODO: this fails as we can't get addresses for the first
+		// peer back from the peerstore.
+		fmt.Printf("peer info of peer: %+v\n", peerHost.Peerstore().Addrs(bootstrapHost.ID()))
 		t.Fatal(err)
 	}
-	if _, err := peerProvider.ChannelFor("test"); err != nil {
-		t.Fatal(err)
-	}
+	// TODO: remove or decrease this time.
 	time.Sleep(4 * time.Second)
 
 	// make sure we have a valid connection
-	bsID := bootstrapPeerProvider.ID().String()
-	if !peerProvider.Connected(bsID) {
-		fmt.Println(bootstrapPeerProvider.Connected(peerIdentity.id.String()))
-		fmt.Println(peerIdentity.id.String())
-		fmt.Println("to")
-		fmt.Println(bootstrapPeerProvider.ID())
+	if routedPeerHost.Network().Connectedness(bootstrapIdentity.id) != inet.Connected {
 		t.Fatal("Failed to connect bootstrap peer to other peer")
 	}
-	// when one falls below
-	// err = monitor.UnstakeTokens("0x010102003")
-	// make sure the connection has been untethered.
-	// re stake
-	// make sure we havea connection again
-}
 
-// func createBootstrapPeer() {}
-// func createNetworkPeer()   {}
-// func stakeNetworkPeer()    {}
+	// drop our second peer below the min stake
+	// make sure the connection that the first peer has to the second peer has been untethered.
+}
