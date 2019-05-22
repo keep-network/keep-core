@@ -47,15 +47,16 @@ const contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 // Stake a target eth account
 async function stakeEthAccount() {
 
+  // Transactions during staking are sent from contract_owner, must be unlocked before start.
   await unlockEthAccount(contract_owner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
 
   console.log("<<<<<<<<<<<< Provisioning Operator Account " + ">>>>>>>>>>>>")
-  let operator = await provisionOperatorAccount();
-  let operator_account_address = operator["address"];
+  let provisioned_operator = await provisionOperatorAccount();
+  let operator = provisioned_operator["address"];
   // ENV VAR sourced from Docker image.
   let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
-  let contract_owner_signed = await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator_account_address);
+  let contract_owner_signed = await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator);
   let contract_owner_signature = contract_owner_signed.signature;
 
   let signature = Buffer.from(contract_owner_signature.substr(2), 'hex');
@@ -77,13 +78,13 @@ async function stakeEthAccount() {
   };
 
   try {
-    console.log("<<<<<<<<<<<< Staking Account: " + operator_account_address + " >>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<< Staking Account: " + operator + " >>>>>>>>>>>>");
     await keepTokenContract.methods.approveAndCall(
       tokenStakingContract.address,
       formatAmount(1000000, 18),
       delegation).send({from: contract_owner}).then((receipt) => {
         console.log(JSON.stringify(receipt));
-        console.log("Account " + operator_account_address + " staked!");
+        console.log("Account " + operator + " staked!");
       });
   }
   catch(error) {
@@ -95,6 +96,7 @@ async function createEthAccount(account_name) {
 
   try {
     let eth_account = await web3.eth.accounts.create();
+    // We write to a file for later passage to the keep-client container
     fs.writeFile("/mnt/keep-client/config/eth_account_address", eth_account["address"], (error) => {
       if (error) throw error;
     });
@@ -106,10 +108,12 @@ async function createEthAccount(account_name) {
   }
 };
 
+// We are creating a local account.  We must manually generate a keyfile for use by the keep-client
 async function createEthAccountKeyfile(eth_account_private_key, eth_account_password) {
 
   try {
     let eth_account_keyfile = await web3.eth.accounts.encrypt(eth_account_private_key, eth_account_password);
+    // We write to a file for later passage to the keep-client container
     fs.writeFile("/mnt/keep-client/config/eth_account_keyfile", JSON.stringify(eth_account_keyfile), (error) => {
       if (error) throw error;
     });
@@ -138,6 +142,7 @@ async function provisionOperatorAccount() {
   try {
     let operator = await createEthAccount("operator");
     await createEthAccountKeyfile(operator["privateKey"], operator_eth_account_password);
+    // We wallet add to make the local account available to web3 functions in the script.
     await web3.eth.accounts.wallet.add(operator["privateKey"]);
     return operator;
   }
