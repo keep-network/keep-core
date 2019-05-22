@@ -20,6 +20,15 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 		{{$method.Params}}
 	)
 
+	if err != nil {
+		return ret, {{$contract.ShortVar}}.errorResolver.ResolveError(
+			err,
+			nil,
+			"{{$method.LowerName}}",
+			{{$method.Params}}
+		)
+	}
+
 	{{ if $method.Return.Multi -}}
 	return ret, err
 	{{ else }}
