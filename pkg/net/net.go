@@ -52,8 +52,6 @@ type Provider interface {
 	// All known peers from the underlying PeerStore. This may include
 	// peers we're not directly connected to.
 	Peers() []string
-	// Returns true if we have at least one connection to a specified peer.
-	Connected(string) bool
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler

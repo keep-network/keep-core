@@ -45,10 +45,6 @@ func (lp *localProvider) Peers() []string {
 	return make([]string, 0)
 }
 
-func (lp *localProvider) Connected(peer string) bool {
-	return true
-}
-
 // Connect returns a local instance of a net provider that does not go over the
 // network.
 func Connect() net.Provider {

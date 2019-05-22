@@ -18,8 +18,6 @@ import (
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	inet "github.com/libp2p/go-libp2p-net"
-	peer "github.com/libp2p/go-libp2p-peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 
@@ -95,11 +93,6 @@ func (p *provider) Peers() []string {
 		peers = append(peers, peer.String())
 	}
 	return peers
-}
-
-func (p *provider) Connected(peerIDAsString string) bool {
-	peerID := peer.ID(peerIDAsString)
-	return p.host.Network().Connectedness(peerID) == inet.Connected
 }
 
 // Connect connects to a libp2p network based on the provided config. The
