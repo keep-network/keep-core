@@ -13,6 +13,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/storage"
 	"github.com/urfave/cli"
 )
 
@@ -140,6 +141,8 @@ func createNode(
 		))
 	}
 
+	storage := storage.NewStorage("path_to_data_storage")
+
 	netProvider := netlocal.Connect()
 
 	go func() {
@@ -157,6 +160,7 @@ func createNode(
 			chainCounter,
 			stakeMonitor,
 			netProvider,
+			storage,
 		)
 		if err != nil {
 			panic(fmt.Sprintf(

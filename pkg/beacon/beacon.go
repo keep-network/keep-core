@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/storage"
 )
 
 // Initialize kicks off the random beacon by initializing internal state,
@@ -24,6 +25,7 @@ func Initialize(
 	blockCounter chain.BlockCounter,
 	stakeMonitor chain.StakeMonitor,
 	netProvider net.Provider,
+	storage storage.Storage,
 ) error {
 	chainConfig, err := relayChain.GetConfig()
 	if err != nil {
@@ -35,7 +37,7 @@ func Initialize(
 		return err
 	}
 
-	groupRegistry := registry.NewGroups(relayChain)
+	groupRegistry := registry.NewGroupRegistry(relayChain, storage)
 
 	node := relay.NewNode(
 		staker,

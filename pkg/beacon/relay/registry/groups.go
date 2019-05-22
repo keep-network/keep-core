@@ -20,6 +20,8 @@ type Groups struct {
 	myGroups map[string][]*Membership
 
 	relayChain relaychain.GroupRegistrationInterface
+
+	storage storage.Storage
 }
 
 // Membership represents a member of a group
@@ -28,13 +30,15 @@ type Membership struct {
 	ChannelName string
 }
 
-// NewGroups returns an empty GroupRegistry.
-func NewGroups(
+// NewGroupRegistry returns an empty GroupRegistry.
+func NewGroupRegistry(
 	relayChain relaychain.GroupRegistrationInterface,
+	storage storage.Storage,
 ) *Groups {
 	return &Groups{
 		myGroups:   make(map[string][]*Membership),
 		relayChain: relayChain,
+		storage:    storage,
 	}
 }
 
@@ -59,14 +63,8 @@ func (gr *Groups) RegisterGroup(
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Marshalling of the membership failed: [%v]\n", err)
 	}
-
-	fileStorage := storage.NewFileStorage()
-	if fileStorage != nil {
-		hexGroupPublicKey := hex.EncodeToString(signer.GroupPublicKeyBytes())
-		fileStorage.Save(membershipBytes, "/membership_"+hexGroupPublicKey)
-	} else {
-		fmt.Fprintf(os.Stderr, "An error occured while retrieving a config path")
-	}
+	hexGroupPublicKey := hex.EncodeToString(signer.GroupPublicKeyBytes())
+	gr.storage.Save(membershipBytes, "/membership_"+hexGroupPublicKey)
 
 	gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
 }

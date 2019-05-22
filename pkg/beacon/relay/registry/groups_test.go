@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
+	"github.com/keep-network/keep-core/pkg/storage"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -25,6 +26,7 @@ func TestRegisterGroup(t *testing.T) {
 		mutex:      sync.Mutex{},
 		myGroups:   make(map[string][]*Membership),
 		relayChain: chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay(),
+		storage:    storage.NewStorage("../../../../data_storage"),
 	}
 
 	gr.RegisterGroup(signer, "test_channel")
