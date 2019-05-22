@@ -3,15 +3,15 @@ package libp2p
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/big"
-	"sync"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
-	peerstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
 func TestProviderReturnsType(t *testing.T) {
@@ -224,36 +224,118 @@ func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
 	return &provider{channelManagr: cm, host: host}, nil
 }
 
-func buildTestProxies(ctx context.Context, t *testing.T, num int) ([]*provider, error) {
-	proxies := make([]*provider, num)
-	for i := 0; i < num; i++ {
-		proxy, err := testProvider(ctx, t)
-		if err != nil {
-			return nil, err
-		}
-		proxies = append(proxies, proxy)
+// disconnect a peer that drops below min stake (unstake?)
+// test that you are no longer connected
+func TestDisconnectPeerUnderMinStake(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// initiate two peers
+	// createNetworkPeer
+	// stakeNetworkPeer(peerAddress, minstake)
+
+	bootstrapPeerPrivKey, bootstrapPeerPubKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
 	}
-	return proxies, nil
-}
 
-func connectNetworks(ctx context.Context, t *testing.T, providers []*provider) {
-	var waitGroup sync.WaitGroup
+	minStake := big.NewInt(200)
+	stakeMonitor := local.NewStakeMonitor(minStake)
 
-	for i, provider := range providers {
-		// connect to all other peers, proxies after i+1, for good connectivity
-		for _, peer := range providers[i+1:] {
-			waitGroup.Add(1)
-			provider.host.Peerstore().AddAddr(
-				peer.host.ID(),
-				peer.host.Network().ListenAddresses()[0],
-				peerstore.PermanentAddrTTL,
-			)
-			_, err := provider.host.Network().DialPeer(ctx, peer.host.ID())
-			if err != nil {
-				t.Fatal(err)
+	bootstrapPeerAddress := key.NetworkPubKeyToEthAddress(bootstrapPeerPubKey)
+	bootstrapPeerStaker, err := stakeMonitor.StakerFor(bootstrapPeerAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = stakeMonitor.StakeTokens(bootstrapPeerAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = bootstrapPeerStaker.Stake()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// kick off the network
+	bootstrapPeerProvider, err := Connect(
+		ctx,
+		Config{Port: 2701, Seed: 60000},
+		bootstrapPeerPrivKey,
+		stakeMonitor,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bootstrapLocation := func(provider net.Provider) string {
+		for _, addr := range provider.AddrStrings() {
+			if strings.Contains(addr, "ip4") && strings.Contains(addr, "127.0.0.1") {
+				fmt.Println(addr)
+				return addr
 			}
-			waitGroup.Done()
 		}
+		panic("failed to get a bootstrap location")
 	}
-	waitGroup.Wait()
+
+	peerPrivKey, peerPubKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	peerIdentity, err := createIdentity(peerPrivKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	peerAddress := key.NetworkPubKeyToEthAddress(peerPubKey)
+	peerStaker, err := stakeMonitor.StakerFor(peerAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = stakeMonitor.StakeTokens(peerAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = peerStaker.Stake()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	peerProvider, err := Connect(
+		ctx,
+		Config{Port: 2709, Peers: []string{bootstrapLocation(bootstrapPeerProvider)}},
+		peerPrivKey,
+		stakeMonitor,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := bootstrapPeerProvider.ChannelFor("test"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := peerProvider.ChannelFor("test"); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(4 * time.Second)
+
+	// make sure we have a valid connection
+	bsID := bootstrapPeerProvider.ID().String()
+	if !peerProvider.Connected(bsID) {
+		fmt.Println(bootstrapPeerProvider.Connected(peerIdentity.id.String()))
+		fmt.Println(peerIdentity.id.String())
+		fmt.Println("to")
+		fmt.Println(bootstrapPeerProvider.ID())
+		t.Fatal("Failed to connect bootstrap peer to other peer")
+	}
+	// when one falls below
+	// err = monitor.UnstakeTokens("0x010102003")
+	// make sure the connection has been untethered.
+	// re stake
+	// make sure we havea connection again
 }
+
+// func createBootstrapPeer() {}
+// func createNetworkPeer()   {}
+// func stakeNetworkPeer()    {}
