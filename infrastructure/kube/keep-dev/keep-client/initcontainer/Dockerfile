@@ -20,6 +20,6 @@ COPY ./StakingProxy.json /tmp/StakingProxy.json
 COPY ./TokenStaking.json /tmp/TokenStaking.json
 COPY ./KeepToken.json /tmp/KeepToken.json
 
-COPY ./unlock-and-stake-eth-account.js /tmp/unlock-and-stake-eth-account.js
+COPY ./create-unlock-stake-account.js /tmp/create-unlock-stake-account.js
 
-ENTRYPOINT ["node", "./unlock-and-stake-eth-account.js"]
+ENTRYPOINT ["node", "./create-unlock-stake-account.js"]
