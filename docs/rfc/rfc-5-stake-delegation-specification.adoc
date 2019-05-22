@@ -168,12 +168,10 @@ any condition is unfulfilled, processing aborts):
 and sets the variables accordingly to the _delegation order_, and binds the
 owner with the operator. The state of agreement between the owner and the
 operator is set to `active`, and the agreement state change time is set to
-current time,
-  
-5. The _operator_ can now use this delegated stake for operating.
+current time.footnote:[Ability to increase the delegated stake can be
+implemented via undelegating and delegating stake again with the new amount.]
 
-6. Ability to increase the delegated stake can be implemented via undelegating
-and delegating stake again with the new amount.
+5. The _operator_ can now use this delegated stake for operating.
 
 [#undelegating]
 ==== Undelegating a stake
