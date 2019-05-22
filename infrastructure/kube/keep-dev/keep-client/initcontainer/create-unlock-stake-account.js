@@ -102,7 +102,7 @@ async function createEthAccount(account_name) {
     return eth_account
   }
   catch(error) {
-    console.log(error)
+    console.log(error);
   }
 };
 
@@ -115,7 +115,7 @@ async function createEthAccountKeyfile(eth_account_private_key, eth_account_pass
     });
   }
   catch(error) {
-    console.error(error)
+    console.error(error);
   }
 };
 
@@ -133,7 +133,7 @@ async function unlockEthAccount(eth_account, eth_account_password) {
 
 async function provisionOperatorAccount() {
 
-  let operator_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
+  let operator_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
 
   try {
     let operator = await createEthAccount("operator");
