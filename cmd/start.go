@@ -77,8 +77,6 @@ func Start(c *cli.Context) error {
 	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
 		config.Ethereum.Account.Address,
 	)
-
-	fmt.Println("hasMinimumStake: ", hasMinimumStake)
 	if err != nil {
 		return fmt.Errorf("could not check the stake [%v]", err)
 	}
