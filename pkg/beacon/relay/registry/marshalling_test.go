@@ -20,7 +20,8 @@ func TestMembershipRoundtrip(t *testing.T) {
 	)
 
 	membership := &Membership{
-		Signer: signer,
+		Signer:      signer,
+		ChannelName: "channel_test_name",
 	}
 
 	unmarshaled := &Membership{}
