@@ -36,11 +36,9 @@ spec:
         type: bootstrap-peer-0
     spec:
       initContainers:
-      - name: initcontainer-unlock-and-stake
+      - name: initcontainer-create-and-stake-eth-account
         image: gcr.io/keep-dev-fe24/keep-client-initcontainer
         env:
-          - name: KEEP_CLIENT_ETH_ACCOUNT_ADDRESS
-            value: 0xA86c468475EF9C2ce851Ea4125424672C3F7e0C8
           - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
             valueFrom:
               secretKeyRef:
@@ -71,7 +69,8 @@ spec:
         command: ["keep-client", "-config", "/mnt/keep-client/keep-client-config.toml", "start"]
       volumes:
       - name: keep-client-config-material
-        hostpath: {}
+        persistentVolumeClaim:
+          claimName: keep-client-config-material
       - name: eth-keyfile
         configMap:
           name: keep-client-bootstrap-peer-0
@@ -84,3 +83,14 @@ spec:
           items:
             - key: keep-client-config.toml
               path: keep-client-config.toml
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keep-client-config-material
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Mi
