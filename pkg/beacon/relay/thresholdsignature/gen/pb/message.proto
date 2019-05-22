@@ -3,13 +3,8 @@ syntax = "proto3";
 option go_package = "pb";
 package thresholdsignature;
 
-// SignatureShare represents one share from the sender of a signature on a given
-// piece of data. The data is not reflected in the message itself; instead, it
-// is expected that all members will know the data that is being signed.
 message SignatureShare {
-    // The little-endian BLS ID of the member who is joining the distributed key
-    // generation process.
     uint32 senderID = 1;
-    // The serialized BLS signature share from the member with the above BLS ID.
     bytes share = 2;
+    string requestID = 3;
 }

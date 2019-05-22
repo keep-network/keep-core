@@ -74,6 +74,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			}
 
 			signature, err := thresholdsignature.Execute(
+				requestID,
 				combinedEntryToSign,
 				n.chainConfig.HonestThreshold(),
 				n.blockCounter,

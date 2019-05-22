@@ -1,6 +1,7 @@
 package thresholdsignature
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
@@ -8,8 +9,9 @@ import (
 )
 
 func TestSignatureShareMessageRoundTrip(t *testing.T) {
-	msg := &SignatureShareMessage{123, make([]byte, 0)}
+	msg := &SignatureShareMessage{123, make([]byte, 0), big.NewInt(997)}
 	unmarshaled := &SignatureShareMessage{}
+
 	err := pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {
 		t.Fatal(err)
@@ -24,4 +26,12 @@ func TestSignatureShareMessageRoundTrip(t *testing.T) {
 	}
 
 	testutils.AssertBytesEqual(t, msg.ShareBytes, unmarshaled.ShareBytes)
+
+	if msg.requestID.Cmp(unmarshaled.requestID) != 0 {
+		t.Errorf(
+			"unexpected request ID\nexpected: [%v]\nactual:   [%v]",
+			msg.requestID,
+			unmarshaled.requestID,
+		)
+	}
 }

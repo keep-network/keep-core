@@ -2,6 +2,7 @@ package thresholdsignature
 
 import (
 	"fmt"
+	"math/big"
 	"os"
 	"sync"
 	"time"
@@ -33,6 +34,7 @@ func Init(channel net.BroadcastChannel) {
 // the process has completed, it returns either the threshold signature's final
 // bytes, or an error.
 func Execute(
+	requestID *big.Int,
 	bytes []byte,
 	threshold int,
 	blockCounter chain.BlockCounter,
@@ -81,7 +83,11 @@ func Execute(
 	// Add local share to map rather than receiving from the network.
 	seenShares[signer.MemberID()] = share
 
-	err = sendSignatureShare(share.Marshal(), channel, signer.MemberID())
+	err = channel.Send(&SignatureShareMessage{
+		signer.MemberID(),
+		share.Marshal(),
+		requestID,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -145,12 +151,4 @@ func Execute(
 			return altbn128.G1Point{G1: signature}.Compress(), nil
 		}
 	}
-}
-
-func sendSignatureShare(
-	share []byte,
-	channel net.BroadcastChannel,
-	memberID group.MemberIndex,
-) error {
-	return channel.Send(&SignatureShareMessage{memberID, share})
 }
