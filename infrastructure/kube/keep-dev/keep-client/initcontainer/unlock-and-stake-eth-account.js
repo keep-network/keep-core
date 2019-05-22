@@ -47,7 +47,6 @@ const contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 // Stake a target eth account
 async function stakeEthAccount() {
 
-  console.log("<<<<<<<<<<<< Unlocking contract_owner Account " + contract_owner + " >>>>>>>>>>>>")
   await unlockEthAccount(contract_owner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
 
   console.log("<<<<<<<<<<<< Provisioning Operator Account " + ">>>>>>>>>>>>")
@@ -66,12 +65,12 @@ async function stakeEthAccount() {
     console.log("<<<<<<<<<<<< Checking if stakingProxy/tokenStaking Contracts Are Authorized >>>>>>>>>>>>")
     if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call({from: contract_owner}))
     {
-      console.log("<<<<<<<<<<<<  Authorizing stakingProxy/tokenStaking Contracts >>>>>>>>>>>>")
+      console.log("Authorizing stakingProxy/tokenStaking Contracts")
       await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner}).then((receipt) => {
       console.log(JSON.stringify(receipt))
       })
     }
-    console.log("<<<<<<<<<<<< stakingProxy/tokenStaking Contracts Authorized! >>>>>>>>>>>>")
+    console.log("stakingProxy/tokenStaking Contracts Authorized!")
   }
   catch(error) {
     console.error(error);
@@ -84,7 +83,7 @@ async function stakeEthAccount() {
       formatAmount(1000000, 18),
       delegation).send({from: contract_owner}).then((receipt) => {
         console.log(JSON.stringify(receipt));
-        console.log("<<<<<<<<<<<< Account " + operator_account_address + " staked! >>>>>>>>>>>>");
+        console.log("Account " + operator_account_address + " staked!");
       });
   }
   catch(error) {
@@ -123,7 +122,7 @@ async function createEthAccountKeyfile(eth_account_private_key, eth_account_pass
 async function unlockEthAccount(eth_account, eth_account_password) {
 
   try {
-    console.log("Unlocking Account: " + eth_account);
+    console.log("<<<<<<<<<<<< Unlocking Account " + eth_account + " >>>>>>>>>>>>");
     await web3.eth.personal.unlockAccount(eth_account, eth_account_password, 150000);
     console.log("Account " + eth_account + " unlocked!");
   }
