@@ -102,13 +102,18 @@ func Execute(
 	for {
 		select {
 		case msg := <-recvChan:
-			fmt.Printf(
-				"[member:%v] Processing signing message\n",
-				signer.MemberID(),
-			)
-
 			switch signatureShareMsg := msg.Payload().(type) {
 			case *SignatureShareMessage:
+				// Ignore message for another request ID
+				if signatureShareMsg.requestID.Cmp(requestID) != 0 {
+					continue
+				}
+
+				fmt.Printf(
+					"[member:%v] Processing signing message\n",
+					signer.MemberID(),
+				)
+
 				// Ignore our own share, we already have it.
 				if signatureShareMsg.senderID == signer.MemberID() {
 					continue
