@@ -47,44 +47,45 @@ const contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 // Stake a target eth account
 async function stakeEthAccount() {
 
-  let operator = await provisionOperatorAccount();
-  console.log("OPERATOR: " + operator);
+  console.log("<<<<<<<<<<<< Unlocking contract_owner Account " + contract_owner + " >>>>>>>>>>>>")
+  await unlockEthAccount(contract_owner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
 
+  console.log("<<<<<<<<<<<< Provisioning Operator Account " + ">>>>>>>>>>>>")
+  let operator = await provisionOperatorAccount();
+  let operator_account_address = operator["address"];
   // ENV VAR sourced from Docker image.
   let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
-  let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator)).substr(2), 'hex');
-  console.log("GOT SIG");
+  let contract_owner_signed = await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator_account_address)
+  let contract_owner_signature = contract_owner_signed.signature
+
+  let signature = Buffer.from(contract_owner_signature.substr(2), 'hex');
   let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
-  try{
-    console.log("Running stakingProxyContract.isAuthorized:")
+  try {
+    console.log("<<<<<<<<<<<< Checking if stakingProxy/tokenStaking Contracts Are Authorized >>>>>>>>>>>>")
     if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call({from: contract_owner}).then((receipt) => {
-        console.log("stakingProxyContract.isAuthorized transaction receipt:")
-        console.log(receipt)
-        console.log("----------------------------------------")
+        console.log("isAuthorized: " + JSON.stringify(receipt))
     })) {
-      console.log("Running stakingProxyContract.authorizeContract:")
-      await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner}).then((receipt) => {
-        console.log("stakingProxyContract.authorizeContract transaction receipt:")
-        console.log(receipt)
+        console.log("<<<<<<<<<<<<  Authorizing stakingProxy/tokenStaking Contracts >>>>>>>>>>>>")
+        await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner}).then((receipt) => {
+        console.log(JSON.stringify(receipt))
       })
     }
-    console.log("stakingProxy/tokenStaking contracts authorized!")
-    console.log("----------------------------------------")
+    console.log("<<<<<<<<<<<< stakingProxy/tokenStaking Contracts Authorized! >>>>>>>>>>>>")
   }
   catch(error) {
     console.error(error);
   }
 
   try {
+    console.log("<<<<<<<<<<<< Staking Account: " + operator_account_address + " >>>>>>>>>>>>")
     await keepTokenContract.methods.approveAndCall(
       tokenStakingContract.address,
       formatAmount(1000000, 18),
       delegation).send({from: contract_owner}).then((receipt) => {
-        console.log("approveAndCall receipt:")
-        console.log(receipt);
-        console.log("Account " + operator + " staked!");
+        console.log(JSON.stringify(receipt));
+        console.log("<<<<<<<<<<<< Account " + operator_account_address + " staked! >>>>>>>>>>>>");
       });
   }
   catch(error) {
@@ -92,19 +93,20 @@ async function stakeEthAccount() {
   }
 };
 
-async function createEthAccount() {
+async function createEthAccount(account_name) {
 
   try {
     let eth_account = await web3.eth.accounts.create();
     fs.writeFile("/tmp/eth_account_address", eth_account["address"], (error) => {
       if (error) throw error;
     });
+    console.log(account_name + " Account "  + eth_account["address"] + " Created!");
     return eth_account
   }
   catch(error) {
     console.log(error)
   }
-}
+};
 
 async function createEthAccountKeyfile(eth_account_private_key, eth_account_password) {
 
@@ -117,36 +119,35 @@ async function createEthAccountKeyfile(eth_account_private_key, eth_account_pass
   catch(error) {
     console.error(error)
   }
-}
+};
 
 async function unlockEthAccount(eth_account, eth_account_password) {
 
   try {
-    console.log("Unlocking account: " + eth_account);
+    console.log("Unlocking Account: " + eth_account);
     await web3.eth.personal.unlockAccount(eth_account, eth_account_password, 150000);
     console.log("Account " + eth_account + " unlocked!");
   }
   catch(error) {
     console.error(error);
   }
-
-}
+};
 
 async function provisionOperatorAccount() {
 
   let operator_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
 
   try {
-    let operator = await createEthAccount();
+    let operator = await createEthAccount("operator");
     await createEthAccountKeyfile(operator["privateKey"], operator_eth_account_password);
-    await web3.eth.accounts.wallet.add(operator)
-    return operator["address"].toString();
+    await web3.eth.accounts.wallet.add(operator["privateKey"]);
+    return operator;
   }
   catch(error) {
     console.error(error);
   }
   callback();
-}
+};
 
 /*
 \heimdall aliens numbers.  Really though, the approveAndCall function expects numbers
@@ -154,8 +155,7 @@ in a particular format, this function facilitates that.
 */
 function formatAmount(amount, decimals) {
   return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
-}
+};
 
-unlockEthAccount(contract_owner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
 stakeEthAccount();
 
