@@ -133,7 +133,7 @@ func Connect(cfg Config) (chain.Handle, error) {
 }
 
 func addressForContract(cfg Config, contractName string) (*common.Address, error) {
-	addressString, exists := cfg.ContractAddresses["KeepRandomBeacon"]
+	addressString, exists := cfg.ContractAddresses[contractName]
 	if !exists {
 		return nil, fmt.Errorf(
 			"no address information for [%v] in configuration",
