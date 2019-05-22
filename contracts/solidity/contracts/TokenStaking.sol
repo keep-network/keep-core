@@ -113,6 +113,10 @@ contract TokenStaking is StakeDelegatable {
      */
     function finishUnstake(uint256 _id, address _operator) public {
         require(now >= withdrawals[_id].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
+        address owner = operatorToOwner[_operator];
+        require(
+            msg.sender == _operator ||
+            msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
 
         address staker = withdrawals[_id].staker;
 
@@ -126,7 +130,6 @@ contract TokenStaking is StakeDelegatable {
         delete withdrawals[_id];
 
         // Release operator
-        address owner = operatorToOwner[_operator];
         operatorToOwner[_operator] = address(0);
         ownerOperators[owner].removeAddress(_operator);
 
