@@ -183,22 +183,6 @@ func (m *testMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
-func TestNetworkConnect(t *testing.T) {
-	t.Skip()
-
-	ctx, cancel := newTestContext()
-	defer cancel()
-
-	proxies, err := buildTestProxies(ctx, t, 2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// TODO: fix this
-	connectNetworks(ctx, t, proxies)
-
-	// TODO: have providers send messages to each other
-}
-
 func newTestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 3*time.Second)
 }
