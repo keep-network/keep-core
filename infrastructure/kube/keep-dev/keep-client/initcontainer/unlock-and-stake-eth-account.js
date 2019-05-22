@@ -64,12 +64,11 @@ async function stakeEthAccount() {
 
   try {
     console.log("<<<<<<<<<<<< Checking if stakingProxy/tokenStaking Contracts Are Authorized >>>>>>>>>>>>")
-    if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call({from: contract_owner}).then((receipt) => {
-        console.log("isAuthorized: " + JSON.stringify(receipt))
-    })) {
-        console.log("<<<<<<<<<<<<  Authorizing stakingProxy/tokenStaking Contracts >>>>>>>>>>>>")
-        await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner}).then((receipt) => {
-        console.log(JSON.stringify(receipt))
+    if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call({from: contract_owner}))
+    {
+      console.log("<<<<<<<<<<<<  Authorizing stakingProxy/tokenStaking Contracts >>>>>>>>>>>>")
+      await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner}).then((receipt) => {
+      console.log(JSON.stringify(receipt))
       })
     }
     console.log("<<<<<<<<<<<< stakingProxy/tokenStaking Contracts Authorized! >>>>>>>>>>>>")
