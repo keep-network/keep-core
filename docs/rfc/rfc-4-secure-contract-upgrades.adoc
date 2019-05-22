@@ -2,6 +2,12 @@
 
 = RFC 4: Secure upgrades for contracts operating staked balances
 
+.SUPERSEDED
+****
+IMPORTANT: This RFC has been superseded by an alternative described
+in RFCs 9 and 11. It was never implemented as described.
+****
+
 :icons: font
 :numbered:
 toc::[]
