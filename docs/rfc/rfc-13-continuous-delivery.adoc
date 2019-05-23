@@ -1,6 +1,6 @@
 :toc: macro
 
-= RFC 08: Continuous Delivery
+= RFC 13: Continuous Delivery
 
 :icons: font
 :numbered:
