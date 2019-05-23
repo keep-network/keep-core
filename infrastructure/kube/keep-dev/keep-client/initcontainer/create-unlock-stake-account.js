@@ -164,5 +164,5 @@ function formatAmount(amount, decimals) {
   return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
 };
 
-stakeEthAccount();
+stakeEthAccount().catch(error => console.error(error))
 
