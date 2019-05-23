@@ -74,7 +74,8 @@ async function stakeEthAccount() {
     console.log("stakingProxy/tokenStaking Contracts Authorized!");
   }
   catch(error) {
-    console.error(error);
+    console.error(error.message);
+    throw(error);
   };
 
   try {
@@ -88,7 +89,8 @@ async function stakeEthAccount() {
       });
   }
   catch(error) {
-    console.error(error);
+    console.error(error.message);
+    throw(error);
   }
 };
 
@@ -119,7 +121,8 @@ async function createEthAccountKeyfile(eth_account_private_key, eth_account_pass
     });
   }
   catch(error) {
-    console.error(error);
+    console.error(error.message);
+    throw(error);
   }
 };
 
@@ -131,7 +134,8 @@ async function unlockEthAccount(eth_account, eth_account_password) {
     console.log("Account " + eth_account + " unlocked!");
   }
   catch(error) {
-    console.error(error);
+    console.error(error.message);
+    throw(error);
   }
 };
 
@@ -147,7 +151,8 @@ async function provisionOperatorAccount() {
     return operator;
   }
   catch(error) {
-    console.error(error);
+    console.error(error.message);
+    throw(error);
   }
 };
 
