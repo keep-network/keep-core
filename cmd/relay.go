@@ -73,20 +73,26 @@ func relayRequest(c *cli.Context) error {
 	}
 
 	requestMutex := sync.Mutex{}
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	wait := make(chan struct{})
 	var requestID *big.Int
 	provider.ThresholdRelay().OnRelayEntryRequested(func(request *event.Request) {
-		fmt.Fprintf(
-			os.Stderr,
-			"Relay entry request submitted with id [%s].\n",
-			request.RequestID.String(),
-		)
-		requestMutex.Lock()
-		requestID = request.RequestID
-		requestMutex.Unlock()
+		// It is possible two relay requests will be generated close to each other.
+		// To make sure we catch request ID from the correct one, we compare seed
+		// with the one we sent.
+		if requestID == nil && seed.Cmp(request.Seed) == 0 {
+			fmt.Fprintf(
+				os.Stderr,
+				"Relay entry request submitted with id [%s].\n",
+				request.RequestID.String(),
+			)
+
+			requestMutex.Lock()
+			requestID = request.RequestID
+			requestMutex.Unlock()
+		}
 	})
 
 	provider.ThresholdRelay().OnRelayEntryGenerated(func(entry *event.Entry) {
