@@ -12,6 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 func TestSubmitAllTickets(t *testing.T) {
@@ -205,4 +206,10 @@ func (mgi *mockGroupInterface) SubmitTicket(
 
 func (mgi *mockGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress, error) {
 	panic("unexpected")
+}
+
+func (mgi *mockGroupInterface) OnGroupSelectionStarted(
+	func(groupSelectionStart *event.GroupSelectionStart),
+) (subscription.EventSubscription, error) {
+	panic("not implemented")
 }

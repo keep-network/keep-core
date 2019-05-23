@@ -9,7 +9,7 @@ const TokenStaking = artifacts.require('./TokenStaking.sol');
 const KeepRandomBeaconProxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
 const KeepGroupProxy = artifacts.require('./KeepGroup.sol');
-const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1.sol');
+const KeepGroupImplV1 = artifacts.require('./KeepGroupImplV1Stub.sol');
 
 
 contract('TestKeepGroupSelection', function(accounts) {
@@ -65,6 +65,9 @@ contract('TestKeepGroupSelection', function(accounts) {
       groupActiveTime
     );
 
+    // Using stub method to add first group to help testing.
+    await keepGroupImplViaProxy.registerNewGroup(bls.groupPubKey);
+
     await keepRandomBeaconImplViaProxy.initialize(1,1, randomBeaconValue, bls.groupPubKey, keepGroupProxy.address,
       relayRequestTimeout);
     await keepRandomBeaconImplViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
@@ -100,6 +103,26 @@ contract('TestKeepGroupSelection', function(accounts) {
 
   it("should fail to get selected participants before challenge period is over", async function() {
     await exceptThrow(keepGroupImplViaProxy.selectedParticipants());
+  });
+
+  it("should not trigger group selection while one is in progress", async function() {
+    let groupSelectionStartBlock = await keepGroupImplViaProxy.ticketSubmissionStartBlock();
+    await keepRandomBeaconImplViaProxy.requestRelayEntry(bls.seed, {value: 10});
+    await keepRandomBeaconImplViaProxy.relayEntry(2, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
+
+    assert.isTrue((await keepGroupImplViaProxy.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
+    assert.isTrue((await keepGroupImplViaProxy.randomBeaconValue()).eq(bls.groupSignature), "Random beacon value for the current group selection should not change.");
+  });
+
+  it("should trigger new group selection when the last one is over", async function() {
+    let groupSelectionStartBlock = await keepGroupImplViaProxy.ticketSubmissionStartBlock();
+    mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
+
+    await keepRandomBeaconImplViaProxy.requestRelayEntry(bls.seed, {value: 10});
+    await keepRandomBeaconImplViaProxy.relayEntry(2, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
+
+    assert.isFalse((await keepGroupImplViaProxy.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
+    assert.isTrue((await keepGroupImplViaProxy.randomBeaconValue()).eq(bls.nextGroupSignature), "Random beacon value for the current group selection should be updated.");
   });
 
   it("should be able to get selected tickets and participants after challenge period is over", async function() {

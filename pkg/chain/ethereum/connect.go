@@ -28,36 +28,36 @@ type ethereumChain struct {
 // Connect makes the network connection to the Ethereum network.  Note: for
 // other things to work correctly the configuration will need to reference a
 // websocket, "ws://", or local IPC connection.
-func Connect(cfg Config) (chain.Handle, error) {
-	client, err := ethclient.Dial(cfg.URL)
+func Connect(config Config) (chain.Handle, error) {
+	client, err := ethclient.Dial(config.URL)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error Connecting to Geth Server: %s [%v]",
-			cfg.URL,
+			config.URL,
 			err,
 		)
 	}
 
-	clientws, err := rpc.Dial(cfg.URL)
+	clientws, err := rpc.Dial(config.URL)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error Connecting to Geth Server: %s [%v]",
-			cfg.URL,
+			config.URL,
 			err,
 		)
 	}
 
-	clientrpc, err := rpc.Dial(cfg.URLRPC)
+	clientrpc, err := rpc.Dial(config.URLRPC)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error Connecting to Geth Server: %s [%v]",
-			cfg.URL,
+			config.URL,
 			err,
 		)
 	}
 
 	pv := &ethereumChain{
-		config:    cfg,
+		config:    config,
 		client:    client,
 		clientRPC: clientrpc,
 		clientWS:  clientws,
@@ -65,20 +65,20 @@ func Connect(cfg Config) (chain.Handle, error) {
 
 	if pv.accountKey == nil {
 		key, err := ethutil.DecryptKeyFile(
-			cfg.Account.KeyFile,
-			cfg.Account.KeyFilePassword,
+			config.Account.KeyFile,
+			config.Account.KeyFilePassword,
 		)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to read KeyFile: %s: [%v]",
-				cfg.Account.KeyFile,
+				config.Account.KeyFile,
 				err,
 			)
 		}
 		pv.accountKey = key
 	}
 
-	address, err := addressForContract(cfg, "KeepRandomBeacon")
+	address, err := addressForContract(config, "KeepRandomBeacon")
 	if err != nil {
 		return nil, fmt.Errorf("error resolving KeepRandomBeacon contract: [%v]", err)
 	}
@@ -97,7 +97,7 @@ func Connect(cfg Config) (chain.Handle, error) {
 	}
 	pv.keepRandomBeaconContract = keepRandomBeaconContract
 
-	address, err = addressForContract(cfg, "KeepGroup")
+	address, err = addressForContract(config, "KeepGroup")
 	if err != nil {
 		return nil, fmt.Errorf("error resolving KeepGroup contract: [%v]", err)
 	}
@@ -113,7 +113,7 @@ func Connect(cfg Config) (chain.Handle, error) {
 	}
 	pv.keepGroupContract = keepGroupContract
 
-	address, err = addressForContract(cfg, "Staking")
+	address, err = addressForContract(config, "Staking")
 	if err != nil {
 		return nil, fmt.Errorf("error resolving TokenStaking contract: [%v]", err)
 	}
@@ -132,8 +132,8 @@ func Connect(cfg Config) (chain.Handle, error) {
 	return pv, nil
 }
 
-func addressForContract(cfg Config, contractName string) (*common.Address, error) {
-	addressString, exists := cfg.ContractAddresses["KeepRandomBeacon"]
+func addressForContract(config Config, contractName string) (*common.Address, error) {
+	addressString, exists := config.ContractAddresses[contractName]
 	if !exists {
 		return nil, fmt.Errorf(
 			"no address information for [%v] in configuration",
