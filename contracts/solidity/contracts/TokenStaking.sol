@@ -116,7 +116,7 @@ contract TokenStaking is StakeDelegatable {
         address owner = operatorToOwner[_operator];
         require(
             msg.sender == _operator ||
-            msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
+            msg.sender == owner, "Only operator or the owner of the stake can finish unstake.");
 
         address staker = withdrawals[_id].staker;
 
