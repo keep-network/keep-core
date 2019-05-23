@@ -26,6 +26,10 @@ contract KeepGroupImplV1 is Ownable {
     // TODO: Add memberIndex
     event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey);
 
+    // TODO: Remove requestId once Keep Client DKG is refactored to
+    // use newEntry as unique id.
+    event GroupSelectionStarted(uint256 newEntry, uint256 requestId, uint256 seed);
+
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
     uint256 internal _minStake;
@@ -45,6 +49,8 @@ contract KeepGroupImplV1 is Ownable {
 
     // Store whether DKG result was published for the corresponding requestID.
     mapping (uint256 => bool) internal _dkgResultPublished;
+
+    bool internal _groupSelectionInProgress;
 
     struct Proof {
         address sender;
@@ -105,11 +111,19 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Triggers the selection process of a new candidate group.
      */
-    function runGroupSelection(uint256 randomBeaconValue) public {
+    function runGroupSelection(uint256 newEntry, uint256 requestId, uint256 seed) public {
         require(msg.sender == _randomBeacon);
-        cleanup();
-        _ticketSubmissionStartBlock = block.number;
-        _randomBeaconValue = randomBeaconValue;
+
+        // dkgTimeout is the time after DKG is expected to be complete plus the expected period to submit the result.
+        uint256 dkgTimeout = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG + _groupSize * _resultPublicationBlockStep;
+
+        if (!_groupSelectionInProgress || block.number > dkgTimeout) {
+            cleanup();
+            _ticketSubmissionStartBlock = block.number;
+            _randomBeaconValue = newEntry;
+            _groupSelectionInProgress = true;
+            emit GroupSelectionStarted(newEntry, requestId, seed);
+        }
     }
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 4).
@@ -328,6 +342,8 @@ contract KeepGroupImplV1 is Ownable {
         cleanup();
         _dkgResultPublished[requestId] = true;
         emit DkgResultPublishedEvent(requestId, groupPubKey);
+
+        _groupSelectionInProgress = false;
     }
 
     /**
@@ -560,6 +576,20 @@ contract KeepGroupImplV1 is Ownable {
      */
     function numberOfGroups() public view returns(uint256) {
         return _groups.length - _expiredOffset;
+    }
+
+    /**
+     * @dev Gets the random beacon value for the group selection currently in progress.
+     */
+    function randomBeaconValue() public view returns(uint256) {
+        return _randomBeaconValue;
+    }
+
+    /**
+     * @dev Returns true if the group selection is in progress.
+     */
+    function groupSelectionInProgress() public view returns(bool) {
+        return _groupSelectionInProgress;
     }
 
     /**
