@@ -2,7 +2,6 @@ node_modules/
 ./contracts/solidity/truffle.js
 build/
 vendor/
-data_storage/
 _local/
 *.swp
 *.swo

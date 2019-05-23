@@ -11,23 +11,30 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
-	"github.com/keep-network/keep-core/pkg/storage"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
+type devNullDataStorage struct {
+}
+
+func (dnds *devNullDataStorage) Save(data []byte, name string) {
+	// noop
+}
+
 func TestRegisterGroup(t *testing.T) {
+	noopStorage := &devNullDataStorage{}
+	gr := &Groups{
+		mutex:      sync.Mutex{},
+		myGroups:   make(map[string][]*Membership),
+		relayChain: chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay(),
+		storage:    noopStorage,
+	}
+
 	signer := dkg.NewThresholdSigner(
 		group.MemberIndex(2),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
 		big.NewInt(1),
 	)
-
-	gr := &Groups{
-		mutex:      sync.Mutex{},
-		myGroups:   make(map[string][]*Membership),
-		relayChain: chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay(),
-		storage:    storage.NewStorage("../../../../data_storage"),
-	}
 
 	gr.RegisterGroup(signer, "test_channel")
 
@@ -53,11 +60,13 @@ func TestUnregisterStaleGroups(t *testing.T) {
 		groupsToRemove: [][]byte{},
 	}
 
+	noopStorage := &devNullDataStorage{}
+
 	gr := &Groups{
 		mutex:      sync.Mutex{},
 		myGroups:   make(map[string][]*Membership),
 		relayChain: mockChain,
-		storage:    storage.NewStorage("../../../../data_storage"),
+		storage:    noopStorage,
 	}
 
 	signer1 := dkg.NewThresholdSigner(

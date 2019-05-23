@@ -13,7 +13,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/keep-network/keep-core/pkg/storage"
 	"github.com/urfave/cli"
 )
 
@@ -42,6 +41,13 @@ const smokeTestDescription = `The smoke-test command creates a local threshold
    chain implementation. Once the process is complete, a threshold signature is
    executed, once again with an in-process broadcast channel and chain, and the
    final signature is verified by each member of the group.`
+
+type devNullDataStorage struct {
+}
+
+func (dnds *devNullDataStorage) Save(data []byte, name string) {
+	// noop
+}
 
 func init() {
 	SmokeTestCommand = cli.Command{
@@ -141,7 +147,7 @@ func createNode(
 		))
 	}
 
-	storage := storage.NewStorage("path_to_data_storage")
+	storage := &devNullDataStorage{}
 
 	netProvider := netlocal.Connect()
 

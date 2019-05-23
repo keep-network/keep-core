@@ -1,27 +1,84 @@
 package storage
 
-// Storage is an interface to persist data on disk
-type Storage interface {
-	Save(data []byte, name string)
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+)
+
+var (
+	//ErrNoFileExists an error is shown when no file name was provided
+	ErrNoFileExists = fmt.Errorf("please provide a file name")
+)
+
+// File represents a file on disk that a caller can use to read and write into.
+type File struct {
+	// FileName is the file name of the main storage file.
+	FileName string
 }
 
-// FileStorage struct is an implementation of Storage
-type fileStorage struct {
-	dataDir string
-}
+// NewFile creates a new file at the target location on disk
+func (f *File) NewFile(FileName string) *File {
 
-// NewStorage creates a new FileStorage
-func NewStorage(path string) Storage {
-	return &fileStorage{
-		dataDir: path,
+	filepath.Dir(FileName)
+
+	return &File{
+		FileName: FileName,
 	}
 }
 
-// Save - writes data in file
-func (fs *fileStorage) Save(data []byte, suffix string) {
-	file := &File{
-		FileName: fs.dataDir + suffix,
+// Create and write data to a file
+func (f *File) Write(data []byte) error {
+	if f.FileName == "" {
+		return ErrNoFileExists
 	}
 
-	file.Write(data)
+	var err error
+	writeFile, err := os.Create(f.FileName)
+	check(err)
+
+	defer writeFile.Close()
+
+	_, err = writeFile.Write(data)
+	check(err)
+
+	writeFile.Sync()
+
+	return nil
+}
+
+// Read a file from a file system
+func (f *File) Read(FileName string) ([]byte, error) {
+	if f.FileName == "" {
+		return nil, ErrNoFileExists
+	}
+
+	readFile, err := os.Open(FileName)
+	check(err)
+
+	defer readFile.Close()
+
+	data, err := ioutil.ReadAll(readFile)
+	check(err)
+
+	return data, nil
+}
+
+// Remove a file from a file syste
+func (f *File) Remove(FileName string) error {
+	if f.FileName == "" {
+		return ErrNoFileExists
+	}
+
+	err := os.Remove(FileName)
+	check(err)
+
+	return nil
+}
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
 }

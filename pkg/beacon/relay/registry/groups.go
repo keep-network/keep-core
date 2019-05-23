@@ -62,6 +62,7 @@ func (gr *Groups) RegisterGroup(
 	membershipBytes, err := membership.Marshal()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Marshalling of the membership failed: [%v]\n", err)
+		return
 	}
 	hexGroupPublicKey := hex.EncodeToString(signer.GroupPublicKeyBytes())
 	gr.storage.Save(membershipBytes, "/membership_"+hexGroupPublicKey)
