@@ -90,14 +90,14 @@ contract('KeepToken', function(accounts) {
     assert.equal(withdrawals.length, 2, "Withdrawal records must present for the staker");
 
     // should not be able to finish unstake
-    await exceptThrow(stakingContract.finishUnstake(stakeWithdrawalId, account_one_operator, {from: account_one_operator}));
+    await exceptThrow(stakingContract.finishUnstake(stakeWithdrawalId, account_one_operator));
 
     // jump in time, full withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
 
     // should be able to finish unstake
-    await stakingContract.finishUnstake(stakeWithdrawalId, account_one_operator, {from: account_one_operator});
-    await stakingContract.finishUnstake(stakeWithdrawalId2, account_one_operator, {from: account_one_operator});
+    await stakingContract.finishUnstake(stakeWithdrawalId, account_one_operator);
+    await stakingContract.finishUnstake(stakeWithdrawalId2, account_one_operator);
 
     withdrawals = await stakingContract.getWithdrawals(account_one);
     assert.equal(withdrawals.length, 0, "Withdrawal record must be cleared for the staker");
@@ -233,14 +233,14 @@ contract('KeepToken', function(accounts) {
     });
 
     // should not be able to finish unstake before withdrawal delay is over
-    await exceptThrow(grantContract.finishUnstake(stakeWithdrawalId, account_two_operator, {from: account_two_operator}));
+    await exceptThrow(grantContract.finishUnstake(stakeWithdrawalId, account_two_operator));
 
     // should not be able to release grant as its still locked for staking
     await exceptThrow(grantContract.release(id));
 
     // jump in time over withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
-    await grantContract.finishUnstake(stakeWithdrawalId, account_two_operator, {from: account_two_operator});
+    await grantContract.finishUnstake(stakeWithdrawalId, account_two_operator);
     account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.isZero(), true, "Stake grant amount should be 0");
     assert.equal(await grantContract.operatorsOf.call(account_two), 0, "Operator should be released after finishing unstake");
@@ -298,14 +298,14 @@ contract('KeepToken', function(accounts) {
     });
 
     // should not be able to finish unstake before withdrawal delay is over
-    await exceptThrow(grantContract.finishUnstake(stakeWithdrawalId, account_two_operator, {from: account_two_operator}));
+    await exceptThrow(grantContract.finishUnstake(stakeWithdrawalId, account_two_operator));
 
     // should not be able to release grant as its still locked for staking
     await exceptThrow(grantContract.release(id));
 
     // jump in time over withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
-    await grantContract.finishUnstake(stakeWithdrawalId, account_two_operator, {from: account_two_operator});
+    await grantContract.finishUnstake(stakeWithdrawalId, account_two_operator);
     account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.isZero(), true, "Stake grant amount should be 0");
     assert.equal(await grantContract.operatorsOf.call(account_two), 0, "Operator should be released after finishing unstake");
