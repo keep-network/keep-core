@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"time"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -49,11 +47,6 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) {
-	combinedEntryToSign := combineEntryToSign(
-		previousEntry.Bytes(),
-		seed.Bytes(),
-	)
-
 	memberships := n.groupRegistry.GetGroup(groupPublicKey)
 
 	if len(memberships) < 1 {
@@ -73,12 +66,14 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				return
 			}
 
-			signature, err := thresholdsignature.Execute(
-				requestID,
-				combinedEntryToSign,
-				n.chainConfig.HonestThreshold(),
+			err = thresholdsignature.Execute(
 				n.blockCounter,
 				channel,
+				relayChain,
+				requestID,
+				previousEntry,
+				seed,
+				n.chainConfig.HonestThreshold(),
 				signer.Signer,
 				startBlockHeight,
 			)
@@ -90,37 +85,6 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				)
 				return
 			}
-
-			rightSizeSignature := big.NewInt(0).SetBytes(signature[:32])
-
-			newEntry := &event.Entry{
-				RequestID:     requestID,
-				Value:         rightSizeSignature,
-				PreviousEntry: previousEntry,
-				Timestamp:     time.Now().UTC(),
-				GroupPubKey:   signer.Signer.GroupPublicKeyBytes(),
-				Seed:          seed,
-			}
-
-			relayChain.SubmitRelayEntry(
-				newEntry,
-			).OnFailure(func(err error) {
-				if err != nil {
-					fmt.Fprintf(
-						os.Stderr,
-						"Failed submission of relay entry: [%v].\n",
-						err,
-					)
-					return
-				}
-			})
 		}(signer)
 	}
-}
-
-func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
-	combinedEntryToSign := make([]byte, 0)
-	combinedEntryToSign = append(combinedEntryToSign, previousEntry...)
-	combinedEntryToSign = append(combinedEntryToSign, seed...)
-	return combinedEntryToSign
 }

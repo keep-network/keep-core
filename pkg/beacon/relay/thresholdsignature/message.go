@@ -13,3 +13,8 @@ type SignatureShareMessage struct {
 	ShareBytes []byte
 	requestID  *big.Int
 }
+
+// SenderID returns protocol-level identifier of the message sender.
+func (ssm *SignatureShareMessage) SenderID() group.MemberIndex {
+	return ssm.senderID
+}

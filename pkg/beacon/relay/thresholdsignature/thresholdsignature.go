@@ -1,18 +1,11 @@
 package thresholdsignature
 
 import (
-	"fmt"
 	"math/big"
-	"os"
-	"sync"
-	"time"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/altbn128"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
-	"github.com/keep-network/keep-core/pkg/bls"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -25,135 +18,51 @@ const (
 
 // Init initializes a given broadcast channel to be able to perform distributed
 // key generation interactions.
-func Init(channel net.BroadcastChannel) {
+func initializeChannel(channel net.BroadcastChannel) {
 	channel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &SignatureShareMessage{} })
 }
 
-// Execute triggers the threshold signature process for the given bytes. After
-// the process has completed, it returns either the threshold signature's final
-// bytes, or an error.
+// Execute triggers the threshold signature process for the given bytes.
 func Execute(
-	requestID *big.Int,
-	bytes []byte,
-	threshold int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
+	relayChain relaychain.RelayEntryInterface,
+	requestID *big.Int,
+	previousEntry *big.Int,
+	seed *big.Int,
+	threshold int,
 	signer *dkg.ThresholdSigner,
 	startBlockHeight uint64,
-) ([]byte, error) {
-	// Use an unbuffered channel to serialize message processing.
-	recvChan := make(chan net.Message)
-	handler := net.HandleMessageFunc{
-		Type: fmt.Sprintf("relay/signature/%s", string(time.Now().UTC().UnixNano())),
-		Handler: func(msg net.Message) error {
-			recvChan <- msg
-			return nil
+) error {
+	initializeChannel(channel)
+
+	initialState := &signatureShareState{
+		signingStateBase: signingStateBase{
+			channel:       channel,
+			relayChain:    relayChain,
+			blockCounter:  blockCounter,
+			signer:        signer,
+			requestID:     requestID,
+			previousEntry: previousEntry,
+			seed:          seed,
+			threshold:     threshold,
 		},
 	}
 
-	// Initialize channel to perform threshold signing process.
-	Init(channel)
+	stateMachine := state.NewMachine(channel, blockCounter, initialState)
+	_, _, err := stateMachine.Execute(startBlockHeight)
 
-	channel.Recv(handler)
-	defer channel.UnregisterRecv(handler.Type)
+	return err
+}
 
-	setupDelay := startBlockHeight + setupBlocks
-	fmt.Printf(
-		"[member:%v] Waiting for block [%v] to start threshold signing...\n",
-		signer.MemberID(),
-		setupDelay,
-	)
-
-	err := blockCounter.WaitForBlockHeight(setupDelay)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to wait %d blocks entering threshold setup: [%v]",
-			setupBlocks,
-			err,
-		)
-	}
-
-	fmt.Printf("[member:%v] Sending signature share...\n", signer.MemberID())
-
-	seenSharesMutex := sync.Mutex{}
-	seenShares := make(map[group.MemberIndex]*bn256.G1)
-	share := signer.CalculateSignatureShare(bytes)
-
-	// Add local share to map rather than receiving from the network.
-	seenShares[signer.MemberID()] = share
-
-	err = channel.Send(&SignatureShareMessage{
-		signer.MemberID(),
-		share.Marshal(),
-		requestID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	blockWaiter, err := blockCounter.BlockHeightWaiter(setupDelay + signatureBlocks)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Printf("[member:%v] Receiving other group signature share\n", signer.MemberID())
-
-	for {
-		select {
-		case msg := <-recvChan:
-			switch signatureShareMsg := msg.Payload().(type) {
-			case *SignatureShareMessage:
-				// Ignore message for another request ID
-				if signatureShareMsg.requestID.Cmp(requestID) != 0 {
-					continue
-				}
-
-				fmt.Printf(
-					"[member:%v] Processing signing message\n",
-					signer.MemberID(),
-				)
-
-				// Ignore our own share, we already have it.
-				if signatureShareMsg.senderID == signer.MemberID() {
-					continue
-				}
-
-				share := new(bn256.G1)
-				_, err := share.Unmarshal(signatureShareMsg.ShareBytes)
-				if err != nil {
-					fmt.Fprintf(
-						os.Stderr,
-						"[member:%v] failed to unmarshal signature share: [%v]",
-						signer.MemberID(),
-						err,
-					)
-				} else {
-					seenSharesMutex.Lock()
-					seenShares[signatureShareMsg.senderID] = share
-					seenSharesMutex.Unlock()
-				}
-			}
-		case endBlockHeight := <-blockWaiter:
-			fmt.Printf(
-				"[member:%v] Stopped receiving signature shares at block [%v]\n",
-				signer.MemberID(),
-				endBlockHeight,
-			)
-
-			// put all seen shares into a slice and complete the signature
-			seenSharesSlice := make([]*bls.SignatureShare, 0)
-			for memberID, share := range seenShares {
-				signatureShare := &bls.SignatureShare{I: int(memberID), V: share}
-				seenSharesSlice = append(seenSharesSlice, signatureShare)
-			}
-
-			signature, err := signer.CompleteSignature(seenSharesSlice, threshold)
-			if err != nil {
-				return nil, err
-			}
-
-			return altbn128.G1Point{G1: signature}.Compress(), nil
-		}
-	}
+// CombineEntryToSign takes the previous relay entry value and the current
+// requests's seed and combines it into a slice of bytes that is going to be
+// signed by the selected group and as a result, will form a new relay entry
+// value.
+func CombineEntryToSign(previousEntry *big.Int, seed *big.Int) []byte {
+	combinedEntryToSign := make([]byte, 0)
+	combinedEntryToSign = append(combinedEntryToSign, previousEntry.Bytes()...)
+	combinedEntryToSign = append(combinedEntryToSign, seed.Bytes()...)
+	return combinedEntryToSign
 }
