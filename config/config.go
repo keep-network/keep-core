@@ -18,6 +18,7 @@ const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 type Config struct {
 	Ethereum ethereum.Config
 	LibP2P   libp2p.Config
+	Storage  Storage
 }
 
 type node struct {
@@ -28,6 +29,11 @@ type node struct {
 type bootstrap struct {
 	URLs []string
 	Seed int
+}
+
+// Storage stores meta-info about keeping data on disk
+type Storage struct {
+	DataDir string
 }
 
 var (
@@ -70,6 +76,10 @@ func ReadConfig(filePath string) (*Config, error) {
 
 	if config.LibP2P.Seed != 0 && len(config.LibP2P.Peers) > 0 {
 		return nil, fmt.Errorf("non-bootstrap node should have bootstrap URLs and a seed of 0")
+	}
+
+	if config.Storage.DataDir == "" {
+		return nil, fmt.Errorf("missing value for storage directory data")
 	}
 
 	return config, nil

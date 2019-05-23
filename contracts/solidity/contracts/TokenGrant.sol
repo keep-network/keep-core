@@ -262,7 +262,7 @@ contract TokenGrant is StakeDelegatable {
 
         // Calculate granted amount that was staked.
         uint256 available = grants[_id].amount.sub(grants[_id].released);
-        require(available > 0, "Must have available granted amount to unstake.");
+        require(available >= 0, "Must have available granted amount to unstake.");
 
         // Remove tokens from granted stake balance.
         stakeBalances[_operator] = stakeBalances[_operator].sub(available);
