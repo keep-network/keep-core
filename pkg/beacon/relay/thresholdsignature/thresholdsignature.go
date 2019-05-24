@@ -3,7 +3,7 @@ package thresholdsignature
 import (
 	"math/big"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 
@@ -27,7 +27,7 @@ func initializeChannel(channel net.BroadcastChannel) {
 func Execute(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	relayChain relaychain.RelayEntryInterface,
+	relayChain relayChain.Interface,
 	requestID *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
@@ -48,6 +48,7 @@ func Execute(
 			seed:          seed,
 			threshold:     threshold,
 		},
+		signingStartBlockHeight: startBlockHeight,
 	}
 
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)

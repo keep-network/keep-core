@@ -5,7 +5,8 @@ import (
 	"math/big"
 	"os"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
@@ -43,7 +44,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	requestID *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
-	relayChain relaychain.RelayEntryInterface,
+	relayChain relayChain.Interface,
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) {

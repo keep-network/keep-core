@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"time"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/bls"
@@ -22,7 +20,7 @@ type signingState = state.State
 
 type signingStateBase struct {
 	channel      net.BroadcastChannel
-	relayChain   relayChain.RelayEntryInterface
+	relayChain   relayChain.Interface
 	blockCounter chain.BlockCounter
 
 	signer *dkg.ThresholdSigner
@@ -39,6 +37,8 @@ type signatureShareState struct {
 
 	selfSignatureShare     *bn256.G1
 	signatureShareMessages []*SignatureShareMessage
+
+	signingStartBlockHeight uint64
 }
 
 func (sss *signatureShareState) DelayBlocks() uint64 {
@@ -86,6 +86,9 @@ func (sss *signatureShareState) Next() signingState {
 		signingStateBase:      sss.signingStateBase,
 		selfSignatureShare:    sss.selfSignatureShare,
 		previousPhaseMessages: sss.signatureShareMessages,
+		signatureCompletionStartBlockHeight: sss.signingStartBlockHeight +
+			sss.DelayBlocks() +
+			sss.ActiveBlocks(),
 	}
 }
 
@@ -99,6 +102,8 @@ type signatureCompleteState struct {
 	selfSignatureShare    *bn256.G1
 	previousPhaseMessages []*SignatureShareMessage
 	fullSignature         []byte
+
+	signatureCompletionStartBlockHeight uint64
 }
 
 func (scs *signatureCompleteState) DelayBlocks() uint64 {
@@ -154,6 +159,9 @@ func (scs *signatureCompleteState) Next() signingState {
 	return &entrySubmissionState{
 		signingStateBase: scs.signingStateBase,
 		signature:        scs.fullSignature,
+		entrySubmissionStartBlockHeight: scs.signatureCompletionStartBlockHeight +
+			scs.DelayBlocks() +
+			scs.ActiveBlocks(),
 	}
 }
 
@@ -165,6 +173,8 @@ type entrySubmissionState struct {
 	signingStateBase
 
 	signature []byte
+
+	entrySubmissionStartBlockHeight uint64
 }
 
 func (ess *entrySubmissionState) DelayBlocks() uint64 {
@@ -182,27 +192,20 @@ func (ess *entrySubmissionState) ActiveBlocks() uint64 {
 func (ess *entrySubmissionState) Initiate() error {
 	rightSizeSignature := big.NewInt(0).SetBytes(ess.signature[:32])
 
-	newEntry := &event.Entry{
-		RequestID:     ess.requestID,
-		Value:         rightSizeSignature,
-		PreviousEntry: ess.previousEntry,
-		Timestamp:     time.Now().UTC(),
-		GroupPubKey:   ess.signer.GroupPublicKeyBytes(),
-		Seed:          ess.seed,
+	submitter := &relayEntrySubmitter{
+		chain:        ess.relayChain,
+		blockCounter: ess.blockCounter,
+		index:        ess.MemberIndex(),
 	}
 
-	// TODO: Extract submission code to a separate class
-	ess.relayChain.SubmitRelayEntry(
-		newEntry,
-	).OnFailure(func(err error) {
-		if err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"Failed submission of relay entry: [%v].\n",
-				err,
-			)
-		}
-	})
+	submitter.submitRelayEntry(
+		ess.requestID,
+		rightSizeSignature,
+		ess.previousEntry,
+		ess.seed,
+		ess.signer.GroupPublicKeyBytes(),
+		ess.entrySubmissionStartBlockHeight,
+	)
 
 	return nil
 }
