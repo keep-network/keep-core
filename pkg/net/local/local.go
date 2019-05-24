@@ -56,6 +56,14 @@ func Connect() net.Provider {
 	}
 }
 
+// For use only in testing
+func ConnectWithCapabilities() *localProvider {
+	return &localProvider{
+		id: localIdentifier(randomIdentifier()),
+		cm: &localConnectionManager{peers: make(map[string]*key.NetworkPublic)},
+	}
+}
+
 func (lp *localProvider) ConnectionManager() net.ConnectionManager {
 	return lp.cm
 }
@@ -104,6 +112,10 @@ func randomIdentifier() string {
 	}
 
 	return string(runes)
+}
+
+func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
+	lp.cm.peers[peerID] = pubKey
 }
 
 type localChannel struct {
