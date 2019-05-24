@@ -18,13 +18,14 @@ func TestExecute_HappyPath(t *testing.T) {
 	}
 	network := testutils.NewInterceptingNetwork(interceptor)
 
-	result, signers, err := executeDKG(groupSize, threshold, network)
+	result, err := executeDKG(groupSize, threshold, network)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assertSignersCount(t, signers, groupSize)
-	assertSamePublicKey(t, result, signers)
+	assertSuccessfulSignersCount(t, result, groupSize)
+	assertMemberFailuresCount(t, result, 0)
+	assertSamePublicKey(t, result)
 	// TODO: assert no DQ
 	// TODO: assert no IA
 	// TODO: assert key is valid
@@ -45,14 +46,14 @@ func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
 	}
 	network := testutils.NewInterceptingNetwork(interceptor)
 
-	result, signers, err := executeDKG(groupSize, threshold, network)
+	result, err := executeDKG(groupSize, threshold, network)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assertSignersCount(t, signers, groupSize)
-	honestSigners := filterOutMisbehavingSigners(signers, group.MemberIndex(1))
-	assertSamePublicKey(t, result, honestSigners)
+	assertSuccessfulSignersCount(t, result, groupSize-1)
+	assertMemberFailuresCount(t, result, 1)
+	assertSamePublicKey(t, result)
 	// TODO: assert no DQ
 	// TODO: assert member 1 is IA
 	// TODO: assert key is valid

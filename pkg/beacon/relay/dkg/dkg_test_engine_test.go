@@ -14,27 +14,32 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
+type dkgTestResult struct {
+	result         *relaychain.DKGResult
+	signers        []*ThresholdSigner
+	memberFailures []error
+}
+
 func executeDKG(
 	groupSize int,
 	threshold int,
 	network testutils.InterceptingNetwork,
-) (*relaychain.DKGResult, []*ThresholdSigner, error) {
+) (*dkgTestResult, error) {
 	minimumStake, requestID, seed, startBlockHeight, err := getDKGParameters()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	chainHandle := chainLocal.Connect(groupSize, threshold, minimumStake)
 	blockCounter, err := chainHandle.BlockCounter()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	broadcastChannel, err := network.ChannelFor("dkg_test")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	signers := make([]*ThresholdSigner, groupSize)
 	resultChan := make(chan *event.DKGResultSubmission)
 	chainHandle.ThresholdRelay().OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
@@ -42,12 +47,15 @@ func executeDKG(
 		},
 	)
 
+	var signers []*ThresholdSigner
+	var memberFailures []error
+
 	var wg sync.WaitGroup
 	wg.Add(groupSize)
 	for i := 0; i < groupSize; i++ {
 		i := i // capture for goroutine
 		go func() {
-			signer, _ := ExecuteDKG(
+			signer, err := ExecuteDKG(
 				requestID,
 				seed,
 				i,
@@ -58,7 +66,13 @@ func executeDKG(
 				chainHandle.ThresholdRelay(),
 				broadcastChannel,
 			)
-			signers[i] = signer
+			if signer != nil {
+				signers = append(signers, signer)
+			}
+			if err != nil {
+				fmt.Printf("Failed with: [%v]\n", err)
+				memberFailures = append(memberFailures, err)
+			}
 			wg.Done()
 		}()
 	}
@@ -73,9 +87,19 @@ func executeDKG(
 	select {
 	case _ = <-resultChan:
 		// result was published to the chain, let's fetch it
-		return chainHandle.GetDKGResult(requestID), signers, nil
+		return &dkgTestResult{
+			chainHandle.GetDKGResult(requestID),
+			signers,
+			memberFailures,
+		}, nil
+
 	case <-ctx.Done():
-		return nil, signers, fmt.Errorf("No result published to the chain")
+		// no result published to the chain
+		return &dkgTestResult{
+			nil,
+			signers,
+			memberFailures,
+		}, nil
 	}
 }
 
