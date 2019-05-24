@@ -18,6 +18,8 @@ import (
 
 // Guard contains the state necessary to make connection pruning decisions.
 type Guard struct {
+	duration time.Duration
+
 	stakeMonitorLock sync.Mutex
 	stakeMonitor     chain.StakeMonitor
 
@@ -32,6 +34,7 @@ type Guard struct {
 // the background for the lifetime of the client.
 func NewGuard(
 	ctx context.Context,
+	duration time.Duration,
 	stakeMonitor chain.StakeMonitor,
 	host host.Host,
 ) *Guard {
@@ -66,7 +69,7 @@ func (g *Guard) completedCheck(peer peer.ID) {
 // start executes the connection management background worker. If it receives a
 // signal to stop the execution of the client, it kills this task.
 func (g *Guard) start(ctx context.Context) {
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(g.duration)
 	defer ticker.Stop()
 
 	for {
