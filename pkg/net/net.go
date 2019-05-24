@@ -2,6 +2,7 @@ package net
 
 import (
 	"github.com/gogo/protobuf/proto"
+	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 // TransportIdentifier represents a protocol-level identifier. It is an opaque
@@ -52,6 +53,14 @@ type Provider interface {
 	// All known peers from the underlying PeerStore. This may include
 	// peers we're not directly connected to.
 	Peers() []string
+
+	ConnectionManager() ConnectionManager
+}
+
+type ConnectionManager interface {
+	ConnectedPeers() []string
+	GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error)
+	DisconnectPeer(connectedPeer string)
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler

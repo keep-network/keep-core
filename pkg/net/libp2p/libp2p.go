@@ -18,6 +18,7 @@ import (
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	peer "github.com/libp2p/go-libp2p-peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 
@@ -55,7 +56,7 @@ type provider struct {
 	routing  *dht.IpfsDHT
 	addrs    []ma.Multiaddr
 
-	connectionGuard *watchtower.Guard
+	connectionManager *connectionManager
 }
 
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
@@ -93,6 +94,41 @@ func (p *provider) Peers() []string {
 		peers = append(peers, peer.String())
 	}
 	return peers
+}
+
+func (p *provider) ConnectionManager() net.ConnectionManager {
+	return p.connectionManager
+}
+
+type connectionManager struct {
+	host.Host
+}
+
+func (cm *connectionManager) ConnectedPeers() []string {
+	var peers []string
+	for _, connectedPeer := range cm.Network().Peers() {
+		peers = append(peers, connectedPeer.String())
+	}
+	return peers
+}
+
+func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error) {
+	peerPublicKey, err := peer.ID(connectedPeer).ExtractPublicKey()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"Failed to extract peer [%s] public key with error [%v]",
+			connectedPeer,
+			err,
+		)
+	}
+	return key.Libp2pKeyToNetworkKey(peerPublicKey), nil
+}
+
+func (cm *connectionManager) DisconnectPeer(connectedPeer string) {
+	connections := cm.Network().ConnsToPeer(peer.ID(connectedPeer))
+	for _, connection := range connections {
+		connection.Close()
+	}
 }
 
 // Connect connects to a libp2p network based on the provided config. The
@@ -141,8 +177,12 @@ func Connect(
 		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
 	}
 
+	provider.connectionManager = &connectionManager{provider.host}
+
 	// Instantiates and starts the connection management background process
-	provider.connectionGuard = watchtower.NewGuard(ctx, stakeMonitor, host)
+	watchtower.NewGuard(
+		ctx, 1*time.Minute, stakeMonitor, provider.connectionManager,
+	)
 
 	return provider, nil
 }
