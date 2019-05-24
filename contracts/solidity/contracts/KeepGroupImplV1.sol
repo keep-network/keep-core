@@ -10,6 +10,10 @@ import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 
+interface KeepRandomBeaconContract {
+  function relayRequestTimeout() external view returns(uint256);
+}
+
 contract KeepGroupImplV1 is Ownable {
 
     using SafeMath for uint256;
@@ -20,7 +24,11 @@ contract KeepGroupImplV1 is Ownable {
 
     // TODO: Rename to DkgResultSubmittedEvent
     // TODO: Add memberIndex
-    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey); 
+    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey);
+
+    // TODO: Remove requestId once Keep Client DKG is refactored to
+    // use newEntry as unique id.
+    event GroupSelectionStarted(uint256 newEntry, uint256 requestId, uint256 seed);
 
     uint256 internal _groupThreshold;
     uint256 internal _groupSize;
@@ -42,6 +50,8 @@ contract KeepGroupImplV1 is Ownable {
     // Store whether DKG result was published for the corresponding requestID.
     mapping (uint256 => bool) internal _dkgResultPublished;
 
+    bool internal _groupSelectionInProgress;
+
     struct Proof {
         address sender;
         uint256 stakerValue;
@@ -50,9 +60,21 @@ contract KeepGroupImplV1 is Ownable {
 
     mapping(uint256 => Proof) internal _proofs;
 
+    // _activeGroupsThreshold is the minimal number of groups that should not
+    // expire to protect the minimal network throughput.
+    // It should be at least 1.
+    uint256 internal _activeGroupsThreshold;
+ 
+    // _activeTime is the time in block after which a group expires
+    uint256 internal _activeTime;
+ 
+    // _expiredOffset is pointing to the first active group, it is also the
+    // expired groups counter
+    uint256 internal _expiredOffset = 0;
+
     struct Group {
         bytes groupPubKey;
-        uint registrationTime;
+        uint registrationBlockHeight;
     }
 
     Group[] internal _groups;
@@ -89,11 +111,19 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Triggers the selection process of a new candidate group.
      */
-    function runGroupSelection(uint256 randomBeaconValue) public {
+    function runGroupSelection(uint256 newEntry, uint256 requestId, uint256 seed) public {
         require(msg.sender == _randomBeacon);
-        cleanup();
-        _ticketSubmissionStartBlock = block.number;
-        _randomBeaconValue = randomBeaconValue;
+
+        // dkgTimeout is the time after DKG is expected to be complete plus the expected period to submit the result.
+        uint256 dkgTimeout = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG + _groupSize * _resultPublicationBlockStep;
+
+        if (!_groupSelectionInProgress || block.number > dkgTimeout) {
+            cleanup();
+            _ticketSubmissionStartBlock = block.number;
+            _randomBeaconValue = newEntry;
+            _groupSelectionInProgress = true;
+            emit GroupSelectionStarted(newEntry, requestId, seed);
+        }
     }
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 4).
@@ -200,7 +230,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Gets ticket proof.
      */
-    function getTicketProof(uint256 ticketValue) public view returns (address, uint256, uint256) {
+    function getTicketProof(uint256 ticketValue) public view returns (address sender, uint256 stakerValue, uint256 virtualStakerIndex) {
         return (
             _proofs[ticketValue].sender,
             _proofs[ticketValue].stakerValue,
@@ -312,6 +342,8 @@ contract KeepGroupImplV1 is Ownable {
         cleanup();
         _dkgResultPublished[requestId] = true;
         emit DkgResultPublishedEvent(requestId, groupPubKey);
+
+        _groupSelectionInProgress = false;
     }
 
     /**
@@ -382,6 +414,9 @@ contract KeepGroupImplV1 is Ownable {
      * @param timeDKG Timeout in blocks after DKG result is complete and ready to be published.
      * @param resultPublicationBlockStep Time in blocks after which member with the given index is eligible
      * to submit DKG result.
+     * @param activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
+     * needs to be greater than 0.
+     * @param activeTime is the time in block after which a group expires.
      */
     function initialize(
         address stakingProxy,
@@ -393,10 +428,13 @@ contract KeepGroupImplV1 is Ownable {
         uint256 timeoutSubmission,
         uint256 timeoutChallenge,
         uint256 timeDKG,
-        uint256 resultPublicationBlockStep
+        uint256 resultPublicationBlockStep,
+        uint256 activeGroupsThreshold,
+        uint256 activeTime
     ) public onlyOwner {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
+        require(activeGroupsThreshold > 0, "The minumum number of active groups needs to be more than zero.");
         _initialized["KeepGroupImplV1"] = true;
         _stakingProxy = stakingProxy;
         _randomBeacon = randomBeacon;
@@ -408,6 +446,8 @@ contract KeepGroupImplV1 is Ownable {
         _timeoutChallenge = timeoutChallenge;
         _timeDKG = timeDKG;
         _resultPublicationBlockStep = resultPublicationBlockStep;
+        _activeGroupsThreshold = activeGroupsThreshold;
+        _activeTime = activeTime;
     }
 
     /**
@@ -535,28 +575,120 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Gets number of active groups.
      */
     function numberOfGroups() public view returns(uint256) {
-        return _groups.length;
+        return _groups.length - _expiredOffset;
     }
 
     /**
-     * @dev Checks if a group with the given public key is registered. 
+     * @dev Gets the random beacon value for the group selection currently in progress.
      */
-    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
-        for (uint i = 0; i < numberOfGroups(); i++) {
+    function randomBeaconValue() public view returns(uint256) {
+        return _randomBeaconValue;
+    }
+
+    /**
+     * @dev Returns true if the group selection is in progress.
+     */
+    function groupSelectionInProgress() public view returns(bool) {
+        return _groupSelectionInProgress;
+    }
+
+    /**
+     * @dev Gets the cutoff time in blocks until which the given group is
+     * considered as an active group. The group may not be marked as expired
+     * even though its active time has passed if one of the rules inside
+     * `selectGroup` function are not met (e.g. minimum active group threshold).
+     * Hence, this value informs when the group may no longer be considered
+     * as active but it does not mean that the group will be immediatelly
+     * considered not as such.
+     */
+    function groupActiveTime(Group memory group) internal view returns(uint256) {
+        return group.registrationBlockHeight + _activeTime;
+    }
+
+    /**
+     * @dev Gets the cutoff time in blocks after which the given group is
+     * considered as stale. Stale group is an expired group which is no longer
+     * performing any operations.
+     */
+    function groupStaleTime(Group memory group) internal view returns(uint256) {
+        return groupActiveTime(group) + KeepRandomBeaconContract(_randomBeacon).relayRequestTimeout();
+    }
+
+    /**
+     * @dev Checks if a group with the given public key is a stale group.
+     * Stale group is an expired group which is no longer performing any
+     * operations. It is important to understand that an expired group may
+     * still perform some operations for which it was selected when it was still
+     * active. We consider a group to be stale when it's expired and when its
+     * expiration time and potentially executed operation timeout are both in
+     * the past.
+     */
+    function isStaleGroup(bytes memory groupPubKey) public view returns(bool) {
+        for (uint i = 0; i < _groups.length; i++) {
             if (_groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                return true;
+                bool isExpired = _expiredOffset > i;
+                bool isStale = groupStaleTime(_groups[i]) < block.number;
+                return isExpired && isStale;
             }
         }
 
-        return false;
+        return true; // no group found, consider it as a stale group
     }
 
     /**
-     * @dev Returns public key of a group from available groups using modulo operator.
+     * @dev Returns public key of a group from active groups using modulo operator.
      * @param previousEntry Previous random beacon value.
      */
-    function selectGroup(uint256 previousEntry) public view returns(bytes memory) {
-        return _groups[previousEntry % _groups.length].groupPubKey;
+    function selectGroup(uint256 previousEntry) public returns(bytes memory) {
+        uint256 numberOfActiveGroups = _groups.length - _expiredOffset;
+        uint256 selectedGroup = previousEntry % numberOfActiveGroups;
+
+        /**
+        * We selected a group based on the information about expired groups offset
+        * from the previous call of the function. Now we need to check whether the
+        * selected group did not expire in the meantime. To do that, we compare its
+        * registration block height and group expiration timeout against the
+        * current block number. If the group has expired we move the expired groups
+        * offset to the position of the selected expired group and we try to select
+        * the next group knowing that all groups before the one previously selected
+        * are expired and should not be taken into account. We do this until we
+        * find an active group or until we reach the minimum active groups
+        * threshold.
+        *
+        * This approach is more efficient than traversing all groups one by one
+        * starting from the previous value of expired groups offset since we can
+        * mark expired groups in batches, in a fewer number of steps.
+        */
+        if (numberOfActiveGroups > _activeGroupsThreshold) {
+            while (groupActiveTime(_groups[_expiredOffset + selectedGroup]) < block.number) {
+                /**
+                * We do -1 to see how many groups are available after the potential removal.
+                * For example:
+                * _groups = [EEEAAAA]
+                * - assuming selectedGroup = 0, then we'll have 4-0-1=3 groups after the removal: [EEEEAAA]
+                * - assuming selectedGroup = 1, then we'll have 4-1-1=2 groups after the removal: [EEEEEAA]
+                * - assuming selectedGroup = 2, then, we'll have 4-2-1=1 groups after the removal: [EEEEEEA]
+                * - assuming selectedGroup = 3, then, we'll have 4-3-1=0 groups after the removal: [EEEEEEE]
+                */
+                if (numberOfActiveGroups - selectedGroup - 1 > _activeGroupsThreshold) {
+                    selectedGroup++;
+                    _expiredOffset += selectedGroup;
+                    numberOfActiveGroups -= selectedGroup;
+                    selectedGroup = previousEntry % numberOfActiveGroups;
+                } else {
+                    /* Number of groups that did not expire is less or equal _activeGroupsThreshold
+                    * and we have more groups than _activeGroupsThreshold (including those expired) groups.
+                    * Hence, we maintain the minimum _activeGroupsThreshold of active groups and
+                    * do not let any other groups to expire
+                    */
+                    _expiredOffset = _groups.length - _activeGroupsThreshold;
+                    numberOfActiveGroups = _activeGroupsThreshold;
+                    selectedGroup = previousEntry % numberOfActiveGroups;
+                    break;
+                }
+            }
+        }
+        return _groups[_expiredOffset + selectedGroup].groupPubKey;
     }
 
     /**

@@ -24,6 +24,7 @@ import (
 var seedGroupPublicKey = []byte("seed to group public key")
 var seedRelayEntry = big.NewInt(123456789)
 var groupActiveTime = uint64(10)
+var relayRequestTimeout = uint64(8)
 
 // Chain is an extention of chain.Handle interface which exposes
 // additional functions useful for testing.
@@ -53,11 +54,12 @@ type localChain struct {
 
 	groups []localGroup
 
-	handlerMutex             sync.Mutex
-	relayEntryHandlers       map[int]func(entry *event.Entry)
-	relayRequestHandlers     map[int]func(request *event.Request)
-	groupRegisteredHandlers  map[int]func(groupRegistration *event.GroupRegistration)
-	resultSubmissionHandlers map[int]func(submission *event.DKGResultSubmission)
+	handlerMutex                  sync.Mutex
+	relayEntryHandlers            map[int]func(entry *event.Entry)
+	relayRequestHandlers          map[int]func(request *event.Request)
+	groupSelectionStartedHandlers map[int]func(groupSelectionStart *event.GroupSelectionStart)
+	groupRegisteredHandlers       map[int]func(groupRegistration *event.GroupRegistration)
+	resultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
 
 	requestID   int64
 	latestValue *big.Int
@@ -211,6 +213,23 @@ func (c *localChain) OnRelayEntryRequested(
 	}), nil
 }
 
+func (c *localChain) OnGroupSelectionStarted(
+	handler func(entry *event.GroupSelectionStart),
+) (subscription.EventSubscription, error) {
+	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
+
+	handlerID := rand.Int()
+	c.groupSelectionStartedHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		c.handlerMutex.Lock()
+		defer c.handlerMutex.Unlock()
+
+		delete(c.groupSelectionStartedHandlers, handlerID)
+	}), nil
+}
+
 func (c *localChain) OnGroupRegistered(
 	handler func(groupRegistration *event.GroupRegistration),
 ) (subscription.EventSubscription, error) {
@@ -337,8 +356,7 @@ func (c *localChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 	return promise
 }
 
-// IsGroupRegistered simulates a check if a group can be cleaned on off-chain
-func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -352,7 +370,7 @@ func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 
 	for _, group := range c.groups {
 		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
-			return group.registrationBlockHeight+groupActiveTime < currentBlock, nil
+			return group.registrationBlockHeight+groupActiveTime+relayRequestTimeout < currentBlock, nil
 		}
 	}
 

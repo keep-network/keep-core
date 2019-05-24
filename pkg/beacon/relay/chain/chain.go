@@ -41,6 +41,11 @@ type RelayEntryInterface interface {
 // GroupSelectionInterface defines the subset of the relay chain interface that
 // pertains to relay group selection activities.
 type GroupSelectionInterface interface {
+	// OnGroupSelectionStarted is a callback that is invoked when an on-chain
+	// group selection started and the contract is ready to accept tickets.
+	OnGroupSelectionStarted(
+		func(groupSelectionStarted *event.GroupSelectionStart),
+	) (subscription.EventSubscription, error)
 	// SubmitTicket submits a ticket corresponding to the virtual staker to
 	// the chain, and returns a promise to track the submission. The promise
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
@@ -59,8 +64,12 @@ type GroupRegistrationInterface interface {
 	OnGroupRegistered(
 		func(groupRegistration *event.GroupRegistration),
 	) (subscription.EventSubscription, error)
-	// Checks if a group with the given public key is registered on-chain.
-	IsGroupRegistered(groupPublicKey []byte) (bool, error)
+	// Checks if a group with the given public key is considered as
+	// stale on-chain. Group is considered as stale if it is expired and when
+	// its expiration time and potentially executed operation timeout are both
+	// in the past. Stale group is never selected by the chain to any new
+	// operation.
+	IsStaleGroup(groupPublicKey []byte) (bool, error)
 }
 
 // GroupInterface defines the subset of the relay chain interface that pertains
