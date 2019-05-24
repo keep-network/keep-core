@@ -225,8 +225,8 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 	return p.routing.Bootstrap(ctx)
 }
 
-func extractMultiAddrFromPeers(peers []string) ([]*peerstore.PeerInfo, error) {
-	var peerInfos []*peerstore.PeerInfo
+func extractMultiAddrFromPeers(peers []string) ([]peerstore.PeerInfo, error) {
+	var peerInfos []peerstore.PeerInfo
 	for _, peer := range peers {
 		ipfsaddr, err := ma.NewMultiaddr(peer)
 		if err != nil {
@@ -238,7 +238,7 @@ func extractMultiAddrFromPeers(peers []string) ([]*peerstore.PeerInfo, error) {
 			return nil, err
 		}
 
-		peerInfos = append(peerInfos, peerInfo)
+		peerInfos = append(peerInfos, *peerInfo)
 	}
 	return peerInfos, nil
 }
