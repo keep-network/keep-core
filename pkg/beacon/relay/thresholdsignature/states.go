@@ -141,6 +141,11 @@ func (scs *signatureCompleteState) Initiate() error {
 		seenSharesSlice = append(seenSharesSlice, signatureShare)
 	}
 
+	fmt.Printf(
+		"[member:%v] restoring signature from [%v] shares...\n",
+		scs.MemberIndex(),
+		len(seenSharesSlice),
+	)
 	signature, err := scs.signer.CompleteSignature(seenSharesSlice, scs.threshold)
 	if err != nil {
 		return err
