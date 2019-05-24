@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"os"
 	"sync"
-	"time"
 
 	crand "crypto/rand"
 
@@ -73,8 +72,7 @@ func relayRequest(c *cli.Context) error {
 	}
 
 	requestMutex := sync.Mutex{}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
+	ctx := context.Background()
 
 	wait := make(chan struct{})
 	var requestID *big.Int
@@ -131,12 +129,11 @@ func relayRequest(c *cli.Context) error {
 	case <-wait:
 		return nil
 	case <-ctx.Done():
-		err := ctx.Err()
 		if err != nil {
 			return fmt.Errorf("request errored out [%v]", err)
 		}
-		return fmt.Errorf("request errored for unknown reason")
 
+		return fmt.Errorf("request errored for unknown reason")
 	}
 }
 
