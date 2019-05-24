@@ -156,11 +156,6 @@ are updated *manually*.
 - Maintenance log and Kubernetes CRUD commands: https://github.com/keep-network/keep-core/blob/master/infrastructure/kube/keep-dev/kube-setup.org[kube-setup]
 - keep-client config files: https://github.com/keep-network/keep-core/tree/master/infrastructure/kube/keep-dev/keep-client/config[keep-client.toml]
 
-*keep-client Consul Configuration:*
-Instead of deploying a keep-client-config.toml file as a ConfigMap we can
-upload these configurations to a Consul host. The keep-client can then query
-the Consul Key Value store for its configuration.
-
 *Ethereum Contract Deployment:*
 
 Ethereum contracts and subsequent steps are managed against `keep-dev` *manually*.
