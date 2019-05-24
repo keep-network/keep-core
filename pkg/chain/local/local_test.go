@@ -815,6 +815,109 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	})
 }
 
+func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
+	groupSize := 5
+	threshold := 3
+
+	localChain := Connect(groupSize, threshold, big.NewInt(200)).(*localChain)
+	chainHandle := localChain.ThresholdRelay()
+
+	var tests = map[string]struct {
+		requestID     *big.Int
+		signatures    map[group.MemberIndex]operator.Signature
+		expectedError error
+	}{
+		"no signatures": {
+			requestID:     big.NewInt(1),
+			signatures:    map[group.MemberIndex]operator.Signature{},
+			expectedError: fmt.Errorf("failed to submit result with [0] signatures for threshold [3]"),
+		},
+		"one signature": {
+			requestID: big.NewInt(2),
+			signatures: map[group.MemberIndex]operator.Signature{
+				1: operator.Signature{101},
+			},
+			expectedError: fmt.Errorf("failed to submit result with [1] signatures for threshold [3]"),
+		},
+		"one less signature than threshold": {
+			requestID: big.NewInt(3),
+			signatures: map[group.MemberIndex]operator.Signature{
+				1: operator.Signature{101},
+				2: operator.Signature{102},
+			},
+			expectedError: fmt.Errorf("failed to submit result with [2] signatures for threshold [3]"),
+		},
+		"threshold signatures": {
+			requestID: big.NewInt(4),
+			signatures: map[group.MemberIndex]operator.Signature{
+				1: operator.Signature{101},
+				2: operator.Signature{102},
+				3: operator.Signature{103},
+			},
+			expectedError: nil,
+		},
+		"one more signature than threshold": {
+			requestID: big.NewInt(5),
+			signatures: map[group.MemberIndex]operator.Signature{
+				1: operator.Signature{101},
+				2: operator.Signature{102},
+				3: operator.Signature{103},
+				4: operator.Signature{104},
+			},
+			expectedError: nil,
+		},
+		"signatures from all group members": {
+			requestID: big.NewInt(6),
+			signatures: map[group.MemberIndex]operator.Signature{
+				1: operator.Signature{101},
+				2: operator.Signature{102},
+				3: operator.Signature{103},
+				4: operator.Signature{104},
+				5: operator.Signature{105},
+			},
+			expectedError: nil,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			ctx, cancel := newTestContext()
+			defer cancel()
+
+			errorChan := make(chan error)
+
+			memberIndex := group.MemberIndex(1)
+			result := &relaychain.DKGResult{
+				GroupPublicKey: []byte{11},
+			}
+
+			promise := chainHandle.SubmitDKGResult(
+				test.requestID,
+				memberIndex,
+				result,
+				test.signatures,
+			)
+			promise.OnComplete(func(event *event.DKGResultSubmission, err error) {
+				errorChan <- err
+			})
+
+			select {
+			case err := <-errorChan:
+				if !reflect.DeepEqual(test.expectedError, err) {
+					t.Fatalf(
+						"Unexpected error\nExpected: [%v]\nActual:   [%v]\n",
+						test.expectedError,
+						err,
+					)
+				}
+
+			case <-ctx.Done():
+				t.Fatalf("promise timed out")
+			}
+		})
+	}
+}
+
 func TestCalculateDKGResultHash(t *testing.T) {
 	localChain := &localChain{}
 
