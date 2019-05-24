@@ -11,9 +11,8 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
-	host "github.com/libp2p/go-libp2p-host"
-	peer "github.com/libp2p/go-libp2p-peer"
 )
 
 // Guard contains the state necessary to make connection pruning decisions.
@@ -23,10 +22,10 @@ type Guard struct {
 	stakeMonitorLock sync.Mutex
 	stakeMonitor     chain.StakeMonitor
 
-	host host.Host
+	connectionManager net.ConnectionManager
 
 	peerCrossListLock sync.Mutex
-	peerCrossList     map[peer.ID]bool
+	peerCrossList     map[string]bool
 }
 
 // NewGuard returns a new instance of Guard. Can only be called once.
@@ -36,31 +35,32 @@ func NewGuard(
 	ctx context.Context,
 	duration time.Duration,
 	stakeMonitor chain.StakeMonitor,
-	host host.Host,
+	connectionManager net.ConnectionManager,
 ) *Guard {
 	guard := &Guard{
-		stakeMonitor:  stakeMonitor,
-		host:          host,
-		peerCrossList: make(map[peer.ID]bool),
+		duration:          duration,
+		stakeMonitor:      stakeMonitor,
+		connectionManager: connectionManager,
+		peerCrossList:     make(map[string]bool),
 	}
 	go guard.start(ctx)
 	return guard
 }
 
-func (g *Guard) currentlyChecking(peer peer.ID) bool {
+func (g *Guard) currentlyChecking(peer string) bool {
 	g.peerCrossListLock.Lock()
 	_, inProcess := g.peerCrossList[peer]
 	g.peerCrossListLock.Unlock()
 	return inProcess
 }
 
-func (g *Guard) markAsChecking(peer peer.ID) {
+func (g *Guard) markAsChecking(peer string) {
 	g.peerCrossListLock.Lock()
 	g.peerCrossList[peer] = true
 	g.peerCrossListLock.Unlock()
 }
 
-func (g *Guard) completedCheck(peer peer.ID) {
+func (g *Guard) completedCheck(peer string) {
 	g.peerCrossListLock.Lock()
 	g.peerCrossList[peer] = false
 	g.peerCrossListLock.Unlock()
@@ -77,7 +77,7 @@ func (g *Guard) start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			for _, connectedPeer := range g.host.Network().Peers() {
+			for _, connectedPeer := range g.connectionManager.ConnectedPeers() {
 				if g.currentlyChecking(connectedPeer) {
 					continue
 				}
@@ -88,7 +88,7 @@ func (g *Guard) start(ctx context.Context) {
 	}
 }
 
-func (g *Guard) manageConnectionByStake(ctx context.Context, peer peer.ID) {
+func (g *Guard) manageConnectionByStake(ctx context.Context, peer string) {
 	g.markAsChecking(peer)
 	defer g.completedCheck(peer)
 
@@ -104,25 +104,23 @@ func (g *Guard) manageConnectionByStake(ctx context.Context, peer peer.ID) {
 	}
 
 	if !hasMinimumStake {
-		g.disconnectPeer(peer)
+		g.connectionManager.DisconnectPeer(peer)
 	}
 }
 
-func (g *Guard) validatePeerStake(ctx context.Context, peer peer.ID) (bool, error) {
-	peerPublicKey, err := peer.ExtractPublicKey()
+func (g *Guard) validatePeerStake(ctx context.Context, peer string) (bool, error) {
+	peerPublicKey, err := g.connectionManager.GetPeerPublicKey(peer)
 	if err != nil {
-		return false, fmt.Errorf(
-			"Failed to extract peer [%s] public key with error [%v]",
-			peer,
-			err,
-		)
+		return false, err
+	}
+
+	if peerPublicKey == nil {
+		return false, nil
 	}
 
 	g.stakeMonitorLock.Lock()
 	hasMinimumStake, err := g.stakeMonitor.HasMinimumStake(
-		key.NetworkPubKeyToEthAddress(
-			peerPublicKey.(*key.NetworkPublic),
-		),
+		key.NetworkPubKeyToEthAddress(peerPublicKey),
 	)
 	if err != nil {
 		g.stakeMonitorLock.Unlock()
@@ -134,11 +132,4 @@ func (g *Guard) validatePeerStake(ctx context.Context, peer peer.ID) (bool, erro
 	}
 	g.stakeMonitorLock.Unlock()
 	return hasMinimumStake, nil
-}
-
-func (g *Guard) disconnectPeer(peer peer.ID) {
-	connections := g.host.Network().ConnsToPeer(peer)
-	for _, connection := range connections {
-		connection.Close()
-	}
 }
