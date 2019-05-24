@@ -413,6 +413,7 @@ func (c *localChain) SubmitDKGResult(
 			len(signatures),
 			c.relayConfig.Threshold,
 		))
+		return dkgResultPublicationPromise
 	}
 
 	c.submittedResults[requestID.String()] = resultToPublish
