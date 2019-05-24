@@ -90,66 +90,45 @@ async function stakeEthAccount() {
 
 async function createEthAccount(account_name) {
 
-  try {
-    let eth_account = await web3.eth.accounts.create();
-    // We write to a file for later passage to the keep-client container
-    fs.writeFile("/mnt/keep-client/config/eth_account_address", eth_account["address"], (error) => {
-      if (error) throw error;
-    });
-    console.log(account_name + " Account "  + eth_account["address"] + " Created!");
-    return eth_account
+  let eth_account = await web3.eth.accounts.create();
+
+  // We write to a file for later passage to the keep-client container
+  fs.writeFile("/mnt/keep-client/config/eth_account_address", eth_account["address"], (error) => {
+    if (error) throw error;
+  });
+  console.log(account_name + " Account "  + eth_account["address"] + " Created!");
+  return eth_account
   }
-  catch(error) {
-    console.log(error);
-  }
-};
 
 // We are creating a local account.  We must manually generate a keyfile for use by the keep-client
 async function createEthAccountKeyfile(eth_account_private_key, eth_account_password) {
 
-  try {
-    let eth_account_keyfile = await web3.eth.accounts.encrypt(eth_account_private_key, eth_account_password);
-    // We write to a file for later passage to the keep-client container
-    fs.writeFile("/mnt/keep-client/config/eth_account_keyfile", JSON.stringify(eth_account_keyfile), (error) => {
-      if (error) throw error;
-    });
-    console.log("Keyfile generated!")
-  }
-  catch(error) {
-    console.error(error.message);
-    throw error;
-  }
+  let eth_account_keyfile = await web3.eth.accounts.encrypt(eth_account_private_key, eth_account_password);
+
+  // We write to a file for later passage to the keep-client container
+  fs.writeFile("/mnt/keep-client/config/eth_account_keyfile", JSON.stringify(eth_account_keyfile), (error) => {
+    if (error) throw error;
+  });
+  console.log("Keyfile generated!")
 };
 
 async function unlockEthAccount(eth_account, eth_account_password) {
 
-  try {
-    console.log("<<<<<<<<<<<< Unlocking Account " + eth_account + " >>>>>>>>>>>>");
-    await web3.eth.personal.unlockAccount(eth_account, eth_account_password, 150000);
-    console.log("Account " + eth_account + " unlocked!");
-  }
-  catch(error) {
-    console.error(error.message);
-    throw error;
-  }
+  console.log("<<<<<<<<<<<< Unlocking Account " + eth_account + " >>>>>>>>>>>>");
+  await web3.eth.personal.unlockAccount(eth_account, eth_account_password, 150000);
+  console.log("Account " + eth_account + " unlocked!");
 };
 
 async function provisionOperatorAccount() {
 
   let operator_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
+  let operator = await createEthAccount("operator");
 
-  try {
-    let operator = await createEthAccount("operator");
-    await createEthAccountKeyfile(operator["privateKey"], operator_eth_account_password);
-    // We wallet add to make the local account available to web3 functions in the script.
-    await web3.eth.accounts.wallet.add(operator["privateKey"]);
-    console.log("Operator account provisioned!")
-    return operator;
-  }
-  catch(error) {
-    console.error(error.message);
-    throw error;
-  }
+  await createEthAccountKeyfile(operator["privateKey"], operator_eth_account_password);
+  // We wallet add to make the local account available to web3 functions in the script.
+  await web3.eth.accounts.wallet.add(operator["privateKey"]);
+  console.log("Operator account provisioned!")
+  return operator;
 };
 
 /*
