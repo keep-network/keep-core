@@ -407,6 +407,14 @@ func (c *localChain) SubmitDKGResult(
 		return dkgResultPublicationPromise
 	}
 
+	if len(signatures) < c.relayConfig.Threshold {
+		dkgResultPublicationPromise.Fail(fmt.Errorf(
+			"failed to submit result with [%v] signatures for threshold [%v]",
+			len(signatures),
+			c.relayConfig.Threshold,
+		))
+	}
+
 	c.submittedResults[requestID.String()] = resultToPublish
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
