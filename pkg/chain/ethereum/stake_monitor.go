@@ -80,9 +80,9 @@ func (es *ethereumStaker) OnStakeChanged(handle func(newStake *big.Int)) {
 	es.stakeChangeHandlers = append(es.stakeChangeHandlers, handle)
 
 	if !es.watchingChain {
-		err := es.ethereum.stakingContract.WatchUnstakedFor(
-			common.HexToAddress(es.address),
-			func(_ common.Address, newStake *big.Int) {
+		// FIXME Should we do something with this event subscription?
+		_, err := es.ethereum.stakingContract.WatchUnstaked(
+			func(_ common.Address, newStake *big.Int, _ uint64) {
 				es.mutex.Lock()
 				allHandlers := make([]func(newStake *big.Int), len(es.stakeChangeHandlers))
 				for _, handler := range es.stakeChangeHandlers {
@@ -102,6 +102,7 @@ func (es *ethereumStaker) OnStakeChanged(handle func(newStake *big.Int)) {
 				)
 				return err
 			},
+			[]common.Address{common.HexToAddress(es.address)},
 		)
 		if err != nil {
 			fmt.Printf(

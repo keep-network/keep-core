@@ -43,11 +43,12 @@ type localChain struct {
 
 	groups []localGroup
 
-	handlerMutex             sync.Mutex
-	relayEntryHandlers       map[int]func(entry *event.Entry)
-	relayRequestHandlers     map[int]func(request *event.Request)
-	groupRegisteredHandlers  map[int]func(groupRegistration *event.GroupRegistration)
-	resultSubmissionHandlers map[int]func(submission *event.DKGResultSubmission)
+	handlerMutex                  sync.Mutex
+	relayEntryHandlers            map[int]func(entry *event.Entry)
+	relayRequestHandlers          map[int]func(request *event.Request)
+	groupSelectionStartedHandlers map[int]func(groupSelectionStart *event.GroupSelectionStart)
+	groupRegisteredHandlers       map[int]func(groupRegistration *event.GroupRegistration)
+	resultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
 
 	requestID   int64
 	latestValue *big.Int
@@ -198,6 +199,23 @@ func (c *localChain) OnRelayEntryRequested(
 		defer c.handlerMutex.Unlock()
 
 		delete(c.relayRequestHandlers, handlerID)
+	}), nil
+}
+
+func (c *localChain) OnGroupSelectionStarted(
+	handler func(entry *event.GroupSelectionStart),
+) (subscription.EventSubscription, error) {
+	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
+
+	handlerID := rand.Int()
+	c.groupSelectionStartedHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		c.handlerMutex.Lock()
+		defer c.handlerMutex.Unlock()
+
+		delete(c.groupSelectionStartedHandlers, handlerID)
 	}), nil
 }
 
