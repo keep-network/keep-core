@@ -47,22 +47,23 @@ const contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 // Stake a target eth account
 async function stakeEthAccount() {
 
-  // Transactions during staking are sent from contract_owner, must be unlocked before start.
-  await unlockEthAccount(contract_owner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
-
-  console.log("<<<<<<<<<<<< Provisioning Operator Account " + ">>>>>>>>>>>>")
-  let provisioned_operator = await provisionOperatorAccount();
-  let operator = provisioned_operator["address"];
-  // ENV VAR sourced from Docker image.
-  let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-
-  let contract_owner_signed = await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator);
-  let contract_owner_signature = contract_owner_signed.signature;
-
-  let signature = Buffer.from(contract_owner_signature.substr(2), 'hex');
-  let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
-
   try {
+    // Transactions during staking are sent from contract_owner, must be unlocked before start.
+    await unlockEthAccount(contract_owner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
+
+    console.log("<<<<<<<<<<<< Provisioning Operator Account " + ">>>>>>>>>>>>")
+    let provisioned_operator = await provisionOperatorAccount();
+    let operator = provisioned_operator["address"];
+
+    // ENV VAR sourced from Docker image.
+    let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+
+    let contract_owner_signed = await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator);
+    let contract_owner_signature = contract_owner_signed.signature;
+
+    let signature = Buffer.from(contract_owner_signature.substr(2), 'hex');
+    let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
+
     console.log("<<<<<<<<<<<< Checking if stakingProxy/tokenStaking Contracts Are Authorized >>>>>>>>>>>>");
     if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call({from: contract_owner}))
     {
@@ -72,13 +73,6 @@ async function stakeEthAccount() {
       })
     }
     console.log("stakingProxy/tokenStaking Contracts Authorized!");
-  }
-  catch(error) {
-    console.error(error.message);
-    throw(error);
-  };
-
-  try {
     console.log("<<<<<<<<<<<< Staking Account: " + operator + " >>>>>>>>>>>>");
     await keepTokenContract.methods.approveAndCall(
       tokenStakingContract.address,
@@ -86,11 +80,11 @@ async function stakeEthAccount() {
       delegation).send({from: contract_owner}).then((receipt) => {
         console.log(JSON.stringify(receipt));
         console.log("Account " + operator + " staked!");
-      });
+    });
   }
   catch(error) {
     console.error(error.message);
-    throw(error);
+    throw error;
   }
 };
 
@@ -119,10 +113,11 @@ async function createEthAccountKeyfile(eth_account_private_key, eth_account_pass
     fs.writeFile("/mnt/keep-client/config/eth_account_keyfile", JSON.stringify(eth_account_keyfile), (error) => {
       if (error) throw error;
     });
+    console.log("Keyfile generated!")
   }
   catch(error) {
     console.error(error.message);
-    throw(error);
+    throw error;
   }
 };
 
@@ -135,7 +130,7 @@ async function unlockEthAccount(eth_account, eth_account_password) {
   }
   catch(error) {
     console.error(error.message);
-    throw(error);
+    throw error;
   }
 };
 
@@ -148,11 +143,12 @@ async function provisionOperatorAccount() {
     await createEthAccountKeyfile(operator["privateKey"], operator_eth_account_password);
     // We wallet add to make the local account available to web3 functions in the script.
     await web3.eth.accounts.wallet.add(operator["privateKey"]);
+    console.log("Operator account provisioned!")
     return operator;
   }
   catch(error) {
     console.error(error.message);
-    throw(error);
+    throw error;
   }
 };
 
