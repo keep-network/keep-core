@@ -62,7 +62,8 @@ func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
 	}
 
 	assertSignersCount(t, signers, groupSize)
-	assertSamePublicKey(t, result, signers)
+	honestSigners := filterOutMisbehavingSigners(signers, group.MemberIndex(1))
+	assertSamePublicKey(t, result, honestSigners)
 	// TODO: assert no DQ
 	// TODO: assert member 1 is IA
 	// TODO: assert key is valid
@@ -94,6 +95,26 @@ func assertSamePublicKey(
 			signer.GroupPublicKeyBytes(),
 		)
 	}
+}
+
+func filterOutMisbehavingSigners(
+	signers []*ThresholdSigner,
+	misbehavingSignersIDs ...group.MemberIndex,
+) []*ThresholdSigner {
+	var honestSigners []*ThresholdSigner
+	for _, signer := range signers {
+		isMisbehaving := false
+		for _, misbehavingID := range misbehavingSignersIDs {
+			if signer.MemberID() == misbehavingID {
+				isMisbehaving = true
+				break
+			}
+		}
+		if !isMisbehaving {
+			honestSigners = append(honestSigners, signer)
+		}
+	}
+	return honestSigners
 }
 
 func executeDKG(
