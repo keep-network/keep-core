@@ -203,7 +203,7 @@ func (ess *entrySubmissionState) Initiate() error {
 		index:        ess.MemberIndex(),
 	}
 
-	submitter.submitRelayEntry(
+	return submitter.submitRelayEntry(
 		ess.requestID,
 		rightSizeSignature,
 		ess.previousEntry,
@@ -211,8 +211,6 @@ func (ess *entrySubmissionState) Initiate() error {
 		ess.signer.GroupPublicKeyBytes(),
 		ess.entrySubmissionStartBlockHeight,
 	)
-
-	return nil
 }
 
 func (ess *entrySubmissionState) Receive(msg net.Message) error {

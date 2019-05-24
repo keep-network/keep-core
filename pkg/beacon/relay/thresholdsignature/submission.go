@@ -76,7 +76,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
-			fmt.Printf("[submitter:%v] Submitting relay entry..\n", res.index)
+			fmt.Printf("[member:%v] Submitting relay entry..\n", res.index)
 			entry := &event.Entry{
 				RequestID:     requestID,
 				Value:         newEntry,
@@ -88,13 +88,20 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 
 			res.chain.SubmitRelayEntry(entry).OnComplete(
 				func(entry *event.Entry, err error) {
+					if err == nil {
+						fmt.Printf(
+							"[member:%v] Relay entry successfully submitted at block [%v]\n",
+							res.index,
+							entry.BlockNumber,
+						)
+					}
 					errorChannel <- err
 				})
 			return <-errorChannel
 		case submittedEntryEvent := <-onSubmittedResultChan:
 			if submittedEntryEvent.RequestID.Cmp(requestID) == 0 {
 				fmt.Printf(
-					"[submitter:%v] Relay entry submitted by other member, leaving.\n",
+					"[member:%v] Relay entry submitted by other member, leaving.\n",
 					res.index,
 				)
 				return returnWithError(nil)
@@ -115,7 +122,7 @@ func (res *relayEntrySubmitter) waitForSubmissionEligibility(
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
 	fmt.Printf(
-		"[submitter:%v] Waiting for block [%v] to submit...\n",
+		"[member:%v] Waiting for block [%v] to submit...\n",
 		res.index,
 		eligibleBlockHeight,
 	)
