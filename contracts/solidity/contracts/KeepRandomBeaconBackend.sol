@@ -50,7 +50,7 @@ contract KeepRandomBeaconBackend is Ownable {
     uint256 public timeDKG;
     uint256 public resultPublicationBlockStep;
     uint256 public ticketSubmissionStartBlock;
-    uint256 public previousEntry;
+    uint256 public groupSelectionSeed;
 
     uint256[] public tickets;
     bytes[] public submissions;
@@ -260,7 +260,7 @@ contract KeepRandomBeaconBackend is Ownable {
         uint256 virtualStakerIndex
     ) public view returns(bool) {
         bool passedCheapCheck = cheapCheck(staker, stakerValue, virtualStakerIndex);
-        uint256 expected = uint256(keccak256(abi.encodePacked(previousEntry, stakerValue, virtualStakerIndex)));
+        uint256 expected = uint256(keccak256(abi.encodePacked(groupSelectionSeed, stakerValue, virtualStakerIndex)));
         return passedCheapCheck && ticketValue == expected;
     }
 
@@ -433,7 +433,7 @@ contract KeepRandomBeaconBackend is Ownable {
         ticketChallengeTimeout = _ticketChallengeTimeout;
         timeDKG = _timeDKG;
         resultPublicationBlockStep = _resultPublicationBlockStep;
-        previousEntry = _genesisEntry;
+        groupSelectionSeed = _genesisEntry;
 
         // Create initial relay entry request. This will allow relayEntry to be called once
         // to trigger the creation of the first group. Requests are removed on successful
@@ -503,7 +503,7 @@ contract KeepRandomBeaconBackend is Ownable {
      * @dev Returns public key of a group from available groups using modulo operator.
      */
     function selectGroup() public view returns(bytes memory) {
-        return groups[previousEntry % groups.length].groupPubKey;
+        return groups[groupSelectionSeed % groups.length].groupPubKey;
     }
 
     /**
@@ -551,7 +551,7 @@ contract KeepRandomBeaconBackend is Ownable {
 
         requests[requestCounter] = Request(from, msg.value, groupPubKey);
 
-        emit RelayEntryRequested(requestCounter, msg.value, previousEntry, seed, groupPubKey);
+        emit RelayEntryRequested(requestCounter, msg.value, groupSelectionSeed, seed, groupPubKey);
         return requestCounter;
     }
 
@@ -567,11 +567,11 @@ contract KeepRandomBeaconBackend is Ownable {
         require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
 
         delete requests[_requestID];
-        previousEntry = _groupSignature;
+        groupSelectionSeed = _groupSignature;
 
-        emit RelayEntryGenerated(_requestID, _groupSignature, _groupPubKey, previousEntry, _seed);
+        emit RelayEntryGenerated(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
-        FrontendContract(frontendContract).relayEntry(_requestID, _groupSignature, _groupPubKey, previousEntry, _seed);
+        FrontendContract(frontendContract).relayEntry(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
         runGroupSelection();
     }
 }

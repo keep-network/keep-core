@@ -37,9 +37,9 @@ contract KeepRandomBeaconBackendStub is KeepRandomBeaconBackend {
 
         require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
 
-        previousEntry =_groupSignature;
-        emit RelayEntryGenerated(_requestID, _groupSignature, _groupPubKey, previousEntry, _seed);
-        FrontendContract(frontendContract).relayEntry(_requestID, _groupSignature, _groupPubKey, previousEntry, _seed);
+        groupSelectionSeed =_groupSignature;
+        emit RelayEntryGenerated(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
+        FrontendContract(frontendContract).relayEntry(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
     }
 
 }
