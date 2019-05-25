@@ -111,8 +111,10 @@ contract KeepRandomBeaconBackend is Ownable {
 
     /**
      * @dev Triggers the selection process of a new candidate group.
+     * @param _groupSelectionSeed Random value that stakers will use to generate their tickets.
      */
-    function runGroupSelection() internal {
+    function runGroupSelection(uint256 _groupSelectionSeed) internal {
+        groupSelectionSeed = _groupSelectionSeed;
         cleanup();
         ticketSubmissionStartBlock = block.number;
     }
@@ -567,11 +569,10 @@ contract KeepRandomBeaconBackend is Ownable {
         require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
 
         delete requests[_requestID];
-        groupSelectionSeed = _groupSignature;
 
         emit RelayEntryGenerated(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
         FrontendContract(frontendContract).relayEntry(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
-        runGroupSelection();
+        runGroupSelection(_groupSignature);
     }
 }
