@@ -5,7 +5,7 @@ import "./DelayedWithdrawal.sol";
 
 
 interface BackendContract {
-    function requestRelayEntry(address from, uint256 seed) payable external returns (uint256 requestId);
+    function requestRelayEntry(address from, uint256 seed, uint256 previousEntry) payable external returns (uint256 requestId);
     function numberOfGroups() external view returns(uint256);
 }
 
@@ -74,8 +74,8 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
         );
 
         // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
-        // BackendContract(_backendContract).requestRelayEntry.value(msg.value)(msg.sender, seed);
-        return BackendContract(_backendContract).requestRelayEntry(msg.sender, seed);
+        // BackendContract(_backendContract).requestRelayEntry.value(msg.value)(msg.sender, seed, _previousEntry);
+        return BackendContract(_backendContract).requestRelayEntry(msg.sender, seed, _previousEntry);
     }
 
     function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {

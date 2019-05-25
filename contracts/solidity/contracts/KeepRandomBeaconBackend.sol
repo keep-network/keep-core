@@ -503,9 +503,10 @@ contract KeepRandomBeaconBackend is Ownable {
 
     /**
      * @dev Returns public key of a group from available groups using modulo operator.
+     * @param seed Signing group selection seed.
      */
-    function selectGroup() public view returns(bytes memory) {
-        return groups[groupSelectionSeed % groups.length].groupPubKey;
+    function selectGroup(uint256 seed) public view returns(bytes memory) {
+        return groups[seed % groups.length].groupPubKey;
     }
 
     /**
@@ -533,9 +534,10 @@ contract KeepRandomBeaconBackend is Ownable {
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
+     * @param previousEntry Previous relay entry that is used to select a signing group for this request.
      * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
      */
-    function requestRelayEntry(address from, uint256 seed) public payable returns (uint256) {
+    function requestRelayEntry(address from, uint256 seed, uint256 previousEntry) public payable returns (uint256) {
 
         require(
             msg.sender == frontendContract,
@@ -547,13 +549,13 @@ contract KeepRandomBeaconBackend is Ownable {
             "At least one group needed to serve the request."
         );
 
-        bytes memory groupPubKey = selectGroup();
+        bytes memory groupPubKey = selectGroup(previousEntry);
 
         requestCounter++;
 
         requests[requestCounter] = Request(from, msg.value, groupPubKey);
 
-        emit RelayEntryRequested(requestCounter, msg.value, groupSelectionSeed, seed, groupPubKey);
+        emit RelayEntryRequested(requestCounter, msg.value, previousEntry, seed, groupPubKey);
         return requestCounter;
     }
 
