@@ -1,12 +1,20 @@
 import exceptThrow from './helpers/expectThrow';
-import {getContracts} from './helpers/initContracts';
+import {initContracts} from './helpers/initContracts';
 
 contract('TestKeepRandomBeaconBackend', function(accounts) {
 
   let backend;
 
   beforeEach(async () => {
-    let contracts = await getContracts(accounts);
+    let contracts = await initContracts(
+      accounts,
+      artifacts.require('./KeepToken.sol'),
+      artifacts.require('./StakingProxy.sol'),
+      artifacts.require('./TokenStaking.sol'),
+      artifacts.require('./KeepRandomBeaconFrontendProxy.sol'),
+      artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
+      artifacts.require('./KeepRandomBeaconBackend.sol')
+    );
     backend = contracts.backend;
   });
 

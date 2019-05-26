@@ -5,7 +5,7 @@ import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
 import expectThrow from './helpers/expectThrow';
 import shuffleArray from './helpers/shuffle';
-import {getContracts} from './helpers/initContracts';
+import {initContracts} from './helpers/initContracts';
 
 
 contract('TestPublishDkgResult', function(accounts) {
@@ -26,7 +26,15 @@ contract('TestPublishDkgResult', function(accounts) {
 
   beforeEach(async () => {
 
-    let contracts = await getContracts(accounts);
+    let contracts = await initContracts(
+      accounts,
+      artifacts.require('./KeepToken.sol'),
+      artifacts.require('./StakingProxy.sol'),
+      artifacts.require('./TokenStaking.sol'),
+      artifacts.require('./KeepRandomBeaconFrontendProxy.sol'),
+      artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
+      artifacts.require('./KeepRandomBeaconBackend.sol')
+    );
     let token = contracts.token;
     backend = contracts.backend;
     let stakingContract = await backend.stakingContract();

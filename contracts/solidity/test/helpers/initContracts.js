@@ -1,13 +1,8 @@
 import { duration } from './increaseTime';
 import { bls } from './data';
-const KeepToken = artifacts.require('./KeepToken.sol');
-const StakingProxy = artifacts.require('./StakingProxy.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const KeepRandomBeaconFrontendProxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol');
-const KeepRandomBeaconFrontendImplV1 = artifacts.require('./KeepRandomBeaconFrontendImplV1.sol');
-const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackend.sol');
 
-async function getContracts(accounts) {
+async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, KeepRandomBeaconFrontendProxy,
+  KeepRandomBeaconFrontendImplV1, KeepRandomBeaconBackend) {
 
   let token, stakingProxy, stakingContract,
     frontendImplV1, frontendProxy, frontend,
@@ -62,4 +57,4 @@ async function getContracts(accounts) {
   };
 };
 
-module.exports.getContracts = getContracts;
+module.exports.initContracts = initContracts;

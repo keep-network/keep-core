@@ -3,7 +3,7 @@ import mineBlocks from './helpers/mineBlocks';
 import {bls} from './helpers/data';
 import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
-import {getContracts} from './helpers/initContracts';
+import {initContracts} from './helpers/initContracts';
 
 
 contract('TestKeepGroupSelection', function(accounts) {
@@ -16,7 +16,15 @@ contract('TestKeepGroupSelection', function(accounts) {
 
   beforeEach(async () => {
 
-    let contracts = await getContracts(accounts);
+    let contracts = await initContracts(
+      accounts,
+      artifacts.require('./KeepToken.sol'),
+      artifacts.require('./StakingProxy.sol'),
+      artifacts.require('./TokenStaking.sol'),
+      artifacts.require('./KeepRandomBeaconFrontendProxy.sol'),
+      artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
+      artifacts.require('./KeepRandomBeaconBackend.sol')
+    );
     token = contracts.token;
     frontend = contracts.frontend;
     backend = contracts.backend;
