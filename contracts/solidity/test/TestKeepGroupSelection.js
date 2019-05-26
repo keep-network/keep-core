@@ -1,81 +1,33 @@
-import { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
 import mineBlocks from './helpers/mineBlocks';
 import generateTickets from './helpers/generateTickets';
-import {bls} from './helpers/data';
-const KeepToken = artifacts.require('./KeepToken.sol');
-const StakingProxy = artifacts.require('./StakingProxy.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const KeepRandomBeaconFrontendProxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol');
-const KeepRandomBeaconFrontendImplV1 = artifacts.require('./KeepRandomBeaconFrontendImplV1.sol');
-const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackend.sol');
+import stakeDelegate from './helpers/stakeDelegate';
+import {getContracts} from './helpers/initContracts';
 
 
 contract('TestKeepGroupSelection', function(accounts) {
 
-  let token, stakingProxy, stakingContract, minimumStake, groupThreshold, groupSize,
-    randomBeaconValue,
-    timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-    frontendImplV1, frontendProxy, frontend,
-    backend,
-    owner = accounts[0], magpie = accounts[1], signature, delegation,
-    operator1 = accounts[2], tickets1,
-    operator2 = accounts[3], tickets2,
-    operator3 = accounts[4], tickets3,
-    operator4 = accounts[5], tickets4;
+  let token, backend,
+  owner = accounts[0], magpie = accounts[1], signature, delegation,
+  operator1 = accounts[2], tickets1,
+  operator2 = accounts[3], tickets2,
+  operator3 = accounts[4], tickets3;
 
   beforeEach(async () => {
-    token = await KeepToken.new();
-    
-    // Initialize staking contract under proxy
-    stakingProxy = await StakingProxy.new();
-    stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
-    await stakingProxy.authorizeContract(stakingContract.address, {from: owner})
 
-    // Initialize Keep Random Beacon contract
-    frontendImplV1 = await KeepRandomBeaconFrontendImplV1.new();
-    frontendProxy = await KeepRandomBeaconFrontendProxy.new(frontendImplV1.address);
-    frontend = await KeepRandomBeaconFrontendImplV1.at(frontendProxy.address);
+    let contracts = await getContracts(accounts);
+    token = contracts.token;
+    backend = contracts.backend;
+    let stakingContract = await backend.stakingContract();
+    let minimumStake = await backend.minimumStake();
 
-    // Initialize Keep Random Beacon backend contract
-    minimumStake = 200000;
-    groupThreshold = 15;
-    groupSize = 20;
-    timeoutInitial = 20;
-    timeoutSubmission = 50;
-    timeoutChallenge = 60;
-    timeDKG = 20;
-    resultPublicationBlockStep = 3;
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(2000)))
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(2000)))
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake.mul(web3.utils.toBN(3000)))
 
-    randomBeaconValue = bls.groupSignature;
-
-    backend = await KeepRandomBeaconBackend.new();
-    await backend.initialize(
-      stakingProxy.address, frontendProxy.address, minimumStake, groupThreshold,
-      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-      randomBeaconValue, bls.groupPubKey
-    );
-
-    await frontend.initialize(1, 1, backend.address);
-    await backend.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
-
-    // Stake delegate tokens to operator1
-    signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator1)).substr(2), 'hex');
-    delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
-    await token.approveAndCall(stakingContract.address, minimumStake*2000, delegation, {from: owner});
-    tickets1 = generateTickets(randomBeaconValue, operator1, 2000);
-
-    // Stake delegate tokens to operator2
-    signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator2)).substr(2), 'hex');
-    delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
-    await token.approveAndCall(stakingContract.address, minimumStake*2000, delegation, {from: owner});
-    tickets2 = generateTickets(randomBeaconValue, operator2, 2000);
-
-    // Stake delegate tokens to operator3
-    signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator3)).substr(2), 'hex');
-    delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
-    await token.approveAndCall(stakingContract.address, minimumStake*3000, delegation, {from: owner});
-    tickets3 = generateTickets(randomBeaconValue, operator3, 3000);
+    tickets1 = generateTickets(await backend.groupSelectionSeed(), operator1, 2000);
+    tickets2 = generateTickets(await backend.groupSelectionSeed(), operator2, 2000);
+    tickets3 = generateTickets(await backend.groupSelectionSeed(), operator3, 3000);
 
   });
 
@@ -94,11 +46,13 @@ contract('TestKeepGroupSelection', function(accounts) {
 
   it("should be able to get selected tickets and participants after challenge period is over", async function() {
 
+    let groupSize = await backend.groupSize();
+
     for (let i = 0; i < groupSize*2; i++) {
       await backend.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
     }
 
-    mineBlocks(timeoutChallenge);
+    mineBlocks(await backend.ticketChallengeTimeout());
     let selectedTickets = await backend.selectedTickets();
     assert.equal(selectedTickets.length, groupSize, "Should be trimmed to groupSize length.");
 

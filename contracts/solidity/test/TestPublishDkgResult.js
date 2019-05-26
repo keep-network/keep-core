@@ -5,74 +5,42 @@ import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
 import expectThrow from './helpers/expectThrow';
 import shuffleArray from './helpers/shuffle';
-const KeepToken = artifacts.require('./KeepToken.sol');
-const StakingProxy = artifacts.require('./StakingProxy.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const KeepRandomBeaconFrontendProxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol');
-const KeepRandomBeaconFrontendImplV1 = artifacts.require('./KeepRandomBeaconFrontendImplV1.sol');
-const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackend.sol');
+import {getContracts} from './helpers/initContracts';
 
 
 contract('TestPublishDkgResult', function(accounts) {
 
-  const minimumStake = 200000;
-  const groupThreshold = 15;
-  const groupSize = 20;
-  const timeoutInitial = 20;
-  const timeoutSubmission = 100;
-  const timeoutChallenge = 60;
-  const timeDKG = 20;
-  const resultPublicationBlockStep = 3;
-
-  let disqualified, inactive, resultHash,
-  token, stakingProxy, stakingContract, randomBeaconValue, requestId,
-  frontendImplV1, frontendProxy, frontend,
-  backend, groupPubKey,
-  ticketSubmissionStartBlock, selectedParticipants, signatures, signingMemberIndices = [],
+  let backend,
   owner = accounts[0], magpie = accounts[0],
-  operator1 = accounts[0], tickets1,
-  operator2 = accounts[1], tickets2,
-  operator3 = accounts[2], tickets3,
-  operator4 = accounts[3];
-  requestId = 0;
-  disqualified = '0x0000000000000000000000000000000000000000'
-  inactive = '0x0000000000000000000000000000000000000000'
-  groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000"
-
+  operator1 = accounts[0],
+  operator2 = accounts[1],
+  operator3 = accounts[2],
+  operator4 = accounts[3],
+  resultPublicationTime, groupThreshold,
+  requestId = 0,
+  selectedParticipants, signatures, signingMemberIndices = [],
+  disqualified = '0x0000000000000000000000000000000000000000',
+  inactive = '0x0000000000000000000000000000000000000000',
+  groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000",
   resultHash = web3.utils.soliditySha3(groupPubKey, disqualified, inactive);
 
   beforeEach(async () => {
-    token = await KeepToken.new();
 
-    // Initialize staking contract under proxy
-    stakingProxy = await StakingProxy.new();
-    stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
-    await stakingProxy.authorizeContract(stakingContract.address, {from: owner})
+    let contracts = await getContracts(accounts);
+    let token = contracts.token;
+    backend = contracts.backend;
+    let stakingContract = await backend.stakingContract();
+    let minimumStake = await backend.minimumStake();
+    let groupSize = await backend.groupSize();
+    groupThreshold = await backend.groupThreshold();
 
-    // Initialize Keep Random Beacon contract
-    frontendImplV1 = await KeepRandomBeaconFrontendImplV1.new();
-    frontendProxy = await KeepRandomBeaconFrontendProxy.new(frontendImplV1.address);
-    frontend = await KeepRandomBeaconFrontendImplV1.at(frontendProxy.address);
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(2000)))
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(2000)))
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake.mul(web3.utils.toBN(3000)))
 
-    // Initialize Keep Random Beacon backend contract
-    backend = await KeepRandomBeaconBackend.new();
-    randomBeaconValue = bls.groupSignature;
-    await backend.initialize(
-      stakingProxy.address, frontendProxy.address, minimumStake, groupThreshold,
-      groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-      randomBeaconValue, bls.groupPubKey
-    );
-
-    await frontend.initialize(1, 1, backend.address);
-    await backend.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
-
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake*2000)
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake*2000)
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake*3000)
-
-    tickets1 = generateTickets(randomBeaconValue, operator1, 2000);
-    tickets2 = generateTickets(randomBeaconValue, operator2, 2000);
-    tickets3 = generateTickets(randomBeaconValue, operator3, 3000);
+    let tickets1 = generateTickets(await backend.groupSelectionSeed(), operator1, 2000);
+    let tickets2 = generateTickets(await backend.groupSelectionSeed(), operator2, 2000);
+    let tickets3 = generateTickets(await backend.groupSelectionSeed(), operator3, 3000);
 
     for(let i = 0; i < groupSize; i++) {
       await backend.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
@@ -86,7 +54,11 @@ contract('TestPublishDkgResult', function(accounts) {
       await backend.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
     }
 
-    ticketSubmissionStartBlock = await backend.ticketSubmissionStartBlock();
+    let ticketSubmissionStartBlock = (await backend.ticketSubmissionStartBlock()).toNumber();
+    let timeoutChallenge = (await backend.ticketChallengeTimeout()).toNumber();
+    let timeDKG = (await backend.timeDKG()).toNumber();
+    resultPublicationTime = ticketSubmissionStartBlock + timeoutChallenge + timeDKG;
+
     selectedParticipants = await backend.selectedParticipants();
 
     for(let i = 0; i < selectedParticipants.length; i++) {
@@ -101,7 +73,7 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
+    mineBlocks(resultPublicationTime - currentBlock);
 
     await backend.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: selectedParticipants[0]})
     assert.isTrue(await backend.isDkgResultSubmitted.call(requestId), "DkgResult should should be submitted");
@@ -125,7 +97,7 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
+    mineBlocks(resultPublicationTime - currentBlock);
 
     await backend.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
     assert.isTrue(await backend.isDkgResultSubmitted.call(requestId), "DkgResult should should be submitted");
@@ -133,11 +105,12 @@ contract('TestPublishDkgResult', function(accounts) {
 
   it("should only be able to submit result at eligible block time based on member index.", async function() {
 
+    let resultPublicationBlockStep = (await backend.resultPublicationBlockStep()).toNumber();
     let submitter1MemberIndex = 4;
     let submitter2MemberIndex = 5;
     let submitter2 = selectedParticipants[submitter2MemberIndex - 1];
-    let eligibleBlockForSubmitter1 = ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG + (submitter1MemberIndex-1)*resultPublicationBlockStep;
-    let eligibleBlockForSubmitter2 = ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG + (submitter2MemberIndex-1)*resultPublicationBlockStep;
+    let eligibleBlockForSubmitter1 = resultPublicationTime + (submitter1MemberIndex-1)*resultPublicationBlockStep;
+    let eligibleBlockForSubmitter2 = resultPublicationTime + (submitter2MemberIndex-1)*resultPublicationBlockStep;
 
     // Jump in time to when submitter 1 becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
@@ -186,7 +159,7 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Jump in time to when first member is eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
+    mineBlocks(resultPublicationTime - currentBlock);
 
     await expectThrow(backend.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
@@ -209,7 +182,7 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Jump in time to when first member is eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
+    mineBlocks(resultPublicationTime - currentBlock);
 
     await backend.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
@@ -233,7 +206,7 @@ contract('TestPublishDkgResult', function(accounts) {
 
     // Jump in time to when first member is eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(ticketSubmissionStartBlock.toNumber() + timeoutChallenge + timeDKG - currentBlock);
+    mineBlocks(resultPublicationTime - currentBlock);
 
     await expectThrow(backend.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
