@@ -8,6 +8,7 @@ const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackendStub
 
 
 contract('TestKeepRandomBeaconUpgrade', function(accounts) {
+  const relayRequestTimeout = 10;
 
   let frontendImplV1, frontendImplV2, frontendProxy, frontendV1, frontendV2, backend,
     account_one = accounts[0],
@@ -21,7 +22,7 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     frontendV2 = await KeepRandomBeaconFrontendImplV2.at(frontendProxy.address);
     backend = await KeepRandomBeaconBackend.new()
     await backend.authorizeFrontendContract(frontendProxy.address);
-    await frontendV1.initialize(100, duration.days(0), backend.address);
+    await frontendV1.initialize(100, duration.days(0), backend.address, relayRequestTimeout);
 
     // Modify state so we can test later that eternal storage works as expected after upgrade
     await backend.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);

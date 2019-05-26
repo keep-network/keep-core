@@ -20,7 +20,12 @@ async function getContracts(accounts) {
     timeoutSubmission = 100,
     timeoutChallenge = 60,
     timeDKG = 20,
-    resultPublicationBlockStep = 3;
+    resultPublicationBlockStep = 3,
+    groupActiveTime = 300,
+    activeGroupsThreshold = 5,
+    minPayment = 1,
+    withdrawalDelay = 1,
+    relayRequestTimeout = 10;
 
   // Initialize Keep token contract
   token = await KeepToken.new();
@@ -40,10 +45,11 @@ async function getContracts(accounts) {
   await backend.initialize(
     stakingProxy.address, frontend.address, minimumStake, groupThreshold,
     groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
+    activeGroupsThreshold, groupActiveTime,
     bls.groupSignature, bls.groupPubKey
   );
-  
-  await frontend.initialize(1, 1, backend.address);
+
+  await frontend.initialize(minPayment, withdrawalDelay, backend.address, relayRequestTimeout);
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 4).
   await backend.authorizeStakingContract(stakingContract.address);

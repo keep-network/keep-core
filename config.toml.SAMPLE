@@ -27,3 +27,6 @@
 # [LibP2P]
 # 	Seed = 2
 # 	Port = 3919
+
+[Storage]
+  DataDir = "/my/secure/location"

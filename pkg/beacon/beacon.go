@@ -8,6 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -34,11 +35,14 @@ func Initialize(
 		return err
 	}
 
+	groupRegistry := registry.NewGroupRegistry(relayChain)
+
 	node := relay.NewNode(
 		staker,
 		netProvider,
 		blockCounter,
 		chainConfig,
+		groupRegistry,
 	)
 
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
@@ -54,17 +58,17 @@ func Initialize(
 		)
 	})
 
-	relayChain.OnRelayEntryGenerated(func(entry *event.Entry) {
-		fmt.Printf("New relay entry generated [%+v]\n", entry)
+	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
+		fmt.Printf("Group selection started [%+v]\n", event)
 
 		go func() {
 			err := node.SubmitTicketsForGroupSelection(
 				relayChain,
 				blockCounter,
-				entry.Value.Bytes(),
-				entry.RequestID,
-				entry.Seed,
-				entry.BlockNumber,
+				event.NewEntry.Bytes(),
+				event.RequestID,
+				event.Seed,
+				event.BlockNumber,
 			)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Tickets submission failed: [%v]\n", err)
@@ -73,7 +77,8 @@ func Initialize(
 	})
 
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
-		fmt.Printf("New group registered [%+v]\n", registration)
+		fmt.Printf("New group registered on chain [%+v]\n", registration)
+		go groupRegistry.UnregisterDeletedGroups()
 	})
 
 	return nil

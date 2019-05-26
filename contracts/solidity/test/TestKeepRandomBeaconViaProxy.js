@@ -7,6 +7,7 @@ const KeepRandomBeaconFrontendImplV1 = artifacts.require('./KeepRandomBeaconFron
 const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackendStub.sol');
 
 contract('TestKeepRandomBeaconViaProxy', function(accounts) {
+  const relayRequestTimeout = 10;
 
   let frontendImplV1, frontendProxy, frontend, backend,
     account_one = accounts[0],
@@ -19,7 +20,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     frontend = await KeepRandomBeaconFrontendImplV1.at(frontendProxy.address);
     backend = await KeepRandomBeaconBackend.new()
     await backend.authorizeFrontendContract(frontendProxy.address)
-    await frontend.initialize(100, duration.days(30), backend.address);
+    await frontend.initialize(100, duration.days(30), backend.address, relayRequestTimeout);
   });
 
   
@@ -83,7 +84,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     let receiverStartBalance = web3.utils.fromWei(await web3.eth.getBalance(account_three), 'ether');
     await frontend.finishWithdrawal(account_three, {from: account_one});
     let receiverEndBalance = web3.utils.fromWei(await web3.eth.getBalance(account_three), 'ether');
-    assert(receiverEndBalance > receiverStartBalance, "Receiver updated balance should include received ether.");
+    assert(Number(receiverEndBalance) > Number(receiverStartBalance), "Receiver updated balance should include received ether.");
 
     let contractEndBalance = await web3.eth.getBalance(backend.address);
     assert.equal(contractEndBalance, contractStartBalance - amount, "Keep Random Beacon contract should send all ether.");

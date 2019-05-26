@@ -1,5 +1,6 @@
 import exceptThrow from './helpers/expectThrow';
 import mineBlocks from './helpers/mineBlocks';
+import {bls} from './helpers/data';
 import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
 import {getContracts} from './helpers/initContracts';
@@ -7,7 +8,7 @@ import {getContracts} from './helpers/initContracts';
 
 contract('TestKeepGroupSelection', function(accounts) {
 
-  let token, backend,
+  let token, frontend, backend,
   owner = accounts[0], magpie = accounts[1], signature, delegation,
   operator1 = accounts[2], tickets1,
   operator2 = accounts[3], tickets2,
@@ -17,6 +18,7 @@ contract('TestKeepGroupSelection', function(accounts) {
 
     let contracts = await getContracts(accounts);
     token = contracts.token;
+    frontend = contracts.frontend;
     backend = contracts.backend;
     let stakingContract = await backend.stakingContract();
     let minimumStake = await backend.minimumStake();
@@ -28,6 +30,9 @@ contract('TestKeepGroupSelection', function(accounts) {
     tickets1 = generateTickets(await backend.groupSelectionSeed(), operator1, 2000);
     tickets2 = generateTickets(await backend.groupSelectionSeed(), operator2, 2000);
     tickets3 = generateTickets(await backend.groupSelectionSeed(), operator3, 3000);
+
+    // Using stub method to add first group to help testing.
+    await backend.registerNewGroup(bls.groupPubKey);
 
   });
 
@@ -42,6 +47,26 @@ contract('TestKeepGroupSelection', function(accounts) {
 
   it("should fail to get selected participants before challenge period is over", async function() {
     await exceptThrow(backend.selectedParticipants());
+  });
+
+  it("should not trigger group selection while one is in progress", async function() {
+    let groupSelectionStartBlock = await backend.ticketSubmissionStartBlock();
+    await frontend.requestRelayEntry(bls.seed, {value: 10});
+    await backend.relayEntry(2, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
+
+    assert.isTrue((await backend.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
+    assert.isTrue((await backend.groupSelectionSeed()).eq(bls.groupSignature), "Random beacon value for the current group selection should not change.");
+  });
+
+  it("should trigger new group selection when the last one is over", async function() {
+    let groupSelectionStartBlock = await keepGroupImplViaProxy.ticketSubmissionStartBlock();
+    mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
+
+    await frontend.requestRelayEntry(bls.seed, {value: 10});
+    await backend.relayEntry(2, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
+
+    assert.isFalse((await keepGroupImplViaProxy.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
+    assert.isTrue((await keepGroupImplViaProxy.randomBeaconValue()).eq(bls.nextGroupSignature), "Random beacon value for the current group selection should be updated.");
   });
 
   it("should be able to get selected tickets and participants after challenge period is over", async function() {

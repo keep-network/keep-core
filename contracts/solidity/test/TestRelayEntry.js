@@ -6,6 +6,7 @@ const KeepRandomBeaconBackendStub = artifacts.require('./KeepRandomBeaconBackend
 
 
 contract('TestRelayEntry', function() {
+  const relayRequestTimeout = 10;
 
   let frontendImplV1, frontendProxy, frontend, backend;
 
@@ -18,7 +19,7 @@ contract('TestRelayEntry', function() {
 
     backend = await KeepRandomBeaconBackendStub.new();
     backend.authorizeFrontendContract(frontend.address);
-    await frontend.initialize(1, 1, backend.address);
+    await frontend.initialize(1, 1, backend.address, relayRequestTimeout);
     await frontend.requestRelayEntry(bls.seed, {value: 10});
 
   });

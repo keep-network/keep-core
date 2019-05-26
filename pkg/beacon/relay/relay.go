@@ -9,6 +9,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -21,14 +22,15 @@ func NewNode(
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
 	chainConfig *config.Chain,
+	groupRegistry *registry.Groups,
 ) Node {
 	return Node{
-		Staker:       staker,
-		netProvider:  netProvider,
-		blockCounter: blockCounter,
-		chainConfig:  chainConfig,
-		stakeIDs:     make([]string, 100),
-		myGroups:     make(map[string][]*membership),
+		Staker:        staker,
+		netProvider:   netProvider,
+		blockCounter:  blockCounter,
+		chainConfig:   chainConfig,
+		stakeIDs:      make([]string, 100),
+		groupRegistry: groupRegistry,
 	}
 }
 
@@ -52,19 +54,31 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		seed.Bytes(),
 	)
 
-	memberships := n.myGroups[string(groupPublicKey)]
+	memberships := n.groupRegistry.GetGroup(groupPublicKey)
+
 	if len(memberships) < 1 {
 		return
 	}
 
 	for _, signer := range memberships {
-		go func(signer *membership) {
+		go func(signer *registry.Membership) {
+			channel, err := n.netProvider.ChannelFor(signer.ChannelName)
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"could not create broadcast channel with name [%v]: [%v]\n",
+					signer.ChannelName,
+					err,
+				)
+				return
+			}
+
 			signature, err := thresholdsignature.Execute(
 				combinedEntryToSign,
 				n.chainConfig.HonestThreshold(),
 				n.blockCounter,
-				signer.channel,
-				signer.signer,
+				channel,
+				signer.Signer,
 				startBlockHeight,
 			)
 			if err != nil {
@@ -83,7 +97,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				Value:         rightSizeSignature,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
-				GroupPubKey:   signer.signer.GroupPublicKeyBytes(),
+				GroupPubKey:   signer.Signer.GroupPublicKeyBytes(),
 				Seed:          seed,
 			}
 

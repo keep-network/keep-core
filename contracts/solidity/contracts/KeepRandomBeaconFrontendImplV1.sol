@@ -7,6 +7,7 @@ import "./DelayedWithdrawal.sol";
 interface BackendContract {
     function requestRelayEntry(address from, uint256 seed, uint256 previousEntry) payable external returns (uint256 requestId);
     function numberOfGroups() external view returns(uint256);
+    function selectGroup(uint256 previousEntry) external returns(bytes memory);
 }
 
 
@@ -26,6 +27,7 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
     uint256 internal _minPayment;
     address internal _backendContract;
     uint256 internal _previousEntry;
+    uint256 internal _relayRequestTimeout;
 
     mapping (string => bool) internal _initialized;
 
@@ -41,8 +43,10 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param backendContract Backend contract linked to this contract.
+     * @param relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
+     * Blocks are counted from the moment relay request occur.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay, address backendContract)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay, address backendContract, uint256 relayRequestTimeout)
         public
         onlyOwner
     {
@@ -52,6 +56,7 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _backendContract = backendContract;
+        _relayRequestTimeout = relayRequestTimeout;
     }
 
     /**
@@ -78,6 +83,14 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
         return BackendContract(_backendContract).requestRelayEntry(msg.sender, seed, _previousEntry);
     }
 
+    /**
+     * @dev Creates a new relay entry and stores the associated data on the chain.
+     * @param requestID The request that started this generation - to tie the results back to the request.
+     * @param groupSignature The generated random number.
+     * @param groupPubKey Public key of the group that generated the threshold signature.
+     * @param previousEntry Previous relay entry value.
+     * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
+     */
     function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {
         require(
             msg.sender == _backendContract,
@@ -111,8 +124,15 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
+     * Gets the timeout in blocks for a relay entry to appear on the chain.
+     */
+    function relayRequestTimeout() public view returns(uint256) {
+        return _relayRequestTimeout;
+    }
+
+    /**
      * @dev Gets version of the current implementation.
-    */
+     */
     function version() public pure returns (string memory) {
         return "V1";
     }
