@@ -90,8 +90,9 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 				func(entry *event.Entry, err error) {
 					if err == nil {
 						fmt.Printf(
-							"[member:%v] Relay entry successfully submitted at block [%v]\n",
+							"[member:%v] Relay entry for request [%v] successfully submitted at block [%v]\n",
 							res.index,
+							requestID,
 							entry.BlockNumber,
 						)
 					}
