@@ -1,36 +1,45 @@
 import {bls} from './helpers/data';
-import increaseTime, { duration } from './helpers/increaseTime';
+import { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
-const KeepRandomBeaconFrontendProxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol');
-const KeepRandomBeaconFrontendImplV1 = artifacts.require('./KeepRandomBeaconFrontendImplV1.sol');
-const KeepRandomBeaconFrontendImplV2 = artifacts.require('./examples/KeepRandomBeaconFrontendUpgradeExample.sol');
-const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackendStub.sol');
+import {initContracts} from './helpers/initContracts';
+const FrontendProxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol');
+const FrontendImplV2 = artifacts.require('./examples/KeepRandomBeaconFrontendUpgradeExample.sol');
 
 
 contract('TestKeepRandomBeaconUpgrade', function(accounts) {
-  const relayRequestTimeout = 10;
 
-  let frontendImplV1, frontendImplV2, frontendProxy, frontendV1, frontendV2, backend,
-    account_one = accounts[0],
+  let backend, frontendProxy, frontend, frontendImplV2, frontendV2,
     account_two = accounts[1];
 
   beforeEach(async () => {
-    frontendImplV1 = await KeepRandomBeaconFrontendImplV1.new();
-    frontendImplV2 = await KeepRandomBeaconFrontendImplV2.new();
-    frontendProxy = await KeepRandomBeaconFrontendProxy.new(frontendImplV1.address);
-    frontendV1 = await KeepRandomBeaconFrontendImplV1.at(frontendProxy.address);
-    frontendV2 = await KeepRandomBeaconFrontendImplV2.at(frontendProxy.address);
-    backend = await KeepRandomBeaconBackend.new()
-    await backend.authorizeFrontendContract(frontendProxy.address);
-    await frontendV1.initialize(100, duration.days(0), backend.address, relayRequestTimeout);
+    let contracts = await initContracts(
+      accounts,
+      artifacts.require('./KeepToken.sol'),
+      artifacts.require('./StakingProxy.sol'),
+      artifacts.require('./TokenStaking.sol'),
+      FrontendProxy,
+      artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
+      artifacts.require('./KeepRandomBeaconBackendStub.sol')
+    );
+
+    backend = contracts.backend;
+    frontend = contracts.frontend;
+    frontendProxy = await FrontendProxy.at(frontend.address);
+
+    frontendImplV2 = await FrontendImplV2.new();
+    frontendV2 = await FrontendImplV2.at(frontendProxy.address);
+
+    // Using stub method to add first group to help testing.
+    await backend.registerNewGroup(bls.groupPubKey);
 
     // Modify state so we can test later that eternal storage works as expected after upgrade
-    await backend.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+    await frontend.requestRelayEntry(bls.seed, {value: 10});
+    await backend.relayEntry(2, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
-    assert.isTrue(await frontendV1.initialized(), "Implementation contract should be initialized.");
+    assert.isTrue(await frontend.initialized(), "Implementation contract should be initialized.");
   });
 
   it("should fail to upgrade implementation if called by not contract owner", async function() {
@@ -39,7 +48,7 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
 
   it("should be able to upgrade implementation and initialize it with new data", async function() {
     await frontendProxy.upgradeTo(frontendImplV2.address);
-    await frontendV2.initialize(100, duration.days(0), backend.address);
+    await frontendV2.initialize(100, duration.days(0), backend.address, 0);
 
     assert.isTrue(await frontendV2.initialized(), "Implementation contract should be initialized.");
 

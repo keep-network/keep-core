@@ -1,26 +1,35 @@
 import { duration, increaseTimeTo } from './helpers/increaseTime';
+import {bls} from './helpers/data';
 import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
-const KeepRandomBeaconFrontendProxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol');
-const KeepRandomBeaconFrontendImplV1 = artifacts.require('./KeepRandomBeaconFrontendImplV1.sol');
-const KeepRandomBeaconBackend = artifacts.require('./KeepRandomBeaconBackendStub.sol');
+import {initContracts} from './helpers/initContracts';
+const FrontendProxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol')
 
 contract('TestKeepRandomBeaconViaProxy', function(accounts) {
-  const relayRequestTimeout = 10;
 
-  let frontendImplV1, frontendProxy, frontend, backend,
+  let frontend, frontendProxy, backend,
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2];
 
   beforeEach(async () => {
-    frontendImplV1 = await KeepRandomBeaconFrontendImplV1.new();
-    frontendProxy = await KeepRandomBeaconFrontendProxy.new(frontendImplV1.address);
-    frontend = await KeepRandomBeaconFrontendImplV1.at(frontendProxy.address);
-    backend = await KeepRandomBeaconBackend.new()
-    await backend.authorizeFrontendContract(frontendProxy.address)
-    await frontend.initialize(100, duration.days(30), backend.address, relayRequestTimeout);
+    let contracts = await initContracts(
+      accounts,
+      artifacts.require('./KeepToken.sol'),
+      artifacts.require('./StakingProxy.sol'),
+      artifacts.require('./TokenStaking.sol'),
+      FrontendProxy,
+      artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
+      artifacts.require('./KeepRandomBeaconBackendStub.sol')
+    );
+  
+    backend = contracts.backend;
+    frontend = contracts.frontend;
+    frontendProxy = await FrontendProxy.at(frontend.address);
+
+    // Using stub method to add first group to help testing.
+    await backend.registerNewGroup(bls.groupPubKey);
   });
 
   
@@ -29,7 +38,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
   });
 
   it("should fail to request relay entry with not enough ether", async function() {
-    await exceptThrow(frontend.requestRelayEntry(0, {from: account_two, value: 99}));
+    await exceptThrow(frontend.requestRelayEntry(0, {from: account_two, value: 0}));
   });
 
   it("should be able to request relay with enough ether", async function() {
