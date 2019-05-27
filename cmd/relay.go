@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"os"
 	"sync"
+	"time"
 
 	crand "crypto/rand"
 
@@ -81,10 +82,10 @@ func relayRequest(c *cli.Context) error {
 		// To make sure we catch request ID from the correct one, we compare seed
 		// with the one we sent.
 		if requestID == nil && seed.Cmp(request.Seed) == 0 {
-			fmt.Fprintf(
-				os.Stderr,
-				"Relay entry request submitted with id [%s].\n",
+			fmt.Printf(
+				"Relay entry request submitted with id [%s]: [%v]\n",
 				request.RequestID.String(),
+				request,
 			)
 
 			requestMutex.Lock()
@@ -108,6 +109,8 @@ func relayRequest(c *cli.Context) error {
 		}
 	})
 
+	fmt.Printf("Requesting for a new relay entry at [%v]\n", time.Now().String())
+
 	provider.ThresholdRelay().RequestRelayEntry(seed).
 		OnComplete(func(request *event.Request, err error) {
 			if err != nil {
@@ -118,11 +121,6 @@ func relayRequest(c *cli.Context) error {
 				)
 				return
 			}
-			fmt.Fprintf(
-				os.Stdout,
-				"Relay entry requested: [%v].\n",
-				request,
-			)
 		})
 
 	select {
