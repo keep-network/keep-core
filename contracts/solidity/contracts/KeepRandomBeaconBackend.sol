@@ -35,8 +35,8 @@ contract KeepRandomBeaconBackend is Ownable {
     event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey);
 
     // These are the public events that are used by clients
-    event RelayEntryRequested(uint256 _requestID, uint256 _payment, uint256 _previousEntry, uint256 seed, bytes _groupPublicKey);
-    event RelayEntryGenerated(uint256 _requestID, uint256 _requestResponse, bytes _requestGroupPubKey, uint256 _previousEntry, uint256 _seed);
+    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
+    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     // TODO: Remove requestId once Keep Client DKG is refactored to
     // use groupSelectionSeed as unique id.

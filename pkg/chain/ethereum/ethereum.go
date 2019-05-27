@@ -213,7 +213,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconFrontendContract.RelayEntry(
+	_, err = ec.keepRandomBeaconBackendContract.RelayEntry(
 		newEntry.RequestID,
 		newEntry.Value,
 		newEntry.GroupPubKey,
@@ -232,7 +232,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 func (ec *ethereumChain) OnRelayEntryGenerated(
 	handle func(entry *event.Entry),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconFrontendContract.WatchRelayEntryGenerated(
+	return ec.keepRandomBeaconBackendContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
 			requestResponse *big.Int,
@@ -263,7 +263,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconFrontendContract.WatchRelayEntryRequested(
+	return ec.keepRandomBeaconBackendContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
 			payment *big.Int,
