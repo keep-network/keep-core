@@ -5,8 +5,11 @@ import (
 	"os"
 	"sync"
 
+	"encoding/hex"
+
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
+	"github.com/keep-network/keep-core/pkg/storage"
 )
 
 // Groups represents a collection of Keep groups in which the given
@@ -17,6 +20,8 @@ type Groups struct {
 	myGroups map[string][]*Membership
 
 	relayChain relaychain.GroupRegistrationInterface
+
+	storage storage.Storage
 }
 
 // Membership represents a member of a group
@@ -28,10 +33,12 @@ type Membership struct {
 // NewGroupRegistry returns an empty GroupRegistry.
 func NewGroupRegistry(
 	relayChain relaychain.GroupRegistrationInterface,
+	storage storage.Storage,
 ) *Groups {
 	return &Groups{
 		myGroups:   make(map[string][]*Membership),
 		relayChain: relayChain,
+		storage:    storage,
 	}
 }
 
@@ -47,11 +54,20 @@ func (gr *Groups) RegisterGroup(
 
 	groupPublicKey := string(signer.GroupPublicKeyBytes())
 
-	gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey],
-		&Membership{
-			Signer:      signer,
-			ChannelName: channelName,
-		})
+	membership := &Membership{
+		Signer:      signer,
+		ChannelName: channelName,
+	}
+
+	membershipBytes, err := membership.Marshal()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Marshalling of the membership failed: [%v]\n", err)
+		return
+	}
+	hexGroupPublicKey := hex.EncodeToString(signer.GroupPublicKeyBytes())
+	gr.storage.Save(membershipBytes, "/membership_"+hexGroupPublicKey)
+
+	gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
 }
 
 // GetGroup gets a group by a groupPublicKey

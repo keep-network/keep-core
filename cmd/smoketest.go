@@ -42,6 +42,13 @@ const smokeTestDescription = `The smoke-test command creates a local threshold
    executed, once again with an in-process broadcast channel and chain, and the
    final signature is verified by each member of the group.`
 
+type devNullDataStorage struct {
+}
+
+func (dnds *devNullDataStorage) Save(data []byte, name string) {
+	// noop
+}
+
 func init() {
 	SmokeTestCommand = cli.Command{
 		Name:        "smoke-test",
@@ -140,6 +147,8 @@ func createNode(
 		))
 	}
 
+	storage := &devNullDataStorage{}
+
 	netProvider := netlocal.Connect()
 
 	go func() {
@@ -157,6 +166,7 @@ func createNode(
 			chainCounter,
 			stakeMonitor,
 			netProvider,
+			storage,
 		)
 		if err != nil {
 			panic(fmt.Sprintf(
