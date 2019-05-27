@@ -24,9 +24,9 @@ func TestExecute_HappyPath(t *testing.T) {
 	assertSuccessfulSignersCount(t, result, groupSize)
 	assertMemberFailuresCount(t, result, 0)
 	assertSamePublicKey(t, result)
-	// TODO: assert no DQ
-	// TODO: assert no IA
-	// TODO: assert key is valid
+	assertNoDisqualifiedMembers(t, result)
+	assertNoInactiveMembers(t, result)
+	assertValidGroupPublicKey(t, result)
 }
 
 func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
@@ -51,7 +51,7 @@ func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
 	assertSuccessfulSignersCount(t, result, groupSize-1)
 	assertMemberFailuresCount(t, result, 1)
 	assertSamePublicKey(t, result)
-	// TODO: assert no DQ
-	// TODO: assert member 1 is IA
-	// TODO: assert key is valid
+	assertNoDisqualifiedMembers(t, result)
+	assertInactiveMembers(t, result, group.MemberIndex(1))
+	assertValidGroupPublicKey(t, result)
 }
