@@ -28,18 +28,18 @@ func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
 }
 
 func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
-	groupSize, err := ec.keepGroupContract.GroupSize()
+	groupSize, err := ec.keepRandomBeaconBackendContract.GroupSize()
 	if err != nil {
 		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
 	}
 
-	threshold, err := ec.keepGroupContract.GroupThreshold()
+	threshold, err := ec.keepRandomBeaconBackendContract.GroupThreshold()
 	if err != nil {
 		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
 	}
 
 	ticketInitialSubmissionTimeout, err :=
-		ec.keepGroupContract.TicketInitialSubmissionTimeout()
+		ec.keepRandomBeaconBackendContract.TicketInitialSubmissionTimeout()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error calling TicketInitialSubmissionTimeout: [%v]",
@@ -48,7 +48,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 	}
 
 	ticketReactiveSubmissionTimeout, err :=
-		ec.keepGroupContract.TicketReactiveSubmissionTimeout()
+		ec.keepRandomBeaconBackendContract.TicketReactiveSubmissionTimeout()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error calling TicketReactiveSubmissionTimeout: [%v]",
@@ -57,7 +57,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 	}
 
 	ticketChallengeTimeout, err :=
-		ec.keepGroupContract.TicketChallengeTimeout()
+		ec.keepRandomBeaconBackendContract.TicketChallengeTimeout()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error calling TicketChallengeTimeout: [%v]",
@@ -65,7 +65,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		)
 	}
 
-	resultPublicationBlockStep, err := ec.keepGroupContract.ResultPublicationBlockStep()
+	resultPublicationBlockStep, err := ec.keepRandomBeaconBackendContract.ResultPublicationBlockStep()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error calling ResultPublicationBlockStep: [%v]",
@@ -73,17 +73,17 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		)
 	}
 
-	minimumStake, err := ec.keepGroupContract.MinimumStake()
+	minimumStake, err := ec.keepRandomBeaconBackendContract.MinimumStake()
 	if err != nil {
 		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
 	}
 
-	tokenSupply, err := ec.keepGroupContract.TokenSupply()
+	tokenSupply, err := ec.keepRandomBeaconBackendContract.TokenSupply()
 	if err != nil {
 		return nil, fmt.Errorf("error calling TokenSupply: [%v]", err)
 	}
 
-	naturalThreshold, err := ec.keepGroupContract.NaturalThreshold()
+	naturalThreshold, err := ec.keepRandomBeaconBackendContract.NaturalThreshold()
 	if err != nil {
 		return nil, fmt.Errorf("error calling NaturalThreshold: [%v]", err)
 	}
@@ -105,7 +105,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 // be returned if not staked.  If err != nil then it was not possible to determine
 // if the address is staked or not.
 func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
-	return ec.keepGroupContract.HasMinimumStake(address)
+	return ec.keepRandomBeaconBackendContract.HasMinimumStake(address)
 }
 
 func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
@@ -123,7 +123,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 		}
 	}
 
-	_, err := ec.keepGroupContract.SubmitTicket(
+	_, err := ec.keepRandomBeaconBackendContract.SubmitTicket(
 		ticket.Value,
 		ticket.Proof.StakerValue,
 		ticket.Proof.VirtualStakerIndex,
@@ -141,7 +141,7 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 	[]chain.StakerAddress,
 	error,
 ) {
-	selectedParticipants, err := ec.keepGroupContract.SelectedParticipants()
+	selectedParticipants, err := ec.keepRandomBeaconBackendContract.SelectedParticipants()
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconContract.RelayEntry(
+	_, err = ec.keepRandomBeaconFrontendContract.RelayEntry(
 		newEntry.RequestID,
 		newEntry.Value,
 		newEntry.GroupPubKey,
@@ -232,7 +232,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 func (ec *ethereumChain) OnRelayEntryGenerated(
 	handle func(entry *event.Entry),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconContract.WatchRelayEntryGenerated(
+	return ec.keepRandomBeaconFrontendContract.WatchRelayEntryGenerated(
 		func(
 			requestID *big.Int,
 			requestResponse *big.Int,
@@ -263,7 +263,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconContract.WatchRelayEntryRequested(
+	return ec.keepRandomBeaconFrontendContract.WatchRelayEntryRequested(
 		func(
 			requestID *big.Int,
 			payment *big.Int,
@@ -293,7 +293,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 func (ec *ethereumChain) OnGroupSelectionStarted(
 	handle func(groupSelectionStart *event.GroupSelectionStart),
 ) (subscription.EventSubscription, error) {
-	return ec.keepGroupContract.WatchGroupSelectionStarted(
+	return ec.keepRandomBeaconBackendContract.WatchGroupSelectionStarted(
 		func(
 			newEntry *big.Int,
 			requestID *big.Int,
@@ -319,7 +319,7 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
 ) (subscription.EventSubscription, error) {
-	return ec.keepGroupContract.WatchDkgResultPublishedEvent(
+	return ec.keepRandomBeaconBackendContract.WatchDkgResultPublishedEvent(
 		func(
 			requestID *big.Int,
 			groupPublicKey []byte,
@@ -395,7 +395,7 @@ func (ec *ethereumChain) RequestRelayEntry(
 	}()
 
 	payment := big.NewInt(2) // FIXME hardcoded 2 gwei until we fill this in
-	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(seed, payment)
+	_, err = ec.keepRandomBeaconFrontendContract.RequestRelayEntry(seed, payment)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(requestedEntry)
@@ -406,17 +406,17 @@ func (ec *ethereumChain) RequestRelayEntry(
 }
 
 func (ec *ethereumChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) {
-	return ec.keepGroupContract.IsDkgResultSubmitted(requestID)
+	return ec.keepRandomBeaconBackendContract.IsDkgResultSubmitted(requestID)
 }
 
 func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
-	return ec.keepGroupContract.IsStaleGroup(groupPublicKey)
+	return ec.keepRandomBeaconBackendContract.IsStaleGroup(groupPublicKey)
 }
 
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
-	return ec.keepGroupContract.WatchDkgResultPublishedEvent(
+	return ec.keepRandomBeaconBackendContract.WatchDkgResultPublishedEvent(
 		func(requestID *big.Int, groupPubKey []byte, blockNumber uint64) {
 			handler(&event.DKGResultSubmission{
 				RequestID:      requestID,
@@ -503,7 +503,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 		return resultPublicationPromise
 	}
 
-	if _, err = ec.keepGroupContract.SubmitDkgResult(
+	if _, err = ec.keepRandomBeaconBackendContract.SubmitDkgResult(
 		requestID,
 		participantIndex.Int(),
 		result.GroupPublicKey,

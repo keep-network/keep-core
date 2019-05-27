@@ -14,15 +14,15 @@ import (
 )
 
 type ethereumChain struct {
-	config                   Config
-	client                   *ethclient.Client
-	clientRPC                *rpc.Client
-	clientWS                 *rpc.Client
-	requestID                *big.Int
-	keepGroupContract        *contract.KeepGroup
-	keepRandomBeaconContract *contract.KeepRandomBeacon
-	stakingContract          *contract.StakingProxy
-	accountKey               *keystore.Key
+	config                           Config
+	client                           *ethclient.Client
+	clientRPC                        *rpc.Client
+	clientWS                         *rpc.Client
+	requestID                        *big.Int
+	keepRandomBeaconBackendContract  *contract.KeepRandomBeaconBackend
+	keepRandomBeaconFrontendContract *contract.KeepRandomBeaconFrontend
+	stakingContract                  *contract.StakingProxy
+	accountKey                       *keystore.Key
 }
 
 // Connect makes the network connection to the Ethereum network.  Note: for
@@ -78,40 +78,40 @@ func Connect(config Config) (chain.Handle, error) {
 		pv.accountKey = key
 	}
 
-	address, err := addressForContract(config, "KeepRandomBeacon")
+	address, err := addressForContract(config, "KeepRandomBeaconFrontend")
 	if err != nil {
-		return nil, fmt.Errorf("error resolving KeepRandomBeacon contract: [%v]", err)
+		return nil, fmt.Errorf("error resolving KeepRandomBeaconFrontend contract: [%v]", err)
 	}
 
-	keepRandomBeaconContract, err :=
-		contract.NewKeepRandomBeacon(
+	keepRandomBeaconFrontendContract, err :=
+		contract.NewKeepRandomBeaconFrontend(
 			*address,
 			pv.accountKey,
 			pv.client,
 		)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error attaching to KeepRandomBeacon contract: [%v]",
+			"error attaching to KeepRandomBeaconFrontend contract: [%v]",
 			err,
 		)
 	}
-	pv.keepRandomBeaconContract = keepRandomBeaconContract
+	pv.keepRandomBeaconFrontendContract = keepRandomBeaconFrontendContract
 
-	address, err = addressForContract(config, "KeepGroup")
+	address, err = addressForContract(config, "KeepRandomBeaconBackend")
 	if err != nil {
-		return nil, fmt.Errorf("error resolving KeepGroup contract: [%v]", err)
+		return nil, fmt.Errorf("error resolving KeepRandomBeaconBackend contract: [%v]", err)
 	}
 
-	keepGroupContract, err :=
-		contract.NewKeepGroup(
+	keepRandomBeaconBackendContract, err :=
+		contract.NewKeepRandomBeaconBackend(
 			*address,
 			pv.accountKey,
 			pv.client,
 		)
 	if err != nil {
-		return nil, fmt.Errorf("error attaching to KeepGroup contract: [%v]", err)
+		return nil, fmt.Errorf("error attaching to KeepRandomBeaconBackend contract: [%v]", err)
 	}
-	pv.keepGroupContract = keepGroupContract
+	pv.keepRandomBeaconBackendContract = keepRandomBeaconBackendContract
 
 	address, err = addressForContract(config, "Staking")
 	if err != nil {
