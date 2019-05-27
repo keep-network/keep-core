@@ -50,7 +50,7 @@ func (f *File) Write(data []byte) error {
 
 // Read a file from a file system
 func (f *File) Read(FileName string) ([]byte, error) {
-	if f.FileName == "" {
+	if FileName == "" {
 		return nil, ErrNoFileExists
 	}
 
@@ -63,6 +63,22 @@ func (f *File) Read(FileName string) ([]byte, error) {
 	check(err)
 
 	return data, nil
+}
+
+// ReadAll returns all memberships for a Keep node
+func (f *File) ReadAll(dirPath string) [][]byte {
+	files, err := ioutil.ReadDir(dirPath)
+	check(err)
+
+	result := [][]byte{}
+
+	for _, file := range files {
+		data, err := f.Read(dirPath + file.Name())
+		check(err)
+		result = append(result, data)
+	}
+
+	return result
 }
 
 // Remove a file from a file syste

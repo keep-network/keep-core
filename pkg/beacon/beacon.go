@@ -38,6 +38,7 @@ func Initialize(
 	}
 
 	groupRegistry := registry.NewGroupRegistry(relayChain, storage)
+	groupRegistry.LoadGroupsOnStart()
 
 	node := relay.NewNode(
 		staker,

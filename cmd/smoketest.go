@@ -49,6 +49,11 @@ func (dnds *devNullDataStorage) Save(data []byte, name string) {
 	// noop
 }
 
+func (dnds *devNullDataStorage) ReadAll() [][]byte {
+	// noop
+	return nil
+}
+
 func init() {
 	SmokeTestCommand = cli.Command{
 		Name:        "smoke-test",

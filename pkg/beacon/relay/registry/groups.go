@@ -52,8 +52,6 @@ func (gr *Groups) RegisterGroup(
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
-	groupPublicKey := string(signer.GroupPublicKeyBytes())
-
 	membership := &Membership{
 		Signer:      signer,
 		ChannelName: channelName,
@@ -64,8 +62,8 @@ func (gr *Groups) RegisterGroup(
 		fmt.Fprintf(os.Stderr, "Marshalling of the membership failed: [%v]\n", err)
 		return
 	}
-	hexGroupPublicKey := hex.EncodeToString(signer.GroupPublicKeyBytes())
-	gr.storage.Save(membershipBytes, "/membership_"+hexGroupPublicKey)
+	groupPublicKey := hex.EncodeToString(signer.GroupPublicKeyBytes())
+	gr.storage.Save(membershipBytes, "/membership_"+groupPublicKey)
 
 	gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
 }
@@ -75,7 +73,7 @@ func (gr *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
-	return gr.myGroups[string(groupPublicKey)]
+	return gr.myGroups[hex.EncodeToString(groupPublicKey)]
 }
 
 // UnregisterDeletedGroups lookup for groups to be removed.
@@ -84,7 +82,7 @@ func (gr *Groups) UnregisterDeletedGroups() {
 	defer gr.mutex.Unlock()
 
 	for publicKey := range gr.myGroups {
-		publicKeyBytes := []byte(publicKey)
+		publicKeyBytes, _ := hex.DecodeString(publicKey)
 		isStaleGroup, err := gr.relayChain.IsStaleGroup(publicKeyBytes)
 
 		if err != nil {
@@ -93,7 +91,27 @@ func (gr *Groups) UnregisterDeletedGroups() {
 
 		if isStaleGroup {
 			delete(gr.myGroups, publicKey)
-			fmt.Printf("Unregistering a stale group [%+v]\n", publicKeyBytes)
 		}
 	}
+}
+
+// LoadGroupsOnStart iterates over all stored memberships on disk and loads them
+// into memory
+func (gr *Groups) LoadGroupsOnStart() error {
+	storedMemberships := gr.storage.ReadAll()
+
+	for _, storedMembership := range storedMemberships {
+		membership := &Membership{}
+		err := membership.Unmarshal(storedMembership)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error occured while unmarshalling a membership: [%v]\n", err)
+			gr.myGroups = make(map[string][]*Membership)
+			return err
+		}
+
+		groupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytes())
+		gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
+	}
+
+	return nil
 }
