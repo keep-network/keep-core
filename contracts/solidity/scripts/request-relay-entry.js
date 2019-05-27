@@ -1,14 +1,14 @@
-const KeepRandomBeaconFrontend = artifacts.require("KeepRandomBeaconFrontendImplV1");
-const KeepRandomBeaconFrontendProxy = artifacts.require('KeepRandomBeaconFrontendProxy.sol');
+const KeepRandomBeaconFrontendImplV1 = artifacts.require("KeepRandomBeaconFrontendImplV1");
+const KeepRandomBeaconFrontend = artifacts.require('KeepRandomBeaconFrontend.sol');
 
 module.exports = async function() {
 
-  const keepRandomBeaconFrontendProxy = await KeepRandomBeaconFrontendProxy.deployed();
+  const keepRandomBeaconFrontendProxy = await KeepRandomBeaconFrontend.deployed();
 
   async function requestRelayEntry() {
 
     let crypto = require("crypto");
-    let KeepRandomBeaconContractAddress = await KeepRandomBeaconFrontend.at(keepRandomBeaconFrontendProxy.address);
+    let KeepRandomBeaconContractAddress = await KeepRandomBeaconFrontendImplV1.at(keepRandomBeaconFrontendProxy.address);
 
     // Generate 32 byte sort of random number
     try {

@@ -1,14 +1,14 @@
-const KeepRandomBeaconFrontendProxy = artifacts.require('KeepRandomBeaconFrontendProxy.sol');
+const KeepRandomBeaconFrontend = artifacts.require('KeepRandomBeaconFrontend.sol');
 const KeepRandomBeaconBackend = artifacts.require("KeepRandomBeaconBackend");
-const KeepRandomBeaconFrontend = artifacts.require("KeepRandomBeaconFrontendImplV1");
+const KeepRandomBeaconFrontendImplV1 = artifacts.require("KeepRandomBeaconFrontendImplV1");
 
 module.exports = async function () {
 
-  const keepRandomBeaconFrontendProxy = await KeepRandomBeaconFrontendProxy.deployed();
+  const keepRandomBeaconFrontendProxy = await KeepRandomBeaconFrontend.deployed();
   const keepRandomBeaconBackend = await KeepRandomBeaconBackend.deployed();
 
   async function printLastRelayEntry() {
-    let contractRef = await KeepRandomBeaconFrontend.at(keepRandomBeaconFrontendProxy.address);
+    let contractRef = await KeepRandomBeaconFrontendImplV1.at(keepRandomBeaconFrontendProxy.address);
     let lastEntry = await contractRef.previousEntry();
 
     console.log('Last relay entry: ' + lastEntry.toString());

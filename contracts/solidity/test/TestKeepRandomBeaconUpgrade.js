@@ -2,7 +2,7 @@ import {bls} from './helpers/data';
 import { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
 import {initContracts} from './helpers/initContracts';
-const FrontendProxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol');
+const FrontendProxy = artifacts.require('./KeepRandomBeaconFrontend.sol');
 const FrontendImplV2 = artifacts.require('./examples/KeepRandomBeaconFrontendUpgradeExample.sol');
 
 

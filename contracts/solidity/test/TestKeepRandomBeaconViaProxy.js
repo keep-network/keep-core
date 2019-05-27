@@ -4,7 +4,7 @@ import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
 import {initContracts} from './helpers/initContracts';
-const FrontendProxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol')
+const FrontendProxy = artifacts.require('./KeepRandomBeaconFrontend.sol')
 
 contract('TestKeepRandomBeaconViaProxy', function(accounts) {
 

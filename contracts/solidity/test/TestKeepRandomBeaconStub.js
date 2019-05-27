@@ -1,6 +1,6 @@
 import { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
-const KeepRandomBeaconFrontendProxy = artifacts.require('./KeepRandomBeaconFrontendProxy.sol');
+const KeepRandomBeaconFrontend = artifacts.require('./KeepRandomBeaconFrontend.sol');
 const KeepRandomBeaconFrontendStub = artifacts.require('./KeepRandomBeaconFrontendStub.sol');
 
 contract('TestKeepRandomBeaconFrontendStub', function(accounts) {
@@ -10,7 +10,7 @@ contract('TestKeepRandomBeaconFrontendStub', function(accounts) {
 
   before(async () => {
     frontendImplV1 = await KeepRandomBeaconFrontendStub.new();
-    frontendProxy = await KeepRandomBeaconFrontendProxy.new(frontendImplV1.address);
+    frontendProxy = await KeepRandomBeaconFrontend.new(frontendImplV1.address);
     frontend = await KeepRandomBeaconFrontendStub.at(frontendProxy.address);
     await frontend.initialize();
     seed = 123456789;

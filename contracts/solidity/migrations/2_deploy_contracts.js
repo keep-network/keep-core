@@ -5,7 +5,7 @@ const BLS = artifacts.require("./cryptography/BLS.sol");
 const StakingProxy = artifacts.require("./StakingProxy.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
-const KeepRandomBeaconFrontendProxy = artifacts.require("./KeepRandomBeaconFrontendProxy.sol");
+const KeepRandomBeaconFrontend = artifacts.require("./KeepRandomBeaconFrontend.sol");
 const KeepRandomBeaconFrontendImplV1 = artifacts.require("./KeepRandomBeaconFrontendImplV1.sol");
 const KeepRandomBeaconBackend = artifacts.require("./KeepRandomBeaconBackend.sol");
 const KeepRandomBeaconBackendStub = artifacts.require("./KeepRandomBeaconBackendStub.sol");
@@ -46,14 +46,14 @@ module.exports = async function(deployer) {
   await deployer.link(BLS, KeepRandomBeaconBackendStub);
   await deployer.deploy(KeepRandomBeaconBackend);
   await deployer.deploy(KeepRandomBeaconFrontendImplV1);
-  await deployer.deploy(KeepRandomBeaconFrontendProxy, KeepRandomBeaconFrontendImplV1.address);
+  await deployer.deploy(KeepRandomBeaconFrontend, KeepRandomBeaconFrontendImplV1.address);
 
-  const keepRandomBeaconFrontend = await KeepRandomBeaconFrontendImplV1.at(KeepRandomBeaconFrontendProxy.address);
+  const keepRandomBeaconFrontend = await KeepRandomBeaconFrontendImplV1.at(KeepRandomBeaconFrontend.address);
   const keepRandomBeaconBackend = await KeepRandomBeaconBackend.deployed();
 
   // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
   await keepRandomBeaconBackend.initialize(
-    StakingProxy.address, KeepRandomBeaconFrontendProxy.address, minStake, groupThreshold, groupSize,
+    StakingProxy.address, KeepRandomBeaconFrontend.address, minStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     activeGroupsThreshold, groupActiveTime,
     web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862'),

@@ -21,7 +21,7 @@ contract('TestKeepGroupSelection', function(accounts) {
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconFrontendProxy.sol'),
+      artifacts.require('./KeepRandomBeaconFrontend.sol'),
       artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
       artifacts.require('./KeepRandomBeaconBackendStub.sol')
     );
