@@ -79,11 +79,11 @@ contract KeepRandomBeaconBackend is Ownable {
     uint256 public activeGroupsThreshold;
  
     // activeTime is the time in block after which a group expires
-    uint256 internal activeTime;
+    uint256 public activeTime;
  
     // expiredOffset is pointing to the first active group, it is also the
     // expired groups counter
-    uint256 internal expiredOffset = 0;
+    uint256 public expiredOffset = 0;
 
     struct Group {
         bytes groupPubKey;
