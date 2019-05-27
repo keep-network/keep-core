@@ -12,7 +12,34 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/net/key"
+	netLocal "github.com/keep-network/keep-core/pkg/net/local"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
+
+var minimumStake = big.NewInt(20)
+
+func runTest(
+	groupSize int,
+	threshold int,
+	interceptor testutils.NetworkMessageInterceptor,
+) (*dkgTestResult, error) {
+	privateKey, publicKey, err := operator.GenerateKeyPair()
+	if err != nil {
+		return nil, err
+	}
+
+	_, networkPublicKey := key.OperatorKeyToNetworkKey(privateKey, publicKey)
+
+	network := testutils.NewInterceptingNetwork(
+		netLocal.ConnectWithKey(networkPublicKey),
+		interceptor,
+	)
+
+	chain := chainLocal.ConnectWithKey(groupSize, threshold, minimumStake, privateKey)
+
+	return executeDKG(groupSize, threshold, chain, network)
+}
 
 type dkgTestResult struct {
 	result         *relaychain.DKGResult
@@ -23,29 +50,31 @@ type dkgTestResult struct {
 func executeDKG(
 	groupSize int,
 	threshold int,
+	chain chainLocal.Chain,
 	network testutils.InterceptingNetwork,
 ) (*dkgTestResult, error) {
-	minimumStake, requestID, seed, startBlockHeight, err := getDKGParameters()
+	blockCounter, err := chain.BlockCounter()
 	if err != nil {
 		return nil, err
 	}
 
-	chainHandle := chainLocal.Connect(groupSize, threshold, minimumStake)
-	blockCounter, err := chainHandle.BlockCounter()
-	if err != nil {
-		return nil, err
-	}
 	broadcastChannel, err := network.ChannelFor("dkg_test")
 	if err != nil {
 		return nil, err
 	}
 
 	resultChan := make(chan *event.DKGResultSubmission)
-	chainHandle.ThresholdRelay().OnDKGResultSubmitted(
+	chain.ThresholdRelay().OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			resultChan <- event
 		},
 	)
+
+	startBlockHeight := uint64(1)
+	requestID, seed, err := getDKGParameters()
+	if err != nil {
+		return nil, err
+	}
 
 	var signers []*ThresholdSigner
 	var memberFailures []error
@@ -63,7 +92,7 @@ func executeDKG(
 				threshold,
 				startBlockHeight,
 				blockCounter,
-				chainHandle.ThresholdRelay(),
+				chain.ThresholdRelay(),
 				broadcastChannel,
 			)
 			if signer != nil {
@@ -88,7 +117,7 @@ func executeDKG(
 	case _ = <-resultChan:
 		// result was published to the chain, let's fetch it
 		return &dkgTestResult{
-			chainHandle.GetDKGResult(requestID),
+			chain.GetDKGResult(requestID),
 			signers,
 			memberFailures,
 		}, nil
@@ -104,15 +133,10 @@ func executeDKG(
 }
 
 func getDKGParameters() (
-	minimumStake *big.Int,
 	requestID *big.Int,
 	seed *big.Int,
-	startBlockHeight uint64,
 	err error,
 ) {
-	startBlockHeight = uint64(1)
-	minimumStake = big.NewInt(20)
-
 	requestID, err = rand.Int(rand.Reader, big.NewInt(10000))
 	if err != nil {
 		return

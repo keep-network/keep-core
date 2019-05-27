@@ -7,13 +7,17 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
+	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 )
 
 func TestPassThruNetworkMessage(t *testing.T) {
-	network := NewInterceptingNetwork(func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-		// return message unchanged
-		return msg
-	})
+	network := NewInterceptingNetwork(
+		netLocal.Connect(),
+		func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+			// return message unchanged
+			return msg
+		},
+	)
 
 	channel, err := network.ChannelFor("badger288")
 	if err != nil {
@@ -39,10 +43,13 @@ func TestPassThruNetworkMessage(t *testing.T) {
 
 func TestModifyNetworkMessage(t *testing.T) {
 	modifiedMessage := &testMessage{"modified"}
-	network := NewInterceptingNetwork(func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-		// alter the message
-		return modifiedMessage
-	})
+	network := NewInterceptingNetwork(
+		netLocal.Connect(),
+		func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+			// alter the message
+			return modifiedMessage
+		},
+	)
 
 	channel, err := network.ChannelFor("badger288")
 	if err != nil {
@@ -67,10 +74,13 @@ func TestModifyNetworkMessage(t *testing.T) {
 }
 
 func TestDropNetworkMessage(t *testing.T) {
-	network := NewInterceptingNetwork(func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-		// return message unchanged
-		return nil
-	})
+	network := NewInterceptingNetwork(
+		netLocal.Connect(),
+		func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+			// return message unchanged
+			return nil
+		},
+	)
 
 	channel, err := network.ChannelFor("badger288")
 	if err != nil {

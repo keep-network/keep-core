@@ -10,6 +10,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/internal"
+	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 type localIdentifier string
@@ -22,7 +23,8 @@ var channelsMutex sync.Mutex
 var channels map[string][]*localChannel
 
 type localProvider struct {
-	id localIdentifier
+	id        localIdentifier
+	staticKey *key.NetworkPublic
 }
 
 func (lp *localProvider) ID() net.TransportIdentifier {
@@ -30,7 +32,7 @@ func (lp *localProvider) ID() net.TransportIdentifier {
 }
 
 func (lp *localProvider) ChannelFor(name string) (net.BroadcastChannel, error) {
-	return channel(name), nil
+	return channel(name, lp.staticKey), nil
 }
 
 func (lp *localProvider) Type() string {
@@ -48,8 +50,24 @@ func (lp *localProvider) Peers() []string {
 // Connect returns a local instance of a net provider that does not go over the
 // network.
 func Connect() net.Provider {
+	_, public, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		panic(err)
+	}
+
 	return &localProvider{
-		id: localIdentifier(randomIdentifier()),
+		id:        localIdentifier(randomIdentifier()),
+		staticKey: public,
+	}
+}
+
+// ConnectWithKey returns a local instance of net provider that does not go
+// over the network. The returned instance uses the provided network key to
+// identify network messages.
+func ConnectWithKey(staticKey *key.NetworkPublic) net.Provider {
+	return &localProvider{
+		id:        localIdentifier(randomIdentifier()),
+		staticKey: staticKey,
 	}
 }
 
@@ -58,7 +76,7 @@ func Connect() net.Provider {
 // receive channels. RecvChan on a LocalChannel creates a new receive channel
 // that is returned to the caller, so that all receive channels can receive
 // the message.
-func channel(name string) net.BroadcastChannel {
+func channel(name string, staticKey *key.NetworkPublic) net.BroadcastChannel {
 	channelsMutex.Lock()
 	defer channelsMutex.Unlock()
 	if channels == nil {
@@ -75,6 +93,7 @@ func channel(name string) net.BroadcastChannel {
 	channel := &localChannel{
 		name:                 name,
 		identifier:           &identifier,
+		staticKey:            staticKey,
 		messageHandlersMutex: sync.Mutex{},
 		messageHandlers:      make([]net.HandleMessageFunc, 0),
 		unmarshalersMutex:    sync.Mutex{},
@@ -102,6 +121,7 @@ func randomIdentifier() string {
 type localChannel struct {
 	name                 string
 	identifier           net.TransportIdentifier
+	staticKey            *key.NetworkPublic
 	messageHandlersMutex sync.Mutex
 	messageHandlers      []net.HandleMessageFunc
 	unmarshalersMutex    sync.Mutex
@@ -151,7 +171,7 @@ func (lc *localChannel) deliver(transportIdentifier net.TransportIdentifier, pay
 			transportIdentifier,
 			payload,
 			"local",
-			make([]byte, 0),
+			key.Marshal(lc.staticKey),
 		)
 
 	go func() {

@@ -15,7 +15,11 @@ func TestRegisterAndFireHandler(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	localChannel := channel("channel name")
+	provider := Connect()
+	localChannel, err := provider.ChannelFor("channel name")
+	if err != nil {
+		t.Fatal(err)
+	}
 	localChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &mockNetMessage{}
 	})
@@ -100,7 +104,11 @@ func TestUnregisterHandler(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			defer cancel()
 
-			localChannel := channel("channel name")
+			provider := Connect()
+			localChannel, err := provider.ChannelFor("channel name")
+			if err != nil {
+				t.Fatal(err)
+			}
 			localChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 				return &mockNetMessage{}
 			})

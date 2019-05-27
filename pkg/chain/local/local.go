@@ -70,6 +70,8 @@ type localChain struct {
 
 	tickets      []*relaychain.Ticket
 	ticketsMutex sync.Mutex
+
+	operatorKey *operator.PrivateKey
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -81,11 +83,7 @@ func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 }
 
 func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
-	privateKey, publicKey, err := operator.GenerateKeyPair()
-	if err != nil {
-		panic(err)
-	}
-	return privateKey, publicKey
+	return c.operatorKey, &c.operatorKey.PublicKey
 }
 
 func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
@@ -255,6 +253,23 @@ func (c *localChain) ThresholdRelay() relaychain.Interface {
 // Connect initializes a local stub implementation of the chain interfaces
 // for testing.
 func Connect(groupSize int, threshold int, minimumStake *big.Int) Chain {
+	privateKey, _, err := operator.GenerateKeyPair()
+	if err != nil {
+		panic(err)
+	}
+
+	return ConnectWithKey(groupSize, threshold, minimumStake, privateKey)
+}
+
+// ConnectWithKey initializes a local stub implementation of the chain
+// interfaces for testing. It does the same as Connect except that it also
+// accepts a predefined operator key.
+func ConnectWithKey(
+	groupSize int,
+	threshold int,
+	minimumStake *big.Int,
+	operatorKey *operator.PrivateKey,
+) Chain {
 	bc, _ := blockCounter()
 
 	tokenSupply, naturalThreshold := calculateGroupSelectionParameters(
@@ -291,6 +306,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) Chain {
 		tickets:                  make([]*relaychain.Ticket, 0),
 		latestValue:              seedRelayEntry,
 		groups:                   []localGroup{group},
+		operatorKey:              operatorKey,
 	}
 }
 

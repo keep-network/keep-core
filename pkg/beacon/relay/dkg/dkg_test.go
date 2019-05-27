@@ -5,7 +5,6 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -16,9 +15,8 @@ func TestExecute_HappyPath(t *testing.T) {
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		return msg
 	}
-	network := testutils.NewInterceptingNetwork(interceptor)
 
-	result, err := executeDKG(groupSize, threshold, network)
+	result, err := runTest(groupSize, threshold, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,9 +42,8 @@ func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
 
 		return msg
 	}
-	network := testutils.NewInterceptingNetwork(interceptor)
 
-	result, err := executeDKG(groupSize, threshold, network)
+	result, err := runTest(groupSize, threshold, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}

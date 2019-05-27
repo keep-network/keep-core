@@ -2,10 +2,12 @@ package testutils
 
 import (
 	"github.com/keep-network/keep-core/pkg/net"
-	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 )
 
-type networkMessageInterceptor = func(msg net.TaggedMarshaler) net.TaggedMarshaler
+// NetworkMessageInterceptor defines a rules of intercepting network messages.
+// Messages can be returned unmodified, they may be modified on the fly and they
+// can be dropped by returning nil.
+type NetworkMessageInterceptor = func(msg net.TaggedMarshaler) net.TaggedMarshaler
 
 // InterceptingNetwork is the local test network implementation capable of
 // intercepting network messages and modifying/dropping them based on rules
@@ -16,16 +18,19 @@ type InterceptingNetwork interface {
 
 // NewInterceptingNetwork creates a new instance of InterceptingNetwork
 // interface implementation with message filtering rules passed as a parameter.
-func NewInterceptingNetwork(interceptor networkMessageInterceptor) InterceptingNetwork {
+func NewInterceptingNetwork(
+	provider net.Provider,
+	interceptor NetworkMessageInterceptor,
+) InterceptingNetwork {
 	return &interceptingNetwork{
-		provider:    netLocal.Connect(),
+		provider:    provider,
 		interceptor: interceptor,
 	}
 }
 
 type interceptingNetwork struct {
 	provider    net.Provider
-	interceptor networkMessageInterceptor
+	interceptor NetworkMessageInterceptor
 }
 
 func (in *interceptingNetwork) ChannelFor(name string) (net.BroadcastChannel, error) {
@@ -42,7 +47,7 @@ func (in *interceptingNetwork) ChannelFor(name string) (net.BroadcastChannel, er
 
 type interceptingChannel struct {
 	delegate    net.BroadcastChannel
-	interceptor networkMessageInterceptor
+	interceptor NetworkMessageInterceptor
 }
 
 func (ic *interceptingChannel) Name() string {
