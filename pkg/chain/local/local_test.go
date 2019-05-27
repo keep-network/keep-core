@@ -274,7 +274,12 @@ func TestLocalOnGroupRegistered(t *testing.T) {
 	requestID := big.NewInt(42)
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := make(map[group.MemberIndex]operator.Signature)
+	signatures := map[group.MemberIndex]operator.Signature{
+		1: operator.Signature{101},
+		2: operator.Signature{102},
+		3: operator.Signature{103},
+		4: operator.Signature{104},
+	}
 
 	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
 
@@ -320,7 +325,12 @@ func TestLocalOnGroupRegisteredUnsubscribed(t *testing.T) {
 	requestID := big.NewInt(42)
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := make(map[group.MemberIndex]operator.Signature)
+	signatures := map[group.MemberIndex]operator.Signature{
+		1: operator.Signature{101},
+		2: operator.Signature{102},
+		3: operator.Signature{103},
+		4: operator.Signature{104},
+	}
 
 	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
 
@@ -443,7 +453,12 @@ func TestLocalOnDKGResultSubmitted(t *testing.T) {
 	requestID := big.NewInt(42)
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := make(map[group.MemberIndex]operator.Signature)
+	signatures := map[group.MemberIndex]operator.Signature{
+		1: operator.Signature{101},
+		2: operator.Signature{102},
+		3: operator.Signature{103},
+		4: operator.Signature{104},
+	}
 
 	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
 
@@ -490,7 +505,12 @@ func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
 	requestID := big.NewInt(42)
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := make(map[group.MemberIndex]operator.Signature)
+	signatures := map[group.MemberIndex]operator.Signature{
+		1: operator.Signature{101},
+		2: operator.Signature{102},
+		3: operator.Signature{103},
+		4: operator.Signature{104},
+	}
 
 	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
 
@@ -668,12 +688,18 @@ func TestLocalIsDKGResultSubmitted(t *testing.T) {
 	)
 
 	chainHandle := Connect(10, 4, big.NewInt(100)).ThresholdRelay()
+	signatures := map[group.MemberIndex]operator.Signature{
+		1: operator.Signature{101},
+		2: operator.Signature{102},
+		3: operator.Signature{103},
+		4: operator.Signature{104},
+	}
 
 	chainHandle.SubmitDKGResult(
 		submittedRequestID,
 		group.MemberIndex(1),
 		submittedResult,
-		make(map[group.MemberIndex]operator.Signature),
+		signatures,
 	)
 
 	var tests = map[string]struct {
@@ -742,6 +768,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		1: operator.Signature{101},
 		2: operator.Signature{102},
 		3: operator.Signature{103},
+		4: operator.Signature{104},
 	}
 
 	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
