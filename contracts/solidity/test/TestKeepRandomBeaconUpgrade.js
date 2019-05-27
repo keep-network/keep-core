@@ -11,7 +11,7 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
   let backend, frontendProxy, frontend, frontendImplV2, frontendV2,
     account_two = accounts[1];
 
-  beforeEach(async () => {
+  before(async () => {
     let contracts = await initContracts(
       accounts,
       artifacts.require('./KeepToken.sol'),

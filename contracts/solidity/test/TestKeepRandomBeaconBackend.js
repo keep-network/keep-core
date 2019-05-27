@@ -5,7 +5,7 @@ contract('TestKeepRandomBeaconBackend', function(accounts) {
 
   let backend;
 
-  beforeEach(async () => {
+  before(async () => {
     let contracts = await initContracts(
       accounts,
       artifacts.require('./KeepToken.sol'),

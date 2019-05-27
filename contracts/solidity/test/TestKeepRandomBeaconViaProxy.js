@@ -13,7 +13,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     account_two = accounts[1],
     account_three = accounts[2];
 
-  beforeEach(async () => {
+  before(async () => {
     let contracts = await initContracts(
       accounts,
       artifacts.require('./KeepToken.sol'),
@@ -65,19 +65,13 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     assert.equal((await backend.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the backend contract.");
 
     let contractBalance = await web3.eth.getBalance(frontend.address);
-    assert.equal(contractBalance, 100, "Keep Random Beacon frontend contract should receive ether.");
+    assert.equal(contractBalance, 200, "Keep Random Beacon frontend contract should receive ether.");
 
     let contractBalanceFrontend = await web3.eth.getBalance(frontendProxy.address);
-    assert.equal(contractBalanceFrontend, 100, "Keep Random Beacon contract new balance should be visible via frontendProxy.");
+    assert.equal(contractBalanceFrontend, 200, "Keep Random Beacon contract new balance should be visible via frontendProxy.");
   });
 
-  it("owner should be able to withdraw ether from random beacon backend contract", async function() {
-
-    let amount = web3.utils.toWei('1', 'ether');
-    await web3.eth.sendTransaction({
-      from: account_two, value: amount, gas: 200000, to: frontendProxy.address,
-      data: encodeCall('requestRelayEntry', ['uint256'], [0])
-    });
+  it("owner should be able to withdraw ether from random beacon frontend contract", async function() {
 
     // should fail to withdraw if not owner
     await exceptThrow(frontend.initiateWithdrawal({from: account_two}));
@@ -86,7 +80,6 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     await frontend.initiateWithdrawal({from: account_one});
     await exceptThrow(frontend.finishWithdrawal(account_three, {from: account_one}));
 
-    let contractStartBalance = await web3.eth.getBalance(frontend.address);
     // jump in time, full withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
 
@@ -95,10 +88,10 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     let receiverEndBalance = web3.utils.fromWei(await web3.eth.getBalance(account_three), 'ether');
     assert(Number(receiverEndBalance) > Number(receiverStartBalance), "Receiver updated balance should include received ether.");
 
-    let contractEndBalance = await web3.eth.getBalance(backend.address);
-    assert.equal(contractEndBalance, contractStartBalance - amount, "Keep Random Beacon contract should send all ether.");
+    let contractEndBalance = await web3.eth.getBalance(frontend.address);
+    assert.equal(contractEndBalance, 0, "Keep Random Beacon contract should send all ether.");
     let contractEndBalanceViaProxy = await web3.eth.getBalance(frontendProxy.address);
-    assert.equal(contractEndBalanceViaProxy, contractStartBalance - amount, "Keep Random Beacon contract updated balance should be visible via frontendProxy.");
+    assert.equal(contractEndBalanceViaProxy, 0, "Keep Random Beacon contract updated balance should be visible via frontendProxy.");
 
   });
 

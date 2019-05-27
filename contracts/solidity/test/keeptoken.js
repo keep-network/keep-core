@@ -16,7 +16,7 @@ contract('KeepToken', function(accounts) {
     account_two_operator = accounts[4],
     account_two_magpie = accounts[5];
 
-  beforeEach(async () => {
+  before(async () => {
     token = await KeepToken.new();
     stakingProxy = await StakingProxy.new();
     stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
@@ -122,7 +122,7 @@ contract('KeepToken', function(accounts) {
     
     // Starting balances
     let account_one_starting_balance = await token.balanceOf.call(account_one);
-    let account_two_starting_balance = await token.balanceOf.call(account_one_operator);
+    let account_two_starting_balance = await token.balanceOf.call(account_two);
 
     // Grant tokens
     await token.approve(grantContract.address, amount, {from: account_one});

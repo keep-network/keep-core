@@ -12,7 +12,7 @@ contract('TestStakeTokenGrantsViaProxy', function(accounts) {
     account_two = accounts[1],
     account_two_operator = accounts[2];
 
-  beforeEach(async () => {
+  before(async () => {
     token = await KeepToken.new();
   });
 

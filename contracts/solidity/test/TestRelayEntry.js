@@ -5,7 +5,7 @@ import {initContracts} from './helpers/initContracts';
 contract('TestRelayEntry', function(accounts) {
   let frontend, backend;
 
-  beforeEach(async () => {
+  before(async () => {
 
     let contracts = await initContracts(
       accounts,

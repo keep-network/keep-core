@@ -3,7 +3,7 @@ const BLS = artifacts.require('./cryptography/BLS.sol');
 contract('TestBLS', function() {
 
   let bls;
-  beforeEach(async () => {
+  before(async () => {
     bls = await BLS.new();
   });
 

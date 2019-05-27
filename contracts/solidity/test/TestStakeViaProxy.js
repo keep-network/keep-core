@@ -10,7 +10,7 @@ contract('TestStakeViaProxy', function(accounts) {
     owner = accounts[0],
     operator = accounts[1];
 
-  beforeEach(async () => {
+  before(async () => {
     token = await KeepToken.new();
   });
 

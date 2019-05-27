@@ -14,7 +14,7 @@ contract('TestKeepGroupSelection', function(accounts) {
   operator2 = accounts[3], tickets2,
   operator3 = accounts[4], tickets3;
 
-  beforeEach(async () => {
+  before(async () => {
 
     let contracts = await initContracts(
       accounts,
@@ -55,48 +55,6 @@ contract('TestKeepGroupSelection', function(accounts) {
 
   it("should fail to get selected participants before challenge period is over", async function() {
     await exceptThrow(backend.selectedParticipants());
-  });
-
-  it("should not trigger group selection while one is in progress", async function() {
-    let groupSelectionStartBlock = await backend.ticketSubmissionStartBlock();
-    await frontend.requestRelayEntry(bls.seed, {value: 10});
-    await backend.relayEntry(2, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
-
-    assert.isTrue((await backend.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
-    assert.isTrue((await backend.groupSelectionSeed()).eq(bls.groupSignature), "Random beacon value for the current group selection should not change.");
-  });
-
-  it("should trigger new group selection when the last one is over", async function() {
-    let groupSelectionStartBlock = await backend.ticketSubmissionStartBlock();
-
-    // Calculate the block time when the group selection should be finished
-    let timeoutChallenge = (await backend.ticketChallengeTimeout()).toNumber();
-    let timeDKG = (await backend.timeDKG()).toNumber();
-    let groupSize = (await backend.groupSize()).toNumber();
-    let resultPublicationBlockStep = (await backend.resultPublicationBlockStep()).toNumber();
-    mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
-
-    await frontend.requestRelayEntry(bls.seed, {value: 10});
-    await backend.relayEntry(2, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
-
-    assert.isFalse((await backend.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
-    assert.isTrue((await backend.groupSelectionSeed()).eq(bls.nextGroupSignature), "Random beacon value for the current group selection should be updated.");
-  });
-
-  it("should be able to get selected tickets and participants after challenge period is over", async function() {
-
-    let groupSize = await backend.groupSize();
-
-    for (let i = 0; i < groupSize*2; i++) {
-      await backend.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
-    }
-
-    mineBlocks(await backend.ticketChallengeTimeout());
-    let selectedTickets = await backend.selectedTickets();
-    assert.equal(selectedTickets.length, groupSize, "Should be trimmed to groupSize length.");
-
-    let selectedParticipants = await backend.selectedParticipants();
-    assert.equal(selectedParticipants.length, groupSize, "Should be trimmed to groupSize length.");
   });
 
   it("should be able to output submited tickets in ascending ordered", async function() {
@@ -146,4 +104,47 @@ contract('TestKeepGroupSelection', function(accounts) {
     ), "Should fail verifying invalid ticket.");
 
   });
+
+  it("should not trigger group selection while one is in progress", async function() {
+    let groupSelectionStartBlock = await backend.ticketSubmissionStartBlock();
+    await frontend.requestRelayEntry(bls.seed, {value: 10});
+    await backend.relayEntry(2, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
+
+    assert.isTrue((await backend.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
+    assert.isTrue((await backend.groupSelectionSeed()).eq(bls.groupSignature), "Random beacon value for the current group selection should not change.");
+  });
+
+  it("should be able to get selected tickets and participants after challenge period is over", async function() {
+
+    let groupSize = await backend.groupSize();
+
+    for (let i = 0; i < groupSize*2; i++) {
+      await backend.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
+    }
+
+    mineBlocks(await backend.ticketChallengeTimeout());
+    let selectedTickets = await backend.selectedTickets();
+    assert.equal(selectedTickets.length, groupSize, "Should be trimmed to groupSize length.");
+
+    let selectedParticipants = await backend.selectedParticipants();
+    assert.equal(selectedParticipants.length, groupSize, "Should be trimmed to groupSize length.");
+  });
+
+  it("should trigger new group selection when the last one is over", async function() {
+    let groupSelectionStartBlock = await backend.ticketSubmissionStartBlock();
+
+    // Calculate the block time when the group selection should be finished
+    let timeoutChallenge = (await backend.ticketChallengeTimeout()).toNumber();
+    let timeDKG = (await backend.timeDKG()).toNumber();
+    let groupSize = (await backend.groupSize()).toNumber();
+    let resultPublicationBlockStep = (await backend.resultPublicationBlockStep()).toNumber();
+    mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
+
+    await frontend.requestRelayEntry(bls.seed, {value: 10});
+    await backend.relayEntry(3, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
+
+    assert.isFalse((await backend.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
+    assert.isTrue((await backend.groupSelectionSeed()).eq(bls.nextGroupSignature), "Random beacon value for the current group selection should be updated.");
+  });
+
 });

@@ -8,7 +8,7 @@ contract('TestKeepRandomBeaconFrontendStub', function(accounts) {
   let frontendImplV1, frontendProxy, frontend, seed,
     account_one = accounts[0];
 
-  beforeEach(async () => {
+  before(async () => {
     frontendImplV1 = await KeepRandomBeaconFrontendStub.new();
     frontendProxy = await KeepRandomBeaconFrontendProxy.new(frontendImplV1.address);
     frontend = await KeepRandomBeaconFrontendStub.at(frontendProxy.address);
