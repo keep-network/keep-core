@@ -23,7 +23,7 @@ contract('TestKeepGroupSelection', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconFrontendProxy.sol'),
       artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconBackend.sol')
+      artifacts.require('./KeepRandomBeaconBackendStub.sol')
     );
     token = contracts.token;
     frontend = contracts.frontend;
@@ -67,14 +67,20 @@ contract('TestKeepGroupSelection', function(accounts) {
   });
 
   it("should trigger new group selection when the last one is over", async function() {
-    let groupSelectionStartBlock = await keepGroupImplViaProxy.ticketSubmissionStartBlock();
+    let groupSelectionStartBlock = await backend.ticketSubmissionStartBlock();
+
+    // Calculate the block time when the group selection should be finished
+    let timeoutChallenge = (await backend.ticketChallengeTimeout()).toNumber();
+    let timeDKG = (await backend.timeDKG()).toNumber();
+    let groupSize = (await backend.groupSize()).toNumber();
+    let resultPublicationBlockStep = (await backend.resultPublicationBlockStep()).toNumber();
     mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
 
     await frontend.requestRelayEntry(bls.seed, {value: 10});
     await backend.relayEntry(2, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
 
-    assert.isFalse((await keepGroupImplViaProxy.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
-    assert.isTrue((await keepGroupImplViaProxy.randomBeaconValue()).eq(bls.nextGroupSignature), "Random beacon value for the current group selection should be updated.");
+    assert.isFalse((await backend.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
+    assert.isTrue((await backend.groupSelectionSeed()).eq(bls.nextGroupSignature), "Random beacon value for the current group selection should be updated.");
   });
 
   it("should be able to get selected tickets and participants after challenge period is over", async function() {
