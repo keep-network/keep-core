@@ -70,7 +70,7 @@ func (sss *signatureShareState) Receive(msg net.Message) error {
 		if !group.IsMessageFromSelf(
 			sss.MemberIndex(),
 			signatureShareMessage,
-		) {
+		) && sss.isForTheCurrentRequestID(signatureShareMessage) {
 			sss.signatureShareMessages = append(
 				sss.signatureShareMessages,
 				signatureShareMessage,
@@ -79,6 +79,10 @@ func (sss *signatureShareState) Receive(msg net.Message) error {
 	}
 
 	return nil
+}
+
+func (sss *signatureShareState) isForTheCurrentRequestID(msg *SignatureShareMessage) bool {
+	return sss.requestID.Cmp(msg.requestID) == 0
 }
 
 func (sss *signatureShareState) Next() signingState {
