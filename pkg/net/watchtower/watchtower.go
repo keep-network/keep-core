@@ -113,7 +113,9 @@ func (g *Guard) validatePeerStake(ctx context.Context, peer string) (bool, error
 	}
 
 	if peerPublicKey == nil {
-		return false, nil
+		return false, fmt.Errorf(
+			"failed to resolve valid public key for peer %s", peer,
+		)
 	}
 
 	g.stakeMonitorLock.Lock()
