@@ -54,6 +54,9 @@ Older versions would by necessity keep existing
 in parallel with newer ones,
 and migrating state between versions
 is difficult if not impossible.
+For example, different versions of threshold BLS contracts,
+even if the changes are as minor as adjusting hardcoded constants,
+would create entirely separate random beacons.
 It is possible that the difficulty of migration
 would lead customers to prefer the old version with established state.
 
