@@ -22,6 +22,16 @@ func (li localIdentifier) String() string {
 var channelsMutex sync.Mutex
 var channels map[string][]*localChannel
 
+// Provider is an extension of net.Provider. This interface exposes additional
+// functions useful for testing.
+type Provider interface {
+	net.Provider
+
+	// AddPeer allows the simulation of adding a peer to the client's local
+	// registry of peers.
+	AddPeer(peerID string, pubKey *key.NetworkPublic)
+}
+
 type localProvider struct {
 	id localIdentifier
 	cm *localConnectionManager
@@ -47,17 +57,13 @@ func (lp *localProvider) Peers() []string {
 	return make([]string, 0)
 }
 
-// Connect returns a local instance of a net provider that does not go over the
-// network.
-func Connect() net.Provider {
-	return &localProvider{
-		id: localIdentifier(randomIdentifier()),
-		cm: &localConnectionManager{peers: make(map[string]*key.NetworkPublic)},
-	}
+func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
+	lp.cm.peers[peerID] = pubKey
 }
 
-// ConnectWithCapabilities is for use only in testing.
-func ConnectWithCapabilities() *localProvider {
+// Connect returns a local instance of a net provider that does not go over the
+// network.
+func Connect() Provider {
 	return &localProvider{
 		id: localIdentifier(randomIdentifier()),
 		cm: &localConnectionManager{peers: make(map[string]*key.NetworkPublic)},
@@ -112,10 +118,6 @@ func randomIdentifier() string {
 	}
 
 	return string(runes)
-}
-
-func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
-	lp.cm.peers[peerID] = pubKey
 }
 
 type localChannel struct {

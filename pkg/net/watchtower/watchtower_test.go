@@ -28,7 +28,7 @@ func TestDisconnectPeerBelowMinStake(t *testing.T) {
 	}
 
 	// kick off the network
-	peer1Provider := localNetwork.ConnectWithCapabilities()
+	peer1Provider := localNetwork.Connect()
 	// TODO: add self to our own map of connections
 	peer1Provider.AddPeer(peer1Provider.ID().String(), peer1PubKey)
 
@@ -46,7 +46,7 @@ func TestDisconnectPeerBelowMinStake(t *testing.T) {
 	}
 
 	// kick off the network
-	peer2Provider := localNetwork.ConnectWithCapabilities()
+	peer2Provider := localNetwork.Connect()
 	peer2Provider.AddPeer(peer2Provider.ID().String(), peer2PubKey)
 
 	// set watchtower for our second peer
