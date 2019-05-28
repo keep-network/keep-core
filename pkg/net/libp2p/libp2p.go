@@ -40,6 +40,13 @@ const (
 	DefaultConnMgrGracePeriod = time.Second * 20
 )
 
+// watchtower constants
+const (
+	// StakeCheckTick is the amount of time between periodic checks for
+	// minimum stake for all peers connected to this one.
+	StakeCheckTick = time.Minute * 1
+)
+
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
 	Peers []string
@@ -183,7 +190,7 @@ func Connect(
 
 	// Instantiates and starts the connection management background process
 	watchtower.NewGuard(
-		ctx, 1*time.Minute, stakeMonitor, provider.connectionManager,
+		ctx, StakeCheckTick, stakeMonitor, provider.connectionManager,
 	)
 
 	return provider, nil
