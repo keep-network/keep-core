@@ -84,16 +84,17 @@ and it should deal gracefully with major changes.
 === Implementation
 
 For each service provided on the Keep network,
-the security-critical components are identified
-and separated from the rest of the contract
-as a _operator contract_ contract.
-The _service contract_ contract
-can abstract over multiple different versions of the operator contract,
-presenting a unified interface to customers.
-Behind that interface,
-security-critical elements are delegated to operator contracts.
+the components critical for correct incentives are identified
+and separated from the rest of the service contract as a _operator contract_.
+Operator contracts aim to be self-contained incentive-wise,
+minimizing or eliminating the need for stakers to trust other contracts.
 
-==== operator contract
+Customer applications use a _service contract_ to perform work.
+The _service contract_ provides a unified interface to customers,
+handling the version management of _operator contracts_
+and any shared non-critical state between them.
+
+==== Operator contract
 
 The operator contracts handle all operations
 that may have an impact on staked tokens.
@@ -117,43 +118,43 @@ When a operator contract performs a service,
 it is paid for the service provided.
 The payment is distributed according to the operator contract's own rules.
 
-==== service contract
+==== Service contract
 
-service contracts use the basic functionality
+Service contracts use the basic functionality
 performed by operator contracts,
 to provide useful services to customers.
 
-service contracts receive requests for services from customers,
+Service contracts receive requests for services from customers,
 and divide the provided service to operator contract and service contract components.
 Elements that are critical for security and incentives
 are delegated to a operator contract,
 while other parts of the work are performed in the service contract.
 
-service contracts can use
+Service contracts can use
 multiple different versions of operator contracts
 to perform the operator contract functions.
 The service contract keeps shared state which is not security-critical.
 
-==== operator contract upgrades
+==== Operator contract upgrades
 
-A operator contract is upgraded by deploying a new version,
+An operator contract is upgraded by deploying a new version,
 and adding it to the available operator contracts of a service contract.
 As stakers authorize the new operator contract,
 the service contract can gradually migrate
 to use the new operator contract over older versions.
 
-operator contracts can be upgraded
+Operator contracts can be upgraded
 without losing service contract state,
 but critical state is held within the operator contract
 and cannot be migrated.
 
-==== service contract upgrades
+==== Service contract upgrades
 
 Because operator contracts are designed
 to be independent of service contract security and correctness,
 there is much more leeway to upgrade service contracts.
 
-service contracts can be directly upgradeable,
+Service contracts can be directly upgradeable,
 e.g. with the eternal storage pattern;
 they may be immutable,
 only accepting new operator contract versions;
@@ -204,6 +205,11 @@ a new operator contract has to start from a blank slate.
 Inherently long-running operations
 present a limit to how rapidly the system can be upgraded.
 
+The division of service contracts and operator contracts
+doesn't map cleanly to situations
+where the service to applications consists of providing keeps,
+individual smart contracts deployed for individual groups of operators.
+
 === Example: Random Beacon
 
 The random beacon generates random numbers in response to requests,
@@ -230,7 +236,7 @@ from the perspective of the stakers.
 These can be performed by the service contract
 without individual staker authorization of upgrades.
 
-==== operator contract
+==== Operator contract
 
 The operator contract for the random beacon
 provides the following interface to the service contract:
@@ -265,7 +271,7 @@ the associated public key so the entry can be validated,
 but even then the operator contract needs to be trusted
 to provide a public key corresponding to a random valid group.
 
-==== service contract
+==== Service contract
 
 The service contract for the random beacon
 handles customer-facing features and ties the operator contracts together.
@@ -334,6 +340,17 @@ will be involved in the generation of their entry.
 However, this would reduce the ability to maintain
 a global "canonical" chain of entries,
 each linked to the previous ones.
+
+Most currently envisioned services on the Keep network
+consist of providing keeps to customer applications.
+The operator contract/service contract split
+is less than ideal for this use-case,
+and the random beacon could be rearchitected to follow the same pattern.
+Each keep is a separate contract which inherits its logic from its factory,
+but applications communicate directly with the keeps.
+The role of the service contract would be limited
+to managing different versions of keep factories,
+with the rest of its functionality being subsumed by the application.
 
 [bibliography]
 == Related Links
