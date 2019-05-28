@@ -113,9 +113,9 @@ func Connect(config Config) (chain.Handle, error) {
 	}
 	pv.keepGroupContract = keepGroupContract
 
-	address, err = addressForContract(config, "Staking")
+	address, err = addressForContract(config, "StakingProxy")
 	if err != nil {
-		return nil, fmt.Errorf("error resolving TokenStaking contract: [%v]", err)
+		return nil, fmt.Errorf("error resolving StakingProxy contract: [%v]", err)
 	}
 
 	stakingContract, err :=
