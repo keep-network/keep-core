@@ -339,4 +339,96 @@ contract('KeepToken', function(accounts) {
     account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.eq(amount), true, "Should stake grant amount");
   });
+
+  it("should not be able to use TokenStaking.finishUnstake() to block competing operator/owner address", async function() {
+
+    let stakingAmount = web3.utils.toBN(100);
+
+    // Send tokens
+    await token.transfer(account_two, stakingAmount, {from: account_one});
+
+    // Starting balances
+    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_one), account_one_operator)).substr(2), 'hex');
+    let data = Buffer.concat([Buffer.from(account_one_magpie.substr(2), 'hex'), signature]);
+
+    let signature2 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
+    let data2 = Buffer.concat([Buffer.from(account_two_magpie.substr(2), 'hex'), signature2]);
+
+    // Stake tokens using approveAndCall pattern
+    await token.approveAndCall(stakingContract.address, stakingAmount, '0x' + data.toString('hex'), {from: account_one});
+    await token.approveAndCall(stakingContract.address, stakingAmount, '0x' + data2.toString('hex'), {from: account_two});
+
+    // Initiate unstake tokens as token owner
+    let stakeWithdrawalId = await stakingContract.initiateUnstake(stakingAmount, account_one_operator, {from: account_one}).then((result)=>{
+      // Look for initiateUnstake event in transaction receipt and get stake withdrawal id
+      for (var i = 0; i < result.logs.length; i++) {
+        var log = result.logs[i];
+        if (log.event == "InitiatedUnstake") {
+          return log.args.id.toNumber();
+        }
+      }
+    })
+
+    // // jump in time, full withdrawal delay
+    await increaseTimeTo(await latestTime()+duration.days(30));
+
+    // // should not be able to finish unstake
+    await exceptThrow(stakingContract.finishUnstake(stakeWithdrawalId, account_two_operator, {from: account_two}));
+  });
+
+  it("should not be able to use TokenGrant.initiateUnstake() to undelegate/unstake not owned stake", async function() {
+    let amount = web3.utils.toBN(10000000);
+    let amount2 = web3.utils.toBN(1000000);
+    let vestingDuration = duration.days(60);
+    let start = await latestTime();
+    let cliff = duration.days(10);
+    let revocable = true;
+
+    // Grant tokens
+    await token.approve(grantContract.address, amount, {from: account_one});
+    let id = await grantContract.grant(amount, account_two, vestingDuration,
+      start, cliff, revocable, {from: account_one}).then((result)=>{
+      // Look for CreatedTokenGrant event in transaction receipt and get grant id
+      for (var i = 0; i < result.logs.length; i++) {
+        var log = result.logs[i];
+        if (log.event == "CreatedTokenGrant") {
+          return log.args.id.toNumber();
+        }
+      }
+    })
+
+    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
+    let delegation = Buffer.concat([Buffer.from(account_two_magpie.substr(2), 'hex'), signature]);
+
+    // stake granted tokens can be only called by grant beneficiary
+    await grantContract.stake(id, delegation, {from: account_two});
+    let account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
+    assert.equal(account_two_operator_stake_balance.eq(amount), true, "Should stake grant amount");
+
+    // Grant tokens
+    await token.approve(grantContract.address, amount2, {from: account_one});
+    let id2 = await grantContract.grant(amount2, account_one, vestingDuration,
+      start, cliff, revocable, {from: account_one}).then((result)=>{
+      // Look for CreatedTokenGrant event in transaction receipt and get grant id
+      for (var i = 0; i < result.logs.length; i++) {
+        var log = result.logs[i];
+        if (log.event == "CreatedTokenGrant") {
+          return log.args.id.toNumber();
+        }
+      }
+    })
+
+    let signature2 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_one), account_one_operator)).substr(2), 'hex');
+    let delegation2 = Buffer.concat([Buffer.from(account_one_magpie.substr(2), 'hex'), signature2]);
+
+    // stake granted tokens can be only called by grant beneficiary
+    await grantContract.stake(id2, delegation2, {from: account_one});
+    let account_one_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_one_operator);
+    assert.equal(account_one_operator_stake_balance.eq(amount2), true, "Should stake grant amount");
+
+    await increaseTimeTo(await latestTime()+duration.days(30));
+
+    // Try to initiate unstake of granted tokens by not by grant beneficiary
+    await exceptThrow(grantContract.initiateUnstake(id2, account_two_operator, {from: account_two}));
+  });
 });
