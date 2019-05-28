@@ -127,7 +127,9 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 func (cm *connectionManager) DisconnectPeer(connectedPeer string) {
 	connections := cm.Network().ConnsToPeer(peer.ID(connectedPeer))
 	for _, connection := range connections {
-		connection.Close()
+		if err := connection.Close(); err != nil {
+			fmt.Printf("disconnect resulted in error [%v]", err)
+		}
 	}
 }
 
