@@ -8,13 +8,41 @@ toc::[]
 
 == Background
 
-Securely upgradeable work contracts
-are important for protecting stakers' tokens.
-However, deploying a new contract on every upgrade,
-which stakers will then individually authorize,
+Stakers in the Keep network use work contracts to perform work for applications.
+Work contracts make the off-chain work of stakers
+available to on-chain applications
+using a system of rewards and punishments to enforce correct behavior.
+
+Because work contracts must be able to penalize misbehaving stakers
+by slashing their staked tokens,
+it is important that they can be upgraded securely.
+For an upgrade to be considered secure,
+two things must be achieved:
+
+1. stakers must authorize any contracts that could slash their stakes
+2. once authorized, contract code must be immutable
+
+Condition 1 is important to protect stakers
+against errors and adversaries.
+Upon staking their tokens,
+each staker appoints an authorizer
+who must approve of all contracts that could punish the staker.
+This ensures that stakes cannot be stolen
+even if the work contract upgrade scheme is thoroughly compromised,
+as long as the individual authorizers reject bad work contracts.
+
+Condition 2 is a practical requirement to make condition 1 meaningful.
+If an authorized contract's code can be changed later,
+the authorizations provide no protection.
+This means that contracts can only be upgraded by deploying a new version,
+which the stakers then authorize individually.
+
+However, deploying a new contract on every upgrade
 makes migrating between implementations difficult.
 Common ways of upgrading contracts,
-such as the "eternal storage" pattern,
+such as the "eternal storage" pattern
+where the contract holds data in its nominal address
+while delegating logic to a different, upgradeable contract address,
 are incompatible with individual upgrade authorization.
 
 === Current Functionality
