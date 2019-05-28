@@ -1,4 +1,4 @@
-# Configured by Kube. Do not edit by hand your changes will be lost.
+# Configured by Kube. Do not edit by hand, your changes will be lost!
 
 [ethereum]
   URL = ""
@@ -18,4 +18,4 @@
 
 [LibP2P]
   Peers = [""]
-  Port = 392
+  Port =
