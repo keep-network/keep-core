@@ -123,7 +123,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 	peerPublicKey, err := peer.ID(connectedPeer).ExtractPublicKey()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Failed to extract peer [%s] public key with error [%v]",
+			"Failed to extract peer [%s] public key with error: [%v]",
 			connectedPeer,
 			err,
 		)
