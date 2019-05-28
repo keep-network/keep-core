@@ -250,7 +250,5 @@ func (lcm *localConnectionManager) GetPeerPublicKey(
 }
 
 func (lcm *localConnectionManager) DisconnectPeer(connectedPeer string) {
-	if _, ok := lcm.peers[connectedPeer]; ok {
-		delete(lcm.peers, connectedPeer)
-	}
+	delete(lcm.peers, connectedPeer)
 }
