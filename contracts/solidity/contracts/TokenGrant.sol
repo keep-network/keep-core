@@ -257,6 +257,7 @@ contract TokenGrant is StakeDelegatable {
         require(grants[_id].staked, "Grant must be staked.");
         require(!grants[_id].revoked, "Grant must not be be revoked.");
         require(stakeWithdrawalStart[_id] == 0, "Grant withdrawal start must not be already set.");
+        require(grants[_id].beneficiary == owner, "Provided operator doesn't match the stake owner");
 
         // Set token grant stake withdrawal start.
         stakeWithdrawalStart[_id] = now;
@@ -283,6 +284,7 @@ contract TokenGrant is StakeDelegatable {
         require(grants[_id].staked, "Grant must be staked.");
         require(!grants[_id].revoked, "Grant must not be be revoked.");
         require(now >= stakeWithdrawalStart[_id].add(stakeWithdrawalDelay), "Grant withdrawal delay should be over.");
+        require(grants[_id].beneficiary == owner, "Provided operator doesn't match the stake owner");
 
         // Unstake grant.
         grants[_id].staked = false;
