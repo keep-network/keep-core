@@ -71,13 +71,40 @@ jobs:
       - run:
           name: Save keep-client image
           command: |
-            mkdir -p /tmp/images/keep-client/
-            docker save -o /tmp/images/keep-client/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
+            mkdir -p /tmp/keep-client/docker-images
+            docker save -o /tmp/keep-client/docker-images/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
       - persist_to_workspace:
-          root: /tmp/images
+          root: /tmp/keep-client
           paths:
-            - keep-client
-  migrate_contracts_keep_dev:
+            - docker-images
+  build_initcontainer:
+    executor: docker-git
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-client
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Run Docker build
+          command: |
+            cp /tmp/keep-client/contracts/* infrastructure/kube/keep-dev/keep-client/initcontainer
+            cd infrastructure/kube/keep-dev/keep-client/initcontainer
+            docker build \
+              --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
+              --build-arg ETH_HOST_PORT=$ETH_HOST_PORT \
+              --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
+              --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
+              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer .
+      - run:
+          name: Save keep-client-initcontainer image
+          command: |
+            docker save -o /tmp/keep-client/docker-images/keep-client-initcontainer.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer
+      - persist_to_workspace:
+          root: /tmp/keep-client
+          paths:
+            - docker-images
+  migrate_contracts:
     executor: docker-thesis-buildpack
     steps:
       - setup_remote_docker:
@@ -92,17 +119,23 @@ jobs:
           name: Migrate Contracts
           command: |
             export BUILD_TAG=$CIRCLE_SHA1
-            export TRUFFLE_NETWORK="keep_dev"
+            export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
+            mkdir -p /tmp/keep-client/contracts
             contracts/solidity/scripts/circleci-migrate-contracts.sh
-  publish_client:
+      - persist_to_workspace:
+          root: /tmp/keep-client
+          paths:
+            - contracts
+  publish_docker_images:
     executor: gcp-gcr/default
     steps:
       - attach_workspace:
-          at: /tmp/images
+          at: /tmp/keep-client
       - run:
-          name: Load keep-client image
+          name: Load Docker images
           command: |
-            docker load -i /tmp/images/keep-client/keep-client.tar
+            docker load -i /tmp/keep-client/docker-images/keep-client.tar
+            docker load -i /tmp/keep-client/docker-images/keep-client-initcontainer.tar
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -112,6 +145,11 @@ jobs:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
           image: keep-client
+          tag: latest
+      - gcp-gcr/push-image:
+          google-project-id: GOOGLE_PROJECT_ID
+          registry-url: $GCR_REGISTRY_URL
+          image: keep-client-initcontainer
           tag: latest
   generate_docs_tex:
     docker:
@@ -177,21 +215,30 @@ workflows:
     jobs:
       - build_client_and_test_go:
           context: keep-dev
-      - migrate_contracts_keep_dev:
+      - build_initcontainer:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+          requires:
+            - migrate_contracts
+            - build_client_and_test_go
+      - migrate_contracts:
           filters:
             branches:
               only: master
           context: keep-dev
           requires:
             - build_client_and_test_go
-      - publish_client:
+      - publish_docker_images:
           filters:
             branches:
               only: master
           context: keep-dev
           requires:
             - build_client_and_test_go
-            - migrate_contracts_keep_dev
+            - build_initcontainer
+            - migrate_contracts
   docs:
     jobs:
       - generate_docs_tex
