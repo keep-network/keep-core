@@ -14,14 +14,14 @@ Documentation related to the Keep network, Keep client, and Keep contracts.
 
 Specifically developer documentation for the various parts of Keep.
 
-### [`solidity/`](solidity/)
+### [`solidity/`](contracts/solidity/)
 
 The smart contracts behind the [Keep network].
 
 They handle creating and managing keeps, bridging off-chain secret storage
 and the public blockchain.
 
-### [`go/`](go/)
+### [`go/`](cmd/)
 
 The Keep Go client.
 
