@@ -56,7 +56,7 @@ func Connect() net.Provider {
 	}
 }
 
-// For use only in testing
+// ConnectWithCapabilities is for use only in testing.
 func ConnectWithCapabilities() *localProvider {
 	return &localProvider{
 		id: localIdentifier(randomIdentifier()),
