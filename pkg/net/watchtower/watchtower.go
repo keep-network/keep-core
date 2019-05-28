@@ -93,43 +93,61 @@ func (g *Guard) manageConnectionByStake(ctx context.Context, peer string) {
 	newContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
+	peerPublicKey, err := g.getPeerPublicKey(peer)
+	if err != nil {
+		// if we error while getting the peer's public key, disconnect them.
+		g.connectionManager.DisconnectPeer(peer)
+		fmt.Println(err)
+		return
+	}
+
 	hasMinimumStake, err := g.validatePeerStake(
-		newContext, peer,
+		newContext, peerPublicKey,
 	)
 	if err != nil {
+		// network issues with geth shouldn't cause disconnects from the
+		// network. Rather we'll abort the check and try again later.
 		fmt.Println(err)
 		return
 	}
 
 	if !hasMinimumStake {
+		// if a peer doesn't have at least the min stake, disconnect them.
 		g.connectionManager.DisconnectPeer(peer)
 	}
 }
 
-func (g *Guard) validatePeerStake(ctx context.Context, peer string) (bool, error) {
+func (g *Guard) getPeerPublicKey(peer string) (*key.NetworkPublic, error) {
 	peerPublicKey, err := g.connectionManager.GetPeerPublicKey(peer)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	if peerPublicKey == nil {
-		return false, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"failed to resolve valid public key for peer %s", peer,
 		)
 	}
+	return peerPublicKey, nil
+}
 
+func (g *Guard) validatePeerStake(
+	ctx context.Context,
+	peerPublicKey *key.NetworkPublic,
+) (bool, error) {
 	g.stakeMonitorLock.Lock()
+	defer g.stakeMonitorLock.Unlock()
+
 	hasMinimumStake, err := g.stakeMonitor.HasMinimumStake(
 		key.NetworkPubKeyToEthAddress(peerPublicKey),
 	)
 	if err != nil {
-		g.stakeMonitorLock.Unlock()
 		return false, fmt.Errorf(
-			"Failed to get stake information for peer [%s] with error [%v]",
-			peer,
+			"Failed to get stake information for key [%s] with error [%v]",
+			peerPublicKey,
 			err,
 		)
 	}
-	g.stakeMonitorLock.Unlock()
+
 	return hasMinimumStake, nil
 }
