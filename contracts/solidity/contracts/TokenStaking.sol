@@ -114,8 +114,8 @@ contract TokenStaking is StakeDelegatable {
     function finishUnstake(uint256 _id, address _operator) public {
         require(now >= withdrawals[_id].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
         address owner = operatorToOwner[_operator];
-
         address staker = withdrawals[_id].staker;
+        require(staker == owner, "Provided operator doesn't match the stake owner");
 
         // No need to call approve since msg.sender will be this staking contract.
         token.safeTransfer(staker, withdrawals[_id].amount);
