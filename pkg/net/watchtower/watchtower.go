@@ -17,8 +17,7 @@ import (
 type Guard struct {
 	duration time.Duration
 
-	stakeMonitorLock sync.Mutex
-	stakeMonitor     chain.StakeMonitor
+	stakeMonitor chain.StakeMonitor
 
 	connectionManager net.ConnectionManager
 
@@ -136,9 +135,6 @@ func (g *Guard) validatePeerStake(
 	ctx context.Context,
 	peerPublicKey *key.NetworkPublic,
 ) (bool, error) {
-	g.stakeMonitorLock.Lock()
-	defer g.stakeMonitorLock.Unlock()
-
 	hasMinimumStake, err := g.stakeMonitor.HasMinimumStake(
 		key.NetworkPubKeyToEthAddress(peerPublicKey),
 	)
