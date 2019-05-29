@@ -83,8 +83,8 @@ func relayRequest(c *cli.Context) error {
 		// with the one we sent.
 		if requestID == nil && seed.Cmp(request.Seed) == 0 {
 			fmt.Printf(
-				"Relay entry request submitted with id [%s]: [%v]\n",
-				request.RequestID.String(),
+				"Relay entry request submitted with id [%s]: [%+v]\n",
+				request.RequestID,
 				request,
 			)
 
@@ -109,7 +109,7 @@ func relayRequest(c *cli.Context) error {
 		}
 	})
 
-	fmt.Printf("Requesting for a new relay entry at [%v]\n", time.Now().String())
+	fmt.Printf("Requesting for a new relay entry at [%s]\n", time.Now())
 
 	provider.ThresholdRelay().RequestRelayEntry(seed).
 		OnComplete(func(request *event.Request, err error) {
