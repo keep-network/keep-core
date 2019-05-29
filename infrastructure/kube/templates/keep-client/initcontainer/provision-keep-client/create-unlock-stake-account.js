@@ -56,12 +56,11 @@ const keepGroupJsonFile = "/tmp/KeepGroup.json";
 const keepGroupParsed = JSON.parse(fs.readFileSync(keepGroupJsonFile));
 const keepGroupContractAddress = keepGroupParsed.networks[process.env.ETH_NETWORK_ID].address;
 
-
-// Eth account that contracts are migrated against. ENV VAR sourced from Docker image.
-const contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-
 // Stake a target eth account
 async function provisionKeepClient() {
+
+  // Eth account that contracts are migrated against. ENV VAR sourced from Docker image.
+  let contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
   try {
     console.log("<<<<<<<<<<<< Unlocking Contract Owner Account " + contract_owner + " >>>>>>>>>>>>");
@@ -78,11 +77,11 @@ async function provisionKeepClient() {
     await web3.eth.accounts.wallet.add(operatorAccount["privateKey"]);
     console.log("Operator account provisioned!")
 
-    console.log("<<<<<<<<<<<< Staking Operator Account " + operator + " >>>>>>>>>>>>")
-    await stakeEthAccount(operator)
+    console.log("<<<<<<<<<<<< Staking Operator Account " + operator + " >>>>>>>>>>>>");
+    await stakeEthAccount(operator, contract_owner);
 
-    console.log("<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>")
-    await createKeepClientConfig(operator)
+    console.log("<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>");
+    await createKeepClientConfig(operator);
 
   }
   catch(error) {
@@ -91,12 +90,12 @@ async function provisionKeepClient() {
   }
 };
 
-async function stakeEthAccount(eth_account) {
+async function stakeEthAccount(operator, contract_owner) {
 
   // ENV VAR sourced from Docker image.
   let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
-  let contract_owner_signed = await web3.eth.sign(web3.utils.soliditySha3(contract_owner), eth_account);
+  let contract_owner_signed = await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator);
   let contract_owner_signature = contract_owner_signed.signature;
 
   let signature = Buffer.from(contract_owner_signature.substr(2), 'hex');
@@ -111,13 +110,13 @@ async function stakeEthAccount(eth_account) {
     })
   }
   console.log("stakingProxy/tokenStaking Contracts Authorized!");
-  console.log("<<<<<<<<<<<< Staking Account: " + eth_account + " >>>>>>>>>>>>");
+  console.log("<<<<<<<<<<<< Staking Account: " + operator + " >>>>>>>>>>>>");
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
     formatAmount(1000000, 18),
     delegation).send({from: contract_owner}).then((receipt) => {
       console.log(JSON.stringify(receipt));
-      console.log("Account " + eth_account + " staked!");
+      console.log("Account " + operator + " staked!");
   });
 }
 
@@ -131,7 +130,7 @@ async function createEthAccount(account_name) {
   });
   console.log(account_name + " Account "  + eth_account["address"] + " Created!");
   return eth_account
-  }
+}
 
 // We are creating a local account.  We must manually generate a keyfile for use by the keep-client
 async function createEthAccountKeyfile(eth_account_private_key, eth_account_password) {
