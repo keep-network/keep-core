@@ -95,7 +95,8 @@ func (g *Guard) manageConnectionByStake(ctx context.Context, peer string) {
 
 	peerPublicKey, err := g.getPeerPublicKey(peer)
 	if err != nil {
-		// if we error while getting the peer's public key, disconnect them.
+		// if we error while getting the peer's public key, the peer's id
+		// or key may be malformed/unknown; disconnect them immediately.
 		g.connectionManager.DisconnectPeer(peer)
 		fmt.Println(err)
 		return
