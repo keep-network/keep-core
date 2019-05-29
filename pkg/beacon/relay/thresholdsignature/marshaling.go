@@ -18,7 +18,7 @@ func (*SignatureShareMessage) Type() string {
 func (ssm *SignatureShareMessage) Marshal() ([]byte, error) {
 	pbSignatureShare := pb.SignatureShare{
 		SenderID:  uint32(ssm.senderID),
-		Share:     ssm.ShareBytes,
+		Share:     ssm.shareBytes,
 		RequestID: ssm.requestID.String(),
 	}
 
@@ -41,7 +41,7 @@ func (ssm *SignatureShareMessage) Unmarshal(bytes []byte) error {
 	}
 
 	ssm.senderID = group.MemberIndex(pbSignatureShare.SenderID)
-	ssm.ShareBytes = pbSignatureShare.Share
+	ssm.shareBytes = pbSignatureShare.Share
 	ssm.requestID = requestID
 
 	return nil

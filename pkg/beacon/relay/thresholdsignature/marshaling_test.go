@@ -25,7 +25,7 @@ func TestSignatureShareMessageRoundTrip(t *testing.T) {
 		)
 	}
 
-	testutils.AssertBytesEqual(t, msg.ShareBytes, unmarshaled.ShareBytes)
+	testutils.AssertBytesEqual(t, msg.shareBytes, unmarshaled.shareBytes)
 
 	if msg.requestID.Cmp(unmarshaled.requestID) != 0 {
 		t.Errorf(

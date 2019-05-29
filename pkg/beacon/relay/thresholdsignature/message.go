@@ -10,7 +10,7 @@ import (
 // signature share for the given message.
 type SignatureShareMessage struct {
 	senderID   group.MemberIndex
-	ShareBytes []byte
+	shareBytes []byte
 	requestID  *big.Int
 }
 

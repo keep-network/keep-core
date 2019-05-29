@@ -124,7 +124,7 @@ func (scs *signatureCompleteState) Initiate() error {
 
 	for _, message := range scs.previousPhaseMessages {
 		share := new(bn256.G1)
-		_, err := share.Unmarshal(message.ShareBytes)
+		_, err := share.Unmarshal(message.shareBytes)
 		if err != nil {
 			fmt.Fprintf(
 				os.Stderr,
