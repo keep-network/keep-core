@@ -88,7 +88,7 @@ jobs:
       - run:
           name: Run Docker build
           command: |
-            cp /tmp/keep-client/contracts/* infrastructure/kube/keep-dev/keep-client/initcontainer
+            cp /tmp/keep-client/contracts/* infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client
             cd infrastructure/kube/keep-dev/keep-client/initcontainer
             docker build \
               --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
