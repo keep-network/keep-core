@@ -57,6 +57,9 @@ type Provider interface {
 	ConnectionManager() ConnectionManager
 }
 
+// ConnectionManager is an interface which exposes peers a client is connected
+// to, and their individual identities, so that a client may forcibly disconnect
+// from any given connected peer.
 type ConnectionManager interface {
 	ConnectedPeers() []string
 	GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error)
