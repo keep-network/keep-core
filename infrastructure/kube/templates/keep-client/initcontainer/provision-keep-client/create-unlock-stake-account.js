@@ -110,7 +110,6 @@ async function stakeEthAccount(operator, contractOwner) {
     });
   }
   console.log("stakingProxy/tokenStaking Contracts Authorized!");
-  console.log("<<<<<<<<<<<< Staking Account: " + operator + " >>>>>>>>>>>>");
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
     formatAmount(1000000, 18),
