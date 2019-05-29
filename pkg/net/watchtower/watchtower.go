@@ -143,7 +143,7 @@ func (g *Guard) validatePeerStake(
 	)
 	if err != nil {
 		return false, fmt.Errorf(
-			"Failed to get stake information for key [%s] with error [%v]",
+			"Failed to get stake information for key [%s] with error: [%v]",
 			peerPublicKey,
 			err,
 		)
