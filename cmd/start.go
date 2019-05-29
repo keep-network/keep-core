@@ -8,10 +8,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
+	storage "github.com/keep-network/keep-core/pkg/disk_storage"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/keep-network/keep-core/pkg/storage"
 	"github.com/urfave/cli"
 )
 
@@ -101,7 +101,7 @@ func Start(c *cli.Context) error {
 	isBootstrapNode := config.LibP2P.Seed != 0
 	nodeHeader(isBootstrapNode, netProvider.AddrStrings(), port)
 
-	storage := storage.NewStorage(config.Storage.DataDir)
+	storage := storage.NewDiskHandler(config.Storage.DataDir)
 
 	err = beacon.Initialize(
 		ctx,

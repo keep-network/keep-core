@@ -17,8 +17,9 @@ import (
 type devNullDataStorage struct {
 }
 
-func (dnds *devNullDataStorage) Save(data []byte, name string) {
+func (dnds *devNullDataStorage) Save(membership *Membership) error {
 	// noop
+	return nil
 }
 
 func TestRegisterGroup(t *testing.T) {

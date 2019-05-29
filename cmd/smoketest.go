@@ -45,8 +45,9 @@ const smokeTestDescription = `The smoke-test command creates a local threshold
 type devNullDataStorage struct {
 }
 
-func (dnds *devNullDataStorage) Save(data []byte, name string) {
+func (dnds *devNullDataStorage) Save(data []byte, name string) error {
 	// noop
+	return nil
 }
 
 func init() {

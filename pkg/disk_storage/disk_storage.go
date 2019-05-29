@@ -36,12 +36,16 @@ func (f *File) Write(data []byte) error {
 
 	var err error
 	writeFile, err := os.Create(f.FileName)
-	check(err)
+	if err != nil {
+		return err
+	}
 
 	defer writeFile.Close()
 
 	_, err = writeFile.Write(data)
-	check(err)
+	if err != nil {
+		return err
+	}
 
 	writeFile.Sync()
 
@@ -55,12 +59,16 @@ func (f *File) Read(FileName string) ([]byte, error) {
 	}
 
 	readFile, err := os.Open(FileName)
-	check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	defer readFile.Close()
 
 	data, err := ioutil.ReadAll(readFile)
-	check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	return data, nil
 }
@@ -72,13 +80,9 @@ func (f *File) Remove(FileName string) error {
 	}
 
 	err := os.Remove(FileName)
-	check(err)
+	if err != nil {
+		return err
+	}
 
 	return nil
-}
-
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
 }
