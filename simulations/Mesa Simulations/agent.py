@@ -25,7 +25,8 @@ class Node(Agent):
         self.node_death_percent = death_percent
         self.failure = False
         self.death = False
-        self.dkg_misbehavior = dkg_misbehavior
+        self.dkg_misbehavior_percent = dkg_misbehavior
+        self.dkg_misbehaving = False
     
     def step(self):
         #connect to chain
@@ -44,6 +45,7 @@ class Node(Agent):
         #simulate node failure
         self.failure = np.random.randint(0,100) < self.node_failure_percent
         self.death = np.random.randint (0,100) < self.node_death_percent
+        self.dkg_misbehaving = np.random.randint (0,100) < self.dkg_misbehavior_percent
 
         #disconnect the node if failure occurs
         if self.failure or self.death:
@@ -86,6 +88,7 @@ class Group(Agent):
         self.model.newest_group_id +=1
         self.ownership_distr = self.calculate_ownership_distr()
 
+
     def step(self):
         """ At each step check if the group has expired """
         self.expiry -=1
@@ -101,6 +104,7 @@ class Group(Agent):
         for node in self.members:    
             temp_distr[node.node_id] +=1 # increments by 1 for each node index everytime it exists in the member list, at each step
         return temp_distr
+
 
 class Signature(Agent):
     def __init__(self, unique_id, signature_id, model, group_object):
@@ -149,6 +153,7 @@ class Signature(Agent):
         if dominator_value > self.model.max_malicious_threshold:
             self.dominator_id = np.argmax(self.ownership_distr)
             #print("dominator owner ID = " + str(self.dominator_id))
+    
 
 
 

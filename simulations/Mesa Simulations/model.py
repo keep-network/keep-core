@@ -9,8 +9,9 @@ class Beacon_Model(Model):
     """The model"""
     def __init__(self, nodes, ticket_distribution, active_group_threshold, 
     group_size, max_malicious_threshold, group_expiry, 
-     node_failure_percent, node_death_percent,
-    signature_delay, min_nodes, node_connection_delay, node_mainloop_connection_delay, log_filename, run_number):
+    node_failure_percent, node_death_percent,
+    signature_delay, min_nodes, node_connection_delay, node_mainloop_connection_delay, 
+    log_filename, run_number, dkg_misbehavior):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
@@ -38,7 +39,11 @@ class Beacon_Model(Model):
 
         #create nodes
         for i in range(nodes):
-            node = agent.Node(i, i, self, self.ticket_distribution[i], node_failure_percent, node_death_percent, node_connection_delay, node_mainloop_connection_delay)
+            node = agent.Node(i, i, self, 
+            self.ticket_distribution[i], 
+            node_failure_percent, 
+            node_death_percent, 
+            node_connection_delay, node_mainloop_connection_delay, dkg_misbehavior)
             self.newest_id = i
             self.schedule.add(node)
         self.newest_id +=1
@@ -97,7 +102,7 @@ class Beacon_Model(Model):
             log.debug("             Not enough nodes to register a group")
 
         else:
-            # make each node generate tickets and save them to a list
+            # make each active node generate tickets and save them to a list
             max_tickets = int(max(self.ticket_distribution))
             for node in self.active_nodes:
                 adjusted_ticket_list = []
