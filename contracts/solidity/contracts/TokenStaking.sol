@@ -16,19 +16,15 @@ contract TokenStaking is StakeDelegatable {
 
     event ReceivedApproval(uint256 _value);
     event Staked(address indexed from, uint256 value);
-    event InitiatedUnstake(uint256 id);
-    event FinishedUnstake(uint256 id);
+    event InitiatedUnstake(address operator);
+    event FinishedUnstake(address operator);
 
     struct Withdrawal {
-        address staker;
         uint256 amount;
         uint256 createdAt;
     }
 
-    uint256 public numWithdrawals;
-    mapping(address => uint256[]) public withdrawalIndices;
-    mapping(uint256 => Withdrawal) public withdrawals;
-    mapping(address => uint256) public stakeBalancesLock;
+    mapping(address => Withdrawal) public withdrawals;
 
     /**
      * @dev Creates a token staking contract for a provided Standard ERC20 token.
@@ -86,75 +82,55 @@ contract TokenStaking is StakeDelegatable {
      * @param _value The amount to be unstaked.
      * @param _operator Address of the stake operator.
      */
-    function initiateUnstake(uint256 _value, address _operator) public returns (uint256 id) {
+    function initiateUnstake(uint256 _value, address _operator) public {
         address owner = operatorToOwner[_operator];
         require(
             msg.sender == _operator ||
             msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
-        require(_value + stakeBalancesLock[_operator] <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
+        require(_value <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
 
-        id = numWithdrawals++;
-        withdrawals[id] = Withdrawal(owner, _value, now);
-        withdrawalIndices[owner].push(id);
-        stakeBalancesLock[_operator] = stakeBalancesLock[_operator].add(_value);
-        emit InitiatedUnstake(id);
+        stakeBalances[_operator] = stakeBalances[_operator].sub(_value);
+ 
+        withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), now);
+
+        emit InitiatedUnstake(_operator);
         if (address(stakingProxy) != address(0)) {
             stakingProxy.emitUnstakedEvent(owner, _value);
         }
-
-        return id;
     }
 
     /**
      * @notice Finishes unstake of the tokens of provided withdrawal request.
      * You can only finish unstake once withdrawal delay is over for the request,
      * otherwise the function will fail and remaining gas is returned.
-     * @param _id Withdrawal ID.
+     * @param _operator Operator address.
      */
-    function finishUnstake(uint256 _id, address _operator) public {
-        require(now >= withdrawals[_id].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
+    function finishUnstake(address _operator) public {
+        require(now >= withdrawals[_operator].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
         address owner = operatorToOwner[_operator];
-        address staker = withdrawals[_id].staker;
-        require(staker == owner, "Provided operator doesn't match the stake owner");
-        require(stakeBalancesLock[_operator] <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
 
         // No need to call approve since msg.sender will be this staking contract.
-        token.safeTransfer(staker, withdrawals[_id].amount);
-
-        // Cleanup withdrawal index.
-        withdrawalIndices[staker].removeValue(_id);
-
-        stakeBalances[_operator] = stakeBalances[_operator].sub(withdrawals[_id].amount);
-        stakeBalancesLock[_operator] = stakeBalancesLock[_operator].sub(withdrawals[_id].amount);
-        // Release operator only when the stake is depleted
-        if (stakeBalances[_operator] == 0) {
-            operatorToOwner[_operator] = address(0);
-            ownerOperators[owner].removeAddress(_operator);
-            stakeBalancesLock[_operator] = 0;
-        }
+        token.safeTransfer(owner, withdrawals[_operator].amount);
 
         // Cleanup withdrawal record.
-        delete withdrawals[_id];
+        delete withdrawals[_operator];
 
-        emit FinishedUnstake(_id);
+        // Release operator only when the stake is depleted
+        if (stakeBalances[_operator] <= 0) {
+            operatorToOwner[_operator] = address(0);
+            ownerOperators[owner].removeAddress(_operator);
+        }
+
+        emit FinishedUnstake(_operator);
     }
 
     /**
-     * @dev Gets withdrawal request by ID.
-     * @param _id ID of withdrawal request.
-     * @return staker, amount, createdAt.
+     * @dev Gets withdrawal request by Operator.
+     * @param _operator address of withdrawal request.
+     * @return amount, createdAt.
      */
-    function getWithdrawal(uint256 _id) public view returns (address, uint256, uint256) {
-        return (withdrawals[_id].staker, withdrawals[_id].amount, withdrawals[_id].createdAt);
-    }
-
-    /**
-     * @dev Gets withdrawal ids of the specified address.
-     * @param _staker The address to query.
-     * @return An uint256 array of withdrawal IDs.
-     */
-    function getWithdrawals(address _staker) public view returns (uint256[] memory) {
-        return withdrawalIndices[_staker];
+    function getWithdrawal(address _operator) public view returns (uint256, uint256) {
+        return (withdrawals[_operator].amount, withdrawals[_operator].createdAt);
     }
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 4).
