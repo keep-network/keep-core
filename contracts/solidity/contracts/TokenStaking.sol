@@ -92,8 +92,6 @@ contract TokenStaking is StakeDelegatable {
             msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
         require(_value <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
 
-        stakeBalances[_operator] = stakeBalances[_operator].sub(_value);
-
         id = numWithdrawals++;
         withdrawals[id] = Withdrawal(owner, _value, now);
         withdrawalIndices[owner].push(id);
@@ -123,12 +121,16 @@ contract TokenStaking is StakeDelegatable {
         // Cleanup withdrawal index.
         withdrawalIndices[staker].removeValue(_id);
 
+        stakeBalances[_operator] = stakeBalances[_operator].sub(withdrawals[_id].amount);
+
+        // Release operator only when the stake is depleted
+        if (stakeBalances[_operator] == 0) {
+            operatorToOwner[_operator] = address(0);
+            ownerOperators[owner].removeAddress(_operator);
+        }
+
         // Cleanup withdrawal record.
         delete withdrawals[_id];
-
-        // Release operator
-        operatorToOwner[_operator] = address(0);
-        ownerOperators[owner].removeAddress(_operator);
 
         emit FinishedUnstake(_id);
     }
