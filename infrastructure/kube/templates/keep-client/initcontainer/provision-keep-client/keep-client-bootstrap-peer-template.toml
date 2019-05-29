@@ -1,12 +1,12 @@
 # Configured by Kube. Do not edit by hand, your changes will be lost!
 
 [ethereum]
-	URL = "Set by Kube"
-	URLRPC = "Set by Kube"
+  URL = "Set by Kube"
+  URLRPC = "Set by Kube"
 
   [ethereum.account]
-  	Address = "0xA86c468475EF9C2ce851Ea4125424672C3F7e0C8"
-  	KeyFile = "/mnt/eth-data/eth-account-keyfile"
+    Address = "0xA86c468475EF9C2ce851Ea4125424672C3F7e0C8"
+    KeyFile = "/mnt/eth-data/eth-account-keyfile"
 
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeacon contract
