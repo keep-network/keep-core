@@ -95,9 +95,9 @@ func (gr *Groups) UnregisterDeletedGroups() {
 	}
 }
 
-// LoadGroupsOnStart iterates over all stored memberships on disk and loads them
+// LoadExistingGroups iterates over all stored memberships on disk and loads them
 // into memory
-func (gr *Groups) LoadGroupsOnStart() error {
+func (gr *Groups) LoadExistingGroups() error {
 	storedMemberships := gr.storage.ReadAll()
 
 	for _, storedMembership := range storedMemberships {

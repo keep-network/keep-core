@@ -44,11 +44,6 @@ func (ts *ThresholdSigner) GroupPublicKeyBytes() []byte {
 	return altbn128GroupPublicKey.Compress()
 }
 
-// GroupPrivateKeyShare returns group private key share.
-func (ts *ThresholdSigner) GroupPrivateKeyShare() *big.Int {
-	return ts.groupPrivateKeyShare
-}
-
 // CalculateSignatureShare takes the message and calculates signer's signature
 // share over that message.
 func (ts *ThresholdSigner) CalculateSignatureShare(message []byte) *bn256.G1 {

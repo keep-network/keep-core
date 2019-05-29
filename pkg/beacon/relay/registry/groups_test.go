@@ -17,14 +17,14 @@ import (
 
 var channelName1 = "test_channel1"
 var channelName2 = "test_channel2"
-var noopStorage = &devNullDataStorage{}
+var storageMock = &dataStorageMock{}
 
 func TestRegisterGroup(t *testing.T) {
 	gr := &Groups{
 		mutex:      sync.Mutex{},
 		myGroups:   make(map[string][]*Membership),
 		relayChain: chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay(),
-		storage:    noopStorage,
+		storage:    storageMock,
 	}
 
 	signer := dkg.NewThresholdSigner(
@@ -57,7 +57,7 @@ func TestLoadGroup(t *testing.T) {
 		mutex:      sync.Mutex{},
 		myGroups:   make(map[string][]*Membership),
 		relayChain: chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay(),
-		storage:    noopStorage,
+		storage:    storageMock,
 	}
 
 	signer1 := dkg.NewThresholdSigner(
@@ -83,7 +83,7 @@ func TestLoadGroup(t *testing.T) {
 		)
 	}
 
-	err := gr.LoadGroupsOnStart()
+	err := gr.LoadExistingGroups()
 
 	if err != nil {
 		t.Fatalf("Error occured while reading groups from the disk")
@@ -121,7 +121,7 @@ func TestUnregisterStaleGroups(t *testing.T) {
 		groupsToRemove: [][]byte{},
 	}
 
-	noopStorage := &devNullDataStorage{}
+	noopStorage := &dataStorageMock{}
 
 	gr := &Groups{
 		mutex:      sync.Mutex{},
@@ -200,14 +200,14 @@ func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) 
 	return false, nil
 }
 
-type devNullDataStorage struct {
+type dataStorageMock struct {
 }
 
-func (dnds *devNullDataStorage) Save(data []byte, name string) {
+func (dsm *dataStorageMock) Save(data []byte, name string) {
 	// noop
 }
 
-func (dnds *devNullDataStorage) ReadAll() [][]byte {
+func (dsm *dataStorageMock) ReadAll() [][]byte {
 	signer1 := dkg.NewThresholdSigner(
 		group.MemberIndex(2),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
