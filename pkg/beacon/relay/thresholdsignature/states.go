@@ -199,8 +199,6 @@ func (ess *entrySubmissionState) ActiveBlocks() uint64 {
 }
 
 func (ess *entrySubmissionState) Initiate() error {
-	rightSizeSignature := big.NewInt(0).SetBytes(ess.signature[:32])
-
 	submitter := &relayEntrySubmitter{
 		chain:        ess.relayChain,
 		blockCounter: ess.blockCounter,
@@ -209,7 +207,7 @@ func (ess *entrySubmissionState) Initiate() error {
 
 	return submitter.submitRelayEntry(
 		ess.requestID,
-		rightSizeSignature,
+		new(big.Int).SetBytes(ess.signature),
 		ess.previousEntry,
 		ess.seed,
 		ess.signer.GroupPublicKeyBytes(),
