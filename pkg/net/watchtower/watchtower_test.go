@@ -29,7 +29,7 @@ func TestDisconnectPeerBelowMinStake(t *testing.T) {
 
 	// kick off the network
 	peer1Provider := localNetwork.Connect()
-	// TODO: add self to our own map of connections
+	// add self to our own map of connections
 	peer1Provider.AddPeer(peer1Provider.ID().String(), peer1PubKey)
 
 	// set watchtower for bootstrap peer
