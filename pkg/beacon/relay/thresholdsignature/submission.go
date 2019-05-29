@@ -43,7 +43,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 	)
 	if err != nil {
 		close(onSubmittedResultChan)
-		return fmt.Errorf("could not watch relay entry publications: [%v]", err)
+		return fmt.Errorf("could not watch for relay entry submissions: [%v]", err)
 	}
 
 	returnWithError := func(err error) error {
