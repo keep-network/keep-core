@@ -18,6 +18,12 @@ type relayEntrySubmitter struct {
 	index group.MemberIndex
 }
 
+// submitRelayEntry submits the provided relay entry data to the chain.
+// Group members tries to submit in the order specified by their indexes.
+// Group member with index 1 tries to submit as the first one, group member 2
+// tries to submit after a few blocks if member 1 did not submit and so on.
+// Relay entry submit process starts at block height defined by startBlockheight
+// parameter.
 func (res *relayEntrySubmitter) submitRelayEntry(
 	requestID *big.Int,
 	newEntry *big.Int,
