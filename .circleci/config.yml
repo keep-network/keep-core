@@ -89,7 +89,7 @@ jobs:
           name: Run Docker build
           command: |
             cp /tmp/keep-client/contracts/* infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client
-            cd infrastructure/kube/keep-dev/keep-client/initcontainer
+            cd infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client
             docker build \
               --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
               --build-arg ETH_HOST_PORT=$ETH_HOST_PORT \
