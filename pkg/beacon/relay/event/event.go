@@ -30,6 +30,14 @@ type Request struct {
 	BlockNumber    uint64
 }
 
+// GroupSelectionStart represents a group selection start event.
+type GroupSelectionStart struct {
+	NewEntry    *big.Int
+	RequestID   *big.Int
+	Seed        *big.Int
+	BlockNumber uint64
+}
+
 // GroupTicketSubmission represents a group selection ticket submission event.
 type GroupTicketSubmission struct {
 	TicketValue *big.Int

@@ -124,7 +124,7 @@ func (c *channel) handleMessages(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			msg, err := c.subscription.Next(ctx)
+			message, err := c.subscription.Next(ctx)
 			if err != nil {
 				// TODO: handle error - different error types
 				// result in different outcomes. Print err is very noisy.
@@ -132,12 +132,15 @@ func (c *channel) handleMessages(ctx context.Context) {
 				continue
 			}
 
-			if err := c.processPubsubMessage(msg); err != nil {
-				// TODO: handle error - different error types
-				// result in different outcomes. Print err is very noisy.
-				fmt.Println(err)
-				continue
-			}
+			// Every message should be independent from any other message.
+			go func(msg *pubsub.Message) {
+				if err := c.processPubsubMessage(msg); err != nil {
+					// TODO: handle error - different error types
+					// result in different outcomes. Print err is very noisy.
+					fmt.Println(err)
+					return
+				}
+			}(message)
 		}
 	}
 }
@@ -228,6 +231,7 @@ func (c *channel) deliver(message net.Message) error {
 			if err := handler.Handler(msg); err != nil {
 				// TODO: handle error
 				fmt.Println(err)
+				return
 			}
 		}(message, handler)
 	}

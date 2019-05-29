@@ -15,8 +15,8 @@ func (m *Membership) Marshal() ([]byte, error) {
 	}
 
 	return (&pb.Membership{
-		Signer: signer,
-		// Channel: "test channel",
+		Signer:  signer,
+		Channel: m.ChannelName,
 	}).Marshal()
 }
 
@@ -35,7 +35,7 @@ func (m *Membership) Unmarshal(bytes []byte) error {
 	}
 
 	m.Signer = signer
-	// m.Channel = protoBuffMembership.Channel; //TODO: will be implemented later
+	m.ChannelName = pbMembership.Channel
 
 	return nil
 }
