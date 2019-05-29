@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"os"
@@ -73,7 +72,6 @@ func relayRequest(c *cli.Context) error {
 	}
 
 	requestMutex := sync.Mutex{}
-	ctx := context.Background()
 
 	wait := make(chan struct{})
 	var requestID *big.Int
@@ -126,12 +124,6 @@ func relayRequest(c *cli.Context) error {
 	select {
 	case <-wait:
 		return nil
-	case <-ctx.Done():
-		if err != nil {
-			return fmt.Errorf("request errored out [%v]", err)
-		}
-
-		return fmt.Errorf("request errored for unknown reason")
 	}
 }
 
@@ -148,11 +140,7 @@ func submitGenesisRelayEntry(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	var (
-		wait        = make(chan error)
-		ctx, cancel = context.WithCancel(context.Background())
-	)
-	defer cancel()
+	wait := make(chan error)
 
 	provider.ThresholdRelay().SubmitRelayEntry(
 		relay.GenesisRelayEntry(),
@@ -171,12 +159,6 @@ func submitGenesisRelayEntry(c *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("error in submitting genesis relay entry: [%v]", err)
 		}
-	case <-ctx.Done():
-		err := ctx.Err()
-		if err != nil {
-			return fmt.Errorf("context done with error: [%v]", err)
-		}
-		return nil
 	}
 	return nil
 }
