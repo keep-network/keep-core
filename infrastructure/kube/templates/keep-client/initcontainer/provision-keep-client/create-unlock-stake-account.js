@@ -47,86 +47,65 @@ const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenC
 // Eth account that contracts are migrated against. ENV VAR sourced from Docker image.
 const contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
-async function provisionKeepClientConfig() {
-
-  try {
-    if ((process.env.INSTANCE_NAME).includes("bootstrap")) {
-      fs.createReadStream('/tmp/keep-client-bootstrap-peer-template.toml', 'utf8').pipe(concat(function(data) {
-        let parsedConfigFile = toml.parse(data);
-        parsedConfigFile.ethereum.URL = "";
-        parsedConfigFile.ethereum.URLRPC = "";
-        parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = "";
-        parsedConfigFile.ethereum.ContractAddresses.KeepGroup = "";
-        parsedConfigFile.ethereum.ContractAddresses.Staking = "";
-        fs.writeFile("/mnt/keep-client/config/keep-client-config.toml", tomlify.toToml(parsedConfigFile), (error) => {
-          if (error) throw error;
-        });
-      }));
-    } else {
-      fs.createReadStream('/tmp/keep-client-standard-peer-template.toml', 'utf8').pipe(concat(function(data) {
-        let parsedConfigFile = toml.parse(data);
-        parsedConfigFile.ethereum.URL = "";
-        parsedConfigFile.ethereum.URLRPC = "";
-        parsedConfigFile.ethereum.account.Address = "";
-        parsedConfigFile.ethereum.account.KeyFile = "";
-        parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = "";
-        parsedConfigFile.ethereum.ContractAddresses.KeepGroup = "";
-        parsedConfigFile.ethereum.ContractAddresses.Staking = "";
-        fs.writeFile("/mnt/keep-client/config/keep-client-config.toml", tomlify.toToml(parsedConfigFile), (error) => {
-          if (error) throw error;
-        });
-      }));
-    }
-  }
-  catch(error) {
-    console.error(error.message);
-    throw error;
-  }
-};
-
 // Stake a target eth account
-async function stakeEthAccount() {
+async function provisionKeepClient() {
 
   try {
+    console.log("<<<<<<<<<<<< Unlocking Contract Owner Account " + contract_owner + " >>>>>>>>>>>>");
     // Transactions during staking are sent from contract_owner, must be unlocked before start.
     await unlockEthAccount(contract_owner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
 
     console.log("<<<<<<<<<<<< Provisioning Operator Account " + ">>>>>>>>>>>>")
-    let provisioned_operator = await provisionOperatorAccount();
-    let operator = provisioned_operator["address"];
+    let operator_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
+    let operatorAccount = await createEthAccount("operator");
+    let operator = operatorAccount["address"];
 
-    // ENV VAR sourced from Docker image.
-    let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+    await createEthAccountKeyfile(operatorAccount["privateKey"], operator_eth_account_password);
+    // We wallet add to make the local account available to web3 functions in the script.
+    await web3.eth.accounts.wallet.add(operatorAccount["privateKey"]);
+    console.log("Operator account provisioned!")
 
-    let contract_owner_signed = await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator);
-    let contract_owner_signature = contract_owner_signed.signature;
+    console.log("<<<<<<<<<<<< Staking Operator Account " + operator + " >>>>>>>>>>>>")
+    await stakeEthAccount(operator)
 
-    let signature = Buffer.from(contract_owner_signature.substr(2), 'hex');
-    let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
+    console.log("<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>")
 
-    console.log("<<<<<<<<<<<< Checking if stakingProxy/tokenStaking Contracts Are Authorized >>>>>>>>>>>>");
-    if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call({from: contract_owner}))
-    {
-      console.log("Authorizing stakingProxy/tokenStaking Contracts")
-      await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner}).then((receipt) => {
-      console.log(JSON.stringify(receipt));
-      })
-    }
-    console.log("stakingProxy/tokenStaking Contracts Authorized!");
-    console.log("<<<<<<<<<<<< Staking Account: " + operator + " >>>>>>>>>>>>");
-    await keepTokenContract.methods.approveAndCall(
-      tokenStakingContract.address,
-      formatAmount(1000000, 18),
-      delegation).send({from: contract_owner}).then((receipt) => {
-        console.log(JSON.stringify(receipt));
-        console.log("Account " + operator + " staked!");
-    });
   }
   catch(error) {
     console.error(error.message);
     throw error;
   }
 };
+
+async function stakeEthAccount(eth_account) {
+
+  // ENV VAR sourced from Docker image.
+  let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+
+  let contract_owner_signed = await web3.eth.sign(web3.utils.soliditySha3(contract_owner), eth_account);
+  let contract_owner_signature = contract_owner_signed.signature;
+
+  let signature = Buffer.from(contract_owner_signature.substr(2), 'hex');
+  let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
+
+  console.log("<<<<<<<<<<<< Checking if stakingProxy/tokenStaking Contracts Are Authorized >>>>>>>>>>>>");
+  if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call({from: contract_owner}))
+  {
+    console.log("Authorizing stakingProxy/tokenStaking Contracts")
+    await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner}).then((receipt) => {
+    console.log(JSON.stringify(receipt));
+    })
+  }
+  console.log("stakingProxy/tokenStaking Contracts Authorized!");
+  console.log("<<<<<<<<<<<< Staking Account: " + eth_account + " >>>>>>>>>>>>");
+  await keepTokenContract.methods.approveAndCall(
+    tokenStakingContract.address,
+    formatAmount(1000000, 18),
+    delegation).send({from: contract_owner}).then((receipt) => {
+      console.log(JSON.stringify(receipt));
+      console.log("Account " + eth_account + " staked!");
+  });
+}
 
 async function createEthAccount(account_name) {
 
@@ -154,21 +133,45 @@ async function createEthAccountKeyfile(eth_account_private_key, eth_account_pass
 
 async function unlockEthAccount(eth_account, eth_account_password) {
 
-  console.log("<<<<<<<<<<<< Unlocking Account " + eth_account + " >>>>>>>>>>>>");
   await web3.eth.personal.unlockAccount(eth_account, eth_account_password, 150000);
   console.log("Account " + eth_account + " unlocked!");
 };
 
-async function provisionOperatorAccount() {
+async function createKeepClientConfig(eth_account) {
 
-  let operator_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
-  let operator = await createEthAccount("operator");
-
-  await createEthAccountKeyfile(operator["privateKey"], operator_eth_account_password);
-  // We wallet add to make the local account available to web3 functions in the script.
-  await web3.eth.accounts.wallet.add(operator["privateKey"]);
-  console.log("Operator account provisioned!")
-  return operator;
+  try {
+    if ((process.env.INSTANCE_NAME).includes("bootstrap")) {
+      fs.createReadStream('/tmp/keep-client-bootstrap-peer-template.toml', 'utf8').pipe(concat(function(data) {
+        let parsedConfigFile = toml.parse(data);
+        parsedConfigFile.ethereum.URL = "";
+        parsedConfigFile.ethereum.URLRPC = "";
+        parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = "";
+        parsedConfigFile.ethereum.ContractAddresses.KeepGroup = "";
+        parsedConfigFile.ethereum.ContractAddresses.Staking = "";
+        fs.writeFile("/mnt/keep-client/config/keep-client-config.toml", tomlify.toToml(parsedConfigFile), (error) => {
+          if (error) throw error;
+        });
+      }));
+    } else {
+      fs.createReadStream('/tmp/keep-client-standard-peer-template.toml', 'utf8').pipe(concat(function(data) {
+        let parsedConfigFile = toml.parse(data);
+        parsedConfigFile.ethereum.URL = "";
+        parsedConfigFile.ethereum.URLRPC = "";
+        parsedConfigFile.ethereum.account.Address = "";
+        parsedConfigFile.ethereum.account.KeyFile = "/mnt/keep-client/config/eth_account_keyfile";
+        parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = "";
+        parsedConfigFile.ethereum.ContractAddresses.KeepGroup = "";
+        parsedConfigFile.ethereum.ContractAddresses.Staking = "";
+        fs.writeFile("/mnt/keep-client/config/keep-client-config.toml", tomlify.toToml(parsedConfigFile), (error) => {
+          if (error) throw error;
+        });
+      }));
+    }
+  }
+  catch(error) {
+    console.error(error.message);
+    throw error;
+  }
 };
 
 /*
@@ -179,6 +182,5 @@ function formatAmount(amount, decimals) {
   return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
 };
 
-stakeEthAccount().catch(error => console.error(error));
-provisionKeepClientConfig();
+provisionKeepClient().catch(error => console.error(error));
 
