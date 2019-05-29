@@ -10,10 +10,8 @@ const StakingProxy = artifacts.require('./StakingProxy.sol');
 contract('TestTokenGrantStake', function(accounts) {
 
   let token, grantContract, stakingContract, stakingProxy,
-    id, id2, amount, amount2,
+    id, amount,
     account_one = accounts[0],
-    account_one_operator = accounts[1],
-    account_one_magpie = accounts[2],
     account_two = accounts[3],
     account_two_operator = accounts[4],
     account_two_magpie = accounts[5];
@@ -26,16 +24,14 @@ contract('TestTokenGrantStake', function(accounts) {
     await stakingProxy.authorizeContract(stakingContract.address);
     await stakingProxy.authorizeContract(grantContract.address);
 
-    let vestingDuration = duration.days(60);
-    let start = await latestTime();
-    let cliff = duration.days(10);
-    let revocable = true;
+    let vestingDuration = duration.days(60),
+    start = await latestTime(),
+    cliff = duration.days(10),
+    revocable = true;
     amount = web3.utils.toBN(1000000000);
-    amount2 = web3.utils.toBN(100);
 
     // Grant tokens
     id = await grantTokens(grantContract, token, amount, account_one, account_two, vestingDuration, start, cliff, revocable);
-    id2 = await grantTokens(grantContract, token, amount2, account_one, account_one, vestingDuration, start, cliff, revocable);
   });
 
 
@@ -89,35 +85,11 @@ contract('TestTokenGrantStake', function(accounts) {
     let grantAmount = grant[0];
     let grantReleased = grant[1];
     let updatedGrantBalance = grantAmount.sub(grantReleased);
-  
+
     // should be able to delegate stake to the same operator after finishing unstaking
     await grantContract.stake(id, delegation, {from: account_two});
     account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.eq(updatedGrantBalance), true, "Should stake grant amount");
 
-  });
-
-  it("should not be able to use TokenGrant.initiateUnstake() to undelegate/unstake not owned stake", async function() {
-
-    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
-    let delegation = Buffer.concat([Buffer.from(account_two_magpie.substr(2), 'hex'), signature]);
-
-    // stake granted tokens can be only called by grant beneficiary
-    await grantContract.stake(id, delegation, {from: account_two});
-    let account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
-    assert.equal(account_two_operator_stake_balance.eq(amount), true, "Should stake grant amount");
-
-    let signature2 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_one), account_one_operator)).substr(2), 'hex');
-    let delegation2 = Buffer.concat([Buffer.from(account_one_magpie.substr(2), 'hex'), signature2]);
-
-    // stake granted tokens can be only called by grant beneficiary
-    await grantContract.stake(id2, delegation2, {from: account_one});
-    let account_one_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_one_operator);
-    assert.equal(account_one_operator_stake_balance.eq(amount2), true, "Should stake grant amount");
-
-    await increaseTimeTo(await latestTime()+duration.days(30));
-
-    // Try to initiate unstake of granted tokens by not by grant beneficiary
-    await exceptThrow(grantContract.initiateUnstake(id2, {from: account_two}));
   });
 });
