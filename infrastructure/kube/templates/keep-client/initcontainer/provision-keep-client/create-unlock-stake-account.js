@@ -60,25 +60,25 @@ const keepGroupContractAddress = keepGroupParsed.networks[process.env.ETH_NETWOR
 async function provisionKeepClient() {
 
   // Eth account that contracts are migrated against. ENV VAR sourced from Docker image.
-  let contract_owner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+  let contractOwner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
   try {
-    console.log("<<<<<<<<<<<< Unlocking Contract Owner Account " + contract_owner + " >>>>>>>>>>>>");
-    // Transactions during staking are sent from contract_owner, must be unlocked before start.
-    await unlockEthAccount(contract_owner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
+    console.log("<<<<<<<<<<<< Unlocking Contract Owner Account " + contractOwner + " >>>>>>>>>>>>");
+    // Transactions during staking are sent from contractOwner, must be unlocked before start.
+    await unlockEthAccount(contractOwner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
 
     console.log("<<<<<<<<<<<< Provisioning Operator Account " + ">>>>>>>>>>>>")
-    let operator_eth_account_password = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
+    let operatorEthAccountPassword = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
     let operatorAccount = await createEthAccount("operator");
     let operator = operatorAccount["address"];
 
-    await createEthAccountKeyfile(operatorAccount["privateKey"], operator_eth_account_password);
+    await createEthAccountKeyfile(operatorAccount["privateKey"], operatorEthAccountPassword);
     // We wallet add to make the local account available to web3 functions in the script.
     await web3.eth.accounts.wallet.add(operatorAccount["privateKey"]);
     console.log("Operator account provisioned!")
 
     console.log("<<<<<<<<<<<< Staking Operator Account " + operator + " >>>>>>>>>>>>");
-    await stakeEthAccount(operator, contract_owner);
+    await stakeEthAccount(operator, contractOwner);
 
     console.log("<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>");
     await createKeepClientConfig(operator);
@@ -90,100 +90,94 @@ async function provisionKeepClient() {
   }
 };
 
-async function stakeEthAccount(operator, contract_owner) {
+async function stakeEthAccount(operator, contractOwner) {
 
   // ENV VAR sourced from Docker image.
   let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
-  let contract_owner_signed = await web3.eth.sign(web3.utils.soliditySha3(contract_owner), operator);
-  let contract_owner_signature = contract_owner_signed.signature;
+  let contractOwnerSigned = await web3.eth.sign(web3.utils.soliditySha3(contractOwner), operator);
+  let contractOwnerSignature = contractOwnerSigned.signature;
 
-  let signature = Buffer.from(contract_owner_signature.substr(2), 'hex');
+  let signature = Buffer.from(contractOwnerSignature.substr(2), 'hex');
   let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
   console.log("<<<<<<<<<<<< Checking if stakingProxy/tokenStaking Contracts Are Authorized >>>>>>>>>>>>");
-  if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call({from: contract_owner}))
+  if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call({from: contractOwner}))
   {
     console.log("Authorizing stakingProxy/tokenStaking Contracts")
-    await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contract_owner}).then((receipt) => {
+    await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contractOwner}).then((receipt) => {
     console.log(JSON.stringify(receipt));
-    })
+    });
   }
   console.log("stakingProxy/tokenStaking Contracts Authorized!");
   console.log("<<<<<<<<<<<< Staking Account: " + operator + " >>>>>>>>>>>>");
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
     formatAmount(1000000, 18),
-    delegation).send({from: contract_owner}).then((receipt) => {
+    delegation).send({from: contractOwner}).then((receipt) => {
       console.log(JSON.stringify(receipt));
       console.log("Account " + operator + " staked!");
   });
-}
+};
 
-async function createEthAccount(account_name) {
+async function createEthAccount(accountName) {
 
-  let eth_account = await web3.eth.accounts.create();
+  let ethAccount = await web3.eth.accounts.create();
 
   // We write to a file for later passage to the keep-client container
-  fs.writeFile("/mnt/keep-client/config/eth_account_address", eth_account["address"], (error) => {
+  fs.writeFile("/mnt/keep-client/config/eth_account_address", ethAccount["address"], (error) => {
     if (error) throw error;
   });
-  console.log(account_name + " Account "  + eth_account["address"] + " Created!");
-  return eth_account
-}
+  console.log(accountName + " Account "  + ethAccount["address"] + " Created!");
+  return ethAccount
+};
 
 // We are creating a local account.  We must manually generate a keyfile for use by the keep-client
-async function createEthAccountKeyfile(eth_account_private_key, eth_account_password) {
+async function createEthAccountKeyfile(ethAccountPrivateKey, ethAccountPassword) {
 
-  let eth_account_keyfile = await web3.eth.accounts.encrypt(eth_account_private_key, eth_account_password);
+  let ethAccountKeyfile = await web3.eth.accounts.encrypt(ethAccountPrivateKey, ethAccountPassword);
 
   // We write to a file for later passage to the keep-client container
-  fs.writeFile("/mnt/keep-client/config/eth_account_keyfile", JSON.stringify(eth_account_keyfile), (error) => {
+  fs.writeFile("/mnt/keep-client/config/eth_account_keyfile", JSON.stringify(ethAccountKeyfile), (error) => {
     if (error) throw error;
   });
   console.log("Keyfile generated!");
 };
 
-async function unlockEthAccount(eth_account, eth_account_password) {
+async function unlockEthAccount(ethAccount, ethAccountPassword) {
 
-  await web3.eth.personal.unlockAccount(eth_account, eth_account_password, 150000);
-  console.log("Account " + eth_account + " unlocked!");
+  await web3.eth.personal.unlockAccount(ethAccount, ethAccountPassword, 150000);
+  console.log("Account " + ethAccount + " unlocked!");
 };
 
-async function createKeepClientConfig(eth_account) {
+async function createKeepClientConfig(ethAccount) {
 
-  try {
-    if ((process.env.INSTANCE_NAME).includes("bootstrap")) {
-      fs.createReadStream('/tmp/keep-client-bootstrap-peer-template.toml', 'utf8').pipe(concat(function(data) {
-        let parsedConfigFile = toml.parse(data);
-        parsedConfigFile.ethereum.URL = "ws://" + process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT;
-        parsedConfigFile.ethereum.URLRPC = "http://" + process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT;
-        parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = keepRandomBeaconContractAddress;
-        parsedConfigFile.ethereum.ContractAddresses.KeepGroup = keepGroupContractAddress;
-        parsedConfigFile.ethereum.ContractAddresses.Staking = stakingProxyContractAddress;
-        fs.writeFile("/mnt/keep-client/config/keep-client-config.toml", tomlify.toToml(parsedConfigFile), (error) => {
-          if (error) throw error;
-        });
-      }));
-    } else {
-      fs.createReadStream('/tmp/keep-client-standard-peer-template.toml', 'utf8').pipe(concat(function(data) {
-        let parsedConfigFile = toml.parse(data);
-        parsedConfigFile.ethereum.URL = "ws://" + process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT;
-        parsedConfigFile.ethereum.URLRPC = "http://" + process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT;
-        parsedConfigFile.ethereum.account.Address = eth_account;
-        parsedConfigFile.ethereum.account.KeyFile = "/mnt/keep-client/config/eth_account_keyfile";
-        parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = keepRandomBeaconContractAddress;
-        parsedConfigFile.ethereum.ContractAddresses.KeepGroup = keepGroupContractAddress;
-        parsedConfigFile.ethereum.ContractAddresses.Staking = stakingProxyContractAddress;
-        fs.writeFile("/mnt/keep-client/config/keep-client-config.toml", tomlify.toToml(parsedConfigFile), (error) => {
-          if (error) throw error;
-        });
-      }));
-    }
-  }
-  catch(error) {
-    console.error(error.message);
-    throw error;
+  if ((process.env.INSTANCE_NAME).includes("bootstrap")) {
+    fs.createReadStream('/tmp/keep-client-bootstrap-peer-template.toml', 'utf8').pipe(concat(function(data) {
+      let parsedConfigFile = toml.parse(data);
+      parsedConfigFile.ethereum.URL = "ws://" + process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT;
+      parsedConfigFile.ethereum.URLRPC = "http://" + process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT;
+      parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = keepRandomBeaconContractAddress;
+      parsedConfigFile.ethereum.ContractAddresses.KeepGroup = keepGroupContractAddress;
+      parsedConfigFile.ethereum.ContractAddresses.Staking = stakingProxyContractAddress;
+      fs.writeFile("/mnt/keep-client/config/keep-client-config.toml", tomlify.toToml(parsedConfigFile), (error) => {
+        if (error) throw error;
+      });
+    }));
+  } else {
+    fs.createReadStream('/tmp/keep-client-standard-peer-template.toml', 'utf8').pipe(concat(function(data) {
+      let parsedConfigFile = toml.parse(data);
+      parsedConfigFile.ethereum.URL = "ws://" + process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT;
+      parsedConfigFile.ethereum.URLRPC = "http://" + process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT;
+      parsedConfigFile.ethereum.account.Address = ethAccount;
+      parsedConfigFile.ethereum.account.KeyFile = "/mnt/keep-client/config/eth_account_keyfile";
+      parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = keepRandomBeaconContractAddress;
+      parsedConfigFile.ethereum.ContractAddresses.KeepGroup = keepGroupContractAddress;
+      parsedConfigFile.ethereum.ContractAddresses.Staking = stakingProxyContractAddress;
+      fs.writeFile("/mnt/keep-client/config/keep-client-config.toml", tomlify.toToml(parsedConfigFile), (error) => {
+        if (error) throw error;
+      });
+    }));
   }
 };
 
