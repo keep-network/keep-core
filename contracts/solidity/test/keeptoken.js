@@ -65,42 +65,19 @@ contract('KeepToken', function(accounts) {
     assert.equal(account_one_operator_stake_balance.eq(stakingAmount), true, "Staking amount should be added to the sender staking balance");
 
     // Initiate unstake tokens as token owner
-    let stakeWithdrawalId = await stakingContract.initiateUnstake(stakingAmount/2, account_one_operator, {from: account_one}).then((result)=>{
-      // Look for initiateUnstake event in transaction receipt and get stake withdrawal id
-      for (var i = 0; i < result.logs.length; i++) {
-        var log = result.logs[i];
-        if (log.event == "InitiatedUnstake") {
-          return log.args.id.toNumber();
-        }
-      }
-    })
+    await stakingContract.initiateUnstake(stakingAmount/2, account_one_operator, {from: account_one});
 
     // Initiate unstake tokens as operator
-    let stakeWithdrawalId2 = await stakingContract.initiateUnstake(stakingAmount/2, account_one_operator, {from: account_one_operator}).then((result)=>{
-      // Look for initiateUnstake event in transaction receipt and get stake withdrawal id
-      for (var i = 0; i < result.logs.length; i++) {
-        var log = result.logs[i];
-        if (log.event == "InitiatedUnstake") {
-          return log.args.id.toNumber();
-        }
-      }
-    })
-
-    let withdrawals = await stakingContract.getWithdrawals(account_one);
-    assert.equal(withdrawals.length, 2, "Withdrawal records must present for the staker");
+    await stakingContract.initiateUnstake(stakingAmount/2, account_one_operator, {from: account_one_operator});
 
     // should not be able to finish unstake
-    await exceptThrow(stakingContract.finishUnstake(stakeWithdrawalId));
+    await exceptThrow(stakingContract.finishUnstake(account_one_operator));
 
     // jump in time, full withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
 
     // should be able to finish unstake
-    await stakingContract.finishUnstake(stakeWithdrawalId);
-    await stakingContract.finishUnstake(stakeWithdrawalId2);
-
-    withdrawals = await stakingContract.getWithdrawals(account_one);
-    assert.equal(withdrawals.length, 0, "Withdrawal record must be cleared for the staker");
+    await stakingContract.finishUnstake(account_one_operator);
 
     // check balances
     account_one_ending_balance = await token.balanceOf.call(account_one);

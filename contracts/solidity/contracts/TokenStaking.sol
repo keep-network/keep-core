@@ -16,18 +16,15 @@ contract TokenStaking is StakeDelegatable {
 
     event ReceivedApproval(uint256 _value);
     event Staked(address indexed from, uint256 value);
-    event InitiatedUnstake(uint256 id);
-    event FinishedUnstake(uint256 id);
+    event InitiatedUnstake(address operator);
+    event FinishedUnstake(address operator);
 
     struct Withdrawal {
-        address staker;
         uint256 amount;
         uint256 createdAt;
     }
 
-    uint256 public numWithdrawals;
-    mapping(address => uint256[]) public withdrawalIndices;
-    mapping(uint256 => Withdrawal) public withdrawals;
+    mapping(address => Withdrawal) public withdrawals;
 
     /**
      * @dev Creates a token staking contract for a provided Standard ERC20 token.
@@ -85,7 +82,7 @@ contract TokenStaking is StakeDelegatable {
      * @param _value The amount to be unstaked.
      * @param _operator Address of the stake operator.
      */
-    function initiateUnstake(uint256 _value, address _operator) public returns (uint256 id) {
+    function initiateUnstake(uint256 _value, address _operator) public {
         address owner = operatorToOwner[_operator];
         require(
             msg.sender == _operator ||
@@ -94,56 +91,47 @@ contract TokenStaking is StakeDelegatable {
 
         stakeBalances[_operator] = stakeBalances[_operator].sub(_value);
 
-        id = numWithdrawals++;
-        withdrawals[id] = Withdrawal(owner, _value, now);
-        withdrawalIndices[owner].push(id);
-        emit InitiatedUnstake(id);
+        withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), now);
+        emit InitiatedUnstake(_operator);
         if (address(stakingProxy) != address(0)) {
             stakingProxy.emitUnstakedEvent(owner, _value);
         }
-        return id;
     }
 
     /**
      * @notice Finishes unstake of the tokens of provided withdrawal request.
      * You can only finish unstake once withdrawal delay is over for the request,
      * otherwise the function will fail and remaining gas is returned.
-     * @param _id Withdrawal ID.
+     * @param _operator Operator address.
      */
-    function finishUnstake(uint256 _id) public {
-        require(now >= withdrawals[_id].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
-
-        address staker = withdrawals[_id].staker;
+    function finishUnstake(address _operator) public {
+        require(now >= withdrawals[_operator].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
+        address owner = operatorToOwner[_operator];
 
         // No need to call approve since msg.sender will be this staking contract.
-        token.safeTransfer(staker, withdrawals[_id].amount);
-
-        // Cleanup withdrawal index.
-        withdrawalIndices[staker].removeValue(_id);
+        token.safeTransfer(owner, withdrawals[_operator].amount);
 
         // Cleanup withdrawal record.
-        delete withdrawals[_id];
+        delete withdrawals[_operator];
 
-        emit FinishedUnstake(_id);
+        // Release operator if there's no delegated stake left
+        if (stakeBalances[_operator] <= 0) {
+            operatorToOwner[_operator] = address(0);
+            ownerOperators[owner].removeAddress(_operator);
+        }
+
+        emit FinishedUnstake(_operator);
     }
 
     /**
      * @dev Gets withdrawal request by ID.
-     * @param _id ID of withdrawal request.
+     * @param _operator Operator address.
      * @return staker, amount, createdAt.
      */
-    function getWithdrawal(uint256 _id) public view returns (address, uint256, uint256) {
-        return (withdrawals[_id].staker, withdrawals[_id].amount, withdrawals[_id].createdAt);
+    function getWithdrawal(address _operator) public view returns (uint256, uint256) {
+        return (withdrawals[_operator].amount, withdrawals[_operator].createdAt);
     }
 
-    /**
-     * @dev Gets withdrawal ids of the specified address.
-     * @param _staker The address to query.
-     * @return An uint256 array of withdrawal IDs.
-     */
-    function getWithdrawals(address _staker) public view returns (uint256[] memory) {
-        return withdrawalIndices[_staker];
-    }
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 4).
     function authorizedTransferFrom(address from, address to, uint256 amount) public {
