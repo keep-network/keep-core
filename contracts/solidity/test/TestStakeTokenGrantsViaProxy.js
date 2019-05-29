@@ -60,7 +60,7 @@ contract('TestStakeTokenGrantsViaProxy', function(accounts) {
     assert.equal((await stakingProxy.getPastEvents())[0].event, 'Staked', "Staked event on the proxy contract should occur.");
 
     // Initiate unstake of granted tokens by grant beneficiary
-    await grantContract.initiateUnstake(id, account_two_operator, {from: account_two});
+    await grantContract.initiateUnstake(id, {from: account_two});
     assert.equal((await stakingProxy.getPastEvents())[0].event, 'Unstaked', "Unstaked event on the proxy contract should occur.");
 
     // Owner of stakingProxy should be able to deauthorize a token grant contract
