@@ -52,16 +52,26 @@ async function provisionKeepClientConfig() {
   try {
     if ((process.env.INSTANCE_NAME).includes("bootstrap")) {
       fs.createReadStream('/tmp/keep-client-bootstrap-peer-template.toml', 'utf8').pipe(concat(function(data) {
-        var parsedConfigFile = toml.parse(data);
-        parsedConfigFile.ethereum.URL = "Does this work?????";
+        let parsedConfigFile = toml.parse(data);
+        parsedConfigFile.ethereum.URL = "";
+        parsedConfigFile.ethereum.URLRPC = "";
+        parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = "";
+        parsedConfigFile.ethereum.ContractAddresses.KeepGroup = "";
+        parsedConfigFile.ethereum.ContractAddresses.Staking = "";
         fs.writeFile("/mnt/keep-client/config/keep-client-config.toml", tomlify.toToml(parsedConfigFile), (error) => {
           if (error) throw error;
         });
       }));
     } else {
       fs.createReadStream('/tmp/keep-client-standard-peer-template.toml', 'utf8').pipe(concat(function(data) {
-        var parsedConfigFile = toml.parse(data);
-        parsedConfigFile.ethereum.URL = "Does this work?????";
+        let parsedConfigFile = toml.parse(data);
+        parsedConfigFile.ethereum.URL = "";
+        parsedConfigFile.ethereum.URLRPC = "";
+        parsedConfigFile.ethereum.account.Address = "";
+        parsedConfigFile.ethereum.account.KeyFile = "";
+        parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = "";
+        parsedConfigFile.ethereum.ContractAddresses.KeepGroup = "";
+        parsedConfigFile.ethereum.ContractAddresses.Staking = "";
         fs.writeFile("/mnt/keep-client/config/keep-client-config.toml", tomlify.toToml(parsedConfigFile), (error) => {
           if (error) throw error;
         });
