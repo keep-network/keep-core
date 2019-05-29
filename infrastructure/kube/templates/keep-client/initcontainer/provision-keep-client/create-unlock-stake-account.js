@@ -149,7 +149,7 @@ async function unlockEthAccount(ethAccount, ethAccountPassword) {
   console.log("Account " + ethAccount + " unlocked!");
 };
 
-async function createKeepClientConfig(ethAccount) {
+async function createKeepClientConfig(operator) {
 
   if ((process.env.INSTANCE_NAME).includes("bootstrap")) {
     fs.createReadStream('/tmp/keep-client-bootstrap-peer-template.toml', 'utf8').pipe(concat(function(data) {
@@ -168,7 +168,7 @@ async function createKeepClientConfig(ethAccount) {
       let parsedConfigFile = toml.parse(data);
       parsedConfigFile.ethereum.URL = "ws://" + process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT;
       parsedConfigFile.ethereum.URLRPC = "http://" + process.env.ETH_HOSTNAME + ":" + process.env.ETH_HOST_PORT;
-      parsedConfigFile.ethereum.account.Address = ethAccount;
+      parsedConfigFile.ethereum.account.Address = operator;
       parsedConfigFile.ethereum.account.KeyFile = "/mnt/keep-client/config/eth_account_keyfile";
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = keepRandomBeaconContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.KeepGroup = keepGroupContractAddress;
