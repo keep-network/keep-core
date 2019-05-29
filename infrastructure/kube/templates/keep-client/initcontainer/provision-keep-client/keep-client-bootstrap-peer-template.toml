@@ -17,5 +17,5 @@
     Staking = ""
 
 [LibP2P]
-  Seed =
- 	Port =
+  Seed = ""
+  Port = ""
