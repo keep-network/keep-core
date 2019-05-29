@@ -28,6 +28,7 @@ contract TokenStaking is StakeDelegatable {
     uint256 public numWithdrawals;
     mapping(address => uint256[]) public withdrawalIndices;
     mapping(uint256 => Withdrawal) public withdrawals;
+    mapping(address => uint256) public stakeBalancesLock;
 
     /**
      * @dev Creates a token staking contract for a provided Standard ERC20 token.
@@ -90,11 +91,12 @@ contract TokenStaking is StakeDelegatable {
         require(
             msg.sender == _operator ||
             msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
-        require(_value <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
+        require(_value + stakeBalancesLock[_operator] <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
 
         id = numWithdrawals++;
         withdrawals[id] = Withdrawal(owner, _value, now);
         withdrawalIndices[owner].push(id);
+        stakeBalancesLock[_operator] = stakeBalancesLock[_operator].add(_value);
         emit InitiatedUnstake(id);
         if (address(stakingProxy) != address(0)) {
             stakingProxy.emitUnstakedEvent(owner, _value);
@@ -114,6 +116,7 @@ contract TokenStaking is StakeDelegatable {
         address owner = operatorToOwner[_operator];
         address staker = withdrawals[_id].staker;
         require(staker == owner, "Provided operator doesn't match the stake owner");
+        require(stakeBalancesLock[_operator] <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
 
         // No need to call approve since msg.sender will be this staking contract.
         token.safeTransfer(staker, withdrawals[_id].amount);
@@ -122,11 +125,12 @@ contract TokenStaking is StakeDelegatable {
         withdrawalIndices[staker].removeValue(_id);
 
         stakeBalances[_operator] = stakeBalances[_operator].sub(withdrawals[_id].amount);
-
+        stakeBalancesLock[_operator] = stakeBalancesLock[_operator].sub(withdrawals[_id].amount);
         // Release operator only when the stake is depleted
         if (stakeBalances[_operator] == 0) {
             operatorToOwner[_operator] = address(0);
             ownerOperators[owner].removeAddress(_operator);
+            stakeBalancesLock[_operator] = 0;
         }
 
         // Cleanup withdrawal record.
