@@ -6,7 +6,9 @@ class Node(Agent):
     """ Node: One hardware device used to stake tokens on the network. 
     Each node will create virtual stakers proportional to
     the number of tokens owned by the node """
-    def __init__(self, unique_id, node_id, model, tickets, failure_percent, death_percent, node_connection_delay, node_mainloop_connection_delay):
+    def __init__(self, unique_id, node_id, model, tickets, 
+    failure_percent, death_percent, node_connection_delay,
+    node_mainloop_connection_delay, dkg_misbehavior):
         super().__init__(unique_id, model)
         self.id = unique_id
         self.type = "node"
@@ -23,6 +25,7 @@ class Node(Agent):
         self.node_death_percent = death_percent
         self.failure = False
         self.death = False
+        self.dkg_misbehavior = dkg_misbehavior
     
     def step(self):
         #connect to chain
