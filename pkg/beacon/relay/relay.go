@@ -6,10 +6,10 @@ import (
 	"os"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -67,7 +67,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				return
 			}
 
-			err = thresholdsignature.Execute(
+			err = entry.SignAndSubmit(
 				n.blockCounter,
 				channel,
 				relayChain,

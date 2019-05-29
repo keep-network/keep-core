@@ -1,4 +1,4 @@
-package thresholdsignature
+package entry
 
 import (
 	"fmt"

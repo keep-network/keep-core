@@ -1,4 +1,4 @@
-package thresholdsignature
+package entry
 
 import (
 	"fmt"
@@ -50,7 +50,7 @@ func (sss *signatureShareState) ActiveBlocks() uint64 {
 }
 
 func (sss *signatureShareState) Initiate() error {
-	entryToSign := CombineEntryToSign(sss.previousEntry, sss.seed)
+	entryToSign := CombineToSign(sss.previousEntry, sss.seed)
 	sss.selfSignatureShare = sss.signer.CalculateSignatureShare(entryToSign)
 
 	message := &SignatureShareMessage{

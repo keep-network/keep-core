@@ -1,11 +1,11 @@
-package thresholdsignature
+package entry
 
 import (
 	"fmt"
 	"math/big"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/entry/gen/pb"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature/gen/pb"
 )
 
 // Type returns a string describing a SignatureShareMessage's type.

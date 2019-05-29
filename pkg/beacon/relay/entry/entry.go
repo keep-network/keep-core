@@ -1,4 +1,4 @@
-package thresholdsignature
+package entry
 
 import (
 	"math/big"
@@ -21,10 +21,10 @@ func initializeChannel(channel net.BroadcastChannel) {
 		func() net.TaggedUnmarshaler { return &SignatureShareMessage{} })
 }
 
-// Execute triggers the threshold signature process for the combination of the
-// previous relay entry and seed and publishes the signature to the chain as
+// SignAndSubmit triggers the threshold signature process for the combination of
+// the previous relay entry and seed and publishes the signature to the chain as
 // a new relay entry.
-func Execute(
+func SignAndSubmit(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
@@ -57,11 +57,11 @@ func Execute(
 	return err
 }
 
-// CombineEntryToSign takes the previous relay entry value and the current
+// CombineToSign takes the previous relay entry value and the current
 // requests's seed and combines it into a slice of bytes that is going to be
 // signed by the selected group and as a result, will form a new relay entry
 // value.
-func CombineEntryToSign(previousEntry *big.Int, seed *big.Int) []byte {
+func CombineToSign(previousEntry *big.Int, seed *big.Int) []byte {
 	combinedEntryToSign := make([]byte, 0)
 	combinedEntryToSign = append(combinedEntryToSign, previousEntry.Bytes()...)
 	combinedEntryToSign = append(combinedEntryToSign, seed.Bytes()...)

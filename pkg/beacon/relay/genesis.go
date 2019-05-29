@@ -6,8 +6,8 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
 	"github.com/keep-network/keep-core/pkg/bls"
 )
 
@@ -37,7 +37,7 @@ func GenesisRelayEntry() *event.Entry {
 	// up our sleeve" value that all consumers of this network can verify.
 	genesisSeedValue := bigFromBase10(eAsString)
 
-	combinedEntryToSign := thresholdsignature.CombineEntryToSign(
+	combinedEntryToSign := entry.CombineToSign(
 		genesisEntryValue,
 		genesisSeedValue,
 	)

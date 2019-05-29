@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 option go_package = "pb";
-package thresholdsignature;
+package entry;
 
 message SignatureShare {
     uint32 senderID = 1;
