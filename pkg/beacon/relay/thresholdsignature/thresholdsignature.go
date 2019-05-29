@@ -16,8 +16,6 @@ const (
 	signatureBlocks = state.MessagingStateActiveBlocks
 )
 
-// Init initializes a given broadcast channel to be able to perform distributed
-// key generation interactions.
 func initializeChannel(channel net.BroadcastChannel) {
 	channel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &SignatureShareMessage{} })
