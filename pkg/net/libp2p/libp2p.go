@@ -203,13 +203,18 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 		return err
 	}
 
+	bootstraConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
+
+	// TODO: allow this to be a configurable value
+	bootstraConfig.Period = 10 * time.Second
+
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.
 	_, err = bootstrap.Bootstrap(
 		p.identity.id,
 		p.host,
 		p.routing,
-		bootstrap.BootstrapConfigWithPeers(peerInfos),
+		bootstraConfig,
 	)
 	return err
 }
