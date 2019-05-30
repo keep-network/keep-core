@@ -16,7 +16,7 @@ import (
 type noopPersistence struct {
 }
 
-func (np *noopPersistence) Save([]byte, string) error {
+func (np *noopPersistence) Save([]byte, string, string) error {
 	// noop
 	return nil
 }

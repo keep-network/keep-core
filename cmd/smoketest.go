@@ -45,7 +45,7 @@ const smokeTestDescription = `The smoke-test command creates a local threshold
 type noopPersistence struct {
 }
 
-func (np *noopPersistence) Save(data []byte, name string) error {
+func (np *noopPersistence) Save(data []byte, dirName string, fileName string) error {
 	// noop
 	return nil
 }
