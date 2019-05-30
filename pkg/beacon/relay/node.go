@@ -97,10 +97,13 @@ func (n *Node) JoinGroupIfEligible(
 					return
 				}
 
-				n.groupRegistry.RegisterGroup(
+				err = n.groupRegistry.RegisterGroup(
 					signer,
 					broadcastChannelName,
 				)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Failed to register a group: [%v].\n", err)
+				}
 			}()
 		}
 	}
