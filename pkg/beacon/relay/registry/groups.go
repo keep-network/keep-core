@@ -7,7 +7,8 @@ import (
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
-	ds "github.com/keep-network/keep-core/pkg/disk_storage"
+
+	"github.com/keep-network/keep-core/pkg/persistence"
 )
 
 // Groups represents a collection of Keep groups in which the given
@@ -19,7 +20,7 @@ type Groups struct {
 
 	relayChain relaychain.GroupRegistrationInterface
 
-	storage Handle
+	storage storage
 }
 
 // Membership represents a member of a group
@@ -31,11 +32,13 @@ type Membership struct {
 // NewGroupRegistry returns an empty GroupRegistry.
 func NewGroupRegistry(
 	relayChain relaychain.GroupRegistrationInterface,
-	diskStorage ds.DiskHandler) *Groups {
+	persistence persistence.Handle,
+) *Groups {
 	return &Groups{
 		myGroups:   make(map[string][]*Membership),
 		relayChain: relayChain,
-		storage:    NewStorage(diskStorage),
+		storage:    newStorage(persistence),
+		mutex:      sync.Mutex{},
 	}
 }
 
@@ -45,7 +48,6 @@ func (gr *Groups) RegisterGroup(
 	signer *dkg.ThresholdSigner,
 	channelName string,
 ) error {
-
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
@@ -56,7 +58,7 @@ func (gr *Groups) RegisterGroup(
 		ChannelName: channelName,
 	}
 
-	err := gr.storage.Save(membership)
+	err := gr.storage.save(membership)
 	if err != nil {
 		return fmt.Errorf("could not persist membership to the storage: [%v]", err)
 	}
