@@ -201,6 +201,22 @@
   revision = "b19d692f0b561c74eaf750e7b6d75fdab571890e"
 
 [[projects]]
+  digest = "1:43028fa83d34b445b4b7e05b055ed853c153567c844af0e6c1ac76337e8901f6"
+  name = "github.com/ipfs/go-ipfs-addr"
+  packages = ["."]
+  pruneopts = ""
+  revision = "ac4881d4db36effbbeebf93d9172fcb20ed04c15"
+  version = "v0.0.1"
+
+[[projects]]
+  digest = "1:6c0b2001524e5078e61082d24bc1550c9dcf5b9b83a1f524f3db9b916542c5ad"
+  name = "github.com/ipfs/go-ipfs-config"
+  packages = ["."]
+  pruneopts = ""
+  revision = "687234717fb9e022b469121d33582a5b821ed39d"
+  version = "v0.0.4"
+
+[[projects]]
   digest = "1:b2cad6771b50640034468327c89ab4db9998a727972e1579134098a5bf29ba73"
   name = "github.com/ipfs/go-ipfs-util"
   packages = ["."]
@@ -273,6 +289,13 @@
   ]
   pruneopts = ""
   revision = "b497e2f366b8624394fb2e89c10ab607bebdde0b"
+
+[[projects]]
+  digest = "1:a68e2a5bc94ff67d2c7ca63fe83bef1abc43be2b8529c4924f930a777876b86c"
+  name = "github.com/keep-network/go-libp2p-bootstrap"
+  packages = ["."]
+  pruneopts = ""
+  revision = "244e03bef9603337784ea1690e2bf54100a7854a"
 
 [[projects]]
   digest = "1:083b726d999fff7a2fcd09b779598cddcb642628bc028e4cfe46e81b18bf0d26"
@@ -662,6 +685,14 @@
   revision = "05b4dd3047e5d6e86cb4e0477164b850cd896261"
 
 [[projects]]
+  digest = "1:6dbb0eb72090871f2e58d1e37973fe3cb8c0f45f49459398d3fc740cb30e13bd"
+  name = "github.com/mitchellh/go-homedir"
+  packages = ["."]
+  pruneopts = ""
+  revision = "af06845cf3004701891bf4fdb884bfe4920b3727"
+  version = "v1.1.0"
+
+[[projects]]
   digest = "1:d2efc3844dabcc36031a748f37e8a528ede8c5e59a9d8c63af16d60e559793ea"
   name = "github.com/mr-tron/base58"
   packages = ["base58"]
@@ -1010,6 +1041,7 @@
     "github.com/gogo/protobuf/sortkeys",
     "github.com/ipfs/go-datastore",
     "github.com/ipfs/go-datastore/sync",
+    "github.com/keep-network/go-libp2p-bootstrap",
     "github.com/libp2p/go-addr-util",
     "github.com/libp2p/go-conn-security",
     "github.com/libp2p/go-libp2p",
