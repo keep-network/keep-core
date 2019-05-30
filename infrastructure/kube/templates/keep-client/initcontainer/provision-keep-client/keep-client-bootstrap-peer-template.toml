@@ -17,5 +17,5 @@
     Staking = "Set by Kube"
 
 [LibP2P]
-  Seed = 2
-  Port = 3919
+  Seed = "Set by Kube"
+  Port = "Set by Kube"
