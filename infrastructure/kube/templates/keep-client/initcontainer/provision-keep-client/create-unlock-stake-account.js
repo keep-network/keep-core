@@ -150,7 +150,7 @@ async function createEthAccount(accountName) {
   let ethAccount = await web3.eth.accounts.create();
 
   // We write to a file for later passage to the keep-client container
-  fs.writeFile('/tmp/eth_account_address', ethAccount['address'], (error) => {
+  fs.writeFile('/mnt/keep-client/config/eth_account_address', ethAccount['address'], (error) => {
     if (error) throw error;
   });
   console.log(accountName + ' Account '  + ethAccount['address'] + ' Created!');
@@ -163,7 +163,7 @@ async function createEthAccountKeyfile(ethAccountPrivateKey, ethAccountPassword)
   let ethAccountKeyfile = await web3.eth.accounts.encrypt(ethAccountPrivateKey, ethAccountPassword);
 
   // We write to a file for later passage to the keep-client container
-  fs.writeFile('/tmp/eth_account_keyfile', JSON.stringify(ethAccountKeyfile), (error) => {
+  fs.writeFile('/mnt/keep-client/config/eth_account_keyfile', JSON.stringify(ethAccountKeyfile), (error) => {
     if (error) throw error;
   });
   console.log('Keyfile generated!');
@@ -189,7 +189,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.LibP2P.Seed = '2';
       parsedConfigFile.LibP2P.Port = '3919';
 
-      fs.writeFile('/tmp/keep-client-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
+      fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
         if (error) throw error;
       });
     }));
@@ -205,7 +205,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.ContractAddresses.KeepGroup = keepGroupContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.Staking = stakingProxyContractAddress;
 
-      fs.writeFile('/tmp/keep-client-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
+      fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
         if (error) throw error;
       });
     }));
