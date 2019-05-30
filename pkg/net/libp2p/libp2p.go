@@ -46,6 +46,10 @@ const (
 	// StakeCheckTick is the amount of time between periodic checks for
 	// minimum stake for all peers connected to this one.
 	StakeCheckTick = time.Minute * 1
+	// BootstrapCheckPeriod is the amount of time between periodic checks
+	// for ensuring we are connected to an appropriate number of bootstrap
+	// peers.
+	BootstrapCheckPeriod = 10 * time.Second
 )
 
 // Config defines the configuration for the libp2p network provider.
@@ -261,7 +265,7 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 	bootstraConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
 
 	// TODO: allow this to be a configurable value
-	bootstraConfig.Period = 10 * time.Second
+	bootstraConfig.Period = BootstrapCheckPeriod
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.
