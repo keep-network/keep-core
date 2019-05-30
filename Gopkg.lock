@@ -291,12 +291,11 @@
   revision = "b497e2f366b8624394fb2e89c10ab607bebdde0b"
 
 [[projects]]
-  branch = "master"
-  digest = "1:8c4f7cf18cac0d2f03fc4649a2010d4a7d0b003b6815586c9fe149b4e0bc0aa0"
+  digest = "1:a68e2a5bc94ff67d2c7ca63fe83bef1abc43be2b8529c4924f930a777876b86c"
   name = "github.com/keep-network/go-libp2p-bootstrap"
   packages = ["."]
   pruneopts = ""
-  revision = "075fbb69e86bc03e32f4555bf8d611ec29f14766"
+  revision = "244e03bef9603337784ea1690e2bf54100a7854a"
 
 [[projects]]
   digest = "1:083b726d999fff7a2fcd09b779598cddcb642628bc028e4cfe46e81b18bf0d26"
