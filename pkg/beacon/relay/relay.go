@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"time"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -45,15 +44,10 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	requestID *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
-	relayChain relaychain.RelayEntryInterface,
+	relayChain relayChain.Interface,
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) {
-	combinedEntryToSign := combineEntryToSign(
-		previousEntry.Bytes(),
-		seed.Bytes(),
-	)
-
 	memberships := n.groupRegistry.GetGroup(groupPublicKey)
 
 	if len(memberships) < 1 {
@@ -73,53 +67,26 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				return
 			}
 
-			signature, err := thresholdsignature.Execute(
-				combinedEntryToSign,
-				n.chainConfig.HonestThreshold(),
+			err = entry.SignAndSubmit(
 				n.blockCounter,
 				channel,
+				relayChain,
+				requestID,
+				previousEntry,
+				seed,
+				n.chainConfig.HonestThreshold(),
 				signer.Signer,
 				startBlockHeight,
 			)
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"error creating threshold signature: [%v]\n",
+					"error creating threshold signature for request [%s]: [%v]\n",
+					requestID,
 					err,
 				)
 				return
 			}
-
-			rightSizeSignature := big.NewInt(0).SetBytes(signature[:32])
-
-			newEntry := &event.Entry{
-				RequestID:     requestID,
-				Value:         rightSizeSignature,
-				PreviousEntry: previousEntry,
-				Timestamp:     time.Now().UTC(),
-				GroupPubKey:   signer.Signer.GroupPublicKeyBytes(),
-				Seed:          seed,
-			}
-
-			relayChain.SubmitRelayEntry(
-				newEntry,
-			).OnFailure(func(err error) {
-				if err != nil {
-					fmt.Fprintf(
-						os.Stderr,
-						"Failed submission of relay entry: [%v].\n",
-						err,
-					)
-					return
-				}
-			})
 		}(signer)
 	}
-}
-
-func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
-	combinedEntryToSign := make([]byte, 0)
-	combinedEntryToSign = append(combinedEntryToSign, previousEntry...)
-	combinedEntryToSign = append(combinedEntryToSign, seed...)
-	return combinedEntryToSign
 }

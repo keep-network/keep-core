@@ -58,7 +58,7 @@ func TestSignAndComplete(t *testing.T) {
 		"failure: less than t members sign a message": {
 			threshold:              4,
 			numberPrivateKeyShares: 3,
-			expectedError:          "not enough shares to reconstruct signature",
+			expectedError:          "not enough shares to reconstruct signature: has [3] shares, threshold is [4]",
 		},
 	}
 
