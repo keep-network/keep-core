@@ -157,11 +157,19 @@ and adding it to the available operator contracts of a service contract.
 As stakers authorize the new operator contract,
 the service contract can gradually migrate
 to use the new operator contract over older versions.
+Support for obsolete operator contracts can be withdrawn
+when a sufficiently overwhelming supermajority of stakers
+has authorized and begun to operate using the new version.
 
 Operator contracts can be upgraded
 without losing service contract state,
 but critical state is held within the operator contract
 and cannot be migrated.
+
+If the operator contract's interface is changed,
+the service contract should be updated as well.
+If customer continuity is required,
+the operator contract can support both versions of the interface.
 
 ==== Service contract upgrades
 
