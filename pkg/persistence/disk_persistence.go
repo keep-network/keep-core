@@ -23,7 +23,7 @@ func (ds *diskPersistence) Save(data []byte, suffix string) error {
 		fileName: ds.dataDir + suffix,
 	}
 
-	return file.Write(data)
+	return file.write(data)
 }
 
 var (
@@ -38,7 +38,7 @@ type file struct {
 }
 
 // Create and write data to a file
-func (f *file) Write(data []byte) error {
+func (f *file) write(data []byte) error {
 	if f.fileName == "" {
 		return errNoFileExists
 	}
@@ -62,7 +62,7 @@ func (f *file) Write(data []byte) error {
 }
 
 // Read a file from a file system
-func (f *file) Read(fileName string) ([]byte, error) {
+func (f *file) read(fileName string) ([]byte, error) {
 	if f.fileName == "" {
 		return nil, errNoFileExists
 	}
