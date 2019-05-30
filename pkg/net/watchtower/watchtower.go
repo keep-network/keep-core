@@ -79,6 +79,9 @@ func (g *Guard) start(ctx context.Context) {
 					continue
 				}
 
+				// Ensure we mark the peer as being checked before
+				// executing the async stake check.
+				g.markAsChecking(connectedPeer)
 				go g.manageConnectionByStake(ctx, connectedPeer)
 			}
 		}
@@ -86,7 +89,6 @@ func (g *Guard) start(ctx context.Context) {
 }
 
 func (g *Guard) manageConnectionByStake(ctx context.Context, peer string) {
-	g.markAsChecking(peer)
 	defer g.completedCheck(peer)
 
 	newContext, cancel := context.WithTimeout(ctx, 10*time.Second)
