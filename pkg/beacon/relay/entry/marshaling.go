@@ -37,7 +37,7 @@ func (ssm *SignatureShareMessage) Unmarshal(bytes []byte) error {
 	requestID := new(big.Int)
 	requestID, ok := requestID.SetString(pbSignatureShare.RequestID, 10)
 	if !ok {
-		return fmt.Errorf("could not unmarshal request ID: [%v]", err)
+		return fmt.Errorf("could not unmarshal request ID")
 	}
 
 	ssm.senderID = group.MemberIndex(pbSignatureShare.SenderID)
