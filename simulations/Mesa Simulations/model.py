@@ -4,6 +4,7 @@ import agent
 import numpy as np
 from mesa.datacollection import DataCollector
 import logging as log
+import numpy as np
 
 class Beacon_Model(Model):
     """The model"""
@@ -148,6 +149,14 @@ class Beacon_Model(Model):
                 if agent.mainloop_status == "forked": 
                     temp_active_node_list.append(agent) #adds the node to the active list only if it is in the forked state
         self.active_nodes = temp_active_node_list
+
+def create_cdf(nodes,ticket_distr):
+# Create CDF's - used to determine max ownership ticket index
+    cdf = np.zeros(nodes)
+    for node,ticketmax in enumerate(ticket_distr):
+        
+        cdf[node]=sum(ticket_distr[0:node+1])
+    return cdf
 
 
 
