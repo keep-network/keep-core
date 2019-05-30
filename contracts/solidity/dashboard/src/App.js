@@ -321,35 +321,38 @@ class Main extends Component {
     }
 
     // Unstake withdrawals
-    let withdrawalIndexes
+    let withdrawalsByOperator = []
+
     if (isOperator) {
-      withdrawalIndexes = await stakingContract.methods.getWithdrawals(stakeOwner).call()
+      withdrawalsByOperator.push(this.state.web3.yourAddress)
     } else {
-      withdrawalIndexes = await stakingContract.methods.getWithdrawals(this.state.web3.yourAddress).call()
+      withdrawalsByOperator = operatorsAddresses;
     }
+
     const withdrawalDelay = (await stakingContract.methods.stakeWithdrawalDelay().call()).toNumber()
     let withdrawals = []
     let withdrawalsTotal = new BigNumber(0)
 
-    for(let i=0; i < withdrawalIndexes.length; i++) {
-      const withdrawalId = withdrawalIndexes[i].toNumber()
-      const withdrawal = await stakingContract.methods.getWithdrawal(withdrawalId).call()
-      const withdrawalAmount = displayAmount(withdrawal[1], 18, 3)
-      withdrawalsTotal = withdrawalsTotal.plus(withdrawal[1])
-      const availableAt = moment(withdrawal[2].toNumber()*1000).add(withdrawalDelay, 'seconds')
-      let available = false
-      const now = moment()
-      if (availableAt.isSameOrBefore(now)) {
-        available = true
-      }
-
-      withdrawals.push({
-        'id': withdrawalId,
-        'amount': withdrawalAmount,
-        'available': available,
-        'availableAt': availableAt.format("MMMM Do YYYY, h:mm:ss a")
+    for(let i=0; i < withdrawalsByOperator.length; i++) {
+      const withdrawal = await stakingContract.methods.getWithdrawal(withdrawalsByOperator[i]).call()
+      if (withdrawal[0] > 0) {
+        const withdrawalAmount = displayAmount(withdrawal[0], 18, 3)
+        withdrawalsTotal = withdrawalsTotal.plus(withdrawal[0])
+        const availableAt = moment(withdrawal[1].toNumber()*1000).add(withdrawalDelay, 'seconds')
+        let available = false
+        const now = moment()
+        if (availableAt.isSameOrBefore(now)) {
+          available = true
         }
-      )
+
+        withdrawals.push({
+          'id': withdrawalsByOperator[i],
+          'amount': withdrawalAmount,
+          'available': available,
+          'availableAt': availableAt.format("MMMM Do YYYY, h:mm:ss a")
+          }
+        )
+      }
     }
 
     withdrawalsTotal = displayAmount(withdrawalsTotal, 18, 3)
