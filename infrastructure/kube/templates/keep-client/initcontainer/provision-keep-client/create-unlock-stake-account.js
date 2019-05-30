@@ -60,6 +60,7 @@ const keepGroupContractAddress = keepGroupParsed.networks[process.env.ETH_NETWOR
 async function provisionKeepClient() {
 
   try {
+    // If it's a boostrap peer we assume existing account and use it accordingly.
     if (process.env.KEEP_CLIENT_TYPE === 'bootstrap') {
       console.log('<<<<<<<<<<<<  Provisioning keep-client Bootstrap Peer! '  + '>>>>>>>>>>>>')
 
@@ -68,6 +69,8 @@ async function provisionKeepClient() {
 
       console.log("Using pre-configured operator account " + operator)
       await unlockEthAccount(operator, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
+
+      console.log("Checking if bootstrap operator account is already staked")
 
     } else {
       console.log('<<<<<<<<<<<<  Provisioning keep-client Standard Peer! '  + '>>>>>>>>>>>>')
@@ -84,21 +87,23 @@ async function provisionKeepClient() {
 
       console.log('Operator account provisioned!')
     }
-    // Eth account that contracts are migrated against. ENV VAR sourced from Docker image.
+    // Eth account that contracts are migrated against. ENV VAR sourced from InitContainer Docker image.
     let contractOwner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 
     console.log('<<<<<<<<<<<< Unlocking Contract Owner Account ' + contractOwner + ' >>>>>>>>>>>>');
-
-    // Transactions during staking are sent from contractOwner, must be unlocked before start.
+    /*
+    Transactions during staking are sent from contractOwner, must be unlocked before start.
+    ENV VAR sourced from Kube config.
+    */
     await unlockEthAccount(contractOwner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
 
     console.log('<<<<<<<<<<<< Staking Operator Account ' + operator + ' >>>>>>>>>>>>');
-
     await stakeEthAccount(operator, contractOwner);
 
     console.log('<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>');
-
     await createKeepClientConfig(operator);
+
+    console.log("keep-client provisioning complete!")
   }
   catch(error) {
     console.error(error.message);
@@ -108,10 +113,16 @@ async function provisionKeepClient() {
 
 async function stakeEthAccount(operator, contractOwner) {
 
-  // ENV VAR sourced from Docker image.
+  // ENV VAR sourced from InitContainer Docker image.
   let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
   let contractOwnerSigned = await web3.eth.sign(web3.utils.soliditySha3(contractOwner), operator);
 
+  /*
+  This is really a bit stupid.  The return from web3.eth.sign is different depending on whether or not
+  the signer is a local or remote ETH account.  We use web3.eth.sign to set contractOwnerSigned. Here
+  the bootstrap peer account already exists and is hosted on an ETH node.
+  ENV VAR sourced from kube config.
+  */
   if (process.env.KEEP_CLIENT_TYPE === 'bootstrap') {
     var contractOwnerSignature = contractOwnerSigned;
   } else {
@@ -210,6 +221,7 @@ async function createKeepClientConfig(operator) {
       });
     }));
   }
+  console.log("keep-client config written to /mnt/keep-client/config/keep-client-config.toml")
 };
 
 /*
