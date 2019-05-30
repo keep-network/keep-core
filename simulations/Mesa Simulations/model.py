@@ -11,7 +11,7 @@ class Beacon_Model(Model):
     group_size, max_malicious_threshold, group_expiry, 
     node_failure_percent, node_death_percent,
     signature_delay, min_nodes, node_connection_delay, node_mainloop_connection_delay, 
-    log_filename, run_number, dkg_misbehavior):
+    log_filename, run_number, dkg_misbehavior, dkg_block_delay):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
@@ -30,6 +30,7 @@ class Beacon_Model(Model):
         self.timer = 0
         self.unsuccessful_signature_events = []
         self.signature_delay = signature_delay
+        self.dkg_block_delay = dkg_block_delay
         self.datacollector = DataCollector(
             agent_reporters={"Ownership_distribution": "ownership_distr"})  # Collect ownership distributions for groups
 

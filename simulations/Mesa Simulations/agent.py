@@ -87,6 +87,8 @@ class Group(Agent):
         self.model.newest_id +=1
         self.model.newest_group_id +=1
         self.ownership_distr = self.calculate_ownership_distr()
+        self.process_complete = False
+        self.block_delay = self.model.dkg_block_delay
 
 
     def step(self):
