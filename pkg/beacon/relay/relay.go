@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"time"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/thresholdsignature"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -21,14 +21,15 @@ func NewNode(
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
 	chainConfig *config.Chain,
+	groupRegistry *registry.Groups,
 ) Node {
 	return Node{
-		Staker:       staker,
-		netProvider:  netProvider,
-		blockCounter: blockCounter,
-		chainConfig:  chainConfig,
-		stakeIDs:     make([]string, 100),
-		myGroups:     make(map[string][]*membership),
+		Staker:        staker,
+		netProvider:   netProvider,
+		blockCounter:  blockCounter,
+		chainConfig:   chainConfig,
+		stakeIDs:      make([]string, 100),
+		groupRegistry: groupRegistry,
 	}
 }
 
@@ -43,69 +44,49 @@ func (n *Node) GenerateRelayEntryIfEligible(
 	requestID *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
-	relayChain relaychain.RelayEntryInterface,
+	relayChain relayChain.Interface,
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) {
-	combinedEntryToSign := combineEntryToSign(
-		previousEntry.Bytes(),
-		seed.Bytes(),
-	)
+	memberships := n.groupRegistry.GetGroup(groupPublicKey)
 
-	memberships := n.myGroups[string(groupPublicKey)]
 	if len(memberships) < 1 {
 		return
 	}
 
 	for _, signer := range memberships {
-		go func(signer *membership) {
-			signature, err := thresholdsignature.Execute(
-				combinedEntryToSign,
-				n.chainConfig.HonestThreshold(),
-				n.blockCounter,
-				signer.channel,
-				signer.signer,
-				startBlockHeight,
-			)
+		go func(signer *registry.Membership) {
+			channel, err := n.netProvider.ChannelFor(signer.ChannelName)
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
-					"error creating threshold signature: [%v]\n",
+					"could not create broadcast channel with name [%v]: [%v]\n",
+					signer.ChannelName,
 					err,
 				)
 				return
 			}
 
-			rightSizeSignature := big.NewInt(0).SetBytes(signature[:32])
-
-			newEntry := &event.Entry{
-				RequestID:     requestID,
-				Value:         rightSizeSignature,
-				PreviousEntry: previousEntry,
-				Timestamp:     time.Now().UTC(),
-				GroupPubKey:   signer.signer.GroupPublicKeyBytes(),
-				Seed:          seed,
+			err = entry.SignAndSubmit(
+				n.blockCounter,
+				channel,
+				relayChain,
+				requestID,
+				previousEntry,
+				seed,
+				n.chainConfig.HonestThreshold(),
+				signer.Signer,
+				startBlockHeight,
+			)
+			if err != nil {
+				fmt.Fprintf(
+					os.Stderr,
+					"error creating threshold signature for request [%s]: [%v]\n",
+					requestID,
+					err,
+				)
+				return
 			}
-
-			relayChain.SubmitRelayEntry(
-				newEntry,
-			).OnFailure(func(err error) {
-				if err != nil {
-					fmt.Fprintf(
-						os.Stderr,
-						"Failed submission of relay entry: [%v].\n",
-						err,
-					)
-					return
-				}
-			})
 		}(signer)
 	}
-}
-
-func combineEntryToSign(previousEntry []byte, seed []byte) []byte {
-	combinedEntryToSign := make([]byte, 0)
-	combinedEntryToSign = append(combinedEntryToSign, previousEntry...)
-	combinedEntryToSign = append(combinedEntryToSign, seed...)
-	return combinedEntryToSign
 }
