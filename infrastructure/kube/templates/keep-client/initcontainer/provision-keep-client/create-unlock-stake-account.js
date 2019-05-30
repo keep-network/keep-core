@@ -60,18 +60,26 @@ const keepGroupContractAddress = keepGroupParsed.networks[process.env.ETH_NETWOR
 async function provisionKeepClient() {
 
   try {
-    // If it's a boostrap peer we assume existing account and use it accordingly.
+    // If it's a bootstrap peer we assume existing account and use it accordingly.
     if (process.env.KEEP_CLIENT_TYPE === 'bootstrap') {
-      console.log('<<<<<<<<<<<<  Provisioning keep-client Bootstrap Peer! '  + '>>>>>>>>>>>>')
+      console.log('<<<<<<<<<<<<  Provisioning keep-client Bootstrap Peer! '  + '>>>>>>>>>>>>');
 
       let bootstrapConfigFile = toml.parse(fs.readFileSync('/tmp/keep-client-bootstrap-peer-template.toml', 'utf8'));
       var operator = bootstrapConfigFile.ethereum.account.Address;
 
-      console.log("Using pre-configured operator account " + operator)
+      console.log('Checking if bootstrap peer account ' + operator +  ' account is already staked');
+      console.log("Using pre-configured operator account " + operator);
+
+      let staked = await isStaked(operator);
+
+      if (staked === true) {
+        console.log('Already Staked, exiting InitContainer run!');
+        return;
+      } else {
+        console.log('Not staked, continuing!');
+      }
+
       await unlockEthAccount(operator, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
-
-      console.log("Checking if bootstrap operator account is already staked")
-
     } else {
       console.log('<<<<<<<<<<<<  Provisioning keep-client Standard Peer! '  + '>>>>>>>>>>>>')
       console.log('Setup operator account:')
@@ -85,11 +93,10 @@ async function provisionKeepClient() {
       // We wallet add to make the local account available to web3 functions in the script.
       await web3.eth.accounts.wallet.add(operatorAccount['privateKey']);
 
-      console.log('Operator account provisioned!')
+      console.log('Operator account provisioned!');
     }
     // Eth account that contracts are migrated against. ENV VAR sourced from InitContainer Docker image.
     let contractOwner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-
     console.log('<<<<<<<<<<<< Unlocking Contract Owner Account ' + contractOwner + ' >>>>>>>>>>>>');
     /*
     Transactions during staking are sent from contractOwner, must be unlocked before start.
@@ -110,6 +117,12 @@ async function provisionKeepClient() {
     throw error;
   }
 };
+
+async function isStaked(operator) {
+  let stakedAmount = await stakingProxyContract.methods.balanceOf(operator).call();
+  console.log(stakedAmount);
+  return stakedAmount != 0
+}
 
 async function stakeEthAccount(operator, contractOwner) {
 
@@ -161,7 +174,7 @@ async function createEthAccount(accountName) {
   let ethAccount = await web3.eth.accounts.create();
 
   // We write to a file for later passage to the keep-client container
-  fs.writeFile('/mnt/keep-client/config/eth_account_address', ethAccount['address'], (error) => {
+  fs.writeFile('/tmp/eth_account_address', ethAccount['address'], (error) => {
     if (error) throw error;
   });
   console.log(accountName + ' Account '  + ethAccount['address'] + ' Created!');
@@ -174,7 +187,7 @@ async function createEthAccountKeyfile(ethAccountPrivateKey, ethAccountPassword)
   let ethAccountKeyfile = await web3.eth.accounts.encrypt(ethAccountPrivateKey, ethAccountPassword);
 
   // We write to a file for later passage to the keep-client container
-  fs.writeFile('/mnt/keep-client/config/eth_account_keyfile', JSON.stringify(ethAccountKeyfile), (error) => {
+  fs.writeFile('/tmp/eth_account_keyfile', JSON.stringify(ethAccountKeyfile), (error) => {
     if (error) throw error;
   });
   console.log('Keyfile generated!');
@@ -200,7 +213,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.LibP2P.Seed = '2';
       parsedConfigFile.LibP2P.Port = '3919';
 
-      fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
+      fs.writeFile('/tmp/keep-client-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
         if (error) throw error;
       });
     }));
@@ -216,7 +229,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.ContractAddresses.KeepGroup = keepGroupContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.Staking = stakingProxyContractAddress;
 
-      fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
+      fs.writeFile('/tmp/keep-client-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
         if (error) throw error;
       });
     }));
