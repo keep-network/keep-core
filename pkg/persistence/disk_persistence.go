@@ -82,8 +82,8 @@ func (f *file) Read(fileName string) ([]byte, error) {
 	return data, nil
 }
 
-// Remove a file from a file syste
-func (f *file) Remove(fileName string) error {
+// Remove a file from a file system
+func (f *file) remove(fileName string) error {
 	if f.fileName == "" {
 		return errNoFileExists
 	}
