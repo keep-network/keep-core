@@ -107,7 +107,6 @@ func (gr *Groups) LoadExistingGroups() error {
 
 	for _, membership := range memberships {
 		groupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytes())
-		fmt.Printf("groupPublicKey: [%s]", groupPublicKey)
 		gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
 	}
 
