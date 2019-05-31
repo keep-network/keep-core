@@ -30,5 +30,5 @@ func (ps *persistentStorage) save(membership *Membership) error {
 	}
 	hexGroupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytes())
 
-	return ps.handle.Save(membershipBytes, "/membership_"+hexGroupPublicKey+"_"+fmt.Sprint(membership.Signer.MemberID()))
+	return ps.handle.Save(membershipBytes, hexGroupPublicKey, "/membership_"+fmt.Sprint(membership.Signer.MemberID()))
 }

@@ -18,12 +18,29 @@ type diskPersistence struct {
 }
 
 // Save - writes data to file
-func (ds *diskPersistence) Save(data []byte, suffix string) error {
+func (ds *diskPersistence) Save(data []byte, dirName string, fileName string) error {
+	dirPath, err := ds.createDir(dirName)
+	if err != nil {
+		return err
+	}
+
 	file := &file{
-		fileName: ds.dataDir + suffix,
+		filePath: fmt.Sprintf("%s%s", dirPath, fileName),
 	}
 
 	return file.write(data)
+}
+
+func (ds *diskPersistence) createDir(dirName string) (string, error) {
+	dirPath := fmt.Sprintf("%s/%s", ds.dataDir, dirName)
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		err = os.Mkdir(dirPath, os.ModePerm)
+		if err != nil {
+			return "", fmt.Errorf("error occured while creating a dir for memberships: [%v]", err)
+		}
+	}
+
+	return dirPath, nil
 }
 
 var (
@@ -34,17 +51,17 @@ var (
 // File represents a file on disk that a caller can use to read and write into.
 type file struct {
 	// FileName is the file name of the main storage file.
-	fileName string
+	filePath string
 }
 
 // Create and write data to a file
 func (f *file) write(data []byte) error {
-	if f.fileName == "" {
+	if f.filePath == "" {
 		return errNoFileExists
 	}
 
 	var err error
-	writeFile, err := os.Create(f.fileName)
+	writeFile, err := os.Create(f.filePath)
 	if err != nil {
 		return err
 	}
@@ -63,7 +80,7 @@ func (f *file) write(data []byte) error {
 
 // Read a file from a file system
 func (f *file) read(fileName string) ([]byte, error) {
-	if f.fileName == "" {
+	if f.filePath == "" {
 		return nil, errNoFileExists
 	}
 
@@ -84,7 +101,7 @@ func (f *file) read(fileName string) ([]byte, error) {
 
 // Remove a file from a file system
 func (f *file) remove(fileName string) error {
-	if f.fileName == "" {
+	if f.filePath == "" {
 		return errNoFileExists
 	}
 
