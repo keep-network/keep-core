@@ -125,7 +125,16 @@ func (cm *connectionManager) ConnectedPeers() []string {
 }
 
 func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error) {
-	peerPublicKey, err := peer.ID(connectedPeer).ExtractPublicKey()
+	peerID, err := peer.IDB58Decode(connectedPeer)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"Failed to decode peer ID from [%s] with error: [%v]",
+			connectedPeer,
+			err,
+		)
+	}
+
+	peerPublicKey, err := peerID.ExtractPublicKey()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"Failed to extract peer [%s] public key with error: [%v]",
@@ -133,6 +142,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 			err,
 		)
 	}
+
 	return key.Libp2pKeyToNetworkKey(peerPublicKey), nil
 }
 
