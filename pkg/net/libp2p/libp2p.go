@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/watchtower"
 
 	dstore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
@@ -17,6 +18,7 @@ import (
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	peer "github.com/libp2p/go-libp2p-peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 
@@ -39,6 +41,17 @@ const (
 	DefaultConnMgrGracePeriod = time.Second * 20
 )
 
+// watchtower constants
+const (
+	// StakeCheckTick is the amount of time between periodic checks for
+	// minimum stake for all peers connected to this one.
+	StakeCheckTick = time.Minute * 1
+	// BootstrapCheckPeriod is the amount of time between periodic checks
+	// for ensuring we are connected to an appropriate number of bootstrap
+	// peers.
+	BootstrapCheckPeriod = 10 * time.Second
+)
+
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
 	Peers []string
@@ -54,6 +67,8 @@ type provider struct {
 	host     host.Host
 	routing  *dht.IpfsDHT
 	addrs    []ma.Multiaddr
+
+	connectionManager *connectionManager
 }
 
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
@@ -91,6 +106,53 @@ func (p *provider) Peers() []string {
 		peers = append(peers, peer.String())
 	}
 	return peers
+}
+
+func (p *provider) ConnectionManager() net.ConnectionManager {
+	return p.connectionManager
+}
+
+type connectionManager struct {
+	host.Host
+}
+
+func (cm *connectionManager) ConnectedPeers() []string {
+	var peers []string
+	for _, connectedPeer := range cm.Network().Peers() {
+		peers = append(peers, connectedPeer.String())
+	}
+	return peers
+}
+
+func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error) {
+	peerID, err := peer.IDB58Decode(connectedPeer)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"Failed to decode peer ID from [%s] with error: [%v]",
+			connectedPeer,
+			err,
+		)
+	}
+
+	peerPublicKey, err := peerID.ExtractPublicKey()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"Failed to extract peer [%s] public key with error: [%v]",
+			connectedPeer,
+			err,
+		)
+	}
+
+	return key.Libp2pKeyToNetworkKey(peerPublicKey), nil
+}
+
+func (cm *connectionManager) DisconnectPeer(connectedPeer string) {
+	connections := cm.Network().ConnsToPeer(peer.ID(connectedPeer))
+	for _, connection := range connections {
+		if err := connection.Close(); err != nil {
+			fmt.Printf("disconnect resulted in error [%v]", err)
+		}
+	}
 }
 
 // Connect connects to a libp2p network based on the provided config. The
@@ -138,6 +200,13 @@ func Connect(
 	if err := provider.bootstrap(ctx, config.Peers); err != nil {
 		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
 	}
+
+	provider.connectionManager = &connectionManager{provider.host}
+
+	// Instantiates and starts the connection management background process
+	watchtower.NewGuard(
+		ctx, StakeCheckTick, stakeMonitor, provider.connectionManager,
+	)
 
 	return provider, nil
 }
@@ -206,7 +275,7 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 	bootstraConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
 
 	// TODO: allow this to be a configurable value
-	bootstraConfig.Period = 10 * time.Second
+	bootstraConfig.Period = BootstrapCheckPeriod
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.
