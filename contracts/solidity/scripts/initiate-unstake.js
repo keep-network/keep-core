@@ -18,7 +18,7 @@ module.exports = async function () {
 
   const accountToUnstake = accounts[1];
 
-  const amountToUnstake = web3.utils.toBN(200000).mul(web3.utils.toBN(10**17));
+  const amountToUnstake = web3.utils.toBN(200000).mul(web3.utils.toBN(10**18));
 
   console.log('Using account:      ', accountToUnstake);
   console.log('Stake before:       ', (await tokenStaking.stakeBalanceOf(accountToUnstake)).toString());
