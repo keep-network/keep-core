@@ -210,7 +210,16 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.LibP2P.Seed = 2;
       parsedConfigFile.LibP2P.Port = 3919;
 
-      fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
+      /*
+      tomlify.toToml() writes our Seed/Port values as a float.  The added precision renders our config
+      file unreadable by the keep-client as it interprets 3919.0 as a string when it expects an int.
+      Here we format the default rendering to write the config file with Seed/Port values as needed.
+      */
+      let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
+        replace: (key, value) => { return (key == 'Seed' || key == 'Port') ? value.toFixed(0) : false }
+      });
+
+      fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', formattedConfigFile, (error) => {
         if (error) throw error;
       });
     }));
@@ -227,7 +236,11 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.ContractAddresses.Staking = stakingProxyContractAddress;
       parsedConfigFile.LibP2P.Port = 3919;
 
-      fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
+      let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
+        replace: (key, value) => { return key == 'Port' ? value.toFixed(0) : false }
+      });
+
+      fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', formattedConfigFile, (error) => {
         if (error) throw error;
       });
     }));
