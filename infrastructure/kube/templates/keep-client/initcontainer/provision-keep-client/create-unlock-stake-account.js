@@ -221,10 +221,11 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.URL = 'ws://' + process.env.ETH_HOSTNAME + ':' + process.env.ETH_HOST_PORT;
       parsedConfigFile.ethereum.URLRPC = process.env.ETH_HOSTNAME + ':' + process.env.ETH_HOST_PORT;
       parsedConfigFile.ethereum.account.Address = operator;
-      parsedConfigFile.ethereum.account.KeyFile = '/tmp/eth_account_keyfile';
+      parsedConfigFile.ethereum.account.KeyFile = '/mnt/keep-client/config/eth_account_keyfile';
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = keepRandomBeaconContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.KeepGroup = keepGroupContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.Staking = stakingProxyContractAddress;
+      parsedConfigFile.LibP2P.Port = '3919';
 
       fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
         if (error) throw error;
