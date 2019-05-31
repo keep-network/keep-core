@@ -75,8 +75,8 @@ spec:
         configMap:
           name: keep-client-bootstrap-peer-0
           items:
-            - key: eth-account-keyfile
-              path: eth-account-keyfile
+            - key: eth-keyfile
+              path: eth-keyfile
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
