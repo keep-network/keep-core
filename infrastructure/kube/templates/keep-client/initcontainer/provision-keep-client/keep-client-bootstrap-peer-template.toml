@@ -19,3 +19,6 @@
 [LibP2P]
   Seed = "Set by Kube"
   Port = "Set by Kube"
+
+[Storage]
+  DataDir = "/tmp"
