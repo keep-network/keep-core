@@ -98,8 +98,12 @@ func (g *Guard) manageConnectionByStake(ctx context.Context, peer string) {
 	if err != nil {
 		// if we error while getting the peer's public key, the peer's id
 		// or key may be malformed/unknown; disconnect them immediately.
+		fmt.Printf(
+			"Dropping the connection - could not get public key for peer [%v]: [%v]\n",
+			peer,
+			err,
+		)
 		g.connectionManager.DisconnectPeer(peer)
-		fmt.Println(err)
 		return
 	}
 
@@ -115,6 +119,10 @@ func (g *Guard) manageConnectionByStake(ctx context.Context, peer string) {
 
 	if !hasMinimumStake {
 		// if a peer doesn't have at least the min stake, disconnect them.
+		fmt.Printf(
+			"Peer [%v] has no minimal stake, dropping the connection.\n",
+			peer,
+		)
 		g.connectionManager.DisconnectPeer(peer)
 	}
 }
