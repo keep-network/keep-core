@@ -1,15 +1,15 @@
 package registry
 
 import (
+	"encoding/hex"
 	"fmt"
 	"os"
 	"sync"
 
-	"encoding/hex"
-
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
-	"github.com/keep-network/keep-core/pkg/storage"
+
+	"github.com/keep-network/keep-core/pkg/persistence"
 )
 
 // Groups represents a collection of Keep groups in which the given
@@ -21,7 +21,7 @@ type Groups struct {
 
 	relayChain relaychain.GroupRegistrationInterface
 
-	storage storage.Storage
+	storage storage
 }
 
 // Membership represents a member of a group
@@ -33,12 +33,13 @@ type Membership struct {
 // NewGroupRegistry returns an empty GroupRegistry.
 func NewGroupRegistry(
 	relayChain relaychain.GroupRegistrationInterface,
-	storage storage.Storage,
+	persistence persistence.Handle,
 ) *Groups {
 	return &Groups{
 		myGroups:   make(map[string][]*Membership),
 		relayChain: relayChain,
-		storage:    storage,
+		storage:    newStorage(persistence),
+		mutex:      sync.Mutex{},
 	}
 }
 
@@ -47,25 +48,25 @@ func NewGroupRegistry(
 func (gr *Groups) RegisterGroup(
 	signer *dkg.ThresholdSigner,
 	channelName string,
-) {
-
+) error {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
+
+	groupPublicKey := hex.EncodeToString(signer.GroupPublicKeyBytes())
 
 	membership := &Membership{
 		Signer:      signer,
 		ChannelName: channelName,
 	}
 
-	membershipBytes, err := membership.Marshal()
+	err := gr.storage.save(membership)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Marshalling of the membership failed: [%v]\n", err)
-		return
+		return fmt.Errorf("could not persist membership to the storage: [%v]", err)
 	}
-	groupPublicKey := hex.EncodeToString(signer.GroupPublicKeyBytes())
-	gr.storage.Save(membershipBytes, "/membership_"+groupPublicKey)
 
 	gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
+
+	return nil
 }
 
 // GetGroup gets a group by a groupPublicKey
@@ -98,18 +99,15 @@ func (gr *Groups) UnregisterDeletedGroups() {
 // LoadExistingGroups iterates over all stored memberships on disk and loads them
 // into memory
 func (gr *Groups) LoadExistingGroups() error {
-	storedMemberships := gr.storage.ReadAll()
+	memberships, err := gr.storage.readAll()
+	if err != nil {
+		gr.myGroups = make(map[string][]*Membership)
+		return err
+	}
 
-	for _, storedMembership := range storedMemberships {
-		membership := &Membership{}
-		err := membership.Unmarshal(storedMembership)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error occured while unmarshalling a membership: [%v]\n", err)
-			gr.myGroups = make(map[string][]*Membership)
-			return err
-		}
-
+	for _, membership := range memberships {
 		groupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytes())
+		fmt.Printf("groupPublicKey: [%s]", groupPublicKey)
 		gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
 	}
 

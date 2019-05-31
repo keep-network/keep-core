@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"math/big"
 	"reflect"
-	"sync"
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -20,12 +19,9 @@ var channelName2 = "test_channel2"
 var storageMock = &dataStorageMock{}
 
 func TestRegisterGroup(t *testing.T) {
-	gr := &Groups{
-		mutex:      sync.Mutex{},
-		myGroups:   make(map[string][]*Membership),
-		relayChain: chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay(),
-		storage:    storageMock,
-	}
+	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
+
+	gr := NewGroupRegistry(chain, storageMock)
 
 	signer := dkg.NewThresholdSigner(
 		group.MemberIndex(2),
@@ -53,12 +49,8 @@ func TestRegisterGroup(t *testing.T) {
 }
 
 func TestLoadGroup(t *testing.T) {
-	gr := &Groups{
-		mutex:      sync.Mutex{},
-		myGroups:   make(map[string][]*Membership),
-		relayChain: chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay(),
-		storage:    storageMock,
-	}
+	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
+	gr := NewGroupRegistry(chain, storageMock)
 
 	signer1 := dkg.NewThresholdSigner(
 		group.MemberIndex(2),
@@ -121,14 +113,7 @@ func TestUnregisterStaleGroups(t *testing.T) {
 		groupsToRemove: [][]byte{},
 	}
 
-	noopStorage := &dataStorageMock{}
-
-	gr := &Groups{
-		mutex:      sync.Mutex{},
-		myGroups:   make(map[string][]*Membership),
-		relayChain: mockChain,
-		storage:    noopStorage,
-	}
+	gr := NewGroupRegistry(mockChain, storageMock)
 
 	signer1 := dkg.NewThresholdSigner(
 		group.MemberIndex(1),
@@ -203,11 +188,12 @@ func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) 
 type dataStorageMock struct {
 }
 
-func (dsm *dataStorageMock) Save(data []byte, name string) {
+func (dsm *dataStorageMock) Save(data []byte, directory string, name string) error {
 	// noop
+	return nil
 }
 
-func (dsm *dataStorageMock) ReadAll() [][]byte {
+func (dsm *dataStorageMock) ReadAll() ([][]byte, error) {
 	signer1 := dkg.NewThresholdSigner(
 		group.MemberIndex(2),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
@@ -228,5 +214,5 @@ func (dsm *dataStorageMock) ReadAll() [][]byte {
 		ChannelName: channelName2,
 	}).Marshal()
 
-	return [][]byte{membershipBytes1, membershipBytes2}
+	return [][]byte{membershipBytes1, membershipBytes2}, nil
 }

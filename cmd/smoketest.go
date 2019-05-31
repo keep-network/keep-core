@@ -42,16 +42,17 @@ const smokeTestDescription = `The smoke-test command creates a local threshold
    executed, once again with an in-process broadcast channel and chain, and the
    final signature is verified by each member of the group.`
 
-type devNullDataStorage struct {
+type noopPersistence struct {
 }
 
-func (dnds *devNullDataStorage) Save(data []byte, name string) {
-	// noop
-}
-
-func (dnds *devNullDataStorage) ReadAll() [][]byte {
+func (np *noopPersistence) Save(data []byte, directory string, name string) error {
 	// noop
 	return nil
+}
+
+func (np *noopPersistence) ReadAll() ([][]byte, error) {
+	// noop
+	return nil, nil
 }
 
 func init() {
@@ -152,7 +153,7 @@ func createNode(
 		))
 	}
 
-	storage := &devNullDataStorage{}
+	storage := &noopPersistence{}
 
 	netProvider := netlocal.Connect()
 
