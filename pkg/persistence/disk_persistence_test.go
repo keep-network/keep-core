@@ -49,7 +49,7 @@ func TestFile_Remove(t *testing.T) {
 }
 
 func TestDiskPersistence_Save(t *testing.T) {
-	dataDir := ""
+	dataDir := "./"
 	diskPersistence := NewDiskHandle(dataDir)
 	dirName := "0x42424242"
 	fileName := "/membership_test"

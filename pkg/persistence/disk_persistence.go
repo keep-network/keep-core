@@ -32,9 +32,9 @@ func (ds *diskPersistence) Save(data []byte, dirName string, fileName string) er
 }
 
 func (ds *diskPersistence) createDir(dirName string) (string, error) {
-	dirPath := fmt.Sprintf("%s%s", ds.dataDir, dirName)
+	dirPath := fmt.Sprintf("%s/%s", ds.dataDir, dirName)
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		err = os.Mkdir(dirPath, os.ModeDir)
+		err = os.Mkdir(dirPath, os.ModePerm)
 		if err != nil {
 			return "", fmt.Errorf("error occured while creating a dir for memberships: [%v]", err)
 		}
