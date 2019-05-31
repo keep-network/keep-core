@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 
 func TestFile_WriteRead(t *testing.T) {
 	file := &file{
-		fileNamePath: fileName,
+		filePath: fileName,
 	}
 	bytesToTest := []byte{115, 111, 109, 101, 10}
 

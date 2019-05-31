@@ -25,7 +25,7 @@ func (ds *diskPersistence) Save(data []byte, dirName string, fileName string) er
 	}
 
 	file := &file{
-		fileNamePath: fmt.Sprintf("%s%s", dirPath, fileName),
+		filePath: fmt.Sprintf("%s%s", dirPath, fileName),
 	}
 
 	return file.write(data)
@@ -51,18 +51,17 @@ var (
 // File represents a file on disk that a caller can use to read and write into.
 type file struct {
 	// FileName is the file name of the main storage file.
-	fileNamePath string
+	filePath string
 }
 
 // Create and write data to a file
 func (f *file) write(data []byte) error {
-	if f.fileNamePath == "" {
+	if f.filePath == "" {
 		return errNoFileExists
 	}
 
 	var err error
-	writeFile, err := os.Create(f.fileNamePath)
-	// writeFile, err := os.Create("0x42424h42/asdfasdf")
+	writeFile, err := os.Create(f.filePath)
 	if err != nil {
 		return err
 	}
@@ -81,7 +80,7 @@ func (f *file) write(data []byte) error {
 
 // Read a file from a file system
 func (f *file) read(fileName string) ([]byte, error) {
-	if f.fileNamePath == "" {
+	if f.filePath == "" {
 		return nil, errNoFileExists
 	}
 
@@ -102,7 +101,7 @@ func (f *file) read(fileName string) ([]byte, error) {
 
 // Remove a file from a file system
 func (f *file) remove(fileName string) error {
-	if f.fileNamePath == "" {
+	if f.filePath == "" {
 		return errNoFileExists
 	}
 
