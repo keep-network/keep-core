@@ -6,7 +6,7 @@
 
   [ethereum.account]
     Address = "0xA86c468475EF9C2ce851Ea4125424672C3F7e0C8"
-    KeyFile = "/mnt/eth-data/eth-account-keyfile"
+    KeyFile = "/mnt/eth-data/eth-keyfile"
 
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeacon contract
