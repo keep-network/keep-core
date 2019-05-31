@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/persistence"
 	"github.com/urfave/cli"
 )
 
@@ -100,6 +101,8 @@ func Start(c *cli.Context) error {
 	isBootstrapNode := config.LibP2P.Seed != 0
 	nodeHeader(isBootstrapNode, netProvider.AddrStrings(), port)
 
+	persistence := persistence.NewDiskHandle(config.Storage.DataDir)
+
 	err = beacon.Initialize(
 		ctx,
 		config.Ethereum.Account.Address,
@@ -107,6 +110,7 @@ func Start(c *cli.Context) error {
 		blockCounter,
 		stakeMonitor,
 		netProvider,
+		persistence,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing beacon: [%v]", err)

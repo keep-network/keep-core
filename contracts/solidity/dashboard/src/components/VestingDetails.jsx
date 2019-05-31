@@ -12,7 +12,7 @@ class VestingDetails extends Component {
         <Table striped bordered condensed className="small table-sm">
           <tbody>
             <TableRow title="From">
-              <a href="">{owner}</a>
+              <a href="/">{owner}</a>
             </TableRow>
 
             <TableRow title="Start date">

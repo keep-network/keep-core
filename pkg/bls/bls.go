@@ -2,6 +2,7 @@ package bls
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -82,7 +83,11 @@ func RecoverSignature(shares []*SignatureShare, threshold int) (*bn256.G1, error
 	}
 
 	if len(validParticipants) < threshold {
-		return nil, errors.New("not enough shares to reconstruct signature")
+		return nil, fmt.Errorf(
+			"not enough shares to reconstruct signature: has [%v] shares, threshold is [%v]",
+			len(validParticipants),
+			threshold,
+		)
 	}
 
 	result := new(bn256.G1)

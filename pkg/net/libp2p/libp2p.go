@@ -20,6 +20,7 @@ import (
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 
+	bootstrap "github.com/keep-network/go-libp2p-bootstrap"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -197,36 +198,29 @@ func getListenAddrs(port int) ([]ma.Multiaddr, error) {
 }
 
 func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {
-	var waitGroup sync.WaitGroup
-
 	peerInfos, err := extractMultiAddrFromPeers(bootstrapPeers)
 	if err != nil {
 		return err
 	}
 
-	for _, peerInfo := range peerInfos {
-		if p.host.ID() == peerInfo.ID {
-			// We shouldn't bootstrap to ourself if we're the
-			// bootstrap node.
-			continue
-		}
-		waitGroup.Add(1)
-		go func(pi *peerstore.PeerInfo) {
-			defer waitGroup.Done()
-			if err := p.host.Connect(ctx, *pi); err != nil {
-				fmt.Println(err)
-				return
-			}
-		}(peerInfo)
-	}
-	waitGroup.Wait()
+	bootstraConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
 
-	// Bootstrap the host
-	return p.routing.Bootstrap(ctx)
+	// TODO: allow this to be a configurable value
+	bootstraConfig.Period = 10 * time.Second
+
+	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
+	// a shutdown process.
+	_, err = bootstrap.Bootstrap(
+		p.identity.id,
+		p.host,
+		p.routing,
+		bootstraConfig,
+	)
+	return err
 }
 
-func extractMultiAddrFromPeers(peers []string) ([]*peerstore.PeerInfo, error) {
-	var peerInfos []*peerstore.PeerInfo
+func extractMultiAddrFromPeers(peers []string) ([]peerstore.PeerInfo, error) {
+	var peerInfos []peerstore.PeerInfo
 	for _, peer := range peers {
 		ipfsaddr, err := ma.NewMultiaddr(peer)
 		if err != nil {
@@ -238,7 +232,7 @@ func extractMultiAddrFromPeers(peers []string) ([]*peerstore.PeerInfo, error) {
 			return nil, err
 		}
 
-		peerInfos = append(peerInfos, peerInfo)
+		peerInfos = append(peerInfos, *peerInfo)
 	}
 	return peerInfos, nil
 }

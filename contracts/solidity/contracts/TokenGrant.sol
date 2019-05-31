@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "./StakeDelegatable.sol";
+import "./utils/UintArrayUtils.sol";
 
 
 /**
@@ -234,6 +235,9 @@ contract TokenGrant is StakeDelegatable {
 
         // Mark as staked. This also locks grant from releasing its balance.
         grants[_id].staked = true;
+
+        // Mark operator as a grant beneficiary.
+        grants[_id].beneficiary = operator;
     
         // Transfer tokens to beneficiary's grants stake balance.
         stakeBalances[operator] = stakeBalances[operator].add(available);
@@ -247,12 +251,11 @@ contract TokenGrant is StakeDelegatable {
      * @notice Initiate unstake of the token grant.
      * @param _id Grant ID
      */
-    function initiateUnstake(uint256 _id, address _operator) public {
-
-        address owner = operatorToOwner[_operator];
+    function initiateUnstake(uint256 _id) public {
         require(
-            msg.sender == _operator ||
-            msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
+            msg.sender == grants[_id].beneficiary || msg.sender == operatorToOwner[grants[_id].beneficiary],
+            "Only operator or the owner of the stake can initiate unstake."
+        );
         require(grants[_id].staked, "Grant must be staked.");
         require(!grants[_id].revoked, "Grant must not be be revoked.");
         require(stakeWithdrawalStart[_id] == 0, "Grant withdrawal start must not be already set.");
@@ -260,16 +263,14 @@ contract TokenGrant is StakeDelegatable {
         // Set token grant stake withdrawal start.
         stakeWithdrawalStart[_id] = now;
 
+        emit InitiatedTokenGrantUnstake(_id);
+
         // Calculate granted amount that was staked.
         uint256 available = grants[_id].amount.sub(grants[_id].released);
         require(available >= 0, "Must have available granted amount to unstake.");
 
-        // Remove tokens from granted stake balance.
-        stakeBalances[_operator] = stakeBalances[_operator].sub(available);
-
-        emit InitiatedTokenGrantUnstake(_id);
         if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitUnstakedEvent(_operator, available);
+            stakingProxy.emitUnstakedEvent(grants[_id].beneficiary, available);
         }
     }
 
@@ -289,6 +290,24 @@ contract TokenGrant is StakeDelegatable {
 
         // Unset stake withdrawal start.
         stakeWithdrawalStart[_id] = 0;
+
+        // Calculate granted amount that was staked.
+        uint256 available = grants[_id].amount.sub(grants[_id].released);
+        require(available >= 0, "Must have available granted amount to unstake.");
+
+        // Get the operator and owner addresses
+        address operator = grants[_id].beneficiary;
+        address owner = operatorToOwner[operator];
+
+        // Remove tokens from granted stake balance.
+        stakeBalances[operator] = stakeBalances[operator].sub(available);
+
+        // Mark stake owner back as the grant beneficiary.
+        grants[_id].beneficiary = owner;
+
+        // Release operator
+        operatorToOwner[operator] = address(0);
+        ownerOperators[owner].removeAddress(operator);
     }
 
     /**
