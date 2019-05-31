@@ -28,7 +28,7 @@ COPY ./KeepGroup.json /tmp/KeepGroup.json
 COPY ./keep-client-bootstrap-peer-template.toml /tmp/keep-client-bootstrap-peer-template.toml
 COPY ./keep-client-standard-peer-template.toml /tmp/keep-client-standard-peer-template.toml
 
-COPY ./create-unlock-stake-account.js /tmp/create-unlock-stake-account.js
+COPY ./provision-keep-client.js /tmp/provision-keep-client.js
 
 
 
