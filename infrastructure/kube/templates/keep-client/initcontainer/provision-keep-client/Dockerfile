@@ -32,4 +32,4 @@ COPY ./create-unlock-stake-account.js /tmp/create-unlock-stake-account.js
 
 
 
-ENTRYPOINT ["node", "./create-unlock-stake-account.js"]
+ENTRYPOINT ["node", "./provision-keep-client.js"]
