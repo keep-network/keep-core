@@ -145,12 +145,12 @@ jobs:
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
-          image: keep-client
+          image: keep-client-initcontainer
           tag: latest
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
-          image: keep-client-initcontainer
+          image: keep-client
           tag: latest
   generate_docs_tex:
     docker:
