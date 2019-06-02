@@ -5,10 +5,10 @@ const concat = require('concat-stream');
 const Web3 = require('web3');
 
 // ETH host info
-const ethHost = process.env.ETH_HOSTNAME
-const ethWsPort = process.env.ETH_WS_PORT
-const ethRpcPort = process.env.ETH_RPC_PORT
-const ethNetworkId = process.env.ETH_NETWORK_ID
+const ethHost = process.env.ETH_HOSTNAME;
+const ethWsPort = process.env.ETH_WS_PORT;
+const ethRpcPort = process.env.ETH_RPC_PORT;
+const ethNetworkId = process.env.ETH_NETWORK_ID;
 
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
@@ -120,7 +120,7 @@ async function provisionKeepClient() {
     console.log('\n<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>');
     await createKeepClientConfig(operator);
 
-    console.log("\n########### keep-client Provisioning Complete! ###########")
+    console.log("\n########### keep-client Provisioning Complete! ###########");
   }
   catch(error) {
     console.error(error.message);
@@ -130,8 +130,7 @@ async function provisionKeepClient() {
 
 async function isStaked(operator) {
   let stakedAmount = await stakingProxyContract.methods.balanceOf(operator).call();
-  console.log(stakedAmount);
-  return stakedAmount != 0
+  return stakedAmount != 0;
 }
 
 async function stakeOperatorAccount(operator, contractOwner) {
