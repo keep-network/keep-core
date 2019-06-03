@@ -212,7 +212,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.URLRPC = ethHost + ':' + ethRpcPort;
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = keepRandomBeaconContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.KeepGroup = keepGroupContractAddress;
-      parsedConfigFile.ethereum.ContractAddresses.Staking = stakingProxyContractAddress;
+      parsedConfigFile.ethereum.ContractAddresses.StakingProxy = stakingProxyContractAddress;
       parsedConfigFile.LibP2P.Seed = 2;
       parsedConfigFile.LibP2P.Port = 3919;
 
@@ -239,7 +239,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.account.KeyFile = '/mnt/keep-client/config/eth_account_keyfile';
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = keepRandomBeaconContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.KeepGroup = keepGroupContractAddress;
-      parsedConfigFile.ethereum.ContractAddresses.Staking = stakingProxyContractAddress;
+      parsedConfigFile.ethereum.ContractAddresses.StakingProxy = stakingProxyContractAddress;
       parsedConfigFile.LibP2P.Port = 3919;
 
       let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
