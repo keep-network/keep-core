@@ -9,6 +9,7 @@ import (
 
 	crand "crypto/rand"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -71,6 +72,11 @@ func relayRequest(c *cli.Context) error {
 		return fmt.Errorf("could not generate seed: [%v]", err)
 	}
 
+	// Callback contract address.
+	callbackContract := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	// Callback contract method signature, an be calculated as bytes4(keccak256("methodName(uint256)")
+	callbackMethod := ""
+
 	requestMutex := sync.Mutex{}
 
 	wait := make(chan struct{})
@@ -109,7 +115,7 @@ func relayRequest(c *cli.Context) error {
 
 	fmt.Printf("Requesting for a new relay entry at [%s]\n", time.Now())
 
-	provider.ThresholdRelay().RequestRelayEntry(seed).
+	provider.ThresholdRelay().RequestRelayEntry(seed, callbackContract, callbackMethod).
 		OnComplete(func(request *event.Request, err error) {
 			if err != nil {
 				fmt.Fprintf(

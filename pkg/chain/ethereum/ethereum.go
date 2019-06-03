@@ -339,6 +339,8 @@ func (ec *ethereumChain) OnGroupRegistered(
 
 func (ec *ethereumChain) RequestRelayEntry(
 	seed *big.Int,
+	callbackContract common.Address,
+	callbackMethod string,
 ) *async.RelayRequestPromise {
 	relayRequestPromise := &async.RelayRequestPromise{}
 
@@ -395,7 +397,7 @@ func (ec *ethereumChain) RequestRelayEntry(
 	}()
 
 	payment := big.NewInt(2) // FIXME hardcoded 2 gwei until we fill this in
-	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(seed, payment)
+	_, err = ec.keepRandomBeaconContract.RequestRelayEntry(seed, callbackContract, callbackMethod, payment)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(requestedEntry)

@@ -113,8 +113,10 @@ func TestLocalRequestRelayEntry(t *testing.T) {
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 	seed := big.NewInt(42)
+	callbackContract := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	callbackMethod := ""
 
-	relayRequestPromise := chainHandle.RequestRelayEntry(seed)
+	relayRequestPromise := chainHandle.RequestRelayEntry(seed, callbackContract, callbackMethod)
 
 	done := make(chan *event.Request)
 	relayRequestPromise.OnSuccess(func(entry *event.Request) {
@@ -352,8 +354,10 @@ func TestLocalOnRelayEntryRequested(t *testing.T) {
 	defer subscription.Unsubscribe()
 
 	seed := big.NewInt(12345)
+	callbackContract := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	callbackMethod := ""
 
-	chainHandle.RequestRelayEntry(seed)
+	chainHandle.RequestRelayEntry(seed, callbackContract, callbackMethod)
 
 	select {
 	case event := <-eventFired:
@@ -410,7 +414,9 @@ func TestLocalOnRelayEntryRequestedUnsubscribed(t *testing.T) {
 
 	subscription.Unsubscribe()
 
-	chainHandle.RequestRelayEntry(big.NewInt(42))
+	callbackContract := common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	callbackMethod := ""
+	chainHandle.RequestRelayEntry(big.NewInt(42), callbackContract, callbackMethod)
 
 	select {
 	case event := <-eventFired:
