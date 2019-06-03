@@ -8,7 +8,7 @@ class TokenGrantsTable extends Component {
         return (
           <tr key={"token-grant-"+i+"-from-"+item.owner}>
             <td>{item.formatted.amount}</td>
-            <td><a href="">{item.owner}</a></td>
+            <td><a href="/">{item.owner}</a></td>
           </tr>
         )
       })

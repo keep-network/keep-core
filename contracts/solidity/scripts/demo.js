@@ -34,9 +34,9 @@ module.exports = async function() {
   let owner = accounts[0]; // The address of an owner of the staked tokens.
   let magpie = accounts[0]; // The address where the rewards for participation are sent.
 
-  // Stake delegate tokens for each account as an operator,
+  // Stake delegate tokens for first 5 accounts as operators,
   // including the first account where owner operating for themself.
-  for(let i = 0; i < accounts.length; i++) {
+  for(let i = 0; i < 5; i++) {
     let operator = accounts[i]
 
     let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator)).substr(2), 'hex');
@@ -56,20 +56,22 @@ module.exports = async function() {
     }
   }
 
-  // Grant tokens to the second account
+  // Create a demo accounts with tokens but without any operators
+  await token.transfer(accounts[5], formatAmount(100000, 18), {from: accounts[0]})
+
+  // Grant tokens to the stake owner account
   let amount = formatAmount(70000, 18);
   let vestingDuration = web3.utils.toBN(86400).mul(web3.utils.toBN(60));
   let start = (await web3.eth.getBlock('latest')).timestamp;
   let cliff = web3.utils.toBN(86400).mul(web3.utils.toBN(10));
   let revocable = true;
-  await token.transfer(accounts[1], formatAmount(70000,18))
-  await token.approve(tokenGrant.address, amount);
-  await tokenGrant.grant(amount, accounts[1], vestingDuration, start, cliff, revocable);
+  await token.approve(tokenGrant.address, amount, {from: accounts[0]});
+  await tokenGrant.grant(amount, accounts[5], vestingDuration, start, cliff, revocable, {from: accounts[0]});
 
-  // Grant tokens from the second account
+  // Grant tokens from the stake owner account
   amount = formatAmount(1000, 18);
-  await token.approve(tokenGrant.address, amount, {from: accounts[1]});
-  await tokenGrant.grant(amount, accounts[0], vestingDuration, start, cliff, revocable, {from: accounts[1]});
+  await token.approve(tokenGrant.address, amount, {from: accounts[5]});
+  await tokenGrant.grant(amount, accounts[6], vestingDuration, start, cliff, revocable, {from: accounts[5]});
 
   process.exit();
 };

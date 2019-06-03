@@ -3,7 +3,6 @@ package registry
 import (
 	"bytes"
 	"math/big"
-	"sync"
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -14,18 +13,25 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
+type noopPersistence struct {
+}
+
+func (np *noopPersistence) Save([]byte, string, string) error {
+	// noop
+	return nil
+}
+
 func TestRegisterGroup(t *testing.T) {
+	noopPersistence := &noopPersistence{}
+	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
+
+	gr := NewGroupRegistry(chain, noopPersistence)
+
 	signer := dkg.NewThresholdSigner(
 		group.MemberIndex(2),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
 		big.NewInt(1),
 	)
-
-	gr := &Groups{
-		mutex:      sync.Mutex{},
-		myGroups:   make(map[string][]*Membership),
-		relayChain: chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay(),
-	}
 
 	gr.RegisterGroup(signer, "test_channel")
 
@@ -50,12 +56,9 @@ func TestUnregisterStaleGroups(t *testing.T) {
 	mockChain := &mockGroupRegistrationInterface{
 		groupsToRemove: [][]byte{},
 	}
+	noopPersistence := &noopPersistence{}
 
-	gr := &Groups{
-		mutex:      sync.Mutex{},
-		myGroups:   make(map[string][]*Membership),
-		relayChain: mockChain,
-	}
+	gr := NewGroupRegistry(mockChain, noopPersistence)
 
 	signer1 := dkg.NewThresholdSigner(
 		group.MemberIndex(1),

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"os"
@@ -73,20 +72,24 @@ func relayRequest(c *cli.Context) error {
 	}
 
 	requestMutex := sync.Mutex{}
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
 
 	wait := make(chan struct{})
 	var requestID *big.Int
 	provider.ThresholdRelay().OnRelayEntryRequested(func(request *event.Request) {
-		fmt.Fprintf(
-			os.Stderr,
-			"Relay entry request submitted with id [%s].\n",
-			request.RequestID.String(),
-		)
-		requestMutex.Lock()
-		requestID = request.RequestID
-		requestMutex.Unlock()
+		// It is possible two relay requests will be generated close to each other.
+		// To make sure we catch request ID from the correct one, we compare seed
+		// with the one we sent.
+		if requestID == nil && seed.Cmp(request.Seed) == 0 {
+			fmt.Printf(
+				"Relay entry request submitted with id [%s]: [%+v]\n",
+				request.RequestID,
+				request,
+			)
+
+			requestMutex.Lock()
+			requestID = request.RequestID
+			requestMutex.Unlock()
+		}
 	})
 
 	provider.ThresholdRelay().OnRelayEntryGenerated(func(entry *event.Entry) {
@@ -104,6 +107,8 @@ func relayRequest(c *cli.Context) error {
 		}
 	})
 
+	fmt.Printf("Requesting for a new relay entry at [%s]\n", time.Now())
+
 	provider.ThresholdRelay().RequestRelayEntry(seed).
 		OnComplete(func(request *event.Request, err error) {
 			if err != nil {
@@ -114,23 +119,11 @@ func relayRequest(c *cli.Context) error {
 				)
 				return
 			}
-			fmt.Fprintf(
-				os.Stdout,
-				"Relay entry requested: [%v].\n",
-				request,
-			)
 		})
 
 	select {
 	case <-wait:
 		return nil
-	case <-ctx.Done():
-		err := ctx.Err()
-		if err != nil {
-			return fmt.Errorf("request errored out [%v]", err)
-		}
-		return fmt.Errorf("request errored for unknown reason")
-
 	}
 }
 
@@ -147,11 +140,7 @@ func submitGenesisRelayEntry(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	var (
-		wait        = make(chan error)
-		ctx, cancel = context.WithCancel(context.Background())
-	)
-	defer cancel()
+	wait := make(chan error)
 
 	provider.ThresholdRelay().SubmitRelayEntry(
 		relay.GenesisRelayEntry(),
@@ -170,12 +159,6 @@ func submitGenesisRelayEntry(c *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("error in submitting genesis relay entry: [%v]", err)
 		}
-	case <-ctx.Done():
-		err := ctx.Err()
-		if err != nil {
-			return fmt.Errorf("context done with error: [%v]", err)
-		}
-		return nil
 	}
 	return nil
 }

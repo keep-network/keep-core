@@ -1,5 +1,4 @@
 import moment from 'moment'
-import Web3 from 'web3'
 import React, { Component } from 'react'
 import { Button, Form, FormGroup,
   FormControl, ControlLabel, Col, HelpBlock, Checkbox } from 'react-bootstrap'
@@ -12,28 +11,22 @@ const ERRORS = {
 }
 
 class TokenGrantForm extends Component {
-  constructor(props) {
-    super(props)
-    this.state = this.getInitialState()
-  }
 
-  getInitialState() {
-    return {
-      amount: 0,
-      beneficiary: "0x0",
-      duration: 1,
-      start: moment().unix(),
-      cliff: 1,
-      revocable: false,
-      formErrors: {
-        beneficiary: '',
-        amount: ''
-      },
-      hasError: false,
-      requestSent: false,
-      requestSuccess: false,
-      errorMsg: ERRORS.INVALID_AMOUNT
-    }
+  state = {
+    amount: 0,
+    beneficiary: "0x0",
+    duration: 1,
+    start: moment().unix(),
+    cliff: 1,
+    revocable: false,
+    formErrors: {
+      beneficiary: '',
+      amount: ''
+    },
+    hasError: false,
+    requestSent: false,
+    requestSuccess: false,
+    errorMsg: ERRORS.INVALID_AMOUNT
   }
 
   onChange = (e) => {
@@ -47,7 +40,8 @@ class TokenGrantForm extends Component {
   }
 
   validateBeneficiary() {
-    if (Web3.utils.isAddress(this.state.beneficiary)) return 'success'
+    const { web3 } = this.props
+    if (web3.utils && web3.utils.isAddress(this.state.beneficiary)) return 'success'
     else return 'error'
   }
 
@@ -59,8 +53,8 @@ class TokenGrantForm extends Component {
     const { amount, beneficiary, duration, start, cliff, revocable} = this.state
     const { web3, tokenGrantContractAddress } = this.props
 
-    await web3.token.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: web3.yourAddress, gas: 60000})
-    await web3.tokenGrantContract.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: web3.yourAddress, gas: 300000})
+    await web3.token.methods.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: web3.yourAddress, gas: 60000})
+    await web3.grantContract.methods.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: web3.yourAddress, gas: 300000})
 
   }
 

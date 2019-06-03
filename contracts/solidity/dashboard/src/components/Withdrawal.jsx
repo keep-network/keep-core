@@ -4,16 +4,16 @@ import WithWeb3Context from './WithWeb3Context'
 
 class Withdrawal extends Component {
 
-  async finishUnstake(withdrawalId) {
-    const { web3 } = this.props
-    web3.stakingContract.finishUnstake(withdrawalId, {from: web3.yourAddress, gas: 110000})
+  finishUnstake = async () => {
+    const { web3, withdrawal } = this.props
+    web3.stakingContract.methods.finishUnstake(withdrawal.id, {from: web3.yourAddress, gas: 110000})
   }
 
   render() {
     const { withdrawal } = this.props
     let action = 'N/A'
     if (withdrawal.available) {
-      action = <Button bsSize="small" bsStyle="primary" onClick={()=>this.finishUnstake(withdrawal.id)}>Finish Unstake</Button>
+      action = <Button bsSize="small" bsStyle="primary" onClick={this.finishUnstake}>Finish Unstake</Button>
     }
 
     return (
