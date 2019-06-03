@@ -17,14 +17,14 @@ contract('TestKeepRandomBeaconStub', function(accounts) {
   });
 
   it("should be able to request relay entry and get response", async function() {
-    await implViaProxy.requestRelayEntry(seed, {from: account_one, value: 100});
+    await implViaProxy.requestRelayEntry(seed, "0x0000000000000000000000000000000000000000", "", {from: account_one, value: 100});
 
     assert.equal((await implViaProxy.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
     assert.equal((await implViaProxy.getPastEvents())[1].event, 'RelayEntryGenerated', "RelayEntryGenerated event should occur on the implementation contract.");
 
     let previousRandomNumber = (await implViaProxy.getPastEvents())[1].args['requestResponse'].toString();  
     await increaseTimeTo(await latestTime()+duration.seconds(1));
-    await implViaProxy.requestRelayEntry(seed, {from: account_one, value: 100});
+    await implViaProxy.requestRelayEntry(seed, "0x0000000000000000000000000000000000000000", "", {from: account_one, value: 100});
 
     assert.equal((await implViaProxy.getPastEvents())[1].args['previousEntry'].toString(), previousRandomNumber, "Previous entry should be present in the event.");
     assert.notEqual((await implViaProxy.getPastEvents())[1].args['requestResponse'].toString(), previousRandomNumber, "New number should be different from previous.");
