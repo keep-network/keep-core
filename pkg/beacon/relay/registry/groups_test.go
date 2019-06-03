@@ -14,24 +14,37 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
-var channelName1 = "test_channel1"
-var channelName2 = "test_channel2"
-var storageMock = &dataStorageMock{}
+var (
+	channelName1 = "test_channel1"
+	channelName2 = "test_channel2"
+
+	storageMock = &dataStorageMock{}
+
+	signer1 = dkg.NewThresholdSigner(
+		group.MemberIndex(1),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
+		big.NewInt(1),
+	)
+	signer2 = dkg.NewThresholdSigner(
+		group.MemberIndex(2),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
+		big.NewInt(2),
+	)
+	signer3 = dkg.NewThresholdSigner(
+		group.MemberIndex(3),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(30)),
+		big.NewInt(3),
+	)
+)
 
 func TestRegisterGroup(t *testing.T) {
 	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
 
 	gr := NewGroupRegistry(chain, storageMock)
 
-	signer := dkg.NewThresholdSigner(
-		group.MemberIndex(2),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
-		big.NewInt(1),
-	)
+	gr.RegisterGroup(signer1, channelName1)
 
-	gr.RegisterGroup(signer, channelName1)
-
-	actual := gr.GetGroup(signer.GroupPublicKeyBytes())
+	actual := gr.GetGroup(signer1.GroupPublicKeyBytes())
 
 	if actual == nil {
 		t.Fatalf(
@@ -52,18 +65,7 @@ func TestLoadGroup(t *testing.T) {
 	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
 	gr := NewGroupRegistry(chain, storageMock)
 
-	signer1 := dkg.NewThresholdSigner(
-		group.MemberIndex(2),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
-		big.NewInt(1),
-	)
 	gr.RegisterGroup(signer1, channelName1)
-
-	signer2 := dkg.NewThresholdSigner(
-		group.MemberIndex(2),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(42)),
-		big.NewInt(1),
-	)
 	gr.RegisterGroup(signer2, channelName2)
 
 	gr.myGroups = make(map[string][]*Membership)
@@ -74,7 +76,6 @@ func TestLoadGroup(t *testing.T) {
 			len(gr.myGroups),
 		)
 	}
-
 	err := gr.LoadExistingGroups()
 
 	if err != nil {
@@ -114,22 +115,6 @@ func TestUnregisterStaleGroups(t *testing.T) {
 	}
 
 	gr := NewGroupRegistry(mockChain, storageMock)
-
-	signer1 := dkg.NewThresholdSigner(
-		group.MemberIndex(1),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
-		big.NewInt(1),
-	)
-	signer2 := dkg.NewThresholdSigner(
-		group.MemberIndex(2),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
-		big.NewInt(2),
-	)
-	signer3 := dkg.NewThresholdSigner(
-		group.MemberIndex(3),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(30)),
-		big.NewInt(3),
-	)
 
 	gr.RegisterGroup(signer1, channelName1)
 	gr.RegisterGroup(signer2, channelName1)
@@ -194,21 +179,11 @@ func (dsm *dataStorageMock) Save(data []byte, directory string, name string) err
 }
 
 func (dsm *dataStorageMock) ReadAll() ([][]byte, error) {
-	signer1 := dkg.NewThresholdSigner(
-		group.MemberIndex(2),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
-		big.NewInt(1),
-	)
 	membershipBytes1, _ := (&Membership{
 		Signer:      signer1,
 		ChannelName: channelName1,
 	}).Marshal()
 
-	signer2 := dkg.NewThresholdSigner(
-		group.MemberIndex(2),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(42)),
-		big.NewInt(1),
-	)
 	membershipBytes2, _ := (&Membership{
 		Signer:      signer2,
 		ChannelName: channelName2,

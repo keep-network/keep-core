@@ -52,7 +52,7 @@ func (gr *Groups) RegisterGroup(
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
-	groupPublicKey := hex.EncodeToString(signer.GroupPublicKeyBytes())
+	groupPublicKey := groupKeyToString(signer.GroupPublicKeyBytes())
 
 	membership := &Membership{
 		Signer:      signer,
@@ -74,7 +74,7 @@ func (gr *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
-	return gr.myGroups[hex.EncodeToString(groupPublicKey)]
+	return gr.myGroups[groupKeyToString(groupPublicKey)]
 }
 
 // UnregisterDeletedGroups lookup for groups to be removed.
@@ -83,7 +83,7 @@ func (gr *Groups) UnregisterDeletedGroups() {
 	defer gr.mutex.Unlock()
 
 	for publicKey := range gr.myGroups {
-		publicKeyBytes, _ := hex.DecodeString(publicKey)
+		publicKeyBytes, _ := groupKeyFromString(publicKey)
 		isStaleGroup, err := gr.relayChain.IsStaleGroup(publicKeyBytes)
 
 		if err != nil {
@@ -106,9 +106,17 @@ func (gr *Groups) LoadExistingGroups() error {
 	}
 
 	for _, membership := range memberships {
-		groupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytes())
+		groupPublicKey := groupKeyToString(membership.Signer.GroupPublicKeyBytes())
 		gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
 	}
 
 	return nil
+}
+
+func groupKeyToString(groupKey []byte) string {
+	return hex.EncodeToString(groupKey)
+}
+
+func groupKeyFromString(groupKey string) ([]byte, error) {
+	return hex.DecodeString(groupKey)
 }
