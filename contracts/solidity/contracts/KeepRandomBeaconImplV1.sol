@@ -41,6 +41,8 @@ contract KeepRandomBeaconImplV1 is Ownable {
         address sender;
         uint256 payment;
         bytes groupPubKey;
+        address callbackContract;
+        string callbackMethod;
     }
 
     mapping(uint256 => Request) internal _requests;
@@ -79,7 +81,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
         // to trigger the creation of the first group. Requests are removed on successful
         // entries so genesis entry can only be called once.
         _requestCounter++;
-        _requests[_requestCounter] = Request(msg.sender, 0, genesisGroupPubKey);
+        _requests[_requestCounter] = Request(msg.sender, 0, genesisGroupPubKey, address(0), "");
     }
 
     /**
@@ -93,9 +95,11 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
+     * @param callbackContract Callback contract address.
+     * @param callbackMethod Callback contract method signature.
      * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
      */
-    function requestRelayEntry(uint256 seed) public payable returns (uint256) {
+    function requestRelayEntry(uint256 seed, address callbackContract, string memory callbackMethod) public payable returns (uint256) {
         require(
             msg.value >= _minPayment,
             "Payment is less than required minimum."
@@ -110,7 +114,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
         _requestCounter++;
 
-        _requests[_requestCounter] = Request(msg.sender, msg.value, groupPubKey);
+        _requests[_requestCounter] = Request(msg.sender, msg.value, groupPubKey, callbackContract, callbackMethod);
 
         emit RelayEntryRequested(_requestCounter, msg.value, _previousEntry, seed, groupPubKey);
         return _requestCounter;
@@ -160,6 +164,12 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
         require(_requests[requestID].groupPubKey.equalStorage(groupPubKey), "Provided group was not selected to produce entry for this request.");
         require(BLS.verify(groupPubKey, abi.encodePacked(previousEntry, seed), bytes32(groupSignature)), "Group signature failed to pass BLS verification.");
+
+        address callbackContract = _requests[requestID].callbackContract;
+
+        if (callbackContract != address(0)) {
+            callbackContract.call(abi.encodeWithSignature(_requests[requestID].callbackMethod, groupSignature));
+        }
 
         delete _requests[requestID];
         _previousEntry = groupSignature;
