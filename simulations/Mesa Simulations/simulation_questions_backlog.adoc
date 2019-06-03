@@ -1,0 +1,22 @@
+Which factors might influence group size?
+- node throughput?
+- node failures?
+- stake amount?
+- token price?
+
+What are the determinants of minimum stake?
+- opportunity cost?
+- lock up period?
+- resistance to powerful adversaries?
+    measured as:
+        - byzantine fault tollerance?
+        - DoS attack?
+        - cost to collude? (under BFT?)
+
+what is the relationship between Group lifetime and Group expense?
+- Which parts of the group lifecycle involve expenditure?
+
+
+Is there another protocal that we can reference?
+
+
