@@ -262,5 +262,8 @@ function formatAmount(amount, decimals) {
   return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
 };
 
-provisionKeepClient().catch(error => console.error(error));
+provisionKeepClient().catch(error => {
+  console.error(error);
+  process.exit(1)
+});
 
