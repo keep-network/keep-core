@@ -14,7 +14,7 @@
     # Hex-encoded address of KeepGroup contract
     KeepGroup = "Set by Kube"
     # StakingProxy
-    Staking = "Set by Kube"
+    StakingProxy = "Set by Kube"
 
 [LibP2P]
   Seed = "Set by Kube"
