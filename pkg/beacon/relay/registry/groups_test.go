@@ -35,6 +35,11 @@ var (
 		new(bn256.G2).ScalarBaseMult(big.NewInt(30)),
 		big.NewInt(3),
 	)
+	signer4 = dkg.NewThresholdSigner(
+		group.MemberIndex(3),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
+		big.NewInt(2),
+	)
 )
 
 func TestRegisterGroup(t *testing.T) {
@@ -185,5 +190,10 @@ func (dsm *dataStorageMock) ReadAll() ([][]byte, error) {
 		ChannelName: channelName2,
 	}).Marshal()
 
-	return [][]byte{membershipBytes1, membershipBytes2}, nil
+	membershipBytes3, _ := (&Membership{
+		Signer:      signer4,
+		ChannelName: channelName2,
+	}).Marshal()
+
+	return [][]byte{membershipBytes1, membershipBytes2, membershipBytes3}, nil
 }

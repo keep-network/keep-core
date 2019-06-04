@@ -110,12 +110,19 @@ func (gr *Groups) LoadExistingGroups() error {
 
 	for _, membership := range memberships {
 		groupPublicKey := groupKeyToString(membership.Signer.GroupPublicKeyBytes())
-		fmt.Fprintf(os.Stdout, "Membership: [%v] was loaded to a group: [%v]\n",
-			membership.Signer.MemberID(),
-			groupPublicKey,
-		)
 
 		gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
+	}
+
+	for group, memberships := range gr.myGroups {
+		fmt.Fprintf(os.Stdout, "Group [%v] was loaded with member IDs [", group)
+		for idx, membership := range memberships {
+			if (len(memberships) - 1) != idx {
+				fmt.Fprintf(os.Stdout, "%v, ", membership.Signer.MemberID())
+			} else {
+				fmt.Fprintf(os.Stdout, "%v]\n", membership.Signer.MemberID())
+			}
+		}
 	}
 
 	return nil
