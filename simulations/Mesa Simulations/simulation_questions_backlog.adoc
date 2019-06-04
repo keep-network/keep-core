@@ -1,11 +1,19 @@
+Impact of malicious nodes:
+- Are malicious nodes malicious from the start?
+- What is the duration of maliciousness?
+- How many blocks should we set the DKG process?
+- Should we model the 14 steps in the DKG process?
+
+Should we create a model of malicious behavior; i.e. should we create a byzantine fault scenario?
+
 Which factors might influence group size?
+- node failures
 - node throughput?
-- node failures?
 - stake amount?
 - token price?
 
 What are the determinants of minimum stake?
-- opportunity cost?
+- opportunity cost, marginal cost, supply/demand?
 - lock up period?
 - resistance to powerful adversaries?
     measured as:
@@ -17,6 +25,6 @@ what is the relationship between Group lifetime and Group expense?
 - Which parts of the group lifecycle involve expenditure?
 
 
-Is there another protocal that we can reference?
+Is there another protocol that we can reference?
 
 
