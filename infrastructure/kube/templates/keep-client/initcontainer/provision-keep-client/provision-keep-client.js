@@ -96,7 +96,7 @@ async function provisionKeepClient() {
     // We need to unlock the operator account only in bootstrap case since it's hosted on ETH node.
     await unlockEthAccount(operator, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
     } else {
-      console.log('###########  Provisioning keep-client Standard Peer! ###########')
+      console.log('###########  Provisioning keep-client Standard Peer! ###########');
       console.log('\n<<<<<<<<<<<< Setting Up Operator Account ' + '>>>>>>>>>>>>');
 
       let operatorEthAccountPassword = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
@@ -129,6 +129,7 @@ async function provisionKeepClient() {
 };
 
 async function isStaked(operator) {
+
   let stakedAmount = await stakingProxyContract.methods.balanceOf(operator).call();
   return stakedAmount != 0;
 }
