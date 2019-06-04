@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"encoding/hex"
 	"fmt"
 	"os"
 	"sync"
@@ -51,7 +52,7 @@ func (gr *Groups) RegisterGroup(
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
-	groupPublicKey := string(signer.GroupPublicKeyBytes())
+	groupPublicKey := groupKeyToString(signer.GroupPublicKeyBytes())
 
 	membership := &Membership{
 		Signer:      signer,
@@ -73,7 +74,7 @@ func (gr *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
-	return gr.myGroups[string(groupPublicKey)]
+	return gr.myGroups[groupKeyToString(groupPublicKey)]
 }
 
 // UnregisterDeletedGroups lookup for groups to be removed.
@@ -82,16 +83,55 @@ func (gr *Groups) UnregisterDeletedGroups() {
 	defer gr.mutex.Unlock()
 
 	for publicKey := range gr.myGroups {
-		publicKeyBytes := []byte(publicKey)
-		isStaleGroup, err := gr.relayChain.IsStaleGroup(publicKeyBytes)
+		publicKeyBytes, err := groupKeyFromString(publicKey)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error occured while decoding public key into bytes [%v]\n", err)
+		}
 
+		isStaleGroup, err := gr.relayChain.IsStaleGroup(publicKeyBytes)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Group removal eligibility check failed: [%v]\n", err)
 		}
 
 		if isStaleGroup {
 			delete(gr.myGroups, publicKey)
-			fmt.Printf("Unregistering a stale group [%+v]\n", publicKeyBytes)
 		}
 	}
+}
+
+// LoadExistingGroups iterates over all stored memberships on disk and loads them
+// into memory
+func (gr *Groups) LoadExistingGroups() error {
+	memberships, err := gr.storage.readAll()
+	if err != nil {
+		gr.myGroups = make(map[string][]*Membership)
+		return err
+	}
+
+	for _, membership := range memberships {
+		groupPublicKey := groupKeyToString(membership.Signer.GroupPublicKeyBytes())
+
+		gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
+	}
+
+	for group, memberships := range gr.myGroups {
+		fmt.Fprintf(os.Stdout, "Group [%v] was loaded with member IDs [", group)
+		for idx, membership := range memberships {
+			if (len(memberships) - 1) != idx {
+				fmt.Fprintf(os.Stdout, "%v, ", membership.Signer.MemberID())
+			} else {
+				fmt.Fprintf(os.Stdout, "%v]\n", membership.Signer.MemberID())
+			}
+		}
+	}
+
+	return nil
+}
+
+func groupKeyToString(groupKey []byte) string {
+	return hex.EncodeToString(groupKey)
+}
+
+func groupKeyFromString(groupKey string) ([]byte, error) {
+	return hex.DecodeString(groupKey)
 }
