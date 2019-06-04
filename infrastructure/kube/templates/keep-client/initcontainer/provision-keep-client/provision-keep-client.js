@@ -179,7 +179,6 @@ async function createEthAccount(accountName) {
     if (error) throw error;
   });
   console.log(accountName + ' Account '  + ethAccount['address'] + ' Created!');
-
   return ethAccount;
 };
 
