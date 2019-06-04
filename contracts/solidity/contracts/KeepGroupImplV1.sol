@@ -321,7 +321,7 @@ contract KeepGroupImplV1 is Ownable {
         bytes memory inactive,
         bytes memory signatures,
         uint[] memory signingMembersIndexes
-    ) public onlyEligibleSubmitter(submitterMemberIndex) {
+    ) public {
 
         require(
             disqualified.length == _groupSize && inactive.length == _groupSize,
@@ -332,6 +332,16 @@ contract KeepGroupImplV1 is Ownable {
             !_dkgResultPublished[requestId], 
             "DKG result for this request ID already published."
         );
+
+        uint256[] memory selected = selectedTickets();
+        require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
+        require(
+            _proofs[selected[submitterMemberIndex - 1]].sender == msg.sender,
+            "".strConcat("Submitter member index does not match sender address. Expected: ", _proofs[selected[submitterMemberIndex - 1]].sender.toString(),
+            ". Actual: ", msg.sender.toString())
+        );
+        uint T_init = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG;
+        require(block.number >= (T_init + (submitterMemberIndex-1) * _resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
         verifySignatures(signatures, signingMembersIndexes, resultHash);
