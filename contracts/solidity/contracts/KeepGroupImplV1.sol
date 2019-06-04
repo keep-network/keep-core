@@ -7,6 +7,7 @@ import "./StakingProxy.sol";
 import "./TokenStaking.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
+import "./utils/StringUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 
@@ -19,6 +20,7 @@ contract KeepGroupImplV1 is Ownable {
     using SafeMath for uint256;
     using BytesLib for bytes;
     using ECDSA for bytes32;
+    using StringUtils for *;
 
     event OnGroupRegistered(bytes groupPubKey);
 
@@ -91,7 +93,11 @@ contract KeepGroupImplV1 is Ownable {
     modifier onlyEligibleSubmitter(uint256 submitterMemberIndex) {
         uint256[] memory selected = selectedTickets();
         require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
-        require(_proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
+        require(
+            _proofs[selected[submitterMemberIndex - 1]].sender == msg.sender,
+            "".strConcat("Submitter member index does not match sender address. Expected: ", _proofs[selected[submitterMemberIndex - 1]].sender.toString(),
+            ". Actual: ", msg.sender.toString())
+        );
         uint T_init = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG;
         require(block.number >= (T_init + (submitterMemberIndex-1) * _resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
         _;
