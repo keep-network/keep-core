@@ -88,8 +88,8 @@ jobs:
       - run:
           name: Run Docker build
           command: |
-            cp /tmp/keep-client/contracts/* infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client
-            cd infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client
+            cp /tmp/keep-client/contracts/* infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
+            cd infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             docker build \
               --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
               --build-arg ETH_WS_PORT=$ETH_WS_PORT \
