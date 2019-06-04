@@ -110,21 +110,21 @@ func (f *file) read(fileName string) ([]byte, error) {
 func (f *file) readAll(dirPath string) ([][]byte, error) {
 	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error occured while reading DataDir: [%v]", err)
 	}
 
 	result := [][]byte{}
 
 	for _, file := range files {
 		if file.IsDir() {
-			dir, err := ioutil.ReadDir(file.Name())
+			dir, err := ioutil.ReadDir(fmt.Sprintf("%s/%s", dirPath, file.Name()))
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error occured while reading a directory: [%v]", err)
 			}
 			for _, dirFile := range dir {
-				data, err := f.read(file.Name() + "/" + dirFile.Name())
+				data, err := f.read(fmt.Sprintf("%s/%s/%s", dirPath, file.Name(), dirFile.Name()))
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("error occured while reading a file in directory: [%v]", err)
 				}
 				result = append(result, data)
 			}

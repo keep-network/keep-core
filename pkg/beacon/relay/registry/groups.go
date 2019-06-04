@@ -83,9 +83,12 @@ func (gr *Groups) UnregisterDeletedGroups() {
 	defer gr.mutex.Unlock()
 
 	for publicKey := range gr.myGroups {
-		publicKeyBytes, _ := groupKeyFromString(publicKey)
-		isStaleGroup, err := gr.relayChain.IsStaleGroup(publicKeyBytes)
+		publicKeyBytes, err := groupKeyFromString(publicKey)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error occured while decoding public key into bytes [%v]\n", err)
+		}
 
+		isStaleGroup, err := gr.relayChain.IsStaleGroup(publicKeyBytes)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Group removal eligibility check failed: [%v]\n", err)
 		}
@@ -107,6 +110,11 @@ func (gr *Groups) LoadExistingGroups() error {
 
 	for _, membership := range memberships {
 		groupPublicKey := groupKeyToString(membership.Signer.GroupPublicKeyBytes())
+		fmt.Fprintf(os.Stdout, "Membership: [%v] was loaded to a group: [%v]\n",
+			membership.Signer.MemberID(),
+			groupPublicKey,
+		)
+
 		gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
 	}
 

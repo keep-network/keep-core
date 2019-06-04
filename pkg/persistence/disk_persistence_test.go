@@ -26,7 +26,8 @@ func TestMain(m *testing.M) {
 
 func TestDiskPersistence_Save(t *testing.T) {
 	diskPersistence := NewDiskHandle(dataDir)
-	pathToFile := dataDir + dirName1 + fileName11
+	pathToDir := dataDir + "/" + dirName1
+	pathToFile := pathToDir + fileName11
 	bytesToTest := []byte{115, 111, 109, 101, 10}
 
 	diskPersistence.Save(bytesToTest, dirName1, fileName11)
@@ -36,7 +37,7 @@ func TestDiskPersistence_Save(t *testing.T) {
 	}
 
 	if _, err := os.Stat(pathToFile); !os.IsNotExist(err) {
-		os.RemoveAll(dataDir + dirName1)
+		os.RemoveAll(pathToDir)
 	}
 
 	if _, err := os.Stat(pathToFile); !os.IsNotExist(err) {

@@ -65,10 +65,6 @@ func TestLoadGroup(t *testing.T) {
 	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
 	gr := NewGroupRegistry(chain, storageMock)
 
-	gr.RegisterGroup(signer1, channelName1)
-	gr.RegisterGroup(signer2, channelName2)
-
-	gr.myGroups = make(map[string][]*Membership)
 	if len(gr.myGroups) != 0 {
 		t.Fatalf(
 			"Unexpected number of group memberships at a Keep Node start \nExpected: [%+v]\nActual:   [%+v]",
