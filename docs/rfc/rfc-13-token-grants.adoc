@@ -1,0 +1,468 @@
+
+:toc: macro
+
+= RFC 13: Token grants
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+Token grants are required for launch,
+grant recipients should be able to stake with their grant
+without compromising the integrity of the network
+
+=== Current Functionality
+
+Previously considered schemes:
+
+Stake-ahead: token grant stakes by transferring tokens to staking contract,
+equal to the amount that would be unlocked within the unstaking period
+
+Grant staking: token grants can be staked along with liquid tokens,
+has complex implementation and makes grant contract security-critical
+
+== Proposal
+
+Token grant stakes by transferring tokens up to the entire grant
+to acceptable staking contract
+
+An acceptable staking contract must implement slashing
+in the form of burning the vast majority of the slashed tokens,
+and optionally placing the rest in a time-locked escrow
+
+This limits the efficiency of "tattletale transfer"
+and ensures grants can't be subverted by deliberate misbehavior
+
+=== Goal
+
+- prevent tattletale transfer
+where staker deliberately misbehaves to get punished
+and uses another identity as tattletale which gets rewarded
+to withdraw tokens in advance
+
+- enable staking on full grant
+so recipients of shorter grants can't gain disproportionate advantage
+and earlier promises are kept
+
+- unprivileged token grant
+that cannot cause the rest of the system to lose integrity
+
+- upgradeable staking contracts as per RFC11
+
+=== Implementation
+
+As per RFC11, acceptable staking contracts
+are defined in a global registry
+
+Token grant has its own upgrader key which can add a new staking contract,
+creating RFC11-like 2 factor authentication
+
+An acceptable staking contract must comply with the following:
+
+- the implementation of slashing tokens burns them all
+- the implementation of slashing tokens and rewarding a tattletale
+burns at least MINIMUM_BURN of the tokens
+and gives the rest as a tattletale reward
+to the named staker
+- OPTIONAL: tattletale rewards are time-locked for TATTLETALE_LOCK
+before being withdrawable by the staker's beneficiary as liquid KEEP tokens
+
+The MINIMUM_BURN places an absolute limit
+on the efficiency of tattletale transfer.
+Even without TATTLETALE_LOCK,
+tattletale transfer can only withdraw
+(1 - MINIMUM_BURN = REMAINING_UNBURNT) of the grant,
+effectively equal to withdrawing
+REMAINING_UNBURNT * GRANT_DURATION
+in advance at the cost of losing MINIMUM_BURN of their total grant.
+
+If TATTLETALE_LOCK is in place and exceeds REMAINING_UNBURNT * GRANT_DURATION,
+tattletale transfer does not release any tokens
+that wouldn't vest within TATTLETALE_LOCK anyway.
+If TATTLETALE_LOCK equals UNSTAKING_TIME,
+tattletale transfer cannot provide liquid tokens
+faster than protocol-compliant unstaking.
+
+=== Token grants
+
+Token grants are made by transferring
+an amount of tokens equal to the _grant amount_
+to the _grant contract_, and designating the
+_grantee_ (grant recipient),
+_vesting duration_,
+_vesting cliff_,
+grant _revocability_,
+and _grant creator_.
+
+==== Vesting
+
+A token grant represents a gradual transfer of KEEP tokens
+from the _grant creator_ to the _grantee_.
+Tokens in a grant are locked until vested according to a linear schedule
+defined by the _vesting duration_ and the _vesting cliff_.
+The _time elapsed_ since grant creation
+is divided by the _vesting duration_
+to determine the fraction of vested tokens.
+The _grant amount_ is then multiplied by this _vested fraction_.
+However, if the _time elapsed_ is less than the _vesting cliff_,
+the _vested fraction_ is defined as 0.
+
+Vested tokens that aren't otherwise in use
+can be withdrawn at the grantee's discretion,
+while unvested tokens remain in the grant contract
+and can only be used for staking, if permitted.
+
+==== Revocable grants
+
+_Revocable_ grants can be revoked by the _grant creator_ at any time.
+If a grant is revoked,
+all unvested tokens are returned to the _grant creator_
+but the _grantee_ can keep any vested tokens.
+
+=== Staking token grants
+
+Token grants are staked by instructing the grant contract to stake them
+with an _operator_, _beneficiary_ and _authorizer_ appointed by the _grantee_.
+The grant contract acts as the _owner_ of the stake.
+
+With _non-revocable_ grants,
+both vested and unvested tokens can be staked
+and the rewards collected by the grantee.
+Depending on the chosen design,
+_revocable_ grants may either be staked like non-revocable grants
+or restricted to staking only vested tokens.
+
+==== Preventing tattletale transfer: staking invariants
+
+To ensure the integrity of the token grant,
+the grantee must not be able to exploit reward and punishment mechanisms
+to efficiently withdraw unvested tokens in advance.
+
+This is achieved by requiring that
+when a staker is punished by slashing their staked tokens,
+most of the slashed tokens must be burned.
+Only a small fraction of slashed stakes may be seized
+and used to reward well-behaved participants.
+
+Optionally, it can be required that
+any seized tokens redistributed as _tattletale rewards_
+are locked for a minimum amount of time
+before the recipient of the tattletale reward can withdraw them.
+
+The _staking invariants_ consist of
+the defined _minimum burn fraction_ and,
+optionally, the _tattletale reward lock_.
+A staking contract which enforces these invariants
+does not compromise the integrity of the token grant scheme unacceptably,
+no matter what any individual staker does.
+
+===== Minimum burn fraction
+
+By burning most (e.g. 95%) of slashed tokens,
+the efficiency of tattletale transfer can be significantly constrained.
+If Alice proves Bob's misbehavior and Bob is penalized by 100 KEEP,
+at least 95 KEEP would be destroyed and at most 5 KEEP transferred to Alice.
+
+This serves two goals.
+First, Bob cannot efficiently withdraw unvested tokens
+through tattletale transfer.
+With a 95% minimum burn,
+only 1/20 of the slashed tokens can be t-transferred.
+On a 24-month grant this represents an amount
+that would vest in 1.2 months or roughly 37 days,
+at the cost of the entire rest of the grant.
+As the remaining vesting time grows shorter,
+this "advance withdrawal window" also grows narrower.
+
+Second, limiting tattletale transfer efficiency
+makes certain types of misbehavior more costly or less profitable.
+Burning tokens benefits all token-holders
+equally in proportion to how many tokens they own,
+while an adversary who expects to be caught
+can always collect the tattletale rewards
+from proving their own misbehavior.
+
+With a high tattletale transfer efficiency
+(80% for the sake of illustration)
+Alice and Bob could collaborate to misbehave and collect the tattletale reward,
+reducing the effective deterrent very significantly.
+If Alice and Bob together own 30% of the token supply,
+they would only suffer 14% of the nominal punishment:
+Alice would collect 80 KEEP as her tattletale reward
+and their remaining holdings would indirectly accrue
+30% of the value of the burned 20 KEEP (6 KEEP).
+With a 95% minimum burn Alice and Bob could only recoup 33.5%:
+5 KEEP as tattletale reward and 28.5 KEEP indirectly (95 KEEP * 0.30).
+
+Similarly, if Alice has compromised Bob's operator keys
+she could use tattletale transfer to steal Bob's stakes.
+It is desirable that compromised operators' stakes can be stolen,
+but it is also desirable to limit the fraction of the token supply
+owned by proven malicious parties.
+Some have estimated that 5% of all BTC have been stolen.
+If a similar amount of KEEP were to be stolen from compromised operators,
+with a 95% minimum burn
+the thieves would only represent 0.25% of stakeable tokens.
+
+===== Locking tattletale rewards
+
+As a further obstacle to "advance withdrawals" via tattletale transfer,
+all tattletale rewards could be locked for a time
+equal to the unstaking time (e.g. 3 months).
+With a 95% minimum burn and 3 month lock on tattletale rewards,
+the amount that can be "advance withdrawn" with tattletale transfer
+is less than the amount that would vest by the time the tokens are freed
+for grants vesting in less than 60 months.
+
+==== Enforcing staking invariants in upgrades
+
+Token grants need to be compatible with staking contract upgrades.
+It is not realistic to tie down the staking schemes
+for the entire duration of all grants,
+even if no new grants are made after launch.
+
+Without the need for upgradeability,
+it would be easy to create and deploy
+one staking contract which is known to enforce the required invariants.
+Grantees could then stake with the known good contract.
+Because this is not feasible,
+a method of enforcing the staking invariants on arbitrary staking contracts
+is required.
+
+An ideal solution would be
+that each staking contract proves that it conforms to the requirements.
+The grant contract would then permit staking on any contract
+which can present such a proof.
+However, there is no known way
+for contracts to prove their properties to other contracts.
+This necessitates a more indirect approach.
+
+At least two suitable approaches can be conceived:
+dividing the functionality of staking contracts
+into an invariant-enforcing _staking proxy_
+and an arbitrary _staking implementation_
+in a manner similar to RFC 9;
+or using human judgment to evaluate staking contracts off-chain
+and permitting staking on approved contracts only.
+
+===== Staking proxy
+
+In the _staking proxy_ model,
+staked tokens are transferred to staking proxy
+which enforces invariants
+while delegating other staking functionality to the actual staking contract.
+The staking contract has the authority to unstake, or punish the staker,
+by sending the appropriate message to the staking proxy.
+The staking proxy then applies the applicable staking invariants.
+
+The staking proxy can enforce invariants reliably,
+but to achieve this it has to implement a lot of the staking logic,
+resulting in additional complexity and duplication of work.
+
+===== Approved staking contracts
+
+In the _approved staking contracts_ model,
+grants can be staked in any staking contract
+that has been approved by the _grant authorizer_.
+The _grant authorizer_ is expected to audit new staking contracts
+and verify that they enforce the desired invariants adequately,
+before approving them for staking grants.
+
+The _grant authorizer_ could either be
+the _grant creator_ of an individual grant,
+or a global role, ultimately controlled by the governance structure.
+
+When a staking contract has been approved,
+the grant contract will trust it to enforce the staking invariants
+and any grantee can direct the grant contract
+to stake some or all of their _available tokens_
+(not already staked or withdrawn) in the grant.
+The grant contract will then transfer the specified amount of tokens
+to the staking contract,
+along with all other necessary information.
+The stake is recorded in the grant contract,
+and the staked amount subtracted from the _available tokens_ in the grant.
+
+The grant contract takes the role of the _owner_ in the staking contract,
+while the _operator_, _beneficiary_ and _authorizer_
+are defined by the _grantee_.
+Any rewards or punishments to the staker are applied in the staking contract,
+without involving the grant contract in any way.
+
+When the grantee wishes to unstake,
+they direct the grant contract
+to unstake and reclaim the remaining tokens.
+Unstaking and reclaiming tokens
+terminates the staker relationship between the _owner_ and _operator_,
+and all remaining stake is returned to the _owner_.
+Therefore, if the _returned amount_ is less than the original _staked amount_,
+the difference has been slashed in punishment
+and is recorded in the grant contract as such.
+Redelegating grant stakes is not supported.
+
+=== Withdrawing tokens from grants
+
+==== Token status
+
+Tokens in grants are divided in two ways:
+by _vesting status_ and by _usage status_.
+
+===== Vesting status
+
+The _vesting status_ is divided to _vested_ and _unvested_.
+Vested tokens can can be withdrawn if otherwise available;
+unvested tokens must stay in the grant until vested.
+
+===== Usage status
+
+The _usage status_ consists of
+_available_, _withdrawn_, _staked_, and _slashed_.
+
+Tokens in the grant that aren't _withdrawn_, _staked_, or _slashed_
+are _available_ by default.
+_Available_ tokens can be staked,
+or withdrawn if the vesting schedule permits.
+
+_Withdrawn_ means tokens that have vested
+and been withdrawn from the grant as liquid tokens.
+
+_Staked_ is the sum of tokens in a grant
+that have been staked over all applicable _grant stakes_.
+
+_Slashed_ tokens is the total difference
+between the amounts that had originally been staked in _grant stakes_
+and the amounts actually returned when unstaking.
+
+==== Grant stakes
+
+The grant contract keeps track of all active _stakers_
+that have been created by the grantee.
+A _grant stake_ consists of the triplet
+`(staking_contract, operator, staking_amount)`.
+A _grant stake_ is created when the grantee stakes grant tokens,
+and is removed when the grant contract successfully reclaims
+the ex-staker's unstaked tokens from the staking contract.
+
+=== Operations on grant tokens
+
+==== Withdrawing
+
+_Vested_ tokens that haven't already been _withdrawn_
+can be withdrawn at the discretion of the grantee, if tokens are available.
+The amount of tokens that can be withdrawn at a point in time
+equals `min(available, (vested - withdrawn))`.
+
+To withdraw, the _grantee_ requests a withdrawal
+and specifies a _withdrawal amount_.
+
+If the _withdrawal amount_ is equal or less than
+the _maximum withdrawal_ at the time,
+the grant contract will add _withdrawal amount_ to the _withdrawn_ tokens
+and send the grantee _withdrawal amount_ tokens.
+
+If the _withdrawal amount_ exceeds the _maximum withdrawal_,
+the withdrawal will fail.
+
+==== Staking
+
+_Available_ tokens can be staked regardless of vesting status.
+
+To stake, the _grantee_ specifies a _staking amount_,
+the _staking contract_ to stake in,
+and the _operator_, _beneficiary_ and _authorizer_.
+The grantee must also provide a signature from the _operator_
+to operate for the _grant contract_ as the _owner_.
+
+The _staking amount_ must be
+equal or less than the number of _available_ tokens.
+The _staking contract_ must be approved by the applicable _grant authorizer_.
+If either condition is not satisfied, the staking request will be rejected.
+If both conditions are satisfied,
+the grant contract will attempt to stake _staking amount_ tokens
+at the _staking contract_,
+using the supplied _operator_, _beneficiary_ and _authorizer_ addresses.
+
+The _grant stake_,
+consisting of the triplet `(staking_contract, operator, staking_amount)`,
+is recorded in the grantee's _grant stakes_.
+The _staking amount_ is added to _staked_ tokens of the grant,
+reducing the _available_ tokens by the same amount.
+
+==== Unstaking
+
+At any time, the grantee can request any _grant stake_ to be unstaked.
+To unstake, the grantee specifies the _staking contract_ and _operator_
+of the _grant stake_ they wish to initiate unstaking on.
+
+If the combination of _staking contract_ and _operator_
+matches an active _grant stake_ of the grantee,
+the grant contract will request the _staking contract_ to initiate unstaking.
+Otherwise, the grant contract will ignore the request.
+
+==== Reclaiming unstaked tokens
+
+At any time, the grantee can request any _grant stake_ to be reclaimed.
+The grantee specifies the _staking contract_ and _operator_
+of the relevant _grant stake_.
+
+If the grantee has a matching _grant stake_,
+the grant contract will request the _staking contract_
+to return unstaked tokens.
+Otherwise, the grant contract will ignore the request.
+
+If reclaiming the tokens fails,
+the grant contract will assume the stake had not finished unstaking
+and will not modify the _grant stake_ information.
+
+If reclaiming the tokens succeeds,
+the grant contract will note the _returned amount_.
+If the _returned amount_ matches the original _staking amount_,
+the _returned amount_ is subtracted from _staked_ grant tokens
+and added to _available_ grant tokens.
+If the _returned amount_ is less than the original _staking amount_,
+the _difference_ is added to _slashed_ grant tokens,
+the _staking amount_ is subtracted from _staked_ grant tokens,
+and the _returned amount_ is added to _available_ grant tokens.
+In either case, the _grant stake_ is removed.
+
+=== Limitations
+
+Without TATTLETALE_LOCK,
+grantees can abuse t-transfers to withdraw more than the vested amount
+although at the expense of the remaining grant
+
+Even with TATTLETALE_LOCK, revocable grants can still be overwithdrawn
+if any level of stakeahead is permitted
+
+=== Proof of Concept
+
+If you have PoC code, refer to the relevant branch and give a brief summary.
+
+== Future Work (optional)
+
+If applicable, what future evolutions could you see this approach leading to?
+Particularly if these possibilities influenced your thinking about the main
+proposal, this is important.
+
+== Open Questions (optional)
+
+Should TATTLETALE_LOCK be implemented,
+or is the loss of MINIMUM_BURN_FRACTION sufficient
+to disincentivize tattletale transfer
+
+How to deal with revocable grants:
+unlimited stakeahead as with non-revocables,
+limited stakeahead,
+or no staking of unvested tokens at all
+
+[bibliography]
+== Related Links
+
+- Flowdock Links
+- Other links
+- If you have publications, you can include them in bibliography style. If you
+  start your bullet with an id in _triple_ square brackets (e.g. `+[[[AAKE]]]+`),
+  you can reference it in the content body using regular cross-reference syntax
+  (e.g. `+<<AAKE>>+`).
