@@ -153,14 +153,14 @@ async function stakeOperatorAccount(operator, contractOwner) {
   let signature = Buffer.from(contractOwnerSignature.substr(2), 'hex');
   let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
-  console.log('Checking if stakingProxy/tokenStaking Contracts Are Authorized.');
+  console.log('Checking if stakingProxy/tokenStaking Contracts Are Authorized:');
 
   if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call())
   {
-    console.log('Authorizing stakingProxy/tokenStaking Contracts.')
+    console.log('Authorizing stakingProxy/tokenStaking contracts.')
     await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contractOwner});
   }
-  console.log('stakingProxy/tokenStaking Contracts Authorized!');
+  console.log('stakingProxy/tokenStaking contracts authorized!');
   console.log('Staking 1000000 KEEP tokens on operator account ' + operator);
 
   await keepTokenContract.methods.approveAndCall(
