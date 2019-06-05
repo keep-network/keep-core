@@ -23,6 +23,11 @@ function use_local_context() {
   kubectl config use-context $LOCAL_KUBE_CONTEXT
 }
 
+function delete_old_registry_secret() {
+
+  kubectl delete secrets google-container-registry-auth
+}
+
 function create_google_container_registry_secret() {
 
   DOCKER_PASSWORD="$(gcloud auth print-access-token)"
@@ -38,6 +43,9 @@ function create_google_container_registry_secret() {
 echo "Setting kube context to local:"
 use_local_context
 echo "----------------"
+
+echo "Deleting old secret for accessing Google private container registry:"
+delete_old_registry_secret
 
 echo "Creating secret for accessing Google private container registry:"
 create_google_container_registry_secret
