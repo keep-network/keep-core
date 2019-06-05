@@ -82,7 +82,7 @@ Make sure the Xcode developer tools are installed:
 ```
 xcode-select --install
 ```
-Expected output: 
+Expected output:
 ```
 xcode-select: error: command line tools are already installed, use "Software Update" to install updates
 ```
@@ -107,12 +107,12 @@ Docker version 18.09.2, build 6247962
 ==== Memory
 
 Make sure enough memory is allocated to Docker. Assign at least `6 GB` of memory
-in Docker preferences: _Docker_ -> _Preferences_ -> _Advanced_ set Memory slider 
+in Docker preferences: _Docker_ -> _Preferences_ -> _Advanced_ set Memory slider
 to `6.0 GiB` and confirm with `Apply & Restart` button.
 
 === Kubernetes
 
-Activate Kubernetes in the Docker preferences: _Docker_ -> _Preferences_ -> 
+Activate Kubernetes in the Docker preferences: _Docker_ -> _Preferences_ ->
 _Kubernetes_ -> _Enable Kubernetes_.
 Make sure you are running at least version `v1.10.3` or higher.
 ```
@@ -152,11 +152,11 @@ chmod +x skaffold
 mv skaffold /usr/local/bin
 ```
 
-Whatever you choose make sure you're using version `v0.17.0` or
+Whatever you choose make sure you're using version `v0.30.0` or
 higher.
 ```
 $ skaffold version
-v0.24.0
+v0.30.0
 ```
 
 === Google Cloud SDK
@@ -254,6 +254,16 @@ and inform each other about new blocks.
 
 
 === Boot the Ethereum Kubernetes Testnet
+To authorized with our GCS image repository where the build server stores the
+Docker images for `miner`, `tx` and `dashboard` nodes you need to run the
+following script on your development machine:
+`infrastructure/scripts/create-google-container-registry-secret.sh`
+
+This will create a temporary access token for the private container registry at
+GCS.
+If you run the script multiple times it will remove the old access token and
+create a new one.
+
 If you want to just boot the Ethereum testnet cluster, you can do that without
 using Skaffold by running the start script:
 
@@ -279,12 +289,17 @@ don't have to go through the full setup routing again.
 If you need to restart the chain from a clean slate you will have to manually
 delete the `/tmp/k8-volumes` directory and all subdirectories.
 
-If you don't care about preserving chain data and need to run more miner or
-tx nodes just comment out the definition of the `HOSTVOLUME` environment
-variable in the coresponding `yaml` file for miner and/or tx node. The pod
+If you don't care about preserving chain data and need to run more miner- or
+tx-nodes just comment out the definition of the `HOSTVOLUME` environment
+variable in the corresponding `yaml` file for miner and/or tx-node. The pod
 will then fallback to ephemeral storage inside the container at boot time.
 
 === Develop Keep
+Configuration files for the Keep clients need to be stored in `/tmp/keepclient`.
+The Skaffold configuration `k8s-pod.yaml` will then mount these configuration
+inside the container at the `/keepclient` mount point where the keep client binary
+expects them at boot.
+
 To start developing run the following command:
 
 ```
