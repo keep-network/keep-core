@@ -1,12 +1,20 @@
-apiVersion: skaffold/v1alpha5
+apiVersion: skaffold/v1beta11
 kind: Config
 build:
   artifacts:
   - image: gcr.io/keep.network/keep-client
+    context: .
+    # sync:
+    #   manual:
+    #   # sync our config.toml into the container
+    #   - src: 'test/config.toml'
+    #     dest: '/keepclient'
+    #     strip: 'test/'
+
 deploy:
   kubectl:
     manifests:
     - infrastructure/kube/lcl/k8s-*
-    - infrastructure/kube/lcl/dashboard.yaml
-    - infrastructure/kube/lcl/miner-nodes.yaml
-    - infrastructure/kube/lcl/tx-nodes.yaml
+    # - infrastructure/kube/lcl/dashboard.yaml
+    # - infrastructure/kube/lcl/miner-nodes.yaml
+    # - infrastructure/kube/lcl/tx-nodes.yaml

@@ -6,3 +6,41 @@ spec:
   containers:
   - name: keep-client
     image: gcr.io/keep.network/keep-client
+
+
+# deployment sketch
+# 1. create separate configuration files for five Keep clients
+# 2. copy these config files to /tmp/keepclient/keep-client-config-<n>.toml
+# 3. mount /tmp/keepclient on pod at /keepclient
+# 4. start each instance of the Keep client pod with the path to the config
+#    file defined as /hostvolume/keep-client-config-<n>.toml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: keep-client-0
+spec:
+  selector:
+    matchLabels:
+      app: keep
+  template:
+    metadata:
+      labels:
+        app: keep
+    spec:
+      containers:
+      - name: node
+        image: gcr.io/keep.network/keep-client
+        command: ["keep-client", "-config", "/keepclient/keep-client-config-0.toml", "relay", "genesis"]
+
+        volumeMounts:
+          - mountPath: "/keepclient"
+            name: hostvolume
+        env:
+          - name: KEEP_ETHEREUM_PASSWORD
+            value: "password"
+      volumes:
+      - name: hostvolume
+        hostPath:
+          path: /tmp/keepclient
+          type: DirectoryOrCreate
