@@ -110,9 +110,23 @@ async function provisionKeepClient() {
     }
     // Eth account that contracts are migrated against.
     let contractOwner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+    // Eth account that's both miner and coinbase on internal testnet
+    let purse = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+
     console.log('\n<<<<<<<<<<<< Unlocking Contract Owner Account ' + contractOwner + ' >>>>>>>>>>>>');
     //Transactions during staking are sent from contractOwner, must be unlocked before start.
     await unlockEthAccount(contractOwner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
+
+    /*
+    Funding here will skip this step for bootstrap peers who are already staked.  This is fine
+    because the bootstrap peer account is pre-created, unchanging, and funded with
+    999997556920000000000 ether as of this comment.  When the bootstrap peer account moves to
+    an InitContainer generated account it will always be funded by this step as the isStaked
+    and exit conditional step for bootstrap peers will be removed along with the transition
+    of the bootstrap peer to InitContainer generated accounts.
+    */
+    console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operator + ' >>>>>>>>>>>>');
+    await fundOperatorAccount(operator, purse, 10000);
 
     console.log('\n<<<<<<<<<<<< Staking Operator Account ' + operator + ' >>>>>>>>>>>>');
     await stakeOperatorAccount(operator, contractOwner);
@@ -201,6 +215,12 @@ async function unlockEthAccount(ethAccount, ethAccountPassword) {
 
   console.log('Account ' + ethAccount + ' unlocked!');
 };
+
+async function fundOperatorAccount(operator, purse, transferAmount) {
+  console.log("Funding account " + operator + " with " + transferAmount + " ether from purse " + purse);
+  await web3.eth.sendTransaction({from:purse, to:operator, value:transferAmount});
+  console.log("Account " + operator + " funded!");
+}
 
 async function createKeepClientConfig(operator) {
 
