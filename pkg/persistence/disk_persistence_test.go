@@ -45,7 +45,7 @@ func TestDiskPersistence_Save(t *testing.T) {
 	}
 }
 
-func TestFile_ReadAll(t *testing.T) {
+func TestDiskPersistence_ReadAll(t *testing.T) {
 	diskPersistence := NewDiskHandle(dataDir)
 
 	bytesToTest := []byte{115, 111, 109, 101, 10}
@@ -72,15 +72,23 @@ func TestFile_ReadAll(t *testing.T) {
 	}
 }
 
-func TestFile_Remove(t *testing.T) {
-	if _, err := os.Stat(fileName11); err == nil {
-		err = os.Remove(fileName11)
+func TestDiskPersistence_Remove(t *testing.T) {
+	diskPersistence := NewDiskHandle(dataDir)
+	pathToDir := dataDir + "/" + dirName1
+
+	bytesToTest := []byte{115, 111, 109, 101, 10}
+
+	diskPersistence.Save(bytesToTest, dirName1, fileName11)
+
+	if _, err := os.Stat(pathToDir); os.IsNotExist(err) {
 		if err != nil {
-			t.Fatalf("Was not able to remove a file [%+v]", fileName11)
+			t.Fatalf("Dir [%+v] was supposed to be created", dirName1)
 		}
 	}
 
-	if _, err := os.Stat(fileName11); err == nil {
-		t.Fatalf("File [%+v] was supposed to be removed", fileName11)
+	diskPersistence.Remove(dirName1)
+
+	if _, err := os.Stat(pathToDir); err == nil {
+		t.Fatalf("Dir [%+v] was supposed to be removed", dirName1)
 	}
 }

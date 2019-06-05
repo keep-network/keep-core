@@ -48,6 +48,15 @@ func (ds *diskPersistence) ReadAll() ([][]byte, error) {
 	return memberships, nil
 }
 
+// Remove a file from a file system
+func (ds *diskPersistence) Remove(dirName string) error {
+	file := &file{
+		filePath: fmt.Sprintf("%s/%s", ds.dataDir, dirName),
+	}
+
+	return file.removeDir()
+}
+
 func (ds *diskPersistence) createDir(dirName string) (string, error) {
 	dirPath := fmt.Sprintf("%s/%s", ds.dataDir, dirName)
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
@@ -60,9 +69,9 @@ func (ds *diskPersistence) createDir(dirName string) (string, error) {
 	return dirPath, nil
 }
 
-// File represents a file on disk that a caller can use to read and write into.
+// File represents a file on disk that a caller can use to write/read into or remove it.
 type file struct {
-	// FileName is the file name of the main storage file.
+	// a file that an operation is executed upon
 	filePath string
 }
 
@@ -106,7 +115,6 @@ func (f *file) read(fileName string) ([]byte, error) {
 	return data, nil
 }
 
-// readAll returns all memberships for a Keep node
 func (f *file) readAll(dirPath string) ([][]byte, error) {
 	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
@@ -134,15 +142,14 @@ func (f *file) readAll(dirPath string) ([][]byte, error) {
 	return result, nil
 }
 
-// Remove a file from a file system
-func (f *file) remove(fileName string) error {
+func (f *file) removeDir() error {
 	if f.filePath == "" {
 		return errNoFileExists
 	}
 
-	err := os.Remove(fileName)
+	err := os.RemoveAll(f.filePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("error occured while removing a file: [%v]", err)
 	}
 
 	return nil

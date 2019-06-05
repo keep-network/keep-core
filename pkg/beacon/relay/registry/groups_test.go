@@ -197,3 +197,8 @@ func (dsm *dataStorageMock) ReadAll() ([][]byte, error) {
 
 	return [][]byte{membershipBytes1, membershipBytes2, membershipBytes3}, nil
 }
+
+func (dsm *dataStorageMock) Remove(name string) error {
+	// noop
+	return nil
+}

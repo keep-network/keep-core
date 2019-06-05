@@ -78,25 +78,32 @@ func (gr *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 }
 
 // UnregisterDeletedGroups lookup for groups to be removed.
-func (gr *Groups) UnregisterDeletedGroups() {
+func (gr *Groups) UnregisterDeletedGroups() error {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
 	for publicKey := range gr.myGroups {
 		publicKeyBytes, err := groupKeyFromString(publicKey)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error occured while decoding public key into bytes [%v]\n", err)
+			return fmt.Errorf("error occured while decoding public key into bytes [%v]", err)
 		}
 
 		isStaleGroup, err := gr.relayChain.IsStaleGroup(publicKeyBytes)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Group removal eligibility check failed: [%v]\n", err)
+			return fmt.Errorf("group removal eligibility check failed: [%v]", err)
 		}
 
 		if isStaleGroup {
+			err = gr.storage.remove(publicKey)
+			if err != nil {
+				return fmt.Errorf("group removal from the disk has failed: [%v]", err)
+			}
+
 			delete(gr.myGroups, publicKey)
 		}
 	}
+
+	return nil
 }
 
 // LoadExistingGroups iterates over all stored memberships on disk and loads them

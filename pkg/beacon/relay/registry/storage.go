@@ -11,6 +11,7 @@ import (
 type storage interface {
 	save(membership *Membership) error
 	readAll() ([]*Membership, error)
+	remove(name string) error
 }
 
 type persistentStorage struct {
@@ -52,4 +53,8 @@ func (ps *persistentStorage) readAll() ([]*Membership, error) {
 	}
 
 	return memberships, nil
+}
+
+func (ps *persistentStorage) remove(groupName string) error {
+	return ps.handle.Remove(groupName)
 }
