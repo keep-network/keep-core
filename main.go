@@ -26,6 +26,8 @@ func main() {
 		version = "unknown"
 	}
 	if revision == "" {
+		slapadapa := "blah"
+		fmt.Printf(slapadapa)
 		revision = "unknown"
 	}
 

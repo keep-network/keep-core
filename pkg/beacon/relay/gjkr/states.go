@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -26,7 +27,7 @@ func (js *joinState) ActiveBlocks() uint64 {
 	return state.MessagingStateActiveBlocks
 }
 
-func (js *joinState) Initiate() error {
+func (js *joinState) Initiate(context.Context) error {
 	return js.channel.Send(NewJoinMessage(js.member.ID))
 }
 
@@ -69,7 +70,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) ActiveBlocks() uint64 {
 	return state.MessagingStateActiveBlocks
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) Initiate() error {
+func (ekpgs *ephemeralKeyPairGenerationState) Initiate(context.Context) error {
 	message, err := ekpgs.member.GenerateEphemeralKeyPair()
 	if err != nil {
 		return err
@@ -125,7 +126,7 @@ func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (skgs *symmetricKeyGenerationState) Initiate() error {
+func (skgs *symmetricKeyGenerationState) Initiate(context.Context) error {
 	skgs.member.MarkInactiveMembers(skgs.previousPhaseMessages)
 	return skgs.member.GenerateSymmetricKeys(skgs.previousPhaseMessages)
 }
@@ -167,7 +168,7 @@ func (cs *commitmentState) ActiveBlocks() uint64 {
 	return state.MessagingStateActiveBlocks
 }
 
-func (cs *commitmentState) Initiate() error {
+func (cs *commitmentState) Initiate(context.Context) error {
 	sharesMsg, commitmentsMsg, err := cs.member.CalculateMembersSharesAndCommitments()
 	if err != nil {
 		return err
@@ -241,7 +242,7 @@ func (cvs *commitmentsVerificationState) ActiveBlocks() uint64 {
 	return state.MessagingStateActiveBlocks
 }
 
-func (cvs *commitmentsVerificationState) Initiate() error {
+func (cvs *commitmentsVerificationState) Initiate(context.Context) error {
 	cvs.member.MarkInactiveMembers(
 		cvs.previousPhaseSharesMessages,
 		cvs.previousPhaseCommitmentsMessages,
@@ -309,7 +310,7 @@ func (sjs *sharesJustificationState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (sjs *sharesJustificationState) Initiate() error {
+func (sjs *sharesJustificationState) Initiate(context.Context) error {
 	disqualifiedMembers, err := sjs.member.ResolveSecretSharesAccusationsMessages(
 		sjs.previousPhaseAccusationsMessages,
 	)
@@ -356,7 +357,7 @@ func (qs *qualificationState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (qs *qualificationState) Initiate() error {
+func (qs *qualificationState) Initiate(context.Context) error {
 	qs.member.CombineMemberShares()
 	return nil
 }
@@ -396,7 +397,7 @@ func (pss *pointsShareState) ActiveBlocks() uint64 {
 	return state.MessagingStateActiveBlocks
 }
 
-func (pss *pointsShareState) Initiate() error {
+func (pss *pointsShareState) Initiate(context.Context) error {
 	message := pss.member.CalculatePublicKeySharePoints()
 	if err := pss.channel.Send(message); err != nil {
 		return err
@@ -452,7 +453,7 @@ func (pvs *pointsValidationState) ActiveBlocks() uint64 {
 	return state.MessagingStateActiveBlocks
 }
 
-func (pvs *pointsValidationState) Initiate() error {
+func (pvs *pointsValidationState) Initiate(context.Context) error {
 	pvs.member.MarkInactiveMembers(pvs.previousPhaseMessages)
 	accusationMsg, err := pvs.member.VerifyPublicKeySharePoints(
 		pvs.previousPhaseMessages,
@@ -513,7 +514,7 @@ func (pjs *pointsJustificationState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (pjs *pointsJustificationState) Initiate() error {
+func (pjs *pointsJustificationState) Initiate(context.Context) error {
 	disqualifiedMembers, err := pjs.member.ResolvePublicKeySharePointsAccusationsMessages(
 		pjs.previousPhaseMessages,
 	)
@@ -562,7 +563,7 @@ func (rs *keyRevealState) ActiveBlocks() uint64 {
 	return state.MessagingStateActiveBlocks
 }
 
-func (rs *keyRevealState) Initiate() error {
+func (rs *keyRevealState) Initiate(context.Context) error {
 	revealMsg, err := rs.member.RevealDisqualifiedMembersKeys()
 	if err != nil {
 		return err
@@ -619,7 +620,7 @@ func (rs *reconstructionState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (rs *reconstructionState) Initiate() error {
+func (rs *reconstructionState) Initiate(context.Context) error {
 	rs.member.MarkInactiveMembers(rs.previousPhaseMessages)
 	if err := rs.member.ReconstructDisqualifiedIndividualKeys(
 		rs.previousPhaseMessages,
@@ -663,7 +664,7 @@ func (cs *combinationState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (cs *combinationState) Initiate() error {
+func (cs *combinationState) Initiate(context.Context) error {
 	cs.member.CombineGroupPublicKey()
 	return nil
 }
@@ -701,7 +702,7 @@ func (fs *finalizationState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (fs *finalizationState) Initiate() error {
+func (fs *finalizationState) Initiate(context.Context) error {
 	return nil
 }
 

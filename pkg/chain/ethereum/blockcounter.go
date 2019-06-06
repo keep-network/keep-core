@@ -26,6 +26,7 @@ type ethereumBlockCounter struct {
 	subscriptionChannel chan block
 	config              *ethereumChain
 	waiters             map[uint64][]chan uint64
+	waitingCancelFuncs  map[uint64][]context.CancelFunc
 }
 
 type block struct {

@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -33,7 +34,7 @@ func NewMachine(
 
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
-func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
+func (m *Machine) Execute(ctx context.Context, startBlockHeight uint64) (State, uint64, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
 	handler := net.HandleMessageFunc{
@@ -62,6 +63,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	lastStateEndBlockHeight := startBlockHeight
 
 	blockWaiter, err := stateTransition(
+		ctx,
 		currentState,
 		lastStateEndBlockHeight,
 		m.blockCounter,
@@ -89,6 +91,14 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 				)
 			}
 
+		case <-ctx.Done():
+			fmt.Printf(
+				"[member:%v, state:%T] State machine context canceled: [%v]\n",
+				currentState.MemberIndex(),
+				currentState,
+				ctx.Err(),
+			)
+
 		case lastStateEndBlockHeight := <-blockWaiter:
 			nextState := currentState.Next()
 			if nextState == nil {
@@ -104,6 +114,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 			currentState = nextState
 
 			blockWaiter, err = stateTransition(
+				ctx,
 				currentState,
 				lastStateEndBlockHeight,
 				m.blockCounter,
@@ -118,6 +129,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 }
 
 func stateTransition(
+	ctx context.Context,
 	currentState State,
 	lastStateEndBlockHeight uint64,
 	blockCounter chain.BlockCounter,
@@ -144,7 +156,7 @@ func stateTransition(
 		)
 	}
 
-	err = currentState.Initiate()
+	err = currentState.Initiate(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initiate new state [%v]", err)
 	}

@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
@@ -18,6 +19,7 @@ import (
 // participate in the group; if generation fails, it returns an error
 // representing what went wrong.
 func Execute(
+	ctx context.Context,
 	memberIndex group.MemberIndex,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
@@ -46,7 +48,7 @@ func Execute(
 
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)
 
-	lastState, endBlockHeight, err := stateMachine.Execute(startBlockHeight)
+	lastState, endBlockHeight, err := stateMachine.Execute(ctx, startBlockHeight)
 	if err != nil {
 		return nil, 0, err
 	}

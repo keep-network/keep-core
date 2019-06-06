@@ -1,6 +1,7 @@
 package result
 
 import (
+	"context"
 	"math/big"
 	"testing"
 
@@ -82,6 +83,7 @@ func TestSubmitDKGResult(t *testing.T) {
 			blockCounter, _ := chainHandle.BlockCounter()
 
 			err = member.SubmitDKGResult(
+				context.TODO(),
 				requestID,
 				result,
 				signatures,
@@ -207,6 +209,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 				blockCounter, _ := chainHandle.BlockCounter()
 
 				err := member1.SubmitDKGResult(
+					context.TODO(),
 					test.requestID1,
 					test.resultToPublish1,
 					signatures,
@@ -226,6 +229,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 				blockCounter, _ := chainHandle.BlockCounter()
 
 				err := member2.SubmitDKGResult(
+					context.TODO(),
 					test.requestID2,
 					test.resultToPublish2,
 					signatures,

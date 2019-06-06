@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"os"
@@ -404,6 +405,18 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 				err,
 			)
 		},
+	)
+}
+
+func (ec *ethereumChain) DKGResultSubmission() subscription.DKGResultSubmissionSubscriber {
+	// TODO Lazy-initialize a watcher for DKGResultPublishedEvent with context?
+	// TODO And then store in a struct var.
+	events := make(chan *event.DKGResultSubmission)
+	errors := make(chan error)
+	return subscription.NewDKGResultSubmissionSubscriber(
+		context.TODO(),
+		events,
+		errors,
 	)
 }
 

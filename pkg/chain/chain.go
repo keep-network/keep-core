@@ -1,6 +1,8 @@
 package chain
 
 import (
+	"context"
+
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
@@ -20,6 +22,8 @@ type BlockCounter interface {
 	// Reading from the returned channel immediately will effectively behave the
 	// same way as calling WaitForBlockHeight.
 	BlockHeightWaiter(blockNumber uint64) (<-chan uint64, error)
+
+	ContextWithBlockDeadline(parent context.Context, blockNumber uint64) (context.Context, context.CancelFunc, error)
 
 	// CurrentBlock returns the current block height.
 	CurrentBlock() (uint64, error)

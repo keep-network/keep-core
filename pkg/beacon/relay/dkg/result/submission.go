@@ -1,6 +1,7 @@
 package result
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 
@@ -49,6 +50,7 @@ func NewSubmittingMember(
 //
 // See Phase 14 of the protocol specification.
 func (sm *SubmittingMember) SubmitDKGResult(
+	ctx context.Context,
 	requestID *big.Int,
 	result *relayChain.DKGResult,
 	signatures map[group.MemberIndex]operator.Signature,
@@ -59,18 +61,14 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	config, err := chainRelay.GetConfig()
 	if err != nil {
 		return fmt.Errorf(
-			"could not fetch chain's config [%v]",
+			"could not fetch chain's config: [%v]",
 			err,
 		)
 	}
 
-	onSubmittedResultChan := make(chan *event.DKGResultSubmission)
+	onSubmittedResultChan := make(chan event.DKGResultSubmission)
+	subscription := chainRelay.DKGResultSubmission().PipeContext(ctx, onSubmittedResultChan)
 
-	subscription, err := chainRelay.OnDKGResultSubmitted(
-		func(event *event.DKGResultSubmission) {
-			onSubmittedResultChan <- event
-		},
-	)
 	if err != nil {
 		close(onSubmittedResultChan)
 		return fmt.Errorf(

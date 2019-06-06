@@ -32,9 +32,9 @@ import (
 // provided.
 type DKGResultSubmissionSubscriber interface {
 	OnEvent(dkgResultSubmissionHandlerFunc) EventSubscription
-	OnEventContext(dkgResultSubmissionHandlerFunc, *context.Context) EventSubscription
+	OnEventContext(context.Context, dkgResultSubmissionHandlerFunc) EventSubscription
 	Pipe(chan<- event.DKGResultSubmission) EventSubscription
-	PipeContext(chan<- event.DKGResultSubmission, *context.Context) EventSubscription
+	PipeContext(context.Context, chan<- event.DKGResultSubmission) EventSubscription
 }
 
 type dkgResultSubmissionHandlerFunc func(
@@ -45,18 +45,20 @@ type dkgResultSubmissionHandlerFunc func(
 )
 
 type dkgResultSubmissionHandler struct {
+	ctx context.Context
+
 	callback dkgResultSubmissionHandlerFunc
-	context  *context.Context
 }
 
 type dkgResultSubmissionChannels struct {
-	events  chan<- event.DKGResultSubmission
-	errors  chan<- error
-	context *context.Context
+	ctx context.Context
+
+	events chan<- event.DKGResultSubmission
+	errors chan<- error
 }
 
 type dkgResultSubmissionSubscriber struct {
-	context    context.Context
+	ctx        context.Context
 	cancelFunc context.CancelFunc
 
 	subscriptionMutex sync.Mutex     // guards subscription management
@@ -69,38 +71,15 @@ type dkgResultSubmissionSubscriber struct {
 }
 
 // NewDKGResultSubmissionSubscriber does some stuff.
-func NewDKGResultSubmissionSubscriber(c context.Context, events <-chan *event.DKGResultSubmission, errors <-chan error) DKGResultSubmissionSubscriber {
-	subscriberContext, subscriberCancel := context.WithCancel(c)
+func NewDKGResultSubmissionSubscriber(ctx context.Context, events <-chan *event.DKGResultSubmission, errors <-chan error) DKGResultSubmissionSubscriber {
+	subscriberContext, subscriberCancel := context.WithCancel(ctx)
 	subscriber := &dkgResultSubmissionSubscriber{
-		context:    subscriberContext,
+		ctx:        subscriberContext,
 		cancelFunc: subscriberCancel,
 	}
 
 	// FIXME Should be go subscriber.eventLoop() or similar.
-	go (func() {
-		for {
-			select {
-			case event, closed := <-events:
-				// closed == "subscribed", in that when the events channel is
-				// closed it means we've been unsubscribed from the event
-				// stream.
-				subscriber.handleEvent(*event, closed)
-
-			case err := <-errors:
-				subscriber.handleFailure(err)
-				return
-
-			case <-subscriberContext.Done():
-				if err := subscriberContext.Err(); err != nil {
-					subscriber.handleFailure(err)
-				} else {
-					subscriber.handleUnsubscribe()
-				}
-
-				return
-			}
-		}
-	})()
+	go subscriber.eventLoop(events, errors, ctx)
 
 	// Wire up the go-ethereum watcher, which supports receiving an additional
 	// context parameter to manage lifecycle.
@@ -122,6 +101,36 @@ func NewDKGResultSubmissionSubscriber(c context.Context, events <-chan *event.DK
 	// )
 
 	return &dkgResultSubmissionSubscriber{}
+}
+
+func (drss *dkgResultSubmissionSubscriber) eventLoop(
+	events <-chan *event.DKGResultSubmission,
+	errors <-chan error,
+	c context.Context,
+) {
+	for {
+		select {
+		case event, closed := <-events:
+			// closed == "subscribed", in that when the events channel is
+			// closed it means we've been unsubscribed from the event
+			// stream.
+			drss.handleEvent(*event, closed)
+
+		case err := <-errors:
+			drss.handleFailure(err)
+			return
+
+		case <-c.Done():
+			if err := c.Err(); err != nil {
+				drss.handleFailure(err)
+			} else {
+				drss.handleUnsubscribe()
+			}
+
+			return
+		}
+	}
+
 }
 
 func (drss *dkgResultSubmissionSubscriber) handleEvent(event event.DKGResultSubmission, subscribed bool) {
@@ -180,23 +189,23 @@ func (drss *dkgResultSubmissionSubscriber) runUnsubscribe() {
 	}
 }
 
-func (drss *dkgResultSubmissionSubscriber) runSuccessHandlers(e event.DKGResultSubmission) {
+func (drss *dkgResultSubmissionSubscriber) runSuccessHandlers(evnt event.DKGResultSubmission) {
 	if drss.unsubscribed {
 		return
 	}
 
 	for _, handler := range drss.callbackHandlers {
-		go (func(waitGroup *sync.WaitGroup, handler dkgResultSubmissionHandlerFunc, e event.DKGResultSubmission) {
+		go (func(waitGroup *sync.WaitGroup, handler dkgResultSubmissionHandlerFunc, evnt event.DKGResultSubmission) {
 			waitGroup.Add(1)
 			defer waitGroup.Done()
 
 			handler(
-				e.RequestID,
-				e.MemberIndex,
-				e.GroupPublicKey,
-				e.BlockNumber,
+				evnt.RequestID,
+				evnt.MemberIndex,
+				evnt.GroupPublicKey,
+				evnt.BlockNumber,
 			)
-		})(&drss.handlingWaitGroup, handler.callback, e)
+		})(&drss.handlingWaitGroup, handler.callback, evnt)
 	}
 }
 
@@ -209,15 +218,15 @@ func (drss *dkgResultSubmissionSubscriber) runFailureHandlers(err error) {
 }
 
 func (drss *dkgResultSubmissionSubscriber) OnEvent(handler dkgResultSubmissionHandlerFunc) EventSubscription {
-	return drss.OnEventContext(handler, nil)
+	return drss.OnEventContext(nil, handler)
 }
 
-func (drss *dkgResultSubmissionSubscriber) OnEventContext(handler dkgResultSubmissionHandlerFunc, context *context.Context) EventSubscription {
+func (drss *dkgResultSubmissionSubscriber) OnEventContext(ctx context.Context, handler dkgResultSubmissionHandlerFunc) EventSubscription {
 	drss.subscriptionMutex.Lock()
 	defer drss.subscriptionMutex.Unlock()
 
 	subscriptionID := drss.subscriptionID
-	drss.callbackHandlers[subscriptionID] = dkgResultSubmissionHandler{handler, context}
+	drss.callbackHandlers[subscriptionID] = dkgResultSubmissionHandler{ctx, handler}
 	eventSubscription := NewEventSubscription(func() {
 		drss.subscriptionMutex.Lock()
 		defer drss.subscriptionMutex.Unlock()
@@ -234,18 +243,18 @@ func (drss *dkgResultSubmissionSubscriber) OnEventContext(handler dkgResultSubmi
 // EventSubscription is cancelled, which will ensure the subscriber will not try
 // to write to the channel.
 func (drss *dkgResultSubmissionSubscriber) Pipe(channel chan<- event.DKGResultSubmission) EventSubscription {
-	return drss.PipeContext(channel, nil)
+	return drss.PipeContext(nil, channel)
 }
 
-func (drss *dkgResultSubmissionSubscriber) PipeContext(channel chan<- event.DKGResultSubmission, context *context.Context) EventSubscription {
+func (drss *dkgResultSubmissionSubscriber) PipeContext(ctx context.Context, channel chan<- event.DKGResultSubmission) EventSubscription {
 	drss.subscriptionMutex.Lock()
 	defer drss.subscriptionMutex.Unlock()
 
 	subscriptionID := drss.subscriptionID
 	drss.channelHandlers[subscriptionID] = dkgResultSubmissionChannels{
-		events:  channel,
-		errors:  nil,
-		context: context,
+		ctx:    ctx,
+		events: channel,
+		errors: nil,
 	}
 	eventSubscription := NewEventSubscription(func() {
 		drss.subscriptionMutex.Lock()
