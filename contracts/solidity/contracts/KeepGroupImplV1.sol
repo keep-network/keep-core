@@ -457,7 +457,7 @@ contract KeepGroupImplV1 is Ownable {
         require(!initialized(), "Contract is already initialized.");
         require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
         require(activeGroupsThreshold > 0, "The minumum number of active groups needs to be more than zero.");
-        _initialized["KeepGroupImplV1"] = true;
+        //_initialized["KeepGroupImplV1"] = true;
         _stakingProxy = stakingProxy;
         _randomBeacon = randomBeacon;
         _minStake = minStake;
