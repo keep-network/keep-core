@@ -72,7 +72,7 @@ func TestErrorResolverHandlesErrorCall(t *testing.T) {
 	caller := &erroringCaller{}
 	resolver := ethutil.NewErrorResolver(caller, &testABI, &testAddress)
 
-	err := resolver.ResolveError(errOriginal, nil, "Test")
+	err := resolver.ResolveError(errOriginal, common.Address{}, nil, "Test")
 	if err == nil {
 		t.Errorf("\nexpected: {error}\nactual:   nil")
 		return
@@ -92,7 +92,7 @@ func TestErrorResolverHandlesShortResponses(t *testing.T) {
 
 	for returnLength := 0; returnLength < 4; returnLength++ {
 		caller.returnedBytes = make([]byte, returnLength)
-		err := resolver.ResolveError(errOriginal, nil, "Test")
+		err := resolver.ResolveError(errOriginal, common.Address{}, nil, "Test")
 		assertErrorContains(
 			t,
 			err,
@@ -107,7 +107,7 @@ func TestErrorResolverHandlesUnknownMethodResponses(t *testing.T) {
 	caller := &fixedReturnCaller{[]byte{0, 0, 0, 1}}
 	resolver := ethutil.NewErrorResolver(caller, &testABI, &testAddress)
 
-	err := resolver.ResolveError(errOriginal, nil, "Test")
+	err := resolver.ResolveError(errOriginal, common.Address{}, nil, "Test")
 	assertErrorContains(
 		t,
 		err,
@@ -122,7 +122,7 @@ func TestErrorResolverHandlesBadParameterResponses(t *testing.T) {
 	resolver := ethutil.NewErrorResolver(caller, &testABI, &testAddress)
 
 	// bad response length
-	err := resolver.ResolveError(errOriginal, nil, "Test")
+	err := resolver.ResolveError(errOriginal, common.Address{}, nil, "Test")
 	assertErrorContains(
 		t,
 		err,
@@ -135,7 +135,7 @@ func TestErrorResolverHandlesBadParameterResponses(t *testing.T) {
 	buildingBlock := [32]byte{}
 	caller.returnedBytes = append(caller.returnedBytes, buildingBlock[:]...)
 	caller.returnedBytes[len(caller.returnedBytes)-1] = 1
-	err = resolver.ResolveError(errOriginal, nil, "Test")
+	err = resolver.ResolveError(errOriginal, common.Address{}, nil, "Test")
 	assertErrorContains(
 		t,
 		err,
@@ -150,7 +150,7 @@ func TestErrorResolverHandlesBadParameterResponses(t *testing.T) {
 	caller.returnedBytes[len(caller.returnedBytes)-1] = 32
 	caller.returnedBytes = append(caller.returnedBytes, buildingBlock[:]...)
 	caller.returnedBytes[len(caller.returnedBytes)-1] = 1
-	err = resolver.ResolveError(errOriginal, nil, "Test")
+	err = resolver.ResolveError(errOriginal, common.Address{}, nil, "Test")
 	assertErrorContains(
 		t,
 		err,
@@ -171,7 +171,7 @@ func TestErrorResolverHandlesGoodErrorResponse(t *testing.T) {
 	caller.returnedBytes[len(caller.returnedBytes)-1] = 0
 
 	resolver := ethutil.NewErrorResolver(caller, &testABI, &testAddress)
-	err := resolver.ResolveError(errOriginal, nil, "Test")
+	err := resolver.ResolveError(errOriginal, common.Address{}, nil, "Test")
 	assertErrorContains(
 		t,
 		err,
@@ -188,7 +188,7 @@ func TestErrorResolverHandlesGoodErrorResponse(t *testing.T) {
 	caller.returnedBytes[len(caller.returnedBytes)-1] = byte(len(errorMessage))
 	caller.returnedBytes = append(caller.returnedBytes, errorMessage[:]...)
 
-	err = resolver.ResolveError(errOriginal, nil, "Test")
+	err = resolver.ResolveError(errOriginal, common.Address{}, nil, "Test")
 	assertErrorContains(
 		t,
 		err,

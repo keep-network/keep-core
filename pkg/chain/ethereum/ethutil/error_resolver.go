@@ -56,9 +56,14 @@ func NewErrorResolver(
 // ResolveError achieves this by re-calling the transaction (not submitting it
 // for block inclusion, just calling it for its results). `value` is the value
 // in gwei to send along with the simulated call.
-func (er *ErrorResolver) ResolveError(originalErr error, value *big.Int, methodName string, parameters ...interface{}) error {
+func (er *ErrorResolver) ResolveError(originalErr error, from common.Address, value *big.Int, methodName string, parameters ...interface{}) error {
 	packed, err := er.abi.Pack(methodName, parameters...)
-	msg := ethereum.CallMsg{To: er.address, Data: packed, Value: value}
+	msg := ethereum.CallMsg{
+		From:  from,
+		To:    er.address,
+		Data:  packed,
+		Value: value,
+	}
 
 	response, err := er.contractCaller.CallContract(context.TODO(), msg, nil)
 	if err != nil {
