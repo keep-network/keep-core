@@ -18,6 +18,16 @@ contract KeepRandomBeaconStub is Ownable {
     uint256 internal _previousEntry;
     mapping (string => bool) internal _initialized;
 
+     struct Request {
+        address sender;
+        uint256 payment;
+        bytes groupPubKey;
+        address callbackContract;
+        string callbackMethod;
+    }
+
+    mapping(uint256 => Request) internal _requests;
+
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
@@ -60,8 +70,23 @@ contract KeepRandomBeaconStub is Ownable {
         
         emit RelayEntryRequested(requestID, msg.value, _previousEntry, seed, groupPubKey);
         emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, _previousEntry);
+        _requests[requestID] = Request(msg.sender, msg.value, groupPubKey, callbackContract, callbackMethod);
 
         _previousEntry = groupSignature;
         return requestID;
+    }
+
+    /**
+     * @dev Stub method to perform a contract callback.
+     * @param requestID The request that started this generation - to tie the results back to the request.
+     * @param groupSignature The generated random number.
+     * @param groupPubKey Public key of the group that generated the threshold signature.
+     */
+    function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {
+
+        address callbackContract = _requests[requestID].callbackContract;
+        if (callbackContract != address(0)) {
+            callbackContract.call(abi.encodeWithSignature(_requests[requestID].callbackMethod, groupSignature));
+        }
     }
 }
