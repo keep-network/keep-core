@@ -156,6 +156,12 @@ contract KeepGroupImplV1 is Ownable {
             revert("Ticket submission period is over.");
         }
 
+        require(
+            cheapCheck(msg.sender, stakerValue, virtualStakerIndex),
+            "".strConcat("Cheap check failed with stakerValue, virtualStakerIndex and msg.sender.",
+            ". Actual msg.sender: ", msg.sender.toString())
+        );
+
         // Invalid tickets are rejected and their senders penalized.
         if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
             // TODO: replace with a secure authorization protocol (addressed in RFC 4).
