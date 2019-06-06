@@ -94,7 +94,7 @@ func (gr *Groups) UnregisterDeletedGroups() error {
 		}
 
 		if isStaleGroup {
-			err = gr.storage.remove(publicKey)
+			err = gr.storage.archive(publicKey)
 			if err != nil {
 				return fmt.Errorf("group removal from the disk has failed: [%v]", err)
 			}

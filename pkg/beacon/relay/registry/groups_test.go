@@ -179,7 +179,7 @@ func (dsm *dataStorageMock) Save(data []byte, directory string, name string) err
 	return nil
 }
 
-func (dsm *dataStorageMock) ReadAll() ([][]byte, error) {
+func (dsm *dataStorageMock) ReadAll(path string) ([][]byte, error) {
 	membershipBytes1, _ := (&Membership{
 		Signer:      signer1,
 		ChannelName: channelName1,
@@ -198,7 +198,17 @@ func (dsm *dataStorageMock) ReadAll() ([][]byte, error) {
 	return [][]byte{membershipBytes1, membershipBytes2, membershipBytes3}, nil
 }
 
-func (dsm *dataStorageMock) Remove(name string) error {
+func (dsm *dataStorageMock) Archive(from, to string) error {
 	// noop
 	return nil
+}
+
+func (dsm *dataStorageMock) CreateDir(base string, name string) error {
+	// noop
+	return nil
+}
+
+func (dsm *dataStorageMock) GetDataDir() string {
+	// noop
+	return ""
 }

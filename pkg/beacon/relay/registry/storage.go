@@ -11,8 +11,13 @@ import (
 type storage interface {
 	save(membership *Membership) error
 	readAll() ([]*Membership, error)
-	remove(name string) error
+	archive(groupName string) error
 }
+
+var (
+	currentDir = "current"
+	archiveDir = "archive"
+)
 
 type persistentStorage struct {
 	handle persistence.Handle
@@ -24,21 +29,42 @@ func newStorage(persistence persistence.Handle) storage {
 	}
 }
 
-// Save converts a membership suitable for disk storage.
 func (ps *persistentStorage) save(membership *Membership) error {
 	membershipBytes, err := membership.Marshal()
 	if err != nil {
 		return fmt.Errorf("marshalling of the membership failed: [%v]", err)
 	}
+
 	hexGroupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytes())
 
+	err = ps.createStorageDir(hexGroupPublicKey)
+	if err != nil {
+		return err
+	}
+
 	return ps.handle.Save(membershipBytes, hexGroupPublicKey, "/membership_"+fmt.Sprint(membership.Signer.MemberID()))
+}
+
+func (ps *persistentStorage) createStorageDir(groupPublicKey string) error {
+	err := ps.handle.CreateDir(ps.handle.GetDataDir(), currentDir)
+	if err != nil {
+		return err
+	}
+
+	currentPath := fmt.Sprintf("%s/%s", ps.handle.GetDataDir(), currentDir)
+	err = ps.handle.CreateDir(currentPath, groupPublicKey)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ps *persistentStorage) readAll() ([]*Membership, error) {
 	memberships := []*Membership{}
 
-	bytesMemberships, err := ps.handle.ReadAll()
+	currentPath := fmt.Sprintf("%s/%s", ps.handle.GetDataDir(), currentDir)
+	bytesMemberships, err := ps.handle.ReadAll(currentPath)
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +81,14 @@ func (ps *persistentStorage) readAll() ([]*Membership, error) {
 	return memberships, nil
 }
 
-func (ps *persistentStorage) remove(groupName string) error {
-	return ps.handle.Remove(groupName)
+func (ps *persistentStorage) archive(groupName string) error {
+	from := fmt.Sprintf("%s/%s/%s", ps.handle.GetDataDir(), currentDir, groupName)
+	to := fmt.Sprintf("%s/%s/%s", ps.handle.GetDataDir(), archiveDir, groupName)
+
+	err := ps.handle.CreateDir(ps.handle.GetDataDir(), archiveDir)
+	if err != nil {
+		return err
+	}
+
+	return ps.handle.Archive(from, to)
 }

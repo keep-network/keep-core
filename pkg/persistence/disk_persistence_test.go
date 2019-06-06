@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"testing"
 )
@@ -9,34 +10,42 @@ import (
 var (
 	dataDir = "./"
 
+	dirCurrent = "current"
+	dirArchive = "archive"
+
 	dirName1   = "0x424242"
 	fileName11 = "/file11"
 	fileName12 = "/file12"
 
 	dirName2   = "0x777777"
 	fileName21 = "/file21"
+
+	pathToCurrent = fmt.Sprintf("%s/%s", dataDir, dirCurrent)
+	pathToArchive = fmt.Sprintf("%s/%s", dataDir, dirArchive)
 )
 
 func TestMain(m *testing.M) {
 	code := m.Run()
-	os.RemoveAll(dirName1)
-	os.RemoveAll(dirName2)
+	os.RemoveAll(pathToCurrent)
+	os.RemoveAll(pathToArchive)
 	os.Exit(code)
 }
 
 func TestDiskPersistence_Save(t *testing.T) {
 	diskPersistence := NewDiskHandle(dataDir)
-	pathToDir := dataDir + "/" + dirName1
-	pathToFile := pathToDir + fileName11
+
+	pathToDir := fmt.Sprintf("%s/%s", pathToCurrent, dirName1)
+	pathToFile := fmt.Sprintf("%s%s", pathToDir, fileName11)
+
 	bytesToTest := []byte{115, 111, 109, 101, 10}
 
-	diskPersistence.Save(bytesToTest, dirName1, fileName11)
+	diskPersistence.CreateDir(dataDir, dirCurrent)
+	diskPersistence.CreateDir(pathToCurrent, dirName1)
+	diskPersistence.Save(bytesToTest, pathToDir, fileName11)
 
 	if _, err := os.Stat(pathToFile); os.IsNotExist(err) {
 		t.Fatalf("file [%+v] was supposed to be created", pathToFile)
-	}
-
-	if _, err := os.Stat(pathToFile); !os.IsNotExist(err) {
+	} else {
 		os.RemoveAll(pathToDir)
 	}
 
@@ -48,14 +57,21 @@ func TestDiskPersistence_Save(t *testing.T) {
 func TestDiskPersistence_ReadAll(t *testing.T) {
 	diskPersistence := NewDiskHandle(dataDir)
 
+	pathToDir1 := fmt.Sprintf("%s/%s", pathToCurrent, dirName1)
+	pathToDir2 := fmt.Sprintf("%s/%s", pathToCurrent, dirName2)
+
 	bytesToTest := []byte{115, 111, 109, 101, 10}
 	expectedBytes := [][]byte{bytesToTest, bytesToTest, bytesToTest}
 
-	diskPersistence.Save(bytesToTest, dirName1, fileName11)
-	diskPersistence.Save(bytesToTest, dirName1, fileName12)
-	diskPersistence.Save(bytesToTest, dirName2, fileName21)
+	diskPersistence.CreateDir(dataDir, dirCurrent)
+	diskPersistence.CreateDir(pathToCurrent, dirName1)
+	diskPersistence.CreateDir(pathToCurrent, dirName2)
 
-	actual, _ := diskPersistence.ReadAll()
+	diskPersistence.Save(bytesToTest, pathToDir1, fileName11)
+	diskPersistence.Save(bytesToTest, pathToDir1, fileName12)
+	diskPersistence.Save(bytesToTest, pathToDir2, fileName21)
+
+	actual, _ := diskPersistence.ReadAll(pathToCurrent)
 
 	if len(actual) != 3 {
 		t.Fatalf("Number of membership does not match. \nExpected: [%+v]\nActual:   [%+v]",
@@ -72,23 +88,43 @@ func TestDiskPersistence_ReadAll(t *testing.T) {
 	}
 }
 
-func TestDiskPersistence_Remove(t *testing.T) {
+func TestDiskPersistence_Archive(t *testing.T) {
 	diskPersistence := NewDiskHandle(dataDir)
-	pathToDir := dataDir + "/" + dirName1
+
+	pathMoveFrom := fmt.Sprintf("%s/%s", pathToCurrent, dirName1)
+	pathMoveTo := fmt.Sprintf("%s/%s", pathToArchive, dirName1)
 
 	bytesToTest := []byte{115, 111, 109, 101, 10}
 
-	diskPersistence.Save(bytesToTest, dirName1, fileName11)
+	diskPersistence.CreateDir(dataDir, dirArchive)
+	diskPersistence.CreateDir(dataDir, dirCurrent)
+	diskPersistence.CreateDir(pathToCurrent, dirName1)
 
-	if _, err := os.Stat(pathToDir); os.IsNotExist(err) {
+	diskPersistence.Save(bytesToTest, pathMoveFrom, fileName11)
+
+	if _, err := os.Stat(pathMoveFrom); os.IsNotExist(err) {
 		if err != nil {
-			t.Fatalf("Dir [%+v] was supposed to be created", dirName1)
+			t.Fatalf("Dir [%+v] was supposed to be created", pathMoveFrom)
 		}
 	}
 
-	diskPersistence.Remove(dirName1)
+	if _, err := os.Stat(pathMoveTo); !os.IsNotExist(err) {
+		if err != nil {
+			t.Fatalf("Dir [%+v] was supposed to be empty", pathMoveTo)
+		}
+	}
 
-	if _, err := os.Stat(pathToDir); err == nil {
-		t.Fatalf("Dir [%+v] was supposed to be removed", dirName1)
+	diskPersistence.Archive(pathMoveFrom, pathMoveTo)
+
+	if _, err := os.Stat(pathMoveFrom); !os.IsNotExist(err) {
+		if err != nil {
+			t.Fatalf("Dir [%+v] was supposed to be empty", pathMoveFrom)
+		}
+	}
+
+	if _, err := os.Stat(pathMoveTo); os.IsNotExist(err) {
+		if err != nil {
+			t.Fatalf("Dir [%+v] was supposed to be created", pathMoveTo)
+		}
 	}
 }

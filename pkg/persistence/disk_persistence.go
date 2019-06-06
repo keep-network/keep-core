@@ -22,13 +22,8 @@ type diskPersistence struct {
 	dataDir string
 }
 
-// Save - writes data to file
-func (ds *diskPersistence) Save(data []byte, dirName string, fileName string) error {
-	dirPath, err := ds.createDir(dirName)
-	if err != nil {
-		return err
-	}
-
+// Save - writes data to a file
+func (ds *diskPersistence) Save(data []byte, dirPath, fileName string) error {
 	file := &file{
 		filePath: fmt.Sprintf("%s%s", dirPath, fileName),
 	}
@@ -37,10 +32,10 @@ func (ds *diskPersistence) Save(data []byte, dirName string, fileName string) er
 }
 
 // ReadAll reads all the memberships from a dir path
-func (ds *diskPersistence) ReadAll() ([][]byte, error) {
+func (ds *diskPersistence) ReadAll(dirPath string) ([][]byte, error) {
 	file := &file{}
 
-	memberships, err := file.readAll(ds.dataDir)
+	memberships, err := file.readAll(dirPath)
 	if err != nil {
 		return nil, fmt.Errorf("error occured while reading data from disk: [%v]", err)
 	}
@@ -48,25 +43,28 @@ func (ds *diskPersistence) ReadAll() ([][]byte, error) {
 	return memberships, nil
 }
 
-// Remove a file from a file system
-func (ds *diskPersistence) Remove(dirName string) error {
-	file := &file{
-		filePath: fmt.Sprintf("%s/%s", ds.dataDir, dirName),
-	}
+// Archive a file
+func (ds *diskPersistence) Archive(fromDir, toDir string) error {
+	file := &file{}
 
-	return file.removeDir()
+	return file.archive(fromDir, toDir)
 }
 
-func (ds *diskPersistence) createDir(dirName string) (string, error) {
-	dirPath := fmt.Sprintf("%s/%s", ds.dataDir, dirName)
+// CreateDir creates a directory by giving a dir path and a new dir name
+func (ds *diskPersistence) CreateDir(dirBasePath, dirName string) error {
+	dirPath := fmt.Sprintf("%s/%s", dirBasePath, dirName)
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		err = os.Mkdir(dirPath, os.ModePerm)
 		if err != nil {
-			return "", fmt.Errorf("error occured while creating a dir for memberships: [%v]", err)
+			return fmt.Errorf("error occured while creating a dir: [%v]", err)
 		}
 	}
 
-	return dirPath, nil
+	return nil
+}
+
+func (ds *diskPersistence) GetDataDir() string {
+	return ds.dataDir
 }
 
 // File represents a file on disk that a caller can use to write/read into or remove it.
@@ -118,7 +116,7 @@ func (f *file) read(fileName string) ([]byte, error) {
 func (f *file) readAll(dirPath string) ([][]byte, error) {
 	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
-		return nil, fmt.Errorf("error occured while reading DataDir: [%v]", err)
+		return nil, fmt.Errorf("error occured while reading dir: [%v]", err)
 	}
 
 	result := [][]byte{}
@@ -142,14 +140,10 @@ func (f *file) readAll(dirPath string) ([][]byte, error) {
 	return result, nil
 }
 
-func (f *file) removeDir() error {
-	if f.filePath == "" {
-		return errNoFileExists
-	}
-
-	err := os.RemoveAll(f.filePath)
+func (f *file) archive(fromDir, toDir string) error {
+	err := os.Rename(fromDir, toDir)
 	if err != nil {
-		return fmt.Errorf("error occured while removing a file: [%v]", err)
+		return fmt.Errorf("error occured while moving a dir: [%v]", err)
 	}
 
 	return nil
