@@ -400,7 +400,8 @@ contract KeepGroupImplV1 is Ownable {
 
             require(
                 _proofs[selected[signingMemberIndices[i] - 1]].sender == recoveredAddress,
-                "Invalid signature. Signer and recovered address at provided index don't match."
+                "".strConcat("Invalid signature. Signer and recovered address at provided index don't match. Expected: ", _proofs[selected[signingMemberIndices[i] - 1]].sender.toString(),
+                ". Recovered: ", recoveredAddress.toString())
             );
         }
 
