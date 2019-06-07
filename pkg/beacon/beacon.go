@@ -2,6 +2,7 @@ package beacon
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"os"
 
@@ -81,6 +82,15 @@ func Initialize(
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
 		fmt.Printf("New group registered on chain [%+v]\n", registration)
 		go groupRegistry.UnregisterDeletedGroups()
+	})
+
+	relayChain.OnSignatureCheck(func(check *event.SignatureCheck) {
+		fmt.Printf(
+			"Signature check:\nsignature = [%v]\nresultHash = [%v]\nAllSignatures=[%v]\n",
+			hex.EncodeToString(check.Signature),
+			hex.EncodeToString(check.ResultHash[:]),
+			hex.EncodeToString(check.AllSignatues),
+		)
 	})
 
 	return nil

@@ -66,3 +66,9 @@ type DKGResultSubmission struct {
 
 	BlockNumber uint64
 }
+
+type SignatureCheck struct {
+	Signature    []byte
+	ResultHash   [32]byte
+	AllSignatues []byte
+}

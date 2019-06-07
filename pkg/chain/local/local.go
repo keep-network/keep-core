@@ -61,6 +61,12 @@ type localChain struct {
 	ticketsMutex sync.Mutex
 }
 
+func (c *localChain) OnSignatureCheck(
+	handler func(signatureCheck *event.SignatureCheck),
+) (subscription.EventSubscription, error) {
+	return nil, fmt.Errorf("NOT IMPLEMENTED")
+}
+
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 	return c.blockCounter, nil
 }

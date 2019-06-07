@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"os"
@@ -413,6 +414,31 @@ func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	return ec.keepGroupContract.IsStaleGroup(groupPublicKey)
 }
 
+// OnSignatureCheck should be removed.
+func (ec *ethereumChain) OnSignatureCheck(
+	handler func(signatureCheck *event.SignatureCheck),
+) (subscription.EventSubscription, error) {
+	return ec.keepGroupContract.WatchSignatureCheck(
+		func(
+			signature []byte,
+			resultHash [32]byte,
+			allSignatures []byte,
+			blockNumber uint64,
+		) {
+			handler(&event.SignatureCheck{
+				Signature:    signature,
+				ResultHash:   resultHash,
+				AllSignatues: allSignatures,
+			})
+		},
+		func(err error) error {
+			return fmt.Errorf(
+				"watch signature check failed with [%v]", err,
+			)
+		},
+	)
+}
+
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
@@ -527,6 +553,12 @@ func (ec *ethereumChain) SubmitDKGResult(
 func convertSignaturesToChainFormat(
 	signatures map[group.MemberIndex]operator.Signature,
 ) ([]*big.Int, []byte, error) {
+
+	fmt.Printf(">>> converting signatures to chain format:\n")
+	for memberID, signature := range signatures {
+		fmt.Printf("[%v]: [%v]\n", memberID, hex.EncodeToString(signature))
+	}
+
 	var membersIndices []*big.Int
 	var signaturesSlice []byte
 
@@ -542,6 +574,8 @@ func convertSignaturesToChainFormat(
 		membersIndices = append(membersIndices, memberIndex.Int())
 		signaturesSlice = append(signaturesSlice, signature...)
 	}
+
+	fmt.Printf(">>> Concatenated data: member indices = [%+v], signaturesSlice = [%v]\n", membersIndices, hex.EncodeToString(signaturesSlice))
 
 	return membersIndices, signaturesSlice, nil
 }

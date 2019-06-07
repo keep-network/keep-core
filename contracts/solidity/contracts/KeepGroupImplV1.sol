@@ -368,6 +368,8 @@ contract KeepGroupImplV1 is Ownable {
         _groupSelectionInProgress = false;
     }
 
+    event SignatureCheck(bytes signature, bytes32 resultHash, bytes allSignatures);
+
     /**
     * @dev Verifies that provided members signatures of the DKG result were produced
     * by the members stored previously on-chain in the order of their ticket values
@@ -381,7 +383,7 @@ contract KeepGroupImplV1 is Ownable {
         bytes memory signatures,
         uint256[] memory signingMemberIndices,
         bytes32 resultHash
-    ) internal view returns (bool) {
+    ) internal returns (bool) {
 
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Signatures bytes array is too short.");
@@ -397,6 +399,8 @@ contract KeepGroupImplV1 is Ownable {
             require(signingMemberIndices[i] <= selected.length, "Provided index is out of acceptable tickets bound.");
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
+
+            emit SignatureCheck(current, resultHash, signatures);
 
             require(
                 _proofs[selected[signingMemberIndices[i] - 1]].sender == recoveredAddress,

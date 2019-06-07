@@ -106,6 +106,11 @@ type DistributedKeyGenerationInterface interface {
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
 	CalculateDKGResultHash(dkgResult *DKGResult) (DKGResultHash, error)
+
+	// OnSignatureCheck should be removed.
+	OnSignatureCheck(
+		func(event *event.SignatureCheck),
+	) (subscription.EventSubscription, error)
 }
 
 // Interface represents the interface that the relay expects to interact with
