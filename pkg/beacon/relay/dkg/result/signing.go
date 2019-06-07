@@ -1,6 +1,7 @@
 package result
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -55,6 +56,8 @@ func (sm *SigningMember) SignDKGResult(
 		return nil, fmt.Errorf("dkg result hash calculation failed [%v]", err)
 	}
 	sm.preferredDKGResultHash = resultHash
+
+	fmt.Printf(">>> [%v] result hash is [%v]\n", sm.index, hex.EncodeToString(resultHash[:]))
 
 	signature, err := operator.Sign(resultHash[:], sm.privateKey)
 	if err != nil {
