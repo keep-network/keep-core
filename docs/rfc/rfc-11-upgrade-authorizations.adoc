@@ -11,9 +11,9 @@ toc::[]
 Securely upgradeable work contracts
 are important for protecting stakers' tokens.
 The current design for dividing work contracts
-into back-end and front-end components
-permits secure upgrades of backend contracts
-without interfering with frontend functionality.
+into operator contract and service contract components
+permits secure upgrades of operator contracts
+without interfering with service functionality.
 To gain the theoretical benefits from this scheme,
 it is necessary to specify how contract upgrades should be authorized,
 and by whom.
@@ -21,33 +21,33 @@ and by whom.
 === Current Functionality
 
 In link:rfc-9-upgradeable-contract-components.adoc[RFC 9: Upgrading contracts by separate components],
-the division between backend and frontend contracts is established.
+the division between operator and service contracts is established.
 Apart from the existing consensus
-that stakers should authorize each backend contract individually,
+that stakers should authorize each operator contract individually,
 there is no overarching design for secure contract upgrades yet.
 
 == Proposal
 
 To achieve secure upgrades, this RFC proposes a scheme
-where the upgrade process is centered on backend contracts,
+where the upgrade process is centered on operator contracts,
 which tie all components of the network together.
 
-Backend contracts are subject to approval
+Operator Contract contracts are subject to approval
 globally on a _master list_,
-in their respective _frontend contracts_,
+in their respective _service contract contracts_,
 and individually from each staker in the _staking contract_.
 This provides multilayered protection
 against a variety of different risks.
 
-Other contracts such as frontends and staking contracts
-are hard-coded in backend contracts,
+Other contracts such as service contracts and staking contracts
+are hard-coded in operator contract contracts,
 so attackers are prevented from inserting arbitrary contracts of any type
 without needing to have separate approval processes
 for different contract types.
 
 Different keys are used in different parts of the upgrade process.
 The roles of global _Upgrade Master_ and _Panic Button_,
-frontend-specific _Backend Upgraders_,
+service contract-specific _Operator Contract Upgraders_,
 and staker-specific _Authorizers_,
 are used to divide the responsibilities
 and to provide resiliency against compromise of individual keys.
@@ -56,7 +56,7 @@ to recover from non-catastrophic compromise.
 
 The multilayered approach permits upgrading staking contracts,
 or even the token itself,
-without disrupting user experience on the frontend.
+without disrupting user experience on the service contract.
 
 === Goal
 
@@ -77,7 +77,7 @@ is to enable recovery from key compromise by rekeying other roles.
 
 Governance has the authority to change the addresses of
 the _Upgrade Master_, _Panic Button_,
-and the frontends' _Backend Upgraders_.
+and the service contracts' _Operator Contract Upgraders_.
 
 The rekeying process should prioritize security over convenience
 to the greatest feasible extent,
@@ -88,10 +88,10 @@ under extraordinary circumstances.
 ==== Upgrade Master
 
 The Upgrade Master maintains the global _master list_
-of approved backend contracts.
-Each backend contract must be approved by the Upgrade Master
+of approved operator contract contracts.
+Each operator contract contract must be approved by the Upgrade Master
 before it can be authorized by a staker
-or used by a frontend contract.
+or used by a service contract contract.
 
 The Upgrade Master can be rekeyed by _Governance_.
 
@@ -106,21 +106,21 @@ Contracts disabled by the Panic Button can not be reactivated.
 
 The Panic Button can be rekeyed by _Governance_.
 
-==== Backend Upgrader
+==== Operator Contract Upgrader
 
-Each frontend contract has a Backend Upgrader
-whose purpose is to manage backends for that specific frontend.
-The Backend Upgrader can add new backends
-to the frontend's backend list,
+Each service contract contract has a Operator Contract Upgrader
+whose purpose is to manage operator contracts for that specific service contract.
+The Operator Contract Upgrader can add new operator contracts
+to the service contract's operator contract list,
 and deprecate old ones.
 
-The Backend Upgraders can be rekeyed by _Governance_.
+The Operator Contract Upgraders can be rekeyed by _Governance_.
 
 ==== Authorizer
 
 Each staker has an Authorizer
-whose purpose is to authorize backends the staker wishes to operate on.
-Authorized backends are permitted to impact the staker's staked tokens
+whose purpose is to authorize operator contracts the staker wishes to operate on.
+Authorized operator contracts are permitted to impact the staker's staked tokens
 via punishments or rewards.
 
 The Authorizer cannot be rekeyed except by undelegating and redelegating.
@@ -129,184 +129,184 @@ The Authorizer cannot be rekeyed except by undelegating and redelegating.
 
 ==== Global
 
-A global master list is used to keep track of all backend contracts,
-ensuring that only Keep Org-approved backends are used,
-and enabling the panic button to disable backends in an emergency.
+A global master list is used to keep track of all operator contract contracts,
+ensuring that only Keep Org-approved operator contracts are used,
+and enabling the panic button to disable operator contracts in an emergency.
 
 ===== Master list
 
-The master list contains all backend contracts of the Keep network.
+The master list contains all operator contract contracts of the Keep network.
 Each contract's status may be `NULL`, `APPROVED` or `DISABLED`.
 
 A status of `NULL` is the default
-and means that the backend has not been approved by the _Upgrade Master_.
+and means that the operator contract has not been approved by the _Upgrade Master_.
 
-When the _Upgrade Master_ approves a backend contract,
+When the _Upgrade Master_ approves a operator contract contract,
 its status switches to `APPROVED` in the master list.
-Approved backends can be authorized by stakers to impact their stakes,
-and frontend contracts may utilize them.
+Approved operator contracts can be authorized by stakers to impact their stakes,
+and service contract contracts may utilize them.
 
 The _Panic Button_ can be used
 to set the status of an `APPROVED` contract to `DISABLED`.
-Backends disabled with the _Panic Button_ cannot be re-enabled.
+Operator Contracts disabled with the _Panic Button_ cannot be re-enabled.
 
-==== Backend contracts
+==== Operator Contract contracts
 
-Backend contracts serve frontend contracts,
+Operator Contract contracts serve service contract contracts,
 and are responsible for all operations involving staked tokens.
 The requirement for stakers' funds to never be subject to
 code they haven't approved individually
-means that the frontend and staking contracts must be hard-coded.
-Backends are also aware of the token contract.
+means that the service contract and staking contracts must be hard-coded.
+Operator Contracts are also aware of the token contract.
 
-===== Served frontends
+===== Served service contracts
 
-Each backend contract has a list
-of one or more frontend contracts it may serve.
-The _served frontends_ are hard-coded when the backend is deployed
+Each operator contract contract has a list
+of one or more service contract contracts it may serve.
+The _served service contracts_ are hard-coded when the operator contract is deployed
 and can not be changed.
 
 ===== Recognized staking contracts
 
-Each backend contract specifies one or more _staking contracts_ it recognizes.
-Every backend must recognize at least one staking contract.
+Each operator contract contract specifies one or more _staking contracts_ it recognizes.
+Every operator contract must recognize at least one staking contract.
 Recognized staking contracts are hard-coded and unchangeable.
 
-==== Frontend contracts
+==== Service Contract contracts
 
-Frontend contracts don't need to be aware of tokens or staking in any way.
-These functions are entirely intermediated by the backend contracts.
-A frontend only needs a list of which backends it uses.
+Service Contract contracts don't need to be aware of tokens or staking in any way.
+These functions are entirely intermediated by the operator contract contracts.
+A service contract only needs a list of which operator contracts it uses.
 To permit system upgrades,
-the list of used backends can be updated with proper authorization.
+the list of used operator contracts can be updated with proper authorization.
 
-===== Used backends
+===== Used operator contracts
 
-Each frontend contract has a list
-of zero or more backend contracts it may use.
+Each service contract contract has a list
+of zero or more operator contract contracts it may use.
 
-For each backend contract, the frontend stores:
+For each operator contract contract, the service contract stores:
 
-- the status of the backend
-- the chronological position of that backend by creation date
+- the status of the operator contract
+- the chronological position of that operator contract by creation date
 
-Each backend contract has a status of `NULL`, `ACTIVE` or `DEPRECATED`.
+Each operator contract contract has a status of `NULL`, `ACTIVE` or `DEPRECATED`.
 A status of `NULL` is the default
-and means that the frontend does not use the backend.
-A status of `ACTIVE` means the frontend actively uses the backend
+and means that the service contract does not use the operator contract.
+A status of `ACTIVE` means the service contract actively uses the operator contract
 for performing work.
-`DEPRECATED` means that the frontend has previously used the backend
+`DEPRECATED` means that the service contract has previously used the operator contract
 and some operations may still be underway,
-but the backend should not be selected for creating new Keeps.
+but the operator contract should not be selected for creating new Keeps.
 
-A frontend contract is deployed with zero backend contracts,
-rendering the frontend inactive until at least one backend is activated.
+A service contract contract is deployed with zero operator contract contracts,
+rendering the service contract inactive until at least one operator contract is activated.
 
-Each frontend has a _Backend Upgrader_
-who can activate or deprecate backend contracts.
+Each service contract has a _Operator Contract Upgrader_
+who can activate or deprecate operator contract contracts.
 
-To activate a backend contract, the following conditions must apply:
+To activate a operator contract contract, the following conditions must apply:
 
-- the backend has been `APPROVED` on the _master list_
-- the frontend is included in the backend's _served contracts_
-- the backend's creation date is more recent
-than that of the most recent `ACTIVE` backend in the _used contracts_
+- the operator contract has been `APPROVED` on the _master list_
+- the service contract is included in the operator contract's _served contracts_
+- the operator contract's creation date is more recent
+than that of the most recent `ACTIVE` operator contract in the _used contracts_
 
-To deprecate a backend contract, the following conditions must apply:
+To deprecate a operator contract contract, the following conditions must apply:
 
-- the backend is `ACTIVE` in the _used contracts_
-- it is not the most recent (or only) backend in the _used contracts_
+- the operator contract is `ACTIVE` in the _used contracts_
+- it is not the most recent (or only) operator contract in the _used contracts_
 
-If a backend has been `DISABLED` by the _Panic Button_,
+If a operator contract has been `DISABLED` by the _Panic Button_,
 it is ineligible for work selection.
 
 ==== Staking contracts
 
 Staking contracts hold staked tokens and enforce staking rules.
-They must permit authorized backend contracts
+They must permit authorized operator contract contracts
 to slash the stakes of misbehaving operators,
 but stakers must be protected from code they haven't authorized individually.
 
 For this purpose, each staking contract maintains a list
-of backends that have been authorized by each staker's _Authorizer_.
-The list of backends could also be maintained globally,
+of operator contracts that have been authorized by each staker's _Authorizer_.
+The list of operator contracts could also be maintained globally,
 removing the need for entry duplication
 when stakers on different staking contracts
-have the same Authorizer and operate on the same backend.
+have the same Authorizer and operate on the same operator contract.
 However, maintaining the authorizations locally
 may be cheaper than cross-contract calls,
 and the scenario where gas would be saved is likely to be rare.
 
 (If _fully backed operation_ is used,
 it may not be necessary to have separate authorizations
-as stakes are explicitly allocated for each backend.)
+as stakes are explicitly allocated for each operator contract.)
 
 Staking contracts are also aware of the token contract by necessity.
 
-===== Authorized backends
+===== Authorized operator contracts
 
-The _authorized backends_ are a mapping
-of `(authorizer_address, backend_address) -> status`.
+The _authorized operator contracts_ are a mapping
+of `(authorizer_address, operator contract_address) -> status`.
 
 The status of a contract may be either `NULL` or `AUTHORIZED`.
-A status of `NULL` is the default and means the backend is not authorized.
-A status of `AUTHORIZED` means that the backend at `backend_address`
+A status of `NULL` is the default and means the operator contract is not authorized.
+A status of `AUTHORIZED` means that the operator contract at `operator contract_address`
 may affect the stakes of those stakers
 who have assigned that `authorizer_address` as their _Authorizer_.
 
-To authorize a backend on a staking contract,
+To authorize a operator contract on a staking contract,
 the following conditions must apply:
 
-- the backend has been `APPROVED` on the _master list_
-- the backend recognizes the staking contract
+- the operator contract has been `APPROVED` on the _master list_
+- the operator contract recognizes the staking contract
 
-Once a backend has been authorized,
+Once a operator contract has been authorized,
 authorization cannot be withdrawn by the staker.
-However, a backend that has been `DISABLED` by the _Panic Button_
+However, a operator contract that has been `DISABLED` by the _Panic Button_
 may not punish stakers.
 
 === Upgrade processes
 
-==== Backend upgrade
+==== Operator Contract upgrade
 
-. Deploy the new backend contract
-. Approve the backend on the master list
-. Activate the backend on the frontend
-. Wait for stakers to authorize the backend
-. (Optional) Deprecate old backend contracts if needed
+. Deploy the new operator contract contract
+. Approve the operator contract on the master list
+. Activate the operator contract on the service contract
+. Wait for stakers to authorize the operator contract
+. (Optional) Deprecate old operator contract contracts if needed
 
-==== New frontend
+==== New service contract
 
-. Deploy the new frontend contract
-. Deploy a new backend serving the new frontend
-  . Approve the backend on the master list
-  . Activate the backend on the frontend
-  . Wait for stakers to authorize the backend
+. Deploy the new service contract contract
+. Deploy a new operator contract serving the new service contract
+  . Approve the operator contract on the master list
+  . Activate the operator contract on the service contract
+  . Wait for stakers to authorize the operator contract
 
 ==== Staking contract upgrade
 
 . Deploy the new staking contract
-. Deploy new backend contracts recognizing the new staking contract
-  . Approve the backends on the master list
-  . Activate the backends on the frontends
+. Deploy new operator contract contracts recognizing the new staking contract
+  . Approve the operator contracts on the master list
+  . Activate the operator contracts on the service contracts
 . Wait for stakers to migrate to the new staking contract
-. Wait for stakers to authorize the new backends
+. Wait for stakers to authorize the new operator contracts
 
 ==== Token upgrade
 
 The upgrade process makes it possible to even hard-fork the token
-without disrupting frontend user experience:
+without disrupting service contract user experience:
 
 . Deploy the new token contract
 . Deploy a migration contract
 that lets holders convert old tokens to new tokens
 . Deploy a new staking contract for the new tokens
-  . Deploy new backend contracts recognizing the new token and staking contract
-    . Approve the backends on the master list
-    . Activate the backends on the frontends
+  . Deploy new operator contract contracts recognizing the new token and staking contract
+    . Approve the operator contracts on the master list
+    . Activate the operator contracts on the service contracts
 . Wait for stakers to convert their tokens,
 stake on the new contract
-and authorize the new backends
+and authorize the new operator contracts
 
 === Resistance to compromise
 
@@ -314,17 +314,17 @@ and authorize the new backends
 
 ===== Upgrade Master
 
-A compromised Upgrade Master can approve arbitrary backends.
-Because using those backends for a frontend
-requires the frontend's Backend Upgrader as well,
+A compromised Upgrade Master can approve arbitrary operator contracts.
+Because using those operator contracts for a service contract
+requires the service contract's Operator Contract Upgrader as well,
 the impact is limited to stakers being able to instantly unstake
-by authorizing a malicious backend
+by authorizing a malicious operator contract
 which slashes their stakes
 and sends the tokens to an address controlled by the staker.
 
 ===== Panic Button
 
-A compromised Panic Button can disable all backends
+A compromised Panic Button can disable all operator contracts
 and halt all network services.
 Recovery is impossible until Governance
 has rekeyed the Panic Button.
@@ -336,59 +336,59 @@ within a particular timeframe.
 However, such a cap would be overwhelmed
 by a mass approval of malicious contracts by the other roles.
 
-===== Backend Upgrader
+===== Operator Contract Upgrader
 
-A compromised Backend Upgrader can activate arbitrary backends
+A compromised Operator Contract Upgrader can activate arbitrary operator contracts
 within the strict constraints of the upgrade process.
 Without compromise of the Upgrade Master
-to approve new malicious backends,
-it is unlikely that a compromised Backend Upgrader alone
+to approve new malicious operator contracts,
+it is unlikely that a compromised Operator Contract Upgrader alone
 would have significant impact on the network.
 
 ===== Authorizer
 
 If only the Authorizer of some staker is compromised,
-the attacker can authorize backends
+the attacker can authorize operator contracts
 that have been approved by the Upgrade Master,
 and that recognize the contract that staker stakes on.
 
 This has a very limited negative impact
 unless the Upgrade Master has approved
-a faulty or malicious backend contract.
+a faulty or malicious operator contract contract.
 
 ==== Key combinations
 
-===== Upgrade Master + Backend Upgrader
+===== Upgrade Master + Operator Contract Upgrader
 
-If a malicious backend can get globally approved,
-the impacted frontend can be completely subverted
-by deprecating all other backends
+If a malicious operator contract can get globally approved,
+the impacted service contract can be completely subverted
+by deprecating all other operator contracts
 and returning malicious values.
 While already existing operations should finish normally,
-the frontend can be rendered effectively useless for new requests.
+the service contract can be rendered effectively useless for new requests.
 
 ===== Upgrade Master + Authorizer
 
-Approving and authorizing a malicious backend
+Approving and authorizing a malicious operator contract
 permits theft of staked funds.
 
 === Limitations
 
-Each backend upgrade requires participation
-from both the _Upgrade Master_ and the _Backend Upgrader_.
+Each operator contract upgrade requires participation
+from both the _Upgrade Master_ and the _Operator Contract Upgrader_.
 This increases the exposure of these keys,
 leading to a higher risk of simultaneous compromise.
 
 == Future Work
 
-Frontend contracts could have upgradeable components
+Service Contract contracts could have upgradeable components
 for performing various sub-tasks.
 These components could be upgraded
-with a process similar to that of backend contracts
+with a process similar to that of operator contract contracts
 except without staker involvement.
 
-Customers could optionally specify to the frontend
-which backend contract they want to serve their request.
+Customers could optionally specify to the service contract
+which operator contract contract they want to serve their request.
 
 == Open Questions
 
@@ -408,13 +408,13 @@ to subvert the honest majority assumption in individual Keeps.
 This means that rekeying is robust against attacks
 unless the network as a whole is compromised.
 
-It is not immediately clear whether frontends should
-completely block backends disabled with the panic button,
+It is not immediately clear whether service contracts should
+completely block operator contracts disabled with the panic button,
 or only deprecate them without regard for the normal limitations.
 
 Rate-limiting the Panic Button can help prevent total DoS
 if the panic button is ever compromised,
-but also permits flooding the system with malicious backends
+but also permits flooding the system with malicious operator contracts
 unless the Upgrade Master is similarly rate-limited.
 
 [bibliography]
