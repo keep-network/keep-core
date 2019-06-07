@@ -398,15 +398,15 @@ contract KeepGroupImplV1 is Ownable {
             require(signingMemberIndices[i] > 0, "Index should be greater than zero.");
             require(signingMemberIndices[i] <= selected.length, "Provided index is out of acceptable tickets bound.");
             current = signatures.slice(65*i, 65);
-            //address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
+            address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
             emit SignatureCheck(current, resultHash, signatures);
 
-            //require(
-            //   _proofs[selected[signingMemberIndices[i] - 1]].sender == recoveredAddress,
-            //    "".strConcat("Invalid signature. Signer and recovered address at provided index don't match. Expected: ", _proofs[selected[signingMemberIndices[i] - 1]].sender.toString(),
-            //    ". Recovered: ", recoveredAddress.toString())
-            //);
+            require(
+               _proofs[selected[signingMemberIndices[i] - 1]].sender == recoveredAddress,
+                "".strConcat("Invalid signature. Signer and recovered address at provided index don't match. Expected: ", _proofs[selected[signingMemberIndices[i] - 1]].sender.toString(),
+                ". Recovered: ", recoveredAddress.toString())
+            );
         }
 
         return true;
