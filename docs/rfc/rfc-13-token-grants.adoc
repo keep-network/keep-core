@@ -1,4 +1,3 @@
-
 :toc: macro
 
 = RFC 13: Token grants
@@ -13,77 +12,279 @@ Token grants are required for launch,
 grant recipients should be able to stake with their grant
 without compromising the integrity of the network
 
-=== Current Functionality
+=== Token grants
 
-Previously considered schemes:
+A token grant represents a gradual transfer of KEEP tokens
+from the _grant creator_ to the _grantee_.
+The difference between these _grant tokens_ and ordinary _liquid tokens_ is
+that grant tokens cannot be transferred away from the grant
+before their ownership is fully transferred to the grantee
+according to a _vesting schedule_.
 
-Stake-ahead: token grant stakes by transferring tokens to staking contract,
-equal to the amount that would be unlocked within the unstaking period
+In addition, some grants will be _revocable_
+so that the grant creator can _revoke_ the remaining grant
+and the remaining unvested tokens will return to the grant creator.
 
-Grant staking: token grants can be staked along with liquid tokens,
-has complex implementation and makes grant contract security-critical
+==== Use-cases and expected characteristics
+
+Keep Org uses token grants widely,
+to distribute tokens to investors and to reward employees.
+
+Investors' token grants limit the amount of liquid tokens
+that could be dumped on exchanges to make a quick profit,
+and incentivize holders to stake instead.
+A typical investor's grant vests in two years,
+but six-month and one-year grants are also used.
+Investor grants are non-revocable.
+
+Employees' token grants replace traditional startup equity,
+and need to support vesting cliffs and revocability.
+Employees' opportunities to stake early are less important
+and may even be contractually restricted
+to prevent various conflicts of interest.
+
+=== Staking token grants
+
+The grantee should be able to use their grant tokens for staking,
+but they should not be able to withdraw them prematurely.
+This presents various problems in practice.
+
+==== Tattletale transfer
+
+In the Keep network,
+staked tokens are used as collateral to enforce correct behavior.
+When staker _Alice's_ misbehavior is proven on-chain,
+some of her staked tokens will be _slashed_ as a punishment.
+Slashing can mean either _burning_ the tokens,
+effectively returning their value to all other token-holders;
+or _seizing_ the tokens to the contract imposing the punishment
+so they can be redistributed according to the contract's rules.
+
+In some cases, detecting and penalizing Alice's misbehavior
+will require collaboration from another staker, _Bob_.
+To incentivize Bob to prove Alice's misbehavior,
+the network entitles him to a _tattletale reward_,
+a fraction of Alice's slashed tokens.
+
+However, if this _tattletale fraction_ is sufficiently high,
+a new type of attack emerges:
+if Alice and Bob are secretly the same party,
+they can reclaim the tattletale reward by tattling on themselves.
+In this situation,
+a _tattletale transfer_ from Alice to Bob happens.
+
+Tattletale transfers (or _t-transfers_ for short)
+can bypass many limits ordinarily in place.
+Tokens can be transferred between stakers
+without waiting for the normal unstaking time-lock to release,
+and deterrent to misbehavior can be significantly reduced.
+With token grants, the most relevant consideration is that
+tattletale transfers could be used to extract unvested tokens from a grant.
+Any scheme for staking grant tokens
+must be able to prevent such _premature withdrawals_
+from significantly undermining the integrity of the grant.
+
+===== Limiting tattletale transfer: minimum burn fraction
+
+By burning most (e.g. 95%) of slashed tokens,
+the efficiency of tattletale transfer can be significantly constrained.
+If Alice proves Bob's misbehavior and Bob is penalized by 100 KEEP,
+at least 95 KEEP would be destroyed and at most 5 KEEP transferred to Alice.
+
+This serves two goals.
+First, Bob cannot efficiently withdraw unvested tokens
+through tattletale transfer.
+With a 95% minimum burn,
+only 1/20 of the slashed tokens can be t-transferred.
+On a 24-month grant this represents an amount
+that would vest in 1.2 months or roughly 37 days,
+at the cost of the entire rest of the grant.
+As the remaining vesting time grows shorter,
+this "advance withdrawal window" also grows narrower.
+
+Second, limiting tattletale transfer efficiency
+makes certain types of misbehavior more costly or less profitable.
+Burning tokens benefits all token-holders
+equally in proportion to how many tokens they own,
+while an adversary who expects to be caught
+can always collect the tattletale rewards
+from proving their own misbehavior.
+
+With a high tattletale transfer efficiency
+(80% for the sake of illustration)
+Alice and Bob could collaborate to misbehave and collect the tattletale reward,
+reducing the effective deterrent very significantly.
+If Alice and Bob together own 30% of the token supply,
+they would only suffer 14% of the nominal punishment:
+Alice would collect 80 KEEP as her tattletale reward
+and their remaining holdings would indirectly accrue
+30% of the value of the burned 20 KEEP (6 KEEP).
+With a 95% minimum burn Alice and Bob could only recoup 33.5%:
+5 KEEP as tattletale reward and 28.5 KEEP indirectly (95 KEEP * 0.30).
+
+Similarly, if Alice has compromised Bob's operator keys
+she could use tattletale transfer to steal Bob's stakes.
+It is desirable that compromised operators' stakes can be stolen,
+but it is also desirable to limit the fraction of the token supply
+owned by proven malicious parties.
+Some have estimated that 5% of all BTC have been stolen.
+If a similar amount of KEEP were to be stolen from compromised operators,
+with a 95% minimum burn
+the thieves would only represent 0.25% of stakeable tokens.
+
+===== Limiting tattletale transfer: locking tattletale rewards
+
+As a further obstacle to "advance withdrawals" via tattletale transfer,
+all tattletale rewards could be locked for a time
+equal to the unstaking time (e.g. 3 months).
+With a 95% minimum burn and 3 month lock on tattletale rewards,
+the amount that can be "advance withdrawn" with tattletale transfer
+is less than the amount that would vest by the time the tokens are freed
+for grants vesting in less than 60 months.
+
+==== Revocable grants and illusory stake
+
+If Alice is expecting her grant to be revoked in the near future,
+the value of her unvested tokens at that time is effectively zero.
+This _illusory stake_ significantly weakens the effective deterrent
+when staking with revocable grant tokens.
+
+==== Trusted staking contracts and upgrading them
+
+If unvested grant tokens can be staked,
+staking contracts are privileged towards grants;
+the grant contract trusts the staking contract not to behave in certain ways
+without being able to enforce it.
+If a grantee could stake their grants on arbitrary contracts,
+they could make up their own "staking contracts"
+that exploit grant staking to the maximum possible extent.
+
+This presents a problem with upgrades.
+The RFC 11 upgrade process consists of Keep Org deploying a new staking contract
+and stakers migrating their stakes by unstaking and re-staking.
+The token grant scheme must not prevent staking upgrades
+while grants are active,
+but the addresses of future staking contracts are unknown.
+
+=== Previously considered schemes
+
+==== Unlimited stake-ahead
+
+In the unlimited stake-ahead model,
+grantees can instruct the grant contract
+to stake all of their grant tokens
+by transferring an equal amount of liquid tokens to the staking contract.
+The grant contract acts as the _owner_ of the tokens;
+grantees nominate the _operator_, _beneficiary_, and _authorizer_,
+and can acquire rewards from operating with the stake as collateral.
+Upon unstaking the tokens are returned to the grant.
+
+The grant contract can be unprivileged,
+affecting only the security of tokens involved in grants,
+and no special considerations are required in the staking contract.
+However, unlimited stake-ahead provides no protection from t-transfer abuse
+or illusory stake.
+
+==== Limited stake-ahead
+
+In the limited stake-ahead model,
+grantees can only stake tokens that would vest within the unstaking time.
+The grantee can be assigned as the owner,
+as the amount of tokens that become liquid upon unstaking 
+equals or is less than the amount
+they would have otherwise been able to withdraw from the grant.
+
+Limited stake-ahead preserves normal incentives with non-revocable grants
+but doesn't protect against illusory stake.
+It also places short grants in a significantly more favorable position
+as they can stake their tokens earlier.
+
+==== Grant tokens as a separate type of collateral
+
+If the special status of grant tokens is maintained when staking,
+any tattletale rewards would simply consist of another grant, vesting over time.
+This prevents premature withdrawals with t-transfer,
+but doesn't address illusory stake.
+
+Recognizing grants as valid collateral
+makes the grant contract a part of the security-critical core;
+if someone could arbitrarily manipulate the grant contract
+they would be able to create unlimited amounts of forged collateral.
+Additionally, calculating correct vesting times is complex
+as grants are split by slashing and tattletale transfers.
+
+==== Enforcing invariants with a staking proxy
+
+If a separate staking proxy is established
+between the grant contract and staking contracts,
+the grant contract could transfer liquid tokens to the proxy
+which then enforces the desired _staking invariants_
+on arbitrary staking contracts.
+This protects the integrity of grants
+by making staking contracts unprivileged,
+and the effectiveness of t-transfer could be limited by the right invariants.
+
+If the majority of slashed tokens are burned
+and only a small fraction can be seized
+and possibly used as a tattletale reward,
+t-transfer becomes dramatically less abusable.
+
+However, a staking proxy has to
+duplicate large parts of staking contract functionality,
+and cross-contract calls make staking operations more expensive.
+Behavior defined in the proxy is permanently immutable
+unless the proxy itself is upgradeable.
 
 == Proposal
 
-Token grant stakes by transferring tokens up to the entire grant
-to acceptable staking contract
+Non-revocable token grants are staked with unlimited stake-ahead,
+by transferring liquid tokens from the grant contract
+to a staking contract authorized by the grant's creator.
+Revocable grants can't be staked through the grant contract;
+instead, vested liquid tokens can be withdrawn and staked normally.
 
-An acceptable staking contract must implement slashing
-in the form of burning the vast majority of the slashed tokens,
-and optionally placing the rest in a time-locked escrow
+Authorized staking contracts are assumed to enforce the invariants
+a particular grant's creator wants enforced.
+For the use of Keep Org's grants,
+this consists of a _minimum burn fraction_ of 95%:
+when a staker is slashed,
+at least 95% of the tokens are burned and at most 5% are seized.
 
-This limits the efficiency of "tattletale transfer"
-and ensures grants can't be subverted by deliberate misbehavior
+Authorized staking contracts are identified
+using a two-role authorization from RFC 11:
+the grant creator can authorize contracts from a global master list
+of staking contracts sanctioned by the governance structure.
+
+Upgrades to staking contracts are accommodated
+by providing a way for the grant contract
+to pass arbitrary instructions from the grantee to the staking contract.
 
 === Goal
 
-- prevent tattletale transfer
-where staker deliberately misbehaves to get punished
-and uses another identity as tattletale which gets rewarded
-to withdraw tokens in advance
+Unprivileged grant contract::
+The security of the Keep network as a whole should be unaffected
+even if the grant contract were to execute arbitrary malicious code.
 
-- enable staking on full grant
-so recipients of shorter grants can't gain disproportionate advantage
-and earlier promises are kept
+Upgradeable staking contract::
+The grant scheme should not prevent future improvements to the staking scheme
+as defined in RFC 11.
 
-- unprivileged token grant
-that cannot cause the rest of the system to lose integrity
+Fair grant staking::
+The recipient of a non-revocable grant
+should be able to stake with the full grant.
+A grant's vesting schedule should only determine
+the amount of liquid tokens the grantee could withdraw at a given time.
 
-- upgradeable staking contracts as per RFC11
+Limited tattletale transfer::
+Abusing tattletale transfer to violate the rules of a token grant
+should provide little benefit at a significant cost.
+
+No illusory stake::
+The need for a reliable deterrent to misbehavior is prioritized
+over revocable grantees' opportunity to obtain staking rewards.
 
 === Implementation
 
-As per RFC11, acceptable staking contracts
-are defined in a global registry
-
-Token grant has its own upgrader key which can add a new staking contract,
-creating RFC11-like 2 factor authentication
-
-An acceptable staking contract must comply with the following:
-
-- the implementation of slashing tokens burns them all
-- the implementation of slashing tokens and rewarding a tattletale
-burns at least MINIMUM_BURN of the tokens
-and gives the rest as a tattletale reward
-to the named staker
-- OPTIONAL: tattletale rewards are time-locked for TATTLETALE_LOCK
-before being withdrawable by the staker's beneficiary as liquid KEEP tokens
-
-The MINIMUM_BURN places an absolute limit
-on the efficiency of tattletale transfer.
-Even without TATTLETALE_LOCK,
-tattletale transfer can only withdraw
-(1 - MINIMUM_BURN = REMAINING_UNBURNT) of the grant,
-effectively equal to withdrawing
-REMAINING_UNBURNT * GRANT_DURATION
-in advance at the cost of losing MINIMUM_BURN of their total grant.
-
-If TATTLETALE_LOCK is in place and exceeds REMAINING_UNBURNT * GRANT_DURATION,
-tattletale transfer does not release any tokens
-that wouldn't vest within TATTLETALE_LOCK anyway.
-If TATTLETALE_LOCK equals UNSTAKING_TIME,
-tattletale transfer cannot provide liquid tokens
-faster than protocol-compliant unstaking.
 
 === Token grants
 
@@ -134,133 +335,6 @@ Depending on the chosen design,
 _revocable_ grants may either be staked like non-revocable grants
 or restricted to staking only vested tokens.
 
-==== Preventing tattletale transfer: staking invariants
-
-To ensure the integrity of the token grant,
-the grantee must not be able to exploit reward and punishment mechanisms
-to efficiently withdraw unvested tokens in advance.
-
-This is achieved by requiring that
-when a staker is punished by slashing their staked tokens,
-most of the slashed tokens must be burned.
-Only a small fraction of slashed stakes may be seized
-and used to reward well-behaved participants.
-
-Optionally, it can be required that
-any seized tokens redistributed as _tattletale rewards_
-are locked for a minimum amount of time
-before the recipient of the tattletale reward can withdraw them.
-
-The _staking invariants_ consist of
-the defined _minimum burn fraction_ and,
-optionally, the _tattletale reward lock_.
-A staking contract which enforces these invariants
-does not compromise the integrity of the token grant scheme unacceptably,
-no matter what any individual staker does.
-
-===== Minimum burn fraction
-
-By burning most (e.g. 95%) of slashed tokens,
-the efficiency of tattletale transfer can be significantly constrained.
-If Alice proves Bob's misbehavior and Bob is penalized by 100 KEEP,
-at least 95 KEEP would be destroyed and at most 5 KEEP transferred to Alice.
-
-This serves two goals.
-First, Bob cannot efficiently withdraw unvested tokens
-through tattletale transfer.
-With a 95% minimum burn,
-only 1/20 of the slashed tokens can be t-transferred.
-On a 24-month grant this represents an amount
-that would vest in 1.2 months or roughly 37 days,
-at the cost of the entire rest of the grant.
-As the remaining vesting time grows shorter,
-this "advance withdrawal window" also grows narrower.
-
-Second, limiting tattletale transfer efficiency
-makes certain types of misbehavior more costly or less profitable.
-Burning tokens benefits all token-holders
-equally in proportion to how many tokens they own,
-while an adversary who expects to be caught
-can always collect the tattletale rewards
-from proving their own misbehavior.
-
-With a high tattletale transfer efficiency
-(80% for the sake of illustration)
-Alice and Bob could collaborate to misbehave and collect the tattletale reward,
-reducing the effective deterrent very significantly.
-If Alice and Bob together own 30% of the token supply,
-they would only suffer 14% of the nominal punishment:
-Alice would collect 80 KEEP as her tattletale reward
-and their remaining holdings would indirectly accrue
-30% of the value of the burned 20 KEEP (6 KEEP).
-With a 95% minimum burn Alice and Bob could only recoup 33.5%:
-5 KEEP as tattletale reward and 28.5 KEEP indirectly (95 KEEP * 0.30).
-
-Similarly, if Alice has compromised Bob's operator keys
-she could use tattletale transfer to steal Bob's stakes.
-It is desirable that compromised operators' stakes can be stolen,
-but it is also desirable to limit the fraction of the token supply
-owned by proven malicious parties.
-Some have estimated that 5% of all BTC have been stolen.
-If a similar amount of KEEP were to be stolen from compromised operators,
-with a 95% minimum burn
-the thieves would only represent 0.25% of stakeable tokens.
-
-===== Locking tattletale rewards
-
-As a further obstacle to "advance withdrawals" via tattletale transfer,
-all tattletale rewards could be locked for a time
-equal to the unstaking time (e.g. 3 months).
-With a 95% minimum burn and 3 month lock on tattletale rewards,
-the amount that can be "advance withdrawn" with tattletale transfer
-is less than the amount that would vest by the time the tokens are freed
-for grants vesting in less than 60 months.
-
-==== Enforcing staking invariants in upgrades
-
-Token grants need to be compatible with staking contract upgrades.
-It is not realistic to tie down the staking schemes
-for the entire duration of all grants,
-even if no new grants are made after launch.
-
-Without the need for upgradeability,
-it would be easy to create and deploy
-one staking contract which is known to enforce the required invariants.
-Grantees could then stake with the known good contract.
-Because this is not feasible,
-a method of enforcing the staking invariants on arbitrary staking contracts
-is required.
-
-An ideal solution would be
-that each staking contract proves that it conforms to the requirements.
-The grant contract would then permit staking on any contract
-which can present such a proof.
-However, there is no known way
-for contracts to prove their properties to other contracts.
-This necessitates a more indirect approach.
-
-At least two suitable approaches can be conceived:
-dividing the functionality of staking contracts
-into an invariant-enforcing _staking proxy_
-and an arbitrary _staking implementation_
-in a manner similar to RFC 9;
-or using human judgment to evaluate staking contracts off-chain
-and permitting staking on approved contracts only.
-
-===== Staking proxy
-
-In the _staking proxy_ model,
-staked tokens are transferred to staking proxy
-which enforces invariants
-while delegating other staking functionality to the actual staking contract.
-The staking contract has the authority to unstake, or punish the staker,
-by sending the appropriate message to the staking proxy.
-The staking proxy then applies the applicable staking invariants.
-
-The staking proxy can enforce invariants reliably,
-but to achieve this it has to implement a lot of the staking logic,
-resulting in additional complexity and duplication of work.
-
 ===== Approved staking contracts
 
 In the _approved staking contracts_ model,
@@ -302,7 +376,7 @@ the difference has been slashed in punishment
 and is recorded in the grant contract as such.
 Redelegating grant stakes is not supported.
 
-=== Withdrawing tokens from grants
+=== Tokens in grants
 
 ==== Token status
 
