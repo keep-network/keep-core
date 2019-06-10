@@ -39,9 +39,7 @@ func TestDiskPersistence_Save(t *testing.T) {
 
 	bytesToTest := []byte{115, 111, 109, 101, 10}
 
-	diskPersistence.CreateDir(dataDir, dirCurrent)
-	diskPersistence.CreateDir(pathToCurrent, dirName1)
-	diskPersistence.Save(bytesToTest, pathToDir, fileName11)
+	diskPersistence.Save(bytesToTest, dirName1, fileName11)
 
 	if _, err := os.Stat(pathToFile); os.IsNotExist(err) {
 		t.Fatalf("file [%+v] was supposed to be created", pathToFile)
@@ -57,24 +55,17 @@ func TestDiskPersistence_Save(t *testing.T) {
 func TestDiskPersistence_ReadAll(t *testing.T) {
 	diskPersistence := NewDiskHandle(dataDir)
 
-	pathToDir1 := fmt.Sprintf("%s/%s", pathToCurrent, dirName1)
-	pathToDir2 := fmt.Sprintf("%s/%s", pathToCurrent, dirName2)
-
 	bytesToTest := []byte{115, 111, 109, 101, 10}
 	expectedBytes := [][]byte{bytesToTest, bytesToTest, bytesToTest}
 
-	diskPersistence.CreateDir(dataDir, dirCurrent)
-	diskPersistence.CreateDir(pathToCurrent, dirName1)
-	diskPersistence.CreateDir(pathToCurrent, dirName2)
+	diskPersistence.Save(bytesToTest, dirName1, fileName11)
+	diskPersistence.Save(bytesToTest, dirName1, fileName12)
+	diskPersistence.Save(bytesToTest, dirName2, fileName21)
 
-	diskPersistence.Save(bytesToTest, pathToDir1, fileName11)
-	diskPersistence.Save(bytesToTest, pathToDir1, fileName12)
-	diskPersistence.Save(bytesToTest, pathToDir2, fileName21)
-
-	actual, _ := diskPersistence.ReadAll(pathToCurrent)
+	actual, _ := diskPersistence.ReadAll()
 
 	if len(actual) != 3 {
-		t.Fatalf("Number of membership does not match. \nExpected: [%+v]\nActual:   [%+v]",
+		t.Fatalf("Number of files does not match. \nExpected: [%+v]\nActual:   [%+v]",
 			3,
 			len(actual))
 	}
@@ -96,11 +87,7 @@ func TestDiskPersistence_Archive(t *testing.T) {
 
 	bytesToTest := []byte{115, 111, 109, 101, 10}
 
-	diskPersistence.CreateDir(dataDir, dirArchive)
-	diskPersistence.CreateDir(dataDir, dirCurrent)
-	diskPersistence.CreateDir(pathToCurrent, dirName1)
-
-	diskPersistence.Save(bytesToTest, pathMoveFrom, fileName11)
+	diskPersistence.Save(bytesToTest, dirName1, fileName11)
 
 	if _, err := os.Stat(pathMoveFrom); os.IsNotExist(err) {
 		if err != nil {
@@ -114,7 +101,7 @@ func TestDiskPersistence_Archive(t *testing.T) {
 		}
 	}
 
-	diskPersistence.Archive(pathMoveFrom, pathMoveTo)
+	diskPersistence.Archive(dirName1)
 
 	if _, err := os.Stat(pathMoveFrom); !os.IsNotExist(err) {
 		if err != nil {

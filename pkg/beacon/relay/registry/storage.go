@@ -14,11 +14,6 @@ type storage interface {
 	archive(groupName string) error
 }
 
-var (
-	currentDir = "current"
-	archiveDir = "archive"
-)
-
 type persistentStorage struct {
 	handle persistence.Handle
 }
@@ -37,34 +32,13 @@ func (ps *persistentStorage) save(membership *Membership) error {
 
 	hexGroupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytes())
 
-	err = ps.createStorageDir(hexGroupPublicKey)
-	if err != nil {
-		return err
-	}
-
 	return ps.handle.Save(membershipBytes, hexGroupPublicKey, "/membership_"+fmt.Sprint(membership.Signer.MemberID()))
-}
-
-func (ps *persistentStorage) createStorageDir(groupPublicKey string) error {
-	err := ps.handle.CreateDir(ps.handle.GetDataDir(), currentDir)
-	if err != nil {
-		return err
-	}
-
-	currentPath := fmt.Sprintf("%s/%s", ps.handle.GetDataDir(), currentDir)
-	err = ps.handle.CreateDir(currentPath, groupPublicKey)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (ps *persistentStorage) readAll() ([]*Membership, error) {
 	memberships := []*Membership{}
 
-	currentPath := fmt.Sprintf("%s/%s", ps.handle.GetDataDir(), currentDir)
-	bytesMemberships, err := ps.handle.ReadAll(currentPath)
+	bytesMemberships, err := ps.handle.ReadAll()
 	if err != nil {
 		return nil, err
 	}
@@ -82,13 +56,5 @@ func (ps *persistentStorage) readAll() ([]*Membership, error) {
 }
 
 func (ps *persistentStorage) archive(groupName string) error {
-	from := fmt.Sprintf("%s/%s/%s", ps.handle.GetDataDir(), currentDir, groupName)
-	to := fmt.Sprintf("%s/%s/%s", ps.handle.GetDataDir(), archiveDir, groupName)
-
-	err := ps.handle.CreateDir(ps.handle.GetDataDir(), archiveDir)
-	if err != nil {
-		return err
-	}
-
-	return ps.handle.Archive(from, to)
+	return ps.handle.Archive(groupName)
 }

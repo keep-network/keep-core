@@ -50,24 +50,14 @@ func (np *noopPersistence) Save(data []byte, directory string, name string) erro
 	return nil
 }
 
-func (np *noopPersistence) ReadAll(directory string) ([][]byte, error) {
+func (np *noopPersistence) ReadAll() ([][]byte, error) {
 	// noop
 	return nil, nil
 }
 
-func (np *noopPersistence) Archive(from, to string) error {
+func (np *noopPersistence) Archive(name string) error {
 	// noop
 	return nil
-}
-
-func (np *noopPersistence) CreateDir(base, name string) error {
-	// noop
-	return nil
-}
-
-func (np *noopPersistence) GetDataDir() string {
-	// noop
-	return ""
 }
 
 func init() {

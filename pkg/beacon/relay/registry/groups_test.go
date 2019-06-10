@@ -123,7 +123,7 @@ func TestUnregisterStaleGroups(t *testing.T) {
 
 	mockChain.markForRemoval(signer2.GroupPublicKeyBytes())
 
-	gr.UnregisterDeletedGroups()
+	gr.UnregisterStaleGroups()
 
 	group1 := gr.GetGroup(signer1.GroupPublicKeyBytes())
 	if group1 == nil {
@@ -179,7 +179,7 @@ func (dsm *dataStorageMock) Save(data []byte, directory string, name string) err
 	return nil
 }
 
-func (dsm *dataStorageMock) ReadAll(path string) ([][]byte, error) {
+func (dsm *dataStorageMock) ReadAll() ([][]byte, error) {
 	membershipBytes1, _ := (&Membership{
 		Signer:      signer1,
 		ChannelName: channelName1,
@@ -198,17 +198,7 @@ func (dsm *dataStorageMock) ReadAll(path string) ([][]byte, error) {
 	return [][]byte{membershipBytes1, membershipBytes2, membershipBytes3}, nil
 }
 
-func (dsm *dataStorageMock) Archive(from, to string) error {
+func (dsm *dataStorageMock) Archive(dir string) error {
 	// noop
 	return nil
-}
-
-func (dsm *dataStorageMock) CreateDir(base string, name string) error {
-	// noop
-	return nil
-}
-
-func (dsm *dataStorageMock) GetDataDir() string {
-	// noop
-	return ""
 }

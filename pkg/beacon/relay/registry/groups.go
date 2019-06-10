@@ -77,8 +77,8 @@ func (gr *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 	return gr.myGroups[groupKeyToString(groupPublicKey)]
 }
 
-// UnregisterDeletedGroups lookup for groups to be removed.
-func (gr *Groups) UnregisterDeletedGroups() error {
+// UnregisterStaleGroups lookup for groups to be removed.
+func (gr *Groups) UnregisterStaleGroups() error {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
@@ -90,13 +90,13 @@ func (gr *Groups) UnregisterDeletedGroups() error {
 
 		isStaleGroup, err := gr.relayChain.IsStaleGroup(publicKeyBytes)
 		if err != nil {
-			return fmt.Errorf("group removal eligibility check failed: [%v]", err)
+			return fmt.Errorf("staling group eligibility check has failed: [%v]", err)
 		}
 
 		if isStaleGroup {
 			err = gr.storage.archive(publicKey)
 			if err != nil {
-				return fmt.Errorf("group removal from the disk has failed: [%v]", err)
+				return fmt.Errorf("group archiving has failed: [%v]", err)
 			}
 
 			delete(gr.myGroups, publicKey)

@@ -11,8 +11,23 @@ var (
 	errNoFileExists = fmt.Errorf("please provide a file name")
 )
 
+const (
+	currentDir = "current"
+	archiveDir = "archive"
+)
+
 // NewDiskHandle creates on-disk data persistence handle
 func NewDiskHandle(path string) Handle {
+	err := createDir(path, currentDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error occured while creating [%v] directory: [%v]", currentDir, err)
+	}
+
+	err = createDir(path, archiveDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error occured while creating [%v] directory: [%v]", archiveDir, err)
+	}
+
 	return &diskPersistence{
 		dataDir: path,
 	}
@@ -22,20 +37,28 @@ type diskPersistence struct {
 	dataDir string
 }
 
-// Save - writes data to a file
-func (ds *diskPersistence) Save(data []byte, dirPath, fileName string) error {
+// Save - writes data to the 'current' directory
+func (ds *diskPersistence) Save(data []byte, dirName, fileName string) error {
+	dirPath := fmt.Sprintf("%s/%s", ds.dataDir, currentDir)
+	err := createDir(dirPath, dirName)
+	if err != nil {
+		return err
+	}
+
 	file := &file{
-		filePath: fmt.Sprintf("%s%s", dirPath, fileName),
+		filePath: fmt.Sprintf("%s/%s%s", dirPath, dirName, fileName),
 	}
 
 	return file.write(data)
 }
 
-// ReadAll reads all the memberships from a dir path
-func (ds *diskPersistence) ReadAll(dirPath string) ([][]byte, error) {
-	file := &file{}
+// ReadAll data from the 'current' directory
+func (ds *diskPersistence) ReadAll() ([][]byte, error) {
+	file := &file{
+		filePath: fmt.Sprintf("%s/%s", ds.dataDir, currentDir),
+	}
 
-	memberships, err := file.readAll(dirPath)
+	memberships, err := file.readAll()
 	if err != nil {
 		return nil, fmt.Errorf("error occured while reading data from disk: [%v]", err)
 	}
@@ -43,16 +66,17 @@ func (ds *diskPersistence) ReadAll(dirPath string) ([][]byte, error) {
 	return memberships, nil
 }
 
-// Archive a file
-func (ds *diskPersistence) Archive(fromDir, toDir string) error {
-	file := &file{}
+// Archive a file to the 'archive' directory
+func (ds *diskPersistence) Archive(dir string) error {
+	file := &file{
+		filePath: ds.dataDir,
+	}
 
-	return file.archive(fromDir, toDir)
+	return file.archive(dir)
 }
 
-// CreateDir creates a directory by giving a dir path and a new dir name
-func (ds *diskPersistence) CreateDir(dirBasePath, dirName string) error {
-	dirPath := fmt.Sprintf("%s/%s", dirBasePath, dirName)
+func createDir(dirBasePath, newDirName string) error {
+	dirPath := fmt.Sprintf("%s/%s", dirBasePath, newDirName)
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		err = os.Mkdir(dirPath, os.ModePerm)
 		if err != nil {
@@ -61,10 +85,6 @@ func (ds *diskPersistence) CreateDir(dirBasePath, dirName string) error {
 	}
 
 	return nil
-}
-
-func (ds *diskPersistence) GetDataDir() string {
-	return ds.dataDir
 }
 
 // File represents a file on disk that a caller can use to write/read into or remove it.
@@ -113,8 +133,8 @@ func (f *file) read(fileName string) ([]byte, error) {
 	return data, nil
 }
 
-func (f *file) readAll(dirPath string) ([][]byte, error) {
-	files, err := ioutil.ReadDir(dirPath)
+func (f *file) readAll() ([][]byte, error) {
+	files, err := ioutil.ReadDir(f.filePath)
 	if err != nil {
 		return nil, fmt.Errorf("error occured while reading dir: [%v]", err)
 	}
@@ -123,12 +143,12 @@ func (f *file) readAll(dirPath string) ([][]byte, error) {
 
 	for _, file := range files {
 		if file.IsDir() {
-			dir, err := ioutil.ReadDir(fmt.Sprintf("%s/%s", dirPath, file.Name()))
+			dir, err := ioutil.ReadDir(fmt.Sprintf("%s/%s", f.filePath, file.Name()))
 			if err != nil {
 				return nil, fmt.Errorf("error occured while reading a directory: [%v]", err)
 			}
 			for _, dirFile := range dir {
-				data, err := f.read(fmt.Sprintf("%s/%s/%s", dirPath, file.Name(), dirFile.Name()))
+				data, err := f.read(fmt.Sprintf("%s/%s/%s", f.filePath, file.Name(), dirFile.Name()))
 				if err != nil {
 					return nil, fmt.Errorf("error occured while reading a file in directory: [%v]", err)
 				}
@@ -140,8 +160,11 @@ func (f *file) readAll(dirPath string) ([][]byte, error) {
 	return result, nil
 }
 
-func (f *file) archive(fromDir, toDir string) error {
-	err := os.Rename(fromDir, toDir)
+func (f *file) archive(dir string) error {
+	from := fmt.Sprintf("%s/%s/%s", f.filePath, currentDir, dir)
+	to := fmt.Sprintf("%s/%s/%s", f.filePath, archiveDir, dir)
+
+	err := os.Rename(from, to)
 	if err != nil {
 		return fmt.Errorf("error occured while moving a dir: [%v]", err)
 	}
