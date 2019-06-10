@@ -1,0 +1,24 @@
+# Configured by Kube. Do not edit by hand, your changes will be lost!
+
+[ethereum]
+  URL = "Set by Kube"
+  URLRPC = "Set by Kube"
+
+  [ethereum.account]
+    Address = "Set by Kube"
+    KeyFile = "Set by Kube"
+
+  [ethereum.ContractAddresses]
+    # Hex-encoded address of KeepRandomBeacon contract
+    KeepRandomBeacon = "Set by Kube"
+    # Hex-encoded address of KeepGroup contract
+    KeepGroup = "Set by Kube"
+    # StakingProxy
+    StakingProxy = "Set by Kube"
+
+[LibP2P]
+  Peers = ["/ip4/10.102.100.142/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r"]
+  Port = "Set by Kube."
+
+[Storage]
+  DataDir = "/tmp"
