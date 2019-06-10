@@ -218,7 +218,7 @@ async function unlockEthAccount(ethAccount, ethAccountPassword) {
 
 async function fundOperatorAccount(operator, purse, etherToTransfer) {
 
-  let transferAmount = web3.toWei(etherToTransfer, "ether")
+  let transferAmount = web3.utils.toWei(etherToTransfer, "ether")
 
   console.log("Funding account " + operator + " with " + transferAmount + " wei from purse " + purse);
   await web3.eth.sendTransaction({from:purse, to:operator, value:transferAmount});
