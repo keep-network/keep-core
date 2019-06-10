@@ -8,24 +8,19 @@ toc::[]
 
 == Background
 
-Token grants are required for launch,
-grant recipients should be able to stake with their grant
-without compromising the integrity of the network
-
-=== Token grants
-
 A token grant represents a gradual transfer of KEEP tokens
-from the _grant creator_ to the _grantee_.
+from the grant creator to the _grantee_.
 The difference between these _grant tokens_ and ordinary _liquid tokens_ is
 that grant tokens cannot be transferred away from the grant
 before their ownership is fully transferred to the grantee
 according to a _vesting schedule_.
 
 In addition, some grants will be _revocable_
-so that the grant creator can _revoke_ the remaining grant
-and the remaining unvested tokens will return to the grant creator.
+so that the grant manager can _revoke_ the remaining grant
+and the remaining unvested tokens
+will return to an address specified by the grant manager.
 
-==== Use-cases and expected characteristics
+=== Use-cases and expected characteristics
 
 Keep Org uses token grants widely,
 to distribute tokens to investors and to reward employees.
@@ -239,12 +234,13 @@ unless the proxy itself is upgradeable.
 
 Non-revocable token grants are staked with unlimited stake-ahead,
 by transferring liquid tokens from the grant contract
-to a staking contract authorized by the grant's creator.
+to a staking contract authorized by the grant's manager,
+appointed by the grant creator upon grant creation.
 Revocable grants can't be staked through the grant contract;
 instead, vested liquid tokens can be withdrawn and staked normally.
 
-Authorized staking contracts are assumed to enforce the invariants
-a particular grant's creator wants enforced.
+_Authorized staking contracts_ are assumed to enforce the invariants
+a particular grant's manager wants enforced.
 For the use of Keep Org's grants,
 this consists of a _minimum burn fraction_ of 95%:
 when a staker is slashed,
@@ -252,7 +248,7 @@ at least 95% of the tokens are burned and at most 5% are seized.
 
 Authorized staking contracts are identified
 using a two-role authorization from RFC 11:
-the grant creator can authorize contracts from a global master list
+the grant manager can authorize contracts from a global master list
 of staking contracts sanctioned by the governance structure.
 
 Upgrades to staking contracts are accommodated
@@ -285,68 +281,248 @@ over revocable grantees' opportunity to obtain staking rewards.
 
 === Implementation
 
-
-=== Token grants
-
-Token grants are made by transferring
-an amount of tokens equal to the _grant amount_
-to the _grant contract_, and designating the
-_grantee_ (grant recipient),
-_vesting duration_,
-_vesting cliff_,
-grant _revocability_,
-and _grant creator_.
-
-==== Vesting
-
 A token grant represents a gradual transfer of KEEP tokens
-from the _grant creator_ to the _grantee_.
-Tokens in a grant are locked until vested according to a linear schedule
-defined by the _vesting duration_ and the _vesting cliff_.
-The _time elapsed_ since grant creation
-is divided by the _vesting duration_
-to determine the fraction of vested tokens.
-The _grant amount_ is then multiplied by this _vested fraction_.
-However, if the _time elapsed_ is less than the _vesting cliff_,
-the _vested fraction_ is defined as 0.
+from the creator of the grant to the _grantee_ (grant recipient).
+
+A token grant is characterized by its _basic parameters_
+and its _vesting schedule_.
+
+==== Basic parameters
+
+The basic parameters of a token grant
+include the _grant manager_,
+the _grant recipient_,
+the _grant amount_
+and the _revocability_ of the grant.
+
+Grant manager::
+The address appointed to manage the grant.
+If the grant is irrevocable,
+the grant manager may determine the _authorized staking contracts_
+the grant can be staked on.
+If the grant is revocable,
+the grant manager may revoke the grant.
+
+Grant recipient::
+The address of the party receiving the grant.
+The recipient may withdraw vested tokens from the grant,
+or stake non-revocable grant tokens.
+
+Grant amount::
+The number of tokens involved in the grant.
+
+Revocability::
+Whether the grant is revocable (_True_) or non-revocable (_False_).
+
+===== Revocability
+
+Token grants may be _revocable_ or _non-revocable_.
+A non-revocable grant represents an irreversible transfer of tokens
+that, once initiated, cannot be stopped or altered.
+A revocable grant represents a conditional transfer,
+subject to continuing consent of the grant manager.
+The grant manager can revoke a revocable grant at any time.
+If a grant is revoked,
+all unvested tokens are returned to an address specified by the grant manager.
+Vested tokens remain in the grant
+and are available for the grantee to withdraw.
+
+==== Vesting schedule
+
+Tokens in a grant are locked until _vested_
+according to a linear schedule defined by
+the _starting time_,
+_grant duration_
+and the _vesting cliff_.
+
+Tokens in the grant start vesting at the starting time,
+becoming available for withdrawal gradually over the grant duration.
+The vesting cliff denotes the earliest time
+tokens can be withdrawn from the grant.
 
 Vested tokens that aren't otherwise in use
-can be withdrawn at the grantee's discretion,
-while unvested tokens remain in the grant contract
-and can only be used for staking, if permitted.
+can be withdrawn at the grantee's discretion.
 
-==== Revocable grants
+Starting time::
+The time the grant begins vesting.
+The starting time of a grant
+may differ from the exact time the grant creation transaction is processed.
 
-_Revocable_ grants can be revoked by the _grant creator_ at any time.
-If a grant is revoked,
-all unvested tokens are returned to the _grant creator_
-but the _grantee_ can keep any vested tokens.
+Grant duration::
+Time after starting until the grant is fully vested
+and all tokens may be withdrawn.
 
-=== Staking token grants
+Vesting cliff::
+The earliest time after starting tokens can be withdrawn from the grant.
 
-Token grants are staked by instructing the grant contract to stake them
+==== Creating a token grant
+
+A token grant is created by submitting a transaction
+defining the _basic parameters_ and the _vesting schedule_,
+and transferring the _grant amount_ of tokens to the grant contract.
+
+===== Example
+
+Alice wants to transfer 1,000 KEEP to Bob and Carol each.
+Bob should receive his tokens over 12 months,
+and be able to start withdrawing tokens after 1 month.
+Carol's grant should be revocable,
+lasting 24 months with a 6 month vesting cliff.
+
+----
+Grant 1
+Manager: Alice
+Recipient: Bob
+Amount: 1,000 KEEP
+Starting time: T_0
+Duration: 12 months
+Vesting cliff: 1 month
+Revocable: False
+
+Grant 2
+Manager: Alice
+Recipient: Carol
+Amount: 1,000 KEEP
+Starting time: T_0
+Duration: 24 months
+Vesting cliff: 6 months
+Revocable: True
+----
+
+==== Grant status
+
+When a grant is created,
+all grant tokens start unvested and unstaked.
+
+Over time, grant tokens will vest
+and become available for withdrawal as liquid tokens.
+_Vesting status_ is calculated implicitly
+from the vesting schedule and the current time.
+
+Grant tokens can be withdrawn once vested.
+Non-revocable grant tokens can also be staked,
+and staked tokens can be lost as punishment.
+The _usage status_ of a grant's tokens tracks these developments.
+
+===== Vesting status
+
+All grant tokens are either _vested_ or _unvested_.
+The vested amount at some time
+represents the maximum number of tokens that may be withdrawn at that time.
+Grant tokens vest linearly over the grant duration;
+when half of the grant duration has elapsed
+50% of the grant tokens will have vested, and so on.
+However, until the vesting cliff is reached,
+the number of vested tokens is fixed at zero.
+
+The amount of vested tokens at time `time_now` is calculated as follows:
+
+[source, python]
+----
+time_elapsed = time_now - time_starting
+cliff_reached = time_now >= vesting_cliff
+
+if cliff_reached:
+    vested_fraction = time_elapsed / grant_duration
+else:
+    vested_fraction = 0
+
+vested_tokens = grant_amount * vested_fraction
+----
+
+3 months in, Bob's vesting cliff has been reached,
+so the amount of vested tokens in Bob's grant equals
+`1000 KEEP * (3 months / 12 months) = 250 KEEP`.
+Carol's 6-month vesting cliff has not been reached;
+if it had, her grant would have
+`1000 KEEP * (3 months / 24 months) = 125 KEEP`
+available for withdrawal.
+
+===== Usage status
+
+The _usage status_ of a grant's tokens consists of
+_available_, _withdrawn_, _staked_, and _slashed_;
+all grant tokens fall within one of these categories.
+
+_Withdrawn_ means tokens that have vested
+and been withdrawn from the grant as liquid tokens.
+The number of withdrawn tokens is tracked in its own entry,
+which is updated whenever a successful withdrawal is performed.
+
+_Staked_ grant tokens are actively being used
+as collateral for staking.
+The number of staked tokens is calculated
+by summing the _staked amount_ in each individual _grant stake_ of the grant.
+
+_Slashed_ grant tokens were staked and have been lost in a penalty.
+The grant tracks the number of slashed tokens explicitly.
+When a grant stake has finished unstaking and its tokens are returned,
+the difference between the returned amount and the original stake
+is added into the slashed tokens.
+With revocable tokens, the _slashed_ status is used for revocation.
+
+Tokens in the grant that aren't _withdrawn_, _staked_, or _slashed_
+are _available_ by default.
+Available grant tokens can be withdrawn if the vesting schedule permits,
+or staked if the grant is non-revocable.
+The number of available grant tokens is calculated
+by subtracting _withdrawn_, _staked_ and _slashed_ tokens
+from the grant amount.
+
+===== Grant stakes
+
+When non-revocable grant tokens are staked,
+some relevant information is stored in a _grant stake_ entry.
+Each non-revocable grant maintains a list of its grant stakes.
+
+A grant stake entry includes
+the _staking contract_ used for the stake,
+the _operator address_ of the stake,
+and the _staked amount_ originally transferred to the staking contract.
+Grant stakes can be uniquely addressed by the pair
+`(staking_contract, operator_address)`.
+
+A grant stake entry is erased
+when its corresponding stake has finished unstaking
+and its tokens are successfully returned to the owner.
+
+==== Grant records
+
+Each token grant is stored in the _grant contract_ as a _grant record_.
+The grant record consists of the following:
+
+* Basic parameters:
+  * _grant manager_
+  * _grant recipient_
+  * _grant amount_
+  * _revocability_
+* Vesting schedule:
+  * _creation time_
+  * _grant duration_
+  * _vesting cliff_
+* Grant status records:
+  * _withdrawn tokens_
+  * _slashed tokens_
+  * _grant stakes_
+
+==== Staking token grants
+
+Non-revocable token grants are staked
+by instructing the grant contract to stake them
 with an _operator_, _beneficiary_ and _authorizer_ appointed by the _grantee_.
 The grant contract acts as the _owner_ of the stake.
 
-With _non-revocable_ grants,
-both vested and unvested tokens can be staked
+Both vested and unvested tokens can be staked
 and the rewards collected by the grantee.
-Depending on the chosen design,
-_revocable_ grants may either be staked like non-revocable grants
-or restricted to staking only vested tokens.
 
-===== Approved staking contracts
+==== Authorized staking contracts
 
-In the _approved staking contracts_ model,
+In the _authorized staking contracts_ model,
 grants can be staked in any staking contract
 that has been approved by the _grant authorizer_.
 The _grant authorizer_ is expected to audit new staking contracts
 and verify that they enforce the desired invariants adequately,
 before approving them for staking grants.
-
-The _grant authorizer_ could either be
-the _grant creator_ of an individual grant,
-or a global role, ultimately controlled by the governance structure.
 
 When a staking contract has been approved,
 the grant contract will trust it to enforce the staking invariants
@@ -376,52 +552,49 @@ the difference has been slashed in punishment
 and is recorded in the grant contract as such.
 Redelegating grant stakes is not supported.
 
-=== Tokens in grants
+===== Option A: registry master as grant authorizer
 
-==== Token status
+In option A,
+any staking contract listed on the _registry_
+as a _sanctioned staking contract_
+is automatically authorized for grant staking.
 
-Tokens in grants are divided in two ways:
-by _vesting status_ and by _usage status_.
+If the role of the _registry master_ is compromised,
+arbitrary "staking contracts" can be authorized.
+Existing stakes on legitimate staking contracts are unaffected,
+but unstaked irrevocable grants can be emptied.
 
-===== Vesting status
+===== Option B: global grant authorizer
 
-The _vesting status_ is divided to _vested_ and _unvested_.
-Vested tokens can can be withdrawn if otherwise available;
-unvested tokens must stay in the grant until vested.
+In option B,
+the grant contract has its own _grant authorizer_ role,
+approving staking contracts for all grantees.
+All grants share the same authorized staking contracts,
+ensuring that the disappearance of the grant manager
+does not prevent grantees from staking on new contracts.
 
-===== Usage status
+A staking contract can be approved by the grant authorizer
+only if it has been _sanctioned_ on the registry.
+The authorizations in Option B are similar to
+how _service contracts/gateways_ are managed in RFC 11.
+As in RFC 11, the compromise of neither the _registry master_
+nor _grant authorizer_ alone can compromise token grants;
+both must be compromised simultaneously.
 
-The _usage status_ consists of
-_available_, _withdrawn_, _staked_, and _slashed_.
+===== Option C: grant manager as grant authorizer
 
-Tokens in the grant that aren't _withdrawn_, _staked_, or _slashed_
-are _available_ by default.
-_Available_ tokens can be staked,
-or withdrawn if the vesting schedule permits.
+In option C,
+_grant managers_ authorize staking contracts
+for all grants they manage.
+Grants with the same _grant manager_
+share the same authorized staking contracts.
 
-_Withdrawn_ means tokens that have vested
-and been withdrawn from the grant as liquid tokens.
+Like in option B,
+staking contracts must be _sanctioned_ to be authorized.
 
-_Staked_ is the sum of tokens in a grant
-that have been staked over all applicable _grant stakes_.
+==== Operations on grants
 
-_Slashed_ tokens is the total difference
-between the amounts that had originally been staked in _grant stakes_
-and the amounts actually returned when unstaking.
-
-==== Grant stakes
-
-The grant contract keeps track of all active _stakers_
-that have been created by the grantee.
-A _grant stake_ consists of the triplet
-`(staking_contract, operator, staking_amount)`.
-A _grant stake_ is created when the grantee stakes grant tokens,
-and is removed when the grant contract successfully reclaims
-the ex-staker's unstaked tokens from the staking contract.
-
-=== Operations on grant tokens
-
-==== Withdrawing
+===== Withdrawing tokens
 
 _Vested_ tokens that haven't already been _withdrawn_
 can be withdrawn at the discretion of the grantee, if tokens are available.
@@ -439,7 +612,7 @@ and send the grantee _withdrawal amount_ tokens.
 If the _withdrawal amount_ exceeds the _maximum withdrawal_,
 the withdrawal will fail.
 
-==== Staking
+===== Staking tokens
 
 _Available_ tokens can be staked regardless of vesting status.
 
@@ -464,7 +637,7 @@ is recorded in the grantee's _grant stakes_.
 The _staking amount_ is added to _staked_ tokens of the grant,
 reducing the _available_ tokens by the same amount.
 
-==== Unstaking
+===== Unstaking a grant stake
 
 At any time, the grantee can request any _grant stake_ to be unstaked.
 To unstake, the grantee specifies the _staking contract_ and _operator_
@@ -475,7 +648,7 @@ matches an active _grant stake_ of the grantee,
 the grant contract will request the _staking contract_ to initiate unstaking.
 Otherwise, the grant contract will ignore the request.
 
-==== Reclaiming unstaked tokens
+===== Reclaiming tokens from an unstaked grant stake
 
 At any time, the grantee can request any _grant stake_ to be reclaimed.
 The grantee specifies the _staking contract_ and _operator_
@@ -500,6 +673,30 @@ the _difference_ is added to _slashed_ grant tokens,
 the _staking amount_ is subtracted from _staked_ grant tokens,
 and the _returned amount_ is added to _available_ grant tokens.
 In either case, the _grant stake_ is removed.
+
+===== Revoking the grant
+
+A revocable grant can be revoked at any time by the grant manager.
+Revoking a grant slashes its unvested tokens,
+transferring them to an address specified by the manager.
+
+Grants are revoked by submitting a transaction
+specifying the grant to be revoked
+and the recipient address.
+
+The grant contract checks that the grant exists,
+is revocable,
+and the transaction was sent by the grant manager.
+
+A revocable grant cannot be staked,
+so the slashed amount on a revocable grant shows whether it has been revoked.
+If the grant already has slashed tokens,
+it has been revoked earlier and the repeat revocation is ignored.
+
+If the checks pass,
+the amount of unvested tokens in the grant is calculated.
+The _unvested amount_ is added to the _slashed_ grant tokens
+and transferred to the recipient address.
 
 === Limitations
 
