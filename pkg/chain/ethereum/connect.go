@@ -3,6 +3,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -23,6 +24,8 @@ type ethereumChain struct {
 	keepRandomBeaconContract *contract.KeepRandomBeacon
 	stakingContract          *contract.StakingProxy
 	accountKey               *keystore.Key
+
+	transactionMutex *sync.Mutex
 }
 
 // Connect makes the network connection to the Ethereum network.  Note: for
@@ -57,10 +60,11 @@ func Connect(config Config) (chain.Handle, error) {
 	}
 
 	pv := &ethereumChain{
-		config:    config,
-		client:    client,
-		clientRPC: clientrpc,
-		clientWS:  clientws,
+		config:           config,
+		client:           client,
+		clientRPC:        clientrpc,
+		clientWS:         clientws,
+		transactionMutex: &sync.Mutex{},
 	}
 
 	if pv.accountKey == nil {
@@ -88,6 +92,7 @@ func Connect(config Config) (chain.Handle, error) {
 			*address,
 			pv.accountKey,
 			pv.client,
+			pv.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -107,6 +112,7 @@ func Connect(config Config) (chain.Handle, error) {
 			*address,
 			pv.accountKey,
 			pv.client,
+			pv.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to KeepGroup contract: [%v]", err)
@@ -123,6 +129,7 @@ func Connect(config Config) (chain.Handle, error) {
 			*address,
 			pv.accountKey,
 			pv.client,
+			pv.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to TokenStaking contract: [%v]", err)

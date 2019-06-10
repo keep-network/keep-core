@@ -4,6 +4,8 @@
 package contract
 
 import (
+	"sync"
+
 	ethereumabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -21,12 +23,15 @@ type {{.Class}} struct {
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
 	errorResolver     *ethutil.ErrorResolver
+
+	transactionMutex *sync.Mutex
 }
 
 func New{{.Class}}(
     contractAddress common.Address,
     accountKey *keystore.Key,
     backend bind.ContractBackend,
+    transactionMutex *sync.Mutex,
 ) (*{{.Class}}, error) {
 	callerOptions := &bind.CallOpts{
 		From: contractAddress,
@@ -58,6 +63,7 @@ func New{{.Class}}(
 		callerOptions:     callerOptions,
 		transactorOptions: transactorOptions,
 		errorResolver:     ethutil.NewErrorResolver(backend, &contractAbi, &contractAddress),
+		transactionMutex:  transactionMutex,
 	}, nil
 }
 
