@@ -126,7 +126,7 @@ async function provisionKeepClient() {
     of the bootstrap peer to InitContainer generated accounts.
     */
     console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operator + ' >>>>>>>>>>>>');
-    await fundOperatorAccount(operator, purse, 1000000);
+    await fundOperatorAccount(operator, purse, 1000000000000);
 
     console.log('\n<<<<<<<<<<<< Staking Operator Account ' + operator + ' >>>>>>>>>>>>');
     await stakeOperatorAccount(operator, contractOwner);
