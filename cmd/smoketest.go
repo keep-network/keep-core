@@ -50,6 +50,11 @@ func (np *noopPersistence) Save(data []byte, directory string, name string) erro
 	return nil
 }
 
+func (np *noopPersistence) ReadAll() ([][]byte, error) {
+	// noop
+	return nil, nil
+}
+
 func init() {
 	SmokeTestCommand = cli.Command{
 		Name:        "smoke-test",

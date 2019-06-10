@@ -6,6 +6,11 @@ import (
 	"os"
 )
 
+var (
+	//ErrNoFileExists an error is shown when no file name was provided
+	errNoFileExists = fmt.Errorf("please provide a file name")
+)
+
 // NewDiskHandle creates on-disk data persistence handle
 func NewDiskHandle(path string) Handle {
 	return &diskPersistence{
@@ -31,6 +36,18 @@ func (ds *diskPersistence) Save(data []byte, dirName string, fileName string) er
 	return file.write(data)
 }
 
+// ReadAll reads all the memberships from a dir path
+func (ds *diskPersistence) ReadAll() ([][]byte, error) {
+	file := &file{}
+
+	memberships, err := file.readAll(ds.dataDir)
+	if err != nil {
+		return nil, fmt.Errorf("error occured while reading data from disk: [%v]", err)
+	}
+
+	return memberships, nil
+}
+
 func (ds *diskPersistence) createDir(dirName string) (string, error) {
 	dirPath := fmt.Sprintf("%s/%s", ds.dataDir, dirName)
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
@@ -42,11 +59,6 @@ func (ds *diskPersistence) createDir(dirName string) (string, error) {
 
 	return dirPath, nil
 }
-
-var (
-	//ErrNoFileExists an error is shown when no file name was provided
-	errNoFileExists = fmt.Errorf("please provide a file name")
-)
 
 // File represents a file on disk that a caller can use to read and write into.
 type file struct {
@@ -60,7 +72,6 @@ func (f *file) write(data []byte) error {
 		return errNoFileExists
 	}
 
-	var err error
 	writeFile, err := os.Create(f.filePath)
 	if err != nil {
 		return err
@@ -78,12 +89,8 @@ func (f *file) write(data []byte) error {
 	return nil
 }
 
-// Read a file from a file system
+// read a file from a file system
 func (f *file) read(fileName string) ([]byte, error) {
-	if f.filePath == "" {
-		return nil, errNoFileExists
-	}
-
 	readFile, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
@@ -97,6 +104,34 @@ func (f *file) read(fileName string) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+// readAll returns all memberships for a Keep node
+func (f *file) readAll(dirPath string) ([][]byte, error) {
+	files, err := ioutil.ReadDir(dirPath)
+	if err != nil {
+		return nil, fmt.Errorf("error occured while reading DataDir: [%v]", err)
+	}
+
+	result := [][]byte{}
+
+	for _, file := range files {
+		if file.IsDir() {
+			dir, err := ioutil.ReadDir(fmt.Sprintf("%s/%s", dirPath, file.Name()))
+			if err != nil {
+				return nil, fmt.Errorf("error occured while reading a directory: [%v]", err)
+			}
+			for _, dirFile := range dir {
+				data, err := f.read(fmt.Sprintf("%s/%s/%s", dirPath, file.Name(), dirFile.Name()))
+				if err != nil {
+					return nil, fmt.Errorf("error occured while reading a file in directory: [%v]", err)
+				}
+				result = append(result, data)
+			}
+		}
+	}
+
+	return result, nil
 }
 
 // Remove a file from a file system

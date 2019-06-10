@@ -10,6 +10,7 @@ import (
 
 type storage interface {
 	save(membership *Membership) error
+	readAll() ([]*Membership, error)
 }
 
 type persistentStorage struct {
@@ -31,4 +32,24 @@ func (ps *persistentStorage) save(membership *Membership) error {
 	hexGroupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytes())
 
 	return ps.handle.Save(membershipBytes, hexGroupPublicKey, "/membership_"+fmt.Sprint(membership.Signer.MemberID()))
+}
+
+func (ps *persistentStorage) readAll() ([]*Membership, error) {
+	memberships := []*Membership{}
+
+	bytesMemberships, err := ps.handle.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, byteMembership := range bytesMemberships {
+		membership := &Membership{}
+		err := membership.Unmarshal(byteMembership)
+		if err != nil {
+			return nil, fmt.Errorf("could not unmarshal membership: [%v]", err)
+		}
+		memberships = append(memberships, membership)
+	}
+
+	return memberships, nil
 }
