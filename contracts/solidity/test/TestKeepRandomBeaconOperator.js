@@ -1,9 +1,9 @@
 import exceptThrow from './helpers/expectThrow';
 import {initContracts} from './helpers/initContracts';
 
-contract('TestKeepRandomBeaconBackend', function(accounts) {
+contract('TestKeepRandomBeaconOperator', function(accounts) {
 
-  let backend;
+  let operatorContract;
 
   before(async () => {
     let contracts = await initContracts(
@@ -13,22 +13,22 @@ contract('TestKeepRandomBeaconBackend', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconFrontend.sol'),
       artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconBackend.sol')
+      artifacts.require('./KeepRandomBeaconOperator.sol')
     );
-    backend = contracts.backend;
+    operatorContract = contracts.operatorContract;
   });
 
   it("should fail to update minimum stake by non owner", async function() {
-    await exceptThrow(backend.setMinimumStake(123, {from: accounts[1]}));
+    await exceptThrow(operatorContract.setMinimumStake(123, {from: accounts[1]}));
   });
 
   it("should be able to update minimum stake by the owner", async function() {
-    await backend.setMinimumStake(123);
-    let newMinStake = await backend.minimumStake();
+    await operatorContract.setMinimumStake(123);
+    let newMinStake = await operatorContract.minimumStake();
     assert.equal(newMinStake, 123, "Should be able to get updated minimum stake.");
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
-    assert.isTrue(await backend.initialized(), "Implementation contract should be initialized.");
+    assert.isTrue(await operatorContract.initialized(), "Implementation contract should be initialized.");
   });
 });

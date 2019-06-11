@@ -8,7 +8,7 @@ const FrontendImplV2 = artifacts.require('./examples/KeepRandomBeaconFrontendUpg
 
 contract('TestKeepRandomBeaconUpgrade', function(accounts) {
 
-  let backend, frontendProxy, frontend, frontendImplV2, frontendV2,
+  let operatorContract, frontendProxy, frontend, frontendImplV2, frontendV2,
     account_two = accounts[1];
 
   before(async () => {
@@ -19,10 +19,10 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       FrontendProxy,
       artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconBackendStub.sol')
+      artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
 
-    backend = contracts.backend;
+    operatorContract = contracts.operatorContract;
     frontend = contracts.frontend;
     frontendProxy = await FrontendProxy.at(frontend.address);
 
@@ -30,11 +30,11 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     frontendV2 = await FrontendImplV2.at(frontendProxy.address);
 
     // Using stub method to add first group to help testing.
-    await backend.registerNewGroup(bls.groupPubKey);
+    await operatorContract.registerNewGroup(bls.groupPubKey);
 
     // Modify state so we can test later that eternal storage works as expected after upgrade
     await frontend.requestRelayEntry(bls.seed, {value: 10});
-    await backend.relayEntry(2, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+    await operatorContract.relayEntry(2, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
   });
 
@@ -48,7 +48,7 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
 
   it("should be able to upgrade implementation and initialize it with new data", async function() {
     await frontendProxy.upgradeTo(frontendImplV2.address);
-    await frontendV2.initialize(100, duration.days(0), backend.address, 0);
+    await frontendV2.initialize(100, duration.days(0), operatorContract.address, 0);
 
     assert.isTrue(await frontendV2.initialized(), "Implementation contract should be initialized.");
 

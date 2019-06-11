@@ -2,11 +2,11 @@ import { duration } from './increaseTime';
 import { bls } from './data';
 
 async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, KeepRandomBeaconFrontend,
-  KeepRandomBeaconFrontendImplV1, KeepRandomBeaconBackend) {
+  KeepRandomBeaconFrontendImplV1, KeepRandomBeaconOperator) {
 
   let token, stakingProxy, stakingContract,
     frontendImplV1, frontendProxy, frontend,
-    backend;
+    operatorContract;
 
   let minimumStake = 200000,
     groupThreshold = 15,
@@ -35,25 +35,25 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
   frontendProxy = await KeepRandomBeaconFrontend.new(frontendImplV1.address);
   frontend = await KeepRandomBeaconFrontendImplV1.at(frontendProxy.address)
 
-  // Initialize Keep Random Beacon backend contract
-  backend = await KeepRandomBeaconBackend.new();
-  await backend.initialize(
+  // Initialize Keep Random Beacon operator contract
+  operatorContract = await KeepRandomBeaconOperator.new();
+  await operatorContract.initialize(
     stakingProxy.address, frontend.address, minimumStake, groupThreshold,
     groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     activeGroupsThreshold, groupActiveTime,
     bls.groupSignature, bls.groupPubKey
   );
 
-  await frontend.initialize(minPayment, withdrawalDelay, backend.address, relayRequestTimeout);
+  await frontend.initialize(minPayment, withdrawalDelay, operatorContract.address, relayRequestTimeout);
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-  await backend.authorizeStakingContract(stakingContract.address);
-  await backend.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+  await operatorContract.authorizeStakingContract(stakingContract.address);
+  await operatorContract.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
   return {
     token: token,
     frontend: frontend,
-    backend: backend
+    operatorContract: operatorContract
   };
 };
 

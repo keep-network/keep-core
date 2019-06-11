@@ -1,12 +1,12 @@
 pragma solidity ^0.5.4;
 
-import "./KeepRandomBeaconBackend.sol";
+import "./KeepRandomBeaconOperator.sol";
 
 /**
- * @title KeepRandomBeaconBackendStub
- * @dev A simplified Random Beacon backend contract to help local development.
+ * @title KeepRandomBeaconOperatorStub
+ * @dev A simplified Random Beacon operator contract to help local development.
  */
-contract KeepRandomBeaconBackendStub is KeepRandomBeaconBackend {
+contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
     /**
      * @dev Stub method to authorize frontend contract to help local development.

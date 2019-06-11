@@ -7,8 +7,8 @@ const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconFrontend = artifacts.require("./KeepRandomBeaconFrontend.sol");
 const KeepRandomBeaconFrontendImplV1 = artifacts.require("./KeepRandomBeaconFrontendImplV1.sol");
-const KeepRandomBeaconBackend = artifacts.require("./KeepRandomBeaconBackend.sol");
-const KeepRandomBeaconBackendStub = artifacts.require("./KeepRandomBeaconBackendStub.sol");
+const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
+const KeepRandomBeaconOperatorStub = artifacts.require("./KeepRandomBeaconOperatorStub.sol");
 
 const withdrawalDelay = 86400; // 1 day
 const minPayment = 1;
@@ -42,17 +42,17 @@ module.exports = async function(deployer) {
   await deployer.deploy(StakingProxy);
   await deployer.deploy(TokenStaking, KeepToken.address, StakingProxy.address, withdrawalDelay);
   await deployer.deploy(TokenGrant, KeepToken.address, StakingProxy.address, withdrawalDelay);
-  await deployer.link(BLS, KeepRandomBeaconBackend);
-  await deployer.link(BLS, KeepRandomBeaconBackendStub);
-  await deployer.deploy(KeepRandomBeaconBackend);
+  await deployer.link(BLS, KeepRandomBeaconOperator);
+  await deployer.link(BLS, KeepRandomBeaconOperatorStub);
+  await deployer.deploy(KeepRandomBeaconOperator);
   await deployer.deploy(KeepRandomBeaconFrontendImplV1);
   await deployer.deploy(KeepRandomBeaconFrontend, KeepRandomBeaconFrontendImplV1.address);
 
   const keepRandomBeaconFrontend = await KeepRandomBeaconFrontendImplV1.at(KeepRandomBeaconFrontend.address);
-  const keepRandomBeaconBackend = await KeepRandomBeaconBackend.deployed();
+  const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
 
   // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
-  await keepRandomBeaconBackend.initialize(
+  await keepRandomBeaconOperator.initialize(
     StakingProxy.address, KeepRandomBeaconFrontend.address, minStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     activeGroupsThreshold, groupActiveTime,
@@ -63,7 +63,7 @@ module.exports = async function(deployer) {
   await keepRandomBeaconFrontend.initialize(
     minPayment,
     withdrawalDelay,
-    keepRandomBeaconBackend.address,
+    keepRandomBeaconOperator.address,
     relayRequestTimeout
   );
 };

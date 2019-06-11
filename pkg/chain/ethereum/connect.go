@@ -20,7 +20,7 @@ type ethereumChain struct {
 	clientRPC                        *rpc.Client
 	clientWS                         *rpc.Client
 	requestID                        *big.Int
-	keepRandomBeaconBackendContract  *contract.KeepRandomBeaconBackend
+	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
 	keepRandomBeaconFrontendContract *contract.KeepRandomBeaconFrontend
 	stakingContract                  *contract.StakingProxy
 	accountKey                       *keystore.Key
@@ -114,22 +114,22 @@ func Connect(config Config) (chain.Handle, error) {
 	}
 	pv.keepRandomBeaconFrontendContract = keepRandomBeaconFrontendContract
 
-	address, err = addressForContract(config, "KeepRandomBeaconBackend")
+	address, err = addressForContract(config, "KeepRandomBeaconOperator")
 	if err != nil {
-		return nil, fmt.Errorf("error resolving KeepRandomBeaconBackend contract: [%v]", err)
+		return nil, fmt.Errorf("error resolving KeepRandomBeaconOperator contract: [%v]", err)
 	}
 
-	keepRandomBeaconBackendContract, err :=
-		contract.NewKeepRandomBeaconBackend(
+	keepRandomBeaconOperatorContract, err :=
+		contract.NewKeepRandomBeaconOperator(
 			*address,
 			pv.accountKey,
 			pv.client,
 			pv.transactionMutex,
 		)
 	if err != nil {
-		return nil, fmt.Errorf("error attaching to KeepRandomBeaconBackend contract: [%v]", err)
+		return nil, fmt.Errorf("error attaching to KeepRandomBeaconOperator contract: [%v]", err)
 	}
-	pv.keepRandomBeaconBackendContract = keepRandomBeaconBackendContract
+	pv.keepRandomBeaconOperatorContract = keepRandomBeaconOperatorContract
 
 	address, err = addressForContract(config, "StakingProxy")
 	if err != nil {

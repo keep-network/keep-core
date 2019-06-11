@@ -3,7 +3,7 @@ import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 
 contract('TestRelayEntry', function(accounts) {
-  let frontend, backend;
+  let frontend, operatorContract;
 
   before(async () => {
 
@@ -14,15 +14,15 @@ contract('TestRelayEntry', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconFrontend.sol'),
       artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconBackendStub.sol')
+      artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
   
-    backend = contracts.backend;
+    operatorContract = contracts.operatorContract;
     frontend = contracts.frontend;
-    // backend.authorizeFrontendContract(frontend.address);
+    // operatorContract.authorizeFrontendContract(frontend.address);
 
     // Using stub method to add first group to help testing.
-    await backend.registerNewGroup(bls.groupPubKey);
+    await operatorContract.registerNewGroup(bls.groupPubKey);
     await frontend.requestRelayEntry(bls.seed, {value: 10});
   });
 
@@ -32,13 +32,13 @@ contract('TestRelayEntry', function(accounts) {
     // Invalid signature
     let groupSignature = web3.utils.toBN('0x0fb34abfa2a9844a58776650e399bca3e08ab134e42595e03e3efc5a0472bcd8');
 
-    await exceptThrow(backend.relayEntry(requestID, groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed));
+    await exceptThrow(operatorContract.relayEntry(requestID, groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed));
   });
 
   it("should be able to submit valid relay entry", async function() {
     let requestID = 2;
 
-    await backend.relayEntry(requestID, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+    await operatorContract.relayEntry(requestID, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     assert.equal((await frontend.getPastEvents())[0].args['requestResponse'].toString(),
       bls.groupSignature.toString(), "Should emit event with successfully submitted groupSignature."

@@ -3,7 +3,7 @@ pragma solidity ^0.5.4;
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
 import "../contracts/utils/ThrowProxy.sol";
-import "../contracts/KeepRandomBeaconBackend.sol";
+import "../contracts/KeepRandomBeaconOperator.sol";
 
 
 contract StakingProxyMock {
@@ -14,20 +14,20 @@ contract StakingProxyMock {
 }
 
 
-contract TestKeepRandomBeaconBackendInitialize {
+contract TestKeepRandomBeaconOperatorInitialize {
     // Create Staking proxy contract mock
     StakingProxyMock stakingProxy = new StakingProxyMock();
 
-    // Create Keep Random Beacon Backend Contract
-    KeepRandomBeaconBackend keepRandomBeaconBackend = new KeepRandomBeaconBackend();
+    // Create Keep Random Beacon operator contract
+    KeepRandomBeaconOperator keepRandomBeaconOperator = new KeepRandomBeaconOperator();
 
     function testCannotInitialize() public {
 
         // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
-        ThrowProxy throwProxy = new ThrowProxy(address(keepRandomBeaconBackend));
+        ThrowProxy throwProxy = new ThrowProxy(address(keepRandomBeaconOperator));
 
         // Prime the proxy
-        KeepRandomBeaconBackend(address(throwProxy)).initialize(address(0), address(0), 200, 150, 200, 1, 1, 1, 1, 1, 1, 1, 1, "0x01");
+        KeepRandomBeaconOperator(address(throwProxy)).initialize(address(0), address(0), 200, 150, 200, 1, 1, 1, 1, 1, 1, 1, 1, "0x01");
 
         // Execute the call that is supposed to throw.
         // r will be false if it threw and true if it didn't.
@@ -36,8 +36,8 @@ contract TestKeepRandomBeaconBackendInitialize {
     }
 
     function testInitialize() public {
-        keepRandomBeaconBackend.initialize(address(stakingProxy), address(0), 200, 150, 200, 1, 1, 1, 1, 1, 1, 1, 1, "0x01");
-        Assert.equal(keepRandomBeaconBackend.initialized(), true, "Should be initialized.");
+        keepRandomBeaconOperator.initialize(address(stakingProxy), address(0), 200, 150, 200, 1, 1, 1, 1, 1, 1, 1, 1, "0x01");
+        Assert.equal(keepRandomBeaconOperator.initialized(), true, "Should be initialized.");
     }
 
 

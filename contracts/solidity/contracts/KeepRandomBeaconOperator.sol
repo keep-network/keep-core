@@ -16,13 +16,13 @@ interface FrontendContract {
 }
 
 /**
- * @title KeepRandomBeaconBackend
+ * @title KeepRandomBeaconOperator
  * @dev Keep client facing contract for random beacon security-critical operations.
  * Handles group creation and expiration, BLS signature verification and incentives.
  * The contract is not upgradeable. New functionality can be implemented by deploying
  * new versions following Keep client update and re-authorization by the stakers.
  */
-contract KeepRandomBeaconBackend is Ownable {
+contract KeepRandomBeaconOperator is Ownable {
 
     using SafeMath for uint256;
     using BytesLib for bytes;

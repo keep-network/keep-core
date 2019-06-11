@@ -10,7 +10,7 @@ import {initContracts} from './helpers/initContracts';
 
 contract('TestPublishDkgResult', function(accounts) {
 
-  let backend,
+  let operatorContract,
   owner = accounts[0], magpie = accounts[0],
   operator1 = accounts[0],
   operator2 = accounts[1],
@@ -33,41 +33,41 @@ contract('TestPublishDkgResult', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconFrontend.sol'),
       artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconBackend.sol')
+      artifacts.require('./KeepRandomBeaconOperator.sol')
     );
     let token = contracts.token;
-    backend = contracts.backend;
-    let stakingContract = await backend.stakingContract();
-    let minimumStake = await backend.minimumStake();
-    let groupSize = await backend.groupSize();
-    groupThreshold = await backend.groupThreshold();
+    operatorContract = contracts.operatorContract;
+    let stakingContract = await operatorContract.stakingContract();
+    let minimumStake = await operatorContract.minimumStake();
+    let groupSize = await operatorContract.groupSize();
+    groupThreshold = await operatorContract.groupThreshold();
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(2000)))
     await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(2000)))
     await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake.mul(web3.utils.toBN(3000)))
 
-    let tickets1 = generateTickets(await backend.groupSelectionSeed(), operator1, 2000);
-    let tickets2 = generateTickets(await backend.groupSelectionSeed(), operator2, 2000);
-    let tickets3 = generateTickets(await backend.groupSelectionSeed(), operator3, 3000);
+    let tickets1 = generateTickets(await operatorContract.groupSelectionSeed(), operator1, 2000);
+    let tickets2 = generateTickets(await operatorContract.groupSelectionSeed(), operator2, 2000);
+    let tickets3 = generateTickets(await operatorContract.groupSelectionSeed(), operator3, 3000);
 
     for(let i = 0; i < groupSize; i++) {
-      await backend.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
+      await operatorContract.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
     }
 
     for(let i = 0; i < groupSize; i++) {
-      await backend.submitTicket(tickets2[i].value, operator2, tickets2[i].virtualStakerIndex, {from: operator2});
+      await operatorContract.submitTicket(tickets2[i].value, operator2, tickets2[i].virtualStakerIndex, {from: operator2});
     }
 
     for(let i = 0; i < groupSize; i++) {
-      await backend.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
+      await operatorContract.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
     }
 
-    let ticketSubmissionStartBlock = (await backend.ticketSubmissionStartBlock()).toNumber();
-    let timeoutChallenge = (await backend.ticketChallengeTimeout()).toNumber();
-    let timeDKG = (await backend.timeDKG()).toNumber();
+    let ticketSubmissionStartBlock = (await operatorContract.ticketSubmissionStartBlock()).toNumber();
+    let timeoutChallenge = (await operatorContract.ticketChallengeTimeout()).toNumber();
+    let timeDKG = (await operatorContract.timeDKG()).toNumber();
     resultPublicationTime = ticketSubmissionStartBlock + timeoutChallenge + timeDKG;
 
-    selectedParticipants = await backend.selectedParticipants();
+    selectedParticipants = await operatorContract.selectedParticipants();
 
     for(let i = 0; i < selectedParticipants.length; i++) {
       let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
@@ -83,8 +83,8 @@ contract('TestPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await backend.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: selectedParticipants[0]})
-    assert.isTrue(await backend.isDkgResultSubmitted.call(requestId), "DkgResult should should be submitted");
+    await operatorContract.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: selectedParticipants[0]})
+    assert.isTrue(await operatorContract.isDkgResultSubmitted.call(requestId), "DkgResult should should be submitted");
   });
 
   it("should be able to submit correct result with unordered signatures and indexes.", async function() {
@@ -107,13 +107,13 @@ contract('TestPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await backend.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
-    assert.isTrue(await backend.isDkgResultSubmitted.call(requestId), "DkgResult should should be submitted");
+    await operatorContract.submitDkgResult(requestId, 1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
+    assert.isTrue(await operatorContract.isDkgResultSubmitted.call(requestId), "DkgResult should should be submitted");
   });
 
   it("should only be able to submit result at eligible block time based on member index.", async function() {
 
-    let resultPublicationBlockStep = (await backend.resultPublicationBlockStep()).toNumber();
+    let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
     let submitter1MemberIndex = 4;
     let submitter2MemberIndex = 5;
     let submitter2 = selectedParticipants[submitter2MemberIndex - 1];
@@ -125,7 +125,7 @@ contract('TestPublishDkgResult', function(accounts) {
     mineBlocks(eligibleBlockForSubmitter1 - currentBlock);
 
     // Should throw if non eligible submitter 2 tries to submit
-    await expectThrow(backend.submitDkgResult(
+    await expectThrow(operatorContract.submitDkgResult(
       requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: submitter2})
     );
@@ -134,12 +134,12 @@ contract('TestPublishDkgResult', function(accounts) {
     currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(eligibleBlockForSubmitter2 - currentBlock);
 
-    await backend.submitDkgResult(requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: submitter2})
-    assert.isTrue(await backend.isDkgResultSubmitted.call(requestId), "DkgResult should be submitted");
+    await operatorContract.submitDkgResult(requestId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: submitter2})
+    assert.isTrue(await operatorContract.isDkgResultSubmitted.call(requestId), "DkgResult should be submitted");
   });
 
   it("should not be able to submit if submitter was not selected to be part of the group.", async function() {
-    await expectThrow(backend.submitDkgResult(
+    await expectThrow(operatorContract.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, 
       {from: operator4})
     );
@@ -169,7 +169,7 @@ contract('TestPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await expectThrow(backend.submitDkgResult(
+    await expectThrow(operatorContract.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );
@@ -192,10 +192,10 @@ contract('TestPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await backend.submitDkgResult(
+    await operatorContract.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
-    assert.isTrue(await backend.isDkgResultSubmitted.call(requestId), "DkgResult should should be submitted");
+    assert.isTrue(await operatorContract.isDkgResultSubmitted.call(requestId), "DkgResult should should be submitted");
 
   });
 
@@ -216,7 +216,7 @@ contract('TestPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await expectThrow(backend.submitDkgResult(
+    await expectThrow(operatorContract.submitDkgResult(
       requestId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );

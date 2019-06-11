@@ -3,7 +3,7 @@ import {initContracts} from './helpers/initContracts';
 
 contract('TestKeepGroupExpiration', function(accounts) {
 
-  let frontend, backend,
+  let frontend, operatorContract,
     groupActiveTime, activeGroupsThreshold, relayRequestTimeout,
     testGroupsNumber = 10;
 
@@ -15,22 +15,22 @@ contract('TestKeepGroupExpiration', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconFrontend.sol'),
       artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconBackendStub.sol')
+      artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
-    backend = contracts.backend;
-    groupActiveTime = (await backend.activeTime()).toNumber();
-    activeGroupsThreshold = (await backend.activeGroupsThreshold()).toNumber();
+    operatorContract = contracts.operatorContract;
+    groupActiveTime = (await operatorContract.activeTime()).toNumber();
+    activeGroupsThreshold = (await operatorContract.activeGroupsThreshold()).toNumber();
     frontend = contracts.frontend;
     relayRequestTimeout = (await frontend.relayRequestTimeout()).toNumber();
   });
 
   async function addGroups(numberOfGroups) {
     for (var i = 1; i <= numberOfGroups; i++)
-      await backend.registerNewGroup([i]);
+      await operatorContract.registerNewGroup([i]);
   }
 
   async function expireGroup(groupIndex) {
-    let groupRegistrationBlock = await backend.getGroupRegistrationBlockHeight(groupIndex);
+    let groupRegistrationBlock = await operatorContract.getGroupRegistrationBlockHeight(groupIndex);
     let currentBlock = await web3.eth.getBlockNumber();
     // If current block is larger than group registration block by group active time then
     // it is not necessary to mine any blocks cause the group is already expired
@@ -42,7 +42,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     await addGroups(testGroupsNumber);
 
-    let numberOfGroups = await backend.numberOfGroups();
+    let numberOfGroups = await operatorContract.numberOfGroups();
     assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups is not equal to number of test groups");
   });
 
@@ -57,10 +57,10 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await addGroups(testGroupsNumber);
     await expireGroup(4);
 
-    await backend.selectGroup(4) // 4 % 10 = 4
+    await operatorContract.selectGroup(4) // 4 % 10 = 4
 
-    let expiredOffset = await backend.getExpiredOffset();
-    let numberOfGroups = await backend.numberOfGroups();
+    let expiredOffset = await operatorContract.getExpiredOffset();
+    let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
     assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
@@ -77,10 +77,10 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await addGroups(testGroupsNumber);
     await expireGroup(5);
 
-    await backend.selectGroup(5) // 5 % 10 = 5
+    await operatorContract.selectGroup(5) // 5 % 10 = 5
 
-    let expiredOffset = await backend.getExpiredOffset();
-    let numberOfGroups = await backend.numberOfGroups();
+    let expiredOffset = await operatorContract.getExpiredOffset();
+    let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
     assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
@@ -97,10 +97,10 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await addGroups(testGroupsNumber);
     await expireGroup(6);
 
-    await backend.selectGroup(6) // 6 % 10 = 6
+    await operatorContract.selectGroup(6) // 6 % 10 = 6
 
-    let expiredOffset = await backend.getExpiredOffset();
-    let numberOfGroups = await backend.numberOfGroups();
+    let expiredOffset = await operatorContract.getExpiredOffset();
+    let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
     assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
@@ -117,10 +117,10 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await addGroups(testGroupsNumber);
     await expireGroup(9);
 
-    await backend.selectGroup(0);
+    await operatorContract.selectGroup(0);
 
-    let expiredOffset = await backend.getExpiredOffset();
-    let numberOfGroups = await backend.numberOfGroups();
+    let expiredOffset = await operatorContract.getExpiredOffset();
+    let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
     assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
@@ -137,10 +137,10 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await addGroups(testGroupsNumber);
     await expireGroup(9);
 
-    await backend.selectGroup(testGroupsNumber - 1); // 9
+    await operatorContract.selectGroup(testGroupsNumber - 1); // 9
 
-    let expiredOffset = await backend.getExpiredOffset();
-    let numberOfGroups = await backend.numberOfGroups();
+    let expiredOffset = await operatorContract.getExpiredOffset();
+    let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
     assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
@@ -157,10 +157,10 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await addGroups(testGroupsNumber);
     await expireGroup(9);
 
-    await backend.selectGroup(testGroupsNumber); // 10
+    await operatorContract.selectGroup(testGroupsNumber); // 10
 
-    let expiredOffset = await backend.getExpiredOffset();
-    let numberOfGroups = await backend.numberOfGroups();
+    let expiredOffset = await operatorContract.getExpiredOffset();
+    let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
     assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
@@ -178,11 +178,11 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await expireGroup(9);
 
     for (var i = 1; i <= testGroupsNumber; i++)
-      await backend.registerNewGroup([i]);
+      await operatorContract.registerNewGroup([i]);
 
-    await backend.selectGroup(1);
+    await operatorContract.selectGroup(1);
 
-    let after = await backend.numberOfGroups();
+    let after = await operatorContract.numberOfGroups();
 
     assert.equal(Number(after), testGroupsNumber, "Number of groups should not fall below the test groups number");
   });
@@ -198,10 +198,10 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await addGroups(1);
     await expireGroup(0) // indexed from 0
 
-    await backend.selectGroup(0);
+    await operatorContract.selectGroup(0);
 
-    let expiredOffset = await backend.getExpiredOffset();
-    let numberOfGroups = await backend.numberOfGroups();
+    let expiredOffset = await operatorContract.getExpiredOffset();
+    let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, 0, "Unexpected expired offset");
     assert.equal(Number(numberOfGroups), 1, "Unexpected number of groups");
@@ -219,10 +219,10 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await addGroups(groupsCount);
     await expireGroup(groupsCount - 1) // indexed from 0
 
-    await backend.selectGroup(0);
+    await operatorContract.selectGroup(0);
 
-    let expiredOffset = await backend.getExpiredOffset();
-    let numberOfGroups = await backend.numberOfGroups();
+    let expiredOffset = await operatorContract.getExpiredOffset();
+    let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, 0, "Unexpected expired offset");
     assert.equal(Number(numberOfGroups), groupsCount, "Unexpected number of groups");
@@ -239,10 +239,10 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await addGroups(groupsCount);
     await expireGroup(groupsCount - 1) // indexed from 0
 
-    await backend.selectGroup(0);
+    await operatorContract.selectGroup(0);
 
-    let expiredOffset = await backend.getExpiredOffset();
-    let numberOfGroups = await backend.numberOfGroups();
+    let expiredOffset = await operatorContract.getExpiredOffset();
+    let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, 0, "Unexpected expired offset");
     assert.equal(Number(numberOfGroups), groupsCount, "Unexpected number of groups");
@@ -255,9 +255,9 @@ contract('TestKeepGroupExpiration', function(accounts) {
     let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
-    let pubKey = await backend.getGroupPublicKey(0);
+    let pubKey = await operatorContract.getGroupPublicKey(0);
 
-    let isStale = await backend.isStaleGroup(pubKey);
+    let isStale = await operatorContract.isStaleGroup(pubKey);
 
     assert.equal(isStale, false, "Group should not be marked as stale");
   });
@@ -271,11 +271,11 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await addGroups(groupsCount);
     await expireGroup(9); // expire first 10 groups (we index from 0)
 
-    await backend.selectGroup(0);
+    await operatorContract.selectGroup(0);
 
     for (var i = 10; i < groupsCount; i++) {
-      let pubKey = await backend.getGroupPublicKey(i);
-      let isStale = await backend.isStaleGroup(pubKey);
+      let pubKey = await operatorContract.getGroupPublicKey(i);
+      let isStale = await operatorContract.isStaleGroup(pubKey);
 
       assert.equal(isStale, false, "Group should not be marked as stale")
     }
@@ -291,13 +291,13 @@ contract('TestKeepGroupExpiration', function(accounts) {
     await addGroups(groupsCount);
     await expireGroup(9); // expire first 10 groups (we index from 0)
 
-    await backend.selectGroup(0);
+    await operatorContract.selectGroup(0);
 
     await mineBlocks(relayRequestTimeout);
 
     for (var i = 10; i < groupsCount; i++) {
-      let pubKey = await backend.getGroupPublicKey(i);
-      let isStale = await backend.isStaleGroup(pubKey);
+      let pubKey = await operatorContract.getGroupPublicKey(i);
+      let isStale = await operatorContract.isStaleGroup(pubKey);
 
       assert.equal(isStale, false, "Group should not be marked as stale")
     }
@@ -315,12 +315,12 @@ contract('TestKeepGroupExpiration', function(accounts) {
     let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
-    let pubKey = await backend.getGroupPublicKey(0);
+    let pubKey = await operatorContract.getGroupPublicKey(0);
 
     // mine blocks but do not select group so it's not marked as expired
     await mineBlocks(groupActiveTime + relayRequestTimeout);
 
-    let isStale  = await backend.isStaleGroup(pubKey);
+    let isStale  = await operatorContract.isStaleGroup(pubKey);
 
     assert.equal(isStale, false, "Group should not be marked as stale");
   });
@@ -335,12 +335,12 @@ contract('TestKeepGroupExpiration', function(accounts) {
     let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
-    let pubKey = await backend.getGroupPublicKey(0);
+    let pubKey = await operatorContract.getGroupPublicKey(0);
 
     await expireGroup(0);
-    await backend.selectGroup(0);
+    await operatorContract.selectGroup(0);
 
-    let isStale  = await backend.isStaleGroup(pubKey);
+    let isStale  = await operatorContract.isStaleGroup(pubKey);
 
     assert.equal(isStale, false, "Group should not be marked as stale");
   });
@@ -356,14 +356,14 @@ contract('TestKeepGroupExpiration', function(accounts) {
      let groupsCount = activeGroupsThreshold + 1
      await addGroups(groupsCount);
  
-     let pubKey = await backend.getGroupPublicKey(0);
+     let pubKey = await operatorContract.getGroupPublicKey(0);
  
      await expireGroup(0);
-     await backend.selectGroup(0);
+     await operatorContract.selectGroup(0);
  
      await mineBlocks(relayRequestTimeout);
 
-     let isStale  = await backend.isStaleGroup(pubKey);
+     let isStale  = await operatorContract.isStaleGroup(pubKey);
 
      assert.equal(isStale, true, "Group should be marked as stale");
    });
@@ -377,7 +377,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     let pubKey = "0x1337"; // group with such pub key does not exist
 
-    let isStale  = await backend.isStaleGroup(pubKey);
+    let isStale  = await operatorContract.isStaleGroup(pubKey);
 
     assert.equal(isStale, true, "Group should be marked as stale");
   });

@@ -13,8 +13,8 @@
 [ethereum.ContractAddresses]
 	# Hex-encoded address of KeepRandomBeaconFrontend contract
 	KeepRandomBeaconFrontend = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-	# Hex-encoded address of KeepRandomBeaconBackend contract
-	KeepRandomBeaconBackend = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+	# Hex-encoded address of KeepRandomBeaconOperator contract
+	KeepRandomBeaconOperator = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 	# Hex-encoded address of StakingProxy contract
 	StakingProxy = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 

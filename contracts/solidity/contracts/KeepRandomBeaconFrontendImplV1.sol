@@ -4,7 +4,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./DelayedWithdrawal.sol";
 
 
-interface BackendContract {
+interface OperatorContract {
     function requestRelayEntry(address from, uint256 seed, uint256 previousEntry) payable external returns (uint256 requestId);
     function numberOfGroups() external view returns(uint256);
     function selectGroup(uint256 previousEntry) external returns(bytes memory);
@@ -25,7 +25,7 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     uint256 internal _minPayment;
-    address internal _backendContract;
+    address internal _operatorContract;
     uint256 internal _previousEntry;
     uint256 internal _relayRequestTimeout;
 
@@ -42,11 +42,11 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
      * @dev Initialize Keep Random Beacon implementaion contract.
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
-     * @param backendContract Backend contract linked to this contract.
+     * @param operatorContract Operator contract linked to this contract.
      * @param relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
      * Blocks are counted from the moment relay request occur.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay, address backendContract, uint256 relayRequestTimeout)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay, address operatorContract, uint256 relayRequestTimeout)
         public
         onlyOwner
     {
@@ -55,7 +55,7 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
         _initialized["KeepRandomBeaconFrontendImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
-        _backendContract = backendContract;
+        _operatorContract = operatorContract;
         _relayRequestTimeout = relayRequestTimeout;
     }
 
@@ -79,8 +79,8 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
         );
 
         // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
-        // BackendContract(_backendContract).requestRelayEntry.value(msg.value)(msg.sender, seed, _previousEntry);
-        return BackendContract(_backendContract).requestRelayEntry(msg.sender, seed, _previousEntry);
+        // OperatorContract(_operatorContract).requestRelayEntry.value(msg.value)(msg.sender, seed, _previousEntry);
+        return OperatorContract(_operatorContract).requestRelayEntry(msg.sender, seed, _previousEntry);
     }
 
     /**
@@ -93,8 +93,8 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
      */
     function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {
         require(
-            msg.sender == _backendContract,
-            "Only authorized backend contract can call relay entry."
+            msg.sender == _operatorContract,
+            "Only authorized operator contract can call relay entry."
         );
 
         _previousEntry = groupSignature;

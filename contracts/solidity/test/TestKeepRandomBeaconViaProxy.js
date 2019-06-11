@@ -8,7 +8,7 @@ const FrontendProxy = artifacts.require('./KeepRandomBeaconFrontend.sol')
 
 contract('TestKeepRandomBeaconViaProxy', function(accounts) {
 
-  let frontend, frontendProxy, backend,
+  let frontend, frontendProxy, operatorContract,
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2];
@@ -21,15 +21,15 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       FrontendProxy,
       artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconBackendStub.sol')
+      artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
   
-    backend = contracts.backend;
+    operatorContract = contracts.operatorContract;
     frontend = contracts.frontend;
     frontendProxy = await FrontendProxy.at(frontend.address);
 
     // Using stub method to add first group to help testing.
-    await backend.registerNewGroup(bls.groupPubKey);
+    await operatorContract.registerNewGroup(bls.groupPubKey);
   });
 
   
@@ -44,7 +44,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
   it("should be able to request relay with enough ether", async function() {
     await frontend.requestRelayEntry(0, {from: account_two, value: 100})
 
-    assert.equal((await backend.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on backend contract.");
+    assert.equal((await operatorContract.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on operator contract.");
 
     let contractBalance = await web3.eth.getBalance(frontend.address);
     assert.equal(contractBalance, 100, "Keep Random Beacon frontend contract should receive ether.");
@@ -62,7 +62,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
       data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
-    assert.equal((await backend.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the backend contract.");
+    assert.equal((await operatorContract.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the operator contract.");
 
     let contractBalance = await web3.eth.getBalance(frontend.address);
     assert.equal(contractBalance, 200, "Keep Random Beacon frontend contract should receive ether.");
