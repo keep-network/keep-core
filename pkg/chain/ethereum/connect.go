@@ -25,6 +25,18 @@ type ethereumChain struct {
 	stakingContract          *contract.StakingProxy
 	accountKey               *keystore.Key
 
+	// transactionMutex allows interested parties to forcibly serialize
+	// transaction submission.
+	//
+	// When transactions are submitted, they require a valid nonce. The nonce is
+	// equal to the count of transactions the account has submitted so far, and
+	// for a transaction to be accepted it should be monotonically greater than
+	// any previous submitted transaction. To do this, transaction submission
+	// asks the Ethereum client it is connected to for the next pending nonce,
+	// and uses that value for the transaction. Unfortunately, if multiple
+	// transactions are submitted in short order, they may all get the same
+	// nonce. Serializing submission ensures that each nonce is requested after
+	// a previous transaction has been submitted.
 	transactionMutex *sync.Mutex
 }
 
