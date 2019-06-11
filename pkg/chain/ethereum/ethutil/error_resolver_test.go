@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -66,6 +67,24 @@ type fixedReturnCaller struct {
 
 func (frc *fixedReturnCaller) CallContract(_ context.Context, _ ethereum.CallMsg, _ *big.Int) ([]byte, error) {
 	return frc.returnedBytes, nil
+}
+
+// Helper caller type that calls a referenced callback function for each
+// CallContract call.
+type callbackCaller struct {
+	callbackCalled bool
+	callback       contractCallFn
+}
+
+type contractCallFn func(ctx context.Context, call ethereum.CallMsg, blockNumber *big.Int) ([]byte, error)
+
+func callbackCallerWith(fn contractCallFn) *callbackCaller {
+	return &callbackCaller{false, fn}
+}
+
+func (cc *callbackCaller) CallContract(ctx context.Context, call ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {
+	cc.callbackCalled = true
+	return cc.callback(ctx, call, blockNumber)
 }
 
 func TestErrorResolverHandlesErrorCall(t *testing.T) {
@@ -195,5 +214,114 @@ func TestErrorResolverHandlesGoodErrorResponse(t *testing.T) {
 		errOriginal.Error(),
 		errorMessage,
 	)
+}
 
+func TestErrorResolverPropagateFromAddress(t *testing.T) {
+	fromAddress := common.HexToAddress("0xA86c468475EF9C2ce851Ea4125424672C3F7e0C8")
+
+	assertingCaller := callbackCallerWith(func(
+		ctx context.Context,
+		msg ethereum.CallMsg,
+		blockNumber *big.Int,
+	) ([]byte, error) {
+		if fromAddress.Hex() != msg.From.Hex() {
+			t.Errorf(
+				"Unexpected From address\nExpected: [%v]\nActual:   [%v]\n",
+				fromAddress.Hex(),
+				msg.From.Hex(),
+			)
+		}
+
+		return nil, fmt.Errorf("I don't care")
+	})
+
+	resolver := ethutil.NewErrorResolver(assertingCaller, &testABI, &testAddress)
+	resolver.ResolveError(errOriginal, fromAddress, nil, "Test")
+
+	if !assertingCaller.callbackCalled {
+		t.Error("CallContract not invoked")
+	}
+}
+
+func TestErrorResolverPropagateToAddress(t *testing.T) {
+	toAddress := common.HexToAddress("0x524f2E0176350d950fA630D9A5a59A0a190DAf48")
+
+	assertingCaller := callbackCallerWith(func(
+		ctx context.Context,
+		msg ethereum.CallMsg,
+		blockNumber *big.Int,
+	) ([]byte, error) {
+		if toAddress.Hex() != msg.To.Hex() {
+			t.Errorf(
+				"Unexpected To address\nExpected: [%v]\nActual:   [%v]\n",
+				toAddress.Hex(),
+				msg.To.Hex(),
+			)
+		}
+
+		return (&erroringCaller{}).CallContract(ctx, msg, blockNumber)
+	})
+
+	resolver := ethutil.NewErrorResolver(assertingCaller, &testABI, &toAddress)
+	resolver.ResolveError(errOriginal, common.Address{}, nil, "Test")
+
+	if !assertingCaller.callbackCalled {
+		t.Error("CallContract not invoked")
+	}
+}
+
+func TestErrorResolverPropagateValue(t *testing.T) {
+	value := big.NewInt(123111)
+
+	assertingCaller := callbackCallerWith(func(
+		ctx context.Context,
+		msg ethereum.CallMsg,
+		blockNumber *big.Int,
+	) ([]byte, error) {
+		if value.Cmp(msg.Value) != 0 {
+			t.Errorf(
+				"Unexpected Value\nExpected: [%v]\nActual:   [%v]\n",
+				value,
+				msg.Value,
+			)
+		}
+
+		return (&erroringCaller{}).CallContract(ctx, msg, blockNumber)
+	})
+
+	resolver := ethutil.NewErrorResolver(assertingCaller, &testABI, &testAddress)
+	resolver.ResolveError(errOriginal, common.Address{}, value, "Test")
+
+	if !assertingCaller.callbackCalled {
+		t.Error("CallContract not invoked")
+	}
+}
+
+func TestErrorResolverPropagateData(t *testing.T) {
+	methodName := "Test"
+	parameters := []interface{}{}
+
+	assertingCaller := callbackCallerWith(func(
+		ctx context.Context,
+		msg ethereum.CallMsg,
+		blockNumber *big.Int,
+	) ([]byte, error) {
+		expectedData, err := (&testABI).Pack(methodName, parameters...)
+		if err != nil {
+			panic(err)
+		}
+
+		if !reflect.DeepEqual(expectedData, msg.Data) {
+			t.Errorf("Unexpected packed transaction Data")
+		}
+
+		return (&erroringCaller{}).CallContract(ctx, msg, blockNumber)
+	})
+
+	resolver := ethutil.NewErrorResolver(assertingCaller, &testABI, &testAddress)
+	resolver.ResolveError(errOriginal, common.Address{}, nil, "Test")
+
+	if !assertingCaller.callbackCalled {
+		t.Error("CallContract not invoked")
+	}
 }
