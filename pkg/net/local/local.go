@@ -10,6 +10,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/internal"
+	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 type localIdentifier string
@@ -21,8 +22,19 @@ func (li localIdentifier) String() string {
 var channelsMutex sync.Mutex
 var channels map[string][]*localChannel
 
+// Provider is an extension of net.Provider. This interface exposes additional
+// functions useful for testing.
+type Provider interface {
+	net.Provider
+
+	// AddPeer allows the simulation of adding a peer to the client's local
+	// registry of peers.
+	AddPeer(peerID string, pubKey *key.NetworkPublic)
+}
+
 type localProvider struct {
 	id localIdentifier
+	cm *localConnectionManager
 }
 
 func (lp *localProvider) ID() net.TransportIdentifier {
@@ -45,12 +57,21 @@ func (lp *localProvider) Peers() []string {
 	return make([]string, 0)
 }
 
+func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
+	lp.cm.peers[peerID] = pubKey
+}
+
 // Connect returns a local instance of a net provider that does not go over the
 // network.
-func Connect() net.Provider {
+func Connect() Provider {
 	return &localProvider{
 		id: localIdentifier(randomIdentifier()),
+		cm: &localConnectionManager{peers: make(map[string]*key.NetworkPublic)},
 	}
+}
+
+func (lp *localProvider) ConnectionManager() net.ConnectionManager {
+	return lp.cm
 }
 
 // channel returns a BroadcastChannel designed to mediate between local
@@ -210,4 +231,26 @@ func (lc *localChannel) RegisterUnmarshaler(
 	}
 	lc.unmarshalersMutex.Unlock()
 	return
+}
+
+type localConnectionManager struct {
+	peers map[string]*key.NetworkPublic
+}
+
+func (lcm *localConnectionManager) ConnectedPeers() []string {
+	connectedPeers := make([]string, len(lcm.peers))
+	for peer := range lcm.peers {
+		connectedPeers = append(connectedPeers, peer)
+	}
+	return connectedPeers
+}
+
+func (lcm *localConnectionManager) GetPeerPublicKey(
+	connectedPeer string,
+) (*key.NetworkPublic, error) {
+	return lcm.peers[connectedPeer], nil
+}
+
+func (lcm *localConnectionManager) DisconnectPeer(connectedPeer string) {
+	delete(lcm.peers, connectedPeer)
 }

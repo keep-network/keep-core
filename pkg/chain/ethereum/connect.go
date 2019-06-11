@@ -3,6 +3,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -23,6 +24,20 @@ type ethereumChain struct {
 	keepRandomBeaconFrontendContract *contract.KeepRandomBeaconFrontend
 	stakingContract                  *contract.StakingProxy
 	accountKey                       *keystore.Key
+
+	// transactionMutex allows interested parties to forcibly serialize
+	// transaction submission.
+	//
+	// When transactions are submitted, they require a valid nonce. The nonce is
+	// equal to the count of transactions the account has submitted so far, and
+	// for a transaction to be accepted it should be monotonically greater than
+	// any previous submitted transaction. To do this, transaction submission
+	// asks the Ethereum client it is connected to for the next pending nonce,
+	// and uses that value for the transaction. Unfortunately, if multiple
+	// transactions are submitted in short order, they may all get the same
+	// nonce. Serializing submission ensures that each nonce is requested after
+	// a previous transaction has been submitted.
+	transactionMutex *sync.Mutex
 }
 
 // Connect makes the network connection to the Ethereum network.  Note: for
@@ -57,10 +72,11 @@ func Connect(config Config) (chain.Handle, error) {
 	}
 
 	pv := &ethereumChain{
-		config:    config,
-		client:    client,
-		clientRPC: clientrpc,
-		clientWS:  clientws,
+		config:           config,
+		client:           client,
+		clientRPC:        clientrpc,
+		clientWS:         clientws,
+		transactionMutex: &sync.Mutex{},
 	}
 
 	if pv.accountKey == nil {
@@ -88,6 +104,7 @@ func Connect(config Config) (chain.Handle, error) {
 			*address,
 			pv.accountKey,
 			pv.client,
+			pv.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -107,15 +124,16 @@ func Connect(config Config) (chain.Handle, error) {
 			*address,
 			pv.accountKey,
 			pv.client,
+			pv.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to KeepRandomBeaconBackend contract: [%v]", err)
 	}
 	pv.keepRandomBeaconBackendContract = keepRandomBeaconBackendContract
 
-	address, err = addressForContract(config, "Staking")
+	address, err = addressForContract(config, "StakingProxy")
 	if err != nil {
-		return nil, fmt.Errorf("error resolving TokenStaking contract: [%v]", err)
+		return nil, fmt.Errorf("error resolving StakingProxy contract: [%v]", err)
 	}
 
 	stakingContract, err :=
@@ -123,6 +141,7 @@ func Connect(config Config) (chain.Handle, error) {
 			*address,
 			pv.accountKey,
 			pv.client,
+			pv.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to TokenStaking contract: [%v]", err)

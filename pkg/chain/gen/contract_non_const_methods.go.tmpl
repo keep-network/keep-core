@@ -5,6 +5,9 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 	{{$method.ParamDeclarations -}}
 	{{if $method.Payable -}} value *big.Int, {{- end -}}
 ) (*types.Transaction, error) {
+	{{$contract.ShortVar}}.transactionMutex.Lock()
+	defer {{$contract.ShortVar}}.transactionMutex.Unlock()
+
 	{{if $method.Payable -}}
 	transactorOptions := &(*{{$contract.ShortVar}}.transactorOptions) // create a copy
 	transactorOptions.Value = value
@@ -20,6 +23,7 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 	if err != nil {
 		return transaction, {{$contract.ShortVar}}.errorResolver.ResolveError(
 			err,
+			{{$contract.ShortVar}}.transactorOptions.From,
 			nil,
 			"{{$method.LowerName}}",
 			{{$method.Params}}

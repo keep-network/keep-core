@@ -9,7 +9,7 @@ class TokenGrants extends Component {
         return (
           <tr key={"token-grant-"+i+"-from-"+item.owner} onClick={() => this.props.selectTokenGrant(i)}>
             <td>{item.formatted.amount}</td>
-            <td><a href="">{item.owner}</a></td>
+            <td><a href="/">{item.owner}</a></td>
             <td>{item.formatted.start}</td>
             <td>{item.formatted.end}</td>
             <td>{item.formatted.cliff}</td>

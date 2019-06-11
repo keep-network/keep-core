@@ -4,14 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"math/big"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
-	peerstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
 func TestProviderReturnsType(t *testing.T) {
@@ -183,22 +181,6 @@ func (m *testMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
-func TestNetworkConnect(t *testing.T) {
-	t.Skip()
-
-	ctx, cancel := newTestContext()
-	defer cancel()
-
-	proxies, err := buildTestProxies(ctx, t, 2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// TODO: fix this
-	connectNetworks(ctx, t, proxies)
-
-	// TODO: have providers send messages to each other
-}
-
 func newTestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 3*time.Second)
 }
@@ -238,38 +220,4 @@ func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
 	}
 
 	return &provider{channelManagr: cm, host: host}, nil
-}
-
-func buildTestProxies(ctx context.Context, t *testing.T, num int) ([]*provider, error) {
-	proxies := make([]*provider, num)
-	for i := 0; i < num; i++ {
-		proxy, err := testProvider(ctx, t)
-		if err != nil {
-			return nil, err
-		}
-		proxies = append(proxies, proxy)
-	}
-	return proxies, nil
-}
-
-func connectNetworks(ctx context.Context, t *testing.T, providers []*provider) {
-	var waitGroup sync.WaitGroup
-
-	for i, provider := range providers {
-		// connect to all other peers, proxies after i+1, for good connectivity
-		for _, peer := range providers[i+1:] {
-			waitGroup.Add(1)
-			provider.host.Peerstore().AddAddr(
-				peer.host.ID(),
-				peer.host.Network().ListenAddresses()[0],
-				peerstore.PermanentAddrTTL,
-			)
-			_, err := provider.host.Network().DialPeer(ctx, peer.host.ID())
-			if err != nil {
-				t.Fatal(err)
-			}
-			waitGroup.Done()
-		}
-	}
-	waitGroup.Wait()
 }

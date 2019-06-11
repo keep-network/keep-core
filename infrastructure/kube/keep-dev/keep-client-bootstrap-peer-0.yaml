@@ -35,6 +35,21 @@ spec:
         app: keep-client
         type: bootstrap-peer-0
     spec:
+      initContainers:
+      - name: initcontainer-provision-keep-client
+        image: gcr.io/keep-dev-fe24/keep-client-initcontainer
+        env:
+          - name: KEEP_CLIENT_TYPE
+            value: bootstrap
+          - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: eth-account-passphrase
+                key: account-passphrase
+        volumeMounts:
+          - name: keep-client-bootstrap-peer-0
+            mountPath: /mnt/keep-client/config
+        command: ["node", "/tmp/provision-keep-client.js"]
       containers:
       - name: keep-client-bootstrap-peer-0
         image: gcr.io/keep-dev-fe24/keep-client
@@ -47,21 +62,29 @@ spec:
                 name: eth-account-passphrase
                 key: account-passphrase
         volumeMounts:
+          - name: keep-client-bootstrap-peer-0
+            mountPath: /mnt/keep-client/config
           - name: eth-keyfile
             mountPath: /mnt/eth-data
-          - name: keep-client-config
-            mountPath: /mnt/keep-client
-        command: ["keep-client", "-config", "/mnt/keep-client/keep-client-config.toml", "start"]
+        command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "start"]
       volumes:
+      - name: keep-client-bootstrap-peer-0
+        persistentVolumeClaim:
+          claimName: keep-client-bootstrap-peer-0
       - name: eth-keyfile
         configMap:
           name: keep-client-bootstrap-peer-0
           items:
             - key: eth-keyfile
               path: eth-keyfile
-      - name: keep-client-config
-        configMap:
-          name: keep-client-bootstrap-peer-0
-          items:
-            - key: keep-client-config.toml
-              path: keep-client-config.toml
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keep-client-bootstrap-peer-0
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Mi
