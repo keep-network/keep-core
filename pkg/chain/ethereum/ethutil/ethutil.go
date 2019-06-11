@@ -8,6 +8,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 // AddressFromHex converts the passed string to a common.Address and returns it,
@@ -33,4 +35,37 @@ func DecryptKeyFile(keyFile, password string) (*keystore.Key, error) {
 		return nil, fmt.Errorf("unable to decrypt %s [%v]", keyFile, err)
 	}
 	return key, nil
+}
+
+// ConnectClients takes HTTP and RPC URLs and returns initialized versions of
+// standard, WebSocket, and RPC clients for the Ethereum node at that address.
+func ConnectClients(url string, urlRPC string) (*ethclient.Client, *rpc.Client, *rpc.Client, error) {
+	client, err := ethclient.Dial(url)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf(
+			"error Connecting to Geth Server: %s [%v]",
+			url,
+			err,
+		)
+	}
+
+	clientWS, err := rpc.Dial(url)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf(
+			"error Connecting to Geth Server: %s [%v]",
+			url,
+			err,
+		)
+	}
+
+	clientRPC, err := rpc.Dial(urlRPC)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf(
+			"error Connecting to Geth Server: %s [%v]",
+			url,
+			err,
+		)
+	}
+
+	return client, clientWS, clientRPC, nil
 }

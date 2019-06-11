@@ -44,28 +44,10 @@ type ethereumChain struct {
 // other things to work correctly the configuration will need to reference a
 // websocket, "ws://", or local IPC connection.
 func Connect(config Config) (chain.Handle, error) {
-	client, err := ethclient.Dial(config.URL)
+	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error Connecting to Geth Server: %s [%v]",
-			config.URL,
-			err,
-		)
-	}
-
-	clientws, err := rpc.Dial(config.URL)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error Connecting to Geth Server: %s [%v]",
-			config.URL,
-			err,
-		)
-	}
-
-	clientrpc, err := rpc.Dial(config.URLRPC)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error Connecting to Geth Server: %s [%v]",
+			"error connecting to Ethereum server: %s [%v]",
 			config.URL,
 			err,
 		)
@@ -74,8 +56,8 @@ func Connect(config Config) (chain.Handle, error) {
 	pv := &ethereumChain{
 		config:           config,
 		client:           client,
-		clientRPC:        clientrpc,
-		clientWS:         clientws,
+		clientRPC:        clientRPC,
+		clientWS:         clientWS,
 		transactionMutex: &sync.Mutex{},
 	}
 
