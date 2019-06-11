@@ -126,7 +126,7 @@ async function provisionKeepClient() {
     of the bootstrap peer to InitContainer generated accounts.
     */
     console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operator + ' >>>>>>>>>>>>');
-    await fundOperatorAccount(operator, purse, 1000000);
+    await fundOperatorAccount(operator, purse, '1');
 
     console.log('\n<<<<<<<<<<<< Staking Operator Account ' + operator + ' >>>>>>>>>>>>');
     await stakeOperatorAccount(operator, contractOwner);
@@ -216,8 +216,11 @@ async function unlockEthAccount(ethAccount, ethAccountPassword) {
   console.log('Account ' + ethAccount + ' unlocked!');
 };
 
-async function fundOperatorAccount(operator, purse, transferAmount) {
-  console.log("Funding account " + operator + " with " + transferAmount + " ether from purse " + purse);
+async function fundOperatorAccount(operator, purse, etherToTransfer) {
+
+  let transferAmount = web3.utils.toWei(etherToTransfer, "ether")
+
+  console.log("Funding account " + operator + " with " + transferAmount + " wei from purse " + purse);
   await web3.eth.sendTransaction({from:purse, to:operator, value:transferAmount});
   console.log("Account " + operator + " funded!");
 }
