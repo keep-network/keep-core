@@ -4,11 +4,11 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
 /**
- * @title KeepRandomBeaconFrontendStub
+ * @title KeepRandomBeaconServiceStub
  * @dev A simplified random beacon contract to help local development. It
  * returns mocked response straight after calling `requestRelayEntry`
  */
-contract KeepRandomBeaconFrontendStub is Ownable {
+contract KeepRandomBeaconServiceStub is Ownable {
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey); 
@@ -33,14 +33,14 @@ contract KeepRandomBeaconFrontendStub is Ownable {
         onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
-        _initialized["KeepRandomBeaconFrontendStub"] = true;
+        _initialized["KeepRandomBeaconServiceStub"] = true;
     }
 
     /**
      * @dev Checks if this contract is initialized.
      */
     function initialized() public view returns (bool) {
-        return _initialized["KeepRandomBeaconFrontendStub"];
+        return _initialized["KeepRandomBeaconServiceStub"];
     }
 
     /**

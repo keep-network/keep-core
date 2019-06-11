@@ -9,10 +9,10 @@ import "./KeepRandomBeaconOperator.sol";
 contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
     /**
-     * @dev Stub method to authorize frontend contract to help local development.
+     * @dev Stub method to authorize service contract to help local development.
      */
-    function authorizeFrontendContract(address _frontendContract) public {
-        frontendContract = _frontendContract;
+    function authorizeServiceContract(address _serviceContract) public {
+        serviceContract = _serviceContract;
     }
 
     /**

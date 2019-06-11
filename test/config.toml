@@ -11,7 +11,7 @@
 	KeyFile            = "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18b"
 
 [ethereum.ContractAddresses]
-	KeepRandomBeaconFrontend = "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
+	KeepRandomBeaconService = "0x639deb0dd975af8e4cc91fe9053a37e4faf37649"
 	KeepRandomBeaconOperator = "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb"
 
 [libp2p]

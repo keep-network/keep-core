@@ -3,13 +3,13 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 /**
- * @title Keep Random Beacon frontend
+ * @title Keep Random Beacon service
  * @dev A proxy contract to provide upgradable Random Beacon functionality.
  * Owner can do upgrades by updating implementation state variable to
  * the address of the upgraded contract. All calls to this proxy contract
  * are delegated to the implementation contract.
  */
-contract KeepRandomBeaconFrontend is Ownable {
+contract KeepRandomBeaconService is Ownable {
 
     // Storage position of the address of the current implementation
     bytes32 private constant implementationPosition = keccak256("network.keep.randombeacon.proxy.implementation");

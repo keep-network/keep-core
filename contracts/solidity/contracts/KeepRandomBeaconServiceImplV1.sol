@@ -12,13 +12,13 @@ interface OperatorContract {
 
 
 /**
- * @title KeepRandomBeaconFrontendImplV1
+ * @title KeepRandomBeaconServiceImplV1
  * @dev Initial version of implementation contract that works under Keep Random
  * Beacon proxy and allows upgradability. The purpose of the contract is to have
  * up-to-date logic for threshold random number generation. Updated contracts
  * must inherit from this contract and have to be initialized under updated version name
  */
-contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
+contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey); 
@@ -52,7 +52,7 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
     {
         require(!initialized(), "Contract is already initialized.");
         _minPayment = minPayment;
-        _initialized["KeepRandomBeaconFrontendImplV1"] = true;
+        _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _operatorContract = operatorContract;
@@ -63,7 +63,7 @@ contract KeepRandomBeaconFrontendImplV1 is Ownable, DelayedWithdrawal {
      * @dev Checks if this contract is initialized.
      */
     function initialized() public view returns (bool) {
-        return _initialized["KeepRandomBeaconFrontendImplV1"];
+        return _initialized["KeepRandomBeaconServiceImplV1"];
     }
 
     /**

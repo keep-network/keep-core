@@ -3,7 +3,7 @@ import {initContracts} from './helpers/initContracts';
 
 contract('TestKeepGroupExpiration', function(accounts) {
 
-  let frontend, operatorContract,
+  let serviceContract, operatorContract,
     groupActiveTime, activeGroupsThreshold, relayRequestTimeout,
     testGroupsNumber = 10;
 
@@ -13,15 +13,15 @@ contract('TestKeepGroupExpiration', function(accounts) {
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconFrontend.sol'),
-      artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
+      artifacts.require('./KeepRandomBeaconService.sol'),
+      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
     operatorContract = contracts.operatorContract;
     groupActiveTime = (await operatorContract.activeTime()).toNumber();
     activeGroupsThreshold = (await operatorContract.activeGroupsThreshold()).toNumber();
-    frontend = contracts.frontend;
-    relayRequestTimeout = (await frontend.relayRequestTimeout()).toNumber();
+    serviceContract = contracts.serviceContract;
+    relayRequestTimeout = (await serviceContract.relayRequestTimeout()).toNumber();
   });
 
   async function addGroups(numberOfGroups) {

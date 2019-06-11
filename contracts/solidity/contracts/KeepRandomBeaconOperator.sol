@@ -10,7 +10,7 @@ import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
 
-interface FrontendContract {
+interface ServiceContract {
     function relayEntry(uint256 requestID, uint256 requestResponse, bytes calldata requestGroupPubKey, uint256 previousEntry, uint256 seed) external;
     function relayRequestTimeout() external view returns(uint256);
 }
@@ -47,7 +47,7 @@ contract KeepRandomBeaconOperator is Ownable {
     uint256 public groupSize;
     uint256 public minimumStake;
     address public stakingProxy;
-    address public frontendContract;
+    address public serviceContract;
 
     uint256 public ticketInitialSubmissionTimeout;
     uint256 public ticketReactiveSubmissionTimeout;
@@ -425,7 +425,7 @@ contract KeepRandomBeaconOperator is Ownable {
     /**
      * @dev Initialize the contract with a linked Staking proxy contract.
      * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
-     * @param _frontendContract Address of a random beacon frontend contract that will be linked to this contract.
+     * @param _serviceContract Address of a random beacon service contract that will be linked to this contract.
      * @param _minimumStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
      * @param _groupSize Size of a group in the threshold relay.
      * @param _groupThreshold Minimum number of interacting group members needed to produce a relay entry.
@@ -443,7 +443,7 @@ contract KeepRandomBeaconOperator is Ownable {
      */
     function initialize(
         address _stakingProxy,
-        address _frontendContract,
+        address _serviceContract,
         uint256 _minimumStake,
         uint256 _groupThreshold,
         uint256 _groupSize,
@@ -461,7 +461,7 @@ contract KeepRandomBeaconOperator is Ownable {
         require(_stakingProxy != address(0x0), "Staking proxy address can't be zero.");
         initialized = true;
         stakingProxy = _stakingProxy;
-        frontendContract = _frontendContract;
+        serviceContract = _serviceContract;
         minimumStake = _minimumStake;
         groupSize = _groupSize;
         groupThreshold = _groupThreshold;
@@ -557,7 +557,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * performing any operations.
      */
     function groupStaleTime(Group memory group) internal view returns(uint256) {
-        return groupActiveTime(group) + FrontendContract(frontendContract).relayRequestTimeout();
+        return groupActiveTime(group) + ServiceContract(serviceContract).relayRequestTimeout();
     }
 
     /**
@@ -668,8 +668,8 @@ contract KeepRandomBeaconOperator is Ownable {
     function requestRelayEntry(address from, uint256 seed, uint256 previousEntry) public payable returns (uint256) {
 
         require(
-            msg.sender == frontendContract,
-            "Only authorized frontend contract can request relay entry."
+            msg.sender == serviceContract,
+            "Only authorized service contract can request relay entry."
         );
 
         require(
@@ -702,7 +702,7 @@ contract KeepRandomBeaconOperator is Ownable {
 
         emit RelayEntryGenerated(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
-        FrontendContract(frontendContract).relayEntry(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
+        ServiceContract(serviceContract).relayEntry(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
         runGroupSelection(_groupSignature, _requestID, _seed);
     }
 }

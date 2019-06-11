@@ -1,11 +1,11 @@
 import { duration } from './increaseTime';
 import { bls } from './data';
 
-async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, KeepRandomBeaconFrontend,
-  KeepRandomBeaconFrontendImplV1, KeepRandomBeaconOperator) {
+async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, KeepRandomBeaconService,
+  KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
 
   let token, stakingProxy, stakingContract,
-    frontendImplV1, frontendProxy, frontend,
+    serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract;
 
   let minimumStake = 200000,
@@ -30,21 +30,21 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
   stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
   await stakingProxy.authorizeContract(stakingContract.address, {from: accounts[0]})
 
-  // Initialize Keep Random Beacon frontend contract
-  frontendImplV1 = await KeepRandomBeaconFrontendImplV1.new();
-  frontendProxy = await KeepRandomBeaconFrontend.new(frontendImplV1.address);
-  frontend = await KeepRandomBeaconFrontendImplV1.at(frontendProxy.address)
+  // Initialize Keep Random Beacon service contract
+  serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new();
+  serviceContractProxy = await KeepRandomBeaconService.new(serviceContractImplV1.address);
+  serviceContract = await KeepRandomBeaconServiceImplV1.at(serviceContractProxy.address)
 
   // Initialize Keep Random Beacon operator contract
   operatorContract = await KeepRandomBeaconOperator.new();
   await operatorContract.initialize(
-    stakingProxy.address, frontend.address, minimumStake, groupThreshold,
+    stakingProxy.address, serviceContract.address, minimumStake, groupThreshold,
     groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     activeGroupsThreshold, groupActiveTime,
     bls.groupSignature, bls.groupPubKey
   );
 
-  await frontend.initialize(minPayment, withdrawalDelay, operatorContract.address, relayRequestTimeout);
+  await serviceContract.initialize(minPayment, withdrawalDelay, operatorContract.address, relayRequestTimeout);
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 4).
   await operatorContract.authorizeStakingContract(stakingContract.address);
@@ -52,7 +52,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
 
   return {
     token: token,
-    frontend: frontend,
+    serviceContract: serviceContract,
     operatorContract: operatorContract
   };
 };

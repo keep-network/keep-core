@@ -395,7 +395,7 @@ func (ec *ethereumChain) RequestRelayEntry(
 	}()
 
 	payment := big.NewInt(2) // FIXME hardcoded 2 gwei until we fill this in
-	_, err = ec.keepRandomBeaconFrontendContract.RequestRelayEntry(seed, payment)
+	_, err = ec.keepRandomBeaconServiceContract.RequestRelayEntry(seed, payment)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(requestedEntry)

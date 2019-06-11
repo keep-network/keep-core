@@ -8,7 +8,7 @@ import {initContracts} from './helpers/initContracts';
 
 contract('TestKeepGroupSelection', function(accounts) {
 
-  let token, frontend, operatorContract,
+  let token, serviceContract, operatorContract,
   owner = accounts[0], magpie = accounts[1], signature, delegation,
   operator1 = accounts[2], tickets1,
   operator2 = accounts[3], tickets2,
@@ -21,12 +21,12 @@ contract('TestKeepGroupSelection', function(accounts) {
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconFrontend.sol'),
-      artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
+      artifacts.require('./KeepRandomBeaconService.sol'),
+      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
     token = contracts.token;
-    frontend = contracts.frontend;
+    serviceContract = contracts.serviceContract;
     operatorContract = contracts.operatorContract;
     let stakingContract = await operatorContract.stakingContract();
     let minimumStake = await operatorContract.minimumStake();
@@ -107,7 +107,7 @@ contract('TestKeepGroupSelection', function(accounts) {
 
   it("should not trigger group selection while one is in progress", async function() {
     let groupSelectionStartBlock = await operatorContract.ticketSubmissionStartBlock();
-    await frontend.requestRelayEntry(bls.seed, {value: 10});
+    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
     await operatorContract.relayEntry(2, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
 
     assert.isTrue((await operatorContract.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
@@ -140,7 +140,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
     mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
 
-    await frontend.requestRelayEntry(bls.seed, {value: 10});
+    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
     await operatorContract.relayEntry(3, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
 
     assert.isFalse((await operatorContract.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");

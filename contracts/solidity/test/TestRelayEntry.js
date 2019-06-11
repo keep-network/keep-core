@@ -3,7 +3,7 @@ import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 
 contract('TestRelayEntry', function(accounts) {
-  let frontend, operatorContract;
+  let serviceContract, operatorContract;
 
   before(async () => {
 
@@ -12,18 +12,18 @@ contract('TestRelayEntry', function(accounts) {
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconFrontend.sol'),
-      artifacts.require('./KeepRandomBeaconFrontendImplV1.sol'),
+      artifacts.require('./KeepRandomBeaconService.sol'),
+      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
   
     operatorContract = contracts.operatorContract;
-    frontend = contracts.frontend;
-    // operatorContract.authorizeFrontendContract(frontend.address);
+    serviceContract = contracts.serviceContract;
+    // operatorContract.authorizeServiceContract(serviceContract.address);
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
-    await frontend.requestRelayEntry(bls.seed, {value: 10});
+    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
   });
 
   it("should not be able to submit invalid relay entry", async function() {
@@ -40,7 +40,7 @@ contract('TestRelayEntry', function(accounts) {
 
     await operatorContract.relayEntry(requestID, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
-    assert.equal((await frontend.getPastEvents())[0].args['requestResponse'].toString(),
+    assert.equal((await serviceContract.getPastEvents())[0].args['requestResponse'].toString(),
       bls.groupSignature.toString(), "Should emit event with successfully submitted groupSignature."
     );
 
