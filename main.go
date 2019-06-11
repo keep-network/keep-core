@@ -54,6 +54,7 @@ func main() {
 		cmd.StartCommand,
 		cmd.RelayCommand,
 		cmd.PingCommand,
+		cmd.ContractCommand,
 		{
 			Name:  "print-info",
 			Usage: "Prints keep client information",
