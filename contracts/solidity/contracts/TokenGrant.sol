@@ -79,7 +79,7 @@ contract TokenGrant is StakeDelegatable {
      * @param _id ID of the token grant.
      * @return amount, released, staked, revoked.
      */
-    function getGrant(uint256 _id) public view returns (uint256, uint256, bool, bool) {
+    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 released, bool staked, bool revoked) {
         return (
             grants[_id].amount,
             grants[_id].released,
@@ -93,7 +93,7 @@ contract TokenGrant is StakeDelegatable {
      * @param _id ID of the token grant.
      * @return  owner, duration, start, cliff
      */
-    function getGrantVestingSchedule(uint256 _id) public view returns (address, uint256, uint256, uint256) {
+    function getGrantVestingSchedule(uint256 _id) public view returns (address owner, uint256 duration, uint256 start, uint256 cliff) {
         return (
             grants[_id].owner,
             grants[_id].duration,
