@@ -2,6 +2,7 @@ package registry
 
 import (
 	"bytes"
+	"encoding/hex"
 	"math/big"
 	"reflect"
 	"testing"
@@ -123,27 +124,25 @@ func TestUnregisterStaleGroups(t *testing.T) {
 
 	mockChain.markForRemoval(signer2.GroupPublicKeyBytes())
 
-	gr.UnregisterDeletedGroups()
+	gr.UnregisterStaleGroups()
 
 	group1 := gr.GetGroup(signer1.GroupPublicKeyBytes())
 	if group1 == nil {
-		t.Fatalf(
-			"Expecting a group, but nil was returned instead",
-		)
+		t.Fatalf("Expecting a group, but nil was returned instead")
 	}
 
 	group2 := gr.GetGroup(signer2.GroupPublicKeyBytes())
 	if group2 != nil {
-		t.Fatalf(
-			"Group2 was expected to be unregistered, but is still present",
-		)
+		t.Fatalf("Group2 was expected to be unregistered, but is still present")
+	}
+	if len(storageMock.archivedGroups) == 1 &&
+		storageMock.archivedGroups[0] != hex.EncodeToString(signer2.GroupPublicKeyBytes()) {
+		t.Fatalf("Group2 was expected to be archived")
 	}
 
 	group3 := gr.GetGroup(signer3.GroupPublicKeyBytes())
 	if group3 == nil {
-		t.Fatalf(
-			"Expecting a group, but nil was returned instead",
-		)
+		t.Fatalf("Expecting a group, but nil was returned instead")
 	}
 
 }
@@ -172,6 +171,7 @@ func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) 
 }
 
 type dataStorageMock struct {
+	archivedGroups []string
 }
 
 func (dsm *dataStorageMock) Save(data []byte, directory string, name string) error {
@@ -196,4 +196,10 @@ func (dsm *dataStorageMock) ReadAll() ([][]byte, error) {
 	}).Marshal()
 
 	return [][]byte{membershipBytes1, membershipBytes2, membershipBytes3}, nil
+}
+
+func (dsm *dataStorageMock) Archive(directory string) error {
+	dsm.archivedGroups = append(dsm.archivedGroups, directory)
+
+	return nil
 }

@@ -81,7 +81,7 @@ func Initialize(
 
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
 		fmt.Printf("New group registered on chain [%+v]\n", registration)
-		go groupRegistry.UnregisterDeletedGroups()
+		go groupRegistry.UnregisterStaleGroups()
 	})
 
 	return nil

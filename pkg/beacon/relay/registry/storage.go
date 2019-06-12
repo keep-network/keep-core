@@ -11,6 +11,7 @@ import (
 type storage interface {
 	save(membership *Membership) error
 	readAll() ([]*Membership, error)
+	archive(groupName string) error
 }
 
 type persistentStorage struct {
@@ -23,12 +24,12 @@ func newStorage(persistence persistence.Handle) storage {
 	}
 }
 
-// Save converts a membership suitable for disk storage.
 func (ps *persistentStorage) save(membership *Membership) error {
 	membershipBytes, err := membership.Marshal()
 	if err != nil {
 		return fmt.Errorf("marshalling of the membership failed: [%v]", err)
 	}
+
 	hexGroupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytes())
 
 	return ps.handle.Save(membershipBytes, hexGroupPublicKey, "/membership_"+fmt.Sprint(membership.Signer.MemberID()))
@@ -52,4 +53,8 @@ func (ps *persistentStorage) readAll() ([]*Membership, error) {
 	}
 
 	return memberships, nil
+}
+
+func (ps *persistentStorage) archive(groupName string) error {
+	return ps.handle.Archive(groupName)
 }
