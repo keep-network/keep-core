@@ -27,8 +27,7 @@ Keep Network:: The Keep network consists of all stakers, all keeps and
                associated sMPC clusters, and the random beacon.
 
 KEEP:: KEEP is an ERC-20 work token used to stake in the Keep network. 
-       A minimum staked value is required for operator to join the network and 
-       fulfill requests.
+       A minimum staked value is required for operator to join sMPC cluster.
 
 Keep Core:: Keep Core consist of a set of on-chain contracts and off-chain  
             client providing the functionality of random beacon
