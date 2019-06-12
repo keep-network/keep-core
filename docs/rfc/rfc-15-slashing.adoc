@@ -1,0 +1,211 @@
+:toc: macro
+
+= RFC 15: Slashing
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+To incentivize correct behavior in the Keep network,
+misbehaving participants need to be punished.
+In some situations,
+another participant's cooperation is required to prove misbehavior.
+This coordination is incentivized by rewarding the _tattletale_.
+
+=== Current Functionality
+
+== Proposal
+
+=== Goal
+
+The goal of this proposal. What are we trying to achieve? Examples of desired
+outcomes would be handy.
+
+=== Implementation
+
+Tokens are staked by transferring them to the staking contract.
+The staking contract tracks the stake allocated to each _staker_.
+Stakes can be _slashed_ to punish misbehavior.
+Tokens backing slashed stakes are burned;
+if a tattletale proves another operator's misbehavior
+they will receive 5% of the slashed tokens,
+the remainder being burned.
+
+When an operator is punished for misbehavior,
+they should be removed from the operation the misbehavior occurred in.
+
+==== Authorization and slashing
+
+_Operator contracts_ (including _keep builders_)
+are authorized to impose penalties by stakers' _authorizers_.
+All stakers using the same _authorizer_
+share the set of authorized operator contracts.
+Once given, this authorization cannot be revoked.
+
+When a staker wishes to join an operation,
+the contract responsible for initiating the operation
+must be authorized by the staker's authorizer.
+The operator contract checks its authorization status
+when determining a staker's eligibility.
+
+===== Directly authorized operator contracts
+
+When an operator misbehaves on-chain,
+the operator contract calls the staking contract to punish the operator.
+The staking contract checks
+that the operator contract is authorized to punish the staker, and if true,
+applies the penalty
+by subtracting the applicable penalty from the operator's stake
+and burns tokens equal to the penalty amount.
+
+When a tattletale proves another operator's misbehavior,
+the operator contract includes the tattletale operator's address in the call.
+The staking contract subtracts the applicable penalty from the operator's stake
+and burns 95% of it.
+The remaining 5% is transferred to the tattletale's _beneficiary_ address.
+
+===== Slashing by indirectly authorized keeps
+
+_Keeps_ created by _keep builders_
+are not individually authorized to impose punishments.
+Instead, the _keep builders_ are authorized to impose punishments
+and each keep builder tracks the individual keeps it has created.
+
+When the keep wants to impose a punishment,
+it includes its builder's address in the call to the staking contract.
+The staking contract checks that the builder is authorized,
+and the keep is listed as being created by the builder.
+
+===== Trusted applications
+
+Some operations rely on trusted input from a third-party application
+to determine if misbehavior has happened.
+These _trusted applications_ are authorized by the staker's authorizer,
+separately from operator contracts.
+
+When an operation involving such a trusted application is initiated,
+the operator contract must include the trusted application's address
+in the initiation event,
+and check the trusted application's authorization 
+alongside its own authorization status
+when determining each staker's eligibility to join.
+
+Trusted applications cannot punish stakers directly;
+they must go through the responsible operator contract.
+When the trusted application claims misbehavior has occurred,
+the operator contract applies the punishment normally.
+
+==== Penalty amounts
+
+Penalties for misbehavior could be adjusted
+to match the severity of the misbehavior.
+However, initially a simple rule should be sufficient:
+when `op_contract` imposes a punishment,
+the amount slashed should equal
+the minimum stake required to participate in operations on `op_contract`.
+
+==== Interface requirements
+
+===== Staking contract: slashing
+
+`slash(address perp, tokens sum)`::
+
+Check that `msg.sender` is authorized to slash `perp`:
+`isAuthorized(msg.sender, perp.authorizer) == true`.
++
+Take `sum` tokens from stake of `perp` and burn them.
+
+`seize(address perp, tokens sum, address mole)`::
+
+Check that `msg.sender` is authorized to slash `perp`:
+`isAuthorized(msg.sender, perp.authorizer) == true`.
++
+Take `sum` tokens from stake of `perp`;
+burn `sum * 0.95`; transfer `sum * 0.05` to beneficiary of staker `mole`.
+
+`indirectSlash(address builder, address perp, tokens sum)`::
+
+Check that `builder` is authorized to slash `perp`:
+`isAuthorized(builder, perp.authorizer) == true`.
+
+Check that `builder` lists `msg.sender` among keeps it created
+`builder.built(msg.sender) == true`.
+
+Take `sum` tokens from stake of `perp` and burn them.
+
+`indirectSeize(address builder, address perp, tokens sum, address mole)`::
+
+Check that `builder` is authorized to slash `perp`:
+`isAuthorized(builder, perp.authorizer) == true`.
++
+Check that `builder` lists `msg.sender` among keeps it created:
+`builder.built(msg.sender) == true`.
++
+Take `sum` tokens from stake of `perp`;
+burn `sum * 0.95`; transfer `sum * 0.05` to beneficiary of staker `mole`.
+
+===== Staking contract: authorizations
+
+`authorize(address op_contract)`::
+
+Authorize `op_contract`.
+Operators using `msg.sender` as their authorizer
+may now join operations on `op_contract`
+and `op_contract` may slash their stakes.
+
+`isAuthorized(address op_contract, address by) -> bool`::
+
+Check if the authorizer `by` has authorized `op_contract`.
+
+`trust(address app)`::
+
+Authorize `app` as a _trusted application_.
+
+`isTrusted(address app, address by) -> bool`::
+
+Check if authorizer `by` has authorized `app` as a trusted application.
+
+===== Token contract
+
+`burn(amount sum)`::
+
+Any address that holds tokens can call `burn(amount sum)`
+to burn `sum` tokens, limited by tokens held by the address.
+
+===== Keep builders
+
+Keep builders should maintain a list of keeps they have created.
+
+`built(address keep) -> bool`::
+
+Return whether `keep` was created by this builder.
+
+=== Limitations
+
+What are the limitations of this approach?
+
+=== Proof of Concept
+
+If you have PoC code, refer to the relevant branch and give a brief summary.
+
+== Future Work (optional)
+
+If applicable, what future evolutions could you see this approach leading to?
+Particularly if these possibilities influenced your thinking about the main
+proposal, this is important.
+
+== Open Questions (optional)
+
+If any open questions are left that you haven't yet investigated, what are they?
+
+[bibliography]
+== Related Links
+
+- Flowdock Links
+- Other links
+- If you have publications, you can include them in bibliography style. If you
+  start your bullet with an id in _triple_ square brackets (e.g. `+[[[AAKE]]]+`),
+  you can reference it in the content body using regular cross-reference syntax
+  (e.g. `+<<AAKE>>+`).
