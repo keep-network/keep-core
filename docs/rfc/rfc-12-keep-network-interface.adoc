@@ -88,21 +88,59 @@ bonded tECDSA keep:: bonded tECDSA keep is a tECDSA keep with an extra bonding
 
 === Implementation
 
+==== Keep factory
+
+Keep factory is a smart contract used to create instances of a keep of a certain 
+type. Each type of keep has a separate keep factory. Each keep factory is an 
+operator contract and has to be sanctioned by stakers as such. Application 
+developers may interact with factory directly if they decide to. The network
+will not guarantee that old factories will be still backed up by enough stakers, 
+though.
+
+==== Gateway
+
+Gateway is a smart contract with which the application interacts to obtain the 
+most current keep factory version backed by enough stakers so that all 
+operations on the created keep can go smoothly. Each gateway is a service 
+contract and does not have to be sanctioned by stakers. Each gateway can operate 
+on several versions of keep factory to allow for a smooth upgrade process.
+
+==== Keep registry
+
+Keep registry serves the role of the master list (see RFC 11 for more details) 
+and tracks sanctioned staking contracts, operator contracts (including keep 
+factories) and gateways. It ensures that only Keep-Org approved contracts are 
+used.
+
+
+=== Pseudocode
+
+==== ECDSA keep gateway
+```
+contract ECDSAKeepGateway {
+    address[] internal _factories;
+
+    function openKeep(
+        uint256 threshold, 
+        uint256 groupSize, 
+        address owner
+    ) returns (address) {
+        address factory = getFactory()
+        return ECDSAKeepFactory(factory).openKeep(
+            threshold, groupSize, owner
+        )
+    }
+
+    function getFactory() returns (address) {
+        // (...)
+    }
+}
+```
+
 ==== ECDSA keep factory
-
-ECDSA keep factory is an on-chain factory of ECDSA keeps. The factory creates 
-and destroys keeps and is responsible for maintaining the list of all active 
-keeps. sMPC cluster clients working with ECDSA keeps observe ECDSA keep registry 
-for all new ECDSA keeps created. Registry is responsible for group selection 
-using the random beacon.
-
-===== Pseudocode
-
 ```
 contract ECDSAKeepFactory {
-    address[] internal _keeps;
-
-    function openNewKeep(
+    function openKeep(
         uint256 threshold, 
         uint256 groupSize, 
         address owner
@@ -112,16 +150,15 @@ contract ECDSAKeepFactory {
             owner
         );
 
-        _keeps.push(keep);
         return keep;
     }
-
-    // (...)
 }
+```
 
+==== ECDSA keep
+```
 contract ECDSAKeep {
-    // (...)
-
+ 
     function sign() { 
         require(msg.sender == _owner, "Only keep owner can ask to sign");
         // (...)
@@ -129,57 +166,24 @@ contract ECDSAKeep {
 }
 ```
 
-==== Bonded ECDSA keep factory
-
-Bonded ECDSA keep factory is an on-chain factory of Bonded ECDSA keeps. The 
-factory creates and destroys keeps and is responsible for maintaining the list 
-of all active keeps. Bonded ECDSA keep has extra bonding logic over a vanilla 
-ECDSA keep. Registry is responsible for group selection using the random beacon.
-
-===== Pseudocode
-
-```
-contract BondedTECDSAKeepFactory is ECDSAKeepFactory {
-    function openNewKeep(
-        uint256 threshold, 
-        uint256 groupSize,
-        Bond bond, 
-        address owner
-    ) returns (address) {
-        address keep = new ECDSAKeep(
-            selectGroup(threshold, groupSize, bond), 
-            owner
-        );
-
-        _keeps.push(keep);
-        return keep;
-    }
-
-    // (...)
-}
-
-contract BondedECDSAKeep is ECDSAKeep {
-    // (...)
-}
-```
-
-
 ==== Keep registry
+```
+contract KeepRegistry {
 
-Keep registry is an interface for application to interact with Keep Network. Keep 
-registry specifies what are the sanctioned types of keep factories and is an 
-upgrade mechanism for the entire system. Application interacts with Keep registry to 
-open a keep. The registry returns a brand new instance of the requested type of 
-a keep. All sanctioned keep factories need to be registered in Keep registry.
+    function getECDSAKeepGateway() address {
+        // (...)
+    }
+}
+```
 
-===== Pseudocode
-
+==== Application 
 ```
 contract Application {
     address internal _keepRegistry;
 
     function openDeposit() {
-        address keep = KeepRegistry(_keepRegistry).openBondedECDSAKeep(
+        address gateway = KeepRegistry(_keepRegistry).getECDSAKeepGateway()    
+        gateway.openBondedECDSAKeep(
             threshold, 
             groupSize, 
             bond
@@ -190,25 +194,3 @@ contract Application {
 }
 ```
 
-```
-contract KeepRegistry {
-    address internal _bondedTECDSAKeepFactory;    
-
-    function openBondedECDSAKeep(
-        uint256 threshold, 
-        uint256 groupSize, 
-        Bond bond
-    ) returns (address) {
-        keep = BondedTECDSAKeepFactory(_bondedTECDSAKeepFactory).openNewKeep(
-            threshold,
-            groupSize,
-            bond
-            msg.sender,
-        );
-
-        return address(keep);
-    }
-
-    // (...)
-}
-```
