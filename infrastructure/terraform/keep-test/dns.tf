@@ -5,6 +5,3 @@ resource "google_dns_managed_zone" "test_keep_network" {
   dns_name = "test.keep.network."
   labels = "${local.labels}"
 }
-
-
-
