@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "./utils/StringUtils.sol";
 import "./BLS.sol";
 
 
@@ -22,6 +23,7 @@ interface GroupContract {
 contract KeepRandomBeaconImplV1 is Ownable {
 
     using BytesLib for bytes;
+    using StringUtils for *;
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey); 
@@ -150,6 +152,10 @@ contract KeepRandomBeaconImplV1 is Ownable {
         return _minPayment;
     }
 
+    function groupPubKeyForRequest(uint256 requestId) public view returns(bytes memory) {
+        return _requests[requestId].groupPubKey;
+    }
+
     /**
      * @dev Creates a new relay entry and stores the associated data on the chain.
      * @param requestID The request that started this generation - to tie the results back to the request.
@@ -158,7 +164,12 @@ contract KeepRandomBeaconImplV1 is Ownable {
      */
     function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {
 
-        require(_requests[requestID].groupPubKey.equalStorage(groupPubKey), "Provided group was not selected to produce entry for this request.");
+        require(
+            _requests[requestID].groupPubKey.equalStorage(groupPubKey),
+            "".strConcat("Provided group was not selected to produce entry for the request with ID = ",
+            requestID.uintToBytes32().bytes32ToString())
+        );
+
         require(BLS.verify(groupPubKey, abi.encodePacked(previousEntry, seed), bytes32(groupSignature)), "Group signature failed to pass BLS verification.");
 
         delete _requests[requestID];
