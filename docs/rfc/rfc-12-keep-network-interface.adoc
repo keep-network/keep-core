@@ -59,14 +59,32 @@ client should be a separate client than Keep tECDSA client:
 
 (The above snippet is just an example for the first keep type)
 
-Each operator is required to run Keep Core client. Running Keep tECDSA client is 
+Each staker is required to run Keep Core client. Running Keep tECDSA client is 
 optional. Eventually, we hope other developers will build their own clients.
 
 ==== Bonding requirement
 
-Some applications requires a bond to be provided by signers. Stakers who want to 
-participate in signing need to opt-in and provide the required bond. A bond can 
-be provided in ETH or ERC-20 token specific to the application.
+Some applications requires a bond to be provided by stakers. Stakers who want to 
+participate in the given protocol need to opt-in and provide the required bond. 
+A bond can  be provided in ETH or ERC-20 token specific to the application.
+
+=== Types of keeps
+
+There are two first types of keeps that are going to be offered by Keep Network: 
+tECDSA keep and bonded tECDSA keep.
+
+tECDSA keep:: tECDSA keep is a type of a keep allowing to sign data with 
+              a uniquely generated private key for each new keep instance. Key 
+              generation and signing are based on trustless, threshold protocols 
+              executed by groups of signers forming an sMPC cluster for this 
+              type of a keep. 
+
+bonded tECDSA keep:: bonded tECDSA keep is a tECDSA keep with an extra bonding 
+                     logic over a vanilla tECDSA keep. Each staker being a part 
+                     of sMPC cluster for this type of keep needs to provide an 
+                     extra bond required for each new instance of bonded tECDSA 
+                     keep. The bond can be slashed as a result of inactivity or 
+                     misbehaviour during tECDSA key generation or signing.
 
 === Implementation
 
