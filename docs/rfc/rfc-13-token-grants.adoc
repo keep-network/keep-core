@@ -1,6 +1,6 @@
 :toc: macro
 
-= RFC 13: Token grants
+= RFC 14: Token grants
 
 :icons: font
 :numbered:
