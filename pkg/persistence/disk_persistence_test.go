@@ -33,22 +33,14 @@ func TestMain(m *testing.M) {
 
 func TestDiskPersistence_Save(t *testing.T) {
 	diskPersistence := NewDiskHandle(dataDir)
-
-	pathToDir := fmt.Sprintf("%s/%s", pathToCurrent, dirName1)
-	pathToFile := fmt.Sprintf("%s%s", pathToDir, fileName11)
-
 	bytesToTest := []byte{115, 111, 109, 101, 10}
 
 	diskPersistence.Save(bytesToTest, dirName1, fileName11)
 
+	pathToFile := fmt.Sprintf("%s/%s%s", pathToCurrent, dirName1, fileName11)
+
 	if _, err := os.Stat(pathToFile); os.IsNotExist(err) {
 		t.Fatalf("file [%+v] was supposed to be created", pathToFile)
-	} else {
-		os.RemoveAll(pathToDir)
-	}
-
-	if _, err := os.Stat(pathToFile); !os.IsNotExist(err) {
-		t.Fatalf("Dir [%+v] was supposed to be removed", pathToFile)
 	}
 }
 
@@ -105,7 +97,7 @@ func TestDiskPersistence_Archive(t *testing.T) {
 
 	if _, err := os.Stat(pathMoveFrom); !os.IsNotExist(err) {
 		if err != nil {
-			t.Fatalf("Dir [%+v] was supposed to be empty", pathMoveFrom)
+			t.Fatalf("Dir [%+v] was supposed to be moved", pathMoveFrom)
 		}
 	}
 
