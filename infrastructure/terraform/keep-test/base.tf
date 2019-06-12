@@ -42,11 +42,6 @@ locals {
   }
 }
 
-resource "google_project_service" "compute" {
-  project = "${module.project.project_id}"
-  service = "compute.googleapis.com"
-}
-
 module "project" {
   source                = "git@github.com:thesis/infrastructure.git//terraform/modules/gcp_project"
   name                  = "${var.project_name}"
