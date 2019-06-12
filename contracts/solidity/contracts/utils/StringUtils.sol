@@ -3,6 +3,26 @@ pragma solidity ^0.5.4;
 
 library StringUtils {
 
+    function uintToBytes32(uint256 x) internal pure returns (bytes32 output) {
+        while (x > 0) {
+            output = bytes32(uint(output) / (2 ** 8));
+            output |= bytes32(((x % 10) + 48) * 2 ** (8 * 31));
+            x /= 10;
+        }
+        return output;
+    }
+
+    function bytes32ToString(bytes32 x) internal pure returns (string memory) {
+        bytes memory s = new bytes(32);
+        for (uint i = 0; i < 32; i++) {
+            byte char = byte(bytes32(uint(x) * 2 ** (8 * i)));
+            if (char != 0) {
+                s[i] = char;
+            }
+        }
+        return string(s);
+    }
+
     function toString(address x) internal pure returns (string memory) {
         bytes memory s = new bytes(40);
         for (uint i = 0; i < 20; i++) {
