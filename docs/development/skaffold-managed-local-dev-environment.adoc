@@ -106,9 +106,10 @@ Docker version 18.09.2, build 6247962
 
 ==== Memory
 
-Make sure enough memory is allocated to Docker. Assign at least `6 GB` of memory
-in Docker preferences: _Docker_ -> _Preferences_ -> _Advanced_ set Memory slider
-to `6.0 GiB` and confirm with `Apply & Restart` button.
+Make sure enough memory is allocated to Docker. Assign at least `12GB` of memory
+and 6 CPUs in Docker preferences:
+_Docker_ -> _Preferences_ -> _Advanced_ set Memory slider to `12GB` and 
+confirm with `Apply & Restart` button.
 
 === Kubernetes
 
