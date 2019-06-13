@@ -50,14 +50,22 @@ type contractInfo struct {
 	Events          []eventInfo
 }
 
+type paramInfo struct {
+	Name      string
+	Type      string
+	ParsingFn string
+}
+
 type methodInfo struct {
 	CapsName          string
 	LowerName         string
 	DashedName        string
 	Modifiers         string
 	Payable           bool
+	CommandCallable   bool
 	Params            string
 	ParamDeclarations string
+	ParamInfos        []paramInfo
 	Return            returnInfo
 }
 
@@ -127,6 +135,7 @@ func buildMethodInfo(
 		)))
 
 		_, payable := payableMethods[name]
+		commandCallable := true
 
 		modifiers := make([]string, 0, 0)
 		if payable {
@@ -139,6 +148,7 @@ func buildMethodInfo(
 
 		paramDeclarations := ""
 		params := ""
+		paramInfos := make([]paramInfo, 0, 0)
 
 		for index, param := range method.Inputs {
 			goType := param.Type.Type.String()
@@ -149,6 +159,25 @@ func buildMethodInfo(
 
 			paramDeclarations += fmt.Sprintf("%v %v,\n", paramName, goType)
 			params += fmt.Sprintf("%v,\n", paramName)
+
+			parsingFn := ""
+			switch param.Type.String() {
+			case "bytes":
+				parsingFn = "hexutil.Decode"
+			case "address":
+				parsingFn = "ethutil.AddressFromHex"
+			case "uint256":
+				parsingFn = "hexutil.DecodeBig"
+			default:
+				commandCallable = false
+			}
+			paramInfos = append(
+				paramInfos,
+				paramInfo{
+					Name:      paramName,
+					Type:      param.Type.String(),
+					ParsingFn: parsingFn,
+				})
 		}
 
 		returned := returnInfo{}
@@ -180,8 +209,10 @@ func buildMethodInfo(
 			dashedName,
 			modifierString,
 			payable,
+			commandCallable,
 			params,
 			paramDeclarations,
+			paramInfos,
 			returned,
 		}
 
