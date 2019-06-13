@@ -11,7 +11,7 @@ import (
 type storage interface {
 	save(membership *Membership) error
 	readAll() ([]*Membership, error)
-	archive(groupName string) error
+	archive(groupPublicKey string) error
 }
 
 type persistentStorage struct {
