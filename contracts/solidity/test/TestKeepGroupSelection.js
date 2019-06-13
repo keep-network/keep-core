@@ -107,7 +107,7 @@ contract('TestKeepGroupSelection', function(accounts) {
 
   it("should not trigger group selection while one is in progress", async function() {
     let groupSelectionStartBlock = await keepGroupImplViaProxy.ticketSubmissionStartBlock();
-    await keepRandomBeaconImplViaProxy.requestRelayEntry(bls.seed, "0x0000000000000000000000000000000000000000", "", {value: 10});
+    await keepRandomBeaconImplViaProxy.requestRelayEntry(bls.seed, {value: 10});
     await keepRandomBeaconImplViaProxy.relayEntry(2, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
 
     assert.isTrue((await keepGroupImplViaProxy.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
@@ -118,7 +118,7 @@ contract('TestKeepGroupSelection', function(accounts) {
     let groupSelectionStartBlock = await keepGroupImplViaProxy.ticketSubmissionStartBlock();
     mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
 
-    await keepRandomBeaconImplViaProxy.requestRelayEntry(bls.seed, "0x0000000000000000000000000000000000000000", "", {value: 10});
+    await keepRandomBeaconImplViaProxy.requestRelayEntry(bls.seed, {value: 10});
     await keepRandomBeaconImplViaProxy.relayEntry(2, bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
 
     assert.isFalse((await keepGroupImplViaProxy.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");

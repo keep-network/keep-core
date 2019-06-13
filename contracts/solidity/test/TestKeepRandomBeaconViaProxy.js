@@ -32,11 +32,11 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
   });
 
   it("should fail to request relay entry with not enough ether", async function() {
-    await exceptThrow(implViaProxy.requestRelayEntry(0, "0x0000000000000000000000000000000000000000", "", {from: account_two, value: 99}));
+    await exceptThrow(implViaProxy.requestRelayEntry(0, {from: account_two, value: 99}));
   });
 
   it("should be able to request relay entry via implementation contract with enough ether", async function() {
-    await implViaProxy.requestRelayEntry(0, "0x0000000000000000000000000000000000000000", "", {from: account_two, value: 100})
+    await implViaProxy.requestRelayEntry(0, {from: account_two, value: 100})
 
     assert.equal((await implViaProxy.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the implementation contract.");
 

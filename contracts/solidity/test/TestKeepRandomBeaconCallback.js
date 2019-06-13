@@ -20,7 +20,7 @@ contract('TestKeepRandomBeaconCallback', function() {
   });
 
   it("should produce entry if callback contract was not provided", async function() {
-    let tx = await keepRandomBeacon.requestRelayEntry(bls.seed, "0x0000000000000000000000000000000000000000", "", {value: 10});
+    let tx = await keepRandomBeacon.requestRelayEntry(bls.seed, {value: 10});
     let requestId = tx.logs[0].args.requestID;
     await keepRandomBeacon.relayEntry(requestId, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
@@ -29,7 +29,7 @@ contract('TestKeepRandomBeaconCallback', function() {
   });
 
   it("should successfully call method on a callback contract", async function() {
-    let tx = await keepRandomBeacon.requestRelayEntry(bls.seed, callbackContract.address, "callback(uint256)", {value: 10});
+    let tx = await keepRandomBeacon.methods['requestRelayEntry(uint256,address,string)'](bls.seed, callbackContract.address, "callback(uint256)", {value: 10});
     let requestId = tx.logs[0].args.requestID;
     await keepRandomBeacon.relayEntry(requestId, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 

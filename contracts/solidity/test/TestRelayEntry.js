@@ -20,7 +20,7 @@ contract('TestRelayEntry', function() {
     keepGroupStub = await KeepGroupStub.new();
     await keepRandomBeaconImplViaProxy.initialize(1,1, bls.previousEntry, bls.groupPubKey, keepGroupStub.address,
       relayRequestTimeout);
-    await keepRandomBeaconImplViaProxy.requestRelayEntry(bls.seed, "0x0000000000000000000000000000000000000000", "", {value: 10});
+    await keepRandomBeaconImplViaProxy.requestRelayEntry(bls.seed, {value: 10});
   });
 
   it("should not be able to submit invalid relay entry", async function() {
