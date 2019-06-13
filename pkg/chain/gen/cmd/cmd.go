@@ -1,7 +1,25 @@
 package cmd
 
 import (
+	"github.com/keep-network/keep-core/cmd/flag"
 	"github.com/urfave/cli"
+)
+
+const (
+	blockFlag        string = "block"
+	blockShort       string = "b"
+	transactionFlag  string = "transaction"
+	transactionShort string = "t"
+	submitFlag       string = "submit"
+	submitShort      string = "s"
+	valueFlag        string = "value"
+	valueShort       string = "v"
+)
+
+var (
+	transactionFlagValue *flag.TransactionHash = &flag.TransactionHash{}
+	blockFlagValue       *flag.Uint256         = &flag.Uint256{}
+	valueFlagValue       *flag.Uint256         = &flag.Uint256{}
 )
 
 // AvailableCommands is the exported list of generated commands that can be
