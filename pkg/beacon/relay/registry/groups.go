@@ -77,26 +77,38 @@ func (gr *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 	return gr.myGroups[groupKeyToString(groupPublicKey)]
 }
 
-// UnregisterDeletedGroups lookup for groups to be removed.
-func (gr *Groups) UnregisterDeletedGroups() {
+// UnregisterStaleGroups lookup for groups that have been marked as stale
+// on-chain. A stale group is a group that has expired and a certain time passed
+// after the group expiration. This guarantees the group will not be selected to
+// a new operation and it cannot have an ongoing operation for which it could be
+// selected before it expired. Such a group can be safely removed from the registry
+// and archived in the underlying storage.
+func (gr *Groups) UnregisterStaleGroups() error {
 	gr.mutex.Lock()
 	defer gr.mutex.Unlock()
 
 	for publicKey := range gr.myGroups {
 		publicKeyBytes, err := groupKeyFromString(publicKey)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error occured while decoding public key into bytes [%v]\n", err)
+			return fmt.Errorf("error occured while decoding public key into bytes [%v]", err)
 		}
 
 		isStaleGroup, err := gr.relayChain.IsStaleGroup(publicKeyBytes)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Group removal eligibility check failed: [%v]\n", err)
+			return fmt.Errorf("staling group eligibility check has failed: [%v]", err)
 		}
 
 		if isStaleGroup {
+			err = gr.storage.archive(publicKey)
+			if err != nil {
+				return fmt.Errorf("group archiving has failed: [%v]", err)
+			}
+
 			delete(gr.myGroups, publicKey)
 		}
 	}
+
+	return nil
 }
 
 // LoadExistingGroups iterates over all stored memberships on disk and loads them
