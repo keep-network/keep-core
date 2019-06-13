@@ -100,3 +100,22 @@ var (
 		return nil
 	}
 )
+
+var (
+	nonConstArgsChecker = submittedArgChecker
+	payableArgsChecker  = nonConstArgsChecker.andThen(valueArgChecker)
+)
+
+func argCountChecker(expectedArgCount int) func(*cli.Context) error {
+	return func(c *cli.Context) error {
+		if c.NArg() != expectedArgCount {
+			return fmt.Errorf(
+				"Expected [%v] arguments but got [%v]",
+				expectedArgCount,
+				c.NArg(),
+			)
+		}
+
+		return nil
+	}
+}
