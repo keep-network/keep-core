@@ -32,6 +32,40 @@ var (
 // commands.
 var AvailableCommands []cli.Command
 
+var (
+	constFlags = []cli.Flag{
+		&cli.GenericFlag{
+			Name:  blockFlag + ", " + blockShort,
+			Usage: "Retrieve the result of calling this method on `BLOCK`.",
+			Value: blockFlagValue,
+		},
+		&cli.GenericFlag{
+			Name:  transactionFlag + ", " + transactionShort,
+			Usage: "Retrieve the already-evaluated result of this method in `TRANSACTION`",
+			Value: transactionFlagValue,
+		},
+	}
+	nonConstFlags = append(
+		[]cli.Flag{
+			&cli.BoolFlag{
+				Name:  submitFlag + ", " + submitShort,
+				Usage: "Submit this call as a gas-spending network transaction.",
+			},
+		},
+		constFlags...,
+	)
+	payableFlags = append(
+		[]cli.Flag{
+			&cli.GenericFlag{
+				Name:  valueFlag + ", " + valueShort,
+				Usage: "Send `VALUE` ether with this call.",
+				Value: valueFlagValue,
+			},
+		},
+		nonConstFlags...,
+	)
+)
+
 type composableArgChecker cli.BeforeFunc
 
 func (cac composableArgChecker) andThen(nextChecker composableArgChecker) composableArgChecker {
