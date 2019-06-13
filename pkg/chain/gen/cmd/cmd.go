@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/keep-network/keep-core/cmd/flag"
 	"github.com/urfave/cli"
 )
@@ -29,3 +31,38 @@ var (
 // reference this variable and expect it to contain all generated contract
 // commands.
 var AvailableCommands []cli.Command
+
+type composableArgChecker cli.BeforeFunc
+
+func (cac composableArgChecker) andThen(nextChecker composableArgChecker) composableArgChecker {
+	return func(c *cli.Context) error {
+		cacErr := cac(c)
+		if cacErr != nil {
+			return cacErr
+		}
+
+		return nextChecker(c)
+	}
+}
+
+var (
+	valueArgChecker composableArgChecker = func(c *cli.Context) error {
+		if !c.IsSet(valueFlag) {
+			return fmt.Errorf("expected value for this payable method")
+		}
+
+		return nil
+	}
+	submittedArgChecker composableArgChecker = func(c *cli.Context) error {
+		if c.Bool(submitFlag) {
+			if c.IsSet(blockFlag) {
+				return fmt.Errorf("cannot specify --block for a submitted transaction")
+			}
+			if c.IsSet(transactionFlag) {
+				return fmt.Errorf("cannot specify --transaction for a submitted transaction")
+			}
+		}
+
+		return nil
+	}
+)
