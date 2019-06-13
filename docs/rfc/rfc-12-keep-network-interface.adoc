@@ -30,7 +30,7 @@ KEEP:: KEEP is an ERC-20 work token used to stake in the Keep network.
        A minimum staked value is required for operator to join sMPC cluster.
 
 Keep Core:: Keep Core consist of a set of on-chain contracts and off-chain  
-            client providing the functionality of random beacon
+            sMPC cluster providing the functionality of random beacon
             and KEEP token along with all stake management interfaces.
 
 tECDSA:: Threshold Elliptic Curve Digital Signature Algorithm. 
@@ -97,27 +97,29 @@ developers may interact with factory directly if they decide to. The network
 will not guarantee that old factories will be still backed up by enough stakers, 
 though.
 
-==== Gateway
+==== Vendor
 
-Gateway is a smart contract with which the application interacts to obtain the 
-most current keep factory version backed by enough stakers so that all 
-operations on the created keep can go smoothly. Each gateway is a service 
-contract and does not have to be sanctioned by stakers. Each gateway can operate 
-on several versions of keep factory to allow for a smooth upgrade process.
+Vendor is a smart contract with which the application interacts to obtain the
+new instance of a keep of the given type backed by enough stakers so that all 
+operations on the created keep can go smoothly. Vendor interacts with keep 
+factories choosing the one most recent if it is backed by enough stakers. Each  
+vendor is a service contract and does not have to be sanctioned by stakers. Each 
+vendor can operate on several versions of keep factory to allow for a smooth 
+upgrade process.
 
 ==== Keep registry
 
 Keep registry serves the role of the master list (see RFC 11 for more details) 
 and tracks sanctioned staking contracts, operator contracts (including keep 
-factories) and gateways. It ensures that only Keep-Org approved contracts are 
+factories) and vendors. It ensures that only Keep-Org approved contracts are 
 used.
 
 
 === Pseudocode
 
-==== ECDSA keep gateway
+==== ECDSA keep vendor
 ```
-contract ECDSAKeepGateway {
+contract ECDSAKeepVendor {
     address[] internal _factories;
 
     function openKeep(
@@ -125,14 +127,10 @@ contract ECDSAKeepGateway {
         uint256 groupSize, 
         address owner
     ) returns (address) {
-        address factory = getFactory()
+        address factory = selectFactory()
         return ECDSAKeepFactory(factory).openKeep(
             threshold, groupSize, owner
         )
-    }
-
-    function getFactory() returns (address) {
-        // (...)
     }
 }
 ```
@@ -170,7 +168,7 @@ contract ECDSAKeep {
 ```
 contract KeepRegistry {
 
-    function getECDSAKeepGateway() address {
+    function getECDSAKeepVendor() address {
         // (...)
     }
 }
@@ -182,8 +180,8 @@ contract Application {
     address internal _keepRegistry;
 
     function openDeposit() {
-        address gateway = KeepRegistry(_keepRegistry).getECDSAKeepGateway()    
-        gateway.openBondedECDSAKeep(
+        address vendor = KeepRegistry(_keepRegistry).getECDSAKeepVendor()    
+        vendor.openKeep(
             threshold, 
             groupSize, 
             bond
