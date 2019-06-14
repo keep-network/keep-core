@@ -45,6 +45,9 @@ the keeps atop which the application is built. This proposal specifies the
 mechanism of creating and registering keeps. This proposal introduces two types
 of keeps: tECDSA keep and Bonded tECDSA keep. Those keeps are just the first
 two types of keeps which are going to be offered by Keep Network.
+All components described in this proposal meet the requirements described in
+the <<rfc-9-upgradeable-contract-components.adoc#header,RFC 9>> addressing 
+upgradeability mechanics.
 
 ==== sMPC cluster requirements
 
