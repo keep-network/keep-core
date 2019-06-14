@@ -24,8 +24,8 @@ func TestTransactionHashSetting(t *testing.T) {
 			hash:         common.Hash{},
 		},
 		"long hash": {
-			value:        "0x000000000000000000000000000000000000001234",
-			errorMessage: "[0x000000000000000000000000000000000000001234] has [21] bytes, must be a hex string of exactly 32 bytes to be a valid transaction hash",
+			value:        "0x123400000000000000000000000000000000000000000000000000000000123400",
+			errorMessage: "[0x123400000000000000000000000000000000000000000000000000000000123400] has [33] bytes, must be a hex string of exactly 32 bytes to be a valid transaction hash",
 			hash:         common.Hash{},
 		},
 		"decimal number": {

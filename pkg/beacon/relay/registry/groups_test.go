@@ -122,7 +122,7 @@ func TestUnregisterStaleGroups(t *testing.T) {
 	gr.RegisterGroup(signer2, channelName1)
 	gr.RegisterGroup(signer3, channelName1)
 
-	mockChain.markForRemoval(signer2.GroupPublicKeyBytes())
+	mockChain.markAsStale(signer2.GroupPublicKeyBytes())
 
 	gr.UnregisterStaleGroups()
 
@@ -135,7 +135,7 @@ func TestUnregisterStaleGroups(t *testing.T) {
 	if group2 != nil {
 		t.Fatalf("Group2 was expected to be unregistered, but is still present")
 	}
-	if len(storageMock.archivedGroups) == 1 &&
+	if len(storageMock.archivedGroups) != 1 ||
 		storageMock.archivedGroups[0] != hex.EncodeToString(signer2.GroupPublicKeyBytes()) {
 		t.Fatalf("Group2 was expected to be archived")
 	}
@@ -151,7 +151,7 @@ type mockGroupRegistrationInterface struct {
 	groupsToRemove [][]byte
 }
 
-func (mgri *mockGroupRegistrationInterface) markForRemoval(publicKey []byte) {
+func (mgri *mockGroupRegistrationInterface) markAsStale(publicKey []byte) {
 	mgri.groupsToRemove = append(mgri.groupsToRemove, publicKey)
 }
 

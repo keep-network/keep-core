@@ -18,16 +18,20 @@ import (
 
 // Main function. Expects to be invoked as:
 //
-//   <executable> [input.abi] contract/[contract_output.go]
+//   <executable> [input.abi] contract/[contract_output.go] cmd/[cmd_output.go]
 //
 // The first file will receive a contract binding that is slightly higher-level
 // than abigen's output, including an event-based interface for contract event
 // interaction, support for revert error reporting, serialized transaction
 // submission, and simplified transactor handling.
+//
+// The second file will receive an urfave/cli-compatible command initialization
+// that can be used to add command-line interaction with the specified contract
+// by adding the relevant commands to a top-level urfave/cli.App object.
 func main() {
-	if len(os.Args) != 3 {
+	if len(os.Args) != 4 {
 		panic(fmt.Sprintf(
-			"Expected `%v [input.abi] [contract_output.go]`, but got [%v].",
+			"Expected `%v [input.abi] [contract_output.go] [cmd_output.go]`, but got [%v].",
 			os.Args[0],
 			os.Args,
 		))
@@ -35,6 +39,7 @@ func main() {
 
 	abiPath := os.Args[1]
 	contractOutputPath := os.Args[2]
+	commandOutputPath := os.Args[3]
 
 	abiFile, err := ioutil.ReadFile(abiPath)
 	if err != nil {
@@ -90,6 +95,20 @@ func main() {
 		))
 	}
 
+	commandBuf, err := generateCode(
+		commandOutputPath,
+		templates,
+		"command.go.tmpl",
+		&contractInfo,
+	)
+	if err != nil {
+		panic(fmt.Sprintf(
+			"Failed to generate Go file at [%v]: [%v].",
+			commandOutputPath,
+			err,
+		))
+	}
+
 	// Save the contract code to a file.
 	if err := saveBufferToFile(contractBuf, contractOutputPath); err != nil {
 		panic(fmt.Sprintf(
@@ -99,6 +118,14 @@ func main() {
 		))
 	}
 
+	// Save the command code to a file.
+	if err := saveBufferToFile(commandBuf, commandOutputPath); err != nil {
+		panic(fmt.Sprintf(
+			"Failed to save Go file at [%v]: [%v].",
+			commandOutputPath,
+			err,
+		))
+	}
 }
 
 // Generates code by applying the named template in the passed template bundle
