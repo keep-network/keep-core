@@ -21,7 +21,7 @@ a keep:: A keep is a smart contract used by an application to perform some work.
 
 sMPC cluster:: A keep can have off-chain clients executing work for a keep. 
                Off-chain clients serving a keep together form an sMPC cluster. 
-               sMPC cluster observes state of a keep and reacts appropriately. 
+               An sMPC cluster observes state of a keep and reacts appropriately. 
 
 Keep Network:: The Keep network consists of all stakers, all keeps and 
                associated sMPC clusters, and the random beacon.
@@ -35,15 +35,13 @@ Keep Core:: Keep Core consist of a set of on-chain contracts and off-chain
 
 tECDSA:: Threshold Elliptic Curve Digital Signature Algorithm. 
 
-Bond:: Bond is a security instrument preventing network operators to collude 
-       and act against agreed rules, for example to censor withdrawals or 
-       abscond with funds. Bond may get slashed or seized in case of malicious
-       behaviour of the operator.
-
+Bond:: A bond is collateral provided by a keep operator that disincentivizes 
+       collusion and misbehavior. Bond may get slashed or seized in case of
+       malicious behaviour of the operator.
 
 === Goal
 The goal of this proposal is to specify the interface between an application and 
-the keeps atop which the application is built. This proposal specifies 
+the keeps atop which the application is built. This proposal specifies the
 mechanism of creating and registering keeps. This proposal introduces two types
 of keeps: tECDSA keep and Bonded tECDSA keep. Those keeps are just the first
 two types of keeps which are going to be offered by Keep Network.
@@ -94,12 +92,12 @@ Keep factory is a smart contract used to create instances of a keep of a certain
 type. Each type of keep has a separate keep factory. Each keep factory is an 
 operator contract and has to be sanctioned by stakers as such. Application 
 developers may interact with factory directly if they decide to. The network
-will not guarantee that old factories will be still backed up by enough stakers, 
+can not guarantee that old factories will be still backed up by enough stakers, 
 though.
 
 ==== Vendor
 
-Vendor is a smart contract with which the application interacts to obtain the
+A vendor is a smart contract with which the application interacts to obtain the
 new instance of a keep of the given type backed by enough stakers so that all 
 operations on the created keep can go smoothly. Vendor interacts with keep 
 factories choosing the one most recent if it is backed by enough stakers. Each  
@@ -109,11 +107,9 @@ upgrade process.
 
 ==== Keep registry
 
-Keep registry serves the role of the master list (see RFC 11 for more details) 
+The keep registry serves the role of the master list (see RFC 11 for more details) 
 and tracks sanctioned staking contracts, operator contracts (including keep 
-factories) and vendors. It ensures that only Keep-Org approved contracts are 
-used.
-
+factories) and vendors. It ensures that only approved contracts are used.
 
 === Pseudocode
 
