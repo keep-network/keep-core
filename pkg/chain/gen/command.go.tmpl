@@ -51,17 +51,8 @@ func init() {
                     Usage: "Calls the {{$method.Modifiers}} method {{$method.LowerName}} on the {{$contract.Class}} contract.",
                     ArgsUsage: "{{ range $i, $param := $method.ParamInfos -}} [{{$param.Name}}] {{ end }}",
                     Action: {{$contract.ShortVar}}{{$method.CapsName}},
-                    Before: func(c *cli.Context) error {
-                    	if c.NArg() != {{$method.ParamInfos | len}} {
-                    		return fmt.Errorf(
-	                    		"Expected [%v] arguments but got [%v]",
-	                    		{{$method.ParamInfos | len}},
-	                    		c.NArg(),
-                    		)
-                    	}
-
-                    	return nil
-                    },
+                    Before: argCountChecker({{$method.ParamInfos | len}}),
+                    Flags: constFlags,
                 },
             {{- end -}}
         },
@@ -88,7 +79,7 @@ func {{$contract.ShortVar}}{{$method.CapsName}}(c *cli.Context) error {
    	}
    	{{ end }}
 
-    ret, err := contract.{{$method.CapsName}}(
+    result, err := contract.{{$method.CapsName}}(
     	{{$method.Params}}
     )
 
@@ -96,7 +87,7 @@ func {{$contract.ShortVar}}{{$method.CapsName}}(c *cli.Context) error {
     	return err
     }
 
-    fmt.Println(ret)
+    printOutput(result)
 
     return nil
 }
