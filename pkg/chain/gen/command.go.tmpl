@@ -81,8 +81,9 @@ func {{$contract.ShortVar}}{{$method.CapsName}}(c *cli.Context) error {
    	}
    	{{ end }}
 
-    result, err := contract.{{$method.CapsName}}(
-    	{{$method.Params}}
+    result, err := contract.{{$method.CapsName}}AtBlock(
+        {{$method.Params}}
+        blockFlagValue.Uint,
     )
 
     if err != nil {
