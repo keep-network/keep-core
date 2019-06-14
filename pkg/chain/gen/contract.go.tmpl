@@ -4,8 +4,10 @@
 package contract
 
 import (
+	"strings"
 	"sync"
 
+	"github.com/ethereum/go-ethereum"
 	ethereumabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -20,6 +22,8 @@ import (
 type {{.Class}} struct {
 	contract          *abi.{{.AbiClass}}
 	contractAddress   common.Address
+	contractABI       *ethereumabi.ABI
+	caller            bind.ContractCaller
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
 	errorResolver     *ethutil.ErrorResolver
@@ -60,6 +64,8 @@ func New{{.Class}}(
 	return &{{.Class}}{
 		contract:          randomBeaconContract,
 		contractAddress:   contractAddress,
+		contractABI: 	   &contractABI,
+		caller:     	   backend,
 		callerOptions:     callerOptions,
 		transactorOptions: transactorOptions,
 		errorResolver:     ethutil.NewErrorResolver(backend, &contractABI, &contractAddress),
