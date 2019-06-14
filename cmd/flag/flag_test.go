@@ -114,7 +114,7 @@ func TestTransactionHashStringification(t *testing.T) {
 }
 
 func TestUint256Setting(t *testing.T) {
-	bigNumber, ok := (&big.Int{}).SetString("8233507321867270975858166353462000283756074959440384344846684898023608160820", 10)
+	bigNumber, ok := (&big.Int{}).SetString("1234000000000000000000000000000000000000000000000000000000001234", 16)
 	if !ok {
 		t.Fatalf("Couldn't set comparison big number.")
 	}
@@ -201,7 +201,7 @@ func TestUint256Setting(t *testing.T) {
 }
 
 func TestUint256Stringification(t *testing.T) {
-	bigNumber, ok := (&big.Int{}).SetString("8233507321867270975858166353462000283756074959440384344846684898023608160820", 10)
+	bigNumber, ok := (&big.Int{}).SetString("1234000000000000000000000000000000000000000000000000000000001234", 16)
 	if !ok {
 		t.Fatalf("Couldn't set comparison big number.")
 	}
