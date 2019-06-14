@@ -52,7 +52,7 @@ func New{{.Class}}(
 		)
 	}
 
-	contractAbi, err := ethereumabi.JSON(strings.NewReader(abi.{{.AbiClass}}ABI))
+	contractABI, err := ethereumabi.JSON(strings.NewReader(abi.{{.AbiClass}}ABI))
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate ABI: [%v]", err)
 	}
@@ -62,7 +62,7 @@ func New{{.Class}}(
 		contractAddress:   contractAddress,
 		callerOptions:     callerOptions,
 		transactorOptions: transactorOptions,
-		errorResolver:     ethutil.NewErrorResolver(backend, &contractAbi, &contractAddress),
+		errorResolver:     ethutil.NewErrorResolver(backend, &contractABI, &contractAddress),
 		transactionMutex:  transactionMutex,
 	}, nil
 }
