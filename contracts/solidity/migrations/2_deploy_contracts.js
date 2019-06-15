@@ -55,7 +55,7 @@ module.exports = async function(deployer) {
   await keepRandomBeaconOperator.initialize(
     StakingProxy.address, KeepRandomBeaconService.address, minStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-    activeGroupsThreshold, groupActiveTime,
+    activeGroupsThreshold, groupActiveTime, relayRequestTimeout,
     web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862'),
     "0x1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0",
   );
@@ -63,7 +63,6 @@ module.exports = async function(deployer) {
   await keepRandomBeaconService.initialize(
     minPayment,
     withdrawalDelay,
-    keepRandomBeaconOperator.address,
-    relayRequestTimeout
+    keepRandomBeaconOperator.address
   );
 };

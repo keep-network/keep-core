@@ -40,11 +40,11 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
   await operatorContract.initialize(
     stakingProxy.address, serviceContract.address, minimumStake, groupThreshold,
     groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-    activeGroupsThreshold, groupActiveTime,
+    activeGroupsThreshold, groupActiveTime, relayRequestTimeout,
     bls.groupSignature, bls.groupPubKey
   );
 
-  await serviceContract.initialize(minPayment, withdrawalDelay, operatorContract.address, relayRequestTimeout);
+  await serviceContract.initialize(minPayment, withdrawalDelay, operatorContract.address);
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 4).
   await operatorContract.authorizeStakingContract(stakingContract.address);

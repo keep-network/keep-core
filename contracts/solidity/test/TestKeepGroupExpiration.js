@@ -21,7 +21,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
     groupActiveTime = (await operatorContract.activeTime()).toNumber();
     activeGroupsThreshold = (await operatorContract.activeGroupsThreshold()).toNumber();
     serviceContract = contracts.serviceContract;
-    relayRequestTimeout = (await serviceContract.relayRequestTimeout()).toNumber();
+    relayRequestTimeout = (await operatorContract.relayRequestTimeout()).toNumber();
   });
 
   async function addGroups(numberOfGroups) {

@@ -81,7 +81,11 @@ contract KeepRandomBeaconOperator is Ownable {
  
     // activeTime is the time in block after which a group expires
     uint256 public activeTime;
- 
+
+    // Timeout in blocks for a relay entry to appear on the chain. Blocks are
+    // counted from the moment relay request occur.
+    uint256 public relayRequestTimeout;
+
     // expiredOffset is pointing to the first active group, it is also the
     // expired groups counter
     uint256 public expiredOffset = 0;
@@ -442,6 +446,8 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param _activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
      * needs to be greater than 0.
      * @param _activeTime is the time in block after which a group expires.
+     * @param _relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
+     * Blocks are counted from the moment relay request occur.
      */
     function initialize(
         address _stakingProxy,
@@ -456,6 +462,7 @@ contract KeepRandomBeaconOperator is Ownable {
         uint256 _resultPublicationBlockStep,
         uint256 _activeGroupsThreshold,
         uint256 _activeTime,
+        uint256 _relayRequestTimeout,
         uint256 _genesisEntry,
         bytes memory _genesisGroupPubKey
     ) public onlyOwner {
@@ -474,6 +481,7 @@ contract KeepRandomBeaconOperator is Ownable {
         resultPublicationBlockStep = _resultPublicationBlockStep;
         activeGroupsThreshold = _activeGroupsThreshold;
         activeTime = _activeTime;
+        relayRequestTimeout = _relayRequestTimeout;
         groupSelectionSeed = _genesisEntry;
 
         // Create initial relay entry request. This will allow relayEntry to be called once
@@ -559,8 +567,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * performing any operations.
      */
     function groupStaleTime(Group memory group) internal view returns(uint256) {
-        // TODO: move relayRequestTimeout constant to this contract
-        return groupActiveTime(group) + ServiceContract(serviceContracts[0]).relayRequestTimeout();
+        return groupActiveTime(group) + relayRequestTimeout;
     }
 
     /**

@@ -29,7 +29,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     uint256 internal _minPayment;
     uint256 internal _previousEntry;
-    uint256 internal _relayRequestTimeout;
 
     address[] internal _operatorContracts;
     mapping (address => uint256) internal _operatorContractNumberOfGroups;
@@ -48,10 +47,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param operatorContract Operator contract linked to this contract.
-     * @param relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
-     * Blocks are counted from the moment relay request occur.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay, address operatorContract, uint256 relayRequestTimeout)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay, address operatorContract)
         public
         onlyOwner
     {
@@ -61,7 +58,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _operatorContracts.push(operatorContract);
-        _relayRequestTimeout = relayRequestTimeout;
     }
 
     /**
@@ -127,13 +123,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function previousEntry() public view returns(uint256) {
         return _previousEntry;
-    }
-
-    /**
-     * Gets the timeout in blocks for a relay entry to appear on the chain.
-     */
-    function relayRequestTimeout() public view returns(uint256) {
-        return _relayRequestTimeout;
     }
 
     /**
