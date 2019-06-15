@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./utils/AddressArrayUtils.sol";
 import "./DelayedWithdrawal.sol";
 
 
@@ -20,14 +21,18 @@ interface OperatorContract {
  */
 contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
+    using AddressArrayUtils for address[];
+
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey); 
     event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     uint256 internal _minPayment;
-    address internal _operatorContract;
     uint256 internal _previousEntry;
     uint256 internal _relayRequestTimeout;
+
+    address[] internal _operatorContracts;
+    mapping (address => uint256) internal _operatorContractNumberOfGroups;
 
     mapping (string => bool) internal _initialized;
 
@@ -55,7 +60,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
-        _operatorContract = operatorContract;
+        _operatorContracts.push(operatorContract);
         _relayRequestTimeout = relayRequestTimeout;
     }
 
@@ -80,7 +85,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
         // OperatorContract(_operatorContract).requestRelayEntry.value(msg.value)(msg.sender, seed, _previousEntry);
-        return OperatorContract(_operatorContract).requestRelayEntry(msg.sender, seed, _previousEntry);
+        // TODO: select operator contract
+        return OperatorContract(_operatorContracts[0]).requestRelayEntry(msg.sender, seed, _previousEntry);
     }
 
     /**
@@ -93,7 +99,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {
         require(
-            msg.sender == _operatorContract,
+            _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."
         );
 
