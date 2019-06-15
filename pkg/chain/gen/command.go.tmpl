@@ -129,6 +129,6 @@ func initialize{{.Class}}(c *cli.Context) (*contract.{{.Class}}, error) {
         address,
         key,
         client,
-        nil,
+        &sync.Mutex{},
     )
 }
