@@ -12,7 +12,7 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
      * @dev Stub method to authorize service contract to help local development.
      */
     function authorizeServiceContract(address _serviceContract) public {
-        serviceContract = _serviceContract;
+        serviceContracts.push(_serviceContract);
     }
 
     /**

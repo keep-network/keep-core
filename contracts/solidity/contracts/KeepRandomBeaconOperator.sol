@@ -27,6 +27,7 @@ contract KeepRandomBeaconOperator is Ownable {
     using SafeMath for uint256;
     using BytesLib for bytes;
     using ECDSA for bytes32;
+    using AddressArrayUtils for address[];
 
     event OnGroupRegistered(bytes groupPubKey);
 
@@ -47,7 +48,7 @@ contract KeepRandomBeaconOperator is Ownable {
     uint256 public groupSize;
     uint256 public minimumStake;
     address public stakingProxy;
-    address public serviceContract;
+    address[] public serviceContracts;
 
     uint256 public ticketInitialSubmissionTimeout;
     uint256 public ticketReactiveSubmissionTimeout;
@@ -100,6 +101,7 @@ contract KeepRandomBeaconOperator is Ownable {
         address sender;
         uint256 payment;
         bytes groupPubKey;
+        address serviceContract;
     }
 
     mapping(uint256 => Request) public requests;
@@ -461,7 +463,7 @@ contract KeepRandomBeaconOperator is Ownable {
         require(_stakingProxy != address(0x0), "Staking proxy address can't be zero.");
         initialized = true;
         stakingProxy = _stakingProxy;
-        serviceContract = _serviceContract;
+        serviceContracts.push(_serviceContract);
         minimumStake = _minimumStake;
         groupSize = _groupSize;
         groupThreshold = _groupThreshold;
@@ -478,7 +480,7 @@ contract KeepRandomBeaconOperator is Ownable {
         // to trigger the creation of the first group. Requests are removed on successful
         // entries so genesis entry can only be called once.
         requestCounter++;
-        requests[requestCounter] = Request(msg.sender, 0, _genesisGroupPubKey);
+        requests[requestCounter] = Request(msg.sender, 0, _genesisGroupPubKey, _serviceContract);
     }
 
     /**
@@ -557,7 +559,8 @@ contract KeepRandomBeaconOperator is Ownable {
      * performing any operations.
      */
     function groupStaleTime(Group memory group) internal view returns(uint256) {
-        return groupActiveTime(group) + ServiceContract(serviceContract).relayRequestTimeout();
+        // TODO: move relayRequestTimeout constant to this contract
+        return groupActiveTime(group) + ServiceContract(serviceContracts[0]).relayRequestTimeout();
     }
 
     /**
@@ -668,7 +671,7 @@ contract KeepRandomBeaconOperator is Ownable {
     function requestRelayEntry(address from, uint256 seed, uint256 previousEntry) public payable returns (uint256) {
 
         require(
-            msg.sender == serviceContract,
+            serviceContracts.contains(msg.sender),
             "Only authorized service contract can request relay entry."
         );
 
@@ -681,7 +684,7 @@ contract KeepRandomBeaconOperator is Ownable {
 
         requestCounter++;
 
-        requests[requestCounter] = Request(from, msg.value, groupPubKey);
+        requests[requestCounter] = Request(from, msg.value, groupPubKey, msg.sender);
 
         emit RelayEntryRequested(requestCounter, msg.value, previousEntry, seed, groupPubKey);
         return requestCounter;
@@ -698,6 +701,7 @@ contract KeepRandomBeaconOperator is Ownable {
         require(requests[_requestID].groupPubKey.equalStorage(_groupPubKey), "Provided group was not selected to produce entry for this request.");
         require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
 
+        address serviceContract = requests[_requestID].serviceContract;
         delete requests[_requestID];
 
         emit RelayEntryGenerated(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
