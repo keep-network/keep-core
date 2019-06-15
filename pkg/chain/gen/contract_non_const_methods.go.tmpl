@@ -1,9 +1,12 @@
 {{- $contract := . -}}
 {{- range $i, $method := .NonConstMethods }}
 
+// Transaction submission.
 func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 	{{$method.ParamDeclarations -}}
-	{{if $method.Payable -}} value *big.Int, {{- end -}}
+	{{- if $method.Payable -}}
+	value *big.Int,
+	{{ end -}}
 ) (*types.Transaction, error) {
 	{{$contract.ShortVar}}.transactionMutex.Lock()
 	defer {{$contract.ShortVar}}.transactionMutex.Unlock()
