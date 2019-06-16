@@ -6,7 +6,7 @@ import "./DelayedWithdrawal.sol";
 
 
 interface OperatorContract {
-    function requestRelayEntry(address from, uint256 seed, uint256 previousEntry) payable external returns (uint256 requestId);
+    function sign(uint256 entryId, uint256 seed, uint256 previousEntry) payable external;
     function numberOfGroups() external view returns(uint256);
     function selectGroup(uint256 previousEntry) external returns(bytes memory);
 }
@@ -25,10 +25,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey); 
-    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
+    event RelayEntryGenerated(uint256 entryId, uint256 entry);
 
     uint256 internal _minPayment;
     uint256 internal _previousEntry;
+    uint256 internal _entryCounter;
 
     address[] internal _operatorContracts;
     mapping (address => uint256) internal _operatorContractNumberOfGroups;
@@ -71,7 +72,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
-     * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
+     * @return An uint256 representing uniquely generated entry Id.
      */
     function requestRelayEntry(uint256 seed) public payable returns (uint256) {
         require(
@@ -79,28 +80,29 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             "Payment is less than required minimum."
         );
 
-        // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
-        // OperatorContract(_operatorContract).requestRelayEntry.value(msg.value)(msg.sender, seed, _previousEntry);
+        _entryCounter++;
+
         // TODO: select operator contract
-        return OperatorContract(_operatorContracts[0]).requestRelayEntry(msg.sender, seed, _previousEntry);
+        // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
+        // OperatorContract(_operatorContracts[0]).sign.value(msg.value)(_entryCounter, seed, _previousEntry);
+        OperatorContract(_operatorContracts[0]).sign(_entryCounter, seed, _previousEntry);
+        return _entryCounter;
     }
 
     /**
-     * @dev Creates a new relay entry and stores the associated data on the chain.
-     * @param requestID The request that started this generation - to tie the results back to the request.
-     * @param groupSignature The generated random number.
-     * @param groupPubKey Public key of the group that generated the threshold signature.
-     * @param previousEntry Previous relay entry value.
-     * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
+     * @dev Store valid entry returned by operator contract and call customer specified callback if required.
+     * @param entryId Entry id tracked internally by this contract.
+     * @param entry The generated random number.
      */
-    function relayEntry(uint256 requestID, uint256 groupSignature, bytes memory groupPubKey, uint256 previousEntry, uint256 seed) public {
+    function entryCreated(uint256 entryId, uint256 entry) public {
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."
         );
 
-        _previousEntry = groupSignature;
-        emit RelayEntryGenerated(requestID, groupSignature, groupPubKey, previousEntry, seed);
+        _previousEntry = entry;
+        emit RelayEntryGenerated(entryId, entry);
+        // TODO: customer-specified callback
     }
 
     /**

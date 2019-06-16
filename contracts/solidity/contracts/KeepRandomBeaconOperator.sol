@@ -11,8 +11,7 @@ import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
 
 interface ServiceContract {
-    function relayEntry(uint256 requestID, uint256 requestResponse, bytes calldata requestGroupPubKey, uint256 previousEntry, uint256 seed) external;
-    function relayRequestTimeout() external view returns(uint256);
+    function entryCreated(uint256 entryId, uint256 entry) external;
 }
 
 /**
@@ -102,7 +101,7 @@ contract KeepRandomBeaconOperator is Ownable {
     bool public initialized;
 
     struct Request {
-        address sender;
+        uint256 entryId;
         uint256 payment;
         bytes groupPubKey;
         address serviceContract;
@@ -488,7 +487,7 @@ contract KeepRandomBeaconOperator is Ownable {
         // to trigger the creation of the first group. Requests are removed on successful
         // entries so genesis entry can only be called once.
         requestCounter++;
-        requests[requestCounter] = Request(msg.sender, 0, _genesisGroupPubKey, _serviceContract);
+        requests[requestCounter] = Request(0, 0, _genesisGroupPubKey, _serviceContract);
     }
 
     /**
@@ -671,11 +670,11 @@ contract KeepRandomBeaconOperator is Ownable {
     /**
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
+     * @param entryId Entry Id trackable by service contract.
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
-     * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
      */
-    function requestRelayEntry(address from, uint256 seed, uint256 previousEntry) public payable returns (uint256) {
+    function sign(uint256 entryId, uint256 seed, uint256 previousEntry) public payable {
 
         require(
             serviceContracts.contains(msg.sender),
@@ -691,10 +690,9 @@ contract KeepRandomBeaconOperator is Ownable {
 
         requestCounter++;
 
-        requests[requestCounter] = Request(from, msg.value, groupPubKey, msg.sender);
+        requests[requestCounter] = Request(entryId, msg.value, groupPubKey, msg.sender);
 
         emit RelayEntryRequested(requestCounter, msg.value, previousEntry, seed, groupPubKey);
-        return requestCounter;
     }
 
     /**
@@ -709,11 +707,12 @@ contract KeepRandomBeaconOperator is Ownable {
         require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
 
         address serviceContract = requests[_requestID].serviceContract;
+        uint256 entryId = requests[_requestID].entryId;
         delete requests[_requestID];
 
         emit RelayEntryGenerated(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
-        ServiceContract(serviceContract).relayEntry(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
+        ServiceContract(serviceContract).entryCreated(entryId, _groupSignature);
         runGroupSelection(_groupSignature, _requestID, _seed);
     }
 }

@@ -40,7 +40,7 @@ contract('TestRelayEntry', function(accounts) {
 
     await operatorContract.relayEntry(requestID, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
-    assert.equal((await serviceContract.getPastEvents())[0].args['requestResponse'].toString(),
+    assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
       bls.groupSignature.toString(), "Should emit event with successfully submitted groupSignature."
     );
 
