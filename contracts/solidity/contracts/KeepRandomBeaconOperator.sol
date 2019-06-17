@@ -12,6 +12,7 @@ import "./cryptography/BLS.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 entryId, uint256 entry) external;
+    function groupCreated(uint256 numberOfGroups) external;
 }
 
 /**
@@ -370,6 +371,8 @@ contract KeepRandomBeaconOperator is Ownable {
         emit DkgResultPublishedEvent(requestId, groupPubKey);
 
         groupSelectionInProgress = false;
+
+        updateNumberOfGroupsOnServiceContracts();
     }
 
     /**
@@ -714,5 +717,14 @@ contract KeepRandomBeaconOperator is Ownable {
 
         ServiceContract(serviceContract).entryCreated(entryId, _groupSignature);
         createGroup(_groupSignature, _requestID, _seed);
+    }
+
+    /**
+     * @dev Update number of groups on each service contract.
+     */
+    function updateNumberOfGroupsOnServiceContracts() public {
+        for (uint i = 0; i < serviceContracts.length; i++) {
+            ServiceContract(serviceContracts[i]).groupCreated(numberOfGroups());
+        }
     }
 }

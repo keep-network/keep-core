@@ -106,6 +106,19 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
+     * @dev Store number of groups returned by operator contract.
+     * @param numberOfGroups Number of groups.
+     */
+    function groupCreated(uint256 numberOfGroups) public {
+        require(
+            _operatorContracts.contains(msg.sender),
+            "Only authorized operator contract can call groupCreated."
+        );
+
+        _operatorContractNumberOfGroups[msg.sender] = numberOfGroups;
+    }
+
+    /**
      * @dev Set the minimum payment that is required before a relay entry occurs.
      * @param minPayment is the value in wei that is required to be payed for the process to start.
      */
