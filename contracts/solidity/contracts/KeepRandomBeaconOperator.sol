@@ -139,7 +139,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param _requestId Relay request ID associated with DKG protocol execution.
      * @param _seed Random value from the client. It should be a cryptographically generated random value.
      */
-    function runGroupSelection(uint256 _groupSelectionSeed, uint256 _requestId, uint256 _seed) private {
+    function createGroup(uint256 _groupSelectionSeed, uint256 _requestId, uint256 _seed) private {
         // dkgTimeout is the time after DKG is expected to be complete plus the expected period to submit the result.
         uint256 dkgTimeout = ticketSubmissionStartBlock + ticketChallengeTimeout + timeDKG + groupSize * resultPublicationBlockStep;
 
@@ -713,6 +713,6 @@ contract KeepRandomBeaconOperator is Ownable {
         emit RelayEntryGenerated(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
         ServiceContract(serviceContract).entryCreated(entryId, _groupSignature);
-        runGroupSelection(_groupSignature, _requestID, _seed);
+        createGroup(_groupSignature, _requestID, _seed);
     }
 }
