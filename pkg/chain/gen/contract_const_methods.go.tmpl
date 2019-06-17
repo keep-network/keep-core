@@ -1,27 +1,24 @@
 {{- $contract := . -}}
 {{- range $i, $method := .ConstMethods }}
 
-{{- $returnTypeVar := print $method.Return.Type "," -}}
 {{- if $method.Return.Multi }}
 type {{$method.Return.Type}} struct {
-	{{$method.Return.Declarations}}
+       {{$method.Return.Declarations}}
 }
-{{ else if eq $method.Return.Type "" -}}
-{{- $returnTypeVar = "" -}}
-{{- end -}}
+{{- end }}
 
 func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 	{{$method.ParamDeclarations -}}
 	{{if $method.Payable -}} value *big.Int, {{- end -}}
-) ({{$returnTypeVar}} error) {
-	var ret {{$method.Return.Type}}
-	ret, err := {{$contract.ShortVar}}.contract.{{$method.CapsName}}(
+) ({{$method.Return.Type}}, error) {
+	var result {{$method.Return.Type}}
+	result, err := {{$contract.ShortVar}}.contract.{{$method.CapsName}}(
 		{{$contract.ShortVar}}.callerOptions,
 		{{$method.Params}}
 	)
 
 	if err != nil {
-		return ret, {{$contract.ShortVar}}.errorResolver.ResolveError(
+		return result, {{$contract.ShortVar}}.errorResolver.ResolveError(
 			err,
 			{{$contract.ShortVar}}.callerOptions.From,
 			nil,
@@ -30,11 +27,29 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 		)
 	}
 
-	{{ if $method.Return.Multi -}}
-	return ret, err
-	{{ else }}
-	return {{$method.Return.Vars}} err
-	{{ end -}}
+	return result, err
+}
+
+func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}AtBlock(
+	{{$method.ParamDeclarations -}}
+	{{if $method.Payable -}} value *big.Int, {{- end -}}
+	blockNumber *big.Int,
+) ({{$method.Return.Type}}, error) {
+	var result {{$method.Return.Type}}
+
+	err := ethutil.CallAtBlock(
+		{{$contract.ShortVar}}.callerOptions.From,
+		blockNumber,
+		{{$contract.ShortVar}}.contractABI,
+		{{$contract.ShortVar}}.caller,
+		{{$contract.ShortVar}}.errorResolver,
+		{{$contract.ShortVar}}.contractAddress,
+		"{{$method.LowerName}}",
+		&result,
+		{{$method.Params}}
+	)
+
+	return result, err
 }
 
 {{end -}}
