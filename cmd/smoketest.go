@@ -55,6 +55,11 @@ func (np *noopPersistence) ReadAll() ([][]byte, error) {
 	return nil, nil
 }
 
+func (np *noopPersistence) Archive(directory string) error {
+	// noop
+	return nil
+}
+
 func init() {
 	SmokeTestCommand = cli.Command{
 		Name:        "smoke-test",

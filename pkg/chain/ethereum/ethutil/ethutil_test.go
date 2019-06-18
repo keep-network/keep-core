@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 )
 
@@ -53,6 +54,72 @@ func TestKeyFileDecryption(t *testing.T) {
 					"\nexpected: [%v]\nactual:   [%v]",
 					test.errorMessage,
 					err,
+				)
+			}
+		})
+	}
+}
+
+func TestAddressFromHex(t *testing.T) {
+	tests := map[string]struct {
+		hex          string
+		errorMessage string
+		address      common.Address
+	}{
+		"valid address": {
+			hex:          "0x0000000000000000000000000000000000001234",
+			errorMessage: "",
+			address:      common.Address([20]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 52}),
+		},
+		"short address": {
+			hex:          "0x1234",
+			errorMessage: "[0x1234] is not a valid Ethereum address",
+			address:      common.Address{},
+		},
+		"long address": {
+			hex:          "0x000000000000000000000000000000000000001234",
+			errorMessage: "[0x000000000000000000000000000000000000001234] is not a valid Ethereum address",
+			address:      common.Address{},
+		},
+		"decimal number": {
+			hex:          "000000000000000000000000000000000000001234",
+			errorMessage: "[000000000000000000000000000000000000001234] is not a valid Ethereum address",
+			address:      common.Address{},
+		},
+		"blank string": {
+			hex:          "",
+			errorMessage: "[] is not a valid Ethereum address",
+			address:      common.Address{},
+		},
+		"arbitrary string": {
+			hex:          "I am a booyan with booyans",
+			errorMessage: "[I am a booyan with booyans] is not a valid Ethereum address",
+			address:      common.Address{},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			address, err := ethutil.AddressFromHex(test.hex)
+
+			message := ""
+			if err != nil {
+				message = err.Error()
+			}
+
+			if message != test.errorMessage {
+				t.Errorf(
+					"\nexpected: [%v]\nactual:   [%v]",
+					test.errorMessage,
+					err,
+				)
+			}
+
+			if address != test.address {
+				t.Errorf(
+					"\nexpected: [%v]\nactual:   [%v]",
+					test.address,
+					address,
 				)
 			}
 		})

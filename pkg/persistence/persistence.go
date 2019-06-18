@@ -5,4 +5,5 @@ package persistence
 type Handle interface {
 	Save(data []byte, directory string, name string) error
 	ReadAll() ([][]byte, error)
+	Archive(directory string) error
 }
