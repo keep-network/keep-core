@@ -210,8 +210,6 @@ variable "keel_parameters" {
 }
 
 ## push
-
-# gcp_deploy
 variable "jumphost" {
   default {
     name = "keep-test-jumphost"
