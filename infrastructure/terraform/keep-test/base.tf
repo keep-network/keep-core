@@ -51,7 +51,6 @@ module "project" {
   labels                = "${local.labels}"
 }
 
-
 resource "google_storage_bucket" "backend_bucket" {
   name     = "${var.backend_bucket_name}"
   project  = "${module.project.project_id}"

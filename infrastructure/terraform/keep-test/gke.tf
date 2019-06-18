@@ -5,17 +5,21 @@ provider "kubernetes" {
   token                  = "${data.google_client_config.default.access_token}"
   cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
 }
+
 module "helm_provider_helper" {
   source                = "git@github.com:thesis/infrastructure.git//terraform/modules/helm_tiller_helper"
   tiller_namespace_name = "${var.tiller_namespace_name}"
 }
+
 provider "helm" {
   version = "<= 0.7.0"
+
   kubernetes {
     host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
     token                  = "${data.google_client_config.default.access_token}"
     cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
   }
+
   tiller_image    = "gcr.io/kubernetes-helm/tiller:v2.11.0"
   service_account = "${module.helm_provider_helper.tiller_service_account}"
   override        = ["spec.template.spec.automountserviceaccounttoken=true"]
@@ -26,6 +30,7 @@ provider "helm" {
 # create gke cluster
 module "gke_cluster" {
   source = "../../../../thesis/infrastructure/terraform/modules/gcp_gke"
+
   #source           = "git@github.com:thesis/infrastructure.git//terraform/modules/gcp_gke"
   project          = "${module.project.project_id}"
   region           = "${var.region_data["region"]}"
