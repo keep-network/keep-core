@@ -53,7 +53,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
 
     await web3.eth.sendTransaction({
       from: account_two, value: 100, gas: 200000, to: proxy.address,
-      data: encodeCall('requestRelayEntry', ['uint256', 'address', 'string'], [0, "0x0000000000000000000000000000000000000000", ""])
+      data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
     assert.equal((await implViaProxy.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the proxy contract.");
@@ -70,7 +70,7 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
     let amount = web3.utils.toWei('1', 'ether');
     await web3.eth.sendTransaction({
       from: account_two, value: amount, gas: 200000, to: proxy.address,
-      data: encodeCall('requestRelayEntry', ['uint256', 'address', 'string'], [0, "0x0000000000000000000000000000000000000000", ""])
+      data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
     // should fail to withdraw if not owner
