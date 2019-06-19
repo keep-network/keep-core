@@ -7,6 +7,8 @@ import (
 	"io"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/secret"
 )
 
 func TestEncryptDecrypt(t *testing.T) {
@@ -95,5 +97,5 @@ func newEcdhSymmetricKey() (*SymmetricEcdhKey, error) {
 		return nil, err
 	}
 
-	return &SymmetricEcdhKey{bytes}, nil
+	return &SymmetricEcdhKey{secret.NewSecret(bytes)}, nil
 }

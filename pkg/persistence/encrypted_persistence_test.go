@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+
+	sec "github.com/keep-network/keep-core/pkg/secret"
 )
 
 const (
@@ -57,11 +59,12 @@ func (hpm *handlePersistenceMock) Archive(directory string) error {
 }
 
 func encryptData() [][]byte {
-	var key [symmetricKeyLength]byte
-	copy(key[:], accountPassword)
+	var secretBytes [32]byte
+	copy(secretBytes[:], accountPassword)
+	secret := sec.NewSecret(secretBytes)
 
-	encryptedData1, err := encrypt(dataToEncrypt1, key)
-	encryptedData2, err := encrypt(dataToEncrypt2, key)
+	encryptedData1, err := secret.Encrypt(dataToEncrypt1)
+	encryptedData2, err := secret.Encrypt(dataToEncrypt2)
 	if err != nil {
 		fmt.Println("Error occured while encrypting data")
 	}
