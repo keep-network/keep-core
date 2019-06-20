@@ -1,4 +1,4 @@
-let crypto = require("crypto")
+const crypto = require("crypto")
 const KeepRandomBeacon = artifacts.require("KeepRandomBeaconImplV1")
 const KeepRandomBeaconProxy = artifacts.require('KeepRandomBeacon.sol')
 
@@ -9,14 +9,22 @@ const KeepRandomBeaconProxy = artifacts.require('KeepRandomBeacon.sol')
 module.exports = async function() {
 
   const keepRandomBeaconProxy = await KeepRandomBeaconProxy.deployed()
-  let contract = await KeepRandomBeacon.at(keepRandomBeaconProxy.address)
+  const contractInstance = await KeepRandomBeacon.at(keepRandomBeaconProxy.address)
 
   try {
-    let tx = await contract.methods['requestRelayEntry(uint256,address,string)'](crypto.randomBytes(32), process.argv[4], process.argv[5], {value: process.argv[6]})
+    let tx = await contractInstance.methods['requestRelayEntry(uint256,address,string)'](crypto.randomBytes(32), process.argv[4], process.argv[5], {value: process.argv[6]})
     console.log('Successfully requested relay entry with a callback. RequestId =', tx.logs[0].args.requestID.toString())
+    console.log(
+      '\n---Transaction Summary---' + '\n' +
+      'From:' + tx.receipt.from + '\n' +
+      'To:' + tx.receipt.to + '\n' +
+      'BlockNumber:' + tx.receipt.blockNumber + '\n' +
+      'TotalGas:' + tx.receipt.cumulativeGasUsed + '\n' +
+      'TransactionHash:' + tx.receipt.transactionHash + '\n' +
+      '--------------------------'
+    )
   } catch(error) {
-    console.log('Request failed:')
-    console.error(error)
+    console.error('Request failed with', error)
   }
 
   process.exit()
