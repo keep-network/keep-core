@@ -33,6 +33,18 @@ feel free.  This guide will assume you use the default paths.*
 
 `tar -xvf keep-client-deployment-bundle.tar.gz`
 
+Resulting directory should look like:
+
+```
+├── keep-client-deployment-bundle
+│   ├── config
+│   │   ├── eth-account-keyfile
+│   │   └── keep-client-config.toml
+│   ├── eth-account-password.txt
+│   └── keep-client-snapshot.tar
+└── keep-client-deployment-bundle.tar.gz
+```
+
 === Load the Docker image
 
 ```
