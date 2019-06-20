@@ -25,8 +25,7 @@ module.exports = async function () {
     await contract.relayEntry(1, groupSignature, groupPubKey, previousEntry, seed)
     console.log('Genesis entry successfully submitted.')
   } catch(error) {
-    console.log('Genesis entry submission failed:')
-    console.error(error)
+    console.error('Genesis entry submission failed with', error)
   }
 
   process.exit()
