@@ -106,7 +106,8 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * random number (by signing the previous entry's random number).
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @param callbackContract Callback contract address. Callback is called once a new relay entry has been generated.
-     * @param callbackMethod Callback contract method signature.
+     * @param callbackMethod Callback contract method signature. String representation of your method with a single
+     * uint256 input parameter i.e. "relayEntryCallback(uint256)".
      * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
      */
     function requestRelayEntry(uint256 seed, address callbackContract, string memory callbackMethod) public payable returns (uint256) {

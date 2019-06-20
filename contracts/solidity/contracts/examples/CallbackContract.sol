@@ -20,7 +20,7 @@ contract CallbackContract {
     }
 
     /**
-     * @dev Returns previously entry.
+     * @dev Returns previous entry.
      */
     function lastEntry() public view returns (uint256)
     {
