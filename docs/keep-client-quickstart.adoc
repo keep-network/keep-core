@@ -36,11 +36,13 @@ feel free.  This guide will assume you use the default paths.*
 Resulting directory should look like:
 
 ```
+.
 ├── keep-client-deployment-bundle
 │   ├── config
 │   │   ├── eth-account-keyfile
 │   │   └── keep-client-config.toml
 │   ├── eth-account-password.txt
+│   ├── keep-client-quickstart.adoc
 │   └── keep-client-snapshot.tar
 └── keep-client-deployment-bundle.tar.gz
 ```
