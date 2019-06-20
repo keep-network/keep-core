@@ -58,10 +58,15 @@ Resulting image should be listed in `docker image ls` as:
 
 === Run the container
 
+Run this from the `keep-client-deployment-bundle` directory:
+
 ```
+export KEEP_CLIENT_ETHEREUM_PASSWORD=$(cat eth-account-password.txt)
+export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
+
 docker run -dit \
---volume /absolute/path/to/keep-client-deployment-bundle/config:/mnt/keep-client/config \
---env KEEP_ETHEREUM_PASSWORD='paste password from text file in bundle' \
+--volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
+--env KEEP_ETHEREUM_PASSWORD=$KEEP_CLIENT_ETHEREUM_PASSWORD \
 gcr.io/keep-test-f3e0/keep-client --config /mnt/keep-client/config/keep-client-config.toml start
 ```
 
@@ -78,6 +83,16 @@ Established connection with bootstrap peer [xxxxxx]
 | IPs : /ip4/127.0.0.1/tcp/3919/ipfs/xxxxxx                                                 |
 |       /ip4/172.17.0.2/tcp/3919/ipfs/xxxxx                                                 |
 ---------------------------------------------------------------------------------------------
+```
+
+== Commands
+
+=== Submit Relay Request
+
+```
+docker ps | \
+grep keep-client awk '{print $1}' | \
+xargs -I {} docker exec -t {} keep-client --config /mnt/keep-client/config/keep-client-config.toml relay request
 ```
 
 == Network Details
