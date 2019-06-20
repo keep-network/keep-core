@@ -21,6 +21,9 @@ all: gen_contract_go gen_abi_go
 clean:
 	rm -r abi/*
 	rm -r contract/*
+	mkdir tmp && mv cmd/cmd*.go tmp
+	rm -r cmd/*
+	mv tmp/* cmd && rm -r tmp
 
 gen_abi_go: $(abigen_files)
 
