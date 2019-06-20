@@ -8,9 +8,7 @@ import (
 	"os"
 	"sort"
 	"sync"
-	"sync/atomic"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto/sha3"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -315,35 +313,6 @@ func selectGroup(entry *big.Int, numberOfGroups int) int {
 	}
 
 	return int(new(big.Int).Mod(entry, big.NewInt(int64(numberOfGroups))).Int64())
-}
-
-// RequestRelayEntry simulates calling to start the random generation process.
-func (c *localChain) RequestRelayEntry(seed *big.Int, callbackContract common.Address, callbackMethod string) *async.RelayRequestPromise {
-	promise := &async.RelayRequestPromise{}
-
-	selectedIdx := selectGroup(c.latestValue, len(c.groups))
-
-	request := &event.Request{
-		RequestID:      big.NewInt(c.requestID),
-		Payment:        big.NewInt(1),
-		PreviousEntry:  c.latestValue,
-		GroupPublicKey: c.groups[selectedIdx].groupPublicKey,
-		Seed:           seed,
-	}
-	atomic.AddUint64(&c.simulatedHeight, 1)
-	atomic.AddInt64(&c.requestID, 1)
-
-	c.handlerMutex.Lock()
-	for _, handler := range c.relayRequestHandlers {
-		go func(handler func(*event.Request), request *event.Request) {
-			handler(request)
-		}(handler, request)
-	}
-	c.handlerMutex.Unlock()
-
-	promise.Fulfill(request)
-
-	return promise
 }
 
 func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {

@@ -3,7 +3,6 @@ package chain
 import (
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -19,13 +18,6 @@ type StakerAddress []byte
 // pertains specifically to submission and retrieval of relay requests and
 // entries.
 type RelayEntryInterface interface {
-	// RequestRelayEntry makes an on-chain request to start generation of a
-	// random signature.  An event is generated.
-	RequestRelayEntry(
-		seed *big.Int,
-		callbackContract common.Address,
-		callbackMethod string,
-	) *async.RelayRequestPromise
 	// SubmitRelayEntry submits an entry in the threshold relay and returns a
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting
