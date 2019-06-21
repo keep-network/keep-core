@@ -98,7 +98,7 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
      */
     function requestRelayEntry(uint256 seed) public payable returns (uint256) {
-        return _requestRelayEntry(seed, address(0), "");
+        return requestRelayEntry(seed, address(0), "");
     }
 
     /**
@@ -111,10 +111,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
      * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
      */
     function requestRelayEntry(uint256 seed, address callbackContract, string memory callbackMethod) public payable returns (uint256) {
-        return _requestRelayEntry(seed, callbackContract, callbackMethod);
-    }
-
-    function _requestRelayEntry(uint256 seed, address callbackContract, string memory callbackMethod) private returns (uint256) {
         require(
             msg.value >= _minPayment,
             "Payment is less than required minimum."
