@@ -31,6 +31,13 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     uint256 internal _previousEntry;
     uint256 internal _entryCounter;
 
+    struct Callback {
+        address callbackContract;
+        string callbackMethod;
+    }
+
+    mapping(uint256 => Callback) public callbacks;
+
     address[] internal _operatorContracts;
     mapping (address => uint256) internal _operatorContractNumberOfGroups;
 
@@ -98,6 +105,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
         // OperatorContract(_operatorContracts[0]).sign.value(msg.value)(_entryCounter, seed, _previousEntry);
         OperatorContract(_operatorContracts[0]).sign(_entryCounter, seed, _previousEntry);
+
+        if (callbackContract != address(0)) {
+            callbacks[_entryCounter] = Callback(callbackContract, callbackMethod);
+        }
+
         return _entryCounter;
     }
 
@@ -114,7 +126,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         _previousEntry = entry;
         emit RelayEntryGenerated(entryId, entry);
-        // TODO: customer-specified callback
+
+        if (callbacks[entryId].callbackContract != address(0)) {
+            callbacks[entryId].callbackContract.call(abi.encodeWithSignature(callbacks[entryId].callbackMethod, entry));
+            delete callbacks[entryId];
+        }
     }
 
     /**
