@@ -82,6 +82,7 @@ func ConnectClients(url string, urlRPC string) (*ethclient.Client, *rpc.Client, 
 func CallAtBlock(
 	fromAddress common.Address,
 	blockNumber *big.Int,
+	value *big.Int,
 	contractABI *abi.ABI,
 	caller bind.ContractCaller,
 	errorResolver *ErrorResolver,
@@ -97,9 +98,10 @@ func CallAtBlock(
 
 	var (
 		msg = ethereum.CallMsg{
-			From: fromAddress,
-			To:   &contractAddress,
-			Data: input,
+			From:  fromAddress,
+			To:    &contractAddress,
+			Data:  input,
+			Value: value,
 		}
 		code   []byte
 		output []byte
@@ -121,7 +123,7 @@ func CallAtBlock(
 		return errorResolver.ResolveError(
 			err,
 			fromAddress,
-			nil,
+			value,
 			method,
 			parameters...,
 		)

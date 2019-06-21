@@ -152,7 +152,8 @@ func generateCode(
 	}
 
 	if err := organizeImports(outFile, &buffer); err != nil {
-		return nil, err
+		fmt.Fprintln(os.Stderr, err)
+		return &buffer, nil
 	}
 
 	return &buffer, nil

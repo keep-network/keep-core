@@ -4,12 +4,17 @@
 package cmd
 
 import (
+    "sync"
+
     "github.com/ethereum/go-ethereum/common"
     "github.com/ethereum/go-ethereum/common/hexutil"
+    "github.com/ethereum/go-ethereum/core/types"
+
     "github.com/keep-network/keep-core/config"
     "github.com/keep-network/keep-core/pkg/chain/gen/contract"
     "github.com/keep-network/keep-core/pkg/chain/ethereum"
     "github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
+
     "github.com/urfave/cli"
 )
 
@@ -57,9 +62,33 @@ func init() {
                 },
             {{- end -}}
             {{- end -}}
+            {{- range $i, $method := .NonConstMethods }}
+            {{- if $method.CommandCallable -}}
+                {
+                    Name: "{{$method.DashedName}}",
+                    Usage: "Calls the {{$method.Modifiers}} method {{$method.LowerName}} on the {{$contract.Class}} contract.",
+                    ArgsUsage: "{{ range $i, $param := $method.ParamInfos -}} [{{$param.Name}}] {{ end }}",
+                    Action: {{$contract.ShortVar}}{{$method.CapsName}},
+                    Before:
+                        {{- if $method.Payable -}}
+                        cli.BeforeFunc(payableArgsChecker.andThen(argCountChecker({{$method.ParamInfos | len}})))
+                        {{- else -}}
+                        cli.BeforeFunc(nonConstArgsChecker.andThen(argCountChecker({{$method.ParamInfos | len}})))
+                        {{- end }},
+                    Flags:
+                        {{- if $method.Payable -}}
+                        payableFlags
+                        {{- else -}}
+                        nonConstFlags
+                        {{- end }},
+                },
+            {{- end -}}
+            {{- end -}}
         },
     })
 }
+
+/// ------------------- Const methods -------------------
 
 {{- $contract := . -}}
 {{- range $i, $method := .ConstMethods -}}
@@ -98,6 +127,73 @@ func {{$contract.ShortVar}}{{$method.CapsName}}(c *cli.Context) error {
 {{- end -}}
 {{- end }}
 
+/// ------------------- Non-const methods -------------------
+
+{{- range $i, $method := .NonConstMethods -}}
+{{- if $method.CommandCallable }}
+
+func {{$contract.ShortVar}}{{$method.CapsName}}(c *cli.Context) error {
+    contract, err := initialize{{$contract.Class}}(c)
+    if err != nil {
+        return err
+    }
+
+    {{ range $i, $param := .ParamInfos }}
+    {{$param.Name}}, err := {{$param.ParsingFn}}(c.Args()[{{$i}}])
+    if err != nil {
+        return fmt.Errorf(
+            "couldn't parse parameter {{$param.Name}}, a {{$param.Type}}, from passed value %v",
+            c.Args()[{{$i}}],
+        )
+    }
+
+    {{ end -}}
+
+    var (
+        transaction *types.Transaction
+        {{ if gt (len $method.Return.Type) 0 -}}
+        result {{$method.Return.Type}}
+        {{ end -}}
+    )
+
+    if c.Bool(submitFlag) {
+        // Do a regular submission. Take payable into account.
+        transaction, err = contract.{{$method.CapsName}}(
+            {{$method.Params}}
+            {{- if $method.Payable -}} valueFlagValue.Uint, {{- end -}}
+        )
+        if err != nil {
+            return err
+        }
+
+        printOutput(transaction.Hash)
+    } else {
+        // Do a call.
+        {{ if gt (len $method.Return.Type) 0 -}} result, {{ end -}} err = contract.Call{{$method.CapsName}}(
+            {{$method.Params}}
+            {{- if $method.Payable -}} valueFlagValue.Uint, {{- end -}}
+            blockFlagValue.Uint,
+        )
+        if err != nil {
+            return err
+        }
+
+        {{ if gt (len $method.Return.Type) 0 -}}
+        printOutput(result)
+        {{- else -}}
+        printOutput(nil)
+        {{- end }}
+    }
+
+
+    return nil
+}
+
+{{- end -}}
+{{- end }}
+
+/// ------------------- Initialization -------------------
+
 func initialize{{.Class}}(c *cli.Context) (*contract.{{.Class}}, error) {
     globalConfig, err := config.ReadConfig(c.GlobalString("config"))
     if err != nil {
@@ -129,6 +225,6 @@ func initialize{{.Class}}(c *cli.Context) (*contract.{{.Class}}, error) {
         address,
         key,
         client,
-        nil,
+        &sync.Mutex{},
     )
 }
