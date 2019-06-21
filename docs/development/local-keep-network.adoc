@@ -462,3 +462,65 @@ $ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.5.toml sta
 |       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAm7wzWEs3fUbA9rgzKRP82Zhtnq2CxZZdXPMrJJgNNra1p |
 ------------------------------------------------------------------------------------------------
 ```
+
+== Genesis entry
+
+In order to trigger creation of the first group genesis entry must be submitted. 
+```
+$ truffle exec ./scripts/genesis.js --network local
+
+Using network 'development'.
+
+Genesis entry successfully submitted.
+
+
+```
+
+
+== Request relay entry
+
+Once the first group is created we can request relay entry with the following script:
+```
+$ truffle exec ./scripts/request-relay-entry.js --network local
+
+Using network 'development'.
+
+Successfully requested relay entry with RequestId = 7
+
+---Transaction Summary---
+From:0x23ba4cf58947d4eebd3b3aedcec28bec364b6727
+To:0x017a532a3bbb538753e84ae59d5131b0dfb7d2df
+BlockNumber:42
+TotalGas:106480
+TransactionHash:0x50dccd40f7f3f67e79598edff614bc250568127a97c0dab1a8011bf3c9cb9776
+--------------------------
+
+```
+
+
+== Request relay entry with a callback
+
+If you want your contract to be called on a successful entry please use the script below in the following format:
+```
+truffle exec ./scripts/request-relay-entry-with-callback.js yourContractAddress "callbackMethodName" payment
+```
+
+Example usage:
+
+```
+$ truffle exec ./scripts/request-relay-entry-with-callback.js 0x230cD94D6a4d3923da88d38b362337A5CC7136Dd "callback(uint256)" 100 --network local
+
+Using network 'development'.
+
+Successfully requested relay entry with a callback. RequestId = 8
+
+---Transaction Summary---
+From:0x23ba4cf58947d4eebd3b3aedcec28bec364b6727
+To:0x017a532a3bbb538753e84ae59d5131b0dfb7d2df
+BlockNumber:45
+TotalGas:139910
+TransactionHash:0xf345ef11c659157613c38366746a7053fd8aca59b854864629eab2b756c20196
+--------------------------
+
+```
+

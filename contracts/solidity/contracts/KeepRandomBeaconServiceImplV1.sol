@@ -75,10 +75,22 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @return An uint256 representing uniquely generated entry Id.
      */
     function requestRelayEntry(uint256 seed) public payable returns (uint256) {
-        require(
-            msg.value >= _minPayment,
-            "Payment is less than required minimum."
-        );
+
+        _entryCounter++;
+
+        return requestRelayEntry(seed, address(0), "");
+    }
+
+    /**
+     * @dev Creates a request to generate a new relay entry, which will include a
+     * random number (by signing the previous entry's random number).
+     * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
+     * @param callbackContract Callback contract address. Callback is called once a new relay entry has been generated.
+     * @param callbackMethod Callback contract method signature. String representation of your method with a single
+     * uint256 input parameter i.e. "relayEntryCallback(uint256)".
+     * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
+     */
+    function requestRelayEntry(uint256 seed, address callbackContract, string memory callbackMethod) public payable returns (uint256) {
 
         _entryCounter++;
 
