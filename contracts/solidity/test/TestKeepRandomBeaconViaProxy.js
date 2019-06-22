@@ -73,6 +73,8 @@ contract('TestKeepRandomBeaconViaProxy', function(accounts) {
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {
 
+    await serviceContract.requestRelayEntry(0, {from: account_one, value: 100})
+
     // should fail to withdraw if not owner
     await exceptThrow(serviceContract.initiateWithdrawal({from: account_two}));
     await exceptThrow(serviceContract.finishWithdrawal(account_two, {from: account_two}));
