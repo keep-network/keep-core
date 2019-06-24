@@ -1,7 +1,7 @@
 import mineBlocks from './helpers/mineBlocks';
 import {initContracts} from './helpers/initContracts';
 
-contract('TestKeepGroupExpiration', function(accounts) {
+contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
 
   let serviceContract, operatorContract,
     groupActiveTime, activeGroupsThreshold, relayRequestTimeout,
@@ -18,7 +18,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
       artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
     operatorContract = contracts.operatorContract;
-    groupActiveTime = (await operatorContract.activeTime()).toNumber();
+    groupActiveTime = (await operatorContract.groupActiveTime()).toNumber();
     activeGroupsThreshold = (await operatorContract.activeGroupsThreshold()).toNumber();
     serviceContract = contracts.serviceContract;
     relayRequestTimeout = (await operatorContract.relayRequestTimeout()).toNumber();

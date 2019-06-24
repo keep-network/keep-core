@@ -6,7 +6,7 @@ import encodeCall from './helpers/encodeCall';
 import {initContracts} from './helpers/initContracts';
 const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
 
-contract('TestKeepRandomBeaconViaProxy', function(accounts) {
+contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
   let serviceContract, serviceContractProxy, operatorContract,
     account_one = accounts[0],

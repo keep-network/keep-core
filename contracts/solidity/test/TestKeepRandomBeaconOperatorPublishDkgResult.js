@@ -8,7 +8,7 @@ import shuffleArray from './helpers/shuffle';
 import {initContracts} from './helpers/initContracts';
 
 
-contract('TestPublishDkgResult', function(accounts) {
+contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
 
   let operatorContract,
   owner = accounts[0], magpie = accounts[0],

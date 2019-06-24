@@ -6,7 +6,7 @@ const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol');
 const ServiceContractImplV2 = artifacts.require('./examples/KeepRandomBeaconServiceUpgradeExample.sol');
 
 
-contract('TestKeepRandomBeaconUpgrade', function(accounts) {
+contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
 
   let operatorContract, serviceContractProxy, serviceContract, serviceContractImplV2, serviceContractV2,
     account_two = accounts[1];

@@ -6,7 +6,7 @@ import stakeDelegate from './helpers/stakeDelegate';
 import {initContracts} from './helpers/initContracts';
 
 
-contract('TestKeepGroupSelection', function(accounts) {
+contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
   let token, serviceContract, operatorContract,
   owner = accounts[0], magpie = accounts[1], signature, delegation,

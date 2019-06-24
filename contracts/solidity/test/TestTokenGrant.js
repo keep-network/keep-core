@@ -5,7 +5,7 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 
-contract('TestTokenGrants', function(accounts) {
+contract('TestTokenGrant', function(accounts) {
 
   let token, grantContract, stakingProxy,
     amount, vestingDuration, start, cliff,

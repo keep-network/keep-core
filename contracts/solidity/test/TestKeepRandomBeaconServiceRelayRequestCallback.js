@@ -2,7 +2,7 @@ import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
-contract('TestKeepRandomBeaconCallback', function(accounts) {
+contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
 
   let operatorContract, serviceContract, callbackContract;
 

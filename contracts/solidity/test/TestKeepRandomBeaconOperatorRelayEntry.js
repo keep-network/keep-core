@@ -2,7 +2,7 @@ import exceptThrow from './helpers/expectThrow';
 import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 
-contract('TestRelayEntry', function(accounts) {
+contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
   let serviceContract, operatorContract;
 
   before(async () => {

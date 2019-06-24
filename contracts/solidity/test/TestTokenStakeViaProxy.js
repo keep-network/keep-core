@@ -4,7 +4,7 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 
-contract('TestStakeViaProxy', function(accounts) {
+contract('TestTokenStakeViaProxy', function(accounts) {
 
   let token, stakingProxy, stakingContract,
     owner = accounts[0],
