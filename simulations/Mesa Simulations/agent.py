@@ -8,7 +8,7 @@ class Node(Agent):
     the number of tokens owned by the node """
     def __init__(self, unique_id, node_id, model, tickets, 
     failure_percent, death_percent, node_connection_delay,
-    node_mainloop_connection_delay, dkg_misbehavior):
+    node_mainloop_connection_delay, misbehaving_nodes):
         super().__init__(unique_id, model)
         self.id = unique_id
         self.type = "node"
@@ -25,8 +25,8 @@ class Node(Agent):
         self.node_death_percent = death_percent
         self.failure = False
         self.death = False
-        self.dkg_misbehavior_percent = dkg_misbehavior
         self.dkg_misbehaving = False
+        self.malicious = np.random.randint (0,100) < misbehaving_nodes  # sets the node as malicious baed on the misbehaving % in model parameters
     
     def step(self):
         #connect to chain
@@ -45,7 +45,6 @@ class Node(Agent):
         #simulate node failure
         self.failure = np.random.randint(0,100) < self.node_failure_percent
         self.death = np.random.randint (0,100) < self.node_death_percent
-        self.dkg_misbehaving = np.random.randint (0,100) < self.dkg_misbehavior_percent
 
         #disconnect the node if failure occurs
         if self.failure or self.death:
@@ -81,31 +80,56 @@ class Group(Agent):
         self.type = "group"
         self.members = members
         self.last_signature = "none"
-        self.status = "Active"
+        self.status = "dkg" # status types: dkg, compromised, active, expired
         self.expiry = expiry # of steps before expiration
         self.timer = self.model.timer
         self.model.newest_id +=1
         self.model.newest_group_id +=1
         self.ownership_distr = self.calculate_ownership_distr()
+        self.malicious_percent = 0
         self.process_complete = False
-        self.block_delay = self.model.dkg_block_delay
+        self.dkg_block_delay = self.model.dkg_block_delay
 
 
     def step(self):
-        """ At each step check if the group has expired """
-        self.expiry -=1
-        #print('group ID '+ str(self.id) + ' expiry ' + str(self.expiry))
-        if self.expiry == 0: 
-            self.status = "Expired"
+        """ block delay to simulate the multiple DKG steps"""
+        if self.status == "dkg"
+            if self.dkg_block_delay>=0:
+                self.dkg_block_delay -=1 # counts down the block delay
+                offline_percent = self.calculate_offline()/sum(self.ownership_distr) # calculates % nodes offline during dkg
+                if self.malicious_percent + offline_percent > 0.25: self.status = "compromised"
+            elif self.status not = "compromised":
+                self.status = "active"
+        elif self.status == "active"
+            """ At each step check if the group has expired """
+            self.expiry -=1
+            #print('group ID '+ str(self.id) + ' expiry ' + str(self.expiry))
+            if self.expiry == 0: 
+                self.status = "expired"
         
     def advance(self):
         pass
 
     def calculate_ownership_distr(self):
         temp_distr = np.zeros(self.model.num_nodes)
+        temp_malicious_count = 0
         for node in self.members:    
             temp_distr[node.node_id] +=1 # increments by 1 for each node index everytime it exists in the member list, at each step
+            if node.malicious:
+                temp_malicious_count +=1
+        self.malicious_percent = temp_malicious_count/sum(temp_distr)
+
         return temp_distr
+
+    def calculate_offline(self):
+        offline_count = 0
+        for node in self.members:
+            if node.status == "not forked": offline_count +=1
+            
+        return offline_count
+
+    
+
 
 
 class Signature(Agent):
@@ -122,6 +146,7 @@ class Signature(Agent):
         self.signature_process_complete = False
         self.block_delay_complete = False
         self.dominator_id = -1
+        self.signature_failure = False
 
     def step(self):
         #signature
@@ -147,14 +172,18 @@ class Signature(Agent):
             if node_tickets > 0:
                 for node in self.model.active_nodes:
                     #print("active node ID = "+ str(node.node_id))
-                    if node.node_id == i : temp_signature_distr[i] = node_tickets
+                    if node.node_id == i : 
+                        temp_signature_distr[i] = node_tickets
         self.ownership_distr = temp_signature_distr
         failed_list = np.array(self.group.ownership_distr)-np.array(self.ownership_distr)
         dominator_value = (sum(failed_list) + max(self.ownership_distr))/sum(self.group.ownership_distr)*100 # adds the failed node virtual stakers and max node virtual stakers
-        
+        self.signature_failure = (sum(failed_list)+max(self.ownership_distr)) > (1-self.model.max_malicious_threshold)
+
         if dominator_value > self.model.max_malicious_threshold:
             self.dominator_id = np.argmax(self.ownership_distr)
             #print("dominator owner ID = " + str(self.dominator_id))
+
+        # calculate misbehaving nodes
     
 
 
