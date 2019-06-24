@@ -79,16 +79,16 @@ contract KeepRandomBeaconOperator is Ownable {
     // It should be at least 1.
     uint256 public activeGroupsThreshold;
  
-    // activeTime is the time in block after which a group expires
-    uint256 public activeTime;
+    // groupActiveTime is the time in block after which a group expires
+    uint256 public groupActiveTime;
 
     // Timeout in blocks for a relay entry to appear on the chain. Blocks are
     // counted from the moment relay request occur.
     uint256 public relayRequestTimeout;
 
-    // expiredOffset is pointing to the first active group, it is also the
+    // expiredGroupOffset is pointing to the first active group, it is also the
     // expired groups counter
-    uint256 public expiredOffset = 0;
+    uint256 public expiredGroupOffset = 0;
 
     struct Group {
         bytes groupPubKey;
@@ -447,7 +447,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * to submit DKG result.
      * @param _activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
      * needs to be greater than 0.
-     * @param _activeTime is the time in block after which a group expires.
+     * @param _groupActiveTime is the time in block after which a group expires.
      * @param _relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
      * Blocks are counted from the moment relay request occur.
      */
@@ -463,7 +463,7 @@ contract KeepRandomBeaconOperator is Ownable {
         uint256 _timeDKG,
         uint256 _resultPublicationBlockStep,
         uint256 _activeGroupsThreshold,
-        uint256 _activeTime,
+        uint256 _groupActiveTime,
         uint256 _relayRequestTimeout,
         uint256 _genesisEntry,
         bytes memory _genesisGroupPubKey
@@ -482,7 +482,7 @@ contract KeepRandomBeaconOperator is Ownable {
         timeDKG = _timeDKG;
         resultPublicationBlockStep = _resultPublicationBlockStep;
         activeGroupsThreshold = _activeGroupsThreshold;
-        activeTime = _activeTime;
+        groupActiveTime = _groupActiveTime;
         relayRequestTimeout = _relayRequestTimeout;
         groupSelectionSeed = _genesisEntry;
 
@@ -547,7 +547,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * @dev Gets number of active groups.
      */
     function numberOfGroups() public view returns(uint256) {
-        return groups.length - expiredOffset;
+        return groups.length - expiredGroupOffset;
     }
 
     /**
@@ -560,7 +560,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * considered not as such.
      */
     function groupActiveTime(Group memory group) internal view returns(uint256) {
-        return group.registrationBlockHeight + activeTime;
+        return group.registrationBlockHeight + groupActiveTime;
     }
 
     /**
@@ -584,7 +584,7 @@ contract KeepRandomBeaconOperator is Ownable {
     function isStaleGroup(bytes memory groupPubKey) public view returns(bool) {
         for (uint i = 0; i < groups.length; i++) {
             if (groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                bool isExpired = expiredOffset > i;
+                bool isExpired = expiredGroupOffset > i;
                 bool isStale = groupStaleTime(groups[i]) < block.number;
                 return isExpired && isStale;
             }
@@ -598,7 +598,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param seed Signing group selection seed.
      */
     function selectGroup(uint256 seed) public returns(bytes memory) {
-        uint256 numberOfActiveGroups = groups.length - expiredOffset;
+        uint256 numberOfActiveGroups = groups.length - expiredGroupOffset;
         uint256 selectedGroup = seed % numberOfActiveGroups;
 
         /**
@@ -618,7 +618,7 @@ contract KeepRandomBeaconOperator is Ownable {
         * mark expired groups in batches, in a fewer number of steps.
         */
         if (numberOfActiveGroups > activeGroupsThreshold) {
-            while (groupActiveTime(groups[expiredOffset + selectedGroup]) < block.number) {
+            while (groupActiveTime(groups[expiredGroupOffset + selectedGroup]) < block.number) {
                 /**
                 * We do -1 to see how many groups are available after the potential removal.
                 * For example:
@@ -630,7 +630,7 @@ contract KeepRandomBeaconOperator is Ownable {
                 */
                 if (numberOfActiveGroups - selectedGroup - 1 > activeGroupsThreshold) {
                     selectedGroup++;
-                    expiredOffset += selectedGroup;
+                    expiredGroupOffset += selectedGroup;
                     numberOfActiveGroups -= selectedGroup;
                     selectedGroup = seed % numberOfActiveGroups;
                 } else {
@@ -639,14 +639,14 @@ contract KeepRandomBeaconOperator is Ownable {
                     * Hence, we maintain the minimum activeGroupsThreshold of active groups and
                     * do not let any other groups to expire
                     */
-                    expiredOffset = groups.length - activeGroupsThreshold;
+                    expiredGroupOffset = groups.length - activeGroupsThreshold;
                     numberOfActiveGroups = activeGroupsThreshold;
                     selectedGroup = seed % numberOfActiveGroups;
                     break;
                 }
             }
         }
-        return groups[expiredOffset + selectedGroup].groupPubKey;
+        return groups[expiredGroupOffset + selectedGroup].groupPubKey;
     }
 
     /**

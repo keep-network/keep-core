@@ -7,14 +7,13 @@ import "./DelayedWithdrawal.sol";
 
 interface OperatorContract {
     function sign(uint256 entryId, uint256 seed, uint256 previousEntry) payable external;
-    function numberOfGroups() external view returns(uint256);
-    function selectGroup(uint256 previousEntry) external returns(bytes memory);
+    // TODO: Add createGroup() when it's implemented on Operator contract.
 }
 
 
 /**
  * @title KeepRandomBeaconServiceImplV1
- * @dev Initial version of implementation contract that works under Keep Random
+ * @dev Initial version of service contract that works under Keep Random
  * Beacon proxy and allows upgradability. The purpose of the contract is to have
  * up-to-date logic for threshold random number generation. Updated contracts
  * must inherit from this contract and have to be initialized under updated version name
