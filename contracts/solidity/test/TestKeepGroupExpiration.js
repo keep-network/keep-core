@@ -59,7 +59,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     await operatorContract.selectGroup(4) // 4 % 10 = 4
 
-    let expiredOffset = await operatorContract.getExpiredOffset();
+    let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
@@ -79,7 +79,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     await operatorContract.selectGroup(5) // 5 % 10 = 5
 
-    let expiredOffset = await operatorContract.getExpiredOffset();
+    let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
@@ -99,7 +99,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     await operatorContract.selectGroup(6) // 6 % 10 = 6
 
-    let expiredOffset = await operatorContract.getExpiredOffset();
+    let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
@@ -119,7 +119,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     await operatorContract.selectGroup(0);
 
-    let expiredOffset = await operatorContract.getExpiredOffset();
+    let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
@@ -139,7 +139,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     await operatorContract.selectGroup(testGroupsNumber - 1); // 9
 
-    let expiredOffset = await operatorContract.getExpiredOffset();
+    let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
@@ -159,7 +159,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     await operatorContract.selectGroup(testGroupsNumber); // 10
 
-    let expiredOffset = await operatorContract.getExpiredOffset();
+    let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
@@ -200,7 +200,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     await operatorContract.selectGroup(0);
 
-    let expiredOffset = await operatorContract.getExpiredOffset();
+    let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, 0, "Unexpected expired offset");
@@ -221,7 +221,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     await operatorContract.selectGroup(0);
 
-    let expiredOffset = await operatorContract.getExpiredOffset();
+    let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, 0, "Unexpected expired offset");
@@ -241,7 +241,7 @@ contract('TestKeepGroupExpiration', function(accounts) {
 
     await operatorContract.selectGroup(0);
 
-    let expiredOffset = await operatorContract.getExpiredOffset();
+    let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
     assert.equal(expiredOffset, 0, "Unexpected expired offset");

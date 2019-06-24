@@ -45,11 +45,4 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         return groups[groupIndex].groupPubKey;
     }
 
-    /**
-     * @dev Gets the value of expired offset.
-     */
-    function getExpiredOffset() public view returns(uint256) {
-        return expiredOffset;
-    }
-
 }
