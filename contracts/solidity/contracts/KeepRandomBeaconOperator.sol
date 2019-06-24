@@ -559,7 +559,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * as active but it does not mean that the group will be immediatelly
      * considered not as such.
      */
-    function groupActiveTime(Group memory group) internal view returns(uint256) {
+    function groupActiveTimeOf(Group memory group) internal view returns(uint256) {
         return group.registrationBlockHeight + groupActiveTime;
     }
 
@@ -569,7 +569,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * performing any operations.
      */
     function groupStaleTime(Group memory group) internal view returns(uint256) {
-        return groupActiveTime(group) + relayRequestTimeout;
+        return groupActiveTimeOf(group) + relayRequestTimeout;
     }
 
     /**
@@ -618,7 +618,7 @@ contract KeepRandomBeaconOperator is Ownable {
         * mark expired groups in batches, in a fewer number of steps.
         */
         if (numberOfActiveGroups > activeGroupsThreshold) {
-            while (groupActiveTime(groups[expiredGroupOffset + selectedGroup]) < block.number) {
+            while (groupActiveTimeOf(groups[expiredGroupOffset + selectedGroup]) < block.number) {
                 /**
                 * We do -1 to see how many groups are available after the potential removal.
                 * For example:
