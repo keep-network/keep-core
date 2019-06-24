@@ -16,7 +16,7 @@ config.*.toml
 *.abi
 *.account
 pkg/**/gen/*/*.go
-!pkg/chain/gen/cmd/cmd.go
+!pkg/chain/gen/cmd/cmd*.go
 
 # Executables
 debug
