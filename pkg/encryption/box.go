@@ -1,4 +1,4 @@
-package secret
+package encryption
 
 import (
 	"crypto/rand"
@@ -6,34 +6,34 @@ import (
 	"fmt"
 	"io"
 
-	sb "golang.org/x/crypto/nacl/secretbox"
+	"golang.org/x/crypto/nacl/secretbox"
 )
 
 const (
-	// SymmetricKeyLength represents the byte size of the key.
-	SymmetricKeyLength = 32
+	// KeyLength represents the byte size of the key.
+	KeyLength = 32
 
 	// NonceSize represents the byte size of nonce for XSalsa20 cipher used for
 	// SymmetricKey encryption.
 	NonceSize = 24
 )
 
-// Secret is used to encrypt and decrypt a plaintext.
-type Secret struct {
-	key [SymmetricKeyLength]byte
+// box is used to encrypt and decrypt a plaintext.
+type box struct {
+	key [KeyLength]byte
 }
 
-// NewSecret uses XSalsa20 and Poly1305 to encrypt and decrypt the plaintext
+// NewBox uses XSalsa20 and Poly1305 to encrypt and decrypt the plaintext
 // with the key.
-func NewSecret(secret [SymmetricKeyLength]byte) *Secret {
-	return &Secret{
-		key: secret,
+func NewBox(key [KeyLength]byte) Box {
+	return &box{
+		key: key,
 	}
 }
 
 // Encrypt takes the input plaintext and uses XSalsa20 and Poly1305 to encrypt
 // the plaintext with the key.
-func (s *Secret) Encrypt(plaintext []byte) ([]byte, error) {
+func (b *box) Encrypt(plaintext []byte) ([]byte, error) {
 	// The nonce needs to be unique, but not secure. Therefore we include it
 	// at the beginning of the ciphertext.
 	var nonce [NonceSize]byte
@@ -41,11 +41,11 @@ func (s *Secret) Encrypt(plaintext []byte) ([]byte, error) {
 		return nil, fmt.Errorf("key encryption failed [%v]", err)
 	}
 
-	return sb.Seal(nonce[:], plaintext, &nonce, &s.key), nil
+	return secretbox.Seal(nonce[:], plaintext, &nonce, &b.key), nil
 }
 
 // Decrypt takes the input ciphertext and decrypts it.
-func (s *Secret) Decrypt(ciphertext []byte) (plaintext []byte, err error) {
+func (b *box) Decrypt(ciphertext []byte) (plaintext []byte, err error) {
 	defer func() {
 		// secretbox Open panics for invalid input
 		if recover() != nil {
@@ -56,7 +56,7 @@ func (s *Secret) Decrypt(ciphertext []byte) (plaintext []byte, err error) {
 	var nonce [NonceSize]byte
 	copy(nonce[:], ciphertext[:NonceSize])
 
-	plaintext, ok := sb.Open(nil, ciphertext[NonceSize:], &nonce, &s.key)
+	plaintext, ok := secretbox.Open(nil, ciphertext[NonceSize:], &nonce, &b.key)
 	if !ok {
 		err = fmt.Errorf("symmetric key decryption failed")
 	}

@@ -5,23 +5,31 @@ import (
 	"reflect"
 	"testing"
 
-	sec "github.com/keep-network/keep-core/pkg/secret"
+	"crypto/sha256"
+
+	"github.com/keep-network/keep-core/pkg/encryption"
 )
 
-const (
-	accountPassword    = "grzeski"
-	symmetricKeyLength = 32
-)
+const accountPassword = "grzeski"
 
 var (
-	handleMock     = &handlePersistenceMock{}
+	delegateMock   = &delegatePersistenceMock{}
 	dataToEncrypt1 = []byte{'b', 'o', 'l', 'e', 'k'}
 	dataToEncrypt2 = []byte{'l', 'o', 'l', 'e', 'k'}
 	dataToEncrypt  = [][]byte{dataToEncrypt1, dataToEncrypt2}
 )
 
-func TestReadAndDecryptData(t *testing.T) {
-	encryptedPersistence := NewEncryptedPersistence(handleMock, accountPassword)
+func TestSaveReadAndDecryptData(t *testing.T) {
+	encryptedPersistence := NewEncryptedPersistence(delegateMock, accountPassword)
+
+	err := encryptedPersistence.Save(dataToEncrypt1, "dir1", "name1")
+	if err != nil {
+		t.Fatalf("Error occured while saving data [%v]", err)
+	}
+	encryptedPersistence.Save(dataToEncrypt2, "dir2", "name2")
+	if err != nil {
+		t.Fatalf("Error occured while saving data [%v]", err)
+	}
 
 	decrypted, err := encryptedPersistence.ReadAll()
 	if err != nil {
@@ -37,34 +45,32 @@ func TestReadAndDecryptData(t *testing.T) {
 			decrypted,
 		)
 	}
-
 }
 
-type handlePersistenceMock struct{}
+type delegatePersistenceMock struct{}
 
-func (hpm *handlePersistenceMock) Save(data []byte, directory string, name string) error {
+func (dpm *delegatePersistenceMock) Save(data []byte, directory string, name string) error {
 	// noop
 	return nil
 }
 
-func (hpm *handlePersistenceMock) ReadAll() ([][]byte, error) {
+func (dpm *delegatePersistenceMock) ReadAll() ([][]byte, error) {
 	encrypted := encryptData()
 
 	return [][]byte{encrypted[0], encrypted[1]}, nil
 }
 
-func (hpm *handlePersistenceMock) Archive(directory string) error {
+func (dpm *delegatePersistenceMock) Archive(directory string) error {
 	// noop
 	return nil
 }
 
 func encryptData() [][]byte {
-	var secretBytes [32]byte
-	copy(secretBytes[:], accountPassword)
-	secret := sec.NewSecret(secretBytes)
+	passwordBytes := []byte(accountPassword)
+	box := encryption.NewBox(sha256.Sum256(passwordBytes))
 
-	encryptedData1, err := secret.Encrypt(dataToEncrypt1)
-	encryptedData2, err := secret.Encrypt(dataToEncrypt2)
+	encryptedData1, err := box.Encrypt(dataToEncrypt1)
+	encryptedData2, err := box.Encrypt(dataToEncrypt2)
 	if err != nil {
 		fmt.Println("Error occured while encrypting data")
 	}

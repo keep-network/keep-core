@@ -1,44 +1,45 @@
 package persistence
 
 import (
-	"github.com/keep-network/keep-core/pkg/secret"
+	"crypto/sha256"
+
+	"github.com/keep-network/keep-core/pkg/encryption"
 )
 
-// SymmetricKeyLength represents the byte size of the key.
-const SymmetricKeyLength = 32
+// KeyLength represents the byte size of the key.
+const KeyLength = encryption.KeyLength
 
 type encryptedPersistence struct {
-	handle Handle
-	secret *secret.Secret
+	delegate Handle
+	box      encryption.Box
 }
 
 // NewEncryptedPersistence creates an adapter for the disk persistence to store data
 // in an encrypted format
 func NewEncryptedPersistence(handle Handle, password string) Handle {
-	var secretBytes [SymmetricKeyLength]byte
-	copy(secretBytes[:], password)
+	passwordBytes := []byte(password)
 
 	return &encryptedPersistence{
-		handle: handle,
-		secret: secret.NewSecret(secretBytes),
+		delegate: handle,
+		box:      encryption.NewBox(sha256.Sum256(passwordBytes)),
 	}
 }
 
 func (ep *encryptedPersistence) Save(data []byte, directory string, name string) error {
-	encrypted, err := ep.secret.Encrypt(data)
+	encrypted, err := ep.box.Encrypt(data)
 	if err != nil {
 		return err
 	}
 
-	return ep.handle.Save(encrypted, directory, name)
+	return ep.delegate.Save(encrypted, directory, name)
 }
 
 func (ep *encryptedPersistence) ReadAll() ([][]byte, error) {
-	encryptedMemberships, err := ep.handle.ReadAll()
+	encryptedMemberships, err := ep.delegate.ReadAll()
 	decryptedMemberships := [][]byte{}
 
 	for _, encryptedMembership := range encryptedMemberships {
-		decryptedMembership, err := ep.secret.Decrypt(encryptedMembership)
+		decryptedMembership, err := ep.box.Decrypt(encryptedMembership)
 		if err != nil {
 			return nil, err
 		}
@@ -50,5 +51,5 @@ func (ep *encryptedPersistence) ReadAll() ([][]byte, error) {
 }
 
 func (ep *encryptedPersistence) Archive(directory string) error {
-	return ep.handle.Archive(directory)
+	return ep.delegate.Archive(directory)
 }

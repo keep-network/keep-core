@@ -8,6 +8,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/encryption"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -205,14 +206,17 @@ func TestRecoverSymmetricKey(t *testing.T) {
 }
 
 func TestRecoverShares(t *testing.T) {
-	member1ID := group.MemberIndex(1)
 	member1KeyPair, err := ephemeral.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	member2ID := group.MemberIndex(2)
 	member2KeyPair, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	member3KeyPair, err := ephemeral.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -230,13 +234,15 @@ func TestRecoverShares(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	member1ID := group.MemberIndex(1)
+	member2ID := group.MemberIndex(2)
 	messageBuffer := newDkgEvidenceLog()
 	shares := make(map[group.MemberIndex]*peerShares)
 	shares[member2ID] = &peerShares{encryptedShareS, encryptedShareT}
 	messageBuffer.PutPeerSharesMessage(&PeerSharesMessage{member1ID, shares})
 
 	var tests = map[string]struct {
-		symmetricKey   ephemeral.SymmetricKey
+		symmetricKey   encryption.Box
 		expectedShareS *big.Int
 		expectedShareT *big.Int
 		expectedError  error
@@ -247,7 +253,7 @@ func TestRecoverShares(t *testing.T) {
 			symmetricKey:   symmetricKey,
 		},
 		"shares recovery failed - incorrect symmetric key": {
-			symmetricKey:  &ephemeral.SymmetricEcdhKey{},
+			symmetricKey:  member1KeyPair.PrivateKey.Ecdh(member3KeyPair.PublicKey),
 			expectedError: fmt.Errorf("cannot decrypt share S [could not decrypt S share [symmetric key decryption failed]]"),
 		},
 	}

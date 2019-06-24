@@ -102,7 +102,9 @@ func Start(c *cli.Context) error {
 	nodeHeader(isBootstrapNode, netProvider.AddrStrings(), port)
 
 	persistence := persistence.NewEncryptedPersistence(
-		persistence.NewDiskHandle(config.Storage.DataDir), config.Ethereum.Account.KeyFilePassword)
+		persistence.NewDiskHandle(config.Storage.DataDir),
+		config.Ethereum.Account.KeyFilePassword,
+	)
 
 	err = beacon.Initialize(
 		ctx,

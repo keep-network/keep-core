@@ -6,6 +6,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/encryption"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -159,7 +160,7 @@ func (psm *PeerSharesMessage) addShares(
 	receiverID group.MemberIndex,
 	shareS *big.Int,
 	shareT *big.Int,
-	symmetricKey ephemeral.SymmetricKey,
+	symmetricKey encryption.Box,
 ) error {
 	encryptedS, err := symmetricKey.Encrypt(shareS.Bytes())
 	if err != nil {
@@ -178,7 +179,7 @@ func (psm *PeerSharesMessage) addShares(
 
 func (psm *PeerSharesMessage) decryptShareS(
 	receiverID group.MemberIndex,
-	key ephemeral.SymmetricKey,
+	key encryption.Box,
 ) (*big.Int, error) {
 	shares, ok := psm.shares[receiverID]
 	if !ok {
@@ -195,7 +196,7 @@ func (psm *PeerSharesMessage) decryptShareS(
 
 func (psm *PeerSharesMessage) decryptShareT(
 	receiverID group.MemberIndex,
-	key ephemeral.SymmetricKey,
+	key encryption.Box,
 ) (*big.Int, error) {
 	shares, ok := psm.shares[receiverID]
 	if !ok {
@@ -218,7 +219,7 @@ func (psm *PeerSharesMessage) decryptShareT(
 // a failure in DKG protocol.
 func (psm *PeerSharesMessage) CanDecrypt(
 	receiverID group.MemberIndex,
-	key ephemeral.SymmetricKey,
+	key encryption.Box,
 ) bool {
 	if _, err := psm.decryptShareS(receiverID, key); err != nil {
 		return false

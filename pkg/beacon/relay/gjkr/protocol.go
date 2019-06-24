@@ -17,6 +17,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/encryption"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -311,10 +312,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				}
 
 				if !cvm.areSharesValidAgainstCommitments(
-					shareS, // s_ji
-					shareT, // t_ji
+					shareS,                         // s_ji
+					shareT,                         // t_ji
 					commitmentsMessage.commitments, // C_j
-					cvm.ID, // i
+					cvm.ID,                         // i
 				) {
 					accusedMembersKeys[commitmentsMessage.senderID] =
 						cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
@@ -454,7 +455,7 @@ func recoverSymmetricKey(
 	evidenceLog evidenceLog,
 	senderID, receiverID group.MemberIndex,
 	receiverPrivateKey *ephemeral.PrivateKey,
-) (ephemeral.SymmetricKey, error) {
+) (encryption.Box, error) {
 	ephemeralPublicKeyMessage := evidenceLog.ephemeralPublicKeyMessage(senderID)
 	if ephemeralPublicKeyMessage == nil {
 		return nil, fmt.Errorf(
@@ -483,7 +484,7 @@ func recoverSymmetricKey(
 func recoverShares(
 	evidenceLog evidenceLog,
 	senderID, receiverID group.MemberIndex,
-	symmetricKey ephemeral.SymmetricKey,
+	symmetricKey encryption.Box,
 ) (*big.Int, *big.Int, error) {
 	peerSharesMessage := evidenceLog.peerSharesMessage(senderID)
 	if peerSharesMessage == nil {

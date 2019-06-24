@@ -6,6 +6,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/encryption"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -54,7 +55,7 @@ type SymmetricKeyGeneratingMember struct {
 	// generated individually for each other group member by ECDH'ing the
 	// broadcasted ephemeral public key intended for this member and the
 	// ephemeral private key generated for the other member.
-	symmetricKeys map[group.MemberIndex]ephemeral.SymmetricKey
+	symmetricKeys map[group.MemberIndex]encryption.Box
 }
 
 // CommittingMember represents one member in a distributed key generation group,
@@ -247,7 +248,7 @@ func (lm *LocalMember) InitializeEphemeralKeysGeneration() *EphemeralKeyPairGene
 func (ekgm *EphemeralKeyPairGeneratingMember) InitializeSymmetricKeyGeneration() *SymmetricKeyGeneratingMember {
 	return &SymmetricKeyGeneratingMember{
 		EphemeralKeyPairGeneratingMember: ekgm,
-		symmetricKeys:                    make(map[group.MemberIndex]ephemeral.SymmetricKey),
+		symmetricKeys:                    make(map[group.MemberIndex]encryption.Box),
 	}
 }
 

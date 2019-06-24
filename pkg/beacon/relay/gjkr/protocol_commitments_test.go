@@ -8,6 +8,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/encryption"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
@@ -213,7 +214,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 func alterPeerSharesMessage(
 	message *PeerSharesMessage,
 	receiverID group.MemberIndex,
-	symmetricKey ephemeral.SymmetricKey,
+	symmetricKey encryption.Box,
 	alterS bool,
 	alterT bool,
 ) error {

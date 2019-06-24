@@ -4,20 +4,13 @@ import (
 	"crypto/sha256"
 
 	"github.com/btcsuite/btcd/btcec"
-	"github.com/keep-network/keep-core/pkg/secret"
+	"github.com/keep-network/keep-core/pkg/encryption"
 )
-
-// SymmetricKeyLength represents the byte size of the key.
-const SymmetricKeyLength = 32
-
-// NonceSize represents the byte size of nonce for XSalsa20 cipher used for
-// SymmetricKey encryption.
-const NonceSize = 24
 
 // SymmetricEcdhKey is an ephemeral Elliptic Curve key created with
 // Diffie-Hellman key exchange and implementing `SymmetricKey` interface.
 type SymmetricEcdhKey struct {
-	secret *secret.Secret
+	box encryption.Box
 }
 
 // Ecdh performs Elliptic Curve Diffie-Hellman operation between public and
@@ -30,16 +23,16 @@ func (pk *PrivateKey) Ecdh(publicKey *PublicKey) *SymmetricEcdhKey {
 	)
 
 	return &SymmetricEcdhKey{
-		secret: secret.NewSecret(sha256.Sum256(shared)),
+		box: encryption.NewBox(sha256.Sum256(shared)),
 	}
 }
 
 // Encrypt plaintext.
 func (sek *SymmetricEcdhKey) Encrypt(plaintext []byte) ([]byte, error) {
-	return sek.secret.Encrypt(plaintext)
+	return sek.box.Encrypt(plaintext)
 }
 
 // Decrypt ciphertext.
 func (sek *SymmetricEcdhKey) Decrypt(ciphertext []byte) (plaintext []byte, err error) {
-	return sek.secret.Decrypt(ciphertext)
+	return sek.box.Decrypt(ciphertext)
 }
