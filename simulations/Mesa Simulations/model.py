@@ -17,7 +17,9 @@ class Beacon_Model(Model):
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
         self.active_groups = []
+        self.num_active_groups = 0
         self.active_nodes = []
+        self.num_active_nodes = 0
         self.inactive_nodes = []
         self.active_group_threshold = active_group_threshold # number of groups that will always be maintained in an active state
         self.max_malicious_threshold = max_malicious_threshold # threshold above which a signature is deemed to be compromised, typically 51%
@@ -35,10 +37,16 @@ class Beacon_Model(Model):
         self.dkg_block_delay = dkg_block_delay
         self.compromised_threshold = compromised_threshold
         self.datacollector = DataCollector(
+            model_reporters = {"# of Active groups":"num_active_groups", "# of Active Nodes":"num_active_nodes"},
             agent_reporters={"Type_ID": lambda x : x.node_id if x.type == "node" else ( x.group_id if x.type == "group" else x.signature_id) , 
-            "Type" : "type", 
+            "Type" : "type",
+            "Node Status (Connection_Mainloop_Stake)": lambda x : str(x.connection_status + x.mainloop_status + x.stake_status) if x.type == "node" else None,
+            "Status": lambda x: x.status if x.type == "group" or x.type == "signature" else None, 
             "Malicious": lambda x : x.malicious if x.type == "node" else None,
-            "Ownership Distribution" : lambda x : x.ownership_distr if x.type =="group" or x.type == "signature" else None})
+            "Ownership Distribution" : lambda x : x.ownership_distr if x.type =="group" or x.type == "signature" else None,
+            "Malicious %" : lambda x : x.malicious_percent if x.type == "group" else None,
+            "Offline %" : lambda x : x.offline_percent if x.type == "group" or x.type == "signature" else None,
+            "Dominator %": lambda x : x.dominator_value if x.type == "signature" else None})
 
 
         #create log file
@@ -96,6 +104,8 @@ class Beacon_Model(Model):
 
         #advance the agents
         self.schedule.step()
+        self.num_active_nodes = len(self.active_nodes)
+        self.num_active_groups = len(self.active_groups)
         self.datacollector.collect(self)
 
 

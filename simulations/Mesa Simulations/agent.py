@@ -90,6 +90,8 @@ class Group(Agent):
         self.model.newest_group_id +=1
         self.ownership_distr = 0
         self.malicious_percent = 0
+        self.offline_percent = 0
+        self.compromised_percent = 0
         self.process_complete = False
         self.dkg_block_delay = self.model.dkg_block_delay
 
@@ -102,9 +104,10 @@ class Group(Agent):
             if self.dkg_block_delay>=0:
                 self.dkg_block_delay -=1 # counts down the block delay
                 #print("Group"+str(self.group_id)+" dkg block delay " + str(self.dkg_block_delay))
-                offline_percent = self.calculate_offline()/sum(self.ownership_distr) # calculates % nodes offline during dkg
+                self.offline_percent = self.calculate_offline()/sum(self.ownership_distr) # calculates % nodes offline during dkg
                 #print("Group"+str(self.group_id)+" offline percent " + str(offline_percent) + "owner_distr" + str(self.ownership_distr))
-                if self.malicious_percent + offline_percent > self.model.compromised_threshold: 
+                self.compromised_percent = self.malicious_percent + self.offline_percent
+                if  self.compromised_percent> self.model.compromised_threshold: 
                     self.status = "compromised"
                 #print("Group"+str(self.group_id)+" Compromised Status " + str(self.status)+" malicious+offline " + str(self.malicious_percent+offline_percent))
             else:
@@ -154,6 +157,7 @@ class Signature(Agent):
         self.id = unique_id
         self.signature_id = signature_id
         self.type = "signature"
+        self.status = "started"
         self.delay = np.random.poisson(self.model.signature_delay) #delay between when it is triggered and when it hits the chain
         self.ownership_distr = []
         self.model.newest_id +=1 # increments the model agent ID by 1 after a new signature is created
@@ -161,6 +165,8 @@ class Signature(Agent):
         self.signature_process_complete = False
         self.block_delay_complete = False
         self.dominator_id = -1
+        self.dominator_value = 0
+        self.offline_percent = 0
         self.signature_failure = False
 
     def step(self):
@@ -173,6 +179,7 @@ class Signature(Agent):
         elif not self.signature_process_complete :
             self.signature_process()
             self.signature_process_complete = True
+            self.status = "complete"
 
     def advance(self):
         pass
@@ -191,10 +198,11 @@ class Signature(Agent):
                         temp_signature_distr[i] = node_tickets
         self.ownership_distr = temp_signature_distr
         failed_list = np.array(self.group.ownership_distr)-np.array(self.ownership_distr)
-        dominator_value = (sum(failed_list) + max(self.ownership_distr))/sum(self.group.ownership_distr)*100 # adds the failed node virtual stakers and max node virtual stakers
+        self.offline_percent = sum(failed_list)/sum(self.ownership_distr)
+        self.dominator_value = (sum(failed_list) + max(self.ownership_distr))/sum(self.group.ownership_distr)*100 # adds the failed node virtual stakers and max node virtual stakers
         self.signature_failure = (sum(failed_list)+max(self.ownership_distr)) > (1-self.model.max_malicious_threshold)
 
-        if dominator_value > self.model.max_malicious_threshold:
+        if self.dominator_value > self.model.max_malicious_threshold:
             self.dominator_id = np.argmax(self.ownership_distr)
             #print("dominator owner ID = " + str(self.dominator_id))
 
