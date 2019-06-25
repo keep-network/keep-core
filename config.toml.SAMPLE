@@ -16,7 +16,7 @@
 	# Hex-encoded address of KeepRandomBeaconOperator contract
 	KeepRandomBeaconOperator = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 	# Hex-encoded address of StakingProxy contract
-	StakingProxy = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+	StakingProxy = "0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
 
 # Non-bootstrap node connecting to an existing network.
 # [LibP2P]
