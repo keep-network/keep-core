@@ -50,6 +50,9 @@ class Node(Agent):
         if self.failure or self.death:
             self.node_disconnect()
 
+        #refresh active nodes list
+        self.model.refresh_connected_nodes_list()
+
     def advance(self):
         pass
 
@@ -85,27 +88,38 @@ class Group(Agent):
         self.timer = self.model.timer
         self.model.newest_id +=1
         self.model.newest_group_id +=1
-        self.ownership_distr = self.calculate_ownership_distr()
+        self.ownership_distr = 0
         self.malicious_percent = 0
         self.process_complete = False
         self.dkg_block_delay = self.model.dkg_block_delay
 
+        self.calculate_ownership_distr()
+
 
     def step(self):
         """ block delay to simulate the multiple DKG steps"""
-        if self.status == "dkg"
+        if self.status == "dkg":
             if self.dkg_block_delay>=0:
                 self.dkg_block_delay -=1 # counts down the block delay
+                #print("Group"+str(self.group_id)+" dkg block delay " + str(self.dkg_block_delay))
                 offline_percent = self.calculate_offline()/sum(self.ownership_distr) # calculates % nodes offline during dkg
-                if self.malicious_percent + offline_percent > 0.25: self.status = "compromised"
-            elif self.status not = "compromised":
+                #print("Group"+str(self.group_id)+" offline percent " + str(offline_percent) + "owner_distr" + str(self.ownership_distr))
+                if self.malicious_percent + offline_percent > self.model.compromised_threshold: 
+                    self.status = "compromised"
+                #print("Group"+str(self.group_id)+" Compromised Status " + str(self.status)+" malicious+offline " + str(self.malicious_percent+offline_percent))
+            else:
                 self.status = "active"
-        elif self.status == "active"
+                #print("Group"+str(self.group_id)+" Compromised Status = " + str(self.status))
+        elif self.status == "active":
             """ At each step check if the group has expired """
             self.expiry -=1
             #print('group ID '+ str(self.id) + ' expiry ' + str(self.expiry))
-            if self.expiry == 0: 
+            if self.expiry <= 0: 
                 self.status = "expired"
+                #print("Group"+str(self.group_id)+ str(self.status))
+
+        # refresh the active group list
+        self.model.refresh_active_group_list()
         
     def advance(self):
         pass
@@ -118,19 +132,20 @@ class Group(Agent):
             if node.malicious:
                 temp_malicious_count +=1
         self.malicious_percent = temp_malicious_count/sum(temp_distr)
+        self.ownership_distr = temp_distr
 
-        return temp_distr
 
     def calculate_offline(self):
         offline_count = 0
         for node in self.members:
-            if node.status == "not forked": offline_count +=1
+            if node.mainloop_status == "not forked": 
+                offline_count +=1
+                print(self.model.inactive_nodes)
+                print("calculate offline = " + str(node.node_id))
             
         return offline_count
 
     
-
-
 
 class Signature(Agent):
     def __init__(self, unique_id, signature_id, model, group_object):

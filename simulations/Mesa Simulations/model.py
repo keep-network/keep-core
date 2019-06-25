@@ -12,12 +12,13 @@ class Beacon_Model(Model):
     group_size, max_malicious_threshold, group_expiry, 
     node_failure_percent, node_death_percent,
     signature_delay, min_nodes, node_connection_delay, node_mainloop_connection_delay, 
-    log_filename, run_number, dkg_misbehavior, dkg_block_delay):
+    log_filename, run_number, misbehaving_nodes, dkg_block_delay, compromised_threshold):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
         self.active_groups = []
         self.active_nodes = []
+        self.inactive_nodes = []
         self.active_group_threshold = active_group_threshold # number of groups that will always be maintained in an active state
         self.max_malicious_threshold = max_malicious_threshold # threshold above which a signature is deemed to be compromised, typically 51%
         self.group_size = group_size
@@ -32,8 +33,13 @@ class Beacon_Model(Model):
         self.unsuccessful_signature_events = []
         self.signature_delay = signature_delay
         self.dkg_block_delay = dkg_block_delay
+        self.compromised_threshold = compromised_threshold
         self.datacollector = DataCollector(
-            agent_reporters={"Ownership_distribution": "ownership_distr"})  # Collect ownership distributions for groups
+            agent_reporters={"Type_ID": lambda x : x.node_id if x.type == "node" else ( x.group_id if x.type == "group" else x.signature_id) , 
+            "Type" : "type", 
+            "Malicious": lambda x : x.malicious if x.type == "node" else None,
+            "Ownership Distribution" : lambda x : x.ownership_distr if x.type =="group" or x.type == "signature" else None})
+
 
         #create log file
         log.basicConfig(filename=log_filename + str(run_number), filemode='w', format='%(name)s - %(levelname)s - %(message)s')
@@ -45,7 +51,7 @@ class Beacon_Model(Model):
             self.ticket_distribution[i], 
             node_failure_percent, 
             node_death_percent, 
-            node_connection_delay, node_mainloop_connection_delay, dkg_misbehavior)
+            node_connection_delay, node_mainloop_connection_delay, misbehaving_nodes)
             self.newest_id = i
             self.schedule.add(node)
         self.newest_id +=1
@@ -53,10 +59,8 @@ class Beacon_Model(Model):
 
     def step(self):
         '''Advance the model by one step'''
-        log.debug("step # = " + str(self.timer))
+        print("step # = " + str(self.timer)+ "##############################################")
  
-        #check how many active nodes are available
-        self.refresh_connected_nodes_list()
         log.debug("Number of nodes in the forked state = " + str(len(self.active_nodes)))
 
         #bootstrap active groups as nodes become available. Can only happen once enough nodes are online
@@ -68,9 +72,6 @@ class Beacon_Model(Model):
                     temp_bootstrap_groups.append(self.group_registration())
                 self.bootstrap_complete = True
             self.active_groups = temp_bootstrap_groups
-
-        #check how many active groups are available
-        self.refresh_active_group_list()
         
         #generate relay requests
         self.relay_request = np.random.choice([True,False]) # make this variable so it can be what-if'd
@@ -95,6 +96,9 @@ class Beacon_Model(Model):
 
         #advance the agents
         self.schedule.step()
+        self.datacollector.collect(self)
+
+
 
     def group_registration(self):
         ticket_list = []
@@ -113,7 +117,7 @@ class Beacon_Model(Model):
                 ticket_list.append(adjusted_ticket_list)
 
             #iteratively add group members by lowest value
-            while len(group_members) <= self.group_size:
+            while len(group_members) < self.group_size:
 
                 min_index = np.where(ticket_list == np.min(ticket_list)) # find the index of the minimum value in the array
                 for i,index in enumerate(min_index[0]): #if there are repeated values, iterate through and add the indexes to the group
@@ -135,20 +139,29 @@ class Beacon_Model(Model):
     def refresh_active_group_list(self):
         temp_list = []
 
-        for group in self.active_groups:
-            if group.status == "Active":
-                temp_list.append(group)
-        
+        for group in self.schedule.agents:
+            if group.type == "group":
+                if group.status == "active":
+                    temp_list.append(group)
+                    print("active group = "+ str(group.group_id))
+        print("active group list length = "+ str(len(temp_list)))
         self.active_groups = temp_list
 
     def refresh_connected_nodes_list(self):
         log.debug("refreshing active nodes list")
         temp_active_node_list = []
+        temp_inactive_node_list = []
+        temp_active_nodes = [] #take out later - id of active nodes
         for agent in self.schedule.agents:
             if agent.type == "node":
                 if agent.mainloop_status == "forked": 
                     temp_active_node_list.append(agent) #adds the node to the active list only if it is in the forked state
+                    temp_active_nodes.append(agent.node_id)
+                
+                else:
+                    temp_inactive_node_list.append(agent.node_id)
         self.active_nodes = temp_active_node_list
+        self.inactive_nodes = temp_inactive_node_list
 
 def create_cdf(nodes,ticket_distr):
 # Create CDF's - used to determine max ownership ticket index
