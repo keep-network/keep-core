@@ -14,7 +14,7 @@ const (
 	KeyLength = 32
 
 	// NonceSize represents the byte size of nonce for XSalsa20 cipher used for
-	// SymmetricKey encryption.
+	// encryption.
 	NonceSize = 24
 )
 

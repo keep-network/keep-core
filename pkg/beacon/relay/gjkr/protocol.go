@@ -17,7 +17,6 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
-	"github.com/keep-network/keep-core/pkg/encryption"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -455,7 +454,7 @@ func recoverSymmetricKey(
 	evidenceLog evidenceLog,
 	senderID, receiverID group.MemberIndex,
 	receiverPrivateKey *ephemeral.PrivateKey,
-) (encryption.Box, error) {
+) (ephemeral.SymmetricKey, error) {
 	ephemeralPublicKeyMessage := evidenceLog.ephemeralPublicKeyMessage(senderID)
 	if ephemeralPublicKeyMessage == nil {
 		return nil, fmt.Errorf(
@@ -484,7 +483,7 @@ func recoverSymmetricKey(
 func recoverShares(
 	evidenceLog evidenceLog,
 	senderID, receiverID group.MemberIndex,
-	symmetricKey encryption.Box,
+	symmetricKey ephemeral.SymmetricKey,
 ) (*big.Int, *big.Int, error) {
 	peerSharesMessage := evidenceLog.peerSharesMessage(senderID)
 	if peerSharesMessage == nil {

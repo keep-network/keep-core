@@ -8,7 +8,6 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
-	"github.com/keep-network/keep-core/pkg/encryption"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -242,7 +241,7 @@ func TestRecoverShares(t *testing.T) {
 	messageBuffer.PutPeerSharesMessage(&PeerSharesMessage{member1ID, shares})
 
 	var tests = map[string]struct {
-		symmetricKey   encryption.Box
+		symmetricKey   ephemeral.SymmetricKey
 		expectedShareS *big.Int
 		expectedShareT *big.Int
 		expectedError  error

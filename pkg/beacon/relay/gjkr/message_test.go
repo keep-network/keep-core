@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
-	"github.com/keep-network/keep-core/pkg/encryption"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
@@ -150,7 +149,7 @@ func TestCanDecrypt(t *testing.T) {
 
 func newTestPeerSharesMessage(senderID, receiverID group.MemberIndex, shareS, shareT *big.Int) (
 	*PeerSharesMessage,
-	encryption.Box,
+	ephemeral.SymmetricKey,
 	error,
 ) {
 	keyPair1, err := ephemeral.GenerateKeyPair()
