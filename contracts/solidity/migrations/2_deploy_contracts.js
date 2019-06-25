@@ -44,7 +44,7 @@ module.exports = async function(deployer) {
   await deployer.deploy(TokenGrant, KeepToken.address, StakingProxy.address, withdrawalDelay);
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.link(BLS, KeepRandomBeaconOperatorStub);
-  await deployer.deploy(KeepRandomBeaconOperator);
+  deployer.deploy(KeepRandomBeaconOperator);
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
 
@@ -52,7 +52,7 @@ module.exports = async function(deployer) {
   const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
 
   // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
-  await keepRandomBeaconOperator.initialize(
+  keepRandomBeaconOperator.initialize(
     StakingProxy.address, KeepRandomBeaconService.address, minStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     activeGroupsThreshold, groupActiveTime, relayRequestTimeout,
@@ -60,7 +60,7 @@ module.exports = async function(deployer) {
     "0x1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0",
   );
 
-  await keepRandomBeaconService.initialize(
+  keepRandomBeaconService.initialize(
     minPayment,
     withdrawalDelay,
     keepRandomBeaconOperator.address
