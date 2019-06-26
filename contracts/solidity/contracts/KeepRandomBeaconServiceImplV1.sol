@@ -23,6 +23,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     using AddressArrayUtils for address[];
 
     // These are the public events that are used by clients
+    event RelayEntryRequested(uint256 entryId);
     event RelayEntryGenerated(uint256 entryId, uint256 entry);
 
     uint256 internal _minPayment;
@@ -113,6 +114,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             callbacks[_entryCounter] = Callback(callbackContract, callbackMethod);
         }
 
+        emit RelayEntryRequested(_entryCounter);
         return _entryCounter;
     }
 
