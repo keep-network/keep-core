@@ -101,7 +101,10 @@ func Start(c *cli.Context) error {
 	isBootstrapNode := config.LibP2P.Seed != 0
 	nodeHeader(isBootstrapNode, netProvider.AddrStrings(), port)
 
-	persistence := persistence.NewDiskHandle(config.Storage.DataDir)
+	persistence := persistence.NewEncryptedPersistence(
+		persistence.NewDiskHandle(config.Storage.DataDir),
+		config.Ethereum.Account.KeyFilePassword,
+	)
 
 	err = beacon.Initialize(
 		ctx,
