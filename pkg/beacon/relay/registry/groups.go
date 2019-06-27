@@ -45,12 +45,12 @@ func NewGroupRegistry(
 
 // RegisterGroup registers that a group was successfully created by the given
 // groupPublicKey.
-func (gr *Groups) RegisterGroup(
+func (g *Groups) RegisterGroup(
 	signer *dkg.ThresholdSigner,
 	channelName string,
 ) error {
-	gr.mutex.Lock()
-	defer gr.mutex.Unlock()
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
 
 	groupPublicKey := groupKeyToString(signer.GroupPublicKeyBytes())
 
@@ -59,22 +59,22 @@ func (gr *Groups) RegisterGroup(
 		ChannelName: channelName,
 	}
 
-	err := gr.storage.save(membership)
+	err := g.storage.save(membership)
 	if err != nil {
 		return fmt.Errorf("could not persist membership to the storage: [%v]", err)
 	}
 
-	gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
+	g.myGroups[groupPublicKey] = append(g.myGroups[groupPublicKey], membership)
 
 	return nil
 }
 
 // GetGroup gets a group by a groupPublicKey
-func (gr *Groups) GetGroup(groupPublicKey []byte) []*Membership {
-	gr.mutex.Lock()
-	defer gr.mutex.Unlock()
+func (g *Groups) GetGroup(groupPublicKey []byte) []*Membership {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
 
-	return gr.myGroups[groupKeyToString(groupPublicKey)]
+	return g.myGroups[groupKeyToString(groupPublicKey)]
 }
 
 // UnregisterStaleGroups lookup for groups that have been marked as stale
@@ -83,28 +83,28 @@ func (gr *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 // a new operation and it cannot have an ongoing operation for which it could be
 // selected before it expired. Such a group can be safely removed from the registry
 // and archived in the underlying storage.
-func (gr *Groups) UnregisterStaleGroups() error {
-	gr.mutex.Lock()
-	defer gr.mutex.Unlock()
+func (g *Groups) UnregisterStaleGroups() error {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
 
-	for publicKey := range gr.myGroups {
+	for publicKey := range g.myGroups {
 		publicKeyBytes, err := groupKeyFromString(publicKey)
 		if err != nil {
 			return fmt.Errorf("error occured while decoding public key into bytes [%v]", err)
 		}
 
-		isStaleGroup, err := gr.relayChain.IsStaleGroup(publicKeyBytes)
+		isStaleGroup, err := g.relayChain.IsStaleGroup(publicKeyBytes)
 		if err != nil {
 			return fmt.Errorf("staling group eligibility check has failed: [%v]", err)
 		}
 
 		if isStaleGroup {
-			err = gr.storage.archive(publicKey)
+			err = g.storage.archive(publicKey)
 			if err != nil {
 				return fmt.Errorf("group archiving has failed: [%v]", err)
 			}
 
-			delete(gr.myGroups, publicKey)
+			delete(g.myGroups, publicKey)
 		}
 	}
 
@@ -113,20 +113,55 @@ func (gr *Groups) UnregisterStaleGroups() error {
 
 // LoadExistingGroups iterates over all stored memberships on disk and loads them
 // into memory
-func (gr *Groups) LoadExistingGroups() error {
-	memberships, err := gr.storage.readAll()
-	if err != nil {
-		gr.myGroups = make(map[string][]*Membership)
-		return err
-	}
+func (g *Groups) LoadExistingGroups() error {
+	g.myGroups = make(map[string][]*Membership)
 
-	for _, membership := range memberships {
-		groupPublicKey := groupKeyToString(membership.Signer.GroupPublicKeyBytes())
+	membershipsChannel, errorsChannel := g.storage.readAll()
 
-		gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
-	}
+	// Two goroutines read from memberships and errors channels and either
+	// adds memberships to the group registry or outputs an error to stderr.
+	// The reason for using two goroutines at the same time - one for
+	// memberships and one for errors is because channels do not have to be
+	// buffered and we do not know in what order information is written to
+	// channels.
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	for group, memberships := range gr.myGroups {
+	go func() {
+		for membership := range membershipsChannel {
+			groupPublicKey := groupKeyToString(
+				membership.Signer.GroupPublicKeyBytes(),
+			)
+			g.myGroups[groupPublicKey] = append(
+				g.myGroups[groupPublicKey],
+				membership,
+			)
+		}
+
+		wg.Done()
+	}()
+
+	go func() {
+		for err := range errorsChannel {
+			fmt.Fprintf(
+				os.Stderr,
+				"Could not load membership from disk: [%v]\n",
+				err,
+			)
+		}
+
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	g.printMemberships()
+
+	return nil
+}
+
+func (g *Groups) printMemberships() {
+	for group, memberships := range g.myGroups {
 		fmt.Fprintf(os.Stdout, "Group [%v] was loaded with member IDs [", group)
 		for idx, membership := range memberships {
 			if (len(memberships) - 1) != idx {
@@ -136,8 +171,6 @@ func (gr *Groups) LoadExistingGroups() error {
 			}
 		}
 	}
-
-	return nil
 }
 
 func groupKeyToString(groupKey []byte) string {

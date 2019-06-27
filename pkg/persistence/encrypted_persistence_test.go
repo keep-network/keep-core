@@ -2,8 +2,9 @@ package persistence
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 
 	"crypto/sha256"
 
@@ -31,19 +32,35 @@ func TestSaveReadAndDecryptData(t *testing.T) {
 		t.Fatalf("Error occured while saving data [%v]", err)
 	}
 
-	decrypted, err := encryptedPersistence.ReadAll()
+	decryptedChan, errChan := encryptedPersistence.ReadAll()
 	if err != nil {
 		t.Fatalf("Error occured while reading data [%v]", err)
 	}
 
-	if !reflect.DeepEqual(
-		dataToEncrypt,
-		decrypted,
-	) {
-		t.Fatalf("invalid decrypted results: \nexpected: %v\nactual:   %v\n",
-			dataToEncrypt,
-			decrypted,
+	for err := range errChan {
+		t.Error(err)
+	}
+
+	decrypted := make([][]byte, 0)
+	for d := range decryptedChan {
+		content, err := d.Content()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		decrypted = append(decrypted, content)
+	}
+
+	if len(decrypted) != len(dataToEncrypt) {
+		t.Fatalf(
+			"Unexpected number of decrypted items\nExpected: [%v]\nActual:   [%v]",
+			len(dataToEncrypt),
+			len(decrypted),
 		)
+	}
+
+	for i := 0; i < len(dataToEncrypt); i++ {
+		testutils.AssertBytesEqual(t, dataToEncrypt[i], decrypted[i])
 	}
 }
 
@@ -54,15 +71,42 @@ func (dpm *delegatePersistenceMock) Save(data []byte, directory string, name str
 	return nil
 }
 
-func (dpm *delegatePersistenceMock) ReadAll() ([][]byte, error) {
+func (dpm *delegatePersistenceMock) ReadAll() (<-chan DataDescriptor, <-chan error) {
 	encrypted := encryptData()
 
-	return [][]byte{encrypted[0], encrypted[1]}, nil
+	outputData := make(chan DataDescriptor, 2)
+	outputErrors := make(chan error)
+
+	outputData <- &testDataDescriptor{"1", "dir", encrypted[0]}
+	outputData <- &testDataDescriptor{"2", "dir", encrypted[1]}
+
+	close(outputData)
+	close(outputErrors)
+
+	return outputData, outputErrors
 }
 
 func (dpm *delegatePersistenceMock) Archive(directory string) error {
 	// noop
 	return nil
+}
+
+type testDataDescriptor struct {
+	name      string
+	directory string
+	content   []byte
+}
+
+func (tdd *testDataDescriptor) Name() string {
+	return tdd.name
+}
+
+func (tdd *testDataDescriptor) Directory() string {
+	return tdd.directory
+}
+
+func (tdd *testDataDescriptor) Content() ([]byte, error) {
+	return tdd.content, nil
 }
 
 func encryptData() [][]byte {
