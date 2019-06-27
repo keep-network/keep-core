@@ -153,7 +153,7 @@ func readAll(directoryPath string) (<-chan DataDescriptor, <-chan error) {
 							fileName,
 						))
 					}
-					dataChannel <- &dataDescriptor{dirName, fileName, readFunc}
+					dataChannel <- &dataDescriptor{fileName, dirName, readFunc}
 				}
 			}
 		}
