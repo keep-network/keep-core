@@ -113,7 +113,7 @@ func (g *Groups) UnregisterStaleGroups() error {
 
 // LoadExistingGroups iterates over all stored memberships on disk and loads them
 // into memory
-func (g *Groups) LoadExistingGroups() error {
+func (g *Groups) LoadExistingGroups() {
 	g.myGroups = make(map[string][]*Membership)
 
 	membershipsChannel, errorsChannel := g.storage.readAll()
@@ -156,8 +156,6 @@ func (g *Groups) LoadExistingGroups() error {
 	wg.Wait()
 
 	g.printMemberships()
-
-	return nil
 }
 
 func (g *Groups) printMemberships() {

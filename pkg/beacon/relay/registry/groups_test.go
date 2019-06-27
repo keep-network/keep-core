@@ -79,11 +79,8 @@ func TestLoadGroup(t *testing.T) {
 			len(gr.myGroups),
 		)
 	}
-	err := gr.LoadExistingGroups()
 
-	if err != nil {
-		t.Fatalf("Error occured while reading groups from the disk")
-	}
+	gr.LoadExistingGroups()
 
 	if len(gr.myGroups) != 2 {
 		t.Fatalf(
