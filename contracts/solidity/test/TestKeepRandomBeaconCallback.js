@@ -1,4 +1,5 @@
 import {bls} from './helpers/data';
+import mineBlocks from './helpers/mineBlocks';
 const Proxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeacon = artifacts.require('./KeepRandomBeaconImplV1.sol');
 const KeepGroupStub = artifacts.require('./KeepGroupStub.sol');
@@ -6,6 +7,7 @@ const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
 contract('TestKeepRandomBeaconCallback', function() {
   const relayRequestTimeout = 10;
+  const blocksForward = 20;
   let impl, proxy, keepRandomBeacon, callbackContract, keepGroupStub;
 
   before(async () => {
@@ -29,6 +31,7 @@ contract('TestKeepRandomBeaconCallback', function() {
   });
 
   it("should successfully call method on a callback contract", async function() {
+    mineBlocks(blocksForward)
     let tx = await keepRandomBeacon.methods['requestRelayEntry(uint256,address,string)'](bls.seed, callbackContract.address, "callback(uint256)", {value: 10});
     let requestId = tx.logs[0].args.requestID;
 

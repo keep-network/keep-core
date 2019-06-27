@@ -1,6 +1,7 @@
 import {bls} from './helpers/data';
-import increaseTime, { duration } from './helpers/increaseTime';
-import exceptThrow from './helpers/expectThrow';
+import { duration } from './helpers/increaseTime';
+import expectThrow from './helpers/expectThrow';
+import mineBlocks from './helpers/mineBlocks';
 const Proxy = artifacts.require('./KeepRandomBeacon.sol');
 const KeepRandomBeaconImplV1 = artifacts.require('./KeepRandomBeaconImplV1.sol');
 const Upgrade = artifacts.require('./examples/KeepRandomBeaconUpgradeExample.sol');
@@ -9,9 +10,9 @@ const KeepGroup = artifacts.require('./KeepGroupStub.sol');
 
 contract('TestKeepRandomBeaconUpgrade', function(accounts) {
   const relayRequestTimeout = 10;
+  const blocksForward = 20;
 
   let implV1, implV2, proxy, implViaProxy, impl2ViaProxy, keepGroup,
-    account_one = accounts[0],
     account_two = accounts[1];
 
   beforeEach(async () => {
@@ -25,8 +26,15 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
 
     // Add a few calls that modify state so we can test later that eternal storage works as expected after upgrade
     await implViaProxy.requestRelayEntry(0, {from: account_two, value: 100});
+    await implViaProxy.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+
+    await mineBlocks(blocksForward)
     await implViaProxy.requestRelayEntry(0, {from: account_two, value: 100});
+    await implViaProxy.relayEntry(2, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+
+    await mineBlocks(blocksForward)
     await implViaProxy.requestRelayEntry(0, {from: account_two, value: 100});
+    await implViaProxy.relayEntry(3, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
   });
 
@@ -36,7 +44,7 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
   });
 
   it("should fail to upgrade implementation if called by not contract owner", async function() {
-    await exceptThrow(proxy.upgradeTo(implV2.address, {from: account_two}));
+    await expectThrow(proxy.upgradeTo(implV2.address, {from: account_two}));
   });
 
   it("should be able to upgrade implementation and initialize it with new data", async function() {
@@ -52,6 +60,7 @@ contract('TestKeepRandomBeaconUpgrade', function(accounts) {
     let newVar = await impl2ViaProxy.getNewVar();
     assert.equal(newVar, 1234, "Should be able to get new data from upgraded contract.");
 
+    await mineBlocks(blocksForward)
     await impl2ViaProxy.requestRelayEntry(0, {from: account_two, value: 100})
 
     assert.equal((await impl2ViaProxy.getPastEvents())[0].args['requestID'], 6, "requestID should not be reset and should continue to increment where it was left in previous implementation.");

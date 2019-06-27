@@ -23,6 +23,8 @@ const timeoutChallenge = 4;
 const resultPublicationBlockStep = 3;
 const activeGroupsThreshold = 5;
 const groupActiveTime = 300;
+// Timeout in blocks for a relay entry to appear on the chain.
+// Blocks are counted from the moment relay request occur.
 const relayRequestTimeout = 10;
 
 // timeDKG - Timeout in blocks after DKG result is complete and ready to be published.

@@ -34,7 +34,8 @@ contract KeepRandomBeaconImplV1 is Ownable {
     address internal _groupContract;
     uint256 internal _previousEntry;
     uint256 internal _relayRequestTimeout;
-    uint256 internal _relayRequestStartBlock;
+    uint256 internal _currentRelayRequestStartBlock;
+    bool internal _relaySigningInProgess;
 
     mapping (string => bool) internal _initialized;
 
@@ -48,7 +49,6 @@ contract KeepRandomBeaconImplV1 is Ownable {
 
     mapping(uint256 => Request) internal _requests;
 
-    bool internal _relaySigningInProgess;
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
@@ -124,11 +124,10 @@ contract KeepRandomBeaconImplV1 is Ownable {
             "At least one group needed to serve the request."
         );
 
-        uint256 relayEntryTimeout = _relayRequestStartBlock + _relayRequestTimeout;
-
-        require(!_relaySigningInProgess || block.number > relayEntryTimeout, "Relay entry request is in progress.");
+        uint256 relayEntryTimeout = _currentRelayRequestStartBlock + _relayRequestTimeout;
+        require(!(_relaySigningInProgess || !(block.number > relayEntryTimeout)), "Relay entry request is in progress.");
         
-        _relayRequestStartBlock = block.number;
+        _currentRelayRequestStartBlock = block.number;
         _relaySigningInProgess = true;
 
         bytes memory groupPubKey = GroupContract(_groupContract).selectGroup(_previousEntry);
