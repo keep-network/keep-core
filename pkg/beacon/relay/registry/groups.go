@@ -83,32 +83,34 @@ func (g *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 // a new operation and it cannot have an ongoing operation for which it could be
 // selected before it expired. Such a group can be safely removed from the registry
 // and archived in the underlying storage.
-func (g *Groups) UnregisterStaleGroups() error {
+func (g *Groups) UnregisterStaleGroups() {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
 	for publicKey := range g.myGroups {
 		publicKeyBytes, err := groupKeyFromString(publicKey)
 		if err != nil {
-			return fmt.Errorf("error occured while decoding public key into bytes [%v]", err)
+			fmt.Fprintf(
+				os.Stderr,
+				"error occured while decoding public key into bytes [%v]",
+				err,
+			)
 		}
 
 		isStaleGroup, err := g.relayChain.IsStaleGroup(publicKeyBytes)
 		if err != nil {
-			return fmt.Errorf("staling group eligibility check has failed: [%v]", err)
+			fmt.Fprintf(os.Stderr, "stale group check has failed: [%v]", err)
 		}
 
 		if isStaleGroup {
 			err = g.storage.archive(publicKey)
 			if err != nil {
-				return fmt.Errorf("group archiving has failed: [%v]", err)
+				fmt.Fprintf(os.Stderr, "group archiving has failed: [%v]", err)
 			}
 
 			delete(g.myGroups, publicKey)
 		}
 	}
-
-	return nil
 }
 
 // LoadExistingGroups iterates over all stored memberships on disk and loads them
