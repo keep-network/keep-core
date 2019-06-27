@@ -3,6 +3,7 @@ package persistence
 import (
 	"fmt"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
@@ -57,13 +58,30 @@ func TestDiskPersistence_ReadAll(t *testing.T) {
 
 	dataChannel, errChannel := diskPersistence.ReadAll()
 
-	for e := range errChannel {
-		t.Error(e)
-	}
+	var descriptors []DataDescriptor
+	var errors []error
 
-	descriptors := make([]DataDescriptor, 0)
-	for d := range dataChannel {
-		descriptors = append(descriptors, d)
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		for e := range errChannel {
+			errors = append(errors, e)
+		}
+		wg.Done()
+	}()
+
+	go func() {
+		for d := range dataChannel {
+			descriptors = append(descriptors, d)
+		}
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	for err := range errors {
+		t.Fatal(err)
 	}
 
 	if len(descriptors) != 3 {

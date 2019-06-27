@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
@@ -33,22 +34,36 @@ func TestSaveReadAndDecryptData(t *testing.T) {
 	}
 
 	decryptedChan, errChan := encryptedPersistence.ReadAll()
-	if err != nil {
-		t.Fatalf("Error occured while reading data [%v]", err)
-	}
 
-	for err := range errChan {
-		t.Error(err)
-	}
+	var decrypted [][]byte
+	var errors []error
 
-	decrypted := make([][]byte, 0)
-	for d := range decryptedChan {
-		content, err := d.Content()
-		if err != nil {
-			t.Fatal(err)
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		for err := range errChan {
+			errors = append(errors, err)
 		}
+		wg.Done()
+	}()
 
-		decrypted = append(decrypted, content)
+	go func() {
+		for d := range decryptedChan {
+			content, err := d.Content()
+			if err != nil {
+				errors = append(errors, err)
+			}
+
+			decrypted = append(decrypted, content)
+		}
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	for err := range errors {
+		t.Fatal(err)
 	}
 
 	if len(decrypted) != len(dataToEncrypt) {
