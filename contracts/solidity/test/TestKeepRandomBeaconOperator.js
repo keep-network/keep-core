@@ -28,7 +28,7 @@ contract('TestKeepRandomBeaconOperator', function(accounts) {
     assert.equal(newMinStake, 123, "Should be able to get updated minimum stake.");
   });
 
-  it("should be able to check if the implementation contract was initialized", async function() {
-    assert.isTrue(await operatorContract.initialized(), "Implementation contract should be initialized.");
+  it("should be able to check if the contract was initialized", async function() {
+    assert.isTrue(await operatorContract.initialized(), "Contract should be initialized.");
   });
 });
