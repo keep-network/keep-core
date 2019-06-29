@@ -75,6 +75,16 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
+     * @dev Selects an operator contract from the available list using modulo operation
+     * with previous entry weighted by the number of active groups on each operator contract.
+     * @return Address of operator contract.
+     */
+    function selectOperatorContract() public view returns (address) {
+        // TODO: Implement logic
+        return _operatorContracts[0];
+    }
+
+    /**
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
@@ -101,10 +111,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         _entryCounter++;
 
-        // TODO: select operator contract
         // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
-        // OperatorContract(_operatorContracts[0]).sign.value(msg.value)(_entryCounter, seed, _previousEntry);
-        OperatorContract(_operatorContracts[0]).sign(_entryCounter, seed, _previousEntry);
+        // OperatorContract(selectOperatorContract()).sign.value(msg.value)(_entryCounter, seed, _previousEntry);
+        OperatorContract(selectOperatorContract()).sign(_entryCounter, seed, _previousEntry);
 
         if (callbackContract != address(0)) {
             _callbacks[_entryCounter] = Callback(callbackContract, callbackMethod);
