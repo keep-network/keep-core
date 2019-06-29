@@ -26,8 +26,8 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should produce entry if callback contract was not provided", async function() {
-    let tx = await serviceContract.requestRelayEntry(bls.seed, {value: 10});
-    let requestId = tx.logs[0].args.entryId;
+    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
+    let requestId = (await operatorContract.getPastEvents())[0].args['requestID'].toNumber();
     await operatorContract.relayEntry(requestId, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     let result = await serviceContract.previousEntry();
@@ -35,8 +35,8 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should successfully call method on a callback contract", async function() {
-    let tx = await serviceContract.methods['requestRelayEntry(uint256,address,string)'](bls.seed, callbackContract.address, "callback(uint256)", {value: 10});
-    let requestId = tx.logs[0].args.entryId;
+    await serviceContract.methods['requestRelayEntry(uint256,address,string)'](bls.seed, callbackContract.address, "callback(uint256)", {value: 10});
+    let requestId = (await operatorContract.getPastEvents())[0].args['requestID'].toNumber();
 
     let result = await callbackContract.lastEntry();
     assert.isFalse(result.eq(bls.groupSignature), "Entry value on the callback contract should not be the same as next relay entry.");
