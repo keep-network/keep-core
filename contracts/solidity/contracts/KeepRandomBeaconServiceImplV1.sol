@@ -81,9 +81,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @return An uint256 representing uniquely generated entry Id.
      */
     function requestRelayEntry(uint256 seed) public payable returns (uint256) {
-
-        _entryCounter++;
-
         return requestRelayEntry(seed, address(0), "");
     }
 
