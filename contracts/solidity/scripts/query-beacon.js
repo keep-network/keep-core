@@ -1,6 +1,6 @@
 const KeepRandomBeaconService = artifacts.require('KeepRandomBeaconService.sol');
-const KeepRandomBeaconOperator = artifacts.require("KeepRandomBeaconOperator");
-const KeepRandomBeaconServiceImplV1 = artifacts.require("KeepRandomBeaconServiceImplV1");
+const KeepRandomBeaconOperator = artifacts.require("KeepRandomBeaconOperator.sol");
+const KeepRandomBeaconServiceImplV1 = artifacts.require("KeepRandomBeaconServiceImplV1.sol");
 
 module.exports = async function () {
 
