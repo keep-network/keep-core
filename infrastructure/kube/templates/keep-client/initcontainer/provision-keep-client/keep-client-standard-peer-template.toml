@@ -9,8 +9,6 @@
     KeyFile = "Set by Kube"
 
   [ethereum.ContractAddresses]
-    # Hex-encoded address of KeepRandomBeaconService contract
-    KeepRandomBeaconService = "Set by Kube"
     # Hex-encoded address of KeepRandomBeaconOperator contract
     KeepRandomBeaconOperator = "Set by Kube"
     # StakingProxy
