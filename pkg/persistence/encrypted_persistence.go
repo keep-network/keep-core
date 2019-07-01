@@ -34,20 +34,44 @@ func (ep *encryptedPersistence) Save(data []byte, directory string, name string)
 	return ep.delegate.Save(encrypted, directory, name)
 }
 
-func (ep *encryptedPersistence) ReadAll() ([][]byte, error) {
-	encryptedMemberships, err := ep.delegate.ReadAll()
-	decryptedMemberships := [][]byte{}
+func (ep *encryptedPersistence) ReadAll() (<-chan DataDescriptor, <-chan error) {
+	outputData := make(chan DataDescriptor)
+	outputErrors := make(chan error)
 
-	for _, encryptedMembership := range encryptedMemberships {
-		decryptedMembership, err := ep.box.Decrypt(encryptedMembership)
-		if err != nil {
-			return nil, err
+	inputData, inputErrors := ep.delegate.ReadAll()
+
+	// pass thru all errors from the input to the output channel without
+	// changing anything
+	go func() {
+		defer close(outputErrors)
+		for err := range inputErrors {
+			outputErrors <- err
 		}
+	}()
 
-		decryptedMemberships = append(decryptedMemberships, decryptedMembership)
-	}
+	// pipe input data descriptor channel to the output data descriptor channel
+	// decorading the descriptor passed so that the content is decrypted on read
+	go func() {
+		defer close(outputData)
+		for descriptor := range inputData {
+			// capture shared loop variable's value for the closure
+			d := descriptor
 
-	return decryptedMemberships, err
+			outputData <- &dataDescriptor{
+				name:      d.Name(),
+				directory: d.Directory(),
+				readFunc: func() ([]byte, error) {
+					content, err := d.Content()
+					if err != nil {
+						return nil, err
+					}
+					return ep.box.Decrypt(content)
+				},
+			}
+		}
+	}()
+
+	return outputData, outputErrors
 }
 
 func (ep *encryptedPersistence) Archive(directory string) error {

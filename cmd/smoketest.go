@@ -13,6 +13,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/persistence"
 	"github.com/urfave/cli"
 )
 
@@ -50,9 +51,14 @@ func (np *noopPersistence) Save(data []byte, directory string, name string) erro
 	return nil
 }
 
-func (np *noopPersistence) ReadAll() ([][]byte, error) {
-	// noop
-	return nil, nil
+func (np *noopPersistence) ReadAll() (<-chan persistence.DataDescriptor, <-chan error) {
+	dataChannel := make(chan persistence.DataDescriptor)
+	errorChannel := make(chan error)
+
+	close(dataChannel)
+	close(errorChannel)
+
+	return dataChannel, errorChannel
 }
 
 func (np *noopPersistence) Archive(directory string) error {
