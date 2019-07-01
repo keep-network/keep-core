@@ -34,13 +34,11 @@ class Node(Agent):
             self.connection_delay -=1
         else:
             self.connection_status = "connected"
-            #print(str("node "+str(self.node_id)+" = connected"))
         #once connected fork the main loop
             if self.mainloop_fork_delay>0:
                 self.mainloop_fork_delay -=1
             else: 
                 self.mainloop_status = "forked"
-                #print(str("node "+str(self.node_id)+" = forked"))
             
         #simulate node failure
         self.failure = np.random.randint(0,100) < self.node_failure_percent
@@ -56,9 +54,6 @@ class Node(Agent):
     def advance(self):
         pass
 
-        #print(str("node " + str(self.id) + "status " + self.mainloop_status ))
-        #print("Mainloop fork delay = " + str(self.mainloop_fork_delay))
-        #print("Mainloop_status = " + self.mainloop_status)
 
     def generate_tickets(self):
         #generates tickets using the uniform distribution
@@ -72,7 +67,6 @@ class Node(Agent):
         self.stake_status = "not staked"
         if self.death == False: # does not reset the failure trigger if the death trigger is true
             self.failure = False
-        #print(str(self.node_id)+" = just Failed")
 
 class Group(Agent):
     """ A Group """
@@ -140,8 +134,6 @@ class Group(Agent):
         for node in self.members:
             if node.mainloop_status == "not forked": 
                 offline_count +=1
-                print(self.model.inactive_nodes)
-                print("calculate offline = " + str(node.node_id))
             
         return offline_count
 

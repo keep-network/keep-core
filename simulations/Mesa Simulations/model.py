@@ -40,9 +40,11 @@ class Beacon_Model(Model):
         self.median_dominated_signatures_percents = 0
         self.perc_dominated_signatures = 0
         self.perc_compromised_groups = 0
+        self.total_signatures = 0
         self.datacollector = DataCollector(
             model_reporters = {"# of Active Groups":"num_active_groups",
              "# of Active Nodes":"num_active_nodes",
+             "# of Signatures":"total_signatures",
              "Median Malicious Group %": "median_malicious_group_percents",
              "% Compromised Groups": "perc_compromised_groups",
              "Median Dominator %":"median_dominated_signatures_percents",
@@ -77,7 +79,6 @@ class Beacon_Model(Model):
 
     def step(self):
         '''Advance the model by one step'''
-        print("step # = " + str(self.timer)+ "##############################################")
  
         log.debug("Number of nodes in the forked state = " + str(len(self.active_nodes)))
 
@@ -114,7 +115,7 @@ class Beacon_Model(Model):
 
         #calculate model measurements
         self.median_malicious_group_percents, self.perc_compromised_groups = self.calculate_compromised_groups()
-        self.median_dominated_signatures_percents, self.perc_dominated_signatures = self.calculate_dominated_signatures()
+        self.median_dominated_signatures_percents, self.perc_dominated_signatures,self.total_signatures = self.calculate_dominated_signatures()
   
 
         #advance the agents
@@ -166,8 +167,6 @@ class Beacon_Model(Model):
             if group.type == "group":
                 if group.status == "active":
                     temp_list.append(group)
-                    print("active group = "+ str(group.group_id))
-        print("active group list length = "+ str(len(temp_list)))
         self.active_groups = temp_list
 
     def refresh_connected_nodes_list(self):
@@ -209,7 +208,7 @@ class Beacon_Model(Model):
                 dominator_array.append(signature.dominator_percent)
                 dominator_count += (signature.dominator_id>=0)
         
-        return np.median(dominator_array), dominator_count/(total_signatures+0.00000000000000001)
+        return np.median(dominator_array), dominator_count/(total_signatures+0.00000000000000001), total_signatures
 
 
 def create_cdf(nodes,ticket_distr):
