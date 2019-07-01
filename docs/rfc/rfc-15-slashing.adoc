@@ -14,14 +14,22 @@ In some situations,
 another participant's cooperation is required to prove misbehavior.
 This coordination is incentivized by rewarding the _tattletale_.
 
-=== Current Functionality
-
 == Proposal
 
 === Goal
 
-The goal of this proposal. What are we trying to achieve? Examples of desired
-outcomes would be handy.
+Slashing should be simple to implement and reason about.
+The slashing method should implement the tattletale transfer mitigations
+defined in the link:rfc-14-token-grants.adoc[token grant RFC],
+always burning at least 95% of the penalty amount.
+
+Only authorized operator contracts should be able to punish an operator,
+but keeps created by keep factories
+should not require individual authorization.
+
+Some operator contracts may rely on an external trusted application
+to determine whether misbehavior has occurred.
+The impact of malfunctions in trusted applications should be minimized.
 
 === Implementation
 
@@ -38,7 +46,7 @@ they should be removed from the operation the misbehavior occurred in.
 
 ==== Authorization and slashing
 
-_Operator contracts_ (including _keep builders_)
+_Operator contracts_ (including _keep factories_)
 are authorized to impose penalties by stakers' _authorizers_.
 All stakers using the same _authorizer_
 share the set of authorized operator contracts.
@@ -55,7 +63,8 @@ when determining a staker's eligibility.
 When an operator misbehaves on-chain,
 the operator contract calls the staking contract to punish the operator.
 The staking contract checks
-that the operator contract is authorized to punish the staker, and if true,
+that the operator contract is authorized to punish the staker,
+and if true,
 applies the penalty
 by subtracting the applicable penalty from the operator's stake
 and burns tokens equal to the penalty amount.
@@ -68,15 +77,15 @@ The remaining 5% is transferred to the tattletale's _beneficiary_ address.
 
 ===== Slashing by indirectly authorized keeps
 
-_Keeps_ created by _keep builders_
+_Keeps_ created by _keep factories_
 are not individually authorized to impose punishments.
-Instead, the _keep builders_ are authorized to impose punishments
-and each keep builder tracks the individual keeps it has created.
+Instead, the _keep factories_ are authorized to impose punishments
+and each keep factory tracks the individual keeps it has created.
 
 When the keep wants to impose a punishment,
-it includes its builder's address in the call to the staking contract.
-The staking contract checks that the builder is authorized,
-and the keep is listed as being created by the builder.
+it includes its factory's address in the call to the staking contract.
+The staking contract checks that the factory is authorized,
+and the keep is listed as being created by the factory.
 
 ===== Trusted applications
 
@@ -105,6 +114,8 @@ However, initially a simple rule should be sufficient:
 when `op_contract` imposes a punishment,
 the amount slashed should equal
 the minimum stake required to participate in operations on `op_contract`.
+If contract _Foo_ requires 10,000 KEEP to participate with one virtual staker,
+_Foo_ should slash a misbehaving virtual staker by 10,000 KEEP.
 
 ==== Interface requirements
 
@@ -125,23 +136,23 @@ Check that `msg.sender` is authorized to slash `perp`:
 Take `sum` tokens from stake of `perp`;
 burn `sum * 0.95`; transfer `sum * 0.05` to beneficiary of staker `mole`.
 
-`indirectSlash(address builder, address perp, tokens sum)`::
+`indirectSlash(address factory, address perp, tokens sum)`::
 
-Check that `builder` is authorized to slash `perp`:
-`isAuthorized(builder, perp.authorizer) == true`.
+Check that `factory` is authorized to slash `perp`:
+`isAuthorized(factory, perp.authorizer) == true`.
 
-Check that `builder` lists `msg.sender` among keeps it created
-`builder.built(msg.sender) == true`.
+Check that `factory` lists `msg.sender` among keeps it created
+`factory.made(msg.sender) == true`.
 
 Take `sum` tokens from stake of `perp` and burn them.
 
-`indirectSeize(address builder, address perp, tokens sum, address mole)`::
+`indirectSeize(address factory, address perp, tokens sum, address mole)`::
 
-Check that `builder` is authorized to slash `perp`:
-`isAuthorized(builder, perp.authorizer) == true`.
+Check that `factory` is authorized to slash `perp`:
+`isAuthorized(factory, perp.authorizer) == true`.
 +
-Check that `builder` lists `msg.sender` among keeps it created:
-`builder.built(msg.sender) == true`.
+Check that `factory` lists `msg.sender` among keeps it created:
+`factory.made(msg.sender) == true`.
 +
 Take `sum` tokens from stake of `perp`;
 burn `sum * 0.95`; transfer `sum * 0.05` to beneficiary of staker `mole`.
@@ -174,38 +185,34 @@ Check if authorizer `by` has authorized `app` as a trusted application.
 Any address that holds tokens can call `burn(amount sum)`
 to burn `sum` tokens, limited by tokens held by the address.
 
-===== Keep builders
+===== Keep factory
 
-Keep builders should maintain a list of keeps they have created.
+Keep factories should maintain a list of keeps they have created.
 
-`built(address keep) -> bool`::
+`made(address keep) -> bool`::
 
-Return whether `keep` was created by this builder.
+Return whether `keep` was created by this factory.
 
 === Limitations
 
-What are the limitations of this approach?
+Slashing is not limited to the amount originally staked
+for participating in the relevant operations;
+a malfunctioning operator contract could cause a staker to lose all stake.
 
-=== Proof of Concept
+When an operator contract relies on a trusted application,
+it is imperative for the operator contract to verify
+that the stake a trusted application tries to slash
+corresponds to an operation that the staker participates in
+and has not yet been slashed for.
 
-If you have PoC code, refer to the relevant branch and give a brief summary.
+== Future Work
 
-== Future Work (optional)
-
-If applicable, what future evolutions could you see this approach leading to?
-Particularly if these possibilities influenced your thinking about the main
-proposal, this is important.
-
-== Open Questions (optional)
-
-If any open questions are left that you haven't yet investigated, what are they?
+With a different staking paradigm that tracks individual operations,
+it is possible to limit the risk
+from malfunctioning operator contracts or trusted applications
+to the stake actually corresponding to the operations.
 
 [bibliography]
 == Related Links
 
-- Flowdock Links
-- Other links
-- If you have publications, you can include them in bibliography style. If you
-  start your bullet with an id in _triple_ square brackets (e.g. `+[[[AAKE]]]+`),
-  you can reference it in the content body using regular cross-reference syntax
-  (e.g. `+<<AAKE>>+`).
+- link:rfc-14-token-grants.adoc[RFC 14: Token grants]
