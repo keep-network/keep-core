@@ -36,17 +36,27 @@ class Beacon_Model(Model):
         self.signature_delay = signature_delay
         self.dkg_block_delay = dkg_block_delay
         self.compromised_threshold = compromised_threshold
+        self.median_malicious_group_percents = 0
+        self.median_dominated_signatures_percents = 0
+        self.perc_dominated_signatures = 0
+        self.perc_compromised_groups = 0
         self.datacollector = DataCollector(
-            model_reporters = {"# of Active groups":"num_active_groups", "# of Active Nodes":"num_active_nodes"},
+            model_reporters = {"# of Active Groups":"num_active_groups",
+             "# of Active Nodes":"num_active_nodes",
+             "Median Malicious Group %": "median_malicious_group_percents",
+             "% Compromised Groups": "perc_compromised_groups",
+             "Median Dominator %":"median_dominated_signatures_percents",
+             "% Dominated signatures":"perc_dominated_signatures" },
             agent_reporters={"Type_ID": lambda x : x.node_id if x.type == "node" else ( x.group_id if x.type == "group" else x.signature_id) , 
             "Type" : "type",
             "Node Status (Connection_Mainloop_Stake)": lambda x : str(x.connection_status + x.mainloop_status + x.stake_status) if x.type == "node" else None,
             "Status": lambda x: x.status if x.type == "group" or x.type == "signature" else None, 
             "Malicious": lambda x : x.malicious if x.type == "node" else None,
+            "DKG Block Delay" : lambda x : x.dkg_block_delay if x.type =="group" else None,
             "Ownership Distribution" : lambda x : x.ownership_distr if x.type =="group" or x.type == "signature" else None,
             "Malicious %" : lambda x : x.malicious_percent if x.type == "group" else None,
             "Offline %" : lambda x : x.offline_percent if x.type == "group" or x.type == "signature" else None,
-            "Dominator %": lambda x : x.dominator_value if x.type == "signature" else None})
+            "Dominator %": lambda x : x.dominator_percent if x.type == "signature" else None})
 
 
         #create log file
@@ -102,13 +112,16 @@ class Beacon_Model(Model):
             log.debug("     No relay request")
         self.timer += 1
 
+        #calculate model measurements
+        self.median_malicious_group_percents, self.perc_compromised_groups = self.calculate_compromised_groups()
+        self.median_dominated_signatures_percents, self.perc_dominated_signatures = self.calculate_dominated_signatures()
+  
+
         #advance the agents
         self.schedule.step()
         self.num_active_nodes = len(self.active_nodes)
         self.num_active_groups = len(self.active_groups)
         self.datacollector.collect(self)
-
-
 
     def group_registration(self):
         ticket_list = []
@@ -173,6 +186,32 @@ class Beacon_Model(Model):
         self.active_nodes = temp_active_node_list
         self.inactive_nodes = temp_inactive_node_list
 
+    def calculate_compromised_groups(self):
+    #Calculate compromised groups
+        malicious_array = []
+        compromised_count = 0
+        total_groups = 0
+        for group in self.schedule.agents:
+            if group.type == "group":
+                total_groups +=1
+                malicious_array.append(group.malicious_percent) #creates an array of malicious percents for each group
+                if group.status == "compromised":
+                    compromised_count +=1
+        return np.median(malicious_array), compromised_count/(total_groups+0.000000000000000001)
+
+    def calculate_dominated_signatures(self):
+        dominator_array = []
+        dominator_count = 0
+        total_signatures = 0
+        for signature in self.schedule.agents:
+            if signature.type == "signature":
+                total_signatures +=1
+                dominator_array.append(signature.dominator_percent)
+                dominator_count += (signature.dominator_id>=0)
+        
+        return np.median(dominator_array), dominator_count/(total_signatures+0.00000000000000001)
+
+
 def create_cdf(nodes,ticket_distr):
 # Create CDF's - used to determine max ownership ticket index
     cdf = np.zeros(nodes)
@@ -180,6 +219,12 @@ def create_cdf(nodes,ticket_distr):
         
         cdf[node]=sum(ticket_distr[0:node+1])
     return cdf
+
+
+            
+            
+
+
 
 
 
