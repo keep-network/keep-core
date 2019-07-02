@@ -101,8 +101,6 @@ class Group(Agent):
                 if self.dkg_block_delay >=11:
                     self.offline_percent = self.calculate_offline()/sum(self.ownership_distr) # calculates % nodes offline during dkg
                     self.compromised_percent = self.malicious_percent + self.offline_percent
-                    if  self.compromised_percent> self.model.compromised_threshold: 
-                        self.status = "compromised"
             else:
                 self.status = "active"
         elif self.status == "active":
