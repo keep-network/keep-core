@@ -4,6 +4,7 @@ import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
 import {initContracts} from './helpers/initContracts';
+import mineBlocks from './helpers/mineBlocks';
 const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
 
 contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
@@ -12,6 +13,8 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2];
+
+    const blocksForward = 20;
 
   before(async () => {
     let contracts = await initContracts(
@@ -55,6 +58,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("should be able to request relay entry via serviceContractProxy contract with enough ether", async function() {
+    mineBlocks(blocksForward)
     await exceptThrow(serviceContractProxy.sendTransaction({from: account_two, value: 1000}));
 
     await web3.eth.sendTransaction({
@@ -72,7 +76,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {
-
+    mineBlocks(blocksForward)
     await serviceContract.requestRelayEntry(0, {from: account_one, value: 100})
 
     // should fail to withdraw if not owner
