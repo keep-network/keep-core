@@ -1,25 +1,25 @@
-package ephemeral
+package encryption
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"reflect"
 	"testing"
 )
 
+var accountPassword = []byte("passW0rd")
+
 func TestEncryptDecrypt(t *testing.T) {
-	msg := "I’m just a little black rain cloud, hovering under the honey tree."
+	msg := "Keep Calm and Carry On"
 
-	symmetricKey, err := newEcdhSymmetricKey()
+	box := NewBox(sha256.Sum256(accountPassword))
+
+	encrypted, err := box.Encrypt([]byte(msg))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	encrypted, err := symmetricKey.Encrypt([]byte(msg))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	decrypted, err := symmetricKey.Decrypt(encrypted)
+	decrypted, err := box.Decrypt(encrypted)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,20 +35,17 @@ func TestEncryptDecrypt(t *testing.T) {
 }
 
 func TestCiphertextRandomized(t *testing.T) {
-	msg := `You can't stay in your corner of the forest waiting 
-			 for others to come to you. You have to go to them sometimes.`
+	msg := `Why do we tell actors to 'break a leg?'
+			 Because every play has a cast.`
 
-	symmetricKey, err := newEcdhSymmetricKey()
+	box := NewBox(sha256.Sum256(accountPassword))
+
+	encrypted1, err := box.Encrypt([]byte(msg))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	encrypted1, err := symmetricKey.Encrypt([]byte(msg))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	encrypted2, err := symmetricKey.Encrypt([]byte(msg))
+	encrypted2, err := box.Encrypt([]byte(msg))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,14 +64,11 @@ func TestCiphertextRandomized(t *testing.T) {
 }
 
 func TestGracefullyHandleBrokenCipher(t *testing.T) {
-	symmetricKey, err := newEcdhSymmetricKey()
-	if err != nil {
-		t.Fatal(err)
-	}
+	box := NewBox(sha256.Sum256(accountPassword))
 
 	brokenCipher := []byte{0x01, 0x02, 0x03}
 
-	_, err = symmetricKey.Decrypt(brokenCipher)
+	_, err := box.Decrypt(brokenCipher)
 
 	expectedError := fmt.Errorf("symmetric key decryption failed")
 	if !reflect.DeepEqual(expectedError, err) {
@@ -84,18 +78,4 @@ func TestGracefullyHandleBrokenCipher(t *testing.T) {
 			err,
 		)
 	}
-}
-
-func newEcdhSymmetricKey() (*SymmetricEcdhKey, error) {
-	keyPair1, err := GenerateKeyPair()
-	if err != nil {
-		return nil, err
-	}
-
-	keyPair2, err := GenerateKeyPair()
-	if err != nil {
-		return nil, err
-	}
-
-	return keyPair1.PrivateKey.Ecdh(keyPair2.PublicKey), nil
 }
