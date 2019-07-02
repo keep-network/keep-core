@@ -8,10 +8,8 @@
   },
   "scripts": {
     "truffle": "truffle",
-
-  "test": "rm -rf build && truffle compile && truffle test",
-  "demo": "truffle migrate --reset && truffle exec ./scripts/demo.js",
-  "multinode": "truffle compile && truffle exec ./scripts/get-and-unlock-eth-accounts.js http://localhost:8545 password && go build ./../.. && go generate ./../../... && truffle migrate --reset && truffle exec ./scripts/conf.js && truffle exec ./scripts/demo.js && cd ../../ && KEEP_ETHEREUM_PASSWORD=\"password\" ./keep-core --config config.local.1.toml start"
+    "test": "rm -rf build && truffle compile && truffle test",	
+    "demo": "truffle migrate --reset && truffle exec ./scripts/demo.js"
 
   },
   "author": "Matt Luongo <mhluongo@gmail.com>",
@@ -21,7 +19,6 @@
   },
   "homepage": "https://github.com/keep-network/contracts",
   "dependencies": {
-    "eslint": "^5.16.0",
     "openzeppelin-solidity": "^2.1.2",
     "solidity-bytes-utils": "0.0.7"
   },
