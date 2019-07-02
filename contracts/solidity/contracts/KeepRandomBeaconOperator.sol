@@ -59,6 +59,8 @@ contract KeepRandomBeaconOperator is Ownable {
 
     uint256[] public tickets;
     bytes[] public submissions;
+    uint256 internal currentRelayRequestStartBlock;
+    bool internal relaySigningInProgress;
 
     // Store whether DKG result was published for the corresponding signingId.
     mapping (uint256 => bool) public dkgResultPublished;
@@ -679,6 +681,12 @@ contract KeepRandomBeaconOperator is Ownable {
             "At least one group needed to serve the request."
         );
 
+        uint256 relayEntryTimeout = currentRelayRequestStartBlock + relayRequestTimeout;
+        require(!relaySigningInProgress || block.number > relayEntryTimeout, "Relay entry request is in progress.");
+
+        currentRelayRequestStartBlock = block.number;
+        relaySigningInProgress = true;
+
         bytes memory groupPubKey = selectGroup(previousEntry);
 
         signingRequestCounter++;
@@ -707,5 +715,7 @@ contract KeepRandomBeaconOperator is Ownable {
 
         ServiceContract(serviceContract).entryCreated(requestId, _groupSignature);
         createGroup(_groupSignature, _signingId, _seed);
+        
+        relaySigningInProgress = false;
     }
 }
