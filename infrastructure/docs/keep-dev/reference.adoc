@@ -1,0 +1,27 @@
+:toc: macro
+
+= keep-dev Reference
+
+:icons: font
+:numbered:
+toc::[]
+
+Here we provide a reference sheet for the keep-dev environment.
+
+You should find _all the things_ related to connecting here.
+
+
+== Network Details
+
+=== Ethereum Network
+
+- *Dashboard:* http://eth-dashboard.internal.keep-dev.com:3000
+- *Transactions:*
+  ** _RPC:_ http://eth-tx-node.default.svc.cluster.local:8545
+  ** _WebSocket:_ link:[ws://eth-tx-node.default.svc.cluster.local:8546]
+
+=== Keep Network
+
+- link:[keep-client-bootstrap-peer-0.default.svc.cluster.local:3919]
+
+
