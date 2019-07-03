@@ -49,7 +49,7 @@ func NewSubmittingMember(
 //
 // See Phase 14 of the protocol specification.
 func (sm *SubmittingMember) SubmitDKGResult(
-	requestID *big.Int,
+	signingId *big.Int,
 	result *relayChain.DKGResult,
 	signatures map[group.MemberIndex]operator.Signature,
 	chainRelay relayChain.Interface,
@@ -87,7 +87,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 
 	// Check if any result has already been submitted to the chain with current
 	// request ID.
-	alreadySubmitted, err := chainRelay.IsDKGResultSubmitted(requestID)
+	alreadySubmitted, err := chainRelay.IsDKGResultSubmitted(signingId)
 	if err != nil {
 		return returnWithError(
 			fmt.Errorf(
@@ -126,7 +126,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 
 			fmt.Printf("[member:%v] Submitting DKG result...\n", sm.index)
 			chainRelay.SubmitDKGResult(
-				requestID,
+				signingId,
 				sm.index,
 				result,
 				signatures,
@@ -139,7 +139,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 				})
 			return <-errorChannel
 		case submittedResultEvent := <-onSubmittedResultChan:
-			if submittedResultEvent.RequestID.Cmp(requestID) == 0 {
+			if submittedResultEvent.SigningId.Cmp(signingId) == 0 {
 				fmt.Printf(
 					"[member:%v] DKG result submitted by other member, leaving.\n",
 					sm.index,

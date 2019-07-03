@@ -19,7 +19,7 @@ type ethereumChain struct {
 	client                           *ethclient.Client
 	clientRPC                        *rpc.Client
 	clientWS                         *rpc.Client
-	requestID                        *big.Int
+	signingId                        *big.Int
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
 	stakingContract                  *contract.StakingProxy
 	accountKey                       *keystore.Key

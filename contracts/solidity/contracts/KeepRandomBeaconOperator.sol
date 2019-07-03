@@ -11,8 +11,7 @@ import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
 
 interface ServiceContract {
-    function entryCreated(uint256 entryId, uint256 entry) external;
-    function groupCreated(uint256 numberOfGroups) external;
+    function entryCreated(uint256 requestId, uint256 entry) external;
 }
 
 /**
@@ -33,17 +32,17 @@ contract KeepRandomBeaconOperator is Ownable {
 
     // TODO: Rename to DkgResultSubmittedEvent
     // TODO: Add memberIndex
-    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey);
+    event DkgResultPublishedEvent(uint256 signingId, bytes groupPubKey);
 
     // These are the public events that are used by clients
-    event RelayEntryRequested(uint256 requestID, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
-    event RelayEntryGenerated(uint256 requestID, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
+    event SignatureRequested(uint256 signingId, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
+    event SignatureSubmitted(uint256 signingId, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
-    // TODO: Remove requestId once Keep Client DKG is refactored to
+    // TODO: Remove signingId once Keep Client DKG is refactored to
     // use groupSelectionSeed as unique id.
-    event GroupSelectionStarted(uint256 groupSelectionSeed, uint256 requestId, uint256 seed);
+    event GroupSelectionStarted(uint256 groupSelectionSeed, uint256 signingId, uint256 seed);
 
-    uint256 public requestCounter;
+    uint256 public signingRequestCounter;
     uint256 public groupThreshold;
     uint256 public groupSize;
     uint256 public minimumStake;
@@ -61,7 +60,7 @@ contract KeepRandomBeaconOperator is Ownable {
     uint256[] public tickets;
     bytes[] public submissions;
 
-    // Store whether DKG result was published for the corresponding requestID.
+    // Store whether DKG result was published for the corresponding signingId.
     mapping (uint256 => bool) public dkgResultPublished;
 
     bool public groupSelectionInProgress;
@@ -101,14 +100,14 @@ contract KeepRandomBeaconOperator is Ownable {
 
     bool public initialized;
 
-    struct Request {
-        uint256 entryId;
+    struct SigningRequest {
+        uint256 requestId;
         uint256 payment;
         bytes groupPubKey;
         address serviceContract;
     }
 
-    mapping(uint256 => Request) public requests;
+    mapping(uint256 => SigningRequest) public signingRequests;
 
     /**
      * @dev Checks if submitter is eligible to submit.
@@ -135,12 +134,75 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
+     * @dev Initialize the contract with a linked Staking proxy contract.
+     * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
+     * @param _serviceContract Address of a random beacon service contract that will be linked to this contract.
+     * @param _minimumStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
+     * @param _groupSize Size of a group in the threshold relay.
+     * @param _groupThreshold Minimum number of interacting group members needed to produce a relay entry.
+     * @param _ticketInitialSubmissionTimeout Timeout in blocks after the initial ticket submission is finished.
+     * @param _ticketReactiveSubmissionTimeout Timeout in blocks after the reactive ticket submission is finished.
+     * @param _ticketChallengeTimeout Timeout in blocks after the period where tickets can be challenged is finished.
+     * @param _timeDKG Timeout in blocks after DKG result is complete and ready to be published.
+     * @param _resultPublicationBlockStep Time in blocks after which member with the given index is eligible
+     * @param _genesisEntry Initial relay entry to create first group.
+     * @param _genesisGroupPubKey Group to respond to the initial relay entry request.
+     * to submit DKG result.
+     * @param _activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
+     * needs to be greater than 0.
+     * @param _groupActiveTime is the time in block after which a group expires.
+     * @param _relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
+     * Blocks are counted from the moment relay request occur.
+     */
+    function initialize(
+        address _stakingProxy,
+        address _serviceContract,
+        uint256 _minimumStake,
+        uint256 _groupThreshold,
+        uint256 _groupSize,
+        uint256 _ticketInitialSubmissionTimeout,
+        uint256 _ticketReactiveSubmissionTimeout,
+        uint256 _ticketChallengeTimeout,
+        uint256 _timeDKG,
+        uint256 _resultPublicationBlockStep,
+        uint256 _activeGroupsThreshold,
+        uint256 _groupActiveTime,
+        uint256 _relayRequestTimeout,
+        uint256 _genesisEntry,
+        bytes memory _genesisGroupPubKey
+    ) public onlyOwner {
+        require(!initialized, "Contract is already initialized.");
+        require(_stakingProxy != address(0x0), "Staking proxy address can't be zero.");
+        initialized = true;
+        stakingProxy = _stakingProxy;
+        serviceContracts.push(_serviceContract);
+        minimumStake = _minimumStake;
+        groupSize = _groupSize;
+        groupThreshold = _groupThreshold;
+        ticketInitialSubmissionTimeout = _ticketInitialSubmissionTimeout;
+        ticketReactiveSubmissionTimeout = _ticketReactiveSubmissionTimeout;
+        ticketChallengeTimeout = _ticketChallengeTimeout;
+        timeDKG = _timeDKG;
+        resultPublicationBlockStep = _resultPublicationBlockStep;
+        activeGroupsThreshold = _activeGroupsThreshold;
+        groupActiveTime = _groupActiveTime;
+        relayRequestTimeout = _relayRequestTimeout;
+        groupSelectionSeed = _genesisEntry;
+
+        // Create initial relay entry request. This will allow relayEntry to be called once
+        // to trigger the creation of the first group. Requests are removed on successful
+        // entries so genesis entry can only be called once.
+        signingRequestCounter++;
+        signingRequests[signingRequestCounter] = SigningRequest(0, 0, _genesisGroupPubKey, _serviceContract);
+    }
+
+    /**
      * @dev Triggers the selection process of a new candidate group.
      * @param _groupSelectionSeed Random value that stakers will use to generate their tickets.
-     * @param _requestId Relay request ID associated with DKG protocol execution.
+     * @param _signingId Relay request ID associated with DKG protocol execution.
      * @param _seed Random value from the client. It should be a cryptographically generated random value.
      */
-    function createGroup(uint256 _groupSelectionSeed, uint256 _requestId, uint256 _seed) private {
+    function createGroup(uint256 _groupSelectionSeed, uint256 _signingId, uint256 _seed) private {
         // dkgTimeout is the time after DKG is expected to be complete plus the expected period to submit the result.
         uint256 dkgTimeout = ticketSubmissionStartBlock + ticketChallengeTimeout + timeDKG + groupSize * resultPublicationBlockStep;
 
@@ -149,7 +211,7 @@ contract KeepRandomBeaconOperator is Ownable {
             ticketSubmissionStartBlock = block.number;
             groupSelectionSeed = _groupSelectionSeed;
             groupSelectionInProgress = true;
-            emit GroupSelectionStarted(_groupSelectionSeed, _requestId, _seed);
+            emit GroupSelectionStarted(_groupSelectionSeed, _signingId, _seed);
         }
     }
 
@@ -323,7 +385,7 @@ contract KeepRandomBeaconOperator is Ownable {
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
      * @param submitterMemberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
-     * @param requestId Relay request ID associated with DKG protocol execution.
+     * @param signingId Relay request ID associated with DKG protocol execution.
      * @param groupPubKey Group public key generated as a result of protocol execution.
      * @param disqualified bytes representing disqualified group members; 1 at the specific index
      * means that the member has been disqualified. Indexes reflect positions of members in the
@@ -335,7 +397,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param signingMembersIndexes indices of members corresponding to each signature.
      */
     function submitDkgResult(
-        uint256 requestId,
+        uint256 signingId,
         uint256 submitterMemberIndex,
         bytes memory groupPubKey,
         bytes memory disqualified,
@@ -350,7 +412,7 @@ contract KeepRandomBeaconOperator is Ownable {
         );
 
         require(
-            !dkgResultPublished[requestId], 
+            !dkgResultPublished[signingId], 
             "DKG result for this request ID already published."
         );
 
@@ -367,12 +429,10 @@ contract KeepRandomBeaconOperator is Ownable {
         groups.push(Group(groupPubKey, block.number));
         // TODO: punish/reward logic
         cleanup();
-        dkgResultPublished[requestId] = true;
-        emit DkgResultPublishedEvent(requestId, groupPubKey);
+        dkgResultPublished[signingId] = true;
+        emit DkgResultPublishedEvent(signingId, groupPubKey);
 
         groupSelectionInProgress = false;
-
-        updateNumberOfGroupsOnServiceContracts();
     }
 
     /**
@@ -418,8 +478,8 @@ contract KeepRandomBeaconOperator is Ownable {
      * @dev Checks if DKG protocol result has been already published for the
      * specific relay request ID associated with the protocol execution. 
      */
-    function isDkgResultSubmitted(uint256 requestId) public view returns(bool) {
-        return dkgResultPublished[requestId];
+    function isDkgResultSubmitted(uint256 signingId) public view returns(bool) {
+        return dkgResultPublished[signingId];
     }
 
 
@@ -428,69 +488,6 @@ contract KeepRandomBeaconOperator is Ownable {
      */
     function() external payable {
         revert("Can not call contract without explicitly calling a function.");
-    }
-
-    /**
-     * @dev Initialize the contract with a linked Staking proxy contract.
-     * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
-     * @param _serviceContract Address of a random beacon service contract that will be linked to this contract.
-     * @param _minimumStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
-     * @param _groupSize Size of a group in the threshold relay.
-     * @param _groupThreshold Minimum number of interacting group members needed to produce a relay entry.
-     * @param _ticketInitialSubmissionTimeout Timeout in blocks after the initial ticket submission is finished.
-     * @param _ticketReactiveSubmissionTimeout Timeout in blocks after the reactive ticket submission is finished.
-     * @param _ticketChallengeTimeout Timeout in blocks after the period where tickets can be challenged is finished.
-     * @param _timeDKG Timeout in blocks after DKG result is complete and ready to be published.
-     * @param _resultPublicationBlockStep Time in blocks after which member with the given index is eligible
-     * @param _genesisEntry Initial relay entry to create first group.
-     * @param _genesisGroupPubKey Group to respond to the initial relay entry request.
-     * to submit DKG result.
-     * @param _activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
-     * needs to be greater than 0.
-     * @param _groupActiveTime is the time in block after which a group expires.
-     * @param _relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
-     * Blocks are counted from the moment relay request occur.
-     */
-    function initialize(
-        address _stakingProxy,
-        address _serviceContract,
-        uint256 _minimumStake,
-        uint256 _groupThreshold,
-        uint256 _groupSize,
-        uint256 _ticketInitialSubmissionTimeout,
-        uint256 _ticketReactiveSubmissionTimeout,
-        uint256 _ticketChallengeTimeout,
-        uint256 _timeDKG,
-        uint256 _resultPublicationBlockStep,
-        uint256 _activeGroupsThreshold,
-        uint256 _groupActiveTime,
-        uint256 _relayRequestTimeout,
-        uint256 _genesisEntry,
-        bytes memory _genesisGroupPubKey
-    ) public onlyOwner {
-        require(!initialized, "Contract is already initialized.");
-        require(_stakingProxy != address(0x0), "Staking proxy address can't be zero.");
-        initialized = true;
-        stakingProxy = _stakingProxy;
-        serviceContracts.push(_serviceContract);
-        minimumStake = _minimumStake;
-        groupSize = _groupSize;
-        groupThreshold = _groupThreshold;
-        ticketInitialSubmissionTimeout = _ticketInitialSubmissionTimeout;
-        ticketReactiveSubmissionTimeout = _ticketReactiveSubmissionTimeout;
-        ticketChallengeTimeout = _ticketChallengeTimeout;
-        timeDKG = _timeDKG;
-        resultPublicationBlockStep = _resultPublicationBlockStep;
-        activeGroupsThreshold = _activeGroupsThreshold;
-        groupActiveTime = _groupActiveTime;
-        relayRequestTimeout = _relayRequestTimeout;
-        groupSelectionSeed = _genesisEntry;
-
-        // Create initial relay entry request. This will allow relayEntry to be called once
-        // to trigger the creation of the first group. Requests are removed on successful
-        // entries so genesis entry can only be called once.
-        requestCounter++;
-        requests[requestCounter] = Request(0, 0, _genesisGroupPubKey, _serviceContract);
     }
 
     /**
@@ -517,13 +514,6 @@ contract KeepRandomBeaconOperator is Ownable {
      */
     function setMinimumStake(uint256 _minimumStake) public onlyOwner {
         minimumStake = _minimumStake;
-    }
-
-    /**
-     * @dev Allows owner to change the groupSize.
-     */
-    function setGroupSize(uint256 _groupSize) public onlyOwner {
-        groupSize = _groupSize;
     }
 
     /**
@@ -673,11 +663,11 @@ contract KeepRandomBeaconOperator is Ownable {
     /**
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
-     * @param entryId Entry Id trackable by service contract.
+     * @param requestId Request Id trackable by service contract.
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
      */
-    function sign(uint256 entryId, uint256 seed, uint256 previousEntry) public payable {
+    function sign(uint256 requestId, uint256 seed, uint256 previousEntry) public payable {
 
         require(
             serviceContracts.contains(msg.sender),
@@ -691,40 +681,31 @@ contract KeepRandomBeaconOperator is Ownable {
 
         bytes memory groupPubKey = selectGroup(previousEntry);
 
-        requestCounter++;
+        signingRequestCounter++;
 
-        requests[requestCounter] = Request(entryId, msg.value, groupPubKey, msg.sender);
+        signingRequests[signingRequestCounter] = SigningRequest(requestId, msg.value, groupPubKey, msg.sender);
 
-        emit RelayEntryRequested(requestCounter, msg.value, previousEntry, seed, groupPubKey);
+        emit SignatureRequested(signingRequestCounter, msg.value, previousEntry, seed, groupPubKey);
     }
 
     /**
      * @dev Creates a new relay entry and stores the associated data on the chain.
-     * @param _requestID The request that started this generation - to tie the results back to the request.
+     * @param _signingId The request that started this generation - to tie the results back to the request.
      * @param _groupSignature The generated random number.
      * @param _groupPubKey Public key of the group that generated the threshold signature.
      */
-    function relayEntry(uint256 _requestID, uint256 _groupSignature, bytes memory _groupPubKey, uint256 _previousEntry, uint256 _seed) public {
+    function relayEntry(uint256 _signingId, uint256 _groupSignature, bytes memory _groupPubKey, uint256 _previousEntry, uint256 _seed) public {
 
-        require(requests[_requestID].groupPubKey.equalStorage(_groupPubKey), "Provided group was not selected to produce entry for this request.");
+        require(signingRequests[_signingId].groupPubKey.equalStorage(_groupPubKey), "Provided group was not selected to produce entry for this request.");
         require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
 
-        address serviceContract = requests[_requestID].serviceContract;
-        uint256 entryId = requests[_requestID].entryId;
-        delete requests[_requestID];
+        address serviceContract = signingRequests[_signingId].serviceContract;
+        uint256 requestId = signingRequests[_signingId].requestId;
+        delete signingRequests[_signingId];
 
-        emit RelayEntryGenerated(_requestID, _groupSignature, _groupPubKey, _previousEntry, _seed);
+        emit SignatureSubmitted(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
-        ServiceContract(serviceContract).entryCreated(entryId, _groupSignature);
-        createGroup(_groupSignature, _requestID, _seed);
-    }
-
-    /**
-     * @dev Update number of groups on each service contract.
-     */
-    function updateNumberOfGroupsOnServiceContracts() public {
-        for (uint i = 0; i < serviceContracts.length; i++) {
-            ServiceContract(serviceContracts[i]).groupCreated(numberOfGroups());
-        }
+        ServiceContract(serviceContract).entryCreated(requestId, _groupSignature);
+        createGroup(_groupSignature, _signingId, _seed);
     }
 }

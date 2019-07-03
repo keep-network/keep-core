@@ -6,8 +6,8 @@ class Request(NamedTuple):
     openTimeout:     Blockheight
     previousOutput:  BlsSignature
 
-def openCommitment(requestID, seed_i):
-    request_i = Requests[requestID] # abort if no such request
+def openCommitment(signingId, seed_i):
+    request_i = Requests[signingId] # abort if no such request
     senderPubkey = getSenderPubkey()
     T_open = getCurrentBlockheight()
 
@@ -36,12 +36,12 @@ def openCommitment(requestID, seed_i):
         signingInput = beaconInput
     )
 
-    OutputInProgress[requestID] = outputWaiting
+    OutputInProgress[signingId] = outputWaiting
 
 
-def receiveOutput(requestID, outputSignature):
-    outputWaiting = OutputInProgress[requestID] # abort if not found
-    request_i = Requests[requestID]
+def receiveOutput(signingId, outputSignature):
+    outputWaiting = OutputInProgress[signingId] # abort if not found
+    request_i = Requests[signingId]
 
     pubkey_Group_i = outputWaiting.signingGroup.groupPubkey
     input_i = outputWaiting.signingInput

@@ -27,7 +27,7 @@ type resultSigningState struct {
 
 	member *SigningMember
 
-	requestID *big.Int
+	signingId *big.Int
 	result    *relayChain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
@@ -96,7 +96,7 @@ func (rss *resultSigningState) Next() signingState {
 		relayChain:        rss.relayChain,
 		blockCounter:      rss.blockCounter,
 		member:            rss.member,
-		requestID:         rss.requestID,
+		signingId:         rss.signingId,
 		result:            rss.result,
 		signatureMessages: rss.signatureMessages,
 		validSignatures:   make(map[group.MemberIndex]operator.Signature),
@@ -123,7 +123,7 @@ type signaturesVerificationState struct {
 
 	member *SigningMember
 
-	requestID *big.Int
+	signingId *big.Int
 	result    *relayChain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
@@ -160,7 +160,7 @@ func (svs *signaturesVerificationState) Next() signingState {
 		relayChain:   svs.relayChain,
 		blockCounter: svs.blockCounter,
 		member:       NewSubmittingMember(svs.member.index),
-		requestID:    svs.requestID,
+		signingId:    svs.signingId,
 		result:       svs.result,
 		signatures:   svs.validSignatures,
 		submissionStartBlockHeight: svs.verificationStartBlockHeight +
@@ -185,7 +185,7 @@ type resultSubmissionState struct {
 
 	member *SubmittingMember
 
-	requestID  *big.Int
+	signingId  *big.Int
 	result     *relayChain.DKGResult
 	signatures map[group.MemberIndex]operator.Signature
 
@@ -206,7 +206,7 @@ func (rss *resultSubmissionState) ActiveBlocks() uint64 {
 
 func (rss *resultSubmissionState) Initiate() error {
 	return rss.member.SubmitDKGResult(
-		rss.requestID,
+		rss.signingId,
 		rss.result,
 		rss.signatures,
 		rss.relayChain,
