@@ -517,13 +517,6 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
-     * @dev Allows owner to change the groupSize.
-     */
-    function setGroupSize(uint256 _groupSize) public onlyOwner {
-        groupSize = _groupSize;
-    }
-
-    /**
      * @dev Return total number of all tokens issued.
      */
     function tokenSupply() public pure returns (uint256) {
