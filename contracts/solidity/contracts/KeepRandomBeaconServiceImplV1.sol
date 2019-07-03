@@ -41,7 +41,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     mapping(uint256 => Callback) internal _callbacks;
 
     address[] internal _operatorContracts;
-    mapping (address => uint256) internal _operatorContractNumberOfGroups;
 
     // Mapping to store new implementation versions that inherit from this contract.
     mapping (string => bool) internal _initialized;
@@ -145,19 +144,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
             delete _callbacks[requestId];
         }
-    }
-
-    /**
-     * @dev Store number of groups returned by operator contract.
-     * @param numberOfGroups Number of groups.
-     */
-    function groupCreated(uint256 numberOfGroups) public {
-        require(
-            _operatorContracts.contains(msg.sender),
-            "Only authorized operator contract can call groupCreated."
-        );
-
-        _operatorContractNumberOfGroups[msg.sender] = numberOfGroups;
     }
 
     /**
