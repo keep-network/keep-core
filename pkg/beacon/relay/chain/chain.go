@@ -85,7 +85,7 @@ type DistributedKeyGenerationInterface interface {
 	// Signatures over DKG result hash are collected in a map keyed by signer's
 	// member index.
 	SubmitDKGResult(
-		requestID *big.Int,
+		signingId *big.Int,
 		participantIndex group.MemberIndex,
 		dkgResult *DKGResult,
 		signatures map[group.MemberIndex]operator.Signature,
@@ -98,7 +98,7 @@ type DistributedKeyGenerationInterface interface {
 	// IsDKGResultSubmitted checks if a DKG result hash has already been
 	// submitted to the chain for the given request ID.
 	IsDKGResultSubmitted(
-		requestID *big.Int,
+		signingId *big.Int,
 	) (bool, error)
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.

@@ -13,7 +13,7 @@ module.exports = async function() {
 
   try {
     let tx = await contractInstance.methods['requestRelayEntry(uint256,address,string)'](crypto.randomBytes(32), process.argv[4], process.argv[5], {value: process.argv[6]})
-    console.log('Successfully requested relay entry with a callback. RequestId =', tx.logs[0].args.requestID.toString())
+    console.log('Successfully requested relay entry with a callback. RequestId =', tx.logs[0].args.entryId.toString())
     console.log(
       '\n---Transaction Summary---' + '\n' +
       'From:' + tx.receipt.from + '\n' +

@@ -112,10 +112,10 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	defer cancel()
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
-	requestID := int64(19)
+	signingId := int64(19)
 	relayEntryPromise := chainHandle.SubmitRelayEntry(
 		&event.Entry{
-			RequestID:   big.NewInt(requestID),
+			SigningId:   big.NewInt(signingId),
 			GroupPubKey: []byte("1"),
 		},
 	)
@@ -131,11 +131,11 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 	select {
 	case entry := <-done:
-		if entry.RequestID.Int64() != requestID {
+		if entry.SigningId.Int64() != signingId {
 			t.Fatalf(
 				"Unexpected relay entry request id\nExpected: [%v]\nActual:  [%v]",
-				requestID,
-				entry.RequestID.Int64(),
+				signingId,
+				entry.SigningId.Int64(),
 			)
 		}
 	case <-ctx.Done():
@@ -164,7 +164,7 @@ func TestLocalOnRelayEntryGenerated(t *testing.T) {
 	defer subscription.Unsubscribe()
 
 	expectedEntry := &event.Entry{
-		RequestID:   big.NewInt(42),
+		SigningId:   big.NewInt(42),
 		Value:       big.NewInt(19),
 		GroupPubKey: []byte("1"),
 		Seed:        big.NewInt(30),
@@ -238,16 +238,16 @@ func TestLocalOnGroupRegistered(t *testing.T) {
 	defer subscription.Unsubscribe()
 
 	groupPublicKey := []byte("1")
-	requestID := big.NewInt(42)
+	signingId := big.NewInt(42)
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
 	signatures := make(map[group.MemberIndex]operator.Signature)
 
-	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
+	chainHandle.SubmitDKGResult(signingId, memberIndex, dkgResult, signatures)
 
 	expectedGroupRegistrationEvent := &event.GroupRegistration{
 		GroupPublicKey: groupPublicKey,
-		RequestID:      requestID,
+		SigningId:      signingId,
 	}
 
 	select {
@@ -284,12 +284,12 @@ func TestLocalOnGroupRegisteredUnsubscribed(t *testing.T) {
 	subscription.Unsubscribe()
 
 	groupPublicKey := []byte("1")
-	requestID := big.NewInt(42)
+	signingId := big.NewInt(42)
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
 	signatures := make(map[group.MemberIndex]operator.Signature)
 
-	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
+	chainHandle.SubmitDKGResult(signingId, memberIndex, dkgResult, signatures)
 
 	select {
 	case event := <-eventFired:
@@ -319,15 +319,15 @@ func TestLocalOnDKGResultSubmitted(t *testing.T) {
 	defer subscription.Unsubscribe()
 
 	groupPublicKey := []byte("1")
-	requestID := big.NewInt(42)
+	signingId := big.NewInt(42)
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
 	signatures := make(map[group.MemberIndex]operator.Signature)
 
-	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
+	chainHandle.SubmitDKGResult(signingId, memberIndex, dkgResult, signatures)
 
 	expectedResultSubmissionEvent := &event.DKGResultSubmission{
-		RequestID:      requestID,
+		SigningId:      signingId,
 		MemberIndex:    uint32(memberIndex),
 		GroupPublicKey: groupPublicKey,
 	}
@@ -366,12 +366,12 @@ func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
 	subscription.Unsubscribe()
 
 	groupPublicKey := []byte("1")
-	requestID := big.NewInt(42)
+	signingId := big.NewInt(42)
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
 	signatures := make(map[group.MemberIndex]operator.Signature)
 
-	chainHandle.SubmitDKGResult(requestID, memberIndex, dkgResult, signatures)
+	chainHandle.SubmitDKGResult(signingId, memberIndex, dkgResult, signatures)
 
 	select {
 	case event := <-eventFired:
@@ -536,42 +536,42 @@ func TestLocalIsGroupStale(t *testing.T) {
 func TestLocalIsDKGResultSubmitted(t *testing.T) {
 	submittedResults := make(map[*big.Int][]*relaychain.DKGResult)
 
-	submittedRequestID := big.NewInt(1)
+	submittedSigningId := big.NewInt(1)
 	submittedResult := &relaychain.DKGResult{
 		GroupPublicKey: []byte{11},
 	}
 
-	submittedResults[submittedRequestID] = append(
-		submittedResults[submittedRequestID],
+	submittedResults[submittedSigningId] = append(
+		submittedResults[submittedSigningId],
 		submittedResult,
 	)
 
 	chainHandle := Connect(10, 4, big.NewInt(100)).ThresholdRelay()
 
 	chainHandle.SubmitDKGResult(
-		submittedRequestID,
+		submittedSigningId,
 		group.MemberIndex(1),
 		submittedResult,
 		make(map[group.MemberIndex]operator.Signature),
 	)
 
 	var tests = map[string]struct {
-		requestID      *big.Int
+		signingId      *big.Int
 		expectedResult bool
 	}{
 		"result for the request ID submitted": {
-			requestID:      submittedRequestID,
+			signingId:      submittedSigningId,
 			expectedResult: true,
 		},
 		"result for the given request ID not yet submitted": {
-			requestID:      big.NewInt(3),
+			signingId:      big.NewInt(3),
 			expectedResult: false,
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualResult, err := chainHandle.IsDKGResultSubmitted(test.requestID)
+			actualResult, err := chainHandle.IsDKGResultSubmitted(test.signingId)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -605,13 +605,13 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit new result for request ID 1
-	requestID1 := big.NewInt(1)
+	signingId1 := big.NewInt(1)
 	memberIndex := uint32(1)
 	submittedResult11 := &relaychain.DKGResult{
 		GroupPublicKey: []byte{11},
 	}
 	expectedEvent1 := &event.DKGResultSubmission{
-		RequestID:      requestID1,
+		SigningId:      signingId1,
 		MemberIndex:    memberIndex,
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 		BlockNumber:    0,
@@ -623,15 +623,15 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		3: operator.Signature{103},
 	}
 
-	chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
+	chainHandle.SubmitDKGResult(signingId1, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID1.String()],
+		localChain.submittedResults[signingId1.String()],
 		submittedResult11,
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
-			requestID1,
+			signingId1,
 			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[requestID1.String()],
+			localChain.submittedResults[signingId1.String()],
 		)
 	}
 	select {
@@ -647,22 +647,22 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit the same result for request ID 2
-	requestID2 := big.NewInt(2)
+	signingId2 := big.NewInt(2)
 	expectedEvent2 := &event.DKGResultSubmission{
-		RequestID:      requestID2,
+		SigningId:      signingId2,
 		MemberIndex:    memberIndex,
 		GroupPublicKey: submittedResult11.GroupPublicKey[:],
 	}
 
-	chainHandle.SubmitDKGResult(requestID2, 1, submittedResult11, signatures)
+	chainHandle.SubmitDKGResult(signingId2, 1, submittedResult11, signatures)
 	if !reflect.DeepEqual(
-		localChain.submittedResults[requestID2.String()],
+		localChain.submittedResults[signingId2.String()],
 		submittedResult11,
 	) {
 		t.Fatalf("invalid submitted results for request ID %v\nexpected: %v\nactual:   %v\n",
-			requestID2,
+			signingId2,
 			[]*relaychain.DKGResult{submittedResult11},
-			localChain.submittedResults[requestID2.String()],
+			localChain.submittedResults[signingId2.String()],
 		)
 	}
 	select {
@@ -678,7 +678,7 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 	}
 
 	// Submit already submitted result for request ID 1
-	promise := chainHandle.SubmitDKGResult(requestID1, 1, submittedResult11, signatures)
+	promise := chainHandle.SubmitDKGResult(signingId1, 1, submittedResult11, signatures)
 	promise.OnSuccess(func(result *event.DKGResultSubmission) {
 		t.Fatalf("Should not be able to submit result for the given ID more than once")
 	})

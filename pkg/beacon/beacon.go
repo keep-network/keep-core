@@ -52,7 +52,7 @@ func Initialize(
 		fmt.Printf("New relay entry requested [%+v]\n", request)
 
 		go node.GenerateRelayEntryIfEligible(
-			request.RequestID,
+			request.SigningId,
 			request.PreviousEntry,
 			request.Seed,
 			relayChain,
@@ -69,7 +69,7 @@ func Initialize(
 				relayChain,
 				blockCounter,
 				event.NewEntry.Bytes(),
-				event.RequestID,
+				event.SigningId,
 				event.Seed,
 				event.BlockNumber,
 			)

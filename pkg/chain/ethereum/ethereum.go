@@ -194,7 +194,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 					return
 				}
 
-				if event.RequestID.Cmp(newEntry.RequestID) == 0 {
+				if event.SigningId.Cmp(newEntry.SigningId) == 0 {
 					subscription.Unsubscribe()
 					close(generatedEntry)
 
@@ -214,7 +214,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	}()
 
 	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(
-		newEntry.RequestID,
+		newEntry.SigningId,
 		newEntry.Value,
 		newEntry.GroupPubKey,
 		newEntry.PreviousEntry,
@@ -234,7 +234,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchRelayEntryGenerated(
 		func(
-			requestID *big.Int,
+			signingId *big.Int,
 			requestResponse *big.Int,
 			requestGroupPubKey []byte,
 			previousEntry *big.Int,
@@ -242,7 +242,7 @@ func (ec *ethereumChain) OnRelayEntryGenerated(
 			blockNumber uint64,
 		) {
 			handle(&event.Entry{
-				RequestID:     requestID,
+				SigningId:     signingId,
 				Value:         requestResponse,
 				GroupPubKey:   requestGroupPubKey,
 				PreviousEntry: previousEntry,
@@ -265,7 +265,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchRelayEntryRequested(
 		func(
-			requestID *big.Int,
+			signingId *big.Int,
 			payment *big.Int,
 			previousEntry *big.Int,
 			seed *big.Int,
@@ -273,7 +273,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			blockNumber uint64,
 		) {
 			handle(&event.Request{
-				RequestID:      requestID,
+				SigningId:      signingId,
 				Payment:        payment,
 				PreviousEntry:  previousEntry,
 				Seed:           seed,
@@ -296,13 +296,13 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 	return ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
 		func(
 			newEntry *big.Int,
-			requestID *big.Int,
+			signingId *big.Int,
 			seed *big.Int,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupSelectionStart{
 				NewEntry:    newEntry,
-				RequestID:   requestID,
+				SigningId:   signingId,
 				Seed:        seed,
 				BlockNumber: blockNumber,
 			})
@@ -321,13 +321,13 @@ func (ec *ethereumChain) OnGroupRegistered(
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchDkgResultPublishedEvent(
 		func(
-			requestID *big.Int,
+			signingId *big.Int,
 			groupPublicKey []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupRegistration{
 				GroupPublicKey: groupPublicKey,
-				RequestID:      requestID,
+				SigningId:      signingId,
 				BlockNumber:    blockNumber,
 			})
 		},
@@ -337,8 +337,8 @@ func (ec *ethereumChain) OnGroupRegistered(
 	)
 }
 
-func (ec *ethereumChain) IsDKGResultSubmitted(requestID *big.Int) (bool, error) {
-	return ec.keepRandomBeaconOperatorContract.IsDkgResultSubmitted(requestID)
+func (ec *ethereumChain) IsDKGResultSubmitted(signingId *big.Int) (bool, error) {
+	return ec.keepRandomBeaconOperatorContract.IsDkgResultSubmitted(signingId)
 }
 
 func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
@@ -349,9 +349,9 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchDkgResultPublishedEvent(
-		func(requestID *big.Int, groupPubKey []byte, blockNumber uint64) {
+		func(signingId *big.Int, groupPubKey []byte, blockNumber uint64) {
 			handler(&event.DKGResultSubmission{
-				RequestID:      requestID,
+				SigningId:      signingId,
 				GroupPublicKey: groupPubKey,
 				BlockNumber:    blockNumber,
 			})
@@ -366,7 +366,7 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 }
 
 func (ec *ethereumChain) SubmitDKGResult(
-	requestID *big.Int,
+	signingId *big.Int,
 	participantIndex group.MemberIndex,
 	result *relaychain.DKGResult,
 	signatures map[group.MemberIndex]operator.Signature,
@@ -408,7 +408,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 					return
 				}
 
-				if event.RequestID.Cmp(requestID) == 0 {
+				if event.SigningId.Cmp(signingId) == 0 {
 					subscription.Unsubscribe()
 					close(publishedResult)
 
@@ -436,7 +436,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 	}
 
 	if _, err = ec.keepRandomBeaconOperatorContract.SubmitDkgResult(
-		requestID,
+		signingId,
 		participantIndex.Int(),
 		result.GroupPublicKey,
 		result.Disqualified,
