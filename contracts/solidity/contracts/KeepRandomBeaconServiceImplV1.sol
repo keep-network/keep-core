@@ -6,7 +6,7 @@ import "./DelayedWithdrawal.sol";
 
 
 interface OperatorContract {
-    function sign(uint256 entryId, uint256 seed, uint256 previousEntry) payable external;
+    function sign(uint256 requestId, uint256 seed, uint256 previousEntry) payable external;
     // TODO: Add createGroup() when it's implemented on Operator contract.
 }
 
@@ -23,15 +23,15 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     using AddressArrayUtils for address[];
 
     // These are the public events that are used by clients
-    event RelayEntryRequested(uint256 entryId);
-    event RelayEntryGenerated(uint256 entryId, uint256 entry);
+    event RelayEntryRequested(uint256 requestId);
+    event RelayEntryGenerated(uint256 requestId, uint256 entry);
 
     uint256 internal _minPayment;
     uint256 internal _previousEntry;
 
     // Each service contract tracks its own requests and these are independent
     // from operator contracts which track signing requests instead.
-    uint256 internal _entryCounter;
+    uint256 internal _requestCounter;
 
     struct Callback {
         address callbackContract;
@@ -113,37 +113,37 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             "Payment is less than required minimum."
         );
 
-        _entryCounter++;
+        _requestCounter++;
 
         // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
-        // OperatorContract(selectOperatorContract()).sign.value(msg.value)(_entryCounter, seed, _previousEntry);
-        OperatorContract(selectOperatorContract()).sign(_entryCounter, seed, _previousEntry);
+        // OperatorContract(selectOperatorContract()).sign.value(msg.value)(_requestCounter, seed, _previousEntry);
+        OperatorContract(selectOperatorContract()).sign(_requestCounter, seed, _previousEntry);
 
         if (callbackContract != address(0)) {
-            _callbacks[_entryCounter] = Callback(callbackContract, callbackMethod);
+            _callbacks[_requestCounter] = Callback(callbackContract, callbackMethod);
         }
 
-        emit RelayEntryRequested(_entryCounter);
-        return _entryCounter;
+        emit RelayEntryRequested(_requestCounter);
+        return _requestCounter;
     }
 
     /**
      * @dev Store valid entry returned by operator contract and call customer specified callback if required.
-     * @param entryId Entry id tracked internally by this contract.
+     * @param requestId Request id tracked internally by this contract.
      * @param entry The generated random number.
      */
-    function entryCreated(uint256 entryId, uint256 entry) public {
+    function entryCreated(uint256 requestId, uint256 entry) public {
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."
         );
 
         _previousEntry = entry;
-        emit RelayEntryGenerated(entryId, entry);
+        emit RelayEntryGenerated(requestId, entry);
 
-        if (_callbacks[entryId].callbackContract != address(0)) {
-            _callbacks[entryId].callbackContract.call(abi.encodeWithSignature(_callbacks[entryId].callbackMethod, entry));
-            delete _callbacks[entryId];
+        if (_callbacks[requestId].callbackContract != address(0)) {
+            _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
+            delete _callbacks[requestId];
         }
     }
 

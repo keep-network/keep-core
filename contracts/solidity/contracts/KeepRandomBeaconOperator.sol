@@ -11,7 +11,7 @@ import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
 
 interface ServiceContract {
-    function entryCreated(uint256 entryId, uint256 entry) external;
+    function entryCreated(uint256 requestId, uint256 entry) external;
     function groupCreated(uint256 numberOfGroups) external;
 }
 
@@ -102,7 +102,7 @@ contract KeepRandomBeaconOperator is Ownable {
     bool public initialized;
 
     struct SigningRequest {
-        uint256 entryId;
+        uint256 requestId;
         uint256 payment;
         bytes groupPubKey;
         address serviceContract;
@@ -673,11 +673,11 @@ contract KeepRandomBeaconOperator is Ownable {
     /**
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
-     * @param entryId Entry Id trackable by service contract.
+     * @param requestId Request Id trackable by service contract.
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
      */
-    function sign(uint256 entryId, uint256 seed, uint256 previousEntry) public payable {
+    function sign(uint256 requestId, uint256 seed, uint256 previousEntry) public payable {
 
         require(
             serviceContracts.contains(msg.sender),
@@ -693,7 +693,7 @@ contract KeepRandomBeaconOperator is Ownable {
 
         signingRequestCounter++;
 
-        signingRequests[signingRequestCounter] = SigningRequest(entryId, msg.value, groupPubKey, msg.sender);
+        signingRequests[signingRequestCounter] = SigningRequest(requestId, msg.value, groupPubKey, msg.sender);
 
         emit RelayEntryRequested(signingRequestCounter, msg.value, previousEntry, seed, groupPubKey);
     }
@@ -710,12 +710,12 @@ contract KeepRandomBeaconOperator is Ownable {
         require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
 
         address serviceContract = signingRequests[_signingId].serviceContract;
-        uint256 entryId = signingRequests[_signingId].entryId;
+        uint256 requestId = signingRequests[_signingId].requestId;
         delete signingRequests[_signingId];
 
         emit RelayEntryGenerated(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
-        ServiceContract(serviceContract).entryCreated(entryId, _groupSignature);
+        ServiceContract(serviceContract).entryCreated(requestId, _groupSignature);
         createGroup(_groupSignature, _signingId, _seed);
     }
 
