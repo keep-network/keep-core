@@ -43,7 +43,7 @@ contract KeepRandomBeaconOperator is Ownable {
     // use groupSelectionSeed as unique id.
     event GroupSelectionStarted(uint256 groupSelectionSeed, uint256 signingId, uint256 seed);
 
-    uint256 public requestCounter;
+    uint256 public signingRequestCounter;
     uint256 public groupThreshold;
     uint256 public groupSize;
     uint256 public minimumStake;
@@ -101,14 +101,14 @@ contract KeepRandomBeaconOperator is Ownable {
 
     bool public initialized;
 
-    struct Request {
+    struct SigningRequest {
         uint256 entryId;
         uint256 payment;
         bytes groupPubKey;
         address serviceContract;
     }
 
-    mapping(uint256 => Request) public requests;
+    mapping(uint256 => SigningRequest) public signingRequests;
 
     /**
      * @dev Checks if submitter is eligible to submit.
@@ -489,8 +489,8 @@ contract KeepRandomBeaconOperator is Ownable {
         // Create initial relay entry request. This will allow relayEntry to be called once
         // to trigger the creation of the first group. Requests are removed on successful
         // entries so genesis entry can only be called once.
-        requestCounter++;
-        requests[requestCounter] = Request(0, 0, _genesisGroupPubKey, _serviceContract);
+        signingRequestCounter++;
+        signingRequests[signingRequestCounter] = SigningRequest(0, 0, _genesisGroupPubKey, _serviceContract);
     }
 
     /**
@@ -691,11 +691,11 @@ contract KeepRandomBeaconOperator is Ownable {
 
         bytes memory groupPubKey = selectGroup(previousEntry);
 
-        requestCounter++;
+        signingRequestCounter++;
 
-        requests[requestCounter] = Request(entryId, msg.value, groupPubKey, msg.sender);
+        signingRequests[signingRequestCounter] = SigningRequest(entryId, msg.value, groupPubKey, msg.sender);
 
-        emit RelayEntryRequested(requestCounter, msg.value, previousEntry, seed, groupPubKey);
+        emit RelayEntryRequested(signingRequestCounter, msg.value, previousEntry, seed, groupPubKey);
     }
 
     /**
@@ -706,12 +706,12 @@ contract KeepRandomBeaconOperator is Ownable {
      */
     function relayEntry(uint256 _signingId, uint256 _groupSignature, bytes memory _groupPubKey, uint256 _previousEntry, uint256 _seed) public {
 
-        require(requests[_signingId].groupPubKey.equalStorage(_groupPubKey), "Provided group was not selected to produce entry for this request.");
+        require(signingRequests[_signingId].groupPubKey.equalStorage(_groupPubKey), "Provided group was not selected to produce entry for this request.");
         require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
 
-        address serviceContract = requests[_signingId].serviceContract;
-        uint256 entryId = requests[_signingId].entryId;
-        delete requests[_signingId];
+        address serviceContract = signingRequests[_signingId].serviceContract;
+        uint256 entryId = signingRequests[_signingId].entryId;
+        delete signingRequests[_signingId];
 
         emit RelayEntryGenerated(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
