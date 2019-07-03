@@ -44,7 +44,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   it("should be able to request relay with enough ether", async function() {
     await serviceContract.requestRelayEntry(0, {from: account_two, value: 100})
 
-    assert.equal((await operatorContract.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on operator contract.");
+    assert.equal((await operatorContract.getPastEvents())[0].event, 'SigningRequested', "SigningRequested event should occur on operator contract.");
 
     let contractBalance = await web3.eth.getBalance(serviceContract.address);
     assert.equal(contractBalance, 100, "Keep Random Beacon service contract should receive ether.");
@@ -62,7 +62,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
       data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
-    assert.equal((await operatorContract.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on the operator contract.");
+    assert.equal((await operatorContract.getPastEvents())[0].event, 'SigningRequested', "SigningRequested event should occur on the operator contract.");
 
     let contractBalance = await web3.eth.getBalance(serviceContract.address);
     assert.equal(contractBalance, 200, "Keep Random Beacon service contract should receive ether.");

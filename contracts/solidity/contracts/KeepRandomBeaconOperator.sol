@@ -35,8 +35,8 @@ contract KeepRandomBeaconOperator is Ownable {
     event DkgResultPublishedEvent(uint256 signingId, bytes groupPubKey);
 
     // These are the public events that are used by clients
-    event RelayEntryRequested(uint256 signingId, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
-    event RelayEntryGenerated(uint256 signingId, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
+    event SigningRequested(uint256 signingId, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
+    event SigningComplete(uint256 signingId, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     // TODO: Remove signingId once Keep Client DKG is refactored to
     // use groupSelectionSeed as unique id.
@@ -685,7 +685,7 @@ contract KeepRandomBeaconOperator is Ownable {
 
         signingRequests[signingRequestCounter] = SigningRequest(requestId, msg.value, groupPubKey, msg.sender);
 
-        emit RelayEntryRequested(signingRequestCounter, msg.value, previousEntry, seed, groupPubKey);
+        emit SigningRequested(signingRequestCounter, msg.value, previousEntry, seed, groupPubKey);
     }
 
     /**
@@ -703,7 +703,7 @@ contract KeepRandomBeaconOperator is Ownable {
         uint256 requestId = signingRequests[_signingId].requestId;
         delete signingRequests[_signingId];
 
-        emit RelayEntryGenerated(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
+        emit SigningComplete(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
         ServiceContract(serviceContract).entryCreated(requestId, _groupSignature);
         createGroup(_groupSignature, _signingId, _seed);

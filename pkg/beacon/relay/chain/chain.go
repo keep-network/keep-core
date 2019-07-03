@@ -23,14 +23,14 @@ type RelayEntryInterface interface {
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
 	SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise
-	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
+	// OnSigningComplete is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnRelayEntryGenerated(
+	OnSigningComplete(
 		func(entry *event.Entry),
 	) (subscription.EventSubscription, error)
-	// OnRelayEntryRequested is a callback that is invoked when an on-chain
+	// OnSigningRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
-	OnRelayEntryRequested(
+	OnSigningRequested(
 		func(request *event.Request),
 	) (subscription.EventSubscription, error)
 }

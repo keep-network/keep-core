@@ -144,7 +144,7 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 }
 
-func TestLocalOnRelayEntryGenerated(t *testing.T) {
+func TestLocalOnSigningComplete(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
@@ -152,7 +152,7 @@ func TestLocalOnRelayEntryGenerated(t *testing.T) {
 
 	eventFired := make(chan *event.Entry)
 
-	subscription, err := chainHandle.OnRelayEntryGenerated(
+	subscription, err := chainHandle.OnSigningComplete(
 		func(entry *event.Entry) {
 			eventFired <- entry
 		},
@@ -187,7 +187,7 @@ func TestLocalOnRelayEntryGenerated(t *testing.T) {
 	}
 }
 
-func TestLocalOnRelayEntryGeneratedUnsubscribed(t *testing.T) {
+func TestLocalOnSigningCompleteUnsubscribed(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
@@ -195,7 +195,7 @@ func TestLocalOnRelayEntryGeneratedUnsubscribed(t *testing.T) {
 
 	eventFired := make(chan *event.Entry)
 
-	subscription, err := chainHandle.OnRelayEntryGenerated(
+	subscription, err := chainHandle.OnSigningComplete(
 		func(entry *event.Entry) {
 			eventFired <- entry
 		},
