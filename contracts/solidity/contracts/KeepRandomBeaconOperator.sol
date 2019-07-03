@@ -135,6 +135,69 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
+     * @dev Initialize the contract with a linked Staking proxy contract.
+     * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
+     * @param _serviceContract Address of a random beacon service contract that will be linked to this contract.
+     * @param _minimumStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
+     * @param _groupSize Size of a group in the threshold relay.
+     * @param _groupThreshold Minimum number of interacting group members needed to produce a relay entry.
+     * @param _ticketInitialSubmissionTimeout Timeout in blocks after the initial ticket submission is finished.
+     * @param _ticketReactiveSubmissionTimeout Timeout in blocks after the reactive ticket submission is finished.
+     * @param _ticketChallengeTimeout Timeout in blocks after the period where tickets can be challenged is finished.
+     * @param _timeDKG Timeout in blocks after DKG result is complete and ready to be published.
+     * @param _resultPublicationBlockStep Time in blocks after which member with the given index is eligible
+     * @param _genesisEntry Initial relay entry to create first group.
+     * @param _genesisGroupPubKey Group to respond to the initial relay entry request.
+     * to submit DKG result.
+     * @param _activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
+     * needs to be greater than 0.
+     * @param _groupActiveTime is the time in block after which a group expires.
+     * @param _relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
+     * Blocks are counted from the moment relay request occur.
+     */
+    function initialize(
+        address _stakingProxy,
+        address _serviceContract,
+        uint256 _minimumStake,
+        uint256 _groupThreshold,
+        uint256 _groupSize,
+        uint256 _ticketInitialSubmissionTimeout,
+        uint256 _ticketReactiveSubmissionTimeout,
+        uint256 _ticketChallengeTimeout,
+        uint256 _timeDKG,
+        uint256 _resultPublicationBlockStep,
+        uint256 _activeGroupsThreshold,
+        uint256 _groupActiveTime,
+        uint256 _relayRequestTimeout,
+        uint256 _genesisEntry,
+        bytes memory _genesisGroupPubKey
+    ) public onlyOwner {
+        require(!initialized, "Contract is already initialized.");
+        require(_stakingProxy != address(0x0), "Staking proxy address can't be zero.");
+        initialized = true;
+        stakingProxy = _stakingProxy;
+        serviceContracts.push(_serviceContract);
+        minimumStake = _minimumStake;
+        groupSize = _groupSize;
+        groupThreshold = _groupThreshold;
+        ticketInitialSubmissionTimeout = _ticketInitialSubmissionTimeout;
+        ticketReactiveSubmissionTimeout = _ticketReactiveSubmissionTimeout;
+        ticketChallengeTimeout = _ticketChallengeTimeout;
+        timeDKG = _timeDKG;
+        resultPublicationBlockStep = _resultPublicationBlockStep;
+        activeGroupsThreshold = _activeGroupsThreshold;
+        groupActiveTime = _groupActiveTime;
+        relayRequestTimeout = _relayRequestTimeout;
+        groupSelectionSeed = _genesisEntry;
+
+        // Create initial relay entry request. This will allow relayEntry to be called once
+        // to trigger the creation of the first group. Requests are removed on successful
+        // entries so genesis entry can only be called once.
+        signingRequestCounter++;
+        signingRequests[signingRequestCounter] = SigningRequest(0, 0, _genesisGroupPubKey, _serviceContract);
+    }
+
+    /**
      * @dev Triggers the selection process of a new candidate group.
      * @param _groupSelectionSeed Random value that stakers will use to generate their tickets.
      * @param _signingId Relay request ID associated with DKG protocol execution.
@@ -428,69 +491,6 @@ contract KeepRandomBeaconOperator is Ownable {
      */
     function() external payable {
         revert("Can not call contract without explicitly calling a function.");
-    }
-
-    /**
-     * @dev Initialize the contract with a linked Staking proxy contract.
-     * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
-     * @param _serviceContract Address of a random beacon service contract that will be linked to this contract.
-     * @param _minimumStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
-     * @param _groupSize Size of a group in the threshold relay.
-     * @param _groupThreshold Minimum number of interacting group members needed to produce a relay entry.
-     * @param _ticketInitialSubmissionTimeout Timeout in blocks after the initial ticket submission is finished.
-     * @param _ticketReactiveSubmissionTimeout Timeout in blocks after the reactive ticket submission is finished.
-     * @param _ticketChallengeTimeout Timeout in blocks after the period where tickets can be challenged is finished.
-     * @param _timeDKG Timeout in blocks after DKG result is complete and ready to be published.
-     * @param _resultPublicationBlockStep Time in blocks after which member with the given index is eligible
-     * @param _genesisEntry Initial relay entry to create first group.
-     * @param _genesisGroupPubKey Group to respond to the initial relay entry request.
-     * to submit DKG result.
-     * @param _activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
-     * needs to be greater than 0.
-     * @param _groupActiveTime is the time in block after which a group expires.
-     * @param _relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
-     * Blocks are counted from the moment relay request occur.
-     */
-    function initialize(
-        address _stakingProxy,
-        address _serviceContract,
-        uint256 _minimumStake,
-        uint256 _groupThreshold,
-        uint256 _groupSize,
-        uint256 _ticketInitialSubmissionTimeout,
-        uint256 _ticketReactiveSubmissionTimeout,
-        uint256 _ticketChallengeTimeout,
-        uint256 _timeDKG,
-        uint256 _resultPublicationBlockStep,
-        uint256 _activeGroupsThreshold,
-        uint256 _groupActiveTime,
-        uint256 _relayRequestTimeout,
-        uint256 _genesisEntry,
-        bytes memory _genesisGroupPubKey
-    ) public onlyOwner {
-        require(!initialized, "Contract is already initialized.");
-        require(_stakingProxy != address(0x0), "Staking proxy address can't be zero.");
-        initialized = true;
-        stakingProxy = _stakingProxy;
-        serviceContracts.push(_serviceContract);
-        minimumStake = _minimumStake;
-        groupSize = _groupSize;
-        groupThreshold = _groupThreshold;
-        ticketInitialSubmissionTimeout = _ticketInitialSubmissionTimeout;
-        ticketReactiveSubmissionTimeout = _ticketReactiveSubmissionTimeout;
-        ticketChallengeTimeout = _ticketChallengeTimeout;
-        timeDKG = _timeDKG;
-        resultPublicationBlockStep = _resultPublicationBlockStep;
-        activeGroupsThreshold = _activeGroupsThreshold;
-        groupActiveTime = _groupActiveTime;
-        relayRequestTimeout = _relayRequestTimeout;
-        groupSelectionSeed = _genesisEntry;
-
-        // Create initial relay entry request. This will allow relayEntry to be called once
-        // to trigger the creation of the first group. Requests are removed on successful
-        // entries so genesis entry can only be called once.
-        signingRequestCounter++;
-        signingRequests[signingRequestCounter] = SigningRequest(0, 0, _genesisGroupPubKey, _serviceContract);
     }
 
     /**
