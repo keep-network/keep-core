@@ -28,6 +28,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     uint256 internal _minPayment;
     uint256 internal _previousEntry;
+
+    // Each service contract tracks its own requests and these are independent
+    // from operator contracts which track signing requests instead.
     uint256 internal _entryCounter;
 
     struct Callback {
@@ -40,6 +43,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     address[] internal _operatorContracts;
     mapping (address => uint256) internal _operatorContractNumberOfGroups;
 
+    // Mapping to store new implementation versions that inherit from this contract.
     mapping (string => bool) internal _initialized;
 
     /**
@@ -50,7 +54,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
-     * @dev Initialize Keep Random Beacon implementaion contract.
+     * @dev Initialize Keep Random Beacon service contract implementation.
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param operatorContract Operator contract linked to this contract.

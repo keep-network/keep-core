@@ -12,9 +12,9 @@
 
 [ethereum.ContractAddresses]
 	# Hex-encoded address of KeepRandomBeaconOperator contract
-	KeepRandomBeaconOperator = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+	KeepRandomBeaconOperator = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 	# Hex-encoded address of StakingProxy contract
-	StakingProxy = "0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+	StakingProxy = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 
 # Non-bootstrap node connecting to an existing network.
 # [LibP2P]
