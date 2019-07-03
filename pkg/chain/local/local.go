@@ -167,7 +167,7 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 	return relayEntryPromise
 }
 
-func (c *localChain) OnSigningComplete(
+func (c *localChain) OnSignatureSubmitted(
 	handler func(entry *event.Entry),
 ) (subscription.EventSubscription, error) {
 	c.handlerMutex.Lock()
@@ -184,7 +184,7 @@ func (c *localChain) OnSigningComplete(
 	}), nil
 }
 
-func (c *localChain) OnSigningRequested(
+func (c *localChain) OnSignatureRequested(
 	handler func(request *event.Request),
 ) (subscription.EventSubscription, error) {
 	c.handlerMutex.Lock()

@@ -48,7 +48,7 @@ func Initialize(
 		groupRegistry,
 	)
 
-	relayChain.OnSigningRequested(func(request *event.Request) {
+	relayChain.OnSignatureRequested(func(request *event.Request) {
 		fmt.Printf("New relay entry requested [%+v]\n", request)
 
 		go node.GenerateRelayEntryIfEligible(

@@ -42,7 +42,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 
 	onSubmittedResultChan := make(chan *event.Entry)
 
-	subscription, err := res.chain.OnSigningComplete(
+	subscription, err := res.chain.OnSignatureSubmitted(
 		func(event *event.Entry) {
 			onSubmittedResultChan <- event
 		},

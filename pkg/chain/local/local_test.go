@@ -144,7 +144,7 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 }
 
-func TestLocalOnSigningComplete(t *testing.T) {
+func TestLocalOnSignatureSubmitted(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
@@ -152,7 +152,7 @@ func TestLocalOnSigningComplete(t *testing.T) {
 
 	eventFired := make(chan *event.Entry)
 
-	subscription, err := chainHandle.OnSigningComplete(
+	subscription, err := chainHandle.OnSignatureSubmitted(
 		func(entry *event.Entry) {
 			eventFired <- entry
 		},
@@ -187,7 +187,7 @@ func TestLocalOnSigningComplete(t *testing.T) {
 	}
 }
 
-func TestLocalOnSigningCompleteUnsubscribed(t *testing.T) {
+func TestLocalOnSignatureSubmittedUnsubscribed(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
@@ -195,7 +195,7 @@ func TestLocalOnSigningCompleteUnsubscribed(t *testing.T) {
 
 	eventFired := make(chan *event.Entry)
 
-	subscription, err := chainHandle.OnSigningComplete(
+	subscription, err := chainHandle.OnSignatureSubmitted(
 		func(entry *event.Entry) {
 			eventFired <- entry
 		},
