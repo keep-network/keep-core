@@ -42,12 +42,13 @@ contract KeepRandomBeaconOperator is Ownable {
     // use groupSelectionSeed as unique id.
     event GroupSelectionStarted(uint256 groupSelectionSeed, uint256 signingId, uint256 seed);
 
+    address[] public serviceContracts;
+
     uint256 public signingRequestCounter;
     uint256 public groupThreshold;
     uint256 public groupSize;
     uint256 public minimumStake;
     address public stakingProxy;
-    address[] public serviceContracts;
 
     uint256 public ticketInitialSubmissionTimeout;
     uint256 public ticketReactiveSubmissionTimeout;
