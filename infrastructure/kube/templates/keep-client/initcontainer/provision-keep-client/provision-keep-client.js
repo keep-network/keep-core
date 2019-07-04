@@ -51,15 +51,15 @@ const keepTokenContractAbi = keepTokenContractParsed.abi;
 const keepTokenContractAddress = keepTokenContractParsed.networks[ethNetworkId].address;
 const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenContractAddress);
 
-// keepRandomBeacon, only contract address for config file create
-const keepRandomBeaconJsonFile = '/tmp/KeepRandomBeacon.json';
-const keepRandomBeaconParsed = JSON.parse(fs.readFileSync(keepRandomBeaconJsonFile));
-const keepRandomBeaconContractAddress = keepRandomBeaconParsed.networks[ethNetworkId].address;
+// keepRandomBeaconService, only contract address for config file create
+const keepRandomBeaconServiceJsonFile = '/tmp/KeepRandomBeaconService.json';
+const keepRandomBeaconServiceParsed = JSON.parse(fs.readFileSync(keepRandomBeaconServiceJsonFile));
+const keepRandomBeaconServiceContractAddress = keepRandomBeaconServiceParsed.networks[ethNetworkId].address;
 
-// KeepGroup, only contract address for config file create
-const keepGroupJsonFile = '/tmp/KeepGroup.json';
-const keepGroupParsed = JSON.parse(fs.readFileSync(keepGroupJsonFile));
-const keepGroupContractAddress = keepGroupParsed.networks[ethNetworkId].address;
+// KeepRandomBeaconOperator, only contract address for config file create
+const keepRandomBeaconOperatorJsonFile = '/tmp/KeepRandomBeaconOperator.json';
+const keepRandomBeaconOperatorParsed = JSON.parse(fs.readFileSync(keepRandomBeaconOperatorJsonFile));
+const keepRandomBeaconOperatorContractAddress = keepRandomBeaconOperatorParsed.networks[ethNetworkId].address;
 
 // Stake a target eth account
 async function provisionKeepClient() {
@@ -233,8 +233,7 @@ async function createKeepClientConfig(operator) {
 
       parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
       parsedConfigFile.ethereum.URLRPC = ethHost + ':' + ethRpcPort;
-      parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = keepRandomBeaconContractAddress;
-      parsedConfigFile.ethereum.ContractAddresses.KeepGroup = keepGroupContractAddress;
+      parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.StakingProxy = stakingProxyContractAddress;
       parsedConfigFile.LibP2P.Seed = 2;
       parsedConfigFile.LibP2P.Port = 3919;
@@ -260,8 +259,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.URLRPC = ethHost + ':' + ethRpcPort;
       parsedConfigFile.ethereum.account.Address = operator;
       parsedConfigFile.ethereum.account.KeyFile = '/mnt/keep-client/config/eth_account_keyfile';
-      parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeacon = keepRandomBeaconContractAddress;
-      parsedConfigFile.ethereum.ContractAddresses.KeepGroup = keepGroupContractAddress;
+      parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.StakingProxy = stakingProxyContractAddress;
       parsedConfigFile.LibP2P.Port = 3919;
 

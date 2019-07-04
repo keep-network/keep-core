@@ -1,5 +1,4 @@
-const KeepRandomBeaconProxy = artifacts.require('KeepRandomBeacon.sol')
-const KeepRandomBeacon = artifacts.require("KeepRandomBeaconImplV1")
+const KeepRandomBeaconOperator = artifacts.require('KeepRandomBeaconOperator.sol')
 
 // The data below should match genesis relay request data defined on contract
 // initialization i.e. in 2_deploy_contracts.js. Successful genesis entry will
@@ -19,8 +18,7 @@ const groupSignature = web3.utils.toBN('1092010247678959141494937778210470713041
 
 module.exports = async function () {
 
-  const keepRandomBeaconProxy = await KeepRandomBeaconProxy.deployed()
-  let contract = await KeepRandomBeacon.at(keepRandomBeaconProxy.address)
+  const contract = await KeepRandomBeaconOperator.deployed()
   try {
     await contract.relayEntry(1, groupSignature, groupPubKey, previousEntry, seed)
     console.log('Genesis entry successfully submitted.')

@@ -4,13 +4,13 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 
-contract('TestStakeViaProxy', function(accounts) {
+contract('TestTokenStakeViaProxy', function(accounts) {
 
   let token, stakingProxy, stakingContract,
     owner = accounts[0],
     operator = accounts[1];
 
-  beforeEach(async () => {
+  before(async () => {
     token = await KeepToken.new();
   });
 
@@ -31,7 +31,7 @@ contract('TestStakeViaProxy', function(accounts) {
 
     // Owner of stakingProxy should be able to authorize a staking contract
     await stakingProxy.authorizeContract(stakingContract.address, {from: owner})
-    assert.equal(await stakingProxy.isAuthorized(stakingContract.address), true, "StakingProxy owner should be able to authorize a staking contract.");
+    assert.isTrue(await stakingProxy.isAuthorized(stakingContract.address), "StakingProxy owner should be able to authorize a staking contract.");
 
     // Stake tokens using approveAndCall pattern
     await token.approveAndCall(stakingContract.address, stakingAmount, delegation, {from: owner});

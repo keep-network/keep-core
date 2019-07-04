@@ -1,6 +1,6 @@
-const TokenStaking = artifacts.require("TokenStaking");
+const TokenStaking = artifacts.require("TokenStaking.sol");
 const KeepGroupProxy = artifacts.require('KeepGroup.sol');
-const KeepGroup = artifacts.require("KeepGroupImplV1");
+const KeepGroup = artifacts.require("KeepGroupImplV1.sol");
 
 function getAccounts() {
   return new Promise((resolve, reject) => {

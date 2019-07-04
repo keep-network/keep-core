@@ -11,7 +11,7 @@ import (
 type SignatureShareMessage struct {
 	senderID   group.MemberIndex
 	shareBytes []byte
-	requestID  *big.Int
+	signingId  *big.Int
 }
 
 // SenderID returns protocol-level identifier of the message sender.

@@ -8,49 +8,62 @@ import "./TokenStaking.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "./cryptography/BLS.sol";
 
-
-interface KeepRandomBeaconContract {
-  function relayRequestTimeout() external view returns(uint256);
+interface ServiceContract {
+    function entryCreated(uint256 requestId, uint256 entry) external;
 }
 
-contract KeepGroupImplV1 is Ownable {
+/**
+ * @title KeepRandomBeaconOperator
+ * @dev Keep client facing contract for random beacon security-critical operations.
+ * Handles group creation and expiration, BLS signature verification and incentives.
+ * The contract is not upgradeable. New functionality can be implemented by deploying
+ * new versions following Keep client update and re-authorization by the stakers.
+ */
+contract KeepRandomBeaconOperator is Ownable {
 
     using SafeMath for uint256;
     using BytesLib for bytes;
     using ECDSA for bytes32;
+    using AddressArrayUtils for address[];
 
     event OnGroupRegistered(bytes groupPubKey);
 
     // TODO: Rename to DkgResultSubmittedEvent
     // TODO: Add memberIndex
-    event DkgResultPublishedEvent(uint256 requestId, bytes groupPubKey);
+    event DkgResultPublishedEvent(uint256 signingId, bytes groupPubKey);
 
-    // TODO: Remove requestId once Keep Client DKG is refactored to
-    // use newEntry as unique id.
-    event GroupSelectionStarted(uint256 newEntry, uint256 requestId, uint256 seed);
+    // These are the public events that are used by clients
+    event SignatureRequested(uint256 signingId, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
+    event SignatureSubmitted(uint256 signingId, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
-    uint256 internal _groupThreshold;
-    uint256 internal _groupSize;
-    uint256 internal _minStake;
-    address internal _stakingProxy;
-    address internal _randomBeacon;
+    // TODO: Remove signingId once Keep Client DKG is refactored to
+    // use groupSelectionSeed as unique id.
+    event GroupSelectionStarted(uint256 groupSelectionSeed, uint256 signingId, uint256 seed);
 
-    uint256 internal _timeoutInitial;
-    uint256 internal _timeoutSubmission;
-    uint256 internal _timeoutChallenge;
-    uint256 internal _timeDKG;
-    uint256 internal _resultPublicationBlockStep;
-    uint256 internal _ticketSubmissionStartBlock;
-    uint256 internal _randomBeaconValue;
+    uint256 public signingRequestCounter;
+    uint256 public groupThreshold;
+    uint256 public groupSize;
+    uint256 public minimumStake;
+    address public stakingProxy;
+    address[] public serviceContracts;
 
-    uint256[] internal _tickets;
-    bytes[] internal _submissions;
+    uint256 public ticketInitialSubmissionTimeout;
+    uint256 public ticketReactiveSubmissionTimeout;
+    uint256 public ticketChallengeTimeout;
+    uint256 public timeDKG;
+    uint256 public resultPublicationBlockStep;
+    uint256 public ticketSubmissionStartBlock;
+    uint256 public groupSelectionSeed;
 
-    // Store whether DKG result was published for the corresponding requestID.
-    mapping (uint256 => bool) internal _dkgResultPublished;
+    uint256[] public tickets;
+    bytes[] public submissions;
 
-    bool internal _groupSelectionInProgress;
+    // Store whether DKG result was published for the corresponding signingId.
+    mapping (uint256 => bool) public dkgResultPublished;
+
+    bool public groupSelectionInProgress;
 
     struct Proof {
         address sender;
@@ -58,31 +71,43 @@ contract KeepGroupImplV1 is Ownable {
         uint256 virtualStakerIndex;
     }
 
-    mapping(uint256 => Proof) internal _proofs;
+    mapping(uint256 => Proof) public proofs;
 
-    // _activeGroupsThreshold is the minimal number of groups that should not
+    // activeGroupsThreshold is the minimal number of groups that should not
     // expire to protect the minimal network throughput.
     // It should be at least 1.
-    uint256 internal _activeGroupsThreshold;
+    uint256 public activeGroupsThreshold;
  
-    // _activeTime is the time in block after which a group expires
-    uint256 internal _activeTime;
- 
-    // _expiredOffset is pointing to the first active group, it is also the
+    // groupActiveTime is the time in block after which a group expires
+    uint256 public groupActiveTime;
+
+    // Timeout in blocks for a relay entry to appear on the chain. Blocks are
+    // counted from the moment relay request occur.
+    uint256 public relayRequestTimeout;
+
+    // expiredGroupOffset is pointing to the first active group, it is also the
     // expired groups counter
-    uint256 internal _expiredOffset = 0;
+    uint256 public expiredGroupOffset = 0;
 
     struct Group {
         bytes groupPubKey;
         uint registrationBlockHeight;
     }
 
-    Group[] internal _groups;
-    
-    mapping (bytes => address[]) internal _groupMembers;
+    Group[] public groups;
 
-    mapping (string => bool) internal _initialized;
+    mapping (bytes => address[]) internal groupMembers;
 
+    bool public initialized;
+
+    struct SigningRequest {
+        uint256 requestId;
+        uint256 payment;
+        bytes groupPubKey;
+        address serviceContract;
+    }
+
+    mapping(uint256 => SigningRequest) public signingRequests;
 
     /**
      * @dev Checks if submitter is eligible to submit.
@@ -91,9 +116,9 @@ contract KeepGroupImplV1 is Ownable {
     modifier onlyEligibleSubmitter(uint256 submitterMemberIndex) {
         uint256[] memory selected = selectedTickets();
         require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
-        require(_proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
-        uint T_init = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG;
-        require(block.number >= (T_init + (submitterMemberIndex-1) * _resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
+        require(proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
+        uint T_init = ticketSubmissionStartBlock + ticketChallengeTimeout + timeDKG;
+        require(block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
         _;
     }
 
@@ -102,35 +127,99 @@ contract KeepGroupImplV1 is Ownable {
      */
     modifier whenTicketChallengeIsOver() {
         require(
-            block.number >= _ticketSubmissionStartBlock + _timeoutChallenge,
+            block.number >= ticketSubmissionStartBlock + ticketChallengeTimeout,
             "Ticket submission challenge period must be over."
         );
         _;
     }
 
     /**
-     * @dev Triggers the selection process of a new candidate group.
+     * @dev Initialize the contract with a linked Staking proxy contract.
+     * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
+     * @param _serviceContract Address of a random beacon service contract that will be linked to this contract.
+     * @param _minimumStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
+     * @param _groupSize Size of a group in the threshold relay.
+     * @param _groupThreshold Minimum number of interacting group members needed to produce a relay entry.
+     * @param _ticketInitialSubmissionTimeout Timeout in blocks after the initial ticket submission is finished.
+     * @param _ticketReactiveSubmissionTimeout Timeout in blocks after the reactive ticket submission is finished.
+     * @param _ticketChallengeTimeout Timeout in blocks after the period where tickets can be challenged is finished.
+     * @param _timeDKG Timeout in blocks after DKG result is complete and ready to be published.
+     * @param _resultPublicationBlockStep Time in blocks after which member with the given index is eligible
+     * @param _genesisEntry Initial relay entry to create first group.
+     * @param _genesisGroupPubKey Group to respond to the initial relay entry request.
+     * to submit DKG result.
+     * @param _activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
+     * needs to be greater than 0.
+     * @param _groupActiveTime is the time in block after which a group expires.
+     * @param _relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
+     * Blocks are counted from the moment relay request occur.
      */
-    function runGroupSelection(uint256 newEntry, uint256 requestId, uint256 seed) public {
-        require(msg.sender == _randomBeacon);
+    function initialize(
+        address _stakingProxy,
+        address _serviceContract,
+        uint256 _minimumStake,
+        uint256 _groupThreshold,
+        uint256 _groupSize,
+        uint256 _ticketInitialSubmissionTimeout,
+        uint256 _ticketReactiveSubmissionTimeout,
+        uint256 _ticketChallengeTimeout,
+        uint256 _timeDKG,
+        uint256 _resultPublicationBlockStep,
+        uint256 _activeGroupsThreshold,
+        uint256 _groupActiveTime,
+        uint256 _relayRequestTimeout,
+        uint256 _genesisEntry,
+        bytes memory _genesisGroupPubKey
+    ) public onlyOwner {
+        require(!initialized, "Contract is already initialized.");
+        require(_stakingProxy != address(0x0), "Staking proxy address can't be zero.");
+        initialized = true;
+        stakingProxy = _stakingProxy;
+        serviceContracts.push(_serviceContract);
+        minimumStake = _minimumStake;
+        groupSize = _groupSize;
+        groupThreshold = _groupThreshold;
+        ticketInitialSubmissionTimeout = _ticketInitialSubmissionTimeout;
+        ticketReactiveSubmissionTimeout = _ticketReactiveSubmissionTimeout;
+        ticketChallengeTimeout = _ticketChallengeTimeout;
+        timeDKG = _timeDKG;
+        resultPublicationBlockStep = _resultPublicationBlockStep;
+        activeGroupsThreshold = _activeGroupsThreshold;
+        groupActiveTime = _groupActiveTime;
+        relayRequestTimeout = _relayRequestTimeout;
+        groupSelectionSeed = _genesisEntry;
 
+        // Create initial relay entry request. This will allow relayEntry to be called once
+        // to trigger the creation of the first group. Requests are removed on successful
+        // entries so genesis entry can only be called once.
+        signingRequestCounter++;
+        signingRequests[signingRequestCounter] = SigningRequest(0, 0, _genesisGroupPubKey, _serviceContract);
+    }
+
+    /**
+     * @dev Triggers the selection process of a new candidate group.
+     * @param _groupSelectionSeed Random value that stakers will use to generate their tickets.
+     * @param _signingId Relay request ID associated with DKG protocol execution.
+     * @param _seed Random value from the client. It should be a cryptographically generated random value.
+     */
+    function createGroup(uint256 _groupSelectionSeed, uint256 _signingId, uint256 _seed) private {
         // dkgTimeout is the time after DKG is expected to be complete plus the expected period to submit the result.
-        uint256 dkgTimeout = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG + _groupSize * _resultPublicationBlockStep;
+        uint256 dkgTimeout = ticketSubmissionStartBlock + ticketChallengeTimeout + timeDKG + groupSize * resultPublicationBlockStep;
 
-        if (!_groupSelectionInProgress || block.number > dkgTimeout) {
+        if (!groupSelectionInProgress || block.number > dkgTimeout) {
             cleanup();
-            _ticketSubmissionStartBlock = block.number;
-            _randomBeaconValue = newEntry;
-            _groupSelectionInProgress = true;
-            emit GroupSelectionStarted(newEntry, requestId, seed);
+            ticketSubmissionStartBlock = block.number;
+            groupSelectionSeed = _groupSelectionSeed;
+            groupSelectionInProgress = true;
+            emit GroupSelectionStarted(_groupSelectionSeed, _signingId, _seed);
         }
     }
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-    address internal _stakingContract;
+    address public stakingContract;
 
-    function authorizeStakingContract(address stakingContract) public onlyOwner {
-        _stakingContract = stakingContract;
+    function authorizeStakingContract(address _stakingContract) public onlyOwner {
+        stakingContract = _stakingContract;
     }
 
     /**
@@ -146,18 +235,18 @@ contract KeepGroupImplV1 is Ownable {
         uint256 virtualStakerIndex
     ) public {
 
-        if (block.number > _ticketSubmissionStartBlock + _timeoutSubmission) {
+        if (block.number > ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout) {
             revert("Ticket submission period is over.");
         }
 
         // Invalid tickets are rejected and their senders penalized.
         if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
             // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-            TokenStaking stakingContract = TokenStaking(_stakingContract);
-            stakingContract.authorizedTransferFrom(msg.sender, address(this), _minStake);
+            TokenStaking _stakingContract = TokenStaking(stakingContract);
+            _stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
         } else {
-            _tickets.push(ticketValue);
-            _proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+            tickets.push(ticketValue);
+            proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
         }
     }
 
@@ -165,7 +254,7 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Gets submitted tickets in ascending order.
      */
     function orderedTickets() public view returns (uint256[] memory) {
-        return UintArrayUtils.sort(_tickets);
+        return UintArrayUtils.sort(tickets);
     }
 
     /**
@@ -176,13 +265,13 @@ contract KeepGroupImplV1 is Ownable {
         uint256[] memory ordered = orderedTickets();
 
         require(
-            ordered.length >= _groupSize,
+            ordered.length >= groupSize,
             "The number of submitted tickets is less than specified group size."
         );
 
-        uint256[] memory selected = new uint256[](_groupSize);
+        uint256[] memory selected = new uint256[](groupSize);
 
-        for (uint i = 0; i < _groupSize; i++) {
+        for (uint i = 0; i < groupSize; i++) {
             selected[i] = ordered[i];
         }
 
@@ -198,7 +287,7 @@ contract KeepGroupImplV1 is Ownable {
         address[] memory participants = new address[](ordered.length);
 
         for (uint i = 0; i < ordered.length; i++) {
-            Proof memory proof = _proofs[ordered[i]];
+            Proof memory proof = proofs[ordered[i]];
             participants[i] = proof.sender;
         }
 
@@ -213,14 +302,14 @@ contract KeepGroupImplV1 is Ownable {
         uint256[] memory ordered = orderedTickets();
 
         require(
-            ordered.length >= _groupSize,
+            ordered.length >= groupSize,
             "The number of submitted tickets is less than specified group size."
         );
 
-        address[] memory selected = new address[](_groupSize);
+        address[] memory selected = new address[](groupSize);
 
-        for (uint i = 0; i < _groupSize; i++) {
-            Proof memory proof = _proofs[ordered[i]];
+        for (uint i = 0; i < groupSize; i++) {
+            Proof memory proof = proofs[ordered[i]];
             selected[i] = proof.sender;
         }
 
@@ -232,9 +321,9 @@ contract KeepGroupImplV1 is Ownable {
      */
     function getTicketProof(uint256 ticketValue) public view returns (address sender, uint256 stakerValue, uint256 virtualStakerIndex) {
         return (
-            _proofs[ticketValue].sender,
-            _proofs[ticketValue].stakerValue,
-            _proofs[ticketValue].virtualStakerIndex
+            proofs[ticketValue].sender,
+            proofs[ticketValue].stakerValue,
+            proofs[ticketValue].virtualStakerIndex
         );
     }
 
@@ -269,7 +358,7 @@ contract KeepGroupImplV1 is Ownable {
         uint256 virtualStakerIndex
     ) public view returns(bool) {
         bool passedCheapCheck = cheapCheck(staker, stakerValue, virtualStakerIndex);
-        uint256 expected = uint256(keccak256(abi.encodePacked(_randomBeaconValue, stakerValue, virtualStakerIndex)));
+        uint256 expected = uint256(keccak256(abi.encodePacked(groupSelectionSeed, stakerValue, virtualStakerIndex)));
         return passedCheapCheck && ticketValue == expected;
     }
 
@@ -296,7 +385,7 @@ contract KeepGroupImplV1 is Ownable {
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
      * @param submitterMemberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
-     * @param requestId Relay request ID associated with DKG protocol execution.
+     * @param signingId Relay request ID associated with DKG protocol execution.
      * @param groupPubKey Group public key generated as a result of protocol execution.
      * @param disqualified bytes representing disqualified group members; 1 at the specific index
      * means that the member has been disqualified. Indexes reflect positions of members in the
@@ -308,7 +397,7 @@ contract KeepGroupImplV1 is Ownable {
      * @param signingMembersIndexes indices of members corresponding to each signature.
      */
     function submitDkgResult(
-        uint256 requestId,
+        uint256 signingId,
         uint256 submitterMemberIndex,
         bytes memory groupPubKey,
         bytes memory disqualified,
@@ -318,12 +407,12 @@ contract KeepGroupImplV1 is Ownable {
     ) public onlyEligibleSubmitter(submitterMemberIndex) {
 
         require(
-            disqualified.length == _groupSize && inactive.length == _groupSize,
+            disqualified.length == groupSize && inactive.length == groupSize,
             "Inactive and disqualified bytes arrays don't match the group size."
         );
 
         require(
-            !_dkgResultPublished[requestId], 
+            !dkgResultPublished[signingId], 
             "DKG result for this request ID already published."
         );
 
@@ -331,19 +420,19 @@ contract KeepGroupImplV1 is Ownable {
         verifySignatures(signatures, signingMembersIndexes, resultHash);
         address[] memory members = selectedParticipants();
 
-        for (uint i = 0; i < _groupSize; i++) {
+        for (uint i = 0; i < groupSize; i++) {
             if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i)) {
-                _groupMembers[groupPubKey].push(members[i]);
+                groupMembers[groupPubKey].push(members[i]);
             }
         }
 
-        _groups.push(Group(groupPubKey, block.number));
+        groups.push(Group(groupPubKey, block.number));
         // TODO: punish/reward logic
         cleanup();
-        _dkgResultPublished[requestId] = true;
-        emit DkgResultPublishedEvent(requestId, groupPubKey);
+        dkgResultPublished[signingId] = true;
+        emit DkgResultPublishedEvent(signingId, groupPubKey);
 
-        _groupSelectionInProgress = false;
+        groupSelectionInProgress = false;
     }
 
     /**
@@ -365,7 +454,7 @@ contract KeepGroupImplV1 is Ownable {
         require(signatures.length >= 65, "Signatures bytes array is too short.");
         require(signatures.length % 65 == 0, "Signatures in the bytes array should be 65 bytes long.");
         require(signaturesCount == signingMemberIndices.length, "Number of signatures and indices don't match.");
-        require(signaturesCount >= _groupThreshold, "Number of signatures is below honest majority threshold.");
+        require(signaturesCount >= groupThreshold, "Number of signatures is below honest majority threshold.");
 
         bytes memory current; // Current signature to be checked.
         uint256[] memory selected = selectedTickets();
@@ -377,7 +466,7 @@ contract KeepGroupImplV1 is Ownable {
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
             require(
-                _proofs[selected[signingMemberIndices[i] - 1]].sender == recoveredAddress,
+                proofs[selected[signingMemberIndices[i] - 1]].sender == recoveredAddress,
                 "Invalid signature. Signer and recovered address at provided index don't match."
             );
         }
@@ -389,8 +478,8 @@ contract KeepGroupImplV1 is Ownable {
      * @dev Checks if DKG protocol result has been already published for the
      * specific relay request ID associated with the protocol execution. 
      */
-    function isDkgResultSubmitted(uint256 requestId) public view returns(bool) {
-        return _dkgResultPublished[requestId];
+    function isDkgResultSubmitted(uint256 signingId) public view returns(bool) {
+        return dkgResultPublished[signingId];
     }
 
 
@@ -402,61 +491,12 @@ contract KeepGroupImplV1 is Ownable {
     }
 
     /**
-     * @dev Initialize Keep Group implementation contract with a linked Staking proxy contract.
-     * @param stakingProxy Address of a staking proxy contract that will be linked to this contract.
-     * @param randomBeacon Address of a random beacon contract that will be linked to this contract.
-     * @param minStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
-     * @param groupSize Size of a group in the threshold relay.
-     * @param groupThreshold Minimum number of interacting group members needed to produce a relay entry.
-     * @param timeoutInitial Timeout in blocks after the initial ticket submission is finished.
-     * @param timeoutSubmission Timeout in blocks after the reactive ticket submission is finished.
-     * @param timeoutChallenge Timeout in blocks after the period where tickets can be challenged is finished.
-     * @param timeDKG Timeout in blocks after DKG result is complete and ready to be published.
-     * @param resultPublicationBlockStep Time in blocks after which member with the given index is eligible
-     * to submit DKG result.
-     * @param activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
-     * needs to be greater than 0.
-     * @param activeTime is the time in block after which a group expires.
-     */
-    function initialize(
-        address stakingProxy,
-        address randomBeacon,
-        uint256 minStake,
-        uint256 groupThreshold,
-        uint256 groupSize,
-        uint256 timeoutInitial,
-        uint256 timeoutSubmission,
-        uint256 timeoutChallenge,
-        uint256 timeDKG,
-        uint256 resultPublicationBlockStep,
-        uint256 activeGroupsThreshold,
-        uint256 activeTime
-    ) public onlyOwner {
-        require(!initialized(), "Contract is already initialized.");
-        require(stakingProxy != address(0x0), "Staking proxy address can't be zero.");
-        require(activeGroupsThreshold > 0, "The minumum number of active groups needs to be more than zero.");
-        _initialized["KeepGroupImplV1"] = true;
-        _stakingProxy = stakingProxy;
-        _randomBeacon = randomBeacon;
-        _minStake = minStake;
-        _groupSize = groupSize;
-        _groupThreshold = groupThreshold;
-        _timeoutInitial = timeoutInitial;
-        _timeoutSubmission = timeoutSubmission;
-        _timeoutChallenge = timeoutChallenge;
-        _timeDKG = timeDKG;
-        _resultPublicationBlockStep = resultPublicationBlockStep;
-        _activeGroupsThreshold = activeGroupsThreshold;
-        _activeTime = activeTime;
-    }
-
-    /**
      * @dev Checks that the specified user has enough stake.
      * @param staker Specifies the identity of the staker.
      * @return True if staked enough to participate in the group, false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return StakingProxy(_stakingProxy).balanceOf(staker) >= _minStake;
+        return StakingProxy(stakingProxy).balanceOf(staker) >= minimumStake;
     }
 
     /**
@@ -465,72 +505,15 @@ contract KeepGroupImplV1 is Ownable {
      * @return Number of how many virtual stakers can staker represent.
      */
     function stakingWeight(address staker) public view returns(uint256) {
-        return StakingProxy(_stakingProxy).balanceOf(staker)/_minStake;
+        return StakingProxy(stakingProxy).balanceOf(staker)/minimumStake;
     }
 
     /**
      * @dev Set the minimum amount of KEEP that allows a Keep network client to participate in a group.
-     * @param minStake Amount in KEEP.
+     * @param _minimumStake Amount in KEEP.
      */
-    function setMinimumStake(uint256 minStake) public onlyOwner {
-        _minStake = minStake;
-    }
-
-    /**
-     * @dev Get the minimum amount in KEEP that allows KEEP network client to participate in a group.
-     */
-    function minimumStake() public view returns(uint256) {
-        return _minStake;
-    }
-
-    /**
-     * @dev Allows owner to change the groupSize.
-     */
-    function setGroupSize(uint256 groupSize) public onlyOwner {
-        _groupSize = groupSize;
-    }
-
-    /**
-     * @dev ticketInitialSubmissionTimeout is the duration (in blocks) the
-     * staker has to submit tickets that fall under the natural threshold
-     * to satisfy the initial ticket timeout (see group selection, phase 2a).
-     */
-    function ticketInitialSubmissionTimeout() public view returns (uint256) {
-        return _timeoutInitial;
-    }
-
-    /**
-     * @dev ticketReactiveSubmissionTimeout is the duration (in blocks) the
-     * staker has to submit any tickets that did not fall under the natural
-     * threshold. This final chance to submit tickets is called reactive
-     * ticket submission (defined in the group selection algorithm, 2b).
-     */
-    function ticketReactiveSubmissionTimeout() public view returns (uint256) {
-        return _timeoutSubmission;
-    }
-
-    /**
-     * @dev ticketChallengeTimeout is the duration (in blocks) the staker
-     * has to submit any challenges for tickets that fail any checks.
-     */
-    function ticketChallengeTimeout() public view returns (uint256) {
-        return _timeoutChallenge;
-    }
-
-    /**
-     * @dev resultPublicationBlockStep is the duration (in blocks) after which
-     * member with the given index is eligible to submit DKG result.
-     */
-    function resultPublicationBlockStep() public view returns (uint256) {
-        return _resultPublicationBlockStep;
-    }
-
-    /**
-     * @dev ticketSubmissionStartBlock block number at which current group
-     * selection started.
-     */
-    function ticketSubmissionStartBlock() public view returns (uint256) {
-        return _ticketSubmissionStartBlock;
+    function setMinimumStake(uint256 _minimumStake) public onlyOwner {
+        minimumStake = _minimumStake;
     }
 
     /**
@@ -547,49 +530,14 @@ contract KeepGroupImplV1 is Ownable {
      */
     function naturalThreshold() public view returns (uint256) {
         uint256 space = 2**256-1; // Space consisting of all possible tickets.
-        return _groupSize.mul(space.div(tokenSupply().div(_minStake)));
-    }
-
-    /**
-     * @dev Checks if this contract is initialized.
-     */
-    function initialized() public view returns (bool) {
-        return _initialized["KeepGroupImplV1"];
-    }
-
-    /**
-     * @dev Gets size of a group in the threshold relay.
-     */
-    function groupSize() public view returns(uint256) {
-        return _groupSize;
-    }
-
-    /**
-     * @dev Gets number of interacting group members needed to produce a relay entry.
-    */
-    function groupThreshold() public view returns(uint256) {
-        return _groupThreshold;
+        return groupSize.mul(space.div(tokenSupply().div(minimumStake)));
     }
 
     /**
      * @dev Gets number of active groups.
      */
     function numberOfGroups() public view returns(uint256) {
-        return _groups.length - _expiredOffset;
-    }
-
-    /**
-     * @dev Gets the random beacon value for the group selection currently in progress.
-     */
-    function randomBeaconValue() public view returns(uint256) {
-        return _randomBeaconValue;
-    }
-
-    /**
-     * @dev Returns true if the group selection is in progress.
-     */
-    function groupSelectionInProgress() public view returns(bool) {
-        return _groupSelectionInProgress;
+        return groups.length - expiredGroupOffset;
     }
 
     /**
@@ -601,8 +549,8 @@ contract KeepGroupImplV1 is Ownable {
      * as active but it does not mean that the group will be immediatelly
      * considered not as such.
      */
-    function groupActiveTime(Group memory group) internal view returns(uint256) {
-        return group.registrationBlockHeight + _activeTime;
+    function groupActiveTimeOf(Group memory group) internal view returns(uint256) {
+        return group.registrationBlockHeight + groupActiveTime;
     }
 
     /**
@@ -611,7 +559,7 @@ contract KeepGroupImplV1 is Ownable {
      * performing any operations.
      */
     function groupStaleTime(Group memory group) internal view returns(uint256) {
-        return groupActiveTime(group) + KeepRandomBeaconContract(_randomBeacon).relayRequestTimeout();
+        return groupActiveTimeOf(group) + relayRequestTimeout;
     }
 
     /**
@@ -624,10 +572,10 @@ contract KeepGroupImplV1 is Ownable {
      * the past.
      */
     function isStaleGroup(bytes memory groupPubKey) public view returns(bool) {
-        for (uint i = 0; i < _groups.length; i++) {
-            if (_groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                bool isExpired = _expiredOffset > i;
-                bool isStale = groupStaleTime(_groups[i]) < block.number;
+        for (uint i = 0; i < groups.length; i++) {
+            if (groups[i].groupPubKey.equalStorage(groupPubKey)) {
+                bool isExpired = expiredGroupOffset > i;
+                bool isStale = groupStaleTime(groups[i]) < block.number;
                 return isExpired && isStale;
             }
         }
@@ -637,11 +585,11 @@ contract KeepGroupImplV1 is Ownable {
 
     /**
      * @dev Returns public key of a group from active groups using modulo operator.
-     * @param previousEntry Previous random beacon value.
+     * @param seed Signing group selection seed.
      */
-    function selectGroup(uint256 previousEntry) public returns(bytes memory) {
-        uint256 numberOfActiveGroups = _groups.length - _expiredOffset;
-        uint256 selectedGroup = previousEntry % numberOfActiveGroups;
+    function selectGroup(uint256 seed) public returns(bytes memory) {
+        uint256 numberOfActiveGroups = groups.length - expiredGroupOffset;
+        uint256 selectedGroup = seed % numberOfActiveGroups;
 
         /**
         * We selected a group based on the information about expired groups offset
@@ -659,36 +607,36 @@ contract KeepGroupImplV1 is Ownable {
         * starting from the previous value of expired groups offset since we can
         * mark expired groups in batches, in a fewer number of steps.
         */
-        if (numberOfActiveGroups > _activeGroupsThreshold) {
-            while (groupActiveTime(_groups[_expiredOffset + selectedGroup]) < block.number) {
+        if (numberOfActiveGroups > activeGroupsThreshold) {
+            while (groupActiveTimeOf(groups[expiredGroupOffset + selectedGroup]) < block.number) {
                 /**
                 * We do -1 to see how many groups are available after the potential removal.
                 * For example:
-                * _groups = [EEEAAAA]
+                * groups = [EEEAAAA]
                 * - assuming selectedGroup = 0, then we'll have 4-0-1=3 groups after the removal: [EEEEAAA]
                 * - assuming selectedGroup = 1, then we'll have 4-1-1=2 groups after the removal: [EEEEEAA]
                 * - assuming selectedGroup = 2, then, we'll have 4-2-1=1 groups after the removal: [EEEEEEA]
                 * - assuming selectedGroup = 3, then, we'll have 4-3-1=0 groups after the removal: [EEEEEEE]
                 */
-                if (numberOfActiveGroups - selectedGroup - 1 > _activeGroupsThreshold) {
+                if (numberOfActiveGroups - selectedGroup - 1 > activeGroupsThreshold) {
                     selectedGroup++;
-                    _expiredOffset += selectedGroup;
+                    expiredGroupOffset += selectedGroup;
                     numberOfActiveGroups -= selectedGroup;
-                    selectedGroup = previousEntry % numberOfActiveGroups;
+                    selectedGroup = seed % numberOfActiveGroups;
                 } else {
-                    /* Number of groups that did not expire is less or equal _activeGroupsThreshold
-                    * and we have more groups than _activeGroupsThreshold (including those expired) groups.
-                    * Hence, we maintain the minimum _activeGroupsThreshold of active groups and
+                    /* Number of groups that did not expire is less or equal activeGroupsThreshold
+                    * and we have more groups than activeGroupsThreshold (including those expired) groups.
+                    * Hence, we maintain the minimum activeGroupsThreshold of active groups and
                     * do not let any other groups to expire
                     */
-                    _expiredOffset = _groups.length - _activeGroupsThreshold;
-                    numberOfActiveGroups = _activeGroupsThreshold;
-                    selectedGroup = previousEntry % numberOfActiveGroups;
+                    expiredGroupOffset = groups.length - activeGroupsThreshold;
+                    numberOfActiveGroups = activeGroupsThreshold;
+                    selectedGroup = seed % numberOfActiveGroups;
                     break;
                 }
             }
         }
-        return _groups[_expiredOffset + selectedGroup].groupPubKey;
+        return groups[expiredGroupOffset + selectedGroup].groupPubKey;
     }
 
     /**
@@ -703,13 +651,61 @@ contract KeepGroupImplV1 is Ownable {
      */
     function cleanup() private {
 
-        for (uint i = 0; i < _tickets.length; i++) {
-            delete _proofs[_tickets[i]];
+        for (uint i = 0; i < tickets.length; i++) {
+            delete proofs[tickets[i]];
         }
 
-        delete _tickets;
+        delete tickets;
 
         // TODO: cleanup DkgResults
     }
 
+    /**
+     * @dev Creates a request to generate a new relay entry, which will include a
+     * random number (by signing the previous entry's random number).
+     * @param requestId Request Id trackable by service contract.
+     * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
+     * @param previousEntry Previous relay entry that is used to select a signing group for this request.
+     */
+    function sign(uint256 requestId, uint256 seed, uint256 previousEntry) public payable {
+
+        require(
+            serviceContracts.contains(msg.sender),
+            "Only authorized service contract can request relay entry."
+        );
+
+        require(
+            numberOfGroups() > 0,
+            "At least one group needed to serve the request."
+        );
+
+        bytes memory groupPubKey = selectGroup(previousEntry);
+
+        signingRequestCounter++;
+
+        signingRequests[signingRequestCounter] = SigningRequest(requestId, msg.value, groupPubKey, msg.sender);
+
+        emit SignatureRequested(signingRequestCounter, msg.value, previousEntry, seed, groupPubKey);
+    }
+
+    /**
+     * @dev Creates a new relay entry and stores the associated data on the chain.
+     * @param _signingId The request that started this generation - to tie the results back to the request.
+     * @param _groupSignature The generated random number.
+     * @param _groupPubKey Public key of the group that generated the threshold signature.
+     */
+    function relayEntry(uint256 _signingId, uint256 _groupSignature, bytes memory _groupPubKey, uint256 _previousEntry, uint256 _seed) public {
+
+        require(signingRequests[_signingId].groupPubKey.equalStorage(_groupPubKey), "Provided group was not selected to produce entry for this request.");
+        require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
+
+        address serviceContract = signingRequests[_signingId].serviceContract;
+        uint256 requestId = signingRequests[_signingId].requestId;
+        delete signingRequests[_signingId];
+
+        emit SignatureSubmitted(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
+
+        ServiceContract(serviceContract).entryCreated(requestId, _groupSignature);
+        createGroup(_groupSignature, _signingId, _seed);
+    }
 }

@@ -23,14 +23,14 @@ type RelayEntryInterface interface {
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
 	SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise
-	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
+	// OnSignatureSubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnRelayEntryGenerated(
+	OnSignatureSubmitted(
 		func(entry *event.Entry),
 	) (subscription.EventSubscription, error)
-	// OnRelayEntryRequested is a callback that is invoked when an on-chain
+	// OnSignatureRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
-	OnRelayEntryRequested(
+	OnSignatureRequested(
 		func(request *event.Request),
 	) (subscription.EventSubscription, error)
 }
@@ -85,7 +85,7 @@ type DistributedKeyGenerationInterface interface {
 	// Signatures over DKG result hash are collected in a map keyed by signer's
 	// member index.
 	SubmitDKGResult(
-		requestID *big.Int,
+		signingId *big.Int,
 		participantIndex group.MemberIndex,
 		dkgResult *DKGResult,
 		signatures map[group.MemberIndex]operator.Signature,
@@ -98,7 +98,7 @@ type DistributedKeyGenerationInterface interface {
 	// IsDKGResultSubmitted checks if a DKG result hash has already been
 	// submitted to the chain for the given request ID.
 	IsDKGResultSubmitted(
-		requestID *big.Int,
+		signingId *big.Int,
 	) (bool, error)
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.

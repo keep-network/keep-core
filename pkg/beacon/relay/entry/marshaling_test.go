@@ -27,11 +27,11 @@ func TestSignatureShareMessageRoundTrip(t *testing.T) {
 
 	testutils.AssertBytesEqual(t, msg.shareBytes, unmarshaled.shareBytes)
 
-	if msg.requestID.Cmp(unmarshaled.requestID) != 0 {
+	if msg.signingId.Cmp(unmarshaled.signingId) != 0 {
 		t.Errorf(
 			"unexpected request ID\nexpected: [%v]\nactual:   [%v]",
-			msg.requestID,
-			unmarshaled.requestID,
+			msg.signingId,
+			unmarshaled.signingId,
 		)
 	}
 }

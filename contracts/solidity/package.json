@@ -8,7 +8,7 @@
   },
   "scripts": {
     "truffle": "truffle",
-    "test": "rm -rf build && truffle test",
+    "test": "rm -rf build && truffle compile && truffle test",
     "demo": "truffle migrate --reset && truffle exec ./scripts/demo.js"
   },
   "author": "Matt Luongo <mhluongo@gmail.com>",
