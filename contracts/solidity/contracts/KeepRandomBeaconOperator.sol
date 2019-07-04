@@ -107,7 +107,7 @@ contract KeepRandomBeaconOperator is Ownable {
         address serviceContract;
     }
 
-    mapping(uint256 => SigningRequest) public signingRequests;
+    mapping(uint256 => SigningRequest) internal signingRequests;
 
     /**
      * @dev Checks if submitter is eligible to submit.
