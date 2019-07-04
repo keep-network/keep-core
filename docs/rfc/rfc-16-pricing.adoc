@@ -172,13 +172,71 @@ _base reward * (1.8 + 0.64) + callback expenditure + entry verification fee_.
 
 ==== Cost estimates
 
+===== Gas price feed
+
+A short-term gas price feed is required
+to estimate the gas cost components.
+
+The critical feature of the gas price feed is
+that the feed price multiplied by a safety margin for fluctuations (e.g. 1.5)
+should be sufficient for getting beacon entries processed
+within the deadline under all circumstances.
+The gas price estimate for an entry is set when the request is processed,
+but the entry submission transaction will be sent later.
+
+If actual gas prices rise to a level
+where the feed price and margin are insufficient
+for getting a transaction to be mined,
+and stays there for the duration of the entry submission window,
+the basic profit margin for the operators cannot be guaranteed.
+
+However, this does not imply that high gas prices
+would render the beacon inoperable.
+The submitter's extra reward incentivizes submitting
+even when the entry verification fee cannot cover the gas costs.
+In the extreme,
+avoiding the severe penalty for failure to produce an entry
+should incentivize group members to pay the gas prices
+up to the (theoretical) limit
+where gas for the entry submission transaction
+costs as much as the KEEP tokens at stake.
+
+The exact implementation of this gas price feed
+is out for scope for this RFC.
+
 ===== DKG cost estimate
+
+The gas required for DKG should be calculated.
+Multiply DKG gas by gas estimate to get DKG cost estimate.
+Use a DKG frequency divider _d_ to set the group creation rate;
+once every _d_ entries on average.
+Divide DKG cost estimate by _d_ to get DKG contribution for each entry.
+
+Long-term gas price feed not required
+when performing DKG whenever sufficient money has accumulated.
+If gas price goes up,
+DKG frequency goes down temporarily;
+If gas price goes down,
+DKG performed more often.
 
 ===== Entry verification fee
 
+Calculate gas required for verifying entry
+and associated support operations.
+Multiply by gas price plus a fluctuation margin (e.g. 1.5)
+to get entry verification fee.
+
 === Limitations
 
-What are the limitations of this approach?
+Entry price reacts slightly to entry quality
+(faster entries -> lower surplus -> lower request subsidies)
+but not to other factors.
+Processing entries one-by-one doesn't scale.
+If submitter is miner,
+can set arbitrary gas fees to attack the requester
+by making the callback run out of gas;
+no recourse is provided in the design,
+and mitigations seem difficult at first look.
 
 === Proof of Concept
 
