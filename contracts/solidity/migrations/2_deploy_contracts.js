@@ -22,7 +22,13 @@ const timeoutChallenge = 4;
 const resultPublicationBlockStep = 3;
 const activeGroupsThreshold = 5;
 const groupActiveTime = 300;
-const relayRequestTimeout = 10;
+// Timeout in blocks for a relay entry to appear on the chain.
+// Blocks are counted from the moment relay request occur.
+// 1 state with state.MessagingStateDelayBlocks which is set to 1
+// 1 state with state.MessagingStateActiveBlocks which is set to 3
+// 4 states with state.MessagingStateActiveBlocks which is set to 3
+// +1 block where a relay request is successfully submitted
+const relayRequestTimeout = 1+3+4*3+1; //17
 
 // timeDKG - Timeout in blocks after DKG result is complete and ready to be published.
 // 7 states with state.MessagingStateActiveBlocks which is set to 3
