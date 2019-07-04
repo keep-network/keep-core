@@ -101,7 +101,7 @@ contract KeepRandomBeaconOperator is Ownable {
     bool public initialized;
 
     struct SigningRequest {
-        uint256 requestId;
+        uint256 relayRequestId;
         uint256 payment;
         bytes groupPubKey;
         address serviceContract;
@@ -701,7 +701,7 @@ contract KeepRandomBeaconOperator is Ownable {
         require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
 
         address serviceContract = signingRequests[_signingId].serviceContract;
-        uint256 requestId = signingRequests[_signingId].requestId;
+        uint256 requestId = signingRequests[_signingId].relayRequestId;
         delete signingRequests[_signingId];
 
         emit SignatureSubmitted(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
