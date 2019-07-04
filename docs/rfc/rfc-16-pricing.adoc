@@ -26,8 +26,10 @@ When a valid entry is submitted,
 the submitter receives a _submitter reward_
 and every other member in the signing group receives a _group reward_.
 To incentivize submitting an entry,
-the _submitter reward_ increases as time goes on
+the _submitter reward_ increases as a request goes unserved
 while the _group reward_ diminishes.
+Rewards not paid out to the operators
+are paid out to requesters to subsidize new requests.
 
 === Goal
 
@@ -50,11 +52,20 @@ the customer should submit the request
 with the _callback_ and _surplus recipient_ addresses
 while transferring _request fee = entry fee estimate + callback allowance_
 currency to the beacon.
+However, no new requests should be made
+while the beacon is already processing another request.
+Requests made while the beacon is busy
+will be rejected and refunded to the _surplus recipient_ address.
 
 ==== Receiving a request
 
-When the beacon receives a request,
-it checks that the _request fee_ exceeds
+If the beacon is already serving an earlier request,
+it rejects any new requests
+and refunds the _request fee_
+to the surplus recipient of the rejected request.
+
+When the beacon is non-busy and receives a request,
+it first checks that the _request fee_ exceeds
 the _entry fee estimate + minimum callback allowance_.
 Insufficiently funded entries forfeit the request fee.
 
@@ -71,9 +82,11 @@ a _DKG cost fraction_,
 an _entry verification cost_,
 and a _profit margin_.
 
-The _DKG cost fraction_ is added to the _DKG fee pool_,
-and a group creation and DKG is triggered
-if the DKG fee pool exceeds the DKG cost estimate.
+The _DKG cost fraction_ is added to the _DKG fee pool_.
+When a DKG trigger event occurs,
+the state of the DKG fee pool is checked.
+Group creation and DKG are initiated
+if the DKG fee pool exceeds the DKG cost estimate at the time.
 
 A signing group is selected and tasked with generating the new entry.
 
@@ -100,7 +113,7 @@ to obtain the _callback gas surplus_.
 
 The _callback gas surplus_ is refunded
 to the requester's _surplus recipient_ address,
-along with 1% of the _operating surplus pool_ of the beacon.
+along with 1% of the _request subsidy pool_ of the beacon.
 
 The submitter and other group members are rewarded
 based on the _submission delay_;
@@ -121,7 +134,7 @@ but vary according to _submission delay_ and submitter position.
 
 If the amount paid out to the signing group in _group rewards_
 and the submitter's _extra reward_ is less than the _profit margin_,
-the difference is added to the beacon's _operating surplus pool_
+the difference is added to the beacon's _request subsidy pool_
 to incentivize customers to request entries.
 
 ===== Group reward
@@ -133,8 +146,8 @@ upon submission of a valid entry.
 The group reward equals the _base reward_
 multiplied by a _delay factor_
 equaling the fraction of time left by the submission deadline, squared.
-If the maximum time to submit is 200 blocks
-and an entry is received 40 blocks from the request,
+If the maximum time to submit is 20 blocks
+and an entry is received 4 blocks from the request,
 the delay factor is _0.8^2^ = 0.64_.
 Thus the _group reward = base reward * 0.64_,
 with the difference being the _delay penalty = base reward * (1 - 0.64)_.
