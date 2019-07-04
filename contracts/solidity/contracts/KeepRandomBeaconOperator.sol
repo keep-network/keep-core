@@ -44,7 +44,11 @@ contract KeepRandomBeaconOperator is Ownable {
 
     address[] public serviceContracts;
 
+    // Each operator contract tracks its own signing requests and these are
+    // independent from service contracts which tracks all the relay requests
+    // the given service contract received.
     uint256 public signingRequestCounter;
+
     uint256 public groupThreshold;
     uint256 public groupSize;
     uint256 public minimumStake;
