@@ -197,7 +197,6 @@ contract KeepRandomBeaconOperator is Ownable {
         // Create initial relay entry request. This will allow relayEntry to be called once
         // to trigger the creation of the first group. Requests are removed on successful
         // entries so genesis entry can only be called once.
-        signingRequestCounter++;
         signingRequests[signingRequestCounter] = SigningRequest(0, 0, _genesisGroupPubKey, _serviceContract);
     }
 

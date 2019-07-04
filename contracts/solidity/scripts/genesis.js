@@ -20,7 +20,7 @@ module.exports = async function () {
 
   const contract = await KeepRandomBeaconOperator.deployed()
   try {
-    await contract.relayEntry(1, groupSignature, groupPubKey, previousEntry, seed)
+    await contract.relayEntry(0, groupSignature, groupPubKey, previousEntry, seed)
     console.log('Genesis entry successfully submitted.')
   } catch(error) {
     console.error('Genesis entry submission failed with', error)
