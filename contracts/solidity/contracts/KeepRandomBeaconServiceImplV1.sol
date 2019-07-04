@@ -113,17 +113,18 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         );
 
         _requestCounter++;
+        uint256 requestId = _requestCounter;
 
         // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
-        // OperatorContract(selectOperatorContract()).sign.value(msg.value)(_requestCounter, seed, _previousEntry);
-        OperatorContract(selectOperatorContract()).sign(_requestCounter, seed, _previousEntry);
+        // OperatorContract(selectOperatorContract()).sign.value(msg.value)(requestId, seed, _previousEntry);
+        OperatorContract(selectOperatorContract()).sign(requestId, seed, _previousEntry);
 
         if (callbackContract != address(0)) {
-            _callbacks[_requestCounter] = Callback(callbackContract, callbackMethod);
+            _callbacks[requestId] = Callback(callbackContract, callbackMethod);
         }
 
-        emit RelayEntryRequested(_requestCounter);
-        return _requestCounter;
+        emit RelayEntryRequested(requestId);
+        return requestId;
     }
 
     /**
