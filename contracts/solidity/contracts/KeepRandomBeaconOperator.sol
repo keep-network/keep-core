@@ -682,10 +682,11 @@ contract KeepRandomBeaconOperator is Ownable {
         bytes memory groupPubKey = selectGroup(previousEntry);
 
         signingRequestCounter++;
+        uint256 signingId = signingRequestCounter;
 
-        signingRequests[signingRequestCounter] = SigningRequest(requestId, msg.value, groupPubKey, msg.sender);
+        signingRequests[signingId] = SigningRequest(requestId, msg.value, groupPubKey, msg.sender);
 
-        emit SignatureRequested(signingRequestCounter, msg.value, previousEntry, seed, groupPubKey);
+        emit SignatureRequested(signingId, msg.value, previousEntry, seed, groupPubKey);
     }
 
     /**
