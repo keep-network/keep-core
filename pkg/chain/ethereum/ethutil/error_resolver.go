@@ -90,7 +90,7 @@ func (er *ErrorResolver) ResolveError(
 		)
 	}
 
-	errorID, encodedReturns := response[0:3], response[4:]
+	errorID, encodedReturns := response[0:4], response[5:]
 
 	errorMethod, err := errorABI.MethodById(errorID)
 	if err != nil {

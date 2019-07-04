@@ -123,7 +123,7 @@ func TestErrorResolverHandlesShortResponses(t *testing.T) {
 }
 
 func TestErrorResolverHandlesUnknownMethodResponses(t *testing.T) {
-	caller := &fixedReturnCaller{[]byte{0, 0, 0, 1}}
+	caller := &fixedReturnCaller{[]byte{0, 0, 0, 0, 1}}
 	resolver := ethutil.NewErrorResolver(caller, &testABI, &testAddress)
 
 	err := resolver.ResolveError(errOriginal, common.Address{}, nil, "Test")
@@ -137,7 +137,7 @@ func TestErrorResolverHandlesUnknownMethodResponses(t *testing.T) {
 }
 
 func TestErrorResolverHandlesBadParameterResponses(t *testing.T) {
-	caller := &fixedReturnCaller{[]byte{8, 195, 121, 160}}
+	caller := &fixedReturnCaller{[]byte{8, 195, 121, 160, 42}}
 	resolver := ethutil.NewErrorResolver(caller, &testABI, &testAddress)
 
 	// bad response length
@@ -164,7 +164,7 @@ func TestErrorResolverHandlesBadParameterResponses(t *testing.T) {
 	)
 
 	// good response length, good data offset, bad string length in response
-	caller.returnedBytes = []byte{8, 195, 121, 160}
+	caller.returnedBytes = []byte{8, 195, 121, 160, 42}
 	caller.returnedBytes = append(caller.returnedBytes, buildingBlock[:]...)
 	caller.returnedBytes[len(caller.returnedBytes)-1] = 32
 	caller.returnedBytes = append(caller.returnedBytes, buildingBlock[:]...)
@@ -180,7 +180,7 @@ func TestErrorResolverHandlesBadParameterResponses(t *testing.T) {
 }
 
 func TestErrorResolverHandlesGoodErrorResponse(t *testing.T) {
-	caller := &fixedReturnCaller{[]byte{8, 195, 121, 160}}
+	caller := &fixedReturnCaller{[]byte{8, 195, 121, 160, 42}}
 
 	// Build a blank error message.
 	buildingBlock := [32]byte{}
@@ -200,7 +200,7 @@ func TestErrorResolverHandlesGoodErrorResponse(t *testing.T) {
 
 	// Build an error message.
 	errorMessage := "Something's gone awry."
-	caller.returnedBytes = []byte{8, 195, 121, 160}
+	caller.returnedBytes = []byte{8, 195, 121, 160, 42}
 	caller.returnedBytes = append(caller.returnedBytes, buildingBlock[:]...)
 	caller.returnedBytes[len(caller.returnedBytes)-1] = 32 // data offset, fixed
 	caller.returnedBytes = append(caller.returnedBytes, buildingBlock[:]...)
