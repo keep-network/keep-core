@@ -78,6 +78,22 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
+     * @dev Adds operator contract
+     * @param operatorContract Address of the operator contract.
+     */
+    function addOperatorContract(address operatorContract) public onlyOwner {
+        _operatorContracts.push(operatorContract);
+    }
+
+    /**
+     * @dev Removes operator contract
+     * @param operatorContract Address of the operator contract.
+     */
+    function removeOperatorContract(address operatorContract) public onlyOwner {
+        _operatorContracts.removeAddress(operatorContract);
+    }
+
+    /**
      * @dev Selects an operator contract from the available list using modulo operation
      * with previous entry weighted by the number of active groups on each operator contract.
      * @return Address of operator contract.
