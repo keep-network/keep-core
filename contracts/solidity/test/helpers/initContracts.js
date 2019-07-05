@@ -51,7 +51,23 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
   await operatorContract.relayEntry(0, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
   return {
+    config: {
+      minimumStake: minimumStake,
+      groupThreshold: groupThreshold,
+      groupSize: groupSize,
+      timeoutInitial: timeoutInitial,
+      timeoutSubmission: timeoutSubmission,
+      timeoutChallenge: timeoutChallenge,
+      timeDKG: timeDKG,
+      resultPublicationBlockStep: resultPublicationBlockStep,
+      groupActiveTime: groupActiveTime,
+      activeGroupsThreshold: activeGroupsThreshold,
+      minPayment: minPayment,
+      withdrawalDelay: withdrawalDelay,
+      relayRequestTimeout: relayRequestTimeout
+    },
     token: token,
+    stakingProxy: stakingProxy,
     serviceContract: serviceContract,
     operatorContract: operatorContract
   };
