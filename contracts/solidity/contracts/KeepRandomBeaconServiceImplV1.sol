@@ -7,6 +7,7 @@ import "./DelayedWithdrawal.sol";
 
 interface OperatorContract {
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) payable external;
+    function numberOfGroups() external view returns(uint256);
     // TODO: Add createGroup() when it's implemented on Operator contract.
 }
 
@@ -95,12 +96,33 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     /**
      * @dev Selects an operator contract from the available list using modulo operation
-     * with previous entry weighted by the number of active groups on each operator contract.
+     * with seed value weighted by the number of active groups on each operator contract.
+     * @param seed Cryptographically generated random value.
      * @return Address of operator contract.
      */
-    function selectOperatorContract() public view returns (address) {
-        // TODO: Implement logic
-        return _operatorContracts[0];
+    function selectOperatorContract(uint256 seed) public view returns (address) {
+
+        uint256 totalNumberOfGroups;
+
+        for (uint i = 0; i < _operatorContracts.length; i++) {
+            totalNumberOfGroups += OperatorContract(_operatorContracts[i]).numberOfGroups();
+        }
+
+        require(totalNumberOfGroups > 0, "Total number of groups must be greater that zero.");
+
+        uint256[] memory indexes = new uint256[](totalNumberOfGroups);
+        uint256 lastIndex;
+
+        for (uint256 i = 0; i < _operatorContracts.length; i++) {
+            uint256 groups = OperatorContract(_operatorContracts[i]).numberOfGroups();
+            for (uint j = lastIndex; j < lastIndex + groups; j++) {
+                indexes[j] = i;
+            }
+            lastIndex = lastIndex + groups;
+        }
+
+        uint256 selected = seed % indexes.length;
+        return _operatorContracts[indexes[selected]];
     }
 
     /**
@@ -132,8 +154,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 requestId = _requestCounter;
 
         // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
-        // OperatorContract(selectOperatorContract()).sign.value(msg.value)(requestId, seed, _previousEntry);
-        OperatorContract(selectOperatorContract()).sign(requestId, seed, _previousEntry);
+        // OperatorContract(selectOperatorContract(_previousEntry)).sign.value(msg.value)(requestId, seed, _previousEntry);
+        OperatorContract(selectOperatorContract(_previousEntry)).sign(requestId, seed, _previousEntry);
 
         if (callbackContract != address(0)) {
             _callbacks[requestId] = Callback(callbackContract, callbackMethod);
