@@ -8,9 +8,8 @@ import "./DelayedWithdrawal.sol";
 interface OperatorContract {
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) payable external;
     function numberOfGroups() external view returns(uint256);
-    // TODO: Add createGroup() when it's implemented on Operator contract.
+    function createGroup(uint256 groupSelectionSeed, uint256 requestId, uint256 seed) payable external;
 }
-
 
 /**
  * @title KeepRandomBeaconServiceImplV1
@@ -169,8 +168,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Store valid entry returned by operator contract and call customer specified callback if required.
      * @param requestId Request id tracked internally by this contract.
      * @param entry The generated random number.
+     * @param seed Relay entry request seed value.
      */
-    function entryCreated(uint256 requestId, uint256 entry) public {
+    function entryCreated(uint256 requestId, uint256 entry, uint256 seed) public {
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."
@@ -183,6 +183,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
             delete _callbacks[requestId];
         }
+
+        // TODO: Figure out when to call createGroup once pricing scheme is finalized.
+        OperatorContract(msg.sender).createGroup(entry, requestId, seed);
     }
 
     /**

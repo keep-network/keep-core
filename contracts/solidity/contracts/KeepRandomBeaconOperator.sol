@@ -11,7 +11,7 @@ import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
 
 interface ServiceContract {
-    function entryCreated(uint256 requestId, uint256 entry) external;
+    function entryCreated(uint256 requestId, uint256 entry, uint256 seed) external;
 }
 
 /**
@@ -203,10 +203,16 @@ contract KeepRandomBeaconOperator is Ownable {
     /**
      * @dev Triggers the selection process of a new candidate group.
      * @param _groupSelectionSeed Random value that stakers will use to generate their tickets.
-     * @param _signingId Relay request ID associated with DKG protocol execution.
+     * @param _relayRequestId Relay request ID associated with DKG protocol execution.
      * @param _seed Random value from the client. It should be a cryptographically generated random value.
      */
-    function createGroup(uint256 _groupSelectionSeed, uint256 _signingId, uint256 _seed) private {
+    function createGroup(uint256 _groupSelectionSeed, uint256 _relayRequestId, uint256 _seed) public payable {
+
+        require(
+            serviceContracts.contains(msg.sender),
+            "Only authorized service contract can call this method."
+        );
+
         // dkgTimeout is the time after DKG is expected to be complete plus the expected period to submit the result.
         uint256 dkgTimeout = ticketSubmissionStartBlock + ticketChallengeTimeout + timeDKG + groupSize * resultPublicationBlockStep;
 
@@ -215,7 +221,7 @@ contract KeepRandomBeaconOperator is Ownable {
             ticketSubmissionStartBlock = block.number;
             groupSelectionSeed = _groupSelectionSeed;
             groupSelectionInProgress = true;
-            emit GroupSelectionStarted(_groupSelectionSeed, _signingId, _seed);
+            emit GroupSelectionStarted(_groupSelectionSeed, _relayRequestId, _seed);
         }
     }
 
@@ -710,7 +716,6 @@ contract KeepRandomBeaconOperator is Ownable {
 
         emit SignatureSubmitted(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
-        ServiceContract(serviceContract).entryCreated(requestId, _groupSignature);
-        createGroup(_groupSignature, _signingId, _seed);
+        ServiceContract(serviceContract).entryCreated(requestId, _groupSignature, _seed);
     }
 }
