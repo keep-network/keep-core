@@ -212,6 +212,22 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
+     * @dev Adds service contract
+     * @param serviceContract Address of the service contract.
+     */
+    function addServiceContract(address serviceContract) public onlyOwner {
+        serviceContracts.push(serviceContract);
+    }
+
+    /**
+     * @dev Removes service contract
+     * @param serviceContract Address of the service contract.
+     */
+    function removeServiceContract(address serviceContract) public onlyOwner {
+        serviceContracts.removeAddress(serviceContract);
+    }
+
+    /**
      * @dev Triggers the selection process of a new candidate group.
      * @param _groupSelectionSeed Random value that stakers will use to generate their tickets.
      * @param _relayRequestId Relay request ID associated with DKG protocol execution.
