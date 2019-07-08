@@ -34,7 +34,7 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
 
     // Modify state so we can test later that eternal storage works as expected after upgrade
     await serviceContract.requestRelayEntry(bls.seed, {value: 10});
-    await operatorContract.relayEntry(2, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+    await operatorContract.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
   });
 

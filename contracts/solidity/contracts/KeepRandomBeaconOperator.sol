@@ -42,12 +42,17 @@ contract KeepRandomBeaconOperator is Ownable {
     // use groupSelectionSeed as unique id.
     event GroupSelectionStarted(uint256 groupSelectionSeed, uint256 signingId, uint256 seed);
 
+    address[] public serviceContracts;
+
+    // Each operator contract tracks its own signing requests and these are
+    // independent from service contracts which tracks all the relay requests
+    // the given service contract received.
     uint256 public signingRequestCounter;
+
     uint256 public groupThreshold;
     uint256 public groupSize;
     uint256 public minimumStake;
     address public stakingProxy;
-    address[] public serviceContracts;
 
     uint256 public ticketInitialSubmissionTimeout;
     uint256 public ticketReactiveSubmissionTimeout;
@@ -103,13 +108,13 @@ contract KeepRandomBeaconOperator is Ownable {
     bool public initialized;
 
     struct SigningRequest {
-        uint256 requestId;
+        uint256 relayRequestId;
         uint256 payment;
         bytes groupPubKey;
         address serviceContract;
     }
 
-    mapping(uint256 => SigningRequest) public signingRequests;
+    mapping(uint256 => SigningRequest) internal signingRequests;
 
     /**
      * @dev Checks if submitter is eligible to submit.
@@ -194,7 +199,6 @@ contract KeepRandomBeaconOperator is Ownable {
         // Create initial relay entry request. This will allow relayEntry to be called once
         // to trigger the creation of the first group. Requests are removed on successful
         // entries so genesis entry can only be called once.
-        signingRequestCounter++;
         signingRequests[signingRequestCounter] = SigningRequest(0, 0, _genesisGroupPubKey, _serviceContract);
     }
 
@@ -690,10 +694,11 @@ contract KeepRandomBeaconOperator is Ownable {
         bytes memory groupPubKey = selectGroup(previousEntry);
 
         signingRequestCounter++;
+        uint256 signingId = signingRequestCounter;
 
-        signingRequests[signingRequestCounter] = SigningRequest(requestId, msg.value, groupPubKey, msg.sender);
+        signingRequests[signingId] = SigningRequest(requestId, msg.value, groupPubKey, msg.sender);
 
-        emit SignatureRequested(signingRequestCounter, msg.value, previousEntry, seed, groupPubKey);
+        emit SignatureRequested(signingId, msg.value, previousEntry, seed, groupPubKey);
     }
 
     /**
@@ -708,7 +713,7 @@ contract KeepRandomBeaconOperator is Ownable {
         require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
 
         address serviceContract = signingRequests[_signingId].serviceContract;
-        uint256 requestId = signingRequests[_signingId].requestId;
+        uint256 requestId = signingRequests[_signingId].relayRequestId;
         delete signingRequests[_signingId];
 
         emit SignatureSubmitted(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
