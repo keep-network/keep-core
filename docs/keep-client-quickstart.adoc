@@ -20,6 +20,14 @@ The deployment bundle contains five items:
 4. Text file with Ethereum account password
 5. This document
 
+== Networking
+
+The application needs ingress/egress access on port `3919`.
+
+The ingress port is configurable and can be set in the included `keep-client-config.toml` file.
+
+`Port` is in section `[libp2p]`
+
 == Starting The Client
 
 *Depending on how you orchestrate containers, these steps will vary.  Here we illustrate
@@ -27,7 +35,6 @@ from the perspective of the Docker client.*
 
 *The keep-client configuration file is already prepared, should you want to change the file paths
 feel free.  This guide will assume you use the default paths.*
-
 
 === Unzip the bundle
 
@@ -98,7 +105,7 @@ grep keep-client | awk '{print $1}' | \
 xargs -I {} docker exec -t {} keep-client --config /mnt/keep-client/config/keep-client-config.toml relay request
 ```
 
-== Network Details
+== Hosts
 
 === Ethereum Network
 
