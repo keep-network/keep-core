@@ -8,7 +8,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract;
 
-  let minimumStake = 200000,
+  let minimumStake = web3.utils.toBN(200000),
     groupThreshold = 15,
     groupSize = 20,
     timeoutInitial = 20,
@@ -68,6 +68,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
     },
     token: token,
     stakingProxy: stakingProxy,
+    stakingContract: stakingContract,
     serviceContract: serviceContract,
     operatorContract: operatorContract
   };

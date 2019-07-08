@@ -49,7 +49,6 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function(accounts) {
   });
 
   it("service contract owner should be able to remove and add operator contracts.", async function() {
-
     let result = await serviceContract.selectOperatorContract(0);
     assert.equal(result, operatorContract.address, "Operator contract added during initialization should present in the service contract.");
 
