@@ -93,7 +93,7 @@ Established connection with bootstrap peer [xxxxxx]
 
 ```
 docker ps | \
-grep keep-client awk '{print $1}' | \
+grep keep-client | awk '{print $1}' | \
 xargs -I {} docker exec -t {} keep-client --config /mnt/keep-client/config/keep-client-config.toml relay request
 ```
 
