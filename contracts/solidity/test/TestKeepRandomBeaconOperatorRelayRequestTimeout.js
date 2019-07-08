@@ -31,22 +31,22 @@ import mineBlocks from './helpers/mineBlocks';
      it("should not throw an error when sigining is in progress and the block number > relay entry timeout", async function() {
       await serviceContract.requestRelayEntry(bls.seed, {value: 10});
       mineBlocks(blocksForward)
-      await serviceContract.requestRelayEntry(bls.seed, {value: 10});
+      let result = await serviceContract.requestRelayEntry(bls.seed, {value: 10});
 
-       assert.equal((await operatorContract.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on operator contract.");
+      assert.equal(result.logs[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on operator contract.");
     })
 
      it("should throw an error when sigining is in progress and the block number <= relay entry timeout", async function() {
       await serviceContract.requestRelayEntry(bls.seed, {value: 10});
 
-       await expectThrowWithMessage(serviceContract.requestRelayEntry(bls.seed, {value: 10}), 'Relay entry request is in progress.');
+      await expectThrowWithMessage(serviceContract.requestRelayEntry(bls.seed, {value: 10}), 'Relay entry request is in progress.');
     })
 
      it("should not throw an error when sigining is not in progress and the block number > relay entry timeout", async function() {
       mineBlocks(blocksForward)
-      await serviceContract.requestRelayEntry(bls.seed, {value: 10});
+      let result = await serviceContract.requestRelayEntry(bls.seed, {value: 10});
 
-       assert.equal((await operatorContract.getPastEvents())[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on operator contract.");
+      assert.equal(result.logs[0].event, 'RelayEntryRequested', "RelayEntryRequested event should occur on operator contract.");
     })
   })
 
