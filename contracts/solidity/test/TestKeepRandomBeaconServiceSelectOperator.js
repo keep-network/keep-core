@@ -57,6 +57,7 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function(accounts) {
     await exceptThrow(serviceContract.selectOperatorContract(0)); // Should revert since no operator contract present.
 
     await serviceContract.addOperatorContract(operatorContract.address);
+    result = await serviceContract.selectOperatorContract(0);
     assert.equal(result, operatorContract.address, "Operator contract should be added");
 
   });
