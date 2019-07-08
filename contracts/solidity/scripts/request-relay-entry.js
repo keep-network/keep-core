@@ -1,15 +1,15 @@
 const crypto = require("crypto")
-const KeepRandomBeacon = artifacts.require("KeepRandomBeaconImplV1")
-const KeepRandomBeaconProxy = artifacts.require('KeepRandomBeacon.sol')
+const KeepRandomBeaconServiceImplV1 = artifacts.require("KeepRandomBeaconServiceImplV1.sol");
+const KeepRandomBeaconService = artifacts.require('KeepRandomBeaconService.sol');
 
 module.exports = async function() {
 
-  const keepRandomBeaconProxy = await KeepRandomBeaconProxy.deployed()
-  const contractInstance = await KeepRandomBeacon.at(keepRandomBeaconProxy.address)
+  const keepRandomBeaconService = await KeepRandomBeaconService.deployed()
+  const contractInstance = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address)
 
   try {
     let tx = await contractInstance.requestRelayEntry(crypto.randomBytes(32), {value: 2})
-    console.log('Successfully requested relay entry with RequestId =', tx.logs[0].args.requestID.toString())
+    console.log('Successfully requested relay entry with RequestId =', tx.logs[0].args.requestId.toString())
     console.log(
       '\n---Transaction Summary---' + '\n' +
       'From:' + tx.receipt.from + '\n' +

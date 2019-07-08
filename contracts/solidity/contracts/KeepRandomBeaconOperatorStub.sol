@@ -1,19 +1,30 @@
 pragma solidity ^0.5.4;
 
-import "./KeepGroupImplV1.sol";
+import "./KeepRandomBeaconOperator.sol";
 
-contract KeepGroupImplV1Stub is KeepGroupImplV1 {
-    
+/**
+ * @title KeepRandomBeaconOperatorStub
+ * @dev A simplified Random Beacon operator contract to help local development.
+ */
+contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
+
+    /**
+     * @dev Stub method to authorize service contract to help local development.
+     */
+    function authorizeServiceContract(address _serviceContract) public {
+        serviceContracts.push(_serviceContract);
+    }
+
     /**
      * @dev Adds a new group based on groupPublicKey.
      * @param groupPublicKey is the identifier of the newly created group.
      */
     function registerNewGroup(bytes memory groupPublicKey) public {
-        _groups.push(Group(groupPublicKey, block.number));
+        groups.push(Group(groupPublicKey, block.number));
         address[] memory members = orderedParticipants();
         if (members.length > 0) {
-            for (uint i = 0; i < _groupSize; i++) {
-                _groupMembers[groupPublicKey].push(members[i]);
+            for (uint i = 0; i < groupSize; i++) {
+                groupMembers[groupPublicKey].push(members[i]);
             }
         }
     }
@@ -23,7 +34,7 @@ contract KeepGroupImplV1Stub is KeepGroupImplV1 {
      * @param groupIndex is the index of the queried group.
      */
     function getGroupRegistrationBlockHeight(uint256 groupIndex) public view returns(uint256) {
-        return _groups[groupIndex].registrationBlockHeight;
+        return groups[groupIndex].registrationBlockHeight;
     }
 
     /**
@@ -31,13 +42,7 @@ contract KeepGroupImplV1Stub is KeepGroupImplV1 {
      * @param groupIndex is the index of the queried group.
      */
     function getGroupPublicKey(uint256 groupIndex) public view returns(bytes memory) {
-        return _groups[groupIndex].groupPubKey;
+        return groups[groupIndex].groupPubKey;
     }
 
-    /**
-     * @dev Gets the value of expired offset.
-     */
-    function getExpiredOffset() public view returns(uint256) {
-        return _expiredOffset;
-    }
 }

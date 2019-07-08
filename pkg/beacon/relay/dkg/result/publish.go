@@ -19,7 +19,7 @@ import (
 // along with everyone's votes.
 func Publish(
 	playerIndex group.MemberIndex,
-	requestID *big.Int,
+	signingId *big.Int,
 	dkgGroup *group.Group,
 	result *gjkr.Result,
 	channel net.BroadcastChannel,
@@ -33,7 +33,7 @@ func Publish(
 		relayChain:              relayChain,
 		blockCounter:            blockCounter,
 		member:                  NewSigningMember(playerIndex, dkgGroup, privateKey),
-		requestID:               requestID,
+		signingId:               signingId,
 		result:                  convertResult(result, dkgGroup.GroupSize()),
 		signatureMessages:       make([]*DKGResultHashSignatureMessage, 0),
 		signingStartBlockHeight: startBlockHeight,
