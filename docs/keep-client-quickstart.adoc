@@ -26,7 +26,7 @@ The application needs ingress/egress access on port `3919`.
 
 The ingress port is configurable and can be set in the included `keep-client-config.toml` file.
 
-`Port` is in section `[libp2p]`
+`Port` is in section `[libp2p]`.
 
 == Starting The Client
 
