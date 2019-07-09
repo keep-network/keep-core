@@ -2,12 +2,12 @@ import increaseTime, { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
+const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
-const StakingProxy = artifacts.require('./StakingProxy.sol');
 
 contract('TestTokenGrant', function(accounts) {
 
-  let token, grantContract, stakingProxy,
+  let token, grantContract, stakingContract,
     amount, vestingDuration, start, cliff,
     account_one = accounts[0],
     account_two = accounts[1],
@@ -15,8 +15,8 @@ contract('TestTokenGrant', function(accounts) {
 
   before(async () => {
     token = await KeepToken.new();
-    stakingProxy = await StakingProxy.new();
-    grantContract = await TokenGrant.new(token.address, stakingProxy.address, duration.days(30));
+    stakingContract = await TokenStaking.new(token.address, duration.days(30));
+    grantContract = await TokenGrant.new(token.address, stakingContract.address, duration.days(30));
     amount = web3.utils.toBN(100);
     vestingDuration = duration.days(30);
     start = await latestTime();
@@ -51,7 +51,7 @@ contract('TestTokenGrant', function(accounts) {
     // Ending balances
     let account_one_ending_balance = await token.balanceOf.call(account_one);
     let account_two_ending_balance = await token.balanceOf.call(account_two);
-    let account_two_grant_balance = await grantContract.balanceOf.call(account_two);
+    let account_two_grant_balance = await grantContract.totalBalanceOf.call(account_two);
 
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(amount)), true, "Amount should be transfered from sender balance");
     assert.equal(account_two_grant_balance.eq(amount), true, "Amount should be added to the beneficiary grant balance");
@@ -78,7 +78,7 @@ contract('TestTokenGrant', function(accounts) {
     account_two_ending_balance = await token.balanceOf.call(account_two);
     assert.equal(account_two_ending_balance.eq(account_two_starting_balance.add(amount)), true, "Should release full grant amount to the main balance");
 
-    account_two_grant_balance = await grantContract.balanceOf.call(account_two);
+    account_two_grant_balance = await grantContract.totalBalanceOf.call(account_two);
     assert.equal(account_two_grant_balance, 0, "Grant amount should become 0");
 
   });
@@ -94,7 +94,7 @@ contract('TestTokenGrant', function(accounts) {
     let account_one_ending_balance = await token.balanceOf.call(account_one);
 
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(amount)), true, "Amount should be taken out from grant creator main balance.");
-    assert.equal((await grantContract.balanceOf.call(beneficiary)).eq(amount), true, "Amount should be added to beneficiary's granted balance.");
+    assert.equal((await grantContract.totalBalanceOf.call(beneficiary)).eq(amount), true, "Amount should be added to beneficiary's granted balance.");
 
     let grant = await grantContract.getGrant(id);
     assert.equal(grant[0].eq(amount), true, "Grant should maintain a record of the granted amount.");
@@ -124,7 +124,7 @@ contract('TestTokenGrant', function(accounts) {
   it("should be able to revoke revocable token grant as grant owner.", async function() {
 
     let account_one_starting_balance = await token.balanceOf.call(account_one);
-    let beneficiary_starting_balance = await grantContract.balanceOf.call(beneficiary);
+    let beneficiary_starting_balance = await grantContract.totalBalanceOf.call(beneficiary);
 
     // Create revocable token grant.
     await token.approve(grantContract.address, amount, {from: account_one});
@@ -134,22 +134,22 @@ contract('TestTokenGrant', function(accounts) {
     let account_one_ending_balance = await token.balanceOf.call(account_one);
 
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(amount)), true, "Amount should be taken out from grant creator main balance.");
-    assert.equal((await grantContract.balanceOf.call(beneficiary)).eq(beneficiary_starting_balance.add(amount)), true, "Amount should be added to beneficiary's granted balance.");
+    assert.equal((await grantContract.totalBalanceOf.call(beneficiary)).eq(beneficiary_starting_balance.add(amount)), true, "Amount should be added to beneficiary's granted balance.");
 
     await grantContract.revoke(id);
 
-    beneficiary_starting_balance = await grantContract.balanceOf.call(beneficiary);
+    beneficiary_starting_balance = await grantContract.totalBalanceOf.call(beneficiary);
     account_one_starting_balance = await token.balanceOf.call(account_one);
     
     let unreleasedAmount = await grantContract.unreleasedAmount(id)
     assert.equal((await token.balanceOf.call(account_one)).eq(account_one_starting_balance.add(amount).sub(unreleasedAmount)), true, "Amount should be added to grant creator main balance.");
-    assert.equal((await grantContract.balanceOf.call(beneficiary)).eq(beneficiary_starting_balance.sub(amount).add(unreleasedAmount)), true, "Amount should be taken out from beneficiary's granted balance.");
+    assert.equal((await grantContract.totalBalanceOf.call(beneficiary)).eq(beneficiary_starting_balance.sub(amount).add(unreleasedAmount)), true, "Amount should be taken out from beneficiary's granted balance.");
   });
 
   it("should be able to revoke the grant but no amount is refunded since duration of the vesting is over.", async function() {
 
     let account_one_starting_balance = await token.balanceOf.call(account_one);
-    let beneficiary_starting_balance = await grantContract.balanceOf.call(beneficiary);
+    let beneficiary_starting_balance = await grantContract.totalBalanceOf.call(beneficiary);
 
     // Create revocable token grant with 0 duration.
     await token.approve(grantContract.address, amount, {from: account_one});
@@ -159,13 +159,13 @@ contract('TestTokenGrant', function(accounts) {
     let account_one_ending_balance = await token.balanceOf.call(account_one);
 
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(amount)), true, "Amount should be taken out from grant creator main balance.");
-    assert.equal((await grantContract.balanceOf.call(beneficiary)).eq(beneficiary_starting_balance.add(amount)), true, "Amount should be added to beneficiary's granted balance.");
+    assert.equal((await grantContract.totalBalanceOf.call(beneficiary)).eq(beneficiary_starting_balance.add(amount)), true, "Amount should be added to beneficiary's granted balance.");
 
-    beneficiary_starting_balance = await grantContract.balanceOf.call(beneficiary);
+    beneficiary_starting_balance = await grantContract.totalBalanceOf.call(beneficiary);
     await grantContract.revoke(id);
 
     assert.equal((await token.balanceOf.call(account_one)).eq(account_one_starting_balance.sub(amount)), true, "No amount to be returned to grant creator since vesting duration is over.");
-    assert.equal((await grantContract.balanceOf.call(beneficiary)).eq(beneficiary_starting_balance), true, "Amount should stay at beneficiary's grant balance.");
+    assert.equal((await grantContract.totalBalanceOf.call(beneficiary)).eq(beneficiary_starting_balance), true, "Amount should stay at beneficiary's grant balance.");
   });
 
 });

@@ -3,7 +3,6 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
-import "./StakingProxy.sol";
 import "./TokenStaking.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
@@ -52,7 +51,6 @@ contract KeepRandomBeaconOperator is Ownable {
     uint256 public groupThreshold;
     uint256 public groupSize;
     uint256 public minimumStake;
-    address public stakingProxy;
 
     uint256 public ticketInitialSubmissionTimeout;
     uint256 public ticketReactiveSubmissionTimeout;
@@ -140,7 +138,6 @@ contract KeepRandomBeaconOperator is Ownable {
 
     /**
      * @dev Initialize the contract with a linked Staking proxy contract.
-     * @param _stakingProxy Address of a staking proxy contract that will be linked to this contract.
      * @param _serviceContract Address of a random beacon service contract that will be linked to this contract.
      * @param _minimumStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
      * @param _groupSize Size of a group in the threshold relay.
@@ -160,7 +157,6 @@ contract KeepRandomBeaconOperator is Ownable {
      * Blocks are counted from the moment relay request occur.
      */
     function initialize(
-        address _stakingProxy,
         address _serviceContract,
         uint256 _minimumStake,
         uint256 _groupThreshold,
@@ -177,9 +173,7 @@ contract KeepRandomBeaconOperator is Ownable {
         bytes memory _genesisGroupPubKey
     ) public onlyOwner {
         require(!initialized, "Contract is already initialized.");
-        require(_stakingProxy != address(0x0), "Staking proxy address can't be zero.");
         initialized = true;
-        stakingProxy = _stakingProxy;
         serviceContracts.push(_serviceContract);
         minimumStake = _minimumStake;
         groupSize = _groupSize;
@@ -500,7 +494,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * @return True if staked enough to participate in the group, false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return StakingProxy(stakingProxy).balanceOf(staker) >= minimumStake;
+        return TokenStaking(stakingContract).balanceOf(staker) >= minimumStake;
     }
 
     /**
@@ -509,7 +503,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * @return Number of how many virtual stakers can staker represent.
      */
     function stakingWeight(address staker) public view returns(uint256) {
-        return StakingProxy(stakingProxy).balanceOf(staker)/minimumStake;
+        return TokenStaking(stakingContract).balanceOf(staker)/minimumStake;
     }
 
     /**

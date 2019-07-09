@@ -453,7 +453,7 @@ keep-client-config.toml:
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeaconOperator contract
   KeepRandomBeaconOperator = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
-  # StakingProxy
+  # TokenStaking
   Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
 # Bootstrap node creating a new network.
@@ -539,7 +539,7 @@ keep-client-config.toml:
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeaconOperator contract
   KeepRandomBeaconOperator = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
-  # StakingProxy
+  # TokenStaking
   Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
 [LibP2P]
@@ -624,7 +624,7 @@ keep-client-config.toml:
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeaconOperator contract
   KeepRandomBeaconOperator = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
-  # StakingProxy
+  # TokenStaking
   Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
 [LibP2P]
@@ -709,7 +709,7 @@ keep-client-config.toml:
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeaconOperator contract
   KeepRandomBeaconOperator = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
-  # StakingProxy
+  # TokenStaking
   Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
 [LibP2P]
@@ -793,7 +793,7 @@ keep-client-config.toml:
 [ethereum.ContractAddresses]
   # Hex-encoded address of KeepRandomBeaconOperator contract
   KeepRandomBeaconOperator = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
-  # StakingProxy
+  # TokenStaking
   Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
 [LibP2P]

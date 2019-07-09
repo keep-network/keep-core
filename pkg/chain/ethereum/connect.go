@@ -21,7 +21,7 @@ type ethereumChain struct {
 	clientWS                         *rpc.Client
 	signingId                        *big.Int
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
-	stakingContract                  *contract.StakingProxy
+	stakingContract                  *contract.TokenStaking
 	accountKey                       *keystore.Key
 
 	// transactionMutex allows interested parties to forcibly serialize
@@ -92,13 +92,13 @@ func Connect(config Config) (chain.Handle, error) {
 	}
 	pv.keepRandomBeaconOperatorContract = keepRandomBeaconOperatorContract
 
-	address, err = addressForContract(config, "StakingProxy")
+	address, err = addressForContract(config, "TokenStaking")
 	if err != nil {
-		return nil, fmt.Errorf("error resolving StakingProxy contract: [%v]", err)
+		return nil, fmt.Errorf("error resolving TokenStaking contract: [%v]", err)
 	}
 
 	stakingContract, err :=
-		contract.NewStakingProxy(
+		contract.NewTokenStaking(
 			*address,
 			pv.accountKey,
 			pv.client,

@@ -5,11 +5,10 @@ import grantTokens from './helpers/grantTokens';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
-const StakingProxy = artifacts.require('./StakingProxy.sol');
 
 contract('TestTokenGrantStake', function(accounts) {
 
-  let token, grantContract, stakingContract, stakingProxy,
+  let token, grantContract, stakingContract,
     id, amount,
     account_one = accounts[0],
     account_two = accounts[3],
@@ -18,11 +17,8 @@ contract('TestTokenGrantStake', function(accounts) {
 
   beforeEach(async () => {
     token = await KeepToken.new();
-    stakingProxy = await StakingProxy.new();
-    stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
-    grantContract = await TokenGrant.new(token.address, stakingProxy.address, duration.days(30));
-    await stakingProxy.authorizeContract(stakingContract.address);
-    await stakingProxy.authorizeContract(grantContract.address);
+    stakingContract = await TokenStaking.new(token.address, duration.days(30));
+    grantContract = await TokenGrant.new(token.address, stakingContract.address, duration.days(30));
 
     let vestingDuration = duration.days(60),
     start = await latestTime(),

@@ -11,8 +11,8 @@
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeaconOperator contract
     KeepRandomBeaconOperator = "Set by Kube"
-    # StakingProxy
-    StakingProxy = "Set by Kube"
+    # TokenStaking
+    TokenStaking = "Set by Kube"
 
 [LibP2P]
   Seed = "Set by Kube"

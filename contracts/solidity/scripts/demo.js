@@ -1,5 +1,4 @@
 const KeepToken = artifacts.require("./KeepToken.sol");
-const StakingProxy = artifacts.require("./StakingProxy.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 
@@ -19,17 +18,8 @@ module.exports = async function() {
 
   const accounts = await getAccounts();
   const token = await KeepToken.deployed();
-  const stakingProxy = await StakingProxy.deployed();
   const tokenStaking = await TokenStaking.deployed();
   const tokenGrant = await TokenGrant.deployed();
-
-  // Authorize contracts to work via proxy
-  if (!await stakingProxy.isAuthorized(tokenStaking.address)) {
-    stakingProxy.authorizeContract(tokenStaking.address);
-  }
-  if (!await stakingProxy.isAuthorized(tokenGrant.address)) {
-    stakingProxy.authorizeContract(tokenGrant.address);
-  }
 
   let owner = accounts[0]; // The address of an owner of the staked tokens.
   let magpie = accounts[0]; // The address where the rewards for participation are sent.

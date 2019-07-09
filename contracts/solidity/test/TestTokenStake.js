@@ -4,11 +4,10 @@ import exceptThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
-const StakingProxy = artifacts.require('./StakingProxy.sol');
 
 contract('TestTokenStake', function(accounts) {
 
-  let token, grantContract, stakingContract, stakingProxy,
+  let token, grantContract, stakingContract, 
     account_one = accounts[0],
     account_one_operator = accounts[1],
     account_one_magpie = accounts[2],
@@ -18,11 +17,8 @@ contract('TestTokenStake', function(accounts) {
 
   before(async () => {
     token = await KeepToken.new();
-    stakingProxy = await StakingProxy.new();
-    stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
-    grantContract = await TokenGrant.new(token.address, stakingProxy.address, duration.days(30));
-    await stakingProxy.authorizeContract(stakingContract.address);
-    await stakingProxy.authorizeContract(grantContract.address);
+    stakingContract = await TokenStaking.new(token.address, duration.days(30));
+    grantContract = await TokenGrant.new(token.address, stakingContract.address, duration.days(30));
   });
 
   it("should send tokens correctly", async function() {
@@ -59,7 +55,7 @@ contract('TestTokenStake', function(accounts) {
 
     // Ending balances
     let account_one_ending_balance = await token.balanceOf.call(account_one);
-    let account_one_operator_stake_balance = await stakingContract.stakeBalanceOf.call(account_one_operator);
+    let account_one_operator_stake_balance = await stakingContract.balanceOf.call(account_one_operator);
 
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(stakingAmount)), true, "Staking amount should be transfered from sender balance");
     assert.equal(account_one_operator_stake_balance.eq(stakingAmount), true, "Staking amount should be added to the sender staking balance");
@@ -84,7 +80,7 @@ contract('TestTokenStake', function(accounts) {
 
     // check balances
     account_one_ending_balance = await token.balanceOf.call(account_one);
-    account_one_operator_stake_balance = await stakingContract.stakeBalanceOf.call(account_one_operator);
+    account_one_operator_stake_balance = await stakingContract.balanceOf.call(account_one_operator);
 
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance), true, "Staking amount should be transfered to sender balance");
     assert.equal(account_one_operator_stake_balance.isZero(), true, "Staking amount should be removed from sender staking balance");
@@ -100,7 +96,7 @@ contract('TestTokenStake', function(accounts) {
 
     // Ending balances
     account_one_ending_balance = await token.balanceOf.call(account_one);
-    account_one_operator_stake_balance = await stakingContract.stakeBalanceOf.call(account_one_operator);
+    account_one_operator_stake_balance = await stakingContract.balanceOf.call(account_one_operator);
 
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(stakingAmount)), true, "Staking amount should be transfered from sender balance for the second time");
     assert.equal(account_one_operator_stake_balance.eq(stakingAmount), true, "Staking amount should be added to the sender staking balance for the second time");

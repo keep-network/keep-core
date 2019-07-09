@@ -17,7 +17,6 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     let contracts = await initContracts(
       accounts,
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
       ServiceContractProxy,
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),

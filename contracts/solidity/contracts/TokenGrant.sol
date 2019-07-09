@@ -19,6 +19,9 @@ contract TokenGrant is StakeDelegatable {
     event InitiatedTokenGrantUnstake(uint256 id);
     event RevokedTokenGrant(uint256 id);
 
+    // Address of a staking contract that will be linked to this contract
+    address public stakingAddress;
+
     struct Grant {
         address owner; // Creator of token grant.
         address beneficiary; // Address to which granted tokens are going to be released.
@@ -52,13 +55,13 @@ contract TokenGrant is StakeDelegatable {
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20 token.
      * @param _tokenAddress address of a token that will be linked to this contract.
-     * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
+     * @param _stakingAddress Address of a staking contract that will be linked to this contract.
      * @param _delay withdrawal delay for unstake.
      */
-    constructor(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
+    constructor(address _tokenAddress, address _stakingAddress, uint256 _delay) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20(_tokenAddress);
-        stakingProxy = StakingProxy(_stakingProxy);
+        stakingAddress = _stakingAddress;
         stakeWithdrawalDelay = _delay;
     }
 
@@ -67,7 +70,7 @@ contract TokenGrant is StakeDelegatable {
      * @param _owner The address to query the grants balance of.
      * @return An uint256 representing the grants balance owned by the passed address.
      */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
+    function totalBalanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
 
@@ -241,10 +244,6 @@ contract TokenGrant is StakeDelegatable {
     
         // Transfer tokens to beneficiary's grants stake balance.
         stakeBalances[operator] = stakeBalances[operator].add(available);
-
-        if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitStakedEvent(operator, available);
-        }
     }
 
     /**
@@ -269,9 +268,6 @@ contract TokenGrant is StakeDelegatable {
         uint256 available = grants[_id].amount.sub(grants[_id].released);
         require(available >= 0, "Must have available granted amount to unstake.");
 
-        if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitUnstakedEvent(grants[_id].beneficiary, available);
-        }
     }
 
     /**
