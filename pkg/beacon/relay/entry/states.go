@@ -121,6 +121,11 @@ func (scs *signatureCompleteState) ActiveBlocks() uint64 {
 func (scs *signatureCompleteState) Initiate() error {
 	seenShares := make(map[group.MemberIndex]*bn256.G1)
 	seenShares[scs.MemberIndex()] = scs.selfSignatureShare
+	fmt.Printf(
+		"[member:%v] auto-accepting self signature share [%v]\n",
+		scs.MemberIndex(),
+		scs.MemberIndex(),
+	)
 
 	for _, message := range scs.previousPhaseMessages {
 		share := new(bn256.G1)
@@ -134,6 +139,11 @@ func (scs *signatureCompleteState) Initiate() error {
 				err,
 			)
 		} else {
+			fmt.Printf(
+				"[member:%v] accepting signature share from member [%v]\n",
+				scs.MemberIndex(),
+				message.senderID,
+			)
 			seenShares[message.senderID] = share
 		}
 	}
