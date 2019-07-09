@@ -32,7 +32,7 @@ contract KeepRandomBeaconOperator is Ownable {
 
     // TODO: Rename to DkgResultSubmittedEvent
     // TODO: Add memberIndex
-    event DkgResultPublishedEvent(uint256 signingId, bytes groupPubKey);
+    event DkgResultPublishedEvent(bytes groupPubKey);
 
     // These are the public events that are used by clients
     event SignatureRequested(uint256 signingId, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
@@ -62,9 +62,6 @@ contract KeepRandomBeaconOperator is Ownable {
 
     uint256[] public tickets;
     bytes[] public submissions;
-
-    // Store whether DKG result was published for the corresponding signingId.
-    mapping (uint256 => bool) public dkgResultPublished;
 
     bool public groupSelectionInProgress;
 
@@ -386,7 +383,6 @@ contract KeepRandomBeaconOperator is Ownable {
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
      * @param submitterMemberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
-     * @param signingId Relay request ID associated with DKG protocol execution.
      * @param groupPubKey Group public key generated as a result of protocol execution.
      * @param disqualified bytes representing disqualified group members; 1 at the specific index
      * means that the member has been disqualified. Indexes reflect positions of members in the
@@ -398,7 +394,6 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param signingMembersIndexes indices of members corresponding to each signature.
      */
     function submitDkgResult(
-        uint256 signingId,
         uint256 submitterMemberIndex,
         bytes memory groupPubKey,
         bytes memory disqualified,
@@ -406,15 +401,9 @@ contract KeepRandomBeaconOperator is Ownable {
         bytes memory signatures,
         uint[] memory signingMembersIndexes
     ) public onlyEligibleSubmitter(submitterMemberIndex) {
-
         require(
             disqualified.length == groupSize && inactive.length == groupSize,
             "Inactive and disqualified bytes arrays don't match the group size."
-        );
-
-        require(
-            !dkgResultPublished[signingId], 
-            "DKG result for this request ID already published."
         );
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
@@ -430,8 +419,7 @@ contract KeepRandomBeaconOperator is Ownable {
         groups.push(Group(groupPubKey, block.number));
         // TODO: punish/reward logic
         cleanup();
-        dkgResultPublished[signingId] = true;
-        emit DkgResultPublishedEvent(signingId, groupPubKey);
+        emit DkgResultPublishedEvent(groupPubKey);
 
         groupSelectionInProgress = false;
     }
@@ -477,10 +465,10 @@ contract KeepRandomBeaconOperator is Ownable {
 
     /**
      * @dev Checks if DKG protocol result has been already published for the
-     * specific relay request ID associated with the protocol execution. 
+     * currently ongoing group selection process.
      */
-    function isDkgResultSubmitted(uint256 signingId) public view returns(bool) {
-        return dkgResultPublished[signingId];
+    function isGroupSelectionInProgress() public view returns(bool) {
+        return groupSelectionInProgress;
     }
 
 
