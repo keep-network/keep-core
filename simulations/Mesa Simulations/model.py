@@ -12,7 +12,8 @@ class Beacon_Model(Model):
     group_size, max_malicious_threshold, group_expiry, 
     node_failure_percent, node_death_percent,
     signature_delay, min_nodes, node_connection_delay, node_mainloop_connection_delay, 
-    log_filename, run_number, misbehaving_nodes, dkg_block_delay, compromised_threshold):
+    log_filename, run_number, misbehaving_nodes, dkg_block_delay, compromised_threshold,
+    failed_signature_threshold):
         self.num_nodes = nodes
         self.schedule = SimultaneousActivation(self)
         self.relay_request = False
@@ -41,6 +42,8 @@ class Beacon_Model(Model):
         self.perc_dominated_signatures = 0
         self.perc_compromised_groups = 0
         self.total_signatures = 0
+        self.failed_signature_threshold = failed_signature_threshold
+        self.perc_failed_signatures = 0
         self.datacollector = DataCollector(
             model_reporters = {"# of Active Groups":"num_active_groups",
              "# of Active Nodes":"num_active_nodes",
@@ -48,7 +51,8 @@ class Beacon_Model(Model):
              "Median Malicious Group %": "median_malicious_group_percents",
              "% Compromised Groups": "perc_compromised_groups",
              "Median Dominator %":"median_dominated_signatures_percents",
-             "% Dominated signatures":"perc_dominated_signatures" },
+             "% Dominated signatures":"perc_dominated_signatures",
+             "Failed Singature %" : "perc_failed_signatures" },
             agent_reporters={"Type_ID": lambda x : x.node_id if x.type == "node" else ( x.group_id if x.type == "group" else x.signature_id) , 
             "Type" : "type",
             "Node Status (Connection_Mainloop_Stake)": lambda x : str(x.connection_status + x.mainloop_status + x.stake_status) if x.type == "node" else None,
@@ -64,7 +68,7 @@ class Beacon_Model(Model):
         #create log file
         log.basicConfig(filename=log_filename + str(run_number), filemode='w', format='%(name)s - %(levelname)s - %(message)s')
 
-
+        print("creating nodes")
         #create nodes
         for i in range(nodes):
             node = agent.Node(i, i, self, 
@@ -114,10 +118,9 @@ class Beacon_Model(Model):
         self.timer += 1
 
         #calculate model measurements
-        self.median_malicious_group_percents, self.perc_compromised_groups = self.calculate_compromised_groups()
-        self.median_dominated_signatures_percents, self.perc_dominated_signatures,self.total_signatures = self.calculate_dominated_signatures()
-  
-
+        self.calculate_compromised_groups()
+        self.calculate_dominated_signatures()
+        
         #advance the agents
         self.schedule.step()
         self.num_active_nodes = len(self.active_nodes)
@@ -194,21 +197,28 @@ class Beacon_Model(Model):
             if group.type == "group":
                 total_groups +=1
                 malicious_array.append(group.malicious_percent) #creates an array of malicious percents for each group
-                if group.status == "compromised":
+                if group.compromised_percent >= self.compromised_threshold:
                     compromised_count +=1
-        return np.median(malicious_array), compromised_count/(total_groups+0.000000000000000001)
+
+        self.median_malicious_group_percents = np.median(malicious_array)
+        self.perc_compromised_groups = compromised_count/(total_groups+0.000000000000000001)
 
     def calculate_dominated_signatures(self):
         dominator_array = []
         dominator_count = 0
         total_signatures = 0
+        failed_signatures = 0
         for signature in self.schedule.agents:
             if signature.type == "signature":
                 total_signatures +=1
                 dominator_array.append(signature.dominator_percent)
                 dominator_count += (signature.dominator_id>=0)
-        
-        return np.median(dominator_array), dominator_count/(total_signatures+0.00000000000000001), total_signatures
+                failed_signatures += (signature.offline_percent>=self.failed_signature_threshold)
+
+        self.perc_failed_signatures = failed_signatures/(total_signatures+0.00000000000000001)
+        self.median_dominated_signatures_percents = np.median(dominator_array)
+        self.perc_dominated_signatures = dominator_count/(total_signatures+0.00000000000000001)
+        self.total_signatures = total_signatures
 
 
 def create_cdf(nodes,ticket_distr):
