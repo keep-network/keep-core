@@ -38,9 +38,7 @@ contract KeepRandomBeaconOperator is Ownable {
     event SignatureRequested(uint256 signingId, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
     event SignatureSubmitted(uint256 signingId, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
-    // TODO: Remove signingId once Keep Client DKG is refactored to
-    // use groupSelectionSeed as unique id.
-    event GroupSelectionStarted(uint256 groupSelectionSeed, uint256 signingId, uint256 seed);
+    event GroupSelectionStarted(uint256 groupSelectionSeed, uint256 seed);
 
     address[] public serviceContracts;
 
@@ -203,10 +201,9 @@ contract KeepRandomBeaconOperator is Ownable {
     /**
      * @dev Triggers the selection process of a new candidate group.
      * @param _groupSelectionSeed Random value that stakers will use to generate their tickets.
-     * @param _signingId Relay request ID associated with DKG protocol execution.
      * @param _seed Random value from the client. It should be a cryptographically generated random value.
      */
-    function createGroup(uint256 _groupSelectionSeed, uint256 _signingId, uint256 _seed) private {
+    function createGroup(uint256 _groupSelectionSeed, uint256 _seed) private {
         // dkgTimeout is the time after DKG is expected to be complete plus the expected period to submit the result.
         uint256 dkgTimeout = ticketSubmissionStartBlock + ticketChallengeTimeout + timeDKG + groupSize * resultPublicationBlockStep;
 
@@ -215,7 +212,7 @@ contract KeepRandomBeaconOperator is Ownable {
             ticketSubmissionStartBlock = block.number;
             groupSelectionSeed = _groupSelectionSeed;
             groupSelectionInProgress = true;
-            emit GroupSelectionStarted(_groupSelectionSeed, _signingId, _seed);
+            emit GroupSelectionStarted(_groupSelectionSeed, _seed);
         }
     }
 
@@ -711,6 +708,6 @@ contract KeepRandomBeaconOperator is Ownable {
         emit SignatureSubmitted(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
         ServiceContract(serviceContract).entryCreated(requestId, _groupSignature);
-        createGroup(_groupSignature, _signingId, _seed);
+        createGroup(_groupSignature, _seed);
     }
 }
