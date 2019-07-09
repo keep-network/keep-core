@@ -109,19 +109,20 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         require(totalNumberOfGroups > 0, "Total number of groups must be greater that zero.");
 
-        uint256[] memory indexes = new uint256[](totalNumberOfGroups);
-        uint256 lastIndex;
+        uint256 selectedIndex = seed % totalNumberOfGroups;
+
+        uint256 selectedContract;
+        uint256 indexByGroupCount;
 
         for (uint256 i = 0; i < _operatorContracts.length; i++) {
-            uint256 groups = OperatorContract(_operatorContracts[i]).numberOfGroups();
-            for (uint j = lastIndex; j < lastIndex + groups; j++) {
-                indexes[j] = i;
+            indexByGroupCount += OperatorContract(_operatorContracts[i]).numberOfGroups();
+            if (selectedIndex < indexByGroupCount) {
+                return _operatorContracts[selectedContract];
             }
-            lastIndex = lastIndex + groups;
+            selectedContract++;
         }
 
-        uint256 selected = seed % indexes.length;
-        return _operatorContracts[indexes[selected]];
+        return _operatorContracts[selectedContract];
     }
 
     /**
