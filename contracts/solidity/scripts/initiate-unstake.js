@@ -1,6 +1,5 @@
-const TokenStaking = artifacts.require("TokenStaking");
-const KeepGroupProxy = artifacts.require('KeepGroup.sol');
-const KeepGroup = artifacts.require("KeepGroupImplV1");
+const TokenStaking = artifacts.require("TokenStaking.sol");
+const KeepRandomBeaconOperator = artifacts.require("KeepRandomBeaconOperator.sol");
 
 function getAccounts() {
   return new Promise((resolve, reject) => {
@@ -13,8 +12,7 @@ function getAccounts() {
 module.exports = async function () {
   const accounts = await getAccounts();
   const tokenStaking = await TokenStaking.deployed();
-  const keepGroupProxy = await KeepGroupProxy.deployed();
-  const keepGroup = await KeepGroup.at(keepGroupProxy.address);
+  const keepRandomBeacon = await KeepRandomBeaconOperator.deployed();
 
   const accountToUnstake = accounts[1];
 
@@ -28,7 +26,7 @@ module.exports = async function () {
   });
   console.log('Stake after:        ', (await tokenStaking.stakeBalanceOf(accountToUnstake)).toString());
 
-  const hasMinStake = await keepGroup.hasMinimumStake(accountToUnstake).catch((err) => {
+  const hasMinStake = await keepRandomBeacon.hasMinimumStake(accountToUnstake).catch((err) => {
       console.log(`could not check for minimum stake: ${err}`);
   });
   console.log('Has minimum stake?: ', hasMinStake);

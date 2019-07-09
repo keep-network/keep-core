@@ -10,6 +10,17 @@
   source = "https://github.com/keep-network/toml.git"
 
 [[projects]]
+  digest = "1:8b13694e3e7b33c6f389f367b6a001a1184b051e34880fdd9e58a2207d9f6573"
+  name = "github.com/allegro/bigcache"
+  packages = [
+    ".",
+    "queue",
+  ]
+  pruneopts = ""
+  revision = "69ea0af04088faa57adb9ac683934277141e92a5"
+  version = "v2.0.0"
+
+[[projects]]
   branch = "master"
   digest = "1:19bd0e5d0aba0152ff8e3e249914c71d1bc34dbe7ce0f77e6be90aa2cce9108b"
   name = "github.com/aristanetworks/goarista"
@@ -42,7 +53,7 @@
   version = "v1.7.1"
 
 [[projects]]
-  digest = "1:3c11702e3f6b0daf20996ef8adb0177c51ffb1b3326eebe373d27083e589cd3c"
+  digest = "1:800932ff1e66409a9cd0bfaa1a1b957ca3decf536b366678a65fb65517a474ea"
   name = "github.com/ethereum/go-ethereum"
   packages = [
     ".",
@@ -61,7 +72,6 @@
     "crypto",
     "crypto/bn256/cloudflare",
     "crypto/secp256k1",
-    "crypto/sha3",
     "ethclient",
     "ethdb",
     "event",
@@ -74,7 +84,7 @@
     "trie",
   ]
   pruneopts = ""
-  revision = "477eb0933b9529f7deeccc233cc815fe34a8ea56"
+  revision = "4bcc0a37ab70cb79b16893556cffdaad6974e7d8"
   source = "https://github.com/keep-network/go-ethereum.git"
 
 [[projects]]
@@ -1027,11 +1037,12 @@
     "github.com/ethereum/go-ethereum/accounts/keystore",
     "github.com/ethereum/go-ethereum/cmd/abigen",
     "github.com/ethereum/go-ethereum/common",
+    "github.com/ethereum/go-ethereum/common/hexutil",
+    "github.com/ethereum/go-ethereum/common/math",
     "github.com/ethereum/go-ethereum/core/types",
     "github.com/ethereum/go-ethereum/crypto",
     "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare",
     "github.com/ethereum/go-ethereum/crypto/secp256k1",
-    "github.com/ethereum/go-ethereum/crypto/sha3",
     "github.com/ethereum/go-ethereum/ethclient",
     "github.com/ethereum/go-ethereum/event",
     "github.com/ethereum/go-ethereum/rpc",

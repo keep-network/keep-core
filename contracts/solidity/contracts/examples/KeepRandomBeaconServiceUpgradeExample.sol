@@ -1,14 +1,14 @@
 pragma solidity ^0.5.4;
 
-import "../KeepRandomBeaconImplV1.sol";
+import "../KeepRandomBeaconServiceImplV1.sol";
 
 
 /**
- * @title KeepRandomBeaconUpgradeExample
+ * @title KeepRandomBeaconServiceUpgradeExample
  * @dev Example version of a new implementation contract to test upgradability
  * under Keep Random Beacon proxy.
  */
-contract KeepRandomBeaconUpgradeExample is KeepRandomBeaconImplV1 {
+contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 {
 
     uint256 internal _newVar;
 
@@ -18,16 +18,13 @@ contract KeepRandomBeaconUpgradeExample is KeepRandomBeaconImplV1 {
      * >Functions can be overridden by another function with the same name and the
      * same number/types of inputs.
      */
-    function initialize(
-        uint256 _minPayment, uint256 _withdrawalDelay, uint256 _genesisEntry, 
-        bytes memory _genesisGroupPubKey, address _groupContract, uint256 _relayRequestTimeout)
+    function initialize(uint256 _minPayment, uint256 withdrawalDelay, address _operatorContract)
         public
         onlyOwner
     {
-        super.initialize(_minPayment, _withdrawalDelay, _genesisEntry, _genesisGroupPubKey, _groupContract, 
-        _relayRequestTimeout);
+        withdrawalDelay; // Silence unused var
+        super.initialize(_minPayment, _withdrawalDelay, _operatorContract);
         _initialized["KeepRandomBeaconImplV2"] = true;
-
         // Example of adding new data to the existing storage.
         _newVar = 1234;
     }

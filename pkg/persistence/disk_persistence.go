@@ -32,7 +32,6 @@ type diskPersistence struct {
 	dataDir string
 }
 
-// Save - writes data to the 'current' directory
 func (ds *diskPersistence) Save(data []byte, dirName, fileName string) error {
 	dirPath := ds.getStorageCurrentDirPath()
 	err := createDir(dirPath, dirName)
@@ -43,17 +42,10 @@ func (ds *diskPersistence) Save(data []byte, dirName, fileName string) error {
 	return write(fmt.Sprintf("%s/%s%s", dirPath, dirName, fileName), data)
 }
 
-// ReadAll data from the 'current' directory
-func (ds *diskPersistence) ReadAll() ([][]byte, error) {
-	memberships, err := readAll(ds.getStorageCurrentDirPath())
-	if err != nil {
-		return nil, fmt.Errorf("error occured while reading data from disk: [%v]", err)
-	}
-
-	return memberships, nil
+func (ds *diskPersistence) ReadAll() (<-chan DataDescriptor, <-chan error) {
+	return readAll(ds.getStorageCurrentDirPath())
 }
 
-// Archive a directory from 'current' to 'archive'
 func (ds *diskPersistence) Archive(directory string) error {
 	from := fmt.Sprintf("%s/%s/%s", ds.dataDir, currentDir, directory)
 	to := fmt.Sprintf("%s/%s/%s", ds.dataDir, archiveDir, directory)
@@ -113,31 +105,61 @@ func read(filePath string) ([]byte, error) {
 	return data, nil
 }
 
-func readAll(directoryPath string) ([][]byte, error) {
-	files, err := ioutil.ReadDir(directoryPath)
-	if err != nil {
-		return nil, fmt.Errorf("error occured while reading dir: [%v]", err)
-	}
+// readAll reads all files from the provided directoryPath and outputs them
+// as DataDescriptors into the first returned output channel. All errors
+// occurred during file system reading are sent to the second output channel
+// returned from this function. The output can be later processed using
+// pipeline pattern. This function is non-blocking and returned channels are
+// not buffered. Channels are closed when there is no more to be read.
+func readAll(directoryPath string) (<-chan DataDescriptor, <-chan error) {
+	dataChannel := make(chan DataDescriptor)
+	errorChannel := make(chan error)
 
-	result := [][]byte{}
+	go func() {
+		defer close(dataChannel)
+		defer close(errorChannel)
 
-	for _, file := range files {
-		if file.IsDir() {
-			dir, err := ioutil.ReadDir(fmt.Sprintf("%s/%s", directoryPath, file.Name()))
-			if err != nil {
-				return nil, fmt.Errorf("error occured while reading a directory: [%v]", err)
-			}
-			for _, dirFile := range dir {
-				data, err := read(fmt.Sprintf("%s/%s/%s", directoryPath, file.Name(), dirFile.Name()))
+		files, err := ioutil.ReadDir(directoryPath)
+		if err != nil {
+			errorChannel <- fmt.Errorf(
+				"could not read the directory [%v]: [%v]",
+				directoryPath,
+				err,
+			)
+		}
+
+		for _, file := range files {
+			if file.IsDir() {
+				dir, err := ioutil.ReadDir(fmt.Sprintf("%s/%s", directoryPath, file.Name()))
 				if err != nil {
-					return nil, fmt.Errorf("error occured while reading a file in directory: [%v]", err)
+					errorChannel <- fmt.Errorf(
+						"could not read the directory [%s/%s]: [%v]",
+						directoryPath,
+						file.Name(),
+						err,
+					)
 				}
-				result = append(result, data)
+
+				for _, dirFile := range dir {
+					// capture shared loop variables for the closure
+					dirName := file.Name()
+					fileName := dirFile.Name()
+
+					readFunc := func() ([]byte, error) {
+						return read(fmt.Sprintf(
+							"%s/%s/%s",
+							directoryPath,
+							dirName,
+							fileName,
+						))
+					}
+					dataChannel <- &dataDescriptor{fileName, dirName, readFunc}
+				}
 			}
 		}
-	}
+	}()
 
-	return result, nil
+	return dataChannel, errorChannel
 }
 
 func move(directoryFromPath, directoryToPath string) error {

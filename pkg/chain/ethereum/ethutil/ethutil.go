@@ -3,9 +3,14 @@
 package ethutil
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -68,4 +73,61 @@ func ConnectClients(url string, urlRPC string) (*ethclient.Client, *rpc.Client, 
 	}
 
 	return client, clientWS, clientRPC, nil
+}
+
+// CallAtBlock allows the invocation of a particular contract method at a
+// particular block. It papers over the fact that abigen bindings don't directly
+// support calling at a particular block, and is mostly meant for use from
+// generated contract code.
+func CallAtBlock(
+	fromAddress common.Address,
+	blockNumber *big.Int,
+	value *big.Int,
+	contractABI *abi.ABI,
+	caller bind.ContractCaller,
+	errorResolver *ErrorResolver,
+	contractAddress common.Address,
+	method string,
+	result interface{},
+	parameters ...interface{},
+) error {
+	input, err := contractABI.Pack(method, parameters...)
+	if err != nil {
+		return err
+	}
+
+	var (
+		msg = ethereum.CallMsg{
+			From:  fromAddress,
+			To:    &contractAddress,
+			Data:  input,
+			Value: value,
+		}
+		code   []byte
+		output []byte
+	)
+
+	output, err = caller.CallContract(context.TODO(), msg, blockNumber)
+	if err == nil && len(output) == 0 {
+		// Make sure we have a contract to operate on, and bail out otherwise.
+		if code, err = caller.CodeAt(context.TODO(), contractAddress, nil); err != nil {
+			return err
+		} else if len(code) == 0 {
+			return bind.ErrNoCode
+		}
+	}
+
+	err = contractABI.Unpack(result, method, output)
+
+	if err != nil {
+		return errorResolver.ResolveError(
+			err,
+			fromAddress,
+			value,
+			method,
+			parameters...,
+		)
+	}
+
+	return nil
 }

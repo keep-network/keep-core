@@ -25,7 +25,7 @@ type signingStateBase struct {
 
 	signer *dkg.ThresholdSigner
 
-	requestID     *big.Int
+	signingId     *big.Int
 	previousEntry *big.Int
 	seed          *big.Int
 
@@ -56,7 +56,7 @@ func (sss *signatureShareState) Initiate() error {
 	message := &SignatureShareMessage{
 		sss.MemberIndex(),
 		sss.selfSignatureShare.Marshal(),
-		sss.requestID,
+		sss.signingId,
 	}
 	if err := sss.channel.Send(message); err != nil {
 		return err
@@ -70,7 +70,7 @@ func (sss *signatureShareState) Receive(msg net.Message) error {
 		if !group.IsMessageFromSelf(
 			sss.MemberIndex(),
 			signatureShareMessage,
-		) && sss.isForTheCurrentRequestID(signatureShareMessage) {
+		) && sss.isForTheCurrentSigningId(signatureShareMessage) {
 			sss.signatureShareMessages = append(
 				sss.signatureShareMessages,
 				signatureShareMessage,
@@ -81,8 +81,8 @@ func (sss *signatureShareState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (sss *signatureShareState) isForTheCurrentRequestID(msg *SignatureShareMessage) bool {
-	return sss.requestID.Cmp(msg.requestID) == 0
+func (sss *signatureShareState) isForTheCurrentSigningId(msg *SignatureShareMessage) bool {
+	return sss.signingId.Cmp(msg.signingId) == 0
 }
 
 func (sss *signatureShareState) Next() signingState {
@@ -121,6 +121,11 @@ func (scs *signatureCompleteState) ActiveBlocks() uint64 {
 func (scs *signatureCompleteState) Initiate() error {
 	seenShares := make(map[group.MemberIndex]*bn256.G1)
 	seenShares[scs.MemberIndex()] = scs.selfSignatureShare
+	fmt.Printf(
+		"[member:%v] auto-accepting self signature share [%v]\n",
+		scs.MemberIndex(),
+		scs.MemberIndex(),
+	)
 
 	for _, message := range scs.previousPhaseMessages {
 		share := new(bn256.G1)
@@ -134,6 +139,11 @@ func (scs *signatureCompleteState) Initiate() error {
 				err,
 			)
 		} else {
+			fmt.Printf(
+				"[member:%v] accepting signature share from member [%v]\n",
+				scs.MemberIndex(),
+				message.senderID,
+			)
 			seenShares[message.senderID] = share
 		}
 	}
@@ -205,7 +215,7 @@ func (ess *entrySubmissionState) Initiate() error {
 	}
 
 	return submitter.submitRelayEntry(
-		ess.requestID,
+		ess.signingId,
 		new(big.Int).SetBytes(ess.signature),
 		ess.previousEntry,
 		ess.seed,
