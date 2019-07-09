@@ -186,7 +186,8 @@ contract KeepRandomBeaconService is Ownable, DelayedWithdrawal {
         }
 
         // TODO: Figure out when to call createGroup once pricing scheme is finalized.
-        OperatorContract(msg.sender).createGroup(entry, requestId, seed);
+        address latestOperatorContract = _operatorContracts[_operatorContracts.length - 1];
+        OperatorContract(latestOperatorContract).createGroup(entry, requestId, seed);
     }
 
     /**
