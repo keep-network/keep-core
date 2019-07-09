@@ -6,7 +6,7 @@ const StakingProxy = artifacts.require("./StakingProxy.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconServiceProxy = artifacts.require("./KeepRandomBeaconServiceProxy.sol");
-const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
+const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol");
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
 const KeepRandomBeaconOperatorStub = artifacts.require("./KeepRandomBeaconOperatorStub.sol");
 
@@ -45,10 +45,10 @@ module.exports = async function(deployer) {
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.link(BLS, KeepRandomBeaconOperatorStub);
   deployer.deploy(KeepRandomBeaconOperator);
-  await deployer.deploy(KeepRandomBeaconServiceImplV1);
-  await deployer.deploy(KeepRandomBeaconServiceProxy, KeepRandomBeaconServiceImplV1.address);
+  await deployer.deploy(KeepRandomBeaconService);
+  await deployer.deploy(KeepRandomBeaconServiceProxy, KeepRandomBeaconService.address);
 
-  const keepRandomBeaconService = await KeepRandomBeaconServiceImplV1.at(KeepRandomBeaconServiceProxy.address);
+  const keepRandomBeaconService = await KeepRandomBeaconService.at(KeepRandomBeaconServiceProxy.address);
   const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
 
   // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()

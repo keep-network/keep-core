@@ -1,5 +1,5 @@
 const crypto = require("crypto")
-const KeepRandomBeaconServiceImplV1 = artifacts.require("KeepRandomBeaconServiceImplV1.sol");
+const KeepRandomBeaconService = artifacts.require("KeepRandomBeaconService.sol");
 const KeepRandomBeaconServiceProxy = artifacts.require('KeepRandomBeaconServiceProxy.sol');
 
 // Example usage:
@@ -9,7 +9,7 @@ const KeepRandomBeaconServiceProxy = artifacts.require('KeepRandomBeaconServiceP
 module.exports = async function() {
 
   const keepRandomBeaconServiceProxy = await KeepRandomBeaconServiceProxy.deployed()
-  const contractInstance = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconServiceProxy.address)
+  const contractInstance = await KeepRandomBeaconService.at(keepRandomBeaconServiceProxy.address)
 
   try {
     let tx = await contractInstance.methods['requestRelayEntry(uint256,address,string)'](crypto.randomBytes(32), process.argv[4], process.argv[5], {value: process.argv[6]})
