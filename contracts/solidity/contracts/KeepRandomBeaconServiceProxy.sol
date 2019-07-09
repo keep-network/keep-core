@@ -9,7 +9,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
  * the address of the upgraded contract. All calls to this proxy contract
  * are delegated to the implementation contract.
  */
-contract KeepRandomBeaconService is Ownable {
+contract KeepRandomBeaconServiceProxy is Ownable {
 
     // Storage position of the address of the current implementation
     bytes32 private constant implementationPosition = keccak256("network.keep.randombeacon.proxy.implementation");

@@ -2,7 +2,7 @@ import {bls} from './helpers/data';
 import { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
 import {initContracts} from './helpers/initContracts';
-const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol');
+const ServiceContractProxy = artifacts.require('./KeepRandomBeaconServiceProxy.sol');
 const ServiceContractImplV2 = artifacts.require('./examples/KeepRandomBeaconServiceUpgradeExample.sol');
 
 
