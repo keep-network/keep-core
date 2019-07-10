@@ -1,8 +1,6 @@
 package chain
 
 import (
-	"math/big"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -85,7 +83,6 @@ type DistributedKeyGenerationInterface interface {
 	// Signatures over DKG result hash are collected in a map keyed by signer's
 	// member index.
 	SubmitDKGResult(
-		signingId *big.Int,
 		participantIndex group.MemberIndex,
 		dkgResult *DKGResult,
 		signatures map[group.MemberIndex]operator.Signature,
@@ -95,11 +92,9 @@ type DistributedKeyGenerationInterface interface {
 	OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission),
 	) (subscription.EventSubscription, error)
-	// IsDKGResultSubmitted checks if a DKG result hash has already been
-	// submitted to the chain for the given request ID.
-	IsDKGResultSubmitted(
-		signingId *big.Int,
-	) (bool, error)
+	// IsGroupRegistered checks if group with the given public key is registered
+	// on-chain.
+	IsGroupRegistered(groupPublicKey []byte) (bool, error)
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
 	CalculateDKGResultHash(dkgResult *DKGResult) (DKGResultHash, error)

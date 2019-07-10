@@ -33,7 +33,6 @@ type Request struct {
 // GroupSelectionStart represents a group selection start event.
 type GroupSelectionStart struct {
 	NewEntry    *big.Int
-	SigningId   *big.Int
 	Seed        *big.Int
 	BlockNumber uint64
 }
@@ -50,7 +49,6 @@ type GroupTicketSubmission struct {
 // spawned by the relay request with id, SigningId.
 type GroupRegistration struct {
 	GroupPublicKey []byte
-	SigningId      *big.Int
 
 	BlockNumber uint64
 }
@@ -60,7 +58,6 @@ type GroupRegistration struct {
 // the index of the member who submitted the result and a final public key of
 // the group.
 type DKGResultSubmission struct {
-	SigningId      *big.Int
 	MemberIndex    uint32
 	GroupPublicKey []byte
 

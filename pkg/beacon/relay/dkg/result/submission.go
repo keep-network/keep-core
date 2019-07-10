@@ -2,7 +2,6 @@ package result
 
 import (
 	"fmt"
-	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -31,16 +30,16 @@ func NewSubmittingMember(
 // SubmitDKGResult sends a result, which contains the group public key and
 // signatures, to the chain.
 //
-// It checks if the result has already been published to the blockchain with
-// the request ID specific to the current DKG execution. If not, it determines if
-// the current member is eligible to submit a result. If allowed, it submits
-// the result to the chain.
+// It checks if the result has already been published to the blockchain by
+// checking if group with the given public key is already registered. If not, it
+// determines if the current member is eligible to submit a result. If allowed,
+// it submits the result to the chain.
 //
 // A user's turn to publish is determined based on the user's index and block
 // step.
 //
-// If a result is submitted for the current request ID and it's accepted by the
-// chain, the current member finishes the phase immediately, without submitting
+// If a result is submitted by another member and it's accepted by the chain,
+// the current member finishes the phase immediately, without submitting
 // their own result.
 //
 // It returns the on-chain block height of the moment when the result was
@@ -49,7 +48,6 @@ func NewSubmittingMember(
 //
 // See Phase 14 of the protocol specification.
 func (sm *SubmittingMember) SubmitDKGResult(
-	signingId *big.Int,
 	result *relayChain.DKGResult,
 	signatures map[group.MemberIndex]operator.Signature,
 	chainRelay relayChain.Interface,
@@ -85,9 +83,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		return err
 	}
 
-	// Check if any result has already been submitted to the chain with current
-	// request ID.
-	alreadySubmitted, err := chainRelay.IsDKGResultSubmitted(signingId)
+	alreadySubmitted, err := chainRelay.IsGroupRegistered(result.GroupPublicKey)
 	if err != nil {
 		return returnWithError(
 			fmt.Errorf(
@@ -126,7 +122,6 @@ func (sm *SubmittingMember) SubmitDKGResult(
 
 			fmt.Printf("[member:%v] Submitting DKG result...\n", sm.index)
 			chainRelay.SubmitDKGResult(
-				signingId,
 				sm.index,
 				result,
 				signatures,
@@ -138,16 +133,14 @@ func (sm *SubmittingMember) SubmitDKGResult(
 					errorChannel <- err
 				})
 			return <-errorChannel
-		case submittedResultEvent := <-onSubmittedResultChan:
-			if submittedResultEvent.SigningId.Cmp(signingId) == 0 {
-				fmt.Printf(
-					"[member:%v] DKG result submitted by other member, leaving.\n",
-					sm.index,
-				)
-				// A result has been submitted by other member. Leave without
-				// publishing the result.
-				return returnWithError(nil)
-			}
+		case <-onSubmittedResultChan:
+			fmt.Printf(
+				"[member:%v] DKG result submitted by other member, leaving.\n",
+				sm.index,
+			)
+			// A result has been submitted by other member. Leave without
+			// publishing the result.
+			return returnWithError(nil)
 		}
 	}
 }
