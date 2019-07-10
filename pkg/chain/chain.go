@@ -1,7 +1,10 @@
 package chain
 
 import (
+	"math/big"
+
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 // BlockCounter is an interface that provides the ability to wait for a certain
@@ -36,9 +39,20 @@ type StakeMonitor interface {
 }
 
 // Handle represents a handle to a blockchain that provides access to the core
-// functionality needed for Keep network interactions.
+// operator functionality needed for Keep network interactions.
 type Handle interface {
 	BlockCounter() (BlockCounter, error)
 	StakeMonitor() (StakeMonitor, error)
 	ThresholdRelay() relaychain.Interface
+}
+
+// Utility represents a handle to a blockchain that provides access to certain
+// utility functions for Keep network interactions. Notably, these functions can
+// either be application or operator functionality, and they are generally not
+// part of the day-to-day process of operating a Keep node.
+type Utility interface {
+	Handle
+
+	Genesis() *async.RelayEntryPromise
+	RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 }
