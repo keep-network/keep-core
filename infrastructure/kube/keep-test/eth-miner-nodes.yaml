@@ -46,8 +46,6 @@ spec:
     spec:
       securityContext:
         fsGroup: 1000
-      imagePullSecrets:
-      - name: google-container-registry-auth
       containers:
       - name: miner
         image: gcr.io/keep-dev-fe24/eth-geth-node
@@ -64,7 +62,7 @@ spec:
         - name: NODE_NAME
           valueFrom:
             fieldRef:
-              fieldPath: metadata.name
+              fieldPath: spec.nodeName
         - name: HOST_IP
           valueFrom:
             fieldRef:

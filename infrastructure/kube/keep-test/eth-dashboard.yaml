@@ -8,7 +8,7 @@ metadata:
     kubernetes.io/ingress.allow-http: "true"
 spec:
   backend:
-    # This assumes http-svc exists and routes to healthy endpoints
+    # This assumes service eth-dashboard-http exists and routes to healthy endpoints
     serviceName: eth-dashboard-http
     servicePort: 8080
 ---
@@ -19,7 +19,7 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - name: atlantis-https-port
+  - name: eth-dashboard-http-port
     port: 8080
     targetPort: 3000
   selector:
@@ -61,8 +61,6 @@ spec:
     spec:
       securityContext:
         fsGroup: 1000
-      imagePullSecrets:
-      - name: google-container-registry-auth        
       containers:
       - name: eth-dashboard
         image: gcr.io/keep-dev-fe24/eth-dashboard-node
