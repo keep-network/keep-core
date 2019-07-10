@@ -464,13 +464,17 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
-     * @dev Checks if DKG protocol result has been already published for the
-     * currently ongoing group selection process.
+     * @dev Checks if group with the given public key is registered.
      */
-    function isGroupSelectionInProgress() public view returns(bool) {
-        return groupSelectionInProgress;
-    }
+    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
+        for (uint i = 0; i < groups.length; i++) {
+            if (groups[i].groupPubKey.equalStorage(groupPubKey)) {
+                return true;
+            }
+        }
 
+        return false;
+    }
 
     /**
      * @dev Prevent receiving ether without explicitly calling a function.

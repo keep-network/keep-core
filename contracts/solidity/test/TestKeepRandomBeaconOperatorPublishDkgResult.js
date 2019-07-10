@@ -82,7 +82,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     mineBlocks(resultPublicationTime - currentBlock);
 
     await operatorContract.submitDkgResult(1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: selectedParticipants[0]})
-    assert.isFalse(await operatorContract.isGroupSelectionInProgress(), "group selection should be completed");
+    assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
@@ -106,7 +106,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     mineBlocks(resultPublicationTime - currentBlock);
 
     await operatorContract.submitDkgResult(1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
-    assert.isFalse(await operatorContract.isGroupSelectionInProgress(), "group selection should be completed");
+    assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
@@ -133,7 +133,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     mineBlocks(eligibleBlockForSubmitter2 - currentBlock);
 
     await operatorContract.submitDkgResult(submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: submitter2})
-    assert.isFalse(await operatorContract.isGroupSelectionInProgress(), "group selection should be completed");
+    assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
@@ -142,6 +142,8 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
       1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, 
       {from: operator4})
     );
+
+    assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
   });
 
   it("should reject the result with invalid signatures.", async function() {
@@ -171,6 +173,8 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
       1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );
+
+    assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
   });
 
   it("should be able to submit the result with minimum number of valid signatures", async function() {
@@ -193,7 +197,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
       1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
 
-      assert.isFalse(await operatorContract.isGroupSelectionInProgress(), "group selection should be completed");
+      assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
       assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
@@ -217,5 +221,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
       1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );
+
+    assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
   });
 })
