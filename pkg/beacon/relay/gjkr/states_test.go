@@ -134,6 +134,7 @@ func doStateTransition(
 	// Once we have the message handler installed, we let all members to init
 	// the phase and send their messages if they want to.
 	for _, state := range states {
+		// TODO Should I logger this thingie?
 		fmt.Printf("[member:%v, state:%T] Executing\n", state.MemberIndex(), state)
 
 		if err := state.Initiate(); err != nil {

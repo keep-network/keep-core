@@ -105,7 +105,7 @@ func (es *ethereumStaker) OnStakeChanged(handle func(newStake *big.Int)) {
 			[]common.Address{common.HexToAddress(es.address)},
 		)
 		if err != nil {
-			fmt.Printf(
+			logger.Errorf(
 				"watch stake changed failed with: [%v]",
 				err,
 			)

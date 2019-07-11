@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -25,6 +27,8 @@ import (
 	bootstrap "github.com/keep-network/go-libp2p-bootstrap"
 	ma "github.com/multiformats/go-multiaddr"
 )
+
+var logger = log.Logger("keep-net-libp2p")
 
 // Defaults from ipfs
 const (
@@ -150,7 +154,7 @@ func (cm *connectionManager) DisconnectPeer(connectedPeer string) {
 	connections := cm.Network().ConnsToPeer(peer.ID(connectedPeer))
 	for _, connection := range connections {
 		if err := connection.Close(); err != nil {
-			fmt.Printf("disconnect resulted in error [%v]", err)
+			logger.Errorf("disconnect resulted in error: [%v]", err)
 		}
 	}
 }

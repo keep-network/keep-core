@@ -11,6 +11,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
+import "github.com/ipfs/go-log"
+
+var logger = log.Logger("keep-entry")
+
 const (
 	setupBlocks     = state.MessagingStateDelayBlocks
 	signatureBlocks = state.MessagingStateActiveBlocks

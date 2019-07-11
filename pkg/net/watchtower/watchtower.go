@@ -8,10 +8,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
+
+var logger = log.Logger("keep-net-watchtower")
 
 // Guard contains the state necessary to make connection pruning decisions.
 type Guard struct {
@@ -98,8 +102,8 @@ func (g *Guard) manageConnectionByStake(ctx context.Context, peer string) {
 	if err != nil {
 		// if we error while getting the peer's public key, the peer's id
 		// or key may be malformed/unknown; disconnect them immediately.
-		fmt.Printf(
-			"Dropping the connection - could not get public key for peer [%v]: [%v]\n",
+		logger.Infof(
+			"Dropping the connection - could not get public key for peer [%v]: [%v]",
 			peer,
 			err,
 		)
@@ -113,14 +117,14 @@ func (g *Guard) manageConnectionByStake(ctx context.Context, peer string) {
 	if err != nil {
 		// network issues with geth shouldn't cause disconnects from the
 		// network. Rather we'll abort the check and try again later.
-		fmt.Println(err)
+		logger.Infof("Error validating peer stake, retrying later: [%v].", err)
 		return
 	}
 
 	if !hasMinimumStake {
 		// if a peer doesn't have at least the min stake, disconnect them.
-		fmt.Printf(
-			"Peer [%v] has no minimal stake, dropping the connection.\n",
+		logger.Infof(
+			"Peer [%v] has no minimal stake, dropping the connection.",
 			peer,
 		)
 		g.connectionManager.DisconnectPeer(peer)

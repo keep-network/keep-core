@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/ipfs/go-log"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -17,6 +19,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
+
+var logger = log.Logger("keep-chain-ethereum")
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
 func (ec *ethereumChain) ThresholdRelay() relaychain.Interface {

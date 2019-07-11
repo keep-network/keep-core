@@ -76,7 +76,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	for {
 		select {
 		case err := <-errorChannel:
-			fmt.Printf(
+			logger.Errorf(
 				"error during ticket submission [%v]",
 				err,
 			)

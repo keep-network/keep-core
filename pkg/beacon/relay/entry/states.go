@@ -1,9 +1,7 @@
 package entry
 
 import (
-	"fmt"
 	"math/big"
-	"os"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
@@ -121,8 +119,8 @@ func (scs *signatureCompleteState) ActiveBlocks() uint64 {
 func (scs *signatureCompleteState) Initiate() error {
 	seenShares := make(map[group.MemberIndex]*bn256.G1)
 	seenShares[scs.MemberIndex()] = scs.selfSignatureShare
-	fmt.Printf(
-		"[member:%v] auto-accepting self signature share [%v]\n",
+	logger.Debugf(
+		"[member:%v] auto-accepting self signature share [%v]",
 		scs.MemberIndex(),
 		scs.MemberIndex(),
 	)
@@ -131,16 +129,15 @@ func (scs *signatureCompleteState) Initiate() error {
 		share := new(bn256.G1)
 		_, err := share.Unmarshal(message.shareBytes)
 		if err != nil {
-			fmt.Fprintf(
-				os.Stderr,
+			logger.Errorf(
 				"[member:%v] failed to unmarshal signature share from [%v]: [%v]",
 				scs.MemberIndex(),
 				message.senderID,
 				err,
 			)
 		} else {
-			fmt.Printf(
-				"[member:%v] accepting signature share from member [%v]\n",
+			logger.Debugf(
+				"[member:%v] accepting signature share from member [%v]",
 				scs.MemberIndex(),
 				message.senderID,
 			)
@@ -154,8 +151,8 @@ func (scs *signatureCompleteState) Initiate() error {
 		seenSharesSlice = append(seenSharesSlice, signatureShare)
 	}
 
-	fmt.Printf(
-		"[member:%v] restoring signature from [%v] shares...\n",
+	logger.Infof(
+		"[member:%v] restoring signature from [%v] shares...",
 		scs.MemberIndex(),
 		len(seenSharesSlice),
 	)

@@ -2,8 +2,8 @@ package beacon
 
 import (
 	"context"
-	"fmt"
-	"os"
+
+	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -13,6 +13,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/persistence"
 )
+
+var logger = log.Logger("keep-beacon")
 
 // Initialize kicks off the random beacon by initializing internal state,
 // ensuring preconditions like staking are met, and then kicking off the
@@ -49,7 +51,7 @@ func Initialize(
 	)
 
 	relayChain.OnSignatureRequested(func(request *event.Request) {
-		fmt.Printf("New relay entry requested [%+v]\n", request)
+		logger.Infof("New relay entry requested [%+v]", request)
 
 		go node.GenerateRelayEntryIfEligible(
 			request.SigningId,
@@ -62,7 +64,7 @@ func Initialize(
 	})
 
 	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
-		fmt.Printf("Group selection started [%+v]\n", event)
+		logger.Infof("Group selection started [%+v]", event)
 
 		go func() {
 			err := node.SubmitTicketsForGroupSelection(
@@ -73,13 +75,13 @@ func Initialize(
 				event.BlockNumber,
 			)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Tickets submission failed: [%v]\n", err)
+				logger.Errorf("Tickets submission failed: [%v]", err)
 			}
 		}()
 	})
 
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
-		fmt.Printf("New group registered on chain [%+v]\n", registration)
+		logger.Infof("New group registered on chain [%+v]", registration)
 		go groupRegistry.UnregisterStaleGroups()
 	})
 
