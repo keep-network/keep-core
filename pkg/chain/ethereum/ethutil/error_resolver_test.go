@@ -137,6 +137,8 @@ func TestErrorResolverHandlesUnknownMethodResponses(t *testing.T) {
 }
 
 func TestErrorResolverHandlesBadParameterResponses(t *testing.T) {
+	// method ABI signature for the basic error construction we get back in case
+	// of a require failing.
 	caller := &fixedReturnCaller{[]byte{8, 195, 121, 160}}
 	resolver := ethutil.NewErrorResolver(caller, &testABI, &testAddress)
 

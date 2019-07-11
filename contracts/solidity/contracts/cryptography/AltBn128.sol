@@ -1,6 +1,6 @@
 pragma solidity ^0.5.4;
 
-import "./ModUtils.sol";
+import "../utils/ModUtils.sol";
 
 /**
  * @title Operations on alt_bn128

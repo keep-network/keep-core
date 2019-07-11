@@ -56,8 +56,6 @@ func TestSubmitDKGResult(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			requestID := big.NewInt(101)
-
 			member := &SubmittingMember{
 				index: group.MemberIndex(test.memberIndex),
 			}
@@ -70,7 +68,7 @@ func TestSubmitDKGResult(t *testing.T) {
 
 			relayChain := chainHandle.ThresholdRelay()
 
-			isSubmitted, err := relayChain.IsDKGResultSubmitted(requestID)
+			isSubmitted, err := relayChain.IsGroupRegistered(result.GroupPublicKey)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -82,7 +80,6 @@ func TestSubmitDKGResult(t *testing.T) {
 			blockCounter, _ := chainHandle.BlockCounter()
 
 			err = member.SubmitDKGResult(
-				requestID,
 				result,
 				signatures,
 				relayChain,
@@ -101,7 +98,7 @@ func TestSubmitDKGResult(t *testing.T) {
 					currentBlock,
 				)
 			}
-			isSubmitted, err = relayChain.IsDKGResultSubmitted(requestID)
+			isSubmitted, err = relayChain.IsGroupRegistered(result.GroupPublicKey)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -136,8 +133,6 @@ func TestConcurrentPublishResult(t *testing.T) {
 	var tests = map[string]struct {
 		resultToPublish1  *relayChain.DKGResult
 		resultToPublish2  *relayChain.DKGResult
-		requestID1        *big.Int
-		requestID2        *big.Int
 		expectedDuration1 func(tStep uint64) uint64 // index * t_step
 		expectedDuration2 func(tStep uint64) uint64 // index * t_step
 	}{
@@ -148,8 +143,6 @@ func TestConcurrentPublishResult(t *testing.T) {
 			resultToPublish2: &relayChain.DKGResult{
 				GroupPublicKey: []byte{101},
 			},
-			requestID1:        big.NewInt(11),
-			requestID2:        big.NewInt(11),
 			expectedDuration1: func(tStep uint64) uint64 { return 0 }, // (P1-1) * t_step
 			expectedDuration2: func(tStep uint64) uint64 { return 0 }, // result already published by member 1 -1
 		},
@@ -160,24 +153,8 @@ func TestConcurrentPublishResult(t *testing.T) {
 			resultToPublish2: &relayChain.DKGResult{
 				GroupPublicKey: []byte{202},
 			},
-			requestID1:        big.NewInt(11),
-			requestID2:        big.NewInt(11),
 			expectedDuration1: func(tStep uint64) uint64 { return 0 }, // (P1-1) * t_step
 			expectedDuration2: func(tStep uint64) uint64 { return 0 }, // result already published by member 1 -1
-		},
-		"two members publish the same results for different Request IDs": {
-			resultToPublish1: &relayChain.DKGResult{
-				GroupPublicKey: []byte{101},
-			},
-			resultToPublish2: &relayChain.DKGResult{
-				GroupPublicKey: []byte{101},
-			},
-			requestID1:        big.NewInt(12),
-			requestID2:        big.NewInt(13),
-			expectedDuration1: func(tStep uint64) uint64 { return 0 }, // (P1-1) * t_step
-			expectedDuration2: func(tStep uint64) uint64 {
-				return (uint64(member2.index) - 1) * tStep // (P4-1) * t_step
-			},
 		},
 	}
 	for testName, test := range tests {
@@ -207,7 +184,6 @@ func TestConcurrentPublishResult(t *testing.T) {
 				blockCounter, _ := chainHandle.BlockCounter()
 
 				err := member1.SubmitDKGResult(
-					test.requestID1,
 					test.resultToPublish1,
 					signatures,
 					chainHandle.ThresholdRelay(),
@@ -226,7 +202,6 @@ func TestConcurrentPublishResult(t *testing.T) {
 				blockCounter, _ := chainHandle.BlockCounter()
 
 				err := member2.SubmitDKGResult(
-					test.requestID2,
 					test.resultToPublish2,
 					signatures,
 					chainHandle.ThresholdRelay(),

@@ -6,7 +6,7 @@ const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const StakingProxy = artifacts.require('./StakingProxy.sol');
 
-contract('KeepToken', function(accounts) {
+contract('TestTokenStake', function(accounts) {
 
   let token, grantContract, stakingContract, stakingProxy,
     account_one = accounts[0],
@@ -16,7 +16,7 @@ contract('KeepToken', function(accounts) {
     account_two_operator = accounts[4],
     account_two_magpie = accounts[5];
 
-  beforeEach(async () => {
+  before(async () => {
     token = await KeepToken.new();
     stakingProxy = await StakingProxy.new();
     stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));

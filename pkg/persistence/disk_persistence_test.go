@@ -1,10 +1,12 @@
 package persistence
 
 import (
-	"bytes"
 	"fmt"
 	"os"
+	"sync"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
 
 var (
@@ -54,20 +56,49 @@ func TestDiskPersistence_ReadAll(t *testing.T) {
 	diskPersistence.Save(bytesToTest, dirName1, fileName12)
 	diskPersistence.Save(bytesToTest, dirName2, fileName21)
 
-	actual, _ := diskPersistence.ReadAll()
+	dataChannel, errChannel := diskPersistence.ReadAll()
 
-	if len(actual) != 3 {
-		t.Fatalf("Number of files does not match. \nExpected: [%+v]\nActual:   [%+v]",
+	var descriptors []DataDescriptor
+	var errors []error
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		for e := range errChannel {
+			errors = append(errors, e)
+		}
+		wg.Done()
+	}()
+
+	go func() {
+		for d := range dataChannel {
+			descriptors = append(descriptors, d)
+		}
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	for err := range errors {
+		t.Fatal(err)
+	}
+
+	if len(descriptors) != 3 {
+		t.Fatalf(
+			"Number of descriptors does not match\nExpected: [%v]\nActual:   [%v]",
 			3,
-			len(actual))
+			len(descriptors),
+		)
 	}
 
 	for i := 0; i < 3; i++ {
-		if !bytes.Equal(expectedBytes[i], actual[i]) {
-			t.Fatalf("Bytes do not match. \nExpected: [%+v]\nActual:   [%+v]",
-				bytesToTest,
-				actual)
+		fileContent, err := descriptors[i].Content()
+		if err != nil {
+			t.Fatal(err)
 		}
+
+		testutils.AssertBytesEqual(t, expectedBytes[i], fileContent)
 	}
 }
 

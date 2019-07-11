@@ -9,10 +9,8 @@
     KeyFile = "/mnt/eth-data/eth-keyfile"
 
   [ethereum.ContractAddresses]
-    # Hex-encoded address of KeepRandomBeacon contract
-    KeepRandomBeacon = "Set by Kube"
-    # Hex-encoded address of KeepGroup contract
-    KeepGroup = "Set by Kube"
+    # Hex-encoded address of KeepRandomBeaconOperator contract
+    KeepRandomBeaconOperator = "Set by Kube"
     # StakingProxy
     StakingProxy = "Set by Kube"
 

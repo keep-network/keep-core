@@ -1,9 +1,9 @@
-const BLS = artifacts.require('./BLS.sol');
+const BLS = artifacts.require('./cryptography/BLS.sol');
 
 contract('TestBLS', function() {
 
   let bls;
-  beforeEach(async () => {
+  before(async () => {
     bls = await BLS.new();
   });
 
@@ -15,7 +15,7 @@ contract('TestBLS', function() {
       "0x48656c6c6f21",
       "0x884b130ed81751b63d0f5882483d4a24a7640bdf371f23b78dbeb520c84e3a85"
     )
-    assert.equal(result, true, "Should be able to verify valid BLS signature.");
+    assert.isTrue(result, "Should be able to verify valid BLS signature.");
   });
 
   it("should be able to verify BLS aggregated signature", async function() {
@@ -26,7 +26,7 @@ contract('TestBLS', function() {
       "0x48656c6c6f21",
       "0xafd0185522d03e015e2165ad450af72a3b601673e8b41bc7f07014aa80892b24"
     )
-    assert.equal(result, true, "Should be able to verify valid BLS signature.");
+    assert.isTrue(result, "Should be able to verify valid BLS signature.");
   });
 
   it("should fail to verify non valid BLS signature", async function() {
@@ -36,7 +36,7 @@ contract('TestBLS', function() {
       "0x48656c6c6f21",
       "0x884b130ed81751b63d0f5882483d4a24a7640bdf371f23b78dbeb520c84e3a85"
     )
-    assert.equal(result, false, "Should return false for failed verification.");
+    assert.isFalse(result, "Should return false for failed verification.");
   });
 
   it("should fail to verify BLS signature without valid message", async function() {
@@ -46,7 +46,7 @@ contract('TestBLS', function() {
       "0x123456789",
       "0xafd0185522d03e015e2165ad450af72a3b601673e8b41bc7f07014aa80892b24"
     )
-    assert.equal(result, false, "Should return false for failed verification.");
+    assert.isFalse(result, "Should return false for failed verification.");
   });
 
   it("should fail to verify BLS signature without valid public key", async function() {
@@ -56,6 +56,6 @@ contract('TestBLS', function() {
       "0x48656c6c6f21",
       "0xafd0185522d03e015e2165ad450af72a3b601673e8b41bc7f07014aa80892b24"
     )
-    assert.equal(result, false, "Should return false for failed verification.");
+    assert.isFalse(result, "Should return false for failed verification.");
   });
 });

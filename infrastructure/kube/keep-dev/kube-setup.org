@@ -451,10 +451,8 @@ keep-client-config.toml:
   KeyFile            = "/mnt/eth-data/eth-keyfile"
 
 [ethereum.ContractAddresses]
-  # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x9d28652e7777946a5Cf1E738E38024cb14993be9"
-  # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
+  # Hex-encoded address of KeepRandomBeaconOperator contract
+  KeepRandomBeaconOperator = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
   # StakingProxy
   Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
@@ -539,10 +537,8 @@ keep-client-config.toml:
   KeyFile            = "/mnt/eth-data/eth-keyfile"
 
 [ethereum.ContractAddresses]
-  # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x9d28652e7777946a5Cf1E738E38024cb14993be9"
-  # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
+  # Hex-encoded address of KeepRandomBeaconOperator contract
+  KeepRandomBeaconOperator = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
   # StakingProxy
   Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
@@ -626,10 +622,8 @@ keep-client-config.toml:
   KeyFile            = "/mnt/eth-data/eth-keyfile"
 
 [ethereum.ContractAddresses]
-  # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x9d28652e7777946a5Cf1E738E38024cb14993be9"
-  # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
+  # Hex-encoded address of KeepRandomBeaconOperator contract
+  KeepRandomBeaconOperator = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
   # StakingProxy
   Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
@@ -713,10 +707,8 @@ keep-client-config.toml:
   KeyFile            = "/mnt/eth-data/eth-keyfile"
 
 [ethereum.ContractAddresses]
-  # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x9d28652e7777946a5Cf1E738E38024cb14993be9"
-  # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
+  # Hex-encoded address of KeepRandomBeaconOperator contract
+  KeepRandomBeaconOperator = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
   # StakingProxy
   Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 
@@ -799,10 +791,8 @@ keep-client-config.toml:
   KeyFile            = "/mnt/eth-data/eth-keyfile"
 
 [ethereum.ContractAddresses]
-  # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x9d28652e7777946a5Cf1E738E38024cb14993be9"
-  # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
+  # Hex-encoded address of KeepRandomBeaconOperator contract
+  KeepRandomBeaconOperator = "0xc9e8CA4765A797C2d614a87de000b35240b86610"
   # StakingProxy
   Staking = "0xC3920F936b251DFE4B4b62C3b62FB530D032a090"
 

@@ -2,7 +2,6 @@ package result
 
 import (
 	"fmt"
-	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
@@ -19,7 +18,6 @@ import (
 // along with everyone's votes.
 func Publish(
 	playerIndex group.MemberIndex,
-	requestID *big.Int,
 	dkgGroup *group.Group,
 	result *gjkr.Result,
 	channel net.BroadcastChannel,
@@ -33,7 +31,6 @@ func Publish(
 		relayChain:              relayChain,
 		blockCounter:            blockCounter,
 		member:                  NewSigningMember(playerIndex, dkgGroup, privateKey),
-		requestID:               requestID,
 		result:                  convertResult(result, dkgGroup.GroupSize()),
 		signatureMessages:       make([]*DKGResultHashSignatureMessage, 0),
 		signingStartBlockHeight: startBlockHeight,

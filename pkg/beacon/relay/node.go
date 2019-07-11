@@ -49,7 +49,6 @@ type Node struct {
 func (n *Node) JoinGroupIfEligible(
 	relayChain relaychain.Interface,
 	groupSelectionResult *groupselection.Result,
-	entryRequestID *big.Int,
 	entrySeed *big.Int,
 	dkgStartBlockHeight uint64,
 ) {
@@ -82,7 +81,6 @@ func (n *Node) JoinGroupIfEligible(
 
 			go func() {
 				signer, err := dkg.ExecuteDKG(
-					entryRequestID,
 					entrySeed,
 					playerIndex,
 					n.chainConfig.GroupSize,

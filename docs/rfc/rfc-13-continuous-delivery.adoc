@@ -75,10 +75,8 @@ contracts before clients due to client startup behavior.
   KeyFile            = "path/to/in-use/keyfile"
 
 [ethereum.ContractAddresses]
-  # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x6299496199d9922193fdd2d717ef585f431er01"
-  # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0x6299496449d11141193fdd2d717ef585f431er02"
+  # Hex-encoded address of KeepRandomBeaconOperator contract
+  KeepRandomBeaconOperator = "0x6299496449d11141193fdd2d717ef585f431er02"
   # StakingProxy
   Staking = "0x6297776199d99942293fdd2d717ef585f431er03"
 
@@ -104,10 +102,8 @@ contracts before clients due to client startup behavior.
   KeyFile            = "path/to/in-use/keyfile"
 
 [ethereum.ContractAddresses]
-  # Hex-encoded address of KeepRandomBeacon contract
-  KeepRandomBeacon = "0x6299496199d9922193fdd2d717ef585f431er01"
-  # Hex-encoded address of KeepGroup contract
-  KeepGroup = "0x6299496449d11141193fdd2d717ef585f431er02"
+  # Hex-encoded address of KeepRandomBeaconOperator contract
+  KeepRandomBeaconOperator = "0x6299496449d11141193fdd2d717ef585f431er02"
   # Hex-encoded address of StakingProxy contract
   Staking = "0x6297776199d99942293fdd2d717ef585f431er03"
 

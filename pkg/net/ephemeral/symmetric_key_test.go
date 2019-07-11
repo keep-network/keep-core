@@ -1,10 +1,7 @@
 package ephemeral
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
 	"fmt"
-	"io"
 	"reflect"
 	"testing"
 )
@@ -90,10 +87,15 @@ func TestGracefullyHandleBrokenCipher(t *testing.T) {
 }
 
 func newEcdhSymmetricKey() (*SymmetricEcdhKey, error) {
-	var bytes [sha256.Size]byte
-	if _, err := io.ReadFull(rand.Reader, bytes[:]); err != nil {
+	keyPair1, err := GenerateKeyPair()
+	if err != nil {
 		return nil, err
 	}
 
-	return &SymmetricEcdhKey{bytes}, nil
+	keyPair2, err := GenerateKeyPair()
+	if err != nil {
+		return nil, err
+	}
+
+	return keyPair1.PrivateKey.Ecdh(keyPair2.PublicKey), nil
 }

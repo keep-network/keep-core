@@ -8,9 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/math"
 )
 
-// TransactionHash is a container for a transaction hash that can be set from
-// and converted to a string. It is compatible with the interface used by
-// urfave/cli to specify flag types.
+// TransactionHash can be used as a cli.Flag.Value that captures a transaction
+// hash from a command-line flag.
 type TransactionHash struct {
 	Hash *common.Hash
 }
@@ -48,7 +47,8 @@ func (tg *TransactionHash) String() string {
 	return tg.Hash.Hex()
 }
 
-// Uint256 turns *big.Int into a flag.Value.
+// Uint256 can be used as a cli.Flag.Value that captures a 256-bit big.Int value
+// from a command-line flag.
 type Uint256 struct {
 	Uint *big.Int
 }
