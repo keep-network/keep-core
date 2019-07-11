@@ -44,9 +44,8 @@ type GroupTicketSubmission struct {
 	BlockNumber uint64
 }
 
-// GroupRegistration represents a registered group in the threshold relay with a
-// public key, that is considered active at ActivationBlockHeight, and was
-// spawned by the relay request with id, SigningId.
+// GroupRegistration represents an event of registering a new group with the
+// given public key.
 type GroupRegistration struct {
 	GroupPublicKey []byte
 
