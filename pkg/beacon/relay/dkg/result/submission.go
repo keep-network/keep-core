@@ -31,9 +31,9 @@ func NewSubmittingMember(
 // signatures, to the chain.
 //
 // It checks if the result has already been published to the blockchain by
-// checking if group with the given public key is already registered. If not, it
-// determines if the current member is eligible to submit a result. If allowed,
-// it submits the result to the chain.
+// checking if a group with the given public key is already registered. If not,
+// it determines if the current member is eligible to submit a result.
+// If allowed, it submits the result to the chain.
 //
 // A user's turn to publish is determined based on the user's index and block
 // step.
