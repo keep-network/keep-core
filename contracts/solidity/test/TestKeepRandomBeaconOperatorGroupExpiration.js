@@ -21,7 +21,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
     groupActiveTime = (await operatorContract.groupActiveTime()).toNumber();
     activeGroupsThreshold = (await operatorContract.activeGroupsThreshold()).toNumber();
     serviceContract = contracts.serviceContract;
-    relayRequestTimeout = (await operatorContract.relayRequestTimeout()).toNumber();
+    relayRequestTimeout = (await operatorContract.relayEntryTimeout()).toNumber();
   });
 
   async function addGroups(numberOfGroups) {

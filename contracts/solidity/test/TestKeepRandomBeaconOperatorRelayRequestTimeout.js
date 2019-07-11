@@ -39,7 +39,7 @@ contract('TestKeepRandomBeaconOperatorRelayRequestTimeout', function(accounts) {
     it("should throw an error when sigining is in progress and the block number <= relay entry timeout", async function() {
       await serviceContract.requestRelayEntry(bls.seed, {value: 10});
 
-      await expectThrowWithMessage(serviceContract.requestRelayEntry(bls.seed, {value: 10}), 'Relay entry request is in progress.');
+      await expectThrowWithMessage(serviceContract.requestRelayEntry(bls.seed, {value: 10}), 'Relay entry is in progress.');
     })
 
     it("should not throw an error when sigining is not in progress and the block number > relay entry timeout", async function() {
