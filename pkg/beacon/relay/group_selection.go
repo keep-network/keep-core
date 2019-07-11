@@ -28,7 +28,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
 	beaconValue []byte,
-	entrySigningId *big.Int,
 	entrySeed *big.Int,
 	startBlockHeight uint64,
 ) error {
@@ -102,7 +101,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			go n.JoinGroupIfEligible(
 				relayChain,
 				&groupselection.Result{SelectedStakers: selectedStakers},
-				entrySigningId,
 				entrySeed,
 				challengeEndBlockHeight,
 			)
