@@ -1,6 +1,6 @@
-export default async function grantTokens(grantContract, token, amount, from, beneficiary, vestingDuration, start, cliff, revocable) {
+export default async function grantTokens(grantContract, token, amount, from, grantee, vestingDuration, start, cliff, revocable) {
   await token.approve(grantContract.address, amount, {from: from});
-  return await grantContract.grant(amount, beneficiary, vestingDuration,
+  return await grantContract.grant(amount, grantee, vestingDuration,
     start, cliff, revocable, {from: from}).then((result)=>{
     // Look for CreatedTokenGrant event in transaction receipt and get grant id
     for (var i = 0; i < result.logs.length; i++) {

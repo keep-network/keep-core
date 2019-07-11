@@ -8,7 +8,7 @@ import "./utils/UintArrayUtils.sol";
  * @title TokenGrant
  * @dev A token grant contract for a specified standard ERC20 token.
  * Has additional functionality to stake/unstake token grants.
- * Tokens are granted to the beneficiary via vesting scheme and can be
+ * Tokens are granted to the grantee via vesting scheme and can be
  * released gradually based on the vesting schedule cliff and vesting duration.
  * Optionally grant can be revoked by the token grant creator.
  */
@@ -24,7 +24,7 @@ contract TokenGrant is StakeDelegatable {
 
     struct Grant {
         address owner; // Creator of token grant.
-        address beneficiary; // Address to which granted tokens are going to be released.
+        address grantee; // Address to which granted tokens are going to be released.
         bool staked; // Whether the grant is staked.
         bool revoked; // Whether the grant was revoked by the creator.
         bool revocable; // Whether creator of grant can revoke it.
@@ -32,7 +32,7 @@ contract TokenGrant is StakeDelegatable {
         uint256 duration; // Duration in seconds of the period in which the granted tokens will vest.
         uint256 start; // Timestamp at which vesting will start.
         uint256 cliff; // Duration in seconds of the cliff after which tokens will begin to vest.
-        uint256 released; // Amount that was released to the beneficiary.
+        uint256 released; // Amount that was released to the grantee.
     }
 
     uint256 public numGrants;
@@ -41,12 +41,12 @@ contract TokenGrant is StakeDelegatable {
     mapping(uint256 => Grant) public grants;
 
     // Mapping of token grant IDs per particular address
-    // involved in a grant as a beneficiary or as a creator.
+    // involved in a grant as a grantee or as a creator.
     mapping(address => uint256[]) public grantIndices;
 
-    // Token grants balances. Sum of all granted tokens to a beneficiary.
+    // Token grants balances. Sum of all granted tokens to a grantee.
     // This includes granted tokens that are already vested and
-    // available to be released to the beneficiary
+    // available to be released to the grantee
     mapping(address => uint256) public balances;
 
     // Token grants stake withdrawals.
@@ -107,22 +107,22 @@ contract TokenGrant is StakeDelegatable {
 
     /**
      * @dev Gets grant ids of the specified address.
-     * @param _beneficiaryOrCreator The address to query.
+     * @param _granteeOrCreator The address to query.
      * @return An uint256 array of grant IDs.
      */
-    function getGrants(address _beneficiaryOrCreator) public view returns (uint256[] memory) {
-        return grantIndices[_beneficiaryOrCreator];
+    function getGrants(address _granteeOrCreator) public view returns (uint256[] memory) {
+        return grantIndices[_granteeOrCreator];
     }
 
     /**
      * @notice Creates a token grant with a vesting schedule where balance released to the
-     * beneficiary gradually in a linear fashion until start + duration. By then all
+     * grantee gradually in a linear fashion until start + duration. By then all
      * of the balance will have vested. You must approve the amount you want to grant
      * by calling approve() method of the token contract first.
      * @dev Transfers token amount from sender to this token grant contract
      * Sender should approve the amount first by calling approve() on the token contract.
      * @param _amount to be granted.
-     * @param _beneficiary address to which granted tokens are going to be released.
+     * @param _grantee address to which granted tokens are going to be released.
      * @param _cliff duration in seconds of the cliff after which tokens will begin to vest.
      * @param _duration duration in seconds of the period in which the tokens will vest.
      * @param _start timestamp at which vesting will start.
@@ -130,36 +130,36 @@ contract TokenGrant is StakeDelegatable {
      */
     function grant(
         uint256 _amount,
-        address _beneficiary,
+        address _grantee,
         uint256 _duration,
         uint256 _start,
         uint256 _cliff,
         bool _revocable
     ) public returns (uint256) {
-        require(_beneficiary != address(0), "Beneficiary address can't be zero.");
+        require(_grantee != address(0), "Grantee address can't be zero.");
         require(_cliff <= _duration, "Vesting cliff duration must be less or equal total vesting duration.");
         require(_amount <= token.balanceOf(msg.sender), "Sender must have enough amount.");
 
         uint256 id = numGrants++;
-        grants[id] = Grant(msg.sender, _beneficiary, false, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0);
+        grants[id] = Grant(msg.sender, _grantee, false, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0);
         
         // Maintain a record to make it easier to query grants by creator.
         grantIndices[msg.sender].push(id);
 
-        // Maintain a record to make it easier to query grants by beneficiary.
-        grantIndices[_beneficiary].push(id);
+        // Maintain a record to make it easier to query grants by grantee.
+        grantIndices[_grantee].push(id);
 
         token.transferFrom(msg.sender, address(this), _amount);
 
         // Maintain a record of the vested amount 
-        balances[_beneficiary] = balances[_beneficiary].add(_amount);
+        balances[_grantee] = balances[_grantee].add(_amount);
         emit CreatedTokenGrant(id);
         return id;
     }
 
     /**
-     * @notice Releases Token grant amount to beneficiary.
-     * @dev Transfers vested tokens of the token grant to beneficiary.
+     * @notice Releases Token grant amount to grantee.
+     * @dev Transfers vested tokens of the token grant to grantee.
      * @param _id Grant ID.
      */
     function release(uint256 _id) public {
@@ -170,11 +170,11 @@ contract TokenGrant is StakeDelegatable {
         // Update released amount.
         grants[_id].released = grants[_id].released.add(unreleased);
 
-        // Update beneficiary grants balance.
-        balances[grants[_id].beneficiary] = balances[grants[_id].beneficiary].sub(unreleased);
+        // Update grantee grants balance.
+        balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(unreleased);
 
-        // Transfer tokens from this contract balance to the beneficiary token balance.
-        token.safeTransfer(grants[_id].beneficiary, unreleased);
+        // Transfer tokens from this contract balance to the grantee token balance.
+        token.safeTransfer(grants[_id].grantee, unreleased);
 
         emit ReleasedTokenGrant(unreleased);
     }
@@ -182,7 +182,7 @@ contract TokenGrant is StakeDelegatable {
     /**
      * @notice Calculates and returns vested grant amount.
      * @dev Calculates token grant amount that has already vested, 
-     * including any tokens that have already been withdrawn by the beneficiary as well 
+     * including any tokens that have already been withdrawn by the grantee as well 
      * as any tokens that are available to withdraw but have not yet been withdrawn.
      * @param _id Grant ID.
      */
@@ -221,7 +221,7 @@ contract TokenGrant is StakeDelegatable {
         require(!grants[_id].staked, "Grant must not be staked.");
         require(!grants[_id].revoked, "Grant must not be revoked.");
     
-        require(grants[_id].beneficiary == msg.sender, "Only beneficiary of the grant can stake it.");
+        require(grants[_id].grantee == msg.sender, "Only grantee of the grant can stake it.");
         // Calculate available amount. Amount of vested tokens minus what user already released.
         uint256 available = grants[_id].amount.sub(grants[_id].released);
         require(available > 0, "Must have available granted amount to stake.");
@@ -239,10 +239,10 @@ contract TokenGrant is StakeDelegatable {
         // Mark as staked. This also locks grant from releasing its balance.
         grants[_id].staked = true;
 
-        // Mark operator as a grant beneficiary.
-        grants[_id].beneficiary = operator;
+        // Mark operator as a grant grantee.
+        grants[_id].grantee = operator;
     
-        // Transfer tokens to beneficiary's grants stake balance.
+        // Transfer tokens to grantee's grants stake balance.
         stakeBalances[operator] = stakeBalances[operator].add(available);
     }
 
@@ -252,7 +252,7 @@ contract TokenGrant is StakeDelegatable {
      */
     function initiateUnstake(uint256 _id) public {
         require(
-            msg.sender == grants[_id].beneficiary || msg.sender == operatorToOwner[grants[_id].beneficiary],
+            msg.sender == grants[_id].grantee || msg.sender == operatorToOwner[grants[_id].grantee],
             "Only operator or the owner of the stake can initiate unstake."
         );
         require(grants[_id].staked, "Grant must be staked.");
@@ -292,14 +292,14 @@ contract TokenGrant is StakeDelegatable {
         require(available >= 0, "Must have available granted amount to unstake.");
 
         // Get the operator and owner addresses
-        address operator = grants[_id].beneficiary;
+        address operator = grants[_id].grantee;
         address owner = operatorToOwner[operator];
 
         // Remove tokens from granted stake balance.
         stakeBalances[operator] = stakeBalances[operator].sub(available);
 
-        // Mark stake owner back as the grant beneficiary.
-        grants[_id].beneficiary = owner;
+        // Mark stake owner back as the grant grantee.
+        grants[_id].grantee = owner;
 
         // Release operator
         operatorToOwner[operator] = address(0);
@@ -308,7 +308,7 @@ contract TokenGrant is StakeDelegatable {
 
     /**
      * @notice Allows the creator of the token grant to revoke it. 
-     * @dev Granted tokens that are already vested (releasable amount) remain so beneficiary can still release them
+     * @dev Granted tokens that are already vested (releasable amount) remain so grantee can still release them
      * the rest are returned to the token grant creator.
      * @param _id Grant ID.
      */
@@ -323,8 +323,8 @@ contract TokenGrant is StakeDelegatable {
         uint256 refund = grants[_id].amount.sub(unreleased);
         grants[_id].revoked = true;
 
-        // Update beneficiary's grants balance.
-        balances[grants[_id].beneficiary] = balances[grants[_id].beneficiary].sub(refund);
+        // Update grantee's grants balance.
+        balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(refund);
 
         // Transfer tokens from this contract balance to the creator of the token grant.
         token.safeTransfer(grants[_id].owner, refund);

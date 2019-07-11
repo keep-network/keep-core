@@ -36,18 +36,18 @@ contract('TestTokenGrantStake', function(accounts) {
     let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
     let delegation = Buffer.concat([Buffer.from(account_two_magpie.substr(2), 'hex'), signature]);
 
-    // should throw if stake granted tokens called by anyone except grant beneficiary
+    // should throw if stake granted tokens called by anyone except grant grantee
     await exceptThrow(grantContract.stake(id, delegation));
 
-    // stake granted tokens can be only called by grant beneficiary
+    // stake granted tokens can be only called by grant grantee
     await grantContract.stake(id, delegation, {from: account_two});
     let account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.eq(amount), true, "Should stake grant amount");
 
-    // should throw if initiate unstake called by anyone except grant beneficiary
+    // should throw if initiate unstake called by anyone except grant grantee
     await exceptThrow(grantContract.initiateUnstake(id));
 
-    // Initiate unstake of granted tokens by grant beneficiary
+    // Initiate unstake of granted tokens by grant grantee
     let stakeWithdrawalId = await grantContract.initiateUnstake(id, {from: account_two}).then((result)=>{
       // Look for InitiatedTokenGrantUnstake event in transaction receipt and get stake withdrawal id
       for (var i = 0; i < result.logs.length; i++) {
