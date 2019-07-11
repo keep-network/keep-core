@@ -296,13 +296,11 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 	return ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
 		func(
 			newEntry *big.Int,
-			signingId *big.Int,
 			seed *big.Int,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupSelectionStart{
 				NewEntry:    newEntry,
-				SigningId:   signingId,
 				Seed:        seed,
 				BlockNumber: blockNumber,
 			})
@@ -321,13 +319,11 @@ func (ec *ethereumChain) OnGroupRegistered(
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchDkgResultPublishedEvent(
 		func(
-			signingId *big.Int,
 			groupPublicKey []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupRegistration{
 				GroupPublicKey: groupPublicKey,
-				SigningId:      signingId,
 				BlockNumber:    blockNumber,
 			})
 		},
@@ -337,8 +333,8 @@ func (ec *ethereumChain) OnGroupRegistered(
 	)
 }
 
-func (ec *ethereumChain) IsDKGResultSubmitted(signingId *big.Int) (bool, error) {
-	return ec.keepRandomBeaconOperatorContract.IsDkgResultSubmitted(signingId)
+func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+	return ec.keepRandomBeaconOperatorContract.IsGroupRegistered(groupPublicKey)
 }
 
 func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
@@ -349,9 +345,8 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchDkgResultPublishedEvent(
-		func(signingId *big.Int, groupPubKey []byte, blockNumber uint64) {
+		func(groupPubKey []byte, blockNumber uint64) {
 			handler(&event.DKGResultSubmission{
-				SigningId:      signingId,
 				GroupPublicKey: groupPubKey,
 				BlockNumber:    blockNumber,
 			})
@@ -366,7 +361,6 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 }
 
 func (ec *ethereumChain) SubmitDKGResult(
-	signingId *big.Int,
 	participantIndex group.MemberIndex,
 	result *relaychain.DKGResult,
 	signatures map[group.MemberIndex]operator.Signature,
@@ -408,21 +402,19 @@ func (ec *ethereumChain) SubmitDKGResult(
 					return
 				}
 
-				if event.SigningId.Cmp(signingId) == 0 {
-					subscription.Unsubscribe()
-					close(publishedResult)
+				subscription.Unsubscribe()
+				close(publishedResult)
 
-					err := resultPublicationPromise.Fulfill(event)
-					if err != nil {
-						fmt.Fprintf(
-							os.Stderr,
-							"fulfilling promise failed with [%v]\n",
-							err,
-						)
-					}
-
-					return
+				err := resultPublicationPromise.Fulfill(event)
+				if err != nil {
+					fmt.Fprintf(
+						os.Stderr,
+						"fulfilling promise failed with [%v]\n",
+						err,
+					)
 				}
+
+				return
 			}
 		}
 	}()
@@ -436,7 +428,6 @@ func (ec *ethereumChain) SubmitDKGResult(
 	}
 
 	if _, err = ec.keepRandomBeaconOperatorContract.SubmitDkgResult(
-		signingId,
 		participantIndex.Int(),
 		result.GroupPublicKey,
 		result.Disqualified,

@@ -14,7 +14,6 @@ import (
 
 // ExecuteDKG runs the full distributed key generation lifecycle.
 func ExecuteDKG(
-	signingId *big.Int,
 	seed *big.Int,
 	index int, // starts with 0
 	groupSize int,
@@ -53,7 +52,6 @@ func ExecuteDKG(
 
 	err = dkgResult.Publish(
 		playerIndex,
-		signingId,
 		gjkrResult.Group,
 		gjkrResult,
 		channel,

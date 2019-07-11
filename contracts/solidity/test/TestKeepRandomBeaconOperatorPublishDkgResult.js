@@ -17,7 +17,6 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
   operator3 = accounts[2],
   operator4 = accounts[3],
   resultPublicationTime, groupThreshold,
-  signingId = 0,
   selectedParticipants, signatures, signingMemberIndices = [],
   disqualified = '0x0000000000000000000000000000000000000000',
   inactive = '0x0000000000000000000000000000000000000000',
@@ -78,17 +77,16 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
   });
 
   it("should be able to submit correct result as first member after DKG finished.", async function() {
-
     // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await operatorContract.submitDkgResult(signingId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: selectedParticipants[0]})
-    assert.isTrue(await operatorContract.isDkgResultSubmitted.call(signingId), "DkgResult should be submitted");
+    await operatorContract.submitDkgResult(1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: selectedParticipants[0]})
+    assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
+    assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
   it("should be able to submit correct result with unordered signatures and indexes.", async function() {
-
     let unorderedSigningMembersIndexes = [];
     for (let i = 0; i < selectedParticipants.length; i++) {
       unorderedSigningMembersIndexes[i] = i + 1;
@@ -107,12 +105,12 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await operatorContract.submitDkgResult(signingId, 1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
-    assert.isTrue(await operatorContract.isDkgResultSubmitted.call(signingId), "DkgResult should should be submitted");
+    await operatorContract.submitDkgResult(1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
+    assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
+    assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
   it("should only be able to submit result at eligible block time based on member index.", async function() {
-
     let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
     let submitter1MemberIndex = 4;
     let submitter2MemberIndex = 5;
@@ -126,7 +124,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
 
     // Should throw if non eligible submitter 2 tries to submit
     await expectThrow(operatorContract.submitDkgResult(
-      signingId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: submitter2})
     );
 
@@ -134,19 +132,21 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(eligibleBlockForSubmitter2 - currentBlock);
 
-    await operatorContract.submitDkgResult(signingId, submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: submitter2})
-    assert.isTrue(await operatorContract.isDkgResultSubmitted.call(signingId), "DkgResult should be submitted");
+    await operatorContract.submitDkgResult(submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: submitter2})
+    assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
+    assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
   it("should not be able to submit if submitter was not selected to be part of the group.", async function() {
     await expectThrow(operatorContract.submitDkgResult(
-      signingId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, 
+      1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, 
       {from: operator4})
     );
+
+    assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
   });
 
   it("should reject the result with invalid signatures.", async function() {
-
     signingMemberIndices = [];
     signatures = undefined;
     let lastParticipantIdx = groupThreshold - 1;
@@ -170,13 +170,14 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     mineBlocks(resultPublicationTime - currentBlock);
 
     await expectThrow(operatorContract.submitDkgResult(
-      signingId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );
+
+    assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
   });
 
   it("should be able to submit the result with minimum number of valid signatures", async function() {
-
     signingMemberIndices = [];
     signatures = undefined;
 
@@ -193,14 +194,14 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     mineBlocks(resultPublicationTime - currentBlock);
 
     await operatorContract.submitDkgResult(
-      signingId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
-    assert.isTrue(await operatorContract.isDkgResultSubmitted.call(signingId), "DkgResult should should be submitted");
 
+      assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
+      assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
   it("should not be able to submit without minimum number of signatures", async function() {
-
     signingMemberIndices = [];
     signatures = undefined;
 
@@ -217,9 +218,10 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     mineBlocks(resultPublicationTime - currentBlock);
 
     await expectThrow(operatorContract.submitDkgResult(
-      signingId, 1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );
 
+    assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
   });
 })
