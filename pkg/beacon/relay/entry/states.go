@@ -25,7 +25,7 @@ type signingStateBase struct {
 
 	signer *dkg.ThresholdSigner
 
-	signingId     *big.Int
+	signingID     *big.Int
 	previousEntry *big.Int
 	seed          *big.Int
 
@@ -56,7 +56,7 @@ func (sss *signatureShareState) Initiate() error {
 	message := &SignatureShareMessage{
 		sss.MemberIndex(),
 		sss.selfSignatureShare.Marshal(),
-		sss.signingId,
+		sss.signingID,
 	}
 	if err := sss.channel.Send(message); err != nil {
 		return err
@@ -70,7 +70,7 @@ func (sss *signatureShareState) Receive(msg net.Message) error {
 		if !group.IsMessageFromSelf(
 			sss.MemberIndex(),
 			signatureShareMessage,
-		) && sss.isForTheCurrentSigningId(signatureShareMessage) {
+		) && sss.isForTheCurrentSigningID(signatureShareMessage) {
 			sss.signatureShareMessages = append(
 				sss.signatureShareMessages,
 				signatureShareMessage,
@@ -81,8 +81,8 @@ func (sss *signatureShareState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (sss *signatureShareState) isForTheCurrentSigningId(msg *SignatureShareMessage) bool {
-	return sss.signingId.Cmp(msg.signingId) == 0
+func (sss *signatureShareState) isForTheCurrentSigningID(msg *SignatureShareMessage) bool {
+	return sss.signingID.Cmp(msg.signingId) == 0
 }
 
 func (sss *signatureShareState) Next() signingState {
@@ -215,7 +215,7 @@ func (ess *entrySubmissionState) Initiate() error {
 	}
 
 	return submitter.submitRelayEntry(
-		ess.signingId,
+		ess.signingID,
 		new(big.Int).SetBytes(ess.signature),
 		ess.previousEntry,
 		ess.seed,
