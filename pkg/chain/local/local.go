@@ -9,7 +9,6 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/crypto/sha3"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -18,6 +17,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
+	"golang.org/x/crypto/sha3"
 )
 
 var seedGroupPublicKey = []byte("seed to group public key")
@@ -34,11 +34,6 @@ type localChain struct {
 
 	groupRelayEntriesMutex sync.Mutex
 	groupRelayEntries      map[string]*big.Int
-
-	submittedResultsMutex sync.Mutex
-	// Map of submitted DKG Results. Key is a SigningId of the specific DKG
-	// execution.
-	submittedResults map[string]*relaychain.DKGResult
 
 	groups []localGroup
 
@@ -269,7 +264,6 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 			NaturalThreshold:                naturalThreshold,
 		},
 		groupRelayEntries:        make(map[string]*big.Int),
-		submittedResults:         make(map[string]*relaychain.DKGResult),
 		relayEntryHandlers:       make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
 		groupRegisteredHandlers:  make(map[int]func(groupRegistration *event.GroupRegistration)),
@@ -336,37 +330,22 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	return true, nil
 }
 
-// IsDKGResultPublished simulates check if the result was already submitted to a
-// chain.
-func (c *localChain) IsDKGResultSubmitted(signingId *big.Int) (bool, error) {
-	c.submittedResultsMutex.Lock()
-	defer c.submittedResultsMutex.Unlock()
-
-	return c.submittedResults[signingId.String()] != nil, nil
+func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+	for _, group := range c.groups {
+		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
-	signingId *big.Int,
 	participantIndex group.MemberIndex,
 	resultToPublish *relaychain.DKGResult,
 	signatures map[group.MemberIndex]operator.Signature,
 ) *async.DKGResultSubmissionPromise {
-	c.submittedResultsMutex.Lock()
-	defer c.submittedResultsMutex.Unlock()
-
 	dkgResultPublicationPromise := &async.DKGResultSubmissionPromise{}
-
-	_, ok := c.submittedResults[signingId.String()]
-	if ok {
-		dkgResultPublicationPromise.Fail(fmt.Errorf(
-			"result for request ID [%v] is already submitted",
-			signingId,
-		))
-		return dkgResultPublicationPromise
-	}
-
-	c.submittedResults[signingId.String()] = resultToPublish
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
@@ -375,7 +354,6 @@ func (c *localChain) SubmitDKGResult(
 	}
 
 	dkgResultPublicationEvent := &event.DKGResultSubmission{
-		SigningId:      signingId,
 		MemberIndex:    uint32(participantIndex),
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
 		BlockNumber:    currentBlock,
@@ -389,7 +367,6 @@ func (c *localChain) SubmitDKGResult(
 
 	groupRegistrationEvent := &event.GroupRegistration{
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
-		SigningId:      signingId,
 		BlockNumber:    currentBlock,
 	}
 

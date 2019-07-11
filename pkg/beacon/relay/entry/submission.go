@@ -82,7 +82,11 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
-			fmt.Printf("[member:%v] Submitting relay entry..\n", res.index)
+			fmt.Printf(
+				"[member:%v] Submitting relay entry on behalf of the group [%v]...\n",
+				res.index,
+				groupPublicKey,
+			)
 			entry := &event.Entry{
 				SigningId:     signingId,
 				Value:         newEntry,

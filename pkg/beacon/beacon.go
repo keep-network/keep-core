@@ -69,7 +69,6 @@ func Initialize(
 				relayChain,
 				blockCounter,
 				event.NewEntry.Bytes(),
-				event.SigningId,
 				event.Seed,
 				event.BlockNumber,
 			)
