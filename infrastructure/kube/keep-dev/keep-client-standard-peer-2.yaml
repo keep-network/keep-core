@@ -61,6 +61,8 @@ spec:
               secretKeyRef:
                 name: eth-account-passphrase
                 key: account-passphrase
+          - name: LOG_LEVEL
+            value: debug
         volumeMounts:
           - name: keep-client-standard-peer-2
             mountPath: /mnt/keep-client/config
