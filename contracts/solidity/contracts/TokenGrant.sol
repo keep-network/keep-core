@@ -39,6 +39,8 @@ contract TokenGrant {
 
     ERC20 public token;
 
+    address[] public stakingContracts;
+
     // Token grants.
     mapping(uint256 => Grant) public grants;
 
@@ -57,10 +59,12 @@ contract TokenGrant {
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20 token.
      * @param _tokenAddress address of a token that will be linked to this contract.
+     * @param _stakingContract Address of a staking contract that will be linked to this contract.
      */
-    constructor(address _tokenAddress) public {
+    constructor(address _tokenAddress, address _stakingContract) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20(_tokenAddress);
+        stakingContracts.push(_stakingContract);
     }
 
     /**
