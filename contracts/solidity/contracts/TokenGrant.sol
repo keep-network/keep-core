@@ -278,6 +278,10 @@ contract TokenGrant {
             "Signer of the grantee doesn't match signer of the grant contract."
         );
 
+        // Calculate available amount. Amount of vested tokens minus what user already released.
+        uint256 available = grants[_id].amount.sub(grants[_id].released);
+        require(_amount <= available, "Must have available granted amount to stake.");
+
         // Keep staking record.
         grantStakes[operator] = GrantStake(_id, _stakingContract, _amount);
     
