@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand"
-	"os"
 	"sort"
 	"sync"
+
+	"github.com/ipfs/go-log"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -19,6 +20,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"golang.org/x/crypto/sha3"
 )
+
+var logger = log.Logger("keep-chain-local")
 
 var seedGroupPublicKey = []byte("seed to group public key")
 var seedRelayEntry = big.NewInt(123456789)
@@ -386,7 +389,7 @@ func (c *localChain) SubmitDKGResult(
 
 	err = dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "promise fulfill failed [%v].\n", err)
+		logger.Errorf("promise fulfill failed [%v].", err)
 	}
 
 	return dkgResultPublicationPromise

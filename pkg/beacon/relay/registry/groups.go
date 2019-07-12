@@ -3,7 +3,6 @@ package registry
 import (
 	"encoding/hex"
 	"fmt"
-	"os"
 	"sync"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -90,8 +89,7 @@ func (g *Groups) UnregisterStaleGroups() {
 	for publicKey := range g.myGroups {
 		publicKeyBytes, err := groupKeyFromString(publicKey)
 		if err != nil {
-			fmt.Fprintf(
-				os.Stderr,
+			logger.Errorf(
 				"error occured while decoding public key into bytes [%v]",
 				err,
 			)
@@ -99,13 +97,13 @@ func (g *Groups) UnregisterStaleGroups() {
 
 		isStaleGroup, err := g.relayChain.IsStaleGroup(publicKeyBytes)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "stale group check has failed: [%v]", err)
+			logger.Errorf("stale group check has failed: [%v]", err)
 		}
 
 		if isStaleGroup {
 			err = g.storage.archive(publicKey)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "group archiving has failed: [%v]", err)
+				logger.Errorf("group archiving has failed: [%v]", err)
 			}
 
 			delete(g.myGroups, publicKey)
@@ -145,9 +143,8 @@ func (g *Groups) LoadExistingGroups() {
 
 	go func() {
 		for err := range errorsChannel {
-			fmt.Fprintf(
-				os.Stderr,
-				"Could not load membership from disk: [%v]\n",
+			logger.Errorf(
+				"Could not load membership from disk: [%v]",
 				err,
 			)
 		}
@@ -162,14 +159,16 @@ func (g *Groups) LoadExistingGroups() {
 
 func (g *Groups) printMemberships() {
 	for group, memberships := range g.myGroups {
-		fmt.Fprintf(os.Stdout, "Group [%v] was loaded with member IDs [", group)
+		memberLog := fmt.Sprintf("Group [%v] was loaded with member IDs [", group)
 		for idx, membership := range memberships {
 			if (len(memberships) - 1) != idx {
-				fmt.Fprintf(os.Stdout, "%v, ", membership.Signer.MemberID())
+				memberLog += fmt.Sprintf("%v, ", membership.Signer.MemberID())
 			} else {
-				fmt.Fprintf(os.Stdout, "%v]\n", membership.Signer.MemberID())
+				memberLog += fmt.Sprintf("%v]", membership.Signer.MemberID())
 			}
 		}
+
+		logger.Infof(memberLog)
 	}
 }
 

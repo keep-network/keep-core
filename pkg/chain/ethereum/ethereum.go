@@ -3,8 +3,9 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"os"
 	"time"
+
+	"github.com/ipfs/go-log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -17,6 +18,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
+
+var logger = log.Logger("keep-chain-ethereum")
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
 func (ec *ethereumChain) ThresholdRelay() relaychain.Interface {
@@ -114,9 +117,8 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 	failPromise := func(err error) {
 		failErr := submittedTicketPromise.Fail(err)
 		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"failing promise because of: [%v] failed with: [%v].\n",
+			logger.Errorf(
+				"failing promise because of: [%v] failed with: [%v].",
 				err,
 				failErr,
 			)
@@ -162,9 +164,8 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	failPromise := func(err error) {
 		failErr := relayEntryPromise.Fail(err)
 		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"failing promise because of [%v] failed with [%v]\n",
+			logger.Errorf(
+				"failing promise because of [%v] failed with [%v]",
 				err,
 				failErr,
 			)
@@ -200,9 +201,8 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 					err := relayEntryPromise.Fulfill(event)
 					if err != nil {
-						fmt.Fprintf(
-							os.Stderr,
-							"fulfilling promise failed with [%v]\n",
+						logger.Errorf(
+							"fulfilling promise failed with [%v]",
 							err,
 						)
 					}
@@ -370,9 +370,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 	failPromise := func(err error) {
 		failErr := resultPublicationPromise.Fail(err)
 		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"failing promise because of [%v] failed with [%v]\n",
+			logger.Errorf(
+				"failing promise because of [%v] failed with [%v]",
 				err,
 				failErr,
 			)
@@ -407,9 +406,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 
 				err := resultPublicationPromise.Fulfill(event)
 				if err != nil {
-					fmt.Fprintf(
-						os.Stderr,
-						"fulfilling promise failed with [%v]\n",
+					logger.Errorf(
+						"fulfilling promise failed with [%v]",
 						err,
 					)
 				}
