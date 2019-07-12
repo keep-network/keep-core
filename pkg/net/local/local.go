@@ -234,10 +234,14 @@ func (lc *localChannel) RegisterUnmarshaler(
 }
 
 type localConnectionManager struct {
+	mutex sync.Mutex
+
 	peers map[string]*key.NetworkPublic
 }
 
 func (lcm *localConnectionManager) ConnectedPeers() []string {
+	lcm.mutex.Lock()
+	defer lcm.mutex.Unlock()
 	connectedPeers := make([]string, len(lcm.peers))
 	for peer := range lcm.peers {
 		connectedPeers = append(connectedPeers, peer)
@@ -248,9 +252,15 @@ func (lcm *localConnectionManager) ConnectedPeers() []string {
 func (lcm *localConnectionManager) GetPeerPublicKey(
 	connectedPeer string,
 ) (*key.NetworkPublic, error) {
+	lcm.mutex.Lock()
+	defer lcm.mutex.Unlock()
+
 	return lcm.peers[connectedPeer], nil
 }
 
 func (lcm *localConnectionManager) DisconnectPeer(connectedPeer string) {
+	lcm.mutex.Lock()
+	defer lcm.mutex.Unlock()
+
 	delete(lcm.peers, connectedPeer)
 }

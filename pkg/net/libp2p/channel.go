@@ -128,7 +128,7 @@ func (c *channel) handleMessages(ctx context.Context) {
 			if err != nil {
 				// TODO: handle error - different error types
 				// result in different outcomes. Print err is very noisy.
-				fmt.Println(err)
+				logger.Error(err)
 				continue
 			}
 
@@ -137,7 +137,7 @@ func (c *channel) handleMessages(ctx context.Context) {
 				if err := c.processPubsubMessage(msg); err != nil {
 					// TODO: handle error - different error types
 					// result in different outcomes. Print err is very noisy.
-					fmt.Println(err)
+					logger.Error(err)
 					return
 				}
 			}(message)
@@ -230,7 +230,7 @@ func (c *channel) deliver(message net.Message) error {
 		go func(msg net.Message, handler net.HandleMessageFunc) {
 			if err := handler.Handler(msg); err != nil {
 				// TODO: handle error
-				fmt.Println(err)
+				logger.Error(err)
 				return
 			}
 		}(message, handler)

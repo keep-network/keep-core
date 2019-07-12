@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"math/big"
-	"os"
 	"sync"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -70,9 +68,8 @@ func (n *Node) JoinGroupIfEligible(
 				broadcastChannelName,
 			)
 			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"Failed to get broadcastChannel for name %s with err: [%v].\n",
+				logger.Errorf(
+					"Failed to get broadcastChannel for name %s with err: [%v].",
 					broadcastChannelName,
 					err,
 				)
@@ -91,7 +88,7 @@ func (n *Node) JoinGroupIfEligible(
 					broadcastChannel,
 				)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to execute dkg: [%v].\n", err)
+					logger.Errorf("Failed to execute dkg: [%v].", err)
 					return
 				}
 
@@ -100,7 +97,7 @@ func (n *Node) JoinGroupIfEligible(
 					broadcastChannelName,
 				)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to register a group: [%v].\n", err)
+					logger.Errorf("Failed to register a group: [%v].", err)
 				}
 			}()
 		}

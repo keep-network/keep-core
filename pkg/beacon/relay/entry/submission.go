@@ -25,7 +25,7 @@ type relayEntrySubmitter struct {
 // Relay entry submit process starts at block height defined by startBlockheight
 // parameter.
 func (res *relayEntrySubmitter) submitRelayEntry(
-	signingId *big.Int,
+	signingID *big.Int,
 	newEntry *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
@@ -82,13 +82,13 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
-			fmt.Printf(
-				"[member:%v] Submitting relay entry on behalf of the group [%v]...\n",
+			logger.Infof(
+				"[member:%v] Submitting relay entry on behalf of the group [%v]...",
 				res.index,
 				groupPublicKey,
 			)
 			entry := &event.Entry{
-				SigningId:     signingId,
+				SigningId:     signingID,
 				Value:         newEntry,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
@@ -99,10 +99,10 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			res.chain.SubmitRelayEntry(entry).OnComplete(
 				func(entry *event.Entry, err error) {
 					if err == nil {
-						fmt.Printf(
-							"[member:%v] Relay entry for request [%v] successfully submitted at block [%v]\n",
+						logger.Infof(
+							"[member:%v] Relay entry for request [%v] successfully submitted at block [%v]",
 							res.index,
-							signingId,
+							signingID,
 							entry.BlockNumber,
 						)
 					}
@@ -110,9 +110,9 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 				})
 			return <-errorChannel
 		case submittedEntryEvent := <-onSubmittedResultChan:
-			if submittedEntryEvent.SigningId.Cmp(signingId) == 0 {
-				fmt.Printf(
-					"[member:%v] Relay entry submitted by other member, leaving.\n",
+			if submittedEntryEvent.SigningId.Cmp(signingID) == 0 {
+				logger.Infof(
+					"[member:%v] Relay entry submitted by other member, leaving.",
 					res.index,
 				)
 				return returnWithError(nil)
@@ -132,8 +132,8 @@ func (res *relayEntrySubmitter) waitForSubmissionEligibility(
 	blockWaitTime := (uint64(res.index) - 1) * blockStep
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
-	fmt.Printf(
-		"[member:%v] Waiting for block [%v] to submit...\n",
+	logger.Infof(
+		"[member:%v] Waiting for block [%v] to submit...",
 		res.index,
 		eligibleBlockHeight,
 	)

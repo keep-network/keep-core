@@ -120,7 +120,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
-			fmt.Printf("[member:%v] Submitting DKG result...\n", sm.index)
+			logger.Infof("[member:%v] Submitting DKG result...", sm.index)
 			chainRelay.SubmitDKGResult(
 				sm.index,
 				result,
@@ -134,8 +134,8 @@ func (sm *SubmittingMember) SubmitDKGResult(
 				})
 			return <-errorChannel
 		case <-onSubmittedResultChan:
-			fmt.Printf(
-				"[member:%v] DKG result submitted by other member, leaving.\n",
+			logger.Infof(
+				"[member:%v] DKG result submitted by other member, leaving.",
 				sm.index,
 			)
 			// A result has been submitted by other member. Leave without
@@ -157,8 +157,8 @@ func (sm *SubmittingMember) waitForSubmissionEligibility(
 	blockWaitTime := (uint64(sm.index) - 1) * blockStep
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
-	fmt.Printf(
-		"[member:%v] Waiting for block [%v] to submit...\n",
+	logger.Infof(
+		"[member:%v] Waiting for block [%v] to submit...",
 		sm.index,
 		eligibleBlockHeight,
 	)

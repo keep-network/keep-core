@@ -1,9 +1,9 @@
 package relay
 
 import (
-	"fmt"
 	"math/big"
-	"os"
+
+	"github.com/ipfs/go-log"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
@@ -13,6 +13,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
+
+var logger = log.Logger("keep-relay")
 
 // NewNode returns an empty Node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
@@ -41,7 +43,7 @@ func NewNode(
 // determining whether the node is or is not is a member of the requested group, and
 // signature creation and submission is performed in a background goroutine.
 func (n *Node) GenerateRelayEntryIfEligible(
-	signingId *big.Int,
+	signingID *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
 	relayChain relayChain.Interface,
@@ -58,9 +60,8 @@ func (n *Node) GenerateRelayEntryIfEligible(
 		go func(signer *registry.Membership) {
 			channel, err := n.netProvider.ChannelFor(signer.ChannelName)
 			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"could not create broadcast channel with name [%v]: [%v]\n",
+				logger.Errorf(
+					"could not create broadcast channel with name [%v]: [%v]",
 					signer.ChannelName,
 					err,
 				)
@@ -71,7 +72,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				n.blockCounter,
 				channel,
 				relayChain,
-				signingId,
+				signingID,
 				previousEntry,
 				seed,
 				n.chainConfig.HonestThreshold(),
@@ -79,10 +80,9 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				startBlockHeight,
 			)
 			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"error creating threshold signature for request [%s]: [%v]\n",
-					signingId,
+				logger.Errorf(
+					"error creating threshold signature for request [%s]: [%v]",
+					signingID,
 					err,
 				)
 				return
