@@ -5,8 +5,8 @@ const BLS = artifacts.require("./cryptography/BLS.sol");
 const StakingProxy = artifacts.require("./StakingProxy.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
+const KeepRandomBeaconServiceProxy = artifacts.require("./KeepRandomBeaconServiceProxy.sol");
 const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol");
-const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
 const KeepRandomBeaconOperatorStub = artifacts.require("./KeepRandomBeaconOperatorStub.sol");
 
@@ -59,15 +59,15 @@ module.exports = async function(deployer) {
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.link(BLS, KeepRandomBeaconOperatorStub);
   deployer.deploy(KeepRandomBeaconOperator);
-  await deployer.deploy(KeepRandomBeaconServiceImplV1);
-  await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
+  await deployer.deploy(KeepRandomBeaconService);
+  await deployer.deploy(KeepRandomBeaconServiceProxy, KeepRandomBeaconService.address);
 
-  const keepRandomBeaconService = await KeepRandomBeaconServiceImplV1.at(KeepRandomBeaconService.address);
+  const keepRandomBeaconService = await KeepRandomBeaconService.at(KeepRandomBeaconServiceProxy.address);
   const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
 
   // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
   keepRandomBeaconOperator.initialize(
-    StakingProxy.address, KeepRandomBeaconService.address, minStake, groupThreshold, groupSize,
+    StakingProxy.address, KeepRandomBeaconServiceProxy.address, minStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     activeGroupsThreshold, groupActiveTime, relayEntryTimeout,
     web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862'),

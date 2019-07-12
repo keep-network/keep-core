@@ -1,14 +1,14 @@
 import { duration } from './increaseTime';
 import { bls } from './data';
 
-async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, KeepRandomBeaconService,
-  KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
+async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, KeepRandomBeaconServiceProxy,
+  KeepRandomBeaconService, KeepRandomBeaconOperator) {
 
   let token, stakingProxy, stakingContract,
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract;
 
-  let minimumStake = 200000,
+  let minimumStake = web3.utils.toBN(200000),
     groupThreshold = 15,
     groupSize = 20,
     timeoutInitial = 20,
@@ -31,9 +31,9 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
   await stakingProxy.authorizeContract(stakingContract.address, {from: accounts[0]})
 
   // Initialize Keep Random Beacon service contract
-  serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new();
-  serviceContractProxy = await KeepRandomBeaconService.new(serviceContractImplV1.address);
-  serviceContract = await KeepRandomBeaconServiceImplV1.at(serviceContractProxy.address)
+  serviceContractImplV1 = await KeepRandomBeaconService.new();
+  serviceContractProxy = await KeepRandomBeaconServiceProxy.new(serviceContractImplV1.address);
+  serviceContract = await KeepRandomBeaconService.at(serviceContractProxy.address)
 
   // Initialize Keep Random Beacon operator contract
   operatorContract = await KeepRandomBeaconOperator.new();
@@ -51,7 +51,24 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
   await operatorContract.relayEntry(0, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
   return {
+    config: {
+      minimumStake: minimumStake,
+      groupThreshold: groupThreshold,
+      groupSize: groupSize,
+      timeoutInitial: timeoutInitial,
+      timeoutSubmission: timeoutSubmission,
+      timeoutChallenge: timeoutChallenge,
+      timeDKG: timeDKG,
+      resultPublicationBlockStep: resultPublicationBlockStep,
+      groupActiveTime: groupActiveTime,
+      activeGroupsThreshold: activeGroupsThreshold,
+      minPayment: minPayment,
+      withdrawalDelay: withdrawalDelay,
+      relayRequestTimeout: relayRequestTimeout
+    },
     token: token,
+    stakingProxy: stakingProxy,
+    stakingContract: stakingContract,
     serviceContract: serviceContract,
     operatorContract: operatorContract
   };

@@ -5,7 +5,7 @@ import exceptThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
 import {initContracts} from './helpers/initContracts';
 import mineBlocks from './helpers/mineBlocks';
-const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
+const ServiceContractProxy = artifacts.require('./KeepRandomBeaconServiceProxy.sol')
 
 contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
@@ -23,7 +23,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
       artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
       ServiceContractProxy,
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
+      artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
   

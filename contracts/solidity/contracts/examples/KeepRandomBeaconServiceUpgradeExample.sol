@@ -1,6 +1,6 @@
 pragma solidity ^0.5.4;
 
-import "../KeepRandomBeaconServiceImplV1.sol";
+import "../KeepRandomBeaconService.sol";
 
 
 /**
@@ -8,7 +8,7 @@ import "../KeepRandomBeaconServiceImplV1.sol";
  * @dev Example version of a new implementation contract to test upgradability
  * under Keep Random Beacon proxy.
  */
-contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 {
+contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconService {
 
     uint256 internal _newVar;
 
