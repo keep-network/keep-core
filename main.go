@@ -105,42 +105,78 @@ func readLoggingSetup() {
 	// "info"
 	//
 	// If blank or unset, subsystems are left in their default initial state.
-	joinedLevelString := os.Getenv("LOG_LEVEL")
+	levelDirectiveString := os.Getenv("LOG_LEVEL")
 
-	// Nothing to do if the env var is empty.
-	if len(joinedLevelString) == 0 {
-		return
+	// Default to info logs for keep.
+	if len(levelDirectiveString) == 0 {
+		levelDirectiveString = "keep*=info"
 	}
 
-	levelStrings := strings.Split(joinedLevelString, " ")
-
-	// If there is only one directive and it has no = in it, treat it as a
-	// global log level.
-	if len(levelStrings) == 1 && !strings.Contains(levelStrings[0], "=") {
-		level := levelStrings[0]
-		err := logging.SetLogLevel("*", level)
+	levelDirectives := strings.Split(levelDirectiveString, " ")
+	for _, directive := range levelDirectives {
+		err := evaluateLevelDirective(directive)
 		if err != nil {
-			log.Fatalf("failed to parse log level [%s]: [%v]", level, err)
-		}
-
-		return
-	}
-
-	// If we're here, we want to handle subsystem=level pairs.
-	for _, subsystemPair := range levelStrings {
-		splitLevel := strings.Split(subsystemPair, "=")
-		if len(splitLevel) != 2 {
 			log.Fatalf(
-				"expected string [%s] to have format subsystem=loglevel",
-				splitLevel,
+				"Failed to parse log level directive [%s]: [%v]\n"+
+					"Directives can be any of:\n"+
+					" - a global log level, e.g. 'debug'\n"+
+					" - a subsystem=level pair, e.g. 'keep-relay=info'\n"+
+					" - a subsystem*=level prefix pair, e.g. 'keep*=warn'\n",
+				directive,
+				err,
 			)
 		}
-
-		subsystem := splitLevel[0]
-		level := splitLevel[1]
-		err := logging.SetLogLevel(subsystem, level)
-		if err != nil {
-			log.Fatalf("failed to parse log level [%s]: [%v]", level, err)
-		}
 	}
+}
+
+// Takes a levelDirective that can have one of three formats:
+//
+//     <log-level> |
+// 	   <subsystem>=<log-level> |
+// 	   <subsystem-prefix>*=<log-level>
+//
+// In the first form, the given log-level is set on all subsystems.
+//
+// In the second form, the given log-level is set on the given subsystem.
+//
+// In the third form, the given log-level is set on any subsystem that starts
+// with the given subsystem-prefix.
+//
+// Supported log levels are as per the ipfs/go-logging library.
+func evaluateLevelDirective(levelDirective string) error {
+	splitLevel := strings.Split(levelDirective, "=")
+
+	switch len(splitLevel) {
+	case 1:
+		level := splitLevel[0]
+
+		err := logging.SetLogLevel("*", level)
+		if err != nil {
+			return err
+		}
+
+	case 2:
+		levelSubsystem := splitLevel[0]
+		level := splitLevel[1]
+
+		if strings.HasSuffix(levelSubsystem, "*") {
+			subsystemPrefix := strings.TrimSuffix(levelSubsystem, "*")
+			// Wildcard suffix, check for matching subsystems.
+			for _, subsystem := range logging.GetSubsystems() {
+				if strings.HasPrefix(subsystem, subsystemPrefix) {
+					err := logging.SetLogLevel(subsystem, level)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		} else {
+			return logging.SetLogLevel(levelSubsystem, level)
+		}
+
+	default:
+		return fmt.Errorf("more than two =-delimited components in directive")
+	}
+
+	return nil
 }
