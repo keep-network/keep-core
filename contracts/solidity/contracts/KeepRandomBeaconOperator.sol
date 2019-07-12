@@ -62,6 +62,8 @@ contract KeepRandomBeaconOperator is Ownable {
 
     uint256[] public tickets;
     bytes[] public submissions;
+    uint256 internal currentEntryStartBlock;
+    bool internal entryInProgress;
 
     bool public groupSelectionInProgress;
 
@@ -83,7 +85,7 @@ contract KeepRandomBeaconOperator is Ownable {
 
     // Timeout in blocks for a relay entry to appear on the chain. Blocks are
     // counted from the moment relay request occur.
-    uint256 public relayRequestTimeout;
+    uint256 public relayEntryTimeout;
 
     // expiredGroupOffset is pointing to the first active group, it is also the
     // expired groups counter
@@ -162,7 +164,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param _activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
      * needs to be greater than 0.
      * @param _groupActiveTime is the time in block after which a group expires.
-     * @param _relayRequestTimeout Timeout in blocks for a relay entry to appear on the chain.
+     * @param _relayEntryTimeout Timeout in blocks for a relay entry to appear on the chain.
      * Blocks are counted from the moment relay request occur.
      */
     function initialize(
@@ -178,7 +180,7 @@ contract KeepRandomBeaconOperator is Ownable {
         uint256 _resultPublicationBlockStep,
         uint256 _activeGroupsThreshold,
         uint256 _groupActiveTime,
-        uint256 _relayRequestTimeout,
+        uint256 _relayEntryTimeout,
         uint256 _genesisEntry,
         bytes memory _genesisGroupPubKey
     ) public onlyOwner {
@@ -197,7 +199,7 @@ contract KeepRandomBeaconOperator is Ownable {
         resultPublicationBlockStep = _resultPublicationBlockStep;
         activeGroupsThreshold = _activeGroupsThreshold;
         groupActiveTime = _groupActiveTime;
-        relayRequestTimeout = _relayRequestTimeout;
+        relayEntryTimeout = _relayEntryTimeout;
         groupSelectionSeed = _genesisEntry;
 
         // Create initial relay entry request. This will allow relayEntry to be called once
@@ -580,7 +582,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * performing any operations.
      */
     function groupStaleTime(Group memory group) internal view returns(uint256) {
-        return groupActiveTimeOf(group) + relayRequestTimeout;
+        return groupActiveTimeOf(group) + relayEntryTimeout;
     }
 
     /**
@@ -695,6 +697,12 @@ contract KeepRandomBeaconOperator is Ownable {
             "At least one group needed to serve the request."
         );
 
+        uint256 entryTimeout = currentEntryStartBlock + relayEntryTimeout;
+        require(!entryInProgress || block.number > entryTimeout, "Relay entry is in progress.");
+
+        currentEntryStartBlock = block.number;
+        entryInProgress = true;
+
         bytes memory groupPubKey = selectGroup(previousEntry);
 
         signingRequestCounter++;
@@ -723,5 +731,7 @@ contract KeepRandomBeaconOperator is Ownable {
         emit SignatureSubmitted(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
         ServiceContract(serviceContract).entryCreated(requestId, _groupSignature, _seed);
+
+        entryInProgress = false;
     }
 }
