@@ -264,6 +264,7 @@ contract TokenGrant {
      * the grantee address and ECDSA signature of this contract address.
      */
     function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
+        require(!grants[_id].revocable, "Revocable grants can not be staked.");
         require(
             stakingContracts.contains(_stakingContract),
             "Provided staking contract is not authorized."
