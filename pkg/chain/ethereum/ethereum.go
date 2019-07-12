@@ -3,7 +3,6 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"os"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -118,8 +117,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 	failPromise := func(err error) {
 		failErr := submittedTicketPromise.Fail(err)
 		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
+			logger.Errorf(
 				"failing promise because of: [%v] failed with: [%v].\n",
 				err,
 				failErr,
@@ -166,8 +164,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	failPromise := func(err error) {
 		failErr := relayEntryPromise.Fail(err)
 		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
+			logger.Errorf(
 				"failing promise because of [%v] failed with [%v]\n",
 				err,
 				failErr,
@@ -204,8 +201,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 					err := relayEntryPromise.Fulfill(event)
 					if err != nil {
-						fmt.Fprintf(
-							os.Stderr,
+						logger.Errorf(
 							"fulfilling promise failed with [%v]\n",
 							err,
 						)
@@ -374,8 +370,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 	failPromise := func(err error) {
 		failErr := resultPublicationPromise.Fail(err)
 		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
+			logger.Errorf(
 				"failing promise because of [%v] failed with [%v]\n",
 				err,
 				failErr,
@@ -411,8 +406,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 
 				err := resultPublicationPromise.Fulfill(event)
 				if err != nil {
-					fmt.Fprintf(
-						os.Stderr,
+					logger.Errorf(
 						"fulfilling promise failed with [%v]\n",
 						err,
 					)

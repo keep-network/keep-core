@@ -3,7 +3,6 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"os"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -95,8 +94,7 @@ func (es *ethereumStaker) OnStakeChanged(handle func(newStake *big.Int)) {
 				}
 			},
 			func(err error) error {
-				fmt.Fprintf(
-					os.Stderr,
+				logger.Errorf(
 					"watch stake changed failed with: [%v]",
 					err,
 				)
