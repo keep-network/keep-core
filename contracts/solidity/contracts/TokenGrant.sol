@@ -265,6 +265,7 @@ contract TokenGrant {
      */
     function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
         require(!grants[_id].revocable, "Revocable grants can not be staked.");
+        require(grants[_id].grantee == msg.sender, "Only grantee of the grant can stake it.");
         require(
             stakingContracts.contains(_stakingContract),
             "Provided staking contract is not authorized."
