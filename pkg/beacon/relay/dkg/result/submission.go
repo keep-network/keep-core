@@ -158,7 +158,7 @@ func (sm *SubmittingMember) waitForSubmissionEligibility(
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
 	logger.Infof(
-		"[member:%v] Waiting for block [%v] to submit...\n",
+		"[member:%v] Waiting for block [%v] to submit...",
 		sm.index,
 		eligibleBlockHeight,
 	)

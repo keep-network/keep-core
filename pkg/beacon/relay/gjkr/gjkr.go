@@ -29,7 +29,7 @@ func Execute(
 	seed *big.Int,
 	startBlockHeight uint64,
 ) (*Result, uint64, error) {
-	logger.Debugf("[member:%v] Initializing member\n", memberIndex)
+	logger.Debugf("[member:%v] Initializing member.", memberIndex)
 
 	member, err := NewMember(
 		memberIndex,

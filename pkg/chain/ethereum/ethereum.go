@@ -118,7 +118,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 		failErr := submittedTicketPromise.Fail(err)
 		if failErr != nil {
 			logger.Errorf(
-				"failing promise because of: [%v] failed with: [%v].\n",
+				"failing promise because of: [%v] failed with: [%v].",
 				err,
 				failErr,
 			)
@@ -165,7 +165,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		failErr := relayEntryPromise.Fail(err)
 		if failErr != nil {
 			logger.Errorf(
-				"failing promise because of [%v] failed with [%v]\n",
+				"failing promise because of [%v] failed with [%v]",
 				err,
 				failErr,
 			)
@@ -202,7 +202,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 					err := relayEntryPromise.Fulfill(event)
 					if err != nil {
 						logger.Errorf(
-							"fulfilling promise failed with [%v]\n",
+							"fulfilling promise failed with [%v]",
 							err,
 						)
 					}
@@ -371,7 +371,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 		failErr := resultPublicationPromise.Fail(err)
 		if failErr != nil {
 			logger.Errorf(
-				"failing promise because of [%v] failed with [%v]\n",
+				"failing promise because of [%v] failed with [%v]",
 				err,
 				failErr,
 			)
@@ -407,7 +407,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 				err := resultPublicationPromise.Fulfill(event)
 				if err != nil {
 					logger.Errorf(
-						"fulfilling promise failed with [%v]\n",
+						"fulfilling promise failed with [%v]",
 						err,
 					)
 				}

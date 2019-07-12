@@ -112,7 +112,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 		case submittedEntryEvent := <-onSubmittedResultChan:
 			if submittedEntryEvent.SigningId.Cmp(signingID) == 0 {
 				logger.Infof(
-					"[member:%v] Relay entry submitted by other member, leaving.\n",
+					"[member:%v] Relay entry submitted by other member, leaving.",
 					res.index,
 				)
 				return returnWithError(nil)
@@ -133,7 +133,7 @@ func (res *relayEntrySubmitter) waitForSubmissionEligibility(
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
 	logger.Infof(
-		"[member:%v] Waiting for block [%v] to submit...\n",
+		"[member:%v] Waiting for block [%v] to submit...",
 		res.index,
 		eligibleBlockHeight,
 	)

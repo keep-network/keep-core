@@ -50,7 +50,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	currentState := m.initialState
 
 	logger.Infof(
-		"[member:%v] Waiting for block %v to start execution...\n",
+		"[member:%v] Waiting for block %v to start execution...",
 		currentState.MemberIndex(),
 		startBlockHeight,
 	)
@@ -74,7 +74,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 		select {
 		case msg := <-recvChan:
 			logger.Debugf(
-				"[member:%v, state:%T] Processing message\n",
+				"[member:%v, state:%T] Processing message",
 				currentState.MemberIndex(),
 				currentState,
 			)
@@ -82,7 +82,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 			err := currentState.Receive(msg)
 			if err != nil {
 				logger.Errorf(
-					"[member:%v, state: %T] Failed to receive a message [%v]\n",
+					"[member:%v, state: %T] Failed to receive a message [%v]",
 					currentState.MemberIndex(),
 					currentState,
 					err,
@@ -93,7 +93,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 			nextState := currentState.Next()
 			if nextState == nil {
 				logger.Infof(
-					"[member:%v, state:%T] Final state reached at block [%v]\n",
+					"[member:%v, state:%T] Final state reached at block [%v]",
 					currentState.MemberIndex(),
 					currentState,
 					lastStateEndBlockHeight,
@@ -123,7 +123,7 @@ func stateTransition(
 	blockCounter chain.BlockCounter,
 ) (<-chan uint64, error) {
 	logger.Infof(
-		"[member:%v, state:%T] Transitioning to a new state at block [%v]...\n",
+		"[member:%v, state:%T] Transitioning to a new state at block [%v]...",
 		currentState.MemberIndex(),
 		currentState,
 		lastStateEndBlockHeight,
@@ -161,7 +161,7 @@ func stateTransition(
 	}
 
 	logger.Infof(
-		"[member:%v, state:%T] Transitioned to new state\n",
+		"[member:%v, state:%T] Transitioned to new state",
 		currentState.MemberIndex(),
 		currentState,
 	)
