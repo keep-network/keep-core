@@ -3,7 +3,7 @@ import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 import mineBlocks from './helpers/mineBlocks';
 
-contract('TestKeepRandomBeaconOperatorRelayRequestTimeout', function(accounts) {
+contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
   let operatorContract;
   const blocksForward = 20;
   const requestCounter = 0;
