@@ -4,7 +4,6 @@ import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
 import {initContracts} from './helpers/initContracts';
-import mineBlocks from './helpers/mineBlocks';
 const ServiceContractProxy = artifacts.require('./KeepRandomBeaconServiceProxy.sol')
 
 contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
@@ -13,8 +12,6 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2];
-
-    const blocksForward = 20;
 
   beforeEach(async () => {
     let contracts = await initContracts(
