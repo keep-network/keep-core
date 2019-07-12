@@ -18,12 +18,12 @@ contract('TestTokenGrantStake', function(accounts) {
   beforeEach(async () => {
     token = await KeepToken.new();
     stakingContract = await TokenStaking.new(token.address, duration.days(30));
-    grantContract = await TokenGrant.new(token.address, stakingContract.address, duration.days(30));
+    grantContract = await TokenGrant.new(token.address, stakingContract.address);
 
     let vestingDuration = duration.days(60),
     start = await latestTime(),
     cliff = duration.days(10),
-    revocable = true;
+    revocable = false;
     amount = web3.utils.toBN(1000000000);
 
     // Grant tokens
@@ -33,43 +33,36 @@ contract('TestTokenGrantStake', function(accounts) {
 
   it("should stake granted tokens correctly", async function() {
 
-    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
-    let delegation = Buffer.concat([Buffer.from(account_two_magpie.substr(2), 'hex'), signature]);
+    // Operator must sign grantee and token grant contract address since grant contract becomes the owner during grant staking.
+    let signature1 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(grantContract.address), account_two_operator)).substr(2), 'hex');
+    let signature2 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
+    let delegation = Buffer.concat([Buffer.from(account_two_magpie.substr(2), 'hex'), signature1, signature2]);
 
     // should throw if stake granted tokens called by anyone except grant grantee
-    await exceptThrow(grantContract.stake(id, delegation));
+    await exceptThrow(grantContract.stake(id, stakingContract.address, amount, delegation));
 
     // stake granted tokens can be only called by grant grantee
-    await grantContract.stake(id, delegation, {from: account_two});
-    let account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
+    await grantContract.stake(id, stakingContract.address, amount, delegation, {from: account_two});
+    let account_two_operator_stake_balance = await stakingContract.balanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.eq(amount), true, "Should stake grant amount");
 
     // should throw if initiate unstake called by anyone except grant grantee
-    await exceptThrow(grantContract.initiateUnstake(id));
+    await exceptThrow(grantContract.initiateUnstake(amount, account_two_operator));
 
     // Initiate unstake of granted tokens by grant grantee
-    let stakeWithdrawalId = await grantContract.initiateUnstake(id, {from: account_two}).then((result)=>{
-      // Look for InitiatedTokenGrantUnstake event in transaction receipt and get stake withdrawal id
-      for (var i = 0; i < result.logs.length; i++) {
-        var log = result.logs[i];
-        if (log.event == "InitiatedTokenGrantUnstake") {
-          return log.args.id.toNumber();
-        }
-      }
-    });
+    await grantContract.initiateUnstake(amount, account_two_operator, {from: account_two});
 
     // should not be able to finish unstake before withdrawal delay is over
-    await exceptThrow(grantContract.finishUnstake(stakeWithdrawalId));
+    await exceptThrow(grantContract.finishUnstake(account_two_operator));
 
     // should not be able to release grant as its still locked for staking
     await exceptThrow(grantContract.release(id));
 
     // jump in time over withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
-    await grantContract.finishUnstake(stakeWithdrawalId);
-    account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
+    await grantContract.finishUnstake(account_two_operator);
+    account_two_operator_stake_balance = await stakingContract.balanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.isZero(), true, "Stake grant amount should be 0");
-    assert.equal(await grantContract.operatorsOf.call(account_two), 0, "Operator should be released after finishing unstake");
 
     // should be able to release 'releasable' granted amount as it's not locked for staking anymore
     await grantContract.release(id);
@@ -83,8 +76,8 @@ contract('TestTokenGrantStake', function(accounts) {
     let updatedGrantBalance = grantAmount.sub(grantReleased);
 
     // should be able to delegate stake to the same operator after finishing unstaking
-    await grantContract.stake(id, delegation, {from: account_two});
-    account_two_operator_stake_balance = await grantContract.stakeBalanceOf.call(account_two_operator);
+    await grantContract.stake(id, stakingContract.address, updatedGrantBalance, delegation, {from: account_two});
+    account_two_operator_stake_balance = await stakingContract.balanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.eq(updatedGrantBalance), true, "Should stake grant amount");
 
   });

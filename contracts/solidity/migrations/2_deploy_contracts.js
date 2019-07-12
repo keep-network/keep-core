@@ -39,7 +39,7 @@ module.exports = async function(deployer) {
   await deployer.deploy(BLS);
   await deployer.deploy(KeepToken);
   await deployer.deploy(TokenStaking, KeepToken.address, withdrawalDelay);
-  await deployer.deploy(TokenGrant, KeepToken.address, TokenStaking.address, withdrawalDelay);
+  await deployer.deploy(TokenGrant, KeepToken.address, TokenStaking.address);
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.link(BLS, KeepRandomBeaconOperatorStub);
   deployer.deploy(KeepRandomBeaconOperator);
