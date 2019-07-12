@@ -53,9 +53,6 @@ contract TokenGrant {
     // available to be released to the grantee
     mapping(address => uint256) public balances;
 
-    // Token grants stake withdrawals.
-    mapping(uint256 => uint256) public stakeWithdrawalStart;
-
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20 token.
      * @param _tokenAddress address of a token that will be linked to this contract.
