@@ -1,5 +1,8 @@
 pragma solidity ^0.5.4;
 
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./utils/UintArrayUtils.sol";
 
 
@@ -12,6 +15,8 @@ import "./utils/UintArrayUtils.sol";
  * Optionally grant can be revoked by the token grant creator.
  */
 contract TokenGrant {
+    using SafeMath for uint256;
+    using SafeERC20 for ERC20;
 
     event CreatedTokenGrant(uint256 id);
     event ReleasedTokenGrant(uint256 amount);
@@ -31,6 +36,8 @@ contract TokenGrant {
     }
 
     uint256 public numGrants;
+
+    ERC20 public token;
 
     // Token grants.
     mapping(uint256 => Grant) public grants;
@@ -140,7 +147,7 @@ contract TokenGrant {
         // Maintain a record to make it easier to query grants by grantee.
         grantIndices[_grantee].push(id);
 
-        token.transferFrom(msg.sender, address(this), _amount);
+        token.safeTransferFrom(msg.sender, address(this), _amount);
 
         // Maintain a record of the vested amount 
         balances[_grantee] = balances[_grantee].add(_amount);
