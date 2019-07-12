@@ -47,6 +47,12 @@ contract TokenGrant {
         uint256 released; // Amount that was released to the grantee.
     }
 
+    struct GrantStake {
+        uint256 grantId; // Id of the grant.
+        address stakingContract; // Staking contract.
+        uint256 amount; // Amount of staked tokens.
+    }
+
     uint256 public numGrants;
 
     ERC20 public token;
@@ -55,6 +61,9 @@ contract TokenGrant {
 
     // Token grants.
     mapping(uint256 => Grant) public grants;
+
+    // Token grants stakes.
+    mapping(address => GrantStake) public grantStakes;
 
     // Mapping of token grant IDs per particular address
     // involved in a grant as a grantee or as a creator.
@@ -267,6 +276,9 @@ contract TokenGrant {
             "Signer of the grantee doesn't match signer of the grant contract."
         );
 
+        // Keep staking record.
+        grantStakes[operator] = GrantStake(_id, _stakingContract, _amount);
+    
         tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData.slice(0, 85));
     }
 }
