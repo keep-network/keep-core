@@ -3,6 +3,8 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./utils/UintArrayUtils.sol";
 
 
@@ -24,6 +26,8 @@ interface tokenSender {
 contract TokenGrant {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
+    using BytesLib for bytes;
+    using ECDSA for bytes32;
 
     event CreatedTokenGrant(uint256 id);
     event ReleasedTokenGrant(uint256 amount);
@@ -255,6 +259,13 @@ contract TokenGrant {
             "Provided staking contract is not authorized."
         );
 
-        tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData);
+        require(_extraData.length == 150, "Stake delegation data must be provided.");
+        address operator = keccak256(abi.encodePacked(address(this))).toEthSignedMessageHash().recover(_extraData.slice(20, 65));
+        require(
+            operator == keccak256(abi.encodePacked(msg.sender)).toEthSignedMessageHash().recover(_extraData.slice(85, 65)),
+            "Signer of the grantee doesn't match signer of the grant contract."
+        );
+
+        tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData.slice(0, 85));
     }
 }
