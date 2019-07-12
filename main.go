@@ -59,14 +59,6 @@ func main() {
 		cmd.StartCommand,
 		cmd.PingCommand,
 		cmd.EthereumCommand,
-		{
-			Name:  "print-info",
-			Usage: "Prints keep client information",
-			Action: func(c *cli.Context) error {
-				printInfo(c)
-				return nil
-			},
-		},
 	}
 
 	cli.AppHelpTemplate = fmt.Sprintf(`%s
@@ -81,18 +73,4 @@ ENVIRONMENT VARIABLES:
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func printInfo(c *cli.Context) {
-	fmt.Printf("Keep client: %s\n\n"+
-		"Description: %s\n"+
-		"version:     %s\n"+
-		"revision:    %s\n"+
-		"Config Path: %s\n",
-		c.App.Name,
-		c.App.Description,
-		version,
-		revision,
-		c.GlobalString("config"),
-	)
 }
