@@ -5,7 +5,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
-import "./utils/UintArrayUtils.sol";
+import "./utils/AddressArrayUtils.sol";
 
 
 /**
@@ -28,6 +28,7 @@ contract TokenGrant {
     using SafeERC20 for ERC20;
     using BytesLib for bytes;
     using ECDSA for bytes32;
+    using AddressArrayUtils for address[];
 
     event CreatedTokenGrant(uint256 id);
     event ReleasedTokenGrant(uint256 amount);
