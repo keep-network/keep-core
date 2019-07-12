@@ -103,7 +103,7 @@ func (g *Guard) manageConnectionByStake(ctx context.Context, peer string) {
 		// if we error while getting the peer's public key, the peer's id
 		// or key may be malformed/unknown; disconnect them immediately.
 		logger.Errorf(
-			"Dropping the connection - could not get public key for peer [%v]: [%v]",
+			"dropping the connection - could not get public key for peer [%v]: [%v]",
 			peer,
 			err,
 		)
@@ -117,14 +117,14 @@ func (g *Guard) manageConnectionByStake(ctx context.Context, peer string) {
 	if err != nil {
 		// network issues with geth shouldn't cause disconnects from the
 		// network. Rather we'll abort the check and try again later.
-		logger.Warningf("Error validating peer stake, retrying later: [%v].", err)
+		logger.Warningf("error validating peer stake, retrying later: [%v].", err)
 		return
 	}
 
 	if !hasMinimumStake {
 		// if a peer doesn't have at least the min stake, disconnect them.
 		logger.Warningf(
-			"Peer [%v] has no minimal stake, dropping the connection.",
+			"dropping the connection - peer [%v] has no minimal stake",
 			peer,
 		)
 		g.connectionManager.DisconnectPeer(peer)

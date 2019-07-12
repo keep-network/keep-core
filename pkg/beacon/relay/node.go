@@ -69,7 +69,7 @@ func (n *Node) JoinGroupIfEligible(
 			)
 			if err != nil {
 				logger.Errorf(
-					"Failed to get broadcastChannel for name %s with err: [%v].",
+					"failed to get broadcastChannel for name [%s] with err: [%v]",
 					broadcastChannelName,
 					err,
 				)
@@ -88,7 +88,7 @@ func (n *Node) JoinGroupIfEligible(
 					broadcastChannel,
 				)
 				if err != nil {
-					logger.Errorf("Failed to execute dkg: [%v].", err)
+					logger.Errorf("failed to execute dkg: [%v]", err)
 					return
 				}
 
@@ -97,7 +97,7 @@ func (n *Node) JoinGroupIfEligible(
 					broadcastChannelName,
 				)
 				if err != nil {
-					logger.Errorf("Failed to register a group: [%v].", err)
+					logger.Errorf("failed to register a group: [%v]", err)
 				}
 			}()
 		}

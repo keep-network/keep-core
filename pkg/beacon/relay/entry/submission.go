@@ -35,7 +35,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 	config, err := res.chain.GetConfig()
 	if err != nil {
 		return fmt.Errorf(
-			"could not fetch chain's config [%v]",
+			"could not fetch chain's config: [%v]",
 			err,
 		)
 	}
@@ -68,7 +68,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 	)
 	if err != nil {
 		return returnWithError(
-			fmt.Errorf("wait for eligibility failure [%v]", err),
+			fmt.Errorf("wait for eligibility failure: [%v]", err),
 		)
 	}
 
@@ -83,7 +83,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			close(onSubmittedResultChan)
 
 			logger.Infof(
-				"[member:%v] Submitting relay entry on behalf of the group [%v]...",
+				"[member:%v] submitting relay entry on behalf of group: [%v]",
 				res.index,
 				groupPublicKey,
 			)
@@ -100,7 +100,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 				func(entry *event.Entry, err error) {
 					if err == nil {
 						logger.Infof(
-							"[member:%v] Relay entry for request [%v] successfully submitted at block [%v]",
+							"[member:%v] successfully submitted relay entry for request [%v] at block: [%v]",
 							res.index,
 							signingID,
 							entry.BlockNumber,
@@ -112,7 +112,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 		case submittedEntryEvent := <-onSubmittedResultChan:
 			if submittedEntryEvent.SigningId.Cmp(signingID) == 0 {
 				logger.Infof(
-					"[member:%v] Relay entry submitted by other member, leaving.",
+					"[member:%v] leaving; relay entry submitted by other member",
 					res.index,
 				)
 				return returnWithError(nil)
@@ -133,14 +133,14 @@ func (res *relayEntrySubmitter) waitForSubmissionEligibility(
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
 	logger.Infof(
-		"[member:%v] Waiting for block [%v] to submit...",
+		"[member:%v] waiting for block [%v] to submit",
 		res.index,
 		eligibleBlockHeight,
 	)
 
 	waiter, err := res.blockCounter.BlockHeightWaiter(eligibleBlockHeight)
 	if err != nil {
-		return nil, fmt.Errorf("block height waiter failure [%v]", err)
+		return nil, fmt.Errorf("block height waiter failure: [%v]", err)
 	}
 
 	return waiter, err

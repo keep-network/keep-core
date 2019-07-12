@@ -51,7 +51,7 @@ func Initialize(
 	)
 
 	relayChain.OnSignatureRequested(func(request *event.Request) {
-		logger.Infof("New relay entry requested [%+v]", request)
+		logger.Infof("new relay entry requested: [%+v]", request)
 
 		go node.GenerateRelayEntryIfEligible(
 			request.SigningId,
@@ -64,7 +64,7 @@ func Initialize(
 	})
 
 	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
-		logger.Infof("Group selection started [%+v]", event)
+		logger.Infof("group selection started: [%+v]", event)
 
 		go func() {
 			err := node.SubmitTicketsForGroupSelection(
@@ -81,7 +81,7 @@ func Initialize(
 	})
 
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
-		logger.Infof("New group registered on chain [%+v]", registration)
+		logger.Infof("new group registered on chain: [%+v]", registration)
 		go groupRegistry.UnregisterStaleGroups()
 	})
 

@@ -389,7 +389,7 @@ func (c *localChain) SubmitDKGResult(
 
 	err = dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
 	if err != nil {
-		logger.Errorf("promise fulfill failed [%v].", err)
+		logger.Errorf("failed to fulfill promise: [%v].", err)
 	}
 
 	return dkgResultPublicationPromise

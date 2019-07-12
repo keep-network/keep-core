@@ -29,7 +29,7 @@ func Execute(
 	seed *big.Int,
 	startBlockHeight uint64,
 ) (*Result, uint64, error) {
-	logger.Debugf("[member:%v] Initializing member.", memberIndex)
+	logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	member, err := NewMember(
 		memberIndex,
@@ -38,7 +38,7 @@ func Execute(
 		seed,
 	)
 	if err != nil {
-		return nil, 0, fmt.Errorf("cannot create a new member [%v]", err)
+		return nil, 0, fmt.Errorf("cannot create a new member: [%v]", err)
 	}
 
 	initializeChannel(channel)
@@ -57,7 +57,7 @@ func Execute(
 
 	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {
-		return nil, 0, fmt.Errorf("execution ended on state %T", lastState)
+		return nil, 0, fmt.Errorf("execution ended on state: %T", lastState)
 	}
 
 	return finalizationState.result(), endBlockHeight, nil

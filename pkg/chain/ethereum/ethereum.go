@@ -165,7 +165,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		failErr := relayEntryPromise.Fail(err)
 		if failErr != nil {
 			logger.Errorf(
-				"failing promise because of [%v] failed with [%v]",
+				"failed to fail promise for [%v]: [%v]",
 				err,
 				failErr,
 			)
@@ -202,7 +202,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 					err := relayEntryPromise.Fulfill(event)
 					if err != nil {
 						logger.Errorf(
-							"fulfilling promise failed with [%v]",
+							"failed to fulfill promise: [%v]",
 							err,
 						)
 					}
@@ -353,7 +353,7 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 		},
 		func(err error) error {
 			return fmt.Errorf(
-				"watch DKG result published failed with [%v]",
+				"watch DKG result published failed with: [%v]",
 				err,
 			)
 		},
@@ -371,7 +371,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 		failErr := resultPublicationPromise.Fail(err)
 		if failErr != nil {
 			logger.Errorf(
-				"failing promise because of [%v] failed with [%v]",
+				"failed to fail promise for [%v]: [%v]",
 				err,
 				failErr,
 			)
@@ -407,7 +407,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 				err := resultPublicationPromise.Fulfill(event)
 				if err != nil {
 					logger.Errorf(
-						"fulfilling promise failed with [%v]",
+						"failed to fulfill promise: [%v]",
 						err,
 					)
 				}

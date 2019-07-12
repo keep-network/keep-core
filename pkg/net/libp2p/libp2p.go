@@ -154,7 +154,7 @@ func (cm *connectionManager) DisconnectPeer(connectedPeer string) {
 	connections := cm.Network().ConnsToPeer(peer.ID(connectedPeer))
 	for _, connection := range connections {
 		if err := connection.Close(); err != nil {
-			logger.Errorf("disconnect resulted in error: [%v]", err)
+			logger.Errorf("failed to disconnect: [%v]", err)
 		}
 	}
 }

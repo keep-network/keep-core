@@ -95,7 +95,7 @@ func (es *ethereumStaker) OnStakeChanged(handle func(newStake *big.Int)) {
 			},
 			func(err error) error {
 				logger.Errorf(
-					"watch stake changed failed with: [%v]",
+					"failed to watch stake change: [%v]",
 					err,
 				)
 				return err
@@ -104,7 +104,7 @@ func (es *ethereumStaker) OnStakeChanged(handle func(newStake *big.Int)) {
 		)
 		if err != nil {
 			logger.Errorf(
-				"watch stake changed failed with: [%v]",
+				"failed to watch stake change: [%v]",
 				err,
 			)
 		}
