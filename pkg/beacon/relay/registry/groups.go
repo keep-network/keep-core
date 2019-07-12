@@ -3,7 +3,6 @@ package registry
 import (
 	"encoding/hex"
 	"fmt"
-	"os"
 	"sync"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -160,14 +159,16 @@ func (g *Groups) LoadExistingGroups() {
 
 func (g *Groups) printMemberships() {
 	for group, memberships := range g.myGroups {
-		fmt.Fprintf(os.Stdout, "Group [%v] was loaded with member IDs [", group)
+		memberLog := fmt.Sprintf("Group [%v] was loaded with member IDs [", group)
 		for idx, membership := range memberships {
 			if (len(memberships) - 1) != idx {
-				fmt.Fprintf(os.Stdout, "%v, ", membership.Signer.MemberID())
+				memberLog += fmt.Sprintf("%v, ", membership.Signer.MemberID())
 			} else {
-				fmt.Fprintf(os.Stdout, "%v]\n", membership.Signer.MemberID())
+				memberLog += fmt.Sprintf("%v]", membership.Signer.MemberID())
 			}
 		}
+
+		logger.Infof(memberLog)
 	}
 }
 
