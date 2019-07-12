@@ -16,6 +16,14 @@ interface tokenSender {
 }
 
 /**
+ @dev Staking contract interface.
+*/
+interface tokenStaking {
+    function initiateUnstake(uint256 _value, address _operator) external;
+    function finishUnstake(address _operator) external;
+}
+
+/**
  * @title TokenGrant
  * @dev A token grant contract for a specified standard ERC20 token.
  * Has additional functionality to stake/unstake token grants.
@@ -286,5 +294,29 @@ contract TokenGrant {
         grantStakes[operator] = GrantStake(_id, _stakingContract, _amount);
     
         tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData.slice(0, 85));
+    }
+
+    /**
+     * @notice Initiate unstake of the token grant.
+     * @param _amount Amount to unstake.
+     * @param _operator Operator of the stake.
+     */
+    function initiateUnstake(uint256 _amount, address _operator) public {
+        require(
+            msg.sender == _operator || msg.sender == grants[grantStakes[_operator].grantId].grantee,
+            "Only operator or grantee can initiate unstake."
+        );
+
+        tokenStaking(grantStakes[_operator].stakingContract).initiateUnstake(_amount, _operator);
+    }
+
+    /**
+     * @notice Finish unstake of the token grant.
+     * @param _operator Operator of the stake.
+     */
+    function finishUnstake(address _operator) public {
+
+        tokenStaking(grantStakes[_operator].stakingContract).finishUnstake(_operator);
+        delete grantStakes[_operator];
     }
 }
