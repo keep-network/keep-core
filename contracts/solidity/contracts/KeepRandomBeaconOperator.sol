@@ -11,7 +11,7 @@ import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
 
 interface ServiceContract {
-    function entryCreated(uint256 requestId, uint256 entry) external;
+    function entryCreated(uint256 requestId, uint256 entry, uint256 seed) external;
 }
 
 /**
@@ -123,6 +123,17 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
+     * @dev Checks if sender is authorized.
+     */
+    modifier onlyServiceContract() {
+        require(
+            serviceContracts.contains(msg.sender),
+            "Only authorized service contract can call this method."
+        );
+        _;
+    }
+
+    /**
      * @dev Reverts if ticket challenge period is not over.
      */
     modifier whenTicketChallengeIsOver() {
@@ -196,11 +207,28 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
+     * @dev Adds service contract
+     * @param serviceContract Address of the service contract.
+     */
+    function addServiceContract(address serviceContract) public onlyOwner {
+        serviceContracts.push(serviceContract);
+    }
+
+    /**
+     * @dev Removes service contract
+     * @param serviceContract Address of the service contract.
+     */
+    function removeServiceContract(address serviceContract) public onlyOwner {
+        serviceContracts.removeAddress(serviceContract);
+    }
+
+    /**
      * @dev Triggers the selection process of a new candidate group.
      * @param _groupSelectionSeed Random value that stakers will use to generate their tickets.
      * @param _seed Random value from the client. It should be a cryptographically generated random value.
      */
-    function createGroup(uint256 _groupSelectionSeed, uint256 _seed) private {
+    function createGroup(uint256 _groupSelectionSeed, uint256 _seed) public payable onlyServiceContract {
+
         // dkgTimeout is the time after DKG is expected to be complete plus the expected period to submit the result.
         uint256 dkgTimeout = ticketSubmissionStartBlock + ticketChallengeTimeout + timeDKG + groupSize * resultPublicationBlockStep;
 
@@ -660,12 +688,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
      */
-    function sign(uint256 requestId, uint256 seed, uint256 previousEntry) public payable {
-
-        require(
-            serviceContracts.contains(msg.sender),
-            "Only authorized service contract can request relay entry."
-        );
+    function sign(uint256 requestId, uint256 seed, uint256 previousEntry) public payable onlyServiceContract {
 
         require(
             numberOfGroups() > 0,
@@ -699,7 +722,6 @@ contract KeepRandomBeaconOperator is Ownable {
 
         emit SignatureSubmitted(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
 
-        ServiceContract(serviceContract).entryCreated(requestId, _groupSignature);
-        createGroup(_groupSignature, _seed);
+        ServiceContract(serviceContract).entryCreated(requestId, _groupSignature, _seed);
     }
 }
