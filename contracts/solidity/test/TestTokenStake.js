@@ -7,18 +7,15 @@ const TokenGrant = artifacts.require('./TokenGrant.sol');
 
 contract('TestTokenStake', function(accounts) {
 
-  let token, grantContract, stakingContract, 
+  let token, stakingContract,
     account_one = accounts[0],
     account_one_operator = accounts[1],
     account_one_magpie = accounts[2],
-    account_two = accounts[3],
-    account_two_operator = accounts[4],
-    account_two_magpie = accounts[5];
+    account_two = accounts[3];
 
   before(async () => {
     token = await KeepToken.new();
     stakingContract = await TokenStaking.new(token.address, duration.days(30));
-    grantContract = await TokenGrant.new(token.address, stakingContract.address, duration.days(30));
   });
 
   it("should send tokens correctly", async function() {
