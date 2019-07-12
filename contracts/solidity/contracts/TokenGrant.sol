@@ -7,6 +7,13 @@ import "./utils/UintArrayUtils.sol";
 
 
 /**
+ @dev Interface of sender contract for approveAndCall pattern.
+*/
+interface tokenSender {
+    function approveAndCall(address _spender, uint256 _value, bytes calldata _extraData) external;
+}
+
+/**
  * @title TokenGrant
  * @dev A token grant contract for a specified standard ERC20 token.
  * Has additional functionality to stake/unstake token grants.
@@ -230,5 +237,24 @@ contract TokenGrant {
         // Transfer tokens from this contract balance to the creator of the token grant.
         token.safeTransfer(grants[_id].owner, refund);
         emit RevokedTokenGrant(_id);
+    }
+
+    /**
+     * @notice Stake token grant.
+     * @dev Stakable token grant amount is the amount of vested tokens minus what user already released from the grant
+     * @param _id Grant Id.
+     * @param _stakingContract Address of the staking contract.
+     * @param _amount Amount to stake.
+     * @param _extraData Data for stake delegation. This byte array must have the following values concatenated:
+     * Magpie address (20 bytes) where the rewards for participation are sent, operator's ECDSA (65 bytes) signature of
+     * the grantee address and ECDSA signature of this contract address.
+     */
+    function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
+        require(
+            stakingContracts.contains(_stakingContract),
+            "Provided staking contract is not authorized."
+        );
+
+        tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData);
     }
 }
