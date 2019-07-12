@@ -57,13 +57,11 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("should be able to request relay entry via serviceContractProxy contract with enough ether", async function() {
-    await serviceContract.requestRelayEntry(0, {from: account_two, value: 100})
-
-    mineBlocks(blocksForward)
     await exceptThrow(serviceContractProxy.sendTransaction({from: account_two, value: 1000}));
 
     await web3.eth.sendTransaction({
-      from: account_two, value: 100, gas: 200000, to: serviceContractProxy.address,
+      // if you see a plain 'revert' error, it's probably because of not enough gas
+      from: account_two, value: 200, gas: 300000, to: serviceContractProxy.address,
       data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
