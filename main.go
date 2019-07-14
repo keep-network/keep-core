@@ -3,13 +3,11 @@ package main
 import (
 	"log"
 	"os"
-	"strings"
 
 	"fmt"
 	"path"
 	"time"
 
-	logging "github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/cmd"
 	"github.com/urfave/cli"
 )
@@ -31,7 +29,10 @@ func main() {
 		revision = "unknown"
 	}
 
-	readLoggingSetup()
+	err := setUpLogging(os.Getenv("LOG_LEVEL"))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	app := cli.NewApp()
 	app.Name = path.Base(os.Args[0])
@@ -58,89 +59,18 @@ func main() {
 		cmd.StartCommand,
 		cmd.PingCommand,
 		cmd.EthereumCommand,
-		{
-			Name:  "print-info",
-			Usage: "Prints keep client information",
-			Action: func(c *cli.Context) error {
-				printInfo(c)
-				return nil
-			},
-		},
 	}
 
 	cli.AppHelpTemplate = fmt.Sprintf(`%s
 ENVIRONMENT VARIABLES:
    KEEP_ETHEREUM_PASSWORD    keep client password
+   LOG_LEVEL                 space-delimited set of log level directives; set to
+                             "help" for help
 
 `, cli.AppHelpTemplate)
 
-	err := app.Run(os.Args)
+	err = app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
-	}
-}
-
-func printInfo(c *cli.Context) {
-	fmt.Printf("Keep client: %s\n\n"+
-		"Description: %s\n"+
-		"version:     %s\n"+
-		"revision:    %s\n"+
-		"Config Path: %s\n",
-		c.App.Name,
-		c.App.Description,
-		version,
-		revision,
-		c.GlobalString("config"),
-	)
-}
-
-func readLoggingSetup() {
-	// Single string with space-delimited directives setting log level for each
-	// subsystem, with = separating subsystem from log level. Example:
-	//
-	// "relay=debug bootstrap=info swarm2=error"
-	//
-	// Can also be a single log level for all subsystems:
-	//
-	// "info"
-	//
-	// If blank or unset, subsystems are left in their default initial state.
-	joinedLevelString := os.Getenv("LOG_LEVEL")
-
-	// Nothing to do if the env var is empty.
-	if len(joinedLevelString) == 0 {
-		return
-	}
-
-	levelStrings := strings.Split(joinedLevelString, " ")
-
-	// If there is only one directive and it has no = in it, treat it as a
-	// global log level.
-	if len(levelStrings) == 1 && !strings.Contains(levelStrings[0], "=") {
-		level := levelStrings[0]
-		err := logging.SetLogLevel("*", level)
-		if err != nil {
-			log.Fatalf("failed to parse log level [%s]: [%v]", level, err)
-		}
-
-		return
-	}
-
-	// If we're here, we want to handle subsystem=level pairs.
-	for _, subsystemPair := range levelStrings {
-		splitLevel := strings.Split(subsystemPair, "=")
-		if len(splitLevel) != 2 {
-			log.Fatalf(
-				"expected string [%s] to have format subsystem=loglevel",
-				splitLevel,
-			)
-		}
-
-		subsystem := splitLevel[0]
-		level := splitLevel[1]
-		err := logging.SetLogLevel(subsystem, level)
-		if err != nil {
-			log.Fatalf("failed to parse log level [%s]: [%v]", level, err)
-		}
 	}
 }
