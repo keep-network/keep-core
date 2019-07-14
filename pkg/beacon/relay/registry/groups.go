@@ -90,7 +90,7 @@ func (g *Groups) UnregisterStaleGroups() {
 		publicKeyBytes, err := groupKeyFromString(publicKey)
 		if err != nil {
 			logger.Errorf(
-				"error occured while decoding public key into bytes [%v]",
+				"error occured while decoding public key into bytes: [%v]",
 				err,
 			)
 		}
@@ -144,7 +144,7 @@ func (g *Groups) LoadExistingGroups() {
 	go func() {
 		for err := range errorsChannel {
 			logger.Errorf(
-				"Could not load membership from disk: [%v]",
+				"could not load membership from disk: [%v]",
 				err,
 			)
 		}
@@ -159,7 +159,7 @@ func (g *Groups) LoadExistingGroups() {
 
 func (g *Groups) printMemberships() {
 	for group, memberships := range g.myGroups {
-		memberLog := fmt.Sprintf("Group [%v] was loaded with member IDs [", group)
+		memberLog := fmt.Sprintf("group [%v] was loaded with member IDs: [", group)
 		for idx, membership := range memberships {
 			if (len(memberships) - 1) != idx {
 				memberLog += fmt.Sprintf("%v, ", membership.Signer.MemberID())

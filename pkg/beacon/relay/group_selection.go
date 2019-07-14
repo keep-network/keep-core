@@ -77,7 +77,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		select {
 		case err := <-errorChannel:
 			logger.Errorf(
-				"error during ticket submission [%v]",
+				"error during ticket submission: [%v]",
 				err,
 			)
 		case <-submissionTimeout:

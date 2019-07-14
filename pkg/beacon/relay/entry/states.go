@@ -120,7 +120,7 @@ func (scs *signatureCompleteState) Initiate() error {
 	seenShares := make(map[group.MemberIndex]*bn256.G1)
 	seenShares[scs.MemberIndex()] = scs.selfSignatureShare
 	logger.Debugf(
-		"[member:%v] auto-accepting self signature share [%v]",
+		"[member:%v] auto-accepting self signature share: [%v]",
 		scs.MemberIndex(),
 		scs.MemberIndex(),
 	)
@@ -130,7 +130,7 @@ func (scs *signatureCompleteState) Initiate() error {
 		_, err := share.Unmarshal(message.shareBytes)
 		if err != nil {
 			logger.Errorf(
-				"[member:%v] failed to unmarshal signature share from [%v]: [%v]",
+				"[member:%v] failed to unmarshal signature share from member [%v]: [%v]",
 				scs.MemberIndex(),
 				message.senderID,
 				err,
@@ -152,7 +152,7 @@ func (scs *signatureCompleteState) Initiate() error {
 	}
 
 	logger.Infof(
-		"[member:%v] restoring signature from [%v] shares...",
+		"[member:%v] restoring signature from [%v] shares",
 		scs.MemberIndex(),
 		len(seenSharesSlice),
 	)

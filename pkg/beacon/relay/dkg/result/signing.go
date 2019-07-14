@@ -113,7 +113,7 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 		// Check if sender sent multiple messages.
 		if duplicatedMessagesFromSender(message.senderIndex) {
 			logger.Infof(
-				"[member: %v] received multiple messages from sender [%d]",
+				"[member: %v] received multiple messages from sender: [%d]",
 				sm.index,
 				message.senderIndex,
 			)
@@ -139,7 +139,7 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 		)
 		if err != nil {
 			logger.Infof(
-				"[member: %v] verification of signature from sender [%d] failed [%+v]",
+				"[member: %v] verification of signature from sender [%d] failed: [%+v]",
 				sm.index,
 				message.senderIndex,
 				message,

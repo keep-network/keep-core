@@ -75,7 +75,7 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 		topBlockNumber, err := strconv.ParseInt(block.Number, 0, 32)
 		if err != nil {
 			// FIXME Consider the right thing to do here.
-			logger.Errorf("Error receiving a new block: [%v].", err)
+			logger.Errorf("error receiving a new block: [%v]", err)
 		}
 
 		// receivedBlockHeight is the current blockchain height as just

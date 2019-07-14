@@ -816,7 +816,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				revealedPrivateKey,
 			)
 			if err != nil {
-				logger.Errorf("cannot recover symmetric key [%v]", err)
+				logger.Errorf("cannot recover symmetric key: [%v]", err)
 				// TODO Disqualify the revealing member
 				continue
 			}
@@ -828,7 +828,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				recoveredSymmetricKey, // s_mk
 			)
 			if err != nil {
-				logger.Errorf("cannot decrypt share S [%v]", err)
+				logger.Errorf("cannot decrypt share S: [%v]", err)
 				// TODO Disqualify the revealing member
 				continue
 			}

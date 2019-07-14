@@ -316,7 +316,7 @@ func (sjs *sharesJustificationState) Initiate() error {
 	}
 
 	// TODO: Handle member disqualification
-	logger.Debugf("disqualified members = %v", disqualifiedMembers)
+	logger.Debugf("disqualified members: %v", disqualifiedMembers)
 
 	return nil
 }
@@ -520,7 +520,7 @@ func (pjs *pointsJustificationState) Initiate() error {
 	}
 
 	// TODO: Handle member disqualification
-	logger.Debugf("disqualified members = %v", disqualifiedMembers)
+	logger.Debugf("disqualified members: %v", disqualifiedMembers)
 
 	return nil
 }

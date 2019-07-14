@@ -57,7 +57,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	config, err := chainRelay.GetConfig()
 	if err != nil {
 		return fmt.Errorf(
-			"could not fetch chain's config [%v]",
+			"could not fetch chain's config: [%v]",
 			err,
 		)
 	}
@@ -72,7 +72,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	if err != nil {
 		close(onSubmittedResultChan)
 		return fmt.Errorf(
-			"could not watch for DKG result publications [%v]",
+			"could not watch for DKG result publications: [%v]",
 			err,
 		)
 	}
@@ -87,7 +87,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	if err != nil {
 		return returnWithError(
 			fmt.Errorf(
-				"could not check if the result is already submitted [%v]",
+				"could not check if the result is already submitted: [%v]",
 				err,
 			),
 		)
@@ -106,7 +106,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	)
 	if err != nil {
 		return returnWithError(
-			fmt.Errorf("wait for eligibility failure [%v]", err),
+			fmt.Errorf("wait for eligibility failure: [%v]", err),
 		)
 	}
 
@@ -120,7 +120,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
-			logger.Infof("[member:%v] Submitting DKG result...", sm.index)
+			logger.Infof("[member:%v] submitting DKG result", sm.index)
 			chainRelay.SubmitDKGResult(
 				sm.index,
 				result,
@@ -135,7 +135,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			return <-errorChannel
 		case <-onSubmittedResultChan:
 			logger.Infof(
-				"[member:%v] DKG result submitted by other member, leaving.",
+				"[member:%v] leaving; DKG result was submitted by other member",
 				sm.index,
 			)
 			// A result has been submitted by other member. Leave without
@@ -158,7 +158,7 @@ func (sm *SubmittingMember) waitForSubmissionEligibility(
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
 	logger.Infof(
-		"[member:%v] Waiting for block [%v] to submit...",
+		"[member:%v] waiting for block [%v] to submit",
 		sm.index,
 		eligibleBlockHeight,
 	)
