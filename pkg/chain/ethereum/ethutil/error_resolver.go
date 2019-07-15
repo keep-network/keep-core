@@ -71,6 +71,11 @@ func (er *ErrorResolver) ResolveError(
 		Value: value,
 	}
 
+	logger.Debugf(
+		"resolving error for contract call [%+v]",
+		msg,
+	)
+
 	response, err := er.contractCaller.CallContract(context.TODO(), msg, nil)
 	if err != nil {
 		return fmt.Errorf("got error [%v] while resolving original error [%v]", err, originalErr)
