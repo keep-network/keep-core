@@ -1,11 +1,11 @@
 const crypto = require("crypto")
-const KeepRandomBeaconService = artifacts.require("KeepRandomBeaconService.sol");
+const KeepRandomBeaconServiceImplV1 = artifacts.require("KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconServiceProxy = artifacts.require('KeepRandomBeaconServiceProxy.sol');
 
 module.exports = async function() {
 
   const keepRandomBeaconServiceProxy = await KeepRandomBeaconServiceProxy.deployed()
-  const contractInstance = await KeepRandomBeaconService.at(keepRandomBeaconServiceProxy.address)
+  const contractInstance = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconServiceProxy.address)
 
   try {
     let tx = await contractInstance.requestRelayEntry(crypto.randomBytes(32), {value: 2})

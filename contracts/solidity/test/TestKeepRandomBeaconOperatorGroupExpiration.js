@@ -13,7 +13,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
       artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconServiceProxy.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
+      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
     config = contracts.config;
