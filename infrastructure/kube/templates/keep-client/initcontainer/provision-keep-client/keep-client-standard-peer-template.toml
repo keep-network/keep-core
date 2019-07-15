@@ -13,6 +13,10 @@
     KeepRandomBeaconOperator = "Set by Kube"
     # StakingProxy
     StakingProxy = "Set by Kube"
+    # Hex-encoded address of KeepRandomBeaconService contract. Only needed
+    # in cases where the client's utility functions will be used (e.g., the
+    # relay subcommand).
+    KeepRandomBeaconService = "Set by Kube"
 
 [LibP2P]
   Peers = ["/ip4/10.102.100.142/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r"]

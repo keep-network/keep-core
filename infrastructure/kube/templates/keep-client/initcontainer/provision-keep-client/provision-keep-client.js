@@ -234,6 +234,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
       parsedConfigFile.ethereum.URLRPC = ethHost + ':' + ethRpcPort;
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
+      parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.StakingProxy = stakingProxyContractAddress;
       parsedConfigFile.LibP2P.Seed = 2;
       parsedConfigFile.LibP2P.Port = 3919;
@@ -260,6 +261,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.account.Address = operator;
       parsedConfigFile.ethereum.account.KeyFile = '/mnt/keep-client/config/eth_account_keyfile';
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
+      parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.StakingProxy = stakingProxyContractAddress;
       parsedConfigFile.LibP2P.Port = 3919;
 
