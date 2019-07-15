@@ -29,9 +29,7 @@ provider "helm" {
 
 # create gke cluster
 module "gke_cluster" {
-  source = "../../../../thesis/infrastructure/terraform/modules/gcp_gke"
-
-  #source           = "git@github.com:thesis/infrastructure.git//terraform/modules/gcp_gke"
+  source           = "git@github.com:thesis/infrastructure.git//terraform/modules/gcp_gke"
   project          = "${module.project.project_id}"
   region           = "${var.region_data["region"]}"
   vpc_network_name = "${module.vpc.vpc_network_name}"
