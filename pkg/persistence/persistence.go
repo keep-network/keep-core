@@ -1,5 +1,9 @@
 package persistence
 
+import "github.com/ipfs/go-log"
+
+var logger = log.Logger("keep-persistence")
+
 // Handle is an interface for data persistence. Underlying implementation
 // can write data e.g. to disk, cache, or hardware module.
 type Handle interface {

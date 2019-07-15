@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"math/big"
 
+	"github.com/ipfs/go-log"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -16,6 +18,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 )
+
+var logger = log.Logger("keep-ethutil")
 
 // AddressFromHex converts the passed string to a common.Address and returns it,
 // unless it is not a valid address, in which case it returns an error. Compare

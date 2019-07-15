@@ -1,8 +1,6 @@
 package gjkr
 
 import (
-	"fmt"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -318,7 +316,7 @@ func (sjs *sharesJustificationState) Initiate() error {
 	}
 
 	// TODO: Handle member disqualification
-	fmt.Printf("disqualified members = %v\n", disqualifiedMembers)
+	logger.Debugf("disqualified members: %v", disqualifiedMembers)
 
 	return nil
 }
@@ -522,7 +520,7 @@ func (pjs *pointsJustificationState) Initiate() error {
 	}
 
 	// TODO: Handle member disqualification
-	fmt.Printf("disqualified members = %v\n", disqualifiedMembers)
+	logger.Debugf("disqualified members: %v", disqualifiedMembers)
 
 	return nil
 }

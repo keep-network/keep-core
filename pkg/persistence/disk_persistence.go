@@ -15,12 +15,20 @@ const (
 func NewDiskHandle(path string) Handle {
 	err := createDir(path, currentDir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error occured while creating [%v] directory: [%v]", currentDir, err)
+		logger.Errorf(
+			"failed while creating directory [%v]: [%v]",
+			currentDir,
+			err,
+		)
 	}
 
 	err = createDir(path, archiveDir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error occured while creating [%v] directory: [%v]", archiveDir, err)
+		logger.Errorf(
+			"failed while creating directory [%v]: [%v]",
+			archiveDir,
+			err,
+		)
 	}
 
 	return &diskPersistence{

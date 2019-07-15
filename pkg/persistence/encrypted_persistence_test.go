@@ -131,7 +131,7 @@ func encryptData() [][]byte {
 	encryptedData1, err := box.Encrypt(dataToEncrypt1)
 	encryptedData2, err := box.Encrypt(dataToEncrypt2)
 	if err != nil {
-		fmt.Println("Error occured while encrypting data")
+		fmt.Println("Error occured while encrypting data.")
 	}
 
 	return [][]byte{encryptedData1, encryptedData2}

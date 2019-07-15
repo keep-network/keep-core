@@ -63,6 +63,13 @@ func (er *ErrorResolver) ResolveError(
 	methodName string,
 	parameters ...interface{},
 ) error {
+	logger.Debugf(
+		"packing parameters for method [%s] with ABI [%v]: [%+v]",
+		methodName,
+		er.abi.Methods[methodName],
+		parameters,
+	)
+
 	packed, err := er.abi.Pack(methodName, parameters...)
 	msg := ethereum.CallMsg{
 		From:  from,
@@ -70,6 +77,11 @@ func (er *ErrorResolver) ResolveError(
 		Data:  packed,
 		Value: value,
 	}
+
+	logger.Debugf(
+		"resolving error for contract call [%+v]",
+		msg,
+	)
 
 	response, err := er.contractCaller.CallContract(context.TODO(), msg, nil)
 	if err != nil {
