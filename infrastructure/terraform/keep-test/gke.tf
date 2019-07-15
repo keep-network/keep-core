@@ -1,5 +1,5 @@
 provider "kubernetes" {
-  version                = "<= 1.5.0"
+  version                = "= 1.5.0"
   load_config_file       = false
   host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
   token                  = "${data.google_client_config.default.access_token}"
@@ -12,7 +12,7 @@ module "helm_provider_helper" {
 }
 
 provider "helm" {
-  version = "<= 0.7.0"
+  version = "= 0.7.0"
 
   kubernetes {
     host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
