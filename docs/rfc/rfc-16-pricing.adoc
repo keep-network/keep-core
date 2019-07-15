@@ -8,7 +8,10 @@ toc::[]
 
 == Background
 
-Why do we want to do the thing this RFC describes?
+The beacon needs to capture enough value to make it self-sufficient.
+A method for pricing beacon entries is required,
+but many schemes have serious drawbacks
+or can be broken by relatively simple third-party contracts.
 
 == Proposal
 
@@ -33,7 +36,11 @@ are paid out to requesters to subsidize new requests.
 
 === Goal
 
-Simple pricing method
+A simple method for pricing beacon entries
+that doesn't present easy exploitation opportunities.
+The pricing method should avoid
+the known downfalls of previously considered, more complex, schemes,
+such as price discrimination being defeated by callback pooling.
 
 === Implementation
 
@@ -83,10 +90,6 @@ an _entry verification cost_,
 and a _profit margin_.
 
 The _DKG cost fraction_ is added to the _DKG fee pool_.
-When a DKG trigger event occurs,
-the state of the DKG fee pool is checked.
-Group creation and DKG are initiated
-if the DKG fee pool exceeds the DKG cost estimate at the time.
 
 A signing group is selected and tasked with generating the new entry.
 
@@ -125,6 +128,12 @@ its members slashed,
 and a new signing group is selected
 and the submission delay calculation reset.
 
+The submission of a new entry acts as the DKG trigger event.
+When a valid entry is received,
+the state of the _DKG fee pool_ is checked.
+Group creation and DKG are initiated
+if the DKG fee pool exceeds the DKG cost estimate at the time.
+
 ==== Rewards
 
 The _base reward_ for submitting an entry
@@ -146,9 +155,22 @@ upon submission of a valid entry.
 The group reward equals the _base reward_
 multiplied by a _delay factor_
 equaling the fraction of time left by the submission deadline, squared.
-If the maximum time to submit is 20 blocks
-and an entry is received 4 blocks from the request,
-the delay factor is _0.8^2^ = 0.64_.
+
+The delay factor is counted
+from 1 in the first block a submission could be published in,
+to 0 in the deadline block which doesn't accept any more submissions.
+
+For example, assume the maximum time to submit is 20 blocks,
+the off-chain entry generation protocol takes 5 blocks
+and a request is made on block 1000.
+
+Block 1005 is the earliest block the submission could be published in:
+if published in this block the delay factor is 1.
+Block 1025 is the deadline block:
+no submissions are accepted and the delay factor is 0.
+
+If the entry is submitted in block 1010,
+the delay factor is `((1010 - 1005) / 20)^2 = 0.8^2 = 0.64`.
 Thus the _group reward = base reward * 0.64_,
 with the difference being the _delay penalty = base reward * (1 - 0.64)_.
 
@@ -225,12 +247,15 @@ Use a DKG frequency divider _d_ to set the group creation rate;
 once every _d_ entries on average.
 Divide DKG cost estimate by _d_ to get DKG contribution for each entry.
 
-Long-term gas price feed not required
-when performing DKG whenever sufficient money has accumulated.
-If gas price goes up,
-DKG frequency goes down temporarily;
-If gas price goes down,
-DKG performed more often.
+Because DKG is performed when sufficient gas money has accumulated,
+fluctuations in gas prices don't need special consideration.
+When gas costs are rising,
+DKG gets performed less frequently
+until prices (and thus gas cost contributions) stabilize.
+As long as the fluctuation safety factor is sufficient
+to cover the immediate rise in gas fees during DKG execution
+the beacon is capable of generating new groups.
+Similarly, when gas costs fall DKG gets triggered faster.
 
 ===== Entry verification fee
 
@@ -241,36 +266,42 @@ to get entry verification fee.
 
 === Limitations
 
-Entry price reacts slightly to entry quality
+Entry pricing is mostly static;
+entry quality has a slight effect on price
 (faster entries -> lower surplus -> lower request subsidies)
-but not to other factors.
+but other factors apart from gas fees do not impact the price.
+
 Processing entries one-by-one doesn't scale.
-If submitter is miner,
-can set arbitrary gas fees to attack the requester
-by making the callback run out of gas;
-no recourse is provided in the design,
-and mitigations seem difficult at first look.
 
-=== Proof of Concept
+If the submitter of some entry is a miner,
+they can set an arbitrarily high gas fee to DOS the requester
+by making their callback run out of gas.
+The current design does not include mitigations for this attack.
 
-If you have PoC code, refer to the relevant branch and give a brief summary.
+== Future Work
 
-== Future Work (optional)
+Instead of rejecting new requests when one has already been made,
+the beacon could accept a single queued request,
+to be served after the active one.
+Other requesters could outbid the current queued request
+by paying enough to process the request and refund the previous one,
+and provide some specified (e.g. 1.2) increase in the profit margin.
+When the current active request is served,
+the queued request automatically becomes the next active request.
 
-If applicable, what future evolutions could you see this approach leading to?
-Particularly if these possibilities influenced your thinking about the main
-proposal, this is important.
+This method would act as both a price floor and a supply cap,
+while capturing the effective price increase when demand exceeds supply,
+instead of letting it go to miners
+as customers try to get their requests processed first.
 
-== Open Questions (optional)
+== Open Questions
 
-If any open questions are left that you haven't yet investigated, what are they?
+The implementation of the gas price feed is out of scope.
+The method of estimating gas fees,
+the timespan over which the estimate should be calculated,
+and the fluctuation safety margin are not yet defined.
 
 [bibliography]
 == Related Links
 
 - Flowdock Links
-- Other links
-- If you have publications, you can include them in bibliography style. If you
-  start your bullet with an id in _triple_ square brackets (e.g. `+[[[AAKE]]]+`),
-  you can reference it in the content body using regular cross-reference syntax
-  (e.g. `+<<AAKE>>+`).
