@@ -1,6 +1,6 @@
 const crypto = require("crypto")
-const KeepRandomBeaconService = artifacts.require("KeepRandomBeaconService.sol");
-const KeepRandomBeaconServiceProxy = artifacts.require('KeepRandomBeaconServiceProxy.sol');
+const KeepRandomBeaconServiceImplV1 = artifacts.require("KeepRandomBeaconServiceImplV1.sol");
+const KeepRandomBeaconService = artifacts.require('KeepRandomBeaconService.sol');
 
 // Example usage:
 // truffle exec ./scripts/request-relay-entry-with-callback.js yourContractAddress "callbackMethodName" payment
@@ -8,8 +8,8 @@ const KeepRandomBeaconServiceProxy = artifacts.require('KeepRandomBeaconServiceP
 
 module.exports = async function() {
 
-  const keepRandomBeaconServiceProxy = await KeepRandomBeaconServiceProxy.deployed()
-  const contractInstance = await KeepRandomBeaconService.at(keepRandomBeaconServiceProxy.address)
+  const keepRandomBeaconService = await KeepRandomBeaconService.deployed()
+  const contractInstance = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address)
 
   try {
     let tx = await contractInstance.methods['requestRelayEntry(uint256,address,string)'](crypto.randomBytes(32), process.argv[4], process.argv[5], {value: process.argv[6]})

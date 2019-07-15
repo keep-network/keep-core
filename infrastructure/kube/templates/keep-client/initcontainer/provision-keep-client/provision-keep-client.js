@@ -51,10 +51,10 @@ const keepTokenContractAbi = keepTokenContractParsed.abi;
 const keepTokenContractAddress = keepTokenContractParsed.networks[ethNetworkId].address;
 const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenContractAddress);
 
-// keepRandomBeaconServiceProxy, only contract address for config file create
-const keepRandomBeaconServiceProxyJsonFile = '/tmp/KeepRandomBeaconServiceProxy.json';
-const keepRandomBeaconServiceProxyParsed = JSON.parse(fs.readFileSync(keepRandomBeaconServiceProxyJsonFile));
-const keepRandomBeaconServiceProxyContractAddress = keepRandomBeaconServiceProxyParsed.networks[ethNetworkId].address;
+// keepRandomBeaconService, only contract address for config file create
+const keepRandomBeaconServiceJsonFile = '/tmp/KeepRandomBeaconService.json';
+const keepRandomBeaconServiceParsed = JSON.parse(fs.readFileSync(keepRandomBeaconServiceJsonFile));
+const keepRandomBeaconServiceContractAddress = keepRandomBeaconServiceParsed.networks[ethNetworkId].address;
 
 // KeepRandomBeaconOperator, only contract address for config file create
 const keepRandomBeaconOperatorJsonFile = '/tmp/KeepRandomBeaconOperator.json';
