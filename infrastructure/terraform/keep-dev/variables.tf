@@ -232,5 +232,6 @@ variable "utility_box" {
     name         = "keep-dev-utility-box"
     tags         = "gke-subnet"
     machine_type = "g1-small"
+    tools        = "kubectl, helm, jq, npm, geth"
   }
 }
