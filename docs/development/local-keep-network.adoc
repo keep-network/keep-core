@@ -8,9 +8,9 @@ toc::[]
 * Installed `geth` Ethereum client
 * Installed `truffle` framework
 
-The `scripts/macos-setup.sh` installs all required packages. Please consult 
+The `scripts/macos-setup.sh` installs all required packages. Please consult
 <<README.adoc#getting-set-up,Keep developer documentation>> for details.
- 
+
 == Setting up local Ethereum client
 
 Create directories for Ethereum client data:
@@ -34,9 +34,9 @@ Address: {3e208f39da1bc335464f40d85546ad6a1b66a9a4}
 ```
 
 Create a new account for each Keep peer individually. Peer's network identifier
-is derived from the account's address and all messages from the peer are signed 
+is derived from the account's address and all messages from the peer are signed
 with the private key belonging to the account. In this document, we will create
-5 accounts for 5 peers. For simplicity, please set the password to just 
+5 accounts for 5 peers. For simplicity, please set the password to just
 `password`. For a real environment, please use some better password.
 ```
 $ geth account new --keystore ~/ethereum/data/keystore
@@ -92,8 +92,8 @@ Account #5: {c4cba981a8edb64276f71a49f9392bad7a726417} keystore:///Users/piotr/e
 ```
 
 Initialize your local Ethereum node from `genesis.json` file. This allows to
-issue some tokens to the accounts we just created. We assign tokens to all 
-addresses. The account under alloc is the address of the account prepended with 
+issue some tokens to the accounts we just created. We assign tokens to all
+addresses. The account under alloc is the address of the account prepended with
 `0x`.
 
 ```
@@ -188,9 +188,9 @@ INFO [10-31|15:03:49.852] 🔨 mined potential block                  number=1 h
 
 == Keep contracts deployment
 
-Before we deploy Keep contracts to the local Ethereum network or stake Keep 
+Before we deploy Keep contracts to the local Ethereum network or stake Keep
 tokens, it is required to unlock addresses that will be used by Keep clients.
-We also unlock the account that will be used by Ethereum client since it will 
+We also unlock the account that will be used by Ethereum client since it will
 be used later to set up staking contract.
 
 ```
@@ -218,8 +218,8 @@ true
 > exit
 ```
 
-We also need to create a new network entry in `keep-core/contracts/solidity/truffle.js` 
-pointing to our local node and its account. This account will pay gas for Keep 
+We also need to create a new network entry in `keep-core/contracts/solidity/truffle.js`
+pointing to our local node and its account. This account will pay gas for Keep
 contract deployment.
 
 ```
@@ -232,8 +232,8 @@ local: {
 },
 ```
 
-Having done all those steps we can finally run a migration and deploy our 
-contracts. Please save the output of as we will need to use some of the 
+Having done all those steps we can finally run a migration and deploy our
+contracts. Please save the output of as we will need to use some of the
 outputted contract addresses in the Keep peer configuration later.
 
 ```
@@ -292,7 +292,7 @@ Saving artifacts...
 == Keep token staking
 
 Each Keep peer needs to have a minimum number of KEEP tokens staked under its
-account. The `demo.js` script transfers KEEP tokens and stake them for all 
+account. The `demo.js` script transfers KEEP tokens and stake them for all
 addresses available.
 
 ```
@@ -311,8 +311,8 @@ successfully staked KEEP tokens for account 0xc4cba981a8edb64276f71a49f9392bad7a
 == Setting up local Keep peers
 
 
-For each Keep peer we need to create a separate configuration file. We need at 
-least one bootstrap peer in the network. Here, we will create one bootstrap peer 
+For each Keep peer we need to create a separate configuration file. We need at
+least one bootstrap peer in the network. Here, we will create one bootstrap peer
 and 4 non-bootstrap peers pointing to it.
 
 Let's create a configuration for the bootstrap peer first:
@@ -320,7 +320,7 @@ Let's create a configuration for the bootstrap peer first:
 $ cp config.toml.SAMPLE config.local.1.toml
 ```
 
-Next, edit `config.local.1.toml` and update `[ethereum.account]` section to 
+Next, edit `config.local.1.toml` and update `[ethereum.account]` section to
 point to the secound account (the first one is used by Ethereum client):
 ```
 [ethereum.account]
@@ -328,8 +328,8 @@ point to the secound account (the first one is used by Ethereum client):
         KeyFile            = "/Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-28-13.525596422Z--3e208f39da1bc335464f40d85546ad6a1b66a9a4"
 ```
 
-Update `[ethereum.ContractAddresses]` section to point to the previously 
-deployed contract instances. Please use addresses of `KeepGroup` and 
+Update `[ethereum.ContractAddresses]` section to point to the previously
+deployed contract instances. Please use addresses of `KeepGroup` and
 `KeepRandomBeacon` contracts:
 ```
 [ethereum.ContractAddresses]
@@ -364,9 +364,9 @@ $ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.1.toml sta
 ------------------------------------------------------------------------------------------------
 ```
 
-The next thing we need to do is to alter configuration file of each 
-non-bootstrap peer. Please modify `Port` number so that it is unique for each 
-peer and update the address of the bootstrap peer. For a non-bootstrap peer, 
+The next thing we need to do is to alter configuration file of each
+non-bootstrap peer. Please modify `Port` number so that it is unique for each
+peer and update the address of the bootstrap peer. For a non-bootstrap peer,
 `Seed` value should be removed or remain commented out. We also need to update
 ethereum account and key file so that each Keep client uses a different account.
 
@@ -465,7 +465,7 @@ $ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.5.toml sta
 
 == Genesis entry
 
-In order to trigger creation of the first group genesis entry must be submitted. 
+In order to trigger creation of the first group genesis entry must be submitted.
 ```
 $ truffle exec ./scripts/genesis.js --network local
 
@@ -523,4 +523,28 @@ TransactionHash:0xf345ef11c659157613c38366746a7053fd8aca59b854864629eab2b756c201
 --------------------------
 
 ```
+
+== Internal Testnet
+
+Environment Name: `keep-dev`
+
+`keep-dev` is a cloud deployed instance of the keep-network complete
+with ETH chain.  This environment is usually deployed with the latest
+`master` and is continuously deployed so uptime is variable.
+
+You do need a `keep-dev` VPN account to access the network.  Reach out
+in the DevOps flow if you do not have one.
+
+=== Connection Info
+
+==== Ethereum Network
+
+- *Dashboard:* http://eth-dashboard.internal.keep-dev.com:3000
+- *Transactions:*
+  ** _RPC:_ http://eth-tx-node.default.svc.cluster.local:8545
+  ** _WebSocket:_ link:[ws://eth-tx-node.default.svc.cluster.local:8546]
+
+==== Keep Network
+
+- link:[keep-client-bootstrap-peer-0.default.svc.cluster.local:3919]
 
