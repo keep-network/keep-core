@@ -1,7 +1,7 @@
 import { duration } from './increaseTime';
 import { bls } from './data';
 
-async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, KeepRandomBeaconServiceProxy,
+async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
 
   let token, stakingProxy, stakingContract,
@@ -32,7 +32,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new();
-  serviceContractProxy = await KeepRandomBeaconServiceProxy.new(serviceContractImplV1.address);
+  serviceContractProxy = await KeepRandomBeaconService.new(serviceContractImplV1.address);
   serviceContract = await KeepRandomBeaconServiceImplV1.at(serviceContractProxy.address)
 
   // Initialize Keep Random Beacon operator contract

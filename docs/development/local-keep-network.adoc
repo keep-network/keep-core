@@ -273,9 +273,9 @@ Running migration: 2_deploy_contracts.js
   Replacing KeepRandomBeaconServiceImplV1...
   ... 0x03a560288292005f2181fe561461aa70b521741349641c31525f64c1482caf25
   KeepRandomBeaconServiceImplV1: 0x3179d9c794e597d6316736189bf040b74a2f1dd7
-  Replacing KeepRandomBeaconServiceProxy...
+  Replacing KeepRandomBeaconService...
   ... 0x9facb5fe566862e67e50d6ad0fc622f717ee5cb795c7044ba9ad2ff32f9faa70
-  KeepRandomBeaconServiceProxy: 0x15045ff30d6327345cc052cc4b8c28dbe974a74b
+  KeepRandomBeaconService: 0x15045ff30d6327345cc052cc4b8c28dbe974a74b
   Replacing KeepRandomBeaconOperator...
   ... 0x9e49a94de6dfbc6496c89bb3edff8201ad407ba906893029185f72be2c4e9528
   KeepRandomBeaconOperator: 0x9da7876f5404dde662bf5cbc6ca1462e777571ff
@@ -328,7 +328,7 @@ deployed contract instances. Please use addresses of `KeepRandomBeaconOperator` 
 `KeepRandomBeacon` contracts:
 ```
 [ethereum.ContractAddresses]
-        KeepRandomBeaconServiceProxy = "0x15045ff30d6327345cc052cc4b8c28dbe974a74b"
+        KeepRandomBeaconService = "0x15045ff30d6327345cc052cc4b8c28dbe974a74b"
         KeepRandomBeaconOperator = "0xdff3075ca23fe28697d5c4f171cf04abd79bd837"
 ```
 
