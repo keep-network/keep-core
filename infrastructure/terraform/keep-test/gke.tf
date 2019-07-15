@@ -60,7 +60,7 @@ module "gke_cluster" {
     machine_type = "${var.gke_node_pool["machine_type"]}"
     disk_type    = "${var.gke_node_pool["disk_type"]}"
     disk_size_gb = "${var.gke_node_pool["disk_size_gb"]}"
-    oauth_scopes = "${(var.gke_node_pool["oauth_scopes"])}"
+    oauth_scopes = "${var.gke_node_pool["oauth_scopes"]}"
     auto_repair  = "${var.gke_node_pool["auto_repair"]}"
     auto_upgrade = "${var.gke_node_pool["auto_upgrade"]}"
     tags         = "${module.nat_gateway_zone_a.routing_tag_regional}"
