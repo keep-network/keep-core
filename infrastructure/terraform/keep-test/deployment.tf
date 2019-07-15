@@ -33,6 +33,7 @@ module "push_deployment_infrastructure" {
   utility_box {
     name         = "${var.utility_box["name"]}"
     machine_type = "${var.utility_box["machine_type"]}"
+    tools        = "${var.utility_box["tools"]}"
     zone         = "${var.region_data["zone_a"]}"
     tags         = "${module.nat_gateway_zone_a.routing_tag_regional},${var.utility_box["tags"]}"
   }
