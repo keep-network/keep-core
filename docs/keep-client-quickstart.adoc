@@ -76,6 +76,7 @@ export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
 docker run -dit \
 --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
 --env KEEP_ETHEREUM_PASSWORD=$KEEP_CLIENT_ETHEREUM_PASSWORD \
+--env LOG_LEVEL=debug \
 -p 3919:3919 \
 gcr.io/keep-test-f3e0/keep-client --config /mnt/keep-client/config/keep-client-config.toml start
 ```
