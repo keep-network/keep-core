@@ -20,7 +20,6 @@ func TestExecuteDKGLocal(t *testing.T) {
 	groupSize := 5
 	threshold := 3
 
-	requestID := big.NewInt(13)
 	seed := big.NewInt(8)
 
 	startBlockHeight := uint64(2)
@@ -40,7 +39,6 @@ func TestExecuteDKGLocal(t *testing.T) {
 		}
 
 		signer, err := ExecuteDKG(
-			requestID,
 			seed,
 			playerIndex,
 			groupSize,

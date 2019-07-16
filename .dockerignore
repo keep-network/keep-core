@@ -12,3 +12,4 @@ testnet*
 # Go stuff.
 vendor
 **/gen/*/**/*.go
+!pkg/chain/gen/cmd/cmd*.go

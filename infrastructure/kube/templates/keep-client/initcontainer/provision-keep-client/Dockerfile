@@ -25,8 +25,8 @@ ENV ETH_NETWORK_ID=$ETH_NETWORK_ID
 COPY ./StakingProxy.json /tmp/StakingProxy.json
 COPY ./TokenStaking.json /tmp/TokenStaking.json
 COPY ./KeepToken.json /tmp/KeepToken.json
-COPY ./KeepRandomBeacon.json /tmp/KeepRandomBeacon.json
-COPY ./KeepGroup.json /tmp/KeepGroup.json
+COPY ./KeepRandomBeaconService.json /tmp/KeepRandomBeaconService.json
+COPY ./KeepRandomBeaconOperator.json /tmp/KeepRandomBeaconOperator.json
 
 COPY ./keep-client-bootstrap-peer-template.toml /tmp/keep-client-bootstrap-peer-template.toml
 COPY ./keep-client-standard-peer-template.toml /tmp/keep-client-standard-peer-template.toml

@@ -28,7 +28,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
 	beaconValue []byte,
-	entryRequestID *big.Int,
 	entrySeed *big.Int,
 	startBlockHeight uint64,
 ) error {
@@ -77,8 +76,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	for {
 		select {
 		case err := <-errorChannel:
-			fmt.Printf(
-				"error during ticket submission [%v]",
+			logger.Errorf(
+				"error during ticket submission: [%v]",
 				err,
 			)
 		case <-submissionTimeout:
@@ -102,7 +101,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			go n.JoinGroupIfEligible(
 				relayChain,
 				&groupselection.Result{SelectedStakers: selectedStakers},
-				entryRequestID,
 				entrySeed,
 				challengeEndBlockHeight,
 			)

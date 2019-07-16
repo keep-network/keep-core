@@ -1,8 +1,6 @@
 package chain
 
 import (
-	"math/big"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -18,22 +16,19 @@ type StakerAddress []byte
 // pertains specifically to submission and retrieval of relay requests and
 // entries.
 type RelayEntryInterface interface {
-	// RequestRelayEntry makes an on-chain request to start generation of a
-	// random signature.  An event is generated.
-	RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 	// SubmitRelayEntry submits an entry in the threshold relay and returns a
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
 	SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise
-	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
+	// OnSignatureSubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnRelayEntryGenerated(
+	OnSignatureSubmitted(
 		func(entry *event.Entry),
 	) (subscription.EventSubscription, error)
-	// OnRelayEntryRequested is a callback that is invoked when an on-chain
+	// OnSignatureRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
-	OnRelayEntryRequested(
+	OnSignatureRequested(
 		func(request *event.Request),
 	) (subscription.EventSubscription, error)
 }
@@ -88,7 +83,6 @@ type DistributedKeyGenerationInterface interface {
 	// Signatures over DKG result hash are collected in a map keyed by signer's
 	// member index.
 	SubmitDKGResult(
-		requestID *big.Int,
 		participantIndex group.MemberIndex,
 		dkgResult *DKGResult,
 		signatures map[group.MemberIndex]operator.Signature,
@@ -98,11 +92,9 @@ type DistributedKeyGenerationInterface interface {
 	OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission),
 	) (subscription.EventSubscription, error)
-	// IsDKGResultSubmitted checks if a DKG result hash has already been
-	// submitted to the chain for the given request ID.
-	IsDKGResultSubmitted(
-		requestID *big.Int,
-	) (bool, error)
+	// IsGroupRegistered checks if group with the given public key is registered
+	// on-chain.
+	IsGroupRegistered(groupPublicKey []byte) (bool, error)
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
 	CalculateDKGResultHash(dkgResult *DKGResult) (DKGResultHash, error)

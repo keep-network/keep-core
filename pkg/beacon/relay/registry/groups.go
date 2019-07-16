@@ -3,7 +3,6 @@ package registry
 import (
 	"encoding/hex"
 	"fmt"
-	"os"
 	"sync"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -45,12 +44,12 @@ func NewGroupRegistry(
 
 // RegisterGroup registers that a group was successfully created by the given
 // groupPublicKey.
-func (gr *Groups) RegisterGroup(
+func (g *Groups) RegisterGroup(
 	signer *dkg.ThresholdSigner,
 	channelName string,
 ) error {
-	gr.mutex.Lock()
-	defer gr.mutex.Unlock()
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
 
 	groupPublicKey := groupKeyToString(signer.GroupPublicKeyBytes())
 
@@ -59,73 +58,118 @@ func (gr *Groups) RegisterGroup(
 		ChannelName: channelName,
 	}
 
-	err := gr.storage.save(membership)
+	err := g.storage.save(membership)
 	if err != nil {
 		return fmt.Errorf("could not persist membership to the storage: [%v]", err)
 	}
 
-	gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
+	g.myGroups[groupPublicKey] = append(g.myGroups[groupPublicKey], membership)
 
 	return nil
 }
 
 // GetGroup gets a group by a groupPublicKey
-func (gr *Groups) GetGroup(groupPublicKey []byte) []*Membership {
-	gr.mutex.Lock()
-	defer gr.mutex.Unlock()
+func (g *Groups) GetGroup(groupPublicKey []byte) []*Membership {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
 
-	return gr.myGroups[groupKeyToString(groupPublicKey)]
+	return g.myGroups[groupKeyToString(groupPublicKey)]
 }
 
-// UnregisterDeletedGroups lookup for groups to be removed.
-func (gr *Groups) UnregisterDeletedGroups() {
-	gr.mutex.Lock()
-	defer gr.mutex.Unlock()
+// UnregisterStaleGroups lookup for groups that have been marked as stale
+// on-chain. A stale group is a group that has expired and a certain time passed
+// after the group expiration. This guarantees the group will not be selected to
+// a new operation and it cannot have an ongoing operation for which it could be
+// selected before it expired. Such a group can be safely removed from the registry
+// and archived in the underlying storage.
+func (g *Groups) UnregisterStaleGroups() {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
 
-	for publicKey := range gr.myGroups {
+	for publicKey := range g.myGroups {
 		publicKeyBytes, err := groupKeyFromString(publicKey)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error occured while decoding public key into bytes [%v]\n", err)
+			logger.Errorf(
+				"error occured while decoding public key into bytes: [%v]",
+				err,
+			)
 		}
 
-		isStaleGroup, err := gr.relayChain.IsStaleGroup(publicKeyBytes)
+		isStaleGroup, err := g.relayChain.IsStaleGroup(publicKeyBytes)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Group removal eligibility check failed: [%v]\n", err)
+			logger.Errorf("stale group check has failed: [%v]", err)
 		}
 
 		if isStaleGroup {
-			delete(gr.myGroups, publicKey)
+			err = g.storage.archive(publicKey)
+			if err != nil {
+				logger.Errorf("group archiving has failed: [%v]", err)
+			}
+
+			delete(g.myGroups, publicKey)
 		}
 	}
 }
 
 // LoadExistingGroups iterates over all stored memberships on disk and loads them
 // into memory
-func (gr *Groups) LoadExistingGroups() error {
-	memberships, err := gr.storage.readAll()
-	if err != nil {
-		gr.myGroups = make(map[string][]*Membership)
-		return err
-	}
+func (g *Groups) LoadExistingGroups() {
+	g.myGroups = make(map[string][]*Membership)
 
-	for _, membership := range memberships {
-		groupPublicKey := groupKeyToString(membership.Signer.GroupPublicKeyBytes())
+	membershipsChannel, errorsChannel := g.storage.readAll()
 
-		gr.myGroups[groupPublicKey] = append(gr.myGroups[groupPublicKey], membership)
-	}
+	// Two goroutines read from memberships and errors channels and either
+	// adds memberships to the group registry or outputs an error to stderr.
+	// The reason for using two goroutines at the same time - one for
+	// memberships and one for errors is because channels do not have to be
+	// buffered and we do not know in what order information is written to
+	// channels.
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	for group, memberships := range gr.myGroups {
-		fmt.Fprintf(os.Stdout, "Group [%v] was loaded with member IDs [", group)
+	go func() {
+		for membership := range membershipsChannel {
+			groupPublicKey := groupKeyToString(
+				membership.Signer.GroupPublicKeyBytes(),
+			)
+			g.myGroups[groupPublicKey] = append(
+				g.myGroups[groupPublicKey],
+				membership,
+			)
+		}
+
+		wg.Done()
+	}()
+
+	go func() {
+		for err := range errorsChannel {
+			logger.Errorf(
+				"could not load membership from disk: [%v]",
+				err,
+			)
+		}
+
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	g.printMemberships()
+}
+
+func (g *Groups) printMemberships() {
+	for group, memberships := range g.myGroups {
+		memberLog := fmt.Sprintf("group [%v] was loaded with member IDs: [", group)
 		for idx, membership := range memberships {
 			if (len(memberships) - 1) != idx {
-				fmt.Fprintf(os.Stdout, "%v, ", membership.Signer.MemberID())
+				memberLog += fmt.Sprintf("%v, ", membership.Signer.MemberID())
 			} else {
-				fmt.Fprintf(os.Stdout, "%v]\n", membership.Signer.MemberID())
+				memberLog += fmt.Sprintf("%v]", membership.Signer.MemberID())
 			}
 		}
-	}
 
-	return nil
+		logger.Infof(memberLog)
+	}
 }
 
 func groupKeyToString(groupKey []byte) string {

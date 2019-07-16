@@ -13,7 +13,7 @@ abigen_files := $(addprefix abi/,$(addsuffix .go,$(contract_stems)))
 # *ImplV1.go files will get generated into clean Keep contract bindings, as will
 # the Staking*.go contract(s). The corresponding contract filenames will drop
 # the ImplV1, if it exists, and live in the contract/ directory.
-clean_contract_stems := $(filter %ImplV1,$(contract_stems)) $(filter Staking%,$(contract_stems))
+clean_contract_stems := $(filter %ImplV1,$(contract_stems)) $(filter %Operator,$(contract_stems)) $(filter Staking%,$(contract_stems)) $(filter TokenGrant, $(contract_stems))
 contract_files := $(addprefix contract/,$(addsuffix .go,$(subst ImplV1,,$(clean_contract_stems))))
 
 all: gen_contract_go gen_abi_go
@@ -21,6 +21,9 @@ all: gen_contract_go gen_abi_go
 clean:
 	rm -r abi/*
 	rm -r contract/*
+	mkdir tmp && mv cmd/cmd*.go tmp
+	rm -r cmd/*
+	mv tmp/* cmd && rm -r tmp
 
 gen_abi_go: $(abigen_files)
 
@@ -34,11 +37,17 @@ abi/%.abi: ${solidity_dir}/contracts/%.sol
 		 --abi \
 		 -o abi $<
 
-abi/%.go : abi/%.abi
+abi/%.go: abi/%.abi
 	abigen --abi $< --pkg abi --type $* --out $@
 
-contract/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go *.tmpl *.go
-	go run ./ $< $@
+contract/%.go cmd/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go *.tmpl *.go
+	go run ./ $< contract/$*.go cmd/$*.go
 
-contract/Staking%.go: abi/Staking%.abi abi/Staking%.go *.tmpl *.go
-	go run ./ $< $@
+contract/%Operator.go cmd/%Operator.go: abi/%Operator.abi abi/%Operator.go *.tmpl *.go
+	go run ./ $< contract/$*Operator.go cmd/$*Operator.go
+
+contract/Staking%.go cmd/Staking%.go: abi/Staking%.abi abi/Staking%.go *.tmpl *.go
+	go run ./ $< contract/Staking$*.go cmd/Staking$*.go
+
+contract/TokenGrant.go cmd/TokenGrant.go: abi/TokenGrant.abi abi/TokenGrant.go *.tmpl *.go
+	go run ./ $< contract/TokenGrant.go cmd/TokenGrant.go

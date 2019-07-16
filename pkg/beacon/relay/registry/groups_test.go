@@ -2,6 +2,7 @@ package registry
 
 import (
 	"bytes"
+	"encoding/hex"
 	"math/big"
 	"reflect"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
+	"github.com/keep-network/keep-core/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -18,7 +20,7 @@ var (
 	channelName1 = "test_channel1"
 	channelName2 = "test_channel2"
 
-	storageMock = &dataStorageMock{}
+	persistenceMock = &persistenceHandleMock{}
 
 	signer1 = dkg.NewThresholdSigner(
 		group.MemberIndex(1),
@@ -45,7 +47,7 @@ var (
 func TestRegisterGroup(t *testing.T) {
 	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
 
-	gr := NewGroupRegistry(chain, storageMock)
+	gr := NewGroupRegistry(chain, persistenceMock)
 
 	gr.RegisterGroup(signer1, channelName1)
 
@@ -68,7 +70,7 @@ func TestRegisterGroup(t *testing.T) {
 
 func TestLoadGroup(t *testing.T) {
 	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
-	gr := NewGroupRegistry(chain, storageMock)
+	gr := NewGroupRegistry(chain, persistenceMock)
 
 	if len(gr.myGroups) != 0 {
 		t.Fatalf(
@@ -77,11 +79,8 @@ func TestLoadGroup(t *testing.T) {
 			len(gr.myGroups),
 		)
 	}
-	err := gr.LoadExistingGroups()
 
-	if err != nil {
-		t.Fatalf("Error occured while reading groups from the disk")
-	}
+	gr.LoadExistingGroups()
 
 	if len(gr.myGroups) != 2 {
 		t.Fatalf(
@@ -115,35 +114,33 @@ func TestUnregisterStaleGroups(t *testing.T) {
 		groupsToRemove: [][]byte{},
 	}
 
-	gr := NewGroupRegistry(mockChain, storageMock)
+	gr := NewGroupRegistry(mockChain, persistenceMock)
 
 	gr.RegisterGroup(signer1, channelName1)
 	gr.RegisterGroup(signer2, channelName1)
 	gr.RegisterGroup(signer3, channelName1)
 
-	mockChain.markForRemoval(signer2.GroupPublicKeyBytes())
+	mockChain.markAsStale(signer2.GroupPublicKeyBytes())
 
-	gr.UnregisterDeletedGroups()
+	gr.UnregisterStaleGroups()
 
 	group1 := gr.GetGroup(signer1.GroupPublicKeyBytes())
 	if group1 == nil {
-		t.Fatalf(
-			"Expecting a group, but nil was returned instead",
-		)
+		t.Fatalf("Expecting a group, but nil was returned instead")
 	}
 
 	group2 := gr.GetGroup(signer2.GroupPublicKeyBytes())
 	if group2 != nil {
-		t.Fatalf(
-			"Group2 was expected to be unregistered, but is still present",
-		)
+		t.Fatalf("Group2 was expected to be unregistered, but is still present")
+	}
+	if len(persistenceMock.archivedGroups) != 1 ||
+		persistenceMock.archivedGroups[0] != hex.EncodeToString(signer2.GroupPublicKeyBytes()) {
+		t.Fatalf("Group2 was expected to be archived")
 	}
 
 	group3 := gr.GetGroup(signer3.GroupPublicKeyBytes())
 	if group3 == nil {
-		t.Fatalf(
-			"Expecting a group, but nil was returned instead",
-		)
+		t.Fatalf("Expecting a group, but nil was returned instead")
 	}
 
 }
@@ -152,7 +149,7 @@ type mockGroupRegistrationInterface struct {
 	groupsToRemove [][]byte
 }
 
-func (mgri *mockGroupRegistrationInterface) markForRemoval(publicKey []byte) {
+func (mgri *mockGroupRegistrationInterface) markAsStale(publicKey []byte) {
 	mgri.groupsToRemove = append(mgri.groupsToRemove, publicKey)
 }
 
@@ -171,15 +168,16 @@ func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) 
 	return false, nil
 }
 
-type dataStorageMock struct {
+type persistenceHandleMock struct {
+	archivedGroups []string
 }
 
-func (dsm *dataStorageMock) Save(data []byte, directory string, name string) error {
+func (phm *persistenceHandleMock) Save(data []byte, directory string, name string) error {
 	// noop
 	return nil
 }
 
-func (dsm *dataStorageMock) ReadAll() ([][]byte, error) {
+func (phm *persistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, <-chan error) {
 	membershipBytes1, _ := (&Membership{
 		Signer:      signer1,
 		ChannelName: channelName1,
@@ -195,5 +193,39 @@ func (dsm *dataStorageMock) ReadAll() ([][]byte, error) {
 		ChannelName: channelName2,
 	}).Marshal()
 
-	return [][]byte{membershipBytes1, membershipBytes2, membershipBytes3}, nil
+	outputData := make(chan persistence.DataDescriptor, 3)
+	outputErrors := make(chan error)
+
+	outputData <- &testDataDescriptor{"1", "dir", membershipBytes1}
+	outputData <- &testDataDescriptor{"2", "dir", membershipBytes2}
+	outputData <- &testDataDescriptor{"3", "dir", membershipBytes3}
+
+	close(outputData)
+	close(outputErrors)
+
+	return outputData, outputErrors
+}
+
+func (phm *persistenceHandleMock) Archive(directory string) error {
+	phm.archivedGroups = append(phm.archivedGroups, directory)
+
+	return nil
+}
+
+type testDataDescriptor struct {
+	name      string
+	directory string
+	content   []byte
+}
+
+func (tdd *testDataDescriptor) Name() string {
+	return tdd.name
+}
+
+func (tdd *testDataDescriptor) Directory() string {
+	return tdd.directory
+}
+
+func (tdd *testDataDescriptor) Content() ([]byte, error) {
+	return tdd.content, nil
 }

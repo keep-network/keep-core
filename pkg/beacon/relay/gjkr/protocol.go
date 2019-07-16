@@ -311,10 +311,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				}
 
 				if !cvm.areSharesValidAgainstCommitments(
-					shareS, // s_ji
-					shareT, // t_ji
+					shareS,                         // s_ji
+					shareT,                         // t_ji
 					commitmentsMessage.commitments, // C_j
-					cvm.ID, // i
+					cvm.ID,                         // i
 				) {
 					accusedMembersKeys[commitmentsMessage.senderID] =
 						cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
@@ -801,7 +801,10 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			publicKey := rm.evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
 				ephemeralPublicKeys[disqualifiedMemberID]
 			if !publicKey.IsKeyMatching(revealedPrivateKey) {
-				fmt.Printf("invalid private key for public key from member %v\n", revealingMemberID)
+				logger.Errorf(
+					"invalid private key for public key from member: [%v]",
+					revealingMemberID,
+				)
 				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
 			}
@@ -813,7 +816,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				revealedPrivateKey,
 			)
 			if err != nil {
-				fmt.Printf("cannot recover symmetric key [%v]", err)
+				logger.Errorf("cannot recover symmetric key: [%v]", err)
 				// TODO Disqualify the revealing member
 				continue
 			}
@@ -825,7 +828,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				recoveredSymmetricKey, // s_mk
 			)
 			if err != nil {
-				fmt.Printf("cannot decrypt share S [%v]", err)
+				logger.Errorf("cannot decrypt share S: [%v]", err)
 				// TODO Disqualify the revealing member
 				continue
 			}

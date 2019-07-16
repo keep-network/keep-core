@@ -1,9 +1,7 @@
 package entry
 
 import (
-	"fmt"
 	"math/big"
-	"os"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
@@ -25,7 +23,7 @@ type signingStateBase struct {
 
 	signer *dkg.ThresholdSigner
 
-	requestID     *big.Int
+	signingID     *big.Int
 	previousEntry *big.Int
 	seed          *big.Int
 
@@ -56,7 +54,7 @@ func (sss *signatureShareState) Initiate() error {
 	message := &SignatureShareMessage{
 		sss.MemberIndex(),
 		sss.selfSignatureShare.Marshal(),
-		sss.requestID,
+		sss.signingID,
 	}
 	if err := sss.channel.Send(message); err != nil {
 		return err
@@ -70,7 +68,7 @@ func (sss *signatureShareState) Receive(msg net.Message) error {
 		if !group.IsMessageFromSelf(
 			sss.MemberIndex(),
 			signatureShareMessage,
-		) && sss.isForTheCurrentRequestID(signatureShareMessage) {
+		) && sss.isForTheCurrentSigningID(signatureShareMessage) {
 			sss.signatureShareMessages = append(
 				sss.signatureShareMessages,
 				signatureShareMessage,
@@ -81,8 +79,8 @@ func (sss *signatureShareState) Receive(msg net.Message) error {
 	return nil
 }
 
-func (sss *signatureShareState) isForTheCurrentRequestID(msg *SignatureShareMessage) bool {
-	return sss.requestID.Cmp(msg.requestID) == 0
+func (sss *signatureShareState) isForTheCurrentSigningID(msg *SignatureShareMessage) bool {
+	return sss.signingID.Cmp(msg.signingId) == 0
 }
 
 func (sss *signatureShareState) Next() signingState {
@@ -121,19 +119,28 @@ func (scs *signatureCompleteState) ActiveBlocks() uint64 {
 func (scs *signatureCompleteState) Initiate() error {
 	seenShares := make(map[group.MemberIndex]*bn256.G1)
 	seenShares[scs.MemberIndex()] = scs.selfSignatureShare
+	logger.Debugf(
+		"[member:%v] auto-accepting self signature share: [%v]",
+		scs.MemberIndex(),
+		scs.MemberIndex(),
+	)
 
 	for _, message := range scs.previousPhaseMessages {
 		share := new(bn256.G1)
 		_, err := share.Unmarshal(message.shareBytes)
 		if err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"[member:%v] failed to unmarshal signature share from [%v]: [%v]",
+			logger.Errorf(
+				"[member:%v] failed to unmarshal signature share from member [%v]: [%v]",
 				scs.MemberIndex(),
 				message.senderID,
 				err,
 			)
 		} else {
+			logger.Debugf(
+				"[member:%v] accepting signature share from member [%v]",
+				scs.MemberIndex(),
+				message.senderID,
+			)
 			seenShares[message.senderID] = share
 		}
 	}
@@ -144,8 +151,8 @@ func (scs *signatureCompleteState) Initiate() error {
 		seenSharesSlice = append(seenSharesSlice, signatureShare)
 	}
 
-	fmt.Printf(
-		"[member:%v] restoring signature from [%v] shares...\n",
+	logger.Infof(
+		"[member:%v] restoring signature from [%v] shares",
 		scs.MemberIndex(),
 		len(seenSharesSlice),
 	)
@@ -205,7 +212,7 @@ func (ess *entrySubmissionState) Initiate() error {
 	}
 
 	return submitter.submitRelayEntry(
-		ess.requestID,
+		ess.signingID,
 		new(big.Int).SetBytes(ess.signature),
 		ess.previousEntry,
 		ess.seed,

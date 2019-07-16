@@ -3,6 +3,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,53 +15,52 @@ import (
 )
 
 type ethereumChain struct {
-	config                   Config
-	client                   *ethclient.Client
-	clientRPC                *rpc.Client
-	clientWS                 *rpc.Client
-	requestID                *big.Int
-	keepGroupContract        *contract.KeepGroup
-	keepRandomBeaconContract *contract.KeepRandomBeacon
-	stakingContract          *contract.StakingProxy
-	accountKey               *keystore.Key
+	config                           Config
+	client                           *ethclient.Client
+	clientRPC                        *rpc.Client
+	clientWS                         *rpc.Client
+	signingId                        *big.Int
+	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
+	stakingContract                  *contract.StakingProxy
+	accountKey                       *keystore.Key
+
+	// transactionMutex allows interested parties to forcibly serialize
+	// transaction submission.
+	//
+	// When transactions are submitted, they require a valid nonce. The nonce is
+	// equal to the count of transactions the account has submitted so far, and
+	// for a transaction to be accepted it should be monotonically greater than
+	// any previous submitted transaction. To do this, transaction submission
+	// asks the Ethereum client it is connected to for the next pending nonce,
+	// and uses that value for the transaction. Unfortunately, if multiple
+	// transactions are submitted in short order, they may all get the same
+	// nonce. Serializing submission ensures that each nonce is requested after
+	// a previous transaction has been submitted.
+	transactionMutex *sync.Mutex
 }
 
-// Connect makes the network connection to the Ethereum network.  Note: for
-// other things to work correctly the configuration will need to reference a
-// websocket, "ws://", or local IPC connection.
-func Connect(config Config) (chain.Handle, error) {
-	client, err := ethclient.Dial(config.URL)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error Connecting to Geth Server: %s [%v]",
-			config.URL,
-			err,
-		)
-	}
+type ethereumUtilityChain struct {
+	ethereumChain
 
-	clientws, err := rpc.Dial(config.URL)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error Connecting to Geth Server: %s [%v]",
-			config.URL,
-			err,
-		)
-	}
+	keepRandomBeaconServiceContract *contract.KeepRandomBeaconService
+}
 
-	clientrpc, err := rpc.Dial(config.URLRPC)
+func connect(config Config) (*ethereumChain, error) {
+	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error Connecting to Geth Server: %s [%v]",
+			"error connecting to Ethereum server: %s [%v]",
 			config.URL,
 			err,
 		)
 	}
 
 	pv := &ethereumChain{
-		config:    config,
-		client:    client,
-		clientRPC: clientrpc,
-		clientWS:  clientws,
+		config:           config,
+		client:           client,
+		clientRPC:        clientRPC,
+		clientWS:         clientWS,
+		transactionMutex: &sync.Mutex{},
 	}
 
 	if pv.accountKey == nil {
@@ -78,40 +78,22 @@ func Connect(config Config) (chain.Handle, error) {
 		pv.accountKey = key
 	}
 
-	address, err := addressForContract(config, "KeepRandomBeacon")
+	address, err := addressForContract(config, "KeepRandomBeaconOperator")
 	if err != nil {
-		return nil, fmt.Errorf("error resolving KeepRandomBeacon contract: [%v]", err)
+		return nil, fmt.Errorf("error resolving KeepRandomBeaconOperator contract: [%v]", err)
 	}
 
-	keepRandomBeaconContract, err :=
-		contract.NewKeepRandomBeacon(
+	keepRandomBeaconOperatorContract, err :=
+		contract.NewKeepRandomBeaconOperator(
 			*address,
 			pv.accountKey,
 			pv.client,
+			pv.transactionMutex,
 		)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"error attaching to KeepRandomBeacon contract: [%v]",
-			err,
-		)
+		return nil, fmt.Errorf("error attaching to KeepRandomBeaconOperator contract: [%v]", err)
 	}
-	pv.keepRandomBeaconContract = keepRandomBeaconContract
-
-	address, err = addressForContract(config, "KeepGroup")
-	if err != nil {
-		return nil, fmt.Errorf("error resolving KeepGroup contract: [%v]", err)
-	}
-
-	keepGroupContract, err :=
-		contract.NewKeepGroup(
-			*address,
-			pv.accountKey,
-			pv.client,
-		)
-	if err != nil {
-		return nil, fmt.Errorf("error attaching to KeepGroup contract: [%v]", err)
-	}
-	pv.keepGroupContract = keepGroupContract
+	pv.keepRandomBeaconOperatorContract = keepRandomBeaconOperatorContract
 
 	address, err = addressForContract(config, "StakingProxy")
 	if err != nil {
@@ -123,6 +105,7 @@ func Connect(config Config) (chain.Handle, error) {
 			*address,
 			pv.accountKey,
 			pv.client,
+			pv.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to TokenStaking contract: [%v]", err)
@@ -130,6 +113,47 @@ func Connect(config Config) (chain.Handle, error) {
 	pv.stakingContract = stakingContract
 
 	return pv, nil
+}
+
+// Connect makes the network connection to the Ethereum network and returns a
+// utility handle to the chain interface with additional methods for non-
+// standard client interactions. Note: for other things to work correctly the
+// configuration will need to reference a websocket, "ws://", or local IPC
+// connection.
+func ConnectUtility(config Config) (chain.Utility, error) {
+	base, err := connect(config)
+	if err != nil {
+		return nil, err
+	}
+
+	address, err := addressForContract(config, "KeepRandomBeaconService")
+	if err != nil {
+		return nil, fmt.Errorf("error resolving KeepRandomBeaconService contract: [%v]", err)
+	}
+
+	keepRandomBeaconServiceContract, err :=
+		contract.NewKeepRandomBeaconService(
+			*address,
+			base.accountKey,
+			base.client,
+			base.transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf("error attaching to KeepRandomBeaconService contract: [%v]", err)
+	}
+
+	return &ethereumUtilityChain{
+		*base,
+		keepRandomBeaconServiceContract,
+	}, nil
+}
+
+// Connect makes the network connection to the Ethereum network and returns a
+// standard handle to the chain interface. Note: for other things to work
+// correctly the configuration will need to reference a websocket, "ws://", or
+// local IPC connection.
+func Connect(config Config) (chain.Handle, error) {
+	return connect(config)
 }
 
 func addressForContract(config Config, contractName string) (*common.Address, error) {

@@ -10,7 +10,6 @@ import (
 	crand "crypto/rand"
 
 	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/urfave/cli"
@@ -56,7 +55,7 @@ func relayRequest(c *cli.Context) error {
 		return fmt.Errorf("error reading config file: [%v]", err)
 	}
 
-	provider, err := ethereum.Connect(cfg.Ethereum)
+	utility, err := ethereum.ConnectUtility(cfg.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
@@ -75,28 +74,28 @@ func relayRequest(c *cli.Context) error {
 
 	wait := make(chan struct{})
 	var requestID *big.Int
-	provider.ThresholdRelay().OnRelayEntryRequested(func(request *event.Request) {
+	utility.ThresholdRelay().OnSignatureRequested(func(request *event.Request) {
 		// It is possible two relay requests will be generated close to each other.
 		// To make sure we catch request ID from the correct one, we compare seed
 		// with the one we sent.
 		if requestID == nil && seed.Cmp(request.Seed) == 0 {
 			fmt.Printf(
 				"Relay entry request submitted with id [%s]: [%+v]\n",
-				request.RequestID,
+				request.SigningId,
 				request,
 			)
 
 			requestMutex.Lock()
-			requestID = request.RequestID
+			requestID = request.SigningId
 			requestMutex.Unlock()
 		}
 	})
 
-	provider.ThresholdRelay().OnRelayEntryGenerated(func(entry *event.Entry) {
+	utility.ThresholdRelay().OnSignatureSubmitted(func(entry *event.Entry) {
 		requestMutex.Lock()
 		defer requestMutex.Unlock()
 
-		if requestID != nil && requestID.Cmp(entry.RequestID) == 0 {
+		if requestID != nil && requestID.Cmp(entry.SigningId) == 0 {
 			fmt.Fprintf(
 				os.Stderr,
 				"Relay entry received with value: [%v].\n",
@@ -109,8 +108,8 @@ func relayRequest(c *cli.Context) error {
 
 	fmt.Printf("Requesting for a new relay entry at [%s]\n", time.Now())
 
-	provider.ThresholdRelay().RequestRelayEntry(seed).
-		OnComplete(func(request *event.Request, err error) {
+	utility.RequestRelayEntry(seed).
+		OnFailure(func(err error) {
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
@@ -135,16 +134,14 @@ func submitGenesisRelayEntry(c *cli.Context) error {
 		return fmt.Errorf("error reading config file: [%v]", err)
 	}
 
-	provider, err := ethereum.Connect(cfg.Ethereum)
+	utility, err := ethereum.ConnectUtility(cfg.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
 	wait := make(chan error)
 
-	provider.ThresholdRelay().SubmitRelayEntry(
-		relay.GenesisRelayEntry(),
-	).OnComplete(func(data *event.Entry, err error) {
+	utility.Genesis().OnComplete(func(data *event.Entry, err error) {
 		if err != nil {
 			wait <- err
 			return
