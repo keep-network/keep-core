@@ -5,13 +5,12 @@ const OperatorContract = artifacts.require('./KeepRandomBeaconOperatorStub.sol')
 
 contract('TestKeepRandomBeaconServiceSelectOperator', function(accounts) {
 
-  let config, stakingProxy, serviceContract, operatorContract, operatorContract2, operatorContract3;
+  let config, serviceContract, operatorContract, operatorContract2, operatorContract3;
 
   before(async () => {
     let contracts = await initContracts(
       accounts,
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
@@ -19,14 +18,13 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function(accounts) {
     );
 
     config = contracts.config;
-    stakingProxy = contracts.stakingProxy;
     serviceContract = contracts.serviceContract;
     operatorContract = contracts.operatorContract;
 
     // Create and initialize additional operator contracts
     operatorContract2 = await OperatorContract.new();
     operatorContract2.initialize(
-      stakingProxy.address, serviceContract.address, config.minimumStake, config.groupThreshold,
+      serviceContract.address, config.minimumStake, config.groupThreshold,
       config.groupSize, config.timeoutInitial, config.timeoutSubmission, config.timeoutChallenge, config.timeDKG, config.resultPublicationBlockStep,
       config.activeGroupsThreshold, config.groupActiveTime, config.relayRequestTimeout,
       bls.groupSignature, bls.groupPubKey
@@ -34,7 +32,7 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function(accounts) {
 
     operatorContract3 = await OperatorContract.new();
     operatorContract3.initialize(
-      stakingProxy.address, serviceContract.address, config.minimumStake, config.groupThreshold,
+      serviceContract.address, config.minimumStake, config.groupThreshold,
       config.groupSize, config.timeoutInitial, config.timeoutSubmission, config.timeoutChallenge, config.timeDKG, config.resultPublicationBlockStep,
       config.activeGroupsThreshold, config.groupActiveTime, config.relayRequestTimeout,
       bls.groupSignature, bls.groupPubKey

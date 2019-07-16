@@ -65,7 +65,6 @@ async function initContracts(accounts, KeepToken, TokenStaking, KeepRandomBeacon
       relayRequestTimeout: relayRequestTimeout
     },
     token: token,
-    stakingProxy: stakingProxy,
     stakingContract: stakingContract,
     serviceContract: serviceContract,
     operatorContract: operatorContract
