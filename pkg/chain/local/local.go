@@ -60,7 +60,6 @@ type localChain struct {
 	groupRegisteredHandlers       map[int]func(groupRegistration *event.GroupRegistration)
 	resultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
 
-	signingId   int64
 	latestValue *big.Int
 
 	simulatedHeight uint64
