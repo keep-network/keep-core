@@ -15,7 +15,7 @@ contract TokenStaking is StakeDelegatable {
     using UintArrayUtils for uint256[];
 
     event Staked(address indexed from, uint256 value);
-    event InitiatedUnstake(address operator);
+    event InitiatedUnstake(address indexed operator, uint256 value);
     event FinishedUnstake(address operator);
 
     struct Withdrawal {
@@ -85,7 +85,7 @@ contract TokenStaking is StakeDelegatable {
  
         withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), now);
 
-        emit InitiatedUnstake(_operator);
+        emit InitiatedUnstake(_operator, _value);
     }
 
     /**
