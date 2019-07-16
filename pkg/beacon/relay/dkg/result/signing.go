@@ -139,10 +139,10 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 		)
 		if err != nil {
 			logger.Infof(
-				"[member: %v] verification of signature from sender [%d] failed: [%+v]",
+				"[member: %v] verification of signature from sender [%d] failed: [%v]",
 				sm.index,
 				message.senderIndex,
-				message,
+				err,
 			)
 			continue
 		}
