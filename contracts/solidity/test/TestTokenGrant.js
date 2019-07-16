@@ -57,26 +57,26 @@ contract('TestTokenGrant', function(accounts) {
     assert.equal(account_two_grant_balance.eq(amount), true, "Amount should be added to the grantee grant balance");
     assert.equal(account_two_ending_balance.eq(account_two_starting_balance), true, "Grantee main balance should stay unchanged");
 
-    // Should not be able to release token grant (0 unreleased amount)
-    await exceptThrow(grantContract.release(id))
+    // Should not be able to withdraw token grant (0 withdrawable amount)
+    await exceptThrow(grantContract.withdraw(id))
 
     // jump in time, third vesting duration
     await increaseTimeTo(await latestTime()+vestingDuration/3);
 
-    // Should be able to release token grant unreleased amount
-    await grantContract.release(id)
+    // Should be able to withdraw token grant withdrawable amount
+    await grantContract.withdraw(id)
 
-    // should release some of grant to the main balance
+    // should withdraw some of grant to the main balance
     account_two_ending_balance = await token.balanceOf.call(account_two);
-    assert.equal(account_two_ending_balance.lte(account_two_starting_balance.add(amount.div(web3.utils.toBN(2)))), true, 'Should release some of the grant to the main balance')
+    assert.equal(account_two_ending_balance.lte(account_two_starting_balance.add(amount.div(web3.utils.toBN(2)))), true, 'Should withdraw some of the grant to the main balance')
 
     // jump in time, full vesting duration
     await increaseTimeTo(await latestTime()+vestingDuration);
-    await grantContract.release(id);
+    await grantContract.withdraw(id);
 
-    // should release full grant amount to the main balance
+    // should withdraw full grant amount to the main balance
     account_two_ending_balance = await token.balanceOf.call(account_two);
-    assert.equal(account_two_ending_balance.eq(account_two_starting_balance.add(amount)), true, "Should release full grant amount to the main balance");
+    assert.equal(account_two_ending_balance.eq(account_two_starting_balance.add(amount)), true, "Should withdraw full grant amount to the main balance");
 
     account_two_grant_balance = await grantContract.totalBalanceOf.call(account_two);
     assert.equal(account_two_grant_balance, 0, "Grant amount should become 0");
@@ -98,7 +98,7 @@ contract('TestTokenGrant', function(accounts) {
 
     let grant = await grantContract.getGrant(id);
     assert.equal(grant[0].eq(amount), true, "Grant should maintain a record of the granted amount.");
-    assert.equal(grant[1].isZero(), true, "Grant should have 0 amount released initially.");
+    assert.equal(grant[1].isZero(), true, "Grant should have 0 amount withdrawn initially.");
     assert.equal(grant[2], false, "Grant should initially be unstaked.");
     assert.equal(grant[3], false, "Grant should not be marked as revoked initially.");
 
@@ -140,10 +140,10 @@ contract('TestTokenGrant', function(accounts) {
 
     grantee_starting_balance = await grantContract.totalBalanceOf.call(grantee);
     account_one_starting_balance = await token.balanceOf.call(account_one);
-    
-    let unreleasedAmount = await grantContract.unreleasedAmount(id)
-    assert.equal((await token.balanceOf.call(account_one)).eq(account_one_starting_balance.add(amount).sub(unreleasedAmount)), true, "Amount should be added to grant creator main balance.");
-    assert.equal((await grantContract.totalBalanceOf.call(grantee)).eq(grantee_starting_balance.sub(amount).add(unreleasedAmount)), true, "Amount should be taken out from grantee's granted balance.");
+
+    let withdrawable = await grantContract.withdrawable(id)
+    assert.equal((await token.balanceOf.call(account_one)).eq(account_one_starting_balance.add(amount).sub(withdrawable)), true, "Amount should be added to grant creator main balance.");
+    assert.equal((await grantContract.totalBalanceOf.call(grantee)).eq(grantee_starting_balance.sub(amount).add(withdrawable)), true, "Amount should be taken out from grantee's granted balance.");
   });
 
   it("should be able to revoke the grant but no amount is refunded since duration of the vesting is over.", async function() {

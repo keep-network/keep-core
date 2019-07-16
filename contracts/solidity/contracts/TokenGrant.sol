@@ -28,7 +28,7 @@ interface tokenStaking {
  * @dev A token grant contract for a specified standard ERC20 token.
  * Has additional functionality to stake/unstake token grants.
  * Tokens are granted to the grantee via vesting scheme and can be
- * released gradually based on the vesting schedule cliff and vesting duration.
+ * withdrawn gradually based on the vesting schedule cliff and vesting duration.
  * Optionally grant can be revoked by the token grant creator.
  */
 contract TokenGrant {
@@ -44,7 +44,7 @@ contract TokenGrant {
 
     struct Grant {
         address owner; // Creator of token grant.
-        address grantee; // Address to which granted tokens are going to be released.
+        address grantee; // Address to which granted tokens are going to be withdrawn.
         bool staked; // Whether the grant is staked.
         bool revoked; // Whether the grant was revoked by the creator.
         bool revocable; // Whether creator of grant can revoke it.
@@ -52,7 +52,7 @@ contract TokenGrant {
         uint256 duration; // Duration in seconds of the period in which the granted tokens will vest.
         uint256 start; // Timestamp at which vesting will start.
         uint256 cliff; // Duration in seconds of the cliff after which tokens will begin to vest.
-        uint256 released; // Amount that was released to the grantee.
+        uint256 withdrawn; // Amount that was withdrawn to the grantee.
     }
 
     struct GrantStake {
@@ -79,7 +79,7 @@ contract TokenGrant {
 
     // Token grants balances. Sum of all granted tokens to a grantee.
     // This includes granted tokens that are already vested and
-    // available to be released to the grantee
+    // available to be withdrawn to the grantee
     mapping(address => uint256) public balances;
 
     /**
@@ -108,12 +108,12 @@ contract TokenGrant {
      * This is to avoid Ethereum `Stack too deep` issue described here:
      * https://forum.ethereum.org/discussion/2400/error-stack-too-deep-try-removing-local-variables
      * @param _id ID of the token grant.
-     * @return amount, released, staked, revoked.
+     * @return amount, withdrawn, staked, revoked.
      */
-    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 released, bool staked, bool revoked) {
+    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, bool staked, bool revoked) {
         return (
             grants[_id].amount,
-            grants[_id].released,
+            grants[_id].withdrawn,
             grants[_id].staked,
             grants[_id].revoked
         );
@@ -143,14 +143,14 @@ contract TokenGrant {
     }
 
     /**
-     * @notice Creates a token grant with a vesting schedule where balance released to the
+     * @notice Creates a token grant with a vesting schedule where balance withdrawn to the
      * grantee gradually in a linear fashion until start + duration. By then all
      * of the balance will have vested. You must approve the amount you want to grant
      * by calling approve() method of the token contract first.
      * @dev Transfers token amount from sender to this token grant contract
      * Sender should approve the amount first by calling approve() on the token contract.
      * @param _amount to be granted.
-     * @param _grantee address to which granted tokens are going to be released.
+     * @param _grantee address to which granted tokens are going to be withdrawn.
      * @param _cliff duration in seconds of the cliff after which tokens will begin to vest.
      * @param _duration duration in seconds of the period in which the tokens will vest.
      * @param _start timestamp at which vesting will start.
@@ -186,25 +186,25 @@ contract TokenGrant {
     }
 
     /**
-     * @notice Releases Token grant amount to grantee.
+     * @notice Withdraws Token grant amount to grantee.
      * @dev Transfers vested tokens of the token grant to grantee.
      * @param _id Grant ID.
      */
-    function release(uint256 _id) public {
+    function withdraw(uint256 _id) public {
         require(!grants[_id].staked, "Grant must not be staked.");
-        uint256 unreleased = unreleasedAmount(_id);
-        require(unreleased > 0, "Grant unreleased amount should be greater than zero.");
+        uint256 amount = withdrawable(_id);
+        require(amount > 0, "Grant available to withdraw amount should be greater than zero.");
 
-        // Update released amount.
-        grants[_id].released = grants[_id].released.add(unreleased);
+        // Update withdrawn amount.
+        grants[_id].withdrawn = grants[_id].withdrawn.add(amount);
 
         // Update grantee grants balance.
-        balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(unreleased);
+        balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(amount);
 
         // Transfer tokens from this contract balance to the grantee token balance.
-        token.safeTransfer(grants[_id].grantee, unreleased);
+        token.safeTransfer(grants[_id].grantee, amount);
 
-        emit ReleasedTokenGrant(unreleased);
+        emit ReleasedTokenGrant(amount);
     }
     
     /**
@@ -227,18 +227,18 @@ contract TokenGrant {
     }
 
     /**
-     * @notice Calculates unreleased granted amount.
-     * @dev Calculates the amount that has already vested but hasn't been released yet.
+     * @notice Calculates withdrawable granted amount.
+     * @dev Calculates the amount that has already vested but hasn't been withdrawn yet.
      * @param _id Grant ID.
      */
-    function unreleasedAmount(uint256 _id) public view returns (uint256) {
-        uint256 released = grants[_id].released;
-        return grantedAmount(_id).sub(released);
+    function withdrawable(uint256 _id) public view returns (uint256) {
+        uint256 withdrawn = grants[_id].withdrawn;
+        return grantedAmount(_id).sub(withdrawn);
     }
 
     /**
      * @notice Allows the creator of the token grant to revoke it. 
-     * @dev Granted tokens that are already vested (releasable amount) remain so grantee can still release them
+     * @dev Granted tokens that are already vested (releasable amount) remain so grantee can still withdraw them
      * the rest are returned to the token grant creator.
      * @param _id Grant ID.
      */
@@ -249,8 +249,8 @@ contract TokenGrant {
         require(!grants[_id].revoked, "Grant must not be already revoked.");
         require(!grants[_id].staked, "Grant must not be staked for staking.");
 
-        uint256 unreleased = unreleasedAmount(_id);
-        uint256 refund = grants[_id].amount.sub(unreleased);
+        uint256 amount = withdrawable(_id);
+        uint256 refund = grants[_id].amount.sub(amount);
         grants[_id].revoked = true;
 
         // Update grantee's grants balance.
@@ -263,7 +263,7 @@ contract TokenGrant {
 
     /**
      * @notice Stake token grant.
-     * @dev Stakable token grant amount is the amount of vested tokens minus what user already released from the grant
+     * @dev Stakable token grant amount is the amount of vested tokens minus what user already withdrawn from the grant
      * @param _id Grant Id.
      * @param _stakingContract Address of the staking contract.
      * @param _amount Amount to stake.
@@ -286,8 +286,8 @@ contract TokenGrant {
             "Signer of the grantee doesn't match signer of the grant contract."
         );
 
-        // Calculate available amount. Amount of vested tokens minus what user already released.
-        uint256 available = grants[_id].amount.sub(grants[_id].released);
+        // Calculate available amount. Amount of vested tokens minus what user already withdrawn.
+        uint256 available = grants[_id].amount.sub(grants[_id].withdrawn);
         require(_amount <= available, "Must have available granted amount to stake.");
 
         // Keep staking record.

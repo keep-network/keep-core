@@ -55,8 +55,8 @@ contract('TestTokenGrantStake', function(accounts) {
     // should not be able to finish unstake before withdrawal delay is over
     await exceptThrow(grantContract.finishUnstake(account_two_operator));
 
-    // should not be able to release grant as its still locked for staking
-    await exceptThrow(grantContract.release(id));
+    // should not be able to withdraw grant as its still locked for staking
+    await exceptThrow(grantContract.withdraw(id));
 
     // jump in time over withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
@@ -64,12 +64,12 @@ contract('TestTokenGrantStake', function(accounts) {
     account_two_operator_stake_balance = await stakingContract.balanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.isZero(), true, "Stake grant amount should be 0");
 
-    // should be able to release 'releasable' granted amount as it's not locked for staking anymore
-    await grantContract.release(id);
+    // should be able to withdraw 'withdrawable' granted amount as it's not locked for staking anymore
+    await grantContract.withdraw(id);
     let account_two_ending_balance = await token.balanceOf.call(account_two);
-    assert.equal(account_two_ending_balance.gte(amount.div(web3.utils.toBN(2))), true, "Should have some released grant amount");
+    assert.equal(account_two_ending_balance.gte(amount.div(web3.utils.toBN(2))), true, "Should have some withdrawn grant amount");
 
-    // Get grant available balance after release
+    // Get grant available balance after withdraw
     let grant = await grantContract.getGrant(id);
     let grantAmount = grant[0];
     let grantReleased = grant[1];
