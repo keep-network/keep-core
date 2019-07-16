@@ -45,7 +45,6 @@ contract TokenGrant {
     struct Grant {
         address owner; // Creator of token grant.
         address grantee; // Address to which granted tokens are going to be withdrawn.
-        bool staked; // Whether the grant is staked.
         bool revoked; // Whether the grant was revoked by the creator.
         bool revocable; // Whether creator of grant can revoke it.
         uint256 amount; // Amount of tokens to be granted.
@@ -53,6 +52,7 @@ contract TokenGrant {
         uint256 start; // Timestamp at which vesting will start.
         uint256 cliff; // Duration in seconds of the cliff after which tokens will begin to vest.
         uint256 withdrawn; // Amount that was withdrawn to the grantee.
+        uint256 staked; // Amount that was staked by the grantee.
     }
 
     struct GrantStake {
@@ -110,7 +110,7 @@ contract TokenGrant {
      * @param _id ID of the token grant.
      * @return amount, withdrawn, staked, revoked.
      */
-    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, bool staked, bool revoked) {
+    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, bool revoked) {
         return (
             grants[_id].amount,
             grants[_id].withdrawn,
@@ -169,7 +169,7 @@ contract TokenGrant {
         require(_amount <= token.balanceOf(msg.sender), "Sender must have enough amount.");
 
         uint256 id = numGrants++;
-        grants[id] = Grant(msg.sender, _grantee, false, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0);
+        grants[id] = Grant(msg.sender, _grantee, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0, 0);
         
         // Maintain a record to make it easier to query grants by creator.
         grantIndices[msg.sender].push(id);
@@ -191,7 +191,6 @@ contract TokenGrant {
      * @param _id Grant ID.
      */
     function withdraw(uint256 _id) public {
-        require(!grants[_id].staked, "Grant must not be staked.");
         uint256 amount = withdrawable(_id);
         require(amount > 0, "Grant available to withdraw amount should be greater than zero.");
 
@@ -232,8 +231,7 @@ contract TokenGrant {
      * @param _id Grant ID.
      */
     function withdrawable(uint256 _id) public view returns (uint256) {
-        uint256 withdrawn = grants[_id].withdrawn;
-        return grantedAmount(_id).sub(withdrawn);
+        return grantedAmount(_id).sub(grants[_id].withdrawn).sub(grants[_id].staked);
     }
 
     /**
@@ -247,7 +245,6 @@ contract TokenGrant {
         require(grants[_id].owner == msg.sender, "Only grant creator can revoke.");
         require(grants[_id].revocable, "Grant must be revocable in the first place.");
         require(!grants[_id].revoked, "Grant must not be already revoked.");
-        require(!grants[_id].staked, "Grant must not be staked for staking.");
 
         uint256 amount = withdrawable(_id);
         uint256 refund = grants[_id].amount.sub(amount);
@@ -286,13 +283,13 @@ contract TokenGrant {
             "Signer of the grantee doesn't match signer of the grant contract."
         );
 
-        // Calculate available amount. Amount of vested tokens minus what user already withdrawn.
-        uint256 available = grants[_id].amount.sub(grants[_id].withdrawn);
+        // Calculate available amount. Amount of vested tokens minus what user already withdrawn and staked.
+        uint256 available = grants[_id].amount.sub(grants[_id].withdrawn).sub(grants[_id].staked);
         require(_amount <= available, "Must have available granted amount to stake.");
 
         // Keep staking record.
         grantStakes[operator] = GrantStake(_id, _stakingContract, _amount);
-    
+        grants[_id].staked = _amount;
         tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData.slice(0, 85));
     }
 
@@ -314,6 +311,8 @@ contract TokenGrant {
      * @param _operator Operator of the stake.
      */
     function finishUnstake(address _operator) public {
+        uint256 grantId = grantStakes[_operator].grantId;
+        grants[grantId].staked = grants[grantId].staked.sub(grantStakes[_operator].amount);
 
         tokenStaking(grantStakes[_operator].stakingContract).finishUnstake(_operator);
         delete grantStakes[_operator];
