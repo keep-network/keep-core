@@ -47,10 +47,10 @@ contract('TestTokenGrantStake', function(accounts) {
     assert.equal(account_two_operator_stake_balance.eq(amount), true, "Should stake grant amount");
 
     // should throw if initiate unstake called by anyone except grant grantee
-    await exceptThrow(grantContract.initiateUnstake(amount, account_two_operator));
+    await exceptThrow(grantContract.initiateUnstake(account_two_operator));
 
     // Initiate unstake of granted tokens by grant grantee
-    await grantContract.initiateUnstake(amount, account_two_operator, {from: account_two});
+    await grantContract.initiateUnstake(account_two_operator, {from: account_two});
 
     // should not be able to finish unstake before withdrawal delay is over
     await exceptThrow(grantContract.finishUnstake(account_two_operator));

@@ -298,16 +298,15 @@ contract TokenGrant {
 
     /**
      * @notice Initiate unstake of the token grant.
-     * @param _amount Amount to unstake.
      * @param _operator Operator of the stake.
      */
-    function initiateUnstake(uint256 _amount, address _operator) public {
+    function initiateUnstake(address _operator) public {
         require(
             msg.sender == _operator || msg.sender == grants[grantStakes[_operator].grantId].grantee,
             "Only operator or grantee can initiate unstake."
         );
 
-        tokenStaking(grantStakes[_operator].stakingContract).initiateUnstake(_amount, _operator);
+        tokenStaking(grantStakes[_operator].stakingContract).initiateUnstake(grantStakes[_operator].amount, _operator);
     }
 
     /**
