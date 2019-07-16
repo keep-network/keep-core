@@ -15,6 +15,10 @@
 	KeepRandomBeaconOperator = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 	# Hex-encoded address of TokenStaking contract
 	TokenStaking = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+	# Hex-encoded address of KeepRandomBeaconService contract. Only needed
+	# in cases where the client's utility functions will be used (e.g., the
+	# relay subcommand).
+	KeepRandomBeaconService = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 
 # Non-bootstrap node connecting to an existing network.
 # [LibP2P]

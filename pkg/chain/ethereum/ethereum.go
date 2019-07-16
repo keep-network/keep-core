@@ -3,8 +3,9 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"os"
 	"time"
+
+	"github.com/ipfs/go-log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -17,6 +18,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
+
+var logger = log.Logger("keep-chain-ethereum")
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
 func (ec *ethereumChain) ThresholdRelay() relaychain.Interface {
@@ -114,9 +117,8 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 	failPromise := func(err error) {
 		failErr := submittedTicketPromise.Fail(err)
 		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"failing promise because of: [%v] failed with: [%v].\n",
+			logger.Errorf(
+				"failing promise because of: [%v] failed with: [%v].",
 				err,
 				failErr,
 			)
@@ -162,9 +164,8 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	failPromise := func(err error) {
 		failErr := relayEntryPromise.Fail(err)
 		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"failing promise because of [%v] failed with [%v]\n",
+			logger.Errorf(
+				"failed to fail promise for [%v]: [%v]",
 				err,
 				failErr,
 			)
@@ -200,9 +201,8 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 					err := relayEntryPromise.Fulfill(event)
 					if err != nil {
-						fmt.Fprintf(
-							os.Stderr,
-							"fulfilling promise failed with [%v]\n",
+						logger.Errorf(
+							"failed to fulfill promise: [%v]",
 							err,
 						)
 					}
@@ -296,13 +296,11 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 	return ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
 		func(
 			newEntry *big.Int,
-			signingId *big.Int,
 			seed *big.Int,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupSelectionStart{
 				NewEntry:    newEntry,
-				SigningId:   signingId,
 				Seed:        seed,
 				BlockNumber: blockNumber,
 			})
@@ -321,13 +319,11 @@ func (ec *ethereumChain) OnGroupRegistered(
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchDkgResultPublishedEvent(
 		func(
-			signingId *big.Int,
 			groupPublicKey []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupRegistration{
 				GroupPublicKey: groupPublicKey,
-				SigningId:      signingId,
 				BlockNumber:    blockNumber,
 			})
 		},
@@ -337,8 +333,8 @@ func (ec *ethereumChain) OnGroupRegistered(
 	)
 }
 
-func (ec *ethereumChain) IsDKGResultSubmitted(signingId *big.Int) (bool, error) {
-	return ec.keepRandomBeaconOperatorContract.IsDkgResultSubmitted(signingId)
+func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+	return ec.keepRandomBeaconOperatorContract.IsGroupRegistered(groupPublicKey)
 }
 
 func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
@@ -349,16 +345,15 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchDkgResultPublishedEvent(
-		func(signingId *big.Int, groupPubKey []byte, blockNumber uint64) {
+		func(groupPubKey []byte, blockNumber uint64) {
 			handler(&event.DKGResultSubmission{
-				SigningId:      signingId,
 				GroupPublicKey: groupPubKey,
 				BlockNumber:    blockNumber,
 			})
 		},
 		func(err error) error {
 			return fmt.Errorf(
-				"watch DKG result published failed with [%v]",
+				"watch DKG result published failed with: [%v]",
 				err,
 			)
 		},
@@ -366,7 +361,6 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 }
 
 func (ec *ethereumChain) SubmitDKGResult(
-	signingId *big.Int,
 	participantIndex group.MemberIndex,
 	result *relaychain.DKGResult,
 	signatures map[group.MemberIndex]operator.Signature,
@@ -376,9 +370,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 	failPromise := func(err error) {
 		failErr := resultPublicationPromise.Fail(err)
 		if failErr != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"failing promise because of [%v] failed with [%v]\n",
+			logger.Errorf(
+				"failed to fail promise for [%v]: [%v]",
 				err,
 				failErr,
 			)
@@ -408,21 +401,18 @@ func (ec *ethereumChain) SubmitDKGResult(
 					return
 				}
 
-				if event.SigningId.Cmp(signingId) == 0 {
-					subscription.Unsubscribe()
-					close(publishedResult)
+				subscription.Unsubscribe()
+				close(publishedResult)
 
-					err := resultPublicationPromise.Fulfill(event)
-					if err != nil {
-						fmt.Fprintf(
-							os.Stderr,
-							"fulfilling promise failed with [%v]\n",
-							err,
-						)
-					}
-
-					return
+				err := resultPublicationPromise.Fulfill(event)
+				if err != nil {
+					logger.Errorf(
+						"failed to fulfill promise: [%v]",
+						err,
+					)
 				}
+
+				return
 			}
 		}
 	}()
@@ -436,7 +426,6 @@ func (ec *ethereumChain) SubmitDKGResult(
 	}
 
 	if _, err = ec.keepRandomBeaconOperatorContract.SubmitDkgResult(
-		signingId,
 		participantIndex.Int(),
 		result.GroupPublicKey,
 		result.Disqualified,

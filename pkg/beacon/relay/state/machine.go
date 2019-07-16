@@ -49,8 +49,8 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 
 	currentState := m.initialState
 
-	fmt.Printf(
-		"[member:%v] Waiting for block %v to start execution...\n",
+	logger.Infof(
+		"[member:%v] waiting for block %v to start execution",
 		currentState.MemberIndex(),
 		startBlockHeight,
 	)
@@ -73,16 +73,16 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	for {
 		select {
 		case msg := <-recvChan:
-			fmt.Printf(
-				"[member:%v, state:%T] Processing message\n",
+			logger.Debugf(
+				"[member:%v, state:%T] processing message",
 				currentState.MemberIndex(),
 				currentState,
 			)
 
 			err := currentState.Receive(msg)
 			if err != nil {
-				fmt.Printf(
-					"[member:%v, state: %T] Failed to receive a message [%v]\n",
+				logger.Errorf(
+					"[member:%v, state: %T] failed to receive a message: [%v]",
 					currentState.MemberIndex(),
 					currentState,
 					err,
@@ -92,8 +92,8 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 		case lastStateEndBlockHeight := <-blockWaiter:
 			nextState := currentState.Next()
 			if nextState == nil {
-				fmt.Printf(
-					"[member:%v, state:%T] Final state reached at block [%v]\n",
+				logger.Infof(
+					"[member:%v, state:%T] reached final state at block: [%v]",
 					currentState.MemberIndex(),
 					currentState,
 					lastStateEndBlockHeight,
@@ -122,8 +122,8 @@ func stateTransition(
 	lastStateEndBlockHeight uint64,
 	blockCounter chain.BlockCounter,
 ) (<-chan uint64, error) {
-	fmt.Printf(
-		"[member:%v, state:%T] Transitioning to a new state at block [%v]...\n",
+	logger.Infof(
+		"[member:%v, state:%T] transitioning to a new state at block: [%v]",
 		currentState.MemberIndex(),
 		currentState,
 		lastStateEndBlockHeight,
@@ -160,8 +160,8 @@ func stateTransition(
 		)
 	}
 
-	fmt.Printf(
-		"[member:%v, state:%T] Transitioned to new state\n",
+	logger.Infof(
+		"[member:%v, state:%T] transitioned to new state",
 		currentState.MemberIndex(),
 		currentState,
 	)

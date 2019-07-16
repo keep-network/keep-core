@@ -13,7 +13,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     account_two = accounts[1],
     account_three = accounts[2];
 
-  before(async () => {
+  beforeEach(async () => {
     let contracts = await initContracts(
       accounts,
       artifacts.require('./KeepToken.sol'),
@@ -50,14 +50,14 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
     let contractBalanceViaProxy = await web3.eth.getBalance(serviceContractProxy.address);
     assert.equal(contractBalanceViaProxy, 100, "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
-
   });
 
   it("should be able to request relay entry via serviceContractProxy contract with enough ether", async function() {
     await exceptThrow(serviceContractProxy.sendTransaction({from: account_two, value: 1000}));
 
     await web3.eth.sendTransaction({
-      from: account_two, value: 100, gas: 200000, to: serviceContractProxy.address,
+      // if you see a plain 'revert' error, it's probably because of not enough gas
+      from: account_two, value: 200, gas: 300000, to: serviceContractProxy.address,
       data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
@@ -71,7 +71,6 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {
-
     await serviceContract.requestRelayEntry(0, {from: account_one, value: 100})
 
     // should fail to withdraw if not owner

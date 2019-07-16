@@ -25,7 +25,7 @@ type relayEntrySubmitter struct {
 // Relay entry submit process starts at block height defined by startBlockheight
 // parameter.
 func (res *relayEntrySubmitter) submitRelayEntry(
-	signingId *big.Int,
+	signingID *big.Int,
 	newEntry *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
@@ -35,7 +35,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 	config, err := res.chain.GetConfig()
 	if err != nil {
 		return fmt.Errorf(
-			"could not fetch chain's config [%v]",
+			"could not fetch chain's config: [%v]",
 			err,
 		)
 	}
@@ -68,7 +68,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 	)
 	if err != nil {
 		return returnWithError(
-			fmt.Errorf("wait for eligibility failure [%v]", err),
+			fmt.Errorf("wait for eligibility failure: [%v]", err),
 		)
 	}
 
@@ -82,13 +82,13 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
-			fmt.Printf(
-				"[member:%v] Submitting relay entry on behalf of the group [%v]...\n",
+			logger.Infof(
+				"[member:%v] submitting relay entry on behalf of group: [%v]",
 				res.index,
 				groupPublicKey,
 			)
 			entry := &event.Entry{
-				SigningId:     signingId,
+				SigningId:     signingID,
 				Value:         newEntry,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
@@ -99,10 +99,10 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			res.chain.SubmitRelayEntry(entry).OnComplete(
 				func(entry *event.Entry, err error) {
 					if err == nil {
-						fmt.Printf(
-							"[member:%v] Relay entry for request [%v] successfully submitted at block [%v]\n",
+						logger.Infof(
+							"[member:%v] successfully submitted relay entry for request [%v] at block: [%v]",
 							res.index,
-							signingId,
+							signingID,
 							entry.BlockNumber,
 						)
 					}
@@ -110,9 +110,9 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 				})
 			return <-errorChannel
 		case submittedEntryEvent := <-onSubmittedResultChan:
-			if submittedEntryEvent.SigningId.Cmp(signingId) == 0 {
-				fmt.Printf(
-					"[member:%v] Relay entry submitted by other member, leaving.\n",
+			if submittedEntryEvent.SigningId.Cmp(signingID) == 0 {
+				logger.Infof(
+					"[member:%v] leaving; relay entry submitted by other member",
 					res.index,
 				)
 				return returnWithError(nil)
@@ -132,15 +132,15 @@ func (res *relayEntrySubmitter) waitForSubmissionEligibility(
 	blockWaitTime := (uint64(res.index) - 1) * blockStep
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
-	fmt.Printf(
-		"[member:%v] Waiting for block [%v] to submit...\n",
+	logger.Infof(
+		"[member:%v] waiting for block [%v] to submit",
 		res.index,
 		eligibleBlockHeight,
 	)
 
 	waiter, err := res.blockCounter.BlockHeightWaiter(eligibleBlockHeight)
 	if err != nil {
-		return nil, fmt.Errorf("block height waiter failure [%v]", err)
+		return nil, fmt.Errorf("block height waiter failure: [%v]", err)
 	}
 
 	return waiter, err

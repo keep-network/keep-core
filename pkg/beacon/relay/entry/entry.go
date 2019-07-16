@@ -11,6 +11,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
+import "github.com/ipfs/go-log"
+
+var logger = log.Logger("keep-entry")
+
 const (
 	setupBlocks     = state.MessagingStateDelayBlocks
 	signatureBlocks = state.MessagingStateActiveBlocks
@@ -28,7 +32,7 @@ func SignAndSubmit(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
-	signingId *big.Int,
+	signingID *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
 	threshold int,
@@ -43,7 +47,7 @@ func SignAndSubmit(
 			relayChain:    relayChain,
 			blockCounter:  blockCounter,
 			signer:        signer,
-			signingId:     signingId,
+			signingID:     signingID,
 			previousEntry: previousEntry,
 			seed:          seed,
 			threshold:     threshold,

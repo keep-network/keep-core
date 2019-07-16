@@ -39,10 +39,13 @@ type ethereumChain struct {
 	transactionMutex *sync.Mutex
 }
 
-// Connect makes the network connection to the Ethereum network.  Note: for
-// other things to work correctly the configuration will need to reference a
-// websocket, "ws://", or local IPC connection.
-func Connect(config Config) (chain.Handle, error) {
+type ethereumUtilityChain struct {
+	ethereumChain
+
+	keepRandomBeaconServiceContract *contract.KeepRandomBeaconService
+}
+
+func connect(config Config) (*ethereumChain, error) {
 	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -110,6 +113,47 @@ func Connect(config Config) (chain.Handle, error) {
 	pv.stakingContract = stakingContract
 
 	return pv, nil
+}
+
+// Connect makes the network connection to the Ethereum network and returns a
+// utility handle to the chain interface with additional methods for non-
+// standard client interactions. Note: for other things to work correctly the
+// configuration will need to reference a websocket, "ws://", or local IPC
+// connection.
+func ConnectUtility(config Config) (chain.Utility, error) {
+	base, err := connect(config)
+	if err != nil {
+		return nil, err
+	}
+
+	address, err := addressForContract(config, "KeepRandomBeaconService")
+	if err != nil {
+		return nil, fmt.Errorf("error resolving KeepRandomBeaconService contract: [%v]", err)
+	}
+
+	keepRandomBeaconServiceContract, err :=
+		contract.NewKeepRandomBeaconService(
+			*address,
+			base.accountKey,
+			base.client,
+			base.transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf("error attaching to KeepRandomBeaconService contract: [%v]", err)
+	}
+
+	return &ethereumUtilityChain{
+		*base,
+		keepRandomBeaconServiceContract,
+	}, nil
+}
+
+// Connect makes the network connection to the Ethereum network and returns a
+// standard handle to the chain interface. Note: for other things to work
+// correctly the configuration will need to reference a websocket, "ws://", or
+// local IPC connection.
+func Connect(config Config) (chain.Handle, error) {
+	return connect(config)
 }
 
 func addressForContract(config Config, contractName string) (*common.Address, error) {

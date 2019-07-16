@@ -3,8 +3,7 @@ import {initContracts} from './helpers/initContracts';
 
 contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
 
-  let serviceContract, operatorContract,
-    groupActiveTime, activeGroupsThreshold, relayRequestTimeout,
+  let config, operatorContract,
     testGroupsNumber = 10;
 
   beforeEach(async () => {
@@ -16,11 +15,8 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
+    config = contracts.config;
     operatorContract = contracts.operatorContract;
-    groupActiveTime = (await operatorContract.groupActiveTime()).toNumber();
-    activeGroupsThreshold = (await operatorContract.activeGroupsThreshold()).toNumber();
-    serviceContract = contracts.serviceContract;
-    relayRequestTimeout = (await operatorContract.relayRequestTimeout()).toNumber();
   });
 
   async function addGroups(numberOfGroups) {
@@ -33,8 +29,8 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     // If current block is larger than group registration block by group active time then
     // it is not necessary to mine any blocks cause the group is already expired
-    if (currentBlock - groupRegistrationBlock <= groupActiveTime)
-      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
+    if (currentBlock - groupRegistrationBlock <= config.groupActiveTime)
+      await mineBlocks(config.groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
   }
 
   it("it should be able to count the number of active groups", async function() {
@@ -61,8 +57,8 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
     let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
-    assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
+    assert.equal(expiredOffset, config.activeGroupsThreshold, "Unexpected expired offset");
+    assert.equal(Number(numberOfGroups), config.activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
   // - we start with [AAAAAAAAAA]
@@ -81,8 +77,8 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
     let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
-    assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
+    assert.equal(expiredOffset, config.activeGroupsThreshold, "Unexpected expired offset");
+    assert.equal(Number(numberOfGroups), config.activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
   // - we start with [AAAAAAAAAA]
@@ -101,8 +97,8 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
     let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
-    assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
+    assert.equal(expiredOffset, config.activeGroupsThreshold, "Unexpected expired offset");
+    assert.equal(Number(numberOfGroups), config.activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
   // - we start with [AAAAAAAAAA]
@@ -121,8 +117,8 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
     let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
-    assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
+    assert.equal(expiredOffset, config.activeGroupsThreshold, "Unexpected expired offset");
+    assert.equal(Number(numberOfGroups), config.activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
   // - we start with [AAAAAAAAAA]
@@ -141,8 +137,8 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
     let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
-    assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
+    assert.equal(expiredOffset, config.activeGroupsThreshold, "Unexpected expired offset");
+    assert.equal(Number(numberOfGroups), config.activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
   // - we start with [AAAAAAAAAA]
@@ -161,8 +157,8 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
     let expiredOffset = await operatorContract.expiredGroupOffset();
     let numberOfGroups = await operatorContract.numberOfGroups();
 
-    assert.equal(expiredOffset, activeGroupsThreshold, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
+    assert.equal(expiredOffset, config.activeGroupsThreshold, "Unexpected expired offset");
+    assert.equal(Number(numberOfGroups), config.activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
   });
 
   // - we start with [AAAAAAAAAA]
@@ -213,7 +209,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
   // - we should end up with [AAAA]
   it("should not mark groups as expired when there is less groups than threshold\
  and they are all expired ", async function() {
-    let groupsCount = activeGroupsThreshold - 1
+    let groupsCount = config.activeGroupsThreshold - 1
 
     await addGroups(groupsCount);
     await expireGroup(groupsCount - 1) // indexed from 0
@@ -234,7 +230,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
   // - we should end up with [AAAAA]
   it("should not mark groups as expired when there is threshold number of groups\
  and they are all expired ", async function() {
-    let groupsCount = activeGroupsThreshold
+    let groupsCount = config.activeGroupsThreshold
     await addGroups(groupsCount);
     await expireGroup(groupsCount - 1) // indexed from 0
 
@@ -251,7 +247,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
   // - we check whether the first group is stale and assert it is not since
   //   an active group cannot be stale
   it("should not mark group as stale if it is active", async function() {
-    let groupsCount = activeGroupsThreshold + 1
+    let groupsCount = config.activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
     let pubKey = await operatorContract.getGroupPublicKey(0);
@@ -292,7 +288,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
 
     await operatorContract.selectGroup(0);
 
-    await mineBlocks(relayRequestTimeout);
+    await mineBlocks(config.relayRequestTimeout);
 
     for (var i = 10; i < groupsCount; i++) {
       let pubKey = await operatorContract.getGroupPublicKey(i);
@@ -311,13 +307,13 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
   //   expired even though it reached its expiration time (minimum threshold)
   it("should not mark group as stale if its expiration time passed but \
  it is not marked as such", async function() {
-    let groupsCount = activeGroupsThreshold + 1
+    let groupsCount = config.activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
     let pubKey = await operatorContract.getGroupPublicKey(0);
 
     // mine blocks but do not select group so it's not marked as expired
-    await mineBlocks(groupActiveTime + relayRequestTimeout);
+    await mineBlocks(config.groupActiveTime + config.relayRequestTimeout);
 
     let isStale  = await operatorContract.isStaleGroup(pubKey);
 
@@ -331,7 +327,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
   //   relay request timeout did not pass since the group expiration block
   it("should not mark group as stale if it is expired but \
  can be still signing relay entry", async function() {
-    let groupsCount = activeGroupsThreshold + 1
+    let groupsCount = config.activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
     let pubKey = await operatorContract.getGroupPublicKey(0);
@@ -352,7 +348,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
   //   relay request timeout did pass since the group expiration block
   it("should mark group as stale if it is expired and \
  can be no longer signing relay entry", async function() {
-     let groupsCount = activeGroupsThreshold + 1
+     let groupsCount = config.activeGroupsThreshold + 1
      await addGroups(groupsCount);
  
      let pubKey = await operatorContract.getGroupPublicKey(0);
@@ -360,7 +356,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
      await expireGroup(0);
      await operatorContract.selectGroup(0);
  
-     await mineBlocks(relayRequestTimeout);
+     await mineBlocks(config.relayRequestTimeout);
 
      let isStale  = await operatorContract.isStaleGroup(pubKey);
 
@@ -371,7 +367,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
    // - we check whether group with a non-existing public key is stale and
    //   we assert it is, since we assume all non-existing groups are stale
    it("should say group is stale if it could not be found", async function() {
-    let groupsCount = activeGroupsThreshold + 1
+    let groupsCount = config.activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
     let pubKey = "0x1337"; // group with such pub key does not exist

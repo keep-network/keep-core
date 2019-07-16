@@ -29,6 +29,11 @@ func main() {
 		revision = "unknown"
 	}
 
+	err := setUpLogging(os.Getenv("LOG_LEVEL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	app := cli.NewApp()
 	app.Name = path.Base(os.Args[0])
 	app.Usage = "CLI for The Keep Network"
@@ -52,40 +57,21 @@ func main() {
 	app.Commands = []cli.Command{
 		cmd.SmokeTestCommand,
 		cmd.StartCommand,
+		cmd.RelayCommand,
 		cmd.PingCommand,
 		cmd.EthereumCommand,
-		{
-			Name:  "print-info",
-			Usage: "Prints keep client information",
-			Action: func(c *cli.Context) error {
-				printInfo(c)
-				return nil
-			},
-		},
 	}
 
 	cli.AppHelpTemplate = fmt.Sprintf(`%s
 ENVIRONMENT VARIABLES:
    KEEP_ETHEREUM_PASSWORD    keep client password
+   LOG_LEVEL                 space-delimited set of log level directives; set to
+                             "help" for help
 
 `, cli.AppHelpTemplate)
 
-	err := app.Run(os.Args)
+	err = app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func printInfo(c *cli.Context) {
-	fmt.Printf("Keep client: %s\n\n"+
-		"Description: %s\n"+
-		"version:     %s\n"+
-		"revision:    %s\n"+
-		"Config Path: %s\n",
-		c.App.Name,
-		c.App.Description,
-		version,
-		revision,
-		c.GlobalString("config"),
-	)
 }

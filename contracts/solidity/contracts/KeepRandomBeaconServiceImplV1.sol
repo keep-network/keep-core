@@ -7,9 +7,9 @@ import "./DelayedWithdrawal.sol";
 
 interface OperatorContract {
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) payable external;
-    // TODO: Add createGroup() when it's implemented on Operator contract.
+    function numberOfGroups() external view returns(uint256);
+    function createGroup(uint256 groupSelectionSeed, uint256 seed) payable external;
 }
-
 
 /**
  * @title KeepRandomBeaconServiceImplV1
@@ -78,13 +78,51 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
+     * @dev Adds operator contract
+     * @param operatorContract Address of the operator contract.
+     */
+    function addOperatorContract(address operatorContract) public onlyOwner {
+        _operatorContracts.push(operatorContract);
+    }
+
+    /**
+     * @dev Removes operator contract
+     * @param operatorContract Address of the operator contract.
+     */
+    function removeOperatorContract(address operatorContract) public onlyOwner {
+        _operatorContracts.removeAddress(operatorContract);
+    }
+
+    /**
      * @dev Selects an operator contract from the available list using modulo operation
-     * with previous entry weighted by the number of active groups on each operator contract.
+     * with seed value weighted by the number of active groups on each operator contract.
+     * @param seed Cryptographically generated random value.
      * @return Address of operator contract.
      */
-    function selectOperatorContract() public view returns (address) {
-        // TODO: Implement logic
-        return _operatorContracts[0];
+    function selectOperatorContract(uint256 seed) public view returns (address) {
+
+        uint256 totalNumberOfGroups;
+
+        for (uint i = 0; i < _operatorContracts.length; i++) {
+            totalNumberOfGroups += OperatorContract(_operatorContracts[i]).numberOfGroups();
+        }
+
+        require(totalNumberOfGroups > 0, "Total number of groups must be greater that zero.");
+
+        uint256 selectedIndex = seed % totalNumberOfGroups;
+
+        uint256 selectedContract;
+        uint256 indexByGroupCount;
+
+        for (uint256 i = 0; i < _operatorContracts.length; i++) {
+            indexByGroupCount += OperatorContract(_operatorContracts[i]).numberOfGroups();
+            if (selectedIndex < indexByGroupCount) {
+                return _operatorContracts[selectedContract];
+            }
+            selectedContract++;
+        }
+
+        return _operatorContracts[selectedContract];
     }
 
     /**
@@ -116,8 +154,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 requestId = _requestCounter;
 
         // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
-        // OperatorContract(selectOperatorContract()).sign.value(msg.value)(requestId, seed, _previousEntry);
-        OperatorContract(selectOperatorContract()).sign(requestId, seed, _previousEntry);
+        // OperatorContract(selectOperatorContract(_previousEntry)).sign.value(msg.value)(requestId, seed, _previousEntry);
+        OperatorContract(selectOperatorContract(_previousEntry)).sign(requestId, seed, _previousEntry);
 
         if (callbackContract != address(0)) {
             _callbacks[requestId] = Callback(callbackContract, callbackMethod);
@@ -131,8 +169,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Store valid entry returned by operator contract and call customer specified callback if required.
      * @param requestId Request id tracked internally by this contract.
      * @param entry The generated random number.
+     * @param seed Relay entry request seed value.
      */
-    function entryCreated(uint256 requestId, uint256 entry) public {
+    function entryCreated(uint256 requestId, uint256 entry, uint256 seed) public {
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."
@@ -145,6 +184,10 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
             delete _callbacks[requestId];
         }
+
+        // TODO: Figure out when to call createGroup once pricing scheme is finalized.
+        address latestOperatorContract = _operatorContracts[_operatorContracts.length - 1];
+        OperatorContract(latestOperatorContract).createGroup(entry, seed);
     }
 
     /**

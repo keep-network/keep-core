@@ -2,7 +2,6 @@ package result
 
 import (
 	"bytes"
-	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -27,8 +26,7 @@ type resultSigningState struct {
 
 	member *SigningMember
 
-	signingId *big.Int
-	result    *relayChain.DKGResult
+	result *relayChain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
 
@@ -96,7 +94,6 @@ func (rss *resultSigningState) Next() signingState {
 		relayChain:        rss.relayChain,
 		blockCounter:      rss.blockCounter,
 		member:            rss.member,
-		signingId:         rss.signingId,
 		result:            rss.result,
 		signatureMessages: rss.signatureMessages,
 		validSignatures:   make(map[group.MemberIndex]operator.Signature),
@@ -123,8 +120,7 @@ type signaturesVerificationState struct {
 
 	member *SigningMember
 
-	signingId *big.Int
-	result    *relayChain.DKGResult
+	result *relayChain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
 	validSignatures   map[group.MemberIndex]operator.Signature
@@ -160,7 +156,6 @@ func (svs *signaturesVerificationState) Next() signingState {
 		relayChain:   svs.relayChain,
 		blockCounter: svs.blockCounter,
 		member:       NewSubmittingMember(svs.member.index),
-		signingId:    svs.signingId,
 		result:       svs.result,
 		signatures:   svs.validSignatures,
 		submissionStartBlockHeight: svs.verificationStartBlockHeight +
@@ -185,7 +180,6 @@ type resultSubmissionState struct {
 
 	member *SubmittingMember
 
-	signingId  *big.Int
 	result     *relayChain.DKGResult
 	signatures map[group.MemberIndex]operator.Signature
 
@@ -206,7 +200,6 @@ func (rss *resultSubmissionState) ActiveBlocks() uint64 {
 
 func (rss *resultSubmissionState) Initiate() error {
 	return rss.member.SubmitDKGResult(
-		rss.signingId,
 		rss.result,
 		rss.signatures,
 		rss.relayChain,
