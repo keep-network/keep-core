@@ -205,7 +205,7 @@ variable "keel" {
   default {
     name      = "helm-keel"
     namespace = "tiller"
-    version   = "0.7.7"
+    version   = "0.8.13"
   }
 }
 
