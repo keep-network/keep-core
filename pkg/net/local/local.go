@@ -22,9 +22,20 @@ func (li localIdentifier) String() string {
 var channelsMutex sync.Mutex
 var channels map[string][]*localChannel
 
+// Provider is an extension of net.Provider. This interface exposes additional
+// functions useful for testing.
+type Provider interface {
+	net.Provider
+
+	// AddPeer allows the simulation of adding a peer to the client's local
+	// registry of peers.
+	AddPeer(peerID string, pubKey *key.NetworkPublic)
+}
+
 type localProvider struct {
 	id        localIdentifier
 	staticKey *key.NetworkPublic
+	cm        *localConnectionManager
 }
 
 func (lp *localProvider) ID() net.TransportIdentifier {
@@ -47,28 +58,34 @@ func (lp *localProvider) Peers() []string {
 	return make([]string, 0)
 }
 
+func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
+	lp.cm.peers[peerID] = pubKey
+}
+
 // Connect returns a local instance of a net provider that does not go over the
 // network.
-func Connect() net.Provider {
+func Connect() Provider {
 	_, public, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		panic(err)
 	}
 
-	return &localProvider{
-		id:        localIdentifier(randomIdentifier()),
-		staticKey: public,
-	}
+	return ConnectWithKey(public)
 }
 
 // ConnectWithKey returns a local instance of net provider that does not go
 // over the network. The returned instance uses the provided network key to
 // identify network messages.
-func ConnectWithKey(staticKey *key.NetworkPublic) net.Provider {
+func ConnectWithKey(staticKey *key.NetworkPublic) Provider {
 	return &localProvider{
 		id:        localIdentifier(randomIdentifier()),
 		staticKey: staticKey,
+		cm:        &localConnectionManager{peers: make(map[string]*key.NetworkPublic)},
 	}
+}
+
+func (lp *localProvider) ConnectionManager() net.ConnectionManager {
+	return lp.cm
 }
 
 // channel returns a BroadcastChannel designed to mediate between local
@@ -230,4 +247,36 @@ func (lc *localChannel) RegisterUnmarshaler(
 	}
 	lc.unmarshalersMutex.Unlock()
 	return
+}
+
+type localConnectionManager struct {
+	mutex sync.Mutex
+
+	peers map[string]*key.NetworkPublic
+}
+
+func (lcm *localConnectionManager) ConnectedPeers() []string {
+	lcm.mutex.Lock()
+	defer lcm.mutex.Unlock()
+	connectedPeers := make([]string, len(lcm.peers))
+	for peer := range lcm.peers {
+		connectedPeers = append(connectedPeers, peer)
+	}
+	return connectedPeers
+}
+
+func (lcm *localConnectionManager) GetPeerPublicKey(
+	connectedPeer string,
+) (*key.NetworkPublic, error) {
+	lcm.mutex.Lock()
+	defer lcm.mutex.Unlock()
+
+	return lcm.peers[connectedPeer], nil
+}
+
+func (lcm *localConnectionManager) DisconnectPeer(connectedPeer string) {
+	lcm.mutex.Lock()
+	defer lcm.mutex.Unlock()
+
+	delete(lcm.peers, connectedPeer)
 }

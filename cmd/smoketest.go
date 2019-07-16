@@ -13,6 +13,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/persistence"
 	"github.com/urfave/cli"
 )
 
@@ -41,6 +42,29 @@ const smokeTestDescription = `The smoke-test command creates a local threshold
    chain implementation. Once the process is complete, a threshold signature is
    executed, once again with an in-process broadcast channel and chain, and the
    final signature is verified by each member of the group.`
+
+type noopPersistence struct {
+}
+
+func (np *noopPersistence) Save(data []byte, directory string, name string) error {
+	// noop
+	return nil
+}
+
+func (np *noopPersistence) ReadAll() (<-chan persistence.DataDescriptor, <-chan error) {
+	dataChannel := make(chan persistence.DataDescriptor)
+	errorChannel := make(chan error)
+
+	close(dataChannel)
+	close(errorChannel)
+
+	return dataChannel, errorChannel
+}
+
+func (np *noopPersistence) Archive(directory string) error {
+	// noop
+	return nil
+}
 
 func init() {
 	SmokeTestCommand = cli.Command{
@@ -95,7 +119,7 @@ func SmokeTest(c *cli.Context) error {
 	<-time.NewTimer(time.Second).C
 
 	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
-		RequestID:     big.NewInt(0),
+		SigningId:     big.NewInt(0),
 		Value:         big.NewInt(0),
 		GroupPubKey:   big.NewInt(0).Bytes(),
 		Seed:          big.NewInt(0),
@@ -140,6 +164,8 @@ func createNode(
 		))
 	}
 
+	storage := &noopPersistence{}
+
 	netProvider := netlocal.Connect()
 
 	go func() {
@@ -157,6 +183,7 @@ func createNode(
 			chainCounter,
 			stakeMonitor,
 			netProvider,
+			storage,
 		)
 		if err != nil {
 			panic(fmt.Sprintf(

@@ -8,7 +8,7 @@ User has the ability to visualize their token and stake balances, token grant ve
 ### MacOS
 
 * Install [Ganache](http://truffleframework.com/ganache/) and [Brew](https://brew.sh/)
-* Install node.js via brew `brew install node`
+* Install node.js via brew `brew install node`. If you experience errors during `npm install` please try previous versions of node i.e. `brew install node@11`
 * Run Ganache and make sure it is using the correct port (8545):
   * Under settings, change port number to 8545
 

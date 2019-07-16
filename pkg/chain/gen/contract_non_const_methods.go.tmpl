@@ -1,10 +1,16 @@
 {{- $contract := . -}}
 {{- range $i, $method := .NonConstMethods }}
 
+// Transaction submission.
 func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 	{{$method.ParamDeclarations -}}
-	{{if $method.Payable -}} value *big.Int, {{- end -}}
+	{{- if $method.Payable -}}
+	value *big.Int,
+	{{ end -}}
 ) (*types.Transaction, error) {
+	{{$contract.ShortVar}}.transactionMutex.Lock()
+	defer {{$contract.ShortVar}}.transactionMutex.Unlock()
+
 	{{if $method.Payable -}}
 	transactorOptions := &(*{{$contract.ShortVar}}.transactorOptions) // create a copy
 	transactorOptions.Value = value
@@ -20,6 +26,7 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 	if err != nil {
 		return transaction, {{$contract.ShortVar}}.errorResolver.ResolveError(
 			err,
+			{{$contract.ShortVar}}.transactorOptions.From,
 			nil,
 			"{{$method.LowerName}}",
 			{{$method.Params}}
@@ -27,6 +34,45 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 	}
 
 	return transaction, err
+}
+
+{{- $returnVar := print "result, " -}}
+{{ if eq $method.Return.Type "" -}}
+{{- $returnVar = "" -}}
+{{- end }}
+
+// Non-mutating call, not a transaction submission.
+func ({{$contract.ShortVar}} *{{$contract.Class}}) Call{{$method.CapsName}}(
+	{{$method.ParamDeclarations -}}
+	{{- if $method.Payable -}}
+	value *big.Int,
+	{{ end -}}
+	blockNumber *big.Int,
+) ({{- if gt (len $method.Return.Type) 0 -}} {{$method.Return.Type}}, {{- end -}} error) {
+	{{- if gt (len $method.Return.Type) 0 }}
+	var result {{$method.Return.Type}}
+	{{- else }}
+	var result interface{} = nil
+	{{- end }}
+
+	err := ethutil.CallAtBlock(
+		{{$contract.ShortVar}}.transactorOptions.From,
+		blockNumber,
+		{{- if $method.Payable -}}
+		value,
+		{{ else -}}
+		nil,
+		{{ end -}}
+		{{$contract.ShortVar}}.contractABI,
+		{{$contract.ShortVar}}.caller,
+		{{$contract.ShortVar}}.errorResolver,
+		{{$contract.ShortVar}}.contractAddress,
+		"{{$method.LowerName}}",
+		&result,
+		{{$method.Params}}
+	)
+
+	return {{$returnVar}}err
 }
 
 {{- end -}}

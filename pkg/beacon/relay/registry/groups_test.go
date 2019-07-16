@@ -2,8 +2,9 @@ package registry
 
 import (
 	"bytes"
+	"encoding/hex"
 	"math/big"
-	"sync"
+	"reflect"
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -11,25 +12,46 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
+	"github.com/keep-network/keep-core/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
-func TestRegisterGroup(t *testing.T) {
-	signer := dkg.NewThresholdSigner(
-		group.MemberIndex(2),
+var (
+	channelName1 = "test_channel1"
+	channelName2 = "test_channel2"
+
+	persistenceMock = &persistenceHandleMock{}
+
+	signer1 = dkg.NewThresholdSigner(
+		group.MemberIndex(1),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
 		big.NewInt(1),
 	)
+	signer2 = dkg.NewThresholdSigner(
+		group.MemberIndex(2),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
+		big.NewInt(2),
+	)
+	signer3 = dkg.NewThresholdSigner(
+		group.MemberIndex(3),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(30)),
+		big.NewInt(3),
+	)
+	signer4 = dkg.NewThresholdSigner(
+		group.MemberIndex(3),
+		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
+		big.NewInt(2),
+	)
+)
 
-	gr := &Groups{
-		mutex:      sync.Mutex{},
-		myGroups:   make(map[string][]*Membership),
-		relayChain: chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay(),
-	}
+func TestRegisterGroup(t *testing.T) {
+	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
 
-	gr.RegisterGroup(signer, "test_channel")
+	gr := NewGroupRegistry(chain, persistenceMock)
 
-	actual := gr.GetGroup(signer.GroupPublicKeyBytes())
+	gr.RegisterGroup(signer1, channelName1)
+
+	actual := gr.GetGroup(signer1.GroupPublicKeyBytes())
 
 	if actual == nil {
 		t.Fatalf(
@@ -46,62 +68,79 @@ func TestRegisterGroup(t *testing.T) {
 	}
 }
 
+func TestLoadGroup(t *testing.T) {
+	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
+	gr := NewGroupRegistry(chain, persistenceMock)
+
+	if len(gr.myGroups) != 0 {
+		t.Fatalf(
+			"Unexpected number of group memberships at a Keep Node start \nExpected: [%+v]\nActual:   [%+v]",
+			0,
+			len(gr.myGroups),
+		)
+	}
+
+	gr.LoadExistingGroups()
+
+	if len(gr.myGroups) != 2 {
+		t.Fatalf(
+			"Unexpected number of group memberships \nExpected: [%+v]\nActual:   [%+v]",
+			2,
+			len(gr.myGroups),
+		)
+	}
+
+	expectedMembership1 := &Membership{
+		Signer:      signer1,
+		ChannelName: channelName1,
+	}
+	actualMembership1 := gr.GetGroup(signer1.GroupPublicKeyBytes())[0]
+	if !reflect.DeepEqual(expectedMembership1, actualMembership1) {
+		t.Errorf("\nexpected: %v\nactual:   %v", expectedMembership1, actualMembership1)
+	}
+
+	expectedMembership2 := &Membership{
+		Signer:      signer2,
+		ChannelName: channelName2,
+	}
+	actualMembership2 := gr.GetGroup(signer2.GroupPublicKeyBytes())[0]
+	if !reflect.DeepEqual(expectedMembership2, actualMembership2) {
+		t.Errorf("\nexpected: %v\nactual:   %v", expectedMembership2, actualMembership2)
+	}
+}
+
 func TestUnregisterStaleGroups(t *testing.T) {
 	mockChain := &mockGroupRegistrationInterface{
 		groupsToRemove: [][]byte{},
 	}
 
-	gr := &Groups{
-		mutex:      sync.Mutex{},
-		myGroups:   make(map[string][]*Membership),
-		relayChain: mockChain,
-	}
+	gr := NewGroupRegistry(mockChain, persistenceMock)
 
-	signer1 := dkg.NewThresholdSigner(
-		group.MemberIndex(1),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
-		big.NewInt(1),
-	)
-	signer2 := dkg.NewThresholdSigner(
-		group.MemberIndex(2),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
-		big.NewInt(2),
-	)
-	signer3 := dkg.NewThresholdSigner(
-		group.MemberIndex(3),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(30)),
-		big.NewInt(3),
-	)
+	gr.RegisterGroup(signer1, channelName1)
+	gr.RegisterGroup(signer2, channelName1)
+	gr.RegisterGroup(signer3, channelName1)
 
-	channelName := "test_channel"
+	mockChain.markAsStale(signer2.GroupPublicKeyBytes())
 
-	gr.RegisterGroup(signer1, channelName)
-	gr.RegisterGroup(signer2, channelName)
-	gr.RegisterGroup(signer3, channelName)
-
-	mockChain.markForRemoval(signer2.GroupPublicKeyBytes())
-
-	gr.UnregisterDeletedGroups()
+	gr.UnregisterStaleGroups()
 
 	group1 := gr.GetGroup(signer1.GroupPublicKeyBytes())
 	if group1 == nil {
-		t.Fatalf(
-			"Expecting a group, but nil was returned instead",
-		)
+		t.Fatalf("Expecting a group, but nil was returned instead")
 	}
 
 	group2 := gr.GetGroup(signer2.GroupPublicKeyBytes())
 	if group2 != nil {
-		t.Fatalf(
-			"Group2 was expected to be unregistered, but is still present",
-		)
+		t.Fatalf("Group2 was expected to be unregistered, but is still present")
+	}
+	if len(persistenceMock.archivedGroups) != 1 ||
+		persistenceMock.archivedGroups[0] != hex.EncodeToString(signer2.GroupPublicKeyBytes()) {
+		t.Fatalf("Group2 was expected to be archived")
 	}
 
 	group3 := gr.GetGroup(signer3.GroupPublicKeyBytes())
 	if group3 == nil {
-		t.Fatalf(
-			"Expecting a group, but nil was returned instead",
-		)
+		t.Fatalf("Expecting a group, but nil was returned instead")
 	}
 
 }
@@ -110,7 +149,7 @@ type mockGroupRegistrationInterface struct {
 	groupsToRemove [][]byte
 }
 
-func (mgri *mockGroupRegistrationInterface) markForRemoval(publicKey []byte) {
+func (mgri *mockGroupRegistrationInterface) markAsStale(publicKey []byte) {
 	mgri.groupsToRemove = append(mgri.groupsToRemove, publicKey)
 }
 
@@ -127,4 +166,66 @@ func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) 
 		}
 	}
 	return false, nil
+}
+
+type persistenceHandleMock struct {
+	archivedGroups []string
+}
+
+func (phm *persistenceHandleMock) Save(data []byte, directory string, name string) error {
+	// noop
+	return nil
+}
+
+func (phm *persistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, <-chan error) {
+	membershipBytes1, _ := (&Membership{
+		Signer:      signer1,
+		ChannelName: channelName1,
+	}).Marshal()
+
+	membershipBytes2, _ := (&Membership{
+		Signer:      signer2,
+		ChannelName: channelName2,
+	}).Marshal()
+
+	membershipBytes3, _ := (&Membership{
+		Signer:      signer4,
+		ChannelName: channelName2,
+	}).Marshal()
+
+	outputData := make(chan persistence.DataDescriptor, 3)
+	outputErrors := make(chan error)
+
+	outputData <- &testDataDescriptor{"1", "dir", membershipBytes1}
+	outputData <- &testDataDescriptor{"2", "dir", membershipBytes2}
+	outputData <- &testDataDescriptor{"3", "dir", membershipBytes3}
+
+	close(outputData)
+	close(outputErrors)
+
+	return outputData, outputErrors
+}
+
+func (phm *persistenceHandleMock) Archive(directory string) error {
+	phm.archivedGroups = append(phm.archivedGroups, directory)
+
+	return nil
+}
+
+type testDataDescriptor struct {
+	name      string
+	directory string
+	content   []byte
+}
+
+func (tdd *testDataDescriptor) Name() string {
+	return tdd.name
+}
+
+func (tdd *testDataDescriptor) Directory() string {
+	return tdd.directory
+}
+
+func (tdd *testDataDescriptor) Content() ([]byte, error) {
+	return tdd.content, nil
 }

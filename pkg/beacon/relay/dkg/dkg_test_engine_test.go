@@ -11,7 +11,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/internal/interceptors"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -22,7 +22,7 @@ var minimumStake = big.NewInt(20)
 func runTest(
 	groupSize int,
 	threshold int,
-	interceptor testutils.NetworkMessageInterceptor,
+	interceptor interceptors.NetworkMessageInterceptor,
 ) (*dkgTestResult, error) {
 	privateKey, publicKey, err := operator.GenerateKeyPair()
 	if err != nil {
@@ -31,7 +31,7 @@ func runTest(
 
 	_, networkPublicKey := key.OperatorKeyToNetworkKey(privateKey, publicKey)
 
-	network := testutils.NewInterceptingNetwork(
+	network := interceptors.NewInterceptingNetwork(
 		netLocal.ConnectWithKey(networkPublicKey),
 		interceptor,
 	)
@@ -51,7 +51,7 @@ func executeDKG(
 	groupSize int,
 	threshold int,
 	chain chainLocal.Chain,
-	network testutils.InterceptingNetwork,
+	network interceptors.InterceptingNetwork,
 ) (*dkgTestResult, error) {
 	blockCounter, err := chain.BlockCounter()
 	if err != nil {
@@ -71,7 +71,7 @@ func executeDKG(
 	)
 
 	startBlockHeight := uint64(1)
-	requestID, seed, err := getDKGParameters()
+	seed, err := rand.Int(rand.Reader, big.NewInt(100000))
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,6 @@ func executeDKG(
 		i := i // capture for goroutine
 		go func() {
 			signer, err := ExecuteDKG(
-				requestID,
 				seed,
 				i,
 				groupSize,
@@ -117,7 +116,7 @@ func executeDKG(
 	case _ = <-resultChan:
 		// result was published to the chain, let's fetch it
 		return &dkgTestResult{
-			chain.GetDKGResult(requestID),
+			chain.GetLastDKGResult(),
 			signers,
 			memberFailures,
 		}, nil
@@ -130,19 +129,4 @@ func executeDKG(
 			memberFailures,
 		}, nil
 	}
-}
-
-func getDKGParameters() (
-	requestID *big.Int,
-	seed *big.Int,
-	err error,
-) {
-	requestID, err = rand.Int(rand.Reader, big.NewInt(10000))
-	if err != nil {
-		return
-	}
-
-	seed, err = rand.Int(rand.Reader, big.NewInt(100000))
-
-	return
 }

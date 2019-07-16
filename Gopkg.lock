@@ -10,6 +10,17 @@
   source = "https://github.com/keep-network/toml.git"
 
 [[projects]]
+  digest = "1:8b13694e3e7b33c6f389f367b6a001a1184b051e34880fdd9e58a2207d9f6573"
+  name = "github.com/allegro/bigcache"
+  packages = [
+    ".",
+    "queue",
+  ]
+  pruneopts = ""
+  revision = "69ea0af04088faa57adb9ac683934277141e92a5"
+  version = "v2.0.0"
+
+[[projects]]
   branch = "master"
   digest = "1:19bd0e5d0aba0152ff8e3e249914c71d1bc34dbe7ce0f77e6be90aa2cce9108b"
   name = "github.com/aristanetworks/goarista"
@@ -42,7 +53,7 @@
   version = "v1.7.1"
 
 [[projects]]
-  digest = "1:3c11702e3f6b0daf20996ef8adb0177c51ffb1b3326eebe373d27083e589cd3c"
+  digest = "1:800932ff1e66409a9cd0bfaa1a1b957ca3decf536b366678a65fb65517a474ea"
   name = "github.com/ethereum/go-ethereum"
   packages = [
     ".",
@@ -61,7 +72,6 @@
     "crypto",
     "crypto/bn256/cloudflare",
     "crypto/secp256k1",
-    "crypto/sha3",
     "ethclient",
     "ethdb",
     "event",
@@ -74,7 +84,7 @@
     "trie",
   ]
   pruneopts = ""
-  revision = "477eb0933b9529f7deeccc233cc815fe34a8ea56"
+  revision = "4bcc0a37ab70cb79b16893556cffdaad6974e7d8"
   source = "https://github.com/keep-network/go-ethereum.git"
 
 [[projects]]
@@ -201,6 +211,22 @@
   revision = "b19d692f0b561c74eaf750e7b6d75fdab571890e"
 
 [[projects]]
+  digest = "1:43028fa83d34b445b4b7e05b055ed853c153567c844af0e6c1ac76337e8901f6"
+  name = "github.com/ipfs/go-ipfs-addr"
+  packages = ["."]
+  pruneopts = ""
+  revision = "ac4881d4db36effbbeebf93d9172fcb20ed04c15"
+  version = "v0.0.1"
+
+[[projects]]
+  digest = "1:6c0b2001524e5078e61082d24bc1550c9dcf5b9b83a1f524f3db9b916542c5ad"
+  name = "github.com/ipfs/go-ipfs-config"
+  packages = ["."]
+  pruneopts = ""
+  revision = "687234717fb9e022b469121d33582a5b821ed39d"
+  version = "v0.0.4"
+
+[[projects]]
   digest = "1:b2cad6771b50640034468327c89ab4db9998a727972e1579134098a5bf29ba73"
   name = "github.com/ipfs/go-ipfs-util"
   packages = ["."]
@@ -273,6 +299,13 @@
   ]
   pruneopts = ""
   revision = "b497e2f366b8624394fb2e89c10ab607bebdde0b"
+
+[[projects]]
+  digest = "1:29685f02c1aff104cb696918561c74a8a995476fa5d27c854378fa51def58f60"
+  name = "github.com/keep-network/go-libp2p-bootstrap"
+  packages = ["."]
+  pruneopts = ""
+  revision = "e92bd71e8199b1d75295ea70846d29910e434070"
 
 [[projects]]
   digest = "1:083b726d999fff7a2fcd09b779598cddcb642628bc028e4cfe46e81b18bf0d26"
@@ -662,6 +695,14 @@
   revision = "05b4dd3047e5d6e86cb4e0477164b850cd896261"
 
 [[projects]]
+  digest = "1:6dbb0eb72090871f2e58d1e37973fe3cb8c0f45f49459398d3fc740cb30e13bd"
+  name = "github.com/mitchellh/go-homedir"
+  packages = ["."]
+  pruneopts = ""
+  revision = "af06845cf3004701891bf4fdb884bfe4920b3727"
+  version = "v1.1.0"
+
+[[projects]]
   digest = "1:d2efc3844dabcc36031a748f37e8a528ede8c5e59a9d8c63af16d60e559793ea"
   name = "github.com/mr-tron/base58"
   packages = ["base58"]
@@ -996,11 +1037,12 @@
     "github.com/ethereum/go-ethereum/accounts/keystore",
     "github.com/ethereum/go-ethereum/cmd/abigen",
     "github.com/ethereum/go-ethereum/common",
+    "github.com/ethereum/go-ethereum/common/hexutil",
+    "github.com/ethereum/go-ethereum/common/math",
     "github.com/ethereum/go-ethereum/core/types",
     "github.com/ethereum/go-ethereum/crypto",
     "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare",
     "github.com/ethereum/go-ethereum/crypto/secp256k1",
-    "github.com/ethereum/go-ethereum/crypto/sha3",
     "github.com/ethereum/go-ethereum/ethclient",
     "github.com/ethereum/go-ethereum/event",
     "github.com/ethereum/go-ethereum/rpc",
@@ -1010,6 +1052,7 @@
     "github.com/gogo/protobuf/sortkeys",
     "github.com/ipfs/go-datastore",
     "github.com/ipfs/go-datastore/sync",
+    "github.com/keep-network/go-libp2p-bootstrap",
     "github.com/libp2p/go-addr-util",
     "github.com/libp2p/go-conn-security",
     "github.com/libp2p/go-libp2p",

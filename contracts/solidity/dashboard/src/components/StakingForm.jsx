@@ -13,19 +13,13 @@ const ERRORS = {
 const RESET_DELAY = 3000 // 3 seconds
 
 class StakingForm extends Component {
-  constructor(props) {
-    super(props)
-    this.state = this.getInitialState()
-  }
 
-  getInitialState() {
-    return {
-      amount: 0,
-      hasError: false,
-      requestSent: false,
-      requestSuccess: false,
-      errorMsg: ERRORS.INVALID_AMOUNT,
-    }
+  state = {
+    amount: 0,
+    hasError: false,
+    requestSent: false,
+    requestSuccess: false,
+    errorMsg: ERRORS.INVALID_AMOUNT
   }
 
   onChange = (e) => {
@@ -41,7 +35,7 @@ class StakingForm extends Component {
       requestSuccess: true
     })
     window.setTimeout(() => {
-      this.setState(this.getInitialState())
+      this.setState(this.state)
     }, RESET_DELAY)
   }
 
@@ -64,9 +58,9 @@ class StakingForm extends Component {
     const { action, web3, stakingContractAddress } = this.props
 
     if (action === 'stake') {
-      web3.token.approveAndCall(stakingContractAddress, formatAmount(amount, 18), "", {from: web3.yourAddress, gas: 150000})
+      await web3.token.methods.approveAndCall(stakingContractAddress, formatAmount(amount, 18), "", {from: web3.yourAddress, gas: 150000})
     } else if (action === 'unstake') {
-      web3.stakingContract.initiateUnstake(formatAmount(amount, 18), {from: web3.yourAddress, gas: 150000})
+      await web3.stakingContract.methods.initiateUnstake(web3.utils.toBN(formatAmount(amount, 18)).toString(), web3.yourAddress).send({from: web3.yourAddress})
     }
   }
 

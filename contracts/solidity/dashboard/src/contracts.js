@@ -1,31 +1,24 @@
-import contract from 'truffle-contract'
+import KeepToken from "contracts/KeepToken.json"
+import TokenStaking from "contracts/TokenStaking.json"
+import TokenGrant from "contracts/TokenGrant.json"
 
 export async function getKeepToken(web3, address) {
 
   const code = await web3.eth.getCode(address);
   if (!code || code === '0x0' || code === '0x') throw Error('No contract at address');
-
-  const KeepToken = contract(require('contracts/KeepToken.json'))
-  KeepToken.setProvider(web3.currentProvider)
-  return KeepToken.at(address)
+  return new web3.eth.Contract(KeepToken.abi, address)
 }
 
 export async function getTokenStaking(web3, address) {
 
   const code = await web3.eth.getCode(address);
   if (!code || code === '0x0' || code === '0x') throw Error('No contract at address');
-
-  const TokenStaking = contract(require('contracts/TokenStaking.json'))
-  TokenStaking.setProvider(web3.currentProvider)
-  return TokenStaking.at(address)
+  return new web3.eth.Contract(TokenStaking.abi, address)
 }
 
 export async function getTokenGrant(web3, address) {
 
   const code = await web3.eth.getCode(address);
   if (!code || code === '0x0' || code === '0x') throw Error('No contract at address');
-
-  const TokenGrant = contract(require('contracts/TokenGrant.json'))
-  TokenGrant.setProvider(web3.currentProvider)
-  return TokenGrant.at(address)
+  return new web3.eth.Contract(TokenGrant.abi, address)
 }
