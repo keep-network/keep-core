@@ -112,10 +112,10 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	defer cancel()
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
-	signingId := int64(19)
+	signingID := int64(19)
 	relayEntryPromise := chainHandle.SubmitRelayEntry(
 		&event.Entry{
-			SigningId:   big.NewInt(signingId),
+			SigningId:   big.NewInt(signingID),
 			GroupPubKey: []byte("1"),
 		},
 	)
@@ -131,10 +131,10 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 	select {
 	case entry := <-done:
-		if entry.SigningId.Int64() != signingId {
+		if entry.SigningId.Int64() != signingID {
 			t.Fatalf(
 				"Unexpected relay entry request id\nExpected: [%v]\nActual:  [%v]",
-				signingId,
+				signingID,
 				entry.SigningId.Int64(),
 			)
 		}
@@ -588,20 +588,20 @@ func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
 	}{
 		"no signatures": {
 			signatures:    map[group.MemberIndex]operator.Signature{},
-			expectedError: fmt.Errorf("failed to submit result with [0] signatures for threshold [3]"),
+			expectedError: fmt.Errorf("failed to submit result with [0] signatures for threshold [%v]", threshold),
 		},
 		"one signature": {
 			signatures: map[group.MemberIndex]operator.Signature{
 				1: operator.Signature{101},
 			},
-			expectedError: fmt.Errorf("failed to submit result with [1] signatures for threshold [3]"),
+			expectedError: fmt.Errorf("failed to submit result with [1] signatures for threshold [%v]", threshold),
 		},
 		"one less signature than threshold": {
 			signatures: map[group.MemberIndex]operator.Signature{
 				1: operator.Signature{101},
 				2: operator.Signature{102},
 			},
-			expectedError: fmt.Errorf("failed to submit result with [2] signatures for threshold [3]"),
+			expectedError: fmt.Errorf("failed to submit result with [2] signatures for threshold [%v]", threshold),
 		},
 		"threshold signatures": {
 			signatures: map[group.MemberIndex]operator.Signature{
