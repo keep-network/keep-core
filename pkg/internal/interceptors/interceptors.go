@@ -4,7 +4,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// NetworkMessageInterceptor defines a rules of intercepting network messages.
+// NetworkMessageInterceptor defines the rules of intercepting network messages.
 // Messages can be returned unmodified, they may be modified on the fly and they
 // can be dropped by returning nil.
 type NetworkMessageInterceptor = func(msg net.TaggedMarshaler) net.TaggedMarshaler
