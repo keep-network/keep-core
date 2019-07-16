@@ -266,7 +266,7 @@ contract TokenGrant {
      * @param _amount Amount to stake.
      * @param _extraData Data for stake delegation. This byte array must have the following values concatenated:
      * Magpie address (20 bytes) where the rewards for participation are sent, operator's ECDSA (65 bytes) signature of
-     * the grantee address and ECDSA signature of this contract address.
+     * the grantee address and ECDSA (65 bytes) signature of this contract address.
      */
     function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
         require(!grants[_id].revocable, "Revocable grants can not be staked.");
@@ -276,6 +276,8 @@ contract TokenGrant {
             "Provided staking contract is not authorized."
         );
 
+        // Expecting 150 bytes _extraData for stake delegation
+        // 20 bytes address + two 65 bytes ECDSA signatures
         require(_extraData.length == 150, "Stake delegation data must be provided.");
         address operator = keccak256(abi.encodePacked(address(this))).toEthSignedMessageHash().recover(_extraData.slice(20, 65));
         require(
@@ -290,6 +292,9 @@ contract TokenGrant {
         // Keep staking record.
         grantStakes[operator] = GrantStake(_id, _stakingContract, _amount);
         grants[_id].staked = _amount;
+
+        // Staking contract expects 85 bytes _extraData for stake delegation
+        // 20 bytes address + 65 bytes ECDSA signature
         tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData.slice(0, 85));
     }
 
