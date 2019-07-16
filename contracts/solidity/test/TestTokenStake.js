@@ -1,9 +1,8 @@
-import increaseTime, { duration, increaseTimeTo } from './helpers/increaseTime';
+import { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
-import exceptThrow from './helpers/expectThrow';
+import expectThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
-const TokenGrant = artifacts.require('./TokenGrant.sol');
 
 contract('TestTokenStake', function(accounts) {
 
@@ -64,7 +63,7 @@ contract('TestTokenStake', function(accounts) {
     await stakingContract.initiateUnstake(stakingAmount/2, account_one_operator, {from: account_one_operator});
 
     // should not be able to finish unstake
-    await exceptThrow(stakingContract.finishUnstake(account_one_operator));
+    await expectThrow(stakingContract.finishUnstake(account_one_operator));
 
     // jump in time, full withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
@@ -73,7 +72,7 @@ contract('TestTokenStake', function(accounts) {
     await stakingContract.finishUnstake(account_one_operator);
 
     // should fail cause there is no stake to unstake
-    await exceptThrow(stakingContract.finishUnstake(account_one_operator));
+    await expectThrow(stakingContract.finishUnstake(account_one_operator));
 
     // check balances
     account_one_ending_balance = await token.balanceOf.call(account_one);

@@ -1,6 +1,6 @@
-import increaseTime, { duration, increaseTimeTo } from './helpers/increaseTime';
+import { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
-import exceptThrow from './helpers/expectThrow';
+import expectThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
@@ -58,7 +58,7 @@ contract('TestTokenGrant', function(accounts) {
     assert.equal(account_two_ending_balance.eq(account_two_starting_balance), true, "Grantee main balance should stay unchanged");
 
     // Should not be able to withdraw token grant (0 withdrawable amount)
-    await exceptThrow(grantContract.withdraw(id))
+    await expectThrow(grantContract.withdraw(id))
 
     // jump in time, third vesting duration
     await increaseTimeTo(await latestTime()+vestingDuration/3);
@@ -117,7 +117,7 @@ contract('TestTokenGrant', function(accounts) {
     let id = (await grantContract.grant(amount, grantee, vestingDuration,
       start, cliff, false, {from: account_one})).logs[0].args.id.toNumber()
 
-    await exceptThrow(grantContract.revoke(id));
+    await expectThrow(grantContract.revoke(id));
 
   });
 

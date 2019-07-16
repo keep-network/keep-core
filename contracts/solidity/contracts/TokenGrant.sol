@@ -298,8 +298,9 @@ contract TokenGrant {
      * @param _operator Operator of the stake.
      */
     function initiateUnstake(address _operator) public {
+        uint256 grantId = grantStakes[_operator].grantId;
         require(
-            msg.sender == _operator || msg.sender == grants[grantStakes[_operator].grantId].grantee,
+            msg.sender == _operator || msg.sender == grants[grantId].grantee,
             "Only operator or grantee can initiate unstake."
         );
 

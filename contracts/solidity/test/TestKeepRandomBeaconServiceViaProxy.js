@@ -1,7 +1,7 @@
 import { duration, increaseTimeTo } from './helpers/increaseTime';
 import {bls} from './helpers/data';
 import latestTime from './helpers/latestTime';
-import exceptThrow from './helpers/expectThrow';
+import expectThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
 import {initContracts} from './helpers/initContracts';
 const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
@@ -15,7 +15,6 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
   beforeEach(async () => {
     let contracts = await initContracts(
-      accounts,
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStaking.sol'),
       ServiceContractProxy,
@@ -37,7 +36,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("should fail to request relay entry with not enough ether", async function() {
-    await exceptThrow(serviceContract.requestRelayEntry(0, {from: account_two, value: 0}));
+    await expectThrow(serviceContract.requestRelayEntry(0, {from: account_two, value: 0}));
   });
 
   it("should be able to request relay with enough ether", async function() {
@@ -53,7 +52,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("should be able to request relay entry via serviceContractProxy contract with enough ether", async function() {
-    await exceptThrow(serviceContractProxy.sendTransaction({from: account_two, value: 1000}));
+    await expectThrow(serviceContractProxy.sendTransaction({from: account_two, value: 1000}));
 
     await web3.eth.sendTransaction({
       // if you see a plain 'revert' error, it's probably because of not enough gas
@@ -74,11 +73,11 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     await serviceContract.requestRelayEntry(0, {from: account_one, value: 100})
 
     // should fail to withdraw if not owner
-    await exceptThrow(serviceContract.initiateWithdrawal({from: account_two}));
-    await exceptThrow(serviceContract.finishWithdrawal(account_two, {from: account_two}));
+    await expectThrow(serviceContract.initiateWithdrawal({from: account_two}));
+    await expectThrow(serviceContract.finishWithdrawal(account_two, {from: account_two}));
 
     await serviceContract.initiateWithdrawal({from: account_one});
-    await exceptThrow(serviceContract.finishWithdrawal(account_three, {from: account_one}));
+    await expectThrow(serviceContract.finishWithdrawal(account_three, {from: account_one}));
 
     // jump in time, full withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
@@ -96,7 +95,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("should fail to update minimum payment by non owner", async function() {
-    await exceptThrow(serviceContract.setMinimumPayment(123, {from: account_two}));
+    await expectThrow(serviceContract.setMinimumPayment(123, {from: account_two}));
   });
 
   it("should be able to update minimum payment by the owner", async function() {

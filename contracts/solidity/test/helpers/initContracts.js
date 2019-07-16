@@ -1,7 +1,7 @@
 import { duration } from './increaseTime';
 import { bls } from './data';
 
-async function initContracts(accounts, KeepToken, TokenStaking, KeepRandomBeaconService,
+async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
 
   let token, stakingContract,

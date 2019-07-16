@@ -1,15 +1,14 @@
-import exceptThrow from './helpers/expectThrow';
+import expectThrow from './helpers/expectThrow';
 import {initContracts} from './helpers/initContracts';
 import {bls} from './helpers/data';
 const OperatorContract = artifacts.require('./KeepRandomBeaconOperatorStub.sol')
 
-contract('TestKeepRandomBeaconServiceSelectOperator', function(accounts) {
+contract('TestKeepRandomBeaconServiceSelectOperator', function() {
 
   let config, serviceContract, operatorContract, operatorContract2, operatorContract3;
 
   before(async () => {
     let contracts = await initContracts(
-      accounts,
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
@@ -51,7 +50,7 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function(accounts) {
     assert.equal(result, operatorContract.address, "Operator contract added during initialization should present in the service contract.");
 
     await serviceContract.removeOperatorContract(operatorContract.address);
-    await exceptThrow(serviceContract.selectOperatorContract(0)); // Should revert since no operator contract present.
+    await expectThrow(serviceContract.selectOperatorContract(0)); // Should revert since no operator contract present.
 
     await serviceContract.addOperatorContract(operatorContract.address);
     result = await serviceContract.selectOperatorContract(0);

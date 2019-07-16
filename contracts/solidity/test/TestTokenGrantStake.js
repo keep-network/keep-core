@@ -1,6 +1,6 @@
-import increaseTime, { duration, increaseTimeTo } from './helpers/increaseTime';
+import { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
-import exceptThrow from './helpers/expectThrow';
+import expectThrow from './helpers/expectThrow';
 import grantTokens from './helpers/grantTokens';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
@@ -39,7 +39,7 @@ contract('TestTokenGrantStake', function(accounts) {
     let delegation = Buffer.concat([Buffer.from(account_two_magpie.substr(2), 'hex'), signature1, signature2]);
 
     // should throw if stake granted tokens called by anyone except grant grantee
-    await exceptThrow(grantContract.stake(id, stakingContract.address, amount, delegation));
+    await expectThrow(grantContract.stake(id, stakingContract.address, amount, delegation));
 
     // stake granted tokens can be only called by grant grantee
     await grantContract.stake(id, stakingContract.address, amount, delegation, {from: account_two});
@@ -47,16 +47,16 @@ contract('TestTokenGrantStake', function(accounts) {
     assert.equal(account_two_operator_stake_balance.eq(amount), true, "Should stake grant amount");
 
     // should throw if initiate unstake called by anyone except grant grantee
-    await exceptThrow(grantContract.initiateUnstake(account_two_operator));
+    await expectThrow(grantContract.initiateUnstake(account_two_operator));
 
     // Initiate unstake of granted tokens by grant grantee
     await grantContract.initiateUnstake(account_two_operator, {from: account_two});
 
     // should not be able to finish unstake before withdrawal delay is over
-    await exceptThrow(grantContract.finishUnstake(account_two_operator));
+    await expectThrow(grantContract.finishUnstake(account_two_operator));
 
     // should not be able to withdraw grant as its still locked for staking
-    await exceptThrow(grantContract.withdraw(id));
+    await expectThrow(grantContract.withdraw(id));
 
     // jump in time over withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));

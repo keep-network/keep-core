@@ -1,6 +1,6 @@
 import {bls} from './helpers/data';
 import { duration } from './helpers/increaseTime';
-import exceptThrow from './helpers/expectThrow';
+import expectThrow from './helpers/expectThrow';
 import {initContracts} from './helpers/initContracts';
 const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol');
 const ServiceContractImplV2 = artifacts.require('./examples/KeepRandomBeaconServiceUpgradeExample.sol');
@@ -13,7 +13,6 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
 
   before(async () => {
     let contracts = await initContracts(
-      accounts,
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStaking.sol'),
       ServiceContractProxy,
@@ -42,7 +41,7 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
   });
 
   it("should fail to upgrade implementation if called by not contract owner", async function() {
-    await exceptThrow(serviceContractProxy.upgradeTo(serviceContractImplV2.address, {from: account_two}));
+    await expectThrow(serviceContractProxy.upgradeTo(serviceContractImplV2.address, {from: account_two}));
   });
 
   it("should be able to upgrade implementation and initialize it with new data", async function() {
