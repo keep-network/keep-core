@@ -14,7 +14,6 @@ contract TokenStaking is StakeDelegatable {
 
     using UintArrayUtils for uint256[];
 
-    event ReceivedApproval(uint256 _value);
     event Staked(address indexed from, uint256 value);
     event InitiatedUnstake(address operator);
     event FinishedUnstake(address operator);
@@ -48,8 +47,6 @@ contract TokenStaking is StakeDelegatable {
      * are sent and the operator's ECDSA (65 bytes) signature of the address of the stake owner.
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
-        emit ReceivedApproval(_value);
-
         require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
         require(_extraData.length == 85, "Stake delegation data must be provided.");
