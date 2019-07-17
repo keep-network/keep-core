@@ -216,17 +216,28 @@ func executeDKG(
 		},
 	)
 
-	startBlockHeight := uint64(1)
 	seed, err := rand.Int(rand.Reader, big.NewInt(100000))
 	if err != nil {
 		return nil, err
 	}
 
+	var signersMutex sync.Mutex
 	var signers []*ThresholdSigner
+
 	var memberFailures []error
 
 	var wg sync.WaitGroup
 	wg.Add(groupSize)
+
+	currentBlockHeight, err := blockCounter.CurrentBlock()
+	if err != nil {
+		return nil, err
+	}
+
+	// Wait for 3 blocks before starting DKG to
+	// make sure all members are up.
+	startBlockHeight := currentBlockHeight + 3
+
 	for i := 0; i < groupSize; i++ {
 		i := i // capture for goroutine
 		go func() {
@@ -241,7 +252,9 @@ func executeDKG(
 				broadcastChannel,
 			)
 			if signer != nil {
+				signersMutex.Lock()
 				signers = append(signers, signer)
+				signersMutex.Unlock()
 			}
 			if err != nil {
 				fmt.Printf("Failed with: [%v]\n", err)
