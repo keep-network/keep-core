@@ -68,6 +68,19 @@ func assertInactiveMembers(
 	inactiveMemberByte := byte(0x01)
 	activeMemberByte := byte(0x00)
 
+	containsIndex := func(
+		index group.MemberIndex,
+		indexes []group.MemberIndex,
+	) bool {
+		for _, i := range indexes {
+			if i == index {
+				return true
+			}
+		}
+
+		return false
+	}
+
 	for i, ia := range result.result.Inactive {
 		index := i + 1 // member indexes starts from 1
 		inactiveExpected := containsIndex(group.MemberIndex(index), expectedInactive)
@@ -78,16 +91,6 @@ func assertInactiveMembers(
 			t.Errorf("Member [%v] has not been marked as inactive", index)
 		}
 	}
-}
-
-func containsIndex(index group.MemberIndex, indexes []group.MemberIndex) bool {
-	for _, i := range indexes {
-		if i == index {
-			return true
-		}
-	}
-
-	return false
 }
 
 func assertValidGroupPublicKey(t *testing.T, result *dkgTestResult) {
