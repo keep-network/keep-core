@@ -35,6 +35,12 @@ func (js *joinState) Receive(msg net.Message) error {
 		if err != nil {
 			return err
 		}
+
+		logger.Debugf(
+			"[member:%v] added member [%v] with key [%x]",
+			joinMsg.SenderID(),
+			msg.SenderPublicKey(),
+		)
 	}
 	return nil
 }
