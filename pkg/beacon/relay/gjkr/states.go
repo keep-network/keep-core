@@ -37,8 +37,9 @@ func (js *joinState) Receive(msg net.Message) error {
 		}
 
 		logger.Debugf(
-			"[member:%v] added member [%v] with key [%x]",
+			"[member:%v,channel:%s] added member [%v] with key [%x]",
 			joinMsg.SenderID(),
+			js.channel.Name()[:5],
 			msg.SenderPublicKey(),
 		)
 	}
