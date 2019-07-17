@@ -47,8 +47,10 @@ func assertSamePublicKey(t *testing.T, result *dkgTestResult) {
 }
 
 func assertNoDisqualifiedMembers(t *testing.T, result *dkgTestResult) {
+	disqualifiedMemberByte := byte(0x01)
+
 	for i, dq := range result.result.Disqualified {
-		if dq == 0x01 {
+		if dq == disqualifiedMemberByte {
 			t.Errorf("Member [%v] has been disqualified", i)
 		}
 	}
@@ -63,13 +65,16 @@ func assertInactiveMembers(
 	result *dkgTestResult,
 	expectedInactive ...group.MemberIndex,
 ) {
+	inactiveMemberByte := byte(0x01)
+	activeMemberByte := byte(0x00)
+
 	for i, ia := range result.result.Inactive {
 		index := i + 1 // member indexes starts from 1
 		inactiveExpected := containsIndex(group.MemberIndex(index), expectedInactive)
 
-		if ia == 0x01 && !inactiveExpected {
+		if ia == inactiveMemberByte && !inactiveExpected {
 			t.Errorf("Member [%v] has been marked as inactive", index)
-		} else if ia == 0x00 && inactiveExpected {
+		} else if ia == activeMemberByte && inactiveExpected {
 			t.Errorf("Member [%v] has not been marked as inactive", index)
 		}
 	}
