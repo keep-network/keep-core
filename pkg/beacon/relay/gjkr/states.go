@@ -31,7 +31,10 @@ func (js *joinState) Initiate() error {
 func (js *joinState) Receive(msg net.Message) error {
 	switch joinMsg := msg.Payload().(type) {
 	case *JoinMessage:
-		js.member.AddToGroup(joinMsg.SenderID())
+		err := js.member.AddToGroup(joinMsg.SenderID())
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
