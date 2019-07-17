@@ -18,7 +18,7 @@ interface tokenSender {
 /**
  @dev Staking contract interface.
 */
-interface tokenStaking {
+interface tokenStakingInterface {
     function initiateUnstake(uint256 _value, address _operator) external;
     function finishUnstake(address _operator) external;
 }
@@ -309,7 +309,7 @@ contract TokenGrant {
             "Only operator or grantee can initiate unstake."
         );
 
-        tokenStaking(grantStakes[_operator].stakingContract).initiateUnstake(grantStakes[_operator].amount, _operator);
+        tokenStakingInterface(grantStakes[_operator].stakingContract).initiateUnstake(grantStakes[_operator].amount, _operator);
     }
 
     /**
@@ -320,7 +320,7 @@ contract TokenGrant {
         uint256 grantId = grantStakes[_operator].grantId;
         grants[grantId].staked = grants[grantId].staked.sub(grantStakes[_operator].amount);
 
-        tokenStaking(grantStakes[_operator].stakingContract).finishUnstake(_operator);
+        tokenStakingInterface(grantStakes[_operator].stakingContract).finishUnstake(_operator);
         delete grantStakes[_operator];
     }
 }
