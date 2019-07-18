@@ -23,6 +23,12 @@ module.exports = async function() {
 
   let owner = accounts[0]; // The address of an owner of the staked tokens.
   let magpie = accounts[0]; // The address where the rewards for participation are sent.
+  // accounts[1]...[4] Operators for owner delegated stake.
+
+  // Token Grants demo accounts
+  let grantee = accounts[0];
+  let grantManager = accounts[5];
+  let granteeOperator = accounts[6];
 
   // Stake delegate tokens for first 5 accounts as operators,
   // including the first account where owner operating for themself.
@@ -46,22 +52,32 @@ module.exports = async function() {
     }
   }
 
-  // Create a demo accounts with tokens but without any operators
-  await token.transfer(accounts[5], formatAmount(100000, 18), {from: accounts[0]})
+  // Make sure grant manager has some tokens to be able to create a grant.
+  await token.transfer(grantManager, formatAmount(100000, 18), {from: owner})
 
-  // Grant tokens to the stake owner account
+  // Grant tokens to grantee.
   let amount = formatAmount(70000, 18);
   let vestingDuration = web3.utils.toBN(86400).mul(web3.utils.toBN(60));
   let start = (await web3.eth.getBlock('latest')).timestamp;
   let cliff = web3.utils.toBN(86400).mul(web3.utils.toBN(10));
-  let revocable = true;
-  await token.approve(tokenGrant.address, amount, {from: accounts[0]});
-  await tokenGrant.grant(amount, accounts[5], vestingDuration, start, cliff, revocable, {from: accounts[0]});
+  let revocable = false; // Can not stake revocable token grants. More info in RFC14 
 
-  // Grant tokens from the stake owner account
-  amount = formatAmount(1000, 18);
-  await token.approve(tokenGrant.address, amount, {from: accounts[5]});
-  await tokenGrant.grant(amount, accounts[6], vestingDuration, start, cliff, revocable, {from: accounts[5]});
+  await token.approve(tokenGrant.address, amount, {from: grantManager});
+  let grantId = await tokenGrant.grant(amount, grantee, vestingDuration, 
+    start, cliff, revocable, {from: grantManager}).then((result)=>{
+    for (var i = 0; i < result.logs.length; i++) {
+      var log = result.logs[i];
+      if (log.event == "CreatedTokenGrant") {
+        return log.args.id.toNumber();
+      }
+    }
+  })
+
+  // Operator must sign grantee and grant contract address since grant contract becomes the owner during staking.
+  let signature1 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(tokenGrant.address), granteeOperator)).substr(2), 'hex');
+  let signature2 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(grantee), granteeOperator)).substr(2), 'hex');
+  let delegation = Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature1, signature2]);
+  await tokenGrant.stake(grantId, tokenStaking.address, 10, delegation, {from: grantee});
 
   process.exit();
 };
