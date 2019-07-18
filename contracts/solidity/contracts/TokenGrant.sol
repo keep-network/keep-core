@@ -98,8 +98,21 @@ contract TokenGrant {
      * @param _owner The address to query the grants balance of.
      * @return An uint256 representing the grants balance owned by the passed address.
      */
-    function totalBalanceOf(address _owner) public view returns (uint256 balance) {
+    function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
+    }
+
+    /**
+     * @dev Gets the stake balance of the specified address.
+     * @param _address The address to query the balance of.
+     * @return An uint256 representing the amount staked by the passed address.
+     */
+    function stakeBalanceOf(address _address) public view returns (uint256 balance) {
+        for (uint i = 0; i < grantIndices[_address].length; i++) {
+            uint256 id = grantIndices[_address][i];
+            balance += grants[id].staked;
+        }
+        return balance;
     }
 
     /**
