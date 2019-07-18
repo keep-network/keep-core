@@ -140,7 +140,14 @@ class Main extends Component {
                       a signature of the stake owner address and sending it to the owner. Using the signature the owner can initiate
                       stake delegation and you will be able to participate in network operations on behalf of the stake owner.
                     </p>
-                    <SigningForm/>
+
+                    <div className="signing-form well">
+                      <SigningForm description="Sign stake owner address" defaultMessageToSign="0x0" />
+                      <SigningForm
+                        description="(Optional) Sign Token Grant contract address. This is required only for Token Grants stake operators"
+                        defaultMessageToSign={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
+                    </div>
+
                   </div>:
                   <Tabs defaultActiveKey={1} id="dashboard-tabs">
                     <Tab eventKey={1} title="Overview">
