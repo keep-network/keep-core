@@ -6,8 +6,8 @@ import moment from 'moment'
 class VestingDetails extends Component {
   render() {
     if (this.props.details) {
-      const { start, cliff, end, amount, released, grantedAmount, revocable, owner } = this.props.details
-      const unreleased = grantedAmount ? grantedAmount - released : null
+      const { start, cliff, end, amount, withdrawn, grantedAmount, revocable, owner, staked } = this.props.details
+      const available = grantedAmount ? grantedAmount - withdrawn : null
       return <div>
         <Table striped bordered condensed className="small table-sm">
           <tbody>
@@ -31,19 +31,24 @@ class VestingDetails extends Component {
               { this.formatTokens(amount) }
             </TableRow>
             
-            <TableRow title="Granted Amount">
+            <TableRow title="Vested">
               { this.formatTokens(grantedAmount) }
             </TableRow>
             
-            <TableRow title="Already released">
-              { this.formatTokens(released) }
+            <TableRow title="Withdrawn">
+              { this.formatTokens(withdrawn) }
             </TableRow>
             
-            <TableRow title="Unreleased">
-              { this.formatTokens(unreleased) }
+            <TableRow title="Available to withdraw">
+              { this.formatTokens(available) }
             </TableRow>
+
             <TableRow title="Revocable">
               { revocable }
+            </TableRow>
+
+            <TableRow title="Staked">
+              { this.formatTokens(staked) }
             </TableRow>
           </tbody>
         </Table>

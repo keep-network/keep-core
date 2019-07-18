@@ -189,7 +189,7 @@ class Main extends Component {
                                 { withdrawalsTotal }
                               </TableRow>
                               <TableRow title="Token Grants">
-                                { grantBalance }
+                                { displayAmount(grantBalance, 18, 3) }
                               </TableRow>
                               <TableRow title="Staked Token Grants">
                                 { grantStakeBalance }
@@ -289,7 +289,7 @@ class Main extends Component {
     const grantContract = this.state.web3.grantContract
     const tokenBalance = await token.methods.balanceOf(this.state.web3.yourAddress).call()
     const stakeOwner = await stakingContract.methods.ownerOf(this.state.web3.yourAddress).call();
-    const grantBalance = displayAmount(await grantContract.methods.balanceOf(this.state.web3.yourAddress).call(), 18, 3)
+    const grantBalance = await grantContract.methods.balanceOf(this.state.web3.yourAddress).call()
     const grantStakeBalance = displayAmount(await grantContract.methods.stakeBalanceOf(this.state.web3.yourAddress).call(), 18, 3)
 
     let isTokenHolder = false;
@@ -304,12 +304,12 @@ class Main extends Component {
     }
 
     // Calculate delegated stake balances
-    let stakeBalance = await stakingContract.methods.stakeBalanceOf(this.state.web3.yourAddress).call()
+    let stakeBalance = await stakingContract.methods.balanceOf(this.state.web3.yourAddress).call()
     const operatorsAddresses = await stakingContract.methods.operatorsOf(this.state.web3.yourAddress).call()
     let operators = [];
 
     for(let i = 0; i < operatorsAddresses.length; i++) {
-      let balance = await stakingContract.methods.stakeBalanceOf(operatorsAddresses[i]).call();
+      let balance = await stakingContract.methods.balanceOf(operatorsAddresses[i]).call();
       if (!balance.isZero()) {
         let operator = {
           'address': operatorsAddresses[i],
@@ -366,31 +366,32 @@ class Main extends Component {
       const grant = await grantContract.methods.grants(grantIndexes[i].toNumber()).call()
       const grantedAmount = await grantContract.methods.grantedAmount(grantIndexes[i].toNumber()).call()
       const data = {
+        'id': grantIndexes[i].toNumber(),
         'owner': this.state.web3.utils.toChecksumAddress(grant[0]),
-        'beneficiary': this.state.web3.utils.toChecksumAddress(grant[1]),
-        'locked': grant[2],
-        'revoked': grant[3],
-        'revocable': grant[4],
-        'amount': grant[5],
+        'grantee': this.state.web3.utils.toChecksumAddress(grant[1]),
+        'revoked': grant[2],
+        'revocable': grant[3],
+        'amount': grant[4],
         'grantedAmount': grantedAmount,
-        'end': grant[6].add(grant[7]),
-        'start': grant[7],
-        'cliff': grant[8],
-        'released': grant[9],
+        'end': grant[5].add(grant[6]),
+        'start': grant[6],
+        'cliff': grant[7],
+        'withdrawn': grant[8],
+        'staked': grant[9],
         'decimals': 18,
         'symbol': 'KEEP',
         'formatted': {
-          'amount': displayAmount(grant[5], 18, 3),
-          'end': moment((grant[6].add(grant[7])).mul(1000)).format("MMMM Do YYYY, h:mm:ss a"),
-          'start': moment((grant[7].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
-          'cliff': moment((grant[8].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
-          'released': grant[9].toNumber()
+          'amount': displayAmount(grant[4], 18, 3),
+          'end': moment((grant[5].add(grant[6])).mul(1000)).format("MMMM Do YYYY, h:mm:ss a"),
+          'start': moment((grant[6].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
+          'cliff': moment((grant[7].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
+          'withdrawn': grant[8].toNumber()
         }
       }
 
       if (this.state.web3.yourAddress === data['owner']) {
         grantedByYou.push(data)
-      } else if (this.state.web3.yourAddress === data['beneficiary']) {
+      } else if (this.state.web3.yourAddress === data['grantee']) {
         grantedToYou.push(data)
       }
     }

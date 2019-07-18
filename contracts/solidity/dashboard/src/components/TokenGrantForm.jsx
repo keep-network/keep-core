@@ -14,13 +14,13 @@ class TokenGrantForm extends Component {
 
   state = {
     amount: 0,
-    beneficiary: "0x0",
+    grantee: "0x0",
     duration: 1,
     start: moment().unix(),
     cliff: 1,
     revocable: false,
     formErrors: {
-      beneficiary: '',
+      grantee: '',
       amount: ''
     },
     hasError: false,
@@ -41,7 +41,7 @@ class TokenGrantForm extends Component {
 
   validateBeneficiary() {
     const { web3 } = this.props
-    if (web3.utils && web3.utils.isAddress(this.state.beneficiary)) return 'success'
+    if (web3.utils && web3.utils.isAddress(this.state.grantee)) return 'success'
     else return 'error'
   }
 
@@ -50,16 +50,16 @@ class TokenGrantForm extends Component {
   }
 
   async submit() {
-    const { amount, beneficiary, duration, start, cliff, revocable} = this.state
+    const { amount, grantee, duration, start, cliff, revocable} = this.state
     const { web3, tokenGrantContractAddress } = this.props
 
     await web3.token.methods.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: web3.yourAddress, gas: 60000})
-    await web3.grantContract.methods.grant(formatAmount(amount, 18), beneficiary, duration, start, cliff, revocable, {from: web3.yourAddress, gas: 300000})
+    await web3.grantContract.methods.grant(formatAmount(amount, 18), grantee, duration, start, cliff, revocable, {from: web3.yourAddress, gas: 300000})
 
   }
 
   render() {
-    const { amount, beneficiary, duration, start, cliff, revocable,
+    const { amount, grantee, duration, start, cliff, revocable,
         hasError,
         errorMsg} = this.state
 
@@ -73,12 +73,12 @@ class TokenGrantForm extends Component {
             <Col sm={8}>
               <FormControl
                 type="text"
-                name="beneficiary"
-                value={beneficiary}
+                name="grantee"
+                value={grantee}
                 onChange={this.onChange}
               />
               <FormControl.Feedback />
-              <HelpBlock className="small">Address to which granted tokens are going to be released.</HelpBlock>
+              <HelpBlock className="small">Address to which granted tokens are going to be withdrawn.</HelpBlock>
             </Col>
           </FormGroup>
 
