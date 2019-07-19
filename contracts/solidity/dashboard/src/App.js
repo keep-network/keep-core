@@ -75,6 +75,7 @@ class Main extends Component {
         token: contracts.token,
         stakingContract: contracts.stakingContract,
         grantContract: contracts.grantContract,
+        defaultContract: contracts.stakingContract,
         utils: web3.utils,
         eth: web3.eth
       }
@@ -351,6 +352,7 @@ class Main extends Component {
     if (stakedGrantByOperator.stakingContract === stakingContract.address) {
       isOperatorOfStakedTokenGrant = true
       stakedGrant = await grantContract.methods.grants(stakedGrantByOperator.grantId.toString()).call()
+      this.setState(state => (state.web3.defaultContract = state.web3.grantContract, state))
     }
 
     // Calculate delegated stake balances
