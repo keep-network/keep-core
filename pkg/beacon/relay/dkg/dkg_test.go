@@ -116,7 +116,7 @@ func assertNoDisqualifiedMembers(t *testing.T, testResult *dkgTestResult) {
 
 	for i, dq := range testResult.dkgResult.Disqualified {
 		if dq == disqualifiedMemberByte {
-			t.Errorf("member [%v] has been disqualified", i)
+			t.Errorf("member [%v] has been unexpectedly disqualified", i)
 		}
 	}
 }
@@ -154,9 +154,15 @@ func assertInactiveMembers(
 		)
 
 		if ia == inactiveMemberByte && !inactiveExpected {
-			t.Errorf("member [%v] has been marked as inactive", memberIndex)
+			t.Errorf(
+				"member [%v] has been unexpectedly marked as inactive",
+				memberIndex,
+			)
 		} else if ia == activeMemberByte && inactiveExpected {
-			t.Errorf("member [%v] has not been marked as inactive", memberIndex)
+			t.Errorf(
+				"member [%v] has not been unexpectedly marked as inactive",
+				memberIndex,
+			)
 		}
 	}
 }
