@@ -75,65 +75,65 @@ func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
 
 func assertSuccessfulSignersCount(
 	t *testing.T,
-	result *dkgTestResult,
+	testResult *dkgTestResult,
 	expectedCount int,
 ) {
-	if len(result.signers) != expectedCount {
+	if len(testResult.signers) != expectedCount {
 		t.Errorf(
 			"unexpected number of successful signers\nexpected: [%v]\nactual:   [%v]",
 			expectedCount,
-			len(result.signers),
+			len(testResult.signers),
 		)
 	}
 }
 
 func assertMemberFailuresCount(
 	t *testing.T,
-	result *dkgTestResult,
+	testResult *dkgTestResult,
 	expectedCount int,
 ) {
-	if len(result.memberFailures) != expectedCount {
+	if len(testResult.memberFailures) != expectedCount {
 		t.Errorf(
 			"unexpected number of member failures\nexpected: [%v]\nactual:   [%v]",
 			expectedCount,
-			len(result.memberFailures),
+			len(testResult.memberFailures),
 		)
 	}
 }
 
-func assertSamePublicKey(t *testing.T, result *dkgTestResult) {
-	for _, signer := range result.signers {
+func assertSamePublicKey(t *testing.T, testResult *dkgTestResult) {
+	for _, signer := range testResult.signers {
 		testutils.AssertBytesEqual(
 			t,
-			result.result.GroupPublicKey,
+			testResult.dkgResult.GroupPublicKey,
 			signer.GroupPublicKeyBytes(),
 		)
 	}
 }
 
-func assertNoDisqualifiedMembers(t *testing.T, result *dkgTestResult) {
+func assertNoDisqualifiedMembers(t *testing.T, testResult *dkgTestResult) {
 	disqualifiedMemberByte := byte(0x01)
 
-	for i, dq := range result.result.Disqualified {
+	for i, dq := range testResult.dkgResult.Disqualified {
 		if dq == disqualifiedMemberByte {
 			t.Errorf("member [%v] has been disqualified", i)
 		}
 	}
 }
 
-func assertNoInactiveMembers(t *testing.T, result *dkgTestResult) {
-	assertInactiveMembers(t, result)
+func assertNoInactiveMembers(t *testing.T, testResult *dkgTestResult) {
+	assertInactiveMembers(t, testResult)
 }
 
 func assertInactiveMembers(
 	t *testing.T,
-	result *dkgTestResult,
-	expectedInactive ...group.MemberIndex,
+	testResult *dkgTestResult,
+	expectedInactiveMembers ...group.MemberIndex,
 ) {
 	inactiveMemberByte := byte(0x01)
 	activeMemberByte := byte(0x00)
 
-	containsIndex := func(
+	containsMemberIndex := func(
 		index group.MemberIndex,
 		indexes []group.MemberIndex,
 	) bool {
@@ -146,20 +146,23 @@ func assertInactiveMembers(
 		return false
 	}
 
-	for i, ia := range result.result.Inactive {
-		index := i + 1 // member indexes starts from 1
-		inactiveExpected := containsIndex(group.MemberIndex(index), expectedInactive)
+	for i, ia := range testResult.dkgResult.Inactive {
+		memberIndex := i + 1 // member indexes starts from 1
+		inactiveExpected := containsMemberIndex(
+			group.MemberIndex(memberIndex),
+			expectedInactiveMembers,
+		)
 
 		if ia == inactiveMemberByte && !inactiveExpected {
-			t.Errorf("member [%v] has been marked as inactive", index)
+			t.Errorf("member [%v] has been marked as inactive", memberIndex)
 		} else if ia == activeMemberByte && inactiveExpected {
-			t.Errorf("member [%v] has not been marked as inactive", index)
+			t.Errorf("member [%v] has not been marked as inactive", memberIndex)
 		}
 	}
 }
 
-func assertValidGroupPublicKey(t *testing.T, result *dkgTestResult) {
-	_, err := altbn128.DecompressToG2(result.result.GroupPublicKey)
+func assertValidGroupPublicKey(t *testing.T, testResult *dkgTestResult) {
+	_, err := altbn128.DecompressToG2(testResult.dkgResult.GroupPublicKey)
 	if err != nil {
 		t.Errorf("invalid group public key: [%v]", err)
 	}
@@ -188,7 +191,7 @@ func runTest(
 }
 
 type dkgTestResult struct {
-	result         *relaychain.DKGResult
+	dkgResult      *relaychain.DKGResult
 	signers        []*ThresholdSigner
 	memberFailures []error
 }
@@ -209,10 +212,10 @@ func executeDKG(
 		return nil, err
 	}
 
-	resultChan := make(chan *event.DKGResultSubmission)
+	resultSubmissionChan := make(chan *event.DKGResultSubmission)
 	chain.ThresholdRelay().OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
-			resultChan <- event
+			resultSubmissionChan <- event
 		},
 	)
 
@@ -272,7 +275,7 @@ func executeDKG(
 	defer cancel()
 
 	select {
-	case _ = <-resultChan:
+	case <-resultSubmissionChan:
 		// result was published to the chain, let's fetch it
 		return &dkgTestResult{
 			chain.GetLastDKGResult(),
