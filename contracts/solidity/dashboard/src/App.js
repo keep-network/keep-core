@@ -114,7 +114,7 @@ class Main extends Component {
 
   render() {
     const { web3, tokenBalance, operators, stakeBalance, grantBalance, grantStakeBalance,
-      isTokenHolder, isOperator, stakeOwner, operatorChartData, stakeOwnerChartData, chartOptions, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
+      isTokenHolder, isOperator, isOperatorOfStakedTokenGrant, stakedGrant, stakeOwner, operatorChartData, stakeOwnerChartData, chartOptions, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
       error } = this.state
 
     return (
@@ -128,8 +128,14 @@ class Main extends Component {
                   <div className="alert alert-danger m-5" role="alert">{error}</div>:null
                 }
 
-                {isOperator ?
+                {isOperator && !isOperatorOfStakedTokenGrant ?
                   <div className="alert alert-info m-5" role="alert">You are registered as an operator for {stakeOwner}</div>:null
+                }
+
+                {isOperatorOfStakedTokenGrant ?
+                  <div className="alert alert-info m-5" role="alert">
+                    You are registered as a staked token grant operator for {stakedGrant.grantee} 
+                  </div>:null
                 }
 
                 {!isTokenHolder && !isOperator ?
@@ -174,7 +180,15 @@ class Main extends Component {
                               </TableRow>
                             </tbody>
                           </Table>
-                          <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
+
+                          {!isOperatorOfStakedTokenGrant ?
+                            <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>:
+                            <div>
+                              <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
+                              <small>You can only unstake full amount. Partial unstake amounts are not yet supported.</small>
+                            </div>
+                          }
+
                         </Col>
                       </Row>:
                       <Row className="overview">
@@ -329,6 +343,16 @@ class Main extends Component {
       isOperator = true;
     }
 
+    // Check if your account is an operator for a staked Token Grant.
+    let stakedGrant
+    let isOperatorOfStakedTokenGrant
+    let stakedGrantByOperator = await grantContract.methods.grantStakes(this.state.web3.yourAddress).call()
+
+    if (stakedGrantByOperator.stakingContract === stakingContract.address) {
+      isOperatorOfStakedTokenGrant = true
+      stakedGrant = await grantContract.methods.grants(stakedGrantByOperator.grantId.toString()).call()
+    }
+
     // Calculate delegated stake balances
     let stakeBalance = await stakingContract.methods.balanceOf(this.state.web3.yourAddress).call()
     const operatorsAddresses = await stakingContract.methods.operatorsOf(this.state.web3.yourAddress).call()
@@ -466,6 +490,8 @@ class Main extends Component {
       operators,
       isTokenHolder,
       isOperator,
+      isOperatorOfStakedTokenGrant,
+      stakedGrant,
       stakeOwner,
       stakeBalance,
       grantBalance,
