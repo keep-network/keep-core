@@ -237,7 +237,7 @@ contract KeepRandomBeaconOperator is Ownable {
         }
     }
 
-    // TODO: replace with a secure authorization protocol (addressed in RFC 4).
+    // TODO: replace with a secure authorization protocol (addressed in RFC 11).
     address public stakingContract;
 
     function authorizeStakingContract(address _stakingContract) public onlyOwner {

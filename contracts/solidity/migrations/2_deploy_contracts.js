@@ -72,6 +72,9 @@ module.exports = async function(deployer) {
     "0x1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0",
   );
 
+  // TODO: replace with a secure authorization protocol (addressed in RFC 11).
+  keepRandomBeaconOperator.authorizeStakingContract(TokenStaking.address);
+
   keepRandomBeaconService.initialize(
     minPayment,
     withdrawalDelay,
