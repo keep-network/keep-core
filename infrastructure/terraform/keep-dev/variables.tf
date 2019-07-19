@@ -183,7 +183,7 @@ variable "prometheus_to_sd" {
 variable "openvpn" {
   default {
     name    = "helm-openvpn"
-    version = "3.10.0"
+    version = "3.13.3"
   }
 }
 
