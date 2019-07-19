@@ -80,7 +80,7 @@ func assertSuccessfulSignersCount(
 ) {
 	if len(result.signers) != expectedCount {
 		t.Errorf(
-			"Unexpected number of successful signers\nExpected: [%v]\nActual:   [%v]",
+			"unexpected number of successful signers\nexpected: [%v]\nactual:   [%v]",
 			expectedCount,
 			len(result.signers),
 		)
@@ -94,7 +94,7 @@ func assertMemberFailuresCount(
 ) {
 	if len(result.memberFailures) != expectedCount {
 		t.Errorf(
-			"Unexpected number of member failures\nExpected: [%v]\nActual:   [%v]",
+			"unexpected number of member failures\nexpected: [%v]\nactual:   [%v]",
 			expectedCount,
 			len(result.memberFailures),
 		)
@@ -116,7 +116,7 @@ func assertNoDisqualifiedMembers(t *testing.T, result *dkgTestResult) {
 
 	for i, dq := range result.result.Disqualified {
 		if dq == disqualifiedMemberByte {
-			t.Errorf("Member [%v] has been disqualified", i)
+			t.Errorf("member [%v] has been disqualified", i)
 		}
 	}
 }
@@ -151,9 +151,9 @@ func assertInactiveMembers(
 		inactiveExpected := containsIndex(group.MemberIndex(index), expectedInactive)
 
 		if ia == inactiveMemberByte && !inactiveExpected {
-			t.Errorf("Member [%v] has been marked as inactive", index)
+			t.Errorf("member [%v] has been marked as inactive", index)
 		} else if ia == activeMemberByte && inactiveExpected {
-			t.Errorf("Member [%v] has not been marked as inactive", index)
+			t.Errorf("member [%v] has not been marked as inactive", index)
 		}
 	}
 }
@@ -161,7 +161,7 @@ func assertInactiveMembers(
 func assertValidGroupPublicKey(t *testing.T, result *dkgTestResult) {
 	_, err := altbn128.DecompressToG2(result.result.GroupPublicKey)
 	if err != nil {
-		t.Errorf("Invalid group public key: [%v]", err)
+		t.Errorf("invalid group public key: [%v]", err)
 	}
 }
 
@@ -257,7 +257,7 @@ func executeDKG(
 				signersMutex.Unlock()
 			}
 			if err != nil {
-				fmt.Printf("Failed with: [%v]\n", err)
+				fmt.Printf("failed with: [%v]\n", err)
 				memberFailures = append(memberFailures, err)
 			}
 			wg.Done()
