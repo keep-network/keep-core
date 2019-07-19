@@ -101,16 +101,6 @@ func assertMemberFailuresCount(
 	}
 }
 
-func assertSamePublicKey(t *testing.T, testResult *dkgTestResult) {
-	for _, signer := range testResult.signers {
-		testutils.AssertBytesEqual(
-			t,
-			testResult.dkgResult.GroupPublicKey,
-			signer.GroupPublicKeyBytes(),
-		)
-	}
-}
-
 func assertNoDisqualifiedMembers(t *testing.T, testResult *dkgTestResult) {
 	disqualifiedMemberByte := byte(0x01)
 
@@ -164,6 +154,16 @@ func assertInactiveMembers(
 				memberIndex,
 			)
 		}
+	}
+}
+
+func assertSamePublicKey(t *testing.T, testResult *dkgTestResult) {
+	for _, signer := range testResult.signers {
+		testutils.AssertBytesEqual(
+			t,
+			testResult.dkgResult.GroupPublicKey,
+			signer.GroupPublicKeyBytes(),
+		)
 	}
 }
 
