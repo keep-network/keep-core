@@ -174,6 +174,12 @@ func assertValidGroupPublicKey(t *testing.T, testResult *dkgTestResult) {
 	}
 }
 
+type dkgTestResult struct {
+	dkgResult      *relaychain.DKGResult
+	signers        []*ThresholdSigner
+	memberFailures []error
+}
+
 func runTest(
 	groupSize int,
 	threshold int,
@@ -194,12 +200,6 @@ func runTest(
 	chain := chainLocal.ConnectWithKey(groupSize, threshold, minimumStake, privateKey)
 
 	return executeDKG(groupSize, threshold, chain, network)
-}
-
-type dkgTestResult struct {
-	dkgResult      *relaychain.DKGResult
-	signers        []*ThresholdSigner
-	memberFailures []error
 }
 
 func executeDKG(
