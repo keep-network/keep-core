@@ -12,6 +12,7 @@ import Footer from './components/Footer'
 import StakingForm from './components/StakingForm'
 import StakingTable from './components/StakingTable'
 import StakingDelegateForm from './components/StakingDelegateForm'
+import StakingDelegateTokenGrantForm from './components/StakingDelegateTokenGrantForm'
 import SigningForm from './components/SigningForm'
 import WithdrawalsTable from './components/WithdrawalsTable'
 import TokenGrantForm from './components/TokenGrantForm'
@@ -254,14 +255,32 @@ class Main extends Component {
                           </Col>
                         </Row>
                         <Row>
-                          <TokenGrants data={grantedToYou} selectTokenGrant={this.selectTokenGrant} />
+                          <Col xs={12} md={12}>
+                            <TokenGrants data={grantedToYou} selectTokenGrant={this.selectTokenGrant} />
+                          </Col>
+                        </Row>
+                        <Row>
+                          <Col xs={12} md={12}>
+                            <h3>Stake Delegation of Token Grants</h3>
+                            <p>
+                              Keep network does not require token owners to perform the day-to-day operations of staking 
+                              with the private keys holding the tokens. This is achieved by stake delegation, where different
+                              addresses hold different responsibilities and cold storage is supported to the highest extent practicable.
+                            </p>
+                            
+                            <StakingDelegateTokenGrantForm
+                              tokenBalance={grantBalance}
+                              tokenGrantContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }
+                              stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }
+                            />
+                          </Col>
                         </Row>
                       </Tab>:null
                     }
                     {!isOperator ?
                       <Tab eventKey={4} title="Create Token Grant">
                         <h3>Grant tokens</h3>
-                        <p>You can grant tokens with a vesting schedule where balance released to the beneficiary 
+                        <p>You can grant tokens with a vesting schedule where balance released to the grantee
                           gradually in a linear fashion until start + duration. By then all of the balance will have vested.
                           You must approve the amount you want to grant by calling approve() method of the token contract first
                         </p>
