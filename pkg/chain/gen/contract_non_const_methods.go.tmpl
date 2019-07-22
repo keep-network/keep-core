@@ -27,7 +27,11 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 		return transaction, {{$contract.ShortVar}}.errorResolver.ResolveError(
 			err,
 			{{$contract.ShortVar}}.transactorOptions.From,
-			nil,
+			{{if $method.Payable -}}
+			value
+			{{- else -}}
+			nil
+			{{- end -}},
 			"{{$method.LowerName}}",
 			{{$method.Params}}
 		)
