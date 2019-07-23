@@ -41,8 +41,17 @@ type StakeMonitor interface {
 // Signing is an interface that provides ability to sign and verify
 // signatures using operator's key associated with the chain.
 type Signing interface {
+	PublicKey() []byte
+
 	Sign(message []byte) ([]byte, error)
+
 	Verify(message []byte, signature []byte) (bool, error)
+
+	VerifyWithPubKey(
+		message []byte,
+		signature []byte,
+		publicKey []byte,
+	) (bool, error)
 }
 
 // Handle represents a handle to a blockchain that provides access to the core
