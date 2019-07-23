@@ -32,21 +32,21 @@ To achieve secure upgrades, this RFC proposes a scheme
 where the upgrade process is centered on operator contracts,
 which tie all components of the network together.
 
-Operator Contract contracts are subject to approval
-globally on a _master list_,
-in their respective _service contract contracts_,
+Operator contracts are subject to approval
+globally on a _registry_,
+in their respective _service contracts_,
 and individually from each staker in the _staking contract_.
 This provides multilayered protection
 against a variety of different risks.
 
 Other contracts such as service contracts and staking contracts
-are hard-coded in operator contract contracts,
+are hard-coded in operator contracts,
 so attackers are prevented from inserting arbitrary contracts of any type
 without needing to have separate approval processes
 for different contract types.
 
 Different keys are used in different parts of the upgrade process.
-The roles of global _Upgrade Master_ and _Panic Button_,
+The roles of global _Registry Keeper_ and _Panic Button_,
 service contract-specific _Operator Contract Upgraders_,
 and staker-specific _Authorizers_,
 are used to divide the responsibilities
@@ -76,7 +76,7 @@ the role of Governance in the upgrade process
 is to enable recovery from key compromise by rekeying other roles.
 
 Governance has the authority to change the addresses of
-the _Upgrade Master_, _Panic Button_,
+the _Registry Keeper_, _Panic Button_,
 and the service contracts' _Operator Contract Upgraders_.
 
 The rekeying process should prioritize security over convenience
@@ -85,22 +85,22 @@ being unsuitable for ordinary upgrades
 but permitting recovery from partial system compromise
 under extraordinary circumstances.
 
-==== Upgrade Master
+==== Registry Keeper
 
-The Upgrade Master maintains the global _master list_
-of approved operator contract contracts.
-Each operator contract contract must be approved by the Upgrade Master
+The Registry Keeper maintains the global _registry_
+of approved operator contracts.
+Each operator contract must be approved by the Registry Keeper
 before it can be authorized by a staker
-or used by a service contract contract.
+or used by a service contract.
 
-The Upgrade Master can be rekeyed by _Governance_.
+The Registry Keeper can be rekeyed by _Governance_.
 
 ==== Panic Button
 
 The Panic Button can disable malicious or malfunctioning contracts
-that have been previously approved by the Upgrade Master.
+that have been previously approved by the Registry Keeper.
 When a contract is disabled by the Panic Button,
-its status on the _master list_ changes to reflect this,
+its status on the _registry_ changes to reflect this,
 and it becomes ineligible to penalize stakers.
 Contracts disabled by the Panic Button can not be reactivated.
 
@@ -108,7 +108,7 @@ The Panic Button can be rekeyed by _Governance_.
 
 ==== Operator Contract Upgrader
 
-Each service contract contract has a Operator Contract Upgrader
+Each service contract has a Operator Contract Upgrader
 whose purpose is to manage operator contracts for that specific service contract.
 The Operator Contract Upgrader can add new operator contracts
 to the service contract's operator contract list,
@@ -125,72 +125,108 @@ via punishments or rewards.
 
 The Authorizer cannot be rekeyed except by undelegating and redelegating.
 
-=== Lists of contracts
+=== Types of contracts
 
-==== Global
+==== Registry
 
-A global master list is used to keep track of all operator contract contracts,
+A global registry is used to keep track of all operator contracts,
 ensuring that only Keep Org-approved operator contracts are used,
 and enabling the panic button to disable operator contracts in an emergency.
 
-===== Master list
-
-The master list contains all operator contract contracts of the Keep network.
+The registry contains all operator contracts of the Keep network.
 Each contract's status may be `NULL`, `APPROVED` or `DISABLED`.
 
 A status of `NULL` is the default
-and means that the operator contract has not been approved by the _Upgrade Master_.
+and means that the operator contract has not been approved by the _Registry Keeper_.
 
-When the _Upgrade Master_ approves a operator contract contract,
-its status switches to `APPROVED` in the master list.
+When the _Registry Keeper_ approves a operator contract,
+its status switches to `APPROVED` in the registry.
 Approved operator contracts can be authorized by stakers to impact their stakes,
-and service contract contracts may utilize them.
+and service contracts may utilize them.
 
 The _Panic Button_ can be used
 to set the status of an `APPROVED` contract to `DISABLED`.
 Operator Contracts disabled with the _Panic Button_ cannot be re-enabled.
 
-==== Operator Contract contracts
+==== Operator Contracts
 
-Operator Contract contracts serve service contract contracts,
+Operator contracts serve other contracts,
 and are responsible for all operations involving staked tokens.
 The requirement for stakers' funds to never be subject to
 code they haven't approved individually
-means that the service contract and staking contracts must be hard-coded.
+means that the staking contract/s used by the operator contract
+must be hard-coded.
 Operator Contracts are also aware of the token contract.
 
-===== Served service contracts
+Operator contracts can be exclusive or non-exclusive.
+Non-exclusive operator contracts provide services
+to any contract that makes a valid request and pays the correct fee,
+while each exclusive operator contract is owned by a specific contract,
+and only serves its owner.
 
-Each operator contract contract has a list
-of one or more service contract contracts it may serve.
-The _served service contracts_ are hard-coded when the operator contract is deployed
-and can not be changed.
+Recognized staking contracts::
 
-===== Recognized staking contracts
-
-Each operator contract contract specifies one or more _staking contracts_ it recognizes.
+Each operator contract specifies one or more _staking contracts_ it recognizes.
 Every operator contract must recognize at least one staking contract.
 Recognized staking contracts are hard-coded and unchangeable.
 
-==== Service Contract contracts
+===== Exclusive operator contracts
 
-Service Contract contracts don't need to be aware of tokens or staking in any way.
-These functions are entirely intermediated by the operator contract contracts.
+Exclusive operator contracts are tied to an _owner contract_,
+only accepting and serving requests from that particular contract. 
+
+Owner contract::
+The contract an exclusive operator contract serves.
+
+===== Keep factories
+
+Keep factories are non-exclusive operator contracts
+that create keeps for customer applications.
+Any contract can request a keep factory to create a keep.
+
+Like all operator contracts,
+each Keep factory recognizes one or more staking contracts
+for the purpose of determining operators' eligibility to join keeps.
+
+Each keep factory implements one or more keep interfaces.
+The factory records its interfaces
+and the addresses of the corresponding keep vendors.
+
+===== Keeps
+
+Keeps are exclusive operator contracts created by keep factories.
+When a contract requests a keep from a factory,
+the factory creates a new contract owned by the customer contract, the keep,
+and hands it off to the customer contract.
+
+Keeps aren't individually authorized to slash stakers,
+instead, they rely on the authorization of their factory.
+
+Once created, a keep cannot be upgraded in any way,
+except by closing the keep and opening another one.
+
+==== Service Contracts
+
+Service contracts provide services without directly interacting with operators,
+but using a set of operator contracts in some way.
+Service Contracts don't need to be aware of tokens or staking in any way;
+these functions are entirely intermediated by the operator contracts.
 A service contract only needs a list of which operator contracts it uses.
 To permit system upgrades,
 the list of used operator contracts can be updated with proper authorization.
 
-===== Used operator contracts
+Used operator contracts::
+A soft list of operator contracts used by the service contract.
 
-Each service contract contract has a list
-of zero or more operator contract contracts it may use.
+Each service contract has a list
+of zero or more operator contracts it may use.
 
-For each operator contract contract, the service contract stores:
+For each operator contract, the service contract stores:
 
 - the status of the operator contract
 - the chronological position of that operator contract by creation date
 
-Each operator contract contract has a status of `NULL`, `ACTIVE` or `DEPRECATED`.
+Each operator contract has a status of `NULL`, `ACTIVE` or `DEPRECATED`.
 A status of `NULL` is the default
 and means that the service contract does not use the operator contract.
 A status of `ACTIVE` means the service contract actively uses the operator contract
@@ -199,20 +235,20 @@ for performing work.
 and some operations may still be underway,
 but the operator contract should not be selected for creating new Keeps.
 
-A service contract contract is deployed with zero operator contract contracts,
+A service contract is deployed with zero operator contracts,
 rendering the service contract inactive until at least one operator contract is activated.
 
 Each service contract has a _Operator Contract Upgrader_
-who can activate or deprecate operator contract contracts.
+who can activate or deprecate operator contracts.
 
-To activate a operator contract contract, the following conditions must apply:
+To activate a operator contract, the following conditions must apply:
 
-- the operator contract has been `APPROVED` on the _master list_
+- the operator contract has been `APPROVED` on the _registry_
 - the service contract is included in the operator contract's _served contracts_
 - the operator contract's creation date is more recent
 than that of the most recent `ACTIVE` operator contract in the _used contracts_
 
-To deprecate a operator contract contract, the following conditions must apply:
+To deprecate a operator contract, the following conditions must apply:
 
 - the operator contract is `ACTIVE` in the _used contracts_
 - it is not the most recent (or only) operator contract in the _used contracts_
@@ -220,10 +256,37 @@ To deprecate a operator contract contract, the following conditions must apply:
 If a operator contract has been `DISABLED` by the _Panic Button_,
 it is ineligible for work selection.
 
+===== Keep vendors
+
+Keep vendors are a type of service contracts
+which perform version management of keep factories
+by abstracting over upgrades
+and providing customers a single unified interface to request up-to-date keeps.
+
+The upgrade process of the Keep Network
+is designed to eliminate the security threat
+posed by unilateral smart contract upgrades.
+However, the consent-centered upgrade process
+is inherently more complex to accommodate
+than a simple switchover to a new version.
+Stakers will authorize a new contract
+and operators will upgrade their client software
+on their own schedule,
+so the initial capacity of a new keep version will be seriously limited.
+
+Instead of updating the factory address when a type of keep is upgraded,
+and explicitly accommodating for the friction in the migration,
+a customer application can go through the vendor of the corresponding keep type
+to receive a recent version of the keep.
+For most applications,
+the convenience of having the version migration
+managed automatically by the keep vendor
+is likely to be more significant than the slight security impact.
+
 ==== Staking contracts
 
 Staking contracts hold staked tokens and enforce staking rules.
-They must permit authorized operator contract contracts
+They must permit authorized operator contracts
 to slash the stakes of misbehaving operators,
 but stakers must be protected from code they haven't authorized individually.
 
@@ -257,7 +320,7 @@ who have assigned that `authorizer_address` as their _Authorizer_.
 To authorize a operator contract on a staking contract,
 the following conditions must apply:
 
-- the operator contract has been `APPROVED` on the _master list_
+- the operator contract has been `APPROVED` on the _registry_
 - the operator contract recognizes the staking contract
 
 Once a operator contract has been authorized,
@@ -269,25 +332,25 @@ may not punish stakers.
 
 ==== Operator Contract upgrade
 
-. Deploy the new operator contract contract
-. Approve the operator contract on the master list
+. Deploy the new operator contract
+. Approve the operator contract on the registry
 . Activate the operator contract on the service contract
 . Wait for stakers to authorize the operator contract
-. (Optional) Deprecate old operator contract contracts if needed
+. (Optional) Deprecate old operator contracts if needed
 
 ==== New service contract
 
-. Deploy the new service contract contract
+. Deploy the new service contract
 . Deploy a new operator contract serving the new service contract
-  . Approve the operator contract on the master list
+  . Approve the operator contract on the registry
   . Activate the operator contract on the service contract
   . Wait for stakers to authorize the operator contract
 
 ==== Staking contract upgrade
 
 . Deploy the new staking contract
-. Deploy new operator contract contracts recognizing the new staking contract
-  . Approve the operator contracts on the master list
+. Deploy new operator contracts recognizing the new staking contract
+  . Approve the operator contracts on the registry
   . Activate the operator contracts on the service contracts
 . Wait for stakers to migrate to the new staking contract
 . Wait for stakers to authorize the new operator contracts
@@ -301,8 +364,8 @@ without disrupting service contract user experience:
 . Deploy a migration contract
 that lets holders convert old tokens to new tokens
 . Deploy a new staking contract for the new tokens
-  . Deploy new operator contract contracts recognizing the new token and staking contract
-    . Approve the operator contracts on the master list
+  . Deploy new operator contracts recognizing the new token and staking contract
+    . Approve the operator contracts on the registry
     . Activate the operator contracts on the service contracts
 . Wait for stakers to convert their tokens,
 stake on the new contract
@@ -312,9 +375,9 @@ and authorize the new operator contracts
 
 ==== Individual keys
 
-===== Upgrade Master
+===== Registry Keeper
 
-A compromised Upgrade Master can approve arbitrary operator contracts.
+A compromised Registry Keeper can approve arbitrary operator contracts.
 Because using those operator contracts for a service contract
 requires the service contract's Operator Contract Upgrader as well,
 the impact is limited to stakers being able to instantly unstake
@@ -340,7 +403,7 @@ by a mass approval of malicious contracts by the other roles.
 
 A compromised Operator Contract Upgrader can activate arbitrary operator contracts
 within the strict constraints of the upgrade process.
-Without compromise of the Upgrade Master
+Without compromise of the Registry Keeper
 to approve new malicious operator contracts,
 it is unlikely that a compromised Operator Contract Upgrader alone
 would have significant impact on the network.
@@ -349,16 +412,16 @@ would have significant impact on the network.
 
 If only the Authorizer of some staker is compromised,
 the attacker can authorize operator contracts
-that have been approved by the Upgrade Master,
+that have been approved by the Registry Keeper,
 and that recognize the contract that staker stakes on.
 
 This has a very limited negative impact
-unless the Upgrade Master has approved
-a faulty or malicious operator contract contract.
+unless the Registry Keeper has approved
+a faulty or malicious operator contract.
 
 ==== Key combinations
 
-===== Upgrade Master + Operator Contract Upgrader
+===== Registry Keeper + Operator Contract Upgrader
 
 If a malicious operator contract can get globally approved,
 the impacted service contract can be completely subverted
@@ -367,7 +430,7 @@ and returning malicious values.
 While already existing operations should finish normally,
 the service contract can be rendered effectively useless for new requests.
 
-===== Upgrade Master + Authorizer
+===== Registry Keeper + Authorizer
 
 Approving and authorizing a malicious operator contract
 permits theft of staked funds.
@@ -375,20 +438,20 @@ permits theft of staked funds.
 === Limitations
 
 Each operator contract upgrade requires participation
-from both the _Upgrade Master_ and the _Operator Contract Upgrader_.
+from both the _Registry Keeper_ and the _Operator Contract Upgrader_.
 This increases the exposure of these keys,
 leading to a higher risk of simultaneous compromise.
 
 == Future Work
 
-Service Contract contracts could have upgradeable components
+Service contracts could have upgradeable components
 for performing various sub-tasks.
 These components could be upgraded
-with a process similar to that of operator contract contracts
+with a process similar to that of operator contracts
 except without staker involvement.
 
 Customers could optionally specify to the service contract
-which operator contract contract they want to serve their request.
+which operator contract they want to serve their request.
 
 == Open Questions
 
@@ -415,7 +478,7 @@ or only deprecate them without regard for the normal limitations.
 Rate-limiting the Panic Button can help prevent total DoS
 if the panic button is ever compromised,
 but also permits flooding the system with malicious operator contracts
-unless the Upgrade Master is similarly rate-limited.
+unless the Registry Keeper is similarly rate-limited.
 
 [bibliography]
 == Related Links
