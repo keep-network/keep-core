@@ -25,7 +25,8 @@ always burning at least 95% of the penalty amount.
 
 Only authorized operator contracts should be able to punish an operator,
 but keeps created by keep factories
-should not require individual authorization.
+should be able to slash if their corresponding factory is authorized,
+instead of requiring individual authorization.
 
 Some operator contracts may rely on an external trusted application
 to determine whether misbehavior has occurred.
@@ -42,7 +43,7 @@ they will receive 5% of the slashed tokens,
 the remainder being burned.
 
 When an operator is punished for misbehavior,
-they should be removed from the operation the misbehavior occurred in.
+they should be removed from the group/keep the misbehavior occurred in.
 
 ==== Authorization and slashing
 
@@ -52,8 +53,8 @@ All stakers using the same _authorizer_
 share the set of authorized operator contracts.
 Once given, this authorization cannot be revoked.
 
-When a staker wishes to join an operation,
-the contract responsible for initiating the operation
+When a staker wishes to join a group or keep,
+the contract responsible for creating the group/keep
 must be authorized by the staker's authorizer.
 The operator contract checks its authorization status
 when determining a staker's eligibility.
@@ -89,22 +90,22 @@ and the keep is listed as being created by the factory.
 
 ===== Trusted applications
 
-Some operations rely on trusted input from a third-party application
+Some keeps rely on trusted input from a third-party application
 to determine if misbehavior has happened.
 These _trusted applications_ are authorized by the staker's authorizer,
 separately from operator contracts.
 
-When an operation involving such a trusted application is initiated,
+When a keep involving such a trusted application is created,
 the operator contract must include the trusted application's address
-in the initiation event,
+in the creation event,
 and check the trusted application's authorization 
 alongside its own authorization status
 when determining each staker's eligibility to join.
 
 Trusted applications cannot punish stakers directly;
-they must go through the responsible operator contract.
+they must go through the associated keep.
 When the trusted application claims misbehavior has occurred,
-the operator contract applies the punishment normally.
+the keep applies the punishment normally.
 
 ==== Penalty amounts
 
@@ -207,7 +208,8 @@ and has not yet been slashed for.
 
 == Future Work
 
-With a different staking paradigm that tracks individual operations,
+With a different staking paradigm
+that tracks individual keep and group memberships,
 it is possible to limit the risk
 from malfunctioning operator contracts or trusted applications
 to the stake actually corresponding to the operations.
