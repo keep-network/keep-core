@@ -132,7 +132,7 @@ func TestSignAndVerifyWithRemotePubKey(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			ok, err := signing2.VerifyWithPubKey(
+			ok, err := signing2.VerifyWithPublicKey(
 				test.message,
 				test.signature,
 				test.publicKey,

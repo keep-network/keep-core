@@ -38,7 +38,7 @@ func (ls *localSigning) Verify(message []byte, signature []byte) (bool, error) {
 	return verifySignature(message, signature, &ls.operatorKey.PublicKey)
 }
 
-func (ls *localSigning) VerifyWithPubKey(
+func (ls *localSigning) VerifyWithPublicKey(
 	message []byte,
 	signature []byte,
 	publicKey []byte,

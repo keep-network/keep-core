@@ -39,7 +39,7 @@ func (es *ethereumSigning) Verify(message []byte, signature []byte) (bool, error
 	return verifySignature(message, signature, &es.operatorKey.PublicKey)
 }
 
-func (es *ethereumSigning) VerifyWithPubKey(
+func (es *ethereumSigning) VerifyWithPublicKey(
 	message []byte,
 	signature []byte,
 	publicKey []byte,

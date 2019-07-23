@@ -55,11 +55,11 @@ type Signing interface {
 	// If signature verification failed for some reason, an error is returned.
 	Verify(message []byte, signature []byte) (bool, error)
 
-	// VerifyWithPubKey verifies the provided message against the signature
+	// VerifyWithPublicKey verifies the provided message against the signature
 	// using the provided operator's public key. Returns true if signature is
 	// valid and false otherwise. If signature verification failed for some
 	// reason, an error is returned.
-	VerifyWithPubKey(
+	VerifyWithPublicKey(
 		message []byte,
 		signature []byte,
 		publicKey []byte,
