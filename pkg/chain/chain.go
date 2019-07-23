@@ -38,12 +38,20 @@ type StakeMonitor interface {
 	StakerFor(address string) (Staker, error)
 }
 
+// Signing is an interface that provides ability to sign and verify
+// signatures using operator's key associated with the chain.
+type Signing interface {
+	Sign(message []byte) ([]byte, error)
+	Verify(message []byte, signature []byte) (bool, error)
+}
+
 // Handle represents a handle to a blockchain that provides access to the core
 // operator functionality needed for Keep network interactions.
 type Handle interface {
 	BlockCounter() (BlockCounter, error)
 	StakeMonitor() (StakeMonitor, error)
 	ThresholdRelay() relaychain.Interface
+	Signing() Signing
 }
 
 // Utility represents a handle to a blockchain that provides access to certain
