@@ -7,7 +7,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // SubmittingMember represents a member submitting a DKG result to the
@@ -49,7 +48,7 @@ func NewSubmittingMember(
 // See Phase 14 of the protocol specification.
 func (sm *SubmittingMember) SubmitDKGResult(
 	result *relayChain.DKGResult,
-	signatures map[group.MemberIndex]operator.Signature,
+	signatures map[group.MemberIndex][]byte,
 	chainRelay relayChain.Interface,
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,

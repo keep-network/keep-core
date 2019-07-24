@@ -363,7 +363,7 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 func (ec *ethereumChain) SubmitDKGResult(
 	participantIndex group.MemberIndex,
 	result *relaychain.DKGResult,
-	signatures map[group.MemberIndex]operator.Signature,
+	signatures map[group.MemberIndex][]byte,
 ) *async.DKGResultSubmissionPromise {
 	resultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
@@ -446,18 +446,18 @@ func (ec *ethereumChain) SubmitDKGResult(
 // concatenated signatures. Signatures and member indices are returned in the
 // matching order. It requires each signature to be exactly 65-byte long.
 func convertSignaturesToChainFormat(
-	signatures map[group.MemberIndex]operator.Signature,
+	signatures map[group.MemberIndex][]byte,
 ) ([]*big.Int, []byte, error) {
 	var membersIndices []*big.Int
 	var signaturesSlice []byte
 
 	for memberIndex, signature := range signatures {
-		if len(signatures[memberIndex]) != operator.SignatureSize {
+		if len(signatures[memberIndex]) != SignatureSize {
 			return nil, nil, fmt.Errorf(
 				"invalid signature size for member [%v] got [%d]-bytes but required [%d]-bytes",
 				memberIndex,
 				len(signatures[memberIndex]),
-				operator.SignatureSize,
+				SignatureSize,
 			)
 		}
 		membersIndices = append(membersIndices, memberIndex.Int())

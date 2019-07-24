@@ -6,7 +6,6 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
-	"github.com/keep-network/keep-core/pkg/operator"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -29,10 +28,10 @@ func TestSubmitDKGResult(t *testing.T) {
 	result := &relayChain.DKGResult{
 		GroupPublicKey: []byte{123, 45},
 	}
-	signatures := map[group.MemberIndex]operator.Signature{
-		1: operator.Signature{101},
-		2: operator.Signature{102},
-		3: operator.Signature{103},
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte{101},
+		2: []byte{102},
+		3: []byte{103},
 	}
 
 	tStep := config.ResultPublicationBlockStep
@@ -124,10 +123,10 @@ func TestConcurrentPublishResult(t *testing.T) {
 		index: group.MemberIndex(4), // P4
 	}
 
-	signatures := map[group.MemberIndex]operator.Signature{
-		1: operator.Signature{101},
-		2: operator.Signature{102},
-		3: operator.Signature{103},
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte{101},
+		2: []byte{102},
+		3: []byte{103},
 	}
 
 	var tests = map[string]struct {

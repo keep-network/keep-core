@@ -8,7 +8,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // represents a given state in the state machine for signing dkg results
@@ -22,6 +21,7 @@ type signingState = state.State
 type resultSigningState struct {
 	channel      net.BroadcastChannel
 	relayChain   relayChain.Interface
+	signing      chain.Signing
 	blockCounter chain.BlockCounter
 
 	member *SigningMember
@@ -42,7 +42,7 @@ func (rss *resultSigningState) ActiveBlocks() uint64 {
 }
 
 func (rss *resultSigningState) Initiate() error {
-	message, err := rss.member.SignDKGResult(rss.result, rss.relayChain)
+	message, err := rss.member.SignDKGResult(rss.result, rss.relayChain, rss.signing)
 	if err != nil {
 		return err
 	}
@@ -69,10 +69,7 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 	// it means that an incorrect key was used to sign DKG result hash and
 	// the message should be rejected.
 	isValidKeyUsed := func(phaseMessage *DKGResultHashSignatureMessage) bool {
-		return bytes.Compare(
-			operator.Marshal(phaseMessage.publicKey),
-			msg.SenderPublicKey(),
-		) == 0
+		return bytes.Compare(phaseMessage.publicKey, msg.SenderPublicKey()) == 0
 	}
 
 	switch signedMessage := msg.Payload().(type) {
@@ -92,11 +89,12 @@ func (rss *resultSigningState) Next() signingState {
 	return &signaturesVerificationState{
 		channel:           rss.channel,
 		relayChain:        rss.relayChain,
+		signing:           rss.signing,
 		blockCounter:      rss.blockCounter,
 		member:            rss.member,
 		result:            rss.result,
 		signatureMessages: rss.signatureMessages,
-		validSignatures:   make(map[group.MemberIndex]operator.Signature),
+		validSignatures:   make(map[group.MemberIndex][]byte),
 		verificationStartBlockHeight: rss.signingStartBlockHeight +
 			rss.DelayBlocks() +
 			rss.ActiveBlocks(),
@@ -116,6 +114,7 @@ func (rss *resultSigningState) MemberIndex() group.MemberIndex {
 type signaturesVerificationState struct {
 	channel      net.BroadcastChannel
 	relayChain   relayChain.Interface
+	signing      chain.Signing
 	blockCounter chain.BlockCounter
 
 	member *SigningMember
@@ -123,7 +122,7 @@ type signaturesVerificationState struct {
 	result *relayChain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
-	validSignatures   map[group.MemberIndex]operator.Signature
+	validSignatures   map[group.MemberIndex][]byte
 
 	verificationStartBlockHeight uint64
 }
@@ -137,7 +136,10 @@ func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
 }
 
 func (svs *signaturesVerificationState) Initiate() error {
-	signatures, err := svs.member.VerifyDKGResultSignatures(svs.signatureMessages)
+	signatures, err := svs.member.VerifyDKGResultSignatures(
+		svs.signatureMessages,
+		svs.signing,
+	)
 	if err != nil {
 		return err
 	}
@@ -181,7 +183,7 @@ type resultSubmissionState struct {
 	member *SubmittingMember
 
 	result     *relayChain.DKGResult
-	signatures map[group.MemberIndex]operator.Signature
+	signatures map[group.MemberIndex][]byte
 
 	submissionStartBlockHeight uint64
 }
