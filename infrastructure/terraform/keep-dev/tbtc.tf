@@ -38,9 +38,3 @@ resource "random_string" "bitcoin_rpc_password" {
   number  = true
   special = false
 }
-
-variable "bitcoin" {
-  default {
-    config_options = "server=1, testnet=1, txindex=1, rpcuser=tbtc"
-  }
-}
