@@ -10,7 +10,11 @@ import (
 )
 
 // SignatureSize is a byte size of a signature calculated by Ethereum with
-// recovery-id, V, included.
+// recovery-id, V, included. The signature consist of three values (R,V,S)
+// in the following order:
+// R = [0:31]
+// S = [32:63]
+// V = [64]
 const SignatureSize = 65
 
 type ethereumSigning struct {
