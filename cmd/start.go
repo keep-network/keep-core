@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 
 	"github.com/keep-network/keep-core/config"
@@ -10,7 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/persistence"
 	"github.com/urfave/cli"
 )
@@ -124,7 +124,7 @@ func Start(c *cli.Context) error {
 
 func loadStaticKey(
 	account ethereum.Account,
-) (*operator.PrivateKey, *operator.PublicKey, error) {
+) (*ecdsa.PrivateKey, *ecdsa.PublicKey, error) {
 	ethereumKey, err := ethutil.DecryptKeyFile(
 		account.KeyFile,
 		account.KeyFilePassword,
@@ -135,7 +135,5 @@ func loadStaticKey(
 		)
 	}
 
-	privateKey, publicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
-
-	return privateKey, publicKey, nil
+	return ethereumKey.PrivateKey, &ethereumKey.PrivateKey.PublicKey, nil
 }

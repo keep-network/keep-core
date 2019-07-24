@@ -17,7 +17,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/pborman/uuid"
 	"github.com/urfave/cli"
 )
@@ -344,6 +343,7 @@ func getPeerNetworkKey(privateEcdsaKey *big.Int) (
 	}
 
 	return key.OperatorKeyToNetworkKey(
-		operator.EthereumKeyToOperatorKey(ethereumKey),
+		ethereumKey.PrivateKey,
+		&ethereumKey.PrivateKey.PublicKey,
 	)
 }

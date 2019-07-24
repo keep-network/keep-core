@@ -5,7 +5,6 @@ import (
 	"crypto/elliptic"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -27,13 +26,6 @@ func GenerateKeyPair() (*PrivateKey, *PublicKey, error) {
 	}
 
 	return (*PrivateKey)(ecdsaKey), (*PublicKey)(&ecdsaKey.PublicKey), nil
-}
-
-// EthereumKeyToOperatorKey transforms a `go-ethereum`-based ECDSA key into the
-// format supported by all packages used in keep-core.
-func EthereumKeyToOperatorKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKey) {
-	privKey := ethereumKey.PrivateKey
-	return (*PrivateKey)(privKey), (*PublicKey)(&privKey.PublicKey)
 }
 
 // Marshal takes an operator's PublicKey and produces an uncompressed public key

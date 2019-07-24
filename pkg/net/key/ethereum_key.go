@@ -1,6 +1,7 @@
 package key
 
 import (
+	"crypto/ecdsa"
 	"crypto/elliptic"
 
 	"github.com/btcsuite/btcd/btcec"
@@ -41,8 +42,8 @@ func GenerateStaticNetworkKey() (*NetworkPrivate, *NetworkPublic, error) {
 // unrecognized curve error. This is no longer a problem if we transform the
 // key using this function.
 func OperatorKeyToNetworkKey(
-	operatorPrivateKey *operator.PrivateKey,
-	operatorPublicKey *operator.PublicKey,
+	operatorPrivateKey *ecdsa.PrivateKey,
+	operatorPublicKey *ecdsa.PublicKey,
 ) (*NetworkPrivate, *NetworkPublic) {
 	privKey, pubKey := btcec.PrivKeyFromBytes(
 		btcec.S256(), operatorPrivateKey.D.Bytes(),
