@@ -158,12 +158,12 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/keep-client
+      - gcp-cli/install        
       - gcp-cli/initialize:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
           # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
           gcloud-service-key: GCLOUD_SERVICE_KEY
-      - gcp-cli/install
       - run:
           name: Upload contract data
           command: |
