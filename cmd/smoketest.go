@@ -15,7 +15,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/persistence"
 	"github.com/urfave/cli"
 )
@@ -140,7 +139,7 @@ func SmokeTest(c *cli.Context) error {
 
 func createNode(
 	context context.Context,
-	operatorPrivateKey *operator.PrivateKey,
+	operatorPrivateKey *ecdsa.PrivateKey,
 	chainHandle chain.Handle,
 	groupSize int,
 	threshold int,
