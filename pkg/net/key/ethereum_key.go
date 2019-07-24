@@ -3,10 +3,10 @@ package key
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	crand "crypto/rand"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/keep-network/keep-core/pkg/operator"
 	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
 )
 
@@ -23,11 +23,14 @@ type NetworkPublic = libp2pcrypto.Secp256k1PublicKey
 // GenerateStaticNetworkKey generates a new, random static key based on
 // secp256k1 ethereum curve.
 func GenerateStaticNetworkKey() (*NetworkPrivate, *NetworkPublic, error) {
-	privKey, pubKey, err := operator.GenerateKeyPair()
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
 	if err != nil {
 		return nil, nil, err
 	}
-	networkPrivateKey, networkPublicKey := OperatorKeyToNetworkKey(privKey, pubKey)
+	networkPrivateKey, networkPublicKey := OperatorKeyToNetworkKey(
+		privKey,
+		&privKey.PublicKey,
+	)
 	return networkPrivateKey, networkPublicKey, nil
 }
 

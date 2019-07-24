@@ -1,6 +1,9 @@
 package result
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"math/big"
 	"reflect"
 	"testing"
@@ -9,7 +12,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
-	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // TestResultSigningAndVerificationRoundTrip simulates Phase 13 execution when
@@ -320,7 +322,7 @@ func initializeSigningMembers(groupSize int) ([]*SigningMember, []chain.Handle, 
 		dkgGroup.RegisterMemberID(memberIndex)
 		members[i] = NewSigningMember(memberIndex, dkgGroup)
 
-		privateKey, _, err := operator.GenerateKeyPair()
+		privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		if err != nil {
 			return nil, nil, err
 		}

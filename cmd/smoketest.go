@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"fmt"
 	"math/big"
 	"time"
@@ -105,7 +108,7 @@ func SmokeTest(c *cli.Context) error {
 	context := context.Background()
 
 	for i := 0; i < groupSize; i++ {
-		operatorPrivateKey, _, err := operator.GenerateKeyPair()
+		operatorPrivateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		if err != nil {
 			panic("failed to generate private key")
 		}
