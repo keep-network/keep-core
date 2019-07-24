@@ -16,6 +16,7 @@ executors:
 
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.0.4
+  gcp-cli: circleci/gcp-cli@1.8.2
 
 jobs:
   test_solidity:
@@ -153,11 +154,11 @@ jobs:
           image: keep-client
           tag: latest
   publish_contract_data:
-    executor: gcp-gcr/default
+    executor: gcp-cli/google
     steps:
       - attach_workspace:
           at: /tmp/keep-client
-      - gcp-gcr/gcr-auth:
+      - gcp-cli/install_and_initialize_cli:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
           # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
