@@ -2,6 +2,8 @@ package local
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -9,6 +11,8 @@ import (
 	"sync"
 
 	"github.com/ipfs/go-log"
+
+	crand "crypto/rand"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -56,6 +60,8 @@ type localChain struct {
 
 	tickets      []*relaychain.Ticket
 	ticketsMutex sync.Mutex
+
+	operatorKey *ecdsa.PrivateKey
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -64,6 +70,10 @@ func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 
 func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 	return c.stakeMonitor, nil
+}
+
+func (c *localChain) Signing() chain.Signing {
+	return &localSigning{c.operatorKey}
 }
 
 func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
@@ -238,9 +248,29 @@ func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }
 
-// Connect initializes a local stub implementation of the chain interfaces
-// for testing.
-func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
+// Connect initializes a local stub implementation of the chain
+// interfaces for testing. It uses auto-generated operator key.
+func Connect(
+	groupSize int,
+	threshold int,
+	minimumStake *big.Int,
+) chain.Handle {
+	operatorKey, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
+	if err != nil {
+		panic(err)
+	}
+
+	return ConnectWithKey(groupSize, threshold, minimumStake, operatorKey)
+}
+
+// ConnectWithKey initializes a local stub implementation of the chain
+// interfaces for testing.
+func ConnectWithKey(
+	groupSize int,
+	threshold int,
+	minimumStake *big.Int,
+	operatorKey *ecdsa.PrivateKey,
+) chain.Handle {
 	bc, _ := blockCounter()
 
 	tokenSupply, naturalThreshold := calculateGroupSelectionParameters(
@@ -276,6 +306,7 @@ func Connect(groupSize int, threshold int, minimumStake *big.Int) chain.Handle {
 		tickets:                  make([]*relaychain.Ticket, 0),
 		latestValue:              seedRelayEntry,
 		groups:                   []localGroup{group},
+		operatorKey:              operatorKey,
 	}
 }
 
