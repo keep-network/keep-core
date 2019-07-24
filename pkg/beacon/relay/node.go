@@ -46,6 +46,7 @@ type Node struct {
 // on-chain group containing at least one of this node's virtual stakers.
 func (n *Node) JoinGroupIfEligible(
 	relayChain relaychain.Interface,
+	signing chain.Signing,
 	groupSelectionResult *groupselection.Result,
 	entrySeed *big.Int,
 	dkgStartBlockHeight uint64,
@@ -85,6 +86,7 @@ func (n *Node) JoinGroupIfEligible(
 					dkgStartBlockHeight,
 					n.blockCounter,
 					relayChain,
+					signing,
 					broadcastChannel,
 				)
 				if err != nil {

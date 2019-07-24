@@ -22,15 +22,16 @@ func Publish(
 	result *gjkr.Result,
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
+	signing chain.Signing,
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
-	privateKey, _ := relayChain.GetKeys()
 	initialState := &resultSigningState{
 		channel:                 channel,
 		relayChain:              relayChain,
+		signing:                 signing,
 		blockCounter:            blockCounter,
-		member:                  NewSigningMember(playerIndex, dkgGroup, privateKey),
+		member:                  NewSigningMember(playerIndex, dkgGroup),
 		result:                  convertResult(result, dkgGroup.GroupSize()),
 		signatureMessages:       make([]*DKGResultHashSignatureMessage, 0),
 		signingStartBlockHeight: startBlockHeight,

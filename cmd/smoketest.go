@@ -148,14 +148,6 @@ func createNode(
 		).String()
 	}
 
-	chainCounter, err := chainHandle.BlockCounter()
-	if err != nil {
-		panic(fmt.Sprintf(
-			"Failed to run setup chainHandle.BlockCounter: [%v].",
-			err,
-		))
-	}
-
 	stakeMonitor, err := chainHandle.StakeMonitor()
 	if err != nil {
 		panic(fmt.Sprintf(
@@ -179,9 +171,7 @@ func createNode(
 		err := beacon.Initialize(
 			context,
 			stakingID,
-			chainHandle.ThresholdRelay(),
-			chainCounter,
-			stakeMonitor,
+			chainHandle,
 			netProvider,
 			storage,
 		)

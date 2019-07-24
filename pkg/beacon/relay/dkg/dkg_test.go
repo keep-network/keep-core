@@ -46,6 +46,7 @@ func TestExecuteDKGLocal(t *testing.T) {
 			startBlockHeight,
 			blockCounter,
 			chainHandle.ThresholdRelay(),
+			chainHandle.Signing(),
 			broadcastChannel,
 		)
 

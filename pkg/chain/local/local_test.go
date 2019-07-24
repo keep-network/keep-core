@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
-	"github.com/keep-network/keep-core/pkg/operator"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
@@ -239,7 +238,7 @@ func TestLocalOnGroupRegistered(t *testing.T) {
 	groupPublicKey := []byte("1")
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := make(map[group.MemberIndex]operator.Signature)
+	signatures := make(map[group.MemberIndex][]byte)
 
 	chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
 
@@ -283,7 +282,7 @@ func TestLocalOnGroupRegisteredUnsubscribed(t *testing.T) {
 	groupPublicKey := []byte("1")
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := make(map[group.MemberIndex]operator.Signature)
+	signatures := make(map[group.MemberIndex][]byte)
 
 	chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
 
@@ -317,7 +316,7 @@ func TestLocalOnDKGResultSubmitted(t *testing.T) {
 	groupPublicKey := []byte("1")
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := make(map[group.MemberIndex]operator.Signature)
+	signatures := make(map[group.MemberIndex][]byte)
 
 	chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
 
@@ -362,7 +361,7 @@ func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
 	groupPublicKey := []byte("1")
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := make(map[group.MemberIndex]operator.Signature)
+	signatures := make(map[group.MemberIndex][]byte)
 
 	chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
 
@@ -536,10 +535,10 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		GroupPublicKey: []byte{11},
 	}
 
-	signatures := map[group.MemberIndex]operator.Signature{
-		1: operator.Signature{101},
-		2: operator.Signature{102},
-		3: operator.Signature{103},
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte{101},
+		2: []byte{102},
+		3: []byte{103},
 	}
 
 	chainHandle.SubmitDKGResult(memberIndex, result, signatures)

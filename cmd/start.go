@@ -65,11 +65,6 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	blockCounter, err := chainProvider.BlockCounter()
-	if err != nil {
-		return fmt.Errorf("error initializing blockcounter: [%v]", err)
-	}
-
 	stakeMonitor, err := chainProvider.StakeMonitor()
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
@@ -109,9 +104,7 @@ func Start(c *cli.Context) error {
 	err = beacon.Initialize(
 		ctx,
 		config.Ethereum.Account.Address,
-		chainProvider.ThresholdRelay(),
-		blockCounter,
-		stakeMonitor,
+		chainProvider,
 		netProvider,
 		persistence,
 	)

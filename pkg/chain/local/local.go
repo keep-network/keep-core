@@ -51,7 +51,6 @@ type localChain struct {
 	groupRegisteredHandlers       map[int]func(groupRegistration *event.GroupRegistration)
 	resultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
 
-	signingId   int64
 	latestValue *big.Int
 
 	simulatedHeight uint64
@@ -377,7 +376,7 @@ func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 func (c *localChain) SubmitDKGResult(
 	participantIndex group.MemberIndex,
 	resultToPublish *relaychain.DKGResult,
-	signatures map[group.MemberIndex]operator.Signature,
+	signatures map[group.MemberIndex][]byte,
 ) *async.DKGResultSubmissionPromise {
 	dkgResultPublicationPromise := &async.DKGResultSubmissionPromise{}
 

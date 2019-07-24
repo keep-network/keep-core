@@ -4,7 +4,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result/gen/pb"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
-	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // Type returns a string describing a DKGResultHashSignatureMessage type for
@@ -20,7 +19,7 @@ func (d *DKGResultHashSignatureMessage) Marshal() ([]byte, error) {
 		SenderIndex: uint32(d.senderIndex),
 		ResultHash:  d.resultHash[:],
 		Signature:   d.signature,
-		PublicKey:   operator.Marshal(d.publicKey),
+		PublicKey:   d.publicKey,
 	}).Marshal()
 }
 
@@ -40,12 +39,7 @@ func (d *DKGResultHashSignatureMessage) Unmarshal(bytes []byte) error {
 	d.resultHash = resultHash
 
 	d.signature = pbMsg.Signature
-
-	publicKey, err := operator.Unmarshal(pbMsg.PublicKey)
-	if err != nil {
-		return err
-	}
-	d.publicKey = publicKey
+	d.publicKey = pbMsg.PublicKey
 
 	return nil
 }
