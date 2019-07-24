@@ -20,7 +20,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"golang.org/x/crypto/sha3"
 )
@@ -73,14 +72,6 @@ func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 
 func (c *localChain) Signing() chain.Signing {
 	return &localSigning{c.operatorKey}
-}
-
-func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
-	privateKey, publicKey, err := operator.GenerateKeyPair()
-	if err != nil {
-		panic(err)
-	}
-	return privateKey, publicKey
 }
 
 func (c *localChain) GetConfig() (*relayconfig.Chain, error) {

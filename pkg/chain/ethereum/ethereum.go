@@ -15,7 +15,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/gen/async"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -24,10 +23,6 @@ var logger = log.Logger("keep-chain-ethereum")
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
 func (ec *ethereumChain) ThresholdRelay() relaychain.Interface {
 	return ec
-}
-
-func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
-	return operator.EthereumKeyToOperatorKey(ec.accountKey)
 }
 
 func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
