@@ -60,22 +60,20 @@ func verifySignature(
 	signature []byte,
 	publicKey *ecdsa.PublicKey,
 ) (bool, error) {
-	sig := signature
-
 	// Convert the operator's static key into an uncompressed public key
 	// which should be 65 bytes in length.
 	uncompressedPubKey := crypto.FromECDSAPub(publicKey)
 	// If our sig is in the [R || S || V] format, ensure we strip out
 	// the Ethereum-specific recovery-id, V, if it already hasn't been done.
-	if len(sig) == SignatureSize {
-		sig = sig[:len(sig)-1]
+	if len(signature) == SignatureSize {
+		signature = signature[:len(signature)-1]
 	}
 
 	// The sig should be now 64 bytes long.
-	if len(sig) != 64 {
+	if len(signature) != 64 {
 		return false, fmt.Errorf(
 			"signature should have 64 bytes; has: [%v]",
-			len(sig),
+			len(signature),
 		)
 	}
 
@@ -87,7 +85,7 @@ func verifySignature(
 	return crypto.VerifySignature(
 		uncompressedPubKey,
 		prefixedHash,
-		sig[:],
+		signature[:],
 	), nil
 }
 
