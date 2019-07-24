@@ -85,7 +85,7 @@ func verifySignature(
 	return crypto.VerifySignature(
 		uncompressedPubKey,
 		prefixedHash,
-		signature[:],
+		signature,
 	), nil
 }
 
