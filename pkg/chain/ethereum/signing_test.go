@@ -67,7 +67,7 @@ func TestSignAndVerify(t *testing.T) {
 	}
 }
 
-func TestSignAndVerifyWithRemotePubKey(t *testing.T) {
+func TestSignAndVerifyWithProvidedPublicKey(t *testing.T) {
 	message := []byte("I am looking for someone to share in an adventure")
 
 	signing1, err := newSigning()

@@ -68,7 +68,7 @@ func TestSignAndVerify(t *testing.T) {
 	}
 }
 
-func TestSignAndVerifyWithRemotePubKey(t *testing.T) {
+func TestSignAndVerifyWithProvidedPublicKey(t *testing.T) {
 	message := []byte("You shall not pass")
 
 	signing1, err := newSigning()
