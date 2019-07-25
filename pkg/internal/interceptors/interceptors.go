@@ -4,76 +4,76 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// NetworkMessageInterceptor defines the rules of intercepting network messages.
-// Messages can be returned unmodified, they may be modified on the fly and they
-// can be dropped by returning nil.
-type NetworkMessageInterceptor = func(msg net.TaggedMarshaler) net.TaggedMarshaler
+// Rules defines the rules of intercepting network messages. Messages can be
+// returned unmodified, they may be modified on the fly and they can be dropped
+// by returning nil.
+type Rules = func(msg net.TaggedMarshaler) net.TaggedMarshaler
 
-// InterceptingNetwork is the local test network implementation capable of
+// Network is the local test network implementation capable of
 // intercepting network messages and modifying/dropping them based on rules
 // passed to the network.
-type InterceptingNetwork interface {
+type Network interface {
 	ChannelFor(name string) (net.BroadcastChannel, error)
 }
 
-// NewInterceptingNetwork creates a new instance of InterceptingNetwork
-// interface implementation with message filtering rules passed as a parameter.
-func NewInterceptingNetwork(
+// NewNetwork creates a new instance of Network interface implementation with
+// message filtering rules passed as a parameter.
+func NewNetwork(
 	provider net.Provider,
-	interceptor NetworkMessageInterceptor,
-) InterceptingNetwork {
-	return &interceptingNetwork{
-		provider:    provider,
-		interceptor: interceptor,
+	rules Rules,
+) Network {
+	return &network{
+		provider: provider,
+		rules:    rules,
 	}
 }
 
-type interceptingNetwork struct {
-	provider    net.Provider
-	interceptor NetworkMessageInterceptor
+type network struct {
+	provider net.Provider
+	rules    Rules
 }
 
-func (in *interceptingNetwork) ChannelFor(name string) (net.BroadcastChannel, error) {
-	delegate, err := in.provider.ChannelFor(name)
+func (n *network) ChannelFor(name string) (net.BroadcastChannel, error) {
+	delegate, err := n.provider.ChannelFor(name)
 	if err != nil {
 		return nil, err
 	}
 
-	return &interceptingChannel{
+	return &channel{
 		delegate,
-		in.interceptor,
+		n.rules,
 	}, nil
 }
 
-type interceptingChannel struct {
-	delegate    net.BroadcastChannel
-	interceptor NetworkMessageInterceptor
+type channel struct {
+	delegate net.BroadcastChannel
+	rules    Rules
 }
 
-func (ic *interceptingChannel) Name() string {
-	return ic.delegate.Name()
+func (c *channel) Name() string {
+	return c.delegate.Name()
 }
 
-func (ic *interceptingChannel) Send(m net.TaggedMarshaler) error {
-	altered := ic.interceptor(m)
+func (c *channel) Send(m net.TaggedMarshaler) error {
+	altered := c.rules(m)
 	if altered == nil {
 		// drop the message
 		return nil
 	}
 
-	return ic.delegate.Send(ic.interceptor(m))
+	return c.delegate.Send(c.rules(m))
 }
 
-func (ic *interceptingChannel) Recv(h net.HandleMessageFunc) error {
-	return ic.delegate.Recv(h)
+func (c *channel) Recv(h net.HandleMessageFunc) error {
+	return c.delegate.Recv(h)
 }
 
-func (ic *interceptingChannel) UnregisterRecv(handlerType string) error {
-	return ic.delegate.UnregisterRecv(handlerType)
+func (c *channel) UnregisterRecv(handlerType string) error {
+	return c.delegate.UnregisterRecv(handlerType)
 }
 
-func (ic *interceptingChannel) RegisterUnmarshaler(
+func (c *channel) RegisterUnmarshaler(
 	unmarshaler func() net.TaggedUnmarshaler,
 ) error {
-	return ic.delegate.RegisterUnmarshaler(unmarshaler)
+	return c.delegate.RegisterUnmarshaler(unmarshaler)
 }

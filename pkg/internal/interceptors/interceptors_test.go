@@ -11,7 +11,7 @@ import (
 )
 
 func TestPassThruNetworkMessage(t *testing.T) {
-	network := NewInterceptingNetwork(
+	network := NewNetwork(
 		netLocal.Connect(),
 		func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 			// return message unchanged
@@ -43,7 +43,7 @@ func TestPassThruNetworkMessage(t *testing.T) {
 
 func TestModifyNetworkMessage(t *testing.T) {
 	modifiedMessage := &testMessage{"modified"}
-	network := NewInterceptingNetwork(
+	network := NewNetwork(
 		netLocal.Connect(),
 		func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 			// alter the message
@@ -74,7 +74,7 @@ func TestModifyNetworkMessage(t *testing.T) {
 }
 
 func TestDropNetworkMessage(t *testing.T) {
-	network := NewInterceptingNetwork(
+	network := NewNetwork(
 		netLocal.Connect(),
 		func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 			// return message unchanged

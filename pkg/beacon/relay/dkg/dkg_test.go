@@ -50,7 +50,7 @@ func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
 	groupSize := 5
 	threshold := 3
 
-	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		// drop commitment message from member 1
 		commitmentMsg, ok := msg.(*gjkr.MemberCommitmentsMessage)
 		if ok && commitmentMsg.SenderID() == group.MemberIndex(1) {
@@ -60,7 +60,7 @@ func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
 		return msg
 	}
 
-	result, err := runTest(groupSize, threshold, interceptor)
+	result, err := runTest(groupSize, threshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -183,7 +183,7 @@ type dkgTestResult struct {
 func runTest(
 	groupSize int,
 	threshold int,
-	interceptor interceptors.NetworkMessageInterceptor,
+	rules interceptors.Rules,
 ) (*dkgTestResult, error) {
 	privateKey, publicKey, err := operator.GenerateKeyPair()
 	if err != nil {
@@ -192,9 +192,9 @@ func runTest(
 
 	_, networkPublicKey := key.OperatorKeyToNetworkKey(privateKey, publicKey)
 
-	network := interceptors.NewInterceptingNetwork(
+	network := interceptors.NewNetwork(
 		netLocal.ConnectWithKey(networkPublicKey),
-		interceptor,
+		rules,
 	)
 
 	chain := chainLocal.ConnectWithKey(groupSize, threshold, minimumStake, privateKey)
@@ -206,7 +206,7 @@ func executeDKG(
 	groupSize int,
 	threshold int,
 	chain chainLocal.Chain,
-	network interceptors.InterceptingNetwork,
+	network interceptors.Network,
 ) (*dkgTestResult, error) {
 	blockCounter, err := chain.BlockCounter()
 	if err != nil {
