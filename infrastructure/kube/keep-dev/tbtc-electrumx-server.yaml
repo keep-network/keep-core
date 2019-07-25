@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: electrum-server
+  name: electrumx-server
   labels:
     app: electrumx
     type: server
@@ -27,7 +27,7 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: electrum-server
+  name: electrumx-server
   labels:
     app: electrumx
     type: server
@@ -44,7 +44,7 @@ spec:
         type: server
     spec:
       containers:
-      - name: electrum-server
+      - name: electrumx-server
         image: lukechilds/electrumx
         ports:
           - containerPort: 50001
@@ -67,18 +67,18 @@ spec:
           - name: LOG_LEVEL
             value: debug
         volumeMounts:
-          - name: electrum-server-data
+          - name: electrumx-server-data
             mountPath: /mnt/electrum/data
  #       command: []
       volumes:
-      - name: electrum-server-data
+      - name: electrumx-server-data
         persistentVolumeClaim:
-          claimName: electrum-server-data
+          claimName: electrumx-server-data
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: electrum-server-data
+  name: electrumx-server-data
 spec:
   selector:
   accessModes:
