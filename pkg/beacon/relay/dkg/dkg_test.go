@@ -258,6 +258,7 @@ func executeDKG(
 				startBlockHeight,
 				blockCounter,
 				chain.ThresholdRelay(),
+				chain.Signing(),
 				broadcastChannel,
 			)
 			if signer != nil {

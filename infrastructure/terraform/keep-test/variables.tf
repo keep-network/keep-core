@@ -9,6 +9,7 @@ variable "gcp_thesis_billing_account" {
 
 # generic vars
 variable "region_data" {
+  type        = "map"
   description = "Region and zone info."
 
   default {
@@ -32,13 +33,13 @@ variable "vertical" {
 
 variable "environment" {
   description = "Environment you're creating resources in.  Usually project name"
-  default     = "keep-dev"
+  default     = "keep-test"
 }
 
 # project vars
 variable "project_name" {
   description = "Name for the project."
-  default     = "keep-dev"
+  default     = "keep-test"
 }
 
 variable "project_owner_members" {
@@ -55,8 +56,8 @@ variable "project_owner_members" {
 # bucket vars
 ## backend bucket
 variable "backend_bucket_name" {
-  description = "Bucket for storing keep-dev Terraform remote state."
-  default     = "keep-dev-tf-backend-bucket"
+  description = "Bucket for storing keep-test Terraform remote state."
+  default     = "keep-test-tf-backend-bucket"
 }
 
 # network vars
@@ -64,7 +65,7 @@ variable "backend_bucket_name" {
 ### vpc-network
 variable "vpc_network_name" {
   description = "The name for your vpc-network"
-  default     = "keep-dev-vpc-network"
+  default     = "keep-test-vpc-network"
 }
 
 variable "routing_mode" {
@@ -94,7 +95,7 @@ variable "nat_gateway_ip_allocation_count" {
 
 variable "nat_gateway_ip_name" {
   description = "The name for your nat gateway IPs."
-  default     = "keep-dev-nat-gateway-external-ip"
+  default     = "keep-test-nat-gateway-external-ip"
 }
 
 variable "nat_gateway_ip_address_type" {
@@ -112,7 +113,7 @@ variable "gke_cluster" {
   description = "The Google managed part of the cluster configuration."
 
   default {
-    name                                = "keep-dev"
+    name                                = "keep-test"
     private_cluster                     = true
     master_ipv4_cidr_block              = "172.16.0.0/28"
     master_private_endpoint             = "172.16.0.2"
@@ -120,6 +121,7 @@ variable "gke_cluster" {
     network_policy_enabled              = false
     network_policy_provider             = "PROVIDER_UNSPECIFIED"
     logging_service                     = "logging.googleapis.com/kubernetes"
+    monitoring_service                  = "monitoring.googleapis.com/kubernetes"
   }
 }
 
@@ -144,22 +146,12 @@ variable "gke_subnet" {
   default {
     primary_ip_cidr_range = "10.2.0.0/16"
 
-    services_secondary_range_name    = "keep-dev-gke-services-secondary-range"
+    services_secondary_range_name    = "keep-test-gke-services-secondary-range"
     services_secondary_ip_cidr_range = "10.102.100.0/24"
 
-    cluster_secondary_range_name    = "keep-dev-gke-cluster-secondary-range"
+    cluster_secondary_range_name    = "keep-test-gke-cluster-secondary-range"
     cluster_secondary_ip_cidr_range = "10.102.0.0/20"
   }
-}
-
-variable "atlantis_ip_name" {
-  description = "The name for your Atlantis IP."
-  default     = "keep-dev-atlantis-external-ip"
-}
-
-variable "atlantis_ip_address_type" {
-  description = "Internet facing or not. internal or external"
-  default     = "external"
 }
 
 # gke_metrics
@@ -183,7 +175,7 @@ variable "prometheus_to_sd" {
 variable "openvpn" {
   default {
     name    = "helm-openvpn"
-    version = "3.13.3"
+    version = "3.13.0"
   }
 }
 
@@ -197,7 +189,7 @@ variable "openvpn_parameters" {
 # deployment infrastructure
 ## pull
 variable "create_ci_publish_to_gcr_service_account" {
-  description = "Create ServiceAccount for CI to publish images to keep-dev GCR."
+  description = "Create ServiceAccount for CI to publish images to keep-test GCR."
   default     = true
 }
 
@@ -205,7 +197,7 @@ variable "keel" {
   default {
     name      = "helm-keel"
     namespace = "tiller"
-    version   = "0.8.13"
+    version   = "0.7.7"
   }
 }
 
@@ -218,18 +210,16 @@ variable "keel_parameters" {
 }
 
 ## push
-
-# gcp_deploy
 variable "jumphost" {
   default {
-    name = "keep-dev-jumphost"
+    name = "keep-test-jumphost"
     tags = "public-subnet"
   }
 }
 
 variable "utility_box" {
   default {
-    name         = "keep-dev-utility-box"
+    name         = "keep-test-utility-box"
     tags         = "gke-subnet"
     machine_type = "g1-small"
     tools        = "kubectl, helm, jq, npm, geth"

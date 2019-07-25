@@ -2,6 +2,8 @@ package local
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -9,6 +11,8 @@ import (
 	"sync"
 
 	"github.com/ipfs/go-log"
+
+	crand "crypto/rand"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -69,7 +73,7 @@ type localChain struct {
 	tickets      []*relaychain.Ticket
 	ticketsMutex sync.Mutex
 
-	operatorKey *operator.PrivateKey
+	operatorKey *ecdsa.PrivateKey
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -78,6 +82,10 @@ func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
 
 func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 	return c.stakeMonitor, nil
+}
+
+func (c *localChain) Signing() chain.Signing {
+	return &localSigning{c.operatorKey}
 }
 
 func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
@@ -248,25 +256,28 @@ func (c *localChain) ThresholdRelay() relaychain.Interface {
 	return relaychain.Interface(c)
 }
 
-// Connect initializes a local stub implementation of the chain interfaces
-// for testing.
-func Connect(groupSize int, threshold int, minimumStake *big.Int) Chain {
-	privateKey, _, err := operator.GenerateKeyPair()
+// Connect initializes a local stub implementation of the chain
+// interfaces for testing. It uses auto-generated operator key.
+func Connect(
+	groupSize int,
+	threshold int,
+	minimumStake *big.Int,
+) Chain {
+	operatorKey, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
 	if err != nil {
 		panic(err)
 	}
 
-	return ConnectWithKey(groupSize, threshold, minimumStake, privateKey)
+	return ConnectWithKey(groupSize, threshold, minimumStake, operatorKey)
 }
 
 // ConnectWithKey initializes a local stub implementation of the chain
-// interfaces for testing. It does the same as Connect except that it also
-// accepts a predefined operator key.
+// interfaces for testing.
 func ConnectWithKey(
 	groupSize int,
 	threshold int,
 	minimumStake *big.Int,
-	operatorKey *operator.PrivateKey,
+	operatorKey *ecdsa.PrivateKey,
 ) Chain {
 	bc, _ := blockCounter()
 
@@ -374,7 +385,7 @@ func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 func (c *localChain) SubmitDKGResult(
 	participantIndex group.MemberIndex,
 	resultToPublish *relaychain.DKGResult,
-	signatures map[group.MemberIndex]operator.Signature,
+	signatures map[group.MemberIndex][]byte,
 ) *async.DKGResultSubmissionPromise {
 	dkgResultPublicationPromise := &async.DKGResultSubmissionPromise{}
 

@@ -21,6 +21,7 @@ func ExecuteDKG(
 	startBlockHeight uint64,
 	blockCounter chain.BlockCounter,
 	relayChain relayChain.Interface,
+	signing chain.Signing,
 	channel net.BroadcastChannel,
 ) (*ThresholdSigner, error) {
 	// The staker index should begin with 1
@@ -56,6 +57,7 @@ func ExecuteDKG(
 		gjkrResult,
 		channel,
 		relayChain,
+		signing,
 		blockCounter,
 		gjkrEndBlockHeight,
 	)
