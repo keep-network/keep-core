@@ -32,10 +32,21 @@ var seedRelayEntry = big.NewInt(123456789)
 var groupActiveTime = uint64(10)
 var relayRequestTimeout = uint64(8)
 
+// Chain is an extention of chain.Handle interface which exposes
+// additional functions useful for testing.
+type Chain interface {
+	chain.Handle
+
+	// GetLastDKGResult returns DKG result submitted to the chain for the given
+	// request ID.
+	GetLastDKGResult() *relaychain.DKGResult
+}
+
 type localGroup struct {
 	groupPublicKey          []byte
 	registrationBlockHeight uint64
 }
+
 type localChain struct {
 	relayConfig *relayconfig.Chain
 
@@ -43,6 +54,8 @@ type localChain struct {
 	groupRelayEntries      map[string]*big.Int
 
 	groups []localGroup
+
+	lastSubmittedDKGResult *relaychain.DKGResult
 
 	handlerMutex                  sync.Mutex
 	relayEntryHandlers            map[int]func(entry *event.Entry)
@@ -76,11 +89,7 @@ func (c *localChain) Signing() chain.Signing {
 }
 
 func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
-	privateKey, publicKey, err := operator.GenerateKeyPair()
-	if err != nil {
-		panic(err)
-	}
-	return privateKey, publicKey
+	return c.operatorKey, &c.operatorKey.PublicKey
 }
 
 func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
@@ -253,7 +262,7 @@ func Connect(
 	groupSize int,
 	threshold int,
 	minimumStake *big.Int,
-) chain.Handle {
+) Chain {
 	operatorKey, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
 	if err != nil {
 		panic(err)
@@ -269,7 +278,7 @@ func ConnectWithKey(
 	threshold int,
 	minimumStake *big.Int,
 	operatorKey *ecdsa.PrivateKey,
-) chain.Handle {
+) Chain {
 	bc, _ := blockCounter()
 
 	tokenSupply, naturalThreshold := calculateGroupSelectionParameters(
@@ -380,6 +389,15 @@ func (c *localChain) SubmitDKGResult(
 ) *async.DKGResultSubmissionPromise {
 	dkgResultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
+	if len(signatures) < c.relayConfig.Threshold {
+		dkgResultPublicationPromise.Fail(fmt.Errorf(
+			"failed to submit result with [%v] signatures for threshold [%v]",
+			len(signatures),
+			c.relayConfig.Threshold,
+		))
+		return dkgResultPublicationPromise
+	}
+
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
 		dkgResultPublicationPromise.Fail(fmt.Errorf("cannot read current block"))
@@ -397,6 +415,7 @@ func (c *localChain) SubmitDKGResult(
 		registrationBlockHeight: currentBlock,
 	}
 	c.groups = append(c.groups, myGroup)
+	c.lastSubmittedDKGResult = resultToPublish
 
 	groupRegistrationEvent := &event.GroupRegistration{
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
@@ -440,6 +459,10 @@ func (c *localChain) OnDKGResultSubmitted(
 
 		delete(c.resultSubmissionHandlers, handlerID)
 	}), nil
+}
+
+func (c *localChain) GetLastDKGResult() *relaychain.DKGResult {
+	return c.lastSubmittedDKGResult
 }
 
 // CalculateDKGResultHash calculates a 256-bit hash of the DKG result.
