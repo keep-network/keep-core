@@ -225,3 +225,15 @@ module "push_deployment_infrastructure" {
 
   labels = "${local.labels}"
 }
+
+resource "google_storage_bucket" "keep_dev_contract_data" {
+  name          = "keep-dev-contract-data"
+  project       = "${module.project.project_id}"
+  location      = "US-CENTRAL1"
+  storage_class = "REGIONAL"
+  labels        = "${local.labels}"
+
+  versioning {
+    enabled = true
+  }
+}
