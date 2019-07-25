@@ -1,0 +1,73 @@
+@font-face {
+  font-family: "PlexMono";
+  src: url("css/fonts/PlexMono/IBMPlexMono-Regular.woff") format("woff");
+}
+@font-face {
+  font-family: "PlexMono-ExtraLight";
+  src: url("css/fonts/PlexMono/IBMPlexMono-ExtraLight.woff") format("woff");
+}
+@font-face {
+  font-family: "PlexMono-Thin";
+  src: url("css/fonts/PlexMono/IBMPlexMono-Thin.woff") format("woff");
+}
+@font-face {
+  font-family: "PlexMono-SemiBold";
+  src: url("css/fonts/PlexMono/IBMPlexMono-SemiBold.woff") format("woff");
+}
+@font-face {
+  font-family: "PlexMono-Bold";
+  src: url("css/fonts/PlexMono/IBMPlexMono-Bold.woff") format("woff");
+}
+body {
+  margin: 0;
+}
+.app {
+  font-family: 'PlexMono';
+  background-color: #f2f2f2;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.app .header,
+.app .body {
+  display: flex;
+  flex-direction: row;
+}
+.app .header {
+  font-size: 1.8em;
+  padding: 20px;
+  margin-bottom: 100px;
+}
+.app .body .nav,
+.app .body .main {
+  display: flex;
+}
+.app .body .nav {
+  width: 210px;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.app .body .nav .nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0 30px;
+  font-size: 1.2em;
+  cursor: pointer;
+}
+.app .body .nav .nav-item.selected {
+  border-left: 5px solid #48dbb4;
+}
+.app .body .main {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.app .body .main .emitter .label {
+  font-size: 0.95em;
+  margin: 5px 0 20px 0;
+}
+.app .body .main .emitter .entry {
+  font-size: 2.2em;
+}
+.app .body .main .requester {
+  margin-top: 50px;
+}

@@ -1,0 +1,44 @@
+{
+  "name": "src",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "drizzle": "^1.4.0",
+    "less": "^3.9.0",
+    "less-plugin-clean-css": "^1.5.1",
+    "less-watch-compiler": "^1.10.0",
+    "npm-run-all": "^4.1.2",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-scripts": "3.0.1",
+    "require-symlink": "^0.2.0"
+  },
+  "scripts": {
+    "env": "truffle exec ./scripts/env.js",
+    "build-css": "lessc --clean-css src/css/app.less src/app.css",
+    "watch-css": "npm run build-css && less-watch-compiler src/css src app.less",
+    "start-js": "require-link && react-scripts start",
+    "start": "npm run env && npm-run-all -p watch-css start-js",
+    "build": "require-link && npm run build-css && react-scripts build",
+    "test": "require-link && react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "requireSymlinks": {
+    "contracts": "../build/contracts"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

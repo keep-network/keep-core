@@ -1,0 +1,68 @@
+@import 'fonts.less';
+@import 'colors.less';
+
+body {
+    margin: 0;
+}
+
+.app {
+    font-family: 'PlexMono';
+    background-color: @dryStone;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    
+    .header, .body {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .header {
+        font-size: 1.8em;
+        padding: 20px;
+        margin-bottom: 100px;
+    }
+
+    .body {
+        .nav, .main {
+            display: flex;
+        }
+
+        .nav {
+            width: 210px;
+            flex-direction: column;
+            align-items: flex-start;
+
+            .nav-item {
+                display: flex;
+                align-items: center;
+                padding: 0 30px;
+                font-size: 1.2em;
+                cursor: pointer;
+
+                &.selected {
+                    border-left: 5px solid @keepGreen;
+                }
+            }
+        }
+
+        .main {
+            flex-direction: column;
+            align-items: flex-start;
+
+            .emitter {
+                .label {
+                    font-size: .95em;
+                    margin: 5px 0 20px 0;
+                }
+                .entry {
+                    font-size: 2.2em;
+                }
+            }
+
+            .requester {
+                margin-top: 50px;
+            }
+        }
+    }
+}
