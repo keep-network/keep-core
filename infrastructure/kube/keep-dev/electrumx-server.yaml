@@ -1,0 +1,88 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: electrum-server
+  labels:
+    app: electrumx
+    type: server
+spec:
+  ports:
+  - port: 50001
+    targetPort: 50001
+    name: tcp-50001
+  - port: 50002
+    targetPort: 50002
+    name: ssl-50002
+  - port: 50004
+    targetPort: 50004
+    name: wss-50004
+  - port: 8000
+    targetPort: 8000
+    name: rpc-8000
+  selector:
+    app: electrumx
+    type: server
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: electrum-server
+  labels:
+    app: electrumx
+    type: server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: electrumx
+      type: server
+  template:
+    metadata:
+      labels:
+        app: electrumx
+        type: server
+    spec:
+      containers:
+      - name: electrum-server
+        image: lukechilds/electrumx
+        ports:
+          - containerPort: 50001
+          - containerPort: 50002
+          - containerPort: 50004
+          - containerPort: 8000
+        env:
+          - name: DB_DIRECTORY
+            value: /mnt/electrum/data
+          - name: SSL_CERTFILE
+            value: /mnt/electrum/data/electrumx.crt
+          - name: SSL_KEYFILE
+            value: /mnt/electrum/data/electrumx.key
+          - name: DAEMON_URL
+            value: http://tbtc:VddO0hOv7ELqxQu6@helm-bitcoind.tbtc.svc.cluster.local:8332
+          - name: COIN
+            value: BitcoinSegwit
+          - name: NET
+            value: testnet
+          - name: LOG_LEVEL
+            value: debug
+        volumeMounts:
+          - name: electrum-server-data
+            mountPath: /mnt/electrum/data
+ #       command: []
+      volumes:
+      - name: electrum-server-data
+        persistentVolumeClaim:
+          claimName: electrum-server-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: electrum-server-data
+spec:
+  selector:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
