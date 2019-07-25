@@ -213,7 +213,12 @@ func executeDKG(
 		return nil, err
 	}
 
-	broadcastChannel, err := network.ChannelFor("dkg_test")
+	seed, err := rand.Int(rand.Reader, big.NewInt(100000))
+	if err != nil {
+		return nil, err
+	}
+
+	broadcastChannel, err := network.ChannelFor(fmt.Sprintf("dkg-test-%v", seed))
 	if err != nil {
 		return nil, err
 	}
@@ -224,11 +229,6 @@ func executeDKG(
 			resultSubmissionChan <- event
 		},
 	)
-
-	seed, err := rand.Int(rand.Reader, big.NewInt(100000))
-	if err != nil {
-		return nil, err
-	}
 
 	var signersMutex sync.Mutex
 	var signers []*ThresholdSigner
