@@ -19,6 +19,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
+// Create a package-level logger for this contract. The logger exists at
+// package level so that the logger is registered at startup and can be
+// included or excluded from logging at startup by name.
+var {{.ShortVar}}Logger = log.Logger("keep-contract-{{.Class}}")
+
 type {{.Class}} struct {
 	contract          *abi.{{.AbiClass}}
 	contractAddress   common.Address
