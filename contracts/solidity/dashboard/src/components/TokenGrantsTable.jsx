@@ -18,7 +18,7 @@ class TokenGrantsTable extends Component {
         <thead>
           <tr>
             <th><strong>Amount</strong></th>
-            <th><strong>From</strong></th>
+            <th><strong>Grant Manager</strong></th>
           </tr>
         </thead>
         <tbody>

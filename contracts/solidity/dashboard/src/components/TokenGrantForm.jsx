@@ -39,7 +39,7 @@ class TokenGrantForm extends Component {
     e.preventDefault()
   }
 
-  validateBeneficiary() {
+  validateGrantee() {
     const { web3 } = this.props
     if (web3.utils && web3.utils.isAddress(this.state.grantee)) return 'success'
     else return 'error'
@@ -66,9 +66,9 @@ class TokenGrantForm extends Component {
     return (
       <div className="token-grant-form">
         <Form horizontal onSubmit={this.onSubmit}>
-          <FormGroup validationState={this.validateBeneficiary()}>
+          <FormGroup validationState={this.validateGrantee()}>
             <Col componentClass={ControlLabel} sm={2}>
-              Beneficiary:
+              Grantee:
             </Col>
             <Col sm={8}>
               <FormControl

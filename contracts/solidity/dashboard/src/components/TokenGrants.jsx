@@ -25,7 +25,7 @@ class TokenGrants extends Component {
           <tr>
             <th className="text-nowrap"><strong>Grant Id</strong></th>
             <th><strong>Amount</strong></th>
-            <th><strong>From</strong></th>
+            <th><strong>Grant Manager</strong></th>
             <th><strong>Start</strong></th>
             <th><strong>End</strong></th>
             <th><strong>Cliff</strong></th>

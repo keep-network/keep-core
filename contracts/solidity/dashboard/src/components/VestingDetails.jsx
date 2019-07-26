@@ -11,7 +11,7 @@ class VestingDetails extends Component {
       return <div>
         <Table striped bordered condensed className="small table-sm">
           <tbody>
-            <TableRow title="From">
+            <TableRow title="Grant Manager">
               <a href="/">{owner}</a>
             </TableRow>
 
