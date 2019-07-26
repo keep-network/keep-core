@@ -27,7 +27,7 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
 
   it("should produce entry if callback contract was not provided", async function() {
     await serviceContract.requestRelayEntry(bls.seed, {value: 10});
-    await operatorContract.relayEntry(bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+    await operatorContract.relayEntry(bls.groupSignature, bls.previousEntry, bls.seed);
 
     let result = await serviceContract.previousEntry();
     assert.isTrue(result.eq(bls.groupSignature), "Value should be updated on beacon contract.");
@@ -39,7 +39,7 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
     let result = await callbackContract.lastEntry();
     assert.isFalse(result.eq(bls.groupSignature), "Entry value on the callback contract should not be the same as next relay entry.");
 
-    await operatorContract.relayEntry(bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+    await operatorContract.relayEntry(bls.groupSignature, bls.previousEntry, bls.seed);
 
     result = await callbackContract.lastEntry();
     assert.isTrue(result.eq(bls.groupSignature), "Value updated by the callback should be the same as relay entry.");

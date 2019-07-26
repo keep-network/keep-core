@@ -706,16 +706,22 @@ contract KeepRandomBeaconOperator is Ownable {
 
     /**
      * @dev Creates a new relay entry and stores the associated data on the chain.
-     * @param _groupSignature The generated random number.
-     * @param _groupPubKey Public key of the group that generated the threshold signature.
+     * @param _groupSignature Group BLS signature over the concatentation of the
+     * previous entry and seed.
      */
-    function relayEntry(uint256 _groupSignature, bytes memory _groupPubKey, uint256 _previousEntry, uint256 _seed) public {        
-        require(signingRequest.groupPubKey.equalStorage(_groupPubKey), "Provided group was not selected to produce entry for this request.");
-        require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
+    function relayEntry(uint256 _groupSignature, uint256 _previousEntry, uint256 _seed) public {
+        require(
+            BLS.verify(
+                signingRequest.groupPubKey,
+                abi.encodePacked(_previousEntry, _seed),
+                bytes32(_groupSignature)
+            ),
+            "Group signature failed to pass BLS verification."
+        );
 
         emit SignatureSubmitted(
             _groupSignature,
-            _groupPubKey,
+            signingRequest.groupPubKey,
             _previousEntry,
             _seed
         );
