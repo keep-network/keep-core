@@ -307,7 +307,7 @@ contract TokenGrant {
 
         // Keep staking record.
         grantStakes[operator] = GrantStake(_id, _stakingContract, _amount);
-        grants[_id].staked = _amount;
+        grants[_id].staked += _amount;
 
         // Staking contract expects 85 bytes _extraData for stake delegation
         // 20 bytes address + 65 bytes ECDSA signature
