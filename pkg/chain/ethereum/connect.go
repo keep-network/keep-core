@@ -2,7 +2,6 @@ package ethereum
 
 import (
 	"fmt"
-	"math/big"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -19,7 +18,6 @@ type ethereumChain struct {
 	client                           *ethclient.Client
 	clientRPC                        *rpc.Client
 	clientWS                         *rpc.Client
-	signingId                        *big.Int
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
 	stakingContract                  *contract.StakingProxy
 	accountKey                       *keystore.Key
@@ -115,10 +113,10 @@ func connect(config Config) (*ethereumChain, error) {
 	return pv, nil
 }
 
-// Connect makes the network connection to the Ethereum network and returns a
-// utility handle to the chain interface with additional methods for non-
-// standard client interactions. Note: for other things to work correctly the
-// configuration will need to reference a websocket, "ws://", or local IPC
+// ConnectUtility makes the network connection to the Ethereum network and
+// returns a utility handle to the chain interface with additional methods for
+// non- standard client interactions. Note: for other things to work correctly
+// the configuration will need to reference a websocket, "ws://", or local IPC
 // connection.
 func ConnectUtility(config Config) (chain.Utility, error) {
 	base, err := connect(config)
