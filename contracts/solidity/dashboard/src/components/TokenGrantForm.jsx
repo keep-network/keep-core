@@ -53,8 +53,8 @@ class TokenGrantForm extends Component {
     const { amount, grantee, duration, start, cliff, revocable} = this.state
     const { web3, tokenGrantContractAddress } = this.props
 
-    await web3.token.methods.approve(tokenGrantContractAddress, formatAmount(amount, 18), {from: web3.yourAddress, gas: 60000})
-    await web3.grantContract.methods.grant(formatAmount(amount, 18), grantee, duration, start, cliff, revocable, {from: web3.yourAddress, gas: 300000})
+    await web3.token.methods.approve(tokenGrantContractAddress, web3.utils.toBN(formatAmount(amount, 18)).toString()).send({from: web3.yourAddress})
+    await web3.grantContract.methods.grant(web3.utils.toBN(formatAmount(amount, 18)).toString(), grantee, duration, start, cliff, revocable).send({from: web3.yourAddress})
 
   }
 
