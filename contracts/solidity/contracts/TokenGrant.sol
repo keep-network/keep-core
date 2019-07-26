@@ -156,46 +156,49 @@ contract TokenGrant {
     }
 
     /**
-     * @notice Creates a token grant with a vesting schedule where balance withdrawn to the
-     * grantee gradually in a linear fashion until start + duration. By then all
-     * of the balance will have vested. You must approve the amount you want to grant
-     * by calling approve() method of the token contract first.
-     * @dev Transfers token amount from sender to this token grant contract
-     * Sender should approve the amount first by calling approve() on the token contract.
-     * @param _amount to be granted.
-     * @param _grantee address to which granted tokens are going to be withdrawn.
-     * @param _cliff duration in seconds of the cliff after which tokens will begin to vest.
-     * @param _duration duration in seconds of the period in which the tokens will vest.
-     * @param _start timestamp at which vesting will start.
-     * @param _revocable whether the token grant is revocable or not.
+     * @notice Receives approval of token transfer and creates a token grant with a vesting
+     * schedule where balance withdrawn to the grantee gradually in a linear fashion until
+     * start + duration. By then all of the balance will have vested.
+     * @param _from The owner of the tokens who approved them to transfer.
+     * @param _amount Approved amount for the transfer to create token grant.
+     * @param _token Token contract address.
+     * @param _extraData This byte array must have the following values concatenated:
+     * grantee (20 bytes) Address of the grantee.
+     * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to vest.
+     * start (32 bytes) Timestamp at which vesting will start.
+     * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
      */
-    function grant(
-        uint256 _amount,
-        address _grantee,
-        uint256 _duration,
-        uint256 _start,
-        uint256 _cliff,
-        bool _revocable
-    ) public returns (uint256) {
+    function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
+        require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
+        require(_amount <= token.balanceOf(_from), "Sender must have enough amount.");
+
+        address _grantee = _extraData.toAddress(0);
+        uint256 _duration = _extraData.toUint(20);
+        uint256 _start = _extraData.toUint(52);
+        uint256 _cliff = _extraData.toUint(84);
+        
         require(_grantee != address(0), "Grantee address can't be zero.");
         require(_cliff <= _duration, "Vesting cliff duration must be less or equal total vesting duration.");
-        require(_amount <= token.balanceOf(msg.sender), "Sender must have enough amount.");
+
+        bool _revocable;
+        if (_extraData.slice(116, 1)[0] == 0x01) {
+            _revocable = true;
+        } 
 
         uint256 id = numGrants++;
-        grants[id] = Grant(msg.sender, _grantee, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0, 0);
-        
+        grants[id] = Grant(_from, _grantee, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0, 0);
+
         // Maintain a record to make it easier to query grants by grant manager.
-        grantIndices[msg.sender].push(id);
+        grantIndices[_from].push(id);
 
         // Maintain a record to make it easier to query grants by grantee.
         grantIndices[_grantee].push(id);
 
-        token.safeTransferFrom(msg.sender, address(this), _amount);
+        token.safeTransferFrom(_from, address(this), _amount);
 
-        // Maintain a record of the vested amount 
+        // Maintain a record of the vested amount
         balances[_grantee] = balances[_grantee].add(_amount);
         emit CreatedTokenGrant(id);
-        return id;
     }
 
     /**
