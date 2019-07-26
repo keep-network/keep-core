@@ -73,37 +73,18 @@ func relayRequest(c *cli.Context) error {
 	requestMutex := sync.Mutex{}
 
 	wait := make(chan struct{})
-	var requestID *big.Int
-	utility.ThresholdRelay().OnSignatureRequested(func(request *event.Request) {
-		// It is possible two relay requests will be generated close to each other.
-		// To make sure we catch request ID from the correct one, we compare seed
-		// with the one we sent.
-		if requestID == nil && seed.Cmp(request.Seed) == 0 {
-			fmt.Printf(
-				"Relay entry request submitted with id [%s]: [%+v]\n",
-				request.SigningId,
-				request,
-			)
-
-			requestMutex.Lock()
-			requestID = request.SigningId
-			requestMutex.Unlock()
-		}
-	})
 
 	utility.ThresholdRelay().OnSignatureSubmitted(func(entry *event.Entry) {
 		requestMutex.Lock()
 		defer requestMutex.Unlock()
 
-		if requestID != nil && requestID.Cmp(entry.SigningId) == 0 {
-			fmt.Fprintf(
-				os.Stderr,
-				"Relay entry received with value: [%v].\n",
-				entry.Value,
-			)
+		fmt.Fprintf(
+			os.Stderr,
+			"Relay entry received with value: [%v].\n",
+			entry.Value,
+		)
 
-			wait <- struct{}{}
-		}
+		wait <- struct{}{}
 	})
 
 	fmt.Printf("Requesting for a new relay entry at [%s]\n", time.Now())

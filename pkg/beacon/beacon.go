@@ -64,7 +64,6 @@ func Initialize(
 		logger.Infof("new relay entry requested: [%+v]", request)
 
 		go node.GenerateRelayEntryIfEligible(
-			request.SigningId,
 			request.PreviousEntry,
 			request.Seed,
 			relayChain,

@@ -25,7 +25,6 @@ type relayEntrySubmitter struct {
 // Relay entry submit process starts at block height defined by startBlockheight
 // parameter.
 func (res *relayEntrySubmitter) submitRelayEntry(
-	signingID *big.Int,
 	newEntry *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
@@ -88,7 +87,6 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 				groupPublicKey,
 			)
 			entry := &event.Entry{
-				SigningId:     signingID,
 				Value:         newEntry,
 				PreviousEntry: previousEntry,
 				Timestamp:     time.Now().UTC(),
@@ -100,23 +98,20 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 				func(entry *event.Entry, err error) {
 					if err == nil {
 						logger.Infof(
-							"[member:%v] successfully submitted relay entry for request [%v] at block: [%v]",
+							"[member:%v] successfully submitted relay entry at block: [%v]",
 							res.index,
-							signingID,
 							entry.BlockNumber,
 						)
 					}
 					errorChannel <- err
 				})
 			return <-errorChannel
-		case submittedEntryEvent := <-onSubmittedResultChan:
-			if submittedEntryEvent.SigningId.Cmp(signingID) == 0 {
-				logger.Infof(
-					"[member:%v] leaving; relay entry submitted by other member",
-					res.index,
-				)
-				return returnWithError(nil)
-			}
+		case <-onSubmittedResultChan:
+			logger.Infof(
+				"[member:%v] leaving; relay entry submitted by other member",
+				res.index,
+			)
+			return returnWithError(nil)
 		}
 	}
 }
