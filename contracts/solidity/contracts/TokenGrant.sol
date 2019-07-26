@@ -39,7 +39,7 @@ contract TokenGrant {
     using AddressArrayUtils for address[];
 
     event CreatedTokenGrant(uint256 id);
-    event ReleasedTokenGrant(uint256 amount);
+    event WithdrawnTokenGrant(uint256 amount);
     event RevokedTokenGrant(uint256 id);
 
     struct Grant {
@@ -219,7 +219,7 @@ contract TokenGrant {
         // Transfer tokens from this contract balance to the grantee token balance.
         token.safeTransfer(grants[_id].grantee, amount);
 
-        emit ReleasedTokenGrant(amount);
+        emit WithdrawnTokenGrant(amount);
     }
     
     /**
