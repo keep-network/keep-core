@@ -37,7 +37,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @notice Receives approval of token transfer and stakes the approved ammount.
+     * @notice Receives approval of token transfer and stakes the approved amount.
      * @dev Makes sure provided token contract is the same one linked to this contract.
      * @param _from The owner of the tokens who approved them to transfer.
      * @param _value Approved amount for the transfer and stake.
