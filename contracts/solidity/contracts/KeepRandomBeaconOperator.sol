@@ -40,6 +40,8 @@ contract KeepRandomBeaconOperator is Ownable {
 
     event GroupSelectionStarted(uint256 groupSelectionSeed, uint256 seed);
 
+    bool public initialized;
+
     address[] public serviceContracts;
 
     // Each operator contract tracks its own signing requests and these are
@@ -57,23 +59,6 @@ contract KeepRandomBeaconOperator is Ownable {
     uint256 public ticketChallengeTimeout;
     uint256 public timeDKG;
     uint256 public resultPublicationBlockStep;
-    uint256 public ticketSubmissionStartBlock;
-    uint256 public groupSelectionSeed;
-
-    uint256[] public tickets;
-    bytes[] public submissions;
-    uint256 internal currentEntryStartBlock;
-    bool internal entryInProgress;
-
-    bool public groupSelectionInProgress;
-
-    struct Proof {
-        address sender;
-        uint256 stakerValue;
-        uint256 virtualStakerIndex;
-    }
-
-    mapping(uint256 => Proof) public proofs;
 
     // activeGroupsThreshold is the minimal number of groups that should not
     // expire to protect the minimal network throughput.
@@ -87,20 +72,32 @@ contract KeepRandomBeaconOperator is Ownable {
     // counted from the moment relay request occur.
     uint256 public relayEntryTimeout;
 
-    // expiredGroupOffset is pointing to the first active group, it is also the
-    // expired groups counter
-    uint256 public expiredGroupOffset = 0;
-
     struct Group {
         bytes groupPubKey;
         uint registrationBlockHeight;
     }
 
     Group[] public groups;
-
     mapping (bytes => address[]) internal groupMembers;
 
-    bool public initialized;
+    // expiredGroupOffset is pointing to the first active group, it is also the
+    // expired groups counter
+    uint256 public expiredGroupOffset = 0;
+
+    struct Proof {
+        address sender;
+        uint256 stakerValue;
+        uint256 virtualStakerIndex;
+    }
+
+    mapping(uint256 => Proof) public proofs;
+
+    bool public groupSelectionInProgress;
+
+    uint256 public ticketSubmissionStartBlock;
+    uint256 public groupSelectionSeed;
+    uint256[] public tickets;
+    bytes[] public submissions;
 
     struct SigningRequest {
         uint256 relayRequestId;
@@ -110,6 +107,10 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     mapping(uint256 => SigningRequest) internal signingRequests;
+
+    uint256 internal currentEntryStartBlock;
+
+    bool internal entryInProgress;
 
     /**
      * @dev Checks if submitter is eligible to submit.
