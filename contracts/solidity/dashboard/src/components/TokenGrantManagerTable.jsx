@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import { Table } from 'react-bootstrap'
+import TokenGrantRevokeButton from './TokenGrantRevokeButton'
 
 class TokenGrantManagerTable extends Component {
   render() {
@@ -9,7 +10,7 @@ class TokenGrantManagerTable extends Component {
           <tr key={"token-grant-"+i+"-for-"+item.grantee}>
             <td>{item.formatted.amount}</td>
             <td><a href="/">{item.grantee}</a></td>
-            <td><button>Revoke</button></td>
+            <td><TokenGrantRevokeButton item={item} /></td>
           </tr>
         )
       })
