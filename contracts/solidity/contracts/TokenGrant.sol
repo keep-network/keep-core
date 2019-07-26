@@ -29,7 +29,7 @@ interface tokenStakingInterface {
  * Has additional functionality to stake/unstake token grants.
  * Tokens are granted to the grantee via vesting scheme and can be
  * withdrawn gradually based on the vesting schedule cliff and vesting duration.
- * Optionally grant can be revoked by the token grant creator.
+ * Optionally grant can be revoked by the token grant manager.
  */
 contract TokenGrant {
     using SafeMath for uint256;
@@ -43,10 +43,10 @@ contract TokenGrant {
     event RevokedTokenGrant(uint256 id);
 
     struct Grant {
-        address owner; // Creator of token grant.
+        address grantManager; // Token grant manager.
         address grantee; // Address to which granted tokens are going to be withdrawn.
-        bool revoked; // Whether the grant was revoked by the creator.
-        bool revocable; // Whether creator of grant can revoke it.
+        bool revoked; // Whether the grant was revoked by the grant manager.
+        bool revocable; // Whether grant manager can revoke the grant.
         uint256 amount; // Amount of tokens to be granted.
         uint256 duration; // Duration in seconds of the period in which the granted tokens will vest.
         uint256 start; // Timestamp at which vesting will start.
@@ -74,7 +74,7 @@ contract TokenGrant {
     mapping(address => GrantStake) public grantStakes;
 
     // Mapping of token grant IDs per particular address
-    // involved in a grant as a grantee or as a creator.
+    // involved in a grant as a grantee or as a grant manager.
     mapping(address => uint256[]) public grantIndices;
 
     // Token grants balances. Sum of all granted tokens to a grantee.
@@ -135,11 +135,11 @@ contract TokenGrant {
     /**
      * @dev Gets grant vesting schedule by grant ID.
      * @param _id ID of the token grant.
-     * @return  owner, duration, start, cliff
+     * @return grantManager, duration, start, cliff
      */
-    function getGrantVestingSchedule(uint256 _id) public view returns (address owner, uint256 duration, uint256 start, uint256 cliff) {
+    function getGrantVestingSchedule(uint256 _id) public view returns (address grantManager, uint256 duration, uint256 start, uint256 cliff) {
         return (
-            grants[_id].owner,
+            grants[_id].grantManager,
             grants[_id].duration,
             grants[_id].start,
             grants[_id].cliff
@@ -148,11 +148,11 @@ contract TokenGrant {
 
     /**
      * @dev Gets grant ids of the specified address.
-     * @param _granteeOrCreator The address to query.
+     * @param _granteeOrGrantManager The address to query.
      * @return An uint256 array of grant IDs.
      */
-    function getGrants(address _granteeOrCreator) public view returns (uint256[] memory) {
-        return grantIndices[_granteeOrCreator];
+    function getGrants(address _granteeOrGrantManager) public view returns (uint256[] memory) {
+        return grantIndices[_granteeOrGrantManager];
     }
 
     /**
@@ -184,7 +184,7 @@ contract TokenGrant {
         uint256 id = numGrants++;
         grants[id] = Grant(msg.sender, _grantee, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0, 0);
         
-        // Maintain a record to make it easier to query grants by creator.
+        // Maintain a record to make it easier to query grants by grant manager.
         grantIndices[msg.sender].push(id);
 
         // Maintain a record to make it easier to query grants by grantee.
@@ -248,14 +248,14 @@ contract TokenGrant {
     }
 
     /**
-     * @notice Allows the creator of the token grant to revoke it. 
+     * @notice Allows the grant manager to revoke the grant. 
      * @dev Granted tokens that are already vested (releasable amount) remain so grantee can still withdraw them
-     * the rest are returned to the token grant creator.
+     * the rest are returned to the token grant manager.
      * @param _id Grant ID.
      */
     function revoke(uint256 _id) public {
 
-        require(grants[_id].owner == msg.sender, "Only grant creator can revoke.");
+        require(grants[_id].grantManager == msg.sender, "Only grant manager can revoke.");
         require(grants[_id].revocable, "Grant must be revocable in the first place.");
         require(!grants[_id].revoked, "Grant must not be already revoked.");
 
@@ -266,8 +266,8 @@ contract TokenGrant {
         // Update grantee's grants balance.
         balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(refund);
 
-        // Transfer tokens from this contract balance to the creator of the token grant.
-        token.safeTransfer(grants[_id].owner, refund);
+        // Transfer tokens from this contract balance to the token grant manager.
+        token.safeTransfer(grants[_id].grantManager, refund);
         emit RevokedTokenGrant(_id);
     }
 
