@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Table } from 'react-bootstrap'
 
-class TokenGrantsOwnerTable extends Component {
+class TokenGrantManagerTable extends Component {
   render() {
     if (this.props.data) {
       var rows = this.props.data.map(function(item, i){
@@ -31,4 +31,4 @@ class TokenGrantsOwnerTable extends Component {
   }
 }
 
-export default TokenGrantsOwnerTable
+export default TokenGrantManagerTable

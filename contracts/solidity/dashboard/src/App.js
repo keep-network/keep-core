@@ -16,7 +16,7 @@ import StakingDelegateTokenGrantForm from './components/StakingDelegateTokenGran
 import SigningForm from './components/SigningForm'
 import WithdrawalsTable from './components/WithdrawalsTable'
 import TokenGrantForm from './components/TokenGrantForm'
-import TokenGrantsOwnerTable from './components/TokenGrantsOwnerTable'
+import TokenGrantManagerTable from './components/TokenGrantManagerTable'
 import TokenGrants from './components/TokenGrants'
 import VestingChart from './components/VestingChart'
 import VestingDetails from './components/VestingDetails'
@@ -307,7 +307,7 @@ class Main extends Component {
                         <Row>
                           <h3>Granted by you</h3>
                           <Col xs={12}>
-                            <TokenGrantsOwnerTable data={ grantedByYou }/>
+                            <TokenGrantManagerTable data={ grantedByYou }/>
                           </Col>
                         </Row>
                       </Tab>:null
@@ -419,7 +419,7 @@ class Main extends Component {
       const grantedAmount = await grantContract.methods.grantedAmount(grantIndexes[i].toNumber()).call()
       const data = {
         'id': grantIndexes[i].toNumber(),
-        'owner': this.state.web3.utils.toChecksumAddress(grant[0]),
+        'grantManager': this.state.web3.utils.toChecksumAddress(grant[0]),
         'grantee': this.state.web3.utils.toChecksumAddress(grant[1]),
         'revoked': grant[2],
         'revocable': grant[3],
@@ -441,7 +441,7 @@ class Main extends Component {
         }
       }
 
-      if (this.state.web3.yourAddress === data['owner']) {
+      if (this.state.web3.yourAddress === data['grantManager']) {
         grantedByYou.push(data)
       } else if (this.state.web3.yourAddress === data['grantee']) {
         grantedToYou.push(data)

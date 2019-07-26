@@ -6,13 +6,13 @@ import moment from 'moment'
 class VestingDetails extends Component {
   render() {
     if (this.props.details) {
-      const { start, cliff, end, amount, withdrawn, grantedAmount, revocable, owner, staked } = this.props.details
+      const { start, cliff, end, amount, withdrawn, grantedAmount, revocable, grantManager, staked } = this.props.details
       const available = grantedAmount ? grantedAmount - withdrawn : null
       return <div>
         <Table striped bordered condensed className="small table-sm">
           <tbody>
             <TableRow title="Grant Manager">
-              <a href="/">{owner}</a>
+              <a href="/">{grantManager}</a>
             </TableRow>
 
             <TableRow title="Start date">
