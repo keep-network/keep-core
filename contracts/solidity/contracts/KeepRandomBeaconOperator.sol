@@ -35,19 +35,14 @@ contract KeepRandomBeaconOperator is Ownable {
     event DkgResultPublishedEvent(bytes groupPubKey);
 
     // These are the public events that are used by clients
-    event SignatureRequested(uint256 signingId, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
-    event SignatureSubmitted(uint256 signingId, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
+    event SignatureRequested(uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
+    event SignatureSubmitted(uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     event GroupSelectionStarted(uint256 groupSelectionSeed, uint256 seed);
 
     bool public initialized;
 
     address[] public serviceContracts;
-
-    // Each operator contract tracks its own signing requests and these are
-    // independent from service contracts which tracks all the relay requests
-    // the given service contract received.
-    uint256 public signingRequestCounter;
 
     uint256 public groupThreshold;
     uint256 public groupSize;
@@ -106,9 +101,8 @@ contract KeepRandomBeaconOperator is Ownable {
         address serviceContract;
     }
 
-    mapping(uint256 => SigningRequest) internal signingRequests;
-
     uint256 internal currentEntryStartBlock;
+    SigningRequest internal signingRequest;
 
     bool internal entryInProgress;
 
@@ -206,7 +200,7 @@ contract KeepRandomBeaconOperator is Ownable {
         // Create initial relay entry request. This will allow relayEntry to be called once
         // to trigger the creation of the first group. Requests are removed on successful
         // entries so genesis entry can only be called once.
-        signingRequests[signingRequestCounter] = SigningRequest(0, 0, _genesisGroupPubKey, _serviceContract);
+        signingRequest = SigningRequest(0, 0, _genesisGroupPubKey, _serviceContract);
     }
 
     /**
@@ -692,7 +686,6 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
      */
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) public payable onlyServiceContract {
-
         require(
             numberOfGroups() > 0,
             "At least one group needed to serve the request."
@@ -706,32 +699,32 @@ contract KeepRandomBeaconOperator is Ownable {
 
         bytes memory groupPubKey = selectGroup(previousEntry);
 
-        signingRequestCounter++;
-        uint256 signingId = signingRequestCounter;
+        signingRequest = SigningRequest(requestId, msg.value, groupPubKey, msg.sender);
 
-        signingRequests[signingId] = SigningRequest(requestId, msg.value, groupPubKey, msg.sender);
-
-        emit SignatureRequested(signingId, msg.value, previousEntry, seed, groupPubKey);
+        emit SignatureRequested(msg.value, previousEntry, seed, groupPubKey);
     }
 
     /**
      * @dev Creates a new relay entry and stores the associated data on the chain.
-     * @param _signingId The request that started this generation - to tie the results back to the request.
      * @param _groupSignature The generated random number.
      * @param _groupPubKey Public key of the group that generated the threshold signature.
      */
-    function relayEntry(uint256 _signingId, uint256 _groupSignature, bytes memory _groupPubKey, uint256 _previousEntry, uint256 _seed) public {
-
-        require(signingRequests[_signingId].groupPubKey.equalStorage(_groupPubKey), "Provided group was not selected to produce entry for this request.");
+    function relayEntry(uint256 _groupSignature, bytes memory _groupPubKey, uint256 _previousEntry, uint256 _seed) public {        
+        require(signingRequest.groupPubKey.equalStorage(_groupPubKey), "Provided group was not selected to produce entry for this request.");
         require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
 
-        address serviceContract = signingRequests[_signingId].serviceContract;
-        uint256 requestId = signingRequests[_signingId].relayRequestId;
-        delete signingRequests[_signingId];
+        emit SignatureSubmitted(
+            _groupSignature,
+            _groupPubKey,
+            _previousEntry,
+            _seed
+        );
 
-        emit SignatureSubmitted(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
-
-        ServiceContract(serviceContract).entryCreated(requestId, _groupSignature, _seed);
+        ServiceContract(signingRequest.serviceContract).entryCreated(
+            signingRequest.relayRequestId,
+            _groupSignature,
+            _seed
+        );
 
         entryInProgress = false;
     }
