@@ -30,7 +30,7 @@ metadata:
   name: eth-tx-node
   namespace: default
 spec:
-  replicas: 3
+  replicas: 1
   strategy:
     type: RollingUpdate
   selector:

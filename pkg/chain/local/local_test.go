@@ -2,6 +2,7 @@ package local
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
@@ -10,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
-	"github.com/keep-network/keep-core/pkg/operator"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
@@ -111,13 +111,15 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	defer cancel()
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
-	signingId := int64(19)
-	relayEntryPromise := chainHandle.SubmitRelayEntry(
-		&event.Entry{
-			SigningId:   big.NewInt(signingId),
-			GroupPubKey: []byte("1"),
-		},
-	)
+
+	expectedEntry := &event.Entry{
+		Value:       big.NewInt(19),
+		GroupPubKey: []byte("1"),
+		Seed:        big.NewInt(30),
+		BlockNumber: 123,
+	}
+
+	relayEntryPromise := chainHandle.SubmitRelayEntry(expectedEntry)
 
 	done := make(chan *event.Entry)
 	relayEntryPromise.OnSuccess(func(entry *event.Entry) {
@@ -130,11 +132,11 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 	select {
 	case entry := <-done:
-		if entry.SigningId.Int64() != signingId {
+		if !reflect.DeepEqual(entry, expectedEntry) {
 			t.Fatalf(
-				"Unexpected relay entry request id\nExpected: [%v]\nActual:  [%v]",
-				signingId,
-				entry.SigningId.Int64(),
+				"Unexpected relay entry\nExpected: [%+v]\nActual:  [%+v]",
+				expectedEntry,
+				entry,
 			)
 		}
 	case <-ctx.Done():
@@ -163,7 +165,6 @@ func TestLocalOnSignatureSubmitted(t *testing.T) {
 	defer subscription.Unsubscribe()
 
 	expectedEntry := &event.Entry{
-		SigningId:   big.NewInt(42),
 		Value:       big.NewInt(19),
 		GroupPubKey: []byte("1"),
 		Seed:        big.NewInt(30),
@@ -239,7 +240,12 @@ func TestLocalOnGroupRegistered(t *testing.T) {
 	groupPublicKey := []byte("1")
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := make(map[group.MemberIndex]operator.Signature)
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte{101},
+		2: []byte{102},
+		3: []byte{103},
+		4: []byte{104},
+	}
 
 	chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
 
@@ -283,7 +289,12 @@ func TestLocalOnGroupRegisteredUnsubscribed(t *testing.T) {
 	groupPublicKey := []byte("1")
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := make(map[group.MemberIndex]operator.Signature)
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte{101},
+		2: []byte{102},
+		3: []byte{103},
+		4: []byte{104},
+	}
 
 	chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
 
@@ -317,7 +328,12 @@ func TestLocalOnDKGResultSubmitted(t *testing.T) {
 	groupPublicKey := []byte("1")
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := make(map[group.MemberIndex]operator.Signature)
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte{101},
+		2: []byte{102},
+		3: []byte{103},
+		4: []byte{104},
+	}
 
 	chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
 
@@ -362,7 +378,12 @@ func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
 	groupPublicKey := []byte("1")
 	memberIndex := group.MemberIndex(1)
 	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := make(map[group.MemberIndex]operator.Signature)
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte{101},
+		2: []byte{102},
+		3: []byte{103},
+		4: []byte{104},
+	}
 
 	chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
 
@@ -527,7 +548,7 @@ func TestLocalIsGroupStale(t *testing.T) {
 }
 
 func TestLocalSubmitDKGResult(t *testing.T) {
-	localChain := Connect(10, 4, big.NewInt(200)).(*localChain)
+	localChain := Connect(10, 4, big.NewInt(200))
 
 	chainHandle := localChain.ThresholdRelay()
 
@@ -536,14 +557,14 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		GroupPublicKey: []byte{11},
 	}
 
-	signatures := map[group.MemberIndex]operator.Signature{
-		1: operator.Signature{101},
-		2: operator.Signature{102},
-		3: operator.Signature{103},
+	signatures := map[group.MemberIndex][]byte{
+		1: []byte{101},
+		2: []byte{102},
+		3: []byte{103},
+		4: []byte{104},
 	}
 
 	chainHandle.SubmitDKGResult(memberIndex, result, signatures)
-
 	groupRegistered, err := chainHandle.IsGroupRegistered(result.GroupPublicKey)
 	if err != nil {
 		t.Fatal(err)
@@ -551,6 +572,101 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	if !groupRegistered {
 		t.Fatalf("Group not registered")
+	}
+}
+
+func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
+	groupSize := 5
+	threshold := 3
+
+	localChain := Connect(groupSize, threshold, big.NewInt(200)).(*localChain)
+	chainHandle := localChain.ThresholdRelay()
+
+	var tests = map[string]struct {
+		signatures    map[group.MemberIndex][]byte
+		expectedError error
+	}{
+		"no signatures": {
+			signatures:    map[group.MemberIndex][]byte{},
+			expectedError: fmt.Errorf("failed to submit result with [0] signatures for threshold [%v]", threshold),
+		},
+		"one signature": {
+			signatures: map[group.MemberIndex][]byte{
+				1: []byte{101},
+			},
+			expectedError: fmt.Errorf("failed to submit result with [1] signatures for threshold [%v]", threshold),
+		},
+		"one less signature than threshold": {
+			signatures: map[group.MemberIndex][]byte{
+				1: []byte{101},
+				2: []byte{102},
+			},
+			expectedError: fmt.Errorf("failed to submit result with [2] signatures for threshold [%v]", threshold),
+		},
+		"threshold signatures": {
+			signatures: map[group.MemberIndex][]byte{
+				1: []byte{101},
+				2: []byte{102},
+				3: []byte{103},
+			},
+			expectedError: nil,
+		},
+		"one more signature than threshold": {
+			signatures: map[group.MemberIndex][]byte{
+				1: []byte{101},
+				2: []byte{102},
+				3: []byte{103},
+				4: []byte{104},
+			},
+			expectedError: nil,
+		},
+		"signatures from all group members": {
+			signatures: map[group.MemberIndex][]byte{
+				1: []byte{101},
+				2: []byte{102},
+				3: []byte{103},
+				4: []byte{104},
+				5: []byte{105},
+			},
+			expectedError: nil,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			ctx, cancel := newTestContext()
+			defer cancel()
+
+			errorChan := make(chan error)
+
+			memberIndex := group.MemberIndex(1)
+			result := &relaychain.DKGResult{
+				GroupPublicKey: []byte{11},
+			}
+
+			promise := chainHandle.SubmitDKGResult(
+				memberIndex,
+				result,
+				test.signatures,
+			)
+			promise.OnComplete(func(event *event.DKGResultSubmission, err error) {
+				errorChan <- err
+			})
+
+			select {
+			case err := <-errorChan:
+				if !reflect.DeepEqual(test.expectedError, err) {
+					t.Fatalf(
+						"Unexpected error\nExpected: [%v]\nActual:   [%v]\n",
+						test.expectedError,
+						err,
+					)
+				}
+
+			case <-ctx.Done():
+				t.Fatalf("promise timed out")
+			}
+		})
 	}
 }
 

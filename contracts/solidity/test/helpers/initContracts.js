@@ -46,7 +46,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 4).
   await operatorContract.authorizeStakingContract(stakingContract.address);
-  await operatorContract.relayEntry(0, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+  await operatorContract.relayEntry(bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
   return {
     config: {

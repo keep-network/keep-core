@@ -27,7 +27,6 @@ func TestResolveContractByName(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		contracts               map[string]string
 		queriedContractName     string
 		expectedContractAddress *common.Address
 		expectedError           error

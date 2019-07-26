@@ -54,7 +54,6 @@ func GenesisRelayEntry() *event.Entry {
 	}.Compress()
 
 	return &event.Entry{
-		SigningId:     big.NewInt(int64(0)),
 		Value:         new(big.Int).SetBytes(genesisGroupSignature),
 		GroupPubKey:   genesisGroupPubKey,
 		PreviousEntry: genesisEntryValue,

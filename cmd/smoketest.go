@@ -119,7 +119,6 @@ func SmokeTest(c *cli.Context) error {
 	<-time.NewTimer(time.Second).C
 
 	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
-		SigningId:     big.NewInt(0),
 		Value:         big.NewInt(0),
 		GroupPubKey:   big.NewInt(0).Bytes(),
 		Seed:          big.NewInt(0),
@@ -148,14 +147,6 @@ func createNode(
 		).String()
 	}
 
-	chainCounter, err := chainHandle.BlockCounter()
-	if err != nil {
-		panic(fmt.Sprintf(
-			"Failed to run setup chainHandle.BlockCounter: [%v].",
-			err,
-		))
-	}
-
 	stakeMonitor, err := chainHandle.StakeMonitor()
 	if err != nil {
 		panic(fmt.Sprintf(
@@ -179,9 +170,7 @@ func createNode(
 		err := beacon.Initialize(
 			context,
 			stakingID,
-			chainHandle.ThresholdRelay(),
-			chainCounter,
-			stakeMonitor,
+			chainHandle,
 			netProvider,
 			storage,
 		)

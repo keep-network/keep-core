@@ -6,7 +6,6 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -23,13 +22,17 @@ var logger = log.Logger("keep-beacon")
 func Initialize(
 	ctx context.Context,
 	stakingID string,
-	relayChain relaychain.Interface,
-	blockCounter chain.BlockCounter,
-	stakeMonitor chain.StakeMonitor,
+	chainHandle chain.Handle,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
+	relayChain := chainHandle.ThresholdRelay()
 	chainConfig, err := relayChain.GetConfig()
+	if err != nil {
+		return err
+	}
+
+	stakeMonitor, err := chainHandle.StakeMonitor()
 	if err != nil {
 		return err
 	}
@@ -38,6 +41,13 @@ func Initialize(
 	if err != nil {
 		return err
 	}
+
+	blockCounter, err := chainHandle.BlockCounter()
+	if err != nil {
+		return err
+	}
+
+	signing := chainHandle.Signing()
 
 	groupRegistry := registry.NewGroupRegistry(relayChain, persistence)
 	groupRegistry.LoadExistingGroups()
@@ -54,7 +64,6 @@ func Initialize(
 		logger.Infof("new relay entry requested: [%+v]", request)
 
 		go node.GenerateRelayEntryIfEligible(
-			request.SigningId,
 			request.PreviousEntry,
 			request.Seed,
 			relayChain,
@@ -70,6 +79,7 @@ func Initialize(
 			err := node.SubmitTicketsForGroupSelection(
 				relayChain,
 				blockCounter,
+				signing,
 				event.NewEntry.Bytes(),
 				event.Seed,
 				event.BlockNumber,
