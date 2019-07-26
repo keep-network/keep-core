@@ -42,7 +42,7 @@ func (es *ethereumSigning) Sign(message []byte) ([]byte, error) {
 	}
 
 	if len(signature) == SignatureSize {
-		// adding 27 to V (signature[64]) to accept malleable signatures.
+		// adding 27 to V (signature[64]) to accept non-malleable signatures.
 		signature[len(signature)-1] = signature[len(signature)-1] + 27
 	}
 
