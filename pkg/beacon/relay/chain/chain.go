@@ -1,6 +1,8 @@
 package chain
 
 import (
+	"math/big"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -20,7 +22,7 @@ type RelayEntryInterface interface {
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
-	SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise
+	SubmitRelayEntry(entryValue *big.Int) *async.RelayEntryPromise
 	// OnSignatureSubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
 	OnSignatureSubmitted(

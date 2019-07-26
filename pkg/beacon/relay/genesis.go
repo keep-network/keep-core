@@ -2,12 +2,9 @@ package relay
 
 import (
 	"math/big"
-	"time"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/bls"
 )
 
@@ -26,7 +23,7 @@ const eAsString = "2718281828459045235360287471352662497757247093699959574966967
 const privateKey = "123"
 
 // GenesisRelayEntry generates genesis relay entry.
-func GenesisRelayEntry() *event.Entry {
+func GenesisRelayEntry() *big.Int {
 	// genesisEntryValue is the initial entry value for the network.
 	// The n digits of pi that fit into a big.Int represent a "nothing up our
 	// sleeve" value that all consumers of this network can verify.
@@ -48,18 +45,7 @@ func GenesisRelayEntry() *event.Entry {
 		G1: bls.Sign(bigFromBase10(privateKey), combinedEntryToSign),
 	}.Compress()
 
-	// public key for provided privateKey
-	genesisGroupPubKey := altbn128.G2Point{
-		G2: new(bn256.G2).ScalarBaseMult(bigFromBase10(privateKey)),
-	}.Compress()
-
-	return &event.Entry{
-		Value:         new(big.Int).SetBytes(genesisGroupSignature),
-		GroupPubKey:   genesisGroupPubKey,
-		PreviousEntry: genesisEntryValue,
-		Timestamp:     time.Now().UTC(),
-		Seed:          genesisSeedValue,
-	}
+	return new(big.Int).SetBytes(genesisGroupSignature)
 }
 
 // bigFromBase10 returns a big number from its string representation.
