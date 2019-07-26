@@ -62,16 +62,19 @@ module.exports = async function() {
   let cliff = web3.utils.toBN(86400).mul(web3.utils.toBN(10));
   let revocable = false; // Can not stake revocable token grants. More info in RFC14 
 
-  await token.approve(tokenGrant.address, amount, {from: grantManager});
-  let grantId = await tokenGrant.grant(amount, grantee, vestingDuration, 
-    start, cliff, revocable, {from: grantManager}).then((result)=>{
-    for (var i = 0; i < result.logs.length; i++) {
-      var log = result.logs[i];
-      if (log.event == "CreatedTokenGrant") {
-        return log.args.id.toNumber();
-      }
-    }
-  })
+  await token.approveAndCall(
+    tokenGrant.address,
+    amount,
+    Buffer.concat([
+      Buffer.from(grantee.substr(2), 'hex'),
+      web3.utils.toBN(vestingDuration).toBuffer('be', 32),
+      web3.utils.toBN(start).toBuffer('be', 32),
+      web3.utils.toBN(cliff).toBuffer('be', 32),
+      Buffer.from(revocable ? "01" : "00", 'hex'),
+    ]),
+    {from: grantManager}
+  )
+  let grantId = (await tokenGrant.getPastEvents())[0].args[0].toNumber()
 
   // Operator must sign grantee and grant contract address since grant contract becomes the owner during staking.
   let signature1 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(tokenGrant.address), granteeOperator)).substr(2), 'hex');
