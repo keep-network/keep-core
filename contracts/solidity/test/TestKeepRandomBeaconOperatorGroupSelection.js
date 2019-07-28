@@ -107,7 +107,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
   it("should not trigger group selection while one is in progress", async function() {
     let groupSelectionStartBlock = await operatorContract.ticketSubmissionStartBlock();
-    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
+    await serviceContract.requestRelayEntry(bls.seed, {value: config.minimumPayment});
     await operatorContract.relayEntry(bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
 
     assert.isTrue((await operatorContract.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
@@ -140,7 +140,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
     mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
 
-    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
+    await serviceContract.requestRelayEntry(bls.seed, {value: config.minimumPayment});
     await operatorContract.relayEntry(bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
 
     assert.isFalse((await operatorContract.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");

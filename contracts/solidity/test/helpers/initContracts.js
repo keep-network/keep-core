@@ -4,6 +4,14 @@ import { bls } from './data';
 async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
 
+  const gasPrice = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei) TODO: Use historical average of recently served requests?
+  const signingCostEstimate = web3.utils.toBN(1240000).mul(gasPrice); // (Wei) TODO: Update once alt_bn128 gas costs reduction is implemented.
+  const createGroupCostEstimate = web3.utils.toBN(2260000).mul(gasPrice); // Wei
+  const minimumCallbackAllowance = web3.utils.toBN(200000).mul(gasPrice); // Wei
+  const profitMargin = web3.utils.toBN(100); // %
+  const entryFeeEstimate = signingCostEstimate.add(createGroupCostEstimate); // Wei
+  const profitMarginEstimate = entryFeeEstimate.mul(profitMargin).div(web3.utils.toBN(100)); // Wei
+
   let token, stakingProxy, stakingContract,
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract;
@@ -18,7 +26,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
     resultPublicationBlockStep = 3,
     groupActiveTime = 300,
     activeGroupsThreshold = 5,
-    minPayment = 1,
+    minimumPayment = entryFeeEstimate.add(profitMarginEstimate).add(minimumCallbackAllowance), // Wei
     withdrawalDelay = 1,
     relayRequestTimeout = 10;
 
@@ -44,7 +52,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
     bls.groupSignature, bls.groupPubKey
   );
 
-  await serviceContract.initialize(minPayment, withdrawalDelay, operatorContract.address);
+  await serviceContract.initialize(minimumPayment, withdrawalDelay, operatorContract.address);
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 4).
   await operatorContract.authorizeStakingContract(stakingContract.address);
@@ -62,7 +70,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
       resultPublicationBlockStep: resultPublicationBlockStep,
       groupActiveTime: groupActiveTime,
       activeGroupsThreshold: activeGroupsThreshold,
-      minPayment: minPayment,
+      minimumPayment: minimumPayment,
       withdrawalDelay: withdrawalDelay,
       relayRequestTimeout: relayRequestTimeout
     },

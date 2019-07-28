@@ -8,7 +8,7 @@ const ServiceContractImplV2 = artifacts.require('./examples/KeepRandomBeaconServ
 
 contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
 
-  let operatorContract, serviceContractProxy, serviceContract, serviceContractImplV2, serviceContractV2,
+  let config, operatorContract, serviceContractProxy, serviceContract, serviceContractImplV2, serviceContractV2,
     account_two = accounts[1];
 
   before(async () => {
@@ -22,6 +22,7 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
       artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
 
+    config = contracts.config;
     operatorContract = contracts.operatorContract;
     serviceContract = contracts.serviceContract;
     serviceContractProxy = await ServiceContractProxy.at(serviceContract.address);
@@ -33,7 +34,7 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
     await operatorContract.registerNewGroup(bls.groupPubKey);
 
     // Modify state so we can test later that eternal storage works as expected after upgrade
-    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
+    await serviceContract.requestRelayEntry(bls.seed, {value: config.minimumPayment});
     await operatorContract.relayEntry(bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
   });

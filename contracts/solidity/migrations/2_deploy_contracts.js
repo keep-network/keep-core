@@ -11,7 +11,14 @@ const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.s
 const KeepRandomBeaconOperatorStub = artifacts.require("./KeepRandomBeaconOperatorStub.sol");
 
 const withdrawalDelay = 86400; // 1 day
-const minPayment = 1;
+const gasPrice = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei) TODO: Use historical average of recently served requests?
+const signingCostEstimate = web3.utils.toBN(1240000).mul(gasPrice); // (Wei) TODO: Update once alt_bn128 gas costs reduction is implemented.
+const createGroupCostEstimate = web3.utils.toBN(2260000).mul(gasPrice); // Wei
+const minimumCallbackAllowance = web3.utils.toBN(200000).mul(gasPrice); // Wei
+const profitMargin = web3.utils.toBN(100); // %
+const entryFeeEstimate = signingCostEstimate.add(createGroupCostEstimate); // Wei
+const profitMarginEstimate = entryFeeEstimate.mul(profitMargin).div(web3.utils.toBN(100)); // Wei
+const minPayment = entryFeeEstimate.add(profitMarginEstimate).add(minimumCallbackAllowance); // Wei
 const minStake = web3.utils.toBN(200000).mul(web3.utils.toBN(10**18));
 
 const groupThreshold = 3;

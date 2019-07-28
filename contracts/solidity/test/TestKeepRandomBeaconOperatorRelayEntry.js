@@ -3,7 +3,7 @@ import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 
 contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
-  let serviceContract, operatorContract;
+  let config, serviceContract, operatorContract;
 
   before(async () => {
 
@@ -16,14 +16,15 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
-  
+
+    config = contracts.config;
     operatorContract = contracts.operatorContract;
     serviceContract = contracts.serviceContract;
     // operatorContract.authorizeServiceContract(serviceContract.address);
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
-    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
+    await serviceContract.requestRelayEntry(bls.seed, {value: config.minimumPayment});
   });
 
   it("should not be able to submit invalid relay entry", async function() {
