@@ -50,9 +50,6 @@ type localGroup struct {
 type localChain struct {
 	relayConfig *relayconfig.Chain
 
-	groupRelayEntriesMutex sync.Mutex
-	groupRelayEntries      map[string]*big.Int
-
 	groups []localGroup
 
 	lastSubmittedDKGResult *relaychain.DKGResult
@@ -139,35 +136,16 @@ func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, erro
 	return selectedParticipants, nil
 }
 
-func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise {
+func (c *localChain) SubmitRelayEntry(newEntry *big.Int) *async.RelayEntryPromise {
 	c.ticketsMutex.Lock()
 	c.tickets = make([]*relaychain.Ticket, 0)
 	c.ticketsMutex.Unlock()
 
 	relayEntryPromise := &async.RelayEntryPromise{}
 
-	c.groupRelayEntriesMutex.Lock()
-	defer c.groupRelayEntriesMutex.Unlock()
-
-	existing, exists := c.groupRelayEntries[string(entry.GroupPubKey)+entry.SigningId.String()]
-	if exists {
-		if existing.Cmp(entry.Value) != 0 {
-			err := fmt.Errorf(
-				"mismatched signature for [%v], submission failed; \n"+
-					"[%v] vs [%v]\n",
-				entry.GroupPubKey,
-				existing,
-				entry.Value,
-			)
-
-			relayEntryPromise.Fail(err)
-		} else {
-			relayEntryPromise.Fulfill(entry)
-		}
-
-		return relayEntryPromise
+	entry := &event.Entry{
+		Value: newEntry,
 	}
-	c.groupRelayEntries[string(entry.GroupPubKey)+entry.SigningId.String()] = entry.Value
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.relayEntryHandlers {
@@ -177,7 +155,7 @@ func (c *localChain) SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromi
 	}
 	c.handlerMutex.Unlock()
 
-	c.latestValue = entry.Value
+	c.latestValue = newEntry
 	relayEntryPromise.Fulfill(entry)
 
 	return relayEntryPromise
@@ -304,7 +282,6 @@ func ConnectWithKey(
 			TokenSupply:                     tokenSupply,
 			NaturalThreshold:                naturalThreshold,
 		},
-		groupRelayEntries:        make(map[string]*big.Int),
 		relayEntryHandlers:       make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
 		groupRegisteredHandlers:  make(map[int]func(groupRegistration *event.GroupRegistration)),

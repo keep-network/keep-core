@@ -157,7 +157,7 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
-	newEntry *event.Entry,
+	entryValue *big.Int,
 ) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
@@ -195,31 +195,23 @@ func (ec *ethereumChain) SubmitRelayEntry(
 					return
 				}
 
-				if event.SigningId.Cmp(newEntry.SigningId) == 0 {
-					subscription.Unsubscribe()
-					close(generatedEntry)
+				subscription.Unsubscribe()
+				close(generatedEntry)
 
-					err := relayEntryPromise.Fulfill(event)
-					if err != nil {
-						logger.Errorf(
-							"failed to fulfill promise: [%v]",
-							err,
-						)
-					}
-
-					return
+				err := relayEntryPromise.Fulfill(event)
+				if err != nil {
+					logger.Errorf(
+						"failed to fulfill promise: [%v]",
+						err,
+					)
 				}
+
+				return
 			}
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(
-		newEntry.SigningId,
-		newEntry.Value,
-		newEntry.GroupPubKey,
-		newEntry.PreviousEntry,
-		newEntry.Seed,
-	)
+	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(entryValue)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(generatedEntry)
@@ -234,7 +226,6 @@ func (ec *ethereumChain) OnSignatureSubmitted(
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchSignatureSubmitted(
 		func(
-			signingId *big.Int,
 			requestResponse *big.Int,
 			requestGroupPubKey []byte,
 			previousEntry *big.Int,
@@ -242,7 +233,6 @@ func (ec *ethereumChain) OnSignatureSubmitted(
 			blockNumber uint64,
 		) {
 			handle(&event.Entry{
-				SigningId:     signingId,
 				Value:         requestResponse,
 				GroupPubKey:   requestGroupPubKey,
 				PreviousEntry: previousEntry,
@@ -265,7 +255,6 @@ func (ec *ethereumChain) OnSignatureRequested(
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchSignatureRequested(
 		func(
-			signingId *big.Int,
 			payment *big.Int,
 			previousEntry *big.Int,
 			seed *big.Int,
@@ -273,7 +262,6 @@ func (ec *ethereumChain) OnSignatureRequested(
 			blockNumber uint64,
 		) {
 			handle(&event.Request{
-				SigningId:      signingId,
 				Payment:        payment,
 				PreviousEntry:  previousEntry,
 				Seed:           seed,

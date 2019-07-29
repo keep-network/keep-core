@@ -15,7 +15,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
-	"github.com/keep-network/keep-core/pkg/internal/interceptors"
+	"github.com/keep-network/keep-core/pkg/internal/interception"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -183,7 +183,7 @@ type dkgTestResult struct {
 func runTest(
 	groupSize int,
 	threshold int,
-	rules interceptors.Rules,
+	rules interception.Rules,
 ) (*dkgTestResult, error) {
 	privateKey, publicKey, err := operator.GenerateKeyPair()
 	if err != nil {
@@ -192,7 +192,7 @@ func runTest(
 
 	_, networkPublicKey := key.OperatorKeyToNetworkKey(privateKey, publicKey)
 
-	network := interceptors.NewNetwork(
+	network := interception.NewNetwork(
 		netLocal.ConnectWithKey(networkPublicKey),
 		rules,
 	)
@@ -206,7 +206,7 @@ func executeDKG(
 	groupSize int,
 	threshold int,
 	chain chainLocal.Chain,
-	network interceptors.Network,
+	network interception.Network,
 ) (*dkgTestResult, error) {
 	blockCounter, err := chain.BlockCounter()
 	if err != nil {

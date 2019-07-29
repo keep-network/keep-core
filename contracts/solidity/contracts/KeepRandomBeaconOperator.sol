@@ -35,17 +35,14 @@ contract KeepRandomBeaconOperator is Ownable {
     event DkgResultPublishedEvent(bytes groupPubKey);
 
     // These are the public events that are used by clients
-    event SignatureRequested(uint256 signingId, uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
-    event SignatureSubmitted(uint256 signingId, uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
+    event SignatureRequested(uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
+    event SignatureSubmitted(uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     event GroupSelectionStarted(uint256 groupSelectionSeed, uint256 seed);
 
-    address[] public serviceContracts;
+    bool public initialized;
 
-    // Each operator contract tracks its own signing requests and these are
-    // independent from service contracts which tracks all the relay requests
-    // the given service contract received.
-    uint256 public signingRequestCounter;
+    address[] public serviceContracts;
 
     uint256 public groupThreshold;
     uint256 public groupSize;
@@ -57,23 +54,6 @@ contract KeepRandomBeaconOperator is Ownable {
     uint256 public ticketChallengeTimeout;
     uint256 public timeDKG;
     uint256 public resultPublicationBlockStep;
-    uint256 public ticketSubmissionStartBlock;
-    uint256 public groupSelectionSeed;
-
-    uint256[] public tickets;
-    bytes[] public submissions;
-    uint256 internal currentEntryStartBlock;
-    bool internal entryInProgress;
-
-    bool public groupSelectionInProgress;
-
-    struct Proof {
-        address sender;
-        uint256 stakerValue;
-        uint256 virtualStakerIndex;
-    }
-
-    mapping(uint256 => Proof) public proofs;
 
     // activeGroupsThreshold is the minimal number of groups that should not
     // expire to protect the minimal network throughput.
@@ -87,29 +67,46 @@ contract KeepRandomBeaconOperator is Ownable {
     // counted from the moment relay request occur.
     uint256 public relayEntryTimeout;
 
-    // expiredGroupOffset is pointing to the first active group, it is also the
-    // expired groups counter
-    uint256 public expiredGroupOffset = 0;
-
     struct Group {
         bytes groupPubKey;
         uint registrationBlockHeight;
     }
 
     Group[] public groups;
-
     mapping (bytes => address[]) internal groupMembers;
 
-    bool public initialized;
+    // expiredGroupOffset is pointing to the first active group, it is also the
+    // expired groups counter
+    uint256 public expiredGroupOffset = 0;
+
+    struct Proof {
+        address sender;
+        uint256 stakerValue;
+        uint256 virtualStakerIndex;
+    }
+
+    mapping(uint256 => Proof) public proofs;
+
+    bool public groupSelectionInProgress;
+
+    uint256 public ticketSubmissionStartBlock;
+    uint256 public groupSelectionSeed;
+    uint256[] public tickets;
+    bytes[] public submissions;
 
     struct SigningRequest {
         uint256 relayRequestId;
         uint256 payment;
         bytes groupPubKey;
+        uint256 previousEntry;
+        uint256 seed;
         address serviceContract;
     }
 
-    mapping(uint256 => SigningRequest) internal signingRequests;
+    uint256 internal currentEntryStartBlock;
+    SigningRequest internal signingRequest;
+
+    bool internal entryInProgress;
 
     /**
      * @dev Checks if submitter is eligible to submit.
@@ -158,7 +155,9 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param _ticketChallengeTimeout Timeout in blocks after the period where tickets can be challenged is finished.
      * @param _timeDKG Timeout in blocks after DKG result is complete and ready to be published.
      * @param _resultPublicationBlockStep Time in blocks after which member with the given index is eligible
-     * @param _genesisEntry Initial relay entry to create first group.
+     * @param _genesisEntry Initial entry data used to trigger the first group selection by submitting
+     * a new relay entry being a signature on this one. The first array element is the previous value, the second
+     * array element is the seed.
      * @param _genesisGroupPubKey Group to respond to the initial relay entry request.
      * to submit DKG result.
      * @param _activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
@@ -181,7 +180,7 @@ contract KeepRandomBeaconOperator is Ownable {
         uint256 _activeGroupsThreshold,
         uint256 _groupActiveTime,
         uint256 _relayEntryTimeout,
-        uint256 _genesisEntry,
+        uint256[2] memory _genesisEntry, // [previous entry, seed]
         bytes memory _genesisGroupPubKey
     ) public onlyOwner {
         require(!initialized, "Contract is already initialized.");
@@ -200,12 +199,19 @@ contract KeepRandomBeaconOperator is Ownable {
         activeGroupsThreshold = _activeGroupsThreshold;
         groupActiveTime = _groupActiveTime;
         relayEntryTimeout = _relayEntryTimeout;
-        groupSelectionSeed = _genesisEntry;
+        groupSelectionSeed = _genesisEntry[0];
 
         // Create initial relay entry request. This will allow relayEntry to be called once
         // to trigger the creation of the first group. Requests are removed on successful
         // entries so genesis entry can only be called once.
-        signingRequests[signingRequestCounter] = SigningRequest(0, 0, _genesisGroupPubKey, _serviceContract);
+        signingRequest = SigningRequest(
+            0,
+            0,
+            _genesisGroupPubKey,
+            _genesisEntry[0],
+            _genesisEntry[1],
+            _serviceContract
+        );
     }
 
     /**
@@ -691,7 +697,6 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
      */
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) public payable onlyServiceContract {
-
         require(
             numberOfGroups() > 0,
             "At least one group needed to serve the request."
@@ -705,32 +710,45 @@ contract KeepRandomBeaconOperator is Ownable {
 
         bytes memory groupPubKey = selectGroup(previousEntry);
 
-        signingRequestCounter++;
-        uint256 signingId = signingRequestCounter;
+        signingRequest = SigningRequest(
+            requestId,
+            msg.value,
+            groupPubKey,
+            previousEntry,
+            seed,
+            msg.sender
+        );
 
-        signingRequests[signingId] = SigningRequest(requestId, msg.value, groupPubKey, msg.sender);
-
-        emit SignatureRequested(signingId, msg.value, previousEntry, seed, groupPubKey);
+        emit SignatureRequested(msg.value, previousEntry, seed, groupPubKey);
     }
 
     /**
      * @dev Creates a new relay entry and stores the associated data on the chain.
-     * @param _signingId The request that started this generation - to tie the results back to the request.
-     * @param _groupSignature The generated random number.
-     * @param _groupPubKey Public key of the group that generated the threshold signature.
+     * @param _groupSignature Group BLS signature over the concatentation of the
+     * previous entry and seed.
      */
-    function relayEntry(uint256 _signingId, uint256 _groupSignature, bytes memory _groupPubKey, uint256 _previousEntry, uint256 _seed) public {
+    function relayEntry(uint256 _groupSignature) public {
+        require(
+            BLS.verify(
+                signingRequest.groupPubKey,
+                abi.encodePacked(signingRequest.previousEntry, signingRequest.seed),
+                bytes32(_groupSignature)
+            ),
+            "Group signature failed to pass BLS verification."
+        );
+        
+        emit SignatureSubmitted(
+            _groupSignature,
+            signingRequest.groupPubKey,
+            signingRequest.previousEntry,
+            signingRequest.seed
+        );
 
-        require(signingRequests[_signingId].groupPubKey.equalStorage(_groupPubKey), "Provided group was not selected to produce entry for this request.");
-        require(BLS.verify(_groupPubKey, abi.encodePacked(_previousEntry, _seed), bytes32(_groupSignature)), "Group signature failed to pass BLS verification.");
-
-        address serviceContract = signingRequests[_signingId].serviceContract;
-        uint256 requestId = signingRequests[_signingId].relayRequestId;
-        delete signingRequests[_signingId];
-
-        emit SignatureSubmitted(_signingId, _groupSignature, _groupPubKey, _previousEntry, _seed);
-
-        ServiceContract(serviceContract).entryCreated(requestId, _groupSignature, _seed);
+        ServiceContract(signingRequest.serviceContract).entryCreated(
+            signingRequest.relayRequestId,
+            _groupSignature,
+            signingRequest.seed
+        );
 
         entryInProgress = false;
     }

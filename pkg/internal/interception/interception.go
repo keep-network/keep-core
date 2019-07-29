@@ -1,4 +1,4 @@
-package interceptors
+package interception
 
 import (
 	"github.com/keep-network/keep-core/pkg/net"

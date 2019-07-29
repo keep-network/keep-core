@@ -10,7 +10,6 @@ import (
 
 // Entry represents one entry in the threshold relay.
 type Entry struct {
-	SigningId     *big.Int
 	Value         *big.Int
 	GroupPubKey   []byte
 	PreviousEntry *big.Int
@@ -22,7 +21,6 @@ type Entry struct {
 
 // Request represents a request for an entry in the threshold relay.
 type Request struct {
-	SigningId      *big.Int
 	Payment        *big.Int
 	PreviousEntry  *big.Int
 	Seed           *big.Int
