@@ -38,10 +38,8 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
   // Initialize Keep Random Beacon operator contract
   operatorContract = await KeepRandomBeaconOperator.new();
   await operatorContract.initialize(
-    stakingProxy.address, serviceContract.address, minimumStake, groupThreshold,
-    groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-    activeGroupsThreshold, groupActiveTime, relayRequestTimeout,
-    [bls.previousEntry, bls.seed], bls.groupPubKey
+    stakingProxy.address, serviceContract.address,
+    bls.previousEntry, bls.seed, bls.groupPubKey
   );
 
   await serviceContract.initialize(minPayment, withdrawalDelay, operatorContract.address);

@@ -8,11 +8,15 @@ import {initContracts} from './helpers/initContracts';
 
 contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
-  let config, token, stakingContract, serviceContract, operatorContract,
+  let token, stakingContract, serviceContract, operatorContract,
   owner = accounts[0], magpie = accounts[1],
   operator1 = accounts[2], tickets1,
   operator2 = accounts[3], tickets2,
   operator3 = accounts[4], tickets3;
+
+  const minimumStake = web3.utils.toBN(200000);
+  const ticketInitialSubmissionTimeout = 20;
+  const ticketReactiveSubmissionTimeout = 100;
 
   before(async () => {
 
@@ -25,15 +29,19 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
-    config = contracts.config;
+    
     token = contracts.token;
     serviceContract = contracts.serviceContract;
     operatorContract = contracts.operatorContract;
     stakingContract = contracts.stakingContract;
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, config.minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, config.minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, config.minimumStake.mul(web3.utils.toBN(3000)))
+    operatorContract.setMinimumStake(minimumStake)
+    operatorContract.setTicketInitialSubmissionTimeout(ticketInitialSubmissionTimeout);
+    operatorContract.setTicketReactiveSubmissionTimeout(ticketReactiveSubmissionTimeout);
+
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(2000)))
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(2000)))
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake.mul(web3.utils.toBN(3000)))
 
     tickets1 = generateTickets(await operatorContract.groupSelectionSeed(), operator1, 2000);
     tickets2 = generateTickets(await operatorContract.groupSelectionSeed(), operator2, 2000);

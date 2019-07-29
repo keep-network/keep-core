@@ -28,7 +28,7 @@ contract TestKeepRandomBeaconOperatorInitialize {
         ThrowProxy throwProxy = new ThrowProxy(address(keepRandomBeaconOperator));
 
         // Prime the proxy
-        KeepRandomBeaconOperator(address(throwProxy)).initialize(address(0), address(0), 200, 150, 200, 1, 1, 1, 1, 1, 1, 1, 1, genesisEntry, "0x01");
+        KeepRandomBeaconOperator(address(throwProxy)).initialize(address(0), address(0), 100, 200, "0x01");
 
         // Execute the call that is supposed to throw.
         // r will be false if it threw and true if it didn't.
@@ -37,7 +37,7 @@ contract TestKeepRandomBeaconOperatorInitialize {
     }
 
     function testInitialize() public {        
-        keepRandomBeaconOperator.initialize(address(stakingProxy), address(0), 200, 150, 200, 1, 1, 1, 1, 1, 1, 1, 1, genesisEntry, "0x01");
+        keepRandomBeaconOperator.initialize(address(stakingProxy), address(0), 100, 200, "0x01");
         Assert.equal(keepRandomBeaconOperator.initialized(), true, "Should be initialized.");
     }
 }

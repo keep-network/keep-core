@@ -5,7 +5,7 @@ const OperatorContract = artifacts.require('./KeepRandomBeaconOperatorStub.sol')
 
 contract('TestKeepRandomBeaconServiceSelectOperator', function(accounts) {
 
-  let config, stakingProxy, serviceContract, operatorContract, operatorContract2, operatorContract3;
+  let stakingProxy, serviceContract, operatorContract, operatorContract2, operatorContract3;
 
   before(async () => {
     let contracts = await initContracts(
@@ -18,7 +18,6 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function(accounts) {
       OperatorContract
     );
 
-    config = contracts.config;
     stakingProxy = contracts.stakingProxy;
     serviceContract = contracts.serviceContract;
     operatorContract = contracts.operatorContract;
@@ -26,18 +25,14 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function(accounts) {
     // Create and initialize additional operator contracts
     operatorContract2 = await OperatorContract.new();
     operatorContract2.initialize(
-      stakingProxy.address, serviceContract.address, config.minimumStake, config.groupThreshold,
-      config.groupSize, config.timeoutInitial, config.timeoutSubmission, config.timeoutChallenge, config.timeDKG, config.resultPublicationBlockStep,
-      config.activeGroupsThreshold, config.groupActiveTime, config.relayRequestTimeout,
-      [bls.previousEntry, bls.seed], bls.groupPubKey
+      stakingProxy.address, serviceContract.address,
+      bls.previousEntry, bls.seed, bls.groupPubKey
     );
 
     operatorContract3 = await OperatorContract.new();
     operatorContract3.initialize(
-      stakingProxy.address, serviceContract.address, config.minimumStake, config.groupThreshold,
-      config.groupSize, config.timeoutInitial, config.timeoutSubmission, config.timeoutChallenge, config.timeDKG, config.resultPublicationBlockStep,
-      config.activeGroupsThreshold, config.groupActiveTime, config.relayRequestTimeout,
-      [bls.previousEntry, bls.seed], bls.groupPubKey
+      stakingProxy.address, serviceContract.address,
+      bls.previousEntry, bls.seed, bls.groupPubKey
     );
 
     operatorContract.registerNewGroup("0x0");
