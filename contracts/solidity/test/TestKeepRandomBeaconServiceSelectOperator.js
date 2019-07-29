@@ -26,7 +26,7 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function() {
       serviceContract.address, config.minimumStake, config.groupThreshold,
       config.groupSize, config.timeoutInitial, config.timeoutSubmission, config.timeoutChallenge, config.timeDKG, config.resultPublicationBlockStep,
       config.activeGroupsThreshold, config.groupActiveTime, config.relayRequestTimeout,
-      bls.groupSignature, bls.groupPubKey
+      [bls.previousEntry, bls.seed], bls.groupPubKey
     );
 
     operatorContract3 = await OperatorContract.new();
@@ -34,7 +34,7 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function() {
       serviceContract.address, config.minimumStake, config.groupThreshold,
       config.groupSize, config.timeoutInitial, config.timeoutSubmission, config.timeoutChallenge, config.timeDKG, config.resultPublicationBlockStep,
       config.activeGroupsThreshold, config.groupActiveTime, config.relayRequestTimeout,
-      bls.groupSignature, bls.groupPubKey
+      [bls.previousEntry, bls.seed], bls.groupPubKey
     );
 
     operatorContract.registerNewGroup("0x0");

@@ -3,7 +3,6 @@ package entry
 import (
 	"fmt"
 	"math/big"
-	"time"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -86,15 +85,8 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 				res.index,
 				groupPublicKey,
 			)
-			entry := &event.Entry{
-				Value:         newEntry,
-				PreviousEntry: previousEntry,
-				Timestamp:     time.Now().UTC(),
-				GroupPubKey:   groupPublicKey,
-				Seed:          seed,
-			}
 
-			res.chain.SubmitRelayEntry(entry).OnComplete(
+			res.chain.SubmitRelayEntry(newEntry).OnComplete(
 				func(entry *event.Entry, err error) {
 					if err == nil {
 						logger.Infof(

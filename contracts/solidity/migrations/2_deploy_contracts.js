@@ -44,6 +44,9 @@ const relayEntryTimeout = relayEntrySigningTime + relayEntryPublicationDeadline
 // state.SilentStateActiveBlocks which are both set to 0.
 const timeDKG = 7*(3+1);
 
+const genesisEntry = web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862');
+const genesisSeed = web3.utils.toBN('27182818284590452353602874713526624977572470936999595749669676277240766303535');
+const genesisGroupPubKey = '0x1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0';
 
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
@@ -68,8 +71,7 @@ module.exports = async function(deployer) {
     KeepRandomBeaconService.address, minStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     activeGroupsThreshold, groupActiveTime, relayEntryTimeout,
-    web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862'),
-    "0x1f1954b33144db2b5c90da089e8bde287ec7089d5d6433f3b6becaefdb678b1b2a9de38d14bef2cf9afc3c698a4211fa7ada7b4f036a2dfef0dc122b423259d0",
+    [genesisEntry, genesisSeed], genesisGroupPubKey
   );
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 11).

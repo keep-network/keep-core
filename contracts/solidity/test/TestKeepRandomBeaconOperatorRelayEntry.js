@@ -32,10 +32,10 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function() {
   });
 
   it("should be able to submit valid relay entry", async function() {
-    await operatorContract.relayEntry(bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+    await operatorContract.relayEntry(bls.nextGroupSignature);
 
     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
-      bls.groupSignature.toString(), "Should emit event with successfully submitted groupSignature."
+      bls.nextGroupSignature.toString(), "Should emit event with successfully submitted groupSignature."
     );
   });
 });
