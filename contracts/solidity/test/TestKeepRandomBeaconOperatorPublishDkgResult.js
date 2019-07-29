@@ -1,5 +1,3 @@
-import { duration } from './helpers/increaseTime';
-import {bls} from './helpers/data';
 import mineBlocks from './helpers/mineBlocks';
 import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
@@ -25,9 +23,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
   beforeEach(async () => {
 
     let contracts = await initContracts(
-      accounts,
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),

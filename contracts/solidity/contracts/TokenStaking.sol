@@ -14,9 +14,8 @@ contract TokenStaking is StakeDelegatable {
 
     using UintArrayUtils for uint256[];
 
-    event ReceivedApproval(uint256 _value);
     event Staked(address indexed from, uint256 value);
-    event InitiatedUnstake(address operator);
+    event InitiatedUnstake(address indexed operator, uint256 value);
     event FinishedUnstake(address operator);
 
     struct Withdrawal {
@@ -29,18 +28,16 @@ contract TokenStaking is StakeDelegatable {
     /**
      * @dev Creates a token staking contract for a provided Standard ERC20 token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
-     * @param _stakingProxy Address of a staking proxy that will be linked to this contract.
      * @param _delay Withdrawal delay for unstake.
      */
-    constructor(address _tokenAddress, address _stakingProxy, uint256 _delay) public {
+    constructor(address _tokenAddress, uint256 _delay) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20(_tokenAddress);
-        stakingProxy = StakingProxy(_stakingProxy);
         stakeWithdrawalDelay = _delay;
     }
 
     /**
-     * @notice Receives approval of token transfer and stakes the approved ammount.
+     * @notice Receives approval of token transfer and stakes the approved amount.
      * @dev Makes sure provided token contract is the same one linked to this contract.
      * @param _from The owner of the tokens who approved them to transfer.
      * @param _value Approved amount for the transfer and stake.
@@ -50,8 +47,6 @@ contract TokenStaking is StakeDelegatable {
      * are sent and the operator's ECDSA (65 bytes) signature of the address of the stake owner.
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
-        emit ReceivedApproval(_value);
-
         require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
         require(_extraData.length == 85, "Stake delegation data must be provided.");
@@ -70,9 +65,6 @@ contract TokenStaking is StakeDelegatable {
         // Maintain a record of the stake amount by the sender.
         stakeBalances[operator] = stakeBalances[operator].add(_value);
         emit Staked(operator, _value);
-        if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitStakedEvent(operator, _value);
-        }
     }
 
     /**
@@ -93,10 +85,7 @@ contract TokenStaking is StakeDelegatable {
  
         withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), now);
 
-        emit InitiatedUnstake(_operator);
-        if (address(stakingProxy) != address(0)) {
-            stakingProxy.emitUnstakedEvent(owner, _value);
-        }
+        emit InitiatedUnstake(_operator, _value);
     }
 
     /**
@@ -129,7 +118,7 @@ contract TokenStaking is StakeDelegatable {
      * @param _operator address of withdrawal request.
      * @return amount, createdAt.
      */
-    function getWithdrawal(address _operator) public view returns (uint256, uint256) {
+    function getWithdrawal(address _operator) public view returns (uint256 amount, uint256 createdAt) {
         return (withdrawals[_operator].amount, withdrawals[_operator].createdAt);
     }
 

@@ -13,9 +13,7 @@ contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
     beforeEach(async () => {
 
       let contracts = await initContracts(
-        accounts,
         artifacts.require('./KeepToken.sol'),
-        artifacts.require('./StakingProxy.sol'),
         artifacts.require('./TokenStaking.sol'),
         artifacts.require('./KeepRandomBeaconService.sol'),
         artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),

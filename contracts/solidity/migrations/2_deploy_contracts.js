@@ -2,7 +2,6 @@ const KeepToken = artifacts.require("./KeepToken.sol");
 const ModUtils = artifacts.require("./utils/ModUtils.sol");
 const AltBn128 = artifacts.require("./cryptography/AltBn128.sol");
 const BLS = artifacts.require("./cryptography/BLS.sol");
-const StakingProxy = artifacts.require("./StakingProxy.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol");
@@ -56,9 +55,8 @@ module.exports = async function(deployer) {
   await deployer.link(AltBn128, BLS);
   await deployer.deploy(BLS);
   await deployer.deploy(KeepToken);
-  await deployer.deploy(StakingProxy);
-  await deployer.deploy(TokenStaking, KeepToken.address, StakingProxy.address, withdrawalDelay);
-  await deployer.deploy(TokenGrant, KeepToken.address, StakingProxy.address, withdrawalDelay);
+  await deployer.deploy(TokenStaking, KeepToken.address, withdrawalDelay);
+  await deployer.deploy(TokenGrant, KeepToken.address, TokenStaking.address);
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.link(BLS, KeepRandomBeaconOperatorStub);
   deployer.deploy(KeepRandomBeaconOperator);
@@ -70,11 +68,14 @@ module.exports = async function(deployer) {
 
   // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
   keepRandomBeaconOperator.initialize(
-    StakingProxy.address, KeepRandomBeaconService.address, minStake, groupThreshold, groupSize,
+    KeepRandomBeaconService.address, minStake, groupThreshold, groupSize,
     timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
     activeGroupsThreshold, groupActiveTime, relayEntryTimeout,
     [genesisEntry, genesisSeed], genesisGroupPubKey
   );
+
+  // TODO: replace with a secure authorization protocol (addressed in RFC 11).
+  keepRandomBeaconOperator.authorizeStakingContract(TokenStaking.address);
 
   keepRandomBeaconService.initialize(
     minPayment,

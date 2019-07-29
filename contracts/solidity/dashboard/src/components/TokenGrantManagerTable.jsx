@@ -1,15 +1,16 @@
 import React, { Component } from 'react'
 import { Table } from 'react-bootstrap'
+import TokenGrantRevokeButton from './TokenGrantRevokeButton'
 
-class TokenGrantsOwnerTable extends Component {
+class TokenGrantManagerTable extends Component {
   render() {
     if (this.props.data) {
       var rows = this.props.data.map(function(item, i){
         return (
-          <tr key={"token-grant-"+i+"-for-"+item.beneficiary}>
+          <tr key={"token-grant-"+i+"-for-"+item.grantee}>
             <td>{item.formatted.amount}</td>
-            <td><a href="/">{item.beneficiary}</a></td>
-            <td><button>Revoke</button></td>
+            <td><a href="/">{item.grantee}</a></td>
+            <td><TokenGrantRevokeButton item={item} /></td>
           </tr>
         )
       })
@@ -31,4 +32,4 @@ class TokenGrantsOwnerTable extends Component {
   }
 }
 
-export default TokenGrantsOwnerTable
+export default TokenGrantManagerTable
