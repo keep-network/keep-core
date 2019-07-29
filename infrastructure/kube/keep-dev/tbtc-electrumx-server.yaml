@@ -51,6 +51,7 @@ spec:
           - containerPort: 50002
           - containerPort: 50004
           - containerPort: 8000
+        # Full list of env vars: https://electrumx.readthedocs.io/en/latest/environment.html
         env:
           - name: DB_DIRECTORY
             value: /mnt/electrum/data
