@@ -157,7 +157,7 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
-	newEntry *event.Entry,
+	entryValue *big.Int,
 ) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
@@ -211,12 +211,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(
-		newEntry.Value,
-		newEntry.GroupPubKey,
-		newEntry.PreviousEntry,
-		newEntry.Seed,
-	)
+	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(entryValue)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(generatedEntry)
