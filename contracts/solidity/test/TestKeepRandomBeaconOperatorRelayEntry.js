@@ -28,7 +28,7 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function() {
     // Invalid signature
     let groupSignature = web3.utils.toBN('0x0fb34abfa2a9844a58776650e399bca3e08ab134e42595e03e3efc5a0472bcd8');
 
-    await expectThrow(operatorContract.relayEntry(groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed));
+    await expectThrow(operatorContract.relayEntry(groupSignature));
   });
 
   it("should be able to submit valid relay entry", async function() {
