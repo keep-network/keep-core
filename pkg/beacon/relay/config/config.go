@@ -40,8 +40,9 @@ type Chain struct {
 	// tickets' values were evenly distributed in the domain of the
 	// pseudorandom function
 	NaturalThreshold *big.Int
-	// RelayEntryTimeout is a timeout in blocks on chain. Blocks are
-	// counted from the moment a relay request occur.
+	// RelayEntryTimeout is a timeout in blocks on-chain for a relay
+	// entry to be published by the selected group. Blocks are
+	// counted from the moment relay request occur.
 	RelayEntryTimeout *big.Int
 }
 
