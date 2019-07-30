@@ -15,7 +15,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
   operator1 = accounts[0],
   operator2 = accounts[1],
   operator3 = accounts[2],
-  operator4 = accounts[3],
+  operator4 = accounts[3],  
   selectedParticipants, signatures, signingMemberIndices = [],
   disqualified = '0x0000000000000000000000000000000000000000',
   inactive = '0x0000000000000000000000000000000000000000',
@@ -23,11 +23,11 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
   resultHash = web3.utils.soliditySha3(groupPubKey, disqualified, inactive);
 
   const groupSize = 20;
-  const groupThreshold = 15;
+  const groupThreshold = 15;  
   const minimumStake = web3.utils.toBN(200000);
   const ticketInitialSubmissionTimeout = 20;
   const ticketReactiveSubmissionTimeout = 100;
-  const ticketChallengeTimeout = 4;
+  const ticketChallengeTimeout = 60;
   const resultPublicationBlockStep = 3;
 
   beforeEach(async () => {
@@ -47,6 +47,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     operatorContract = contracts.operatorContract;
 
     operatorContract.setGroupSize(groupSize);
+    operatorContract.setGroupThreshold(groupThreshold);
     operatorContract.setMinimumStake(minimumStake);
     operatorContract.setResultPublicationBlockStep(resultPublicationBlockStep);
     operatorContract.setTicketInitialSubmissionTimeout(ticketInitialSubmissionTimeout);
