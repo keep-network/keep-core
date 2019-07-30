@@ -1,4 +1,4 @@
-import exceptThrow from './helpers/expectThrow';
+import expectThrow from './helpers/expectThrow';
 import mineBlocks from './helpers/mineBlocks';
 import {bls} from './helpers/data';
 import generateTickets from './helpers/generateTickets';
@@ -17,9 +17,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
   before(async () => {
 
     let contracts = await initContracts(
-      accounts,
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
@@ -50,11 +48,11 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
   });
 
   it("should fail to get selected tickets before challenge period is over", async function() {
-    await exceptThrow(operatorContract.selectedTickets());
+    await expectThrow(operatorContract.selectedTickets());
   });
 
   it("should fail to get selected participants before challenge period is over", async function() {
-    await exceptThrow(operatorContract.selectedParticipants());
+    await expectThrow(operatorContract.selectedParticipants());
   });
 
   it("should be able to output submited tickets in ascending ordered", async function() {

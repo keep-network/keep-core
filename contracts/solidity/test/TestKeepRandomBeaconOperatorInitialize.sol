@@ -6,7 +6,7 @@ import "../contracts/utils/ThrowProxy.sol";
 import "../contracts/KeepRandomBeaconOperator.sol";
 
 
-contract StakingProxyMock {
+contract StakingContractMock {
     function balanceOf(address _staker) public pure returns(uint256) {
         _staker; // Suppress unused variable warning.
         return 200;
@@ -15,8 +15,8 @@ contract StakingProxyMock {
 
 
 contract TestKeepRandomBeaconOperatorInitialize {
-    // Create Staking proxy contract mock
-    StakingProxyMock stakingProxy = new StakingProxyMock();
+    // Create Staking contract mock
+    StakingContractMock stakingContract = new StakingContractMock();
 
     // Create Keep Random Beacon operator contract
     KeepRandomBeaconOperator keepRandomBeaconOperator = new KeepRandomBeaconOperator();
@@ -28,7 +28,8 @@ contract TestKeepRandomBeaconOperatorInitialize {
         ThrowProxy throwProxy = new ThrowProxy(address(keepRandomBeaconOperator));
 
         // Prime the proxy
-        KeepRandomBeaconOperator(address(throwProxy)).initialize(address(0), address(0), 200, 150, 200, 1, 1, 1, 1, 1, 1, 1, 1, genesisEntry, "0x01");
+        KeepRandomBeaconOperator(address(throwProxy)).initialize(address(0), 200, 150, 200, 1, 1, 1, 1, 1, 1, 1, 1, genesisEntry, "0x01");
+
 
         // Execute the call that is supposed to throw.
         // r will be false if it threw and true if it didn't.
@@ -37,7 +38,8 @@ contract TestKeepRandomBeaconOperatorInitialize {
     }
 
     function testInitialize() public {        
-        keepRandomBeaconOperator.initialize(address(stakingProxy), address(0), 200, 150, 200, 1, 1, 1, 1, 1, 1, 1, 1, genesisEntry, "0x01");
+        keepRandomBeaconOperator.initialize(address(0), 200, 150, 200, 1, 1, 1, 1, 1, 1, 1, 1, genesisEntry, "0x01");
+
         Assert.equal(keepRandomBeaconOperator.initialized(), true, "Should be initialized.");
     }
 }

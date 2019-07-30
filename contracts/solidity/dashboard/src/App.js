@@ -12,10 +12,11 @@ import Footer from './components/Footer'
 import StakingForm from './components/StakingForm'
 import StakingTable from './components/StakingTable'
 import StakingDelegateForm from './components/StakingDelegateForm'
+import StakingDelegateTokenGrantForm from './components/StakingDelegateTokenGrantForm'
 import SigningForm from './components/SigningForm'
 import WithdrawalsTable from './components/WithdrawalsTable'
 import TokenGrantForm from './components/TokenGrantForm'
-import TokenGrantsOwnerTable from './components/TokenGrantsOwnerTable'
+import TokenGrantManagerTable from './components/TokenGrantManagerTable'
 import TokenGrants from './components/TokenGrants'
 import VestingChart from './components/VestingChart'
 import VestingDetails from './components/VestingDetails'
@@ -74,6 +75,7 @@ class Main extends Component {
         token: contracts.token,
         stakingContract: contracts.stakingContract,
         grantContract: contracts.grantContract,
+        defaultContract: contracts.stakingContract,
         utils: web3.utils,
         eth: web3.eth
       }
@@ -113,7 +115,7 @@ class Main extends Component {
 
   render() {
     const { web3, tokenBalance, operators, stakeBalance, grantBalance, grantStakeBalance,
-      isTokenHolder, isOperator, stakeOwner, operatorChartData, stakeOwnerChartData, chartOptions, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
+      isTokenHolder, isOperator, isOperatorOfStakedTokenGrant, stakedGrant, stakeOwner, operatorChartData, stakeOwnerChartData, chartOptions, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
       error } = this.state
 
     return (
@@ -127,8 +129,14 @@ class Main extends Component {
                   <div className="alert alert-danger m-5" role="alert">{error}</div>:null
                 }
 
-                {isOperator ?
+                {isOperator && !isOperatorOfStakedTokenGrant ?
                   <div className="alert alert-info m-5" role="alert">You are registered as an operator for {stakeOwner}</div>:null
+                }
+
+                {isOperatorOfStakedTokenGrant ?
+                  <div className="alert alert-info m-5" role="alert">
+                    You are registered as a staked token grant operator for {stakedGrant.grantee} 
+                  </div>:null
                 }
 
                 {!isTokenHolder && !isOperator ?
@@ -140,7 +148,14 @@ class Main extends Component {
                       a signature of the stake owner address and sending it to the owner. Using the signature the owner can initiate
                       stake delegation and you will be able to participate in network operations on behalf of the stake owner.
                     </p>
-                    <SigningForm/>
+
+                    <div className="signing-form well">
+                      <SigningForm description="Sign stake owner address" defaultMessageToSign="0x0" />
+                      <SigningForm
+                        description="(Optional) Sign Token Grant contract address. This is required only for Token Grants stake operators"
+                        defaultMessageToSign={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
+                    </div>
+
                   </div>:
                   <Tabs defaultActiveKey={1} id="dashboard-tabs">
                     <Tab eventKey={1} title="Overview">
@@ -166,7 +181,15 @@ class Main extends Component {
                               </TableRow>
                             </tbody>
                           </Table>
-                          <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
+
+                          {!isOperatorOfStakedTokenGrant ?
+                            <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>:
+                            <div>
+                              <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
+                              <small>You can only unstake full amount. Partial unstake amounts are not yet supported.</small>
+                            </div>
+                          }
+
                         </Col>
                       </Row>:
                       <Row className="overview">
@@ -189,7 +212,7 @@ class Main extends Component {
                                 { withdrawalsTotal }
                               </TableRow>
                               <TableRow title="Token Grants">
-                                { grantBalance }
+                                { displayAmount(grantBalance, 18, 3) }
                               </TableRow>
                               <TableRow title="Staked Token Grants">
                                 { grantStakeBalance }
@@ -247,14 +270,32 @@ class Main extends Component {
                           </Col>
                         </Row>
                         <Row>
-                          <TokenGrants data={grantedToYou} selectTokenGrant={this.selectTokenGrant} />
+                          <Col xs={12} md={12}>
+                            <TokenGrants data={grantedToYou} selectTokenGrant={this.selectTokenGrant} />
+                          </Col>
+                        </Row>
+                        <Row>
+                          <Col xs={12} md={12}>
+                            <h3>Stake Delegation of Token Grants</h3>
+                            <p>
+                              Keep network does not require token owners to perform the day-to-day operations of staking 
+                              with the private keys holding the tokens. This is achieved by stake delegation, where different
+                              addresses hold different responsibilities and cold storage is supported to the highest extent practicable.
+                            </p>
+                            
+                            <StakingDelegateTokenGrantForm
+                              tokenBalance={grantBalance}
+                              tokenGrantContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }
+                              stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }
+                            />
+                          </Col>
                         </Row>
                       </Tab>:null
                     }
                     {!isOperator ?
                       <Tab eventKey={4} title="Create Token Grant">
                         <h3>Grant tokens</h3>
-                        <p>You can grant tokens with a vesting schedule where balance released to the beneficiary 
+                        <p>You can grant tokens with a vesting schedule where balance released to the grantee
                           gradually in a linear fashion until start + duration. By then all of the balance will have vested.
                           You must approve the amount you want to grant by calling approve() method of the token contract first
                         </p>
@@ -266,7 +307,7 @@ class Main extends Component {
                         <Row>
                           <h3>Granted by you</h3>
                           <Col xs={12}>
-                            <TokenGrantsOwnerTable data={ grantedByYou }/>
+                            <TokenGrantManagerTable data={ grantedByYou }/>
                           </Col>
                         </Row>
                       </Tab>:null
@@ -289,7 +330,7 @@ class Main extends Component {
     const grantContract = this.state.web3.grantContract
     const tokenBalance = await token.methods.balanceOf(this.state.web3.yourAddress).call()
     const stakeOwner = await stakingContract.methods.ownerOf(this.state.web3.yourAddress).call();
-    const grantBalance = displayAmount(await grantContract.methods.balanceOf(this.state.web3.yourAddress).call(), 18, 3)
+    const grantBalance = await grantContract.methods.balanceOf(this.state.web3.yourAddress).call()
     const grantStakeBalance = displayAmount(await grantContract.methods.stakeBalanceOf(this.state.web3.yourAddress).call(), 18, 3)
 
     let isTokenHolder = false;
@@ -303,13 +344,24 @@ class Main extends Component {
       isOperator = true;
     }
 
+    // Check if your account is an operator for a staked Token Grant.
+    let stakedGrant
+    let isOperatorOfStakedTokenGrant
+    let stakedGrantByOperator = await grantContract.methods.grantStakes(this.state.web3.yourAddress).call()
+
+    if (stakedGrantByOperator.stakingContract === stakingContract.address) {
+      isOperatorOfStakedTokenGrant = true
+      stakedGrant = await grantContract.methods.grants(stakedGrantByOperator.grantId.toString()).call()
+      this.setState(state => (state.web3.defaultContract = state.web3.grantContract, state))
+    }
+
     // Calculate delegated stake balances
-    let stakeBalance = await stakingContract.methods.stakeBalanceOf(this.state.web3.yourAddress).call()
+    let stakeBalance = await stakingContract.methods.balanceOf(this.state.web3.yourAddress).call()
     const operatorsAddresses = await stakingContract.methods.operatorsOf(this.state.web3.yourAddress).call()
     let operators = [];
 
     for(let i = 0; i < operatorsAddresses.length; i++) {
-      let balance = await stakingContract.methods.stakeBalanceOf(operatorsAddresses[i]).call();
+      let balance = await stakingContract.methods.balanceOf(operatorsAddresses[i]).call();
       if (!balance.isZero()) {
         let operator = {
           'address': operatorsAddresses[i],
@@ -366,31 +418,32 @@ class Main extends Component {
       const grant = await grantContract.methods.grants(grantIndexes[i].toNumber()).call()
       const grantedAmount = await grantContract.methods.grantedAmount(grantIndexes[i].toNumber()).call()
       const data = {
-        'owner': this.state.web3.utils.toChecksumAddress(grant[0]),
-        'beneficiary': this.state.web3.utils.toChecksumAddress(grant[1]),
-        'locked': grant[2],
-        'revoked': grant[3],
-        'revocable': grant[4],
-        'amount': grant[5],
+        'id': grantIndexes[i].toNumber(),
+        'grantManager': this.state.web3.utils.toChecksumAddress(grant[0]),
+        'grantee': this.state.web3.utils.toChecksumAddress(grant[1]),
+        'revoked': grant[2],
+        'revocable': grant[3],
+        'amount': grant[4],
         'grantedAmount': grantedAmount,
-        'end': grant[6].add(grant[7]),
-        'start': grant[7],
-        'cliff': grant[8],
-        'released': grant[9],
+        'end': grant[5].add(grant[6]),
+        'start': grant[6],
+        'cliff': grant[7],
+        'withdrawn': grant[8],
+        'staked': grant[9],
         'decimals': 18,
         'symbol': 'KEEP',
         'formatted': {
-          'amount': displayAmount(grant[5], 18, 3),
-          'end': moment((grant[6].add(grant[7])).mul(1000)).format("MMMM Do YYYY, h:mm:ss a"),
-          'start': moment((grant[7].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
-          'cliff': moment((grant[8].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
-          'released': grant[9].toNumber()
+          'amount': displayAmount(grant[4], 18, 3),
+          'end': moment((grant[5].add(grant[6])).mul(1000)).format("MMMM Do YYYY, h:mm:ss a"),
+          'start': moment((grant[6].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
+          'cliff': moment((grant[7].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
+          'withdrawn': grant[8].toNumber()
         }
       }
 
-      if (this.state.web3.yourAddress === data['owner']) {
+      if (this.state.web3.yourAddress === data['grantManager']) {
         grantedByYou.push(data)
-      } else if (this.state.web3.yourAddress === data['beneficiary']) {
+      } else if (this.state.web3.yourAddress === data['grantee']) {
         grantedToYou.push(data)
       }
     }
@@ -439,6 +492,8 @@ class Main extends Component {
       operators,
       isTokenHolder,
       isOperator,
+      isOperatorOfStakedTokenGrant,
+      stakedGrant,
       stakeOwner,
       stakeBalance,
       grantBalance,

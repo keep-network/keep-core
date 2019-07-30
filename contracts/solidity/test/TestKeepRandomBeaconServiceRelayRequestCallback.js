@@ -2,15 +2,13 @@ import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
-contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
+contract('TestKeepRandomBeaconServiceRelayRequestCallback', function() {
 
   let operatorContract, serviceContract, callbackContract;
 
   before(async () => {
     let contracts = await initContracts(
-      accounts,
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),

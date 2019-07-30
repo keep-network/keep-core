@@ -1,16 +1,14 @@
 import mineBlocks from './helpers/mineBlocks';
 import {initContracts} from './helpers/initContracts';
 
-contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
+contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
 
   let config, operatorContract,
     testGroupsNumber = 10;
 
   beforeEach(async () => {
     let contracts = await initContracts(
-      accounts,
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),

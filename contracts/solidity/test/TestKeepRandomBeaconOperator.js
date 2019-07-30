@@ -1,4 +1,4 @@
-import exceptThrow from './helpers/expectThrow';
+import expectThrow from './helpers/expectThrow';
 import {initContracts} from './helpers/initContracts';
 
 contract('TestKeepRandomBeaconOperator', function(accounts) {
@@ -7,9 +7,7 @@ contract('TestKeepRandomBeaconOperator', function(accounts) {
 
   before(async () => {
     let contracts = await initContracts(
-      accounts,
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
@@ -19,7 +17,7 @@ contract('TestKeepRandomBeaconOperator', function(accounts) {
   });
 
   it("should fail to update minimum stake by non owner", async function() {
-    await exceptThrow(operatorContract.setMinimumStake(123, {from: accounts[1]}));
+    await expectThrow(operatorContract.setMinimumStake(123, {from: accounts[1]}));
   });
 
   it("should be able to update minimum stake by the owner", async function() {
