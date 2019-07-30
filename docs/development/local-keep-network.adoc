@@ -261,9 +261,6 @@ Running migration: 2_deploy_contracts.js
   Replacing KeepToken...
   ... 0x2e1472bcf86de889e451828de94a3f6b673304767e49f050989d2bfcfba739ce
   KeepToken: 0xcb6a6a58f0badc45827d4bb221f5387f70ea6184
-  Replacing StakingProxy...
-  ... 0x8ae70295914339ca77032f12b86db52d4ad3bdf42cf53d61e091f804b577fea1
-  StakingProxy: 0xaaf62d144641daa15d9208552360a27b2edf0c25
   Replacing TokenStaking...
   ... 0x61af5445af82db5b8da75a8e8fcd272c7c2a542a81b372662cde9b98d37a0cb0
   TokenStaking: 0xce812232c495262ff1423fa68b237177eda3af4c

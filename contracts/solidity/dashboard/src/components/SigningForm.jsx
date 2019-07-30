@@ -14,7 +14,7 @@ const RESET_DELAY = 3000 // 3 seconds
 class SigningForm extends Component {
 
   state = {
-    address: "0x0",
+    messageToSign: this.props.defaultMessageToSign,
     signature: "",
     hasError: false,
     requestSent: false,
@@ -31,7 +31,7 @@ class SigningForm extends Component {
 
   validateAddress() {
     const { web3 } = this.props
-    if (web3.utils && web3.utils.isAddress(this.state.address)) return 'success'
+    if (web3.utils && web3.utils.isAddress(this.state.messageToSign)) return 'success'
     else return 'error'
   }
 
@@ -61,10 +61,10 @@ class SigningForm extends Component {
   }
 
   async submit() {
-    const { address } = this.state
+    const { messageToSign } = this.state
     const { web3 } = this.props
 
-    let signature = await web3.eth.personal.sign(web3.utils.soliditySha3(address), web3.yourAddress, '');
+    let signature = await web3.eth.personal.sign(web3.utils.soliditySha3(messageToSign), web3.yourAddress, '');
 
     this.setState({
       signature: signature
@@ -73,23 +73,24 @@ class SigningForm extends Component {
   }
 
   render() {
-    const { address, signature,
+    const { messageToSign, signature,
       hasError, errorMsg} = this.state
+    const { description } = this.props
 
     let hidden = {
       display: signature ? "block" : "none"
     }
 
     return (
-      <div className="signing-form well">
-        <p>Step 1: Sign stake owner address</p>
+      <div>
+        <p>{description}</p>
         <Form inline
           onSubmit={this.onSubmit}>
           <FormGroup>
             <FormControl
               type="text"
-              name="address"
-              value={address}
+              name="messageToSign"
+              value={messageToSign}
               onChange={this.onChange}
               />
           </FormGroup>
@@ -105,7 +106,7 @@ class SigningForm extends Component {
           <small className="error-message">{errorMsg}</small> }
         <Row style={ hidden }>
           <Col sm={12} >
-            <p>Step 2: Send the signature below to the stake owner to initiate stake delegation</p>
+            <p>Send the signature below to the stake owner to initiate stake delegation</p>
             <div className="well small">{signature}</div>
           </Col>
         </Row>

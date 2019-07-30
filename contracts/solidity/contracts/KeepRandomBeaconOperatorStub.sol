@@ -45,6 +45,10 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         return groups[groupIndex].groupPubKey;
     }
 
+    function getTicketSubmissionStartBlock() public view returns(uint256) {
+        return ticketSubmissionStartBlock;
+    }
+
     function setGroupSize(uint256 size) public {
         groupSize = size;
     }

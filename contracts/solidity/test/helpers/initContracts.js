@@ -1,10 +1,10 @@
 import { duration } from './increaseTime';
 import { bls } from './data';
 
-async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, KeepRandomBeaconService,
+async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
 
-  let token, stakingProxy, stakingContract,
+  let token, stakingContract,
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract;
 
@@ -14,10 +14,8 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
   // Initialize Keep token contract
   token = await KeepToken.new();
 
-  // Initialize staking contract under proxy
-  stakingProxy = await StakingProxy.new();
-  stakingContract = await TokenStaking.new(token.address, stakingProxy.address, duration.days(30));
-  await stakingProxy.authorizeContract(stakingContract.address, {from: accounts[0]})
+  // Initialize staking contract
+  stakingContract = await TokenStaking.new(token.address, duration.days(30));
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new();
@@ -27,7 +25,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
   // Initialize Keep Random Beacon operator contract
   operatorContract = await KeepRandomBeaconOperator.new();
   await operatorContract.initialize(
-    stakingProxy.address, serviceContract.address,
+    serviceContract.address,
     bls.previousEntry, bls.seed, bls.groupPubKey
   );
 
@@ -39,7 +37,6 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
 
   return {
     token: token,
-    stakingProxy: stakingProxy,
     stakingContract: stakingContract,
     serviceContract: serviceContract,
     operatorContract: operatorContract

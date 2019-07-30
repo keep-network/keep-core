@@ -2,12 +2,11 @@ package ethereum
 
 import (
 	"fmt"
-	"math/big"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
@@ -16,12 +15,11 @@ import (
 
 type ethereumChain struct {
 	config                           Config
-	client                           *ethclient.Client
+	client                           bind.ContractBackend
 	clientRPC                        *rpc.Client
 	clientWS                         *rpc.Client
-	signingId                        *big.Int
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
-	stakingContract                  *contract.StakingProxy
+	stakingContract                  *contract.TokenStaking
 	accountKey                       *keystore.Key
 
 	// transactionMutex allows interested parties to forcibly serialize
@@ -57,7 +55,7 @@ func connect(config Config) (*ethereumChain, error) {
 
 	pv := &ethereumChain{
 		config:           config,
-		client:           client,
+		client:           ethutil.WrapCallLogging(logger, client),
 		clientRPC:        clientRPC,
 		clientWS:         clientWS,
 		transactionMutex: &sync.Mutex{},
@@ -95,13 +93,13 @@ func connect(config Config) (*ethereumChain, error) {
 	}
 	pv.keepRandomBeaconOperatorContract = keepRandomBeaconOperatorContract
 
-	address, err = addressForContract(config, "StakingProxy")
+	address, err = addressForContract(config, "TokenStaking")
 	if err != nil {
-		return nil, fmt.Errorf("error resolving StakingProxy contract: [%v]", err)
+		return nil, fmt.Errorf("error resolving TokenStaking contract: [%v]", err)
 	}
 
 	stakingContract, err :=
-		contract.NewStakingProxy(
+		contract.NewTokenStaking(
 			*address,
 			pv.accountKey,
 			pv.client,
@@ -115,10 +113,10 @@ func connect(config Config) (*ethereumChain, error) {
 	return pv, nil
 }
 
-// Connect makes the network connection to the Ethereum network and returns a
-// utility handle to the chain interface with additional methods for non-
-// standard client interactions. Note: for other things to work correctly the
-// configuration will need to reference a websocket, "ws://", or local IPC
+// ConnectUtility makes the network connection to the Ethereum network and
+// returns a utility handle to the chain interface with additional methods for
+// non- standard client interactions. Note: for other things to work correctly
+// the configuration will need to reference a websocket, "ws://", or local IPC
 // connection.
 func ConnectUtility(config Config) (chain.Utility, error) {
 	base, err := connect(config)
