@@ -1,4 +1,5 @@
 {{- $contract := . -}}
+{{- $logger := (print $contract.ShortVar "Logger") -}}
 {{- range $i, $method := .NonConstMethods }}
 
 // Transaction submission.
@@ -8,6 +9,14 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 	value *big.Int,
 	{{ end -}}
 ) (*types.Transaction, error) {
+	{{$logger}}.Debug(
+		"submitting transaction {{$method.LowerName}}\n",
+		{{$method.Params}}
+		{{- if $method.Payable -}}
+		"\nValue: ", value,
+		{{ end -}}
+	)
+
 	{{$contract.ShortVar}}.transactionMutex.Lock()
 	defer {{$contract.ShortVar}}.transactionMutex.Unlock()
 
@@ -36,6 +45,11 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 			{{$method.Params}}
 		)
 	}
+
+	{{$logger}}.Debugf(
+		"submitted transaction {{$method.LowerName}} with id: [%v]",
+		transaction.Hash().Hex(),
+	)
 
 	return transaction, err
 }
