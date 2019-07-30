@@ -8,19 +8,8 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract;
 
-  let minimumStake = web3.utils.toBN(200000),
-    groupThreshold = 15,
-    groupSize = 20,
-    timeoutInitial = 20,
-    timeoutSubmission = 100,
-    timeoutChallenge = 60,
-    timeDKG = 20,
-    resultPublicationBlockStep = 3,
-    groupActiveTime = 300,
-    activeGroupsThreshold = 5,
-    minPayment = 1,
-    withdrawalDelay = 1,
-    relayRequestTimeout = 10;
+  let minPayment = 1
+  let withdrawalDelay = 1
 
   // Initialize Keep token contract
   token = await KeepToken.new();
@@ -49,21 +38,6 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
   await operatorContract.relayEntry(bls.groupSignature);
 
   return {
-    config: {
-      minimumStake: minimumStake,
-      groupThreshold: groupThreshold,
-      groupSize: groupSize,
-      timeoutInitial: timeoutInitial,
-      timeoutSubmission: timeoutSubmission,
-      timeoutChallenge: timeoutChallenge,
-      timeDKG: timeDKG,
-      resultPublicationBlockStep: resultPublicationBlockStep,
-      groupActiveTime: groupActiveTime,
-      activeGroupsThreshold: activeGroupsThreshold,
-      minPayment: minPayment,
-      withdrawalDelay: withdrawalDelay,
-      relayRequestTimeout: relayRequestTimeout
-    },
     token: token,
     stakingProxy: stakingProxy,
     stakingContract: stakingContract,
