@@ -25,8 +25,59 @@ ifndef::yellowpaper[toc::[]]
 :leveloffset: +1
 
 include::terms.adoc[]
+= Details+Rationale
 
-include::concepts.adoc[]
+== Message delivery
+
+=== Broadcast channel
+
+Every group member in phase _p_ can safely assume
+every non-inactive group member has seen
+all messages broadcast within _T~p~_ after the beginning of phase _p_.
+
+All messages broadcast by _P~i~_ are assumed to be signed with _X~i~_.
+
+A message is malformed if it cannot be parsed and validated
+as the message required in a particular phase of the protocol.
+
+The implementation details of the broadcast channel
+are currently out of scope for this document.
+
+==== Assumptions and implications
+
+The broadcast channel is assumed to give all participants
+the same view of the world,
+and deliver all messages from non-inactive participants
+within a time that is less than the applicable time limit for each phase.
+
+If these assumptions don't hold, certain attacks become possible.
+For example, if a message from _P~i~_
+reaches honest participant _P~j~_ but not _P~k~_,
+their sets of inactive participants _IA~Pj~_ and _IA~Pk~_ will differ.
+This will make them vote for different results,
+which may prevent quorum from being reached.
+
+== Dispute resolution
+
+Given that the protocol is performed off-chain,
+participants may submit incorrect results
+in an attempt to gain advantage.
+By relying on the honest majority assumption,
+this can be mitigated by having participants vote on results.
+
+Voting on results means that only votes need to be counted on-chain;
+validating everything else can be offloaded onto the honest majority.
+This has significant cost advantages as _O(n^2^)_ blockchain operations,
+including _O(n)_ transactions and up to _O(n^2^)_ elliptic curve operations,
+can be replaced with simply _O(n)_ transactions of mostly constant size,
+or a single transaction with _O(n)_ elliptic curve operations.
+
+There are two main ways this voting can be performed:
+either by members signing valid results, which are then verified on-chain,
+or by designated members being eligible to submit a result
+which may be challenged by others if they consider it incorrect.
+For simplicity, the first option is selected
+and a submitted result requires at least _M~max~ + 1_ supporting signatures.
 
 :leveloffset: -1
 
