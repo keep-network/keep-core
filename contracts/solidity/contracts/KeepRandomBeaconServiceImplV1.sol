@@ -6,6 +6,8 @@ import "./DelayedWithdrawal.sol";
 
 
 interface OperatorContract {
+    function signingGasEstimate() external view returns(uint256);
+    function createGroupGasEstimate() external view returns(uint256);
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) payable external;
     function numberOfGroups() external view returns(uint256);
     function createGroup(uint256 groupSelectionSeed, uint256 seed) payable external;
@@ -27,7 +29,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     event RelayEntryGenerated(uint256 requestId, uint256 entry);
 
     uint256 internal _minGasPrice;
-    uint256 internal _minPayment;
     uint256 internal _previousEntry;
 
     // Each service contract tracks its own requests and these are independent
@@ -56,17 +57,15 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param minGasPrice Minimum gas price for relay entry request.
-     * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param operatorContract Operator contract linked to this contract.
      */
-    function initialize(uint256 minGasPrice, uint256 minPayment, uint256 withdrawalDelay, address operatorContract)
+    function initialize(uint256 minGasPrice, uint256 withdrawalDelay, address operatorContract)
         public
         onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
         _minGasPrice = minGasPrice;
-        _minPayment = minPayment;
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
@@ -149,7 +148,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function requestRelayEntry(uint256 seed, address callbackContract, string memory callbackMethod) public payable returns (uint256) {
         require(
-            msg.value >= _minPayment,
+            msg.value >= minimumPayment(),
             "Payment is less than required minimum."
         );
 
@@ -209,18 +208,23 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
-     * @dev Set the minimum payment that is required before a relay entry occurs.
-     * @param minPayment is the value in wei that is required to be payed for the process to start.
-     */
-    function setMinimumPayment(uint256 minPayment) public onlyOwner {
-        _minPayment = minPayment;
-    }
-
-    /**
-     * @dev Get the minimum payment that is required before a relay entry occurs.
+     * @dev Get the minimum payment for relay entry request.
      */
     function minimumPayment() public view returns(uint256) {
-        return _minPayment;
+        uint256 signingGas;
+        uint256 createGroupGas;
+
+        // Use most expensive operator contract for estimated gas values.
+        for (uint i = 0; i < _operatorContracts.length; i++) {
+            OperatorContract operator = OperatorContract(_operatorContracts[i]);
+
+            if (operator.numberOfGroups() > 0) {
+                signingGas = operator.signingGasEstimate() > signingGas ? operator.signingGasEstimate():signingGas;
+                createGroupGas = operator.createGroupGasEstimate() > createGroupGas ? operator.createGroupGasEstimate():createGroupGas;
+            }
+        }
+
+        return signingGas*_minGasPrice + createGroupGas*_minGasPrice;
     }
 
     /**

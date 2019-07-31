@@ -67,6 +67,9 @@ contract KeepRandomBeaconOperator is Ownable {
     // counted from the moment relay request occur.
     uint256 public relayEntryTimeout;
 
+    uint256 public signingGasEstimate = 1240000; // TODO: Update once alt_bn128 gas costs reduction is implemented.
+    uint256 public createGroupGasEstimate = 2260000;
+
     struct Group {
         bytes groupPubKey;
         uint registrationBlockHeight;

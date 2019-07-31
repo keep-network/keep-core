@@ -27,7 +27,8 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should produce entry if callback contract was not provided", async function() {
-    await serviceContract.requestRelayEntry(bls.seed, {value: config.minimumPayment});
+    let minimumPayment = await serviceContract.minimumPayment()
+    await serviceContract.requestRelayEntry(bls.seed, {value: minimumPayment});
     await operatorContract.relayEntry(bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
     let result = await serviceContract.previousEntry();
@@ -35,7 +36,8 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should successfully call method on a callback contract", async function() {
-    await serviceContract.methods['requestRelayEntry(uint256,address,string)'](bls.seed, callbackContract.address, "callback(uint256)", {value: config.minimumPayment});
+    let minimumPayment = await serviceContract.minimumPayment()
+    await serviceContract.methods['requestRelayEntry(uint256,address,string)'](bls.seed, callbackContract.address, "callback(uint256)", {value: minimumPayment});
 
     let result = await callbackContract.lastEntry();
     assert.isFalse(result.eq(bls.groupSignature), "Entry value on the callback contract should not be the same as next relay entry.");

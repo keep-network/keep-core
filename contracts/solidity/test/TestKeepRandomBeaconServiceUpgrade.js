@@ -34,7 +34,8 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
     await operatorContract.registerNewGroup(bls.groupPubKey);
 
     // Modify state so we can test later that eternal storage works as expected after upgrade
-    await serviceContract.requestRelayEntry(bls.seed, {value: config.minimumPayment});
+    let minimumPayment = await serviceContract.minimumPayment()
+    await serviceContract.requestRelayEntry(bls.seed, {value: minimumPayment});
     await operatorContract.relayEntry(bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
   });

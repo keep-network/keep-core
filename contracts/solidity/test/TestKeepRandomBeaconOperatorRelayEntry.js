@@ -24,7 +24,8 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
-    await serviceContract.requestRelayEntry(bls.seed, {value: config.minimumPayment});
+    let minimumPayment = await serviceContract.minimumPayment()
+    await serviceContract.requestRelayEntry(bls.seed, {value: minimumPayment});
   });
 
   it("should not be able to submit invalid relay entry", async function() {
