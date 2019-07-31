@@ -1,0 +1,307 @@
+:toc: macro
+
+= RFC 16: Pricing
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+The beacon needs to capture enough value to make it self-sufficient.
+A method for pricing beacon entries is required,
+but many schemes have serious drawbacks
+or can be broken by relatively simple third-party contracts.
+
+== Proposal
+
+Beacon entries are priced
+based on a _cost estimate_ which covers entry verification and DKG,
+and a _profit margin_ that scales linearly in group size.
+An interface is provided
+for customer applications to query the current _entry fee estimate_.
+The customer should provide a _callback address_ to receive the entry,
+and ensure they provide a sufficient _callback allowance_
+to cover the gas fees of the callback.
+Any surplus is returned to the customer in a _surplus recipient_ address.
+
+When a valid entry is submitted,
+the submitter receives a _submitter reward_
+and every other member in the signing group receives a _group reward_.
+To incentivize submitting an entry,
+the _submitter reward_ increases as a request goes unserved
+while the _group reward_ diminishes.
+Rewards not paid out to the operators
+are paid out to requesters to subsidize new requests.
+
+=== Goal
+
+A simple method for pricing beacon entries
+that doesn't present easy exploitation opportunities.
+The pricing method should avoid
+the known downfalls of previously considered, more complex, schemes,
+such as price discrimination being defeated by callback pooling.
+
+=== Implementation
+
+==== Making requests
+
+When a customer wishes to receive an entry,
+they should query the beacon for a current _entry fee estimate_.
+The customer should also know
+the _callback address_ they wish to receive the entry in,
+and the _surplus recipient_ address for refunding excess fees.
+The customer should prepare a sufficient _callback allowance_
+to cover the gas costs of the callback.
+
+When making a request for an entry,
+the customer should submit the request
+with the _callback_ and _surplus recipient_ addresses
+while transferring _request fee = entry fee estimate + callback allowance_
+currency to the beacon.
+However, no new requests should be made
+while the beacon is already processing another request.
+Requests made while the beacon is busy
+will be rejected and refunded to the _surplus recipient_ address.
+
+==== Receiving a request
+
+If the beacon is already serving an earlier request,
+it rejects any new requests
+and refunds the _request fee_
+to the surplus recipient of the rejected request.
+
+When the beacon is non-busy and receives a request,
+it first checks that the _request fee_ exceeds
+the _entry fee estimate + minimum callback allowance_.
+Insufficiently funded entries forfeit the request fee.
+
+Once the request has been verified to be sufficiently funded,
+it is queued among the _pending requests_
+and the request fee is divided into various budgets.
+
+The _entry fee estimate_ is subtracted from the _request fee_
+to gain the _callback allowance_ of the request.
+The callback allowance is recorded in the pending request.
+
+The _entry fee estimate_ is divided into
+a _DKG cost fraction_,
+an _entry verification cost_,
+and a _profit margin_.
+
+The _DKG cost fraction_ is added to the _DKG fee pool_.
+
+A signing group is selected and tasked with generating the new entry.
+
+==== Serving a request
+
+When the signing group has produced a valid entry,
+one of its members should submit it to the beacon.
+The first member to submit a valid entry is the _submitter_.
+
+Submissions that fail verification are ignored.
+Repeat submissions for a request that has already been served
+should be dropped immediately,
+minimizing the gas expenditure.
+
+When a valid entry submission is received on-chain,
+it is provided to the corresponding request's _callback address_,
+using the _callback allowance_ as the gas budget.
+Once the callback returns,
+the gas cost of the callback is multiplied
+with the exact gas price used for the transaction
+to obtain the actual _callback gas expenditure_.
+The callback gas expenditure is subtracted from the callback allowance
+to obtain the _callback gas surplus_.
+
+The _callback gas surplus_ is refunded
+to the requester's _surplus recipient_ address,
+along with 1% of the _request subsidy pool_ of the beacon.
+
+The submitter and other group members are rewarded
+based on the _submission delay_;
+time from when the request was originally received
+to the submission of the valid entry.
+If no valid entry has been received by the _submission deadline_,
+the failing group is terminated,
+its members slashed,
+and a new signing group is selected
+and the submission delay calculation reset.
+
+The submission of a new entry acts as the DKG trigger event.
+When a valid entry is received,
+the state of the _DKG fee pool_ is checked.
+Group creation and DKG are initiated
+if the DKG fee pool exceeds the DKG cost estimate at the time.
+
+==== Rewards
+
+The _base reward_ for submitting an entry
+equals the _profit margin_ divided by _group size_.
+The exact rewards paid out to operators are based on the base reward
+but vary according to _submission delay_ and submitter position.
+
+If the amount paid out to the signing group in _group rewards_
+and the submitter's _extra reward_ is less than the _profit margin_,
+the difference is added to the beacon's _request subsidy pool_
+to incentivize customers to request entries.
+
+===== Group reward
+
+The group reward is paid to every member of the signing group,
+including the submitter,
+upon submission of a valid entry.
+
+The group reward equals the _base reward_
+multiplied by a _delay factor_
+equaling the fraction of time left by the submission deadline, squared.
+
+The delay factor is counted
+from 1 in the first block a submission could be published in,
+to 0 in the deadline block which doesn't accept any more submissions.
+
+For example, assume the maximum time to submit is 20 blocks,
+the off-chain entry generation protocol takes 5 blocks
+and a request is made on block 1000.
+
+Block 1005 is the earliest block the submission could be published in:
+if published in this block the delay factor is 1.
+Block 1025 is the deadline block:
+no submissions are accepted and the delay factor is 0.
+
+If the entry is submitted in block 1010,
+the delay factor is `((1010 - 1005) / 20)^2 = 0.8^2 = 0.64`.
+Thus the _group reward = base reward * 0.64_,
+with the difference being the _delay penalty = base reward * (1 - 0.64)_.
+
+If the submission deadline is reached and the delay factor reaches 0,
+the entry submission fails and all group members are penalized.
+
+===== Submitter reward
+
+In addition to the _group reward_,
+the submitter is reimbursed for gas fees
+and receives an extra reward.
+
+The _submitter reward_ consists of
+the _callback gas expenditure_ to cover the exact cost of the callback;
+the _entry verification fee_ to cover the cost of verifying the submission;
+and 5% of the _delay penalties_ of the entire group.
+
+Unlike the _callback allowance_,
+the entire _entry verification fee_ is paid to the submitter
+regardless of their gas expenditure.
+The submitter is free to spend less or more,
+keeping the surplus or paying the difference.
+This is to incentivize optimizing gas fees.
+
+To incentivize a race for the submitter position,
+the submitter receives _group size * delay penalty * 0.05_ as an extra reward.
+With realistic group sizes this is significant,
+but not high enough to render certain attacks profitable.
+If the group size is 100 and the delay factor is 0.64,
+the submitter receives an extra reward of
+_base reward * 0.36 * 100 * 0.05 = base reward * 1.8_.
+In this scenario the full submitter reward would be
+_base reward * (1.8 + 0.64) + callback expenditure + entry verification fee_.
+
+==== Cost estimates
+
+===== Gas price feed
+
+A short-term gas price feed is required
+to estimate the gas cost components.
+
+The critical feature of the gas price feed is
+that the feed price multiplied by a safety margin for fluctuations (e.g. 1.5)
+should be sufficient for getting beacon entries processed
+within the deadline under all circumstances.
+The gas price estimate for an entry is set when the request is processed,
+but the entry submission transaction will be sent later.
+
+If actual gas prices rise to a level
+where the feed price and margin are insufficient
+for getting a transaction to be mined,
+and stays there for the duration of the entry submission window,
+the basic profit margin for the operators cannot be guaranteed.
+
+However, this does not imply that high gas prices
+would render the beacon inoperable.
+The submitter's extra reward incentivizes submitting
+even when the entry verification fee cannot cover the gas costs.
+In the extreme,
+avoiding the severe penalty for failure to produce an entry
+should incentivize group members to pay the gas prices
+up to the (theoretical) limit
+where gas for the entry submission transaction
+costs as much as the KEEP tokens at stake.
+
+The exact implementation of this gas price feed
+is out for scope for this RFC.
+
+===== DKG cost estimate
+
+The gas required for DKG should be calculated.
+Multiply DKG gas by gas estimate to get DKG cost estimate.
+Use a DKG frequency divider _d_ to set the group creation rate;
+once every _d_ entries on average.
+Divide DKG cost estimate by _d_ to get DKG contribution for each entry.
+
+Because DKG is performed when sufficient gas money has accumulated,
+fluctuations in gas prices don't need special consideration.
+When gas costs are rising,
+DKG gets performed less frequently
+until prices (and thus gas cost contributions) stabilize.
+As long as the fluctuation safety factor is sufficient
+to cover the immediate rise in gas fees during DKG execution
+the beacon is capable of generating new groups.
+Similarly, when gas costs fall DKG gets triggered faster.
+
+===== Entry verification fee
+
+Calculate gas required for verifying entry
+and associated support operations.
+Multiply by gas price plus a fluctuation margin (e.g. 1.5)
+to get entry verification fee.
+
+=== Limitations
+
+Entry pricing is mostly static;
+entry quality has a slight effect on price
+(faster entries -> lower surplus -> lower request subsidies)
+but other factors apart from gas fees do not impact the price.
+
+Processing entries one-by-one doesn't scale.
+
+If the submitter of some entry is a miner,
+they can set an arbitrarily high gas fee to DOS the requester
+by making their callback run out of gas.
+The current design does not include mitigations for this attack.
+
+== Future Work
+
+Instead of rejecting new requests when one has already been made,
+the beacon could accept a single queued request,
+to be served after the active one.
+Other requesters could outbid the current queued request
+by paying enough to process the request and refund the previous one,
+and provide some specified (e.g. 1.2) increase in the profit margin.
+When the current active request is served,
+the queued request automatically becomes the next active request.
+
+This method would act as both a price floor and a supply cap,
+while capturing the effective price increase when demand exceeds supply,
+instead of letting it go to miners
+as customers try to get their requests processed first.
+
+== Open Questions
+
+The implementation of the gas price feed is out of scope.
+The method of estimating gas fees,
+the timespan over which the estimate should be calculated,
+and the fluctuation safety margin are not yet defined.
+
+[bibliography]
+== Related Links
+
+- Flowdock Links
