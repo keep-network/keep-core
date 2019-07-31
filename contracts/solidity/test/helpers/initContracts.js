@@ -8,8 +8,8 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract;
 
-  let minPayment = 1
-  let withdrawalDelay = 1
+  const minPayment = 1
+  const withdrawalDelay = 1
 
   // Initialize Keep token contract
   token = await KeepToken.new();

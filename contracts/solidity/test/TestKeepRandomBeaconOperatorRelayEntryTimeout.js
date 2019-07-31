@@ -7,7 +7,7 @@ contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
   let operatorContract;
   const blocksForward = 20;
   const requestCounter = 0;
-  let relayEntryTimeout = 10;
+  const relayEntryTimeout = 10;
 
   describe("RelayEntryTimeout", function() {
 
