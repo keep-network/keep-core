@@ -102,6 +102,6 @@ include::group-selection/index.adoc[leveloffset=+2]
 
 include::dkg/index.adoc[leveloffset=+2]
 
-include::pricing.adoc[leveloffset=+1]
+include::signing/index.adoc[leveloffset=+2]
 
 include::glossary.adoc[]
