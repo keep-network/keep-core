@@ -23,6 +23,7 @@ to the number of tokens they have staked
 . [[req-3]]not require an excessive amount of on-chain operations to perform
 . [[req-4]]not be feasible for an adversary to manipulate
 . [[req-5]]be compatible with future measures to make stakers indistinguishable
+(deprecated and replaced with the new upgrade scheme)
 
 .Some terms
 |===
@@ -135,10 +136,10 @@ selection of a new candidate group.
 
 === Phase 1: ticket calculation
 
-_S~j~_ calculates _Ticket~k~ = (W~k~, proof~k~)_  containing the value
-_W~k~ = prf(V~i~, Q~j~, vs)_ and proof that:
+_S~j~_ calculates _Ticket~k~ = (W~k~, vs)_  containing the value
+_W~k~ = prf(V~i~, Q~j~, vs)_ and its corresponding virtual staker index _vs_
+so that:
 
-- the ticket value _W~k~_ is created correctly
 - the staker-specific values _Q~j~, Weight~j~_ correspond to _S~j~_ in _S_
 - the virtual staker number _vs_ is within the range _1 <= vs <= Weight~j~_
 
@@ -149,8 +150,7 @@ _W~k~ = prf(V~i~, Q~j~, vs)_ and proof that:
 Each staker whose _W~k~ < Threshold~nat~_ on one or more _Ticket~k~_ publishes
 the ticket/s.
 
-The smart contract function `cheapCheck` is used to do basic inexpensive
-on-chain validation of the tickets as they are received. Invalid tickets are
+Tickets are validated as they are received. Invalid tickets are
 rejected and their senders penalized.
 
 Phase 2a ends when _TICKET_INITIAL_TIMEOUT_ is reached.
@@ -174,22 +174,12 @@ Phase 2b ends when _TICKET_SUBMISSION_TIMEOUT_ is reached.
 
 === Phase 3: ticket verification
 
-Each staker should verify the proofs supplied with each ticket. If a ticket
-doesn't pass `costlyCheck`, the staker should raise a challenge to that ticket.
-
-When a ticket is challenged, on-chain will perform `costlyCheck` on the
-challenged ticket, performing whatever verification is necessary on the proof.
-If the ticket fails `costlyCheck`, the staker who originally submitted the
-ticket will be penalized. If the ticket passes `costlyCheck` the staker who
-presented the invalid challenge will be penalized.
-
-Phase 3 ends when _TICKET_CHALLENGE_TIMEOUT_ is reached. Challenges may also be
-presented during phase 2. 
+Deprecated due to the removal of <<req-5,requirement 5>>.
 
 === Phase 4: threshold determination
 
-After all potentially eligible tickets have been submitted and challenges
-resolved, the _N_ tickets with the lowest values for _W~k~_ will be selected
+After all potentially eligible tickets have been submitted and validated,
+the _N_ tickets with the lowest values for _W~k~_ will be selected
 into the group _P_. The corresponding virtual stakers will be automatically
 assigned to form the group and no further interaction is necessary. DKG will be
 performed.
@@ -259,27 +249,6 @@ If it seems likely that _Threshold~P~ < W~k~_,
 _S~j~_ can refrain from broadcasting _W~k~_ and only monitor the situation,
 reacting if it seems that few stakers' ticket values are falling under
 the estimated threshold.
-
-=== Zero-knowledge proofs
-
-The protocol has been designed to be easily compatible with zero-knowledge
-proofs later (<<req-5,requirement 5>>). The weights and virtual staker indices
-can use range proofs, and _Q~j~_ is required to be simply a value unique to any
-given staker.
-
-Initially _Q~j~_ can be something public and easy to verify, such as the address
-of _S~j~_, but the design of the protocol should be flexible later.
-
-Similarly, the protocol specifies a pseudorandom function `prf`; `sha3` can be used
-before staker indistinguishability is required, but any function with the right
-qualities can be easily substituted.
-
-Tickets are checked on-chain in two stages: `cheapCheck` does surface-level
-validation of factors that are easy to check, while `costlyCheck` performs a
-full verification of the supplied proof only if the ticket is challenged. This
-means that the on-chain protocol should not be too constrained by the cost of
-ZKP verification later on, as verification can only be performed when necessary.
-Rational adversaries will not present invalid tickets due to the penalties.
 
 == Alternative off-chain protocol
 
