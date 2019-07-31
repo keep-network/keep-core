@@ -8,7 +8,7 @@ import "./DelayedWithdrawal.sol";
 interface OperatorContract {
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) payable external;
     function numberOfGroups() external view returns(uint256);
-    function createGroup(uint256 groupSelectionSeed, uint256 seed) payable external;
+    function createGroup(uint256 groupSelectionSeed) payable external;
 }
 
 /**
@@ -187,7 +187,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         // TODO: Figure out when to call createGroup once pricing scheme is finalized.
         address latestOperatorContract = _operatorContracts[_operatorContracts.length - 1];
-        OperatorContract(latestOperatorContract).createGroup(entry, seed);
+        OperatorContract(latestOperatorContract).createGroup(entry);
     }
 
     /**

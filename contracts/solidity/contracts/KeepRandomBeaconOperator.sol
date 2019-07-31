@@ -37,7 +37,7 @@ contract KeepRandomBeaconOperator is Ownable {
     event SignatureRequested(uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
     event SignatureSubmitted(uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
-    event GroupSelectionStarted(uint256 groupSelectionSeed, uint256 seed);
+    event GroupSelectionStarted(uint256 newEntry);
 
     bool public initialized;
 
@@ -110,7 +110,7 @@ contract KeepRandomBeaconOperator is Ownable {
     bool public groupSelectionInProgress;
 
     uint256 public ticketSubmissionStartBlock;
-    uint256 public groupSelectionSeed;
+    uint256 public groupSelectionRelayEntry;
     uint256[] public tickets;
     bytes[] public submissions;
 
@@ -185,7 +185,7 @@ contract KeepRandomBeaconOperator is Ownable {
         initialized = true;
         serviceContracts.push(_serviceContract);
 
-        groupSelectionSeed = _genesisEntry;
+        groupSelectionRelayEntry = _genesisEntry;
 
         // Create initial relay entry request. This will allow relayEntry to be
         // called once to trigger the creation of the first group.
@@ -217,10 +217,10 @@ contract KeepRandomBeaconOperator is Ownable {
 
     /**
      * @dev Triggers the selection process of a new candidate group.
-     * @param _groupSelectionSeed Random value that stakers will use to generate their tickets.
-     * @param _seed Random value from the client. It should be a cryptographically generated random value.
+     * @param _newEntry New random beacon value that stakers will use to
+     * generate their tickets.
      */
-    function createGroup(uint256 _groupSelectionSeed, uint256 _seed) public payable onlyServiceContract {
+    function createGroup(uint256 _newEntry) public payable onlyServiceContract {
 
         // dkgTimeout is the time after DKG is expected to be complete plus the expected period to submit the result.
         uint256 dkgTimeout = ticketSubmissionStartBlock + ticketChallengeTimeout + timeDKG + groupSize * resultPublicationBlockStep;
@@ -228,9 +228,9 @@ contract KeepRandomBeaconOperator is Ownable {
         if (!groupSelectionInProgress || block.number > dkgTimeout) {
             cleanup();
             ticketSubmissionStartBlock = block.number;
-            groupSelectionSeed = _groupSelectionSeed;
+            groupSelectionRelayEntry = _newEntry;
             groupSelectionInProgress = true;
-            emit GroupSelectionStarted(_groupSelectionSeed, _seed);
+            emit GroupSelectionStarted(_newEntry);
         }
     }
 
@@ -377,7 +377,7 @@ contract KeepRandomBeaconOperator is Ownable {
         uint256 virtualStakerIndex
     ) public view returns(bool) {
         bool passedCheapCheck = cheapCheck(staker, stakerValue, virtualStakerIndex);
-        uint256 expected = uint256(keccak256(abi.encodePacked(groupSelectionSeed, stakerValue, virtualStakerIndex)));
+        uint256 expected = uint256(keccak256(abi.encodePacked(groupSelectionRelayEntry, stakerValue, virtualStakerIndex)));
         return passedCheapCheck && ticketValue == expected;
     }
 
