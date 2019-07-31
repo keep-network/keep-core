@@ -8,19 +8,8 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract;
 
-  let minimumStake = web3.utils.toBN(200000),
-    groupThreshold = 15,
-    groupSize = 20,
-    timeoutInitial = 20,
-    timeoutSubmission = 100,
-    timeoutChallenge = 60,
-    timeDKG = 20,
-    resultPublicationBlockStep = 3,
-    groupActiveTime = 300,
-    activeGroupsThreshold = 5,
-    minPayment = 1,
-    withdrawalDelay = 1,
-    relayRequestTimeout = 10;
+  const minPayment = 1
+  const withdrawalDelay = 1
 
   // Initialize Keep token contract
   token = await KeepToken.new();
@@ -36,10 +25,8 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   // Initialize Keep Random Beacon operator contract
   operatorContract = await KeepRandomBeaconOperator.new();
   await operatorContract.initialize(
-    serviceContract.address, minimumStake, groupThreshold,
-    groupSize, timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-    activeGroupsThreshold, groupActiveTime, relayRequestTimeout,
-    [bls.previousEntry, bls.seed], bls.groupPubKey
+    serviceContract.address,
+    bls.previousEntry, bls.seed, bls.groupPubKey
   );
 
   await serviceContract.initialize(minPayment, withdrawalDelay, operatorContract.address);
@@ -49,21 +36,6 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await operatorContract.relayEntry(bls.groupSignature);
 
   return {
-    config: {
-      minimumStake: minimumStake,
-      groupThreshold: groupThreshold,
-      groupSize: groupSize,
-      timeoutInitial: timeoutInitial,
-      timeoutSubmission: timeoutSubmission,
-      timeoutChallenge: timeoutChallenge,
-      timeDKG: timeDKG,
-      resultPublicationBlockStep: resultPublicationBlockStep,
-      groupActiveTime: groupActiveTime,
-      activeGroupsThreshold: activeGroupsThreshold,
-      minPayment: minPayment,
-      withdrawalDelay: withdrawalDelay,
-      relayRequestTimeout: relayRequestTimeout
-    },
     token: token,
     stakingContract: stakingContract,
     serviceContract: serviceContract,

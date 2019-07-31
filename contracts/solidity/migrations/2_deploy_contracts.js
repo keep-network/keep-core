@@ -11,38 +11,6 @@ const KeepRandomBeaconOperatorStub = artifacts.require("./KeepRandomBeaconOperat
 
 const withdrawalDelay = 86400; // 1 day
 const minPayment = 1;
-const minStake = web3.utils.toBN(200000).mul(web3.utils.toBN(10**18));
-
-const groupThreshold = 3;
-const groupSize = 5;
-const timeoutInitial = 4;
-const timeoutSubmission = 4;
-const timeoutChallenge = 4;
-const resultPublicationBlockStep = 3;
-const activeGroupsThreshold = 5;
-const groupActiveTime = 300;
-// Time in blocks it takes to execute relay entry signing.
-// 1 state with state.MessagingStateDelayBlocks which is set to 1
-// 1 state with state.MessagingStateActiveBlocks which is set to 3
-const relayEntrySigningTime = 4
-
-// Deadline in blocks for relay entry publication after the first 
-// group member becomes eligible to submit the result.
-// Deadline should not be shorter than the time it takes for the
-// last group member to become eligible plus at least one block 
-// to submit.
-const relayEntryPublicationDeadline = 20
-
-// The maximum time it may take for relay entry to appear on 
-// chain after relay request has been published
-const relayEntryTimeout = relayEntrySigningTime + relayEntryPublicationDeadline
-
-// timeDKG - Timeout in blocks after DKG result is complete and ready to be published.
-// 7 states with state.MessagingStateActiveBlocks which is set to 3
-// 7 states with state.MessagingStateDelayBlocks which is set to 1
-// the rest of the states use state.SilentStateDelayBlocks and
-// state.SilentStateActiveBlocks which are both set to 0.
-const timeDKG = 7*(3+1);
 
 const genesisEntry = web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862');
 const genesisSeed = web3.utils.toBN('27182818284590452353602874713526624977572470936999595749669676277240766303535');
@@ -66,12 +34,9 @@ module.exports = async function(deployer) {
   const keepRandomBeaconService = await KeepRandomBeaconServiceImplV1.at(KeepRandomBeaconService.address);
   const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
 
-  // Initialize contract genesis entry value and genesis group defined in Go client submitGenesisRelayEntry()
   keepRandomBeaconOperator.initialize(
-    KeepRandomBeaconService.address, minStake, groupThreshold, groupSize,
-    timeoutInitial, timeoutSubmission, timeoutChallenge, timeDKG, resultPublicationBlockStep,
-    activeGroupsThreshold, groupActiveTime, relayEntryTimeout,
-    [genesisEntry, genesisSeed], genesisGroupPubKey
+    KeepRandomBeaconService.address,
+    genesisEntry, genesisSeed, genesisGroupPubKey
   );
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 11).

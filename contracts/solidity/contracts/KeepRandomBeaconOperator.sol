@@ -43,27 +43,49 @@ contract KeepRandomBeaconOperator is Ownable {
 
     address[] public serviceContracts;
 
-    uint256 public groupThreshold;
-    uint256 public groupSize;
-    uint256 public minimumStake;
+    // Size of a group in the threshold relay.
+    uint256 public groupSize = 5;
 
-    uint256 public ticketInitialSubmissionTimeout;
-    uint256 public ticketReactiveSubmissionTimeout;
-    uint256 public ticketChallengeTimeout;
-    uint256 public timeDKG;
-    uint256 public resultPublicationBlockStep;
+    // Minimum number of group members needed to interact according to the
+    // protocol to produce a relay entry.
+    uint256 public groupThreshold = 3;
 
-    // activeGroupsThreshold is the minimal number of groups that should not
-    // expire to protect the minimal network throughput.
-    // It should be at least 1.
-    uint256 public activeGroupsThreshold;
+    // Minimum amount of KEEP that allows sMPC cluster client to participate in
+    // the Keep network.
+    uint256 public minimumStake = 200000 * 1e18;
+
+    // Timeout in blocks after the initial ticket submission is finished.
+    uint256 public ticketInitialSubmissionTimeout = 4;
+
+    // Timeout in blocks after the reactive ticket submission is finished.
+    uint256 public ticketReactiveSubmissionTimeout = 4;
+
+    // Timeout in blocks after the period where tickets can be challenged is
+    // finished.
+    uint256 public ticketChallengeTimeout = 4;
+
+    // Time in blocks after which the next group member is eligible
+    // to submit the result.
+    uint256 public resultPublicationBlockStep = 3;
+
+    // Time in blocks after DKG result is complete and ready to be published
+    // by clients.
+    uint256 public timeDKG = 7*(3+1);
+
+    // The minimal number of groups that should not expire to protect the
+    // minimal network throughput.
+    uint256 public activeGroupsThreshold = 5;
  
-    // groupActiveTime is the time in block after which a group expires
-    uint256 public groupActiveTime;
+    // Time in blocks after which a group expires.
+    uint256 public groupActiveTime = 3000;
 
     // Timeout in blocks for a relay entry to appear on the chain. Blocks are
     // counted from the moment relay request occur.
-    uint256 public relayEntryTimeout;
+    //
+    // Timeout is never shorter than the time needed by clients to generate
+    // relay entry and the time it takes for the last group member to become
+    // eligible to submit the result plus at least one block to submit it.
+    uint256 public relayEntryTimeout = 24;
 
     struct Group {
         bytes groupPubKey;
@@ -143,67 +165,36 @@ contract KeepRandomBeaconOperator is Ownable {
 
     /**
      * @dev Initialize the contract with a linked Staking proxy contract.
-     * @param _serviceContract Address of a random beacon service contract that will be linked to this contract.
-     * @param _minimumStake Minimum amount in KEEP that allows KEEP network client to participate in a group.
-     * @param _groupSize Size of a group in the threshold relay.
-     * @param _groupThreshold Minimum number of interacting group members needed to produce a relay entry.
-     * @param _ticketInitialSubmissionTimeout Timeout in blocks after the initial ticket submission is finished.
-     * @param _ticketReactiveSubmissionTimeout Timeout in blocks after the reactive ticket submission is finished.
-     * @param _ticketChallengeTimeout Timeout in blocks after the period where tickets can be challenged is finished.
-     * @param _timeDKG Timeout in blocks after DKG result is complete and ready to be published.
-     * @param _resultPublicationBlockStep Time in blocks after which member with the given index is eligible
-     * @param _genesisEntry Initial entry data used to trigger the first group selection by submitting
-     * a new relay entry being a signature on this one. The first array element is the previous value, the second
-     * array element is the seed.
-     * @param _genesisGroupPubKey Group to respond to the initial relay entry request.
-     * to submit DKG result.
-     * @param _activeGroupsThreshold is the minimal number of groups that cannot be marked as expired and
-     * needs to be greater than 0.
-     * @param _groupActiveTime is the time in block after which a group expires.
-     * @param _relayEntryTimeout Timeout in blocks for a relay entry to appear on the chain.
-     * Blocks are counted from the moment relay request occur.
+     *
+     * @param _serviceContract Address of a random beacon service contract that
+     * will be linked to this contract.
+     * @param _genesisEntry Initial entry value used to trigger the first group
+     * selection by submitting a new relay entry.
+     * @param _genesisSeed Initial seed value used to trigger the first group
+     * selection by submitting a new relay entry.
+     * @param _genesisGroupPubKey Initial group public key value used to trigger
+     * the first group selection by submitting a new relay entry.
      */
     function initialize(
         address _serviceContract,
-        uint256 _minimumStake,
-        uint256 _groupThreshold,
-        uint256 _groupSize,
-        uint256 _ticketInitialSubmissionTimeout,
-        uint256 _ticketReactiveSubmissionTimeout,
-        uint256 _ticketChallengeTimeout,
-        uint256 _timeDKG,
-        uint256 _resultPublicationBlockStep,
-        uint256 _activeGroupsThreshold,
-        uint256 _groupActiveTime,
-        uint256 _relayEntryTimeout,
-        uint256[2] memory _genesisEntry, // [previous entry, seed]
+        uint256 _genesisEntry,
+        uint256 _genesisSeed,
         bytes memory _genesisGroupPubKey
     ) public onlyOwner {
         require(!initialized, "Contract is already initialized.");
         initialized = true;
         serviceContracts.push(_serviceContract);
-        minimumStake = _minimumStake;
-        groupSize = _groupSize;
-        groupThreshold = _groupThreshold;
-        ticketInitialSubmissionTimeout = _ticketInitialSubmissionTimeout;
-        ticketReactiveSubmissionTimeout = _ticketReactiveSubmissionTimeout;
-        ticketChallengeTimeout = _ticketChallengeTimeout;
-        timeDKG = _timeDKG;
-        resultPublicationBlockStep = _resultPublicationBlockStep;
-        activeGroupsThreshold = _activeGroupsThreshold;
-        groupActiveTime = _groupActiveTime;
-        relayEntryTimeout = _relayEntryTimeout;
-        groupSelectionSeed = _genesisEntry[0];
 
-        // Create initial relay entry request. This will allow relayEntry to be called once
-        // to trigger the creation of the first group. Requests are removed on successful
-        // entries so genesis entry can only be called once.
+        groupSelectionSeed = _genesisEntry;
+
+        // Create initial relay entry request. This will allow relayEntry to be
+        // called once to trigger the creation of the first group.
         signingRequest = SigningRequest(
             0,
             0,
             _genesisGroupPubKey,
-            _genesisEntry[0],
-            _genesisEntry[1],
+            _genesisEntry,
+            _genesisSeed,
             _serviceContract
         );
     }
