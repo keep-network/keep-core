@@ -15,13 +15,8 @@ contract StakingContractMock {
 
 
 contract TestKeepRandomBeaconOperatorInitialize {
-    // Create Staking contract mock
-    StakingContractMock stakingContract = new StakingContractMock();
-
     // Create Keep Random Beacon operator contract
     KeepRandomBeaconOperator keepRandomBeaconOperator = new KeepRandomBeaconOperator();
-
-    uint256[2] genesisEntry = [314, 271];
 
     function testCannotInitialize() public {
         // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
