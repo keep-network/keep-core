@@ -169,9 +169,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Store valid entry returned by operator contract and call customer specified callback if required.
      * @param requestId Request id tracked internally by this contract.
      * @param entry The generated random number.
-     * @param seed Relay entry request seed value.
      */
-    function entryCreated(uint256 requestId, uint256 entry, uint256 seed) public {
+    function entryCreated(uint256 requestId, uint256 entry) public {
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."

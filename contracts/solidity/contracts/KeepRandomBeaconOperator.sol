@@ -10,7 +10,7 @@ import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
 
 interface ServiceContract {
-    function entryCreated(uint256 requestId, uint256 entry, uint256 seed) external;
+    function entryCreated(uint256 requestId, uint256 entry) external;
 }
 
 /**
@@ -731,8 +731,7 @@ contract KeepRandomBeaconOperator is Ownable {
 
         ServiceContract(signingRequest.serviceContract).entryCreated(
             signingRequest.relayRequestId,
-            _groupSignature,
-            signingRequest.seed
+            _groupSignature
         );
 
         entryInProgress = false;
