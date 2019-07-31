@@ -26,6 +26,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     event RelayEntryRequested(uint256 requestId);
     event RelayEntryGenerated(uint256 requestId, uint256 entry);
 
+    uint256 internal _minGasPrice;
     uint256 internal _minPayment;
     uint256 internal _previousEntry;
 
@@ -54,15 +55,17 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
+     * @param minGasPrice Minimum gas price for relay entry request.
      * @param minPayment Minimum amount of ether (in wei) that allows anyone to request a random number.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param operatorContract Operator contract linked to this contract.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay, address operatorContract)
+    function initialize(uint256 minGasPrice, uint256 minPayment, uint256 withdrawalDelay, address operatorContract)
         public
         onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
+        _minGasPrice = minGasPrice;
         _minPayment = minPayment;
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
@@ -188,6 +191,21 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         // TODO: Figure out when to call createGroup once pricing scheme is finalized.
         address latestOperatorContract = _operatorContracts[_operatorContracts.length - 1];
         OperatorContract(latestOperatorContract).createGroup(entry, seed);
+    }
+
+    /**
+     * @dev Set the minimum gas price for relay entry request.
+     * @param minGasPrice is the minimum gas price required for relay entry request.
+     */
+    function setMinimumGasPrice(uint256 minGasPrice) public onlyOwner {
+        _minGasPrice = minGasPrice;
+    }
+
+    /**
+     * @dev Get the minimum gas price for relay entry request.
+     */
+    function minimumGasPrice() public view returns(uint256) {
+        return _minGasPrice;
     }
 
     /**

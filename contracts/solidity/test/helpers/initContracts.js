@@ -27,6 +27,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
     groupActiveTime = 300,
     activeGroupsThreshold = 5,
     minimumPayment = entryFeeEstimate.add(profitMarginEstimate).add(minimumCallbackAllowance), // Wei
+    minimumGasPrice = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei) TODO: Use historical average of recently served requests?
     withdrawalDelay = 1,
     relayRequestTimeout = 10;
 
@@ -52,7 +53,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
     bls.groupSignature, bls.groupPubKey
   );
 
-  await serviceContract.initialize(minimumPayment, withdrawalDelay, operatorContract.address);
+  await serviceContract.initialize(minimumGasPrice, minimumPayment, withdrawalDelay, operatorContract.address);
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 4).
   await operatorContract.authorizeStakingContract(stakingContract.address);
@@ -71,6 +72,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
       groupActiveTime: groupActiveTime,
       activeGroupsThreshold: activeGroupsThreshold,
       minimumPayment: minimumPayment,
+      minimumGasPrice: minimumGasPrice,
       withdrawalDelay: withdrawalDelay,
       relayRequestTimeout: relayRequestTimeout
     },
