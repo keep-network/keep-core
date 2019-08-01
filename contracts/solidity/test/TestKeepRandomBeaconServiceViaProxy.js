@@ -11,7 +11,8 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   let config, serviceContract, serviceContractProxy, operatorContract,
     account_one = accounts[0],
     account_two = accounts[1],
-    account_three = accounts[2];
+    account_three = accounts[2],
+    minimumPayment, minimumCallbackPayment, entryFee;
 
   beforeEach(async () => {
     let contracts = await initContracts(
@@ -31,6 +32,10 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
+
+    minimumPayment = await serviceContract.minimumPayment()
+    minimumCallbackPayment = await serviceContract.minimumCallbackPayment()
+    entryFee = await serviceContract.entryFee()
   });
 
   it("should be able to check if the service contract was initialized", async function() {
@@ -42,19 +47,20 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("should be able to request relay with enough ether", async function() {
-    let minimumPayment = await serviceContract.minimumPayment()
     await serviceContract.requestRelayEntry(0, {from: account_two, value: minimumPayment})
     assert.equal((await operatorContract.getPastEvents())[0].event, 'SignatureRequested', "SignatureRequested event should occur on operator contract.");
 
     let contractBalance = await web3.eth.getBalance(serviceContract.address);
-    assert.equal(contractBalance, minimumPayment, "Keep Random Beacon service contract should receive ether.");
+    assert.isTrue(web3.utils.toBN(contractBalance).eq(minimumCallbackPayment), "Keep Random Beacon service contract should receive callback payment.");
 
     let contractBalanceViaProxy = await web3.eth.getBalance(serviceContractProxy.address);
-    assert.equal(contractBalanceViaProxy, minimumPayment, "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
+    assert.isTrue(web3.utils.toBN(contractBalanceViaProxy).eq(minimumCallbackPayment), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
+
+    let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee), "Keep Random Beacon operator contract should receive entry fee.");
   });
 
   it("should be able to request relay entry via serviceContractProxy contract with enough ether", async function() {
-    let minimumPayment = await serviceContract.minimumPayment()
     await exceptThrow(serviceContractProxy.sendTransaction({from: account_two, value: minimumPayment}));
 
     await web3.eth.sendTransaction({
@@ -66,10 +72,13 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.equal((await operatorContract.getPastEvents())[0].event, 'SignatureRequested', "SignatureRequested event should occur on the operator contract.");
 
     let contractBalance = await web3.eth.getBalance(serviceContract.address);
-    assert.equal(contractBalance, minimumPayment, "Keep Random Beacon service contract should receive ether.");
+    assert.isTrue(web3.utils.toBN(contractBalance).eq(minimumCallbackPayment), "Keep Random Beacon service contract should receive callback payment.");
 
     let contractBalanceServiceContract = await web3.eth.getBalance(serviceContractProxy.address);
-    assert.equal(contractBalanceServiceContract, minimumPayment, "Keep Random Beacon contract new balance should be visible via serviceContractProxy.");
+    assert.isTrue(web3.utils.toBN(contractBalanceServiceContract).eq(minimumCallbackPayment), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
+
+    let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee), "Keep Random Beacon operator contract should receive entry fee.");
   });
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {

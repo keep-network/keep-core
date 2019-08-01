@@ -8,6 +8,7 @@ import "./DelayedWithdrawal.sol";
 interface OperatorContract {
     function signingGasEstimate() external view returns(uint256);
     function createGroupGasEstimate() external view returns(uint256);
+    function groupSize() external view returns(uint256);
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) payable external;
     function numberOfGroups() external view returns(uint256);
     function createGroup(uint256 groupSelectionSeed, uint256 seed) payable external;
@@ -40,6 +41,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     struct Callback {
         address callbackContract;
         string callbackMethod;
+        uint256 callbackPayment;
     }
 
     mapping(uint256 => Callback) internal _callbacks;
@@ -158,15 +160,21 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             "Payment is less than required minimum."
         );
 
+        uint256 entryFee = entryFee();
+        uint256 callbackPayment = msg.value - entryFee;
+
+        require(
+            callbackPayment >= minimumCallbackPayment(),
+            "Callback payment is less than required minimum."
+        );
+
         _requestCounter++;
         uint256 requestId = _requestCounter;
 
-        // TODO: Figure out pricing, if we decide to pass payment to the backed use this instead:
-        // OperatorContract(selectOperatorContract(_previousEntry)).sign.value(msg.value)(requestId, seed, _previousEntry);
-        OperatorContract(selectOperatorContract(_previousEntry)).sign(requestId, seed, _previousEntry);
+        OperatorContract(selectOperatorContract(_previousEntry)).sign.value(entryFee)(requestId, seed, _previousEntry);
 
         if (callbackContract != address(0)) {
-            _callbacks[requestId] = Callback(callbackContract, callbackMethod);
+            _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackPayment);
         }
 
         emit RelayEntryRequested(requestId);
@@ -214,11 +222,26 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
+     * @dev Get the minimum payment for relay entry callback.
+     */
+    function minimumCallbackPayment() public view returns(uint256) {
+        return _minCallbackAllowance*_minGasPrice;
+    }
+
+    /**
      * @dev Get the minimum payment for relay entry request.
      */
     function minimumPayment() public view returns(uint256) {
+        return entryFee() + minimumCallbackPayment();
+    }
+
+    /**
+     * @dev Get the entry fee for relay entry request.
+     */
+    function entryFee() public view returns(uint256) {
         uint256 signingGas;
         uint256 createGroupGas;
+        uint256 groupSize;
 
         // Use most expensive operator contract for estimated gas values.
         for (uint i = 0; i < _operatorContracts.length; i++) {
@@ -227,10 +250,14 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             if (operator.numberOfGroups() > 0) {
                 signingGas = operator.signingGasEstimate() > signingGas ? operator.signingGasEstimate():signingGas;
                 createGroupGas = operator.createGroupGasEstimate() > createGroupGas ? operator.createGroupGasEstimate():createGroupGas;
+                groupSize = operator.groupSize() > groupSize ? operator.groupSize():groupSize;
             }
         }
 
-        return signingGas*_minGasPrice + createGroupGas*_minGasPrice;
+        uint256 entryFeeEstimate = signingGas*_minGasPrice + createGroupGas*_minGasPrice;
+        uint256 profitMarginTotal = groupSize*entryFeeEstimate*_profitMargin/100;
+
+        return entryFeeEstimate + profitMarginTotal;
     }
 
     /**
