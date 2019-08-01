@@ -177,18 +177,19 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             "Payment is less than required minimum."
         );
 
-        uint256 entryFee = entryFee();
-        uint256 callbackPayment = msg.value - entryFee;
-
+        (uint256 signingFee, uint256 createGroupFee, uint256 profitMargin) = entryFeeBreakdown();
+        uint256 callbackPayment = msg.value - signingFee - createGroupFee - profitMargin;
         require(
             callbackPayment >= minimumCallbackPayment(),
             "Callback payment is less than required minimum."
         );
 
+        _createGroupFeePool += createGroupFee;
+
         _requestCounter++;
         uint256 requestId = _requestCounter;
 
-        OperatorContract(selectOperatorContract(_previousEntry)).sign.value(entryFee)(requestId, seed, _previousEntry);
+        OperatorContract(selectOperatorContract(_previousEntry)).sign.value(signingFee + profitMargin)(requestId, seed, _previousEntry);
 
         if (callbackContract != address(0)) {
             _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackPayment);
@@ -249,13 +250,14 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Get the minimum payment for relay entry request.
      */
     function minimumPayment() public view returns(uint256) {
-        return entryFee() + minimumCallbackPayment();
+        (uint256 signingFee, uint256 createGroupFee, uint256 profitMargin) = entryFeeBreakdown();
+        return signingFee + createGroupFee + profitMargin + minimumCallbackPayment();
     }
 
     /**
-     * @dev Get the entry fee for relay entry request.
+     * @dev Get the entry fee breakdown for relay entry request.
      */
-    function entryFee() public view returns(uint256) {
+    function entryFeeBreakdown() public view returns(uint256 signingFee, uint256 createGroupFee, uint256 profitMargin) {
         uint256 signingGas;
         uint256 createGroupGas;
         uint256 groupSize;
@@ -271,10 +273,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             }
         }
 
-        uint256 entryFeeEstimate = signingGas*_minGasPrice + createGroupGas*_minGasPrice;
-        uint256 profitMarginTotal = groupSize*entryFeeEstimate*_profitMargin/100;
-
-        return entryFeeEstimate + profitMarginTotal;
+        return (
+            signingGas*_minGasPrice,
+            createGroupGas*_minGasPrice*_createGroupFee/100,
+            (signingGas + createGroupGas)*_minGasPrice*_profitMargin*groupSize/100
+        );
     }
 
     /**

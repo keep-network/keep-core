@@ -35,7 +35,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
     minimumPayment = await serviceContract.minimumPayment()
     minimumCallbackPayment = await serviceContract.minimumCallbackPayment()
-    entryFee = await serviceContract.entryFee()
+    entryFee = await serviceContract.entryFeeBreakdown()
   });
 
   it("should be able to check if the service contract was initialized", async function() {
@@ -57,7 +57,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.isTrue(web3.utils.toBN(contractBalanceViaProxy).eq(minimumCallbackPayment), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
-    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee), "Keep Random Beacon operator contract should receive entry fee.");
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.signingFee.add(entryFee.profitMargin)), "Keep Random Beacon operator contract should receive entry fee.");
   });
 
   it("should be able to request relay entry via serviceContractProxy contract with enough ether", async function() {
@@ -78,7 +78,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.isTrue(web3.utils.toBN(contractBalanceServiceContract).eq(minimumCallbackPayment), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
-    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee), "Keep Random Beacon operator contract should receive entry fee.");
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.signingFee.add(entryFee.profitMargin)), "Keep Random Beacon operator contract should receive entry fee.");
   });
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {
