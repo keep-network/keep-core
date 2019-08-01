@@ -21,6 +21,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
     minimumGasPrice = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei) TODO: Use historical average of recently served requests?
     minimumCallbackAllowance = web3.utils.toBN(200000), // Minimum gas required for relay request callback.
     profitMargin = 1, // Signing group reward per each member in % of the entry fee.
+    createGroupFee = 10, // Fraction in % of the estimated cost of group creation that is included in relay request payment.
     withdrawalDelay = 1,
     relayRequestTimeout = 10;
 
@@ -46,7 +47,7 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
     bls.groupSignature, bls.groupPubKey
   );
 
-  await serviceContract.initialize(minimumGasPrice, minimumCallbackAllowance, profitMargin, withdrawalDelay, operatorContract.address);
+  await serviceContract.initialize(minimumGasPrice, minimumCallbackAllowance, profitMargin, createGroupFee, withdrawalDelay, operatorContract.address);
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 4).
   await operatorContract.authorizeStakingContract(stakingContract.address);

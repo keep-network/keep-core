@@ -32,6 +32,14 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     uint256 internal _minGasPrice;
     uint256 internal _minCallbackAllowance;
     uint256 internal _profitMargin;
+
+    // Every relay request payment includes a fraction of the total fee for
+    // group creation and DKG that is added to the fee pool, once the pool
+    // amount reaches the total estimate relay entry will trigger the creation
+    // of a new group.
+    uint256 internal _createGroupFee;
+    uint256 internal _createGroupFeePool;
+
     uint256 internal _previousEntry;
 
     // Each service contract tracks its own requests and these are independent
@@ -63,10 +71,19 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param minGasPrice Minimum gas price for relay entry request.
      * @param minCallbackAllowance Minimum gas amount for relay entry callback.
      * @param profitMargin Each signing group member reward in % of the relay entry cost.
+     * @param createGroupFee Fraction in % of the estimated cost of group creation
+     * that is included in relay request payment.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param operatorContract Operator contract linked to this contract.
      */
-    function initialize(uint256 minGasPrice, uint256 minCallbackAllowance, uint256 profitMargin, uint256 withdrawalDelay, address operatorContract)
+    function initialize(
+        uint256 minGasPrice,
+        uint256 createGroupFee,
+        uint256 minCallbackAllowance,
+        uint256 profitMargin,
+        uint256 withdrawalDelay,
+        address operatorContract
+    )
         public
         onlyOwner
     {
