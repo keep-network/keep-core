@@ -54,9 +54,9 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(2000)))
     await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake.mul(web3.utils.toBN(3000)))
 
-    let tickets1 = generateTickets(await operatorContract.groupSelectionSeed(), operator1, 2000);
-    let tickets2 = generateTickets(await operatorContract.groupSelectionSeed(), operator2, 2000);
-    let tickets3 = generateTickets(await operatorContract.groupSelectionSeed(), operator3, 3000);
+    let tickets1 = generateTickets(await operatorContract.groupSelectionRelayEntry(), operator1, 2000);
+    let tickets2 = generateTickets(await operatorContract.groupSelectionRelayEntry(), operator2, 2000);
+    let tickets3 = generateTickets(await operatorContract.groupSelectionRelayEntry(), operator3, 3000);
 
     for(let i = 0; i < groupSize; i++) {
       await operatorContract.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});

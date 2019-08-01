@@ -80,8 +80,7 @@ func Initialize(
 				relayChain,
 				blockCounter,
 				signing,
-				event.NewEntry.Bytes(),
-				event.Seed,
+				event.NewEntry,
 				event.BlockNumber,
 			)
 			if err != nil {
