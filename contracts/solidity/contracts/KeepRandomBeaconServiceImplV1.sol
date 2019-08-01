@@ -8,7 +8,7 @@ import "./DelayedWithdrawal.sol";
 interface OperatorContract {
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) payable external;
     function numberOfGroups() external view returns(uint256);
-    function createGroup(uint256 groupSelectionSeed) payable external;
+    function createGroup(uint256 newEntry) payable external;
 }
 
 /**
