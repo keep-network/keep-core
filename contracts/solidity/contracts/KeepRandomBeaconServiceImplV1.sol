@@ -29,6 +29,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     event RelayEntryGenerated(uint256 requestId, uint256 entry);
 
     uint256 internal _minGasPrice;
+    uint256 internal _minCallbackAllowance;
+    uint256 internal _profitMargin;
     uint256 internal _previousEntry;
 
     // Each service contract tracks its own requests and these are independent
@@ -57,15 +59,19 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param minGasPrice Minimum gas price for relay entry request.
+     * @param minCallbackAllowance Minimum gas amount for relay entry callback.
+     * @param profitMargin Each signing group member reward in % of the relay entry cost.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param operatorContract Operator contract linked to this contract.
      */
-    function initialize(uint256 minGasPrice, uint256 withdrawalDelay, address operatorContract)
+    function initialize(uint256 minGasPrice, uint256 minCallbackAllowance, uint256 profitMargin, uint256 withdrawalDelay, address operatorContract)
         public
         onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
         _minGasPrice = minGasPrice;
+        _minCallbackAllowance = minCallbackAllowance;
+        _profitMargin = profitMargin;
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
