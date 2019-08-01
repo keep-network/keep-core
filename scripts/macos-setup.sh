@@ -45,6 +45,9 @@ echo "Installing contracts/solidity npm and requirements..."
 brew list npm &>/dev/null || brew install npm
 cd ../contracts/solidity && npm install && cd ../../scripts
 
+echo "Installing truffle..."
+npm install -g truffle
+
 echo "******************************************************************"
 echo "*** Please configure PATH, LD_LIBRARY_PATH, DYLD_LIBRARY_PATH  ***"
 echo "*** environment variables in your shell configuration file.    ***"
