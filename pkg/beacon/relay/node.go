@@ -29,11 +29,20 @@ type Node struct {
 	blockCounter chain.BlockCounter
 	chainConfig  *config.Chain
 
-	// The IDs of the known stakes in the system, including this node's StakeID.
-	stakeIDs      []string
-	maxStakeIndex int
-
 	groupRegistry *registry.Groups
+}
+
+// IsSelectedForGroup ...
+func (n *Node) IsSelectedForGroup(
+	groupSelectionResult *groupselection.Result,
+) bool {
+	for _, selectedStaker := range groupSelectionResult.SelectedStakers {
+		if bytes.Compare(selectedStaker, n.Staker.ID()) == 0 {
+			return true
+		}
+	}
+
+	return false
 }
 
 // JoinGroupIfEligible takes a threshold relay entry value and undergoes the
