@@ -33,6 +33,10 @@ type RelayEntryInterface interface {
 	OnSignatureRequested(
 		func(request *event.Request),
 	) (subscription.EventSubscription, error)
+	// HandleRelayEntryTimeout notifies the chain when a selected group which was
+	// supposed to submit a relay entry, did not deliver it within a specified
+	// time frame (relayEntryTimeout) counted on-chain in blocks.
+	HandleRelayEntryTimeout()
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that

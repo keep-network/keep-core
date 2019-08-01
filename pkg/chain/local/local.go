@@ -212,6 +212,10 @@ func (c *localChain) OnGroupSelectionStarted(
 	}), nil
 }
 
+func (c *localChain) HandleRelayEntryTimeout() {
+	//TODO: implement
+}
+
 func (c *localChain) OnGroupRegistered(
 	handler func(groupRegistration *event.GroupRegistration),
 ) (subscription.EventSubscription, error) {

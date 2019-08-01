@@ -746,4 +746,8 @@ contract KeepRandomBeaconOperator is Ownable {
 
         entryInProgress = false;
     }
+
+    function handleRelayEntryTimeout() public {
+        //TODO: handle a group that didn't deliver a relay entry.
+    }
 }

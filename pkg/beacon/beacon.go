@@ -7,6 +7,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -63,13 +64,57 @@ func Initialize(
 	relayChain.OnSignatureRequested(func(request *event.Request) {
 		logger.Infof("new relay entry requested: [%+v]", request)
 
-		go node.GenerateRelayEntryIfEligible(
-			request.PreviousEntry,
-			request.Seed,
-			relayChain,
-			request.GroupPublicKey,
-			request.BlockNumber,
-		)
+		selectedParticipants, err := relayChain.GetSelectedParticipants()
+		if err != nil {
+			logger.Errorf("could not fetch selected participants after challenge timeout [%v]", err)
+		}
+		selectedStakers := make([][]byte, len(selectedParticipants))
+		for i, participant := range selectedParticipants {
+			selectedStakers[i] = []byte(participant)
+		}
+
+		if (node.IsSelectedForGroup(&groupselection.Result{SelectedStakers: selectedStakers})) {
+			go node.GenerateRelayEntryIfEligible(
+				request.PreviousEntry,
+				request.Seed,
+				relayChain,
+				request.GroupPublicKey,
+				request.BlockNumber,
+			)
+		} else {
+			go func() {
+				logger.Infof("chain is being observed by the staker ID: [%+v] for a relay entry", node.Staker.ID())
+
+				timeoutWaiterChannel, err := blockCounter.BlockHeightWaiter(request.BlockNumber + chainConfig.RelayEntryTimeout)
+				if err != nil {
+					logger.Errorf("block height waiter failure [%v]", err)
+				}
+
+				onSubmittedResultChannel := make(chan *event.Entry)
+
+				subscription, err := relayChain.OnSignatureSubmitted(
+					func(event *event.Entry) {
+						onSubmittedResultChannel <- event
+					},
+				)
+				if err != nil {
+					close(onSubmittedResultChannel)
+					logger.Errorf("could not watch for a signature submission: [%v]", err)
+					return
+				}
+
+				for {
+					select {
+					case <-timeoutWaiterChannel:
+						subscription.Unsubscribe()
+
+						relayChain.HandleRelayEntryTimeout()
+					case <-onSubmittedResultChannel:
+						return
+					}
+				}
+			}()
+		}
 	})
 
 	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
