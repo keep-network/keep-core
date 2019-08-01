@@ -39,7 +39,6 @@ xcode-select --install || true
 if ! [ -x "$(command -v protoc-gen-gogoslick)" ]; then
   echo 'WARNING: protoc-gen-gogoslick command is not available'
   echo 'WARNING: please check whether $GOPATH/bin is added to your $PATH'
-  exit 1
 fi
 
 echo "Installing contracts/solidity npm and requirements..."
