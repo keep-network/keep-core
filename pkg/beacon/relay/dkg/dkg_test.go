@@ -24,11 +24,10 @@ import (
 )
 
 var minimumStake = big.NewInt(20)
+var groupSize = 5
+var threshold = 3
 
 func TestExecute_HappyPath(t *testing.T) {
-	groupSize := 5
-	threshold := 3
-
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		return msg
 	}
@@ -46,10 +45,31 @@ func TestExecute_HappyPath(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
-	groupSize := 5
-	threshold := 3
+func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 
+		pubKeyMsg, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
+		if ok && pubKeyMsg.SenderID() == group.MemberIndex(1) {
+			return nil
+		}
+
+		return msg
+	}
+
+	result, err := runTest(groupSize, threshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertSuccessfulSignersCount(t, result, groupSize-1)
+	assertMemberFailuresCount(t, result, 1)
+	assertSamePublicKey(t, result)
+	assertNoDisqualifiedMembers(t, result)
+	assertInactiveMembers(t, result, group.MemberIndex(1))
+	assertValidGroupPublicKey(t, result)
+}
+
+func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		// drop commitment message from member 1
 		commitmentMsg, ok := msg.(*gjkr.MemberCommitmentsMessage)
