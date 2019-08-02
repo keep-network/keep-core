@@ -193,6 +193,12 @@ tokens, it is required to unlock addresses that will be used by Keep clients.
 We also unlock the account that will be used by Ethereum client since it will 
 be used later to set up staking contract.
 
+In several versions of geth you might encounter an error while executing account
+unlock commands described below.
+If you get `Account unlock with HTTP access is forbidden` you should run
+Ethereum client (described in the previous section) with param:
+`--allow-insecure-unlock`
+
 ```
 $ geth attach http://127.0.0.1:8545
 Welcome to the Geth JavaScript console!
@@ -227,7 +233,6 @@ local: {
   host: "localhost",
   port: 8545,
   network_id: "*",
-  gas: 4712388,
   from: "0x3e208f39da1bc335464f40d85546ad6a1b66a9a4"
 },
 ```
@@ -321,12 +326,13 @@ point to the secound account (the first one is used by Ethereum client):
 ```
 
 Update `[ethereum.ContractAddresses]` section to point to the previously 
-deployed contract instances. Please use addresses of `KeepRandomBeaconOperator` and 
-`KeepRandomBeacon` contracts:
+deployed contract instances. Please use addresses of `KeepRandomBeaconOperator`,
+`KeepRandomBeacon` and `TokenStaking` contracts:
 ```
 [ethereum.ContractAddresses]
         KeepRandomBeaconService = "0x15045ff30d6327345cc052cc4b8c28dbe974a74b"
         KeepRandomBeaconOperator = "0xdff3075ca23fe28697d5c4f171cf04abd79bd837"
+        TokenStaking = "0xDfc7251170abd753342B585Adcd8BCEE48aDb379"
 ```
 
 Next, create configuration files for non-bootstrap peers:
@@ -344,9 +350,23 @@ In the `config.local.1.toml` enable network settings for bootstrap peer:
         Port = 3919
 ```
 
+And set a storage directory:
+```
+[Storage]
+  DataDir = "/Users/username/keepdata"
+```
+This directory must be created before peer start.
+
+Build the `keep-core` executable:
+```
+dep ensure
+go generate ./...
+go build
+```
+
 And start the peer:
 ```
-$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.1.toml start
+$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.1.toml start
 ------------------------------------------------------------------------------------------------
 | Node: BOOTSTRAP node                                                                         |
 | Port: 0                                                                                      |
@@ -412,7 +432,7 @@ In `config.local.5.toml`:
 
 Finally, we can start each non-bootstrap instance:
 ```
-$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.2.toml start
+$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.2.toml start
 ------------------------------------------------------------------------------------------------
 | Node: BOOTSTRAP node                                                                         |
 | Port: 0                                                                                      |
@@ -423,7 +443,7 @@ $ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.2.toml sta
 ```
 
 ```
-$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.3.toml start
+$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.3.toml start
 ------------------------------------------------------------------------------------------------
 | Node: BOOTSTRAP node                                                                         |
 | Port: 0                                                                                      |
@@ -434,7 +454,7 @@ $ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.3.toml sta
 ```
 
 ```
-$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.4.toml start
+$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.4.toml start
 ------------------------------------------------------------------------------------------------
 | Node: BOOTSTRAP node                                                                         |
 | Port: 0                                                                                      |
@@ -445,7 +465,7 @@ $ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.4.toml sta
 ```
 
 ```
-$ KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.5.toml start
+$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.5.toml start
 ------------------------------------------------------------------------------------------------
 | Node: BOOTSTRAP node                                                                         |
 | Port: 0                                                                                      |
