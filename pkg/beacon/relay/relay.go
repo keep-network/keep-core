@@ -7,6 +7,7 @@ import (
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
@@ -31,6 +32,48 @@ func NewNode(
 		blockCounter:  blockCounter,
 		chainConfig:   chainConfig,
 		groupRegistry: groupRegistry,
+	}
+}
+
+// MonitorRelayEntryOnChain is listetning to the chain for a new relay entry.
+// When a processing group which is supposed to deliver a relay entry does not
+// fulfill it's work, then this Node notifies the chain about it. In the case of
+// delivering a relay entry by a processing group, this Node does nothing.
+func (n *Node) MonitorRelayEntryOnChain(
+	blockCounter chain.BlockCounter,
+	relayChain relayChain.Interface,
+	startBlockHeight uint64,
+	chainConfig *config.Chain,
+) {
+	logger.Infof("chain is being observed by the staker ID: [%+v] for a relay entry", n.Staker.ID())
+
+	timeoutWaiterChannel, err := blockCounter.BlockHeightWaiter(startBlockHeight + chainConfig.RelayEntryTimeout)
+	if err != nil {
+		logger.Errorf("block height waiter failure [%v]", err)
+	}
+
+	onSubmittedResultChannel := make(chan *event.Entry)
+
+	subscription, err := relayChain.OnSignatureSubmitted(
+		func(event *event.Entry) {
+			onSubmittedResultChannel <- event
+		},
+	)
+	if err != nil {
+		close(onSubmittedResultChannel)
+		logger.Errorf("could not watch for a signature submission: [%v]", err)
+		return
+	}
+
+	for {
+		select {
+		case <-timeoutWaiterChannel:
+			subscription.Unsubscribe()
+
+			relayChain.HandleRelayEntryTimeout()
+		case <-onSubmittedResultChannel:
+			return
+		}
 	}
 }
 

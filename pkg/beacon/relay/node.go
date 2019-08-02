@@ -32,8 +32,9 @@ type Node struct {
 	groupRegistry *registry.Groups
 }
 
-// IsSelectedForGroup ...
-func (n *Node) IsSelectedForGroup(
+// IsSelectedIntoGroup checks if this node's staker was selected to join a group
+// which undergoes the process of generating a threshold relay entry.
+func (n *Node) IsSelectedIntoGroup(
 	groupSelectionResult *groupselection.Result,
 ) bool {
 	for _, selectedStaker := range groupSelectionResult.SelectedStakers {

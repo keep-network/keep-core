@@ -73,7 +73,7 @@ func Initialize(
 			selectedStakers[i] = []byte(participant)
 		}
 
-		if (node.IsSelectedForGroup(&groupselection.Result{SelectedStakers: selectedStakers})) {
+		if (node.IsSelectedIntoGroup(&groupselection.Result{SelectedStakers: selectedStakers})) {
 			go node.GenerateRelayEntryIfEligible(
 				request.PreviousEntry,
 				request.Seed,
@@ -82,38 +82,12 @@ func Initialize(
 				request.BlockNumber,
 			)
 		} else {
-			go func() {
-				logger.Infof("chain is being observed by the staker ID: [%+v] for a relay entry", node.Staker.ID())
-
-				timeoutWaiterChannel, err := blockCounter.BlockHeightWaiter(request.BlockNumber + chainConfig.RelayEntryTimeout)
-				if err != nil {
-					logger.Errorf("block height waiter failure [%v]", err)
-				}
-
-				onSubmittedResultChannel := make(chan *event.Entry)
-
-				subscription, err := relayChain.OnSignatureSubmitted(
-					func(event *event.Entry) {
-						onSubmittedResultChannel <- event
-					},
-				)
-				if err != nil {
-					close(onSubmittedResultChannel)
-					logger.Errorf("could not watch for a signature submission: [%v]", err)
-					return
-				}
-
-				for {
-					select {
-					case <-timeoutWaiterChannel:
-						subscription.Unsubscribe()
-
-						relayChain.HandleRelayEntryTimeout()
-					case <-onSubmittedResultChannel:
-						return
-					}
-				}
-			}()
+			go node.MonitorRelayEntryOnChain(
+				blockCounter,
+				relayChain,
+				request.BlockNumber,
+				chainConfig,
+			)
 		}
 	})
 
