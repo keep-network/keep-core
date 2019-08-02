@@ -36,11 +36,6 @@ export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${LD_LIBRARY_PATH}"
 echo "Installing command line developer tools..."
 xcode-select --install || true
 
-if ! [ -x "$(command -v protoc-gen-gogoslick)" ]; then
-  echo 'WARNING: protoc-gen-gogoslick command is not available'
-  echo 'WARNING: please check whether $GOPATH/bin is added to your $PATH'
-fi
-
 echo "Installing contracts/solidity npm and requirements..."
 brew list npm &>/dev/null || brew install npm
 cd ../contracts/solidity && npm install && cd ../../scripts
@@ -53,5 +48,10 @@ echo "*** Please configure PATH, LD_LIBRARY_PATH, DYLD_LIBRARY_PATH  ***"
 echo "*** environment variables in your shell configuration file.    ***"
 echo "*** Ex. for bash shell - ~/.bash_profile, for zsh - ~/.zshrc   ***"
 echo "******************************************************************"
+
+if ! [ -x "$(command -v protoc-gen-gogoslick)" ]; then
+  echo 'WARNING: protoc-gen-gogoslick command is not available'
+  echo 'WARNING: please check whether $GOPATH/bin is added to your $PATH'
+fi
 
 echo "Ready to rock! See above for any extra environment-related instructions."
