@@ -21,16 +21,10 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function() {
 
     // Create and initialize additional operator contracts
     operatorContract2 = await OperatorContract.new();
-    operatorContract2.initialize(
-      serviceContract.address,
-      bls.previousEntry, bls.seed, bls.groupPubKey
-    );
+    operatorContract2.initialize(serviceContract.address);
 
     operatorContract3 = await OperatorContract.new();
-    operatorContract3.initialize(
-      serviceContract.address,
-      bls.previousEntry, bls.seed, bls.groupPubKey
-    );
+    operatorContract3.initialize(serviceContract.address);
 
     operatorContract.registerNewGroup("0x0");
     operatorContract2.registerNewGroup("0x0");
