@@ -117,7 +117,7 @@ contract KeepRandomBeaconOperator is Ownable {
     struct SigningRequest {
         uint256 relayRequestId;
         uint256 payment;
-        bytes groupPubKey;
+        uint256 groupIndex;
         uint256 previousEntry;
         uint256 seed;
         address serviceContract;
@@ -594,10 +594,10 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
-     * @dev Returns public key of a group from active groups using modulo operator.
-     * @param seed Signing group selection seed.
+     * @dev Returns index of a randomly selected active group.
+     * @param seed Random number used as a group selection seed.
      */
-    function selectGroup(uint256 seed) public returns(bytes memory) {
+    function selectGroup(uint256 seed) public returns(uint256) {
         uint256 numberOfActiveGroups = groups.length - expiredGroupOffset;
         uint256 selectedGroup = seed % numberOfActiveGroups;
 
@@ -646,7 +646,7 @@ contract KeepRandomBeaconOperator is Ownable {
                 }
             }
         }
-        return groups[expiredGroupOffset + selectedGroup].groupPubKey;
+        return expiredGroupOffset + selectedGroup;
     }
 
     /**
@@ -689,12 +689,13 @@ contract KeepRandomBeaconOperator is Ownable {
         currentEntryStartBlock = block.number;
         entryInProgress = true;
 
-        bytes memory groupPubKey = selectGroup(previousEntry);
+        uint256 groupIndex = selectGroup(previousEntry);
+        bytes memory groupPubKey = groups[groupIndex].groupPubKey;
 
         signingRequest = SigningRequest(
             requestId,
             msg.value,
-            groupPubKey,
+            groupIndex,
             previousEntry,
             seed,
             msg.sender
@@ -709,9 +710,11 @@ contract KeepRandomBeaconOperator is Ownable {
      * previous entry and seed.
      */
     function relayEntry(uint256 _groupSignature) public {
+        bytes memory groupPublicKey = groups[signingRequest.groupIndex].groupPubKey;
+
         require(
             BLS.verify(
-                signingRequest.groupPubKey,
+                groupPublicKey,
                 abi.encodePacked(signingRequest.previousEntry, signingRequest.seed),
                 bytes32(_groupSignature)
             ),
@@ -720,7 +723,7 @@ contract KeepRandomBeaconOperator is Ownable {
         
         emit SignatureSubmitted(
             _groupSignature,
-            signingRequest.groupPubKey,
+            groupPublicKey,
             signingRequest.previousEntry,
             signingRequest.seed
         );
