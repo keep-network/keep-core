@@ -193,12 +193,6 @@ tokens, it is required to unlock addresses that will be used by Keep clients.
 We also unlock the account that will be used by Ethereum client since it will 
 be used later to set up staking contract.
 
-In several versions of geth you might encounter an error while executing account
-unlock commands described below.
-If you get `Account unlock with HTTP access is forbidden` you should run
-Ethereum client (described in the previous section) with param:
-`--allow-insecure-unlock`
-
 ```
 $ geth attach http://127.0.0.1:8545
 Welcome to the Geth JavaScript console!
@@ -223,6 +217,12 @@ true
 true
 > exit
 ```
+
+In several versions of geth (1.9.0 and above) you might encounter an error while executing account
+unlock commands described above.
+If you get `Account unlock with HTTP access is forbidden` you should run
+Ethereum client (described in the previous section) with param:
+`--allow-insecure-unlock`
 
 We also need to create a new network entry in `keep-core/contracts/solidity/truffle.js` 
 pointing to our local node and its account. This account will pay gas for Keep 
@@ -327,7 +327,7 @@ point to the secound account (the first one is used by Ethereum client):
 
 Update `[ethereum.ContractAddresses]` section to point to the previously 
 deployed contract instances. Please use addresses of `KeepRandomBeaconOperator`,
-`KeepRandomBeacon` and `TokenStaking` contracts:
+`KeepRandomBeaconService` and `TokenStaking` contracts:
 ```
 [ethereum.ContractAddresses]
         KeepRandomBeaconService = "0x15045ff30d6327345cc052cc4b8c28dbe974a74b"
@@ -350,10 +350,10 @@ In the `config.local.1.toml` enable network settings for bootstrap peer:
         Port = 3919
 ```
 
-And set a storage directory:
+And set a storage directory for the bootstrap peer:
 ```
 [Storage]
-  DataDir = "/Users/username/keepdata"
+  DataDir = "/Users/username/keepdata/1"
 ```
 This directory must be created before peer start.
 
@@ -393,6 +393,10 @@ In `config.local.2.toml`:
         Address            = "0xb7314de01d5f3188c7df0a9e95f3477bcaae2120"
         KeyFile            = "/Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-31-43.391759751Z--b7314de01d5f3188c7df0a9e95f3477bcaae2120"
 ```
+```
+[Storage]
+  DataDir = "/Users/username/keepdata/2"
+```
 
 In `config.local.3.toml`:
 ```
@@ -404,6 +408,10 @@ In `config.local.3.toml`:
 [ethereum.account]
         Address            = "0x5ef1e10dd1830af50924db623c7a9d90bf8a71be"
         KeyFile            = "/Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-34-52.920270040Z--5ef1e10dd1830af50924db623c7a9d90bf8a71be"
+```
+```
+[Storage]
+  DataDir = "/Users/username/keepdata/3"
 ```
 
 In `config.local.4.toml`:
@@ -417,6 +425,10 @@ In `config.local.4.toml`:
         Address            = "0x64c20c1ae603c30553de4ea5dd10cc1760b956be"
         KeyFile            = "/Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-35-12.560028755Z--64c20c1ae603c30553de4ea5dd10cc1760b956be"
 ```
+```
+[Storage]
+  DataDir = "/Users/username/keepdata/4"
+```
 
 In `config.local.5.toml`:
 ```
@@ -428,6 +440,10 @@ In `config.local.5.toml`:
 [ethereum.account]
         Address            = "0xc4cba981a8edb64276f71a49f9392bad7a726417"
         KeyFile            = "/Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-35-31.551964909Z--c4cba981a8edb64276f71a49f9392bad7a726417"
+```
+```
+[Storage]
+  DataDir = "/Users/username/keepdata/5"
 ```
 
 Finally, we can start each non-bootstrap instance:
