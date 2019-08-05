@@ -73,7 +73,7 @@ func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
+func TestExecute_IA_member1and2_commitmentPhase(t *testing.T) {
 	groupSize := 7
 	threshold := 4
 
