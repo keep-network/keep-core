@@ -122,6 +122,13 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
+     * @dev Add funds to group creation fee pool.
+     */
+    function fundCreateGroupFeePool() public payable {
+        _createGroupFeePool += msg.value;
+    }
+
+    /**
      * @dev Selects an operator contract from the available list using modulo operation
      * with seed value weighted by the number of active groups on each operator contract.
      * @param seed Cryptographically generated random value.
