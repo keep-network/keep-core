@@ -24,10 +24,11 @@ import (
 )
 
 var minimumStake = big.NewInt(20)
-var groupSize = 5
-var threshold = 3
 
 func TestExecute_HappyPath(t *testing.T) {
+	groupSize := 5
+	threshold := 3
+
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		return msg
 	}
@@ -46,6 +47,9 @@ func TestExecute_HappyPath(t *testing.T) {
 }
 
 func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
+	groupSize := 5
+	threshold := 3
+
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 
 		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
@@ -70,6 +74,9 @@ func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
 }
 
 func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
+	groupSize := 7
+	threshold := 4
+
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		// drop commitment message from member 1
 		commitmentMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
