@@ -78,9 +78,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function initialize(
         uint256 minGasPrice,
-        uint256 createGroupFee,
         uint256 minCallbackAllowance,
         uint256 profitMargin,
+        uint256 createGroupFee,
         uint256 withdrawalDelay,
         address operatorContract
     )
@@ -91,6 +91,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         _minGasPrice = minGasPrice;
         _minCallbackAllowance = minCallbackAllowance;
         _profitMargin = profitMargin;
+        _createGroupFee = createGroupFee;
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
