@@ -77,6 +77,12 @@ func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
 			return nil
 		}
 
+		// drop shares message from member 2
+		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
+		if ok && sharesMessage.SenderID() == group.MemberIndex(2) {
+			return nil
+		}
+
 		return msg
 	}
 
@@ -85,11 +91,11 @@ func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assertSuccessfulSignersCount(t, result, groupSize-1)
-	assertMemberFailuresCount(t, result, 1)
+	assertSuccessfulSignersCount(t, result, groupSize-2)
+	assertMemberFailuresCount(t, result, 2)
 	assertSamePublicKey(t, result)
 	assertNoDisqualifiedMembers(t, result)
-	assertInactiveMembers(t, result, group.MemberIndex(1))
+	assertInactiveMembers(t, result, group.MemberIndex(1), group.MemberIndex(2))
 	assertValidGroupPublicKey(t, result)
 }
 
