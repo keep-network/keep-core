@@ -9,6 +9,12 @@ module.exports = {
       network_id: "*"
     },
     keep_dev: {
+      host: "localhost",
+      port: 8545,
+      network_id: "*",
+      from: "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB"
+    },
+    keep_dev_vpn: {
       host: "eth-tx-node.default.svc.cluster.local",
       port: 8545,
       network_id: "*",
