@@ -93,6 +93,7 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     Group[] public groups;
+    uint256[] internal terminatedGroups;
     mapping (bytes => address[]) internal groupMembers;
 
     // expiredGroupOffset is pointing to the first active group, it is also the
@@ -643,6 +644,11 @@ contract KeepRandomBeaconOperator is Ownable {
         // TODO: cleanup DkgResults
     }
 
+    function isEntryTimedOut() public view returns (bool) {
+        uint256 entryTimeout = currentEntryStartBlock + relayEntryTimeout;
+        return entryInProgress && block.number > entryTimeout;
+    }
+
     /**
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
@@ -651,13 +657,16 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
      */
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) public payable onlyServiceContract {
+        signRelayEntry(requestId, seed, previousEntry);
+    }
+
+    function signRelayEntry(uint256 requestId, uint256 seed, uint256 previousEntry) internal {
         require(
             numberOfGroups() > 0,
             "At least one group needed to serve the request."
         );
 
-        uint256 entryTimeout = currentEntryStartBlock + relayEntryTimeout;
-        require(!entryInProgress || block.number > entryTimeout, "Relay entry is in progress.");
+        require(!entryInProgress || isEntryTimedOut(), "Relay entry is in progress.");
 
         currentEntryStartBlock = block.number;
         entryInProgress = true;
@@ -675,6 +684,18 @@ contract KeepRandomBeaconOperator is Ownable {
         );
 
         emit SignatureRequested(msg.value, previousEntry, seed, groupPubKey);
+    }
+
+    function reportRelayEntryTimeout() public {
+        require(isEntryTimedOut(), "Current relay entry did not time out");
+
+        terminatedGroups.push(signingRequest.groupIndex);
+
+        signRelayEntry(
+            signingRequest.relayRequestId,
+            signingRequest.seed,
+            signingRequest.previousEntry
+        );
     }
 
     /**
