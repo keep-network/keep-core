@@ -8,7 +8,7 @@ module.exports = {
       port: 8545,
       network_id: "*"
     },
-    testnet: {
+    keep_dev: {
       host: "eth-tx-node.default.svc.cluster.local",
       port: 8545,
       network_id: "*",
