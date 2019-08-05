@@ -48,8 +48,8 @@ func TestExecute_HappyPath(t *testing.T) {
 func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 
-		pubKeyMsg, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
-		if ok && pubKeyMsg.SenderID() == group.MemberIndex(1) {
+		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
+		if ok && publicKeyMessage.SenderID() == group.MemberIndex(1) {
 			return nil
 		}
 
@@ -72,8 +72,8 @@ func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
 func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		// drop commitment message from member 1
-		commitmentMsg, ok := msg.(*gjkr.MemberCommitmentsMessage)
-		if ok && commitmentMsg.SenderID() == group.MemberIndex(1) {
+		commitmentMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
+		if ok && commitmentMessage.SenderID() == group.MemberIndex(1) {
 			return nil
 		}
 
