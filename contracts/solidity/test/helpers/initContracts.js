@@ -51,6 +51,11 @@ async function initContracts(accounts, KeepToken, StakingProxy, TokenStaking, Ke
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 4).
   await operatorContract.authorizeStakingContract(stakingContract.address);
+
+  // Add initial funds to the fee pool to trigger group creation on relay entry without waiting for fee accumulation
+  let createGroupGasEstimateCost = await operatorContract.createGroupGasEstimate();
+  await serviceContract.fundCreateGroupFeePool({value: createGroupGasEstimateCost.mul(minimumGasPrice)});
+
   await operatorContract.relayEntry(bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
 
   return {

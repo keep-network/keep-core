@@ -227,9 +227,12 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             delete _callbacks[requestId];
         }
 
-        // TODO: Figure out when to call createGroup once pricing scheme is finalized.
         address latestOperatorContract = _operatorContracts[_operatorContracts.length - 1];
-        OperatorContract(latestOperatorContract).createGroup(entry, seed);
+        uint256 createGroupPriceEstimate = tx.gasprice*OperatorContract(latestOperatorContract).createGroupGasEstimate();
+        if (_createGroupFeePool >= createGroupPriceEstimate) {
+            _createGroupFeePool = _createGroupFeePool - createGroupPriceEstimate;
+            OperatorContract(latestOperatorContract).createGroup.value(createGroupPriceEstimate)(entry, seed);
+        }
     }
 
     /**

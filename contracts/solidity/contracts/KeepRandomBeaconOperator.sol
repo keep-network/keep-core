@@ -70,6 +70,8 @@ contract KeepRandomBeaconOperator is Ownable {
     uint256 public signingGasEstimate = 1240000; // TODO: Update once alt_bn128 gas costs reduction is implemented.
     uint256 public createGroupGasEstimate = 2260000;
 
+    uint256 public createGroupPayment;
+
     struct Group {
         bytes groupPubKey;
         uint registrationBlockHeight;
@@ -238,6 +240,7 @@ contract KeepRandomBeaconOperator is Ownable {
             groupSelectionSeed = _groupSelectionSeed;
             groupSelectionInProgress = true;
             emit GroupSelectionStarted(_groupSelectionSeed, _seed);
+            createGroupPayment = msg.value;
         }
     }
 
@@ -446,6 +449,9 @@ contract KeepRandomBeaconOperator is Ownable {
 
         groups.push(Group(groupPubKey, block.number));
         // TODO: punish/reward logic
+        uint256 rewards = createGroupPayment;
+        createGroupPayment = 0;
+        msg.sender.transfer(rewards);
         cleanup();
         emit DkgResultPublishedEvent(groupPubKey);
 

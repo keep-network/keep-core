@@ -143,6 +143,11 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
     let minimumPayment = await serviceContract.minimumPayment()
     await serviceContract.requestRelayEntry(bls.seed, {value: minimumPayment});
+
+    // Add initial funds to the fee pool to trigger group creation on relay entry without waiting for fee accumulation
+    let createGroupGasEstimateCost = await operatorContract.createGroupGasEstimate();
+    await serviceContract.fundCreateGroupFeePool({value: createGroupGasEstimateCost.mul(config.minimumGasPrice)});
+
     await operatorContract.relayEntry(bls.nextGroupSignature, bls.groupPubKey, bls.groupSignature, bls.seed);
 
     assert.isFalse((await operatorContract.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
