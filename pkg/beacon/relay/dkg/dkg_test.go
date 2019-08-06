@@ -24,10 +24,11 @@ import (
 )
 
 var minimumStake = big.NewInt(20)
-var groupSize = 5
-var threshold = 3
 
 func TestExecute_HappyPath(t *testing.T) {
+	groupSize := 5
+	threshold := 3
+
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		return msg
 	}
@@ -46,6 +47,9 @@ func TestExecute_HappyPath(t *testing.T) {
 }
 
 func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
+	groupSize := 5
+	threshold := 3
+
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 
 		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
@@ -69,11 +73,20 @@ func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
+func TestExecute_IA_member1and2_commitmentPhase(t *testing.T) {
+	groupSize := 7
+	threshold := 4
+
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		// drop commitment message from member 1
 		commitmentMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
 		if ok && commitmentMessage.SenderID() == group.MemberIndex(1) {
+			return nil
+		}
+
+		// drop shares message from member 2
+		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
+		if ok && sharesMessage.SenderID() == group.MemberIndex(2) {
 			return nil
 		}
 
@@ -85,11 +98,11 @@ func TestExecute_IA_member1_commitmentPhase(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assertSuccessfulSignersCount(t, result, groupSize-1)
-	assertMemberFailuresCount(t, result, 1)
+	assertSuccessfulSignersCount(t, result, groupSize-2)
+	assertMemberFailuresCount(t, result, 2)
 	assertSamePublicKey(t, result)
 	assertNoDisqualifiedMembers(t, result)
-	assertInactiveMembers(t, result, group.MemberIndex(1))
+	assertInactiveMembers(t, result, group.MemberIndex(1), group.MemberIndex(2))
 	assertValidGroupPublicKey(t, result)
 }
 
