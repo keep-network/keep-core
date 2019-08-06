@@ -83,7 +83,6 @@ func Initialize(
 			)
 		} else {
 			go node.MonitorRelayEntryOnChain(
-				blockCounter,
 				relayChain,
 				request.BlockNumber,
 				chainConfig,

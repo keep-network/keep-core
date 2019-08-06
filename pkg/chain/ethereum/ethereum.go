@@ -354,8 +354,8 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 	)
 }
 
-func (ec *ethereumChain) HandleRelayEntryTimeout() {
-	ec.keepRandomBeaconOperatorContract.HandleRelayEntryTimeout()
+func (ec *ethereumChain) ReportRelayEntryTimeout() {
+	ec.keepRandomBeaconOperatorContract.ReportRelayEntryTimeout()
 }
 
 func (ec *ethereumChain) SubmitDKGResult(

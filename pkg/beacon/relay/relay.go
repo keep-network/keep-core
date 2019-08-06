@@ -37,17 +37,16 @@ func NewNode(
 
 // MonitorRelayEntryOnChain is listetning to the chain for a new relay entry.
 // When a processing group which is supposed to deliver a relay entry does not
-// fulfill it's work, then this Node notifies the chain about it. In the case of
+// fulfill its work, then this Node notifies the chain about it. In the case of
 // delivering a relay entry by a processing group, this Node does nothing.
 func (n *Node) MonitorRelayEntryOnChain(
-	blockCounter chain.BlockCounter,
 	relayChain relayChain.Interface,
 	startBlockHeight uint64,
 	chainConfig *config.Chain,
 ) {
-	logger.Infof("chain is being observed by the staker ID: [%+v] for a relay entry", n.Staker.ID())
+	logger.Infof("observing chain for a new relay entry")
 
-	timeoutWaiterChannel, err := blockCounter.BlockHeightWaiter(startBlockHeight + chainConfig.RelayEntryTimeout)
+	timeoutWaiterChannel, err := n.blockCounter.BlockHeightWaiter(startBlockHeight + chainConfig.RelayEntryTimeout)
 	if err != nil {
 		logger.Errorf("block height waiter failure [%v]", err)
 	}
@@ -70,7 +69,7 @@ func (n *Node) MonitorRelayEntryOnChain(
 		case <-timeoutWaiterChannel:
 			subscription.Unsubscribe()
 
-			relayChain.HandleRelayEntryTimeout()
+			relayChain.ReportRelayEntryTimeout()
 		case <-onSubmittedResultChannel:
 			return
 		}

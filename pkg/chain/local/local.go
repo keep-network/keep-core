@@ -40,6 +40,10 @@ type Chain interface {
 	// GetLastDKGResult returns DKG result submitted to the chain for the given
 	// request ID.
 	GetLastDKGResult() *relaychain.DKGResult
+
+	// ReportRelayEntryTimeoutCount returns total count of reported relay entry
+	// timeouts.
+	ReportRelayEntryTimeoutCount() int
 }
 
 type localGroup struct {
@@ -69,6 +73,9 @@ type localChain struct {
 
 	tickets      []*relaychain.Ticket
 	ticketsMutex sync.Mutex
+
+	relayEntryTimeoutReportsMutex sync.Mutex
+	relayEntryTimeoutReports      []uint64
 
 	operatorKey *ecdsa.PrivateKey
 }
@@ -210,10 +217,6 @@ func (c *localChain) OnGroupSelectionStarted(
 
 		delete(c.groupSelectionStartedHandlers, handlerID)
 	}), nil
-}
-
-func (c *localChain) HandleRelayEntryTimeout() {
-	//TODO: implement
 }
 
 func (c *localChain) OnGroupRegistered(
@@ -444,6 +447,16 @@ func (c *localChain) OnDKGResultSubmitted(
 
 func (c *localChain) GetLastDKGResult() *relaychain.DKGResult {
 	return c.lastSubmittedDKGResult
+}
+
+func (c *localChain) ReportRelayEntryTimeout() {
+	c.relayEntryTimeoutReportsMutex.Lock()
+	c.relayEntryTimeoutReports = append(c.relayEntryTimeoutReports, c.simulatedHeight)
+	c.relayEntryTimeoutReportsMutex.Unlock()
+}
+
+func (c *localChain) ReportRelayEntryTimeoutCount() int {
+	return len(c.relayEntryTimeoutReports)
 }
 
 // CalculateDKGResultHash calculates a 256-bit hash of the DKG result.
