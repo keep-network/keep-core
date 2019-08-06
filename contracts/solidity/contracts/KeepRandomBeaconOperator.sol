@@ -545,13 +545,6 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
-     * @dev Gets number of active groups.
-     */
-    function numberOfGroups() public view returns(uint256) {
-        return groups.length - expiredGroupOffset;
-    }
-
-    /**
      * @dev Gets the cutoff time in blocks until which the given group is
      * considered as an active group. The group may not be marked as expired
      * even though its active time has passed if one of the rules inside
@@ -595,6 +588,13 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
+     * @dev Gets number of active groups.
+     */
+    function numberOfGroups() public view returns(uint256) {
+        return groups.length - expiredGroupOffset - terminatedGroups.length;
+    }
+
+    /**
      * @dev Goes through groups starting from the oldest one that is still
      * active and checks if it hasn't expired. If so, updates the information
      * about expired groups so that all expired groups are marked as such.
@@ -609,6 +609,15 @@ contract KeepRandomBeaconOperator is Ownable {
         ) {
             expiredGroupOffset++;
         }
+
+        for (uint i = 0; i < terminatedGroups.length; i++) {
+            if (expiredGroupOffset > terminatedGroups[i]) {
+                if (terminatedGroups.length > 1) {
+                    terminatedGroups[i] = terminatedGroups[terminatedGroups.length - 1];
+                }
+                terminatedGroups.length--;
+            }
+        }
     }
 
     /**
@@ -617,10 +626,19 @@ contract KeepRandomBeaconOperator is Ownable {
      */
     function selectGroup(uint256 seed) public returns(uint256) {
         expireOldGroups();
-
         uint256 selectedGroup = seed % numberOfGroups();
+        return shiftByTerminatedGroups(expiredGroupOffset + selectedGroup);
+    }
 
-        return expiredGroupOffset + selectedGroup;
+    function shiftByTerminatedGroups(uint256 selectedIndex) public returns(uint256) {
+        uint256 shift = 0;
+        for (uint i = 0; i < terminatedGroups.length; i++) {
+            if (terminatedGroups[i] <= selectedIndex + shift) {
+                shift++;
+            }
+        }
+
+        return selectedIndex + shift;
     }
 
     /**
