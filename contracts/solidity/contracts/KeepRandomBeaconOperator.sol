@@ -234,14 +234,13 @@ contract KeepRandomBeaconOperator is Ownable {
         // dkgTimeout is the time after DKG is expected to be complete plus the expected period to submit the result.
         uint256 dkgTimeout = ticketSubmissionStartBlock + ticketChallengeTimeout + timeDKG + groupSize * resultPublicationBlockStep;
 
-        if (!groupSelectionInProgress || block.number > dkgTimeout) {
-            cleanup();
-            ticketSubmissionStartBlock = block.number;
-            groupSelectionSeed = _groupSelectionSeed;
-            groupSelectionInProgress = true;
-            emit GroupSelectionStarted(_groupSelectionSeed, _seed);
-            createGroupPayment = msg.value;
-        }
+        require(!groupSelectionInProgress || block.number > dkgTimeout, "Group selection is in progress.");
+        cleanup();
+        ticketSubmissionStartBlock = block.number;
+        groupSelectionSeed = _groupSelectionSeed;
+        groupSelectionInProgress = true;
+        emit GroupSelectionStarted(_groupSelectionSeed, _seed);
+        createGroupPayment = msg.value;
     }
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 4).

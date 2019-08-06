@@ -214,6 +214,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param seed Relay entry request seed value.
      */
     function entryCreated(uint256 requestId, uint256 entry, uint256 seed) public {
+        bool success; // Store status of external contract call.
+        bytes memory data; // Store result data of external contract call.
+
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."
@@ -223,7 +226,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         emit RelayEntryGenerated(requestId, entry);
 
         if (_callbacks[requestId].callbackContract != address(0)) {
-            _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
+            (success, data) = _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
             delete _callbacks[requestId];
         }
 
@@ -231,7 +234,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 createGroupPriceEstimate = tx.gasprice*OperatorContract(latestOperatorContract).createGroupGasEstimate();
         if (_createGroupFeePool >= createGroupPriceEstimate) {
             _createGroupFeePool = _createGroupFeePool - createGroupPriceEstimate;
-            OperatorContract(latestOperatorContract).createGroup.value(createGroupPriceEstimate)(entry, seed);
+            (success, data) = latestOperatorContract.call.value(createGroupPriceEstimate)(abi.encodeWithSignature("createGroup(uint256,uint256)", entry, seed));
         }
     }
 
