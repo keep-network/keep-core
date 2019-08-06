@@ -41,12 +41,12 @@ func NewNode(
 // delivering a relay entry by a processing group, this Node does nothing.
 func (n *Node) MonitorRelayEntryOnChain(
 	relayChain relayChain.Interface,
-	startBlockHeight uint64,
+	relayRequestBlockNumber uint64,
 	chainConfig *config.Chain,
 ) {
 	logger.Infof("observing chain for a new relay entry")
 
-	timeoutWaiterChannel, err := n.blockCounter.BlockHeightWaiter(startBlockHeight + chainConfig.RelayEntryTimeout)
+	timeoutWaiterChannel, err := n.blockCounter.BlockHeightWaiter(relayRequestBlockNumber + chainConfig.RelayEntryTimeout)
 	if err != nil {
 		logger.Errorf("block height waiter failure [%v]", err)
 	}

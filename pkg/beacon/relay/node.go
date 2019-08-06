@@ -35,8 +35,18 @@ type Node struct {
 // IsSelectedIntoGroup checks if this node's staker was selected to join a group
 // which undergoes the process of generating a threshold relay entry.
 func (n *Node) IsSelectedIntoGroup(
-	groupSelectionResult *groupselection.Result,
+	selectedParticipants []relaychain.StakerAddress,
 ) bool {
+
+	selectedStakers := make([][]byte, len(selectedParticipants))
+	for i, participant := range selectedParticipants {
+		selectedStakers[i] = []byte(participant)
+	}
+
+	groupSelectionResult := &groupselection.Result{
+		SelectedStakers: selectedStakers,
+	}
+
 	for _, selectedStaker := range groupSelectionResult.SelectedStakers {
 		if bytes.Compare(selectedStaker, n.Staker.ID()) == 0 {
 			return true

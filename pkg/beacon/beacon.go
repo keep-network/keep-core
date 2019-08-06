@@ -7,7 +7,6 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -68,12 +67,8 @@ func Initialize(
 		if err != nil {
 			logger.Errorf("could not fetch selected participants after challenge timeout [%v]", err)
 		}
-		selectedStakers := make([][]byte, len(selectedParticipants))
-		for i, participant := range selectedParticipants {
-			selectedStakers[i] = []byte(participant)
-		}
 
-		if (node.IsSelectedIntoGroup(&groupselection.Result{SelectedStakers: selectedStakers})) {
+		if node.IsSelectedIntoGroup(selectedParticipants) {
 			go node.GenerateRelayEntryIfEligible(
 				request.PreviousEntry,
 				request.Seed,

@@ -96,17 +96,18 @@ func TestMonitorRelayEntryOnChain_WhenResultWasNotDelivered(t *testing.T) {
 	)
 
 	relayChain := chain.ThresholdRelay()
-	startBlockHeight, _ := blockCounter.CurrentBlock()
+	currentBlock, _ := blockCounter.CurrentBlock()
 	chainConfig := &config.Chain{
 		RelayEntryTimeout: uint64(relayEntryTimeout),
 	}
 	go node.MonitorRelayEntryOnChain(
 		relayChain,
-		uint64(startBlockHeight),
+		uint64(currentBlock),
 		chainConfig,
 	)
 
-	blockCounter.WaitForBlockHeight(startBlockHeight + relayEntryTimeout)
+	relayEntryTimeoutExtended := relayEntryTimeout + 5
+	blockCounter.WaitForBlockHeight(currentBlock + relayEntryTimeoutExtended)
 
 	count := chain.ReportRelayEntryTimeoutCount()
 
