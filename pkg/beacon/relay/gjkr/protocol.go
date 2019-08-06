@@ -328,7 +328,9 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 			}
 		}
 		if !sharesMessageFound {
-			logger.Warningf("cannot find shares message from member: [%v]", commitmentsMessage.senderID)
+			logger.Warningf("cannot find shares message from member: [%v]",
+				commitmentsMessage.senderID,
+			)
 		}
 	}
 
