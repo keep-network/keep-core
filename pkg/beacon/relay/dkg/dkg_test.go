@@ -106,7 +106,7 @@ func TestExecute_IA_member1and2_commitmentPhase(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_verifySharesAndCommitmentsPhase(t *testing.T) {
+func TestExecute_IA_member1_sharesAndCommitmentsVerificationPhase(t *testing.T) {
 	groupSize := 3
 	threshold := 2
 
