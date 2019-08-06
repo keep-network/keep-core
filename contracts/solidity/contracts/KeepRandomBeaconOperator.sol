@@ -588,7 +588,8 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
-     * @dev Gets number of active groups.
+     * @dev Gets the number of active groups. Expired and terminated groups are
+     * not counted as active.
      */
     function numberOfGroups() public view returns(uint256) {
         return groups.length - expiredGroupOffset - terminatedGroups.length;
@@ -605,7 +606,7 @@ contract KeepRandomBeaconOperator is Ownable {
         // be marked as expired and we are above activeGroupsThreshold.
         while(
             groupActiveTimeOf(groups[expiredGroupOffset]) < block.number &&
-            groups.length - expiredGroupOffset > activeGroupsThreshold
+            numberOfGroups() > activeGroupsThreshold
         ) {
             expiredGroupOffset++;
         }
