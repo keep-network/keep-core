@@ -79,7 +79,7 @@ a newly deployed version.
 === Proof of Concept
 
 The basis for the concept can be seen in the current Staking contracts
-and StakingProxy.sol
+and TokenStaking.sol
 
 
 [bibliography]

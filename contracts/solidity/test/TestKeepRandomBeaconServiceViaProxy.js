@@ -1,14 +1,14 @@
 import { duration, increaseTimeTo } from './helpers/increaseTime';
 import {bls} from './helpers/data';
 import latestTime from './helpers/latestTime';
-import exceptThrow from './helpers/expectThrow';
+import expectThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
 import {initContracts} from './helpers/initContracts';
 const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
 
 contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
-  let config, serviceContract, serviceContractProxy, operatorContract,
+  let serviceContract, serviceContractProxy, operatorContract,
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2],
@@ -16,16 +16,13 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
   beforeEach(async () => {
     let contracts = await initContracts(
-      accounts,
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
       ServiceContractProxy,
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
 
-    config = contracts.config;
     operatorContract = contracts.operatorContract;
     serviceContract = contracts.serviceContract;
     serviceContractProxy = await ServiceContractProxy.at(serviceContract.address);
@@ -43,7 +40,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("should fail to request relay entry with not enough ether", async function() {
-    await exceptThrow(serviceContract.requestRelayEntry(0, {from: account_two, value: 0}));
+    await expectThrow(serviceContract.requestRelayEntry(0, {from: account_two, value: 0}));
   });
 
   it("should be able to request relay with enough ether", async function() {
@@ -64,14 +61,14 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("should be able to request relay entry via serviceContractProxy contract with enough ether", async function() {
-    await exceptThrow(serviceContractProxy.sendTransaction({from: account_two, value: minimumPayment}));
+    await expectThrow(serviceContractProxy.sendTransaction({from: account_two, value: minimumPayment}));
 
     let contractPreviousBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
     let createGroupPayment = await operatorContract.createGroupPayment()
 
     await web3.eth.sendTransaction({
       // if you see a plain 'revert' error, it's probably because of not enough gas
-      from: account_two, value: minimumPayment, gas: 300000, to: serviceContractProxy.address,
+      from: account_two, value: minimumPayment, gas: 400000, to: serviceContractProxy.address,
       data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
@@ -92,11 +89,11 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     await serviceContract.requestRelayEntry(0, {from: account_one, value: minimumPayment})
 
     // should fail to withdraw if not owner
-    await exceptThrow(serviceContract.initiateWithdrawal({from: account_two}));
-    await exceptThrow(serviceContract.finishWithdrawal(account_two, {from: account_two}));
+    await expectThrow(serviceContract.initiateWithdrawal({from: account_two}));
+    await expectThrow(serviceContract.finishWithdrawal(account_two, {from: account_two}));
 
     await serviceContract.initiateWithdrawal({from: account_one});
-    await exceptThrow(serviceContract.finishWithdrawal(account_three, {from: account_one}));
+    await expectThrow(serviceContract.finishWithdrawal(account_three, {from: account_one}));
 
     // jump in time, full withdrawal delay
     await increaseTimeTo(await latestTime()+duration.days(30));
@@ -114,7 +111,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("should fail to update minimum gas price by non owner", async function() {
-    await exceptThrow(serviceContract.setMinimumGasPrice(123, {from: account_two}));
+    await expectThrow(serviceContract.setMinimumGasPrice(123, {from: account_two}));
   });
 
   it("should be able to update minimum gas price by the owner", async function() {

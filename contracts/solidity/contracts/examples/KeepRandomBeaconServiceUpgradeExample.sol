@@ -19,21 +19,28 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
      * same number/types of inputs.
      */
     function initialize(
-        uint256 _minPayment,
-        uint256 _minCallbackAllowance,
-        uint256 _profitMargin,
-        uint256 _createGroupFee,
+        uint256 minPayment,
+        uint256 minCallbackAllowance,
+        uint256 profitMargin,
+        uint256 createGroupFee,
         uint256 withdrawalDelay,
-        address _operatorContract
+        address operatorContract
     )
         public
         onlyOwner
     {
-        withdrawalDelay; // Silence unused var
-        super.initialize(_minPayment, _minCallbackAllowance, _profitMargin, _createGroupFee, _withdrawalDelay, _operatorContract);
+        require(!initialized(), "Contract is already initialized.");
         _initialized["KeepRandomBeaconImplV2"] = true;
         // Example of adding new data to the existing storage.
         _newVar = 1234;
+
+        // silence solc warnings, it's just an example
+        minPayment;
+        minCallbackAllowance;
+        profitMargin;
+        createGroupFee;
+        withdrawalDelay;
+        operatorContract;
     }
 
     /**

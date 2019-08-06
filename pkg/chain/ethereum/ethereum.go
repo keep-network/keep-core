@@ -91,6 +91,11 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		return nil, fmt.Errorf("error calling NaturalThreshold: [%v]", err)
 	}
 
+	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
+	if err != nil {
+		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
+	}
+
 	return &relayconfig.Chain{
 		GroupSize:                       int(groupSize.Int64()),
 		Threshold:                       int(threshold.Int64()),
@@ -101,6 +106,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		MinimumStake:                    minimumStake,
 		TokenSupply:                     tokenSupply,
 		NaturalThreshold:                naturalThreshold,
+		RelayEntryTimeout:               relayEntryTimeout,
 	}, nil
 }
 
@@ -157,7 +163,7 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
-	newEntry *event.Entry,
+	entryValue *big.Int,
 ) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
@@ -211,12 +217,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(
-		newEntry.Value,
-		newEntry.GroupPubKey,
-		newEntry.PreviousEntry,
-		newEntry.Seed,
-	)
+	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(entryValue)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(generatedEntry)
@@ -289,12 +290,10 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 	return ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
 		func(
 			newEntry *big.Int,
-			seed *big.Int,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupSelectionStart{
 				NewEntry:    newEntry,
-				Seed:        seed,
 				BlockNumber: blockNumber,
 			})
 		},

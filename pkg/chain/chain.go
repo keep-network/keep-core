@@ -82,6 +82,6 @@ type Handle interface {
 type Utility interface {
 	Handle
 
-	Genesis() *async.RelayEntryPromise
+	Genesis() error
 	RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 }

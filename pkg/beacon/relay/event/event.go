@@ -31,7 +31,6 @@ type Request struct {
 // GroupSelectionStart represents a group selection start event.
 type GroupSelectionStart struct {
 	NewEntry    *big.Int
-	Seed        *big.Int
 	BlockNumber uint64
 }
 

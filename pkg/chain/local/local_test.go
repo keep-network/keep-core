@@ -112,14 +112,12 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 
+	newEntryValue := big.NewInt(19)
 	expectedEntry := &event.Entry{
-		Value:       big.NewInt(19),
-		GroupPubKey: []byte("1"),
-		Seed:        big.NewInt(30),
-		BlockNumber: 123,
+		Value: newEntryValue,
 	}
 
-	relayEntryPromise := chainHandle.SubmitRelayEntry(expectedEntry)
+	relayEntryPromise := chainHandle.SubmitRelayEntry(newEntryValue)
 
 	done := make(chan *event.Entry)
 	relayEntryPromise.OnSuccess(func(entry *event.Entry) {
@@ -164,14 +162,12 @@ func TestLocalOnSignatureSubmitted(t *testing.T) {
 
 	defer subscription.Unsubscribe()
 
+	newEntryValue := big.NewInt(20)
 	expectedEntry := &event.Entry{
-		Value:       big.NewInt(19),
-		GroupPubKey: []byte("1"),
-		Seed:        big.NewInt(30),
-		BlockNumber: 123,
+		Value: newEntryValue,
 	}
 
-	chainHandle.SubmitRelayEntry(expectedEntry)
+	chainHandle.SubmitRelayEntry(newEntryValue)
 
 	select {
 	case event := <-eventFired:
@@ -206,9 +202,7 @@ func TestLocalOnSignatureSubmittedUnsubscribed(t *testing.T) {
 
 	subscription.Unsubscribe()
 
-	chainHandle.SubmitRelayEntry(
-		&event.Entry{},
-	)
+	chainHandle.SubmitRelayEntry(big.NewInt(1))
 
 	select {
 	case event := <-eventFired:

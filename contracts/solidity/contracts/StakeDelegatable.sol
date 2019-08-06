@@ -5,7 +5,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
-import "./StakingProxy.sol";
+import "./utils/AddressArrayUtils.sol";
 
 
 /**
@@ -20,7 +20,6 @@ contract StakeDelegatable {
     using AddressArrayUtils for address[];
 
     ERC20 public token;
-    StakingProxy public stakingProxy;
 
     uint256 public stakeWithdrawalDelay;
 
@@ -39,7 +38,7 @@ contract StakeDelegatable {
      * @param _address The address to query the balance of.
      * @return An uint256 representing the amount staked by the passed address.
      */
-    function stakeBalanceOf(address _address) public view returns (uint256 balance) {
+    function balanceOf(address _address) public view returns (uint256 balance) {
         return stakeBalances[_address];
     }
 
