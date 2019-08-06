@@ -687,11 +687,6 @@ contract KeepRandomBeaconOperator is Ownable {
         // TODO: cleanup DkgResults
     }
 
-    function isEntryTimedOut() public view returns (bool) {
-        uint256 entryTimeout = currentEntryStartBlock + relayEntryTimeout;
-        return entryInProgress && block.number > entryTimeout;
-    }
-
     /**
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
@@ -724,18 +719,6 @@ contract KeepRandomBeaconOperator is Ownable {
         emit SignatureRequested(msg.value, previousEntry, seed, groupPubKey);
     }
 
-    function reportRelayEntryTimeout() public {
-        require(isEntryTimedOut(), "Current relay entry did not time out");
-
-        terminatedGroups.push(signingRequest.groupIndex);
-
-        signRelayEntry(
-            signingRequest.relayRequestId,
-            signingRequest.seed,
-            signingRequest.previousEntry
-        );
-    }
-
     /**
      * @dev Creates a new relay entry and stores the associated data on the chain.
      * @param _groupSignature Group BLS signature over the concatentation of the
@@ -766,5 +749,33 @@ contract KeepRandomBeaconOperator is Ownable {
         );
 
         entryInProgress = false;
+    }
+
+    /**
+     * @dev Returns true if the currently ongoing new relay entry generation
+     * operation timed out. There is a certain timeout for a new relay entry
+     * to be produced, see `relayEntryTimeout` value.
+     */
+    function isEntryTimedOut() public view returns (bool) {
+        uint256 entryTimeout = currentEntryStartBlock + relayEntryTimeout;
+        return entryInProgress && block.number > entryTimeout;
+    }
+
+    /**
+     * @dev Function used to inform about the fact the currently ongoing
+     * new relay entry generation operation timed out. As a result, the group
+     * which was supposed to produce a new relay entry is immediatelly
+     * terminated and a new group is selected to produce a new relay entry.
+     */
+    function reportRelayEntryTimeout() public {
+        require(isEntryTimedOut(), "Current relay entry did not time out");
+
+        terminatedGroups.push(signingRequest.groupIndex);
+
+        signRelayEntry(
+            signingRequest.relayRequestId,
+            signingRequest.seed,
+            signingRequest.previousEntry
+        );
     }
 }
