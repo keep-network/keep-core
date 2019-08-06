@@ -536,7 +536,7 @@ contract KeepRandomBeaconOperator is Ownable {
 
     /**
      * @dev Return natural threshold, the value N virtual stakers' tickets would be expected
-     * to fall below if the tokens were optimally staked, and the tickets' values were evenly 
+     * to fall below if the tokens were optimally staked, and the tickets' values were evenly
      * distributed in the domain of the pseudorandom function.
      */
     function naturalThreshold() public view returns (uint256) {
@@ -546,12 +546,12 @@ contract KeepRandomBeaconOperator is Ownable {
 
     /**
      * @dev Gets the cutoff time in blocks until which the given group is
-     * considered as an active group. The group may not be marked as expired
-     * even though its active time has passed if one of the rules inside
-     * `selectGroup` function are not met (e.g. minimum active group threshold).
-     * Hence, this value informs when the group may no longer be considered
-     * as active but it does not mean that the group will be immediatelly
-     * considered not as such.
+     * considered as an active group assuming it hasn't been terminated before.
+     * The group may not be marked as expired even though its active
+     * time has passed if one of the rules inside `selectGroup` function are not
+     * met (e.g. minimum active group threshold). Hence, this value informs when
+     * the group may no longer be considered as active but it does not mean that
+     * the group will be immediatelly considered not as such.
      */
     function groupActiveTimeOf(Group memory group) internal view returns(uint256) {
         return group.registrationBlockHeight + groupActiveTime;
@@ -599,11 +599,13 @@ contract KeepRandomBeaconOperator is Ownable {
      * @dev Goes through groups starting from the oldest one that is still
      * active and checks if it hasn't expired. If so, updates the information
      * about expired groups so that all expired groups are marked as such.
-     * It does not mark more than activeGroupsThreshold as expired.
+     * It does not mark more than `activeGroupsThreshold` active groups as
+     * expired.
      */
     function expireOldGroups() internal {
         // move expiredGroupOffset as long as there are some groups that should
-        // be marked as expired and we are above activeGroupsThreshold.
+        // be marked as expired and we are above activeGroupsThreshold of
+        // active groups.
         while(
             groupActiveTimeOf(groups[expiredGroupOffset]) < block.number &&
             numberOfGroups() > activeGroupsThreshold
@@ -611,6 +613,10 @@ contract KeepRandomBeaconOperator is Ownable {
             expiredGroupOffset++;
         }
 
+        // Go through all terminatedGroups and if some of the terminated
+        // groups are expired, remove them from terminatedGroups collection.
+        // This is needed because we evaluate the shift of selected group index
+        // based on how many non-expired groups has been terminated.
         for (uint i = 0; i < terminatedGroups.length; i++) {
             if (expiredGroupOffset > terminatedGroups[i]) {
                 if (terminatedGroups.length > 1) {
@@ -622,7 +628,11 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
-     * @dev Returns index of a randomly selected active group.
+     * @dev Returns index of a randomly selected active group. Terminated and
+     * expired groups are not considered as active.
+     * Before new group is selected, information about expired groups
+     * is updated. At least one active group needs to be present for this
+     * function to succeed.
      * @param seed Random number used as a group selection seed.
      */
     function selectGroup(uint256 seed) public returns(uint256) {
@@ -633,6 +643,10 @@ contract KeepRandomBeaconOperator is Ownable {
         return shiftByTerminatedGroups(expiredGroupOffset + selectedGroup);
     }
 
+    /**
+     * @dev Evaluates the shift of selected group index based on the number of
+     * non-expired, terminated groups.
+     */
     function shiftByTerminatedGroups(uint256 selectedIndex) public returns(uint256) {
         uint256 shift = 0;
         for (uint i = 0; i < terminatedGroups.length; i++) {
