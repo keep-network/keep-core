@@ -626,6 +626,8 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param seed Random number used as a group selection seed.
      */
     function selectGroup(uint256 seed) public returns(uint256) {
+        require(numberOfGroups() > 0, "At least one active group required");
+
         expireOldGroups();
         uint256 selectedGroup = seed % numberOfGroups();
         return shiftByTerminatedGroups(expiredGroupOffset + selectedGroup);
@@ -680,11 +682,6 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     function signRelayEntry(uint256 requestId, uint256 seed, uint256 previousEntry) internal {
-        require(
-            numberOfGroups() > 0,
-            "At least one group needed to serve the request."
-        );
-
         require(!entryInProgress || isEntryTimedOut(), "Relay entry is in progress.");
 
         currentEntryStartBlock = block.number;

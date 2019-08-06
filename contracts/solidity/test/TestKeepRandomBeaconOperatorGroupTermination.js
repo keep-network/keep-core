@@ -1,6 +1,7 @@
 import mineBlocks from './helpers/mineBlocks';
 import {initContracts} from './helpers/initContracts';
 import expireGroup from './helpers/expireGroup';
+import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 
 contract('TestKeepRandomBeaconOperatorGroupTermination', function() {
 
@@ -223,6 +224,21 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function() {
         operatorContract.setActiveGroupsThreshold(5); 
         let selectedIndex = await runTerminationTest(6, 5, [5], 5);
         assert.equal(0, selectedIndex)
+      })
+    })
+
+    describe("should fail when there are no active groups", async () => {
+      it("T", async function() {
+        await expectThrowWithMessage(
+          runTerminationTest(1, 0, [0], 0), 
+          "At least one active group required"
+        );
+      })
+      it("TT", async function() {
+        await expectThrowWithMessage(
+          runTerminationTest(2, 0, [0, 1], 0), 
+          "At least one active group required"
+        );
       })
     })
 });
