@@ -128,6 +128,19 @@ contract KeepRandomBeaconOperator is Ownable {
 
     bool internal entryInProgress;
 
+    // Seed value used for the genesis group selection.
+    // https://www.wolframalpha.com/input/?i=pi+to+78+digits
+    uint256 internal _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
+
+    /**
+     * @dev Triggers the first group selection. Genesis can be called only when
+     * there are no groups on the operator contract.
+     */
+    function genesis() public {
+        require(groups.length == 0, "There can be no groups");
+        startGroupSelection(_genesisGroupSeed);
+    }
+
     /**
      * @dev Checks if submitter is eligible to submit.
      * @param submitterMemberIndex The claimed index of the submitter.
@@ -168,35 +181,11 @@ contract KeepRandomBeaconOperator is Ownable {
      *
      * @param _serviceContract Address of a random beacon service contract that
      * will be linked to this contract.
-     * @param _genesisEntry Initial entry value used to trigger the first group
-     * selection by submitting a new relay entry.
-     * @param _genesisSeed Initial seed value used to trigger the first group
-     * selection by submitting a new relay entry.
-     * @param _genesisGroupPubKey Initial group public key value used to trigger
-     * the first group selection by submitting a new relay entry.
      */
-    function initialize(
-        address _serviceContract,
-        uint256 _genesisEntry,
-        uint256 _genesisSeed,
-        bytes memory _genesisGroupPubKey
-    ) public onlyOwner {
+    function initialize(address _serviceContract) public onlyOwner {
         require(!initialized, "Contract is already initialized.");
         initialized = true;
         serviceContracts.push(_serviceContract);
-
-        groupSelectionRelayEntry = _genesisEntry;
-
-        // Create initial relay entry request. This will allow relayEntry to be
-        // called once to trigger the creation of the first group.
-        signingRequest = SigningRequest(
-            0,
-            0,
-            _genesisGroupPubKey,
-            _genesisEntry,
-            _genesisSeed,
-            _serviceContract
-        );
     }
 
     /**
@@ -221,9 +210,16 @@ contract KeepRandomBeaconOperator is Ownable {
      * generate their tickets.
      */
     function createGroup(uint256 _newEntry) public payable onlyServiceContract {
+        startGroupSelection(_newEntry);
+    }
 
-        // dkgTimeout is the time after DKG is expected to be complete plus the expected period to submit the result.
-        uint256 dkgTimeout = ticketSubmissionStartBlock + ticketChallengeTimeout + timeDKG + groupSize * resultPublicationBlockStep;
+    function startGroupSelection(uint256 _newEntry) internal {
+        // dkgTimeout is the time after key generation protocol is expected to
+        // be complete plus the expected time to submit the result.
+        uint256 dkgTimeout = ticketSubmissionStartBlock +
+            ticketChallengeTimeout +
+            timeDKG +
+            groupSize * resultPublicationBlockStep;
 
         if (!groupSelectionInProgress || block.number > dkgTimeout) {
             cleanup();

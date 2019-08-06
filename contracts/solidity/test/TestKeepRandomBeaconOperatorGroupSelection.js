@@ -113,11 +113,12 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
   it("should not trigger group selection while one is in progress", async function() {
     let groupSelectionStartBlock = await operatorContract.ticketSubmissionStartBlock();
+    let groupSelectionRelayEntry = await operatorContract.groupSelectionRelayEntry();
     await serviceContract.requestRelayEntry(bls.seed, {value: 10});
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
     assert.isTrue((await operatorContract.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
-    assert.isTrue((await operatorContract.groupSelectionRelayEntry()).eq(bls.groupSignature), "Random beacon value for the current group selection should not change.");
+    assert.isTrue((await operatorContract.groupSelectionRelayEntry()).eq(groupSelectionRelayEntry), "Random beacon value for the current group selection should not change.");
   });
 
   it("should be able to get selected tickets and participants after challenge period is over", async function() {
