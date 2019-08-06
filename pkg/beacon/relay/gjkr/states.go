@@ -320,6 +320,8 @@ func (sjs *sharesJustificationState) ActiveBlocks() uint64 {
 }
 
 func (sjs *sharesJustificationState) Initiate() error {
+	sjs.member.MarkInactiveMembers(sjs.previousPhaseAccusationsMessages)
+
 	disqualifiedMembers, err := sjs.member.ResolveSecretSharesAccusationsMessages(
 		sjs.previousPhaseAccusationsMessages,
 	)

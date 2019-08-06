@@ -36,6 +36,19 @@ func (cvm *CommitmentsVerifyingMember) MarkInactiveMembers(
 
 // MarkInactiveMembers takes all messages from the previous DKG protocol
 // execution phase and marks all member who did not send a message as IA.
+func (cvm *SharesJustifyingMember) MarkInactiveMembers(
+	sharesAccusationsMessages []*SecretSharesAccusationsMessage,
+) {
+	filter := cvm.messageFilter()
+	for _, message := range sharesAccusationsMessages {
+		filter.MarkMemberAsActive(message.senderID)
+	}
+
+	filter.FlushInactiveMembers()
+}
+
+// MarkInactiveMembers takes all messages from the previous DKG protocol
+// execution phase and marks all member who did not send a message as IA.
 func (sm *SharingMember) MarkInactiveMembers(
 	keySharePointsMessages []*MemberPublicKeySharePointsMessage,
 ) {
