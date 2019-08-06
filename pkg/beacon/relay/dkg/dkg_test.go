@@ -106,6 +106,33 @@ func TestExecute_IA_member1and2_commitmentPhase(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
+func TestExecute_IA_member1_publicKeySharePointsCalculationPhase(t *testing.T) {
+	groupSize := 5
+	threshold := 3
+
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+
+		sharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
+		if ok && sharePointsMessage.SenderID() == group.MemberIndex(1) {
+			return nil
+		}
+
+		return msg
+	}
+
+	result, err := runTest(groupSize, threshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertSuccessfulSignersCount(t, result, groupSize-1)
+	assertMemberFailuresCount(t, result, 1)
+	assertSamePublicKey(t, result)
+	assertNoDisqualifiedMembers(t, result)
+	assertInactiveMembers(t, result, group.MemberIndex(1))
+	assertValidGroupPublicKey(t, result)
+}
+
 func assertSuccessfulSignersCount(
 	t *testing.T,
 	testResult *dkgTestResult,
