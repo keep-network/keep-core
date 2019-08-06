@@ -640,7 +640,15 @@ contract KeepRandomBeaconOperator is Ownable {
 
         expireOldGroups();
         uint256 selectedGroup = seed % numberOfGroups();
-        return shiftByTerminatedGroups(expiredGroupOffset + selectedGroup);
+        return shiftByTerminatedGroups(shiftByExpiredGroups(selectedGroup));
+    }
+
+    /**
+     * @dev Evaluates the shift of selected group index based on the number of
+     * expired groups.
+     */
+    function shiftByExpiredGroups(uint256 selectedIndex) public returns(uint256) {
+        return expiredGroupOffset + selectedIndex;
     }
 
     /**
