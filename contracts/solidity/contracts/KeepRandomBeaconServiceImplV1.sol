@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./DelayedWithdrawal.sol";
 
@@ -22,7 +23,7 @@ interface OperatorContract {
  * must inherit from this contract and have to be initialized under updated version name
  */
 contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
-
+    using SafeMath for uint256;
     using AddressArrayUtils for address[];
 
     // These are the public events that are used by clients
@@ -193,7 +194,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         );
 
         (uint256 signingFee, uint256 createGroupFee, uint256 profitMargin) = entryFeeBreakdown();
-        uint256 callbackPayment = msg.value - signingFee - createGroupFee - profitMargin;
+        uint256 callbackPayment = msg.value.sub(signingFee).sub(createGroupFee).sub(profitMargin);
         require(
             callbackPayment >= minimumCallbackPayment(),
             "Callback payment is less than required minimum."
@@ -204,7 +205,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         _requestCounter++;
         uint256 requestId = _requestCounter;
 
-        OperatorContract(selectOperatorContract(_previousEntry)).sign.value(signingFee + profitMargin)(requestId, seed, _previousEntry);
+        OperatorContract(selectOperatorContract(_previousEntry)).sign.value(signingFee.add(profitMargin))(requestId, seed, _previousEntry);
 
         if (callbackContract != address(0)) {
             _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackPayment);
@@ -236,10 +237,10 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             delete _callbacks[requestId];
         }
 
-        address latestOperatorContract = _operatorContracts[_operatorContracts.length - 1];
-        uint256 createGroupPriceEstimate = tx.gasprice*OperatorContract(latestOperatorContract).createGroupGasEstimate();
+        address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
+        uint256 createGroupPriceEstimate = tx.gasprice.mul(OperatorContract(latestOperatorContract).createGroupGasEstimate());
         if (_createGroupFeePool >= createGroupPriceEstimate) {
-            _createGroupFeePool = _createGroupFeePool - createGroupPriceEstimate;
+            _createGroupFeePool = _createGroupFeePool.sub(createGroupPriceEstimate);
             (success, data) = latestOperatorContract.call.value(createGroupPriceEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));
         }
     }
@@ -271,7 +272,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function minimumPayment() public view returns(uint256) {
         (uint256 signingFee, uint256 createGroupFee, uint256 profitMargin) = entryFeeBreakdown();
-        return signingFee + createGroupFee + profitMargin + minimumCallbackPayment();
+        return signingFee.add(createGroupFee).add(profitMargin).add(minimumCallbackPayment());
     }
 
     /**
@@ -294,9 +295,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         }
 
         return (
-            signingGas*_minGasPrice,
-            createGroupGas*_minGasPrice*_createGroupFee/100,
-            (signingGas + createGroupGas)*_minGasPrice*_profitMargin*groupSize/100
+            signingGas.mul(_minGasPrice),
+            createGroupGas.mul(_minGasPrice).mul(_createGroupFee).div(100),
+            (signingGas.add(createGroupGas)).mul(_minGasPrice).mul(_profitMargin).mul(groupSize).div(100)
         );
     }
 
