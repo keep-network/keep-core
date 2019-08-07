@@ -110,7 +110,7 @@ func TestMonitorRelayEntryOnChain_EntryNotSubmitted(t *testing.T) {
 		)
 	}
 
-	if timeoutsReport[0] != relayEntryTimeout {
+	if timeoutsReport[0] != startBlockHeight+relayEntryTimeout {
 		t.Fatalf(
 			"Timeout reporting must happen only after a relay entry timeout\nexpected: [%v]\nactual:   [%v]",
 			relayEntryTimeout,
