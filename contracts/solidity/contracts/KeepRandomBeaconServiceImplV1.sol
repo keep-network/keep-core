@@ -51,6 +51,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         address callbackContract;
         string callbackMethod;
         uint256 callbackPayment;
+        address payable surplusRecipient;
     }
 
     mapping(uint256 => Callback) internal _callbacks;
@@ -208,7 +209,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         OperatorContract(selectOperatorContract(_previousEntry)).sign.value(signingFee.add(profitMargin))(requestId, seed, _previousEntry);
 
         if (callbackContract != address(0)) {
-            _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackPayment);
+            _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackPayment, msg.sender);
         }
 
         emit RelayEntryRequested(requestId);
@@ -233,6 +234,15 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         emit RelayEntryGenerated(requestId, entry);
 
         if (_callbacks[requestId].callbackContract != address(0)) {
+
+            // Obtain the actual callback gas expenditure and refund the surplus.
+            uint256 excessFeesRefund = 0;
+            uint256 callbackCost = _minCallbackAllowance.mul(tx.gasprice);
+            if (callbackCost < minimumCallbackPayment()) {
+                excessFeesRefund = minimumCallbackPayment().sub(callbackCost);
+                _callbacks[requestId].surplusRecipient.transfer(excessFeesRefund);
+            }
+
             (success, data) = _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
             delete _callbacks[requestId];
         }
