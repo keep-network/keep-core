@@ -43,7 +43,11 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 	relayEntryResultWindow := startBlockHeight + relayEntryTimeout - 5
 	err = blockCounter.WaitForBlockHeight(relayEntryResultWindow)
 	if err != nil {
-		fmt.Printf("failed to wait for a block: [%v]. Error occured: [%v]", relayEntryResultWindow, err)
+		fmt.Printf(
+			"failed to wait for a block: [%v]. Error occured: [%v]",
+			relayEntryResultWindow,
+			err,
+		)
 	}
 
 	chain.ThresholdRelay().SubmitRelayEntry(big.NewInt(1)).OnFailure(func(err error) {
@@ -59,8 +63,7 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 
 	if numberOfReports != 0 {
 		t.Fatalf(
-			"\nexpected: [%v]\nactual:   [%v]",
-			0,
+			"expected 0 relay entry timeout reports; has: [%v]",
 			numberOfReports,
 		)
 	}

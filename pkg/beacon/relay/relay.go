@@ -48,7 +48,7 @@ func (n *Node) MonitorRelayEntry(
 
 	timeoutWaiterChannel, err := n.blockCounter.BlockHeightWaiter(relayRequestBlockNumber + chainConfig.RelayEntryTimeout)
 	if err != nil {
-		logger.Errorf("block height waiter failure [%v]", err)
+		logger.Errorf("waiter for a relay entry timeout block failed: [%v]", err)
 	}
 
 	onSubmittedResultChannel := make(chan *event.Entry)
