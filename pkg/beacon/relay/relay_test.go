@@ -32,7 +32,7 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	go node.MonitorRelayEntryOnChain(
+	go node.MonitorRelayEntry(
 		relayChain,
 		startBlockHeight,
 		chainConfig,
@@ -86,7 +86,7 @@ func TestMonitorRelayEntryOnChain_EntryNotSubmitted(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	go node.MonitorRelayEntryOnChain(
+	go node.MonitorRelayEntry(
 		relayChain,
 		currentBlock,
 		chainConfig,

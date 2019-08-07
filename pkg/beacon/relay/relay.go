@@ -35,11 +35,11 @@ func NewNode(
 	}
 }
 
-// MonitorRelayEntryOnChain is listetning to the chain for a new relay entry.
+// MonitorRelayEntry is listetning to the chain for a new relay entry.
 // When a processing group which is supposed to deliver a relay entry does not
 // fulfill its work, then this Node notifies the chain about it. In the case of
 // delivering a relay entry by a processing group, this Node does nothing.
-func (n *Node) MonitorRelayEntryOnChain(
+func (n *Node) MonitorRelayEntry(
 	relayChain relayChain.Interface,
 	relayRequestBlockNumber uint64,
 	chainConfig *config.Chain,
