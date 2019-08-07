@@ -69,7 +69,7 @@ func Initialize(
 		}
 
 		if node.IsSelectedIntoGroup(selectedParticipants) {
-			go node.GenerateRelayEntryIfEligible(
+			go node.GenerateRelayEntry(
 				request.PreviousEntry,
 				request.Seed,
 				relayChain,

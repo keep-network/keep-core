@@ -68,22 +68,26 @@ func (n *Node) MonitorRelayEntryOnChain(
 		select {
 		case <-timeoutWaiterChannel:
 			subscription.Unsubscribe()
-
-			relayChain.ReportRelayEntryTimeout()
+			close(onSubmittedResultChannel)
+			err = relayChain.ReportRelayEntryTimeout()
+			if err != nil {
+				logger.Errorf("could not report a relay entry timeout: [%v]", err)
+			}
+			return
 		case <-onSubmittedResultChannel:
 			return
 		}
 	}
 }
 
-// GenerateRelayEntryIfEligible takes a relay request and checks if this client
+// GenerateRelayEntry takes a relay request and checks if this client
 // is one of the nodes elected by that request to create a new relay entry.
 // If it is, this client enters the threshold signature creation process and,
 // upon successfully completing it, submits the signature as a new relay entry
 // to the passed in relayChain. Note that this function returns immediately after
 // determining whether the node is or is not is a member of the requested group, and
 // signature creation and submission is performed in a background goroutine.
-func (n *Node) GenerateRelayEntryIfEligible(
+func (n *Node) GenerateRelayEntry(
 	previousEntry *big.Int,
 	seed *big.Int,
 	relayChain relayChain.Interface,

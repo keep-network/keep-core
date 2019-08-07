@@ -35,8 +35,8 @@ type RelayEntryInterface interface {
 	) (subscription.EventSubscription, error)
 	// ReportRelayEntryTimeout notifies the chain when a selected group which was
 	// supposed to submit a relay entry, did not deliver it within a specified
-	// time frame (relayEntryTimeout) counted on-chain in blocks.
-	ReportRelayEntryTimeout()
+	// time frame (relayEntryTimeout) counted in blocks.
+	ReportRelayEntryTimeout() error
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that

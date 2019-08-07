@@ -354,8 +354,13 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 	)
 }
 
-func (ec *ethereumChain) ReportRelayEntryTimeout() {
-	ec.keepRandomBeaconOperatorContract.ReportRelayEntryTimeout()
+func (ec *ethereumChain) ReportRelayEntryTimeout() error {
+	_, err := ec.keepRandomBeaconOperatorContract.ReportRelayEntryTimeout()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ec *ethereumChain) SubmitDKGResult(
