@@ -41,9 +41,9 @@ type Chain interface {
 	// request ID.
 	GetLastDKGResult() *relaychain.DKGResult
 
-	// GetReportRelayEntryTimeouts returns an array of relay entry timeouts that
-	// is populated when a relay entry is not submitted.
-	GetReportRelayEntryTimeouts() []uint64
+	// GetRelayEntryTimeoutReports returns an array of blocks which denote at what
+	// block a relay entry timeout occured.
+	GetRelayEntryTimeoutReports() []uint64
 }
 
 type localGroup struct {
@@ -461,7 +461,7 @@ func (c *localChain) ReportRelayEntryTimeout() error {
 	return nil
 }
 
-func (c *localChain) GetReportRelayEntryTimeouts() []uint64 {
+func (c *localChain) GetRelayEntryTimeoutReports() []uint64 {
 	return c.relayEntryTimeoutReports
 }
 

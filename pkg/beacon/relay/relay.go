@@ -51,15 +51,15 @@ func (n *Node) MonitorRelayEntry(
 		logger.Errorf("waiter for a relay entry timeout block failed: [%v]", err)
 	}
 
-	onSubmittedResultChannel := make(chan *event.Entry)
+	onEntrySubmittedChannel := make(chan *event.Entry)
 
 	subscription, err := relayChain.OnSignatureSubmitted(
 		func(event *event.Entry) {
-			onSubmittedResultChannel <- event
+			onEntrySubmittedChannel <- event
 		},
 	)
 	if err != nil {
-		close(onSubmittedResultChannel)
+		close(onEntrySubmittedChannel)
 		logger.Errorf("could not watch for a signature submission: [%v]", err)
 		return
 	}
@@ -68,13 +68,13 @@ func (n *Node) MonitorRelayEntry(
 		select {
 		case <-timeoutWaiterChannel:
 			subscription.Unsubscribe()
-			close(onSubmittedResultChannel)
+			close(onEntrySubmittedChannel)
 			err = relayChain.ReportRelayEntryTimeout()
 			if err != nil {
 				logger.Errorf("could not report a relay entry timeout: [%v]", err)
 			}
 			return
-		case <-onSubmittedResultChannel:
+		case <-onEntrySubmittedChannel:
 			return
 		}
 	}
