@@ -451,13 +451,14 @@ func (c *localChain) GetLastDKGResult() *relaychain.DKGResult {
 
 func (c *localChain) ReportRelayEntryTimeout() error {
 	c.relayEntryTimeoutReportsMutex.Lock()
+	defer c.relayEntryTimeoutReportsMutex.Unlock()
+
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
-		fmt.Printf("failed to fetch a current block: [%v]", err)
+		return err
 	}
-	c.relayEntryTimeoutReports = append(c.relayEntryTimeoutReports, currentBlock)
-	c.relayEntryTimeoutReportsMutex.Unlock()
 
+	c.relayEntryTimeoutReports = append(c.relayEntryTimeoutReports, currentBlock)
 	return nil
 }
 
