@@ -44,7 +44,7 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 	err = blockCounter.WaitForBlockHeight(relayEntrySubmissionWindow)
 	if err != nil {
 		fmt.Printf(
-			"failed to wait for a block: [%v]. Error occured: [%v]",
+			"failed to wait for a block: [%v]: [%v]",
 			relayEntrySubmissionWindow,
 			err,
 		)
@@ -95,9 +95,11 @@ func TestMonitorRelayEntryOnChain_EntryNotSubmitted(t *testing.T) {
 		chainConfig,
 	)
 
+	relayEntryTimeoutFromStart := startBlockHeight + relayEntryTimeout
+
 	// we want to exceed the relay entry timeout to report that a relay entry
 	// was not submitted. 5 is an arbitrary number to exceed relayEntryTimeout.
-	blockCounter.WaitForBlockHeight(startBlockHeight + relayEntryTimeout + 5)
+	blockCounter.WaitForBlockHeight(relayEntryTimeoutFromStart + 5)
 
 	timeoutsReport := chain.GetRelayEntryTimeoutReports()
 	numberOfReports := len(timeoutsReport)
@@ -110,10 +112,10 @@ func TestMonitorRelayEntryOnChain_EntryNotSubmitted(t *testing.T) {
 		)
 	}
 
-	if timeoutsReport[0] != startBlockHeight+relayEntryTimeout {
+	if timeoutsReport[0] != relayEntryTimeoutFromStart {
 		t.Fatalf(
 			"Timeout reporting must happen only after a relay entry timeout\nexpected: [%v]\nactual:   [%v]",
-			relayEntryTimeout,
+			relayEntryTimeoutFromStart,
 			timeoutsReport[0],
 		)
 	}
