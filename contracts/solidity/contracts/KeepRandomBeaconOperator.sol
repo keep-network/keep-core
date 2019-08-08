@@ -611,7 +611,7 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
-     * @dev Returns index of a randomly selected active group.
+     * @dev Returns an index of a randomly selected active group.
      * @param seed Random number used as a group selection seed.
      */
     function selectGroup(uint256 seed) public returns(uint256) {
