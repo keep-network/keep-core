@@ -44,7 +44,7 @@ func (n *Node) MonitorRelayEntry(
 	relayRequestBlockNumber uint64,
 	chainConfig *config.Chain,
 ) {
-	logger.Infof("observing chain for a new relay entry")
+	logger.Infof("monitoring chain for a new relay entry")
 
 	timeoutWaiterChannel, err := n.blockCounter.BlockHeightWaiter(relayRequestBlockNumber + chainConfig.RelayEntryTimeout)
 	if err != nil {
@@ -66,15 +66,23 @@ func (n *Node) MonitorRelayEntry(
 
 	for {
 		select {
-		case <-timeoutWaiterChannel:
+		case blockNumber := <-timeoutWaiterChannel:
 			subscription.Unsubscribe()
 			close(onEntrySubmittedChannel)
+			logger.Warningf(
+				"relay entry not submitted on time, reporting timeout at block [%v]",
+				blockNumber,
+			)
 			err = relayChain.ReportRelayEntryTimeout()
 			if err != nil {
 				logger.Errorf("could not report a relay entry timeout: [%v]", err)
 			}
 			return
-		case <-onEntrySubmittedChannel:
+		case entry := <-onEntrySubmittedChannel:
+			logger.Infof(
+				"relay entry submitted by the selected group on time at block [%v]",
+				entry.BlockNumber,
+			)
 			return
 		}
 	}
