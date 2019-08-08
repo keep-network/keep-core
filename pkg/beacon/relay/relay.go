@@ -70,7 +70,7 @@ func (n *Node) MonitorRelayEntry(
 			subscription.Unsubscribe()
 			close(onEntrySubmittedChannel)
 			logger.Warningf(
-				"relay entry not submitted on time, reporting timeout at block [%v]",
+				"relay entry was not submitted on time, reporting timeout at block [%v]",
 				blockNumber,
 			)
 			err = relayChain.ReportRelayEntryTimeout()
@@ -80,7 +80,7 @@ func (n *Node) MonitorRelayEntry(
 			return
 		case entry := <-onEntrySubmittedChannel:
 			logger.Infof(
-				"relay entry submitted by the selected group on time at block [%v]",
+				"relay entry was submitted by the selected group on time at block [%v]",
 				entry.BlockNumber,
 			)
 			return
