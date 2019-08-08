@@ -32,18 +32,10 @@ type Node struct {
 	groupRegistry *registry.Groups
 }
 
-// IsSelectedIntoGroup checks if this node's staker was selected to join a group
+// IsInGroup checks if this node's group was selected to join a group
 // which undergoes the process of generating a threshold relay entry.
-func (n *Node) IsSelectedIntoGroup(
-	selectedParticipants []relaychain.StakerAddress,
-) bool {
-	for _, selectedParticipant := range selectedParticipants {
-		if bytes.Compare([]byte(selectedParticipant), n.Staker.ID()) == 0 {
-			return true
-		}
-	}
-
-	return false
+func (n *Node) IsInGroup(groupPublicKey []byte) bool {
+	return len(n.groupRegistry.GetGroup(groupPublicKey)) > 0
 }
 
 // JoinGroupIfEligible takes a threshold relay entry value and undergoes the

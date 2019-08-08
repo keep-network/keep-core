@@ -63,12 +63,7 @@ func Initialize(
 	relayChain.OnSignatureRequested(func(request *event.Request) {
 		logger.Infof("new relay entry requested: [%+v]", request)
 
-		selectedParticipants, err := relayChain.GetSelectedParticipants()
-		if err != nil {
-			logger.Errorf("could not fetch selected participants after challenge timeout [%v]", err)
-		}
-
-		if node.IsSelectedIntoGroup(selectedParticipants) {
+		if node.IsInGroup(request.GroupPublicKey) {
 			go node.GenerateRelayEntry(
 				request.PreviousEntry,
 				request.Seed,
