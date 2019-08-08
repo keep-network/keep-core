@@ -619,9 +619,7 @@ contract KeepRandomBeaconOperator is Ownable {
         // based on how many non-expired groups has been terminated.
         for (uint i = 0; i < terminatedGroups.length; i++) {
             if (expiredGroupOffset > terminatedGroups[i]) {
-                if (terminatedGroups.length > 1) {
-                    terminatedGroups[i] = terminatedGroups[terminatedGroups.length - 1];
-                }
+                terminatedGroups[i] = terminatedGroups[terminatedGroups.length - 1];
                 terminatedGroups.length--;
             }
         }
