@@ -7,8 +7,9 @@ contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
   let operatorContract;
   const blocksForward = 20;
   const requestCounter = 0;
+  const relayEntryTimeout = 10;
 
-  describe("RelayRequestTimeout", function() {
+  describe("RelayEntryTimeout", function() {
 
     beforeEach(async () => {
 
@@ -21,6 +22,8 @@ contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
       );
 
       operatorContract = contracts.operatorContract;
+
+      operatorContract.setRelayEntryTimeout(relayEntryTimeout);
 
       // Using stub method to add first group to help testing.
       await operatorContract.registerNewGroup(bls.groupPubKey);
@@ -36,7 +39,7 @@ contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
       assert.equal((await operatorContract.getPastEvents())[0].event, 'SignatureRequested', "SignatureRequested event should occur on operator contract.");
     })
 
-    it("should throw an error when sigining is in progress and the block number <= relay entry timeout", async function() {
+    it("should throw an error when signing is in progress and the block number <= relay entry timeout", async function() {
       await operatorContract.sign(requestCounter, bls.seed, bls.previousEntry);
 
       await expectThrowWithMessage(operatorContract.sign(requestCounter, bls.seed, bls.previousEntry), 'Relay entry is in progress.');

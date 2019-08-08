@@ -15,21 +15,15 @@ contract StakingContractMock {
 
 
 contract TestKeepRandomBeaconOperatorInitialize {
-    // Create Staking contract mock
-    StakingContractMock stakingContract = new StakingContractMock();
-
     // Create Keep Random Beacon operator contract
     KeepRandomBeaconOperator keepRandomBeaconOperator = new KeepRandomBeaconOperator();
-
-    uint256[2] genesisEntry = [314, 271];
 
     function testCannotInitialize() public {
         // http://truffleframework.com/tutorials/testing-for-throws-in-solidity-tests
         ThrowProxy throwProxy = new ThrowProxy(address(keepRandomBeaconOperator));
 
         // Prime the proxy
-        KeepRandomBeaconOperator(address(throwProxy)).initialize(address(0), 200, 150, 200, 1, 1, 1, 1, 1, 1, 1, 1, genesisEntry, "0x01");
-
+        KeepRandomBeaconOperator(address(throwProxy)).initialize(address(0));
 
         // Execute the call that is supposed to throw.
         // r will be false if it threw and true if it didn't.
@@ -37,9 +31,8 @@ contract TestKeepRandomBeaconOperatorInitialize {
         Assert.isFalse(r, "Should fail to initialize without Staking proxy address.");
     }
 
-    function testInitialize() public {        
-        keepRandomBeaconOperator.initialize(address(0), 200, 150, 200, 1, 1, 1, 1, 1, 1, 1, 1, genesisEntry, "0x01");
-
+    function testInitialize() public {
+        keepRandomBeaconOperator.initialize(address(0));
         Assert.equal(keepRandomBeaconOperator.initialized(), true, "Should be initialized.");
     }
 }
