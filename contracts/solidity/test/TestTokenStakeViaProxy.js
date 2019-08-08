@@ -1,3 +1,4 @@
+import { sign } from './helpers/signature';
 import { duration } from './helpers/increaseTime';
 import exceptThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
@@ -20,7 +21,7 @@ contract('TestTokenStakeViaProxy', function(accounts) {
 
     let stakingAmount = 10000000;
 
-    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator)).substr(2), 'hex');
+    let signature = Buffer.from((await sign(web3.utils.soliditySha3(owner), operator)).substr(2), 'hex');
     let delegation = '0x' + Buffer.concat([Buffer.from(owner.substr(2), 'hex'), signature]).toString('hex');
 
     // Stake should fail since stakingContract was not added to the proxy

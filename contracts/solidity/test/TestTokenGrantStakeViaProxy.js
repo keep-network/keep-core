@@ -1,3 +1,4 @@
+import { sign } from './helpers/signature';
 import { duration } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
@@ -42,7 +43,7 @@ contract('TestTokenGrantStakeViaProxy', function(accounts) {
       }
     })
 
-    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
+    let signature = Buffer.from((await sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
     let delegation = '0x' + Buffer.concat([Buffer.from(account_two.substr(2), 'hex'), signature]).toString('hex');
 
     // Stake should fail since grantContract was not added to the staking proxy

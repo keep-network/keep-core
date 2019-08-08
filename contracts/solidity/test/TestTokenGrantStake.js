@@ -1,3 +1,4 @@
+import { sign } from './helpers/signature';
 import increaseTime, { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import exceptThrow from './helpers/expectThrow';
@@ -37,7 +38,7 @@ contract('TestTokenGrantStake', function(accounts) {
 
   it("should stake granted tokens correctly", async function() {
 
-    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
+    let signature = Buffer.from((await sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
     let delegation = Buffer.concat([Buffer.from(account_two_magpie.substr(2), 'hex'), signature]);
 
     // should throw if stake granted tokens called by anyone except grant beneficiary
