@@ -23,8 +23,8 @@ const relayDescription = `The relay command allows interacting with Keep's
 	threshold relay. The "request" subcommand allows for requesting a new entry
 	from the relay, which is equivalent to asking for a new random number. This
 	subcommand waits for the entry to appear on-chain and then reports the value.
-	The "genesis" subcommand submits initial genesis value to the relay. This
-	action can be done only once and can not be repeated ever again.`
+	The "genesis" subcommand triggers the first group selection. This action 
+    can be done only once when there are no groups on the chain.`
 
 func init() {
 	RelayCommand = cli.Command{
@@ -39,8 +39,8 @@ func init() {
 			},
 			{
 				Name:   "genesis",
-				Usage:  "Submits genesis relay entry. Can be executed only one time.",
-				Action: submitGenesisRelayEntry,
+				Usage:  "Performs genesis. Can be executed only one time.",
+				Action: genesis,
 			},
 		},
 	}
@@ -73,37 +73,18 @@ func relayRequest(c *cli.Context) error {
 	requestMutex := sync.Mutex{}
 
 	wait := make(chan struct{})
-	var requestID *big.Int
-	utility.ThresholdRelay().OnSignatureRequested(func(request *event.Request) {
-		// It is possible two relay requests will be generated close to each other.
-		// To make sure we catch request ID from the correct one, we compare seed
-		// with the one we sent.
-		if requestID == nil && seed.Cmp(request.Seed) == 0 {
-			fmt.Printf(
-				"Relay entry request submitted with id [%s]: [%+v]\n",
-				request.SigningId,
-				request,
-			)
-
-			requestMutex.Lock()
-			requestID = request.SigningId
-			requestMutex.Unlock()
-		}
-	})
 
 	utility.ThresholdRelay().OnSignatureSubmitted(func(entry *event.Entry) {
 		requestMutex.Lock()
 		defer requestMutex.Unlock()
 
-		if requestID != nil && requestID.Cmp(entry.SigningId) == 0 {
-			fmt.Fprintf(
-				os.Stderr,
-				"Relay entry received with value: [%v].\n",
-				entry.Value,
-			)
+		fmt.Fprintf(
+			os.Stderr,
+			"Relay entry received with value: [%v].\n",
+			entry.Value,
+		)
 
-			wait <- struct{}{}
-		}
+		wait <- struct{}{}
 	})
 
 	fmt.Printf("Requesting for a new relay entry at [%s]\n", time.Now())
@@ -126,9 +107,8 @@ func relayRequest(c *cli.Context) error {
 	}
 }
 
-// submitGenesisRelayEntry submits genesis entry for the threshold relay,
-// kicking off protocol to create the first group.
-func submitGenesisRelayEntry(c *cli.Context) error {
+// genesis kicks off protocol to create the first group.
+func genesis(c *cli.Context) error {
 	cfg, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: [%v]", err)
@@ -139,23 +119,9 @@ func submitGenesisRelayEntry(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	wait := make(chan error)
-
-	utility.Genesis().OnComplete(func(data *event.Entry, err error) {
-		if err != nil {
-			wait <- err
-			return
-		}
-		fmt.Printf("Submitted genesis relay entry: [%+v]\n", data)
-		wait <- nil
-		return
-	})
-
-	select {
-	case err := <-wait:
-		if err != nil {
-			return fmt.Errorf("error in submitting genesis relay entry: [%v]", err)
-		}
+	err = utility.Genesis()
+	if err != nil {
+		return fmt.Errorf("error triggering genesis: [%v]", err)
 	}
 	return nil
 }

@@ -111,13 +111,13 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	defer cancel()
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
-	signingID := int64(19)
-	relayEntryPromise := chainHandle.SubmitRelayEntry(
-		&event.Entry{
-			SigningId:   big.NewInt(signingID),
-			GroupPubKey: []byte("1"),
-		},
-	)
+
+	newEntryValue := big.NewInt(19)
+	expectedEntry := &event.Entry{
+		Value: newEntryValue,
+	}
+
+	relayEntryPromise := chainHandle.SubmitRelayEntry(newEntryValue)
 
 	done := make(chan *event.Entry)
 	relayEntryPromise.OnSuccess(func(entry *event.Entry) {
@@ -130,11 +130,11 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 	select {
 	case entry := <-done:
-		if entry.SigningId.Int64() != signingID {
+		if !reflect.DeepEqual(entry, expectedEntry) {
 			t.Fatalf(
-				"Unexpected relay entry request id\nExpected: [%v]\nActual:  [%v]",
-				signingID,
-				entry.SigningId.Int64(),
+				"Unexpected relay entry\nExpected: [%+v]\nActual:  [%+v]",
+				expectedEntry,
+				entry,
 			)
 		}
 	case <-ctx.Done():
@@ -162,15 +162,12 @@ func TestLocalOnSignatureSubmitted(t *testing.T) {
 
 	defer subscription.Unsubscribe()
 
+	newEntryValue := big.NewInt(20)
 	expectedEntry := &event.Entry{
-		SigningId:   big.NewInt(42),
-		Value:       big.NewInt(19),
-		GroupPubKey: []byte("1"),
-		Seed:        big.NewInt(30),
-		BlockNumber: 123,
+		Value: newEntryValue,
 	}
 
-	chainHandle.SubmitRelayEntry(expectedEntry)
+	chainHandle.SubmitRelayEntry(newEntryValue)
 
 	select {
 	case event := <-eventFired:
@@ -205,9 +202,7 @@ func TestLocalOnSignatureSubmittedUnsubscribed(t *testing.T) {
 
 	subscription.Unsubscribe()
 
-	chainHandle.SubmitRelayEntry(
-		&event.Entry{},
-	)
+	chainHandle.SubmitRelayEntry(big.NewInt(1))
 
 	select {
 	case event := <-eventFired:

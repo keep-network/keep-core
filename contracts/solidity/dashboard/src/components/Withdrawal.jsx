@@ -6,7 +6,7 @@ class Withdrawal extends Component {
 
   finishUnstake = async () => {
     const { web3, withdrawal } = this.props
-    web3.stakingContract.methods.finishUnstake(withdrawal.id, {from: web3.yourAddress, gas: 110000})
+    web3.defaultContract.methods.finishUnstake(withdrawal.id).send({from: web3.yourAddress})
   }
 
   render() {

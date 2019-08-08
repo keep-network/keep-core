@@ -43,7 +43,6 @@ func NewNode(
 // determining whether the node is or is not is a member of the requested group, and
 // signature creation and submission is performed in a background goroutine.
 func (n *Node) GenerateRelayEntryIfEligible(
-	signingID *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
 	relayChain relayChain.Interface,
@@ -72,7 +71,6 @@ func (n *Node) GenerateRelayEntryIfEligible(
 				n.blockCounter,
 				channel,
 				relayChain,
-				signingID,
 				previousEntry,
 				seed,
 				n.chainConfig.HonestThreshold(),
@@ -81,8 +79,7 @@ func (n *Node) GenerateRelayEntryIfEligible(
 			)
 			if err != nil {
 				logger.Errorf(
-					"error creating threshold signature for request [%s]: [%v]",
-					signingID,
+					"error creating threshold signature: [%v]",
 					err,
 				)
 				return

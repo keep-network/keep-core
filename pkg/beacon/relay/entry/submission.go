@@ -3,7 +3,6 @@ package entry
 import (
 	"fmt"
 	"math/big"
-	"time"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -25,7 +24,6 @@ type relayEntrySubmitter struct {
 // Relay entry submit process starts at block height defined by startBlockheight
 // parameter.
 func (res *relayEntrySubmitter) submitRelayEntry(
-	signingID *big.Int,
 	newEntry *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
@@ -87,36 +85,25 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 				res.index,
 				groupPublicKey,
 			)
-			entry := &event.Entry{
-				SigningId:     signingID,
-				Value:         newEntry,
-				PreviousEntry: previousEntry,
-				Timestamp:     time.Now().UTC(),
-				GroupPubKey:   groupPublicKey,
-				Seed:          seed,
-			}
 
-			res.chain.SubmitRelayEntry(entry).OnComplete(
+			res.chain.SubmitRelayEntry(newEntry).OnComplete(
 				func(entry *event.Entry, err error) {
 					if err == nil {
 						logger.Infof(
-							"[member:%v] successfully submitted relay entry for request [%v] at block: [%v]",
+							"[member:%v] successfully submitted relay entry at block: [%v]",
 							res.index,
-							signingID,
 							entry.BlockNumber,
 						)
 					}
 					errorChannel <- err
 				})
 			return <-errorChannel
-		case submittedEntryEvent := <-onSubmittedResultChan:
-			if submittedEntryEvent.SigningId.Cmp(signingID) == 0 {
-				logger.Infof(
-					"[member:%v] leaving; relay entry submitted by other member",
-					res.index,
-				)
-				return returnWithError(nil)
-			}
+		case <-onSubmittedResultChan:
+			logger.Infof(
+				"[member:%v] leaving; relay entry submitted by other member",
+				res.index,
+			)
+			return returnWithError(nil)
 		}
 	}
 }
