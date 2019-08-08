@@ -22,9 +22,6 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         }
     }
 
-    event Dupa(uint256 idx);
-    event Dupa2(uint256[] idxs);
-
     function terminateGroup(uint256 groupIndex) public {
         terminatedGroups.push(groupIndex);
     }
