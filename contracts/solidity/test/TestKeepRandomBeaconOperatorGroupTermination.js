@@ -184,24 +184,24 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function() {
       })
     })
 
-    describe("should include terminated groups when checking minimum active groups threshold", async () => {
+    describe("should include terminated groups when checking the minimum active groups threshold", async () => {    
+      beforeEach(async () => {
+        await operatorContract.setActiveGroupsThreshold(5); 
+      });      
       /*
         We do not expire any more groups because the minimum active threshold
         condition is not met (4 < 5) and we do not take the terminated group
         into account for group selection.
       */
       it("EEEET beacon_value = 0, active threshold = 5", async function() {
-        operatorContract.setActiveGroupsThreshold(5); 
         let selectedIndex = await runTerminationTest(5, 4, [4], 0);
         assert.equal(0, selectedIndex)
       })
       it("EEEET beacon_value = 3, active threshold = 5", async function() {
-        operatorContract.setActiveGroupsThreshold(5); 
         let selectedIndex = await runTerminationTest(5, 4, [4], 3);
         assert.equal(3, selectedIndex)
       })
       it("EEEET beacon_value = 4, active threshold = 5", async function() {
-        operatorContract.setActiveGroupsThreshold(5); 
         let selectedIndex = await runTerminationTest(5, 4, [4], 4);
         assert.equal(0, selectedIndex)
       })
