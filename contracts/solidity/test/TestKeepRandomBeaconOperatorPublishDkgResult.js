@@ -191,13 +191,8 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     signatures = undefined;
 
     // Create minimum amount of valid signatures
-<<<<<<< HEAD
-    for(let i = 0; i < config.groupThreshold; i++) {
-      let signature = await sign(resultHash, selectedParticipants[i]);
-=======
     for(let i = 0; i < groupThreshold; i++) {
-      let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
->>>>>>> master
+      let signature = await sign(resultHash, selectedParticipants[i]);
       signingMemberIndices.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
@@ -220,13 +215,8 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     signatures = undefined;
 
     // Create less than minimum amount of valid signatures
-<<<<<<< HEAD
-    for(let i = 0; i < config.groupThreshold - 1; i++) {
-      let signature = await sign(resultHash, selectedParticipants[i]);
-=======
     for(let i = 0; i < groupThreshold - 1; i++) {
-      let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
->>>>>>> master
+      let signature = await sign(resultHash, selectedParticipants[i]);
       signingMemberIndices.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
