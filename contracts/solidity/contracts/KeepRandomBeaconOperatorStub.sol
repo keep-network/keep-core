@@ -45,4 +45,47 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         return groups[groupIndex].groupPubKey;
     }
 
+    function getTicketSubmissionStartBlock() public view returns(uint256) {
+        return ticketSubmissionStartBlock;
+    }
+
+    function setGroupSize(uint256 size) public {
+        groupSize = size;
+    }
+
+    function setGroupThreshold(uint256 threshold) public {
+        groupThreshold = threshold;
+    }
+
+    function setActiveGroupsThreshold(uint256 threshold) public {
+        activeGroupsThreshold = threshold;
+    }
+
+    function setGroupActiveTime(uint256 time) public {
+        groupActiveTime = time;
+    }
+
+    function setRelayEntryTimeout(uint256 timeout) public {
+        relayEntryTimeout = timeout;
+    }
+
+    function setMinimumStake(uint256 stake) public {
+        minimumStake = stake;
+    }
+
+    function setTicketInitialSubmissionTimeout(uint256 timeout) public {
+        ticketInitialSubmissionTimeout = timeout;
+    }
+
+    function setTicketReactiveSubmissionTimeout(uint256 timeout) public {
+        ticketReactiveSubmissionTimeout = timeout;
+    }
+
+    function setTicketChallengeTimeout(uint256 timeout) public {
+        ticketChallengeTimeout = timeout;
+    }
+
+    function setResultPublicationBlockStep(uint256 blockStep) public {
+        resultPublicationBlockStep = blockStep;
+    }
 }

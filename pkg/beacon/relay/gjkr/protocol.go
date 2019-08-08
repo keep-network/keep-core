@@ -155,9 +155,8 @@ func (cm *CommittingMember) CalculateMembersSharesAndCommitments() (
 		// yield an error.
 		symmetricKey, hasKey := cm.symmetricKeys[receiverID]
 		if !hasKey {
-			return nil, nil, fmt.Errorf(
-				"no symmetric key for receiver %v", receiverID,
-			)
+			logger.Warningf("no symmetric key for receiver: [%v]", receiverID)
+			continue
 		}
 
 		err := sharesMessage.addShares(
@@ -329,7 +328,7 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 			}
 		}
 		if !sharesMessageFound {
-			return nil, fmt.Errorf("cannot find shares message from member %v",
+			logger.Warningf("cannot find shares message from member: [%v]",
 				commitmentsMessage.senderID,
 			)
 		}

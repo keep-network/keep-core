@@ -58,7 +58,7 @@ func (n *Node) JoinGroupIfEligible(
 	relayChain relaychain.Interface,
 	signing chain.Signing,
 	groupSelectionResult *groupselection.Result,
-	entrySeed *big.Int,
+	newEntry *big.Int,
 	dkgStartBlockHeight uint64,
 ) {
 
@@ -89,7 +89,7 @@ func (n *Node) JoinGroupIfEligible(
 
 			go func() {
 				signer, err := dkg.ExecuteDKG(
-					entrySeed,
+					newEntry,
 					playerIndex,
 					n.chainConfig.GroupSize,
 					n.chainConfig.Threshold,
