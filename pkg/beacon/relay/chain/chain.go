@@ -53,7 +53,7 @@ type GroupSelectionInterface interface {
 	// error submitting the entry.
 	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
 	// GetSelectedParticipants returns `GroupSize` slice of addresses of
-	// candidates which have been selected to the group.
+	// candidates which have been selected to the currently assembling group.
 	GetSelectedParticipants() ([]StakerAddress, error)
 }
 
