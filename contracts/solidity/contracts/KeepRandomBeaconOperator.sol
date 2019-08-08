@@ -699,7 +699,7 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     function signRelayEntry(uint256 requestId, uint256 seed, uint256 previousEntry) internal {
-        require(!entryInProgress || isEntryTimedOut(), "Relay entry is in progress.");
+        require(!entryInProgress || hasEntryTimedOut(), "Relay entry is in progress.");
 
         currentEntryStartBlock = block.number;
         entryInProgress = true;
@@ -756,7 +756,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * operation timed out. There is a certain timeout for a new relay entry
      * to be produced, see `relayEntryTimeout` value.
      */
-    function isEntryTimedOut() public view returns (bool) {
+    function hasEntryTimedOut() internal view returns (bool) {
         uint256 entryTimeout = currentEntryStartBlock + relayEntryTimeout;
         return entryInProgress && block.number > entryTimeout;
     }
@@ -768,7 +768,7 @@ contract KeepRandomBeaconOperator is Ownable {
      * terminated and a new group is selected to produce a new relay entry.
      */
     function reportRelayEntryTimeout() public {
-        require(isEntryTimedOut(), "Current relay entry did not time out");
+        require(hasEntryTimedOut(), "Current relay entry did not time out");
 
         terminatedGroups.push(signingRequest.groupIndex);
 
