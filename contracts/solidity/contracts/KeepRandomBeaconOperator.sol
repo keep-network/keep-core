@@ -656,14 +656,14 @@ contract KeepRandomBeaconOperator is Ownable {
      * non-expired, terminated groups.
      */
     function shiftByTerminatedGroups(uint256 selectedIndex) public returns(uint256) {
-        uint256 shift = 0;
+        uint256 shiftedIndex = selectedIndex;
         for (uint i = 0; i < terminatedGroups.length; i++) {
-            if (terminatedGroups[i] <= selectedIndex + shift) {
-                shift++;
+            if (terminatedGroups[i] <= shiftedIndex) {
+                shiftedIndex++;
             }
         }
 
-        return selectedIndex + shift;
+        return shiftedIndex;
     }
 
     /**
