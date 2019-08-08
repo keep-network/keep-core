@@ -63,13 +63,21 @@ func Initialize(
 	relayChain.OnSignatureRequested(func(request *event.Request) {
 		logger.Infof("new relay entry requested: [%+v]", request)
 
-		go node.GenerateRelayEntryIfEligible(
-			request.PreviousEntry,
-			request.Seed,
-			relayChain,
-			request.GroupPublicKey,
-			request.BlockNumber,
-		)
+		if node.IsInGroup(request.GroupPublicKey) {
+			go node.GenerateRelayEntry(
+				request.PreviousEntry,
+				request.Seed,
+				relayChain,
+				request.GroupPublicKey,
+				request.BlockNumber,
+			)
+		} else {
+			go node.MonitorRelayEntry(
+				relayChain,
+				request.BlockNumber,
+				chainConfig,
+			)
+		}
 	})
 
 	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
