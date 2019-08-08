@@ -628,7 +628,7 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
-     * @dev Returns index of a randomly selected active group. Terminated and
+     * @dev Returns an index of a randomly selected active group. Terminated and
      * expired groups are not considered as active.
      * Before new group is selected, information about expired groups
      * is updated. At least one active group needs to be present for this

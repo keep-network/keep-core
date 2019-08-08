@@ -106,7 +106,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		MinimumStake:                    minimumStake,
 		TokenSupply:                     tokenSupply,
 		NaturalThreshold:                naturalThreshold,
-		RelayEntryTimeout:               relayEntryTimeout,
+		RelayEntryTimeout:               relayEntryTimeout.Uint64(),
 	}, nil
 }
 
@@ -350,6 +350,15 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 			)
 		},
 	)
+}
+
+func (ec *ethereumChain) ReportRelayEntryTimeout() error {
+	_, err := ec.keepRandomBeaconOperatorContract.ReportRelayEntryTimeout()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ec *ethereumChain) SubmitDKGResult(

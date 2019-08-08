@@ -18,7 +18,7 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
      * >Functions can be overridden by another function with the same name and the
      * same number/types of inputs.
      */
-    function initialize(uint256 minPayment, uint256 withdrawalDelay, address _operatorContract)
+    function initialize(uint256 minPayment, uint256 withdrawalDelay, address operatorContract)
         public
         onlyOwner
     {
@@ -27,6 +27,11 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
 
         // Example of adding new data to the existing storage.
         _newVar = 1234;
+
+        // silence solc warnings, it's just an example
+        minPayment;
+        withdrawalDelay;
+        operatorContract;
     }
 
     /**
