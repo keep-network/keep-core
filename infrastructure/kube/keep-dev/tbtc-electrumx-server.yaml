@@ -13,7 +13,10 @@ spec:
     name: tcp-50001
   - port: 50002
     targetPort: 50002
-    name: ssl-50002
+    name: ssl-50002    
+  - port: 50003
+    targetPort: 50003
+    name: ws-50003
   - port: 50004
     targetPort: 50004
     name: wss-50004
@@ -49,6 +52,7 @@ spec:
         ports:
           - containerPort: 50001
           - containerPort: 50002
+          - containerPort: 50003
           - containerPort: 50004
           - containerPort: 8000
         # Full list of env vars: https://electrumx.readthedocs.io/en/latest/environment.html
@@ -61,6 +65,8 @@ spec:
             value: /mnt/electrum/data/electrumx.key
           - name: DAEMON_URL
             value: http://tbtc:VddO0hOv7ELqxQu6@helm-bitcoind.tbtc.svc.cluster.local:8332
+          - name: SERVICES
+            value: tcp://:50001,ssl://:50002,ws://:50003,wss://:50004,rpc://0.0.0.0:8000
           - name: COIN
             value: BitcoinSegwit
           - name: NET
