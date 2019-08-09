@@ -22,8 +22,23 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         }
     }
 
+    function registerNewGroups(uint256 groupsCount) public {
+        for (uint i = 1; i <= groupsCount; i++) {
+            registerNewGroup(new bytes(i));
+        }
+    }
+
     function terminateGroup(uint256 groupIndex) public {
         terminatedGroups.push(groupIndex);
+    }
+
+    function clearGroups() public {
+        for (uint i = 0; i < groups.length; i++) {
+            delete groupMembers[groups[i].groupPubKey];
+        }
+        groups.length = 0;
+        terminatedGroups.length = 0;
+        expiredGroupOffset = 0;
     }
 
     function getGroupRegistrationBlockHeight(uint256 groupIndex) public view returns(uint256) {

@@ -1,17 +1,16 @@
 import mineBlocks from './helpers/mineBlocks';
 import {initContracts} from './helpers/initContracts';
-import expireGroup from './helpers/expireGroup';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 
 contract('TestKeepRandomBeaconOperatorGroupTermination', function() {
 
     let operatorContract;
 
-    const groupActiveTime = 100;
+    const groupActiveTime = 5;
     const activeGroupsThreshold = 1;
     const relayEntryTimeout = 10;
 
-    beforeEach(async () => {
+    before(async () => {
       let contracts = await initContracts(
         artifacts.require('./KeepToken.sol'),
         artifacts.require('./TokenStaking.sol'),
@@ -21,6 +20,10 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function() {
       );
       
       operatorContract = contracts.operatorContract;
+    });
+
+    beforeEach(async () => {
+      operatorContract.clearGroups();
       
       operatorContract.setGroupActiveTime(groupActiveTime);
       operatorContract.setActiveGroupsThreshold(activeGroupsThreshold);
@@ -28,16 +31,9 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function() {
     });
 
     async function runTerminationTest(groupsCount, expiredCount, terminatedGroups, beaconValue ) {
-      for (var i = 1; i <= groupsCount; i++) {
-        await operatorContract.registerNewGroup([i]);
-        await mineBlocks(10);
-      }
-
-      if (expiredCount > 0) {
-        // expire group accepts group index, we need to subtract one from the 
-        // count since we index from 0.
-        await expireGroup(operatorContract, expiredCount - 1); 
-      }
+      await operatorContract.registerNewGroups(expiredCount);
+      mineBlocks(groupActiveTime);
+      await operatorContract.registerNewGroups(groupsCount - expiredCount);
 
       for (const groupIndex of terminatedGroups) {
         await operatorContract.terminateGroup(groupIndex);
