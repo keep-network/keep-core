@@ -117,7 +117,7 @@ contract KeepRandomBeaconOperator is Ownable {
     struct SigningRequest {
         uint256 relayRequestId;
         uint256 payment;
-        bytes groupPubKey;
+        uint256 groupIndex;
         uint256 previousEntry;
         uint256 seed;
         address serviceContract;
@@ -594,64 +594,37 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
-     * @dev Returns public key of a group from active groups using modulo operator.
-     * @param seed Signing group selection seed.
+     * @dev Goes through groups starting from the oldest one that is still
+     * active and checks if it hasn't expired. If so, updates the information
+     * about expired groups so that all expired groups are marked as such.
+     * It does not mark more than activeGroupsThreshold as expired.
      */
-    function selectGroup(uint256 seed) public returns(bytes memory) {
-        uint256 numberOfActiveGroups = groups.length - expiredGroupOffset;
-        uint256 selectedGroup = seed % numberOfActiveGroups;
-
-        /**
-        * We selected a group based on the information about expired groups offset
-        * from the previous call of the function. Now we need to check whether the
-        * selected group did not expire in the meantime. To do that, we compare its
-        * registration block height and group expiration timeout against the
-        * current block number. If the group has expired we move the expired groups
-        * offset to the position of the selected expired group and we try to select
-        * the next group knowing that all groups before the one previously selected
-        * are expired and should not be taken into account. We do this until we
-        * find an active group or until we reach the minimum active groups
-        * threshold.
-        *
-        * This approach is more efficient than traversing all groups one by one
-        * starting from the previous value of expired groups offset since we can
-        * mark expired groups in batches, in a fewer number of steps.
-        */
-        if (numberOfActiveGroups > activeGroupsThreshold) {
-            while (groupActiveTimeOf(groups[expiredGroupOffset + selectedGroup]) < block.number) {
-                /**
-                * We do -1 to see how many groups are available after the potential removal.
-                * For example:
-                * groups = [EEEAAAA]
-                * - assuming selectedGroup = 0, then we'll have 4-0-1=3 groups after the removal: [EEEEAAA]
-                * - assuming selectedGroup = 1, then we'll have 4-1-1=2 groups after the removal: [EEEEEAA]
-                * - assuming selectedGroup = 2, then, we'll have 4-2-1=1 groups after the removal: [EEEEEEA]
-                * - assuming selectedGroup = 3, then, we'll have 4-3-1=0 groups after the removal: [EEEEEEE]
-                */
-                if (numberOfActiveGroups - selectedGroup - 1 > activeGroupsThreshold) {
-                    selectedGroup++;
-                    expiredGroupOffset += selectedGroup;
-                    numberOfActiveGroups -= selectedGroup;
-                    selectedGroup = seed % numberOfActiveGroups;
-                } else {
-                    /* Number of groups that did not expire is less or equal activeGroupsThreshold
-                    * and we have more groups than activeGroupsThreshold (including those expired) groups.
-                    * Hence, we maintain the minimum activeGroupsThreshold of active groups and
-                    * do not let any other groups to expire
-                    */
-                    expiredGroupOffset = groups.length - activeGroupsThreshold;
-                    numberOfActiveGroups = activeGroupsThreshold;
-                    selectedGroup = seed % numberOfActiveGroups;
-                    break;
-                }
-            }
+    function expireOldGroups() internal {
+        // move expiredGroupOffset as long as there are some groups that should
+        // be marked as expired and we are above activeGroupsThreshold.
+        while(
+            groupActiveTimeOf(groups[expiredGroupOffset]) < block.number &&
+            groups.length - expiredGroupOffset > activeGroupsThreshold
+        ) {
+            expiredGroupOffset++;
         }
-        return groups[expiredGroupOffset + selectedGroup].groupPubKey;
+    }
+
+    /**
+     * @dev Returns an index of a randomly selected active group.
+     * @param seed Random number used as a group selection seed.
+     */
+    function selectGroup(uint256 seed) public returns(uint256) {
+        expireOldGroups();
+
+        uint256 selectedGroup = seed % numberOfGroups();
+
+        return expiredGroupOffset + selectedGroup;
     }
 
     /**
      * @dev Gets version of the current implementation.
-    */
+     */
     function version() public pure returns (string memory) {
         return "V1";
     }
@@ -689,12 +662,13 @@ contract KeepRandomBeaconOperator is Ownable {
         currentEntryStartBlock = block.number;
         entryInProgress = true;
 
-        bytes memory groupPubKey = selectGroup(previousEntry);
+        uint256 groupIndex = selectGroup(previousEntry);
+        bytes memory groupPubKey = groups[groupIndex].groupPubKey;
 
         signingRequest = SigningRequest(
             requestId,
             msg.value,
-            groupPubKey,
+            groupIndex,
             previousEntry,
             seed,
             msg.sender
@@ -709,9 +683,11 @@ contract KeepRandomBeaconOperator is Ownable {
      * previous entry and seed.
      */
     function relayEntry(uint256 _groupSignature) public {
+        bytes memory groupPublicKey = groups[signingRequest.groupIndex].groupPubKey;
+
         require(
             BLS.verify(
-                signingRequest.groupPubKey,
+                groupPublicKey,
                 abi.encodePacked(signingRequest.previousEntry, signingRequest.seed),
                 bytes32(_groupSignature)
             ),
@@ -720,7 +696,7 @@ contract KeepRandomBeaconOperator is Ownable {
         
         emit SignatureSubmitted(
             _groupSignature,
-            signingRequest.groupPubKey,
+            groupPublicKey,
             signingRequest.previousEntry,
             signingRequest.seed
         );
@@ -731,5 +707,9 @@ contract KeepRandomBeaconOperator is Ownable {
         );
 
         entryInProgress = false;
+    }
+
+    function reportRelayEntryTimeout() public {
+        //TODO: handle a group that didn't deliver a relay entry.
     }
 }
