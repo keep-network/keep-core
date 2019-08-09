@@ -26,6 +26,8 @@ import (
 var minimumStake = big.NewInt(20)
 
 func TestExecute_HappyPath(t *testing.T) {
+	t.Parallel()
+
 	groupSize := 5
 	threshold := 3
 
@@ -47,6 +49,8 @@ func TestExecute_HappyPath(t *testing.T) {
 }
 
 func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
+	t.Parallel()
+
 	groupSize := 5
 	threshold := 3
 
@@ -74,6 +78,8 @@ func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
 }
 
 func TestExecute_IA_member1and2_commitmentPhase(t *testing.T) {
+	t.Parallel()
+
 	groupSize := 7
 	threshold := 4
 
@@ -107,6 +113,8 @@ func TestExecute_IA_member1and2_commitmentPhase(t *testing.T) {
 }
 
 func TestExecute_IA_member1_publicKeySharePointsCalculationPhase(t *testing.T) {
+	t.Parallel()
+
 	groupSize := 5
 	threshold := 3
 
@@ -134,6 +142,8 @@ func TestExecute_IA_member1_publicKeySharePointsCalculationPhase(t *testing.T) {
 }
 
 func TestExecute_IA_member1_publicKeySharePointsVerificationPhase(t *testing.T) {
+	t.Parallel()
+
 	groupSize := 5
 	threshold := 3
 
