@@ -171,6 +171,8 @@ func TestExecute_IA_member1_publicKeySharePointsVerificationPhase(t *testing.T) 
 }
 
 func TestExecute_IA_member1_disqualifiedMembersKeysRevealingPhase(t *testing.T) {
+	t.Parallel()
+
 	groupSize := 5
 	threshold := 3
 
