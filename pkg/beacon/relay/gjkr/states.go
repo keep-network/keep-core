@@ -202,7 +202,8 @@ func (cs *commitmentState) Receive(msg net.Message) error {
 		}
 
 	case *MemberCommitmentsMessage:
-		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) {
+		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(cs.member, phaseMessage) {
 			cs.phaseCommitmentsMessages = append(
 				cs.phaseCommitmentsMessages,
 				phaseMessage,

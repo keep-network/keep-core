@@ -91,6 +91,11 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		return nil, fmt.Errorf("error calling NaturalThreshold: [%v]", err)
 	}
 
+	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
+	if err != nil {
+		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
+	}
+
 	return &relayconfig.Chain{
 		GroupSize:                       int(groupSize.Int64()),
 		Threshold:                       int(threshold.Int64()),
@@ -101,6 +106,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		MinimumStake:                    minimumStake,
 		TokenSupply:                     tokenSupply,
 		NaturalThreshold:                naturalThreshold,
+		RelayEntryTimeout:               relayEntryTimeout,
 	}, nil
 }
 
@@ -284,12 +290,10 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 	return ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
 		func(
 			newEntry *big.Int,
-			seed *big.Int,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupSelectionStart{
 				NewEntry:    newEntry,
-				Seed:        seed,
 				BlockNumber: blockNumber,
 			})
 		},

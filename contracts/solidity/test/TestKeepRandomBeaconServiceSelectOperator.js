@@ -5,7 +5,7 @@ const OperatorContract = artifacts.require('./KeepRandomBeaconOperatorStub.sol')
 
 contract('TestKeepRandomBeaconServiceSelectOperator', function() {
 
-  let config, serviceContract, operatorContract, operatorContract2, operatorContract3;
+  let serviceContract, operatorContract, operatorContract2, operatorContract3;
 
   before(async () => {
     let contracts = await initContracts(
@@ -16,26 +16,15 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function() {
       OperatorContract
     );
 
-    config = contracts.config;
     serviceContract = contracts.serviceContract;
     operatorContract = contracts.operatorContract;
 
     // Create and initialize additional operator contracts
     operatorContract2 = await OperatorContract.new();
-    operatorContract2.initialize(
-      serviceContract.address, config.minimumStake, config.groupThreshold,
-      config.groupSize, config.timeoutInitial, config.timeoutSubmission, config.timeoutChallenge, config.timeDKG, config.resultPublicationBlockStep,
-      config.activeGroupsThreshold, config.groupActiveTime, config.relayRequestTimeout,
-      [bls.previousEntry, bls.seed], bls.groupPubKey
-    );
+    operatorContract2.initialize(serviceContract.address);
 
     operatorContract3 = await OperatorContract.new();
-    operatorContract3.initialize(
-      serviceContract.address, config.minimumStake, config.groupThreshold,
-      config.groupSize, config.timeoutInitial, config.timeoutSubmission, config.timeoutChallenge, config.timeDKG, config.resultPublicationBlockStep,
-      config.activeGroupsThreshold, config.groupActiveTime, config.relayRequestTimeout,
-      [bls.previousEntry, bls.seed], bls.groupPubKey
-    );
+    operatorContract3.initialize(serviceContract.address);
 
     operatorContract.registerNewGroup("0x0");
     operatorContract2.registerNewGroup("0x0");

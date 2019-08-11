@@ -3,8 +3,11 @@ import {initContracts} from './helpers/initContracts';
 
 contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
 
-  let config, operatorContract,
-    testGroupsNumber = 10;
+  let operatorContract;
+
+  const groupActiveTime = 300;
+  const activeGroupsThreshold = 5;
+  const relayEntryTimeout = 10;
 
   beforeEach(async () => {
     let contracts = await initContracts(
@@ -14,8 +17,12 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./KeepRandomBeaconOperatorStub.sol')
     );
-    config = contracts.config;
+
     operatorContract = contracts.operatorContract;
+    
+    operatorContract.setGroupActiveTime(groupActiveTime);
+    operatorContract.setActiveGroupsThreshold(activeGroupsThreshold);
+    operatorContract.setRelayEntryTimeout(relayEntryTimeout);
   });
 
   async function addGroups(numberOfGroups) {
@@ -26,227 +33,139 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
   async function expireGroup(groupIndex) {
     let groupRegistrationBlock = await operatorContract.getGroupRegistrationBlockHeight(groupIndex);
     let currentBlock = await web3.eth.getBlockNumber();
+
     // If current block is larger than group registration block by group active time then
     // it is not necessary to mine any blocks cause the group is already expired
-    if (currentBlock - groupRegistrationBlock <= config.groupActiveTime)
-      await mineBlocks(config.groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
+    if (currentBlock - groupRegistrationBlock <= groupActiveTime) {
+      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock));
+    }
   }
 
-  it("it should be able to count the number of active groups", async function() {
+  async function runExpirationTest(groupSize, expiredCount, beaconValue) {
+    await addGroups(groupSize);
+    if (expiredCount > 0) {
+      // expire group accepts group index, we need to subtract one from the 
+      // count since we index from 0.
+      await expireGroup(expiredCount - 1); 
+    }
+    return operatorContract.selectGroup.call(beaconValue);
+  }
 
-    await addGroups(testGroupsNumber);
-
+  it("should be able to count the number of active groups", async function() {
+    let expectedGroupCount = 23;
+    await addGroups(expectedGroupCount);
     let numberOfGroups = await operatorContract.numberOfGroups();
-    assert.equal(Number(numberOfGroups), testGroupsNumber, "Number of groups is not equal to number of test groups");
+    assert.equal(Number(numberOfGroups), expectedGroupCount, "Unexpected number of groups");
   });
 
-  // - we start with [AAAAAAAAAA]
-  // - threshold is equal 5
-  // - we mine as many blocks as needed to make groups [0, 4] expired
-  // - we select group at position 4 which is expired
-  // - we should end up with [EEEEEAAAAA]
-  it("should mark all groups as expired except active threshold when\
- the selected group is right before of threshold section and it is expired", async function() {
-
-    await addGroups(testGroupsNumber);
-    await expireGroup(4);
-
-    await operatorContract.selectGroup(4) // 4 % 10 = 4
-
-    let expiredOffset = await operatorContract.expiredGroupOffset();
-    let numberOfGroups = await operatorContract.numberOfGroups();
-
-    assert.equal(expiredOffset, config.activeGroupsThreshold, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), config.activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
+  describe("should expire old groups and select active one", async () => {
+    it("A beacon_value = 0", async function() {
+      let selectedIndex = await runExpirationTest(1, 0, 0);
+      assert.equal(0, selectedIndex);
+    });
+    it("A beacon_value = 1", async function() {
+      let selectedIndex = await runExpirationTest(1, 0, 1);
+      assert.equal(0, selectedIndex);
+    });
+    it("AAA beacon_value = 0", async function() {
+      let selectedIndex = await runExpirationTest(3, 0, 0);
+      assert.equal(0, selectedIndex);
+    });
+    it("AAA beacon_value = 1", async function() {
+      let selectedIndex = await runExpirationTest(3, 0, 1);
+      assert.equal(1, selectedIndex);
+    });
+    it("AAA beacon_value = 2", async function() {
+      let selectedIndex = await runExpirationTest(3, 0, 2);
+      assert.equal(2, selectedIndex);
+    });
+    it("AAA beacon_value = 3", async function() {
+      let selectedIndex = await runExpirationTest(3, 0, 3);
+      assert.equal(0, selectedIndex);
+    });
+    it("EAA beacon_value = 0", async function() {
+      let selectedIndex = await runExpirationTest(3, 1, 0);
+      assert.equal(0, selectedIndex); // min active threshold does not let to move offset
+    });
+    it("EAAAA beacon_value = 0", async function() {
+      let selectedIndex = await runExpirationTest(5, 1, 0);
+      assert.equal(0, selectedIndex); // min active threshold does not let to move offset
+    });
+    it("EAAAAA beacon_value = 0", async function() {
+      let selectedIndex = await runExpirationTest(6, 1, 0);
+      assert.equal(1, selectedIndex); // min active threshold does allow to move offset
+    });
+    it("EEEEAAAAAA beacon_value = 0", async function() { 
+      let selectedIndex = await runExpirationTest(10, 4, 0);
+      assert.equal(4, selectedIndex);
+    });
+    it("EEEEAAAAAA beacon_value = 1", async function() {
+      let selectedIndex = await runExpirationTest(10, 4, 1);
+      assert.equal(5, selectedIndex);
+    });
+    it("EEEEAAAAAA beacon_value = 2", async function() {
+      let selectedIndex = await runExpirationTest(10, 4, 2);
+      assert.equal(6, selectedIndex);
+    });
+    it("EEEEAAAAAA beacon_value = 3", async function() {
+      let selectedIndex = await runExpirationTest(10, 4, 3);
+      assert.equal(7, selectedIndex);
+    });
+    it("EEEEAAAAAA beacon_value = 4", async function() {
+      let selectedIndex = await runExpirationTest(10, 4, 4);
+      assert.equal(8, selectedIndex);
+    });
+    it("EEEEAAAAAA beacon_value = 5", async function() {
+      let selectedIndex = await runExpirationTest(10, 4, 5);
+      assert.equal(9, selectedIndex);
+    });
+    it("EEEEAAAAAA beacon_value = 6", async function() {
+      let selectedIndex = await runExpirationTest(10, 4, 6);
+      assert.equal(4, selectedIndex);
+    });
+    it("EEEEAAAAAA beacon_value = 7", async function() {
+      let selectedIndex = await runExpirationTest(10, 4, 7);
+      assert.equal(5, selectedIndex);
+    });
+    it("EEEEAAAAAA beacon_value = 8", async function() {
+      let selectedIndex = await runExpirationTest(10, 4, 8);
+      assert.equal(6, selectedIndex);
+    });
+    it("EEEEAAAAAA beacon_value = 9", async function() {
+      let selectedIndex = await runExpirationTest(10, 4, 9);
+      assert.equal(7, selectedIndex);
+    });
+    it("EEEEAAAAAA beacon_value = 10", async function() {
+      let selectedIndex = await runExpirationTest(10, 4, 10);
+      assert.equal(8, selectedIndex);
+    });
+    it("EEEEAAAAAA beacon_value = 11", async function() {
+      let selectedIndex = await runExpirationTest(10, 4, 11);
+      assert.equal(9, selectedIndex);
+    });
+    it("EEEEEEEEEA beacon_value = 0", async function() {
+      let selectedIndex = await runExpirationTest(10, 9, 0);
+      assert.equal(5, selectedIndex); // min active threshold does not let to move offset further than to 5
+    });
+    it("EEEEEEEEEA beacon_value = 1", async function() {
+      let selectedIndex = await runExpirationTest(10, 9, 1);
+      assert.equal(6, selectedIndex); // min active threshold does not let to move offset further than to 5
+    });
+    it("EEEEEEEEEA beacon_value = 10", async function() {
+      let selectedIndex = await runExpirationTest(10, 9, 10);
+      assert.equal(5, selectedIndex); // min active threshold does not let to move offset further than to 5
+    });
+    it("EEEEEEEEEA beacon_value = 11", async function() {
+      let selectedIndex = await runExpirationTest(10, 9, 11);
+      assert.equal(6, selectedIndex); // min active threshold does not let to move offset further than to 5
+    });
   });
-
-  // - we start with [AAAAAAAAAA]
-  // - threshold is equal 5
-  // - we mine as many blocks as needed to make groups [0, 5] expired
-  // - we select group at position 5 which is expired
-  // - we should end up with [EEEEEAAAAA]
-  it("should mark all groups as expired except active threshold when\
- the selected group is right at the beginning of threshold section and it is expired", async function() {
-
-    await addGroups(testGroupsNumber);
-    await expireGroup(5);
-
-    await operatorContract.selectGroup(5) // 5 % 10 = 5
-
-    let expiredOffset = await operatorContract.expiredGroupOffset();
-    let numberOfGroups = await operatorContract.numberOfGroups();
-
-    assert.equal(expiredOffset, config.activeGroupsThreshold, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), config.activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
-  });
-
-  // - we start with [AAAAAAAAAA]
-  // - threshold is equal 5
-  // - we mine as many blocks as needed to make groups [0, 6] expired
-  // - we select group at position 6 which is expired
-  // - we should end up with [EEEEEAAAAA]
-  it("should mark all groups as expired except active threshold when\
- the selected group is right after the beginning of threshold section and it is expired", async function() {
-
-    await addGroups(testGroupsNumber);
-    await expireGroup(6);
-
-    await operatorContract.selectGroup(6) // 6 % 10 = 6
-
-    let expiredOffset = await operatorContract.expiredGroupOffset();
-    let numberOfGroups = await operatorContract.numberOfGroups();
-
-    assert.equal(expiredOffset, config.activeGroupsThreshold, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), config.activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
-  });
-
-  // - we start with [AAAAAAAAAA]
-  // - threshold is equal 5
-  // - we mine as many blocks as needed to mark all groups as expired
-  // - we select group at position 0 which is expired
-  // - we should end up with [EEEEEAAAAA]
-  it("should mark all groups as expired except active threshold when\
- selected the very first group", async function() {
-
-    await addGroups(testGroupsNumber);
-    await expireGroup(9);
-
-    await operatorContract.selectGroup(0);
-
-    let expiredOffset = await operatorContract.expiredGroupOffset();
-    let numberOfGroups = await operatorContract.numberOfGroups();
-
-    assert.equal(expiredOffset, config.activeGroupsThreshold, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), config.activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
-  });
-
-  // - we start with [AAAAAAAAAA]
-  // - threshold is equal 5
-  // - we mine as many blocks as needed to mark all groups as expired
-  // - we select group at position 9 (testGroupsNumber - 1) which is expired
-  // - we should end up with [EEEEEAAAAA]
-  it("should mark all groups as expired except active threshold when\
- selected the very last group", async function() {
-
-    await addGroups(testGroupsNumber);
-    await expireGroup(9);
-
-    await operatorContract.selectGroup(testGroupsNumber - 1); // 9
-
-    let expiredOffset = await operatorContract.expiredGroupOffset();
-    let numberOfGroups = await operatorContract.numberOfGroups();
-
-    assert.equal(expiredOffset, config.activeGroupsThreshold, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), config.activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
-  });
-
-  // - we start with [AAAAAAAAAA]
-  // - threshold is equal 5
-  // - we mine as many blocks as needed to mark all groups as expired
-  // - we select group at position 10 (testGroupsNumber) which is expired
-  // - we should end up with [EEEEEAAAAA]
-  it("should mark all groups as expired except active threshold when\
- selected the one after the last group (modulo operation check)", async function() {
-
-    await addGroups(testGroupsNumber);
-    await expireGroup(9);
-
-    await operatorContract.selectGroup(testGroupsNumber); // 10
-
-    let expiredOffset = await operatorContract.expiredGroupOffset();
-    let numberOfGroups = await operatorContract.numberOfGroups();
-
-    assert.equal(expiredOffset, config.activeGroupsThreshold, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), config.activeGroupsThreshold, "Number of groups is not equal to active groups threshold");
-  });
-
-  // - we start with [AAAAAAAAAA]
-  // - threshold is equal 5
-  // - we mine as many blocks as needed to mark all groups as expired
-  // - we add more groups so we have [AAAAAAAAAAAAAAAAAAAA]
-  // - we select group at position 1 which is expired
-  // - we should end up with [EEEEEEEEEEAAAAAAAAAA]
-  it("it should be able to mark only a subset of groups as expired", async function() {
-
-    await addGroups(testGroupsNumber);
-    await expireGroup(9);
-
-    for (var i = 1; i <= testGroupsNumber; i++)
-      await operatorContract.registerNewGroup([i]);
-
-    await operatorContract.selectGroup(1);
-
-    let after = await operatorContract.numberOfGroups();
-
-    assert.equal(Number(after), testGroupsNumber, "Number of groups should not fall below the test groups number");
-  });
-
-  // - we start with [A]
-  // - threshold is equal 5
-  // - we mine as many blocks as needed to mark the group as expired
-  // - we select group at position 0 which is expired
-  // - we should end up with [A]
-  it("should not mark group as expired when\
- there is just one group and it is expired", async function() {
-
-    await addGroups(1);
-    await expireGroup(0) // indexed from 0
-
-    await operatorContract.selectGroup(0);
-
-    let expiredOffset = await operatorContract.expiredGroupOffset();
-    let numberOfGroups = await operatorContract.numberOfGroups();
-
-    assert.equal(expiredOffset, 0, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), 1, "Unexpected number of groups");
-  });
-
-  // - we start with [AAAA]
-  // - threshold is equal 5
-  // - we mine as many blocks as needed to mark all the groups as expired
-  // - we select group at position 0 which is expired
-  // - we should end up with [AAAA]
-  it("should not mark groups as expired when there is less groups than threshold\
- and they are all expired ", async function() {
-    let groupsCount = config.activeGroupsThreshold - 1
-
-    await addGroups(groupsCount);
-    await expireGroup(groupsCount - 1) // indexed from 0
-
-    await operatorContract.selectGroup(0);
-
-    let expiredOffset = await operatorContract.expiredGroupOffset();
-    let numberOfGroups = await operatorContract.numberOfGroups();
-
-    assert.equal(expiredOffset, 0, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), groupsCount, "Unexpected number of groups");
-  });
-
-  // - we start with [AAAAA]
-  // - threshold is equal 5
-  // - we mine as many blocks as needed to mark all the groups as expired
-  // - we select group at position 0 which is expired
-  // - we should end up with [AAAAA]
-  it("should not mark groups as expired when there is threshold number of groups\
- and they are all expired ", async function() {
-    let groupsCount = config.activeGroupsThreshold
-    await addGroups(groupsCount);
-    await expireGroup(groupsCount - 1) // indexed from 0
-
-    await operatorContract.selectGroup(0);
-
-    let expiredOffset = await operatorContract.expiredGroupOffset();
-    let numberOfGroups = await operatorContract.numberOfGroups();
-
-    assert.equal(expiredOffset, 0, "Unexpected expired offset");
-    assert.equal(Number(numberOfGroups), groupsCount, "Unexpected number of groups");
-  });
-
+  
   // - we start with [AAAAAA]
   // - we check whether the first group is stale and assert it is not since
   //   an active group cannot be stale
   it("should not mark group as stale if it is active", async function() {
-    let groupsCount = config.activeGroupsThreshold + 1
+    let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
     let pubKey = await operatorContract.getGroupPublicKey(0);
@@ -259,7 +178,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
   // - we start with [AAAAAAAAAAAAAAA]
   // - we expire the first 10 groups so that we have [EEEEEEEEEEAAAAA]
   // - we check whether any of active groups is stale and assert it's not
-  it("should not mark group as stale if it is active and \
+  it("should not mark group as stale if it is active and\
  there are other expired groups", async function() {
     let groupsCount = 15
     await addGroups(groupsCount);
@@ -279,7 +198,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
   // - we expire the first 10 groups so that we have [EEEEEEEEEEAAAAA]
   // - we mine as many blocks as needed to mark expired groups as stale
   // - we check whether any of active groups is stale and assert it's not
-  it("should not mark group as stale if it is active and \
+  it("should not mark group as stale if it is active and\
  there are other stale groups", async function() {
     let groupsCount = 15
     await addGroups(groupsCount);
@@ -287,7 +206,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
 
     await operatorContract.selectGroup(0);
 
-    await mineBlocks(config.relayRequestTimeout);
+    await mineBlocks(relayEntryTimeout);
 
     for (var i = 10; i < groupsCount; i++) {
       let pubKey = await operatorContract.getGroupPublicKey(i);
@@ -304,15 +223,15 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
   //   (no group selection was triggered); group can be stale only if it has
   //   been marked as expired - `selectGroup` may decide not to mark group as
   //   expired even though it reached its expiration time (minimum threshold)
-  it("should not mark group as stale if its expiration time passed but \
+  it("should not mark group as stale if its expiration time passed but\
  it is not marked as such", async function() {
-    let groupsCount = config.activeGroupsThreshold + 1
+    let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
     let pubKey = await operatorContract.getGroupPublicKey(0);
 
     // mine blocks but do not select group so it's not marked as expired
-    await mineBlocks(config.groupActiveTime + config.relayRequestTimeout);
+    await mineBlocks(groupActiveTime + relayEntryTimeout);
 
     let isStale  = await operatorContract.isStaleGroup(pubKey);
 
@@ -324,9 +243,9 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
   //   and we run group selection to mark it as such; we have [EAAAAA]
   // - we check whether this group is a stale group and assert it is not since
   //   relay request timeout did not pass since the group expiration block
-  it("should not mark group as stale if it is expired but \
+  it("should not mark group as stale if it is expired but\
  can be still signing relay entry", async function() {
-    let groupsCount = config.activeGroupsThreshold + 1
+    let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
     let pubKey = await operatorContract.getGroupPublicKey(0);
@@ -345,9 +264,9 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
   // - we mine as many blocks as defined by relay request timeout
   // - we check whether this group is a stale group and assert it is stale since
   //   relay request timeout did pass since the group expiration block
-  it("should mark group as stale if it is expired and \
+  it("should mark group as stale if it is expired and\
  can be no longer signing relay entry", async function() {
-     let groupsCount = config.activeGroupsThreshold + 1
+     let groupsCount = activeGroupsThreshold + 1
      await addGroups(groupsCount);
  
      let pubKey = await operatorContract.getGroupPublicKey(0);
@@ -355,7 +274,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
      await expireGroup(0);
      await operatorContract.selectGroup(0);
  
-     await mineBlocks(config.relayRequestTimeout);
+     await mineBlocks(relayEntryTimeout);
 
      let isStale  = await operatorContract.isStaleGroup(pubKey);
 
@@ -366,7 +285,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
    // - we check whether group with a non-existing public key is stale and
    //   we assert it is, since we assume all non-existing groups are stale
    it("should say group is stale if it could not be found", async function() {
-    let groupsCount = config.activeGroupsThreshold + 1
+    let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
     let pubKey = "0x1337"; // group with such pub key does not exist

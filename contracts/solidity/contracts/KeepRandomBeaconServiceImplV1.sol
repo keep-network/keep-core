@@ -8,7 +8,7 @@ import "./DelayedWithdrawal.sol";
 interface OperatorContract {
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) payable external;
     function numberOfGroups() external view returns(uint256);
-    function createGroup(uint256 groupSelectionSeed, uint256 seed) payable external;
+    function createGroup(uint256 newEntry) payable external;
 }
 
 /**
@@ -45,6 +45,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     // Mapping to store new implementation versions that inherit from this contract.
     mapping (string => bool) internal _initialized;
 
+    // Seed used as the first random beacon value.
+    // It is a signature over 78 digits of PI and 78 digits of Euler's number
+    // using BLS private key 123.
+    uint256 constant internal _beaconSeed = 10920102476789591414949377782104707130412218726336356788412941355500907533021;
+
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
@@ -63,11 +68,14 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
-        _minPayment = minPayment;
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
+
+        _minPayment = minPayment;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _operatorContracts.push(operatorContract);
+
+        _previousEntry = _beaconSeed;
     }
 
     /**
@@ -169,9 +177,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Store valid entry returned by operator contract and call customer specified callback if required.
      * @param requestId Request id tracked internally by this contract.
      * @param entry The generated random number.
-     * @param seed Relay entry request seed value.
      */
-    function entryCreated(uint256 requestId, uint256 entry, uint256 seed) public {
+    function entryCreated(uint256 requestId, uint256 entry) public {
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."
@@ -187,7 +194,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         // TODO: Figure out when to call createGroup once pricing scheme is finalized.
         address latestOperatorContract = _operatorContracts[_operatorContracts.length - 1];
-        OperatorContract(latestOperatorContract).createGroup(entry, seed);
+        OperatorContract(latestOperatorContract).createGroup(entry);
     }
 
     /**
