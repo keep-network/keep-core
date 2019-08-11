@@ -42,7 +42,11 @@ func (es *ethereumSigning) Sign(message []byte) ([]byte, error) {
 	}
 
 	if len(signature) == SignatureSize {
-		// adding 27 to V (signature[64]) to accept non-malleable signatures.
+		// go-ethereum/crypto produces signature with v={0, 1} and we need to add
+		// 27 to v-part (signature[64]) to conform wtih the on-chain signature
+		// validation code that accepts v={27, 28} as specified in the
+		// Appendix F of the Ethereum Yellow Paper
+		// https://ethereum.github.io/yellowpaper/paper.pdf
 		signature[len(signature)-1] = signature[len(signature)-1] + 27
 	}
 
