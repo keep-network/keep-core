@@ -191,11 +191,9 @@ func (lc *localChannel) deliver(transportIdentifier net.TransportIdentifier, pay
 			key.Marshal(lc.staticKey),
 		)
 
-	go func() {
-		for _, handler := range snapshot {
-			handler.Handler(message)
-		}
-	}()
+	for _, handler := range snapshot {
+		go handler.Handler(message)
+	}
 }
 
 func (lc *localChannel) Send(message net.TaggedMarshaler) error {
