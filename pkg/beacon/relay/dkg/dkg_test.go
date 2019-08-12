@@ -40,6 +40,7 @@ func TestExecute_HappyPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	assertDkgResultPublished(t, result)
 	assertSuccessfulSignersCount(t, result, groupSize)
 	assertMemberFailuresCount(t, result, 0)
 	assertSamePublicKey(t, result)
@@ -69,6 +70,7 @@ func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	assertDkgResultPublished(t, result)
 	assertSuccessfulSignersCount(t, result, groupSize-1)
 	assertMemberFailuresCount(t, result, 1)
 	assertSamePublicKey(t, result)
@@ -104,11 +106,42 @@ func TestExecute_IA_member1and2_commitmentPhase(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	assertDkgResultPublished(t, result)
 	assertSuccessfulSignersCount(t, result, groupSize-2)
 	assertMemberFailuresCount(t, result, 2)
 	assertSamePublicKey(t, result)
 	assertNoDisqualifiedMembers(t, result)
 	assertInactiveMembers(t, result, group.MemberIndex(1), group.MemberIndex(2))
+	assertValidGroupPublicKey(t, result)
+}
+
+func TestExecute_IA_member1_sharesAndCommitmentsVerificationPhase(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 3
+	threshold := 2
+
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+
+		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
+		if ok && accusationsMessage.SenderID() == group.MemberIndex(1) {
+			return nil
+		}
+
+		return msg
+	}
+
+	result, err := runTest(groupSize, threshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertDkgResultPublished(t, result)
+	assertSuccessfulSignersCount(t, result, groupSize-1)
+	assertMemberFailuresCount(t, result, 1)
+	assertSamePublicKey(t, result)
+	assertNoDisqualifiedMembers(t, result)
+	assertInactiveMembers(t, result, group.MemberIndex(1))
 	assertValidGroupPublicKey(t, result)
 }
 
@@ -133,6 +166,7 @@ func TestExecute_IA_member1_publicKeySharePointsCalculationPhase(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	assertDkgResultPublished(t, result)
 	assertSuccessfulSignersCount(t, result, groupSize-1)
 	assertMemberFailuresCount(t, result, 1)
 	assertSamePublicKey(t, result)
@@ -162,12 +196,22 @@ func TestExecute_IA_member1_publicKeySharePointsVerificationPhase(t *testing.T) 
 		t.Fatal(err)
 	}
 
+	assertDkgResultPublished(t, result)
 	assertSuccessfulSignersCount(t, result, groupSize-1)
 	assertMemberFailuresCount(t, result, 1)
 	assertSamePublicKey(t, result)
 	assertNoDisqualifiedMembers(t, result)
 	assertInactiveMembers(t, result, group.MemberIndex(1))
 	assertValidGroupPublicKey(t, result)
+}
+
+func assertDkgResultPublished(
+	t *testing.T,
+	testResult *dkgTestResult,
+) {
+	if testResult.dkgResult == nil {
+		t.Fatal("dkg result is nil")
+	}
 }
 
 func assertSuccessfulSignersCount(
