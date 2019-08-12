@@ -34,10 +34,7 @@ module.exports = async function(deployer) {
   const keepRandomBeaconService = await KeepRandomBeaconServiceImplV1.at(KeepRandomBeaconService.address);
   const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
 
-  keepRandomBeaconOperator.initialize(
-    KeepRandomBeaconService.address,
-    genesisEntry, genesisSeed, genesisGroupPubKey
-  );
+  keepRandomBeaconOperator.initialize(KeepRandomBeaconService.address);
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 11).
   keepRandomBeaconOperator.authorizeStakingContract(TokenStaking.address);

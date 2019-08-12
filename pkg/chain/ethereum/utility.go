@@ -4,12 +4,12 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
-func (euc *ethereumUtilityChain) Genesis() *async.RelayEntryPromise {
-	return euc.SubmitRelayEntry(relay.GenesisRelayEntry())
+func (euc *ethereumUtilityChain) Genesis() error {
+	_, err := euc.keepRandomBeaconOperatorContract.Genesis()
+	return err
 }
 
 func (euc *ethereumUtilityChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise {

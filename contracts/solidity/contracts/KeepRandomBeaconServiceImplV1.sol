@@ -45,6 +45,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     // Mapping to store new implementation versions that inherit from this contract.
     mapping (string => bool) internal _initialized;
 
+    // Seed used as the first random beacon value.
+    // It is a signature over 78 digits of PI and 78 digits of Euler's number
+    // using BLS private key 123.
+    uint256 constant internal _beaconSeed = 10920102476789591414949377782104707130412218726336356788412941355500907533021;
+
     /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
@@ -63,11 +68,14 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
-        _minPayment = minPayment;
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
+
+        _minPayment = minPayment;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _operatorContracts.push(operatorContract);
+
+        _previousEntry = _beaconSeed;
     }
 
     /**
