@@ -192,6 +192,9 @@ func (lc *localChannel) deliver(transportIdentifier net.TransportIdentifier, pay
 		)
 
 	for _, handler := range snapshot {
+		// Invoking each handler in a separate goroutine in order
+		// to avoid situation when one of the handlers blocks the
+		// whole loop execution.
 		go handler.Handler(message)
 	}
 }
