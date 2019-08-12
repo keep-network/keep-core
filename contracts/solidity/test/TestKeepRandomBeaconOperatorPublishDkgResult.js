@@ -1,3 +1,4 @@
+import { sign } from './helpers/signature';
 import mineBlocks from './helpers/mineBlocks';
 import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
@@ -78,7 +79,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     selectedParticipants = await operatorContract.selectedParticipants();
 
     for(let i = 0; i < selectedParticipants.length; i++) {
-      let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
+      let signature = await sign(resultHash, selectedParticipants[i]);
       signingMemberIndices.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
@@ -105,7 +106,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     let unorderedSignatures;
 
     for(let i = 0; i < selectedParticipants.length; i++) {
-      let signature = await web3.eth.sign(resultHash, selectedParticipants[unorderedSigningMembersIndexes[i] - 1]);
+      let signature = await sign(resultHash, selectedParticipants[unorderedSigningMembersIndexes[i] - 1]);
       if (unorderedSignatures == undefined) unorderedSignatures = signature
       else unorderedSignatures += signature.slice(2, signature.length);
     }
@@ -161,7 +162,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
 
     // Create less than minimum amount of valid signatures
     for(let i = 0; i < lastParticipantIdx; i++) {
-      let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
+      let signature = await sign(resultHash, selectedParticipants[i]);
       signingMemberIndices.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
@@ -169,7 +170,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
 
     // Add invalid signature as the last one
     let nonsenseHash = web3.utils.soliditySha3("ducky duck");
-    let invalidSignature = await web3.eth.sign(nonsenseHash, selectedParticipants[lastParticipantIdx]);
+    let invalidSignature = await sign(nonsenseHash, selectedParticipants[lastParticipantIdx]);
     signatures += invalidSignature.slice(2, invalidSignature.length);
     signingMemberIndices.push(lastParticipantIdx);
 
@@ -191,7 +192,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
 
     // Create minimum amount of valid signatures
     for(let i = 0; i < groupThreshold; i++) {
-      let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
+      let signature = await sign(resultHash, selectedParticipants[i]);
       signingMemberIndices.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
@@ -215,7 +216,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
 
     // Create less than minimum amount of valid signatures
     for(let i = 0; i < groupThreshold - 1; i++) {
-      let signature = await web3.eth.sign(resultHash, selectedParticipants[i]);
+      let signature = await sign(resultHash, selectedParticipants[i]);
       signingMemberIndices.push(i+1);
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
