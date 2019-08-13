@@ -31,13 +31,8 @@ func (js *joinState) Initiate() error {
 func (js *joinState) Receive(msg net.Message) error {
 	switch joinMsg := msg.Payload().(type) {
 	case *JoinMessage:
-		err := js.member.AddToGroup(joinMsg.SenderID())
-		if err != nil {
-			return err
-		}
-
 		logger.Debugf(
-			"[member:%v,channel:%s] added member [%v] with key [%x]",
+			"[member:%v,channel:%s] processing member [%v] with key [%x]",
 			js.member.ID,
 			js.channel.Name()[:5],
 			joinMsg.SenderID(),

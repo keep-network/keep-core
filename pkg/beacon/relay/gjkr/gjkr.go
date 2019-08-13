@@ -6,6 +6,7 @@ import (
 
 	"github.com/ipfs/go-log"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -28,12 +29,13 @@ func Execute(
 	threshold int,
 	seed *big.Int,
 	startBlockHeight uint64,
+	chainConfig *config.Chain,
 ) (*Result, uint64, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	member, err := NewMember(
 		memberIndex,
-		make([]group.MemberIndex, 0),
+		make([]group.MemberIndex, chainConfig.GroupSize),
 		threshold,
 		seed,
 	)

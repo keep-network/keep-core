@@ -35,6 +35,14 @@ func ExecuteDKG(
 		)
 	}
 
+	chainConfig, err := relayChain.GetConfig()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"fetching a chain configuration has failed: [%v]",
+			err,
+		)
+	}
+
 	gjkrResult, gjkrEndBlockHeight, err := gjkr.Execute(
 		playerIndex,
 		blockCounter,
@@ -42,6 +50,7 @@ func ExecuteDKG(
 		threshold,
 		seed,
 		startBlockHeight,
+		chainConfig,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
