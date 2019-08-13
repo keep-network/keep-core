@@ -71,6 +71,63 @@ func (mf *InactiveMemberFilter) FlushInactiveMembers() {
 	}
 }
 
+// DisqualifiedMemberFilter is a proxy facilitates filtering out disqualified
+// members in the given phase and registering their final list in DKG Group.
+type DisqualifiedMemberFilter struct {
+	selfMemberID MemberIndex
+	group        *Group
+
+	phaseDisqualifiedMembers []MemberIndex
+}
+
+// NewDisqualifiedMemberFilter creates a new instance of
+// DisqualifiedMemberFilter. It accepts member index of the current member
+// (the one which will be filtering out other group members
+// for disqualification) and the reference to Group to which all
+// those members belong.
+func NewDisqualifiedMemberFilter(
+	selfMemberIndex MemberIndex,
+	group *Group,
+) *DisqualifiedMemberFilter {
+	return &DisqualifiedMemberFilter{
+		selfMemberID:             selfMemberIndex,
+		group:                    group,
+		phaseDisqualifiedMembers: make([]MemberIndex, 0),
+	}
+}
+
+// MarkMemberAsDisqualified marks member with the given index as disqualified
+// in the given phase.
+func (mf *DisqualifiedMemberFilter) MarkMemberAsDisqualified(
+	memberID MemberIndex,
+) {
+	mf.phaseDisqualifiedMembers = append(mf.phaseDisqualifiedMembers, memberID)
+}
+
+// FlushDisqualifiedMembers takes all members who were previously marked as
+// disqualified and flushes them to DKG group as disqualified members.
+func (mf *DisqualifiedMemberFilter) FlushDisqualifiedMembers() {
+	isDisqualified := func(id MemberIndex) bool {
+		if id == mf.selfMemberID {
+			return false
+		}
+
+		for _, disqualifiedMemberID := range mf.phaseDisqualifiedMembers {
+			if disqualifiedMemberID == id {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	for _, operatingMemberID := range mf.group.OperatingMemberIDs() {
+		if isDisqualified(operatingMemberID) {
+			mf.group.MarkMemberAsDisqualified(operatingMemberID)
+		}
+	}
+}
+
 // IsMessageFromSelf is an auxiliary function determining whether the given
 // ProtocolMessage is from the current member itself.
 func IsMessageFromSelf(memberIndex MemberIndex, message ProtocolMessage) bool {
