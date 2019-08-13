@@ -50,7 +50,7 @@ func TestExecute_HappyPath(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
+func TestExecute_IA_member1_ephemeralKeyGenerationPhase1(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -80,7 +80,7 @@ func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1and2_commitmentPhase(t *testing.T) {
+func TestExecute_IA_member1and2_commitmentPhase3(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 7
@@ -116,7 +116,7 @@ func TestExecute_IA_member1and2_commitmentPhase(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_sharesAndCommitmentsVerificationPhase(t *testing.T) {
+func TestExecute_IA_member1_sharesAndCommitmentsVerificationPhase4(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 3
@@ -146,7 +146,7 @@ func TestExecute_IA_member1_sharesAndCommitmentsVerificationPhase(t *testing.T) 
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_publicKeySharePointsCalculationPhase(t *testing.T) {
+func TestExecute_IA_member1_publicKeySharePointsCalculationPhase7(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -176,7 +176,7 @@ func TestExecute_IA_member1_publicKeySharePointsCalculationPhase(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_publicKeySharePointsVerificationPhase(t *testing.T) {
+func TestExecute_IA_member1_publicKeySharePointsVerificationPhase8(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -203,6 +203,37 @@ func TestExecute_IA_member1_publicKeySharePointsVerificationPhase(t *testing.T) 
 	assertSamePublicKey(t, result)
 	assertNoDisqualifiedMembers(t, result)
 	assertInactiveMembers(t, result, group.MemberIndex(1))
+	assertValidGroupPublicKey(t, result)
+}
+
+func TestExecute_IA_member3and5_disqualifiedMembersKeysRevealingPhase10(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	threshold := 3
+
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+
+		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
+		if ok && (disqualifiedKeysMessage.SenderID() == group.MemberIndex(3) ||
+			disqualifiedKeysMessage.SenderID() == group.MemberIndex(5)) {
+			return nil
+		}
+
+		return msg
+	}
+
+	result, err := runTest(groupSize, threshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertDkgResultPublished(t, result)
+	assertSuccessfulSignersCount(t, result, groupSize-2)
+	assertMemberFailuresCount(t, result, 2)
+	assertSamePublicKey(t, result)
+	assertNoDisqualifiedMembers(t, result)
+	assertInactiveMembers(t, result, group.MemberIndex(3), group.MemberIndex(5))
 	assertValidGroupPublicKey(t, result)
 }
 
