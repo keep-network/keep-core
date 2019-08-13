@@ -206,7 +206,7 @@ func TestExecute_IA_member1_publicKeySharePointsVerificationPhase(t *testing.T) 
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_DKGResultSigningPhase13(t *testing.T) {
+func TestExecute_IA_member2and4_DKGResultSigningPhase13(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -215,7 +215,8 @@ func TestExecute_IA_member1_DKGResultSigningPhase13(t *testing.T) {
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 
 		hashSignatureMessage, ok := msg.(*result.DKGResultHashSignatureMessage)
-		if ok && hashSignatureMessage.SenderID() == group.MemberIndex(1) {
+		if ok && (hashSignatureMessage.SenderID() == group.MemberIndex(2) ||
+			hashSignatureMessage.SenderID() == group.MemberIndex(4)) {
 			return nil
 		}
 
