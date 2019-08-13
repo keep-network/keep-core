@@ -226,6 +226,7 @@ func TestExecute_IA_member1_disqualifiedMembersKeysRevealingPhase(t *testing.T) 
 		t.Fatal(err)
 	}
 
+	assertDkgResultPublished(t, result)
 	assertSuccessfulSignersCount(t, result, groupSize-1)
 	assertMemberFailuresCount(t, result, 1)
 	assertSamePublicKey(t, result)
