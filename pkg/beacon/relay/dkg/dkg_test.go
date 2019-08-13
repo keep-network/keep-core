@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
+
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
@@ -233,6 +235,50 @@ func TestExecute_IA_member2and4_DKGResultSigningPhase13(t *testing.T) {
 	assertMemberFailuresCount(t, result, 0)
 	assertSamePublicKey(t, result)
 	assertNoDisqualifiedMembers(t, result)
+	assertInactiveMembers(t, result)
+	assertValidGroupPublicKey(t, result)
+}
+
+// TODO 1. Test case for 'private key is invalid scalar for ECDH DQ -> result: disqualify accuser'
+
+// TODO 2. Test case for 'presented private key does not correspond to the published public key -> result: disqualify accuser'.
+
+// TODO 3. Test case for 'shares inconsistent -> result: disqualify accused'
+
+// TODO 4. Test case for 'shares consistent -> result: disqualify accuser'. Refactor test case name further, to align with other test scenarios for this phase
+func TestExecute_DQ_member1_secretSharesAccusationsMessagesResolvingPhase5(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	threshold := 3
+
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+
+		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
+		if ok && (accusationsMessage.SenderID() == group.MemberIndex(1)) {
+			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey, 1)
+			//accusedMemberKey = ? // TODO Obtain private key of member 2 in order to make a false accusation
+			//accusedMembersKeys[group.MemberIndex(2)] = accusedMemberKey
+
+			return gjkr.NewSecretSharesAccusationsMessage(
+				accusationsMessage.SenderID(),
+				accusedMembersKeys,
+			)
+		}
+
+		return msg
+	}
+
+	result, err := runTest(groupSize, threshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertDkgResultPublished(t, result)
+	assertSuccessfulSignersCount(t, result, groupSize-1)
+	assertMemberFailuresCount(t, result, 0)
+	assertSamePublicKey(t, result)
+	assertNoDisqualifiedMembers(t, result) //TODO Should fail for now. New assertion will be implemented later
 	assertInactiveMembers(t, result)
 	assertValidGroupPublicKey(t, result)
 }
