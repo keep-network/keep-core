@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/net/ephemeral"
-
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
@@ -21,6 +19,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/interception"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
