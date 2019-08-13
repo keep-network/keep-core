@@ -7,7 +7,7 @@ import "github.com/keep-network/keep-core/pkg/beacon/relay/group"
 func (em *SymmetricKeyGeneratingMember) MarkInactiveMembers(
 	ephemeralPubKeyMessages []*EphemeralPublicKeyMessage,
 ) {
-	filter := em.messageFilter()
+	filter := em.messageIAFilter()
 	for _, message := range ephemeralPubKeyMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
@@ -21,7 +21,7 @@ func (cvm *CommitmentsVerifyingMember) MarkInactiveMembers(
 	sharesMessages []*PeerSharesMessage,
 	commitmentsMessages []*MemberCommitmentsMessage,
 ) {
-	filter := cvm.messageFilter()
+	filter := cvm.messageIAFilter()
 	for _, sharesMessage := range sharesMessages {
 		for _, commitmentsMessage := range commitmentsMessages {
 			if sharesMessage.senderID == commitmentsMessage.senderID {
@@ -39,7 +39,7 @@ func (cvm *CommitmentsVerifyingMember) MarkInactiveMembers(
 func (cvm *SharesJustifyingMember) MarkInactiveMembers(
 	sharesAccusationsMessages []*SecretSharesAccusationsMessage,
 ) {
-	filter := cvm.messageFilter()
+	filter := cvm.messageIAFilter()
 	for _, message := range sharesAccusationsMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
@@ -52,7 +52,7 @@ func (cvm *SharesJustifyingMember) MarkInactiveMembers(
 func (sm *SharingMember) MarkInactiveMembers(
 	keySharePointsMessages []*MemberPublicKeySharePointsMessage,
 ) {
-	filter := sm.messageFilter()
+	filter := sm.messageIAFilter()
 	for _, message := range keySharePointsMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
@@ -65,7 +65,7 @@ func (sm *SharingMember) MarkInactiveMembers(
 func (cvm *PointsJustifyingMember) MarkInactiveMembers(
 	pointsAccusationsMessages []*PointsAccusationsMessage,
 ) {
-	filter := cvm.messageFilter()
+	filter := cvm.messageIAFilter()
 	for _, message := range pointsAccusationsMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
@@ -78,7 +78,7 @@ func (cvm *PointsJustifyingMember) MarkInactiveMembers(
 func (rm *ReconstructingMember) MarkInactiveMembers(
 	disqialifiedKeysMessages []*DisqualifiedEphemeralKeysMessage,
 ) {
-	filter := rm.messageFilter()
+	filter := rm.messageIAFilter()
 	for _, message := range disqialifiedKeysMessages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
@@ -86,8 +86,12 @@ func (rm *ReconstructingMember) MarkInactiveMembers(
 	filter.FlushInactiveMembers()
 }
 
-func (mc *memberCore) messageFilter() *group.InactiveMemberFilter {
+func (mc *memberCore) messageIAFilter() *group.InactiveMemberFilter {
 	return group.NewInactiveMemberFilter(mc.ID, mc.group)
+}
+
+func (mc *memberCore) messageDQFilter() *group.DisqualifiedMemberFilter {
+	return group.NewDisqualifiedMemberFilter(mc.ID, mc.group)
 }
 
 func (mc *memberCore) IsSenderAccepted(senderID group.MemberIndex) bool {
