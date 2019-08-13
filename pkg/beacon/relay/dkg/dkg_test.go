@@ -206,7 +206,7 @@ func TestExecute_IA_member1_publicKeySharePointsVerificationPhase(t *testing.T) 
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_DKGResultSigningPhase(t *testing.T) {
+func TestExecute_IA_member1_DKGResultSigningPhase13(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
