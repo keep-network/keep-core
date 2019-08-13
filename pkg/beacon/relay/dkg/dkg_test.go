@@ -11,6 +11,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -233,6 +234,37 @@ func TestExecute_IA_member3and5_disqualifiedMembersKeysRevealingPhase10(t *testi
 	assertSamePublicKey(t, result)
 	assertNoDisqualifiedMembers(t, result)
 	assertInactiveMembers(t, result, group.MemberIndex(3), group.MemberIndex(5))
+	assertValidGroupPublicKey(t, result)
+}
+
+func TestExecute_IA_member2and4_DKGResultSigningPhase13(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	threshold := 3
+
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+
+		hashSignatureMessage, ok := msg.(*result.DKGResultHashSignatureMessage)
+		if ok && (hashSignatureMessage.SenderID() == group.MemberIndex(2) ||
+			hashSignatureMessage.SenderID() == group.MemberIndex(4)) {
+			return nil
+		}
+
+		return msg
+	}
+
+	result, err := runTest(groupSize, threshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertDkgResultPublished(t, result)
+	assertSuccessfulSignersCount(t, result, groupSize)
+	assertMemberFailuresCount(t, result, 0)
+	assertSamePublicKey(t, result)
+	assertNoDisqualifiedMembers(t, result)
+	assertInactiveMembers(t, result)
 	assertValidGroupPublicKey(t, result)
 }
 
