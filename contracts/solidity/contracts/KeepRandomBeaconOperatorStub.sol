@@ -8,6 +8,8 @@ import "./KeepRandomBeaconOperator.sol";
  */
 contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
+    constructor(address _serviceContract, address _stakingContract) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {}
+
     /**
      * @dev Stub method to authorize service contract to help local development.
      */
