@@ -63,8 +63,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 
 	if len(signatures) < config.Threshold {
 		return fmt.Errorf(
-			"could not submit result with [%v] signatures "+
-				"for threshold [%v]",
+			"could not submit result with [%v] signatures for threshold [%v]",
 			len(signatures),
 			config.Threshold,
 		)
