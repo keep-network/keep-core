@@ -1,6 +1,5 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./TokenStaking.sol";
@@ -20,8 +19,7 @@ interface ServiceContract {
  * The contract is not upgradeable. New functionality can be implemented by deploying
  * new versions following Keep client update and re-authorization by the stakers.
  */
-contract KeepRandomBeaconOperator is Ownable {
-
+contract KeepRandomBeaconOperator {
     using SafeMath for uint256;
     using BytesLib for bytes;
     using ECDSA for bytes32;
@@ -38,6 +36,9 @@ contract KeepRandomBeaconOperator is Ownable {
     event SignatureSubmitted(uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     event GroupSelectionStarted(uint256 newEntry);
+
+    // Contract owner.
+    address public owner;
 
     bool public initialized;
 
@@ -143,6 +144,14 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(owner == msg.sender, "Caller is not the owner.");
+        _;
+    }
+
+    /**
      * @dev Checks if submitter is eligible to submit.
      * @param submitterMemberIndex The claimed index of the submitter.
      */
@@ -175,6 +184,13 @@ contract KeepRandomBeaconOperator is Ownable {
             "Ticket submission challenge period must be over."
         );
         _;
+    }
+
+    /**
+     * @dev Initializes the contract setting the deployer as the initial owner.
+     */
+    constructor() public {
+        owner = msg.sender;
     }
 
     /**
