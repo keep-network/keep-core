@@ -40,9 +40,10 @@ contract KeepRandomBeaconOperator {
     // Contract owner.
     address public owner;
 
-    bool public initialized;
-
     address[] public serviceContracts;
+
+    // TODO: replace with a secure authorization protocol (addressed in RFC 11).
+    address public stakingContract;
 
     // Size of a group in the threshold relay.
     uint256 public groupSize = 5;
@@ -187,22 +188,15 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Initializes the contract setting the deployer as the initial owner.
+     * @dev Initializes the contract with service and staking contract addresses and
+     * the deployer as the contract owner.
      */
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    /**
-     * @dev Initialize the contract with a linked Staking proxy contract.
-     *
-     * @param _serviceContract Address of a random beacon service contract that
-     * will be linked to this contract.
-     */
-    function initialize(address _serviceContract) public onlyOwner {
-        require(!initialized, "Contract is already initialized.");
-        initialized = true;
+    constructor(address _serviceContract, address _stakingContract) public {
+        require(_serviceContract != address(0), "Service contract address can't be zero.");
+        require(_stakingContract != address(0), "Staking contract address can't be zero.");
         serviceContracts.push(_serviceContract);
+        stakingContract = _stakingContract;
+        owner = msg.sender;
     }
 
     /**
@@ -245,13 +239,6 @@ contract KeepRandomBeaconOperator {
             groupSelectionInProgress = true;
             emit GroupSelectionStarted(_newEntry);
         }
-    }
-
-    // TODO: replace with a secure authorization protocol (addressed in RFC 11).
-    address public stakingContract;
-
-    function authorizeStakingContract(address _stakingContract) public onlyOwner {
-        stakingContract = _stakingContract;
     }
 
     /**

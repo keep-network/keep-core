@@ -8,6 +8,8 @@ import "./KeepRandomBeaconOperator.sol";
  */
 contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
+    constructor(address _serviceContract, address _stakingContract) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {}
+
     function authorizeServiceContract(address _serviceContract) public {
         serviceContracts.push(_serviceContract);
     }

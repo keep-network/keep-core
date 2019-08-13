@@ -23,13 +23,10 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   serviceContract = await KeepRandomBeaconServiceImplV1.at(serviceContractProxy.address)
 
   // Initialize Keep Random Beacon operator contract
-  operatorContract = await KeepRandomBeaconOperator.new();
-  await operatorContract.initialize(serviceContract.address);
+  operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address);
 
   await serviceContract.initialize(minPayment, withdrawalDelay, operatorContract.address);
 
-  // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-  await operatorContract.authorizeStakingContract(stakingContract.address);
   await operatorContract.genesis();
 
   return {

@@ -27,17 +27,14 @@ module.exports = async function(deployer) {
   await deployer.deploy(TokenGrant, KeepToken.address, TokenStaking.address);
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.link(BLS, KeepRandomBeaconOperatorStub);
-  deployer.deploy(KeepRandomBeaconOperator);
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
 
+  // TODO: replace with a secure authorization protocol (addressed in RFC 11).
+  await deployer.deploy(KeepRandomBeaconOperator, KeepRandomBeaconService.address, TokenStaking.address);
+
   const keepRandomBeaconService = await KeepRandomBeaconServiceImplV1.at(KeepRandomBeaconService.address);
   const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
-
-  keepRandomBeaconOperator.initialize(KeepRandomBeaconService.address);
-
-  // TODO: replace with a secure authorization protocol (addressed in RFC 11).
-  keepRandomBeaconOperator.authorizeStakingContract(TokenStaking.address);
 
   keepRandomBeaconService.initialize(
     minPayment,
