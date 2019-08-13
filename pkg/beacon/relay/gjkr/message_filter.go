@@ -1,6 +1,9 @@
 package gjkr
 
-import "github.com/keep-network/keep-core/pkg/beacon/relay/group"
+import (
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
+)
 
 // MarkInactiveMembers takes all messages from the previous DKG protocol
 // execution phase and marks all member who did not send a message as IA.
@@ -45,6 +48,37 @@ func (cvm *SharesJustifyingMember) MarkInactiveMembers(
 	}
 
 	filter.FlushInactiveMembers()
+}
+
+func (cvm *SharesJustifyingMember) MarkDisqualifiedMembers(
+	sharesAccusationsMessages []*SecretSharesAccusationsMessage,
+) {
+	isValidECDHScalar := func(key *ephemeral.PrivateKey) bool {
+		return true //TODO Implementation of this validation
+	}
+
+	filter := cvm.messageDQFilter()
+	for _, message := range sharesAccusationsMessages {
+		for _, key := range message.accusedMembersKeys {
+			if !isValidECDHScalar(key) {
+				filter.MarkMemberAsDisqualified(message.senderID)
+				break
+			}
+		}
+	}
+
+	filter.FlushDisqualifiedMembers()
+}
+
+func (cvm *SharesJustifyingMember) MarkDisqualifiedMembersExplicitly(
+	members []group.MemberIndex,
+) {
+	filter := cvm.messageDQFilter()
+	for _, memberID := range members {
+		filter.MarkMemberAsDisqualified(memberID)
+	}
+
+	filter.FlushDisqualifiedMembers()
 }
 
 // MarkInactiveMembers takes all messages from the previous DKG protocol
