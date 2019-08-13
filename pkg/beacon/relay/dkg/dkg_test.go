@@ -227,6 +227,7 @@ func TestExecute_IA_member1_DKGResultSigningPhase(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	assertDkgResultPublished(t, result)
 	assertSuccessfulSignersCount(t, result, groupSize)
 	assertMemberFailuresCount(t, result, 0)
 	assertSamePublicKey(t, result)
