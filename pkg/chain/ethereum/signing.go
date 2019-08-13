@@ -36,7 +36,21 @@ func (es *ethereumSigning) Sign(message []byte) ([]byte, error) {
 		message,
 	)
 
-	return crypto.Sign(prefixedHash, es.operatorKey)
+	signature, err := crypto.Sign(prefixedHash, es.operatorKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(signature) == SignatureSize {
+		// go-ethereum/crypto produces signature with v={0, 1} and we need to add
+		// 27 to v-part (signature[64]) to conform wtih the on-chain signature
+		// validation code that accepts v={27, 28} as specified in the
+		// Appendix F of the Ethereum Yellow Paper
+		// https://ethereum.github.io/yellowpaper/paper.pdf
+		signature[len(signature)-1] = signature[len(signature)-1] + 27
+	}
+
+	return signature, nil
 }
 
 func (es *ethereumSigning) Verify(message []byte, signature []byte) (bool, error) {
@@ -67,13 +81,13 @@ func verifySignature(
 	// Convert the operator's static key into an uncompressed public key
 	// which should be 65 bytes in length.
 	uncompressedPubKey := crypto.FromECDSAPub(publicKey)
-	// If our sig is in the [R || S || V] format, ensure we strip out
+	// If our signature is in the [R || S || V] format, ensure we strip out
 	// the Ethereum-specific recovery-id, V, if it already hasn't been done.
 	if len(signature) == SignatureSize {
 		signature = signature[:len(signature)-1]
 	}
 
-	// The sig should be now 64 bytes long.
+	// The signature should be now 64 bytes long.
 	if len(signature) != 64 {
 		return false, fmt.Errorf(
 			"signature should have 64 bytes; has: [%v]",

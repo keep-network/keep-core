@@ -1,3 +1,4 @@
+import { sign } from './helpers/signature';
 import { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import expectThrow from './helpers/expectThrow';
@@ -34,8 +35,8 @@ contract('TestTokenGrantStake', function(accounts) {
   it("should stake granted tokens correctly", async function() {
 
     // Operator must sign grantee and token grant contract address since grant contract becomes the owner during grant staking.
-    let signature1 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(grantContract.address), account_two_operator)).substr(2), 'hex');
-    let signature2 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
+    let signature1 = Buffer.from((await sign(web3.utils.soliditySha3(grantContract.address), account_two_operator)).substr(2), 'hex');
+    let signature2 = Buffer.from((await sign(web3.utils.soliditySha3(account_two), account_two_operator)).substr(2), 'hex');
     let delegation = Buffer.concat([Buffer.from(account_two_magpie.substr(2), 'hex'), signature1, signature2]);
 
     // should throw if stake granted tokens called by anyone except grant grantee
