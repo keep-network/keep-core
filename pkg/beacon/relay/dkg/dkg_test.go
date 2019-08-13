@@ -49,7 +49,7 @@ func TestExecute_HappyPath(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
+func TestExecute_IA_member1_ephemeralKeyGenerationPhase1(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -79,7 +79,7 @@ func TestExecute_IA_member1_ephemeralKeyGenerationPhase(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1and2_commitmentPhase(t *testing.T) {
+func TestExecute_IA_member1and2_commitmentPhase3(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 7
@@ -115,7 +115,7 @@ func TestExecute_IA_member1and2_commitmentPhase(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_sharesAndCommitmentsVerificationPhase(t *testing.T) {
+func TestExecute_IA_member1_sharesAndCommitmentsVerificationPhase4(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 3
@@ -145,7 +145,7 @@ func TestExecute_IA_member1_sharesAndCommitmentsVerificationPhase(t *testing.T) 
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_publicKeySharePointsCalculationPhase(t *testing.T) {
+func TestExecute_IA_member1_publicKeySharePointsCalculationPhase7(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -175,7 +175,7 @@ func TestExecute_IA_member1_publicKeySharePointsCalculationPhase(t *testing.T) {
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_publicKeySharePointsVerificationPhase(t *testing.T) {
+func TestExecute_IA_member1_publicKeySharePointsVerificationPhase8(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -205,7 +205,7 @@ func TestExecute_IA_member1_publicKeySharePointsVerificationPhase(t *testing.T) 
 	assertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_disqualifiedMembersKeysRevealingPhase(t *testing.T) {
+func TestExecute_IA_member1_disqualifiedMembersKeysRevealingPhase10(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
