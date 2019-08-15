@@ -758,8 +758,7 @@ contract KeepRandomBeaconOperator {
      * to be produced, see `relayEntryTimeout` value.
      */
     function hasEntryTimedOut() internal view returns (bool) {
-        uint256 entryTimeout = currentEntryStartBlock + relayEntryTimeout;
-        return entryInProgress && block.number > entryTimeout;
+        return entryInProgress && block.number > currentEntryStartBlock + relayEntryTimeout;
     }
 
     /**
@@ -773,10 +772,15 @@ contract KeepRandomBeaconOperator {
 
         terminatedGroups.push(signingRequest.groupIndex);
 
-        signRelayEntry(
-            signingRequest.relayRequestId,
-            signingRequest.seed,
-            signingRequest.previousEntry
-        );
+        // We could terminate the last active group. If that's the case,
+        // do not try to execute signing again because there is no group
+        // which can handle it.
+        if (numberOfGroups() > 0) {
+            signRelayEntry(
+                signingRequest.relayRequestId,
+                signingRequest.seed,
+                signingRequest.previousEntry
+            );
+        }
     }
 }
