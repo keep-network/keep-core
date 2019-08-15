@@ -10,7 +10,13 @@ interface OperatorContract {
     function signingGasEstimate() external view returns(uint256);
     function createGroupGasEstimate() external view returns(uint256);
     function groupSize() external view returns(uint256);
-    function sign(uint256 requestId, uint256 seed, uint256 previousEntry) payable external;
+    function sign(
+        uint256 requestId,
+        uint256 seed,
+        uint256 previousEntry,
+        uint256 signingFee,
+        uint256 callbackPayment
+    ) payable external;
     function numberOfGroups() external view returns(uint256);
     function createGroup(uint256 newEntry) payable external;
 }
@@ -206,7 +212,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         _requestCounter++;
         uint256 requestId = _requestCounter;
 
-        OperatorContract(selectOperatorContract(_previousEntry)).sign.value(signingFee.add(profitMargin))(requestId, seed, _previousEntry);
+        OperatorContract(selectOperatorContract(_previousEntry)).sign.value(
+            signingFee.add(callbackPayment).add(profitMargin)
+        )(requestId, seed, _previousEntry, signingFee, callbackPayment);
 
         if (callbackContract != address(0)) {
             _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackPayment, msg.sender);

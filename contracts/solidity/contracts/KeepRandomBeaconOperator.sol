@@ -122,13 +122,15 @@ contract KeepRandomBeaconOperator is Ownable {
     struct SigningRequest {
         uint256 relayRequestId;
         uint256 payment;
+        uint256 signingFee;
+        uint256 callbackFee;
         bytes groupPubKey;
         uint256 previousEntry;
         uint256 seed;
         address serviceContract;
     }
 
-    uint256 internal currentEntryStartBlock;
+    uint256 public currentEntryStartBlock;
     SigningRequest internal signingRequest;
 
     bool internal entryInProgress;
@@ -684,8 +686,16 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param requestId Request Id trackable by service contract.
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
+     * @param signingFee Fee to cover submitter entry verification cost.
+     * @param callbackFee Fee to cover submitter the gas costs of the callback.
      */
-    function sign(uint256 requestId, uint256 seed, uint256 previousEntry) public payable onlyServiceContract {
+    function sign(
+        uint256 requestId,
+        uint256 seed,
+        uint256 previousEntry,
+        uint256 signingFee,
+        uint256 callbackFee
+    ) public payable onlyServiceContract {
         require(
             numberOfGroups() > 0,
             "At least one group needed to serve the request."
@@ -702,6 +712,8 @@ contract KeepRandomBeaconOperator is Ownable {
         signingRequest = SigningRequest(
             requestId,
             msg.value,
+            signingFee,
+            callbackFee,
             groupPubKey,
             previousEntry,
             seed,
@@ -739,5 +751,18 @@ contract KeepRandomBeaconOperator is Ownable {
         );
 
         entryInProgress = false;
+
+        // Calculate each group member reward = baseReward * delayFactor / groupLength
+        // Adding 2 decimals (1e2) to perform float division.
+        uint256 baseReward = signingRequest.payment.sub(signingRequest.signingFee).sub(signingRequest.callbackFee);
+        uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
+        uint256 delayFactor = entryTimeout.sub(block.number).mul(1e2).div(relayEntryTimeout.sub(1))**2;
+        uint256 groupLength = groupMembers[signingRequest.groupPubKey].length;
+        uint256 groupReward = baseReward.mul(delayFactor).div(groupLength).div(1e2**2);
+
+        for (uint i = 0; i < groupLength; i++) {
+            address payable receiver = address(uint160(groupMembers[signingRequest.groupPubKey][i]));
+            receiver.transfer(groupReward);
+        }
     }
 }

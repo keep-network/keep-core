@@ -30,6 +30,14 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
     }
 
     /**
+     * @dev Adds member to the group based on groupPublicKey.
+     * @param member is the address of the member.
+     */
+    function addGroupMember(bytes memory groupPublicKey, address member) public {
+        groupMembers[groupPublicKey].push(member);
+    }
+
+    /**
      * @dev Gets the group registration block height.
      * @param groupIndex is the index of the queried group.
      */
