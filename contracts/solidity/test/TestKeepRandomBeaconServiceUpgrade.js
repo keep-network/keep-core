@@ -29,6 +29,8 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
+    let group = await operatorContract.getGroupPublicKey(0);
+    await operatorContract.addGroupMember(group, accounts[0]);
 
     // Modify state so we can test later that eternal storage works as expected after upgrade
     let minimumPayment = await serviceContract.minimumPayment()

@@ -2,7 +2,7 @@ import expectThrow from './helpers/expectThrow';
 import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 
-contract('TestKeepRandomBeaconOperatorRelayEntry', function() {
+contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
   let serviceContract, operatorContract;
 
   before(async () => {
@@ -21,6 +21,9 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function() {
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
+    let group = await operatorContract.getGroupPublicKey(0);
+    await operatorContract.addGroupMember(group, accounts[0]);
+
     let minimumPayment = await serviceContract.minimumPayment()
     await serviceContract.requestRelayEntry(bls.seed, {value: minimumPayment});
   });

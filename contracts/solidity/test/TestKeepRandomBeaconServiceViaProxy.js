@@ -29,6 +29,8 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
+    let group = await operatorContract.getGroupPublicKey(0);
+    await operatorContract.addGroupMember(group, accounts[0]);
 
     minimumPayment = await serviceContract.minimumPayment()
     minimumCallbackPayment = await serviceContract.minimumCallbackPayment()
@@ -51,13 +53,14 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.equal((await operatorContract.getPastEvents())[0].event, 'SignatureRequested', "SignatureRequested event should occur on operator contract.");
 
     let contractBalance = await web3.eth.getBalance(serviceContract.address);
-    assert.isTrue(web3.utils.toBN(contractBalance).eq(contractPreviousBalance.add(minimumCallbackPayment).add(entryFee.createGroupFee)), "Keep Random Beacon service contract should receive callback payment and create group fee fraction.");
+    assert.isTrue(web3.utils.toBN(contractBalance).eq(contractPreviousBalance.add(entryFee.createGroupFee)), "Keep Random Beacon service contract should receive create group fee fraction.");
 
     let contractBalanceViaProxy = await web3.eth.getBalance(serviceContractProxy.address);
-    assert.isTrue(web3.utils.toBN(contractBalanceViaProxy).eq(contractPreviousBalance.add(minimumCallbackPayment).add(entryFee.createGroupFee)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
+    assert.isTrue(web3.utils.toBN(contractBalanceViaProxy).eq(contractPreviousBalance.add(entryFee.createGroupFee)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
-    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.signingFee.add(entryFee.profitMargin).add(createGroupPayment)), "Keep Random Beacon operator contract should receive entry fee, profit margin and create group payment.");
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.signingFee.add(minimumCallbackPayment).add(entryFee.profitMargin).add(createGroupPayment)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and create group payment.");
+  
   });
 
   it("should be able to request relay entry via serviceContractProxy contract with enough ether", async function() {
@@ -75,13 +78,13 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.equal((await operatorContract.getPastEvents())[0].event, 'SignatureRequested', "SignatureRequested event should occur on the operator contract.");
 
     let contractBalance = await web3.eth.getBalance(serviceContract.address);
-    assert.isTrue(web3.utils.toBN(contractBalance).eq(contractPreviousBalance.add(minimumCallbackPayment).add(entryFee.createGroupFee)), "Keep Random Beacon service contract should receive callback payment and create group fee fraction.");
+    assert.isTrue(web3.utils.toBN(contractBalance).eq(contractPreviousBalance.add(entryFee.createGroupFee)), "Keep Random Beacon service contract should receive create group fee fraction.");
 
     let contractBalanceServiceContract = await web3.eth.getBalance(serviceContractProxy.address);
-    assert.isTrue(web3.utils.toBN(contractBalanceServiceContract).eq(contractPreviousBalance.add(minimumCallbackPayment).add(entryFee.createGroupFee)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
+    assert.isTrue(web3.utils.toBN(contractBalanceServiceContract).eq(contractPreviousBalance.add(entryFee.createGroupFee)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
-    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.signingFee.add(entryFee.profitMargin).add(createGroupPayment)), "Keep Random Beacon operator contract should receive entry fee, profit margin and create group payment.");
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.signingFee.add(minimumCallbackPayment).add(entryFee.profitMargin).add(createGroupPayment)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and create group payment.");
   });
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {

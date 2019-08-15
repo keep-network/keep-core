@@ -2,7 +2,7 @@ import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
-contract('TestKeepRandomBeaconServiceRelayRequestCallback', function() {
+contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
 
   let operatorContract, serviceContract, callbackContract;
 
@@ -21,6 +21,8 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function() {
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
+    let group = await operatorContract.getGroupPublicKey(0);
+    await operatorContract.addGroupMember(group, accounts[0]);
   });
 
   it("should produce entry if callback contract was not provided", async function() {
