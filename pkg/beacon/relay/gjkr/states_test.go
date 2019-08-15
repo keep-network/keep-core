@@ -35,7 +35,7 @@ func TestFullStateTransitions(t *testing.T) {
 
 		member, err := NewMember(
 			group.MemberIndex(i+1),
-			make([]group.MemberIndex, 0),
+			groupSize,
 			threshold,
 			seed,
 		)

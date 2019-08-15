@@ -9,11 +9,8 @@ import (
 func TestFilterSymmetricKeyGeneratingMembers(t *testing.T) {
 	member := (&LocalMember{
 		memberCore: &memberCore{
-			ID: 13,
-			group: group.NewDkgGroup(
-				1,
-				[]group.MemberIndex{11, 12, 13, 14, 15},
-			),
+			ID:    13,
+			group: group.NewDkgGroup(1, 5),
 		},
 	}).InitializeEphemeralKeysGeneration().
 		InitializeSymmetricKeyGeneration()
@@ -35,11 +32,8 @@ func TestFilterSymmetricKeyGeneratingMembers(t *testing.T) {
 func TestFilterCommitmentsVefiryingMembers(t *testing.T) {
 	member := (&LocalMember{
 		memberCore: &memberCore{
-			ID: 93,
-			group: group.NewDkgGroup(
-				1,
-				[]group.MemberIndex{91, 92, 93, 94, 95, 96},
-			),
+			ID:    93,
+			group: group.NewDkgGroup(1, 6),
 		},
 	}).InitializeEphemeralKeysGeneration().
 		InitializeSymmetricKeyGeneration().
@@ -80,11 +74,8 @@ func TestFilterCommitmentsVefiryingMembers(t *testing.T) {
 func TestFilterSharingMembers(t *testing.T) {
 	member := (&LocalMember{
 		memberCore: &memberCore{
-			ID: 24,
-			group: group.NewDkgGroup(
-				1,
-				[]group.MemberIndex{21, 22, 23, 24},
-			),
+			ID:    24,
+			group: group.NewDkgGroup(1, 4),
 		},
 	}).InitializeEphemeralKeysGeneration().
 		InitializeSymmetricKeyGeneration().
@@ -110,11 +101,8 @@ func TestFilterSharingMembers(t *testing.T) {
 func TestFilterReconstructingMember(t *testing.T) {
 	member := (&LocalMember{
 		memberCore: &memberCore{
-			ID: 44,
-			group: group.NewDkgGroup(
-				1,
-				[]group.MemberIndex{41, 42, 43, 44},
-			),
+			ID:    44,
+			group: group.NewDkgGroup(1, 4),
 		},
 	}).InitializeEphemeralKeysGeneration().
 		InitializeSymmetricKeyGeneration().

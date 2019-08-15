@@ -28,7 +28,7 @@ func TestConvertResult(t *testing.T) {
 			inactiveMemberIDs:     []group.MemberIndex{},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: nil,
-				Group:          group.NewEmptyDkgGroup(5),
+				Group:          group.NewDkgGroup(5, 0),
 			},
 			expectedResult: &relayChain.DKGResult{
 				GroupPublicKey: []byte{},
@@ -41,7 +41,7 @@ func TestConvertResult(t *testing.T) {
 			inactiveMemberIDs:     []group.MemberIndex{5},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
-				Group:          group.NewDkgGroup(3, []group.MemberIndex{1, 2, 3, 4, 5}),
+				Group:          group.NewDkgGroup(3, 5),
 			},
 			expectedResult: &relayChain.DKGResult{
 				GroupPublicKey: compressedPublicKey,

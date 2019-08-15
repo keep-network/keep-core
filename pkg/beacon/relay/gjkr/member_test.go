@@ -2,7 +2,6 @@ package gjkr
 
 import (
 	"fmt"
-	"math/big"
 	"reflect"
 	"testing"
 
@@ -12,22 +11,7 @@ import (
 func TestNewMemberWithInvalidID(t *testing.T) {
 	expectedError := fmt.Errorf("could not create a new member [member index must be >= 1]")
 
-	_, err := NewMember(group.MemberIndex(0), nil, 13, nil)
-
-	if !reflect.DeepEqual(err, expectedError) {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
-	}
-}
-
-func TestAddToGroupWithInvalidID(t *testing.T) {
-	expectedError := fmt.Errorf("could not add the member ID to the group [member index must be >= 1]")
-
-	newMember, err := NewMember(group.MemberIndex(1), nil, 13, big.NewInt(14))
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = newMember.AddToGroup(group.MemberIndex(0))
+	_, err := NewMember(group.MemberIndex(0), 13, 13, nil)
 
 	if !reflect.DeepEqual(err, expectedError) {
 		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
