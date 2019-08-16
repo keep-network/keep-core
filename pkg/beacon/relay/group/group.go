@@ -25,12 +25,13 @@ func NewDkgGroup(dishonestThreshold int, size int) *Group {
 }
 
 func generateMemberIDs(size int) []MemberIndex {
+	// +1 because group member indexes start from 1
 	members := make([]MemberIndex, size+1)
 	for i := 0; i < size+1; i++ {
 		members[i] = MemberIndex(i)
 	}
 
-	return members[1:size]
+	return members[1 : size+1]
 }
 
 // MemberIDs returns IDs of all group members, as initially selected to the
