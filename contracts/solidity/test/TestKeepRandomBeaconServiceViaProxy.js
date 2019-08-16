@@ -46,17 +46,24 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("should be able to request relay with enough ether", async function() {
+    let account_two_balance = await web3.eth.getBalance(account_two);
+    await serviceContract.fundRequestSubsidyFeePool({from: account_one, value: 100});
+    let requestorSubsidy = web3.utils.toBN(1); // 1% is returned to the requestor.
+
     let contractPreviousBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
     let createGroupPayment = await operatorContract.createGroupPayment()
 
-    await serviceContract.requestRelayEntry(0, {from: account_two, value: minimumPayment})
+    let tx = await serviceContract.requestRelayEntry(0, {from: account_two, value: minimumPayment})
+    let transactionCost = web3.utils.toBN(tx.receipt.gasUsed).mul(web3.utils.toWei(web3.utils.toBN(20), 'gwei')); // 20 default gasPrice
+    assert.isTrue(web3.utils.toBN(account_two_balance).sub(minimumPayment).sub(transactionCost).add(requestorSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(account_two))), "Requestor should receive 1% subsidy.");
+
     assert.equal((await operatorContract.getPastEvents())[0].event, 'SignatureRequested', "SignatureRequested event should occur on operator contract.");
 
     let contractBalance = await web3.eth.getBalance(serviceContract.address);
-    assert.isTrue(web3.utils.toBN(contractBalance).eq(contractPreviousBalance.add(entryFee.createGroupFee)), "Keep Random Beacon service contract should receive create group fee fraction.");
+    assert.isTrue(web3.utils.toBN(contractBalance).eq(contractPreviousBalance.add(entryFee.createGroupFee).sub(requestorSubsidy)), "Keep Random Beacon service contract should receive create group fee fraction.");
 
     let contractBalanceViaProxy = await web3.eth.getBalance(serviceContractProxy.address);
-    assert.isTrue(web3.utils.toBN(contractBalanceViaProxy).eq(contractPreviousBalance.add(entryFee.createGroupFee)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
+    assert.isTrue(web3.utils.toBN(contractBalanceViaProxy).eq(contractPreviousBalance.add(entryFee.createGroupFee).sub(requestorSubsidy)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
     assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.signingFee.add(minimumCallbackPayment).add(entryFee.profitMargin).add(createGroupPayment)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and create group payment.");

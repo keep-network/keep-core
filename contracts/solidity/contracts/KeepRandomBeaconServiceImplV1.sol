@@ -231,6 +231,13 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackPayment, msg.sender);
         }
 
+        // Send 1% of the request subsidy pool to the requestor.
+        if (_requestSubsidyFeePool >= 100) {
+            uint256 amount = _requestSubsidyFeePool.div(100);
+            _requestSubsidyFeePool -= amount;
+            msg.sender.transfer(amount);
+        }
+
         emit RelayEntryRequested(requestId);
         return requestId;
     }
