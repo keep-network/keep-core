@@ -47,6 +47,10 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     uint256 internal _createGroupFee;
     uint256 internal _createGroupFeePool;
 
+    // Rewards not paid out to the operators are sent to request subsidy pool to
+    // subsidize new requests: 1% is returned to the requester's surplus address.
+    uint256 internal _requestSubsidyFeePool;
+
     uint256 internal _previousEntry;
 
     // Each service contract tracks its own requests and these are independent
@@ -141,6 +145,13 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function fundCreateGroupFeePool() public payable {
         _createGroupFeePool += msg.value;
+    }
+
+    /**
+     * @dev Add funds to request subsidy fee pool.
+     */
+    function fundRequestSubsidyFeePool() public payable {
+        _requestSubsidyFeePool += msg.value;
     }
 
     /**

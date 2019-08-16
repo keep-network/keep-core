@@ -11,6 +11,7 @@ import "./cryptography/BLS.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry) external;
+    function fundRequestSubsidyFeePool() payable external;
 }
 
 /**
