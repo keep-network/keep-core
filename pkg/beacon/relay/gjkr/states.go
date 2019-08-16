@@ -322,15 +322,12 @@ func (sjs *sharesJustificationState) ActiveBlocks() uint64 {
 func (sjs *sharesJustificationState) Initiate() error {
 	sjs.member.MarkInactiveMembers(sjs.previousPhaseAccusationsMessages)
 
-	disqualifiedMembers, err := sjs.member.ResolveSecretSharesAccusationsMessages(
+	err := sjs.member.ResolveSecretSharesAccusationsMessages(
 		sjs.previousPhaseAccusationsMessages,
 	)
 	if err != nil {
 		return err
 	}
-
-	// TODO: Handle member disqualification
-	logger.Debugf("disqualified members: %v", disqualifiedMembers)
 
 	return nil
 }
