@@ -755,15 +755,22 @@ contract KeepRandomBeaconOperator is Ownable {
 
         // Calculate each group member reward = baseReward * delayFactor / groupLength
         // Adding 2 decimals (1e2) to perform float division.
-        uint256 baseReward = signingRequest.payment.sub(signingRequest.signingFee).sub(signingRequest.callbackFee);
+        uint256 profitMargin = signingRequest.payment.sub(signingRequest.signingFee).sub(signingRequest.callbackFee);
+        uint256 groupLength = groupMembers[signingRequest.groupPubKey].length;
+        uint256 baseReward = profitMargin.div(groupLength);
         uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
         uint256 delayFactor = entryTimeout.sub(block.number).mul(1e2).div(relayEntryTimeout.sub(1))**2;
-        uint256 groupLength = groupMembers[signingRequest.groupPubKey].length;
-        uint256 groupReward = baseReward.mul(delayFactor).div(groupLength).div(1e2**2);
+        uint256 groupReward = baseReward.mul(delayFactor).div(1e2**2);
 
         for (uint i = 0; i < groupLength; i++) {
             address payable receiver = address(uint160(groupMembers[signingRequest.groupPubKey][i]));
             receiver.transfer(groupReward);
+        }
+
+        // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
+        uint256 subsidy = profitMargin.sub(groupReward.mul(groupLength));
+        if (subsidy > 0) {
+            ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
         }
     }
 }
