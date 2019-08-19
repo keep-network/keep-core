@@ -68,9 +68,6 @@ func Execute(
 // perform distributed key generation interactions.
 func initializeChannel(channel net.BroadcastChannel) {
 	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &JoinMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &EphemeralPublicKeyMessage{}
 	})
 	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {

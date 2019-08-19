@@ -25,7 +25,7 @@ func (js *joinState) ActiveBlocks() uint64 {
 }
 
 func (js *joinState) Initiate() error {
-	return js.channel.Send(NewJoinMessage(js.member.ID))
+	return nil
 }
 
 func (js *joinState) Receive(msg net.Message) error {
