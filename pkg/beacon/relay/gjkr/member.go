@@ -1,7 +1,6 @@
 package gjkr
 
 import (
-	"fmt"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -207,10 +206,6 @@ func NewMember(
 	dishonestThreshold int,
 	seed *big.Int,
 ) (*LocalMember, error) {
-	if err := memberID.Validate(); err != nil {
-		return nil, fmt.Errorf("could not create a new member [%v]", err)
-	}
-
 	return &LocalMember{
 		memberCore: &memberCore{
 			memberID,
