@@ -35,7 +35,7 @@ func TestFullStateTransitions(t *testing.T) {
 
 		member, err := NewMember(
 			group.MemberIndex(i+1),
-			make([]group.MemberIndex, 0),
+			groupSize,
 			threshold,
 			seed,
 		)
@@ -197,8 +197,6 @@ func expectedMessagesCount(states []keyGenerationState) int {
 	}
 
 	switch states[0].(type) {
-	case *joinState:
-		return statesCount
 	case *ephemeralKeyPairGenerationState:
 		return statesCount
 	case *commitmentState:

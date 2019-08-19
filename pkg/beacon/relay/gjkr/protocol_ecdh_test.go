@@ -140,7 +140,7 @@ func initializeEphemeralKeyPairMembersGroup(
 	threshold int,
 	groupSize int,
 ) []*EphemeralKeyPairGeneratingMember {
-	dkgGroup := group.NewEmptyDkgGroup(threshold)
+	dkgGroup := group.NewDkgGroup(threshold, groupSize)
 
 	protocolParameters := newProtocolParameters(big.NewInt(18313131145))
 
@@ -158,7 +158,6 @@ func initializeEphemeralKeyPairMembersGroup(
 			},
 			ephemeralKeyPairs: make(map[group.MemberIndex]*ephemeral.KeyPair),
 		})
-		dkgGroup.RegisterMemberID(id)
 	}
 
 	return members
