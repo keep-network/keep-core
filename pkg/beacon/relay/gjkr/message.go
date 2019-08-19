@@ -148,18 +148,6 @@ func NewJoinMessage(senderID group.MemberIndex) *JoinMessage {
 	return &JoinMessage{senderID}
 }
 
-// NewSecretSharesAccusationsMessage creates a new SecretSharesAccusationsMessage
-// for the provided sender ID and accusedMemberKeys.
-func NewSecretSharesAccusationsMessage(
-	senderID group.MemberIndex,
-	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey,
-) *SecretSharesAccusationsMessage {
-	return &SecretSharesAccusationsMessage{
-		senderID,
-		accusedMembersKeys,
-	}
-}
-
 func newPeerSharesMessage(senderID group.MemberIndex) *PeerSharesMessage {
 	return &PeerSharesMessage{
 		senderID: senderID,
