@@ -51,13 +51,51 @@ func AssertMemberFailuresCount(
 // AssertNoDisqualifiedMembers checks there were no disqualified members during
 // the protocol execution.
 func AssertNoDisqualifiedMembers(t *testing.T, testResult *Result) {
+	AssertDisqualifiedMembers(t, testResult)
+}
+
+// AssertDisqualifiedMembers checks which members were disqualified
+// during the protocol execution and compares them against expected ones.
+func AssertDisqualifiedMembers(
+	t *testing.T,
+	testResult *Result,
+	expectedDisqualifiedMembers ...group.MemberIndex,
+) {
 	disqualifiedMemberByte := byte(0x01)
+	qualifiedMemberByte := byte(0x00)
 
 	for i, dq := range testResult.dkgResult.Disqualified {
-		if dq == disqualifiedMemberByte {
-			t.Errorf("member [%v] has been unexpectedly disqualified", i)
+		memberIndex := i + 1 // member indexes starts from 1
+		disqualifiedExpected := containsMemberIndex(
+			group.MemberIndex(memberIndex),
+			expectedDisqualifiedMembers,
+		)
+
+		if dq == disqualifiedMemberByte && !disqualifiedExpected {
+			t.Errorf(
+				"member [%v] has been unexpectedly marked as disqualified",
+				memberIndex,
+			)
+		} else if dq == qualifiedMemberByte && disqualifiedExpected {
+			t.Errorf(
+				"member [%v] has not been unexpectedly marked as disqualified",
+				memberIndex,
+			)
 		}
 	}
+}
+
+func containsMemberIndex(
+	index group.MemberIndex,
+	indexes []group.MemberIndex,
+) bool {
+	for _, i := range indexes {
+		if i == index {
+			return true
+		}
+	}
+
+	return false
 }
 
 // AssertNoInactiveMembers checks there were no inactive members during the
@@ -75,19 +113,6 @@ func AssertInactiveMembers(
 ) {
 	inactiveMemberByte := byte(0x01)
 	activeMemberByte := byte(0x00)
-
-	containsMemberIndex := func(
-		index group.MemberIndex,
-		indexes []group.MemberIndex,
-	) bool {
-		for _, i := range indexes {
-			if i == index {
-				return true
-			}
-		}
-
-		return false
-	}
 
 	for i, ia := range testResult.dkgResult.Inactive {
 		memberIndex := i + 1 // member indexes starts from 1
