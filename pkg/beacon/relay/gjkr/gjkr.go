@@ -23,12 +23,12 @@ var logger = log.Logger("keep-gjkr")
 // representing what went wrong.
 func Execute(
 	memberIndex group.MemberIndex,
+	groupSize int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	threshold int,
 	seed *big.Int,
 	startBlockHeight uint64,
-	groupSize int,
 ) (*Result, uint64, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
 

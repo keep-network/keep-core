@@ -29,12 +29,12 @@ func ExecuteDKG(
 
 	gjkrResult, gjkrEndBlockHeight, err := gjkr.Execute(
 		playerIndex,
+		groupSize,
 		blockCounter,
 		channel,
 		threshold,
 		seed,
 		startBlockHeight,
-		groupSize,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
