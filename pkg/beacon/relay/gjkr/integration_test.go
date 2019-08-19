@@ -229,7 +229,7 @@ func TestExecute_IA_member3and5_disqualifiedMembersKeysRevealingPhase10(t *testi
 
 // TODO Test case Phase 5: 'presented private key does not correspond to the published public key -> expected result: disqualify accuser'
 
-// TODO Test case Phase 5: 'shares cannot be decrypted (check with CanDecrypt) -> expected result: disqualify accuser'
+// TODO Test case Phase 5: 'shares cannot be decrypted (check with CanDecrypt)'
 
 func TestExecute_DQ_member1_accusedOfInconsistentShares_secretSharesAccusationsMessagesResolvingPhase5(t *testing.T) {
 	t.Parallel()

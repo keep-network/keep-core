@@ -368,11 +368,11 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 		}
 	}
 
-	commitment := cm.calculateCommitment(shareS, shareT) // G * s_ji + H * t_ji
-
 	if sum == nil {
 		return false
 	}
+
+	commitment := cm.calculateCommitment(shareS, shareT) // G * s_ji + H * t_ji
 
 	return commitment.String() == sum.String()
 }
