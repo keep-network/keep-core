@@ -696,10 +696,15 @@ contract KeepRandomBeaconOperator {
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
      */
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) public payable onlyServiceContract {
-        signRelayEntry(requestId, seed, previousEntry);
+        signRelayEntry(requestId, seed, previousEntry, msg.sender);
     }
 
-    function signRelayEntry(uint256 requestId, uint256 seed, uint256 previousEntry) internal {
+    function signRelayEntry(
+        uint256 requestId,
+        uint256 seed,
+        uint256 previousEntry,
+        address serviceContract
+    ) internal {
         require(!entryInProgress || hasEntryTimedOut(), "Relay entry is in progress.");
 
         currentEntryStartBlock = block.number;
@@ -714,7 +719,7 @@ contract KeepRandomBeaconOperator {
             groupIndex,
             previousEntry,
             seed,
-            msg.sender
+            serviceContract
         );
 
         emit SignatureRequested(msg.value, previousEntry, seed, groupPubKey);
@@ -779,7 +784,8 @@ contract KeepRandomBeaconOperator {
             signRelayEntry(
                 signingRequest.relayRequestId,
                 signingRequest.seed,
-                signingRequest.previousEntry
+                signingRequest.previousEntry,
+                signingRequest.serviceContract
             );
         }
     }
