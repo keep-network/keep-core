@@ -117,7 +117,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     let groupSelectionStartBlock = await operatorContract.ticketSubmissionStartBlock();
     let groupSelectionRelayEntry = await operatorContract.groupSelectionRelayEntry();
 
-    let minimumPayment = await serviceContract.minimumPayment()
+    let minimumPayment = await serviceContract.minimumPayment(0)
     await serviceContract.requestRelayEntry(bls.seed, {value: minimumPayment});
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
@@ -151,7 +151,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
     mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
 
-    let minimumPayment = await serviceContract.minimumPayment()
+    let minimumPayment = await serviceContract.minimumPayment(0)
     let minimumGasPrice = await serviceContract.minimumGasPrice()
     await serviceContract.requestRelayEntry(bls.seed, {value: minimumPayment});
 

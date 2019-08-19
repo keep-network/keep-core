@@ -32,8 +32,8 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     let group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, accounts[0]);
 
-    minimumPayment = await serviceContract.minimumPayment()
-    minimumCallbackPayment = await serviceContract.minimumCallbackPayment()
+    minimumPayment = await serviceContract.minimumPayment(0)
+    minimumCallbackPayment = await serviceContract.minimumCallbackPayment(0)
     entryFee = await serviceContract.entryFeeBreakdown()
   });
 
@@ -95,7 +95,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {
-    let minimumPayment = await serviceContract.minimumPayment()
+    let minimumPayment = await serviceContract.minimumPayment(0)
     await serviceContract.requestRelayEntry(0, {from: account_one, value: minimumPayment})
 
     // should fail to withdraw if not owner

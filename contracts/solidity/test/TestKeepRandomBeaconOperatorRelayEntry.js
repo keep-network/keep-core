@@ -24,7 +24,7 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
     let group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, accounts[0]);
 
-    let minimumPayment = await serviceContract.minimumPayment()
+    let minimumPayment = await serviceContract.minimumPayment(0)
     await serviceContract.requestRelayEntry(bls.seed, {value: minimumPayment});
   });
 

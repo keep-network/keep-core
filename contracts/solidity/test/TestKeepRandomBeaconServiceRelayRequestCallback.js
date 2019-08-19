@@ -26,7 +26,7 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should produce entry if callback contract was not provided", async function() {
-    let minimumPayment = await serviceContract.minimumPayment()
+    let minimumPayment = await serviceContract.minimumPayment(0)
     await serviceContract.requestRelayEntry(bls.seed, {value: minimumPayment});
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
@@ -35,8 +35,9 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should successfully call method on a callback contract", async function() {
-    let minimumPayment = await serviceContract.minimumPayment()
-    await serviceContract.methods['requestRelayEntry(uint256,address,string)'](bls.seed, callbackContract.address, "callback(uint256)", {value: minimumPayment});
+    let callbackGas = await callbackContract.callback.estimateGas(bls.nextNextGroupSignature);
+    let minimumPayment = await serviceContract.minimumPayment(callbackGas)
+    await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](bls.seed, callbackContract.address, "callback(uint256)", callbackGas, {value: minimumPayment});
 
     await operatorContract.relayEntry(bls.nextNextGroupSignature);
 

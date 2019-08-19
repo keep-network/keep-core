@@ -42,15 +42,17 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     // Set higher gas price
     await serviceContract.setMinimumGasPrice(web3.utils.toWei(web3.utils.toBN(200), 'gwei'));
 
-    let minimumPayment = await serviceContract.minimumPayment()
-    await serviceContract.methods['requestRelayEntry(uint256,address,string)'](
+    let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
+    let minimumPayment = await serviceContract.minimumPayment(callbackGas)
+    await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
       callbackContract.address,
       "callback(uint256)",
+      0,
       {value: minimumPayment, from: requestor}
     );
 
-    let minimumCallbackPayment = await serviceContract.minimumCallbackPayment()
+    let minimumCallbackPayment = await serviceContract.minimumCallbackPayment(0)
     let requestorBalance = await web3.eth.getBalance(requestor);
 
     await operatorContract.relayEntry(bls.nextGroupSignature);
@@ -58,7 +60,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     // Put back the default gas price
     await serviceContract.setMinimumGasPrice(web3.utils.toWei(web3.utils.toBN(20), 'gwei'));
 
-    let updatedMinimumCallbackPayment = await serviceContract.minimumCallbackPayment()
+    let updatedMinimumCallbackPayment = await serviceContract.minimumCallbackPayment(0)
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
     let surplus = web3.utils.toBN(minimumCallbackPayment).sub(web3.utils.toBN(updatedMinimumCallbackPayment))
@@ -74,11 +76,12 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let operator2balance = web3.utils.toBN(await web3.eth.getBalance(operator2));
     let operator3balance = web3.utils.toBN(await web3.eth.getBalance(operator3));
 
-    let minimumPayment = await serviceContract.minimumPayment()
-    await serviceContract.methods['requestRelayEntry(uint256,address,string)'](
+    let minimumPayment = await serviceContract.minimumPayment(0)
+    await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
       callbackContract.address,
       "callback(uint256)",
+      0,
       {value: minimumPayment, from: requestor}
     );
 
@@ -105,11 +108,12 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let operator2balance = web3.utils.toBN(await web3.eth.getBalance(operator2));
     let operator3balance = web3.utils.toBN(await web3.eth.getBalance(operator3));
 
-    let minimumPayment = await serviceContract.minimumPayment()
-    await serviceContract.methods['requestRelayEntry(uint256,address,string)'](
+    let minimumPayment = await serviceContract.minimumPayment(0)
+    await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
       callbackContract.address,
       "callback(uint256)",
+      0,
       {value: minimumPayment, from: requestor}
     );
 

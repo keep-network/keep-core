@@ -61,6 +61,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         address callbackContract;
         string callbackMethod;
         uint256 callbackPayment;
+        uint256 callbackGas;
         address payable surplusRecipient;
     }
 
@@ -193,7 +194,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @return An uint256 representing uniquely generated entry Id.
      */
     function requestRelayEntry(uint256 seed) public payable returns (uint256) {
-        return requestRelayEntry(seed, address(0), "");
+        return requestRelayEntry(seed, address(0), "", 0);
     }
 
     /**
@@ -203,18 +204,24 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param callbackContract Callback contract address. Callback is called once a new relay entry has been generated.
      * @param callbackMethod Callback contract method signature. String representation of your method with a single
      * uint256 input parameter i.e. "relayEntryCallback(uint256)".
+     * @param callbackGas Gas required for the callback.
      * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
      */
-    function requestRelayEntry(uint256 seed, address callbackContract, string memory callbackMethod) public payable returns (uint256) {
+    function requestRelayEntry(
+        uint256 seed,
+        address callbackContract,
+        string memory callbackMethod,
+        uint256 callbackGas
+    ) public payable returns (uint256) {
         require(
-            msg.value >= minimumPayment(),
+            msg.value >= minimumPayment(callbackGas),
             "Payment is less than required minimum."
         );
 
         (uint256 signingFee, uint256 createGroupFee, uint256 profitMargin) = entryFeeBreakdown();
         uint256 callbackPayment = msg.value.sub(signingFee).sub(createGroupFee).sub(profitMargin);
         require(
-            callbackPayment >= minimumCallbackPayment(),
+            callbackPayment >= minimumCallbackPayment(callbackGas),
             "Callback payment is less than required minimum."
         );
 
@@ -228,7 +235,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         )(requestId, seed, _previousEntry, signingFee, callbackPayment);
 
         if (callbackContract != address(0)) {
-            _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackPayment, msg.sender);
+            _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackPayment, callbackGas, msg.sender);
         }
 
         // Send 1% of the request subsidy pool to the requestor.
@@ -264,12 +271,12 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             // Obtain the actual callback gas expenditure and refund the surplus.
             uint256 excessFeesRefund = 0;
             uint256 callbackCost = _minCallbackAllowance.mul(tx.gasprice);
-            if (callbackCost < minimumCallbackPayment()) {
-                excessFeesRefund = minimumCallbackPayment().sub(callbackCost);
+            if (callbackCost < minimumCallbackPayment(_callbacks[requestId].callbackGas)) {
+                excessFeesRefund = minimumCallbackPayment(_callbacks[requestId].callbackGas).sub(callbackCost);
                 _callbacks[requestId].surplusRecipient.transfer(excessFeesRefund);
             }
 
-            (success, data) = _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
+            (success, data) = _callbacks[requestId].callbackContract.call.gas(_callbacks[requestId].callbackGas)(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
             delete _callbacks[requestId];
         }
 
@@ -298,17 +305,19 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     /**
      * @dev Get the minimum payment for relay entry callback.
+     * @param callbackGas Gas required for the callback.
      */
-    function minimumCallbackPayment() public view returns(uint256) {
-        return _minCallbackAllowance*_minGasPrice;
+    function minimumCallbackPayment(uint256 callbackGas) public view returns(uint256) {
+        return callbackGas.mul(_minGasPrice);
     }
 
     /**
      * @dev Get the minimum payment for relay entry request.
+     * @param callbackGas Gas required for the callback.
      */
-    function minimumPayment() public view returns(uint256) {
+    function minimumPayment(uint256 callbackGas) public view returns(uint256) {
         (uint256 signingFee, uint256 createGroupFee, uint256 profitMargin) = entryFeeBreakdown();
-        return signingFee.add(createGroupFee).add(profitMargin).add(minimumCallbackPayment());
+        return signingFee.add(createGroupFee).add(profitMargin).add(minimumCallbackPayment(callbackGas));
     }
 
     /**

@@ -8,7 +8,7 @@ module.exports = async function() {
   const contractInstance = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address)
 
   try {
-    let minimumPayment = await contractInstance.minimumPayment();
+    let minimumPayment = await contractInstance.minimumPayment(0);
     let tx = await contractInstance.requestRelayEntry(crypto.randomBytes(32), {value: minimumPayment})
     console.log('Successfully requested relay entry with RequestId =', tx.logs[0].args.requestId.toString())
     console.log(
