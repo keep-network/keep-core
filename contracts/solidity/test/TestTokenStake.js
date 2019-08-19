@@ -1,3 +1,4 @@
+import { sign } from './helpers/signature';
 import { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import expectThrow from './helpers/expectThrow';
@@ -43,7 +44,7 @@ contract('TestTokenStake', function(accounts) {
     // Starting balances
     let account_one_starting_balance = await token.balanceOf.call(account_one);
 
-    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_one), account_one_operator)).substr(2), 'hex');
+    let signature = Buffer.from((await sign(web3.utils.soliditySha3(account_one), account_one_operator)).substr(2), 'hex');
     let data = Buffer.concat([Buffer.from(account_one_magpie.substr(2), 'hex'), signature]);
 
     // Stake tokens using approveAndCall pattern
@@ -84,7 +85,7 @@ contract('TestTokenStake', function(accounts) {
     // Starting balances
     account_one_starting_balance = await token.balanceOf.call(account_one);
 
-    signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(account_one), account_one_operator)).substr(2), 'hex');
+    signature = Buffer.from((await sign(web3.utils.soliditySha3(account_one), account_one_operator)).substr(2), 'hex');
     data = Buffer.concat([Buffer.from(account_one_magpie.substr(2), 'hex'), signature]);
 
     // Stake tokens using approveAndCall pattern

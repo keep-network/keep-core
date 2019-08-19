@@ -5,7 +5,7 @@ const OperatorContract = artifacts.require('./KeepRandomBeaconOperatorStub.sol')
 
 contract('TestKeepRandomBeaconServiceSelectOperator', function() {
 
-  let serviceContract, operatorContract, operatorContract2, operatorContract3;
+  let stakingContract, serviceContract, operatorContract, operatorContract2, operatorContract3;
 
   before(async () => {
     let contracts = await initContracts(
@@ -16,15 +16,13 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function() {
       OperatorContract
     );
 
+    stakingContract = contracts.stakingContract;
     serviceContract = contracts.serviceContract;
     operatorContract = contracts.operatorContract;
 
     // Create and initialize additional operator contracts
-    operatorContract2 = await OperatorContract.new();
-    operatorContract2.initialize(serviceContract.address);
-
-    operatorContract3 = await OperatorContract.new();
-    operatorContract3.initialize(serviceContract.address);
+    operatorContract2 = await OperatorContract.new(serviceContract.address, stakingContract.address);
+    operatorContract3 = await OperatorContract.new(serviceContract.address, stakingContract.address);
 
     operatorContract.registerNewGroup("0x0");
     operatorContract2.registerNewGroup("0x0");
