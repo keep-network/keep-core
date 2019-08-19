@@ -16,22 +16,17 @@ type Group struct {
 // NewDkgGroup creates a new Group with the provided dishonest threshold, member
 // identifiers, and empty IA and DQ members list.
 func NewDkgGroup(dishonestThreshold int, size int) *Group {
+	memberIDs := make([]MemberIndex, size)
+	for i := 0; i < size; i++ {
+		memberIDs[i] = MemberIndex(i + 1)
+	}
+
 	return &Group{
 		dishonestThreshold:    dishonestThreshold,
 		disqualifiedMemberIDs: []MemberIndex{},
 		inactiveMemberIDs:     []MemberIndex{},
-		memberIDs:             generateMemberIDs(size),
+		memberIDs:             memberIDs,
 	}
-}
-
-func generateMemberIDs(size int) []MemberIndex {
-	// +1 because group member indexes start from 1
-	members := make([]MemberIndex, size+1)
-	for i := 0; i < size+1; i++ {
-		members[i] = MemberIndex(i)
-	}
-
-	return members[1 : size+1]
 }
 
 // MemberIDs returns IDs of all group members, as initially selected to the
