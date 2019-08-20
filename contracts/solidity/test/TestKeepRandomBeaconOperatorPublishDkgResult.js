@@ -36,7 +36,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorStub.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
     );
 
     token = contracts.token;
@@ -71,7 +71,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
       await operatorContract.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
     }
 
-    let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
+    let ticketSubmissionStartBlock = (await operatorContract.ticketSubmissionStartBlock()).toNumber();
     let timeoutChallenge = (await operatorContract.ticketChallengeTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
     resultPublicationTime = ticketSubmissionStartBlock + timeoutChallenge + timeDKG;

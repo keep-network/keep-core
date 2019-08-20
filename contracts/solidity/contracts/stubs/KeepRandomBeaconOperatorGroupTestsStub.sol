@@ -1,18 +1,14 @@
 pragma solidity ^0.5.4;
 
-import "./KeepRandomBeaconOperator.sol";
+import "../KeepRandomBeaconOperator.sol";
 
 /**
- * @title KeepRandomBeaconOperatorStub
+ * @title KeepRandomBeaconOperatorGroupTestsStub
  * @dev A simplified Random Beacon operator contract to help local development.
  */
-contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
+contract KeepRandomBeaconOperatorGroupTestsStub is KeepRandomBeaconOperator {
 
     constructor(address _serviceContract, address _stakingContract) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {}
-
-    function authorizeServiceContract(address _serviceContract) public {
-        serviceContracts.push(_serviceContract);
-    }
 
     function registerNewGroup(bytes memory groupPublicKey) public {
         groups.push(Group(groupPublicKey, block.number));
@@ -22,10 +18,6 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
                 groupMembers[groupPublicKey].push(members[i]);
             }
         }
-    }
-
-    function addGroupMember(bytes memory groupPublicKey, address member) public {
-        groupMembers[groupPublicKey].push(member);
     }
 
     function registerNewGroups(uint256 groupsCount) public {
@@ -55,18 +47,6 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         return groups[groupIndex].groupPubKey;
     }
 
-    function getTicketSubmissionStartBlock() public view returns(uint256) {
-        return ticketSubmissionStartBlock;
-    }
-
-    function setGroupSize(uint256 size) public {
-        groupSize = size;
-    }
-
-    function setGroupThreshold(uint256 threshold) public {
-        groupThreshold = threshold;
-    }
-
     function setActiveGroupsThreshold(uint256 threshold) public {
         activeGroupsThreshold = threshold;
     }
@@ -77,25 +57,5 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
     function setRelayEntryTimeout(uint256 timeout) public {
         relayEntryTimeout = timeout;
-    }
-
-    function setMinimumStake(uint256 stake) public {
-        minimumStake = stake;
-    }
-
-    function setTicketInitialSubmissionTimeout(uint256 timeout) public {
-        ticketInitialSubmissionTimeout = timeout;
-    }
-
-    function setTicketReactiveSubmissionTimeout(uint256 timeout) public {
-        ticketReactiveSubmissionTimeout = timeout;
-    }
-
-    function setTicketChallengeTimeout(uint256 timeout) public {
-        ticketChallengeTimeout = timeout;
-    }
-
-    function setResultPublicationBlockStep(uint256 blockStep) public {
-        resultPublicationBlockStep = blockStep;
     }
 }

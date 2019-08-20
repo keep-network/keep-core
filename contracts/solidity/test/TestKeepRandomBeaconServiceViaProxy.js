@@ -20,7 +20,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       ServiceContractProxy,
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorStub.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
     );
 
     operatorContract = contracts.operatorContract;

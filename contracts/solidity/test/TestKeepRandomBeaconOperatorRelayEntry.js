@@ -12,12 +12,11 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorStub.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
     );
 
     operatorContract = contracts.operatorContract;
     serviceContract = contracts.serviceContract;
-    // operatorContract.authorizeServiceContract(serviceContract.address);
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);

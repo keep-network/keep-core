@@ -18,7 +18,7 @@ contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
         artifacts.require('./TokenStaking.sol'),
         artifacts.require('./KeepRandomBeaconService.sol'),
         artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-        artifacts.require('./KeepRandomBeaconOperatorStub.sol')
+        artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
       );
 
       operatorContract = contracts.operatorContract;

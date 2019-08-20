@@ -1,7 +1,7 @@
 import expectThrow from './helpers/expectThrow';
 import {initContracts} from './helpers/initContracts';
 import {bls} from './helpers/data';
-const OperatorContract = artifacts.require('./KeepRandomBeaconOperatorStub.sol')
+const OperatorContract = artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
 
 contract('TestKeepRandomBeaconServiceSelectOperator', function() {
 
