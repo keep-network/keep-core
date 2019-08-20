@@ -38,7 +38,7 @@ func TestExecute_HappyPath(t *testing.T) {
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_ephemeralKeyGenerationPhase1(t *testing.T) {
+func TestExecute_IA_member1_phase1(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -68,7 +68,7 @@ func TestExecute_IA_member1_ephemeralKeyGenerationPhase1(t *testing.T) {
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1and2_commitmentPhase3(t *testing.T) {
+func TestExecute_IA_members12_phase3(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 7
@@ -104,7 +104,7 @@ func TestExecute_IA_member1and2_commitmentPhase3(t *testing.T) {
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_sharesAndCommitmentsVerificationPhase4(t *testing.T) {
+func TestExecute_IA_member1_phase4(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 3
@@ -134,7 +134,7 @@ func TestExecute_IA_member1_sharesAndCommitmentsVerificationPhase4(t *testing.T)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_publicKeySharePointsCalculationPhase7(t *testing.T) {
+func TestExecute_IA_member1_phase7(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -164,7 +164,7 @@ func TestExecute_IA_member1_publicKeySharePointsCalculationPhase7(t *testing.T) 
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_publicKeySharePointsVerificationPhase8(t *testing.T) {
+func TestExecute_IA_member1_phase8(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -194,7 +194,7 @@ func TestExecute_IA_member1_publicKeySharePointsVerificationPhase8(t *testing.T)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member3and5_disqualifiedMembersKeysRevealingPhase10(t *testing.T) {
+func TestExecute_IA_members35_phase10(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -231,7 +231,11 @@ func TestExecute_IA_member3and5_disqualifiedMembersKeysRevealingPhase10(t *testi
 
 // TODO Test case Phase 5: 'shares cannot be decrypted (check with CanDecrypt)'
 
-func TestExecute_DQ_member1_accusedOfInconsistentShares_secretSharesAccusationsMessagesResolvingPhase5(t *testing.T) {
+// Phase 5 test case - a member misbehaved by sending fake commitments
+// to all other members. It becomes accused by all receivers of the
+// fake commitments. Accusers are right and the misbehaving member
+// is marked as disqualified in phase 5.
+func TestExecute_DQ_member1_accusedOfInconsistentShares_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
