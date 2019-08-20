@@ -235,7 +235,7 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 // to all other members. It becomes accused by all receivers of the
 // fake commitments. Accusers are right and the misbehaving member
 // is marked as disqualified in phase 5.
-func TestExecute_DQ_member1_accusedOfInconsistentShares_phase5(t *testing.T) {
+func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -244,7 +244,7 @@ func TestExecute_DQ_member1_accusedOfInconsistentShares_phase5(t *testing.T) {
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 
 		commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
-		if ok && commitmentsMessage.SenderID() == group.MemberIndex(1) {
+		if ok && commitmentsMessage.SenderID() == group.MemberIndex(5) {
 			commitments := make(
 				[]*bn256.G1,
 				len(commitmentsMessage.Commitments()),
@@ -270,7 +270,7 @@ func TestExecute_DQ_member1_accusedOfInconsistentShares_phase5(t *testing.T) {
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(5))
 	dkgtest.AssertInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
