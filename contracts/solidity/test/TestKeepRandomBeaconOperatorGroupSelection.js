@@ -15,8 +15,6 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
   operator3 = accounts[4], tickets3;
 
   const minimumStake = web3.utils.toBN(200000);
-  const ticketInitialSubmissionTimeout = 20;
-  const ticketReactiveSubmissionTimeout = 100;
 
   before(async () => {
 
@@ -34,8 +32,6 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     stakingContract = contracts.stakingContract;
 
     operatorContract.setMinimumStake(minimumStake)
-    operatorContract.setTicketInitialSubmissionTimeout(ticketInitialSubmissionTimeout);
-    operatorContract.setTicketReactiveSubmissionTimeout(ticketReactiveSubmissionTimeout);
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(2000)))
     await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(2000)))

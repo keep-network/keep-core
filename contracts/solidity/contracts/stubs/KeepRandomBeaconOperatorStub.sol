@@ -8,7 +8,14 @@ import "../KeepRandomBeaconOperator.sol";
  */
 contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
-    constructor(address _serviceContract, address _stakingContract) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {}
+    constructor(address _serviceContract, address _stakingContract) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
+        groupThreshold = 15;
+        relayEntryTimeout = 10;
+        ticketInitialSubmissionTimeout = 20;
+        ticketReactiveSubmissionTimeout = 100;
+        ticketChallengeTimeout = 60;
+        resultPublicationBlockStep = 3;
+    }
 
     function registerNewGroup(bytes memory groupPublicKey) public {
         groups.push(Group(groupPublicKey, block.number));
@@ -32,27 +39,4 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         groupSize = size;
     }
 
-    function setRelayEntryTimeout(uint256 timeout) public {
-        relayEntryTimeout = timeout;
-    }
-
-    function setGroupThreshold(uint256 threshold) public {
-        groupThreshold = threshold;
-    }
-
-    function setTicketInitialSubmissionTimeout(uint256 timeout) public {
-        ticketInitialSubmissionTimeout = timeout;
-    }
-
-    function setTicketReactiveSubmissionTimeout(uint256 timeout) public {
-        ticketReactiveSubmissionTimeout = timeout;
-    }
-
-    function setTicketChallengeTimeout(uint256 timeout) public {
-        ticketChallengeTimeout = timeout;
-    }
-
-    function setResultPublicationBlockStep(uint256 blockStep) public {
-        resultPublicationBlockStep = blockStep;
-    }
 }

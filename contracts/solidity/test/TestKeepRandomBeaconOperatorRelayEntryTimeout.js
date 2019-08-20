@@ -23,8 +23,6 @@ contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
 
       operatorContract = contracts.operatorContract;
 
-      operatorContract.setRelayEntryTimeout(relayEntryTimeout);
-
       // Using stub method to add first group to help testing.
       await operatorContract.registerNewGroup(bls.groupPubKey);
       // Passing a sender's authorization. accounts[0] is a msg.sender on blockchain
