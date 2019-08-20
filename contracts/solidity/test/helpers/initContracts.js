@@ -1,5 +1,4 @@
 import { duration } from './increaseTime';
-import { bls } from './data';
 
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
