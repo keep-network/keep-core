@@ -115,7 +115,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             totalNumberOfGroups += OperatorContract(_operatorContracts[i]).numberOfGroups();
         }
 
-        require(totalNumberOfGroups > 0, "Total number of groups must be greater that zero.");
+        require(totalNumberOfGroups > 0, "Total number of groups must be greater than zero.");
 
         uint256 selectedIndex = seed % totalNumberOfGroups;
 
