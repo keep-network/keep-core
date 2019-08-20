@@ -265,7 +265,7 @@ func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(5))
-	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertNoInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
