@@ -228,8 +228,11 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 
 // TODO Test case Phase 5: 'private key is invalid scalar for ECDH DQ -> expected result: disqualify accuser'
 
-// TODO Test case Phase 5: 'presented private key does not correspond to the published public key -> expected result: disqualify accuser'
-func TestExecute_DQ_member3_accuserWithPrivateKeyNotCorrespondingToPublicKey_secretSharesAccusationsMessagesResolvingPhase5(t *testing.T) {
+// Phase 5 test case - a member performs an accusation but provides
+// a wrong private key of the accused member. The private key is wrong
+// because it doesn't correspond to the public key published earlier.
+// The accuser is marked as disqualified in phase 5.
+func TestExecute_DQ_member3_accuserWithWrongPrivateKey_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -239,17 +242,13 @@ func TestExecute_DQ_member3_accuserWithPrivateKeyNotCorrespondingToPublicKey_sec
 
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(3) {
-			accusedMembersKeys := make(
-				map[group.MemberIndex]*ephemeral.PrivateKey,
-				1,
-			)
-
 			// accuser (member 3) provides a random private key which not
 			// correspond to his public key for member 1 published earlier
-			keyPair, _ := ephemeral.GenerateKeyPair()
-			accusedMembersKeys[group.MemberIndex(1)] = keyPair.PrivateKey
-
-			accusationsMessage.SetAccusedMembersKeys(accusedMembersKeys)
+			randomKeyPair, _ := ephemeral.GenerateKeyPair()
+			accusationsMessage.SetAccusedMemberKey(
+				group.MemberIndex(1),
+				randomKeyPair.PrivateKey,
+			)
 			return accusationsMessage
 		}
 

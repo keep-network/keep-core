@@ -13,8 +13,9 @@ func (mcm *MemberCommitmentsMessage) SetCommitment(
 	mcm.commitments[index] = commitment
 }
 
-func (ssam *SecretSharesAccusationsMessage) SetAccusedMembersKeys(
-	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey,
+func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKey(
+	memberIndex group.MemberIndex,
+	privateKey *ephemeral.PrivateKey,
 ) {
-	ssam.accusedMembersKeys = accusedMembersKeys
+	ssam.accusedMembersKeys[memberIndex] = privateKey
 }
