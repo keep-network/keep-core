@@ -101,6 +101,7 @@ contract KeepRandomBeaconOperator {
     }
 
     Group[] public groups;
+    uint256[] internal terminatedGroups;
     mapping (bytes => address[]) internal groupMembers;
 
     // expiredGroupOffset is pointing to the first active group, it is also the
@@ -127,7 +128,7 @@ contract KeepRandomBeaconOperator {
         uint256 payment;
         uint256 signingFee;
         uint256 callbackFee;
-        bytes groupPubKey;
+        uint256 groupIndex;
         uint256 previousEntry;
         uint256 seed;
         address serviceContract;
@@ -146,9 +147,9 @@ contract KeepRandomBeaconOperator {
      * @dev Triggers the first group selection. Genesis can be called only when
      * there are no groups on the operator contract.
      */
-    function genesis() public {
+    function genesis() public payable {
         require(groups.length == 0, "There can be no groups");
-        startGroupSelection(_genesisGroupSeed);
+        startGroupSelection(_genesisGroupSeed, msg.value);
     }
 
     /**
@@ -228,10 +229,10 @@ contract KeepRandomBeaconOperator {
      * generate their tickets.
      */
     function createGroup(uint256 _newEntry) public payable onlyServiceContract {
-        startGroupSelection(_newEntry);
+        startGroupSelection(_newEntry, msg.value);
     }
 
-    function startGroupSelection(uint256 _newEntry) internal {
+    function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
         // dkgTimeout is the time after key generation protocol is expected to
         // be complete plus the expected time to submit the result.
         uint256 dkgTimeout = ticketSubmissionStartBlock +
@@ -245,7 +246,7 @@ contract KeepRandomBeaconOperator {
         groupSelectionRelayEntry = _newEntry;
         groupSelectionInProgress = true;
         emit GroupSelectionStarted(_newEntry);
-        createGroupPayment = msg.value;
+        createGroupPayment = _payment;
     }
 
     /**
@@ -549,7 +550,7 @@ contract KeepRandomBeaconOperator {
 
     /**
      * @dev Return natural threshold, the value N virtual stakers' tickets would be expected
-     * to fall below if the tokens were optimally staked, and the tickets' values were evenly 
+     * to fall below if the tokens were optimally staked, and the tickets' values were evenly
      * distributed in the domain of the pseudorandom function.
      */
     function naturalThreshold() public view returns (uint256) {
@@ -558,20 +559,13 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets number of active groups.
-     */
-    function numberOfGroups() public view returns(uint256) {
-        return groups.length - expiredGroupOffset;
-    }
-
-    /**
      * @dev Gets the cutoff time in blocks until which the given group is
-     * considered as an active group. The group may not be marked as expired
-     * even though its active time has passed if one of the rules inside
-     * `selectGroup` function are not met (e.g. minimum active group threshold).
-     * Hence, this value informs when the group may no longer be considered
-     * as active but it does not mean that the group will be immediatelly
-     * considered not as such.
+     * considered as an active group assuming it hasn't been terminated before.
+     * The group may not be marked as expired even though its active
+     * time has passed if one of the rules inside `selectGroup` function are not
+     * met (e.g. minimum active group threshold). Hence, this value informs when
+     * the group may no longer be considered as active but it does not mean that
+     * the group will be immediatelly considered not as such.
      */
     function groupActiveTimeOf(Group memory group) internal view returns(uint256) {
         return group.registrationBlockHeight + groupActiveTime;
@@ -608,64 +602,85 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Returns public key of a group from active groups using modulo operator.
-     * @param seed Signing group selection seed.
+     * @dev Gets the number of active groups. Expired and terminated groups are
+     * not counted as active.
      */
-    function selectGroup(uint256 seed) public returns(bytes memory) {
-        uint256 numberOfActiveGroups = groups.length - expiredGroupOffset;
-        uint256 selectedGroup = seed % numberOfActiveGroups;
+    function numberOfGroups() public view returns(uint256) {
+        return groups.length - expiredGroupOffset - terminatedGroups.length;
+    }
 
-        /**
-        * We selected a group based on the information about expired groups offset
-        * from the previous call of the function. Now we need to check whether the
-        * selected group did not expire in the meantime. To do that, we compare its
-        * registration block height and group expiration timeout against the
-        * current block number. If the group has expired we move the expired groups
-        * offset to the position of the selected expired group and we try to select
-        * the next group knowing that all groups before the one previously selected
-        * are expired and should not be taken into account. We do this until we
-        * find an active group or until we reach the minimum active groups
-        * threshold.
-        *
-        * This approach is more efficient than traversing all groups one by one
-        * starting from the previous value of expired groups offset since we can
-        * mark expired groups in batches, in a fewer number of steps.
-        */
-        if (numberOfActiveGroups > activeGroupsThreshold) {
-            while (groupActiveTimeOf(groups[expiredGroupOffset + selectedGroup]) < block.number) {
-                /**
-                * We do -1 to see how many groups are available after the potential removal.
-                * For example:
-                * groups = [EEEAAAA]
-                * - assuming selectedGroup = 0, then we'll have 4-0-1=3 groups after the removal: [EEEEAAA]
-                * - assuming selectedGroup = 1, then we'll have 4-1-1=2 groups after the removal: [EEEEEAA]
-                * - assuming selectedGroup = 2, then, we'll have 4-2-1=1 groups after the removal: [EEEEEEA]
-                * - assuming selectedGroup = 3, then, we'll have 4-3-1=0 groups after the removal: [EEEEEEE]
-                */
-                if (numberOfActiveGroups - selectedGroup - 1 > activeGroupsThreshold) {
-                    selectedGroup++;
-                    expiredGroupOffset += selectedGroup;
-                    numberOfActiveGroups -= selectedGroup;
-                    selectedGroup = seed % numberOfActiveGroups;
-                } else {
-                    /* Number of groups that did not expire is less or equal activeGroupsThreshold
-                    * and we have more groups than activeGroupsThreshold (including those expired) groups.
-                    * Hence, we maintain the minimum activeGroupsThreshold of active groups and
-                    * do not let any other groups to expire
-                    */
-                    expiredGroupOffset = groups.length - activeGroupsThreshold;
-                    numberOfActiveGroups = activeGroupsThreshold;
-                    selectedGroup = seed % numberOfActiveGroups;
-                    break;
-                }
+    /**
+     * @dev Goes through groups starting from the oldest one that is still
+     * active and checks if it hasn't expired. If so, updates the information
+     * about expired groups so that all expired groups are marked as such.
+     * It does not mark more than `activeGroupsThreshold` active groups as
+     * expired.
+     */
+    function expireOldGroups() internal {
+        // move expiredGroupOffset as long as there are some groups that should
+        // be marked as expired and we are above activeGroupsThreshold of
+        // active groups.
+        while(
+            groupActiveTimeOf(groups[expiredGroupOffset]) < block.number &&
+            numberOfGroups() > activeGroupsThreshold
+        ) {
+            expiredGroupOffset++;
+        }
+
+        // Go through all terminatedGroups and if some of the terminated
+        // groups are expired, remove them from terminatedGroups collection.
+        // This is needed because we evaluate the shift of selected group index
+        // based on how many non-expired groups has been terminated.
+        for (uint i = 0; i < terminatedGroups.length; i++) {
+            if (expiredGroupOffset > terminatedGroups[i]) {
+                terminatedGroups[i] = terminatedGroups[terminatedGroups.length - 1];
+                terminatedGroups.length--;
             }
         }
-        return groups[expiredGroupOffset + selectedGroup].groupPubKey;
+    }
+
+    /**
+     * @dev Returns an index of a randomly selected active group. Terminated and
+     * expired groups are not considered as active.
+     * Before new group is selected, information about expired groups
+     * is updated. At least one active group needs to be present for this
+     * function to succeed.
+     * @param seed Random number used as a group selection seed.
+     */
+    function selectGroup(uint256 seed) public returns(uint256) {
+        require(numberOfGroups() > 0, "At least one active group required");
+
+        expireOldGroups();
+        uint256 selectedGroup = seed % numberOfGroups();
+        return shiftByTerminatedGroups(shiftByExpiredGroups(selectedGroup));
+    }
+
+    /**
+     * @dev Evaluates the shift of selected group index based on the number of
+     * expired groups.
+     */
+    function shiftByExpiredGroups(uint256 selectedIndex) public returns(uint256) {
+        return expiredGroupOffset + selectedIndex;
+    }
+
+    /**
+     * @dev Evaluates the shift of selected group index based on the number of
+     * non-expired, terminated groups.
+     */
+    function shiftByTerminatedGroups(uint256 selectedIndex) public returns(uint256) {
+        uint256 shiftedIndex = selectedIndex;
+        for (uint i = 0; i < terminatedGroups.length; i++) {
+            if (terminatedGroups[i] <= shiftedIndex) {
+                shiftedIndex++;
+            }
+        }
+
+        return shiftedIndex;
     }
 
     /**
      * @dev Gets version of the current implementation.
-    */
+     */
     function version() public pure returns (string memory) {
         return "V1";
     }
@@ -690,8 +705,6 @@ contract KeepRandomBeaconOperator {
      * @param requestId Request Id trackable by service contract.
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
-     * @param signingFee Fee to cover submitter entry verification cost.
-     * @param callbackFee Fee to cover submitter the gas costs of the callback.
      */
     function sign(
         uint256 requestId,
@@ -700,31 +713,38 @@ contract KeepRandomBeaconOperator {
         uint256 signingFee,
         uint256 callbackFee
     ) public payable onlyServiceContract {
-        require(
-            numberOfGroups() > 0,
-            "At least one group needed to serve the request."
-        );
+        signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value, signingFee, callbackFee);
+    }
 
-        uint256 entryTimeout = currentEntryStartBlock + relayEntryTimeout;
-        require(!entryInProgress || block.number > entryTimeout, "Relay entry is in progress.");
+    function signRelayEntry(
+        uint256 requestId,
+        uint256 seed,
+        uint256 previousEntry,
+        address serviceContract,
+        uint256 payment,
+        uint256 signingFee,
+        uint256 callbackFee
+    ) internal {
+        require(!entryInProgress || hasEntryTimedOut(), "Relay entry is in progress.");
 
         currentEntryStartBlock = block.number;
         entryInProgress = true;
 
-        bytes memory groupPubKey = selectGroup(previousEntry);
+        uint256 groupIndex = selectGroup(previousEntry);
+        bytes memory groupPubKey = groups[groupIndex].groupPubKey;
 
         signingRequest = SigningRequest(
             requestId,
-            msg.value,
+            payment,
             signingFee,
             callbackFee,
-            groupPubKey,
+            groupIndex,
             previousEntry,
             seed,
-            msg.sender
+            serviceContract
         );
 
-        emit SignatureRequested(msg.value, previousEntry, seed, groupPubKey);
+        emit SignatureRequested(payment, previousEntry, seed, groupPubKey);
     }
 
     /**
@@ -733,9 +753,11 @@ contract KeepRandomBeaconOperator {
      * previous entry and seed.
      */
     function relayEntry(uint256 _groupSignature) public {
+        bytes memory groupPublicKey = groups[signingRequest.groupIndex].groupPubKey;
+
         require(
             BLS.verify(
-                signingRequest.groupPubKey,
+                groupPublicKey,
                 abi.encodePacked(signingRequest.previousEntry, signingRequest.seed),
                 bytes32(_groupSignature)
             ),
@@ -744,7 +766,7 @@ contract KeepRandomBeaconOperator {
         
         emit SignatureSubmitted(
             _groupSignature,
-            signingRequest.groupPubKey,
+            groupPublicKey,
             signingRequest.previousEntry,
             signingRequest.seed
         );
@@ -759,14 +781,14 @@ contract KeepRandomBeaconOperator {
         // Calculate each group member reward = baseReward * delayFactor / groupLength
         // Adding 2 decimals (1e2) to perform float division.
         uint256 profitMargin = signingRequest.payment.sub(signingRequest.signingFee).sub(signingRequest.callbackFee);
-        uint256 groupLength = groupMembers[signingRequest.groupPubKey].length;
+        uint256 groupLength = groupMembers[groupPublicKey].length;
         uint256 baseReward = profitMargin.div(groupLength);
         uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
         uint256 delayFactor = entryTimeout.sub(block.number).mul(1e2).div(relayEntryTimeout.sub(1))**2;
         uint256 groupReward = baseReward.mul(delayFactor).div(1e2**2);
 
         for (uint i = 0; i < groupLength; i++) {
-            address payable receiver = address(uint160(groupMembers[signingRequest.groupPubKey][i]));
+            address payable receiver = address(uint160(groupMembers[groupPublicKey][i]));
             receiver.transfer(groupReward);
         }
 
@@ -774,6 +796,42 @@ contract KeepRandomBeaconOperator {
         uint256 subsidy = profitMargin.sub(groupReward.mul(groupLength));
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
+        }
+    }
+
+    /**
+     * @dev Returns true if the currently ongoing new relay entry generation
+     * operation timed out. There is a certain timeout for a new relay entry
+     * to be produced, see `relayEntryTimeout` value.
+     */
+    function hasEntryTimedOut() internal view returns (bool) {
+        return entryInProgress && block.number > currentEntryStartBlock + relayEntryTimeout;
+    }
+
+    /**
+     * @dev Function used to inform about the fact the currently ongoing
+     * new relay entry generation operation timed out. As a result, the group
+     * which was supposed to produce a new relay entry is immediatelly
+     * terminated and a new group is selected to produce a new relay entry.
+     */
+    function reportRelayEntryTimeout() public {
+        require(hasEntryTimedOut(), "Current relay entry did not time out");
+
+        terminatedGroups.push(signingRequest.groupIndex);
+
+        // We could terminate the last active group. If that's the case,
+        // do not try to execute signing again because there is no group
+        // which can handle it.
+        if (numberOfGroups() > 0) {
+            signRelayEntry(
+                signingRequest.relayRequestId,
+                signingRequest.seed,
+                signingRequest.previousEntry,
+                signingRequest.serviceContract,
+                signingRequest.payment,
+                signingRequest.signingFee,
+                signingRequest.callbackFee
+            );
         }
     }
 }

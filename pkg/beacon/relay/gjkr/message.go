@@ -9,11 +9,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-// JoinMessage is sent by member to announce its presence in the group.
-type JoinMessage struct {
-	senderID group.MemberIndex
-}
-
 // EphemeralPublicKeyMessage is a message payload that carries the sender's
 // ephemeral public keys generated for all other group members.
 //
@@ -104,11 +99,6 @@ type DisqualifiedEphemeralKeysMessage struct {
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (jm *JoinMessage) SenderID() group.MemberIndex {
-	return jm.senderID
-}
-
-// SenderID returns protocol-level identifier of the message sender.
 func (epkm *EphemeralPublicKeyMessage) SenderID() group.MemberIndex {
 	return epkm.senderID
 }
@@ -141,11 +131,6 @@ func (pam *PointsAccusationsMessage) SenderID() group.MemberIndex {
 // SenderID returns protocol-level identifier of the message sender.
 func (dekm *DisqualifiedEphemeralKeysMessage) SenderID() group.MemberIndex {
 	return dekm.senderID
-}
-
-// NewJoinMessage creates a new JoinMessage for the provided sender ID.
-func NewJoinMessage(senderID group.MemberIndex) *JoinMessage {
-	return &JoinMessage{senderID}
 }
 
 func newPeerSharesMessage(senderID group.MemberIndex) *PeerSharesMessage {

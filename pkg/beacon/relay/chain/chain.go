@@ -33,6 +33,10 @@ type RelayEntryInterface interface {
 	OnSignatureRequested(
 		func(request *event.Request),
 	) (subscription.EventSubscription, error)
+	// ReportRelayEntryTimeout notifies the chain when a selected group which was
+	// supposed to submit a relay entry, did not deliver it within a specified
+	// time frame (relayEntryTimeout) counted in blocks.
+	ReportRelayEntryTimeout() error
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that
@@ -49,7 +53,7 @@ type GroupSelectionInterface interface {
 	// error submitting the entry.
 	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
 	// GetSelectedParticipants returns `GroupSize` slice of addresses of
-	// candidates which have been selected to the group.
+	// candidates which have been selected to the currently assembling group.
 	GetSelectedParticipants() ([]StakerAddress, error)
 }
 

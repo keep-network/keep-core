@@ -1,7 +1,6 @@
 package gjkr
 
 import (
-	"fmt"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -203,33 +202,18 @@ type FinalizingMember struct {
 // protocol.
 func NewMember(
 	memberID group.MemberIndex,
-	groupMembers []group.MemberIndex,
+	groupSize,
 	dishonestThreshold int,
 	seed *big.Int,
 ) (*LocalMember, error) {
-	if err := memberID.Validate(); err != nil {
-		return nil, fmt.Errorf("could not create a new member [%v]", err)
-	}
-
 	return &LocalMember{
 		memberCore: &memberCore{
 			memberID,
-			group.NewDkgGroup(dishonestThreshold, groupMembers),
+			group.NewDkgGroup(dishonestThreshold, groupSize),
 			newDkgEvidenceLog(),
 			newProtocolParameters(seed),
 		},
 	}, nil
-}
-
-// AddToGroup adds the provided MemberID to the group
-func (mc *memberCore) AddToGroup(memberID group.MemberIndex) error {
-	if err := memberID.Validate(); err != nil {
-		return fmt.Errorf("could not add the member ID to the group [%v]", err)
-	}
-
-	mc.group.RegisterMemberID(memberID)
-
-	return nil
 }
 
 // InitializeEphemeralKeysGeneration performs a transition of a member state

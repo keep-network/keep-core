@@ -25,25 +25,10 @@ func (js *joinState) ActiveBlocks() uint64 {
 }
 
 func (js *joinState) Initiate() error {
-	return js.channel.Send(NewJoinMessage(js.member.ID))
+	return nil
 }
 
 func (js *joinState) Receive(msg net.Message) error {
-	switch joinMsg := msg.Payload().(type) {
-	case *JoinMessage:
-		err := js.member.AddToGroup(joinMsg.SenderID())
-		if err != nil {
-			return err
-		}
-
-		logger.Debugf(
-			"[member:%v,channel:%s] added member [%v] with key [%x]",
-			js.member.ID,
-			js.channel.Name()[:5],
-			joinMsg.SenderID(),
-			msg.SenderPublicKey(),
-		)
-	}
 	return nil
 }
 
@@ -320,6 +305,8 @@ func (sjs *sharesJustificationState) ActiveBlocks() uint64 {
 }
 
 func (sjs *sharesJustificationState) Initiate() error {
+	sjs.member.MarkInactiveMembers(sjs.previousPhaseAccusationsMessages)
+
 	disqualifiedMembers, err := sjs.member.ResolveSecretSharesAccusationsMessages(
 		sjs.previousPhaseAccusationsMessages,
 	)
@@ -524,6 +511,8 @@ func (pjs *pointsJustificationState) ActiveBlocks() uint64 {
 }
 
 func (pjs *pointsJustificationState) Initiate() error {
+	pjs.member.MarkInactiveMembers(pjs.previousPhaseMessages)
+
 	disqualifiedMembers, err := pjs.member.ResolvePublicKeySharePointsAccusationsMessages(
 		pjs.previousPhaseMessages,
 	)

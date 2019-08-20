@@ -29,11 +29,13 @@ type Node struct {
 	blockCounter chain.BlockCounter
 	chainConfig  *config.Chain
 
-	// The IDs of the known stakes in the system, including this node's StakeID.
-	stakeIDs      []string
-	maxStakeIndex int
-
 	groupRegistry *registry.Groups
+}
+
+// IsInGroup checks if this node is a member of the group which was selected to
+// join a group which undergoes the process of generating a threshold relay entry.
+func (n *Node) IsInGroup(groupPublicKey []byte) bool {
+	return len(n.groupRegistry.GetGroup(groupPublicKey)) > 0
 }
 
 // JoinGroupIfEligible takes a threshold relay entry value and undergoes the

@@ -1,7 +1,6 @@
 package group
 
 import (
-	"fmt"
 	"math/big"
 )
 
@@ -16,13 +15,4 @@ func (id MemberIndex) Int() *big.Int {
 // Equals checks if `MemberIndex` equals the passed int value.
 func (id MemberIndex) Equals(value int) bool {
 	return id == MemberIndex(value)
-}
-
-// Validate checks if `MemberIndex` has a valid value. `MemberIndex` is expected
-// to be equal or greater than `1`.
-func (id MemberIndex) Validate() error {
-	if id < 1 {
-		return fmt.Errorf("member index must be >= 1")
-	}
-	return nil
 }

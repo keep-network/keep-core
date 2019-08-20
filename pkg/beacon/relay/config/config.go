@@ -43,7 +43,7 @@ type Chain struct {
 	// RelayEntryTimeout is a timeout in blocks on-chain for a relay
 	// entry to be published by the selected group. Blocks are
 	// counted from the moment relay request occur.
-	RelayEntryTimeout *big.Int
+	RelayEntryTimeout uint64
 }
 
 // HonestThreshold is the sufficient amount of valid signature shares required

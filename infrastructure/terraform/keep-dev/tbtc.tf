@@ -6,6 +6,8 @@ data "template_file" "bitcoin_values" {
     printtoconsole = "printtoconsole=1"
     testnet        = "testnet=1"
     txindex        = "txindex=1"
+    rpcport        = "test.rpcport=8332"
+    port           = "test.port=8333"
     rpcuser        = "rpcuser=tbtc"
     rpcpassword    = "rpcpassword=${random_string.bitcoin_rpc_password.result}"
   }
@@ -31,6 +33,11 @@ resource "helm_release" "bitcoind" {
   values = [
     "${data.template_file.bitcoin_values.rendered}",
   ]
+
+  set {
+    name  = "persistence.size"
+    value = "40Gi"
+  }
 }
 
 resource "random_string" "bitcoin_rpc_password" {
