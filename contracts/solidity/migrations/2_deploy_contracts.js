@@ -36,7 +36,7 @@ module.exports = async function(deployer) {
   const keepRandomBeaconService = await KeepRandomBeaconServiceImplV1.at(KeepRandomBeaconService.address);
   const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
 
-  keepRandomBeaconService.initialize(
+  await keepRandomBeaconService.initialize(
     minPayment,
     withdrawalDelay,
     keepRandomBeaconOperator.address
