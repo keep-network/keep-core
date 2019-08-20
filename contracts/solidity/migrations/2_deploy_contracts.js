@@ -7,7 +7,6 @@ const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol");
 const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
-const KeepRandomBeaconOperatorStub = artifacts.require("./KeepRandomBeaconOperatorStub.sol");
 
 const withdrawalDelay = 86400; // 1 day
 const minimumGasPrice = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei) TODO: Use historical average of recently served requests?
@@ -29,7 +28,6 @@ module.exports = async function(deployer) {
   await deployer.deploy(TokenStaking, KeepToken.address, withdrawalDelay);
   await deployer.deploy(TokenGrant, KeepToken.address, TokenStaking.address);
   await deployer.link(BLS, KeepRandomBeaconOperator);
-  await deployer.link(BLS, KeepRandomBeaconOperatorStub);
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
 
