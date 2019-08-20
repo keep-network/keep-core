@@ -15,7 +15,7 @@ func (euc *ethereumUtilityChain) Genesis() error {
 func (euc *ethereumUtilityChain) RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise {
 	promise := &async.RelayRequestPromise{}
 
-	_, err := euc.keepRandomBeaconServiceContract.RequestRelayEntry(seed, common.BytesToAddress([]byte{}), "", big.NewInt(1))
+	_, err := euc.keepRandomBeaconServiceContract.RequestRelayEntry(seed, common.BytesToAddress([]byte{}), "", big.NewInt(1), big.NewInt(0))
 	if err != nil {
 		promise.Fail(err)
 	}
