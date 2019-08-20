@@ -12,6 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/internal/dkgtest"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 func TestExecute_HappyPath(t *testing.T) {
@@ -228,6 +229,46 @@ func TestExecute_IA_member3and5_disqualifiedMembersKeysRevealingPhase10(t *testi
 // TODO Test case Phase 5: 'private key is invalid scalar for ECDH DQ -> expected result: disqualify accuser'
 
 // TODO Test case Phase 5: 'presented private key does not correspond to the published public key -> expected result: disqualify accuser'
+func TestExecute_DQ_member3_accuserWithPrivateKeyNotCorrespondingToPublicKey_secretSharesAccusationsMessagesResolvingPhase5(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	threshold := 3
+
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+
+		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
+		if ok && accusationsMessage.SenderID() == group.MemberIndex(3) {
+			accusedMembersKeys := make(
+				map[group.MemberIndex]*ephemeral.PrivateKey,
+				1,
+			)
+
+			// accuser (member 3) provides a random private key which not
+			// correspond to his public key for member 1 published earlier
+			keyPair, _ := ephemeral.GenerateKeyPair()
+			accusedMembersKeys[group.MemberIndex(1)] = keyPair.PrivateKey
+
+			accusationsMessage.SetAccusedMembersKeys(accusedMembersKeys)
+			return accusationsMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(3))
+	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+}
 
 // TODO Test case Phase 5: 'shares cannot be decrypted (check with CanDecrypt)'
 

@@ -410,6 +410,17 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				continue
 			}
 
+			publicKey := sjm.evidenceLog.ephemeralPublicKeyMessage(accuserID).
+				ephemeralPublicKeys[accusedID]
+			if !publicKey.IsKeyMatching(revealedAccuserPrivateKey) {
+				logger.Errorf(
+					"invalid private key for public key from member: [%v]",
+					accuserID,
+				)
+				sjm.group.MarkMemberAsDisqualified(accuserID)
+				continue
+			}
+
 			symmetricKey, err := recoverSymmetricKey(
 				sjm.evidenceLog,
 				accusedID,
