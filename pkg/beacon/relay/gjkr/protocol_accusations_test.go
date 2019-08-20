@@ -80,7 +80,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				return &ephemeral.PrivateKey{D: big.NewInt(12)}
 			},
 			// TODO Should we disqualify accuser/accused member here?
-			expectedResult: make([]group.MemberIndex, 0),
+			expectedResult: []group.MemberIndex{},
 			expectedError:  fmt.Errorf("could not decrypt shares [cannot decrypt share S [could not decrypt S share [symmetric key decryption failed]]]"),
 		},
 	}

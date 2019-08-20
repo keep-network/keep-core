@@ -6,12 +6,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-func (mcm *MemberCommitmentsMessage) Commitments() []*bn256.G1 {
-	return mcm.commitments
-}
-
-func (mcm *MemberCommitmentsMessage) SetCommitments(commitments []*bn256.G1) {
-	mcm.commitments = commitments
+func (mcm *MemberCommitmentsMessage) SetCommitment(
+	index int,
+	commitment *bn256.G1,
+) {
+	mcm.commitments[index] = commitment
 }
 
 func (ssam *SecretSharesAccusationsMessage) SetAccusedMembersKeys(

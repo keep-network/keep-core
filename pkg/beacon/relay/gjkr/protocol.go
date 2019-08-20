@@ -358,6 +358,10 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 	commitments []*bn256.G1, // C_j
 	memberID group.MemberIndex, // i
 ) bool {
+	if len(commitments) == 0 {
+		return false
+	}
+
 	var sum *bn256.G1                // Σ (C_j[k] * (i^k)) for k in [0..T]
 	for k, ck := range commitments { // k, C_j[k]
 		ci := new(bn256.G1).ScalarMult(ck, pow(memberID, k)) // C_j[k] * (i^k)
@@ -366,10 +370,6 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 		} else {
 			sum = new(bn256.G1).Add(sum, ci)
 		}
-	}
-
-	if sum == nil {
-		return false
 	}
 
 	commitment := cm.calculateCommitment(shareS, shareT) // G * s_ji + H * t_ji
@@ -448,8 +448,18 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				sjm.receivedValidPeerCommitments[accusedID], // C_m
 				accuserID, // j
 			) {
+				logger.Warningf("member [%v] disqualified because of "+
+					"false accusation against member [%v] ",
+					accuserID,
+					accusedID,
+				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
 			} else {
+				logger.Warningf("member [%v] disqualified because of "+
+					"confirmed misbehaviour against member [%v] ",
+					accusedID,
+					accuserID,
+				)
 				sjm.group.MarkMemberAsDisqualified(accusedID)
 			}
 		}

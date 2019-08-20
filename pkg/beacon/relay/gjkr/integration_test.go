@@ -39,7 +39,7 @@ func TestExecute_HappyPath(t *testing.T) {
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_ephemeralKeyGenerationPhase1(t *testing.T) {
+func TestExecute_IA_member1_phase1(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -69,7 +69,7 @@ func TestExecute_IA_member1_ephemeralKeyGenerationPhase1(t *testing.T) {
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1and2_commitmentPhase3(t *testing.T) {
+func TestExecute_IA_members12_phase3(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 7
@@ -105,7 +105,7 @@ func TestExecute_IA_member1and2_commitmentPhase3(t *testing.T) {
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_sharesAndCommitmentsVerificationPhase4(t *testing.T) {
+func TestExecute_IA_member1_phase4(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 3
@@ -135,7 +135,7 @@ func TestExecute_IA_member1_sharesAndCommitmentsVerificationPhase4(t *testing.T)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_publicKeySharePointsCalculationPhase7(t *testing.T) {
+func TestExecute_IA_member1_phase7(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -165,7 +165,7 @@ func TestExecute_IA_member1_publicKeySharePointsCalculationPhase7(t *testing.T) 
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member1_publicKeySharePointsVerificationPhase8(t *testing.T) {
+func TestExecute_IA_member1_phase8(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -195,7 +195,7 @@ func TestExecute_IA_member1_publicKeySharePointsVerificationPhase8(t *testing.T)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
-func TestExecute_IA_member3and5_disqualifiedMembersKeysRevealingPhase10(t *testing.T) {
+func TestExecute_IA_members35_phase10(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -272,7 +272,11 @@ func TestExecute_DQ_member3_accuserWithPrivateKeyNotCorrespondingToPublicKey_sec
 
 // TODO Test case Phase 5: 'shares cannot be decrypted (check with CanDecrypt)'
 
-func TestExecute_DQ_member1_accusedOfInconsistentShares_secretSharesAccusationsMessagesResolvingPhase5(t *testing.T) {
+// Phase 5 test case - a member misbehaved by sending fake commitment
+// to another member. It becomes accused by the receiver of the
+// fake commitment. The accuser is right and the misbehaving member
+// is marked as disqualified in phase 5.
+func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -281,17 +285,11 @@ func TestExecute_DQ_member1_accusedOfInconsistentShares_secretSharesAccusationsM
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 
 		commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
-		if ok && commitmentsMessage.SenderID() == group.MemberIndex(1) {
-			commitments := make(
-				[]*bn256.G1,
-				len(commitmentsMessage.Commitments()),
+		if ok && commitmentsMessage.SenderID() == group.MemberIndex(5) {
+			commitmentsMessage.SetCommitment(
+				2,
+				new(bn256.G1).ScalarBaseMult(big.NewInt(1337)),
 			)
-
-			for i := range commitments {
-				commitments[i] = new(bn256.G1).ScalarBaseMult(big.NewInt(1))
-			}
-
-			commitmentsMessage.SetCommitments(commitments)
 			return commitmentsMessage
 		}
 
@@ -307,8 +305,8 @@ func TestExecute_DQ_member1_accusedOfInconsistentShares_secretSharesAccusationsM
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(1))
-	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(5))
+	dkgtest.AssertNoInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 

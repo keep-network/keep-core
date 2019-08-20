@@ -73,12 +73,12 @@ func AssertDisqualifiedMembers(
 
 		if dq == disqualifiedMemberByte && !disqualifiedExpected {
 			t.Errorf(
-				"member [%v] has been unexpectedly marked as disqualified",
+				"member [%v] should not be marked as disqualified",
 				memberIndex,
 			)
 		} else if dq == qualifiedMemberByte && disqualifiedExpected {
 			t.Errorf(
-				"member [%v] has not been unexpectedly marked as disqualified",
+				"member [%v] should be marked as disqualified",
 				memberIndex,
 			)
 		}
@@ -123,12 +123,12 @@ func AssertInactiveMembers(
 
 		if ia == inactiveMemberByte && !inactiveExpected {
 			t.Errorf(
-				"member [%v] has been unexpectedly marked as inactive",
+				"member [%v] should not be marked as inactive",
 				memberIndex,
 			)
 		} else if ia == activeMemberByte && inactiveExpected {
 			t.Errorf(
-				"member [%v] has not been unexpectedly marked as inactive",
+				"member [%v] should be marked as inactive",
 				memberIndex,
 			)
 		}
