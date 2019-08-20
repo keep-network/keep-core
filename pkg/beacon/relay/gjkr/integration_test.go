@@ -231,9 +231,9 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 
 // TODO Test case Phase 5: 'shares cannot be decrypted (check with CanDecrypt)'
 
-// Phase 5 test case - a member misbehaved by sending fake commitments
-// to all other members. It becomes accused by all receivers of the
-// fake commitments. Accusers are right and the misbehaving member
+// Phase 5 test case - a member misbehaved by sending fake commitment
+// to another member. It becomes accused by the receiver of the
+// fake commitment. The accuser is right and the misbehaving member
 // is marked as disqualified in phase 5.
 func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
 	t.Parallel()
@@ -245,16 +245,10 @@ func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
 
 		commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
 		if ok && commitmentsMessage.SenderID() == group.MemberIndex(5) {
-			commitments := make(
-				[]*bn256.G1,
-				len(commitmentsMessage.Commitments()),
+			commitmentsMessage.SetCommitment(
+				2,
+				new(bn256.G1).ScalarBaseMult(big.NewInt(1337)),
 			)
-
-			for i := range commitments {
-				commitments[i] = new(bn256.G1).ScalarBaseMult(big.NewInt(1))
-			}
-
-			commitmentsMessage.SetCommitments(commitments)
 			return commitmentsMessage
 		}
 
