@@ -437,8 +437,18 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				sjm.receivedValidPeerCommitments[accusedID], // C_m
 				accuserID, // j
 			) {
+				logger.Warningf("member [%v] disqualified because of "+
+					"false accusation against member [%v] ",
+					accuserID,
+					accusedID,
+				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
 			} else {
+				logger.Warningf("member [%v] disqualified because of "+
+					"confirmed misbehaviour against member [%v] ",
+					accusedID,
+					accuserID,
+				)
 				sjm.group.MarkMemberAsDisqualified(accusedID)
 			}
 		}
