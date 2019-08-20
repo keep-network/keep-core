@@ -8,7 +8,6 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function() {
 
     const groupActiveTime = 5;
     const activeGroupsThreshold = 1;
-    const relayEntryTimeout = 10;
 
     before(async () => {
       let contracts = await initContracts(
@@ -16,7 +15,7 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function() {
         artifacts.require('./TokenStaking.sol'),
         artifacts.require('./KeepRandomBeaconService.sol'),
         artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-        artifacts.require('./stubs/KeepRandomBeaconOperatorGroupTestsStub.sol')
+        artifacts.require('./stubs/KeepRandomBeaconOperatorGroupTerminationStub.sol')
       );
       
       operatorContract = contracts.operatorContract;
@@ -24,10 +23,7 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function() {
 
     beforeEach(async () => {
       operatorContract.clearGroups();
-      
-      operatorContract.setGroupActiveTime(groupActiveTime);
       operatorContract.setActiveGroupsThreshold(activeGroupsThreshold);
-      operatorContract.setRelayEntryTimeout(relayEntryTimeout);
     });
 
     async function runTerminationTest(groupsCount, expiredCount, terminatedGroups, beaconValue ) {
@@ -39,7 +35,7 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function() {
         await operatorContract.terminateGroup(groupIndex);
       }
 
-      return operatorContract.selectGroup.call(beaconValue);      
+      return operatorContract.selectGroup.call(beaconValue);
     }
     
     describe("should not select terminated groups", async () => {

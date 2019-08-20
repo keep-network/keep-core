@@ -15,14 +15,10 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorGroupTestsStub.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorGroupExpirationStub.sol')
     );
 
     operatorContract = contracts.operatorContract;
-    
-    operatorContract.setGroupActiveTime(groupActiveTime);
-    operatorContract.setActiveGroupsThreshold(activeGroupsThreshold);
-    operatorContract.setRelayEntryTimeout(relayEntryTimeout);
   });
 
   async function addGroups(numberOfGroups) {
