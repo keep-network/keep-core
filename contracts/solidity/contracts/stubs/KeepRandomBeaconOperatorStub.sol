@@ -36,10 +36,6 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         relayEntryTimeout = timeout;
     }
 
-    function setMinimumStake(uint256 stake) public {
-        minimumStake = stake;
-    }
-
     function setGroupThreshold(uint256 threshold) public {
         groupThreshold = threshold;
     }
