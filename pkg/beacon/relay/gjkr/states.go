@@ -25,14 +25,10 @@ func (js *joinState) ActiveBlocks() uint64 {
 }
 
 func (js *joinState) Initiate() error {
-	return js.channel.Send(NewJoinMessage(js.member.ID))
+	return nil
 }
 
 func (js *joinState) Receive(msg net.Message) error {
-	switch joinMsg := msg.Payload().(type) {
-	case *JoinMessage:
-		js.member.AddToGroup(joinMsg.SenderID())
-	}
 	return nil
 }
 
@@ -191,7 +187,8 @@ func (cs *commitmentState) Receive(msg net.Message) error {
 		}
 
 	case *MemberCommitmentsMessage:
-		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) {
+		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(cs.member, phaseMessage) {
 			cs.phaseCommitmentsMessages = append(
 				cs.phaseCommitmentsMessages,
 				phaseMessage,
@@ -308,6 +305,8 @@ func (sjs *sharesJustificationState) ActiveBlocks() uint64 {
 }
 
 func (sjs *sharesJustificationState) Initiate() error {
+	sjs.member.MarkInactiveMembers(sjs.previousPhaseAccusationsMessages)
+
 	disqualifiedMembers, err := sjs.member.ResolveSecretSharesAccusationsMessages(
 		sjs.previousPhaseAccusationsMessages,
 	)
@@ -512,6 +511,8 @@ func (pjs *pointsJustificationState) ActiveBlocks() uint64 {
 }
 
 func (pjs *pointsJustificationState) Initiate() error {
+	pjs.member.MarkInactiveMembers(pjs.previousPhaseMessages)
+
 	disqualifiedMembers, err := pjs.member.ResolvePublicKeySharePointsAccusationsMessages(
 		pjs.previousPhaseMessages,
 	)

@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
@@ -118,13 +117,7 @@ func SmokeTest(c *cli.Context) error {
 	// Give the nodes a sec to get going.
 	<-time.NewTimer(time.Second).C
 
-	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
-		SigningId:     big.NewInt(0),
-		Value:         big.NewInt(0),
-		GroupPubKey:   big.NewInt(0).Bytes(),
-		Seed:          big.NewInt(0),
-		PreviousEntry: &big.Int{},
-	})
+	chainHandle.ThresholdRelay().SubmitRelayEntry(big.NewInt(0))
 
 	// TODO Add validations when DKG Phase 14 is implemented.
 
@@ -146,14 +139,6 @@ func createNode(
 		return common.BytesToAddress(
 			[]byte(value),
 		).String()
-	}
-
-	chainCounter, err := chainHandle.BlockCounter()
-	if err != nil {
-		panic(fmt.Sprintf(
-			"Failed to run setup chainHandle.BlockCounter: [%v].",
-			err,
-		))
 	}
 
 	stakeMonitor, err := chainHandle.StakeMonitor()
@@ -179,9 +164,7 @@ func createNode(
 		err := beacon.Initialize(
 			context,
 			stakingID,
-			chainHandle.ThresholdRelay(),
-			chainCounter,
-			stakeMonitor,
+			chainHandle,
 			netProvider,
 			storage,
 		)

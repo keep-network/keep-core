@@ -1,13 +1,13 @@
 package result
 
 import (
-	"bytes"
 	"math/big"
 	"reflect"
 	"testing"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
@@ -17,140 +17,90 @@ import (
 // verifies messages received from other group members.
 func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 	groupSize := 10
-	threshold := 5
-	minimumStake := big.NewInt(200)
 
 	dkgResult := &relayChain.DKGResult{
 		GroupPublicKey: []byte{10},
 	}
 
-	chainHandle := local.Connect(groupSize, threshold, minimumStake)
-
-	members, err := initializeSigningMembers(groupSize)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	expectedResultHash, err := chainHandle.ThresholdRelay().
-		CalculateDKGResultHash(dkgResult)
+	members, chainHandles, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	currentMember := members[0]
+	currentSigning := chainHandles[0].Signing()
+
 	messages := make([]*DKGResultHashSignatureMessage, 0)
 
-	for _, member := range members {
-		message, err := member.SignDKGResult(dkgResult, chainHandle.ThresholdRelay())
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if message.senderIndex != member.index {
-			t.Errorf(
-				"unexpected mesage sender index\nexpected: %+v\nactual:   %+v\n",
-				member.index,
-				message.senderIndex,
-			)
-		}
-		if message.resultHash != expectedResultHash {
-			t.Errorf(
-				"unexpected result hash\nexpected: %+v\nactual:   %+v\n",
-				expectedResultHash,
-				message.resultHash,
-			)
-		}
-
-		err = operator.VerifySignature(
-			message.publicKey,
-			expectedResultHash[:],
-			message.signature,
+	for i, member := range members {
+		message, err := member.SignDKGResult(
+			dkgResult,
+			chainHandles[i].ThresholdRelay(),
+			chainHandles[i].Signing(),
 		)
 		if err != nil {
-			t.Errorf(
-				"invalid signature [%v]\nsignature:  %v\npublic key: %+v\n",
-				message.signature,
-				message.publicKey,
-				err,
-			)
+			t.Fatal(err)
 		}
 
 		// Don't register message from self.
 		if member.index != currentMember.index {
 			messages = append(messages, message)
 		}
-
-		if currentMember.selfDKGResultSignature == nil {
-			t.Errorf(
-				"self signatures not registered\nexpected: %v\nactual:   %v\n",
-				1,
-				len(currentMember.selfDKGResultSignature),
-			)
-		}
 	}
 
-	receivedValidSignatures, err := currentMember.VerifyDKGResultSignatures(messages)
+	receivedValidSignatures, err := currentMember.VerifyDKGResultSignatures(
+		messages,
+		currentSigning,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if len(receivedValidSignatures) != groupSize {
 		t.Errorf(
-			"unexpected number of registered valid signatures\nexpected: %v\nactual:   %v\n",
+			"unexpected number of registered signatures\nexpected: %v\nactual:   %v\n",
 			groupSize,
 			len(receivedValidSignatures),
 		)
 	}
-
-	for _, message := range messages {
-		if !bytes.Equal(receivedValidSignatures[message.senderIndex],
-			message.signature) {
-			t.Errorf(
-				"unexpected registered signature for member %d\nexpected: %x\nactual:   %x\n",
-				message.senderIndex,
-				message.signature,
-				receivedValidSignatures[message.senderIndex],
-			)
-		}
-	}
 }
 
 func TestVerifyDKGResultSignatures(t *testing.T) {
-	groupSize := 5
+	groupSize := 10
 
 	dkgResultHash1 := relayChain.DKGResultHash{10}
 	dkgResultHash2 := relayChain.DKGResultHash{20}
 
-	members, err := initializeSigningMembers(groupSize)
+	members, chainHandles, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	verifyingMember := members[0]
+	verifyingMember, verifyingMemberSigning := members[0], chainHandles[0].Signing()
 	verifyingMember.preferredDKGResultHash = dkgResultHash1
 
-	selfSignature, _ := operator.Sign(dkgResultHash1[:], verifyingMember.privateKey)
+	selfSignature, _ := verifyingMemberSigning.Sign(dkgResultHash1[:])
 	verifyingMember.selfDKGResultSignature = selfSignature
 
-	member2 := members[1]
-	member3 := members[2]
-	member4 := members[3]
-	member5 := members[4]
+	member2, signing2 := members[1], chainHandles[1].Signing()
+	member3, signing3 := members[2], chainHandles[2].Signing()
+	member4, signing4 := members[3], chainHandles[3].Signing()
+	member5, signing5 := members[4], chainHandles[4].Signing()
 
-	signature21, _ := operator.Sign(dkgResultHash1[:], member2.privateKey)
+	signature21, _ := signing2.Sign(dkgResultHash1[:])
 
-	signature311, _ := operator.Sign(dkgResultHash1[:], member3.privateKey)
-	signature312, _ := operator.Sign(dkgResultHash1[:], member3.privateKey)
+	signature311, _ := signing3.Sign(dkgResultHash1[:])
+	signature312, _ := signing3.Sign(dkgResultHash1[:])
 
-	signature411, _ := operator.Sign(dkgResultHash1[:], member4.privateKey)
-	signature421, _ := operator.Sign(dkgResultHash2[:], member4.privateKey)
+	signature411, _ := signing4.Sign(dkgResultHash1[:])
+	signature421, _ := signing4.Sign(dkgResultHash2[:])
 
-	signature52, _ := operator.Sign(dkgResultHash2[:], member5.privateKey)
+	signature52, _ := signing5.Sign(dkgResultHash2[:])
 
 	var tests = map[string]struct {
 		messages []*DKGResultHashSignatureMessage
 
-		expectedReceivedValidSignatures map[group.MemberIndex]operator.Signature
+		expectedReceivedValidSignatures map[group.MemberIndex][]byte
 		expectedError                   error
 	}{
 		"received valid messages with signatures for the preferred result": {
@@ -159,16 +109,16 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member2.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature21,
-					publicKey:   &member2.privateKey.PublicKey,
+					publicKey:   signing2.PublicKey(),
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
-					publicKey:   &member3.privateKey.PublicKey,
+					publicKey:   signing3.PublicKey(),
 				},
 			},
-			expectedReceivedValidSignatures: map[group.MemberIndex]operator.Signature{
+			expectedReceivedValidSignatures: map[group.MemberIndex][]byte{
 				verifyingMember.index: selfSignature,
 				member2.index:         signature21,
 				member3.index:         signature311,
@@ -180,22 +130,22 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
-					publicKey:   &member3.privateKey.PublicKey,
+					publicKey:   signing3.PublicKey(),
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature312,
-					publicKey:   &member3.privateKey.PublicKey,
+					publicKey:   signing3.PublicKey(),
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
-					publicKey:   &member3.privateKey.PublicKey,
+					publicKey:   signing3.PublicKey(),
 				},
 			},
-			expectedReceivedValidSignatures: map[group.MemberIndex]operator.Signature{
+			expectedReceivedValidSignatures: map[group.MemberIndex][]byte{
 				verifyingMember.index: selfSignature,
 			},
 		},
@@ -205,16 +155,16 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
-					publicKey:   &member3.privateKey.PublicKey,
+					publicKey:   signing3.PublicKey(),
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
-					publicKey:   &member3.privateKey.PublicKey,
+					publicKey:   signing3.PublicKey(),
 				},
 			},
-			expectedReceivedValidSignatures: map[group.MemberIndex]operator.Signature{
+			expectedReceivedValidSignatures: map[group.MemberIndex][]byte{
 				verifyingMember.index: selfSignature,
 			},
 		},
@@ -224,16 +174,16 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature411,
-					publicKey:   &member4.privateKey.PublicKey,
+					publicKey:   signing4.PublicKey(),
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash2,
 					signature:   signature421,
-					publicKey:   &member4.privateKey.PublicKey,
+					publicKey:   signing4.PublicKey(),
 				},
 			},
-			expectedReceivedValidSignatures: map[group.MemberIndex]operator.Signature{
+			expectedReceivedValidSignatures: map[group.MemberIndex][]byte{
 				verifyingMember.index: selfSignature,
 			},
 		},
@@ -243,10 +193,10 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member5.index,
 					resultHash:  dkgResultHash2,
 					signature:   signature52,
-					publicKey:   &member5.privateKey.PublicKey,
+					publicKey:   signing5.PublicKey(),
 				},
 			},
-			expectedReceivedValidSignatures: map[group.MemberIndex]operator.Signature{
+			expectedReceivedValidSignatures: map[group.MemberIndex][]byte{
 				verifyingMember.index: selfSignature,
 			},
 		},
@@ -255,11 +205,11 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 				&DKGResultHashSignatureMessage{
 					senderIndex: member2.index,
 					resultHash:  dkgResultHash1,
-					signature:   operator.Signature{99},
-					publicKey:   &member2.privateKey.PublicKey,
+					signature:   []byte{99},
+					publicKey:   signing2.PublicKey(),
 				},
 			},
-			expectedReceivedValidSignatures: map[group.MemberIndex]operator.Signature{
+			expectedReceivedValidSignatures: map[group.MemberIndex][]byte{
 				verifyingMember.index: selfSignature,
 			},
 		},
@@ -269,10 +219,10 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member2.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature21,
-					publicKey:   &members[0].privateKey.PublicKey,
+					publicKey:   signing5.PublicKey(),
 				},
 			},
-			expectedReceivedValidSignatures: map[group.MemberIndex]operator.Signature{
+			expectedReceivedValidSignatures: map[group.MemberIndex][]byte{
 				verifyingMember.index: selfSignature,
 			},
 		},
@@ -283,43 +233,43 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 					senderIndex: member2.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature21,
-					publicKey:   &member2.privateKey.PublicKey,
+					publicKey:   signing2.PublicKey(),
 				},
 				// Multiple signatures from the same member supporting the same result as preferred.
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
-					publicKey:   &member3.privateKey.PublicKey,
+					publicKey:   signing3.PublicKey(),
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature312,
-					publicKey:   &member3.privateKey.PublicKey,
+					publicKey:   signing3.PublicKey(),
 				},
 				// Multiple signatures from the same member supporting two different results.
 				&DKGResultHashSignatureMessage{
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature411,
-					publicKey:   &member4.privateKey.PublicKey,
+					publicKey:   signing4.PublicKey(),
 				},
 				&DKGResultHashSignatureMessage{
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash2,
 					signature:   signature421,
-					publicKey:   &member4.privateKey.PublicKey,
+					publicKey:   signing4.PublicKey(),
 				},
 				// Member supporting different result than preferred.
 				&DKGResultHashSignatureMessage{
 					senderIndex: member5.index,
 					resultHash:  dkgResultHash2,
 					signature:   signature52,
-					publicKey:   &member5.privateKey.PublicKey,
+					publicKey:   signing5.PublicKey(),
 				},
 			},
-			expectedReceivedValidSignatures: map[group.MemberIndex]operator.Signature{
+			expectedReceivedValidSignatures: map[group.MemberIndex][]byte{
 				verifyingMember.index: selfSignature,
 				member2.index:         signature21,
 			},
@@ -328,7 +278,10 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			receivedValidSignatures, err := verifyingMember.VerifyDKGResultSignatures(test.messages)
+			receivedValidSignatures, err := verifyingMember.VerifyDKGResultSignatures(
+				test.messages,
+				verifyingMemberSigning,
+			)
 
 			if !reflect.DeepEqual(err, test.expectedError) {
 				t.Errorf(
@@ -352,22 +305,32 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	}
 }
 
-func initializeSigningMembers(groupSize int) ([]*SigningMember, error) {
-	dkgGroup := group.NewEmptyDkgGroup(groupSize)
+func initializeSigningMembers(groupSize int) ([]*SigningMember, []chain.Handle, error) {
+	threshold := groupSize/2 + 1
+	minimumStake := big.NewInt(200)
+
+	dkgGroup := group.NewDkgGroup(threshold, groupSize)
 
 	members := make([]*SigningMember, groupSize)
+	chainHandles := make([]chain.Handle, groupSize)
 
 	for i := 0; i < groupSize; i++ {
 		memberIndex := group.MemberIndex(i + 1)
 
+		members[i] = NewSigningMember(memberIndex, dkgGroup)
+
 		privateKey, _, err := operator.GenerateKeyPair()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		dkgGroup.RegisterMemberID(memberIndex)
-		members[i] = NewSigningMember(memberIndex, dkgGroup, privateKey)
+		chainHandles[i] = local.ConnectWithKey(
+			groupSize,
+			threshold,
+			minimumStake,
+			privateKey,
+		)
 	}
 
-	return members, nil
+	return members, chainHandles, nil
 }

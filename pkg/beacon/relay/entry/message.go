@@ -1,8 +1,6 @@
 package entry
 
 import (
-	"math/big"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
 
@@ -11,7 +9,6 @@ import (
 type SignatureShareMessage struct {
 	senderID   group.MemberIndex
 	shareBytes []byte
-	signingId  *big.Int
 }
 
 // SenderID returns protocol-level identifier of the message sender.

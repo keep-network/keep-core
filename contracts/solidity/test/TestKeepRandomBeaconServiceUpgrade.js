@@ -1,6 +1,6 @@
 import {bls} from './helpers/data';
 import { duration } from './helpers/increaseTime';
-import exceptThrow from './helpers/expectThrow';
+import expectThrow from './helpers/expectThrow';
 import {initContracts} from './helpers/initContracts';
 const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol');
 const ServiceContractImplV2 = artifacts.require('./examples/KeepRandomBeaconServiceUpgradeExample.sol');
@@ -13,9 +13,7 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
 
   before(async () => {
     let contracts = await initContracts(
-      accounts,
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./StakingProxy.sol'),
       artifacts.require('./TokenStaking.sol'),
       ServiceContractProxy,
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
@@ -34,7 +32,7 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
 
     // Modify state so we can test later that eternal storage works as expected after upgrade
     await serviceContract.requestRelayEntry(bls.seed, {value: 10});
-    await operatorContract.relayEntry(1, bls.groupSignature, bls.groupPubKey, bls.previousEntry, bls.seed);
+    await operatorContract.relayEntry(bls.nextGroupSignature);
 
   });
 
@@ -43,10 +41,11 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
   });
 
   it("should fail to upgrade implementation if called by not contract owner", async function() {
-    await exceptThrow(serviceContractProxy.upgradeTo(serviceContractImplV2.address, {from: account_two}));
+    await expectThrow(serviceContractProxy.upgradeTo(serviceContractImplV2.address, {from: account_two}));
   });
 
   it("should be able to upgrade implementation and initialize it with new data", async function() {
+    let previousEntry = await serviceContractV2.previousEntry();
     await serviceContractProxy.upgradeTo(serviceContractImplV2.address);
     await serviceContractV2.initialize(100, duration.days(0), operatorContract.address);
 
@@ -55,7 +54,7 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
     let newVar = await serviceContractV2.getNewVar();
     assert.equal(newVar, 1234, "Should be able to get new data from upgraded contract.");
 
-    assert.isTrue(bls.groupSignature.eq(await serviceContractV2.previousEntry()), "Should keep previous storage after upgrade.");
+    assert.isTrue(previousEntry.eq(await serviceContractV2.previousEntry()), "Should keep previous storage after upgrade.");
   });
 
 });

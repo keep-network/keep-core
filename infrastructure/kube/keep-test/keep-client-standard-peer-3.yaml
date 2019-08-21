@@ -53,6 +53,8 @@ spec:
         ports:
           - containerPort: 3919
         env:
+          - name: LOG_LEVEL
+            value: debug          
           - name: KEEP_ETHEREUM_PASSWORD
             valueFrom:
               secretKeyRef:

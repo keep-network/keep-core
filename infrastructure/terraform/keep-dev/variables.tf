@@ -183,7 +183,7 @@ variable "prometheus_to_sd" {
 variable "openvpn" {
   default {
     name    = "helm-openvpn"
-    version = "3.10.0"
+    version = "3.13.3"
   }
 }
 
@@ -232,5 +232,6 @@ variable "utility_box" {
     name         = "keep-dev-utility-box"
     tags         = "gke-subnet"
     machine_type = "g1-small"
+    tools        = "kubectl, helm, jq, npm, geth"
   }
 }

@@ -91,6 +91,11 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		return nil, fmt.Errorf("error calling NaturalThreshold: [%v]", err)
 	}
 
+	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
+	if err != nil {
+		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
+	}
+
 	return &relayconfig.Chain{
 		GroupSize:                       int(groupSize.Int64()),
 		Threshold:                       int(threshold.Int64()),
@@ -101,6 +106,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		MinimumStake:                    minimumStake,
 		TokenSupply:                     tokenSupply,
 		NaturalThreshold:                naturalThreshold,
+		RelayEntryTimeout:               relayEntryTimeout.Uint64(),
 	}, nil
 }
 
@@ -157,7 +163,7 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
-	newEntry *event.Entry,
+	entryValue *big.Int,
 ) *async.RelayEntryPromise {
 	relayEntryPromise := &async.RelayEntryPromise{}
 
@@ -195,31 +201,23 @@ func (ec *ethereumChain) SubmitRelayEntry(
 					return
 				}
 
-				if event.SigningId.Cmp(newEntry.SigningId) == 0 {
-					subscription.Unsubscribe()
-					close(generatedEntry)
+				subscription.Unsubscribe()
+				close(generatedEntry)
 
-					err := relayEntryPromise.Fulfill(event)
-					if err != nil {
-						logger.Errorf(
-							"failed to fulfill promise: [%v]",
-							err,
-						)
-					}
-
-					return
+				err := relayEntryPromise.Fulfill(event)
+				if err != nil {
+					logger.Errorf(
+						"failed to fulfill promise: [%v]",
+						err,
+					)
 				}
+
+				return
 			}
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(
-		newEntry.SigningId,
-		newEntry.Value,
-		newEntry.GroupPubKey,
-		newEntry.PreviousEntry,
-		newEntry.Seed,
-	)
+	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(entryValue)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(generatedEntry)
@@ -234,7 +232,6 @@ func (ec *ethereumChain) OnSignatureSubmitted(
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchSignatureSubmitted(
 		func(
-			signingId *big.Int,
 			requestResponse *big.Int,
 			requestGroupPubKey []byte,
 			previousEntry *big.Int,
@@ -242,7 +239,6 @@ func (ec *ethereumChain) OnSignatureSubmitted(
 			blockNumber uint64,
 		) {
 			handle(&event.Entry{
-				SigningId:     signingId,
 				Value:         requestResponse,
 				GroupPubKey:   requestGroupPubKey,
 				PreviousEntry: previousEntry,
@@ -265,7 +261,6 @@ func (ec *ethereumChain) OnSignatureRequested(
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchSignatureRequested(
 		func(
-			signingId *big.Int,
 			payment *big.Int,
 			previousEntry *big.Int,
 			seed *big.Int,
@@ -273,7 +268,6 @@ func (ec *ethereumChain) OnSignatureRequested(
 			blockNumber uint64,
 		) {
 			handle(&event.Request{
-				SigningId:      signingId,
 				Payment:        payment,
 				PreviousEntry:  previousEntry,
 				Seed:           seed,
@@ -296,12 +290,10 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 	return ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
 		func(
 			newEntry *big.Int,
-			seed *big.Int,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupSelectionStart{
 				NewEntry:    newEntry,
-				Seed:        seed,
 				BlockNumber: blockNumber,
 			})
 		},
@@ -360,10 +352,19 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 	)
 }
 
+func (ec *ethereumChain) ReportRelayEntryTimeout() error {
+	_, err := ec.keepRandomBeaconOperatorContract.ReportRelayEntryTimeout()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (ec *ethereumChain) SubmitDKGResult(
 	participantIndex group.MemberIndex,
 	result *relaychain.DKGResult,
-	signatures map[group.MemberIndex]operator.Signature,
+	signatures map[group.MemberIndex][]byte,
 ) *async.DKGResultSubmissionPromise {
 	resultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
@@ -446,18 +447,18 @@ func (ec *ethereumChain) SubmitDKGResult(
 // concatenated signatures. Signatures and member indices are returned in the
 // matching order. It requires each signature to be exactly 65-byte long.
 func convertSignaturesToChainFormat(
-	signatures map[group.MemberIndex]operator.Signature,
+	signatures map[group.MemberIndex][]byte,
 ) ([]*big.Int, []byte, error) {
 	var membersIndices []*big.Int
 	var signaturesSlice []byte
 
 	for memberIndex, signature := range signatures {
-		if len(signatures[memberIndex]) != operator.SignatureSize {
+		if len(signatures[memberIndex]) != SignatureSize {
 			return nil, nil, fmt.Errorf(
 				"invalid signature size for member [%v] got [%d]-bytes but required [%d]-bytes",
 				memberIndex,
 				len(signatures[memberIndex]),
-				operator.SignatureSize,
+				SignatureSize,
 			)
 		}
 		membersIndices = append(membersIndices, memberIndex.Int())

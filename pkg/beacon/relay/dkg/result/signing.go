@@ -3,11 +3,13 @@ package result
 import (
 	"fmt"
 
-	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/chain"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
+
+type dkgResultSignature = []byte
 
 // SigningMember represents a group member sharing their preferred DKG result hash
 // and signature (over this hash) with other peer members.
@@ -17,25 +19,20 @@ type SigningMember struct {
 	// Group to which this member belongs.
 	group *group.Group
 
-	// Key used for signing the DKG result hash.
-	privateKey *operator.PrivateKey
-
 	// Hash of DKG result preferred by the current participant.
 	preferredDKGResultHash relayChain.DKGResultHash
 	// Signature over preferredDKGResultHash calculated by the member.
-	selfDKGResultSignature operator.Signature
+	selfDKGResultSignature []byte
 }
 
 // NewSigningMember creates a member to execute signing DKG result hash.
 func NewSigningMember(
 	memberIndex group.MemberIndex,
 	dkgGroup *group.Group,
-	operatorPrivateKey *operator.PrivateKey,
 ) *SigningMember {
 	return &SigningMember{
-		index:      memberIndex,
-		group:      dkgGroup,
-		privateKey: operatorPrivateKey,
+		index: memberIndex,
+		group: dkgGroup,
 	}
 }
 
@@ -46,6 +43,7 @@ func NewSigningMember(
 func (sm *SigningMember) SignDKGResult(
 	dkgResult *relayChain.DKGResult,
 	relayChain relayChain.Interface,
+	signing chain.Signing,
 ) (
 	*DKGResultHashSignatureMessage,
 	error,
@@ -56,7 +54,7 @@ func (sm *SigningMember) SignDKGResult(
 	}
 	sm.preferredDKGResultHash = resultHash
 
-	signature, err := operator.Sign(resultHash[:], sm.privateKey)
+	signature, err := signing.Sign(resultHash[:])
 	if err != nil {
 		return nil, fmt.Errorf("dkg result hash signing failed [%v]", err)
 	}
@@ -68,7 +66,7 @@ func (sm *SigningMember) SignDKGResult(
 		senderIndex: sm.index,
 		resultHash:  resultHash,
 		signature:   signature,
-		publicKey:   &sm.privateKey.PublicKey,
+		publicKey:   signing.PublicKey(),
 	}, nil
 }
 
@@ -88,7 +86,8 @@ func (sm *SigningMember) SignDKGResult(
 // See Phase 13 of the protocol specification.
 func (sm *SigningMember) VerifyDKGResultSignatures(
 	messages []*DKGResultHashSignatureMessage,
-) (map[group.MemberIndex]operator.Signature, error) {
+	signing chain.Signing,
+) (map[group.MemberIndex][]byte, error) {
 	duplicatedMessagesFromSender := func(senderIndex group.MemberIndex) bool {
 		messageFromSenderAlreadySeen := false
 		for _, message := range messages {
@@ -102,7 +101,7 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 		return false
 	}
 
-	receivedValidResultSignatures := make(map[group.MemberIndex]operator.Signature)
+	receivedValidResultSignatures := make(map[group.MemberIndex][]byte)
 
 	for _, message := range messages {
 		// Check if message from self.
@@ -131,18 +130,26 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 			continue
 		}
 
-		// Signature is invalid.
-		err := operator.VerifySignature(
-			message.publicKey,
+		// Check if the signature is valid.
+		ok, err := signing.VerifyWithPublicKey(
 			message.resultHash[:],
 			message.signature,
+			message.publicKey,
 		)
 		if err != nil {
 			logger.Infof(
-				"[member: %v] verification of signature from sender [%d] failed: [%+v]",
+				"[member: %v] verification of signature from sender [%d] failed: [%v]",
 				sm.index,
 				message.senderIndex,
-				message,
+				err,
+			)
+			continue
+		}
+		if !ok {
+			logger.Infof(
+				"[member: %v] sender [%d] provided invalid signature",
+				sm.index,
+				message.senderIndex,
 			)
 			continue
 		}

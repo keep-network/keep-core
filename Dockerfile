@@ -3,16 +3,6 @@ FROM golang:1.11.4-alpine3.7 AS runtime
 ENV APP_NAME=keep-client \
 	BIN_PATH=/usr/local/bin
 
-RUN apk add --update --no-cache \
-	gmp \
-	gmp-dev \
-	libgmpxx  \
-	libstdc++ \
-	openssl \
-	openssl-dev && \
-	rm -rf /var/cache/apk && mkdir /var/cache/apk && \
-	rm -rf /usr/share/man
-
 FROM runtime AS gobuild
 
 ENV GOPATH=/go \

@@ -22,7 +22,6 @@ ENV ETH_WS_PORT=$ETH_WS_PORT
 ARG ETH_NETWORK_ID
 ENV ETH_NETWORK_ID=$ETH_NETWORK_ID
 
-COPY ./StakingProxy.json /tmp/StakingProxy.json
 COPY ./TokenStaking.json /tmp/TokenStaking.json
 COPY ./KeepToken.json /tmp/KeepToken.json
 COPY ./KeepRandomBeaconService.json /tmp/KeepRandomBeaconService.json

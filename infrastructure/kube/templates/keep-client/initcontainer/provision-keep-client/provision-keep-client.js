@@ -30,13 +30,6 @@ Each <contract.json> file is sourced directly from the InitContainer.  Files are
 Truffle during contract and copied to the InitContainer image via Circle.
 */
 
-// StakingProxy
-const stakingProxyContractJsonFile = '/tmp/StakingProxy.json';
-const stakingProxyContractParsed = JSON.parse(fs.readFileSync(stakingProxyContractJsonFile));
-const stakingProxyContractAbi = stakingProxyContractParsed.abi;
-const stakingProxyContractAddress = stakingProxyContractParsed.networks[ethNetworkId].address;
-const stakingProxyContract = new web3.eth.Contract(stakingProxyContractAbi, stakingProxyContractAddress);
-
 // TokenStaking
 const tokenStakingContractJsonFile = '/tmp/TokenStaking.json';
 const tokenStakingContractParsed = JSON.parse(fs.readFileSync(tokenStakingContractJsonFile));
@@ -144,7 +137,7 @@ async function provisionKeepClient() {
 
 async function isStaked(operator) {
 
-  let stakedAmount = await stakingProxyContract.methods.balanceOf(operator).call();
+  let stakedAmount = await tokenStakingContract.methods.balanceOf(operator).call();
   return stakedAmount != 0;
 }
 
@@ -167,14 +160,6 @@ async function stakeOperatorAccount(operator, contractOwner) {
   let signature = Buffer.from(contractOwnerSignature.substr(2), 'hex');
   let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
 
-  console.log('Checking if stakingProxy/tokenStaking Contracts Are Authorized:');
-
-  if (!await stakingProxyContract.methods.isAuthorized(tokenStakingContract.address).call())
-  {
-    console.log('Authorizing stakingProxy/tokenStaking contracts.')
-    await stakingProxyContract.methods.authorizeContract(tokenStakingContract.address).send({from: contractOwner});
-  }
-  console.log('stakingProxy/tokenStaking contracts authorized!');
   console.log('Staking 1000000 KEEP tokens on operator account ' + operator);
 
   await keepTokenContract.methods.approveAndCall(
@@ -235,7 +220,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.URLRPC = ethHost + ':' + ethRpcPort;
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
-      parsedConfigFile.ethereum.ContractAddresses.StakingProxy = stakingProxyContractAddress;
+      parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
       parsedConfigFile.LibP2P.Seed = 2;
       parsedConfigFile.LibP2P.Port = 3919;
 
@@ -262,7 +247,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.account.KeyFile = '/mnt/keep-client/config/eth_account_keyfile';
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
-      parsedConfigFile.ethereum.ContractAddresses.StakingProxy = stakingProxyContractAddress;
+      parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
       parsedConfigFile.LibP2P.Port = 3919;
 
       let formattedConfigFile = tomlify.toToml(parsedConfigFile, {

@@ -27,8 +27,8 @@ const getTicketListInterval = 5 * time.Second
 func (n *Node) SubmitTicketsForGroupSelection(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
-	beaconValue []byte,
-	entrySeed *big.Int,
+	signing chain.Signing,
+	newEntry *big.Int,
 	startBlockHeight uint64,
 ) error {
 	availableStake, err := n.Staker.Stake()
@@ -37,7 +37,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 	tickets, err :=
 		groupselection.GenerateTickets(
-			beaconValue,
+			newEntry.Bytes(),
 			n.Staker.ID(),
 			availableStake,
 			n.chainConfig.MinimumStake,
@@ -100,8 +100,9 @@ func (n *Node) SubmitTicketsForGroupSelection(
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
 				relayChain,
+				signing,
 				&groupselection.Result{SelectedStakers: selectedStakers},
-				entrySeed,
+				newEntry,
 				challengeEndBlockHeight,
 			)
 			return nil

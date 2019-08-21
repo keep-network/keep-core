@@ -9,7 +9,12 @@ metadata:
 spec:
   schedule: '*/5 * * * *'
   jobTemplate:
+    metadata:
+      labels:
+        app: keep-network
+        type: relay-request-submitter
     spec:
+      activeDeadlineSeconds: 600
       template:
         spec:
           initContainers:

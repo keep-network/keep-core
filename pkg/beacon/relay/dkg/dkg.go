@@ -21,21 +21,15 @@ func ExecuteDKG(
 	startBlockHeight uint64,
 	blockCounter chain.BlockCounter,
 	relayChain relayChain.Interface,
+	signing chain.Signing,
 	channel net.BroadcastChannel,
 ) (*ThresholdSigner, error) {
 	// The staker index should begin with 1
 	playerIndex := group.MemberIndex(index + 1)
-	err := playerIndex.Validate()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"[member:%v] could not start DKG: [%v]",
-			playerIndex,
-			err,
-		)
-	}
 
 	gjkrResult, gjkrEndBlockHeight, err := gjkr.Execute(
 		playerIndex,
+		groupSize,
 		blockCounter,
 		channel,
 		threshold,
@@ -56,6 +50,7 @@ func ExecuteDKG(
 		gjkrResult,
 		channel,
 		relayChain,
+		signing,
 		blockCounter,
 		gjkrEndBlockHeight,
 	)

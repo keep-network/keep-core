@@ -1,6 +1,8 @@
 package chain
 
 import (
+	"math/big"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -20,7 +22,7 @@ type RelayEntryInterface interface {
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
-	SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise
+	SubmitRelayEntry(entryValue *big.Int) *async.RelayEntryPromise
 	// OnSignatureSubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
 	OnSignatureSubmitted(
@@ -31,6 +33,10 @@ type RelayEntryInterface interface {
 	OnSignatureRequested(
 		func(request *event.Request),
 	) (subscription.EventSubscription, error)
+	// ReportRelayEntryTimeout notifies the chain when a selected group which was
+	// supposed to submit a relay entry, did not deliver it within a specified
+	// time frame (relayEntryTimeout) counted in blocks.
+	ReportRelayEntryTimeout() error
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that
@@ -47,7 +53,7 @@ type GroupSelectionInterface interface {
 	// error submitting the entry.
 	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
 	// GetSelectedParticipants returns `GroupSize` slice of addresses of
-	// candidates which have been selected to the group.
+	// candidates which have been selected to the currently assembling group.
 	GetSelectedParticipants() ([]StakerAddress, error)
 }
 
@@ -85,7 +91,7 @@ type DistributedKeyGenerationInterface interface {
 	SubmitDKGResult(
 		participantIndex group.MemberIndex,
 		dkgResult *DKGResult,
-		signatures map[group.MemberIndex]operator.Signature,
+		signatures map[group.MemberIndex][]byte,
 	) *async.DKGResultSubmissionPromise
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.

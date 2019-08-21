@@ -1,7 +1,6 @@
 package entry
 
 import (
-	"math/big"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
@@ -9,7 +8,7 @@ import (
 )
 
 func TestSignatureShareMessageRoundTrip(t *testing.T) {
-	msg := &SignatureShareMessage{123, make([]byte, 0), big.NewInt(997)}
+	msg := &SignatureShareMessage{123, make([]byte, 0)}
 	unmarshaled := &SignatureShareMessage{}
 
 	err := pbutils.RoundTrip(msg, unmarshaled)
@@ -26,12 +25,4 @@ func TestSignatureShareMessageRoundTrip(t *testing.T) {
 	}
 
 	testutils.AssertBytesEqual(t, msg.shareBytes, unmarshaled.shareBytes)
-
-	if msg.signingId.Cmp(unmarshaled.signingId) != 0 {
-		t.Errorf(
-			"unexpected request ID\nexpected: [%v]\nactual:   [%v]",
-			msg.signingId,
-			unmarshaled.signingId,
-		)
-	}
 }
