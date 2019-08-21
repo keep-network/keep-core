@@ -27,7 +27,6 @@ module.exports = {
       from: "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB"
     }
   },
-  },
 
   mocha: {
     useColors: true,
