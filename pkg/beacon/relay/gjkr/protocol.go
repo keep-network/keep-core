@@ -413,8 +413,9 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			publicKey := sjm.evidenceLog.ephemeralPublicKeyMessage(accuserID).
 				ephemeralPublicKeys[accusedID]
 			if !publicKey.IsKeyMatching(revealedAccuserPrivateKey) {
-				logger.Errorf(
-					"invalid private key for public key from member: [%v]",
+				logger.Warningf(
+					"member [%v] disqualified because of "+
+						"providing invalid private key for public key",
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
