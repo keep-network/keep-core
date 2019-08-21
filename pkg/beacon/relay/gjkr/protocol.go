@@ -901,6 +901,12 @@ func (rm *ReconstructingMember) reconstructIndividualPrivateKeys(
 		// - `s_mk` is a share calculated by disqualified member `m` for peer member `k`
 		// - `a_mk` is lagrange coefficient for peer member k (see below)
 		individualPrivateKey := big.NewInt(0)
+
+		// Add current member own shareS received from disqualified member
+		if ownShare, ok := rm.receivedValidSharesS[ds.disqualifiedMemberID]; ok {
+			ds.peerSharesS[rm.ID] = ownShare
+		}
+
 		// Get IDs of all peer members from disqualified shares.
 		var peerIDs []group.MemberIndex
 		for k := range ds.peerSharesS {
