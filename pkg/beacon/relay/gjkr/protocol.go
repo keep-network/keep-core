@@ -830,6 +830,13 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 	for _, message := range messages {
 		revealingMemberID := message.senderID
 		for disqualifiedMemberID, revealedPrivateKey := range message.privateKeys {
+			if rm.ID == disqualifiedMemberID {
+				// If a member is marked as disqualified, there is no sense
+				// to recover shares sent by him. Such recovered
+				// shares will not be taken into account by other members.
+				continue
+			}
+
 			publicKey := rm.evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
 				ephemeralPublicKeys[disqualifiedMemberID]
 			if !publicKey.IsKeyMatching(revealedPrivateKey) {
