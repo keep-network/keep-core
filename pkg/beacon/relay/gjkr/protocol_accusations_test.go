@@ -38,10 +38,10 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			accusedID:      3,
 			expectedResult: []group.MemberIndex{},
 		},
-		"current member as an accused - accusation skipped": {
+		"current member as an accused - accuser is punished": {
 			accuserID:      3,
 			accusedID:      currentMemberID,
-			expectedResult: []group.MemberIndex{},
+			expectedResult: []group.MemberIndex{3},
 		},
 		"incorrect shareS - accused member is punished": {
 			accuserID: 3,
@@ -73,15 +73,13 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			},
 			expectedResult: []group.MemberIndex{4},
 		},
-		"incorrect accused private key - error returned": {
+		"incorrect accused private key - accuser is punished": {
 			accuserID: 3,
 			accusedID: 4,
 			modifyAccusedPrivateKey: func(symmetricKey *ephemeral.PrivateKey) *ephemeral.PrivateKey {
 				return &ephemeral.PrivateKey{D: big.NewInt(12)}
 			},
-			// TODO Should we disqualify accuser/accused member here?
-			expectedResult: []group.MemberIndex{},
-			expectedError:  fmt.Errorf("could not decrypt shares [cannot decrypt share S [could not decrypt S share [symmetric key decryption failed]]]"),
+			expectedResult: []group.MemberIndex{3},
 		},
 	}
 	for testName, test := range tests {
