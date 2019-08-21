@@ -405,8 +405,16 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
-			if sjm.ID == accuserID || sjm.ID == accusedID {
-				// The member cannot resolve the dispute in which it's involved.
+			if sjm.ID == accuserID {
+				// The member cannot resolve the dispute as an accuser.
+				continue
+			}
+
+			if sjm.ID == accusedID {
+				// The member cannot resolve the dispute as an accused.
+				// Mark the accuser as disqualified immediately,
+				// as each member consider itself as a honest participant.
+				sjm.group.MarkMemberAsDisqualified(accuserID)
 				continue
 			}
 
