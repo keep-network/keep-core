@@ -126,10 +126,13 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     let currentBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
     let delayFactor = (deadlineBlock.sub(currentBlock)).mul(decimalPoints).div(relayEntryTimeout.sub(web3.utils.toBN(1))).pow(web3.utils.toBN(2));
+    let delayFactorInverse = decimalPoints.pow(web3.utils.toBN(2)).sub(delayFactor);
 
     let baseReward = entryFee.profitMargin.div(groupSize)
     let expectedGroupReward = baseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
-    let requestSubsidy = entryFee.profitMargin.sub(expectedGroupReward.mul(groupSize));
+    let expectedDelayPenalty = baseReward.mul(delayFactorInverse).div(decimalPoints.pow(web3.utils.toBN(2)));
+    let expectedExtraReward = expectedDelayPenalty.mul(groupSize).mul(web3.utils.toBN(5)).div(web3.utils.toBN(100));
+    let requestSubsidy = entryFee.profitMargin.sub(expectedGroupReward.mul(groupSize)).sub(expectedExtraReward);
 
     let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
 
