@@ -284,7 +284,46 @@ func TestExecute_DQ_member3_accuserRevealsWrongPrivateKey_phase5(t *testing.T) {
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 4, 5}...)
 }
 
-// TODO Test case Phase 5: 'shares cannot be decrypted (check with CanDecrypt)'
+// Phase 5 test case - a member misbehaved by sending shares which
+// cannot be decrypted by the receiver. The receiver makes an accusation
+// which is confirmed by others so the misbehaving member is marked
+// as disqualified in phase 5.
+func TestExecute_DQ_member2_accusedOfCannotDecryptTheirShares_phase5(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	threshold := 3
+
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+
+		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
+		if ok && sharesMessage.SenderID() == group.MemberIndex(2) {
+			sharesMessage.SetShares(
+				1,
+				[]byte{0x00},
+				[]byte{0x00},
+			)
+			return sharesMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3, 4, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
+	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 4, 5}...)
+}
 
 // Phase 5 test case - a member misbehaved by sending invalid commitment
 // to another member. It becomes accused by the receiver of the
