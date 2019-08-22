@@ -416,7 +416,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			}
 
 			if sjm.ID == accusedID {
-				// The member cannot resolve the dispute as an accused.
+				// The member does not resolve the dispute as an accused.
 				// Mark the accuser as disqualified immediately,
 				// as each member consider itself as a honest participant.
 				sjm.group.MarkMemberAsDisqualified(accuserID)
@@ -428,7 +428,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			if !publicKey.IsKeyMatching(revealedAccuserPrivateKey) {
 				logger.Warningf(
 					"member [%v] disqualified because of "+
-						"providing invalid private key for public key",
+						"revealing private key not matching the public key",
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
@@ -837,7 +837,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 		for disqualifiedMemberID, revealedPrivateKey := range message.privateKeys {
 			if rm.ID == disqualifiedMemberID {
 				// If a member is marked as disqualified, there is no sense
-				// to recover shares sent by him. Such recovered
+				// to recover their shares. Such recovered
 				// shares will not be taken into account by other members.
 				continue
 			}
