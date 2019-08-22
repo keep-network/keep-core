@@ -190,6 +190,10 @@ func generateDisqualifiedMemberShares(
 			)
 		}
 		currentMember.evidenceLog.PutPeerSharesMessage(peerSharesMessage)
+
+		// Add current member own shareS received from disqualified member
+		disqualifiedMemberShares[disqualifiedMember.ID][currentMember.ID] =
+			currentMember.receivedValidSharesS[disqualifiedMember.ID]
 	}
 	return disqualifiedMemberShares
 }
