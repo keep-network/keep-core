@@ -16,12 +16,6 @@ contract KeepRandomBeaconOperatorGroupExpirationStub is KeepRandomBeaconOperator
 
     function registerNewGroup(bytes memory groupPublicKey) public {
         groups.push(Group(groupPublicKey, block.number));
-        address[] memory members = orderedParticipants();
-        if (members.length > 0) {
-            for (uint i = 0; i < groupSize; i++) {
-                groupMembers[groupPublicKey].push(members[i]);
-            }
-        }
     }
 
     function getGroupRegistrationBlockHeight(uint256 groupIndex) public view returns(uint256) {

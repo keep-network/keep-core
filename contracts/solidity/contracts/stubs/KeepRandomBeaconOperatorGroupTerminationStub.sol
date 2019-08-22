@@ -15,12 +15,6 @@ contract KeepRandomBeaconOperatorGroupTerminationStub is KeepRandomBeaconOperato
 
     function registerNewGroup(bytes memory groupPublicKey) public {
         groups.push(Group(groupPublicKey, block.number));
-        address[] memory members = orderedParticipants();
-        if (members.length > 0) {
-            for (uint i = 0; i < groupSize; i++) {
-                groupMembers[groupPublicKey].push(members[i]);
-            }
-        }
     }
 
     function registerNewGroups(uint256 groupsCount) public {
