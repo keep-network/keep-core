@@ -13,6 +13,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/internal/interception"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -27,6 +28,7 @@ type Result struct {
 	dkgResult      *relaychain.DKGResult
 	signers        []*dkg.ThresholdSigner
 	memberFailures []error
+	signatures     map[group.MemberIndex][]byte
 }
 
 // RunTest executes the full DKG roundrip test for the provided group size
@@ -136,10 +138,12 @@ func executeDKG(
 	select {
 	case <-resultSubmissionChan:
 		// result was published to the chain, let's fetch it
+		dkgResult, signatures := chain.GetLastDKGResult()
 		return &Result{
-			chain.GetLastDKGResult(),
+			dkgResult,
 			signers,
 			memberFailures,
+			signatures,
 		}, nil
 
 	case <-ctx.Done():
@@ -148,6 +152,7 @@ func executeDKG(
 			nil,
 			signers,
 			memberFailures,
+			nil,
 		}, nil
 	}
 }

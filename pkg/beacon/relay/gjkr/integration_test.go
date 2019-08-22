@@ -62,11 +62,13 @@ func TestExecute_IA_member1_phase1(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertNoDisqualifiedMembers(t, result)
 	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
 	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 }
 
 func TestExecute_IA_members12_phase3(t *testing.T) {
@@ -98,11 +100,13 @@ func TestExecute_IA_members12_phase3(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5, 6, 7}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertNoDisqualifiedMembers(t, result)
 	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1), group.MemberIndex(2))
 	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5, 6, 7}...)
 }
 
 func TestExecute_IA_member1_phase4(t *testing.T) {
@@ -128,11 +132,13 @@ func TestExecute_IA_member1_phase4(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertNoDisqualifiedMembers(t, result)
 	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
 	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3}...)
 }
 
 func TestExecute_IA_member1_phase7(t *testing.T) {
@@ -158,11 +164,13 @@ func TestExecute_IA_member1_phase7(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertNoDisqualifiedMembers(t, result)
 	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
 	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 }
 
 func TestExecute_IA_member1_phase8(t *testing.T) {
@@ -188,11 +196,13 @@ func TestExecute_IA_member1_phase8(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertNoDisqualifiedMembers(t, result)
 	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
 	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 }
 
 func TestExecute_IA_members35_phase10(t *testing.T) {
@@ -219,11 +229,13 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 4}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertNoDisqualifiedMembers(t, result)
 	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(3), group.MemberIndex(5))
 	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 4}...)
 }
 
 // TODO Test case Phase 5: 'private key is invalid scalar for ECDH DQ -> expected result: disqualify accuser'
@@ -269,6 +281,7 @@ func TestExecute_DQ_member3_accuserWithWrongPrivateKey_phase5(t *testing.T) {
 	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(3))
 	dkgtest.AssertInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 4, 5}...)
 }
 
 // TODO Test case Phase 5: 'shares cannot be decrypted (check with CanDecrypt)'
@@ -310,6 +323,7 @@ func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
 	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(5))
 	dkgtest.AssertNoInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 4}...)
 }
 
 // TODO Test case Phase 5: 'shares consistent -> expected result: disqualify accuser'.
