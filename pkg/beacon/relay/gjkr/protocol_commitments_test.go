@@ -152,7 +152,7 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 		"no commitments at all": {
 			modifyCommitmentsMessage: func(messages map[group.MemberIndex]*MemberCommitmentsMessage) {
 				message := messages[member1.ID]
-				message.commitments = nil
+				message.commitments = []*bn256.G1{}
 			},
 			expectedAccusedIDs: []group.MemberIndex{member1.ID},
 		},
