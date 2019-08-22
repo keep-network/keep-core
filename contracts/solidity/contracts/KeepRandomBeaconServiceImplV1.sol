@@ -37,7 +37,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     event RelayEntryGenerated(uint256 requestId, uint256 entry);
 
     uint256 internal _minGasPrice;
-    uint256 internal _minCallbackAllowance;
     uint256 internal _profitMargin;
 
     // Every relay request payment includes a fraction of the total fee for
@@ -87,7 +86,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param minGasPrice Minimum gas price for relay entry request.
-     * @param minCallbackAllowance Minimum gas amount for relay entry callback.
      * @param profitMargin Each signing group member reward in % of the relay entry cost.
      * @param createGroupFee Fraction in % of the estimated cost of group creation
      * that is included in relay request payment.
@@ -96,7 +94,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function initialize(
         uint256 minGasPrice,
-        uint256 minCallbackAllowance,
         uint256 profitMargin,
         uint256 createGroupFee,
         uint256 withdrawalDelay,
@@ -108,7 +105,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         require(!initialized(), "Contract is already initialized.");
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _minGasPrice = minGasPrice;
-        _minCallbackAllowance = minCallbackAllowance;
         _profitMargin = profitMargin;
         _createGroupFee = createGroupFee;
         _withdrawalDelay = withdrawalDelay;
@@ -270,7 +266,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
             // Obtain the actual callback gas expenditure and refund the surplus.
             uint256 excessFeesRefund = 0;
-            uint256 callbackCost = _minCallbackAllowance.mul(tx.gasprice);
+            uint256 callbackCost = _callbacks[requestId].callbackGas.mul(tx.gasprice);
             if (callbackCost < minimumCallbackPayment(_callbacks[requestId].callbackGas)) {
                 excessFeesRefund = minimumCallbackPayment(_callbacks[requestId].callbackGas).sub(callbackCost);
                 _callbacks[requestId].surplusRecipient.transfer(excessFeesRefund);

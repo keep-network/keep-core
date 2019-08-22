@@ -20,7 +20,6 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
      */
     function initialize(
         uint256 minPayment,
-        uint256 minCallbackAllowance,
         uint256 profitMargin,
         uint256 createGroupFee,
         uint256 withdrawalDelay,
@@ -36,7 +35,6 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
 
         // silence solc warnings, it's just an example
         minPayment;
-        minCallbackAllowance;
         profitMargin;
         createGroupFee;
         withdrawalDelay;

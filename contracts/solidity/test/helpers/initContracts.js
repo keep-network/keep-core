@@ -9,7 +9,6 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     operatorContract;
 
   let minimumGasPrice = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei) TODO: Use historical average of recently served requests?
-    minimumCallbackAllowance = web3.utils.toBN(200000), // Minimum gas required for relay request callback.
     profitMargin = 1, // Signing group reward per each member in % of the entry fee.
     createGroupFee = 10, // Fraction in % of the estimated cost of group creation that is included in relay request payment.
     withdrawalDelay = 1;
@@ -30,7 +29,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await KeepRandomBeaconOperator.link("BLS", bls.address);
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address);
 
-  await serviceContract.initialize(minimumGasPrice, minimumCallbackAllowance, profitMargin, createGroupFee, withdrawalDelay, operatorContract.address);
+  await serviceContract.initialize(minimumGasPrice, profitMargin, createGroupFee, withdrawalDelay, operatorContract.address);
 
   // Add initial funds to the fee pool to trigger group creation without waiting for fee accumulation
   let createGroupGasEstimateCost = await operatorContract.createGroupGasEstimate();

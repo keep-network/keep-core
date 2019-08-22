@@ -10,7 +10,6 @@ const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.s
 
 const withdrawalDelay = 86400; // 1 day
 const minimumGasPrice = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei) TODO: Use historical average of recently served requests?
-const minimumCallbackAllowance = web3.utils.toBN(200000); // Minimum gas required for relay request callback.
 const profitMargin = 1; // Signing group reward per each member in % of the entry fee.
 const createGroupFee = 10; // Fraction in % of the estimated cost of group creation that is included in relay request payment.
 
@@ -39,7 +38,6 @@ module.exports = async function(deployer) {
 
   keepRandomBeaconService.initialize(
     minimumGasPrice,
-    minimumCallbackAllowance,
     profitMargin,
     createGroupFee,
     withdrawalDelay,
