@@ -9,7 +9,7 @@ import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
 
 interface ServiceContract {
-    function entryCreated(uint256 requestId, uint256 entry) external;
+    function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
     function fundRequestSubsidyFeePool() payable external;
 }
 
@@ -773,7 +773,8 @@ contract KeepRandomBeaconOperator {
 
         ServiceContract(signingRequest.serviceContract).entryCreated(
             signingRequest.relayRequestId,
-            _groupSignature
+            _groupSignature,
+            msg.sender
         );
 
         entryInProgress = false;

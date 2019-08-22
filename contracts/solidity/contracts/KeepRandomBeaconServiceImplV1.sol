@@ -249,8 +249,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Store valid entry returned by operator contract and call customer specified callback if required.
      * @param requestId Request id tracked internally by this contract.
      * @param entry The generated random number.
+     * @param submitter Relay entry submitter.
      */
-    function entryCreated(uint256 requestId, uint256 entry) public {
+    function entryCreated(uint256 requestId, uint256 entry, address payable submitter) public {
         bool success; // Store status of external contract call.
         bytes memory data; // Store result data of external contract call.
 
@@ -265,11 +266,19 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         if (_callbacks[requestId].callbackContract != address(0)) {
 
             // Obtain the actual callback gas expenditure and refund the surplus.
-            uint256 excessFeesRefund = 0;
+            uint256 callbackSurplus = 0;
             uint256 callbackCost = _callbacks[requestId].callbackGas.mul(tx.gasprice);
-            if (callbackCost < minimumCallbackPayment(_callbacks[requestId].callbackGas)) {
-                excessFeesRefund = minimumCallbackPayment(_callbacks[requestId].callbackGas).sub(callbackCost);
-                _callbacks[requestId].surplusRecipient.transfer(excessFeesRefund);
+            uint256 minimumCallbackPayment = minimumCallbackPayment(_callbacks[requestId].callbackGas);
+
+            if (callbackCost < minimumCallbackPayment) {
+                callbackSurplus = minimumCallbackPayment.sub(callbackCost);
+                // Reimburse submitter with his actual callback cost.
+                submitter.transfer(callbackCost);
+                // Return callback surplus to the requestor.
+                _callbacks[requestId].surplusRecipient.transfer(callbackSurplus);
+            } else {
+                // Reimburse submitter with the callback payment sent by the requestor.
+                submitter.transfer(minimumCallbackPayment);
             }
 
             (success, data) = _callbacks[requestId].callbackContract.call.gas(_callbacks[requestId].callbackGas)(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
