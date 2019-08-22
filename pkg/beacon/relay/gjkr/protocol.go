@@ -315,6 +315,12 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 					commitmentsMessage.commitments, // C_j
 					cvm.ID,                         // i
 				) {
+					logger.Warningf(
+						"shares from member [%v] invalid against commitments. "+
+							"Performed disqualification and accusation against them",
+						commitmentsMessage.senderID,
+					)
+					cvm.group.MarkMemberAsDisqualified(commitmentsMessage.senderID)
 					accusedMembersKeys[commitmentsMessage.senderID] =
 						cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
 					break
@@ -406,7 +412,6 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
 			if sjm.ID == accuserID {
-				// The member cannot resolve the dispute as an accuser.
 				continue
 			}
 
