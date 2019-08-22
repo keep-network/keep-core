@@ -309,7 +309,7 @@ func initializeSigningMembers(groupSize int) ([]*SigningMember, []chain.Handle, 
 	threshold := groupSize/2 + 1
 	minimumStake := big.NewInt(200)
 
-	dkgGroup := group.NewEmptyDkgGroup(groupSize)
+	dkgGroup := group.NewDkgGroup(threshold, groupSize)
 
 	members := make([]*SigningMember, groupSize)
 	chainHandles := make([]chain.Handle, groupSize)
@@ -317,7 +317,6 @@ func initializeSigningMembers(groupSize int) ([]*SigningMember, []chain.Handle, 
 	for i := 0; i < groupSize; i++ {
 		memberIndex := group.MemberIndex(i + 1)
 
-		dkgGroup.RegisterMemberID(memberIndex)
 		members[i] = NewSigningMember(memberIndex, dkgGroup)
 
 		privateKey, _, err := operator.GenerateKeyPair()

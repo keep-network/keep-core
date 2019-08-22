@@ -170,10 +170,7 @@ func initializeGroup(
 	disqualifiedMembers []group.MemberIndex,
 	inactiveMembers []group.MemberIndex,
 ) *group.Group {
-	dkgGroup := group.NewEmptyDkgGroup(threshold)
-	for i := 1; i <= groupSize; i++ {
-		dkgGroup.RegisterMemberID(group.MemberIndex(i))
-	}
+	dkgGroup := group.NewDkgGroup(threshold, groupSize)
 
 	for _, disqualified := range disqualifiedMembers {
 		dkgGroup.MarkMemberAsDisqualified(disqualified)

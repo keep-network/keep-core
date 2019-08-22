@@ -271,9 +271,9 @@ func TestExecute_DQ_member3_accuserWithWrongPrivateKey_phase5(t *testing.T) {
 
 // TODO Test case Phase 5: 'shares cannot be decrypted (check with CanDecrypt)'
 
-// Phase 5 test case - a member misbehaved by sending fake commitment
+// Phase 5 test case - a member misbehaved by sending invalid commitment
 // to another member. It becomes accused by the receiver of the
-// fake commitment. The accuser is right and the misbehaving member
+// invalid commitment. The accuser is right and the misbehaving member
 // is marked as disqualified in phase 5.
 func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
 	t.Parallel()
@@ -302,6 +302,7 @@ func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 4}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(5))

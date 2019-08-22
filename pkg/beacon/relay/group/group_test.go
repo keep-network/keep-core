@@ -1,21 +1,9 @@
 package group
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
-
-func TestRegisterMemberIDWithInvalidID(t *testing.T) {
-	expectedError := fmt.Errorf("cannot register member ID in the group [member index must be >= 1]")
-
-	dkgGroup := &Group{}
-	err := dkgGroup.RegisterMemberID(MemberIndex(0))
-
-	if !reflect.DeepEqual(err, expectedError) {
-		t.Fatalf("\nexpected: %v\nactual:   %v\n", expectedError, err)
-	}
-}
 
 func TestMarkMemberAsDisqualified(t *testing.T) {
 	var tests = map[string]struct {

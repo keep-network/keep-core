@@ -1,6 +1,5 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./TokenStaking.sol";
@@ -20,8 +19,7 @@ interface ServiceContract {
  * The contract is not upgradeable. New functionality can be implemented by deploying
  * new versions following Keep client update and re-authorization by the stakers.
  */
-contract KeepRandomBeaconOperator is Ownable {
-
+contract KeepRandomBeaconOperator {
     using SafeMath for uint256;
     using BytesLib for bytes;
     using ECDSA for bytes32;
@@ -39,9 +37,13 @@ contract KeepRandomBeaconOperator is Ownable {
 
     event GroupSelectionStarted(uint256 newEntry);
 
-    bool public initialized;
+    // Contract owner.
+    address public owner;
 
     address[] public serviceContracts;
+
+    // TODO: replace with a secure authorization protocol (addressed in RFC 11).
+    address public stakingContract;
 
     // Size of a group in the threshold relay.
     uint256 public groupSize = 5;
@@ -93,6 +95,7 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     Group[] public groups;
+    uint256[] internal terminatedGroups;
     mapping (bytes => address[]) internal groupMembers;
 
     // expiredGroupOffset is pointing to the first active group, it is also the
@@ -142,6 +145,14 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(owner == msg.sender, "Caller is not the owner.");
+        _;
+    }
+
+    /**
      * @dev Checks if submitter is eligible to submit.
      * @param submitterMemberIndex The claimed index of the submitter.
      */
@@ -177,15 +188,15 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
-     * @dev Initialize the contract with a linked Staking proxy contract.
-     *
-     * @param _serviceContract Address of a random beacon service contract that
-     * will be linked to this contract.
+     * @dev Initializes the contract with service and staking contract addresses and
+     * the deployer as the contract owner.
      */
-    function initialize(address _serviceContract) public onlyOwner {
-        require(!initialized, "Contract is already initialized.");
-        initialized = true;
+    constructor(address _serviceContract, address _stakingContract) public {
+        require(_serviceContract != address(0), "Service contract address can't be zero.");
+        require(_stakingContract != address(0), "Staking contract address can't be zero.");
         serviceContracts.push(_serviceContract);
+        stakingContract = _stakingContract;
+        owner = msg.sender;
     }
 
     /**
@@ -228,13 +239,6 @@ contract KeepRandomBeaconOperator is Ownable {
             groupSelectionInProgress = true;
             emit GroupSelectionStarted(_newEntry);
         }
-    }
-
-    // TODO: replace with a secure authorization protocol (addressed in RFC 11).
-    address public stakingContract;
-
-    function authorizeStakingContract(address _stakingContract) public onlyOwner {
-        stakingContract = _stakingContract;
     }
 
     /**
@@ -535,7 +539,7 @@ contract KeepRandomBeaconOperator is Ownable {
 
     /**
      * @dev Return natural threshold, the value N virtual stakers' tickets would be expected
-     * to fall below if the tokens were optimally staked, and the tickets' values were evenly 
+     * to fall below if the tokens were optimally staked, and the tickets' values were evenly
      * distributed in the domain of the pseudorandom function.
      */
     function naturalThreshold() public view returns (uint256) {
@@ -544,20 +548,13 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
-     * @dev Gets number of active groups.
-     */
-    function numberOfGroups() public view returns(uint256) {
-        return groups.length - expiredGroupOffset;
-    }
-
-    /**
      * @dev Gets the cutoff time in blocks until which the given group is
-     * considered as an active group. The group may not be marked as expired
-     * even though its active time has passed if one of the rules inside
-     * `selectGroup` function are not met (e.g. minimum active group threshold).
-     * Hence, this value informs when the group may no longer be considered
-     * as active but it does not mean that the group will be immediatelly
-     * considered not as such.
+     * considered as an active group assuming it hasn't been terminated before.
+     * The group may not be marked as expired even though its active
+     * time has passed if one of the rules inside `selectGroup` function are not
+     * met (e.g. minimum active group threshold). Hence, this value informs when
+     * the group may no longer be considered as active but it does not mean that
+     * the group will be immediatelly considered not as such.
      */
     function groupActiveTimeOf(Group memory group) internal view returns(uint256) {
         return group.registrationBlockHeight + groupActiveTime;
@@ -594,32 +591,80 @@ contract KeepRandomBeaconOperator is Ownable {
     }
 
     /**
+     * @dev Gets the number of active groups. Expired and terminated groups are
+     * not counted as active.
+     */
+    function numberOfGroups() public view returns(uint256) {
+        return groups.length - expiredGroupOffset - terminatedGroups.length;
+    }
+
+    /**
      * @dev Goes through groups starting from the oldest one that is still
      * active and checks if it hasn't expired. If so, updates the information
      * about expired groups so that all expired groups are marked as such.
-     * It does not mark more than activeGroupsThreshold as expired.
+     * It does not mark more than `activeGroupsThreshold` active groups as
+     * expired.
      */
     function expireOldGroups() internal {
         // move expiredGroupOffset as long as there are some groups that should
-        // be marked as expired and we are above activeGroupsThreshold.
+        // be marked as expired and we are above activeGroupsThreshold of
+        // active groups.
         while(
             groupActiveTimeOf(groups[expiredGroupOffset]) < block.number &&
-            groups.length - expiredGroupOffset > activeGroupsThreshold
+            numberOfGroups() > activeGroupsThreshold
         ) {
             expiredGroupOffset++;
+        }
+
+        // Go through all terminatedGroups and if some of the terminated
+        // groups are expired, remove them from terminatedGroups collection.
+        // This is needed because we evaluate the shift of selected group index
+        // based on how many non-expired groups has been terminated.
+        for (uint i = 0; i < terminatedGroups.length; i++) {
+            if (expiredGroupOffset > terminatedGroups[i]) {
+                terminatedGroups[i] = terminatedGroups[terminatedGroups.length - 1];
+                terminatedGroups.length--;
+            }
         }
     }
 
     /**
-     * @dev Returns an index of a randomly selected active group.
+     * @dev Returns an index of a randomly selected active group. Terminated and
+     * expired groups are not considered as active.
+     * Before new group is selected, information about expired groups
+     * is updated. At least one active group needs to be present for this
+     * function to succeed.
      * @param seed Random number used as a group selection seed.
      */
     function selectGroup(uint256 seed) public returns(uint256) {
+        require(numberOfGroups() > 0, "At least one active group required");
+
         expireOldGroups();
-
         uint256 selectedGroup = seed % numberOfGroups();
+        return shiftByTerminatedGroups(shiftByExpiredGroups(selectedGroup));
+    }
 
-        return expiredGroupOffset + selectedGroup;
+    /**
+     * @dev Evaluates the shift of selected group index based on the number of
+     * expired groups.
+     */
+    function shiftByExpiredGroups(uint256 selectedIndex) public returns(uint256) {
+        return expiredGroupOffset + selectedIndex;
+    }
+
+    /**
+     * @dev Evaluates the shift of selected group index based on the number of
+     * non-expired, terminated groups.
+     */
+    function shiftByTerminatedGroups(uint256 selectedIndex) public returns(uint256) {
+        uint256 shiftedIndex = selectedIndex;
+        for (uint i = 0; i < terminatedGroups.length; i++) {
+            if (terminatedGroups[i] <= shiftedIndex) {
+                shiftedIndex++;
+            }
+        }
+
+        return shiftedIndex;
     }
 
     /**
@@ -651,13 +696,17 @@ contract KeepRandomBeaconOperator is Ownable {
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
      */
     function sign(uint256 requestId, uint256 seed, uint256 previousEntry) public payable onlyServiceContract {
-        require(
-            numberOfGroups() > 0,
-            "At least one group needed to serve the request."
-        );
+        signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value);
+    }
 
-        uint256 entryTimeout = currentEntryStartBlock + relayEntryTimeout;
-        require(!entryInProgress || block.number > entryTimeout, "Relay entry is in progress.");
+    function signRelayEntry(
+        uint256 requestId,
+        uint256 seed,
+        uint256 previousEntry,
+        address serviceContract,
+        uint256 payment
+    ) internal {
+        require(!entryInProgress || hasEntryTimedOut(), "Relay entry is in progress.");
 
         currentEntryStartBlock = block.number;
         entryInProgress = true;
@@ -667,14 +716,14 @@ contract KeepRandomBeaconOperator is Ownable {
 
         signingRequest = SigningRequest(
             requestId,
-            msg.value,
+            payment,
             groupIndex,
             previousEntry,
             seed,
-            msg.sender
+            serviceContract
         );
 
-        emit SignatureRequested(msg.value, previousEntry, seed, groupPubKey);
+        emit SignatureRequested(payment, previousEntry, seed, groupPubKey);
     }
 
     /**
@@ -709,7 +758,37 @@ contract KeepRandomBeaconOperator is Ownable {
         entryInProgress = false;
     }
 
+    /**
+     * @dev Returns true if the currently ongoing new relay entry generation
+     * operation timed out. There is a certain timeout for a new relay entry
+     * to be produced, see `relayEntryTimeout` value.
+     */
+    function hasEntryTimedOut() internal view returns (bool) {
+        return entryInProgress && block.number > currentEntryStartBlock + relayEntryTimeout;
+    }
+
+    /**
+     * @dev Function used to inform about the fact the currently ongoing
+     * new relay entry generation operation timed out. As a result, the group
+     * which was supposed to produce a new relay entry is immediatelly
+     * terminated and a new group is selected to produce a new relay entry.
+     */
     function reportRelayEntryTimeout() public {
-        //TODO: handle a group that didn't deliver a relay entry.
+        require(hasEntryTimedOut(), "Current relay entry did not time out");
+
+        terminatedGroups.push(signingRequest.groupIndex);
+
+        // We could terminate the last active group. If that's the case,
+        // do not try to execute signing again because there is no group
+        // which can handle it.
+        if (numberOfGroups() > 0) {
+            signRelayEntry(
+                signingRequest.relayRequestId,
+                signingRequest.seed,
+                signingRequest.previousEntry,
+                signingRequest.serviceContract,
+                signingRequest.payment
+            );
+        }
     }
 }

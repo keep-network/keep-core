@@ -8,17 +8,12 @@ import "./KeepRandomBeaconOperator.sol";
  */
 contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
-    /**
-     * @dev Stub method to authorize service contract to help local development.
-     */
+    constructor(address _serviceContract, address _stakingContract) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {}
+
     function authorizeServiceContract(address _serviceContract) public {
         serviceContracts.push(_serviceContract);
     }
 
-    /**
-     * @dev Adds a new group based on groupPublicKey.
-     * @param groupPublicKey is the identifier of the newly created group.
-     */
     function registerNewGroup(bytes memory groupPublicKey) public {
         groups.push(Group(groupPublicKey, block.number));
         address[] memory members = orderedParticipants();
@@ -29,18 +24,29 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         }
     }
 
-    /**
-     * @dev Gets the group registration block height.
-     * @param groupIndex is the index of the queried group.
-     */
+    function registerNewGroups(uint256 groupsCount) public {
+        for (uint i = 1; i <= groupsCount; i++) {
+            registerNewGroup(new bytes(i));
+        }
+    }
+
+    function terminateGroup(uint256 groupIndex) public {
+        terminatedGroups.push(groupIndex);
+    }
+
+    function clearGroups() public {
+        for (uint i = 0; i < groups.length; i++) {
+            delete groupMembers[groups[i].groupPubKey];
+        }
+        groups.length = 0;
+        terminatedGroups.length = 0;
+        expiredGroupOffset = 0;
+    }
+
     function getGroupRegistrationBlockHeight(uint256 groupIndex) public view returns(uint256) {
         return groups[groupIndex].registrationBlockHeight;
     }
 
-    /**
-     * @dev Gets the public key of the group registered under the given index.
-     * @param groupIndex is the index of the queried group.
-     */
     function getGroupPublicKey(uint256 groupIndex) public view returns(bytes memory) {
         return groups[groupIndex].groupPubKey;
     }

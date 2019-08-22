@@ -32,6 +32,45 @@ func AssertSuccessfulSignersCount(
 	}
 }
 
+// AssertSuccessfulSigners checks which particular signers were successful.
+func AssertSuccessfulSigners(
+	t *testing.T,
+	testResult *Result,
+	expectedSuccessfulMembers ...group.MemberIndex,
+) {
+	actualSuccessfulMembers := make([]group.MemberIndex, len(testResult.signers))
+	for _, signer := range testResult.signers {
+		memberIndex := signer.MemberID()
+		actualSuccessfulMembers = append(actualSuccessfulMembers, memberIndex)
+
+		isSuccessfulExpected := containsMemberIndex(
+			memberIndex,
+			expectedSuccessfulMembers,
+		)
+
+		if !isSuccessfulExpected {
+			t.Errorf(
+				"member [%v] should not be a successful signer",
+				memberIndex,
+			)
+		}
+	}
+
+	for _, memberIndex := range expectedSuccessfulMembers {
+		isSuccessful := containsMemberIndex(
+			memberIndex,
+			actualSuccessfulMembers,
+		)
+
+		if !isSuccessful {
+			t.Errorf(
+				"member [%v] should be a successful signer",
+				memberIndex,
+			)
+		}
+	}
+}
+
 // AssertMemberFailuresCount checks the number of members who failed the
 // protocol execution. It does not check which particular members failed.
 func AssertMemberFailuresCount(

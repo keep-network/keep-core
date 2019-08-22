@@ -23,6 +23,7 @@ var logger = log.Logger("keep-gjkr")
 // representing what went wrong.
 func Execute(
 	memberIndex group.MemberIndex,
+	groupSize int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	threshold int,
@@ -33,7 +34,7 @@ func Execute(
 
 	member, err := NewMember(
 		memberIndex,
-		make([]group.MemberIndex, 0),
+		groupSize,
 		threshold,
 		seed,
 	)
@@ -66,9 +67,6 @@ func Execute(
 // initializeChannel initializes a given broadcast channel to be able to
 // perform distributed key generation interactions.
 func initializeChannel(channel net.BroadcastChannel) {
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &JoinMessage{}
-	})
 	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &EphemeralPublicKeyMessage{}
 	})
