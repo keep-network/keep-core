@@ -295,6 +295,17 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 					)
 				}
 
+				if !sharesMessage.CanDecrypt(cvm.ID, symmetricKey) {
+					logger.Warningf("member [%v] disqualified because "+
+						"cannot decrypt their shares",
+						sharesMessage.senderID,
+					)
+					cvm.group.MarkMemberAsDisqualified(sharesMessage.senderID)
+					accusedMembersKeys[sharesMessage.senderID] =
+						cvm.ephemeralKeyPairs[sharesMessage.senderID].PrivateKey
+					break
+				}
+
 				// Decrypt shares using symmetric key established with sender.
 				// Since all the messages are validated prior to passing to this
 				// function, decryption error should never happen.
@@ -457,7 +468,10 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				revealedAccuserPrivateKey,
 			)
 			if err != nil {
-				// TODO Should we disqualify accuser/accused member here?
+				// Symmetric key should be recovered without any problems.
+				// All related misbehaviour should be already handled in
+				// previous phases. If an error happened here, it should
+				// be fatal as there is no way to recover from it.
 				return fmt.Errorf("could not recover symmetric key [%v]", err)
 			}
 
@@ -468,8 +482,14 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				symmetricKey,
 			)
 			if err != nil {
-				// TODO Should we disqualify accuser/accused member here?
-				return fmt.Errorf("could not decrypt shares [%v]", err)
+				logger.Warningf(
+					"member [%v] disqualified because of sending "+
+						"shares which could not be decrypted to member [%v]",
+					accusedID,
+					accuserID,
+				)
+				sjm.group.MarkMemberAsDisqualified(accusedID)
+				continue
 			}
 
 			if sjm.areSharesValidAgainstCommitments(
@@ -576,12 +596,10 @@ func recoverShares(
 
 	shareS, err := peerSharesMessage.decryptShareS(receiverID, symmetricKey) // s_mj
 	if err != nil {
-		// TODO Should we disqualify accuser/accused member here?
 		return nil, nil, fmt.Errorf("cannot decrypt share S [%v]", err)
 	}
 	shareT, err := peerSharesMessage.decryptShareT(receiverID, symmetricKey) // t_mj
 	if err != nil {
-		// TODO Should we disqualify accuser/accused member here?
 		return nil, nil, fmt.Errorf("cannot decrypt share T [%v]", err)
 	}
 
