@@ -80,7 +80,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				return &ephemeral.PrivateKey{D: big.NewInt(12)}
 			},
 			// TODO Should we disqualify accuser/accused member here?
-			expectedResult: nil,
+			expectedResult: []group.MemberIndex{},
 			expectedError:  fmt.Errorf("could not decrypt shares [cannot decrypt share S [could not decrypt S share [symmetric key decryption failed]]]"),
 		},
 	}
@@ -143,7 +143,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				accusedMembersKeys: accusedMembersKeys,
 			})
 
-			result, err := justifyingMember.ResolveSecretSharesAccusationsMessages(
+			err = justifyingMember.ResolveSecretSharesAccusationsMessages(
 				messages,
 			)
 
@@ -151,6 +151,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				t.Fatalf("\nexpected: %s\nactual:   %s\n", test.expectedError, err)
 			}
 
+			result := justifyingMember.group.DisqualifiedMemberIDs()
 			if !reflect.DeepEqual(result, test.expectedResult) {
 				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
 			}
