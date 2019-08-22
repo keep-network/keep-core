@@ -228,10 +228,10 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 
 // TODO Test case Phase 5: 'private key is invalid scalar for ECDH DQ -> expected result: disqualify accuser'
 
-// Phase 5 test case - a member performs an accusation but provides
-// a wrong private key of the accused member. The private key is wrong
-// because it doesn't correspond to the public key published earlier.
-// The accuser is marked as disqualified in phase 5.
+// Phase 5 test case - a member performs an accusation but reveals an
+// ephemeral private key which doesn't correspond to the previously broadcast
+// public key, generated for the sake of communication with the accused member.
+// Due to such behaviour, the accuser is marked as disqualified in phase 5.
 func TestExecute_DQ_member3_accuserWithWrongPrivateKey_phase5(t *testing.T) {
 	t.Parallel()
 
@@ -242,8 +242,9 @@ func TestExecute_DQ_member3_accuserWithWrongPrivateKey_phase5(t *testing.T) {
 
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(3) {
-			// accuser (member 3) provides a random private key which not
-			// correspond to his public key for member 1 published earlier
+			// accuser (member 3) reveals a random private key which doesn't
+			// correspond to the previously broadcast public key
+			// generated for the sake of communication with the member 1
 			randomKeyPair, _ := ephemeral.GenerateKeyPair()
 			accusationsMessage.SetAccusedMemberKey(
 				group.MemberIndex(1),
@@ -262,6 +263,7 @@ func TestExecute_DQ_member3_accuserWithWrongPrivateKey_phase5(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 4, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(3))
