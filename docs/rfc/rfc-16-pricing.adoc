@@ -62,7 +62,7 @@ currency to the beacon.
 However, no new requests should be made
 while the beacon is already processing another request.
 Requests made while the beacon is busy
-will be rejected and refunded to the _surplus recipient_ address.
+will be rejected and the payment will not be transferred from the requester.
 
 ==== Receiving a request
 
@@ -199,7 +199,7 @@ keeping the surplus or paying the difference.
 This is to incentivize optimizing gas fees.
 
 To incentivize a race for the submitter position,
-the submitter receives _group size * delay penalty * 0.05_ as an extra reward.
+the submitter receives _delay penalty * group size * 0.05_ as an extra reward.
 With realistic group sizes this is significant,
 but not high enough to render certain attacks profitable.
 If the group size is 100 and the delay factor is 0.64,
