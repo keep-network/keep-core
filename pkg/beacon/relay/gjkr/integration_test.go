@@ -372,6 +372,67 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 //  member, there is a need to obtain ephemeral private key for the accused
 //  member which is stored in accuser internal map called 'ephemeralKeyPairs'.
 
+// TODO Test case Phase 9: 'private key is invalid scalar for ECDH DQ ->
+//  expected result: disqualify accuser'
+
+// TODO Test case Phase 9: 'presented private key does not correspond
+//  to the published public key -> result: disqualify accuser'
+
+// Phase 9 test case - some members misbehaved by sending
+// invalid public key shares to another members. They become accused
+// by the receivers of the invalid public key shares. The accusers are right
+// and the misbehaving members are marked as disqualified in phase 9.
+func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	threshold := 3
+
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+
+		publicKeyShareMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
+		if ok && publicKeyShareMessage.SenderID() == group.MemberIndex(1) {
+			publicKeyShareMessage.SetPublicKeyShare(
+				1,
+				new(bn256.G2).ScalarBaseMult(big.NewInt(5843)),
+			)
+			return publicKeyShareMessage
+		}
+
+		if ok && publicKeyShareMessage.SenderID() == group.MemberIndex(4) {
+			publicKeyShareMessage.SetPublicKeyShare(
+				2,
+				new(bn256.G2).ScalarBaseMult(big.NewInt(7456)),
+			)
+			return publicKeyShareMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 2)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, []group.MemberIndex{1, 4}...)
+	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 5}...)
+}
+
+// TODO Test case Phase 9: 'public key share valid ->
+//  expected result: disqualify accuser'.
+//  This case is difficult to implement for now because it needs
+//  access to member internals. In order to make a false accusation
+//  there is a need to obtain ephemeral private key for the accused member which
+//  is stored in accuser internal map called 'ephemeralKeyPairs'.
+
 // Phase 11 test case - a member misbehaved by revealing key of an operating
 // member. The revealing member becomes disqualified by all other members which
 // consider the member for which the key has been revealed as normally operating.
