@@ -37,6 +37,13 @@ func (mpkspm *MemberPublicKeySharePointsMessage) SetPublicKeyShare(
 	mpkspm.publicKeySharePoints[index] = publicKeyShare
 }
 
+func (pam *PointsAccusationsMessage) SetAccusedMemberKey(
+	memberIndex group.MemberIndex,
+	privateKey *ephemeral.PrivateKey,
+) {
+	pam.accusedMembersKeys[memberIndex] = privateKey
+}
+
 func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
 	memberIndex group.MemberIndex,
 	privateKey *ephemeral.PrivateKey,
