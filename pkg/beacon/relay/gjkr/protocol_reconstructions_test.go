@@ -373,6 +373,11 @@ func TestReconstructDisqualifiedIndividualKeys(t *testing.T) {
 	member6 := members[5]
 	disqualifiedMembers := []*ReconstructingMember{member5, member6}
 
+	// Disqualified members must be also disqualified
+	// from the recovering member's perspective
+	member1.group.MarkMemberAsDisqualified(member5.ID)
+	member1.group.MarkMemberAsDisqualified(member6.ID)
+
 	var disqualifiedEphemeralKeysMessages []*DisqualifiedEphemeralKeysMessage
 	for _, otherMember := range otherMembers {
 		revealedKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
