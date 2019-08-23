@@ -316,8 +316,9 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 					cvm.ID,                         // i
 				) {
 					logger.Warningf(
-						"shares from member [%v] invalid against commitments. "+
-							"Performed disqualification and accusation against them",
+						"[member:%v] shares from member [%v] invalid against "+
+							"commitments; disqualifying and accusing the member",
+						cvm.ID,
 						commitmentsMessage.senderID,
 					)
 					cvm.group.MarkMemberAsDisqualified(commitmentsMessage.senderID)
@@ -412,6 +413,8 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
 			if sjm.ID == accuserID {
+				// The accuser already disqualified the accused member in the
+				// previous phase when they published the accusation
 				continue
 			}
 
@@ -427,8 +430,9 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				ephemeralPublicKeys[accusedID]
 			if !publicKey.IsKeyMatching(revealedAccuserPrivateKey) {
 				logger.Warningf(
-					"member [%v] disqualified because of "+
+					"[member:%v] member [%v] disqualified because of "+
 						"revealing private key not matching the public key",
+					sjm.ID,
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
@@ -845,7 +849,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			publicKey := rm.evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
 				ephemeralPublicKeys[disqualifiedMemberID]
 			if !publicKey.IsKeyMatching(revealedPrivateKey) {
-				logger.Errorf(
+				logger.Warningf(
 					"invalid private key for public key from member: [%v]",
 					revealingMemberID,
 				)
