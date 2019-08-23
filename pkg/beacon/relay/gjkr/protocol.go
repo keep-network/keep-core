@@ -358,6 +358,10 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 	commitments []*bn256.G1, // C_j
 	memberID group.MemberIndex, // i
 ) bool {
+	if len(commitments) == 0 {
+		return false
+	}
+
 	var sum *bn256.G1                // Σ (C_j[k] * (i^k)) for k in [0..T]
 	for k, ck := range commitments { // k, C_j[k]
 		ci := new(bn256.G1).ScalarMult(ck, pow(memberID, k)) // C_j[k] * (i^k)
@@ -397,8 +401,7 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 // See Phase 5 of the protocol specification.
 func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	messages []*SecretSharesAccusationsMessage,
-) ([]group.MemberIndex, error) {
-	disqualifiedMembers := make([]group.MemberIndex, 0)
+) error {
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
@@ -415,7 +418,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			)
 			if err != nil {
 				// TODO Should we disqualify accuser/accused member here?
-				return nil, fmt.Errorf("could not recover symmetric key [%v]", err)
+				return fmt.Errorf("could not recover symmetric key [%v]", err)
 			}
 
 			shareS, shareT, err := recoverShares(
@@ -426,7 +429,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			)
 			if err != nil {
 				// TODO Should we disqualify accuser/accused member here?
-				return nil, fmt.Errorf("could not decrypt shares [%v]", err)
+				return fmt.Errorf("could not decrypt shares [%v]", err)
 			}
 
 			if sjm.areSharesValidAgainstCommitments(
@@ -434,13 +437,23 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				sjm.receivedValidPeerCommitments[accusedID], // C_m
 				accuserID, // j
 			) {
-				disqualifiedMembers = append(disqualifiedMembers, accuserID)
+				logger.Warningf("member [%v] disqualified because of "+
+					"false accusation against member [%v] ",
+					accuserID,
+					accusedID,
+				)
+				sjm.group.MarkMemberAsDisqualified(accuserID)
 			} else {
-				disqualifiedMembers = append(disqualifiedMembers, accusedID)
+				logger.Warningf("member [%v] disqualified because of "+
+					"confirmed misbehaviour against member [%v] ",
+					accusedID,
+					accuserID,
+				)
+				sjm.group.MarkMemberAsDisqualified(accusedID)
 			}
 		}
 	}
-	return disqualifiedMembers, nil
+	return nil
 }
 
 // Recover ephemeral symmetric key used to encrypt communication between sender
