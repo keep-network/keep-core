@@ -77,7 +77,7 @@ the _entry fee estimate + minimum callback allowance_.
 Insufficiently funded entries forfeit the request fee.
 
 Once the request has been verified to be sufficiently funded,
-it is queued among the _pending requests_
+it is queued as the _pending request_
 and the request fee is divided into various budgets.
 
 The _entry fee estimate_ is subtracted from the _request fee_
