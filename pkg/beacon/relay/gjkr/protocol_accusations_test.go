@@ -383,12 +383,14 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 				accusedMembersKeys: accusedMembersKeys,
 			})
 
-			result, err := justifyingMember.ResolvePublicKeySharePointsAccusationsMessages(
+			err = justifyingMember.ResolvePublicKeySharePointsAccusationsMessages(
 				messages,
 			)
 			if err != nil {
 				t.Fatal(err)
 			}
+
+			result := justifyingMember.group.DisqualifiedMemberIDs()
 			if !reflect.DeepEqual(result, test.expectedResult) {
 				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
 			}
