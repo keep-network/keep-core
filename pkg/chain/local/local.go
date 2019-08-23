@@ -56,8 +56,8 @@ type localChain struct {
 
 	groups []localGroup
 
-	lastSubmittedDKGResult     *relaychain.DKGResult
-	resultSupportingSignatures map[group.MemberIndex][]byte
+	lastSubmittedDKGResult           *relaychain.DKGResult
+	lastSubmittedDKGResultSignatures map[group.MemberIndex][]byte
 
 	handlerMutex                  sync.Mutex
 	relayEntryHandlers            map[int]func(entry *event.Entry)
@@ -401,7 +401,7 @@ func (c *localChain) SubmitDKGResult(
 	}
 	c.groups = append(c.groups, myGroup)
 	c.lastSubmittedDKGResult = resultToPublish
-	c.resultSupportingSignatures = signatures
+	c.lastSubmittedDKGResultSignatures = signatures
 
 	groupRegistrationEvent := &event.GroupRegistration{
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
@@ -451,7 +451,7 @@ func (c *localChain) GetLastDKGResult() (
 	*relaychain.DKGResult,
 	map[group.MemberIndex][]byte,
 ) {
-	return c.lastSubmittedDKGResult, c.resultSupportingSignatures
+	return c.lastSubmittedDKGResult, c.lastSubmittedDKGResultSignatures
 }
 
 func (c *localChain) ReportRelayEntryTimeout() error {

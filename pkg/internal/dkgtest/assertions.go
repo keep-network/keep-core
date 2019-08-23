@@ -201,8 +201,11 @@ func AssertResultSupportingMembers(
 	testResult *Result,
 	expectedSupportingMembers ...group.MemberIndex,
 ) {
-	actualSupportingMembers := make([]group.MemberIndex, len(testResult.signatures))
-	for memberIndex, _ := range testResult.signatures {
+	actualSupportingMembers := make(
+		[]group.MemberIndex,
+		len(testResult.dkgResultSignatures),
+	)
+	for memberIndex, _ := range testResult.dkgResultSignatures {
 		actualSupportingMembers = append(actualSupportingMembers, memberIndex)
 
 		isSupportingExpected := containsMemberIndex(

@@ -25,10 +25,10 @@ var minimumStake = big.NewInt(20)
 
 // Result of a DKG test execution.
 type Result struct {
-	dkgResult      *relaychain.DKGResult
-	signers        []*dkg.ThresholdSigner
-	memberFailures []error
-	signatures     map[group.MemberIndex][]byte
+	dkgResult           *relaychain.DKGResult
+	dkgResultSignatures map[group.MemberIndex][]byte
+	signers             []*dkg.ThresholdSigner
+	memberFailures      []error
 }
 
 // RunTest executes the full DKG roundrip test for the provided group size
@@ -138,21 +138,21 @@ func executeDKG(
 	select {
 	case <-resultSubmissionChan:
 		// result was published to the chain, let's fetch it
-		dkgResult, signatures := chain.GetLastDKGResult()
+		dkgResult, dkgResultSignatures := chain.GetLastDKGResult()
 		return &Result{
 			dkgResult,
+			dkgResultSignatures,
 			signers,
 			memberFailures,
-			signatures,
 		}, nil
 
 	case <-ctx.Done():
 		// no result published to the chain
 		return &Result{
 			nil,
+			nil,
 			signers,
 			memberFailures,
-			nil,
 		}, nil
 	}
 }
