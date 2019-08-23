@@ -154,7 +154,10 @@ upon submission of a valid entry.
 
 The group reward equals the _base reward_
 multiplied by a _delay factor_
-equaling the fraction of time left by the submission deadline, squared.
+equaling the fraction of time left by the submission deadline, squared:
+_group reward = base reward * delay factor_;
+_delay factor = (T~remaining~ / (T~deadline~ - T~begin~))^2^_;
+_T~remaining~ = T~deadline~ - T~received~_.
 
 The delay factor is counted
 from 1 in the first block a submission could be published in,
@@ -169,8 +172,8 @@ if published in this block the delay factor is 1.
 Block 1025 is the deadline block:
 no submissions are accepted and the delay factor is 0.
 
-If the entry is submitted in block 1010,
-the delay factor is `((1010 - 1005) / 20)^2 = 0.8^2 = 0.64`.
+If the entry is submitted in block 1009,
+the delay factor is `((1025 - 1009) / (1025 - 1005))^2 = 0.8^2 = 0.64`.
 Thus the _group reward = base reward * 0.64_,
 with the difference being the _delay penalty = base reward * (1 - 0.64)_.
 
