@@ -787,13 +787,36 @@ func (rm *RevealingMember) disqualifiedSharingMembers() []group.MemberIndex {
 func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
 	messages []*DisqualifiedEphemeralKeysMessage,
 ) error {
-	revealedDisqualifiedShares, err := rm.recoverDisqualifiedShares(messages)
+	revealedDisqualifiedShares, err := rm.revealDisqualifiedShares(messages)
 	if err != nil {
-		return fmt.Errorf("recovering disqualified shares failed [%v]", err)
+		return fmt.Errorf("revealing disqualified shares failed [%v]", err)
 	}
 	rm.reconstructIndividualPrivateKeys(revealedDisqualifiedShares) // z_m
 	rm.reconstructIndividualPublicKeys()                            // y_m
 	return nil
+}
+
+func (rm *ReconstructingMember) revealDisqualifiedShares(
+	messages []*DisqualifiedEphemeralKeysMessage,
+) ([]*disqualifiedShares, error) {
+	disqualifiedShares, err := rm.recoverDisqualifiedShares(messages)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add current member own shares received from disqualified members
+	for _, disqualifiedMemberID := range rm.group.DisqualifiedMemberIDs() {
+		for _, shares := range disqualifiedShares {
+			if shares.disqualifiedMemberID == disqualifiedMemberID {
+				if ownShare, ok := rm.receivedValidSharesS[disqualifiedMemberID]; ok {
+					shares.peerSharesS[rm.ID] = ownShare
+				}
+				break
+			}
+		}
+	}
+
+	return disqualifiedShares, nil
 }
 
 // Recover shares `s_mk` calculated by members `m` disqualified in Phase 9.
@@ -895,11 +918,6 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			}
 
 			addShare(disqualifiedMemberID, revealingMemberID, shareS)
-
-			// Add current member own shareS received from disqualified member
-			if ownShare, ok := rm.receivedValidSharesS[disqualifiedMemberID]; ok {
-				addShare(disqualifiedMemberID, rm.ID, ownShare)
-			}
 		}
 	}
 	return revealedDisqualifiedShares, nil
