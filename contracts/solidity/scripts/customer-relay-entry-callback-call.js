@@ -16,7 +16,9 @@ module.exports = async function() {
     let callbackGas = await callbackContract.callback.estimateGas(seed);
     // minimum payment for a relay entry request in Wei. Needs to include callbackGas to 
     // cover estimated gas for his callback.
-    let minimumPayment = await contractService.minimumPayment(callbackGas)
+    console.log("estimated gas needed for a callback function: ", callbackGas.toString())
+    let recommendedPayment = await contractService.minimumPayment(callbackGas)
+    console.log("recommended payment in Wei: ", recommendedPayment.toString())
     // account(s) should have enough ether to cover the cost of a relay entry
     let accounts = await web3.eth.getAccounts();
     
@@ -27,7 +29,7 @@ module.exports = async function() {
       callbackContract.address,
       "callback(uint256)",
       callbackGas,
-      {value: minimumPayment, from: accounts[0]}
+      {value: recommendedPayment, from: accounts[0]}
     );
   } catch(error) {
     console.error('Request failed with', error)
