@@ -846,11 +846,24 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				continue
 			}
 
+			if rm.group.IsOperating(disqualifiedMemberID) {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"revealing an operating member as disqualified",
+					rm.ID,
+					revealingMemberID,
+				)
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
+				continue
+			}
+
 			publicKey := rm.evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
 				ephemeralPublicKeys[disqualifiedMemberID]
 			if !publicKey.IsKeyMatching(revealedPrivateKey) {
 				logger.Warningf(
-					"invalid private key for public key from member: [%v]",
+					"[member:%v] member [%v] disqualified because of "+
+						"revealing private key not matching the public key",
+					rm.ID,
 					revealingMemberID,
 				)
 				rm.group.MarkMemberAsDisqualified(revealingMemberID)

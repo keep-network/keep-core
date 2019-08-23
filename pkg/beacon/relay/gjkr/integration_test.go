@@ -328,6 +328,13 @@ func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
 
 // TODO Test case Phase 5: 'shares consistent -> expected result: disqualify accuser'.
 //  This case is difficult to implement for now because it needs
-//  accces to member internals. In order to make a false accusation
-//  there is a need to obtain private key of the accused member which
+//  access to member internals. In order to make a false accusation
+//  there is a need to obtain ephemeral private key for the accused member which
 //  is stored in accuser internal map called 'ephemeralKeyPairs'.
+
+// TODO Test case Phase 11: 'member reveals operating member as disqualified ->
+//  expected result: disqualify revealing member'.
+//  This case is difficult to implement for now because it needs access to
+//  member internals. In order to falsely reveal a member as disqualified
+//  there is a need to obtain ephemeral private key for the disqualified member
+//  which is stored in revealing member internal map called 'ephemeralKeyPairs'.
