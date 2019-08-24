@@ -779,18 +779,17 @@ contract KeepRandomBeaconOperator {
 
         entryInProgress = false;
 
-        // Calculate each group member reward = baseReward * delayFactor / groupLength
+        // Calculate each group member reward = baseReward * delayFactor / groupSize
         // Adding 2 decimals (1e2) to perform float division.
         uint256 profitMargin = signingRequest.payment.sub(signingRequest.signingFee).sub(signingRequest.callbackFee);
-        uint256 groupLength = groupMembers[groupPublicKey].length;
-        uint256 baseReward = profitMargin.div(groupLength);
+        uint256 baseReward = profitMargin.div(groupSize);
         uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
         uint256 delayFactor = entryTimeout.sub(block.number).mul(1e2).div(relayEntryTimeout.sub(1))**2;
         uint256 delayFactorInverse = uint256(1).mul(1e2**2).sub(delayFactor);
         uint256 groupReward = baseReward.mul(delayFactor).div(1e2**2);
         uint256 delayPenalty = baseReward.mul(delayFactorInverse).div(1e2**2);
         
-        for (uint i = 0; i < groupLength; i++) {
+        for (uint i = 0; i < groupSize; i++) {
             address payable receiver = address(uint160(groupMembers[groupPublicKey][i]));
             receiver.transfer(groupReward);
         }
@@ -799,11 +798,11 @@ contract KeepRandomBeaconOperator {
         // The callback gas expenditure (reimbursed by the service contract)
         // The entry verification fee to cover the cost of verifying the submission
         // Extra reward - 5% of the delay penalties of the entire group
-        uint256 extraReward = delayPenalty.mul(groupLength).mul(5).div(100); 
+        uint256 extraReward = delayPenalty.mul(groupSize).mul(5).div(100); 
         msg.sender.transfer(signingRequest.signingFee.add(extraReward));
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
-        uint256 subsidy = profitMargin.sub(groupReward.mul(groupLength)).sub(extraReward);
+        uint256 subsidy = profitMargin.sub(groupReward.mul(groupSize)).sub(extraReward);
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
         }
