@@ -93,7 +93,7 @@ contract KeepRandomBeaconOperator {
     uint256 public signingGasEstimate = 1240000; // TODO: Update once alt_bn128 gas costs reduction is implemented.
     uint256 public createGroupGasEstimate = 2260000;
 
-    uint256 public createGroupPayment;
+    uint256 public dkgSubmitterReward;
 
     struct Group {
         bytes groupPubKey;
@@ -246,7 +246,7 @@ contract KeepRandomBeaconOperator {
         groupSelectionRelayEntry = _newEntry;
         groupSelectionInProgress = true;
         emit GroupSelectionStarted(_newEntry);
-        createGroupPayment = _payment;
+        dkgSubmitterReward = _payment;
     }
 
     /**
@@ -447,8 +447,8 @@ contract KeepRandomBeaconOperator {
 
         groups.push(Group(groupPubKey, block.number));
         // TODO: punish/reward logic
-        uint256 rewards = createGroupPayment;
-        createGroupPayment = 0;
+        uint256 rewards = dkgSubmitterReward;
+        dkgSubmitterReward = 0;
         msg.sender.transfer(rewards);
         cleanup();
         emit DkgResultPublishedEvent(groupPubKey);

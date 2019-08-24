@@ -51,7 +51,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     let requestorSubsidy = web3.utils.toBN(1); // 1% is returned to the requestor.
 
     let contractPreviousBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
-    let createGroupPayment = await operatorContract.createGroupPayment()
+    let dkgSubmitterReward = await operatorContract.dkgSubmitterReward()
 
     let tx = await serviceContract.requestRelayEntry(0, {from: account_two, value: minimumPayment})
     let transactionCost = web3.utils.toBN(tx.receipt.gasUsed).mul(web3.utils.toWei(web3.utils.toBN(20), 'gwei')); // 20 default gasPrice
@@ -66,7 +66,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.isTrue(web3.utils.toBN(contractBalanceViaProxy).eq(contractPreviousBalance.add(entryFee.createGroupFee).sub(requestorSubsidy)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
-    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.signingFee.add(minimumCallbackPayment).add(entryFee.profitMargin).add(createGroupPayment)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and create group payment.");
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.signingFee.add(minimumCallbackPayment).add(entryFee.profitMargin).add(dkgSubmitterReward)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and create group payment.");
   
   });
 
@@ -74,7 +74,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     await expectThrow(serviceContractProxy.sendTransaction({from: account_two, value: minimumPayment}));
 
     let contractPreviousBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
-    let createGroupPayment = await operatorContract.createGroupPayment()
+    let dkgSubmitterReward = await operatorContract.dkgSubmitterReward()
 
     await web3.eth.sendTransaction({
       // if you see a plain 'revert' error, it's probably because of not enough gas
@@ -91,7 +91,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.isTrue(web3.utils.toBN(contractBalanceServiceContract).eq(contractPreviousBalance.add(entryFee.createGroupFee)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
-    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.signingFee.add(minimumCallbackPayment).add(entryFee.profitMargin).add(createGroupPayment)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and create group payment.");
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.signingFee.add(minimumCallbackPayment).add(entryFee.profitMargin).add(dkgSubmitterReward)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and dkg submitter reward.");
   });
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {
