@@ -47,17 +47,33 @@ such as price discrimination being defeated by callback pooling.
 ==== Making requests
 
 When a customer wishes to receive an entry,
-they should query the beacon for a current _entry fee estimate_.
-The customer should also know
-the _callback address_ they wish to receive the entry in.
-The customer should prepare a sufficient _callback allowance_
-to cover the gas costs of the callback.
+they should query the beacon for the _entry fee estimate_
+applicable for their request:
+`entry_fee_estimate = estimate_fee(callback_gas_amount)`.
+The _callback gas amount_ is the amount of gas required
+for the customer's callback to execute successfully;
+if no callback is required `callback_gas_amount = 0`.
 
-When making a request for an entry,
-the customer should submit the request with the _callback_ address
-while transferring _request fee = entry fee estimate + callback allowance_
-currency to the beacon.
-However, no new requests should be made
+The estimate returned is guaranteed to be valid
+only for the transaction it is called in,
+and for callback gas costs
+equal or lower than the provided callback gas amount.
+Thus the request should be made immediately after receiving the estimate.
+Paying more than the applicable entry fee estimate
+has a minimal cost to the requester
+as excess fees will be refunded.
+Insufficient payment will lead to the request being rejected.
+
+To make a request after determining the applicable fee
+the customer must call the request method on the beacon,
+transferring enough currency to cover the fee:
+`request_entry.value(entry_fee_estimate)()`.
+
+If the customer wishes to receive the generated random number in a callback,
+they should also specify the _callback address_ and _callback gas amount_:
+`request_entry.value(entry_fee_estimate)(callback_address, callback_gas)`.
+
+No new requests should be made
 while the beacon is already processing another request.
 Requests made while the beacon is busy will be rejected
 and the transaction reverted.
@@ -69,28 +85,52 @@ it rejects any new requests
 (implicitly refunding the fees by reverting the transactions).
 
 When the beacon is non-busy and receives a request,
-it first checks that the _request fee_ exceeds the _entry fee estimate_.
+it first checks that the _request fee_ exceeds
+the _entry fee estimate_ with the _callback gas amount_ from the request.
 
 Once the request has been verified to be sufficiently funded,
+the previous entry is used to select the signing group
+by `selected_group = active_groups.pick(sha3(previous_entry, retry_counter))`
+where the _retry counter_ starting at 0.
+The selected group is tasked with producing the new entry.
+
 it is queued as the _pending request_
-and the request fee is divided into various budgets.
+including the following information:
 
-The _entry fee estimate_ is subtracted from the _request fee_
-to gain the _callback allowance_ of the request.
-The callback allowance is recorded in the pending request.
+- the _requester address_
 
-The _entry fee estimate_ is divided into
-a _DKG cost fraction_,
-an _entry verification cost_,
-and a _profit margin_.
+- the _callback address_ and _callback gas amount_, if applicable
 
-The _DKG cost fraction_ is added to the _DKG fee pool_.
+- the _assigned signing group_{blank}footnote:[This is needed
+if changes to the active groups can be made
+while waiting for an entry.
+]
 
-A signing group is selected and tasked with generating the new entry.
+- the _submission delay base time_ which equals
+the number of the block the request was received in,
+plus 1{blank}footnote:[The way of calculating rewards
+is inevitably prone to off-by-one errors _somewhere_
+and doing the incrementing at request time seems the simplest.
+]
+
+- the _retry counter_{blank}footnote:[As the retry counter starts at 0,
+including it in the request data doesn't add a cost to request processing.
+]
+
+- the _estimated gas price_ at the time of the request{blank}footnote:[This
+means we don't need to assume the price feed remains stable
+between the making of the request and the paying out of rewards.
+If the gas price feed is guaranteed to not change
+until a valid entry is received, this is not necessary.
+]
+
+- the _request fee_ paid
 
 ==== Serving a request
 
-When the signing group has produced a valid entry,
+===== Receiving submissions
+
+When the assigned signing group has produced a valid entry,
 one of its members should submit it to the beacon.
 The first member to submit a valid entry is the _submitter_.
 
@@ -99,40 +139,93 @@ Repeat submissions for a request that has already been served
 should be dropped immediately,
 minimizing the gas expenditure.
 
-When a valid entry submission is received on-chain,
-it is provided to the corresponding request's _callback address_,
-using the _callback allowance_ as the gas budget.
-Once the callback returns,
-the gas cost of the callback is multiplied
-with the exact gas price used for the transaction
-to obtain the actual _callback gas expenditure_.
-The callback gas expenditure is subtracted from the callback allowance
-to obtain the _callback gas surplus_.
+If no valid entry has been received by the _submission deadline_,
+a submission timeout can be called by anyone.
+If the submission times out,
+the failing group is terminated and its members slashed.
+A new signing group is assigned from the remaining active groups
+by incrementing the _retry counter_
+and the submission delay calculation is reset
+by setting the _submission delay base time_
+to the previous _submission deadline_.
 
-The _callback gas surplus_ is refunded
-to the requester's address,
+When a valid entry submission is received on-chain
+it is emitted in an event,
+the requester's callback is called if applicable,
+and fees, rewards and refunds are paid out.
+
+===== Callback processing
+
+If the requester specified a callback address and gas amount,
+the callback is called using the callback gas amount as the maximum gas.
+
+After the callback is made
+the amount of gas spent on the call
+is multiplied with the lower of the
+_estimated gas price_ at the time of the request,
+or the actual gas price of the transaction,
+to get the _callback expenditure_.
+
+===== Requester refund
+
+After the _callback expenditure_ has been determined,
+it is added to the _entry base price_ calculated with the _estimated gas price_
+to get the _actual entry price_.
+If no callback was specified in the request the _callback expenditure_ is 0
+and the _actual entry price = entry base price_.
+
+The difference between the actual entry price and the _requester fee_
+is refunded to the requester,
 along with 1% of the _request subsidy pool_ of the beacon.
+
+===== Paying rewards and operational fees
+
+The _entry base price_ consists of:
+the beacon's nominal _profit margin_ for the entry;
+a _DKG contribution_ to cover the cost of creating new signing groups,
+amortized over multiple entries per DKG;
+and the _entry verification fee_ for the gas costs of entry submission.
 
 The submitter and other group members are rewarded
 based on the _submission delay_;
-time from when the request was originally received
+time from the _submission delay base time_
 to the submission of the valid entry.
-If no valid entry has been received by the _submission deadline_,
-the failing group is terminated,
-its members slashed,
-and a new signing group is selected
-and the submission delay calculation reset.
+The rewards are specified in their own section.
 
-The submission of a new entry acts as the DKG trigger event.
-When a valid entry is received,
-the state of the _DKG fee pool_ is checked.
-Group creation and DKG are initiated
-if the DKG fee pool exceeds the DKG cost estimate at the time.
+If the sum of rewards paid out
+is less than the _profit margin + entry verification fee_,
+the difference is added to the _request subsidy pool_.
+
+The _DKG contribution_ is added to the _DKG fee pool_,
+and the state of the pool is checked.
+If the amount in the DKG fee pool equals or exceeds the _DKG cost estimate_,
+group creation and a new DKG may be triggered.footnote:[Whether
+DKG is actually triggered is open.
+Always triggering DKG when the fee pool reaches a given level
+doesn't smooth out fluctuations in demand:
+a very large number of groups is created when demand is high,
+but those groups will expire on schedule if a slump occurs.
+A stochastic method for triggering DKG
+would permit smoothing out demand fluctuations:
+Take the current number of active groups,
+divide by a threshold number of groups,
+and e.g. square root the result to get a(n insensitivity) number;
+Trigger DKG if the entry (interpreted as a number from 0 to 1)
+is less than 1 divided by the above number.
+If the number of active groups is below the threshold,
+this attempts to create a new signing group
+every time sufficient funding is present;
+with higher demand the number of groups
+tends to be proportional to _(number of entries in expiration period)^2/3^_.
+]
 
 ==== Rewards
 
-The _base reward_ for submitting an entry
-equals the _profit margin_ divided by _group size_.
+A _base reward_ for each member of a signing group that produces an entry
+is specified in the system constants.
+The nominal _profit margin_ of each entry
+equals the _base reward_ multiplied by the applicable _group size_.
+
 The exact rewards paid out to operators are based on the base reward
 but vary according to _submission delay_ and submitter position.
 
@@ -235,7 +328,11 @@ where gas for the entry submission transaction
 costs as much as the KEEP tokens at stake.
 
 The exact implementation of this gas price feed
-is out for scope for this RFC.
+is out for scope for this RFC.footnote:[A rather obvious candidate
+is to use the gas price paid by the requester.
+This doesn't work if the requester is a miner
+as they can provide an arbitrarily low price.
+]
 
 ===== DKG cost estimate
 
@@ -299,7 +396,9 @@ The method of estimating gas fees,
 the timespan over which the estimate should be calculated,
 and the fluctuation safety margin are not yet defined.
 
+////
 [bibliography]
 == Related Links
 
 - Flowdock Links
+////
