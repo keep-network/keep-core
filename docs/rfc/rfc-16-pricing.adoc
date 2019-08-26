@@ -219,6 +219,14 @@ with higher demand the number of groups
 tends to be proportional to _(number of entries in expiration period)^2/3^_.
 ]
 
+===== Cleanup
+
+After the request has been served and rewards etc. given out,
+the request data should be wiped by setting the necessary fields to zero.
+
+After the cleanup is performed,
+the beacon finishes and can accept requests again.
+
 ==== Rewards
 
 A _base reward_ for each member of a signing group that produces an entry
@@ -275,7 +283,7 @@ the submitter is reimbursed for gas fees
 and receives an extra reward.
 
 The _submitter reward_ consists of
-the _callback gas expenditure_ to cover the exact cost of the callback;
+the _callback expenditure_ to cover the exact cost of the callback;
 the _entry verification fee_ to cover the cost of verifying the submission;
 and 5% of the _delay penalties_ of the entire group.
 
@@ -358,6 +366,92 @@ Calculate gas required for verifying entry
 and associated support operations.
 Multiply by gas price plus a fluctuation margin (e.g. 1.5)
 to get entry verification fee.
+
+==== Cleanup gas efficiency
+
+As the gas cost of storing data in a previously zero field
+and later zeroing it again (20,000 + 5,000 - 15,000 = 10,000)
+exceeds the cost of modifying a nonzero field (5,000),
+cleaning unnecessary fields would appear to increase operating costs
+with little upside.
+
+However, gas costs in the entry submission transaction
+contribute 1.5 times as much to the effective price of beacon entries.
+Thus the 10,000 gas net refund per field
+is effectively worth 15,000 gas,
+making both options equal to the requester.
+The difference of 5,000 actual gas is effectively paid by the submitter
+in the form of a lower _entry verification fee_.
+
+Packing request data more densely,
+where applicable,
+could further reduce operating costs.
+
+===== Zeroing everything
+
+Resetting all request fields to zero after serving a request
+increases the immediate gas cost of making a request,
+but reduces the entry verification fee by a roughly equal amount.
+
+This results in a slightly lower total revenue for operators,
+but reduces the possible space of programming errors marginally;
+false positives for pending requests are eliminated
+even if the wrong field is queried.
+In practice this benefit is negligible.
+
+===== Wiping the minimum necessary
+
+Wiping only the necessary fields results in higher operator revenue
+for the same net price paid by requesters.
+Additionally, if a field remains nonzero but unchanged between requests
+even greater gas savings can be obtained.
+
+The field used to determine the presence of a pending request must be wiped.
+So must the retry counter, if nonzero.
+
+The requester address,
+assigned signing group,
+submission delay base time,
+gas price estimate
+and request fee
+are always written when a request is received.
+These are not necessary to wipe,
+but one of them must be chosen to signify the presence of a pending request
+with a nonzero value.
+
+Requester address, signing group, gas price and fee
+can theoretically stay unchanged between requests.
+If a single heavy user makes a number of consecutive requests
+with the same callback (gas amount) and gas prices are stable,
+this would provide a minor reduction in beacon operating costs.
+
+The submission delay base time
+is guaranteed to change when a new request is made,
+and thus is the most efficient indicator of a pending request.
+Using the maximum value instead of zero for "no request"
+is slightly more efficient.
+
+The presence of a callback can be determined by either 
+the callback address or callback gas.
+
+The callback address is likely to remain the same
+only if the requester is the same.
+
+Because excess callback gas is refunded
+the only cost of setting a higher callback gas is the tied-up liquidity,
+with the exception of callbacks
+where excessive gas consumption indicates an error state
+where reverting is preferable to continuing.
+With well-programmed callback contracts,
+the callback gas amount is only necessary to modify
+if it needs to be increased,
+or if the requester cannot afford the higher gas allowance.
+
+This suggests that using callback address to denote the presence of a callback
+allows minor efficiency gains.
+Modifying the callback address when a request is processed,
+including setting it to zero in a no-callback request,
+further improves gas efficiency.
 
 === Limitations
 
