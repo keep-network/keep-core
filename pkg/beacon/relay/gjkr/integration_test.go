@@ -244,7 +244,7 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 // ephemeral private key which doesn't correspond to the previously broadcast
 // public key, generated for the sake of communication with the accused member.
 // Due to such behaviour, the accuser is marked as disqualified in phase 5.
-func TestExecute_DQ_member3_accuserWithWrongPrivateKey_phase5(t *testing.T) {
+func TestExecute_DQ_member3_accuserRevealsWrongPrivateKey_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -332,10 +332,13 @@ func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
 //  there is a need to obtain ephemeral private key for the accused member which
 //  is stored in accuser internal map called 'ephemeralKeyPairs'.
 
-// Phase 11 test case - a member misbehaved by revealing an operating member
-// as disqualified. The revealing member becomes disqualified by all other
-// members which consider the revealed member as normally operating.
-func TestExecute_DQ_member2_revealedOperatingMemberAsDisqualified_phase11(t *testing.T) {
+// Phase 11 test case - a member misbehaved by revealing key of an operating
+// member. The revealing member becomes disqualified by all other members which
+// consider the member for which the key has been revealed as normally operating.
+// After phase 9, all group members should have the same view on who
+// is disqualified. Revealing key of non-disqualified members is forbidden and
+// leads to disqualifying the revealing member.
+func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5

@@ -38,7 +38,7 @@ type Chain interface {
 	chain.Handle
 
 	// GetLastDKGResult returns DKG result submitted to the chain for the given
-	// request ID.
+	// request ID as well as all the signatures that supported that result.
 	GetLastDKGResult() (*relaychain.DKGResult, map[group.MemberIndex][]byte)
 
 	// GetRelayEntryTimeoutReports returns an array of blocks which denote at what

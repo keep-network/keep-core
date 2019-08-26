@@ -796,6 +796,11 @@ func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
 	return nil
 }
 
+// Reveal shares calculated by members disqualified in previous phases.
+// First, perform shares recovery based on received DisqualifiedEphemeralKeysMessage.
+// Then, add disqualified member shares generated for the current member.
+// In result, a complete slice of shares is returned and reconstruction
+// of individual private keys is possible.
 func (rm *ReconstructingMember) revealDisqualifiedShares(
 	messages []*DisqualifiedEphemeralKeysMessage,
 ) ([]*disqualifiedShares, error) {
@@ -804,12 +809,12 @@ func (rm *ReconstructingMember) revealDisqualifiedShares(
 		return nil, err
 	}
 
-	// Add current member own shares received from disqualified members
+	// Add disqualified member shares generated for the current member
 	for _, disqualifiedMemberID := range rm.group.DisqualifiedMemberIDs() {
 		for _, shares := range disqualifiedShares {
 			if shares.disqualifiedMemberID == disqualifiedMemberID {
-				if ownShare, ok := rm.receivedValidSharesS[disqualifiedMemberID]; ok {
-					shares.peerSharesS[rm.ID] = ownShare
+				if currentMemberShare, ok := rm.receivedValidSharesS[disqualifiedMemberID]; ok {
+					shares.peerSharesS[rm.ID] = currentMemberShare
 				}
 				break
 			}
@@ -870,10 +875,13 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				continue
 			}
 
+			// After phase 9, all group members should have the same view on
+			// who is disqualified. Revealing key of non-disqualified members
+			// is forbidden and leads to disqualifying the revealing member.
 			if rm.group.IsOperating(disqualifiedMemberID) {
 				logger.Warningf(
-					"[member:%v] member [%v] disqualified because of "+
-						"revealing an operating member as disqualified",
+					"[member:%v] member [%v] disqualified because "+
+						"revealing key of non-disqualified member",
 					rm.ID,
 					revealingMemberID,
 				)
