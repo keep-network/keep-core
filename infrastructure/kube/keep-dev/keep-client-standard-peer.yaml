@@ -15,8 +15,8 @@ spec:
     app: keep-client
     type: standard-peer
 ---
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
   name: keep-client-standard-peer
   labels:
@@ -29,6 +29,15 @@ spec:
     matchLabels:
       app: keep-client
       type: standard-peer
+  serviceName: keep-client-standard-peer
+  volumeClaimTemplates:
+  - metadata:
+      name: keep-client-standard-peer
+    spec:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 5Mi
   template:
     metadata:
       labels:
@@ -67,18 +76,5 @@ spec:
           - name: keep-client-standard-peer
             mountPath: /mnt/keep-client/config
         command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "start"]
-      volumes:
-      - name: keep-client-standard-peer
-        persistentVolumeClaim:
-          claimName: keep-client-standard-peer
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: keep-client-standard-peer
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Mi
+
+

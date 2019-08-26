@@ -12,7 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-func TestExecute_IA_member2and4_DKGResultSigningPhase13(t *testing.T) {
+func TestExecute_IA_members24_phase13(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -39,6 +39,6 @@ func TestExecute_IA_member2and4_DKGResultSigningPhase13(t *testing.T) {
 	dkgtest.AssertMemberFailuresCount(t, result, 0)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertNoDisqualifiedMembers(t, result)
-	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertNoInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }

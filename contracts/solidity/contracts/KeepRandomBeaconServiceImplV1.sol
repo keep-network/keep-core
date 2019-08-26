@@ -165,7 +165,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             totalNumberOfGroups += OperatorContract(_operatorContracts[i]).numberOfGroups();
         }
 
-        require(totalNumberOfGroups > 0, "Total number of groups must be greater that zero.");
+        require(totalNumberOfGroups > 0, "Total number of groups must be greater than zero.");
 
         uint256 selectedIndex = seed % totalNumberOfGroups;
 
@@ -289,7 +289,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 createGroupPriceEstimate = tx.gasprice.mul(OperatorContract(latestOperatorContract).createGroupGasEstimate());
         if (_createGroupFeePool >= createGroupPriceEstimate) {
             _createGroupFeePool = _createGroupFeePool.sub(createGroupPriceEstimate);
-            (success, data) = latestOperatorContract.call.value(createGroupPriceEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));
+            (success, data) = latestOperatorContract.transfer(createGroupPriceEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));
         }
     }
 
