@@ -332,9 +332,42 @@ func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
 //  there is a need to obtain ephemeral private key for the accused member which
 //  is stored in accuser internal map called 'ephemeralKeyPairs'.
 
-// TODO Test case Phase 11: 'member reveals operating member as disqualified ->
-//  expected result: disqualify revealing member'.
-//  This case is difficult to implement for now because it needs access to
-//  member internals. In order to falsely reveal a member as disqualified
-//  there is a need to obtain ephemeral private key for the disqualified member
-//  which is stored in revealing member internal map called 'ephemeralKeyPairs'.
+// Phase 11 test case - a member misbehaved by revealing an operating member
+// as disqualified. The revealing member becomes disqualified by all other
+// members which consider the revealed member as normally operating.
+func TestExecute_DQ_member2_revealedOperatingMemberAsDisqualified_phase11(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	threshold := 3
+
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+
+		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
+		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(2) {
+			randomKeyPair, _ := ephemeral.GenerateKeyPair()
+			disqualifiedKeysMessage.SetPrivateKey(
+				group.MemberIndex(3),
+				randomKeyPair.PrivateKey,
+			)
+			return disqualifiedKeysMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3, 4, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
+	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 4, 5}...)
+}

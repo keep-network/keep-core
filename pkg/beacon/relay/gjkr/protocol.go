@@ -863,9 +863,10 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 		revealingMemberID := message.senderID
 		for disqualifiedMemberID, revealedPrivateKey := range message.privateKeys {
 			if rm.ID == disqualifiedMemberID {
-				// If a member is marked as disqualified, there is no sense
-				// to recover their shares. Such recovered
-				// shares will not be taken into account by other members.
+				// Mark the revealing member as disqualified immediately,
+				// as each member consider itself as a honest participant.
+				// Continue as there is no sense to recover own shares.
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
 			}
 

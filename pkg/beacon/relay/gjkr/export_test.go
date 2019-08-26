@@ -19,3 +19,10 @@ func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKey(
 ) {
 	ssam.accusedMembersKeys[memberIndex] = privateKey
 }
+
+func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
+	memberIndex group.MemberIndex,
+	privateKey *ephemeral.PrivateKey,
+) {
+	dekm.privateKeys[memberIndex] = privateKey
+}
