@@ -67,6 +67,9 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 	ephemeralPubKeyMessages []*EphemeralPublicKeyMessage,
 ) error {
 	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
+		// TODO Implement ephemeralPubKeyMessage validation and mark sender
+		//  as disqualified if message is invalid.
+
 		sm.evidenceLog.PutEphemeralMessage(ephemeralPubKeyMessage)
 
 		otherMember := ephemeralPubKeyMessage.senderID
