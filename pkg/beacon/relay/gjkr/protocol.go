@@ -849,7 +849,7 @@ func (rm *ReconstructingMember) revealDisqualifiedShares(
 		return nil, err
 	}
 
-	// Add disqualified member shares generated for the current member
+	// Add disqualified member shares generated for the current member.
 	for _, disqualifiedMemberID := range rm.group.DisqualifiedMemberIDs() {
 		for _, shares := range disqualifiedShares {
 			if shares.disqualifiedMemberID == disqualifiedMemberID {
