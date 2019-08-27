@@ -20,6 +20,7 @@ import (
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	lnet "github.com/libp2p/go-libp2p-net"
 	peer "github.com/libp2p/go-libp2p-peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
@@ -159,6 +160,23 @@ func (cm *connectionManager) DisconnectPeer(connectedPeer string) {
 	}
 }
 
+func (cm *connectionManager) OnConnected(callback func(remoteAddress string)) {
+	notifyBundle := &lnet.NotifyBundle{}
+	notifyBundle.ConnectedF = func(_ lnet.Network, connection lnet.Conn) {
+		callback(connection.RemoteMultiaddr().String())
+	}
+	cm.Network().Notify(notifyBundle)
+}
+
+func (cm *connectionManager) OnDisconnected(callback func(remoteAddress string)) {
+	notifyBundle := &lnet.NotifyBundle{}
+	notifyBundle.DisconnectedF = func(_ lnet.Network, connection lnet.Conn) {
+		callback(connection.RemoteMultiaddr().String())
+
+	}
+	cm.Network().Notify(notifyBundle)
+}
+
 // Connect connects to a libp2p network based on the provided config. The
 // connection is managed in part by the passed context, and provides access to
 // the functionality specified in the net.Provider interface.
@@ -205,7 +223,15 @@ func Connect(
 		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
 	}
 
-	provider.connectionManager = &connectionManager{provider.host}
+	connectionManager := &connectionManager{provider.host}
+	connectionManager.OnConnected(func(peer string) {
+		logger.Infof("connected to peer [%v]", peer)
+	})
+	connectionManager.OnDisconnected(func(peer string) {
+		logger.Infof("disconnected from peer [%v]", peer)
+	})
+
+	provider.connectionManager = connectionManager
 
 	// Instantiates and starts the connection management background process
 	watchtower.NewGuard(
