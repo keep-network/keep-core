@@ -449,7 +449,7 @@ contract KeepRandomBeaconOperator {
         // TODO: punish/reward logic
         uint256 rewards = dkgSubmitterReward;
         dkgSubmitterReward = 0;
-        msg.sender.transfer(rewards);
+        TokenStaking(stakingContract).magpieOf(msg.sender).transfer(rewards);
         cleanup();
         emit DkgResultPublishedEvent(groupPubKey);
 
@@ -790,8 +790,8 @@ contract KeepRandomBeaconOperator {
         uint256 delayPenalty = baseReward.mul(delayFactorInverse).div(1e2**2);
         
         for (uint i = 0; i < groupSize; i++) {
-            address payable receiver = address(uint160(groupMembers[groupPublicKey][i]));
-            receiver.transfer(groupReward);
+            address payable operator = address(uint160(groupMembers[groupPublicKey][i]));
+            TokenStaking(stakingContract).magpieOf(operator).transfer(groupReward);
         }
 
         // The submitter reward consists of:
@@ -799,7 +799,7 @@ contract KeepRandomBeaconOperator {
         // The entry verification fee to cover the cost of verifying the submission
         // Extra reward - 5% of the delay penalties of the entire group
         uint256 extraReward = delayPenalty.mul(groupSize).mul(5).div(100); 
-        msg.sender.transfer(signingRequest.signingFee.add(extraReward));
+        TokenStaking(stakingContract).magpieOf(msg.sender).transfer(signingRequest.signingFee.add(extraReward));
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
         uint256 subsidy = profitMargin.sub(groupReward.mul(groupSize)).sub(extraReward);
