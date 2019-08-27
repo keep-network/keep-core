@@ -28,7 +28,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 		expectedResult          []group.MemberIndex
 		expectedError           error
 	}{
-		"false accusation - accuser is punished": {
+		"false accusation - accuser is disqualified": {
 			accuserID:      3,
 			accusedID:      4,
 			expectedResult: []group.MemberIndex{3},
@@ -38,12 +38,12 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			accusedID:      3,
 			expectedResult: []group.MemberIndex{},
 		},
-		"current member as an accused - accusation skipped": {
+		"current member as an accused - accuser is disqualified": {
 			accuserID:      3,
 			accusedID:      currentMemberID,
-			expectedResult: []group.MemberIndex{},
+			expectedResult: []group.MemberIndex{3},
 		},
-		"incorrect shareS - accused member is punished": {
+		"incorrect shareS - accused member is disqualified": {
 			accuserID: 3,
 			accusedID: 4,
 			modifyShareS: func(shareS *big.Int) *big.Int {
@@ -51,7 +51,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			},
 			expectedResult: []group.MemberIndex{4},
 		},
-		"incorrect shareT - accused member is punished": {
+		"incorrect shareT - accused member is disqualified": {
 			accuserID: 3,
 			accusedID: 4,
 			modifyShareT: func(shareT *big.Int) *big.Int {
@@ -59,7 +59,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			},
 			expectedResult: []group.MemberIndex{4},
 		},
-		"incorrect commitments - accused member is punished": {
+		"incorrect commitments - accused member is disqualified": {
 			accuserID: 3,
 			accusedID: 4,
 			modifyCommitments: func(commitments []*bn256.G1) []*bn256.G1 {
@@ -73,15 +73,13 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			},
 			expectedResult: []group.MemberIndex{4},
 		},
-		"incorrect accused private key - error returned": {
+		"incorrect accused private key - accuser is disqualified": {
 			accuserID: 3,
 			accusedID: 4,
 			modifyAccusedPrivateKey: func(symmetricKey *ephemeral.PrivateKey) *ephemeral.PrivateKey {
 				return &ephemeral.PrivateKey{D: big.NewInt(12)}
 			},
-			// TODO Should we disqualify accuser/accused member here?
-			expectedResult: []group.MemberIndex{},
-			expectedError:  fmt.Errorf("could not decrypt shares [cannot decrypt share S [could not decrypt S share [symmetric key decryption failed]]]"),
+			expectedResult: []group.MemberIndex{3},
 		},
 	}
 	for testName, test := range tests {
@@ -303,7 +301,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 		modifyPublicKeySharePoints func(points []*bn256.G2) []*bn256.G2
 		expectedResult             []group.MemberIndex
 	}{
-		"false accusation - sender is punished": {
+		"false accusation - sender is disqualified": {
 			accuserID:      3,
 			accusedID:      4,
 			expectedResult: []group.MemberIndex{3},
@@ -318,7 +316,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			accusedID:      currentMemberID,
 			expectedResult: []group.MemberIndex{},
 		},
-		"incorrect shareS - accused member is punished": {
+		"incorrect shareS - accused member is disqualified": {
 			accuserID: 3,
 			accusedID: 4,
 			modifyShareS: func(shareS *big.Int) *big.Int {
@@ -326,7 +324,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			},
 			expectedResult: []group.MemberIndex{4},
 		},
-		"incorrect commitments - accused member is punished": {
+		"incorrect commitments - accused member is disqualified": {
 			accuserID: 3,
 			accusedID: 4,
 			modifyPublicKeySharePoints: func(points []*bn256.G2) []*bn256.G2 {

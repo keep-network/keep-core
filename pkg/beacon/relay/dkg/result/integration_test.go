@@ -41,4 +41,5 @@ func TestExecute_IA_members24_phase13(t *testing.T) {
 	dkgtest.AssertNoDisqualifiedMembers(t, result)
 	dkgtest.AssertNoInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 5}...)
 }
