@@ -325,10 +325,16 @@ func setupNotifications(network lnet.Network) {
 	notifyBundle := &lnet.NotifyBundle{}
 
 	notifyBundle.ConnectedF = func(_ lnet.Network, connection lnet.Conn) {
-		logger.Infof("connected to [%v]", addressWithIdentity(connection))
+		logger.Infof(
+			"established connection to [%v]",
+			addressWithIdentity(connection),
+		)
 	}
 	notifyBundle.DisconnectedF = func(_ lnet.Network, connection lnet.Conn) {
-		logger.Infof("disconnected from [%v]", addressWithIdentity(connection))
+		logger.Infof(
+			"disconnected from [%v]",
+			addressWithIdentity(connection),
+		)
 	}
 
 	network.Notify(notifyBundle)

@@ -78,7 +78,10 @@ func (g *Guard) start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			for _, connectedPeer := range g.connectionManager.ConnectedPeers() {
+			connectedPeers := g.connectionManager.ConnectedPeers()
+			logger.Debugf("connected peers: %v\n", connectedPeers)
+
+			for _, connectedPeer := range connectedPeers {
 				if g.currentlyChecking(connectedPeer) {
 					continue
 				}
