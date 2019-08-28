@@ -365,6 +365,13 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 //  there is a need to obtain ephemeral private key for the accused member which
 //  is stored in accuser internal map called 'ephemeralKeyPairs'.
 
+// TODO Test case Phase 5: 'accuser accuse an inactive member ->
+//  expected result: disqualify accuser'.
+//  This case is difficult to implement for now because it needs
+//  access to member internals. In order to make an accusation against inactive
+//  member, there is a need to obtain ephemeral private key for the accused
+//  member which is stored in accuser internal map called 'ephemeralKeyPairs'.
+
 // Phase 11 test case - a member misbehaved by revealing key of an operating
 // member. The revealing member becomes disqualified by all other members which
 // consider the member for which the key has been revealed as normally operating.

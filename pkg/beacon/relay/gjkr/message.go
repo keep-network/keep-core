@@ -194,3 +194,19 @@ func (psm *PeerSharesMessage) decryptShareT(
 
 	return new(big.Int).SetBytes(decryptedT), nil
 }
+
+func (psm *PeerSharesMessage) decryptShares(
+	receiverID group.MemberIndex,
+	key ephemeral.SymmetricKey,
+) (*big.Int, *big.Int, error) {
+	shareS, err := psm.decryptShareS(receiverID, key) // s_mj
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot decrypt share S [%v]", err)
+	}
+	shareT, err := psm.decryptShareT(receiverID, key) // t_mj
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot decrypt share T [%v]", err)
+	}
+
+	return shareS, shareT, nil
+}

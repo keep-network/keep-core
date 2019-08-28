@@ -477,9 +477,25 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				return fmt.Errorf("could not recover symmetric key [%v]", err)
 			}
 
-			shareS, shareT, err := recoverShares(
-				sjm.evidenceLog,
-				accusedID,
+			// Get peer shares message sent by accused member from evidence log.
+			// If message is not present, this means the accused member is inactive.
+			// Assuming that each other member consider the accused member as
+			// inactive, the accuser should be disqualified because of
+			// accusing an inactive member.
+			accusedSharesMessage := sjm.evidenceLog.peerSharesMessage(accusedID)
+			if accusedSharesMessage == nil {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"accusing inactive member [%v] ",
+					sjm.ID,
+					accuserID,
+					accuserID,
+				)
+				sjm.group.MarkMemberAsDisqualified(accuserID)
+				continue
+			}
+
+			shareS, shareT, err := accusedSharesMessage.decryptShares(
 				accuserID,
 				symmetricKey,
 			)
@@ -586,6 +602,10 @@ func recoverSymmetricKey(
 // First it finds in the evidence log the Peer Shares Message sent by the sender
 // to the receiver. Then it decrypts the decrypted shares with provided symmetric
 // key.
+//
+// Deprecated: Should be replaced. `peerSharesMessage` should be obtained and
+// `decryptShares` method from `PeerSharesMessage` should be used to decrypt shares.
+// TODO Remove when all usages will be replaced.
 func recoverShares(
 	evidenceLog evidenceLog,
 	senderID, receiverID group.MemberIndex,
@@ -765,6 +785,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 				return nil, fmt.Errorf("could not recover symmetric key [%v]", err)
 			}
 
+			// TODO Replace as in phase 5
 			shareS, _, err := recoverShares(
 				evidenceLog,
 				accusedID,
@@ -977,6 +998,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				continue
 			}
 
+			// TODO Replace as in phase 5
 			shareS, _, err := recoverShares(
 				rm.evidenceLog,
 				disqualifiedMemberID,  // m
