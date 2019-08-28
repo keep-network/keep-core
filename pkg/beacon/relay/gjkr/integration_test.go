@@ -238,7 +238,8 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 4}...)
 }
 
-// TODO Test case Phase 5: 'private key is invalid scalar for ECDH DQ -> expected result: disqualify accuser'
+// TODO Test case Phase 5: 'private key is invalid scalar for ECDH DQ ->
+//  expected result: disqualify accuser'
 
 // Phase 5 test case - a member performs an accusation but reveals an
 // ephemeral private key which doesn't correspond to the previously broadcast
@@ -365,7 +366,8 @@ func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 4}...)
 }
 
-// TODO Test case Phase 5: 'shares consistent -> expected result: disqualify accuser'.
+// TODO Test case Phase 5: 'shares consistent ->
+//  expected result: disqualify accuser'.
 //  This case is difficult to implement for now because it needs
 //  access to member internals. In order to make a false accusation
 //  there is a need to obtain ephemeral private key for the accused member which

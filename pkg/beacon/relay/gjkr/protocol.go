@@ -295,9 +295,13 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 					)
 				}
 
+				// If shares received in the message could not be decrypted,
+				// sender should be disqualified and accused in order to allow
+				// other members perform their own check.
 				if !sharesMessage.CanDecrypt(cvm.ID, symmetricKey) {
-					logger.Warningf("member [%v] disqualified because "+
-						"cannot decrypt their shares",
+					logger.Warningf("[member:%v] member [%v] disqualified "+
+						"because could not decrypt shares received from them",
+						cvm.ID,
 						sharesMessage.senderID,
 					)
 					cvm.group.MarkMemberAsDisqualified(sharesMessage.senderID)
@@ -482,9 +486,9 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				symmetricKey,
 			)
 			if err != nil {
-				logger.Warningf(
-					"member [%v] disqualified because of sending "+
-						"shares which could not be decrypted to member [%v]",
+				logger.Warningf("[member:%v] member [%v] disqualified because of "+
+					"sending shares which could not be decrypted to member [%v]",
+					sjm.ID,
 					accusedID,
 					accuserID,
 				)
@@ -497,15 +501,17 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				sjm.receivedValidPeerCommitments[accusedID], // C_m
 				accuserID, // j
 			) {
-				logger.Warningf("member [%v] disqualified because of "+
-					"false accusation against member [%v] ",
+				logger.Warningf("[member:%v] member [%v] disqualified "+
+					"because of false accusation against member [%v] ",
+					sjm.ID,
 					accuserID,
 					accusedID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
 			} else {
-				logger.Warningf("member [%v] disqualified because of "+
-					"confirmed misbehaviour against member [%v] ",
+				logger.Warningf("[member:%v] member [%v] disqualified "+
+					"because of confirmed misbehaviour against member [%v] ",
+					sjm.ID,
 					accusedID,
 					accuserID,
 				)
