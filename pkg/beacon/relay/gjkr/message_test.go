@@ -90,63 +90,6 @@ func TestNoSharesForReceiver(t *testing.T) {
 	}
 }
 
-func TestCanDecrypt(t *testing.T) {
-	sender := group.MemberIndex(4181)
-	receiver := group.MemberIndex(1231)
-
-	var tests = map[string]struct {
-		modifyMessage  func(msg *PeerSharesMessage)
-		expectedResult bool
-	}{
-		"decryption possible": {
-			expectedResult: true,
-		},
-		"decryption not possible - invalid S": {
-			modifyMessage: func(msg *PeerSharesMessage) {
-				msg.shares[receiver].encryptedShareS = []byte{0x01, 0x02, 0x03}
-			},
-			expectedResult: false,
-		},
-		"decryption not possible - invalid T": {
-			modifyMessage: func(msg *PeerSharesMessage) {
-				msg.shares[receiver].encryptedShareT = []byte{0x04, 0x05, 0x06}
-			},
-			expectedResult: false,
-		},
-	}
-
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			shareS := big.NewInt(90787123)
-			shareT := big.NewInt(62829113)
-
-			message, key, err := newTestPeerSharesMessage(
-				sender,
-				receiver,
-				shareS,
-				shareT,
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if test.modifyMessage != nil {
-				test.modifyMessage(message)
-			}
-
-			canDecrypt := message.CanDecrypt(receiver, key)
-
-			if test.expectedResult != canDecrypt {
-				t.Fatalf(
-					"unexpected CanDecrypt result\nexpected: %v\nactual:   %v",
-					test.expectedResult,
-					canDecrypt,
-				)
-			}
-		})
-	}
-}
-
 func newTestPeerSharesMessage(senderID, receiverID group.MemberIndex, shareS, shareT *big.Int) (
 	*PeerSharesMessage,
 	ephemeral.SymmetricKey,

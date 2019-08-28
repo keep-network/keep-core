@@ -194,23 +194,3 @@ func (psm *PeerSharesMessage) decryptShareT(
 
 	return new(big.Int).SetBytes(decryptedT), nil
 }
-
-// CanDecrypt checks if the shares for the given receiver from the
-// PeerSharesMessage can be successfully decrypted with the provided symmetric
-// key. This function should be called before the message is passed to DKG
-// protocol for processing. It's possible that malicious group member can send
-// an invalid message. In such case, it should be rejected to do not cause
-// a failure in DKG protocol.
-func (psm *PeerSharesMessage) CanDecrypt(
-	receiverID group.MemberIndex,
-	key ephemeral.SymmetricKey,
-) bool {
-	if _, err := psm.decryptShareS(receiverID, key); err != nil {
-		return false
-	}
-	if _, err := psm.decryptShareT(receiverID, key); err != nil {
-		return false
-	}
-
-	return true
-}
