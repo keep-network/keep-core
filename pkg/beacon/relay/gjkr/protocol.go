@@ -299,24 +299,14 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				// If shares received in the message could not be decrypted,
 				// sender should be disqualified and accused in order to allow
 				// other members perform their own check.
-				shareS, err := sharesMessage.decryptShareS(cvm.ID, symmetricKey) // s_ji
+				shareS, shareT, err := sharesMessage.decryptShares(
+					cvm.ID,
+					symmetricKey,
+				)
 				if err != nil {
 					logger.Warningf(
 						"[member:%v] member [%v] disqualified because "+
-							"could not decrypt share S received from them",
-						cvm.ID,
-						sharesMessage.senderID,
-					)
-					cvm.group.MarkMemberAsDisqualified(sharesMessage.senderID)
-					accusedMembersKeys[sharesMessage.senderID] =
-						cvm.ephemeralKeyPairs[sharesMessage.senderID].PrivateKey
-					break
-				}
-				shareT, err := sharesMessage.decryptShareT(cvm.ID, symmetricKey) // t_ji
-				if err != nil {
-					logger.Warningf(
-						"[member:%v] member [%v] disqualified because "+
-							"could not decrypt share T received from them",
+							"could not decrypt shares received from them",
 						cvm.ID,
 						sharesMessage.senderID,
 					)
