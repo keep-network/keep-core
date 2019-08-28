@@ -160,23 +160,6 @@ func (cm *connectionManager) DisconnectPeer(connectedPeer string) {
 	}
 }
 
-func (cm *connectionManager) OnConnected(callback func(remoteAddress string)) {
-	notifyBundle := &lnet.NotifyBundle{}
-	notifyBundle.ConnectedF = func(_ lnet.Network, connection lnet.Conn) {
-		callback(connection.RemoteMultiaddr().String())
-	}
-	cm.Network().Notify(notifyBundle)
-}
-
-func (cm *connectionManager) OnDisconnected(callback func(remoteAddress string)) {
-	notifyBundle := &lnet.NotifyBundle{}
-	notifyBundle.DisconnectedF = func(_ lnet.Network, connection lnet.Conn) {
-		callback(connection.RemoteMultiaddr().String())
-
-	}
-	cm.Network().Notify(notifyBundle)
-}
-
 // Connect connects to a libp2p network based on the provided config. The
 // connection is managed in part by the passed context, and provides access to
 // the functionality specified in the net.Provider interface.
@@ -198,6 +181,8 @@ func Connect(
 	if err != nil {
 		return nil, err
 	}
+
+	setupNotifications(host.Network())
 
 	cm, err := newChannelManager(ctx, identity, host)
 	if err != nil {
@@ -223,15 +208,7 @@ func Connect(
 		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
 	}
 
-	connectionManager := &connectionManager{provider.host}
-	connectionManager.OnConnected(func(peer string) {
-		logger.Infof("connected to peer [%v]", peer)
-	})
-	connectionManager.OnDisconnected(func(peer string) {
-		logger.Infof("disconnected from peer [%v]", peer)
-	})
-
-	provider.connectionManager = connectionManager
+	provider.connectionManager = &connectionManager{provider.host}
 
 	// Instantiates and starts the connection management background process
 	watchtower.NewGuard(
@@ -334,4 +311,25 @@ func extractMultiAddrFromPeers(peers []string) ([]peerstore.PeerInfo, error) {
 		peerInfos = append(peerInfos, *peerInfo)
 	}
 	return peerInfos, nil
+}
+
+func setupNotifications(network lnet.Network) {
+	addressWithIdentity := func(connection lnet.Conn) string {
+		return fmt.Sprintf(
+			"%s/ipfs/%s",
+			connection.RemoteMultiaddr().String(),
+			connection.RemotePeer().String(),
+		)
+	}
+
+	notifyBundle := &lnet.NotifyBundle{}
+
+	notifyBundle.ConnectedF = func(_ lnet.Network, connection lnet.Conn) {
+		logger.Infof("connected to [%v]", addressWithIdentity(connection))
+	}
+	notifyBundle.DisconnectedF = func(_ lnet.Network, connection lnet.Conn) {
+		logger.Infof("disconnected from [%v]", addressWithIdentity(connection))
+	}
+
+	network.Notify(notifyBundle)
 }

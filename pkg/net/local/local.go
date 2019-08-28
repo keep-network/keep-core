@@ -281,9 +281,3 @@ func (lcm *localConnectionManager) DisconnectPeer(connectedPeer string) {
 
 	delete(lcm.peers, connectedPeer)
 }
-
-func (lcm *localConnectionManager) OnConnected(callback func(string)) {
-}
-
-func (lcm *localConnectionManager) OnDisconnected(callback func(string)) {
-}

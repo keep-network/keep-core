@@ -64,8 +64,6 @@ type ConnectionManager interface {
 	ConnectedPeers() []string
 	GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error)
 	DisconnectPeer(connectedPeer string)
-	OnConnected(func(remoteAddress string))
-	OnDisconnected(func(remoteAddress string))
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler
