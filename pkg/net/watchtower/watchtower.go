@@ -79,7 +79,11 @@ func (g *Guard) start(ctx context.Context) {
 			return
 		case <-ticker.C:
 			connectedPeers := g.connectionManager.ConnectedPeers()
-			logger.Debugf("connected peers: %v\n", connectedPeers)
+			logger.Debugf(
+				"connected to [%v] peers: %v\n",
+				len(connectedPeers),
+				connectedPeers,
+			)
 
 			for _, connectedPeer := range connectedPeers {
 				if g.currentlyChecking(connectedPeer) {
