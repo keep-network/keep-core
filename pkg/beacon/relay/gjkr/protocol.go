@@ -792,6 +792,10 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 	shareS *big.Int,
 	publicKeySharePoints []*bn256.G2,
 ) bool {
+	if len(publicKeySharePoints) == 0 {
+		return false
+	}
+
 	var sum *bn256.G2 // Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 	for k, a := range publicKeySharePoints {
 		aj := new(bn256.G2).ScalarMult(a, pow(senderID, k)) // A_j[k] * (i^k)

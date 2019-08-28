@@ -333,6 +333,14 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			},
 			expectedResult: []group.MemberIndex{4},
 		},
+		"no commitments - accused member is disqualified": {
+			accuserID: 3,
+			accusedID: 4,
+			modifyPublicKeySharePoints: func(points []*bn256.G2) []*bn256.G2 {
+				return []*bn256.G2{}
+			},
+			expectedResult: []group.MemberIndex{4},
+		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
