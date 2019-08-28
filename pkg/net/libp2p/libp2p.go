@@ -62,6 +62,7 @@ type Config struct {
 	Peers []string
 	Port  int
 	Seed  int
+	NAT   bool
 }
 
 type provider struct {
@@ -177,7 +178,7 @@ func Connect(
 		return nil, err
 	}
 
-	host, err := discoverAndListen(ctx, identity, config.Port, stakeMonitor)
+	host, err := discoverAndListen(ctx, identity, &config, stakeMonitor)
 	if err != nil {
 		return nil, err
 	}
@@ -221,13 +222,13 @@ func Connect(
 func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
-	port int,
+	config *Config,
 	stakeMonitor chain.StakeMonitor,
 ) (host.Host, error) {
 	var err error
 
 	// Get available network ifaces, for a specific port, as multiaddrs
-	addrs, err := getListenAddrs(port)
+	addrs, err := getListenAddrs(config.Port)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +244,7 @@ func discoverAndListen(
 		)
 	}
 
-	return libp2p.New(ctx,
+	options := []libp2p.Option{
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
 		libp2p.Security(handshakeID, transport),
@@ -254,7 +255,16 @@ func discoverAndListen(
 				DefaultConnMgrGracePeriod,
 			),
 		),
-	)
+	}
+
+	if config.NAT {
+		logger.Info("enabling NAT support; will attempt to open a port in " +
+			"your network's firewall using UPnP")
+
+		options = append(options, libp2p.NATPortMap())
+	}
+
+	return libp2p.New(ctx, options...)
 }
 
 func getListenAddrs(port int) ([]ma.Multiaddr, error) {
