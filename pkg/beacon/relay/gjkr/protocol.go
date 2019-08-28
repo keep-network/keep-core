@@ -299,8 +299,9 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				// sender should be disqualified and accused in order to allow
 				// other members perform their own check.
 				if !sharesMessage.CanDecrypt(cvm.ID, symmetricKey) {
-					logger.Warningf("[member:%v] member [%v] disqualified "+
-						"because could not decrypt shares received from them",
+					logger.Warningf(
+						"[member:%v] member [%v] disqualified because "+
+							"could not decrypt shares received from them",
 						cvm.ID,
 						sharesMessage.senderID,
 					)
@@ -486,8 +487,9 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				symmetricKey,
 			)
 			if err != nil {
-				logger.Warningf("[member:%v] member [%v] disqualified because of "+
-					"sending shares which could not be decrypted to member [%v]",
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of sending "+
+						"to member [%v] shares that could not be decrypted",
 					sjm.ID,
 					accusedID,
 					accuserID,

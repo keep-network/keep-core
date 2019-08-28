@@ -46,7 +46,6 @@ func TestExecute_IA_member1_phase1(t *testing.T) {
 	threshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-
 		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
 		if ok && publicKeyMessage.SenderID() == group.MemberIndex(1) {
 			return nil
@@ -116,7 +115,6 @@ func TestExecute_IA_member1_phase4(t *testing.T) {
 	threshold := 2
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(1) {
 			return nil
@@ -148,7 +146,6 @@ func TestExecute_IA_member1_phase7(t *testing.T) {
 	threshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-
 		sharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
 		if ok && sharePointsMessage.SenderID() == group.MemberIndex(1) {
 			return nil
@@ -180,7 +177,6 @@ func TestExecute_IA_member1_phase8(t *testing.T) {
 	threshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-
 		accusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(1) {
 			return nil
@@ -212,7 +208,6 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 	threshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
 		if ok && (disqualifiedKeysMessage.SenderID() == group.MemberIndex(3) ||
 			disqualifiedKeysMessage.SenderID() == group.MemberIndex(5)) {
@@ -245,14 +240,13 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 // ephemeral private key which doesn't correspond to the previously broadcast
 // public key, generated for the sake of communication with the accused member.
 // Due to such behaviour, the accuser is marked as disqualified in phase 5.
-func TestExecute_DQ_member3_accuserRevealsWrongPrivateKey_phase5(t *testing.T) {
+func TestExecute_DQ_member3_revealsWrongPrivateKey_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
 	threshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(3) {
 			// accuser (member 3) reveals a random private key which doesn't
@@ -289,14 +283,13 @@ func TestExecute_DQ_member3_accuserRevealsWrongPrivateKey_phase5(t *testing.T) {
 // cannot be decrypted by the receiver. The receiver makes an accusation
 // which is confirmed by others so the misbehaving member is marked
 // as disqualified in phase 5.
-func TestExecute_DQ_member2_accusedOfCannotDecryptTheirShares_phase5(t *testing.T) {
+func TestExecute_DQ_member2_cannotDecryptTheirShares_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
 	threshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-
 		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
 		if ok && sharesMessage.SenderID() == group.MemberIndex(2) {
 			sharesMessage.SetShares(
@@ -330,14 +323,13 @@ func TestExecute_DQ_member2_accusedOfCannotDecryptTheirShares_phase5(t *testing.
 // to another member. It becomes accused by the receiver of the
 // invalid commitment. The accuser is right and the misbehaving member
 // is marked as disqualified in phase 5.
-func TestExecute_DQ_member5_accusedOfInconsistentShares_phase5(t *testing.T) {
+func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
 	threshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-
 		commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
 		if ok && commitmentsMessage.SenderID() == group.MemberIndex(5) {
 			commitmentsMessage.SetCommitment(
@@ -386,7 +378,6 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 	threshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
 		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(2) {
 			randomKeyPair, _ := ephemeral.GenerateKeyPair()
