@@ -20,7 +20,7 @@ import (
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	lnet "github.com/libp2p/go-libp2p-net"
+	libp2pnet "github.com/libp2p/go-libp2p-net"
 	peer "github.com/libp2p/go-libp2p-peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
@@ -323,8 +323,8 @@ func extractMultiAddrFromPeers(peers []string) ([]peerstore.PeerInfo, error) {
 	return peerInfos, nil
 }
 
-func setupNotifications(network lnet.Network) {
-	addressWithIdentity := func(connection lnet.Conn) string {
+func setupNotifications(network libp2pnet.Network) {
+	addressWithIdentity := func(connection libp2pnet.Conn) string {
 		return fmt.Sprintf(
 			"%s/ipfs/%s",
 			connection.RemoteMultiaddr().String(),
@@ -332,15 +332,15 @@ func setupNotifications(network lnet.Network) {
 		)
 	}
 
-	notifyBundle := &lnet.NotifyBundle{}
+	notifyBundle := &libp2pnet.NotifyBundle{}
 
-	notifyBundle.ConnectedF = func(_ lnet.Network, connection lnet.Conn) {
+	notifyBundle.ConnectedF = func(_ libp2pnet.Network, connection libp2pnet.Conn) {
 		logger.Infof(
 			"established connection to [%v]",
 			addressWithIdentity(connection),
 		)
 	}
-	notifyBundle.DisconnectedF = func(_ lnet.Network, connection lnet.Conn) {
+	notifyBundle.DisconnectedF = func(_ libp2pnet.Network, connection libp2pnet.Conn) {
 		logger.Infof(
 			"disconnected from [%v]",
 			addressWithIdentity(connection),
