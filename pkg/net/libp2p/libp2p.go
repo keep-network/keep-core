@@ -231,7 +231,7 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
-	NAT bool,
+	nat bool,
 	stakeMonitor chain.StakeMonitor,
 ) (host.Host, error) {
 	var err error
@@ -266,7 +266,7 @@ func discoverAndListen(
 		),
 	}
 
-	if NAT {
+	if nat {
 		logger.Info("enabling NAT support; will attempt to open a port in " +
 			"your network's firewall using UPnP")
 
