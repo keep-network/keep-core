@@ -189,7 +189,7 @@ func Connect(
 		return nil, err
 	}
 
-	setupNotifications(host.Network())
+	host.Network().Notify(buildNotifiee())
 
 	cm, err := newChannelManager(ctx, identity, host)
 	if err != nil {
@@ -330,7 +330,7 @@ func extractMultiAddrFromPeers(peers []string) ([]peerstore.PeerInfo, error) {
 	return peerInfos, nil
 }
 
-func setupNotifications(network libp2pnet.Network) {
+func buildNotifiee() libp2pnet.Notifiee {
 	addressWithIdentity := func(connection libp2pnet.Conn) string {
 		return fmt.Sprintf(
 			"%s/ipfs/%s",
@@ -354,5 +354,5 @@ func setupNotifications(network libp2pnet.Network) {
 		)
 	}
 
-	network.Notify(notifyBundle)
+	return notifyBundle
 }
