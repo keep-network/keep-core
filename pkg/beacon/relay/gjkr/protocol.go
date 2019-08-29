@@ -285,6 +285,9 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 			if sharesMessage.senderID == commitmentsMessage.senderID {
 				sharesMessageFound = true
 
+				// TODO Add validation: message must contain encrypted
+				//  payloads for all other participants
+
 				// If there is no symmetric key established with a sender of
 				// the message, error is returned.
 				symmetricKey, hasKey := cvm.symmetricKeys[sharesMessage.senderID]
@@ -296,9 +299,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				}
 
 				// Decrypt shares using symmetric key established with sender.
-				// If shares received in the message could not be decrypted,
-				// sender should be disqualified and accused in order to allow
-				// other members perform their own check.
+				// Message validation ensures that shares for current member
+				// are in the message. If shares received in the message
+				// could not be decrypted, sender should be disqualified and
+				// accused in order to allow other members perform their own check.
 				shareS, shareT, err := sharesMessage.decryptShares(
 					cvm.ID,
 					symmetricKey,
@@ -468,7 +472,8 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			}
 
 			// Get peer shares message sent by accused member from evidence log.
-			// If message is not present, this means the accused member is inactive.
+			// If message is not present, this means the accused member
+			// has been already marked as inactive in phase 3.
 			// Assuming that each other member consider the accused member as
 			// inactive, the accuser should be disqualified because of
 			// accusing an inactive member.
