@@ -178,7 +178,13 @@ func Connect(
 		return nil, err
 	}
 
-	host, err := discoverAndListen(ctx, identity, &config, stakeMonitor)
+	host, err := discoverAndListen(
+		ctx,
+		identity,
+		config.Port,
+		config.NAT,
+		stakeMonitor,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -222,13 +228,14 @@ func Connect(
 func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
-	config *Config,
+	port int,
+	NAT bool,
 	stakeMonitor chain.StakeMonitor,
 ) (host.Host, error) {
 	var err error
 
 	// Get available network ifaces, for a specific port, as multiaddrs
-	addrs, err := getListenAddrs(config.Port)
+	addrs, err := getListenAddrs(port)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +264,7 @@ func discoverAndListen(
 		),
 	}
 
-	if config.NAT {
+	if NAT {
 		logger.Info("enabling NAT support; will attempt to open a port in " +
 			"your network's firewall using UPnP")
 

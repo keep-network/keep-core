@@ -209,7 +209,8 @@ func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
 	host, err := discoverAndListen(
 		ctx,
 		identity,
-		&config,
+		config.Port,
+		config.NAT,
 		local.NewStakeMonitor(big.NewInt(200)),
 	)
 	if err != nil {
