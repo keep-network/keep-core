@@ -94,8 +94,10 @@ func (p *provider) ID() net.TransportIdentifier {
 func (p *provider) AddrStrings() []string {
 	multiaddrStrings := make([]string, 0, len(p.addrs))
 	for _, multiaddr := range p.addrs {
-		addrWithIdentity := fmt.Sprintf("%s/ipfs/%s", multiaddr.String(), p.identity.id.String())
-		multiaddrStrings = append(multiaddrStrings, addrWithIdentity)
+		multiaddrStrings = append(
+			multiaddrStrings,
+			multiaddressWithIdentity(multiaddr, p.identity.id),
+		)
 	}
 
 	return multiaddrStrings
@@ -331,28 +333,33 @@ func extractMultiAddrFromPeers(peers []string) ([]peerstore.PeerInfo, error) {
 }
 
 func buildNotifiee() libp2pnet.Notifiee {
-	addressWithIdentity := func(connection libp2pnet.Conn) string {
-		return fmt.Sprintf(
-			"%s/ipfs/%s",
-			connection.RemoteMultiaddr().String(),
-			connection.RemotePeer().String(),
-		)
-	}
-
 	notifyBundle := &libp2pnet.NotifyBundle{}
 
 	notifyBundle.ConnectedF = func(_ libp2pnet.Network, connection libp2pnet.Conn) {
 		logger.Infof(
 			"established connection to [%v]",
-			addressWithIdentity(connection),
+			multiaddressWithIdentity(
+				connection.RemoteMultiaddr(),
+				connection.RemotePeer(),
+			),
 		)
 	}
 	notifyBundle.DisconnectedF = func(_ libp2pnet.Network, connection libp2pnet.Conn) {
 		logger.Infof(
 			"disconnected from [%v]",
-			addressWithIdentity(connection),
+			multiaddressWithIdentity(
+				connection.RemoteMultiaddr(),
+				connection.RemotePeer(),
+			),
 		)
 	}
 
 	return notifyBundle
+}
+
+func multiaddressWithIdentity(
+	multiaddress ma.Multiaddr,
+	peerID peer.ID,
+) string {
+	return fmt.Sprintf("%s/ipfs/%s", multiaddress.String(), peerID.String())
 }
