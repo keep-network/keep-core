@@ -2,6 +2,7 @@ package relay
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"time"
@@ -93,7 +94,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 			selectedStakers := make([][]byte, len(selectedParticipants))
 			for i, participant := range selectedParticipants {
-				selectedStakers[i] = []byte(participant)
+				selectedStakers[i] = participant
+				logger.Infof("new group member: [0x%v]", hex.EncodeToString(participant))
 			}
 
 			// Read the selected, ordered tickets from the chain,
