@@ -457,6 +457,15 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				continue
 			}
 
+			// Recover symmetric key based on ephemeral public key message sent
+			// by accused member from evidence log. If the message is not present,
+			// this means the accused member has been already marked as inactive
+			// in phase 1. If the message is present but does not contain a
+			// public key for the accuser, this means the accused member has been
+			// already marked as disqualified in phase 1. Assuming that each other
+			// member consider the accused member as either inactive or disqualified,
+			// the accuser should be disqualified because of accusing an inactive or
+			// disqualified member.
 			symmetricKey, err := recoverSymmetricKey(
 				sjm.evidenceLog,
 				accusedID,
@@ -464,11 +473,17 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				revealedAccuserPrivateKey,
 			)
 			if err != nil {
-				// Symmetric key should be recovered without any problems.
-				// All related misbehaviour should be already handled in
-				// previous phases. If an error happened here, it should
-				// be fatal as there is no way to recover from it.
-				return fmt.Errorf("could not recover symmetric key [%v]", err)
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because could not "+
+						"recover symmetric key; accused member [%v] is already "+
+						"marked as inactive or disqualified: [%v] ",
+					sjm.ID,
+					accuserID,
+					accusedID,
+					err,
+				)
+				sjm.group.MarkMemberAsDisqualified(accuserID)
+				continue
 			}
 
 			// Get peer shares message sent by accused member from evidence log.
@@ -480,11 +495,12 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			accusedSharesMessage := sjm.evidenceLog.peerSharesMessage(accusedID)
 			if accusedSharesMessage == nil {
 				logger.Warningf(
-					"[member:%v] member [%v] disqualified because of "+
-						"accusing inactive member [%v] ",
+					"[member:%v] member [%v] disqualified because could not "+
+						"get peer shares message from evidence log; "+
+						"accused member [%v] is already marked as inactive",
 					sjm.ID,
 					accuserID,
-					accuserID,
+					accusedID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
 				continue
