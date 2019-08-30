@@ -43,7 +43,7 @@ contract KeepRandomBeaconOperator {
     address[] public serviceContracts;
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
-    address public stakingContract;
+    TokenStaking public stakingContract;
 
     // Size of a group in the threshold relay.
     uint256 public groupSize = 5;
@@ -195,7 +195,7 @@ contract KeepRandomBeaconOperator {
         require(_serviceContract != address(0), "Service contract address can't be zero.");
         require(_stakingContract != address(0), "Staking contract address can't be zero.");
         serviceContracts.push(_serviceContract);
-        stakingContract = _stakingContract;
+        stakingContract = TokenStaking(_stakingContract);
         owner = msg.sender;
     }
 
@@ -261,8 +261,7 @@ contract KeepRandomBeaconOperator {
         // Invalid tickets are rejected and their senders penalized.
         if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
             // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-            TokenStaking _stakingContract = TokenStaking(stakingContract);
-            _stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
+            stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
         } else {
             tickets.push(ticketValue);
             proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
@@ -510,7 +509,7 @@ contract KeepRandomBeaconOperator {
      * @return True if staked enough to participate in the group, false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return TokenStaking(stakingContract).balanceOf(staker) >= minimumStake;
+        return stakingContract.balanceOf(staker) >= minimumStake;
     }
 
     /**
@@ -519,7 +518,7 @@ contract KeepRandomBeaconOperator {
      * @return Number of how many virtual stakers can staker represent.
      */
     function stakingWeight(address staker) public view returns(uint256) {
-        return TokenStaking(stakingContract).balanceOf(staker)/minimumStake;
+        return stakingContract.balanceOf(staker).div(minimumStake);
     }
 
     /**
