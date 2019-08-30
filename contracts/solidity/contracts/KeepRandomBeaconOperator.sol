@@ -647,7 +647,7 @@ contract KeepRandomBeaconOperator {
      * @dev Evaluates the shift of selected group index based on the number of
      * expired groups.
      */
-    function shiftByExpiredGroups(uint256 selectedIndex) public returns(uint256) {
+    function shiftByExpiredGroups(uint256 selectedIndex) public view returns(uint256) {
         return expiredGroupOffset + selectedIndex;
     }
 
@@ -655,7 +655,7 @@ contract KeepRandomBeaconOperator {
      * @dev Evaluates the shift of selected group index based on the number of
      * non-expired, terminated groups.
      */
-    function shiftByTerminatedGroups(uint256 selectedIndex) public returns(uint256) {
+    function shiftByTerminatedGroups(uint256 selectedIndex) public view returns(uint256) {
         uint256 shiftedIndex = selectedIndex;
         for (uint i = 0; i < terminatedGroups.length; i++) {
             if (terminatedGroups[i] <= shiftedIndex) {
