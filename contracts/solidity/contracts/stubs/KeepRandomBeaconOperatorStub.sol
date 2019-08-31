@@ -29,10 +29,6 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         groupContract.addGroupMember(groupPublicKey, member);
     }
 
-    function getGroupPublicKey(uint256 groupIndex) public view returns(bytes memory) {
-        return groupContract.groupPubKeyByIndex(groupIndex);
-    }
-
     function setGroupSize(uint256 size) public {
         groupSize = size;
     }

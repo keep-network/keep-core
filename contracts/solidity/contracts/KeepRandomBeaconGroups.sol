@@ -73,7 +73,7 @@ contract KeepRandomBeaconGroups {
     /**
      * @dev Gets group public key.
      */
-    function groupPubKeyByIndex(uint256 groupIndex) public view returns (bytes memory) {
+    function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups[groupIndex].groupPubKey;
     }
 

@@ -591,7 +591,7 @@ contract KeepRandomBeaconOperator {
         entryInProgress = true;
 
         uint256 groupIndex = groupContract.selectGroup(previousEntry);
-        bytes memory groupPubKey = groupContract.groupPubKeyByIndex(groupIndex);
+        bytes memory groupPubKey = groupContract.getGroupPublicKey(groupIndex);
 
         signingRequest = SigningRequest(
             requestId,
@@ -611,7 +611,7 @@ contract KeepRandomBeaconOperator {
      * previous entry and seed.
      */
     function relayEntry(uint256 _groupSignature) public {
-        bytes memory groupPubKey = groupContract.groupPubKeyByIndex(signingRequest.groupIndex);
+        bytes memory groupPubKey = groupContract.getGroupPublicKey(signingRequest.groupIndex);
 
         require(
             BLS.verify(
