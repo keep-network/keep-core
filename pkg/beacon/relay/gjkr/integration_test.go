@@ -233,9 +233,6 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 4}...)
 }
 
-// TODO Test case Phase 5: 'private key is invalid scalar for ECDH DQ ->
-//  expected result: disqualify accuser'
-
 // Phase 5 test case - a member performs an accusation but reveals an
 // ephemeral private key which doesn't correspond to the previously broadcast
 // public key, generated for the sake of communication with the accused member.
@@ -371,9 +368,6 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 //  access to member internals. In order to make an accusation against inactive
 //  member, there is a need to obtain ephemeral private key for the accused
 //  member which is stored in accuser internal map called 'ephemeralKeyPairs'.
-
-// TODO Test case Phase 9: 'private key is invalid scalar for ECDH DQ ->
-//  expected result: disqualify accuser'
 
 // TODO Test case Phase 9: 'presented private key does not correspond
 //  to the published public key -> result: disqualify accuser'
