@@ -437,18 +437,22 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				continue
 			}
 
-			accuserPublicKey, err := findPublicKey(
+			accuserPublicKey := findPublicKey(
 				sjm.evidenceLog,
 				accuserID,
 				accusedID,
 			)
-			if err != nil {
+			if accuserPublicKey == nil {
 				// Accuser ephemeral public key, generated for the sake of
 				// communication with the accused member should be recovered
 				// without any problems. All related misbehaviour should be
 				// already handled. If an error happened here, it should
 				// be fatal as there is no way to recover from it.
-				return err
+				return fmt.Errorf(
+					"could not find public key sent by [%v] to [%v]",
+					accuserID,
+					accusedID,
+				)
 			}
 
 			if !accuserPublicKey.IsKeyMatching(revealedAccuserPrivateKey) {
@@ -471,20 +475,19 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			// member consider the accused member as either inactive or disqualified,
 			// the accuser should be disqualified because of accusing an inactive or
 			// disqualified member.
-			accusedPublicKey, err := findPublicKey(
+			accusedPublicKey := findPublicKey(
 				sjm.evidenceLog,
 				accusedID,
 				accuserID,
 			)
-			if err != nil {
+			if accusedPublicKey == nil {
 				logger.Warningf(
 					"[member:%v] member [%v] disqualified because could not "+
 						"recover symmetric key; accused member [%v] is already "+
-						"marked as inactive or disqualified: [%v] ",
+						"marked as inactive or disqualified ",
 					sjm.ID,
 					accuserID,
 					accusedID,
-					err,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
 				continue
@@ -573,24 +576,26 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 func findPublicKey(
 	evidenceLog evidenceLog,
 	senderID, receiverID group.MemberIndex,
-) (*ephemeral.PublicKey, error) {
+) *ephemeral.PublicKey {
 	ephemeralPublicKeyMessage := evidenceLog.ephemeralPublicKeyMessage(senderID)
 	if ephemeralPublicKeyMessage == nil {
-		return nil, fmt.Errorf(
+		logger.Warningf(
 			"no ephemeral public key message for sender %v",
 			senderID,
 		)
+		return nil
 	}
 
 	senderPublicKey, ok := ephemeralPublicKeyMessage.ephemeralPublicKeys[receiverID]
 	if !ok {
-		return nil, fmt.Errorf(
+		logger.Warningf(
 			"no ephemeral public key generated for receiver %v",
 			receiverID,
 		)
+		return nil
 	}
 
-	return senderPublicKey, nil
+	return senderPublicKey
 }
 
 // Recover ephemeral symmetric key used to encrypt communication between sender
@@ -608,9 +613,13 @@ func recoverSymmetricKey(
 	senderID, receiverID group.MemberIndex,
 	receiverPrivateKey *ephemeral.PrivateKey,
 ) (ephemeral.SymmetricKey, error) {
-	senderPublicKey, err := findPublicKey(evidenceLog, senderID, receiverID)
-	if err != nil {
-		return nil, err
+	senderPublicKey := findPublicKey(evidenceLog, senderID, receiverID)
+	if senderPublicKey == nil {
+		return nil, fmt.Errorf(
+			"could not find public key sent by [%v] to [%v]",
+			senderID,
+			receiverID,
+		)
 	}
 
 	return receiverPrivateKey.Ecdh(senderPublicKey), nil
