@@ -443,6 +443,11 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				accusedID,
 			)
 			if err != nil {
+				// Accuser ephemeral public key, generated for the sake of
+				// communication with the accused member should be recovered
+				// without any problems. All related misbehaviour should be
+				// already handled. If an error happened here, it should
+				// be fatal as there is no way to recover from it.
 				return err
 			}
 
@@ -466,11 +471,10 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 			// member consider the accused member as either inactive or disqualified,
 			// the accuser should be disqualified because of accusing an inactive or
 			// disqualified member.
-			symmetricKey, err := recoverSymmetricKey(
+			accusedPublicKey, err := findPublicKey(
 				sjm.evidenceLog,
 				accusedID,
 				accuserID,
-				revealedAccuserPrivateKey,
 			)
 			if err != nil {
 				logger.Warningf(
@@ -485,6 +489,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				sjm.group.MarkMemberAsDisqualified(accuserID)
 				continue
 			}
+			symmetricKey := revealedAccuserPrivateKey.Ecdh(accusedPublicKey)
 
 			// Get peer shares message sent by accused member from evidence log.
 			// If message is not present, this means the accused member
@@ -594,6 +599,10 @@ func findPublicKey(
 // Finds ephemeral public key sent by sender to the receiver. Performs ECDH
 // operation between sender's public key and receiver's private key to recover
 // the ephemeral symmetric key.
+//
+// Deprecated: Body of this function should be used directly in order to
+// explain intentions more expressively in the client code.
+// TODO Remove when all usages will be replaced.
 func recoverSymmetricKey(
 	evidenceLog evidenceLog,
 	senderID, receiverID group.MemberIndex,
@@ -785,6 +794,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 
 			evidenceLog := pjm.evidenceLog
 
+			// TODO Replace as in phase 5.
 			recoveredSymmetricKey, err := recoverSymmetricKey(
 				evidenceLog,
 				accusedID,
@@ -997,6 +1007,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				continue
 			}
 
+			// TODO Replace as in phase 5.
 			recoveredSymmetricKey, err := recoverSymmetricKey(
 				rm.evidenceLog,
 				disqualifiedMemberID, // m
