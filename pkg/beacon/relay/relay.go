@@ -126,7 +126,7 @@ func (n *Node) GenerateRelayEntry(
 				relayChain,
 				previousEntry,
 				seed,
-				n.chainConfig.HonestThreshold(),
+				n.chainConfig.Threshold,
 				signer.Signer,
 				startBlockHeight,
 			)
