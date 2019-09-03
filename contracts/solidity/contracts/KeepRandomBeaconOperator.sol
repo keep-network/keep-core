@@ -705,6 +705,8 @@ contract KeepRandomBeaconOperator {
      * @param requestId Request Id trackable by service contract.
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
+     * @param signingFee Amount in wei included in msg.value to cover the cost of signing to produce relay entry.
+     * @param callbackFee Amount in wei included in msg.value to cover the cost of the callback contract call.
      */
     function sign(
         uint256 requestId,
@@ -749,7 +751,7 @@ contract KeepRandomBeaconOperator {
 
     /**
      * @dev Creates a new relay entry and stores the associated data on the chain.
-     * @param _groupSignature Group BLS signature over the concatentation of the
+     * @param _groupSignature Group BLS signature over the concatenation of the
      * previous entry and seed.
      */
     function relayEntry(uint256 _groupSignature) public {

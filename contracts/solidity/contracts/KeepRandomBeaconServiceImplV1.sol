@@ -267,7 +267,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
             uint256 gasBeforeCallback = gasleft();
             (success, data) = _callbacks[requestId].callbackContract.call.gas(_callbacks[requestId].callbackGas)(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
-            uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 wei (ethereum transaction minimum gas) 
+            uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 gas (ethereum transaction minimum gas)
 
             // Obtain the actual callback gas expenditure and refund the surplus.
             uint256 callbackSurplus = 0;
