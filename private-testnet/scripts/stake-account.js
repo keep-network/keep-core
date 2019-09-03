@@ -7,6 +7,9 @@ const ethWsPort = '8546';
 const ethRpcPort = '8545';
 const ethNetworkId = '1101';
 
+// Acccounts that are currently distributed to external participants
+const activeAccounts = ["0x48f4bb2cf7379467c3052cb8c5d9e3892eeda487", "0x307bed667e177c7851779da0612c824d56ba097b", "0xa924d3a62b2d515235e5de5d903c405cba7f0e86"]
+
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
 25 and 50 blocks respectively at default.  The result of this on small private testnets
@@ -28,14 +31,14 @@ Truffle during contract and copied to the InitContainer image via Circle.
 */
 
 // TokenStaking
-const tokenStakingContractJsonFile = '/Users/sthompson22/Desktop/private-testnet/TokenStaking.json';
+const tokenStakingContractJsonFile = '../TokenStaking.json';
 const tokenStakingContractParsed = JSON.parse(fs.readFileSync(tokenStakingContractJsonFile));
 const tokenStakingContractAbi = tokenStakingContractParsed.abi;
 const tokenStakingContractAddress = tokenStakingContractParsed.networks[ethNetworkId].address;
 const tokenStakingContract = new web3.eth.Contract(tokenStakingContractAbi, tokenStakingContractAddress);
 
 // KeepToken
-const keepTokenContractJsonFile = '/Users/sthompson22/Desktop/private-testnet/KeepToken.json';
+const keepTokenContractJsonFile = '../KeepToken.json';
 const keepTokenContractParsed = JSON.parse(fs.readFileSync(keepTokenContractJsonFile));
 const keepTokenContractAbi = keepTokenContractParsed.abi;
 const keepTokenContractAddress = keepTokenContractParsed.networks[ethNetworkId].address;
@@ -75,4 +78,5 @@ function formatAmount(amount, decimals) {
   return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
 };
 
-stakeOperatorAccount('', '')
+activeAccounts.forEach(account => stakeOperatorAccount(account, '0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB'));
+
