@@ -10,7 +10,7 @@ interface OperatorContract {
 
 /**
  * @title KeepRandomBeaconGroups
- * @dev A helper contract for operatro contract to store groups and 
+ * @dev A helper contract for operator contract to store groups and 
  * perform logic to expire and terminate groups.
  */
 contract KeepRandomBeaconGroups {
