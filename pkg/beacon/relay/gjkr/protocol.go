@@ -877,16 +877,18 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 				shareS,
 				pjm.receivedValidPeerPublicKeySharePoints[accusedID],
 			) {
-				logger.Warningf("[member:%v] member [%v] disqualified "+
-					"because of false accusation against member [%v] ",
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"false accusation against member [%v] ",
 					pjm.ID,
 					accuserID,
 					accusedID,
 				)
 				pjm.group.MarkMemberAsDisqualified(accuserID)
 			} else {
-				logger.Warningf("[member:%v] member [%v] disqualified "+
-					"because of confirmed misbehaviour against member [%v] ",
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"confirmed misbehaviour against member [%v] ",
 					pjm.ID,
 					accusedID,
 					accuserID,
