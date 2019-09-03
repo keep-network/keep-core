@@ -1,0 +1,40 @@
+pragma solidity ^0.5.4;
+
+import "../KeepRandomBeaconOperator.sol";
+
+/**
+ * @title KeepRandomBeaconOperatorStub
+ * @dev A simplified Random Beacon operator contract to help local development.
+ */
+contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
+
+    constructor(
+        address _serviceContract,
+        address _stakingContract,
+        address payable _groupContract
+    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract, _groupContract) public {
+        groupThreshold = 15;
+        relayEntryTimeout = 10;
+        ticketInitialSubmissionTimeout = 20;
+        ticketReactiveSubmissionTimeout = 100;
+        ticketChallengeTimeout = 60;
+        resultPublicationBlockStep = 3;
+    }
+
+    function registerNewGroup(bytes memory groupPublicKey) public {
+        groupContract.addGroup(groupPublicKey);
+    }
+
+    function addGroupMember(bytes memory groupPublicKey, address member) public {
+        groupContract.addGroupMember(groupPublicKey, member);
+    }
+
+    function getGroupPublicKey(uint256 groupIndex) public view returns(bytes memory) {
+        return groupContract.groupPubKeyByIndex(groupIndex);
+    }
+
+    function setGroupSize(uint256 size) public {
+        groupSize = size;
+    }
+
+}
