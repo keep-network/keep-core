@@ -7,7 +7,6 @@ contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
   let operatorContract;
   const blocksForward = 20;
   const requestCounter = 0;
-  const relayEntryTimeout = 10;
 
   describe("RelayEntryTimeout", function() {
 
@@ -18,12 +17,11 @@ contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
         artifacts.require('./TokenStaking.sol'),
         artifacts.require('./KeepRandomBeaconService.sol'),
         artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-        artifacts.require('./KeepRandomBeaconOperatorStub.sol')
+        artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
+        artifacts.require('./KeepRandomBeaconGroups.sol')
       );
 
       operatorContract = contracts.operatorContract;
-
-      operatorContract.setRelayEntryTimeout(relayEntryTimeout);
 
       // Using stub method to add first group to help testing.
       await operatorContract.registerNewGroup(bls.groupPubKey);

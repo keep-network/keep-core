@@ -3,35 +3,33 @@ import {initContracts} from './helpers/initContracts';
 
 contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
 
-  let operatorContract;
+  let operatorContract, groupContract;
 
   const groupActiveTime = 300;
   const activeGroupsThreshold = 5;
-  const relayEntryTimeout = 10;
+  const relayEntryTimeout = 24;
 
   beforeEach(async () => {
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
+      artifacts.require('./KeepRandomBeaconService.sol'), 
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorStub.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperator.sol'),
+      artifacts.require('./stubs/KeepRandomBeaconGroupExpirationStub.sol')
     );
 
     operatorContract = contracts.operatorContract;
-    
-    operatorContract.setGroupActiveTime(groupActiveTime);
-    operatorContract.setActiveGroupsThreshold(activeGroupsThreshold);
-    operatorContract.setRelayEntryTimeout(relayEntryTimeout);
+    groupContract = contracts.groupContract;
   });
 
   async function addGroups(numberOfGroups) {
     for (var i = 1; i <= numberOfGroups; i++)
-      await operatorContract.registerNewGroup([i]);
+      await groupContract.addGroup([i]);
   }
 
   async function expireGroup(groupIndex) {
-    let groupRegistrationBlock = await operatorContract.getGroupRegistrationBlockHeight(groupIndex);
+    let groupRegistrationBlock = await groupContract.getGroupRegistrationBlockHeight(groupIndex);
     let currentBlock = await web3.eth.getBlockNumber();
 
     // If current block is larger than group registration block by group active time then
@@ -48,13 +46,13 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
       // count since we index from 0.
       await expireGroup(expiredCount - 1); 
     }
-    return operatorContract.selectGroup.call(beaconValue);
+    return groupContract.selectGroup.call(beaconValue);
   }
 
   it("should be able to count the number of active groups", async function() {
     let expectedGroupCount = 23;
     await addGroups(expectedGroupCount);
-    let numberOfGroups = await operatorContract.numberOfGroups();
+    let numberOfGroups = await groupContract.numberOfGroups();
     assert.equal(Number(numberOfGroups), expectedGroupCount, "Unexpected number of groups");
   });
 
@@ -168,7 +166,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
     let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
-    let pubKey = await operatorContract.getGroupPublicKey(0);
+    let pubKey = await groupContract.getGroupPublicKey(0);
 
     let isStale = await operatorContract.isStaleGroup(pubKey);
 
@@ -184,10 +182,10 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
     await addGroups(groupsCount);
     await expireGroup(9); // expire first 10 groups (we index from 0)
 
-    await operatorContract.selectGroup(0);
+    await groupContract.selectGroup(0);
 
     for (var i = 10; i < groupsCount; i++) {
-      let pubKey = await operatorContract.getGroupPublicKey(i);
+      let pubKey = await groupContract.getGroupPublicKey(i);
       let isStale = await operatorContract.isStaleGroup(pubKey);
 
       assert.equal(isStale, false, "Group should not be marked as stale")
@@ -204,12 +202,12 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
     await addGroups(groupsCount);
     await expireGroup(9); // expire first 10 groups (we index from 0)
 
-    await operatorContract.selectGroup(0);
+    await groupContract.selectGroup(0);
 
     await mineBlocks(relayEntryTimeout);
 
     for (var i = 10; i < groupsCount; i++) {
-      let pubKey = await operatorContract.getGroupPublicKey(i);
+      let pubKey = await groupContract.getGroupPublicKey(i);
       let isStale = await operatorContract.isStaleGroup(pubKey);
 
       assert.equal(isStale, false, "Group should not be marked as stale")
@@ -228,7 +226,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
     let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
-    let pubKey = await operatorContract.getGroupPublicKey(0);
+    let pubKey = await groupContract.getGroupPublicKey(0);
 
     // mine blocks but do not select group so it's not marked as expired
     await mineBlocks(groupActiveTime + relayEntryTimeout);
@@ -248,10 +246,10 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
     let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
-    let pubKey = await operatorContract.getGroupPublicKey(0);
+    let pubKey = await groupContract.getGroupPublicKey(0);
 
     await expireGroup(0);
-    await operatorContract.selectGroup(0);
+    await groupContract.selectGroup(0);
 
     let isStale  = await operatorContract.isStaleGroup(pubKey);
 
@@ -269,10 +267,10 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
      let groupsCount = activeGroupsThreshold + 1
      await addGroups(groupsCount);
  
-     let pubKey = await operatorContract.getGroupPublicKey(0);
+     let pubKey = await groupContract.getGroupPublicKey(0);
  
      await expireGroup(0);
-     await operatorContract.selectGroup(0);
+     await groupContract.selectGroup(0);
  
      await mineBlocks(relayEntryTimeout);
 

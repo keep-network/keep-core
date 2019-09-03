@@ -36,7 +36,8 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorStub.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
+      artifacts.require('./KeepRandomBeaconGroups.sol')
     );
 
     token = contracts.token;
@@ -44,12 +45,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     operatorContract = contracts.operatorContract;
 
     operatorContract.setGroupSize(groupSize);
-    operatorContract.setGroupThreshold(groupThreshold);
     operatorContract.setMinimumStake(minimumStake);
-    operatorContract.setResultPublicationBlockStep(resultPublicationBlockStep);
-    operatorContract.setTicketInitialSubmissionTimeout(ticketInitialSubmissionTimeout);
-    operatorContract.setTicketReactiveSubmissionTimeout(ticketReactiveSubmissionTimeout);
-    operatorContract.setTicketChallengeTimeout(ticketChallengeTimeout);
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(2000)))
     await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(2000)))
@@ -71,7 +67,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
       await operatorContract.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
     }
 
-    let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
+    let ticketSubmissionStartBlock = (await operatorContract.ticketSubmissionStartBlock()).toNumber();
     let timeoutChallenge = (await operatorContract.ticketChallengeTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
     resultPublicationTime = ticketSubmissionStartBlock + timeoutChallenge + timeDKG;

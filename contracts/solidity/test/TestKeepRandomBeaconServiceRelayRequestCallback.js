@@ -2,9 +2,9 @@ import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
-contract('TestKeepRandomBeaconServiceRelayRequestCallback', function() {
+contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
 
-  let operatorContract, serviceContract, callbackContract;
+  let operatorContract, groupContract, serviceContract, callbackContract;
 
   before(async () => {
     let contracts = await initContracts(
@@ -12,15 +12,20 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function() {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorStub.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
+      artifacts.require('./KeepRandomBeaconGroups.sol')
     );
 
     operatorContract = contracts.operatorContract;
+    groupContract = contracts.groupContract;
     serviceContract = contracts.serviceContract;
     callbackContract = await CallbackContract.new();
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
+    operatorContract.setGroupSize(1);
+    let group = await groupContract.getGroupPublicKey(0);
+    await operatorContract.addGroupMember(group, accounts[0]);
   });
 
   it("should produce entry if callback contract was not provided", async function() {

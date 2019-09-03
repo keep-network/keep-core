@@ -2,8 +2,8 @@ import expectThrow from './helpers/expectThrow';
 import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 
-contract('TestKeepRandomBeaconOperatorRelayEntry', function() {
-  let serviceContract, operatorContract;
+contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
+  let serviceContract, operatorContract, groupContract;
 
   before(async () => {
 
@@ -12,15 +12,20 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function() {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorStub.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
+      artifacts.require('./KeepRandomBeaconGroups.sol')
     );
   
     operatorContract = contracts.operatorContract;
+    groupContract = contracts.groupContract;
     serviceContract = contracts.serviceContract;
-    // operatorContract.authorizeServiceContract(serviceContract.address);
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
+    operatorContract.setGroupSize(1);
+    let group = await groupContract.getGroupPublicKey(0);
+    await operatorContract.addGroupMember(group, accounts[0]);
+
     await serviceContract.requestRelayEntry(bls.seed, {value: 10});
   });
 

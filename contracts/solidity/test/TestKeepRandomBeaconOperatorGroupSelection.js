@@ -8,7 +8,7 @@ import {initContracts} from './helpers/initContracts';
 
 contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
-  let token, stakingContract, serviceContract, operatorContract,
+  let token, stakingContract, serviceContract, operatorContract, groupContract,
   owner = accounts[0], magpie = accounts[1],
   operator1 = accounts[2], tickets1,
   operator2 = accounts[3], tickets2,
@@ -25,17 +25,17 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorStub.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
+      artifacts.require('./KeepRandomBeaconGroups.sol')
     );
     
     token = contracts.token;
     serviceContract = contracts.serviceContract;
     operatorContract = contracts.operatorContract;
+    groupContract = contracts.groupContract;
     stakingContract = contracts.stakingContract;
 
     operatorContract.setMinimumStake(minimumStake)
-    operatorContract.setTicketInitialSubmissionTimeout(ticketInitialSubmissionTimeout);
-    operatorContract.setTicketReactiveSubmissionTimeout(ticketReactiveSubmissionTimeout);
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(2000)))
     await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(2000)))
@@ -47,6 +47,9 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
+    operatorContract.setGroupSize(1);
+    let group = await groupContract.getGroupPublicKey(0);
+    await operatorContract.addGroupMember(group, accounts[0]);
 
   });
 

@@ -36,6 +36,7 @@ module.exports = async function(deployer) {
   await keepRandomBeaconGroups.setOperatorContract(keepRandomBeaconOperator.address);
 
   keepRandomBeaconService.initialize(
+    minPayment,
     withdrawalDelay,
     keepRandomBeaconOperator.address
   );
