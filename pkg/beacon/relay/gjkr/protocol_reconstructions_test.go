@@ -50,7 +50,7 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 	}
 }
 
-func TestRecoverDisqualifiedShares(t *testing.T) {
+func TestRevealDisqualifiedShares(t *testing.T) {
 	threshold := 2
 	groupSize := 6
 
@@ -97,7 +97,7 @@ func TestRecoverDisqualifiedShares(t *testing.T) {
 	}
 
 	// TEST
-	recoveredDisqualifiedShares, err := member1.recoverDisqualifiedShares(disqualifiedEphemeralKeysMessages)
+	recoveredDisqualifiedShares, err := member1.revealDisqualifiedShares(disqualifiedEphemeralKeysMessages)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,6 +190,10 @@ func generateDisqualifiedMemberShares(
 			)
 		}
 		currentMember.evidenceLog.PutPeerSharesMessage(peerSharesMessage)
+
+		// Add current member own shareS received from disqualified member
+		disqualifiedMemberShares[disqualifiedMember.ID][currentMember.ID] =
+			currentMember.receivedValidSharesS[disqualifiedMember.ID]
 	}
 	return disqualifiedMemberShares
 }
@@ -368,6 +372,11 @@ func TestReconstructDisqualifiedIndividualKeys(t *testing.T) {
 	member5 := members[4]
 	member6 := members[5]
 	disqualifiedMembers := []*ReconstructingMember{member5, member6}
+
+	// Disqualified members must be also disqualified
+	// from the recovering member's perspective
+	member1.group.MarkMemberAsDisqualified(member5.ID)
+	member1.group.MarkMemberAsDisqualified(member6.ID)
 
 	var disqualifiedEphemeralKeysMessages []*DisqualifiedEphemeralKeysMessage
 	for _, otherMember := range otherMembers {

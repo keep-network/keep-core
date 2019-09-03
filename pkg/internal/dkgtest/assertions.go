@@ -32,6 +32,45 @@ func AssertSuccessfulSignersCount(
 	}
 }
 
+// AssertSuccessfulSigners checks which particular signers were successful.
+func AssertSuccessfulSigners(
+	t *testing.T,
+	testResult *Result,
+	expectedSuccessfulMembers ...group.MemberIndex,
+) {
+	actualSuccessfulMembers := make([]group.MemberIndex, len(testResult.signers))
+	for _, signer := range testResult.signers {
+		memberIndex := signer.MemberID()
+		actualSuccessfulMembers = append(actualSuccessfulMembers, memberIndex)
+
+		isSuccessfulExpected := containsMemberIndex(
+			memberIndex,
+			expectedSuccessfulMembers,
+		)
+
+		if !isSuccessfulExpected {
+			t.Errorf(
+				"member [%v] should not be a successful signer",
+				memberIndex,
+			)
+		}
+	}
+
+	for _, memberIndex := range expectedSuccessfulMembers {
+		isSuccessful := containsMemberIndex(
+			memberIndex,
+			actualSuccessfulMembers,
+		)
+
+		if !isSuccessful {
+			t.Errorf(
+				"member [%v] should be a successful signer",
+				memberIndex,
+			)
+		}
+	}
+}
+
 // AssertMemberFailuresCount checks the number of members who failed the
 // protocol execution. It does not check which particular members failed.
 func AssertMemberFailuresCount(
@@ -51,13 +90,51 @@ func AssertMemberFailuresCount(
 // AssertNoDisqualifiedMembers checks there were no disqualified members during
 // the protocol execution.
 func AssertNoDisqualifiedMembers(t *testing.T, testResult *Result) {
+	AssertDisqualifiedMembers(t, testResult)
+}
+
+// AssertDisqualifiedMembers checks which members were disqualified
+// during the protocol execution and compares them against expected ones.
+func AssertDisqualifiedMembers(
+	t *testing.T,
+	testResult *Result,
+	expectedDisqualifiedMembers ...group.MemberIndex,
+) {
 	disqualifiedMemberByte := byte(0x01)
+	qualifiedMemberByte := byte(0x00)
 
 	for i, dq := range testResult.dkgResult.Disqualified {
-		if dq == disqualifiedMemberByte {
-			t.Errorf("member [%v] has been unexpectedly disqualified", i)
+		memberIndex := i + 1 // member indexes starts from 1
+		disqualifiedExpected := containsMemberIndex(
+			group.MemberIndex(memberIndex),
+			expectedDisqualifiedMembers,
+		)
+
+		if dq == disqualifiedMemberByte && !disqualifiedExpected {
+			t.Errorf(
+				"member [%v] should not be marked as disqualified",
+				memberIndex,
+			)
+		} else if dq == qualifiedMemberByte && disqualifiedExpected {
+			t.Errorf(
+				"member [%v] should be marked as disqualified",
+				memberIndex,
+			)
 		}
 	}
+}
+
+func containsMemberIndex(
+	index group.MemberIndex,
+	indexes []group.MemberIndex,
+) bool {
+	for _, i := range indexes {
+		if i == index {
+			return true
+		}
+	}
+
+	return false
 }
 
 // AssertNoInactiveMembers checks there were no inactive members during the
@@ -76,19 +153,6 @@ func AssertInactiveMembers(
 	inactiveMemberByte := byte(0x01)
 	activeMemberByte := byte(0x00)
 
-	containsMemberIndex := func(
-		index group.MemberIndex,
-		indexes []group.MemberIndex,
-	) bool {
-		for _, i := range indexes {
-			if i == index {
-				return true
-			}
-		}
-
-		return false
-	}
-
 	for i, ia := range testResult.dkgResult.Inactive {
 		memberIndex := i + 1 // member indexes starts from 1
 		inactiveExpected := containsMemberIndex(
@@ -98,12 +162,12 @@ func AssertInactiveMembers(
 
 		if ia == inactiveMemberByte && !inactiveExpected {
 			t.Errorf(
-				"member [%v] has been unexpectedly marked as inactive",
+				"member [%v] should not be marked as inactive",
 				memberIndex,
 			)
 		} else if ia == activeMemberByte && inactiveExpected {
 			t.Errorf(
-				"member [%v] has not been unexpectedly marked as inactive",
+				"member [%v] should be marked as inactive",
 				memberIndex,
 			)
 		}
@@ -127,5 +191,47 @@ func AssertValidGroupPublicKey(t *testing.T, testResult *Result) {
 	_, err := altbn128.DecompressToG2(testResult.dkgResult.GroupPublicKey)
 	if err != nil {
 		t.Errorf("invalid group public key: [%v]", err)
+	}
+}
+
+// AssertResultSupportingMembers checks which particular members
+// actually support the final result with their signature.
+func AssertResultSupportingMembers(
+	t *testing.T,
+	testResult *Result,
+	expectedSupportingMembers ...group.MemberIndex,
+) {
+	actualSupportingMembers := make(
+		[]group.MemberIndex,
+		len(testResult.dkgResultSignatures),
+	)
+	for memberIndex, _ := range testResult.dkgResultSignatures {
+		actualSupportingMembers = append(actualSupportingMembers, memberIndex)
+
+		isSupportingExpected := containsMemberIndex(
+			memberIndex,
+			expectedSupportingMembers,
+		)
+
+		if !isSupportingExpected {
+			t.Errorf(
+				"member [%v] should not support the result",
+				memberIndex,
+			)
+		}
+	}
+
+	for _, memberIndex := range expectedSupportingMembers {
+		isSupporting := containsMemberIndex(
+			memberIndex,
+			actualSupportingMembers,
+		)
+
+		if !isSupporting {
+			t.Errorf(
+				"member [%v] should support the result",
+				memberIndex,
+			)
+		}
 	}
 }

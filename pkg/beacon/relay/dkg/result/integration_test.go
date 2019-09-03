@@ -12,14 +12,13 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-func TestExecute_IA_member2and4_DKGResultSigningPhase13(t *testing.T) {
+func TestExecute_IA_members24_phase13(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
 	threshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-
 		hashSignatureMessage, ok := msg.(*result.DKGResultHashSignatureMessage)
 		if ok && (hashSignatureMessage.SenderID() == group.MemberIndex(2) ||
 			hashSignatureMessage.SenderID() == group.MemberIndex(4)) {
@@ -39,6 +38,7 @@ func TestExecute_IA_member2and4_DKGResultSigningPhase13(t *testing.T) {
 	dkgtest.AssertMemberFailuresCount(t, result, 0)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertNoDisqualifiedMembers(t, result)
-	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertNoInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 5}...)
 }
