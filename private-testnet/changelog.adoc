@@ -1,0 +1,39 @@
+:toc: macro
+
+= Changelog
+
+:icons: font
+:numbered:
+toc::[]
+
+Summary of Keep private-testnet iterations.
+
+== 2019-08-22
+
+=== NEW FEATURES
+- Timeout for a relay entry: If the group selected to produce a new random number does not deliver relay entry on time, we terminate that group and another one is selected to do the work.
+
+- Allow re-trigger genesis when the first group creation failed: We should be able to trigger genesis once again if the first group creation failed. This is to avoid a situation that something went wrong during the DKG and we are dead in the water with our contracts.
+
+=== BUGFIXES
+- Non-uniform distribution of group selection results: Fixed bug in group selection protocol; not all groups registered on the chain had the same chance of being selected in the case when we were marking some groups as expired. We fixed this problem and now all groups have the same chance of being selected.
+
+- Broadcast channel initialisation problems:  When running Keep nodes and sending a request for a new relay entry, occasionally we received the error coming from the chain saying “Total number of groups must be greater than zero”. This was caused by bug in DKG protocol in broadcast channel initialisation and happened when we had a network glitch for a while.  This is addressed now.
+
+- Incorrect seed for group selection and Pedersen commitment: The group selection protocol should take the previous beacon value along with staker-specific values to create a ticket. The buggy implementation passed the seed instead of the previous beacon value to group selection. This could threat the trapdoor of Pedersen commitment we use in DKG.
+
+=== OTHERS
+- Upgrade to the newest OpenZeppelin version.
+
+- Covered all known corner cases DKG protocol with integration tests for member inactivity and fixed all minor issues found.
+
+== 2019-07-16
+- Extended the deployment bundle and `docker run` command to include persistence.  The addition of persistence allows a restarted keep-client to recover group status/state.
+
+- Added more robust logging (now with Timestamps!).
+
+== 2019-07-10
+- Updated Docker image restores `relay request` command to the keep-client.
+
+- Updated config file for new contract references.
+

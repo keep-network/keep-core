@@ -1,0 +1,22 @@
+[ethereum]
+  URL = "ws://eth-tx.test.keep.network:8546"
+  URLRPC = "http://eth-tx.test.keep.network:8545"
+
+  [ethereum.account]
+    Address = "0x48f4bb2cf7379467c3052cb8c5d9e3892eeda487"
+    KeyFile = "/mnt/keep-client/config/eth-account-keyfile"
+
+  # Contracts are already deployed to the private testnet.  They are subject to change on deployment
+  [ethereum.ContractAddresses]
+    KeepRandomBeaconOperator = "0xf9e6Ae4d96C25D4187f7b16F7ca7975299A299d9"
+    TokenStaking = "0xF59E8Fa78877B5426Abbbf359CadF62fCf21f257"
+    KeepRandomBeaconService = "0xb340f8A11f44d4A8BDafCf8b5736Bd265e058f0a"
+
+# We can configure multiple bootstrap peers.  For the purpose of initial testing we're keeping it at one.
+[LibP2P]
+  Peers = ["/dns4/bootstrap.test.keep.network/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r"]
+  Port = 3919
+
+# In the real world this directory should be on persistent storage.
+[Storage]
+  DataDir = "/mnt/keep-client/persistence"
