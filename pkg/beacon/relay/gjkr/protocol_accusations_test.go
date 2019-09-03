@@ -33,11 +33,6 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			accusedID:      4,
 			expectedResult: []group.MemberIndex{3},
 		},
-		"current member as an accuser - accusation skipped": {
-			accuserID:      currentMemberID,
-			accusedID:      3,
-			expectedResult: []group.MemberIndex{},
-		},
 		"current member as an accused - accuser is disqualified": {
 			accuserID:      3,
 			accusedID:      currentMemberID,
