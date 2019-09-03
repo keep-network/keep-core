@@ -257,16 +257,17 @@ func (cm *CommittingMember) evaluateMemberShare(
 }
 
 // VerifyReceivedSharesAndCommitmentsMessages verifies shares and commitments
-// received in messages from other group members.
-// It returns accusation message with ID of members for which verification failed.
+// received in messages from other group members. Returns accusation message
+// with IDs of members for which the verification failed. All those members are
+// disqualified by the current member in this function.
 //
-// If cannot match commitments message with shares message for given sender then
-// error is returned. Also, error is returned if the member does not have
-// a symmetric encryption key established with sender of a message.
+// Function returns error only if it is fatal to the protocol. Such situation
+// should never happen.
 //
-// All the received PeerSharesMessage should be validated before they are passed
-// to this function. It should never happen that the message can't be decrypted
-// by this function.
+// Member is disqualified if:
+// - messages contain invalid number of shares or commitments
+// - shares can not be decrypted
+// - shares are not valid against commitments
 //
 // See Phase 4 of the protocol specification.
 func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessages(
@@ -405,24 +406,36 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 
 // ResolveSecretSharesAccusationsMessages resolves complaints received in
 // secret shares accusations messages. The member calls this function to judge
-// which party of the dispute is lying.
+// which party of the dispute is misbehaving.
 //
-// The current member cannot be a part of a dispute. If the current member is
-// either an accuser or is accused, the accusation is ignored. The accused
-// party cannot be a judge in its own case. From the other hand, the accuser has
-// already performed the calculation in the previous phase which resulted in the
-// accusation and waits now for a judgment from other players.
+// Function should not receive accusation message sent by the current member.
+// Members accused by the current member are disqualified in the previous phase,
+// at the same time when an accusation against them is published.
+//
+// If the current member is accused, it marks the accuser as disqualified
+// without checking self shares. Each member consider itself as an honest
+// participant.
 //
 // This function needs to decrypt shares sent previously by the accused member
 // to the accuser in an encrypted form. To do that it needs to recover a symmetric
 // key used for data encryption. It takes private key revealed by the accuser
 // and public key broadcasted by the accused and performs Elliptic Curve Diffie-
-// Hellman operation between them.
+// Hellman operation on them.
 //
-// It returns IDs of members who should be disqualified. It will be an accuser
-// if the validation shows that shares and commitments are valid, so the accusation
-// was unfounded. Else it confirms that accused member misbehaved and their ID is
-// added to the list.
+// Function returns error only if it is fatal to the protocol. Such situation
+// should never happen.
+//
+// Accuser is disqualified if:
+// - accused the current member
+// - revealed public key does not match the public key previously broadcast
+//   by that member
+// - accused inactive or already disqualified member and as a result, we do not
+//   have enough information to resolve that accusation
+// - shares of the accused member are valid against commitments
+//
+// Accused member is disqualified if:
+// - shares of the accused member can not be decrypted
+// - shares of the accused member are not valid against commitments
 //
 // See Phase 5 of the protocol specification.
 func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
@@ -449,7 +462,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				// of communication with the accused member should be present
 				// in the evidence log. The key is not there only if it was not
 				// sent by the accuser in the first phase of the protocol and
-				// such behaviour results in marking that member as inactive
+				// such behaviour results in marking that member as disqualified
 				// in the second phase. As a result, we no longer accept
 				// messages from that member and it is not possible we will
 				// receive an accusation from an inactive member in this phase.
@@ -559,16 +572,18 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				sjm.receivedValidPeerCommitments[accusedID], // C_m
 				accuserID, // j
 			) {
-				logger.Warningf("[member:%v] member [%v] disqualified "+
-					"because of false accusation against member [%v] ",
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"false accusation against member [%v] ",
 					sjm.ID,
 					accuserID,
 					accusedID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
 			} else {
-				logger.Warningf("[member:%v] member [%v] disqualified "+
-					"because of confirmed misbehaviour against member [%v] ",
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"confirmed misbehaviour against member [%v] ",
 					sjm.ID,
 					accusedID,
 					accuserID,
