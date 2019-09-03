@@ -40,3 +40,14 @@ module "push_deployment_infrastructure" {
 
   labels = "${local.labels}"
 }
+
+resource "google_storage_bucket" "keep_contract_data" {
+  name     = "${var.keep_contract_data_bucket_name}"
+  project  = "${module.project.project_id}"
+  location = "${var.region_data["region"]}"
+  labels   = "${local.labels}"
+
+  versioning {
+    enabled = true
+  }
+}

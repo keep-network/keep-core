@@ -225,3 +225,9 @@ variable "utility_box" {
     tools        = "kubectl, helm, jq, npm, geth"
   }
 }
+
+## global
+variable "keep_contract_data_bucket_name" {
+  description = "The name for the bucket that we publish compiled contract data to after CI driven migration."
+  default     = "keep-test-contract-data"
+}
