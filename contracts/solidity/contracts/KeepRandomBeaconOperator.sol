@@ -782,14 +782,14 @@ contract KeepRandomBeaconOperator {
         entryInProgress = false;
 
         // Calculate each group member reward = baseReward * delayFactor / groupSize
-        // Adding 2 decimals (1e2) to perform float division.
+        uint256 decimals = 1e4; // Adding 4 decimals to perform float division.
         uint256 profitMargin = signingRequest.payment.sub(signingRequest.signingFee).sub(signingRequest.callbackFee);
         uint256 baseReward = profitMargin.div(groupSize);
         uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
-        uint256 delayFactor = entryTimeout.sub(block.number).mul(1e2).div(relayEntryTimeout.sub(1))**2;
-        uint256 delayFactorInverse = uint256(1).mul(1e2**2).sub(delayFactor);
-        uint256 groupReward = baseReward.mul(delayFactor).div(1e2**2);
-        uint256 delayPenalty = baseReward.mul(delayFactorInverse).div(1e2**2);
+        uint256 delayFactor = entryTimeout.sub(block.number).mul(decimals).div(relayEntryTimeout.sub(1))**2;
+        uint256 delayFactorInverse = uint256(1).mul(decimals**2).sub(delayFactor);
+        uint256 groupReward = baseReward.mul(delayFactor).div(decimals**2);
+        uint256 delayPenalty = baseReward.mul(delayFactorInverse).div(decimals**2);
         
         for (uint i = 0; i < groupSize; i++) {
             address payable operator = address(uint160(groupMembers[groupPublicKey][i]));
