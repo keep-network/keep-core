@@ -123,7 +123,7 @@ contract KeepRandomBeaconOperator {
      * there are no groups on the operator contract.
      */
     function genesis() public {
-        require(groupContract.numberOfGroups() == 0, "There can be no groups");
+        require(numberOfGroups() == 0, "There can be no groups.");
         startGroupSelection(_genesisGroupSeed);
     }
 
@@ -469,35 +469,10 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Checks if group with the given public key is registered.
-     */
-    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
-        return groupContract.isGroupRegistered(groupPubKey);
-    }
-
-    /**
      * @dev Prevent receiving ether without explicitly calling a function.
      */
     function() external payable {
         revert("Can not call contract without explicitly calling a function.");
-    }
-
-    /**
-     * @dev Checks that the specified user has enough stake.
-     * @param staker Specifies the identity of the staker.
-     * @return True if staked enough to participate in the group, false otherwise.
-     */
-    function hasMinimumStake(address staker) public view returns(bool) {
-        return stakingContract.balanceOf(staker) >= minimumStake;
-    }
-
-    /**
-     * @dev Gets staking weight.
-     * @param staker Specifies the identity of the staker.
-     * @return Number of how many virtual stakers can staker represent.
-     */
-    function stakingWeight(address staker) public view returns(uint256) {
-        return stakingContract.balanceOf(staker).div(minimumStake);
     }
 
     /**
@@ -523,27 +498,6 @@ contract KeepRandomBeaconOperator {
     function naturalThreshold() public view returns (uint256) {
         uint256 space = 2**256-1; // Space consisting of all possible tickets.
         return groupSize.mul(space.div(tokenSupply().div(minimumStake)));
-    }
-
-    /**
-     * @dev Checks if a group with the given public key is a stale group.
-     * Stale group is an expired group which is no longer performing any
-     * operations. It is important to understand that an expired group may
-     * still perform some operations for which it was selected when it was still
-     * active. We consider a group to be stale when it's expired and when its
-     * expiration time and potentially executed operation timeout are both in
-     * the past.
-     */
-    function isStaleGroup(bytes memory groupPubKey) public view returns(bool) {
-        return groupContract.isStaleGroup(groupPubKey);
-    }
-
-    /**
-     * @dev Gets the number of active groups. Expired and terminated groups are
-     * not counted as active.
-     */
-    function numberOfGroups() public view returns(uint256) {
-        return groupContract.numberOfGroups();
     }
 
     /**
@@ -660,7 +614,7 @@ contract KeepRandomBeaconOperator {
         // We could terminate the last active group. If that's the case,
         // do not try to execute signing again because there is no group
         // which can handle it.
-        if (groupContract.numberOfGroups() > 0) {
+        if (numberOfGroups() > 0) {
             signRelayEntry(
                 signingRequest.relayRequestId,
                 signingRequest.seed,
@@ -669,5 +623,51 @@ contract KeepRandomBeaconOperator {
                 signingRequest.payment
             );
         }
+    }
+
+    /**
+     * @dev Checks that the specified user has enough stake.
+     * @param staker Specifies the identity of the staker.
+     * @return True if staked enough to participate in the group, false otherwise.
+     */
+    function hasMinimumStake(address staker) public view returns(bool) {
+        return stakingContract.balanceOf(staker) >= minimumStake;
+    }
+
+    /**
+     * @dev Gets staking weight.
+     * @param staker Specifies the identity of the staker.
+     * @return Number of how many virtual stakers can staker represent.
+     */
+    function stakingWeight(address staker) public view returns(uint256) {
+        return stakingContract.balanceOf(staker).div(minimumStake);
+    }
+
+    /**
+     * @dev Checks if group with the given public key is registered.
+     */
+    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
+        return groupContract.isGroupRegistered(groupPubKey);
+    }
+
+    /**
+     * @dev Checks if a group with the given public key is a stale group.
+     * Stale group is an expired group which is no longer performing any
+     * operations. It is important to understand that an expired group may
+     * still perform some operations for which it was selected when it was still
+     * active. We consider a group to be stale when it's expired and when its
+     * expiration time and potentially executed operation timeout are both in
+     * the past.
+     */
+    function isStaleGroup(bytes memory groupPubKey) public view returns(bool) {
+        return groupContract.isStaleGroup(groupPubKey);
+    }
+
+    /**
+     * @dev Gets the number of active groups. Expired and terminated groups are
+     * not counted as active.
+     */
+    function numberOfGroups() public view returns(uint256) {
+        return groupContract.numberOfGroups();
     }
 }
