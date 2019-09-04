@@ -280,6 +280,17 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 
 	accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 	for _, commitmentsMessage := range commitmentsMessages {
+		if !cvm.isValidMemberCommitmentsMessage(commitmentsMessage) {
+			logger.Warningf(
+				"[member:%v] member [%v] disqualified because of "+
+					"sending invalid member commitments message",
+				cvm.ID,
+				commitmentsMessage.senderID,
+			)
+			cvm.group.MarkMemberAsDisqualified(commitmentsMessage.senderID)
+			continue
+		}
+
 		// Find share message sent by the same member who sent commitment message
 		sharesMessageFound := false
 		for _, sharesMessage := range sharesMessages {
@@ -365,6 +376,27 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 		senderID:           cvm.ID,
 		accusedMembersKeys: accusedMembersKeys,
 	}, nil
+}
+
+// isValidMemberCommitmentsMessage validates a given MemberCommitmentsMessage.
+// Message is considered valid if it contains an expected number of commitments.
+func (cvm *CommitmentsVerifyingMember) isValidMemberCommitmentsMessage(
+	message *MemberCommitmentsMessage,
+) bool {
+	expectedCommitmentsNumber := cvm.group.DishonestThreshold() + 1
+	if len(message.commitments) != expectedCommitmentsNumber {
+		logger.Warningf(
+			"[member:%v] member [%v] sent message with number of "+
+				"commitments [%v] instead of [%v]",
+			cvm.ID,
+			message.senderID,
+			len(message.commitments),
+			expectedCommitmentsNumber,
+		)
+		return false
+	}
+
+	return true
 }
 
 // areSharesValidAgainstCommitments verifies if commitments are valid for passed

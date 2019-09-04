@@ -13,6 +13,12 @@ func (mcm *MemberCommitmentsMessage) SetCommitment(
 	mcm.commitments[index] = commitment
 }
 
+func (mcm *MemberCommitmentsMessage) SetCommitments(
+	commitments []*bn256.G1,
+) {
+	mcm.commitments = commitments
+}
+
 func (psm *PeerSharesMessage) SetShares(
 	memberIndex group.MemberIndex,
 	encryptedShareS, encryptedShareT []byte,
