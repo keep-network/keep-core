@@ -25,4 +25,10 @@ contract KeepRandomBeaconGroupExpirationStub is KeepRandomBeaconGroups {
         return groups[groupIndex].groupPubKey;
     }
 
+    function selectGroup(uint256 seed) public returns(uint256) {
+        require(numberOfGroups() > 0, "At least one active group required");
+        expireOldGroups();
+        uint256 selectedGroup = seed % numberOfGroups();
+        return shiftByTerminatedGroups(shiftByExpiredGroups(selectedGroup));
+    }
 }

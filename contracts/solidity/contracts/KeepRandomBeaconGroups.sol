@@ -193,7 +193,7 @@ contract KeepRandomBeaconGroups {
      * function to succeed.
      * @param seed Random number used as a group selection seed.
      */
-    function selectGroup(uint256 seed) public returns(uint256) {
+    function selectGroup(uint256 seed) public onlyOperatorContract returns(uint256) {
         require(numberOfGroups() > 0, "At least one active group required");
 
         expireOldGroups();
