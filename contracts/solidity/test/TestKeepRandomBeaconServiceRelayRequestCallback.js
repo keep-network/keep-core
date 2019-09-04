@@ -23,9 +23,11 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
-    operatorContract.setGroupSize(1);
+    operatorContract.setGroupSize(3);
     let group = await groupContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, accounts[0]);
+    await operatorContract.addGroupMember(group, accounts[1]);
+    await operatorContract.addGroupMember(group, accounts[2]);
   });
 
   it("should produce entry if callback contract was not provided", async function() {
