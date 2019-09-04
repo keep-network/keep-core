@@ -1,14 +1,14 @@
 pragma solidity ^0.5.4;
 
-import "../KeepRandomBeaconGroups.sol";
+import "../KeepRandomBeaconOperatorGroups.sol";
 
 /**
- * @title KeepRandomBeaconGroupExpirationStub
+ * @title KeepRandomBeaconOperatorGroupExpirationStub
  * @dev A simplified Random Beacon group contract to help local development.
  */
-contract KeepRandomBeaconGroupExpirationStub is KeepRandomBeaconGroups {
+contract KeepRandomBeaconOperatorGroupExpirationStub is KeepRandomBeaconOperatorGroups {
 
-    constructor() KeepRandomBeaconGroups() public {
+    constructor() KeepRandomBeaconOperatorGroups() public {
         groupActiveTime = 300;
         activeGroupsThreshold = 5;
     }

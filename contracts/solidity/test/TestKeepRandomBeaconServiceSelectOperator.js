@@ -2,7 +2,7 @@ import expectThrow from './helpers/expectThrow';
 import {initContracts} from './helpers/initContracts';
 import {bls} from './helpers/data';
 const OperatorContract = artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
-const GroupContract = artifacts.require('./stubs/KeepRandomBeaconGroups.sol')
+const GroupContract = artifacts.require('./stubs/KeepRandomBeaconOperatorGroups.sol')
 
 contract('TestKeepRandomBeaconServiceSelectOperator', function() {
 

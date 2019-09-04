@@ -3,7 +3,7 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./TokenStaking.sol";
-import "./KeepRandomBeaconGroups.sol";
+import "./KeepRandomBeaconOperatorGroups.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
@@ -46,7 +46,7 @@ contract KeepRandomBeaconOperator {
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
     TokenStaking public stakingContract;
 
-    KeepRandomBeaconGroups public groupContract;
+    KeepRandomBeaconOperatorGroups public groupContract;
 
     // Size of a group in the threshold relay.
     uint256 public groupSize = 5;
@@ -179,7 +179,7 @@ contract KeepRandomBeaconOperator {
         require(_stakingContract != address(0), "Staking contract address can't be zero.");
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
-        groupContract = KeepRandomBeaconGroups(_groupContract);
+        groupContract = KeepRandomBeaconOperatorGroups(_groupContract);
         owner = msg.sender;
     }
 

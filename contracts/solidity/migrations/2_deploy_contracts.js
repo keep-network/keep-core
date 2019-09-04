@@ -7,7 +7,7 @@ const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol");
 const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
-const KeepRandomBeaconGroups = artifacts.require("./KeepRandomBeaconGroups.sol");
+const KeepRandomBeaconOperatorGroups = artifacts.require("./KeepRandomBeaconOperatorGroups.sol");
 
 const withdrawalDelay = 86400; // 1 day
 const minPayment = 1;
@@ -24,16 +24,16 @@ module.exports = async function(deployer) {
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
-  await deployer.deploy(KeepRandomBeaconGroups);
+  await deployer.deploy(KeepRandomBeaconOperatorGroups);
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 11).
-  await deployer.deploy(KeepRandomBeaconOperator, KeepRandomBeaconService.address, TokenStaking.address, KeepRandomBeaconGroups.address);
+  await deployer.deploy(KeepRandomBeaconOperator, KeepRandomBeaconService.address, TokenStaking.address, KeepRandomBeaconOperatorGroups.address);
 
   const keepRandomBeaconService = await KeepRandomBeaconServiceImplV1.at(KeepRandomBeaconService.address);
   const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
 
-  const keepRandomBeaconGroups = await KeepRandomBeaconGroups.deployed();
-  await keepRandomBeaconGroups.setOperatorContract(keepRandomBeaconOperator.address);
+  const keepRandomBeaconOperatorGroups = await KeepRandomBeaconOperatorGroups.deployed();
+  await keepRandomBeaconOperatorGroups.setOperatorContract(keepRandomBeaconOperator.address);
 
   keepRandomBeaconService.initialize(
     minPayment,

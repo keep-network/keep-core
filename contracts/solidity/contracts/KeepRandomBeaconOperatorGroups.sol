@@ -9,11 +9,11 @@ interface OperatorContract {
 }
 
 /**
- * @title KeepRandomBeaconGroups
+ * @title KeepRandomBeaconOperatorGroups
  * @dev A helper contract for operator contract to store groups and 
  * perform logic to expire and terminate groups.
  */
-contract KeepRandomBeaconGroups {
+contract KeepRandomBeaconOperatorGroups {
     using SafeMath for uint256;
     using BytesLib for bytes;
 

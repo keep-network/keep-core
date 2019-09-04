@@ -2,7 +2,7 @@ import { duration } from './increaseTime';
 const BLS = artifacts.require('./cryptography/BLS.sol');
 
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
-  KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator, KeepRandomBeaconGroups) {
+  KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator, KeepRandomBeaconOperatorGroups) {
 
   let token, stakingContract,
     serviceContractImplV1, serviceContractProxy, serviceContract,
@@ -25,7 +25,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   // Initialize Keep Random Beacon operator contract
   const bls = await BLS.new();
   await KeepRandomBeaconOperator.link("BLS", bls.address);
-  groupContract = await KeepRandomBeaconGroups.new();
+  groupContract = await KeepRandomBeaconOperatorGroups.new();
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address, groupContract.address);
   await groupContract.setOperatorContract(operatorContract.address);
 
