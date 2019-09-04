@@ -761,7 +761,13 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 			sm.receivedValidSharesS[message.senderID],
 			message.publicKeySharePoints,
 		) {
-			// TODO in next PR: mark message sender as disqualified
+			logger.Warningf(
+				"[member:%v] share from member [%v] invalid against public "+
+					"key share points; disqualifying and accusing the member",
+				sm.ID,
+				message.senderID,
+			)
+			sm.group.MarkMemberAsDisqualified(message.senderID)
 			accusedMembersKeys[message.senderID] = sm.ephemeralKeyPairs[message.senderID].PrivateKey
 			continue
 		}
