@@ -29,6 +29,12 @@ func (psm *PeerSharesMessage) SetShares(
 	}
 }
 
+func (psm *PeerSharesMessage) RemoveShares(
+	memberIndex group.MemberIndex,
+) {
+	delete(psm.shares, memberIndex)
+}
+
 func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKey(
 	memberIndex group.MemberIndex,
 	privateKey *ephemeral.PrivateKey,

@@ -297,8 +297,16 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 			if sharesMessage.senderID == commitmentsMessage.senderID {
 				sharesMessageFound = true
 
-				// TODO Add validation: message must contain encrypted
-				//  payloads for all other participants; disqualify otherwise.
+				if !cvm.isValidPeerSharesMessage(sharesMessage) {
+					logger.Warningf(
+						"[member:%v] member [%v] disqualified because of "+
+							"sending invalid peer shares message",
+						cvm.ID,
+						sharesMessage.senderID,
+					)
+					cvm.group.MarkMemberAsDisqualified(sharesMessage.senderID)
+					break
+				}
 
 				// If there is no symmetric key established with the sender of
 				// the message, error is returned.
@@ -394,6 +402,32 @@ func (cvm *CommitmentsVerifyingMember) isValidMemberCommitmentsMessage(
 			expectedCommitmentsNumber,
 		)
 		return false
+	}
+
+	return true
+}
+
+// isValidPeerSharesMessage validates a given PeerSharesMessage.
+// Message is considered valid if it contains shares for all sender's peers.
+func (cvm *CommitmentsVerifyingMember) isValidPeerSharesMessage(
+	message *PeerSharesMessage,
+) bool {
+	for _, checkedMemberID := range cvm.group.OperatingMemberIDs() {
+		if checkedMemberID == message.senderID {
+			// Message contains shares only for sender's peers
+			continue
+		}
+
+		if _, ok := message.shares[checkedMemberID]; !ok {
+			logger.Warningf(
+				"[member:%v] peer shares message from member [%v] doesn't "+
+					"contain shares for member [%v]",
+				cvm.ID,
+				message.senderID,
+				checkedMemberID,
+			)
+			return false
+		}
 	}
 
 	return true
