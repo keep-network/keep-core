@@ -372,8 +372,8 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 // TODO Test case Phase 9: 'presented private key does not correspond
 //  to the published public key -> result: disqualify accuser'
 
-// Phase 9 test case - some members misbehaved by sending
-// invalid public key shares to another members. They become accused
+// Phase 9 test case - some members misbehaved by sending in phase 7
+// invalid public key shares to another members. They became accused in phase 8
 // by the receivers of the invalid public key shares. The accusers are right
 // and the misbehaving members are marked as disqualified in phase 9.
 func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
