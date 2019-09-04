@@ -2,7 +2,7 @@ import mineBlocks from './helpers/mineBlocks';
 import {initContracts} from './helpers/initContracts';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 
-contract('TestKeepRandomBeaconOperatorGroupTermination', function() {
+contract('TestKeepRandomBeaconOperatorGroupTermination', function(accounts) {
 
     let groupContract;
 
@@ -21,6 +21,7 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function() {
       );
 
       groupContract = contracts.groupContract;
+      await groupContract.setOperatorContract(accounts[0]); // Let us pass onlyOperatorContract check
     });
 
     beforeEach(async () => {
