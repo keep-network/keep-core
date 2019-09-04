@@ -101,7 +101,7 @@ contract KeepRandomBeaconGroups {
      * @dev Prevent receiving ether without explicitly calling a function.
      */
     function() external payable {
-        revert("Can not call contract without explicitly calling a function.");
+        revert("You should not send any ether to this contract.");
     }
 
     /**

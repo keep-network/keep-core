@@ -4,7 +4,7 @@ import "../KeepRandomBeaconGroups.sol";
 
 /**
  * @title KeepRandomBeaconGroupExpirationStub
- * @dev A simplified Random Beacon group contract to help local development.s
+ * @dev A simplified Random Beacon group contract to help local development.
  */
 contract KeepRandomBeaconGroupExpirationStub is KeepRandomBeaconGroups {
 
