@@ -756,6 +756,17 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 	// `product = Π (A_j[k] ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is threshold.
 	for _, message := range messages {
+		if !sm.isValidMemberPublicKeySharePointsMessage(message) {
+			logger.Warningf(
+				"[member:%v] member [%v] disqualified because of "+
+					"sending invalid member public key share points message",
+				sm.ID,
+				message.senderID,
+			)
+			sm.group.MarkMemberAsDisqualified(message.senderID)
+			continue
+		}
+
 		if !sm.isShareValidAgainstPublicKeySharePoints(
 			sm.ID,
 			sm.receivedValidSharesS[message.senderID],
@@ -772,6 +783,28 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 		senderID:           sm.ID,
 		accusedMembersKeys: accusedMembersKeys,
 	}, nil
+}
+
+// isValidMemberPublicKeySharePointsMessage validates a given
+// MemberPublicKeySharePointsMessage. Message is considered valid if it
+// contains an expected number of public key share points.
+func (sm *SharingMember) isValidMemberPublicKeySharePointsMessage(
+	message *MemberPublicKeySharePointsMessage,
+) bool {
+	expectedPointsNumber := sm.group.DishonestThreshold() + 1
+	if len(message.publicKeySharePoints) != expectedPointsNumber {
+		logger.Warningf(
+			"[member:%v] member [%v] sent message with number of public "+
+				"key share points [%v] instead of [%v]",
+			sm.ID,
+			message.senderID,
+			len(message.publicKeySharePoints),
+			expectedPointsNumber,
+		)
+		return false
+	}
+
+	return true
 }
 
 // isShareValidAgainstPublicKeySharePoints verifies if public key share points

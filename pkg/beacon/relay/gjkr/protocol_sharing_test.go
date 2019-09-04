@@ -142,15 +142,6 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 			expectedError:      nil,
 			expectedAccusedIDs: []group.MemberIndex{2, 5},
 		},
-		"negative validation - no public key share - one accused member": {
-			modifyPublicKeySharePointsMessages: func(
-				messages []*MemberPublicKeySharePointsMessage,
-			) {
-				messages[0].publicKeySharePoints = []*bn256.G2{}
-			},
-			expectedError:      nil,
-			expectedAccusedIDs: []group.MemberIndex{2},
-		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
