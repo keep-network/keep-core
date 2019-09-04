@@ -301,15 +301,10 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			accusedID:      4,
 			expectedResult: []group.MemberIndex{3},
 		},
-		"current member as a sender - accusation skipped": {
-			accuserID:      currentMemberID,
-			accusedID:      3,
-			expectedResult: []group.MemberIndex{},
-		},
 		"current member as an accused - accusation skipped": {
 			accuserID:      3,
 			accusedID:      currentMemberID,
-			expectedResult: []group.MemberIndex{},
+			expectedResult: []group.MemberIndex{3},
 		},
 		"incorrect shareS - accused member is disqualified": {
 			accuserID: 3,
