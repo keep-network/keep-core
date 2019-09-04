@@ -921,15 +921,17 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 	return gs.String() == sum.String()
 }
 
-// ResolvePublicKeySharePointsAccusationsMessages resolves a complaint received
+// ResolvePublicKeySharePointsAccusationsMessages resolves complaints received
 // in points accusations messages. The member calls this function to judge
-// which party of the dispute is lying.
+// which party of the dispute is misbehaving.
 //
-// The current member cannot be a part of a dispute. If the current member is
-// either an accuser or is accused, the accusation is ignored. The accused
-// party cannot be a judge in its own case. From the other hand, the accuser has
-// already performed the calculation in the previous phase which resulted in the
-// accusation and waits now for a judgment from other players.
+// Function should not receive accusation message sent by the current member.
+// Members accused by the current member are disqualified in the previous phase,
+// at the same time when an accusation against them is published.
+//
+// If the current member is accused, it marks the accuser as disqualified
+// without checking self shares. Each member consider itself as an honest
+// participant.
 //
 // This function needs to decrypt shares sent previously by the accused member
 // to the accuser in an encrypted form. To do that it needs to recover a symmetric
@@ -937,10 +939,22 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 // and public key broadcasted by the accused and performs Elliptic Curve Diffie-
 // Hellman operation between them.
 //
-// It returns IDs of members who should be disqualified. It will be an accuser
-// if the validation shows that coefficients are valid, so the accusation was
-// unfounded. Else it confirms that accused member misbehaved and their ID is
-// added to the list.
+// Function returns error only if it is fatal to the protocol. Such situation
+// should never happen.
+//
+// Accuser is disqualified if:
+// - accused the current member
+// - revealed public key does not match the public key previously broadcast
+//   by that member
+// - accused inactive or already disqualified member and as a result, we do not
+//   have enough information to resolve that accusation
+// - shares of the accused member are valid against public key share points
+// - shares of the accused member can not be decrypted and the accuser didn't
+//   complain about this fact in phase 4 (protocol violation)
+//
+// Accused member is disqualified if:
+// - shares of the accused member can not be decrypted
+// - shares of the accused member are not valid against public key share points
 //
 // See Phase 9 of the protocol specification.
 func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessages(
@@ -993,28 +1007,90 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 				continue
 			}
 
-			// TODO Replace as in phase 5.
-			recoveredSymmetricKey, err := recoverSymmetricKey(
+			// Recover symmetric key based on ephemeral public key message sent
+			// by the accused member. If the message is not present in the
+			// evidence log, it means the accused member did not sent us
+			// their public key in the first phase of the protocol and we
+			// marked the accused member as inactive in the second phase of the
+			// protocol. Assuming everyone in the group has the same view on
+			// who is inactive, it means the accuser sent and accusation against
+			// inactive member, knowing we can not resolve that accusation.
+			// As a result, we should mark the accuser as disqualified.
+			//
+			// If the message is present in the evidence log but it does not
+			// contain a public key generated for the accuser, it means we have
+			// already marked the accused party as disqualified when performing
+			// a validation of a message with public keys in the first phase of
+			// the protocol. Assuming everyone in the group has the same view on
+			// who is disqualified after the second phase of the protocol, it
+			// means the accuser sent an accusation against a disqualified
+			// member, knowing we can not resolve that accusation.
+			// As a result, we should mark the accuser as disqualified.
+			accusedPublicKey := findPublicKey(
 				evidenceLog,
 				accusedID,
 				accuserID,
-				revealedAccuserPrivateKey,
 			)
-			if err != nil {
-				// TODO Should we disqualify accuser/accused member here?
-				return fmt.Errorf("could not recover symmetric key [%v]", err)
+			if accusedPublicKey == nil {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because could not "+
+						"recover symmetric key; accused member [%v] is already "+
+						"marked as inactive or disqualified ",
+					pjm.ID,
+					accuserID,
+					accusedID,
+				)
+				pjm.group.MarkMemberAsDisqualified(accuserID)
+				continue
+			}
+			recoveredSymmetricKey := revealedAccuserPrivateKey.Ecdh(accusedPublicKey)
+
+			// Get from evidence log peer shares message sent by the accused
+			// member. If the message is not present, this means the accused
+			// member has been already marked as inactive in phase 4.
+			// Assuming that each other member consider the accused member as
+			// inactive, the accuser should be disqualified because of
+			// accusing an inactive member knowing we can not resolve this
+			// accusation.
+			accusedSharesMessage := evidenceLog.peerSharesMessage(accusedID)
+			if accusedSharesMessage == nil {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because could not "+
+						"get peer shares message from evidence log; "+
+						"accused member [%v] is already marked as inactive",
+					pjm.ID,
+					accuserID,
+					accusedID,
+				)
+				pjm.group.MarkMemberAsDisqualified(accuserID)
+				continue
 			}
 
-			// TODO Replace as in phase 5
-			shareS, _, err := recoverShares(
-				evidenceLog,
-				accusedID,
+			// Message validation performed in the fourth phase ensures
+			// that shares for all group members (including the accused one)
+			// are in the message.
+			// The only reason possible why shares could not be decrypted
+			// here is because they are broken. If shares are broken,
+			// the accused member is disqualified.
+			// Accuser should be also marked as disqualified because they didn't
+			// complain earlier about invalid shares so they violated the protocol.
+			shareS, _, err := accusedSharesMessage.decryptShares(
 				accuserID,
 				recoveredSymmetricKey,
 			)
 			if err != nil {
-				// TODO Should we disqualify accuser/accused member here?
-				return fmt.Errorf("could not decrypt share S [%v]", err)
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of sending "+
+						"shares that could not be decrypted; "+
+						"member [%v] disqualified because didn't complain "+
+						"about invalid shares earlier",
+					pjm.ID,
+					accusedID,
+					accuserID,
+				)
+				pjm.group.MarkMemberAsDisqualified(accuserID)
+				pjm.group.MarkMemberAsDisqualified(accusedID)
+				continue
 			}
 
 			if pjm.isShareValidAgainstPublicKeySharePoints(
