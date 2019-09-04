@@ -32,13 +32,13 @@ contract KeepRandomBeaconGroups {
         uint registrationBlockHeight;
     }
 
-    Group[] public groups;
+    Group[] internal groups;
     uint256[] internal terminatedGroups;
     mapping (bytes => address[]) internal groupMembers;
 
     // expiredGroupOffset is pointing to the first active group, it is also the
     // expired groups counter
-    uint256 public expiredGroupOffset = 0;
+    uint256 internal expiredGroupOffset = 0;
 
     /**
      * @dev Throws if called by any account other than the authorized address.
@@ -205,7 +205,7 @@ contract KeepRandomBeaconGroups {
      * @dev Evaluates the shift of selected group index based on the number of
      * expired groups.
      */
-    function shiftByExpiredGroups(uint256 selectedIndex) public view returns(uint256) {
+    function shiftByExpiredGroups(uint256 selectedIndex) internal view returns(uint256) {
         return expiredGroupOffset.add(selectedIndex);
     }
 
@@ -213,7 +213,7 @@ contract KeepRandomBeaconGroups {
      * @dev Evaluates the shift of selected group index based on the number of
      * non-expired, terminated groups.
      */
-    function shiftByTerminatedGroups(uint256 selectedIndex) public view returns(uint256) {
+    function shiftByTerminatedGroups(uint256 selectedIndex) internal view returns(uint256) {
         uint256 shiftedIndex = selectedIndex;
         for (uint i = 0; i < terminatedGroups.length; i++) {
             if (terminatedGroups[i] <= shiftedIndex) {
