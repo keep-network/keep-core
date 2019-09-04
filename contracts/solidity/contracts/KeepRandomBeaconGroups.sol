@@ -78,13 +78,6 @@ contract KeepRandomBeaconGroups {
     }
 
     /**
-     * @dev Gets group member.
-     */
-    function groupMember(bytes memory groupPubKey, uint256 memberIndex) public view returns (address payable) {
-        return address(uint160(groupMembers[groupPubKey][memberIndex]));
-    }
-
-    /**
      * @dev Terminates group.
      */
     function terminateGroup(uint256 groupIndex) public onlyOperatorContract {

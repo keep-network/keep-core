@@ -122,7 +122,7 @@ contract KeepRandomBeaconOperator {
      * @dev Triggers the first group selection. Genesis can be called only when
      * there are no groups on the operator contract.
      */
-    function genesis() public payable {
+    function genesis() public {
         require(groupContract.numberOfGroups() == 0, "There can be no groups");
         startGroupSelection(_genesisGroupSeed);
     }
