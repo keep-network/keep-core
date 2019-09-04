@@ -30,6 +30,13 @@ func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKey(
 	ssam.accusedMembersKeys[memberIndex] = privateKey
 }
 
+func (mpkspm *MemberPublicKeySharePointsMessage) SetPublicKeyShare(
+	index int,
+	publicKeyShare *bn256.G2,
+) {
+	mpkspm.publicKeySharePoints[index] = publicKeyShare
+}
+
 func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
 	memberIndex group.MemberIndex,
 	privateKey *ephemeral.PrivateKey,

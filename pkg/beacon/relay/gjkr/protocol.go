@@ -761,6 +761,7 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 			sm.receivedValidSharesS[message.senderID],
 			message.publicKeySharePoints,
 		) {
+			// TODO in next PR: mark message sender as disqualified
 			accusedMembersKeys[message.senderID] = sm.ephemeralKeyPairs[message.senderID].PrivateKey
 			continue
 		}
@@ -791,6 +792,10 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 	shareS *big.Int,
 	publicKeySharePoints []*bn256.G2,
 ) bool {
+	if len(publicKeySharePoints) == 0 {
+		return false
+	}
+
 	var sum *bn256.G2 // Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 	for k, a := range publicKeySharePoints {
 		aj := new(bn256.G2).ScalarMult(a, pow(senderID, k)) // A_j[k] * (i^k)
@@ -830,11 +835,12 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 // See Phase 9 of the protocol specification.
 func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessages(
 	messages []*PointsAccusationsMessage,
-) ([]group.MemberIndex, error) {
-	disqualifiedMembers := make([]group.MemberIndex, 0)
+) error {
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
+
+			// TODO in next PR: change this condition similarly as in phase 5
 			if pjm.ID == message.senderID || pjm.ID == accusedID {
 				// The member cannot resolve the dispute in which it's involved.
 				continue
@@ -851,7 +857,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 			)
 			if err != nil {
 				// TODO Should we disqualify accuser/accused member here?
-				return nil, fmt.Errorf("could not recover symmetric key [%v]", err)
+				return fmt.Errorf("could not recover symmetric key [%v]", err)
 			}
 
 			// TODO Replace as in phase 5
@@ -863,7 +869,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 			)
 			if err != nil {
 				// TODO Should we disqualify accuser/accused member here?
-				return nil, fmt.Errorf("could not decrypt share S [%v]", err)
+				return fmt.Errorf("could not decrypt share S [%v]", err)
 			}
 
 			if pjm.isShareValidAgainstPublicKeySharePoints(
@@ -871,15 +877,27 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 				shareS,
 				pjm.receivedValidPeerPublicKeySharePoints[accusedID],
 			) {
-				// TODO The accusation turned out to be unfounded. Should we add accused
-				// member's individual public key to receivedValidPeerPublicKeySharePoints?
-				disqualifiedMembers = append(disqualifiedMembers, message.senderID)
-				continue
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"false accusation against member [%v] ",
+					pjm.ID,
+					accuserID,
+					accusedID,
+				)
+				pjm.group.MarkMemberAsDisqualified(accuserID)
+			} else {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"confirmed misbehaviour against member [%v] ",
+					pjm.ID,
+					accusedID,
+					accuserID,
+				)
+				pjm.group.MarkMemberAsDisqualified(accusedID)
 			}
-			disqualifiedMembers = append(disqualifiedMembers, accusedID)
 		}
 	}
-	return disqualifiedMembers, nil
+	return nil
 }
 
 // RevealDisqualifiedMembersKeys reveals ephemeral private keys used to create

@@ -333,6 +333,14 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			},
 			expectedResult: []group.MemberIndex{4},
 		},
+		"no commitments - accused member is disqualified": {
+			accuserID: 3,
+			accusedID: 4,
+			modifyPublicKeySharePoints: func(points []*bn256.G2) []*bn256.G2 {
+				return []*bn256.G2{}
+			},
+			expectedResult: []group.MemberIndex{4},
+		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
@@ -383,12 +391,14 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 				accusedMembersKeys: accusedMembersKeys,
 			})
 
-			result, err := justifyingMember.ResolvePublicKeySharePointsAccusationsMessages(
+			err = justifyingMember.ResolvePublicKeySharePointsAccusationsMessages(
 				messages,
 			)
 			if err != nil {
 				t.Fatal(err)
 			}
+
+			result := justifyingMember.group.DisqualifiedMemberIDs()
 			if !reflect.DeepEqual(result, test.expectedResult) {
 				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
 			}
