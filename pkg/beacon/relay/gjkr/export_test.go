@@ -69,3 +69,10 @@ func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
 ) {
 	dekm.privateKeys[memberIndex] = privateKey
 }
+
+func (ms *messageStorage) removeMessage(sender group.MemberIndex) {
+	ms.cacheLock.Lock()
+	defer ms.cacheLock.Unlock()
+
+	delete(ms.cache, sender)
+}

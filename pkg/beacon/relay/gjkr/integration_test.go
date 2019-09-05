@@ -466,6 +466,8 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 //  access to member internals. In order to make a false accusation
 //  there is a need to obtain ephemeral private key for the accused member which
 //  is stored in accuser internal map called 'ephemeralKeyPairs'.
+//  This case is only covered by unit test
+//  (TestResolveSecretSharesAccusations in protocol_accusations_test.go).
 
 // TODO Test case Phase 5: 'accuser accuse an inactive member ->
 //  expected result: disqualify accuser'.
@@ -473,6 +475,8 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 //  access to member internals. In order to make an accusation against inactive
 //  member, there is a need to obtain ephemeral private key for the accused
 //  member which is stored in accuser internal map called 'ephemeralKeyPairs'.
+//  This case is only covered by unit test
+//  (TestResolveSecretSharesAccusations in protocol_accusations_test.go).
 
 // Phase 9 test case - some members perform an accusation but reveal
 // ephemeral private keys which don't correspond to the previously broadcast
@@ -582,6 +586,8 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 //  access to member internals. In order to make a false accusation
 //  there is a need to obtain ephemeral private key for the accused member which
 //  is stored in accuser internal map called 'ephemeralKeyPairs'.
+//  This case is only covered by unit test
+//  (TestResolvePublicKeySharePointsAccusationsMessages in protocol_accusations_test.go).
 
 // TODO Test case Phase 9: 'accuser accuse an inactive member ->
 //  expected result: disqualify accuser'.
@@ -589,6 +595,8 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 //  access to member internals. In order to make an accusation against inactive
 //  member, there is a need to obtain ephemeral private key for the accused
 //  member which is stored in accuser internal map called 'ephemeralKeyPairs'.
+//  This case is only covered by unit test
+//  (TestResolvePublicKeySharePointsAccusationsMessages in protocol_accusations_test.go).
 
 // TODO Test case Phase 9: 'cannot decrypt shares ->
 //  expected result: disqualify both'.
@@ -596,6 +604,8 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 //  access to member internals. In order to screw up shares decryption
 //  in this phase, there is a need to alter an already received message
 //  which is stored in the evidence log.
+//  This case is only covered by unit test
+//  (TestResolvePublicKeySharePointsAccusationsMessages in protocol_accusations_test.go).
 
 // Phase 11 test case - a member misbehaved by revealing key of an operating
 // member. The revealing member becomes disqualified by all other members which
