@@ -26,7 +26,7 @@ func TestExecute_HappyPath(t *testing.T) {
 		return msg
 	}
 
-	dkgResult, err := dkgtest.RunTest(groupSize, threshold, interceptor)
+	dkgResult, err := dkgtest.RunTest(groupSize, threshold-1, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
