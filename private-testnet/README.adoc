@@ -6,6 +6,15 @@ contract migration or keep-client build for the `keep-test` environment.  Bundle
 are managed via scripts provided in the `/scripts` dir and should require little
 context to operate.
 
+== General Steps
+
+* Run a new circle build from `keep-test-deployment` branch
+* Update `changelog.adoc` with relevant info since the last release
+* Update `keep-client-quickstart.adoc` with any changes
+* Run `prepare-participant-bundles.sh`
+* Run `fetch-contract-data.js`
+* Run  `stake-accounts.js`
+
 == Directory Structure
 
 This touches on directory format and reasons for this format.  It's not exhaustive,
