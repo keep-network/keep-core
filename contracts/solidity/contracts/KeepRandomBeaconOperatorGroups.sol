@@ -116,13 +116,6 @@ contract KeepRandomBeaconOperatorGroups {
     }
 
     /**
-     * @dev Prevent receiving ether without explicitly calling a function.
-     */
-    function() external payable {
-        revert("You should not send any ether to this contract.");
-    }
-
-    /**
      * @dev Gets the cutoff time in blocks until which the given group is
      * considered as an active group assuming it hasn't been terminated before.
      * The group may not be marked as expired even though its active

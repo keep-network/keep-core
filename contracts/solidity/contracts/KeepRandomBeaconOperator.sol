@@ -469,13 +469,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Prevent receiving ether without explicitly calling a function.
-     */
-    function() external payable {
-        revert("Can not call contract without explicitly calling a function.");
-    }
-
-    /**
      * @dev Set the minimum amount of KEEP that allows a Keep network client to participate in a group.
      * @param _minimumStake Amount in KEEP.
      */
