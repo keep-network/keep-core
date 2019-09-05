@@ -1,6 +1,7 @@
 package entry
 
 import (
+	"fmt"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -145,15 +146,22 @@ func (scs *signatureCompleteState) Initiate() error {
 		seenSharesSlice = append(seenSharesSlice, signatureShare)
 	}
 
-	logger.Infof(
-		"[member:%v] restoring signature from [%v] shares",
+	fmt.Printf(
+		"[member:%v] restoring signature from [%v] shares\n",
 		scs.MemberIndex(),
 		len(seenSharesSlice),
 	)
+
 	signature, err := scs.signer.CompleteSignature(seenSharesSlice, scs.threshold)
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf(
+		"[member:%v] signature I will submit: [%v]\n",
+		scs.MemberIndex(),
+		signature.String(),
+	)
 
 	scs.fullSignature = altbn128.G1Point{G1: signature}.Compress()
 

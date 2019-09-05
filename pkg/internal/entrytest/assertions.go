@@ -5,7 +5,7 @@ import "testing"
 // AssertEntryPublished checks if relay entry has been published to the chain.
 // It does not inspect the entry.
 func AssertEntryPublished(t *testing.T, testResult *Result) {
-	if testResult.entry == nil {
+	if testResult.Entry == nil {
 		t.Fatal("expected relay entry to be published")
 	}
 }
@@ -13,7 +13,7 @@ func AssertEntryPublished(t *testing.T, testResult *Result) {
 // AssertEntryNotPublished checks if no relay entry has been published to
 // the chain.
 func AssertEntryNotPublished(t *testing.T, testResult *Result) {
-	if testResult.entry != nil {
+	if testResult.Entry != nil {
 		t.Fatal("expected relay entry not to be published")
 	}
 }

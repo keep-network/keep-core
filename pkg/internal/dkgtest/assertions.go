@@ -23,11 +23,11 @@ func AssertSuccessfulSignersCount(
 	testResult *Result,
 	expectedCount int,
 ) {
-	if len(testResult.signers) != expectedCount {
+	if len(testResult.Signers) != expectedCount {
 		t.Errorf(
 			"unexpected number of successful signers\nexpected: [%v]\nactual:   [%v]",
 			expectedCount,
-			len(testResult.signers),
+			len(testResult.Signers),
 		)
 	}
 }
@@ -38,8 +38,8 @@ func AssertSuccessfulSigners(
 	testResult *Result,
 	expectedSuccessfulMembers ...group.MemberIndex,
 ) {
-	actualSuccessfulMembers := make([]group.MemberIndex, len(testResult.signers))
-	for _, signer := range testResult.signers {
+	actualSuccessfulMembers := make([]group.MemberIndex, len(testResult.Signers))
+	for _, signer := range testResult.Signers {
 		memberIndex := signer.MemberID()
 		actualSuccessfulMembers = append(actualSuccessfulMembers, memberIndex)
 
@@ -177,7 +177,7 @@ func AssertInactiveMembers(
 // AssertSamePublicKey checks if all members of the group generated the same
 // group public key during DKG.
 func AssertSamePublicKey(t *testing.T, testResult *Result) {
-	for _, signer := range testResult.signers {
+	for _, signer := range testResult.Signers {
 		testutils.AssertBytesEqual(
 			t,
 			testResult.dkgResult.GroupPublicKey,

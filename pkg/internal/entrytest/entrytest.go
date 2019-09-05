@@ -26,7 +26,7 @@ var minimumStake = big.NewInt(20)
 
 // Result of the relay entry signing protocol execution.
 type Result struct {
-	entry          *event.Entry
+	Entry          *event.Entry
 	signerFailures []error
 }
 

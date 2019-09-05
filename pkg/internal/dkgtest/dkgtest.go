@@ -27,7 +27,7 @@ var minimumStake = big.NewInt(20)
 type Result struct {
 	dkgResult           *relaychain.DKGResult
 	dkgResultSignatures map[group.MemberIndex][]byte
-	signers             []*dkg.ThresholdSigner
+	Signers             []*dkg.ThresholdSigner
 	memberFailures      []error
 }
 
