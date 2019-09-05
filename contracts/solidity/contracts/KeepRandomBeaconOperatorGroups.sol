@@ -17,6 +17,9 @@ contract KeepRandomBeaconOperatorGroups {
     using SafeMath for uint256;
     using BytesLib for bytes;
 
+    // Contract owner.
+    address public owner;
+
     // Operator contract that is linked to this contract.
     address public operatorContract;
 
@@ -41,6 +44,14 @@ contract KeepRandomBeaconOperatorGroups {
     uint256 internal expiredGroupOffset = 0;
 
     /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(owner == msg.sender, "Caller is not the owner.");
+        _;
+    }
+
+    /**
      * @dev Throws if called by any account other than the authorized address.
      */
     modifier onlyOperatorContract() {
@@ -49,9 +60,16 @@ contract KeepRandomBeaconOperatorGroups {
     }
 
     /**
+     * @dev Initializes the contract with deployer as the contract owner.
+     */
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    /**
      * @dev Sets operator contract.
      */
-    function setOperatorContract(address _operatorContract) public {
+    function setOperatorContract(address _operatorContract) public onlyOwner {
         require(operatorContract == address(0), "Operator contract can only be set once.");
         operatorContract = _operatorContract;
     }
