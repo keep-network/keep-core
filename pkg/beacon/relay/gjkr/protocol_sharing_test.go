@@ -114,7 +114,9 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 			expectedError: nil,
 		},
 		"negative validation - changed public key share - one accused member": {
-			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
+			modifyPublicKeySharePointsMessages: func(
+				messages []*MemberPublicKeySharePointsMessage,
+			) {
 				messages[1].publicKeySharePoints[1] = new(bn256.G2).ScalarMult(
 					messages[1].publicKeySharePoints[1],
 					big.NewInt(2),
@@ -125,7 +127,9 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 			expectedAccusedIDs: []group.MemberIndex{3},
 		},
 		"negative validation - changed public key share - two accused members": {
-			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
+			modifyPublicKeySharePointsMessages: func(
+				messages []*MemberPublicKeySharePointsMessage,
+			) {
 				messages[0].publicKeySharePoints[1] = new(bn256.G2).ScalarMult(
 					messages[0].publicKeySharePoints[1],
 					big.NewInt(2),
@@ -137,6 +141,15 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []group.MemberIndex{2, 5},
+		},
+		"negative validation - no public key share - one accused member": {
+			modifyPublicKeySharePointsMessages: func(
+				messages []*MemberPublicKeySharePointsMessage,
+			) {
+				messages[0].publicKeySharePoints = []*bn256.G2{}
+			},
+			expectedError:      nil,
+			expectedAccusedIDs: []group.MemberIndex{2},
 		},
 	}
 	for testName, test := range tests {

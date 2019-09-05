@@ -13,11 +13,28 @@ func (mcm *MemberCommitmentsMessage) SetCommitment(
 	mcm.commitments[index] = commitment
 }
 
+func (psm *PeerSharesMessage) SetShares(
+	memberIndex group.MemberIndex,
+	encryptedShareS, encryptedShareT []byte,
+) {
+	psm.shares[memberIndex] = &peerShares{
+		encryptedShareS: encryptedShareS,
+		encryptedShareT: encryptedShareT,
+	}
+}
+
 func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKey(
 	memberIndex group.MemberIndex,
 	privateKey *ephemeral.PrivateKey,
 ) {
 	ssam.accusedMembersKeys[memberIndex] = privateKey
+}
+
+func (mpkspm *MemberPublicKeySharePointsMessage) SetPublicKeyShare(
+	index int,
+	publicKeyShare *bn256.G2,
+) {
+	mpkspm.publicKeySharePoints[index] = publicKeyShare
 }
 
 func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
