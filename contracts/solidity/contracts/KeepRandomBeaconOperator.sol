@@ -174,7 +174,7 @@ contract KeepRandomBeaconOperator {
      * @dev Initializes the contract with service and staking contract addresses and
      * the deployer as the contract owner.
      */
-    constructor(address _serviceContract, address _stakingContract, address payable _groupContract) public {
+    constructor(address _serviceContract, address _stakingContract, address _groupContract) public {
         require(_serviceContract != address(0), "Service contract address can't be zero.");
         require(_stakingContract != address(0), "Staking contract address can't be zero.");
         serviceContracts.push(_serviceContract);
