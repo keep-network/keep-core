@@ -79,12 +79,16 @@ func (n *Node) JoinGroupIfEligible(
 				return
 			}
 
+			// Polynomial degree - maximum number of misbehaving participants for
+			// which it is still possible to generate a new relay entry
+			dishonestThreshold := n.chainConfig.Threshold - 1
+
 			go func() {
 				signer, err := dkg.ExecuteDKG(
 					newEntry,
 					playerIndex,
 					n.chainConfig.GroupSize,
-					n.chainConfig.Threshold,
+					dishonestThreshold,
 					dkgStartBlockHeight,
 					n.blockCounter,
 					relayChain,
