@@ -1,7 +1,7 @@
 import mineBlocks from './helpers/mineBlocks';
 import {initContracts} from './helpers/initContracts';
 
-contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
+contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
 
   let operatorContract, groupContract;
 
@@ -21,6 +21,7 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function() {
 
     operatorContract = contracts.operatorContract;
     groupContract = contracts.groupContract;
+    await groupContract.setOperatorContract(accounts[0]); // Let us pass onlyOperatorContract check
   });
 
   async function addGroups(numberOfGroups) {

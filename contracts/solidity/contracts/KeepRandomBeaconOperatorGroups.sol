@@ -30,6 +30,10 @@ contract KeepRandomBeaconOperatorGroups {
     // Time in blocks after which a group expires.
     uint256 public groupActiveTime = 3000;
 
+    // Duplicated constant from operator contract to avoid extra call.
+    // The value is set when the operator contract is added.
+    uint256 public relayEntryTimeout;
+
     struct Group {
         bytes groupPubKey;
         uint registrationBlockHeight;
@@ -72,6 +76,7 @@ contract KeepRandomBeaconOperatorGroups {
     function setOperatorContract(address _operatorContract) public onlyOwner {
         require(operatorContract == address(0), "Operator contract can only be set once.");
         operatorContract = _operatorContract;
+        relayEntryTimeout = OperatorContract(operatorContract).relayEntryTimeout();
     }
 
     /**
@@ -134,7 +139,7 @@ contract KeepRandomBeaconOperatorGroups {
      * performing any operations.
      */
     function groupStaleTime(Group memory group) internal view returns(uint256) {
-        return groupActiveTimeOf(group).add(OperatorContract(operatorContract).relayEntryTimeout());
+        return groupActiveTimeOf(group).add(relayEntryTimeout);
     }
 
     /**

@@ -11,6 +11,7 @@ contract KeepRandomBeaconOperatorGroupExpirationStub is KeepRandomBeaconOperator
     constructor() KeepRandomBeaconOperatorGroups() public {
         groupActiveTime = 300;
         activeGroupsThreshold = 5;
+        relayEntryTimeout = 24;
     }
 
     function addGroup(bytes memory groupPubKey) public {
@@ -25,10 +26,7 @@ contract KeepRandomBeaconOperatorGroupExpirationStub is KeepRandomBeaconOperator
         return groups[groupIndex].groupPubKey;
     }
 
-    function selectGroup(uint256 seed) public returns(uint256) {
-        require(numberOfGroups() > 0, "At least one active group required");
-        expireOldGroups();
-        uint256 selectedGroup = seed % numberOfGroups();
-        return shiftByTerminatedGroups(shiftByExpiredGroups(selectedGroup));
+    function setOperatorContract(address _operatorContract) public {
+        operatorContract = _operatorContract;
     }
 }
