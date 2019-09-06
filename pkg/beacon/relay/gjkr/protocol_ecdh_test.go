@@ -12,10 +12,11 @@ import (
 
 func TestSaveEphemeralKeyMessagesForEvidence(t *testing.T) {
 	groupSize := 2
+	dishonestThreshold := 0
 
 	// Create a group of 2 members
 	ephemeralGeneratingMembers := initializeEphemeralKeyPairMembersGroup(
-		0,
+		dishonestThreshold,
 		groupSize,
 	)
 
@@ -53,10 +54,11 @@ func TestSaveEphemeralKeyMessagesForEvidence(t *testing.T) {
 
 func TestGenerateEphemeralKeys(t *testing.T) {
 	groupSize := 3
+	dishonestThreshold := 0
 
 	// Create a group of 3 members
 	ephemeralGeneratingMembers := initializeEphemeralKeyPairMembersGroup(
-		0,
+		dishonestThreshold,
 		groupSize,
 	)
 
