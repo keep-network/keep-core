@@ -1,6 +1,5 @@
-/*
-  Integration tests for the full DKG affecting GJKR-specific parts.
-*/
+// Package gjkr_test contains integration tests for the full roundrip
+// of GJKR-specific parts of DKG.
 package gjkr_test
 
 import (
