@@ -5,7 +5,7 @@ import (
 )
 
 func TestRoundTrip(t *testing.T) {
-	dishonestThreshold := 3
+	dishonestThreshold := 2
 	groupSize := 5
 
 	committingMembers, err := initializeCommittingMembersGroup(dishonestThreshold, groupSize)

@@ -46,18 +46,18 @@ func TestSignAndComplete(t *testing.T) {
 		expectedError          string
 	}{
 		"success: all members sign the message": {
-			honestThreshold:        6,
+			honestThreshold:        4,
 			numberPrivateKeyShares: 6,
 			expectedError:          "",
 		},
 		"success: t+1 members sign the message": {
-			honestThreshold:        3,
-			numberPrivateKeyShares: 4,
+			honestThreshold:        4,
+			numberPrivateKeyShares: 5,
 			expectedError:          "",
 		},
 		"success: t members sign the message": {
-			honestThreshold:        3,
-			numberPrivateKeyShares: 3,
+			honestThreshold:        4,
+			numberPrivateKeyShares: 4,
 			expectedError:          "",
 		},
 		"failure: t-1 members sign a message": {

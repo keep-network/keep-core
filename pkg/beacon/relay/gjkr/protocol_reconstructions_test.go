@@ -12,7 +12,7 @@ import (
 )
 
 func TestRevealDisqualifiedMembersKeys(t *testing.T) {
-	dishonestThreshold := 2
+	dishonestThreshold := 4
 	groupSize := 8
 
 	members, err := initializeRevealingMembersGroup(dishonestThreshold, groupSize)
@@ -51,7 +51,7 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 }
 
 func TestRevealDisqualifiedShares(t *testing.T) {
-	dishonestThreshold := 2
+	dishonestThreshold := 3
 	groupSize := 6
 
 	members, err := initializeReconstructingMembersGroup(dishonestThreshold, groupSize)

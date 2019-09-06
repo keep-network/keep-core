@@ -12,7 +12,7 @@ import (
 )
 
 func TestSubmitDKGResult(t *testing.T) {
-	honestThreshold := 2
+	honestThreshold := 3
 	groupSize := 5
 
 	chainHandle, initialBlock, err := initChainHandle(honestThreshold, groupSize)
@@ -116,7 +116,7 @@ func TestSubmitDKGResult(t *testing.T) {
 // member loop should be aborted and result published by the first member should
 // be returned.
 func TestConcurrentPublishResult(t *testing.T) {
-	honestThreshold := 2
+	honestThreshold := 3
 	groupSize := 5
 
 	member1 := &SubmittingMember{
