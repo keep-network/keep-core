@@ -73,7 +73,7 @@ func TestGenerateResult(t *testing.T) {
 				}
 			},
 		},
-		"failure: more than dishonest threshold disqualified and inactive members": {
+		"failure: total number of disqualified and inactive members is greater than dishonest threshold": {
 			disqualifiedMemberIDs: []group.MemberIndex{2, 5},
 			inactiveMemberIDs:     []group.MemberIndex{3, 7},
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
