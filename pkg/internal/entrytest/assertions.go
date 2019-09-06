@@ -18,6 +18,20 @@ func AssertEntryNotPublished(t *testing.T, testResult *Result) {
 	}
 }
 
+// AssertNoSignerFailures checks there were no signer failures during the
+// protocol execution.
+func AssertNoSignerFailures(
+	t *testing.T,
+	testResult *Result,
+) {
+	if len(testResult.signerFailures) != 0 {
+		t.Errorf(
+			"expected no signer failures; has [%v]",
+			len(testResult.signerFailures),
+		)
+	}
+}
+
 // AssertSignerFailuresCount checks the number of signers who failed the
 // protocol execution. It does not check which particular signers failed.
 func AssertSignerFailuresCount(

@@ -30,6 +30,16 @@ type Result struct {
 	signerFailures []error
 }
 
+// EntryValue returns the value of relay entry in the result or nil if no entry
+// was produced because of signers failures.
+func (r *Result) EntryValue() *big.Int {
+	if r.entry == nil {
+		return nil
+	}
+
+	return r.entry.Value
+}
+
 // RunTest executes the full relay entry signing roundtrip test for the provided
 // group of signers and threshold. Note that the group public key and private
 // key shares used by signers had to be created for the same threshold value.
