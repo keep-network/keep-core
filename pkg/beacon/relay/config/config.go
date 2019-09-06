@@ -6,9 +6,9 @@ import "math/big"
 type Chain struct {
 	// GroupSize is the size of a group in the threshold relay.
 	GroupSize int
-	// Threshold is the minimum number of interacting group members needed to
-	// produce a relay entry.
-	Threshold int
+	// HonestThreshold is the minimum number of active participants behaving
+	// according to the protocol needed to generate a new relay entry.
+	HonestThreshold int
 	// TicketInitialSubmissionTimeout is the duration (in blocks) the staker has to submit
 	// tickets that fall under the natural threshold to satisfy the initial
 	// ticket timeout (see group selection, phase 2a).
@@ -44,4 +44,11 @@ type Chain struct {
 	// entry to be published by the selected group. Blocks are
 	// counted from the moment relay request occur.
 	RelayEntryTimeout uint64
+}
+
+// DishonestThreshold is the maximum number of misbehaving participants for
+// which it is still possible to generate a new relay entry.
+// Misbehaviour is any misconduct to the protocol, including inactivity.
+func (c *Chain) DishonestThreshold() int {
+	return c.GroupSize - c.HonestThreshold
 }

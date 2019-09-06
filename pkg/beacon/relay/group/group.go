@@ -2,8 +2,8 @@ package group
 
 // Group is protocol's members group.
 type Group struct {
-	// The maximum number of group members who could be dishonest in order for
-	// the generated key to be uncompromised.
+	// Tthe maximum number of misbehaving participants for which it is still
+	// possible to generate a signature.
 	dishonestThreshold int
 	// IDs of all disqualified members of the group.
 	disqualifiedMemberIDs []MemberIndex

@@ -34,7 +34,7 @@ func SignAndSubmit(
 	relayChain relayChain.Interface,
 	previousEntry *big.Int,
 	seed *big.Int,
-	threshold int,
+	honestThreshold int,
 	signer *dkg.ThresholdSigner,
 	startBlockHeight uint64,
 ) error {
@@ -42,13 +42,13 @@ func SignAndSubmit(
 
 	initialState := &signatureShareState{
 		signingStateBase: signingStateBase{
-			channel:       channel,
-			relayChain:    relayChain,
-			blockCounter:  blockCounter,
-			signer:        signer,
-			previousEntry: previousEntry,
-			seed:          seed,
-			threshold:     threshold,
+			channel:         channel,
+			relayChain:      relayChain,
+			blockCounter:    blockCounter,
+			signer:          signer,
+			previousEntry:   previousEntry,
+			seed:            seed,
+			honestThreshold: honestThreshold,
 		},
 		signingStartBlockHeight: startBlockHeight,
 	}

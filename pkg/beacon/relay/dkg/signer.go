@@ -57,7 +57,7 @@ func (ts *ThresholdSigner) CalculateSignatureShare(message []byte) *bn256.G1 {
 // aggregate signature (one which would require all members).
 func (ts *ThresholdSigner) CompleteSignature(
 	signatureShares []*bls.SignatureShare,
-	threshold int,
+	honestThreshold int,
 ) (*bn256.G1, error) {
-	return bls.RecoverSignature(signatureShares, threshold)
+	return bls.RecoverSignature(signatureShares, honestThreshold)
 }

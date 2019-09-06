@@ -306,10 +306,10 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 }
 
 func initializeSigningMembers(groupSize int) ([]*SigningMember, []chain.Handle, error) {
-	threshold := groupSize/2 + 1
+	honestThreshold := groupSize/2 + 1
 	minimumStake := big.NewInt(200)
 
-	dkgGroup := group.NewDkgGroup(threshold, groupSize)
+	dkgGroup := group.NewDkgGroup(honestThreshold, groupSize)
 
 	members := make([]*SigningMember, groupSize)
 	chainHandles := make([]chain.Handle, groupSize)
@@ -326,7 +326,7 @@ func initializeSigningMembers(groupSize int) ([]*SigningMember, []chain.Handle, 
 
 		chainHandles[i] = local.ConnectWithKey(
 			groupSize,
-			threshold,
+			honestThreshold,
 			minimumStake,
 			privateKey,
 		)

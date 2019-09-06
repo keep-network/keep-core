@@ -15,18 +15,18 @@ import (
 var logger = log.Logger("keep-gjkr")
 
 // Execute runs the GJKR distributed key generation  protocol, given a
-// broadcast channel to mediate it, a block counter used for time tracking,
-// a player index to use in the group, threshold, and block height when DKG
-// protocol should start.
-// If generation is successful, it returns a threshold group member who can
-// participate in the group; if generation fails, it returns an error
-// representing what went wrong.
+// broadcast channel to mediate with, a block counter used for time tracking,
+// a player index to use in the group, dishonest threshold, and block height
+// when DKG protocol should start.
+// If the generation is successful, it returns a threshold group member who can
+// participate in the signing group; if the generation fails, it returns an
+// error.
 func Execute(
 	memberIndex group.MemberIndex,
 	groupSize int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	threshold int,
+	dishonestThreshold int,
 	seed *big.Int,
 	startBlockHeight uint64,
 ) (*Result, uint64, error) {
@@ -35,7 +35,7 @@ func Execute(
 	member, err := NewMember(
 		memberIndex,
 		groupSize,
-		threshold,
+		dishonestThreshold,
 		seed,
 	)
 	if err != nil {

@@ -203,9 +203,9 @@ func (cm *CommittingMember) calculateCommitment(
 }
 
 // generatePolynomial generates a random polynomial over `Z_q` of a given degree.
-// This function will generate a slice of `degree + 1` coefficients. Each value
-// will be a random `big.Int` in range `(0, q)` where `q` is cardinality of
-// alt_bn128 elliptic curve.
+// This function will generate a slice of `degree + 1` coefficients (+1 for
+// a constant coefficient). Each value will be a random `big.Int` in range
+// `(0, q)` where `q` is the cardinality of alt_bn128 elliptic curve.
 func generatePolynomial(degree int) ([]*big.Int, error) {
 	generateCoefficient := func() (c *big.Int, err error) {
 		for {
@@ -234,7 +234,7 @@ func generatePolynomial(degree int) ([]*big.Int, error) {
 // It calculates `s_j = Σ a_k * j^k mod q`for k in [0..T], where:
 // - `a_k` is k coefficient
 // - `j` is memberID
-// - `T` is threshold
+// - `T` is dishonest threshold, so there are T+1 coefficients
 // - `q` is the order of cyclic group formed over the alt_bn128 curve
 func (cm *CommittingMember) evaluateMemberShare(
 	memberID group.MemberIndex,
@@ -330,10 +330,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				}
 
 				if !cvm.areSharesValidAgainstCommitments(
-					shareS,                         // s_ji
-					shareT,                         // t_ji
+					shareS, // s_ji
+					shareT, // t_ji
 					commitmentsMessage.commitments, // C_j
-					cvm.ID,                         // i
+					cvm.ID, // i
 				) {
 					logger.Warningf(
 						"[member:%v] shares from member [%v] invalid against "+
@@ -754,7 +754,7 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 ) (*PointsAccusationsMessage, error) {
 	accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 	// `product = Π (A_j[k] ^ (i^k)) mod p` for k in [0..T],
-	// where: j is sender's ID, i is current member ID, T is threshold.
+	// where: j is sender's ID, i is current member ID, T is dishonest threshold.
 	for _, message := range messages {
 		if !sm.isShareValidAgainstPublicKeySharePoints(
 			sm.ID,
