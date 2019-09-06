@@ -18,8 +18,8 @@ var logger = log.Logger("keep-gjkr")
 // broadcast channel to mediate with, a block counter used for time tracking,
 // a player index to use in the group, dishonest threshold, and block height
 // when DKG protocol should start.
-// If the generation is successful, it returns a threshold group member who can
-// participate in the signing group; if the generation fails, it returns an
+// If the generation is successful, it returns a threshold group member which
+// can participate in the signing group; if the generation fails, it returns an
 // error.
 func Execute(
 	memberIndex group.MemberIndex,
