@@ -317,7 +317,7 @@
     "pkg/persistence",
   ]
   pruneopts = ""
-  revision = "18ec764f799e4b0a3795837d66fc7142f5048c1e"
+  revision = "787318dfe0401a634c395683cdb368e5282c7e49"
 
 [[projects]]
   digest = "1:083b726d999fff7a2fcd09b779598cddcb642628bc028e4cfe46e81b18bf0d26"

@@ -107,8 +107,8 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.HasMinimumStake(address)
 }
 
-func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
-	submittedTicketPromise := &async.GroupTicketPromise{}
+func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTicketSubmissionPromise {
+	submittedTicketPromise := &async.EventGroupTicketSubmissionPromise{}
 
 	failPromise := func(err error) {
 		failErr := submittedTicketPromise.Fail(err)
@@ -158,8 +158,8 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 
 func (ec *ethereumChain) SubmitRelayEntry(
 	entryValue *big.Int,
-) *async.RelayEntryPromise {
-	relayEntryPromise := &async.RelayEntryPromise{}
+) *async.EventEntryPromise {
+	relayEntryPromise := &async.EventEntryPromise{}
 
 	failPromise := func(err error) {
 		failErr := relayEntryPromise.Fail(err)
@@ -359,8 +359,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 	participantIndex group.MemberIndex,
 	result *relaychain.DKGResult,
 	signatures map[group.MemberIndex][]byte,
-) *async.DKGResultSubmissionPromise {
-	resultPublicationPromise := &async.DKGResultSubmissionPromise{}
+) *async.EventDKGResultSubmissionPromise {
+	resultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
 	failPromise := func(err error) {
 		failErr := resultPublicationPromise.Fail(err)

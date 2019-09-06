@@ -22,7 +22,7 @@ type RelayEntryInterface interface {
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
-	SubmitRelayEntry(entryValue *big.Int) *async.RelayEntryPromise
+	SubmitRelayEntry(entryValue *big.Int) *async.EventEntryPromise
 	// OnSignatureSubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
 	OnSignatureSubmitted(
@@ -51,7 +51,7 @@ type GroupSelectionInterface interface {
 	// the chain, and returns a promise to track the submission. The promise
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
-	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
+	SubmitTicket(ticket *Ticket) *async.EventGroupTicketSubmissionPromise
 	// GetSubmittedTicketsCount gets the number of submitted group candidate
 	// tickets so far.
 	GetSubmittedTicketsCount() (*big.Int, error)
@@ -95,7 +95,7 @@ type DistributedKeyGenerationInterface interface {
 		participantIndex group.MemberIndex,
 		dkgResult *DKGResult,
 		signatures map[group.MemberIndex][]byte,
-	) *async.DKGResultSubmissionPromise
+	) *async.EventDKGResultSubmissionPromise
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.
 	OnDKGResultSubmitted(
