@@ -6,7 +6,7 @@ const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
 contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
-  let token, stakingContract, operatorContract, serviceContract, callbackContract, entryFee, groupSize,
+  let token, stakingContract, operatorContract, groupContract, serviceContract, callbackContract, entryFee, groupSize,
     owner = accounts[0],
     requestor = accounts[1],
     operator1 = accounts[2],
@@ -22,12 +22,14 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
+      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
     );
 
     token = contracts.token;
     stakingContract = contracts.stakingContract;
     operatorContract = contracts.operatorContract;
+    groupContract = contracts.groupContract;
     serviceContract = contracts.serviceContract;
     callbackContract = await CallbackContract.new();
 
@@ -36,7 +38,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     groupSize = web3.utils.toBN(3);
     await operatorContract.setGroupSize(groupSize);
-    let group = await operatorContract.getGroupPublicKey(0);
+    let group = await groupContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, operator1);
     await operatorContract.addGroupMember(group, operator2);
     await operatorContract.addGroupMember(group, operator3);

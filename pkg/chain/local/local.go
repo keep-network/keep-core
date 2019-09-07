@@ -38,8 +38,8 @@ type Chain interface {
 	chain.Handle
 
 	// GetLastDKGResult returns DKG result submitted to the chain for the given
-	// request ID.
-	GetLastDKGResult() *relaychain.DKGResult
+	// request ID as well as all the signatures that supported that result.
+	GetLastDKGResult() (*relaychain.DKGResult, map[group.MemberIndex][]byte)
 
 	// GetRelayEntryTimeoutReports returns an array of blocks which denote at what
 	// block a relay entry timeout occured.
@@ -56,7 +56,8 @@ type localChain struct {
 
 	groups []localGroup
 
-	lastSubmittedDKGResult *relaychain.DKGResult
+	lastSubmittedDKGResult           *relaychain.DKGResult
+	lastSubmittedDKGResultSignatures map[group.MemberIndex][]byte
 
 	handlerMutex                  sync.Mutex
 	relayEntryHandlers            map[int]func(entry *event.Entry)
@@ -400,6 +401,7 @@ func (c *localChain) SubmitDKGResult(
 	}
 	c.groups = append(c.groups, myGroup)
 	c.lastSubmittedDKGResult = resultToPublish
+	c.lastSubmittedDKGResultSignatures = signatures
 
 	groupRegistrationEvent := &event.GroupRegistration{
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
@@ -445,8 +447,11 @@ func (c *localChain) OnDKGResultSubmitted(
 	}), nil
 }
 
-func (c *localChain) GetLastDKGResult() *relaychain.DKGResult {
-	return c.lastSubmittedDKGResult
+func (c *localChain) GetLastDKGResult() (
+	*relaychain.DKGResult,
+	map[group.MemberIndex][]byte,
+) {
+	return c.lastSubmittedDKGResult, c.lastSubmittedDKGResultSignatures
 }
 
 func (c *localChain) ReportRelayEntryTimeout() error {

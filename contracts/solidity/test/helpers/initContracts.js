@@ -2,11 +2,11 @@ import { duration } from './increaseTime';
 const BLS = artifacts.require('./cryptography/BLS.sol');
 
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
-  KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
+  KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator, KeepRandomBeaconOperatorGroups) {
 
   let token, stakingContract,
     serviceContractImplV1, serviceContractProxy, serviceContract,
-    operatorContract;
+    operatorContract, groupContract;
 
   let minimumGasPrice = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei) TODO: Use historical average of recently served requests?
     profitMargin = 1, // Signing group reward per each member in % of the entry fee.
@@ -27,7 +27,9 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   // Initialize Keep Random Beacon operator contract
   const bls = await BLS.new();
   await KeepRandomBeaconOperator.link("BLS", bls.address);
-  operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address);
+  groupContract = await KeepRandomBeaconOperatorGroups.new();
+  operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address, groupContract.address);
+  await groupContract.setOperatorContract(operatorContract.address);
 
   await serviceContract.initialize(minimumGasPrice, profitMargin, createGroupFee, withdrawalDelay, operatorContract.address);
 
@@ -41,7 +43,8 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     token: token,
     stakingContract: stakingContract,
     serviceContract: serviceContract,
-    operatorContract: operatorContract
+    operatorContract: operatorContract,
+    groupContract: groupContract
   };
 };
 

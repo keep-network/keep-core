@@ -19,7 +19,6 @@ func TestExecute_IA_members24_phase13(t *testing.T) {
 	threshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-
 		hashSignatureMessage, ok := msg.(*result.DKGResultHashSignatureMessage)
 		if ok && (hashSignatureMessage.SenderID() == group.MemberIndex(2) ||
 			hashSignatureMessage.SenderID() == group.MemberIndex(4)) {
@@ -41,4 +40,5 @@ func TestExecute_IA_members24_phase13(t *testing.T) {
 	dkgtest.AssertNoDisqualifiedMembers(t, result)
 	dkgtest.AssertNoInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 5}...)
 }

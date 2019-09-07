@@ -1,21 +1,21 @@
 pragma solidity ^0.5.4;
 
-import "../KeepRandomBeaconOperator.sol";
+import "../KeepRandomBeaconOperatorGroups.sol";
 
 /**
  * @title KeepRandomBeaconOperatorGroupExpirationStub
- * @dev A simplified Random Beacon operator contract to help local development.
+ * @dev A simplified Random Beacon group contract to help local development.
  */
-contract KeepRandomBeaconOperatorGroupExpirationStub is KeepRandomBeaconOperator {
+contract KeepRandomBeaconOperatorGroupExpirationStub is KeepRandomBeaconOperatorGroups {
 
-    constructor(address _serviceContract, address _stakingContract) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
-        relayEntryTimeout = 10;
+    constructor() KeepRandomBeaconOperatorGroups() public {
         groupActiveTime = 300;
         activeGroupsThreshold = 5;
+        relayEntryTimeout = 24;
     }
 
-    function registerNewGroup(bytes memory groupPublicKey) public {
-        groups.push(Group(groupPublicKey, block.number));
+    function addGroup(bytes memory groupPubKey) public {
+        groups.push(Group(groupPubKey, block.number));
     }
 
     function getGroupRegistrationBlockHeight(uint256 groupIndex) public view returns(uint256) {
@@ -26,4 +26,7 @@ contract KeepRandomBeaconOperatorGroupExpirationStub is KeepRandomBeaconOperator
         return groups[groupIndex].groupPubKey;
     }
 
+    function setOperatorContract(address _operatorContract) public {
+        operatorContract = _operatorContract;
+    }
 }

@@ -3,6 +3,7 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./TokenStaking.sol";
+import "./KeepRandomBeaconOperatorGroups.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
@@ -44,7 +45,9 @@ contract KeepRandomBeaconOperator {
     address[] public serviceContracts;
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
-    address public stakingContract;
+    TokenStaking public stakingContract;
+
+    KeepRandomBeaconOperatorGroups public groupContract;
 
     // Size of a group in the threshold relay.
     uint256 public groupSize = 5;
@@ -75,13 +78,6 @@ contract KeepRandomBeaconOperator {
     // by clients.
     uint256 public timeDKG = 7*(3+1);
 
-    // The minimal number of groups that should not expire to protect the
-    // minimal network throughput.
-    uint256 public activeGroupsThreshold = 5;
- 
-    // Time in blocks after which a group expires.
-    uint256 public groupActiveTime = 3000;
-
     // Timeout in blocks for a relay entry to appear on the chain. Blocks are
     // counted from the moment relay request occur.
     //
@@ -94,19 +90,6 @@ contract KeepRandomBeaconOperator {
     uint256 public createGroupGasEstimate = 2260000;
 
     uint256 public dkgSubmitterReward;
-
-    struct Group {
-        bytes groupPubKey;
-        uint registrationBlockHeight;
-    }
-
-    Group[] public groups;
-    uint256[] internal terminatedGroups;
-    mapping (bytes => address[]) internal groupMembers;
-
-    // expiredGroupOffset is pointing to the first active group, it is also the
-    // expired groups counter
-    uint256 public expiredGroupOffset = 0;
 
     struct Proof {
         address sender;
@@ -147,9 +130,9 @@ contract KeepRandomBeaconOperator {
      * @dev Triggers the first group selection. Genesis can be called only when
      * there are no groups on the operator contract.
      */
-    function genesis() public payable {
-        require(groups.length == 0, "There can be no groups");
-        startGroupSelection(_genesisGroupSeed, msg.value);
+    function genesis() public {
+        require(numberOfGroups() == 0, "There can be no groups.");
+        startGroupSelection(_genesisGroupSeed, 0);
     }
 
     /**
@@ -199,11 +182,12 @@ contract KeepRandomBeaconOperator {
      * @dev Initializes the contract with service and staking contract addresses and
      * the deployer as the contract owner.
      */
-    constructor(address _serviceContract, address _stakingContract) public {
+    constructor(address _serviceContract, address _stakingContract, address _groupContract) public {
         require(_serviceContract != address(0), "Service contract address can't be zero.");
         require(_stakingContract != address(0), "Staking contract address can't be zero.");
         serviceContracts.push(_serviceContract);
-        stakingContract = _stakingContract;
+        stakingContract = TokenStaking(_stakingContract);
+        groupContract = KeepRandomBeaconOperatorGroups(_groupContract);
         owner = msg.sender;
     }
 
@@ -269,8 +253,7 @@ contract KeepRandomBeaconOperator {
         // Invalid tickets are rejected and their senders penalized.
         if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
             // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-            TokenStaking _stakingContract = TokenStaking(stakingContract);
-            _stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
+            stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
         } else {
             tickets.push(ticketValue);
             proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
@@ -441,15 +424,16 @@ contract KeepRandomBeaconOperator {
 
         for (uint i = 0; i < groupSize; i++) {
             if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i)) {
-                groupMembers[groupPubKey].push(members[i]);
+                groupContract.addGroupMember(groupPubKey, members[i]);
             }
         }
 
-        groups.push(Group(groupPubKey, block.number));
+        groupContract.addGroup(groupPubKey);
+
         // TODO: punish/reward logic
         uint256 rewards = dkgSubmitterReward;
         dkgSubmitterReward = 0;
-        TokenStaking(stakingContract).magpieOf(msg.sender).transfer(rewards);
+        stakingContract.magpieOf(msg.sender).transfer(rewards);
         cleanup();
         emit DkgResultPublishedEvent(groupPubKey);
 
@@ -496,44 +480,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Checks if group with the given public key is registered.
-     */
-    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
-        for (uint i = 0; i < groups.length; i++) {
-            if (groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @dev Prevent receiving ether without explicitly calling a function.
-     */
-    function() external payable {
-        revert("Can not call contract without explicitly calling a function.");
-    }
-
-    /**
-     * @dev Checks that the specified user has enough stake.
-     * @param staker Specifies the identity of the staker.
-     * @return True if staked enough to participate in the group, false otherwise.
-     */
-    function hasMinimumStake(address staker) public view returns(bool) {
-        return TokenStaking(stakingContract).balanceOf(staker) >= minimumStake;
-    }
-
-    /**
-     * @dev Gets staking weight.
-     * @param staker Specifies the identity of the staker.
-     * @return Number of how many virtual stakers can staker represent.
-     */
-    function stakingWeight(address staker) public view returns(uint256) {
-        return TokenStaking(stakingContract).balanceOf(staker)/minimumStake;
-    }
-
-    /**
      * @dev Set the minimum amount of KEEP that allows a Keep network client to participate in a group.
      * @param _minimumStake Amount in KEEP.
      */
@@ -556,126 +502,6 @@ contract KeepRandomBeaconOperator {
     function naturalThreshold() public view returns (uint256) {
         uint256 space = 2**256-1; // Space consisting of all possible tickets.
         return groupSize.mul(space.div(tokenSupply().div(minimumStake)));
-    }
-
-    /**
-     * @dev Gets the cutoff time in blocks until which the given group is
-     * considered as an active group assuming it hasn't been terminated before.
-     * The group may not be marked as expired even though its active
-     * time has passed if one of the rules inside `selectGroup` function are not
-     * met (e.g. minimum active group threshold). Hence, this value informs when
-     * the group may no longer be considered as active but it does not mean that
-     * the group will be immediatelly considered not as such.
-     */
-    function groupActiveTimeOf(Group memory group) internal view returns(uint256) {
-        return group.registrationBlockHeight + groupActiveTime;
-    }
-
-    /**
-     * @dev Gets the cutoff time in blocks after which the given group is
-     * considered as stale. Stale group is an expired group which is no longer
-     * performing any operations.
-     */
-    function groupStaleTime(Group memory group) internal view returns(uint256) {
-        return groupActiveTimeOf(group) + relayEntryTimeout;
-    }
-
-    /**
-     * @dev Checks if a group with the given public key is a stale group.
-     * Stale group is an expired group which is no longer performing any
-     * operations. It is important to understand that an expired group may
-     * still perform some operations for which it was selected when it was still
-     * active. We consider a group to be stale when it's expired and when its
-     * expiration time and potentially executed operation timeout are both in
-     * the past.
-     */
-    function isStaleGroup(bytes memory groupPubKey) public view returns(bool) {
-        for (uint i = 0; i < groups.length; i++) {
-            if (groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                bool isExpired = expiredGroupOffset > i;
-                bool isStale = groupStaleTime(groups[i]) < block.number;
-                return isExpired && isStale;
-            }
-        }
-
-        return true; // no group found, consider it as a stale group
-    }
-
-    /**
-     * @dev Gets the number of active groups. Expired and terminated groups are
-     * not counted as active.
-     */
-    function numberOfGroups() public view returns(uint256) {
-        return groups.length - expiredGroupOffset - terminatedGroups.length;
-    }
-
-    /**
-     * @dev Goes through groups starting from the oldest one that is still
-     * active and checks if it hasn't expired. If so, updates the information
-     * about expired groups so that all expired groups are marked as such.
-     * It does not mark more than `activeGroupsThreshold` active groups as
-     * expired.
-     */
-    function expireOldGroups() internal {
-        // move expiredGroupOffset as long as there are some groups that should
-        // be marked as expired and we are above activeGroupsThreshold of
-        // active groups.
-        while(
-            groupActiveTimeOf(groups[expiredGroupOffset]) < block.number &&
-            numberOfGroups() > activeGroupsThreshold
-        ) {
-            expiredGroupOffset++;
-        }
-
-        // Go through all terminatedGroups and if some of the terminated
-        // groups are expired, remove them from terminatedGroups collection.
-        // This is needed because we evaluate the shift of selected group index
-        // based on how many non-expired groups has been terminated.
-        for (uint i = 0; i < terminatedGroups.length; i++) {
-            if (expiredGroupOffset > terminatedGroups[i]) {
-                terminatedGroups[i] = terminatedGroups[terminatedGroups.length - 1];
-                terminatedGroups.length--;
-            }
-        }
-    }
-
-    /**
-     * @dev Returns an index of a randomly selected active group. Terminated and
-     * expired groups are not considered as active.
-     * Before new group is selected, information about expired groups
-     * is updated. At least one active group needs to be present for this
-     * function to succeed.
-     * @param seed Random number used as a group selection seed.
-     */
-    function selectGroup(uint256 seed) public returns(uint256) {
-        require(numberOfGroups() > 0, "At least one active group required");
-
-        expireOldGroups();
-        uint256 selectedGroup = seed % numberOfGroups();
-        return shiftByTerminatedGroups(shiftByExpiredGroups(selectedGroup));
-    }
-
-    /**
-     * @dev Evaluates the shift of selected group index based on the number of
-     * expired groups.
-     */
-    function shiftByExpiredGroups(uint256 selectedIndex) public returns(uint256) {
-        return expiredGroupOffset + selectedIndex;
-    }
-
-    /**
-     * @dev Evaluates the shift of selected group index based on the number of
-     * non-expired, terminated groups.
-     */
-    function shiftByTerminatedGroups(uint256 selectedIndex) public returns(uint256) {
-        uint256 shiftedIndex = selectedIndex;
-        for (uint i = 0; i < terminatedGroups.length; i++) {
-            if (terminatedGroups[i] <= shiftedIndex) {
-                shiftedIndex++;
-            }
-        }
-
-        return shiftedIndex;
     }
 
     /**
@@ -732,8 +558,8 @@ contract KeepRandomBeaconOperator {
         currentEntryStartBlock = block.number;
         entryInProgress = true;
 
-        uint256 groupIndex = selectGroup(previousEntry);
-        bytes memory groupPubKey = groups[groupIndex].groupPubKey;
+        uint256 groupIndex = groupContract.selectGroup(previousEntry);
+        bytes memory groupPubKey = groupContract.getGroupPublicKey(groupIndex);
 
         signingRequest = SigningRequest(
             requestId,
@@ -755,11 +581,11 @@ contract KeepRandomBeaconOperator {
      * previous entry and seed.
      */
     function relayEntry(uint256 _groupSignature) public {
-        bytes memory groupPublicKey = groups[signingRequest.groupIndex].groupPubKey;
+        bytes memory groupPubKey = groupContract.getGroupPublicKey(signingRequest.groupIndex);
 
         require(
             BLS.verify(
-                groupPublicKey,
+                groupPubKey,
                 abi.encodePacked(signingRequest.previousEntry, signingRequest.seed),
                 bytes32(_groupSignature)
             ),
@@ -768,7 +594,7 @@ contract KeepRandomBeaconOperator {
         
         emit SignatureSubmitted(
             _groupSignature,
-            groupPublicKey,
+            groupPubKey,
             signingRequest.previousEntry,
             signingRequest.seed
         );
@@ -792,8 +618,8 @@ contract KeepRandomBeaconOperator {
         uint256 delayPenalty = baseReward.mul(delayFactorInverse).div(decimals**2);
         
         for (uint i = 0; i < groupSize; i++) {
-            address payable operator = address(uint160(groupMembers[groupPublicKey][i]));
-            TokenStaking(stakingContract).magpieOf(operator).transfer(groupReward);
+            address payable operator = address(uint160(groupContract.getGroupMember(groupPubKey, i)));
+            stakingContract.magpieOf(operator).transfer(groupReward);
         }
 
         // The submitter reward consists of:
@@ -801,7 +627,7 @@ contract KeepRandomBeaconOperator {
         // The entry verification fee to cover the cost of verifying the submission
         // Extra reward - 5% of the delay penalties of the entire group
         uint256 extraReward = delayPenalty.mul(groupSize).mul(5).div(100); 
-        TokenStaking(stakingContract).magpieOf(msg.sender).transfer(signingRequest.signingFee.add(extraReward));
+        stakingContract.magpieOf(msg.sender).transfer(signingRequest.signingFee.add(extraReward));
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
         uint256 subsidy = profitMargin.sub(groupReward.mul(groupSize)).sub(extraReward);
@@ -828,7 +654,7 @@ contract KeepRandomBeaconOperator {
     function reportRelayEntryTimeout() public {
         require(hasEntryTimedOut(), "Current relay entry did not time out");
 
-        terminatedGroups.push(signingRequest.groupIndex);
+        groupContract.terminateGroup(signingRequest.groupIndex);
 
         // We could terminate the last active group. If that's the case,
         // do not try to execute signing again because there is no group
@@ -844,5 +670,51 @@ contract KeepRandomBeaconOperator {
                 signingRequest.callbackFee
             );
         }
+    }
+
+    /**
+     * @dev Checks that the specified user has enough stake.
+     * @param staker Specifies the identity of the staker.
+     * @return True if staked enough to participate in the group, false otherwise.
+     */
+    function hasMinimumStake(address staker) public view returns(bool) {
+        return stakingContract.balanceOf(staker) >= minimumStake;
+    }
+
+    /**
+     * @dev Gets staking weight.
+     * @param staker Specifies the identity of the staker.
+     * @return Number of how many virtual stakers can staker represent.
+     */
+    function stakingWeight(address staker) public view returns(uint256) {
+        return stakingContract.balanceOf(staker).div(minimumStake);
+    }
+
+    /**
+     * @dev Checks if group with the given public key is registered.
+     */
+    function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
+        return groupContract.isGroupRegistered(groupPubKey);
+    }
+
+    /**
+     * @dev Checks if a group with the given public key is a stale group.
+     * Stale group is an expired group which is no longer performing any
+     * operations. It is important to understand that an expired group may
+     * still perform some operations for which it was selected when it was still
+     * active. We consider a group to be stale when it's expired and when its
+     * expiration time and potentially executed operation timeout are both in
+     * the past.
+     */
+    function isStaleGroup(bytes memory groupPubKey) public view returns(bool) {
+        return groupContract.isStaleGroup(groupPubKey);
+    }
+
+    /**
+     * @dev Gets the number of active groups. Expired and terminated groups are
+     * not counted as active.
+     */
+    function numberOfGroups() public view returns(uint256) {
+        return groupContract.numberOfGroups();
     }
 }

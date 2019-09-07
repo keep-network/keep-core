@@ -8,7 +8,11 @@ import "../KeepRandomBeaconOperator.sol";
  */
 contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
-    constructor(address _serviceContract, address _stakingContract) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
+    constructor(
+        address _serviceContract,
+        address _stakingContract,
+        address payable _groupContract
+    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract, _groupContract) public {
         groupThreshold = 15;
         relayEntryTimeout = 10;
         ticketInitialSubmissionTimeout = 20;
@@ -18,15 +22,11 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
     }
 
     function registerNewGroup(bytes memory groupPublicKey) public {
-        groups.push(Group(groupPublicKey, block.number));
+        groupContract.addGroup(groupPublicKey);
     }
 
     function addGroupMember(bytes memory groupPublicKey, address member) public {
-        groupMembers[groupPublicKey].push(member);
-    }
-
-    function getGroupPublicKey(uint256 groupIndex) public view returns(bytes memory) {
-        return groups[groupIndex].groupPubKey;
+        groupContract.addGroupMember(groupPublicKey, member);
     }
 
     function setGroupSize(uint256 size) public {

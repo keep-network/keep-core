@@ -193,3 +193,45 @@ func AssertValidGroupPublicKey(t *testing.T, testResult *Result) {
 		t.Errorf("invalid group public key: [%v]", err)
 	}
 }
+
+// AssertResultSupportingMembers checks which particular members
+// actually support the final result with their signature.
+func AssertResultSupportingMembers(
+	t *testing.T,
+	testResult *Result,
+	expectedSupportingMembers ...group.MemberIndex,
+) {
+	actualSupportingMembers := make(
+		[]group.MemberIndex,
+		len(testResult.dkgResultSignatures),
+	)
+	for memberIndex, _ := range testResult.dkgResultSignatures {
+		actualSupportingMembers = append(actualSupportingMembers, memberIndex)
+
+		isSupportingExpected := containsMemberIndex(
+			memberIndex,
+			expectedSupportingMembers,
+		)
+
+		if !isSupportingExpected {
+			t.Errorf(
+				"member [%v] should not support the result",
+				memberIndex,
+			)
+		}
+	}
+
+	for _, memberIndex := range expectedSupportingMembers {
+		isSupporting := containsMemberIndex(
+			memberIndex,
+			actualSupportingMembers,
+		)
+
+		if !isSupporting {
+			t.Errorf(
+				"member [%v] should support the result",
+				memberIndex,
+			)
+		}
+	}
+}

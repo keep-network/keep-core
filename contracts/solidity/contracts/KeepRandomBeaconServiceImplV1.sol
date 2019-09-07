@@ -77,13 +77,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     uint256 constant internal _beaconSeed = 10920102476789591414949377782104707130412218726336356788412941355500907533021;
 
     /**
-     * @dev Prevent receiving ether without explicitly calling a function.
-     */
-    function() external payable {
-        revert("Can not call contract without explicitly calling a function.");
-    }
-
-    /**
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param minGasPrice Minimum gas price for relay entry request.
      * @param profitMargin Each signing group member reward in % of the relay entry cost.

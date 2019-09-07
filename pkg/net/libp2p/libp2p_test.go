@@ -24,7 +24,7 @@ func TestProviderReturnsType(t *testing.T) {
 	expectedType := "libp2p"
 	provider, err := Connect(
 		ctx,
-		generateDeterministicNetworkConfig(t),
+		generateDeterministicNetworkConfig(),
 		privKey,
 		local.NewStakeMonitor(big.NewInt(200)),
 	)
@@ -53,7 +53,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 
 	provider, err := Connect(
 		ctx,
-		generateDeterministicNetworkConfig(t),
+		generateDeterministicNetworkConfig(),
 		privKey,
 		local.NewStakeMonitor(big.NewInt(200)),
 	)
@@ -74,7 +74,7 @@ func TestSendReceive(t *testing.T) {
 	defer cancel()
 
 	var (
-		config          = generateDeterministicNetworkConfig(t)
+		config          = generateDeterministicNetworkConfig()
 		name            = "testchannel"
 		expectedPayload = "some text"
 	)
@@ -194,7 +194,7 @@ func newTestIdentity() (*identity, error) {
 	return createIdentity(privKey)
 }
 
-func generateDeterministicNetworkConfig(t *testing.T) Config {
+func generateDeterministicNetworkConfig() Config {
 	return Config{Port: 8080}
 }
 
@@ -204,10 +204,13 @@ func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
 		return nil, err
 	}
 
+	config := generateDeterministicNetworkConfig()
+
 	host, err := discoverAndListen(
 		ctx,
 		identity,
-		8080,
+		config.Port,
+		config.NAT,
 		local.NewStakeMonitor(big.NewInt(200)),
 	)
 	if err != nil {

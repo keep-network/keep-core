@@ -67,6 +67,10 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 	ephemeralPubKeyMessages []*EphemeralPublicKeyMessage,
 ) error {
 	for _, ephemeralPubKeyMessage := range ephemeralPubKeyMessages {
+		// TODO Implement ephemeralPubKeyMessage validation and mark sender
+		//  as disqualified if the message does not contain public keys
+		//  for all group members.
+
 		sm.evidenceLog.PutEphemeralMessage(ephemeralPubKeyMessage)
 
 		otherMember := ephemeralPubKeyMessage.senderID
@@ -253,16 +257,17 @@ func (cm *CommittingMember) evaluateMemberShare(
 }
 
 // VerifyReceivedSharesAndCommitmentsMessages verifies shares and commitments
-// received in messages from other group members.
-// It returns accusation message with ID of members for which verification failed.
+// received in messages from other group members. Returns accusation message
+// with IDs of members for which the verification failed. All those members are
+// disqualified by the current member in this function.
 //
-// If cannot match commitments message with shares message for given sender then
-// error is returned. Also, error is returned if the member does not have
-// a symmetric encryption key established with sender of a message.
+// Function returns error only if it is fatal to the protocol. Such situation
+// should never happen.
 //
-// All the received PeerSharesMessage should be validated before they are passed
-// to this function. It should never happen that the message can't be decrypted
-// by this function.
+// Member is disqualified if:
+// - messages contain invalid number of shares or commitments
+// - shares can not be decrypted
+// - shares are not valid against commitments
 //
 // See Phase 4 of the protocol specification.
 func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessages(
@@ -281,8 +286,16 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 			if sharesMessage.senderID == commitmentsMessage.senderID {
 				sharesMessageFound = true
 
-				// If there is no symmetric key established with a sender of
+				// TODO Add validation: message must contain encrypted
+				//  payloads for all other participants; disqualify otherwise.
+
+				// If there is no symmetric key established with the sender of
 				// the message, error is returned.
+				// This should never happen - member which did not establish
+				// symmetric key with the current member is marked as inactive
+				// in the second phase and we no longer accept messages from them.
+				// If the symmetric key is not available, we consider it as a
+				// fatal error. Such a situation should never happen.
 				symmetricKey, hasKey := cvm.symmetricKeys[sharesMessage.senderID]
 				if !hasKey {
 					return nil, fmt.Errorf(
@@ -292,21 +305,28 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				}
 
 				// Decrypt shares using symmetric key established with sender.
-				// Since all the messages are validated prior to passing to this
-				// function, decryption error should never happen.
-				shareS, err := sharesMessage.decryptShareS(cvm.ID, symmetricKey) // s_ji
+				// Message validation performed earlier in this phase ensures
+				// that shares for all group members (including the current one)
+				// are in the message.
+				// The only reason possible why shares could not be decrypted
+				// here is because they are broken. If shares are broken,
+				// sender is disqualified and an accusation against the sender
+				// is published.
+				shareS, shareT, err := sharesMessage.decryptShares(
+					cvm.ID,
+					symmetricKey,
+				)
 				if err != nil {
-					return nil, fmt.Errorf(
-						"could not decrypt share S [%v]",
-						err,
+					logger.Warningf(
+						"[member:%v] member [%v] disqualified because "+
+							"could not decrypt shares received from them",
+						cvm.ID,
+						sharesMessage.senderID,
 					)
-				}
-				shareT, err := sharesMessage.decryptShareT(cvm.ID, symmetricKey) // t_ji
-				if err != nil {
-					return nil, fmt.Errorf(
-						"could not decrypt share T [%v]",
-						err,
-					)
+					cvm.group.MarkMemberAsDisqualified(sharesMessage.senderID)
+					accusedMembersKeys[sharesMessage.senderID] =
+						cvm.ephemeralKeyPairs[sharesMessage.senderID].PrivateKey
+					break
 				}
 
 				if !cvm.areSharesValidAgainstCommitments(
@@ -315,6 +335,13 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 					commitmentsMessage.commitments, // C_j
 					cvm.ID,                         // i
 				) {
+					logger.Warningf(
+						"[member:%v] shares from member [%v] invalid against "+
+							"commitments; disqualifying and accusing the member",
+						cvm.ID,
+						commitmentsMessage.senderID,
+					)
+					cvm.group.MarkMemberAsDisqualified(commitmentsMessage.senderID)
 					accusedMembersKeys[commitmentsMessage.senderID] =
 						cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
 					break
@@ -379,24 +406,36 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 
 // ResolveSecretSharesAccusationsMessages resolves complaints received in
 // secret shares accusations messages. The member calls this function to judge
-// which party of the dispute is lying.
+// which party of the dispute is misbehaving.
 //
-// The current member cannot be a part of a dispute. If the current member is
-// either an accuser or is accused, the accusation is ignored. The accused
-// party cannot be a judge in its own case. From the other hand, the accuser has
-// already performed the calculation in the previous phase which resulted in the
-// accusation and waits now for a judgment from other players.
+// Function should not receive accusation message sent by the current member.
+// Members accused by the current member are disqualified in the previous phase,
+// at the same time when an accusation against them is published.
+//
+// If the current member is accused, it marks the accuser as disqualified
+// without checking self shares. Each member consider itself as an honest
+// participant.
 //
 // This function needs to decrypt shares sent previously by the accused member
 // to the accuser in an encrypted form. To do that it needs to recover a symmetric
 // key used for data encryption. It takes private key revealed by the accuser
 // and public key broadcasted by the accused and performs Elliptic Curve Diffie-
-// Hellman operation between them.
+// Hellman operation on them.
 //
-// It returns IDs of members who should be disqualified. It will be an accuser
-// if the validation shows that shares and commitments are valid, so the accusation
-// was unfounded. Else it confirms that accused member misbehaved and their ID is
-// added to the list.
+// Function returns error only if it is fatal to the protocol. Such situation
+// should never happen.
+//
+// Accuser is disqualified if:
+// - accused the current member
+// - revealed public key does not match the public key previously broadcast
+//   by that member
+// - accused inactive or already disqualified member and as a result, we do not
+//   have enough information to resolve that accusation
+// - shares of the accused member are valid against commitments
+//
+// Accused member is disqualified if:
+// - shares of the accused member can not be decrypted
+// - shares of the accused member are not valid against commitments
 //
 // See Phase 5 of the protocol specification.
 func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
@@ -405,31 +444,127 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
-			if sjm.ID == accuserID || sjm.ID == accusedID {
-				// The member cannot resolve the dispute in which it's involved.
+			if sjm.ID == accusedID {
+				// The member does not resolve the dispute as an accused.
+				// Mark the accuser as disqualified immediately,
+				// as each member consider itself as a honest participant.
+				sjm.group.MarkMemberAsDisqualified(accuserID)
 				continue
 			}
 
-			symmetricKey, err := recoverSymmetricKey(
+			accuserPublicKey := findPublicKey(
+				sjm.evidenceLog,
+				accuserID,
+				accusedID,
+			)
+			if accuserPublicKey == nil {
+				// Ephemeral public key of the accuser, generated for the sake
+				// of communication with the accused member should be present
+				// in the evidence log. The key is not there only if it was not
+				// sent by the accuser in the first phase of the protocol and
+				// such behaviour results in marking that member as disqualified
+				// in the second phase. As a result, we no longer accept
+				// messages from that member and it is not possible we will
+				// receive an accusation from an inactive member in this phase.
+				// If the public key could not be found we consider this a
+				// fatal error. Such a situation should never happen.
+				return fmt.Errorf(
+					"could not find public key sent by [%v] to [%v]",
+					accuserID,
+					accusedID,
+				)
+			}
+
+			if !accuserPublicKey.IsKeyMatching(revealedAccuserPrivateKey) {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"revealing private key not matching the public key",
+					sjm.ID,
+					accuserID,
+				)
+				sjm.group.MarkMemberAsDisqualified(accuserID)
+				continue
+			}
+
+			// Recover symmetric key based on ephemeral public key message sent
+			// by the accused member. If the message is not present in the
+			// evidence log, it means the accused member did not sent us
+			// their public key in the first phase of the protocol and we
+			// marked the accused member as inactive in the second phase of the
+			// protocol. Assuming everyone in the group has the same view on
+			// who is inactive, it means the accuser sent and accusation against
+			// inactive member, knowing we can not resolve that accusation.
+			// As a result, we should mark the accuser as disqualified.
+			//
+			// If the message is present in the evidence log but it does not
+			// contain a public key generated for the accuser, it means we have
+			// already marked the accused party as disqualified when performing
+			// a validation of a message with public keys in the first phase of
+			// the protocol. Assuming everyone in the group has the same view on
+			// who is disqualified after the second phase of the protocol, it
+			// means the accuser sent an accusation against a disqualified
+			// member, knowing we can not resolve that accusation.
+			// As a result, we should mark the accuser as disqualified.
+			accusedPublicKey := findPublicKey(
 				sjm.evidenceLog,
 				accusedID,
 				accuserID,
-				revealedAccuserPrivateKey,
 			)
-			if err != nil {
-				// TODO Should we disqualify accuser/accused member here?
-				return fmt.Errorf("could not recover symmetric key [%v]", err)
+			if accusedPublicKey == nil {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because could not "+
+						"recover symmetric key; accused member [%v] is already "+
+						"marked as inactive or disqualified ",
+					sjm.ID,
+					accuserID,
+					accusedID,
+				)
+				sjm.group.MarkMemberAsDisqualified(accuserID)
+				continue
+			}
+			symmetricKey := revealedAccuserPrivateKey.Ecdh(accusedPublicKey)
+
+			// Get from evidence log peer shares message sent by the accused
+			// member. If the message is not present, this means the accused
+			// member has been already marked as inactive in phase 4.
+			// Assuming that each other member consider the accused member as
+			// inactive, the accuser should be disqualified because of
+			// accusing an inactive member knowing we can not resolve this
+			// accusation.
+			accusedSharesMessage := sjm.evidenceLog.peerSharesMessage(accusedID)
+			if accusedSharesMessage == nil {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because could not "+
+						"get peer shares message from evidence log; "+
+						"accused member [%v] is already marked as inactive",
+					sjm.ID,
+					accuserID,
+					accusedID,
+				)
+				sjm.group.MarkMemberAsDisqualified(accuserID)
+				continue
 			}
 
-			shareS, shareT, err := recoverShares(
-				sjm.evidenceLog,
-				accusedID,
+			// Message validation performed in the fourth phase ensures
+			// that shares for all group members (including the accused one)
+			// are in the message.
+			// The only reason possible why shares could not be decrypted
+			// here is because they are broken. If shares are broken,
+			// the accused member is disqualified.
+			shareS, shareT, err := accusedSharesMessage.decryptShares(
 				accuserID,
 				symmetricKey,
 			)
 			if err != nil {
-				// TODO Should we disqualify accuser/accused member here?
-				return fmt.Errorf("could not decrypt shares [%v]", err)
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of sending "+
+						"to member [%v] shares that could not be decrypted",
+					sjm.ID,
+					accusedID,
+					accuserID,
+				)
+				sjm.group.MarkMemberAsDisqualified(accusedID)
+				continue
 			}
 
 			if sjm.areSharesValidAgainstCommitments(
@@ -437,15 +572,19 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				sjm.receivedValidPeerCommitments[accusedID], // C_m
 				accuserID, // j
 			) {
-				logger.Warningf("member [%v] disqualified because of "+
-					"false accusation against member [%v] ",
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"false accusation against member [%v] ",
+					sjm.ID,
 					accuserID,
 					accusedID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
 			} else {
-				logger.Warningf("member [%v] disqualified because of "+
-					"confirmed misbehaviour against member [%v] ",
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"confirmed misbehaviour against member [%v] ",
+					sjm.ID,
 					accusedID,
 					accuserID,
 				)
@@ -456,29 +595,68 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	return nil
 }
 
+// Inspects evidence log looking for ephemeral public key message sent in phase
+// 1 of the protocol by the sender with the given ID and retrieves from that
+// message public key generated by that sender for the given receiver ID.
+//
+// The function fails if ephemeral public key message for the given sender ID
+// could not be found or if the public key for the given received ID was not
+// present in that message.
+//
+// There are two assumptions made here:
+// 1. If the given sender did not deliver ephemeral public key message in phase
+//    1, it should be marked as inactive, hence, this function should never be
+//    called for that sender ID,
+// 2. If the given sender delivered ephemeral public key message in phase 1
+//    but that message did not contain a public key for all group members
+//    including the one passed as receiver to this function, sender should be
+//    disqualified in phase 2, and this function should never be called for that
+//    sender ID.
+func findPublicKey(
+	evidenceLog evidenceLog,
+	senderID, receiverID group.MemberIndex,
+) *ephemeral.PublicKey {
+	ephemeralPublicKeyMessage := evidenceLog.ephemeralPublicKeyMessage(senderID)
+	if ephemeralPublicKeyMessage == nil {
+		logger.Warningf(
+			"no ephemeral public key message for sender %v",
+			senderID,
+		)
+		return nil
+	}
+
+	senderPublicKey, ok := ephemeralPublicKeyMessage.ephemeralPublicKeys[receiverID]
+	if !ok {
+		logger.Warningf(
+			"no ephemeral public key generated for receiver %v",
+			receiverID,
+		)
+		return nil
+	}
+
+	return senderPublicKey
+}
+
 // Recover ephemeral symmetric key used to encrypt communication between sender
 // and receiver assuming that receiver revealed its private ephemeral key.
 //
 // Finds ephemeral public key sent by sender to the receiver. Performs ECDH
 // operation between sender's public key and receiver's private key to recover
 // the ephemeral symmetric key.
+//
+// Deprecated: Body of this function should be used directly in order to
+// explain intentions more expressively in the client code.
+// TODO Remove when all usages will be replaced.
 func recoverSymmetricKey(
 	evidenceLog evidenceLog,
 	senderID, receiverID group.MemberIndex,
 	receiverPrivateKey *ephemeral.PrivateKey,
 ) (ephemeral.SymmetricKey, error) {
-	ephemeralPublicKeyMessage := evidenceLog.ephemeralPublicKeyMessage(senderID)
-	if ephemeralPublicKeyMessage == nil {
+	senderPublicKey := findPublicKey(evidenceLog, senderID, receiverID)
+	if senderPublicKey == nil {
 		return nil, fmt.Errorf(
-			"no ephemeral public key message for sender %v",
+			"could not find public key sent by [%v] to [%v]",
 			senderID,
-		)
-	}
-
-	senderPublicKey, ok := ephemeralPublicKeyMessage.ephemeralPublicKeys[receiverID]
-	if !ok {
-		return nil, fmt.Errorf(
-			"no ephemeral public key generated for receiver %v",
 			receiverID,
 		)
 	}
@@ -492,6 +670,10 @@ func recoverSymmetricKey(
 // First it finds in the evidence log the Peer Shares Message sent by the sender
 // to the receiver. Then it decrypts the decrypted shares with provided symmetric
 // key.
+//
+// Deprecated: Should be replaced. `peerSharesMessage` should be obtained and
+// `decryptShares` method from `PeerSharesMessage` should be used to decrypt shares.
+// TODO Remove when all usages will be replaced.
 func recoverShares(
 	evidenceLog evidenceLog,
 	senderID, receiverID group.MemberIndex,
@@ -507,12 +689,10 @@ func recoverShares(
 
 	shareS, err := peerSharesMessage.decryptShareS(receiverID, symmetricKey) // s_mj
 	if err != nil {
-		// TODO Should we disqualify accuser/accused member here?
 		return nil, nil, fmt.Errorf("cannot decrypt share S [%v]", err)
 	}
 	shareT, err := peerSharesMessage.decryptShareT(receiverID, symmetricKey) // t_mj
 	if err != nil {
-		// TODO Should we disqualify accuser/accused member here?
 		return nil, nil, fmt.Errorf("cannot decrypt share T [%v]", err)
 	}
 
@@ -581,6 +761,7 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 			sm.receivedValidSharesS[message.senderID],
 			message.publicKeySharePoints,
 		) {
+			// TODO in next PR: mark message sender as disqualified
 			accusedMembersKeys[message.senderID] = sm.ephemeralKeyPairs[message.senderID].PrivateKey
 			continue
 		}
@@ -611,6 +792,10 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 	shareS *big.Int,
 	publicKeySharePoints []*bn256.G2,
 ) bool {
+	if len(publicKeySharePoints) == 0 {
+		return false
+	}
+
 	var sum *bn256.G2 // Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 	for k, a := range publicKeySharePoints {
 		aj := new(bn256.G2).ScalarMult(a, pow(senderID, k)) // A_j[k] * (i^k)
@@ -650,11 +835,12 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 // See Phase 9 of the protocol specification.
 func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessages(
 	messages []*PointsAccusationsMessage,
-) ([]group.MemberIndex, error) {
-	disqualifiedMembers := make([]group.MemberIndex, 0)
+) error {
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
+
+			// TODO in next PR: change this condition similarly as in phase 5
 			if pjm.ID == message.senderID || pjm.ID == accusedID {
 				// The member cannot resolve the dispute in which it's involved.
 				continue
@@ -662,6 +848,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 
 			evidenceLog := pjm.evidenceLog
 
+			// TODO Replace as in phase 5.
 			recoveredSymmetricKey, err := recoverSymmetricKey(
 				evidenceLog,
 				accusedID,
@@ -670,9 +857,10 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 			)
 			if err != nil {
 				// TODO Should we disqualify accuser/accused member here?
-				return nil, fmt.Errorf("could not recover symmetric key [%v]", err)
+				return fmt.Errorf("could not recover symmetric key [%v]", err)
 			}
 
+			// TODO Replace as in phase 5
 			shareS, _, err := recoverShares(
 				evidenceLog,
 				accusedID,
@@ -681,7 +869,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 			)
 			if err != nil {
 				// TODO Should we disqualify accuser/accused member here?
-				return nil, fmt.Errorf("could not decrypt share S [%v]", err)
+				return fmt.Errorf("could not decrypt share S [%v]", err)
 			}
 
 			if pjm.isShareValidAgainstPublicKeySharePoints(
@@ -689,15 +877,27 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 				shareS,
 				pjm.receivedValidPeerPublicKeySharePoints[accusedID],
 			) {
-				// TODO The accusation turned out to be unfounded. Should we add accused
-				// member's individual public key to receivedValidPeerPublicKeySharePoints?
-				disqualifiedMembers = append(disqualifiedMembers, message.senderID)
-				continue
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"false accusation against member [%v] ",
+					pjm.ID,
+					accuserID,
+					accusedID,
+				)
+				pjm.group.MarkMemberAsDisqualified(accuserID)
+			} else {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"confirmed misbehaviour against member [%v] ",
+					pjm.ID,
+					accusedID,
+					accuserID,
+				)
+				pjm.group.MarkMemberAsDisqualified(accusedID)
 			}
-			disqualifiedMembers = append(disqualifiedMembers, accusedID)
 		}
 	}
-	return disqualifiedMembers, nil
+	return nil
 }
 
 // RevealDisqualifiedMembersKeys reveals ephemeral private keys used to create
@@ -758,13 +958,41 @@ func (rm *RevealingMember) disqualifiedSharingMembers() []group.MemberIndex {
 func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
 	messages []*DisqualifiedEphemeralKeysMessage,
 ) error {
-	revealedDisqualifiedShares, err := rm.recoverDisqualifiedShares(messages)
+	revealedDisqualifiedShares, err := rm.revealDisqualifiedShares(messages)
 	if err != nil {
-		return fmt.Errorf("recovering disqualified shares failed [%v]", err)
+		return fmt.Errorf("revealing disqualified shares failed [%v]", err)
 	}
 	rm.reconstructIndividualPrivateKeys(revealedDisqualifiedShares) // z_m
 	rm.reconstructIndividualPublicKeys()                            // y_m
 	return nil
+}
+
+// Reveal shares calculated by members disqualified in previous phases.
+// First, perform shares recovery based on received DisqualifiedEphemeralKeysMessage.
+// Then, add disqualified member shares generated for the current member.
+// In result, a complete slice of shares is returned and reconstruction
+// of individual private keys is possible.
+func (rm *ReconstructingMember) revealDisqualifiedShares(
+	messages []*DisqualifiedEphemeralKeysMessage,
+) ([]*disqualifiedShares, error) {
+	disqualifiedShares, err := rm.recoverDisqualifiedShares(messages)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add disqualified member shares generated for the current member.
+	for _, disqualifiedMemberID := range rm.group.DisqualifiedMemberIDs() {
+		for _, shares := range disqualifiedShares {
+			if shares.disqualifiedMemberID == disqualifiedMemberID {
+				if currentMemberShare, ok := rm.receivedValidSharesS[disqualifiedMemberID]; ok {
+					shares.peerSharesS[rm.ID] = currentMemberShare
+				}
+				break
+			}
+		}
+	}
+
+	return disqualifiedShares, nil
 }
 
 // Recover shares `s_mk` calculated by members `m` disqualified in Phase 9.
@@ -810,17 +1038,42 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 	for _, message := range messages {
 		revealingMemberID := message.senderID
 		for disqualifiedMemberID, revealedPrivateKey := range message.privateKeys {
-			publicKey := rm.evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
-				ephemeralPublicKeys[disqualifiedMemberID]
-			if !publicKey.IsKeyMatching(revealedPrivateKey) {
-				logger.Errorf(
-					"invalid private key for public key from member: [%v]",
+			if rm.ID == disqualifiedMemberID {
+				// Mark the revealing member as disqualified immediately,
+				// as each member consider itself as a honest participant.
+				// Continue as there is no sense to recover own shares.
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
+				continue
+			}
+
+			// After phase 9, all group members should have the same view on
+			// who is disqualified. Revealing key of non-disqualified members
+			// is forbidden and leads to disqualifying the revealing member.
+			if rm.group.IsOperating(disqualifiedMemberID) {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because "+
+						"revealing key of non-disqualified member",
+					rm.ID,
 					revealingMemberID,
 				)
 				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
 			}
 
+			publicKey := rm.evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
+				ephemeralPublicKeys[disqualifiedMemberID]
+			if !publicKey.IsKeyMatching(revealedPrivateKey) {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"revealing private key not matching the public key",
+					rm.ID,
+					revealingMemberID,
+				)
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
+				continue
+			}
+
+			// TODO Replace as in phase 5.
 			recoveredSymmetricKey, err := recoverSymmetricKey(
 				rm.evidenceLog,
 				disqualifiedMemberID, // m
@@ -833,6 +1086,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				continue
 			}
 
+			// TODO Replace as in phase 5
 			shareS, _, err := recoverShares(
 				rm.evidenceLog,
 				disqualifiedMemberID,  // m

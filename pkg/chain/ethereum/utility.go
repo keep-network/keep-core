@@ -8,7 +8,7 @@ import (
 )
 
 func (euc *ethereumUtilityChain) Genesis() error {
-	_, err := euc.keepRandomBeaconOperatorContract.Genesis(big.NewInt(0))
+	_, err := euc.keepRandomBeaconOperatorContract.Genesis()
 	return err
 }
 
