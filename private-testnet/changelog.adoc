@@ -2,6 +2,12 @@
 
 Summary of Keep private testnet releases in reverse chronological order.
 
+== 2019-09-09
+
+== BUGFIXES
+
+- Incorrect group threshold when signing relay entry:  As part of a group there is an honest and dishonest threshold for participants to produce a relay entry.  Our current group size is set to 5.  At a group size of 5 we need a minimum of 3 honest and max of 2 dishonest participants.  We have been calculating the threshold at 4, resulting in more stringent than desired threshold requirements.  Additionally, we corrected GJKR polynomial generation by setting the dishonest threshold as the degree, instead of honest threshold.
+
 == 2019-09-06
 
 === NEW FEATURES
