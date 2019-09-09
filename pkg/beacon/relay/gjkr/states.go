@@ -510,15 +510,12 @@ func (pjs *pointsJustificationState) ActiveBlocks() uint64 {
 func (pjs *pointsJustificationState) Initiate() error {
 	pjs.member.MarkInactiveMembers(pjs.previousPhaseMessages)
 
-	disqualifiedMembers, err := pjs.member.ResolvePublicKeySharePointsAccusationsMessages(
+	err := pjs.member.ResolvePublicKeySharePointsAccusationsMessages(
 		pjs.previousPhaseMessages,
 	)
 	if err != nil {
 		return err
 	}
-
-	// TODO: Handle member disqualification
-	logger.Debugf("disqualified members: %v", disqualifiedMembers)
 
 	return nil
 }

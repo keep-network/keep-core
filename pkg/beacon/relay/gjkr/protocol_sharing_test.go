@@ -13,7 +13,7 @@ import (
 )
 
 func TestCombineReceivedShares(t *testing.T) {
-	threshold := 3
+	dishonestThreshold := 3
 	groupSize := 7
 
 	selfShareS := big.NewInt(9)
@@ -29,7 +29,7 @@ func TestCombineReceivedShares(t *testing.T) {
 	// 9 + 10 + 11 + 12 + 13 + 14 + 15 = 84
 	expectedShareS := big.NewInt(84)
 
-	members, err := initializeQualifiedMembersGroup(threshold, groupSize)
+	members, err := initializeQualifiedMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
@@ -95,10 +95,10 @@ func TestCalculatePublicKeySharePoints(t *testing.T) {
 }
 
 func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
-	threshold := 3
+	dishonestThreshold := 2
 	groupSize := 5
 
-	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
+	sharingMembers, err := initializeSharingMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
@@ -114,7 +114,9 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 			expectedError: nil,
 		},
 		"negative validation - changed public key share - one accused member": {
-			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
+			modifyPublicKeySharePointsMessages: func(
+				messages []*MemberPublicKeySharePointsMessage,
+			) {
 				messages[1].publicKeySharePoints[1] = new(bn256.G2).ScalarMult(
 					messages[1].publicKeySharePoints[1],
 					big.NewInt(2),
@@ -125,7 +127,9 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 			expectedAccusedIDs: []group.MemberIndex{3},
 		},
 		"negative validation - changed public key share - two accused members": {
-			modifyPublicKeySharePointsMessages: func(messages []*MemberPublicKeySharePointsMessage) {
+			modifyPublicKeySharePointsMessages: func(
+				messages []*MemberPublicKeySharePointsMessage,
+			) {
 				messages[0].publicKeySharePoints[1] = new(bn256.G2).ScalarMult(
 					messages[0].publicKeySharePoints[1],
 					big.NewInt(2),
@@ -137,6 +141,15 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 			},
 			expectedError:      nil,
 			expectedAccusedIDs: []group.MemberIndex{2, 5},
+		},
+		"negative validation - no public key share - one accused member": {
+			modifyPublicKeySharePointsMessages: func(
+				messages []*MemberPublicKeySharePointsMessage,
+			) {
+				messages[0].publicKeySharePoints = []*bn256.G2{}
+			},
+			expectedError:      nil,
+			expectedAccusedIDs: []group.MemberIndex{2},
 		},
 	}
 	for testName, test := range tests {
@@ -180,12 +193,12 @@ func TestCalculateAndVerifyPublicKeySharePoints(t *testing.T) {
 	}
 }
 
-func initializeQualifiedMembersGroup(threshold, groupSize int) (
+func initializeQualifiedMembersGroup(dishonestThreshold, groupSize int) (
 	[]*QualifiedMember,
 	error,
 ) {
 	sharesJustifyingMembers, err := initializeSharesJustifyingMemberGroup(
-		threshold,
+		dishonestThreshold,
 		groupSize,
 	)
 	if err != nil {
@@ -200,19 +213,21 @@ func initializeQualifiedMembersGroup(threshold, groupSize int) (
 	return qualifiedMembers, nil
 }
 
-func initializeSharingMembersGroup(threshold, groupSize int) (
+func initializeSharingMembersGroup(dishonestThreshold, groupSize int) (
 	[]*SharingMember,
 	error,
 ) {
-	qualifiedMembers, err := initializeQualifiedMembersGroup(threshold, groupSize)
+	qualifiedMembers, err := initializeQualifiedMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
 
 	var sharingMembers []*SharingMember
 	for _, sjm := range qualifiedMembers {
-		sjm.secretCoefficients = make([]*big.Int, threshold+1)
-		for i := 0; i < threshold+1; i++ {
+		// polynomial is of degree dishonestThreshold so we have
+		// dishonestThreshold+1 coefficients, including a constant coefficient
+		sjm.secretCoefficients = make([]*big.Int, dishonestThreshold+1)
+		for i := 0; i < dishonestThreshold+1; i++ {
 			sjm.secretCoefficients[i], err = crand.Int(crand.Reader, bn256.Order)
 			if err != nil {
 				return nil, fmt.Errorf("secret share generation failed [%s]", err)
