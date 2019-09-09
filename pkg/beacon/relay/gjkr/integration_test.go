@@ -1,4 +1,4 @@
-// Package gjkr_test contains integration tests for the full roundrip
+// Package gjkr_test contains integration tests for the full roundtrip
 // of GJKR-specific parts of DKG.
 package gjkr_test
 
