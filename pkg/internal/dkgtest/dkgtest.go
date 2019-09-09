@@ -32,11 +32,11 @@ type Result struct {
 }
 
 // RunTest executes the full DKG roundrip test for the provided group size
-// and threshold. The provided interception rules are applied in the broadcast
-// channel for the time of DKG execution.
+// and honest threshold. The provided interception rules are applied in the
+// broadcast channel for the time of DKG execution.
 func RunTest(
 	groupSize int,
-	threshold int,
+	honestThreshold int,
 	rules interception.Rules,
 ) (*Result, error) {
 	privateKey, publicKey, err := operator.GenerateKeyPair()
@@ -51,17 +51,20 @@ func RunTest(
 		rules,
 	)
 
-	chain := chainLocal.ConnectWithKey(groupSize, threshold, minimumStake, privateKey)
+	chain := chainLocal.ConnectWithKey(groupSize, honestThreshold, minimumStake, privateKey)
 
-	return executeDKG(groupSize, threshold, chain, network)
+	return executeDKG(chain, network)
 }
 
 func executeDKG(
-	groupSize int,
-	threshold int,
 	chain chainLocal.Chain,
 	network interception.Network,
 ) (*Result, error) {
+	relayConfig, err := chain.ThresholdRelay().GetConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	blockCounter, err := chain.BlockCounter()
 	if err != nil {
 		return nil, err
@@ -90,7 +93,7 @@ func executeDKG(
 	var memberFailures []error
 
 	var wg sync.WaitGroup
-	wg.Add(groupSize)
+	wg.Add(relayConfig.GroupSize)
 
 	currentBlockHeight, err := blockCounter.CurrentBlock()
 	if err != nil {
@@ -101,14 +104,14 @@ func executeDKG(
 	// make sure all members are up.
 	startBlockHeight := currentBlockHeight + 3
 
-	for i := 0; i < groupSize; i++ {
+	for i := 0; i < relayConfig.GroupSize; i++ {
 		i := i // capture for goroutine
 		go func() {
 			signer, err := dkg.ExecuteDKG(
 				seed,
 				i,
-				groupSize,
-				threshold,
+				relayConfig.GroupSize,
+				relayConfig.DishonestThreshold(),
 				startBlockHeight,
 				blockCounter,
 				chain.ThresholdRelay(),

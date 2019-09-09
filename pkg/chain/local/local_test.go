@@ -571,9 +571,9 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
 
-	localChain := Connect(groupSize, threshold, big.NewInt(200)).(*localChain)
+	localChain := Connect(groupSize, honestThreshold, big.NewInt(200)).(*localChain)
 	chainHandle := localChain.ThresholdRelay()
 
 	var tests = map[string]struct {
@@ -582,20 +582,20 @@ func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
 	}{
 		"no signatures": {
 			signatures:    map[group.MemberIndex][]byte{},
-			expectedError: fmt.Errorf("failed to submit result with [0] signatures for threshold [%v]", threshold),
+			expectedError: fmt.Errorf("failed to submit result with [0] signatures for honest threshold [%v]", honestThreshold),
 		},
 		"one signature": {
 			signatures: map[group.MemberIndex][]byte{
 				1: []byte{101},
 			},
-			expectedError: fmt.Errorf("failed to submit result with [1] signatures for threshold [%v]", threshold),
+			expectedError: fmt.Errorf("failed to submit result with [1] signatures for honest threshold [%v]", honestThreshold),
 		},
 		"one less signature than threshold": {
 			signatures: map[group.MemberIndex][]byte{
 				1: []byte{101},
 				2: []byte{102},
 			},
-			expectedError: fmt.Errorf("failed to submit result with [2] signatures for threshold [%v]", threshold),
+			expectedError: fmt.Errorf("failed to submit result with [2] signatures for honest threshold [%v]", honestThreshold),
 		},
 		"threshold signatures": {
 			signatures: map[group.MemberIndex][]byte{

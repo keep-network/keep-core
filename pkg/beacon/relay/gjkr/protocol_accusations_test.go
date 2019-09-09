@@ -13,7 +13,7 @@ import (
 
 // TODO Add test with many messages from accusers and many accused in the message.
 func TestResolveSecretSharesAccusations(t *testing.T) {
-	threshold := 3
+	dishonestThreshold := 2
 	groupSize := 5
 
 	currentMemberID := group.MemberIndex(2) // i
@@ -80,7 +80,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			members, err := initializeSharesJustifyingMemberGroup(
-				threshold,
+				dishonestThreshold,
 				groupSize,
 			)
 			if err != nil {
@@ -284,7 +284,7 @@ func TestRecoverShares(t *testing.T) {
 
 // TODO Add test with many messages from accusers and many accused in the message.
 func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
-	threshold := 3
+	dishonestThreshold := 2
 	groupSize := 5
 
 	currentMemberID := group.MemberIndex(2) // i
@@ -301,15 +301,10 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			accusedID:      4,
 			expectedResult: []group.MemberIndex{3},
 		},
-		"current member as a sender - accusation skipped": {
-			accuserID:      currentMemberID,
-			accusedID:      3,
-			expectedResult: []group.MemberIndex{},
-		},
-		"current member as an accused - accusation skipped": {
+		"current member as an accused - accuser is disqualified": {
 			accuserID:      3,
 			accusedID:      currentMemberID,
-			expectedResult: []group.MemberIndex{},
+			expectedResult: []group.MemberIndex{3},
 		},
 		"incorrect shareS - accused member is disqualified": {
 			accuserID: 3,
@@ -345,7 +340,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			members, err := initializePointsJustifyingMemberGroup(
-				threshold,
+				dishonestThreshold,
 				groupSize,
 			)
 			if err != nil {
@@ -434,12 +429,12 @@ func findCoefficientsJustifyingMemberByID(
 // It generates coefficients for each group member, calculates commitments and
 // shares for each peer member individually. At the end it stores values for each
 // member just like they would be received from peers.
-func initializeSharesJustifyingMemberGroup(threshold, groupSize int) (
+func initializeSharesJustifyingMemberGroup(dishonestThreshold, groupSize int) (
 	[]*SharesJustifyingMember,
 	error,
 ) {
 	commitmentsVerifyingMembers, err :=
-		initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize)
+		initializeCommitmentsVerifiyingMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
@@ -456,18 +451,19 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) (
 	groupCoefficientsB := make(map[group.MemberIndex][]*big.Int, groupSize)
 	groupCommitments := make(map[group.MemberIndex][]*bn256.G1, groupSize)
 
-	// Generate threshold+1 coefficients and commitments for each group member.
 	for _, m := range sharesJustifyingMembers {
-		memberCoefficientsA, err := generatePolynomial(threshold)
+		memberCoefficientsA, err := generatePolynomial(dishonestThreshold)
 		if err != nil {
 			return nil, fmt.Errorf("polynomial generation failed [%s]", err)
 		}
-		memberCoefficientsB, err := generatePolynomial(threshold)
+		memberCoefficientsB, err := generatePolynomial(dishonestThreshold)
 		if err != nil {
 			return nil, fmt.Errorf("polynomial generation failed [%s]", err)
 		}
 
-		commitments := make([]*bn256.G1, threshold+1)
+		// polynomial is of degree dishonestThreshold so it has
+		// dishonestThreshold+1 coefficients including a constant coefficient
+		commitments := make([]*bn256.G1, dishonestThreshold+1)
 		for k := range memberCoefficientsA {
 
 			commitments[k] = m.calculateCommitment(
@@ -501,9 +497,9 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) (
 // secretCoefficients field for each group member. At the end it stores
 // values for each member just like they would be received from peers.
 func initializePointsJustifyingMemberGroup(
-	threshold, groupSize int,
+	dishonestThreshold, groupSize int,
 ) ([]*PointsJustifyingMember, error) {
-	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
+	sharingMembers, err := initializeSharingMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}

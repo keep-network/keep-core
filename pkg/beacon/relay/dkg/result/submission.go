@@ -61,11 +61,11 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		)
 	}
 
-	if len(signatures) < config.Threshold {
+	if len(signatures) < config.HonestThreshold {
 		return fmt.Errorf(
-			"could not submit result with [%v] signatures for threshold [%v]",
+			"could not submit result with [%v] signatures for honest threshold [%v]",
 			len(signatures),
-			config.Threshold,
+			config.HonestThreshold,
 		)
 	}
 

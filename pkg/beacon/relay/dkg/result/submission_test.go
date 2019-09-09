@@ -12,10 +12,10 @@ import (
 )
 
 func TestSubmitDKGResult(t *testing.T) {
-	threshold := 2
+	honestThreshold := 3
 	groupSize := 5
 
-	chainHandle, initialBlock, err := initChainHandle(threshold, groupSize)
+	chainHandle, initialBlock, err := initChainHandle(honestThreshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,10 @@ func TestSubmitDKGResult(t *testing.T) {
 			}
 
 			// Reinitialize chain to reset block counter
-			chainHandle, initialBlockHeight, err := initChainHandle(threshold, groupSize)
+			chainHandle, initialBlockHeight, err := initChainHandle(
+				honestThreshold,
+				groupSize,
+			)
 			if err != nil {
 				t.Fatalf("chain initialization failed [%v]", err)
 			}
@@ -113,7 +116,7 @@ func TestSubmitDKGResult(t *testing.T) {
 // member loop should be aborted and result published by the first member should
 // be returned.
 func TestConcurrentPublishResult(t *testing.T) {
-	threshold := 2
+	honestThreshold := 3
 	groupSize := 5
 
 	member1 := &SubmittingMember{
@@ -159,7 +162,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			chainHandle, initialBlock, err :=
-				initChainHandle(threshold, groupSize)
+				initChainHandle(honestThreshold, groupSize)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -225,8 +228,8 @@ func TestConcurrentPublishResult(t *testing.T) {
 	}
 }
 
-func initChainHandle(threshold, groupSize int) (chain.Handle, uint64, error) {
-	chainHandle := local.Connect(groupSize, threshold, big.NewInt(200))
+func initChainHandle(honestThreshold int, groupSize int) (chain.Handle, uint64, error) {
+	chainHandle := local.Connect(groupSize, honestThreshold, big.NewInt(200))
 
 	blockCounter, err := chainHandle.BlockCounter()
 	if err != nil {
