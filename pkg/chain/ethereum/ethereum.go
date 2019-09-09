@@ -98,7 +98,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 
 	return &relayconfig.Chain{
 		GroupSize:                       int(groupSize.Int64()),
-		Threshold:                       int(threshold.Int64()),
+		HonestThreshold:                 int(threshold.Int64()),
 		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout.Uint64(),
 		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout.Uint64(),
 		TicketChallengeTimeout:          ticketChallengeTimeout.Uint64(),

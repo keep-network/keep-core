@@ -19,13 +19,13 @@ func TestExecute_HappyPath(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptor)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestExecute_IA_member1_phase1(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
@@ -54,7 +54,7 @@ func TestExecute_IA_member1_phase1(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestExecute_IA_members12_phase3(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 7
-	threshold := 4
+	honestThreshold := 4
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		// drop commitment message from member 1
@@ -92,7 +92,7 @@ func TestExecute_IA_members12_phase3(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,7 +112,7 @@ func TestExecute_IA_member1_phase4(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 3
-	threshold := 2
+	honestThreshold := 2
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
@@ -123,7 +123,7 @@ func TestExecute_IA_member1_phase4(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +143,7 @@ func TestExecute_IA_member1_phase7(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		sharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
@@ -154,7 +154,7 @@ func TestExecute_IA_member1_phase7(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +174,7 @@ func TestExecute_IA_member1_phase8(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		accusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
@@ -185,7 +185,7 @@ func TestExecute_IA_member1_phase8(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -205,7 +205,7 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
@@ -217,7 +217,7 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -241,7 +241,7 @@ func TestExecute_DQ_member3_revealsWrongPrivateKey_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
@@ -260,7 +260,7 @@ func TestExecute_DQ_member3_revealsWrongPrivateKey_phase5(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -284,7 +284,7 @@ func TestExecute_DQ_member2_cannotDecryptTheirShares_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
@@ -300,7 +300,7 @@ func TestExecute_DQ_member2_cannotDecryptTheirShares_phase5(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -324,7 +324,7 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
@@ -339,7 +339,7 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -380,7 +380,7 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 
@@ -404,7 +404,7 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -437,7 +437,7 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
@@ -453,7 +453,7 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
