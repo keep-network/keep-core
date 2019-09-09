@@ -26,7 +26,7 @@ type signingStateBase struct {
 	previousEntry *big.Int
 	seed          *big.Int
 
-	threshold int
+	honestThreshold int
 }
 
 type signatureShareState struct {
@@ -150,7 +150,10 @@ func (scs *signatureCompleteState) Initiate() error {
 		scs.MemberIndex(),
 		len(seenSharesSlice),
 	)
-	signature, err := scs.signer.CompleteSignature(seenSharesSlice, scs.threshold)
+	signature, err := scs.signer.CompleteSignature(
+		seenSharesSlice,
+		scs.honestThreshold,
+	)
 	if err != nil {
 		return err
 	}

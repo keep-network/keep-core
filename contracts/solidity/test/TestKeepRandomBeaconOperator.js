@@ -11,7 +11,8 @@ contract('TestKeepRandomBeaconOperator', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconOperator.sol')
+      artifacts.require('./KeepRandomBeaconOperator.sol'),
+      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
     );
     operatorContract = contracts.operatorContract;
   });
