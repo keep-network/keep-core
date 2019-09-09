@@ -1,11 +1,11 @@
 BASEDIR=$(dirname "$0")
 EXTERNAL_PARTICIPANT_PATH="$BASEDIR/../participants"
-EXTERNAL_PARTICIPANTAS=$(ls $EXTERNAL_PARTICIPANT_PATH)
+EXTERNAL_PARTICIPANTS=$(ls $EXTERNAL_PARTICIPANT_PATH)
 
 function clean_deployment_bundles() {
   echo "=====REMOVING OLD BUNDLES====="
-  for partcipant in $EXTERNAL_PARTICIPANTAS; do
-    PARTICIPANT_PATH=$EXTERNAL_PARTICIPANT_PATH/$partcipant
+  for participant in $EXTERNAL_PARTICIPANTS; do
+    PARTICIPANT_PATH=$EXTERNAL_PARTICIPANT_PATH/$participant
     CURRENT_BUNDLE=$(ls $PARTICIPANT_PATH | grep ".tar.gz")
 
     if [ -z $CURRENT_BUNDLE ]
@@ -24,16 +24,16 @@ function create_deployment_bundles() {
   echo "=====CREATING DEPLOYMENT BUNDLES====="
   DATE=$(date +%F)
 
-  for partcipant in $EXTERNAL_PARTICIPANTAS; do
-    PARTICIPANT_PATH=$EXTERNAL_PARTICIPANT_PATH/$partcipant
+  for participant in $EXTERNAL_PARTICIPANTS; do
+    PARTICIPANT_PATH=$EXTERNAL_PARTICIPANT_PATH/$participant
 
-    echo "$partcipant"
+    echo "$participant"
     tar -zcvf $PARTICIPANT_PATH/$DATE-keep-client-deployment-bundle.tar.gz \
       -C $BASEDIR/../../docs/ keep-client-quickstart.adoc \
       -C ../private-testnet/ changelog.adoc \
         ./eth-account-password.txt  \
         ./keep-client-snapshot.tar \
-      -C ./participants/$partcipant config \
+      -C ./participants/$participant config \
         ./persistence
      echo "==============================\n"
    done
