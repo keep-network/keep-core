@@ -481,7 +481,7 @@ func TestExecute_DQ_member2_invalidMessage_phase8(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	dishonestThreshold := 3
+	honestThreshold := 3
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		sharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
@@ -493,7 +493,7 @@ func TestExecute_DQ_member2_invalidMessage_phase8(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, dishonestThreshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
