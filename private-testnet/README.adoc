@@ -8,6 +8,8 @@ context to operate.
 
 == General Steps
 
+Scripts should be run from `keep-core/private-testnet/scripts`
+
 * Run a new circle build from `keep-test-deployment` branch
 * Update `changelog.adoc` with relevant info since the last release
 * Update `keep-client-quickstart.adoc` with any changes
@@ -36,8 +38,6 @@ external participants.  This should look like:
 ├── keyfiles
 ├── participants
 └── scripts
-
-3 directories, 6 files
 ```
 
 Files the bundling script expects to be on this level:
@@ -48,7 +48,7 @@ Files the bundling script expects to be on this level:
 
 === Participants
 
-Participant directories should all live in `/private-testnet/partcipants`.
+Participant directories should all live in `keep-core/private-testnet/partcipants`.
 Each particpant must get their own directory.  The bundling script and quickstart
 guide both operate under the assumption that each participant directory is
 structured in the format highlighted below:
@@ -60,8 +60,6 @@ structured in the format highlighted below:
 ├── bisontrails
 ├── figment
 └── staked
-
-3 directories, 0 files
 ```
 
 *Individual participant directory structure:*
@@ -71,26 +69,20 @@ structured in the format highlighted below:
 │   ├── eth-account-keyfile
 │   └── keep-client-config.toml
 └── persistence
-
-2 directories, 3 files
 ```
 
 == Scripts
 
 There are 3 scripts that make up preparing deployment bundles:
 
-* `private-testnet/scripts/prepare-participant-bundles.js`
-  ** Creates a `.tar.gz` bundle to be distributed to each participant.  The file
-     is stored on the top level of the particpant directory.
-* `private-testnet/scripts/fetch-contract-data.js`
+* `fetch-contract-data.js`
   ** Grabs the latest contract data for `KeepToken` and `TokenStaking`.  These are
      used in the `stake-accounts.js` script
-* `private-testnet/scripts/stake-accounts.js`
+* `stake-accounts.js`
   ** Stakes each ETH account that is assigned to a participant.
-
-`prepare-participant-bundles.js` can be run before staking, you just need to make sure that
-`fetch-contract-data.js` is run before `stake-accounts.js`.
-
+* `prepare-participant-bundles.js`
+  ** Creates a `.tar.gz` bundle to be distributed to each participant.  The file
+     is stored on the top level of the particpant directory.
 
 === Dependencies
 
