@@ -791,15 +791,20 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 func (sm *SharingMember) isValidMemberPublicKeySharePointsMessage(
 	message *MemberPublicKeySharePointsMessage,
 ) bool {
-	expectedPointsNumber := sm.group.DishonestThreshold() + 1
-	if len(message.publicKeySharePoints) != expectedPointsNumber {
+	// A public key share point is generated for each coefficient of the
+	// polynomial. The polynomial is of degree equal to the dishonest threshold,
+	// thus we have dishonest threshold + 1 coefficients in the polynomial
+	// including a constant coefficient. It implicates the same count of
+	// public key share points.
+	expectedPointsCount := sm.group.DishonestThreshold() + 1
+	if len(message.publicKeySharePoints) != expectedPointsCount {
 		logger.Warningf(
-			"[member:%v] member [%v] sent message with number of public "+
-				"key share points [%v] instead of [%v]",
+			"[member:%v] member [%v] sent a message with a wrong number "+
+				"of public key share points: [%v] instead of expected [%v]",
 			sm.ID,
 			message.senderID,
 			len(message.publicKeySharePoints),
-			expectedPointsNumber,
+			expectedPointsCount,
 		)
 		return false
 	}

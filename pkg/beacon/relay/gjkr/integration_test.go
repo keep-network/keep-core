@@ -370,9 +370,9 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 //  member which is stored in accuser internal map called 'ephemeralKeyPairs'.
 
 // Phase 8 test case - a member sends an invalid member public key share points
-// message. Message payload doesn't contain correct number of share points.
-// Sender of the invalid message is disqualified by all of the receivers.
-func TestExecute_DQ_member1_invalidMessage_phase8(t *testing.T) {
+// message. Message payload doesn't contain correct number of public key share
+// points. Sender of the invalid message is disqualified by all of the receivers.
+func TestExecute_DQ_member2_invalidMessage_phase8(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -380,8 +380,8 @@ func TestExecute_DQ_member1_invalidMessage_phase8(t *testing.T) {
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		sharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
-		if ok && sharePointsMessage.SenderID() == group.MemberIndex(1) {
-			sharePointsMessage.SetPublicKeyShares([]*bn256.G2{})
+		if ok && sharePointsMessage.SenderID() == group.MemberIndex(2) {
+			sharePointsMessage.RemovePublicKeyShare(0)
 			return sharePointsMessage
 		}
 
@@ -395,13 +395,13 @@ func TestExecute_DQ_member1_invalidMessage_phase8(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
-	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 4, 5}...)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3, 4, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
 	dkgtest.AssertInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
-	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 4, 5}...)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 4, 5}...)
 }
 
 // TODO Test case Phase 9: 'presented private key does not correspond

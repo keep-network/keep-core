@@ -37,10 +37,13 @@ func (mpkspm *MemberPublicKeySharePointsMessage) SetPublicKeyShare(
 	mpkspm.publicKeySharePoints[index] = publicKeyShare
 }
 
-func (mpkspm *MemberPublicKeySharePointsMessage) SetPublicKeyShares(
-	publicKeyShares []*bn256.G2,
+func (mpkspm *MemberPublicKeySharePointsMessage) RemovePublicKeyShare(
+	index int,
 ) {
-	mpkspm.publicKeySharePoints = publicKeyShares
+	mpkspm.publicKeySharePoints = append(
+		mpkspm.publicKeySharePoints[:index],
+		mpkspm.publicKeySharePoints[index+1:]...,
+	)
 }
 
 func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
