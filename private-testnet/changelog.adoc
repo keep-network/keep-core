@@ -1,12 +1,6 @@
-:toc: macro
+= Keep Private Testnet Changelog
 
-= Changelog
-
-:icons: font
-:numbered:
-toc::[]
-
-Summary of Keep private-testnet iterations.
+Summary of Keep private testnet releases in reverse chronological order.
 
 == 2019-09-06
 
