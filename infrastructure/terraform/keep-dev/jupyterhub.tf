@@ -2,7 +2,6 @@ data "template_file" "jupyterhub_values" {
   template = "${file("${path.module}/config-files/jupyterhub-values.yaml.tmpl")}"
 
   vars = {
-    clientId     = "42518614489-elr1i0khrg215fo6ic7iqp20e5i7kdat.apps.googleusercontent.com"
     clientSecret = "${data.kubernetes_secret.jupyter_oauth_key.data.jupyter-oauth-key}"
   }
 }
