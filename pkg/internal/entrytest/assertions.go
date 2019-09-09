@@ -14,7 +14,10 @@ func AssertEntryPublished(t *testing.T, testResult *Result) {
 // the chain.
 func AssertEntryNotPublished(t *testing.T, testResult *Result) {
 	if testResult.entry != nil {
-		t.Fatal("expected relay entry not to be published")
+		t.Fatalf(
+			"expected relay entry not to be published; is: [%v]",
+			testResult.entry,
+		)
 	}
 }
 
