@@ -762,8 +762,8 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 			message.publicKeySharePoints,
 		) {
 			logger.Warningf(
-				"[member:%v] share from member [%v] invalid against public "+
-					"key share points; disqualifying and accusing the member",
+				"[member:%v] member [%v] disqualified because of "+
+					"invalid public key share points",
 				sm.ID,
 				message.senderID,
 			)

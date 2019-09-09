@@ -301,7 +301,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			accusedID:      4,
 			expectedResult: []group.MemberIndex{3},
 		},
-		"current member as an accused - accusation skipped": {
+		"current member as an accused - accuser is disqualified": {
 			accuserID:      3,
 			accusedID:      currentMemberID,
 			expectedResult: []group.MemberIndex{3},
