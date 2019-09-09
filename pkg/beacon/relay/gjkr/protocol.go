@@ -314,14 +314,33 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 
 	accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 	for _, commitmentsMessage := range commitmentsMessages {
+		if !cvm.isValidMemberCommitmentsMessage(commitmentsMessage) {
+			logger.Warningf(
+				"[member:%v] member [%v] disqualified because of "+
+					"sending invalid member commitments message",
+				cvm.ID,
+				commitmentsMessage.senderID,
+			)
+			cvm.group.MarkMemberAsDisqualified(commitmentsMessage.senderID)
+			continue
+		}
+
 		// Find share message sent by the same member who sent commitment message
 		sharesMessageFound := false
 		for _, sharesMessage := range sharesMessages {
 			if sharesMessage.senderID == commitmentsMessage.senderID {
 				sharesMessageFound = true
 
-				// TODO Add validation: message must contain encrypted
-				//  payloads for all other participants; disqualify otherwise.
+				if !cvm.isValidPeerSharesMessage(sharesMessage) {
+					logger.Warningf(
+						"[member:%v] member [%v] disqualified because of "+
+							"sending invalid peer shares message",
+						cvm.ID,
+						sharesMessage.senderID,
+					)
+					cvm.group.MarkMemberAsDisqualified(sharesMessage.senderID)
+					break
+				}
 
 				// If there is no symmetric key established with the sender of
 				// the message, error is returned.
@@ -364,10 +383,10 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				}
 
 				if !cvm.areSharesValidAgainstCommitments(
-					shareS, // s_ji
-					shareT, // t_ji
+					shareS,                         // s_ji
+					shareT,                         // t_ji
 					commitmentsMessage.commitments, // C_j
-					cvm.ID, // i
+					cvm.ID,                         // i
 				) {
 					logger.Warningf(
 						"[member:%v] shares from member [%v] invalid against "+
@@ -399,6 +418,57 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 		senderID:           cvm.ID,
 		accusedMembersKeys: accusedMembersKeys,
 	}, nil
+}
+
+// isValidMemberCommitmentsMessage validates a given MemberCommitmentsMessage.
+// Message is considered valid if it contains an expected number of commitments.
+func (cvm *CommitmentsVerifyingMember) isValidMemberCommitmentsMessage(
+	message *MemberCommitmentsMessage,
+) bool {
+	// A commitment is generated for each coefficient of the polynomial.
+	// The polynomial is of degree equal to the dishonest threshold, thus we
+	// have dishonest threshold + 1 coefficients in the polynomial including a
+	// constant coefficient. It implicates the same count of commitments.
+	expectedCommitmentsCount := cvm.group.DishonestThreshold() + 1
+	if len(message.commitments) != expectedCommitmentsCount {
+		logger.Warningf(
+			"[member:%v] member [%v] sent a message with a wrong number "+
+				"of commitments: [%v] instead of expected [%v]",
+			cvm.ID,
+			message.senderID,
+			len(message.commitments),
+			expectedCommitmentsCount,
+		)
+		return false
+	}
+
+	return true
+}
+
+// isValidPeerSharesMessage validates a given PeerSharesMessage.
+// Message is considered valid if it contains shares for all other group members.
+func (cvm *CommitmentsVerifyingMember) isValidPeerSharesMessage(
+	message *PeerSharesMessage,
+) bool {
+	for _, memberID := range cvm.group.OperatingMemberIDs() {
+		if memberID == message.senderID {
+			// Message contains shares only for other group members.
+			continue
+		}
+
+		if _, ok := message.shares[memberID]; !ok {
+			logger.Warningf(
+				"[member:%v] peer shares message from member [%v] does not "+
+					"contain shares for member [%v]",
+				cvm.ID,
+				message.senderID,
+				memberID,
+			)
+			return false
+		}
+	}
+
+	return true
 }
 
 // areSharesValidAgainstCommitments verifies if commitments are valid for passed

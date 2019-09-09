@@ -19,6 +19,15 @@ func (mcm *MemberCommitmentsMessage) SetCommitment(
 	mcm.commitments[index] = commitment
 }
 
+func (mcm *MemberCommitmentsMessage) RemoveCommitment(
+	index int,
+) {
+	mcm.commitments = append(
+		mcm.commitments[:index],
+		mcm.commitments[index+1:]...,
+	)
+}
+
 func (psm *PeerSharesMessage) SetShares(
 	memberIndex group.MemberIndex,
 	encryptedShareS, encryptedShareT []byte,
@@ -27,6 +36,10 @@ func (psm *PeerSharesMessage) SetShares(
 		encryptedShareS: encryptedShareS,
 		encryptedShareT: encryptedShareT,
 	}
+}
+
+func (psm *PeerSharesMessage) RemoveShares(memberIndex group.MemberIndex) {
+	delete(psm.shares, memberIndex)
 }
 
 func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKey(

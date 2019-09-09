@@ -268,6 +268,76 @@ func TestExecute_DQ_member1_invalidMessage_phase2(t *testing.T) {
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 }
 
+// Phase 4 test case - a member sends an invalid member commitments message.
+// Message payload doesn't contain a correct number of commitments.
+// Sender of the invalid message is disqualified by all of the receivers.
+func TestExecute_DQ_member5_invalidCommitmentsMessage_phase4(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
+		if ok && commitmentsMessage.SenderID() == group.MemberIndex(5) {
+			commitmentsMessage.RemoveCommitment(1)
+			return commitmentsMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 4}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(5))
+	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 4}...)
+}
+
+// Phase 4 test case - a member sends an invalid peer shares message.
+// Message payload doesn't contain shares for all other group members.
+// Sender of the invalid message is disqualified by all of the receivers.
+func TestExecute_DQ_member4_invalidSharesMessage_phase4(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
+		if ok && sharesMessage.SenderID() == group.MemberIndex(4) {
+			sharesMessage.RemoveShares(group.MemberIndex(1))
+			return sharesMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(4))
+	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 5}...)
+}
+
 // Phase 5 test case - a member performs an accusation but reveals an
 // ephemeral private key which doesn't correspond to the previously broadcast
 // public key, generated for the sake of communication with the accused member.
