@@ -559,8 +559,8 @@ Environment Name: `keep-dev`
 with ETH chain.  This environment is usually deployed with the latest
 `master` and is continuously deployed so uptime is variable.
 
-You do need a `keep-dev` VPN account to access the network.  Reach out
-in the DevOps flow if you do not have one.
+You do need a `keep-dev` VPN account to access the network and below
+endpoints.  Reach out in the https://www.flowdock.com/app/cardforcoin/ops[DevOps flow] if you do not have one.
 
 === Connection Info
 
