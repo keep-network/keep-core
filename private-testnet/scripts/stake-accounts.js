@@ -23,14 +23,8 @@ const web3 = new Web3(new Web3.providers.HttpProvider(ethHost + ':' + ethRpcPort
 
 const assignedAccounts = [
   '0x48f4bb2cf7379467c3052cb8c5d9e3892eeda487',
-  '0x12585a8a0cb7277ed5ae419b32f75133ed3e6d8a',
-  '0xcebcd72afaf8292c97748896cb745338d05b9400',
   '0x307bed667e177c7851779da0612c824d56ba097b',
-  '0xb8fa2e4ae6865c0c023342bd5c729d01b9b30833',
-  '0xaf642447bb32a94cf231f9406d3bd9b7439eef52',
   '0xa924d3a62b2d515235e5de5d903c405cba7f0e86',
-  '0xb72f6478da1341e65afb664fd64c4256c89441e5',
-  '0x31fa88b13116221e46265919d5ea8f8004dd067c'
   ]
 
 /*
@@ -87,7 +81,7 @@ function formatAmount(amount, decimals) {
 };
 
 assignedAccounts.forEach(account =>
-  await stakeOperatorAccount(account, '0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB').catch(error => {
+  stakeOperatorAccount(account, '0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB').catch(error => {
   console.error(error);
   process.exit(1);
   })
