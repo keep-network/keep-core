@@ -2,6 +2,7 @@ package relay
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"time"
@@ -27,9 +28,8 @@ const getTicketListInterval = 5 * time.Second
 func (n *Node) SubmitTicketsForGroupSelection(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
-	beaconValue []byte,
-	entryRequestID *big.Int,
-	entrySeed *big.Int,
+	signing chain.Signing,
+	newEntry *big.Int,
 	startBlockHeight uint64,
 ) error {
 	availableStake, err := n.Staker.Stake()
@@ -38,7 +38,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	}
 	tickets, err :=
 		groupselection.GenerateTickets(
-			beaconValue,
+			newEntry.Bytes(),
 			n.Staker.ID(),
 			availableStake,
 			n.chainConfig.MinimumStake,
@@ -77,8 +77,8 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	for {
 		select {
 		case err := <-errorChannel:
-			fmt.Printf(
-				"error during ticket submission [%v]",
+			logger.Errorf(
+				"error during ticket submission: [%v]",
 				err,
 			)
 		case <-submissionTimeout:
@@ -94,16 +94,17 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 			selectedStakers := make([][]byte, len(selectedParticipants))
 			for i, participant := range selectedParticipants {
-				selectedStakers[i] = []byte(participant)
+				selectedStakers[i] = participant
+				logger.Infof("new group member: [0x%v]", hex.EncodeToString(participant))
 			}
 
 			// Read the selected, ordered tickets from the chain,
 			// determine if we're eligible for the next group.
 			go n.JoinGroupIfEligible(
 				relayChain,
+				signing,
 				&groupselection.Result{SelectedStakers: selectedStakers},
-				entryRequestID,
-				entrySeed,
+				newEntry,
 				challengeEndBlockHeight,
 			)
 			return nil

@@ -11,19 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-func TestJoinMessageRoundtrip(t *testing.T) {
-	msg := &JoinMessage{group.MemberIndex(1337)}
-	unmarshaled := &JoinMessage{}
-
-	err := pbutils.RoundTrip(msg, unmarshaled)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(msg, unmarshaled) {
-		t.Fatalf("unexpected content of unmarshaled message")
-	}
-}
-
 func TestEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
 	keyPair1, err := ephemeral.GenerateKeyPair()
 	if err != nil {

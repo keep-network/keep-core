@@ -25,7 +25,7 @@ module "helm_provider_helper" {
 }
 
 provider "helm" {
-  version = "<= 0.7.0"
+  version = "<= 0.10.2"
 
   kubernetes {
     host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
@@ -33,7 +33,7 @@ provider "helm" {
     cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
   }
 
-  tiller_image    = "gcr.io/kubernetes-helm/tiller:v2.11.0"
+  tiller_image    = "gcr.io/kubernetes-helm/tiller:v2.14.2"
   service_account = "${module.helm_provider_helper.tiller_service_account}"
   override        = ["spec.template.spec.automountserviceaccounttoken=true"]
   namespace       = "${module.helm_provider_helper.tiller_namespace}"

@@ -1,9 +1,13 @@
 package state
 
 import (
+	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net"
 )
+
+var logger = log.Logger("keep-relay-state")
 
 // State is and interface against which relay states should be implemented.
 type State interface {

@@ -1,8 +1,6 @@
 package gjkr
 
 import (
-	"fmt"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -27,14 +25,10 @@ func (js *joinState) ActiveBlocks() uint64 {
 }
 
 func (js *joinState) Initiate() error {
-	return js.channel.Send(NewJoinMessage(js.member.ID))
+	return nil
 }
 
 func (js *joinState) Receive(msg net.Message) error {
-	switch joinMsg := msg.Payload().(type) {
-	case *JoinMessage:
-		js.member.AddToGroup(joinMsg.SenderID())
-	}
 	return nil
 }
 
@@ -193,7 +187,8 @@ func (cs *commitmentState) Receive(msg net.Message) error {
 		}
 
 	case *MemberCommitmentsMessage:
-		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) {
+		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) &&
+			group.IsSenderAccepted(cs.member, phaseMessage) {
 			cs.phaseCommitmentsMessages = append(
 				cs.phaseCommitmentsMessages,
 				phaseMessage,
@@ -310,15 +305,14 @@ func (sjs *sharesJustificationState) ActiveBlocks() uint64 {
 }
 
 func (sjs *sharesJustificationState) Initiate() error {
-	disqualifiedMembers, err := sjs.member.ResolveSecretSharesAccusationsMessages(
+	sjs.member.MarkInactiveMembers(sjs.previousPhaseAccusationsMessages)
+
+	err := sjs.member.ResolveSecretSharesAccusationsMessages(
 		sjs.previousPhaseAccusationsMessages,
 	)
 	if err != nil {
 		return err
 	}
-
-	// TODO: Handle member disqualification
-	fmt.Printf("disqualified members = %v\n", disqualifiedMembers)
 
 	return nil
 }
@@ -514,15 +508,14 @@ func (pjs *pointsJustificationState) ActiveBlocks() uint64 {
 }
 
 func (pjs *pointsJustificationState) Initiate() error {
-	disqualifiedMembers, err := pjs.member.ResolvePublicKeySharePointsAccusationsMessages(
+	pjs.member.MarkInactiveMembers(pjs.previousPhaseMessages)
+
+	err := pjs.member.ResolvePublicKeySharePointsAccusationsMessages(
 		pjs.previousPhaseMessages,
 	)
 	if err != nil {
 		return err
 	}
-
-	// TODO: Handle member disqualification
-	fmt.Printf("disqualified members = %v\n", disqualifiedMembers)
 
 	return nil
 }

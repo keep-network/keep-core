@@ -14,32 +14,25 @@ import (
 
 // ExecuteDKG runs the full distributed key generation lifecycle.
 func ExecuteDKG(
-	requestID *big.Int,
 	seed *big.Int,
 	index int, // starts with 0
 	groupSize int,
-	threshold int,
+	dishonestThreshold int,
 	startBlockHeight uint64,
 	blockCounter chain.BlockCounter,
 	relayChain relayChain.Interface,
+	signing chain.Signing,
 	channel net.BroadcastChannel,
 ) (*ThresholdSigner, error) {
 	// The staker index should begin with 1
 	playerIndex := group.MemberIndex(index + 1)
-	err := playerIndex.Validate()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"[member:%v] could not start DKG: [%v]",
-			playerIndex,
-			err,
-		)
-	}
 
 	gjkrResult, gjkrEndBlockHeight, err := gjkr.Execute(
 		playerIndex,
+		groupSize,
 		blockCounter,
 		channel,
-		threshold,
+		dishonestThreshold,
 		seed,
 		startBlockHeight,
 	)
@@ -53,11 +46,11 @@ func ExecuteDKG(
 
 	err = dkgResult.Publish(
 		playerIndex,
-		requestID,
 		gjkrResult.Group,
 		gjkrResult,
 		channel,
 		relayChain,
+		signing,
 		blockCounter,
 		gjkrEndBlockHeight,
 	)

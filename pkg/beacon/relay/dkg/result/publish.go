@@ -2,7 +2,6 @@ package result
 
 import (
 	"fmt"
-	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
@@ -18,22 +17,21 @@ import (
 // our own result and added to the list of votes. Finally, we submit the result
 // along with everyone's votes.
 func Publish(
-	playerIndex group.MemberIndex,
-	requestID *big.Int,
+	memberIndex group.MemberIndex,
 	dkgGroup *group.Group,
 	result *gjkr.Result,
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
+	signing chain.Signing,
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
-	privateKey, _ := relayChain.GetKeys()
 	initialState := &resultSigningState{
 		channel:                 channel,
 		relayChain:              relayChain,
+		signing:                 signing,
 		blockCounter:            blockCounter,
-		member:                  NewSigningMember(playerIndex, dkgGroup, privateKey),
-		requestID:               requestID,
+		member:                  NewSigningMember(memberIndex, dkgGroup),
 		result:                  convertResult(result, dkgGroup.GroupSize()),
 		signatureMessages:       make([]*DKGResultHashSignatureMessage, 0),
 		signingStartBlockHeight: startBlockHeight,

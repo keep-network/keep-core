@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
-	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // TestCalculateDKGResultHash validates if calculated DKG result hash matches
@@ -107,25 +106,25 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 	memberIndex4 := group.MemberIndex(4)
 	memberIndex5 := group.MemberIndex(5)
 
-	signature1 := operator.Signature(common.LeftPadBytes([]byte("marry"), 65))
-	signature2 := operator.Signature(common.LeftPadBytes([]byte("had"), 65))
-	signature3 := operator.Signature(common.LeftPadBytes([]byte("a"), 65))
-	signature4 := operator.Signature(common.LeftPadBytes([]byte("little"), 65))
-	signature5 := operator.Signature(common.LeftPadBytes([]byte("lamb"), 65))
+	signature1 := common.LeftPadBytes([]byte("marry"), 65)
+	signature2 := common.LeftPadBytes([]byte("had"), 65)
+	signature3 := common.LeftPadBytes([]byte("a"), 65)
+	signature4 := common.LeftPadBytes([]byte("little"), 65)
+	signature5 := common.LeftPadBytes([]byte("lamb"), 65)
 
-	invalidSignature := operator.Signature(common.LeftPadBytes([]byte("invalid"), 64))
+	invalidSignature := common.LeftPadBytes([]byte("invalid"), 64)
 
 	var tests = map[string]struct {
-		signaturesMap map[group.MemberIndex]operator.Signature
+		signaturesMap map[group.MemberIndex][]byte
 		expectedError error
 	}{
 		"one valid signature": {
-			signaturesMap: map[group.MemberIndex]operator.Signature{
+			signaturesMap: map[group.MemberIndex][]byte{
 				memberIndex1: signature1,
 			},
 		},
 		"five valid signatures": {
-			signaturesMap: map[group.MemberIndex]operator.Signature{
+			signaturesMap: map[group.MemberIndex][]byte{
 				memberIndex3: signature3,
 				memberIndex1: signature1,
 				memberIndex4: signature4,
@@ -134,7 +133,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 			},
 		},
 		"invalid signature": {
-			signaturesMap: map[group.MemberIndex]operator.Signature{
+			signaturesMap: map[group.MemberIndex][]byte{
 				memberIndex1: signature1,
 				memberIndex2: invalidSignature,
 			},
@@ -163,10 +162,10 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 					)
 				}
 
-				if len(signaturesSlice) != (operator.SignatureSize * len(indicesSlice)) {
+				if len(signaturesSlice) != (SignatureSize * len(indicesSlice)) {
 					t.Errorf(
 						"invalid signatures slice size\nexpected: %v\nactual:   %v\n",
-						(operator.SignatureSize * len(indicesSlice)),
+						(SignatureSize * len(indicesSlice)),
 						len(signaturesSlice),
 					)
 				}
@@ -175,7 +174,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 			for i, actualMemberIndex := range indicesSlice {
 				memberIndex := group.MemberIndex(actualMemberIndex.Uint64())
 
-				actualSignature := signaturesSlice[operator.SignatureSize*i : operator.SignatureSize*(i+1)]
+				actualSignature := signaturesSlice[SignatureSize*i : SignatureSize*(i+1)]
 				if !bytes.Equal(
 					test.signaturesMap[memberIndex],
 					actualSignature,

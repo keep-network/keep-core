@@ -55,12 +55,11 @@ ssh utilitybox << EOF
   cd /tmp/$BUILD_TAG/solidity
 
   npm install truffle@5.0.7
-  npm install openzeppelin-solidity@2.1.2
+  npm install openzeppelin-solidity@2.3.0
   npm install solidity-bytes-utils@0.0.7
   npm install babel-register@6.26.0
   npm install babel-polyfill@6.26.0
 
-  cp ./truffle_sample.js ./truffle.js
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
 EOF

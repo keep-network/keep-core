@@ -3,7 +3,6 @@ package entry
 import (
 	"fmt"
 	"math/big"
-	"time"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -25,7 +24,6 @@ type relayEntrySubmitter struct {
 // Relay entry submit process starts at block height defined by startBlockheight
 // parameter.
 func (res *relayEntrySubmitter) submitRelayEntry(
-	requestID *big.Int,
 	newEntry *big.Int,
 	previousEntry *big.Int,
 	seed *big.Int,
@@ -35,14 +33,14 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 	config, err := res.chain.GetConfig()
 	if err != nil {
 		return fmt.Errorf(
-			"could not fetch chain's config [%v]",
+			"could not fetch chain's config: [%v]",
 			err,
 		)
 	}
 
 	onSubmittedResultChan := make(chan *event.Entry)
 
-	subscription, err := res.chain.OnRelayEntryGenerated(
+	subscription, err := res.chain.OnSignatureSubmitted(
 		func(event *event.Entry) {
 			onSubmittedResultChan <- event
 		},
@@ -68,7 +66,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 	)
 	if err != nil {
 		return returnWithError(
-			fmt.Errorf("wait for eligibility failure [%v]", err),
+			fmt.Errorf("wait for eligibility failure: [%v]", err),
 		)
 	}
 
@@ -82,37 +80,30 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
-			fmt.Printf("[member:%v] Submitting relay entry..\n", res.index)
-			entry := &event.Entry{
-				RequestID:     requestID,
-				Value:         newEntry,
-				PreviousEntry: previousEntry,
-				Timestamp:     time.Now().UTC(),
-				GroupPubKey:   groupPublicKey,
-				Seed:          seed,
-			}
+			logger.Infof(
+				"[member:%v] submitting relay entry on behalf of group: [%v]",
+				res.index,
+				groupPublicKey,
+			)
 
-			res.chain.SubmitRelayEntry(entry).OnComplete(
+			res.chain.SubmitRelayEntry(newEntry).OnComplete(
 				func(entry *event.Entry, err error) {
 					if err == nil {
-						fmt.Printf(
-							"[member:%v] Relay entry for request [%v] successfully submitted at block [%v]\n",
+						logger.Infof(
+							"[member:%v] successfully submitted relay entry at block: [%v]",
 							res.index,
-							requestID,
 							entry.BlockNumber,
 						)
 					}
 					errorChannel <- err
 				})
 			return <-errorChannel
-		case submittedEntryEvent := <-onSubmittedResultChan:
-			if submittedEntryEvent.RequestID.Cmp(requestID) == 0 {
-				fmt.Printf(
-					"[member:%v] Relay entry submitted by other member, leaving.\n",
-					res.index,
-				)
-				return returnWithError(nil)
-			}
+		case <-onSubmittedResultChan:
+			logger.Infof(
+				"[member:%v] leaving; relay entry submitted by other member",
+				res.index,
+			)
+			return returnWithError(nil)
 		}
 	}
 }
@@ -128,15 +119,15 @@ func (res *relayEntrySubmitter) waitForSubmissionEligibility(
 	blockWaitTime := (uint64(res.index) - 1) * blockStep
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
-	fmt.Printf(
-		"[member:%v] Waiting for block [%v] to submit...\n",
+	logger.Infof(
+		"[member:%v] waiting for block [%v] to submit",
 		res.index,
 		eligibleBlockHeight,
 	)
 
 	waiter, err := res.blockCounter.BlockHeightWaiter(eligibleBlockHeight)
 	if err != nil {
-		return nil, fmt.Errorf("block height waiter failure [%v]", err)
+		return nil, fmt.Errorf("block height waiter failure: [%v]", err)
 	}
 
 	return waiter, err

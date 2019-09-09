@@ -2,17 +2,18 @@ package beacon
 
 import (
 	"context"
-	"fmt"
-	"os"
+
+	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/persistence"
 )
+
+var logger = log.Logger("keep-beacon")
 
 // Initialize kicks off the random beacon by initializing internal state,
 // ensuring preconditions like staking are met, and then kicking off the
@@ -21,13 +22,17 @@ import (
 func Initialize(
 	ctx context.Context,
 	stakingID string,
-	relayChain relaychain.Interface,
-	blockCounter chain.BlockCounter,
-	stakeMonitor chain.StakeMonitor,
+	chainHandle chain.Handle,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
+	relayChain := chainHandle.ThresholdRelay()
 	chainConfig, err := relayChain.GetConfig()
+	if err != nil {
+		return err
+	}
+
+	stakeMonitor, err := chainHandle.StakeMonitor()
 	if err != nil {
 		return err
 	}
@@ -36,6 +41,13 @@ func Initialize(
 	if err != nil {
 		return err
 	}
+
+	blockCounter, err := chainHandle.BlockCounter()
+	if err != nil {
+		return err
+	}
+
+	signing := chainHandle.Signing()
 
 	groupRegistry := registry.NewGroupRegistry(relayChain, persistence)
 	groupRegistry.LoadExistingGroups()
@@ -48,39 +60,45 @@ func Initialize(
 		groupRegistry,
 	)
 
-	relayChain.OnRelayEntryRequested(func(request *event.Request) {
-		fmt.Printf("New relay entry requested [%+v]\n", request)
+	relayChain.OnSignatureRequested(func(request *event.Request) {
+		logger.Infof("new relay entry requested: [%+v]", request)
 
-		go node.GenerateRelayEntryIfEligible(
-			request.RequestID,
-			request.PreviousEntry,
-			request.Seed,
-			relayChain,
-			request.GroupPublicKey,
-			request.BlockNumber,
-		)
+		if node.IsInGroup(request.GroupPublicKey) {
+			go node.GenerateRelayEntry(
+				request.PreviousEntry,
+				request.Seed,
+				relayChain,
+				request.GroupPublicKey,
+				request.BlockNumber,
+			)
+		} else {
+			go node.MonitorRelayEntry(
+				relayChain,
+				request.BlockNumber,
+				chainConfig,
+			)
+		}
 	})
 
 	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
-		fmt.Printf("Group selection started [%+v]\n", event)
+		logger.Infof("group selection started: [%+v]", event)
 
 		go func() {
 			err := node.SubmitTicketsForGroupSelection(
 				relayChain,
 				blockCounter,
-				event.NewEntry.Bytes(),
-				event.RequestID,
-				event.Seed,
+				signing,
+				event.NewEntry,
 				event.BlockNumber,
 			)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Tickets submission failed: [%v]\n", err)
+				logger.Errorf("Tickets submission failed: [%v]", err)
 			}
 		}()
 	})
 
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
-		fmt.Printf("New group registered on chain [%+v]\n", registration)
+		logger.Infof("new group registered on chain: [%+v]", registration)
 		go groupRegistry.UnregisterStaleGroups()
 	})
 

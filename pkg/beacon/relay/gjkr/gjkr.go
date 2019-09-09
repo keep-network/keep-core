@@ -4,37 +4,42 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
+var logger = log.Logger("keep-gjkr")
+
 // Execute runs the GJKR distributed key generation  protocol, given a
-// broadcast channel to mediate it, a block counter used for time tracking,
-// a player index to use in the group, threshold, and block height when DKG
-// protocol should start.
-// If generation is successful, it returns a threshold group member who can
-// participate in the group; if generation fails, it returns an error
-// representing what went wrong.
+// broadcast channel to mediate with, a block counter used for time tracking,
+// a player index to use in the group, dishonest threshold, and block height
+// when DKG protocol should start.
+// If the generation is successful, it returns a threshold group member which
+// can participate in the signing group; if the generation fails, it returns an
+// error.
 func Execute(
 	memberIndex group.MemberIndex,
+	groupSize int,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	threshold int,
+	dishonestThreshold int,
 	seed *big.Int,
 	startBlockHeight uint64,
 ) (*Result, uint64, error) {
-	fmt.Printf("[member:0x%010v] Initializing member\n", memberIndex)
+	logger.Debugf("[member:%v] initializing member", memberIndex)
 
 	member, err := NewMember(
 		memberIndex,
-		make([]group.MemberIndex, 0),
-		threshold,
+		groupSize,
+		dishonestThreshold,
 		seed,
 	)
 	if err != nil {
-		return nil, 0, fmt.Errorf("cannot create a new member [%v]", err)
+		return nil, 0, fmt.Errorf("cannot create a new member: [%v]", err)
 	}
 
 	initializeChannel(channel)
@@ -53,7 +58,7 @@ func Execute(
 
 	finalizationState, ok := lastState.(*finalizationState)
 	if !ok {
-		return nil, 0, fmt.Errorf("execution ended on state %T", lastState)
+		return nil, 0, fmt.Errorf("execution ended on state: %T", lastState)
 	}
 
 	return finalizationState.result(), endBlockHeight, nil
@@ -62,9 +67,6 @@ func Execute(
 // initializeChannel initializes a given broadcast channel to be able to
 // perform distributed key generation interactions.
 func initializeChannel(channel net.BroadcastChannel) {
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &JoinMessage{}
-	})
 	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &EphemeralPublicKeyMessage{}
 	})

@@ -9,12 +9,14 @@
     KeyFile = "/mnt/eth-data/eth-keyfile"
 
   [ethereum.ContractAddresses]
-    # Hex-encoded address of KeepRandomBeacon contract
-    KeepRandomBeacon = "Set by Kube"
-    # Hex-encoded address of KeepGroup contract
-    KeepGroup = "Set by Kube"
-    # StakingProxy
-    StakingProxy = "Set by Kube"
+    # Hex-encoded address of KeepRandomBeaconOperator contract
+    KeepRandomBeaconOperator = "Set by Kube"
+    # TokenStaking
+    TokenStaking = "Set by Kube"
+    # Hex-encoded address of KeepRandomBeaconService contract. Only needed
+    # in cases where the client's utility functions will be used (e.g., the
+    # relay subcommand).
+    KeepRandomBeaconService = "Set by Kube"
 
 [LibP2P]
   Seed = "Set by Kube"

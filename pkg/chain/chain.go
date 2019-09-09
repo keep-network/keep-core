@@ -1,7 +1,10 @@
 package chain
 
 import (
+	"math/big"
+
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 // BlockCounter is an interface that provides the ability to wait for a certain
@@ -35,10 +38,50 @@ type StakeMonitor interface {
 	StakerFor(address string) (Staker, error)
 }
 
+// Signing is an interface that provides ability to sign and verify
+// signatures using operator's key associated with the chain.
+type Signing interface {
+	// PublicKey returns operator's public key in a serialized format.
+	// The returned public key is used to Sign messages and can be later used
+	// for verification.
+	PublicKey() []byte
+
+	// Sign the provided message with operator's private key. Returns the
+	// signature or error in case signing failed.
+	Sign(message []byte) ([]byte, error)
+
+	// Verify the provided message against the signature using operator's
+	// public key. Returns true if signature is valid and false otherwise.
+	// If signature verification failed for some reason, an error is returned.
+	Verify(message []byte, signature []byte) (bool, error)
+
+	// VerifyWithPublicKey verifies the provided message against the signature
+	// using the provided operator's public key. Returns true if signature is
+	// valid and false otherwise. If signature verification failed for some
+	// reason, an error is returned.
+	VerifyWithPublicKey(
+		message []byte,
+		signature []byte,
+		publicKey []byte,
+	) (bool, error)
+}
+
 // Handle represents a handle to a blockchain that provides access to the core
-// functionality needed for Keep network interactions.
+// operator functionality needed for Keep network interactions.
 type Handle interface {
 	BlockCounter() (BlockCounter, error)
 	StakeMonitor() (StakeMonitor, error)
 	ThresholdRelay() relaychain.Interface
+	Signing() Signing
+}
+
+// Utility represents a handle to a blockchain that provides access to certain
+// utility functions for Keep network interactions. Notably, these functions can
+// either be application or operator functionality, and they are generally not
+// part of the day-to-day process of operating a Keep node.
+type Utility interface {
+	Handle
+
+	Genesis() error
+	RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
 }

@@ -1,9 +1,6 @@
 package entry
 
 import (
-	"fmt"
-	"math/big"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/entry/gen/pb"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
@@ -17,9 +14,8 @@ func (*SignatureShareMessage) Type() string {
 // network communication.
 func (ssm *SignatureShareMessage) Marshal() ([]byte, error) {
 	pbSignatureShare := pb.SignatureShare{
-		SenderID:  uint32(ssm.senderID),
-		Share:     ssm.shareBytes,
-		RequestID: ssm.requestID.String(),
+		SenderID: uint32(ssm.senderID),
+		Share:    ssm.shareBytes,
 	}
 
 	return pbSignatureShare.Marshal()
@@ -34,15 +30,8 @@ func (ssm *SignatureShareMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
-	requestID := new(big.Int)
-	requestID, ok := requestID.SetString(pbSignatureShare.RequestID, 10)
-	if !ok {
-		return fmt.Errorf("could not unmarshal request ID")
-	}
-
 	ssm.senderID = group.MemberIndex(pbSignatureShare.SenderID)
 	ssm.shareBytes = pbSignatureShare.Share
-	ssm.requestID = requestID
 
 	return nil
 }

@@ -22,17 +22,21 @@ type RelayEntryInterface interface {
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
-	SubmitRelayEntry(entry *event.Entry) *async.RelayEntryPromise
-	// OnRelayEntryGenerated is a callback that is invoked when an on-chain
+	SubmitRelayEntry(entryValue *big.Int) *async.RelayEntryPromise
+	// OnSignatureSubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnRelayEntryGenerated(
+	OnSignatureSubmitted(
 		func(entry *event.Entry),
 	) (subscription.EventSubscription, error)
-	// OnRelayEntryRequested is a callback that is invoked when an on-chain
+	// OnSignatureRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
-	OnRelayEntryRequested(
+	OnSignatureRequested(
 		func(request *event.Request),
 	) (subscription.EventSubscription, error)
+	// ReportRelayEntryTimeout notifies the chain when a selected group which was
+	// supposed to submit a relay entry, did not deliver it within a specified
+	// time frame (relayEntryTimeout) counted in blocks.
+	ReportRelayEntryTimeout() error
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that
@@ -49,7 +53,7 @@ type GroupSelectionInterface interface {
 	// error submitting the entry.
 	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
 	// GetSelectedParticipants returns `GroupSize` slice of addresses of
-	// candidates which have been selected to the group.
+	// candidates which have been selected to the currently assembling group.
 	GetSelectedParticipants() ([]StakerAddress, error)
 }
 
@@ -85,21 +89,18 @@ type DistributedKeyGenerationInterface interface {
 	// Signatures over DKG result hash are collected in a map keyed by signer's
 	// member index.
 	SubmitDKGResult(
-		requestID *big.Int,
 		participantIndex group.MemberIndex,
 		dkgResult *DKGResult,
-		signatures map[group.MemberIndex]operator.Signature,
+		signatures map[group.MemberIndex][]byte,
 	) *async.DKGResultSubmissionPromise
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.
 	OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission),
 	) (subscription.EventSubscription, error)
-	// IsDKGResultSubmitted checks if a DKG result hash has already been
-	// submitted to the chain for the given request ID.
-	IsDKGResultSubmitted(
-		requestID *big.Int,
-	) (bool, error)
+	// IsGroupRegistered checks if group with the given public key is registered
+	// on-chain.
+	IsGroupRegistered(groupPublicKey []byte) (bool, error)
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
 	CalculateDKGResultHash(dkgResult *DKGResult) (DKGResultHash, error)

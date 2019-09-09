@@ -8,7 +8,7 @@
   },
   "scripts": {
     "truffle": "truffle",
-    "test": "rm -rf build && truffle test",
+    "test": "rm -rf build && truffle compile && truffle test",
     "demo": "truffle migrate --reset && truffle exec ./scripts/demo.js"
   },
   "author": "Matt Luongo <mhluongo@gmail.com>",
@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/keep-network/contracts",
   "dependencies": {
-    "openzeppelin-solidity": "^2.1.2",
+    "openzeppelin-solidity": "2.3.0",
     "solidity-bytes-utils": "0.0.7"
   },
   "devDependencies": {
@@ -28,6 +28,7 @@
     "babel-preset-stage-2": "^6.18.0",
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
+    "eth-gas-reporter": "^0.2.9",
     "ethereumjs-abi": "^0.6.5",
     "solc": "^0.5.7",
     "truffle": "^5.0.13",

@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"math/big"
-	"os"
 	"sync"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -31,11 +29,13 @@ type Node struct {
 	blockCounter chain.BlockCounter
 	chainConfig  *config.Chain
 
-	// The IDs of the known stakes in the system, including this node's StakeID.
-	stakeIDs      []string
-	maxStakeIndex int
-
 	groupRegistry *registry.Groups
+}
+
+// IsInGroup checks if this node is a member of the group which was selected to
+// join a group which undergoes the process of generating a threshold relay entry.
+func (n *Node) IsInGroup(groupPublicKey []byte) bool {
+	return len(n.groupRegistry.GetGroup(groupPublicKey)) > 0
 }
 
 // JoinGroupIfEligible takes a threshold relay entry value and undergoes the
@@ -48,9 +48,9 @@ type Node struct {
 // on-chain group containing at least one of this node's virtual stakers.
 func (n *Node) JoinGroupIfEligible(
 	relayChain relaychain.Interface,
+	signing chain.Signing,
 	groupSelectionResult *groupselection.Result,
-	entryRequestID *big.Int,
-	entrySeed *big.Int,
+	newEntry *big.Int,
 	dkgStartBlockHeight uint64,
 ) {
 
@@ -71,9 +71,8 @@ func (n *Node) JoinGroupIfEligible(
 				broadcastChannelName,
 			)
 			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"Failed to get broadcastChannel for name %s with err: [%v].\n",
+				logger.Errorf(
+					"failed to get broadcastChannel for name [%s] with err: [%v]",
 					broadcastChannelName,
 					err,
 				)
@@ -82,18 +81,18 @@ func (n *Node) JoinGroupIfEligible(
 
 			go func() {
 				signer, err := dkg.ExecuteDKG(
-					entryRequestID,
-					entrySeed,
+					newEntry,
 					playerIndex,
 					n.chainConfig.GroupSize,
-					n.chainConfig.Threshold,
+					n.chainConfig.DishonestThreshold(),
 					dkgStartBlockHeight,
 					n.blockCounter,
 					relayChain,
+					signing,
 					broadcastChannel,
 				)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to execute dkg: [%v].\n", err)
+					logger.Errorf("failed to execute dkg: [%v]", err)
 					return
 				}
 
@@ -102,7 +101,7 @@ func (n *Node) JoinGroupIfEligible(
 					broadcastChannelName,
 				)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to register a group: [%v].\n", err)
+					logger.Errorf("failed to register a group: [%v]", err)
 				}
 			}()
 		}

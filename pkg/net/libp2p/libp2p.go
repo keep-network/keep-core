@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -18,6 +20,7 @@ import (
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	libp2pnet "github.com/libp2p/go-libp2p-net"
 	peer "github.com/libp2p/go-libp2p-peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
@@ -25,6 +28,8 @@ import (
 	bootstrap "github.com/keep-network/go-libp2p-bootstrap"
 	ma "github.com/multiformats/go-multiaddr"
 )
+
+var logger = log.Logger("keep-net-libp2p")
 
 // Defaults from ipfs
 const (
@@ -57,6 +62,7 @@ type Config struct {
 	Peers []string
 	Port  int
 	Seed  int
+	NAT   bool
 }
 
 type provider struct {
@@ -88,8 +94,10 @@ func (p *provider) ID() net.TransportIdentifier {
 func (p *provider) AddrStrings() []string {
 	multiaddrStrings := make([]string, 0, len(p.addrs))
 	for _, multiaddr := range p.addrs {
-		addrWithIdentity := fmt.Sprintf("%s/ipfs/%s", multiaddr.String(), p.identity.id.String())
-		multiaddrStrings = append(multiaddrStrings, addrWithIdentity)
+		multiaddrStrings = append(
+			multiaddrStrings,
+			multiaddressWithIdentity(multiaddr, p.identity.id),
+		)
 	}
 
 	return multiaddrStrings
@@ -150,7 +158,7 @@ func (cm *connectionManager) DisconnectPeer(connectedPeer string) {
 	connections := cm.Network().ConnsToPeer(peer.ID(connectedPeer))
 	for _, connection := range connections {
 		if err := connection.Close(); err != nil {
-			fmt.Printf("disconnect resulted in error [%v]", err)
+			logger.Errorf("failed to disconnect: [%v]", err)
 		}
 	}
 }
@@ -172,10 +180,18 @@ func Connect(
 		return nil, err
 	}
 
-	host, err := discoverAndListen(ctx, identity, config.Port, stakeMonitor)
+	host, err := discoverAndListen(
+		ctx,
+		identity,
+		config.Port,
+		config.NAT,
+		stakeMonitor,
+	)
 	if err != nil {
 		return nil, err
 	}
+
+	host.Network().Notify(buildNotifiee())
 
 	cm, err := newChannelManager(ctx, identity, host)
 	if err != nil {
@@ -215,6 +231,7 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
+	nat bool,
 	stakeMonitor chain.StakeMonitor,
 ) (host.Host, error) {
 	var err error
@@ -236,7 +253,7 @@ func discoverAndListen(
 		)
 	}
 
-	return libp2p.New(ctx,
+	options := []libp2p.Option{
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
 		libp2p.Security(handshakeID, transport),
@@ -247,7 +264,16 @@ func discoverAndListen(
 				DefaultConnMgrGracePeriod,
 			),
 		),
-	)
+	}
+
+	if nat {
+		logger.Info("enabling NAT support; will attempt to open a port in " +
+			"your network's firewall using UPnP")
+
+		options = append(options, libp2p.NATPortMap())
+	}
+
+	return libp2p.New(ctx, options...)
 }
 
 func getListenAddrs(port int) ([]ma.Multiaddr, error) {
@@ -304,4 +330,36 @@ func extractMultiAddrFromPeers(peers []string) ([]peerstore.PeerInfo, error) {
 		peerInfos = append(peerInfos, *peerInfo)
 	}
 	return peerInfos, nil
+}
+
+func buildNotifiee() libp2pnet.Notifiee {
+	notifyBundle := &libp2pnet.NotifyBundle{}
+
+	notifyBundle.ConnectedF = func(_ libp2pnet.Network, connection libp2pnet.Conn) {
+		logger.Infof(
+			"established connection to [%v]",
+			multiaddressWithIdentity(
+				connection.RemoteMultiaddr(),
+				connection.RemotePeer(),
+			),
+		)
+	}
+	notifyBundle.DisconnectedF = func(_ libp2pnet.Network, connection libp2pnet.Conn) {
+		logger.Infof(
+			"disconnected from [%v]",
+			multiaddressWithIdentity(
+				connection.RemoteMultiaddr(),
+				connection.RemotePeer(),
+			),
+		)
+	}
+
+	return notifyBundle
+}
+
+func multiaddressWithIdentity(
+	multiaddress ma.Multiaddr,
+	peerID peer.ID,
+) string {
+	return fmt.Sprintf("%s/ipfs/%s", multiaddress.String(), peerID.String())
 }

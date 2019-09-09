@@ -33,8 +33,9 @@ type Provider interface {
 }
 
 type localProvider struct {
-	id localIdentifier
-	cm *localConnectionManager
+	id        localIdentifier
+	staticKey *key.NetworkPublic
+	cm        *localConnectionManager
 }
 
 func (lp *localProvider) ID() net.TransportIdentifier {
@@ -42,7 +43,7 @@ func (lp *localProvider) ID() net.TransportIdentifier {
 }
 
 func (lp *localProvider) ChannelFor(name string) (net.BroadcastChannel, error) {
-	return channel(name), nil
+	return channel(name, lp.staticKey), nil
 }
 
 func (lp *localProvider) Type() string {
@@ -64,9 +65,22 @@ func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
 // Connect returns a local instance of a net provider that does not go over the
 // network.
 func Connect() Provider {
+	_, public, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		panic(err)
+	}
+
+	return ConnectWithKey(public)
+}
+
+// ConnectWithKey returns a local instance of net provider that does not go
+// over the network. The returned instance uses the provided network key to
+// identify network messages.
+func ConnectWithKey(staticKey *key.NetworkPublic) Provider {
 	return &localProvider{
-		id: localIdentifier(randomIdentifier()),
-		cm: &localConnectionManager{peers: make(map[string]*key.NetworkPublic)},
+		id:        localIdentifier(randomIdentifier()),
+		staticKey: staticKey,
+		cm:        &localConnectionManager{peers: make(map[string]*key.NetworkPublic)},
 	}
 }
 
@@ -79,7 +93,7 @@ func (lp *localProvider) ConnectionManager() net.ConnectionManager {
 // receive channels. RecvChan on a LocalChannel creates a new receive channel
 // that is returned to the caller, so that all receive channels can receive
 // the message.
-func channel(name string) net.BroadcastChannel {
+func channel(name string, staticKey *key.NetworkPublic) net.BroadcastChannel {
 	channelsMutex.Lock()
 	defer channelsMutex.Unlock()
 	if channels == nil {
@@ -96,6 +110,7 @@ func channel(name string) net.BroadcastChannel {
 	channel := &localChannel{
 		name:                 name,
 		identifier:           &identifier,
+		staticKey:            staticKey,
 		messageHandlersMutex: sync.Mutex{},
 		messageHandlers:      make([]net.HandleMessageFunc, 0),
 		unmarshalersMutex:    sync.Mutex{},
@@ -123,6 +138,7 @@ func randomIdentifier() string {
 type localChannel struct {
 	name                 string
 	identifier           net.TransportIdentifier
+	staticKey            *key.NetworkPublic
 	messageHandlersMutex sync.Mutex
 	messageHandlers      []net.HandleMessageFunc
 	unmarshalersMutex    sync.Mutex
@@ -172,14 +188,15 @@ func (lc *localChannel) deliver(transportIdentifier net.TransportIdentifier, pay
 			transportIdentifier,
 			payload,
 			"local",
-			make([]byte, 0),
+			key.Marshal(lc.staticKey),
 		)
 
-	go func() {
-		for _, handler := range snapshot {
-			handler.Handler(message)
-		}
-	}()
+	for _, handler := range snapshot {
+		// Invoking each handler in a separate goroutine in order
+		// to avoid situation when one of the handlers blocks the
+		// whole loop execution.
+		go handler.Handler(message)
+	}
 }
 
 func (lc *localChannel) Send(message net.TaggedMarshaler) error {
@@ -234,10 +251,14 @@ func (lc *localChannel) RegisterUnmarshaler(
 }
 
 type localConnectionManager struct {
+	mutex sync.Mutex
+
 	peers map[string]*key.NetworkPublic
 }
 
 func (lcm *localConnectionManager) ConnectedPeers() []string {
+	lcm.mutex.Lock()
+	defer lcm.mutex.Unlock()
 	connectedPeers := make([]string, len(lcm.peers))
 	for peer := range lcm.peers {
 		connectedPeers = append(connectedPeers, peer)
@@ -248,9 +269,15 @@ func (lcm *localConnectionManager) ConnectedPeers() []string {
 func (lcm *localConnectionManager) GetPeerPublicKey(
 	connectedPeer string,
 ) (*key.NetworkPublic, error) {
+	lcm.mutex.Lock()
+	defer lcm.mutex.Unlock()
+
 	return lcm.peers[connectedPeer], nil
 }
 
 func (lcm *localConnectionManager) DisconnectPeer(connectedPeer string) {
+	lcm.mutex.Lock()
+	defer lcm.mutex.Unlock()
+
 	delete(lcm.peers, connectedPeer)
 }

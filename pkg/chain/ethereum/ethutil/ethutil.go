@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"math/big"
 
+	"github.com/ipfs/go-log"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -16,6 +18,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 )
+
+var logger = log.Logger("keep-ethutil")
 
 // AddressFromHex converts the passed string to a common.Address and returns it,
 // unless it is not a valid address, in which case it returns an error. Compare
@@ -130,4 +134,40 @@ func CallAtBlock(
 	}
 
 	return nil
+}
+
+type loggingWrapper struct {
+	bind.ContractBackend
+
+	logger log.EventLogger
+}
+
+func (lw *loggingWrapper) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
+	price, err := lw.ContractBackend.SuggestGasPrice(ctx)
+
+	if err != nil {
+		lw.logger.Debugf("error requesting gas price suggestion: [%v]", err)
+		return nil, err
+	}
+
+	lw.logger.Debugf("received gas price suggestion: [%v]", price)
+	return price, nil
+}
+
+func (lw *loggingWrapper) EstimateGas(ctx context.Context, msg ethereum.CallMsg) (uint64, error) {
+	gas, err := lw.ContractBackend.EstimateGas(ctx, msg)
+
+	if err != nil {
+		return 0, err
+	}
+
+	lw.logger.Debugf("received gas price estimate: [%v]", gas)
+	return gas, nil
+}
+
+// WrapCallLogging wraps certain call-related methods on the given `backend`
+// with debug logging sent to the given `logger`. Actual functionality is
+// delegated to the passed backend.
+func WrapCallLogging(logger log.EventLogger, backend bind.ContractBackend) bind.ContractBackend {
+	return &loggingWrapper{backend, logger}
 }

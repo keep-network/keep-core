@@ -13,10 +13,10 @@ import (
 )
 
 func TestCalculateSharesAndCommitments(t *testing.T) {
-	threshold := 3
+	dishonestThreshold := 2
 	groupSize := 5
 
-	members, err := initializeCommittingMembersGroup(threshold, groupSize)
+	members, err := initializeCommittingMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
@@ -27,9 +27,11 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 		t.Fatalf("shares and commitments calculation failed [%s]", err)
 	}
 
-	if len(member.secretCoefficients) != (threshold + 1) {
+	// polynomial is of degree dishonestThreshold, so we have
+	// dishonestThreshold+1 coefficients, including the constant coefficient
+	if len(member.secretCoefficients) != (dishonestThreshold + 1) {
 		t.Fatalf("\nexpected: %v secret coefficients\nactual:   %v\n",
-			threshold+1,
+			dishonestThreshold+1,
 			len(member.secretCoefficients),
 		)
 	}
@@ -40,9 +42,9 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 		)
 	}
 
-	if len(commitmentsMessage.commitments) != (threshold + 1) {
+	if len(commitmentsMessage.commitments) != (dishonestThreshold + 1) {
 		t.Fatalf("\nexpected: %v calculated commitments\nactual:   %v\n",
-			threshold+1,
+			dishonestThreshold+1,
 			len(commitmentsMessage.commitments),
 		)
 	}
@@ -51,10 +53,7 @@ func TestCalculateSharesAndCommitments(t *testing.T) {
 func TestStoreSharesMessageForEvidence(t *testing.T) {
 	groupSize := 2
 
-	members, err := initializeCommittingMembersGroup(
-		groupSize, // threshold = group size
-		groupSize,
-	)
+	members, err := initializeCommittingMembersGroup(0, groupSize)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
@@ -92,10 +91,10 @@ func TestStoreSharesMessageForEvidence(t *testing.T) {
 }
 
 func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
-	threshold := 2
+	dishonestThreshold := 1
 	groupSize := 3
 
-	members, err := initializeCommittingMembersGroup(threshold, groupSize)
+	members, err := initializeCommittingMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		t.Fatalf("group initialization failed [%s]", err)
 	}
@@ -315,12 +314,12 @@ func TestGeneratePolynomial(t *testing.T) {
 	}
 }
 
-func initializeCommittingMembersGroup(threshold, groupSize int) (
+func initializeCommittingMembersGroup(dishonestThreshold, groupSize int) (
 	[]*CommittingMember,
 	error,
 ) {
 	symmetricKeyMembers, err := generateGroupWithEphemeralKeys(
-		threshold,
+		dishonestThreshold,
 		groupSize,
 	)
 	if err != nil {
@@ -336,12 +335,12 @@ func initializeCommittingMembersGroup(threshold, groupSize int) (
 	return members, nil
 }
 
-func initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize int) (
+func initializeCommitmentsVerifiyingMembersGroup(dishonestThreshold, groupSize int) (
 	[]*CommitmentsVerifyingMember,
 	error,
 ) {
 	committingMembers, err := initializeCommittingMembersGroup(
-		threshold,
+		dishonestThreshold,
 		groupSize,
 	)
 	if err != nil {

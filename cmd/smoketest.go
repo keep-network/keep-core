@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	netlocal "github.com/keep-network/keep-core/pkg/net/local"
@@ -18,9 +17,9 @@ import (
 )
 
 const (
-	defaultGroupSize    int = 10
-	defaultThreshold    int = 4
-	defaultMinimumStake int = 2000000
+	defaultGroupSize       int = 10
+	defaultHonestThreshold int = 4
+	defaultMinimumStake    int = 2000000
 )
 
 // SmokeTestCommand contains the definition of the smoke-test command-line
@@ -28,17 +27,17 @@ const (
 var SmokeTestCommand cli.Command
 
 const (
-	groupSizeFlag     = "group-size"
-	groupSizeShort    = "g"
-	thresholdFlag     = "threshold"
-	thresholdShort    = "t"
-	minimumStakeFlag  = "minimum-stake"
-	minimumStakeShort = "s"
+	groupSizeFlag        = "group-size"
+	groupSizeShort       = "g"
+	honestThresholdFlag  = "threshold"
+	honestThresholdShort = "t"
+	minimumStakeFlag     = "minimum-stake"
+	minimumStakeShort    = "s"
 )
 
 const smokeTestDescription = `The smoke-test command creates a local threshold
-   group of the specified size and with the specified threshold and simulates a
-   distributed key generation process with an in-process broadcast channel and
+   group of the specified size and with the specified honest threshold and simulates
+   a distributed key generation process with an in-process broadcast channel and
    chain implementation. Once the process is complete, a threshold signature is
    executed, once again with an in-process broadcast channel and chain, and the
    final signature is verified by each member of the group.`
@@ -78,8 +77,8 @@ func init() {
 				Value: defaultGroupSize,
 			},
 			&cli.IntFlag{
-				Name:  thresholdFlag + "," + thresholdShort,
-				Value: defaultThreshold,
+				Name:  honestThresholdFlag + "," + honestThresholdShort,
+				Value: defaultHonestThreshold,
 			},
 			&cli.IntFlag{
 				Name:  minimumStakeFlag + "," + minimumStakeShort,
@@ -93,12 +92,12 @@ func init() {
 // them, simulating some relay entries and requests.
 func SmokeTest(c *cli.Context) error {
 	groupSize := c.Int(groupSizeFlag)
-	threshold := c.Int(thresholdFlag)
+	honestThreshold := c.Int(honestThresholdFlag)
 	minimumStake := c.Int(minimumStakeFlag)
 
 	chainHandle := local.Connect(
 		groupSize,
-		threshold,
+		honestThreshold,
 		big.NewInt(int64(minimumStake)),
 	)
 
@@ -110,21 +109,13 @@ func SmokeTest(c *cli.Context) error {
 			panic("failed to generate private key")
 		}
 
-		createNode(
-			context, operatorPrivateKey, chainHandle, groupSize, threshold,
-		)
+		createNode(context, operatorPrivateKey, chainHandle)
 	}
 
 	// Give the nodes a sec to get going.
 	<-time.NewTimer(time.Second).C
 
-	chainHandle.ThresholdRelay().SubmitRelayEntry(&event.Entry{
-		RequestID:     big.NewInt(0),
-		Value:         big.NewInt(0),
-		GroupPubKey:   big.NewInt(0).Bytes(),
-		Seed:          big.NewInt(0),
-		PreviousEntry: &big.Int{},
-	})
+	chainHandle.ThresholdRelay().SubmitRelayEntry(big.NewInt(0))
 
 	// TODO Add validations when DKG Phase 14 is implemented.
 
@@ -139,21 +130,11 @@ func createNode(
 	context context.Context,
 	operatorPrivateKey *operator.PrivateKey,
 	chainHandle chain.Handle,
-	groupSize int,
-	threshold int,
 ) {
 	toEthereumAddress := func(value string) string {
 		return common.BytesToAddress(
 			[]byte(value),
 		).String()
-	}
-
-	chainCounter, err := chainHandle.BlockCounter()
-	if err != nil {
-		panic(fmt.Sprintf(
-			"Failed to run setup chainHandle.BlockCounter: [%v].",
-			err,
-		))
 	}
 
 	stakeMonitor, err := chainHandle.StakeMonitor()
@@ -179,9 +160,7 @@ func createNode(
 		err := beacon.Initialize(
 			context,
 			stakingID,
-			chainHandle.ThresholdRelay(),
-			chainCounter,
-			stakeMonitor,
+			chainHandle,
 			netProvider,
 			storage,
 		)

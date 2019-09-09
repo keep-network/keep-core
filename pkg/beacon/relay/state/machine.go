@@ -49,9 +49,10 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 
 	currentState := m.initialState
 
-	fmt.Printf(
-		"[member:%v] Waiting for block %v to start execution...\n",
+	logger.Infof(
+		"[member:%v,channel:%s] waiting for block %v to start execution",
 		currentState.MemberIndex(),
+		m.channel.Name()[:5],
 		startBlockHeight,
 	)
 	err := m.blockCounter.WaitForBlockHeight(startBlockHeight)
@@ -65,6 +66,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 		currentState,
 		lastStateEndBlockHeight,
 		m.blockCounter,
+		m.channel.Name()[:5],
 	)
 	if err != nil {
 		return nil, 0, err
@@ -73,17 +75,19 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	for {
 		select {
 		case msg := <-recvChan:
-			fmt.Printf(
-				"[member:%v, state:%T] Processing message\n",
+			logger.Debugf(
+				"[member:%v,channel:%s,state:%T] processing message",
 				currentState.MemberIndex(),
+				m.channel.Name()[:5],
 				currentState,
 			)
 
 			err := currentState.Receive(msg)
 			if err != nil {
-				fmt.Printf(
-					"[member:%v, state: %T] Failed to receive a message [%v]\n",
+				logger.Errorf(
+					"[member:%v,channel:%s, state: %T] failed to receive a message: [%v]",
 					currentState.MemberIndex(),
+					m.channel.Name()[:5],
 					currentState,
 					err,
 				)
@@ -92,9 +96,10 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 		case lastStateEndBlockHeight := <-blockWaiter:
 			nextState := currentState.Next()
 			if nextState == nil {
-				fmt.Printf(
-					"[member:%v, state:%T] Final state reached at block [%v]\n",
+				logger.Infof(
+					"[member:%v,channel:%s,state:%T] reached final state at block: [%v]",
 					currentState.MemberIndex(),
+					m.channel.Name()[:5],
 					currentState,
 					lastStateEndBlockHeight,
 				)
@@ -107,6 +112,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 				currentState,
 				lastStateEndBlockHeight,
 				m.blockCounter,
+				m.channel.Name()[:5],
 			)
 			if err != nil {
 				return nil, 0, err
@@ -121,10 +127,12 @@ func stateTransition(
 	currentState State,
 	lastStateEndBlockHeight uint64,
 	blockCounter chain.BlockCounter,
+	channelName string,
 ) (<-chan uint64, error) {
-	fmt.Printf(
-		"[member:%v, state:%T] Transitioning to a new state at block [%v]...\n",
+	logger.Infof(
+		"[member:%v,channel:%s,state:%T] transitioning to a new state at block: [%v]",
 		currentState.MemberIndex(),
+		channelName,
 		currentState,
 		lastStateEndBlockHeight,
 	)
@@ -160,9 +168,10 @@ func stateTransition(
 		)
 	}
 
-	fmt.Printf(
-		"[member:%v, state:%T] Transitioned to new state\n",
+	logger.Infof(
+		"[member:%v,channel:%s,state:%T] transitioned to new state",
 		currentState.MemberIndex(),
+		channelName,
 		currentState,
 	)
 

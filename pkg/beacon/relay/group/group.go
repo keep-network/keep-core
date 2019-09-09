@@ -1,37 +1,31 @@
 package group
 
-import (
-	"fmt"
-)
-
 // Group is protocol's members group.
 type Group struct {
-	// The maximum number of group members who could be dishonest in order for
-	// the generated key to be uncompromised.
+	// The maximum number of misbehaving participants for which it is still
+	// possible to generate a signature.
 	dishonestThreshold int
-	// IDs of all members of the group. Contains local member's ID.
-	// Initially empty, populated as each other member announces its presence.
-	memberIDs []MemberIndex
 	// IDs of all disqualified members of the group.
 	disqualifiedMemberIDs []MemberIndex
 	// IDs of all inactive members of the group.
 	inactiveMemberIDs []MemberIndex
-}
-
-// NewEmptyDkgGroup creates a new empty Group with the provided dishonest
-// threshold.
-func NewEmptyDkgGroup(dishonestThreshold int) *Group {
-	return NewDkgGroup(dishonestThreshold, []MemberIndex{})
+	// All member IDs in this group.
+	memberIDs []MemberIndex
 }
 
 // NewDkgGroup creates a new Group with the provided dishonest threshold, member
 // identifiers, and empty IA and DQ members list.
-func NewDkgGroup(dishonestThreshold int, memberIDs []MemberIndex) *Group {
+func NewDkgGroup(dishonestThreshold int, size int) *Group {
+	memberIDs := make([]MemberIndex, size)
+	for i := 0; i < size; i++ {
+		memberIDs[i] = MemberIndex(i + 1)
+	}
+
 	return &Group{
-		dishonestThreshold,
-		memberIDs,
-		[]MemberIndex{},
-		[]MemberIndex{},
+		dishonestThreshold:    dishonestThreshold,
+		disqualifiedMemberIDs: []MemberIndex{},
+		inactiveMemberIDs:     []MemberIndex{},
+		memberIDs:             memberIDs,
 	}
 }
 
@@ -65,28 +59,12 @@ func (g *Group) InactiveMemberIDs() []MemberIndex {
 	return g.inactiveMemberIDs
 }
 
-// RegisterMemberID adds a member to the list of group members.
-func (g *Group) RegisterMemberID(memberID MemberIndex) error {
-	if err := memberID.Validate(); err != nil {
-		return fmt.Errorf("cannot register member ID in the group [%v]", err)
-	}
-
-	for _, id := range g.memberIDs {
-		if id == memberID {
-			return nil // already there
-		}
-	}
-	g.memberIDs = append(g.memberIDs, memberID)
-
-	return nil
-}
-
 // OperatingMemberIDs returns IDs of all group members that are active and have
 // not been disqualified. All those members are properly operating in the group
 // at the moment of calling this method.
 func (g *Group) OperatingMemberIDs() []MemberIndex {
 	operatingMembers := make([]MemberIndex, 0)
-	for _, member := range g.memberIDs {
+	for _, member := range g.MemberIDs() {
 		if g.IsOperating(member) {
 			operatingMembers = append(operatingMembers, member)
 		}
@@ -122,7 +100,7 @@ func (g *Group) IsOperating(memberID MemberIndex) bool {
 }
 
 func (g *Group) isInGroup(memberID MemberIndex) bool {
-	for _, groupMember := range g.memberIDs {
+	for _, groupMember := range g.MemberIDs() {
 		if groupMember == memberID {
 			return true
 		}

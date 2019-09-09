@@ -2,14 +2,12 @@ package result
 
 import (
 	"bytes"
-	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // represents a given state in the state machine for signing dkg results
@@ -23,12 +21,12 @@ type signingState = state.State
 type resultSigningState struct {
 	channel      net.BroadcastChannel
 	relayChain   relayChain.Interface
+	signing      chain.Signing
 	blockCounter chain.BlockCounter
 
 	member *SigningMember
 
-	requestID *big.Int
-	result    *relayChain.DKGResult
+	result *relayChain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
 
@@ -44,7 +42,7 @@ func (rss *resultSigningState) ActiveBlocks() uint64 {
 }
 
 func (rss *resultSigningState) Initiate() error {
-	message, err := rss.member.SignDKGResult(rss.result, rss.relayChain)
+	message, err := rss.member.SignDKGResult(rss.result, rss.relayChain, rss.signing)
 	if err != nil {
 		return err
 	}
@@ -71,10 +69,7 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 	// it means that an incorrect key was used to sign DKG result hash and
 	// the message should be rejected.
 	isValidKeyUsed := func(phaseMessage *DKGResultHashSignatureMessage) bool {
-		return bytes.Compare(
-			operator.Marshal(phaseMessage.publicKey),
-			msg.SenderPublicKey(),
-		) == 0
+		return bytes.Compare(phaseMessage.publicKey, msg.SenderPublicKey()) == 0
 	}
 
 	switch signedMessage := msg.Payload().(type) {
@@ -94,12 +89,12 @@ func (rss *resultSigningState) Next() signingState {
 	return &signaturesVerificationState{
 		channel:           rss.channel,
 		relayChain:        rss.relayChain,
+		signing:           rss.signing,
 		blockCounter:      rss.blockCounter,
 		member:            rss.member,
-		requestID:         rss.requestID,
 		result:            rss.result,
 		signatureMessages: rss.signatureMessages,
-		validSignatures:   make(map[group.MemberIndex]operator.Signature),
+		validSignatures:   make(map[group.MemberIndex][]byte),
 		verificationStartBlockHeight: rss.signingStartBlockHeight +
 			rss.DelayBlocks() +
 			rss.ActiveBlocks(),
@@ -119,15 +114,15 @@ func (rss *resultSigningState) MemberIndex() group.MemberIndex {
 type signaturesVerificationState struct {
 	channel      net.BroadcastChannel
 	relayChain   relayChain.Interface
+	signing      chain.Signing
 	blockCounter chain.BlockCounter
 
 	member *SigningMember
 
-	requestID *big.Int
-	result    *relayChain.DKGResult
+	result *relayChain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
-	validSignatures   map[group.MemberIndex]operator.Signature
+	validSignatures   map[group.MemberIndex][]byte
 
 	verificationStartBlockHeight uint64
 }
@@ -141,7 +136,10 @@ func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
 }
 
 func (svs *signaturesVerificationState) Initiate() error {
-	signatures, err := svs.member.VerifyDKGResultSignatures(svs.signatureMessages)
+	signatures, err := svs.member.VerifyDKGResultSignatures(
+		svs.signatureMessages,
+		svs.signing,
+	)
 	if err != nil {
 		return err
 	}
@@ -160,7 +158,6 @@ func (svs *signaturesVerificationState) Next() signingState {
 		relayChain:   svs.relayChain,
 		blockCounter: svs.blockCounter,
 		member:       NewSubmittingMember(svs.member.index),
-		requestID:    svs.requestID,
 		result:       svs.result,
 		signatures:   svs.validSignatures,
 		submissionStartBlockHeight: svs.verificationStartBlockHeight +
@@ -185,9 +182,8 @@ type resultSubmissionState struct {
 
 	member *SubmittingMember
 
-	requestID  *big.Int
 	result     *relayChain.DKGResult
-	signatures map[group.MemberIndex]operator.Signature
+	signatures map[group.MemberIndex][]byte
 
 	submissionStartBlockHeight uint64
 }
@@ -206,7 +202,6 @@ func (rss *resultSubmissionState) ActiveBlocks() uint64 {
 
 func (rss *resultSubmissionState) Initiate() error {
 	return rss.member.SubmitDKGResult(
-		rss.requestID,
 		rss.result,
 		rss.signatures,
 		rss.relayChain,

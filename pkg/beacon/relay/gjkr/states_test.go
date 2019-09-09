@@ -14,7 +14,7 @@ import (
 )
 
 func TestFullStateTransitions(t *testing.T) {
-	threshold := 2
+	dishonestThreshold := 2
 	groupSize := 5
 
 	seed := big.NewInt(18293712839)
@@ -35,8 +35,8 @@ func TestFullStateTransitions(t *testing.T) {
 
 		member, err := NewMember(
 			group.MemberIndex(i+1),
-			make([]group.MemberIndex, 0),
-			threshold,
+			groupSize,
+			dishonestThreshold,
 			seed,
 		)
 		if err != nil {
@@ -197,8 +197,6 @@ func expectedMessagesCount(states []keyGenerationState) int {
 	}
 
 	switch states[0].(type) {
-	case *joinState:
-		return statesCount
 	case *ephemeralKeyPairGenerationState:
 		return statesCount
 	case *commitmentState:

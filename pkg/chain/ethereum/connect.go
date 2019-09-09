@@ -2,12 +2,11 @@ package ethereum
 
 import (
 	"fmt"
-	"math/big"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ethutil"
@@ -15,15 +14,13 @@ import (
 )
 
 type ethereumChain struct {
-	config                   Config
-	client                   *ethclient.Client
-	clientRPC                *rpc.Client
-	clientWS                 *rpc.Client
-	requestID                *big.Int
-	keepGroupContract        *contract.KeepGroup
-	keepRandomBeaconContract *contract.KeepRandomBeacon
-	stakingContract          *contract.StakingProxy
-	accountKey               *keystore.Key
+	config                           Config
+	client                           bind.ContractBackend
+	clientRPC                        *rpc.Client
+	clientWS                         *rpc.Client
+	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
+	stakingContract                  *contract.TokenStaking
+	accountKey                       *keystore.Key
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
@@ -40,10 +37,13 @@ type ethereumChain struct {
 	transactionMutex *sync.Mutex
 }
 
-// Connect makes the network connection to the Ethereum network.  Note: for
-// other things to work correctly the configuration will need to reference a
-// websocket, "ws://", or local IPC connection.
-func Connect(config Config) (chain.Handle, error) {
+type ethereumUtilityChain struct {
+	ethereumChain
+
+	keepRandomBeaconServiceContract *contract.KeepRandomBeaconService
+}
+
+func connect(config Config) (*ethereumChain, error) {
 	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -55,7 +55,7 @@ func Connect(config Config) (chain.Handle, error) {
 
 	pv := &ethereumChain{
 		config:           config,
-		client:           client,
+		client:           ethutil.WrapCallLogging(logger, client),
 		clientRPC:        clientRPC,
 		clientWS:         clientWS,
 		transactionMutex: &sync.Mutex{},
@@ -76,50 +76,30 @@ func Connect(config Config) (chain.Handle, error) {
 		pv.accountKey = key
 	}
 
-	address, err := addressForContract(config, "KeepRandomBeacon")
+	address, err := addressForContract(config, "KeepRandomBeaconOperator")
 	if err != nil {
-		return nil, fmt.Errorf("error resolving KeepRandomBeacon contract: [%v]", err)
+		return nil, fmt.Errorf("error resolving KeepRandomBeaconOperator contract: [%v]", err)
 	}
 
-	keepRandomBeaconContract, err :=
-		contract.NewKeepRandomBeacon(
+	keepRandomBeaconOperatorContract, err :=
+		contract.NewKeepRandomBeaconOperator(
 			*address,
 			pv.accountKey,
 			pv.client,
 			pv.transactionMutex,
 		)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"error attaching to KeepRandomBeacon contract: [%v]",
-			err,
-		)
+		return nil, fmt.Errorf("error attaching to KeepRandomBeaconOperator contract: [%v]", err)
 	}
-	pv.keepRandomBeaconContract = keepRandomBeaconContract
+	pv.keepRandomBeaconOperatorContract = keepRandomBeaconOperatorContract
 
-	address, err = addressForContract(config, "KeepGroup")
+	address, err = addressForContract(config, "TokenStaking")
 	if err != nil {
-		return nil, fmt.Errorf("error resolving KeepGroup contract: [%v]", err)
-	}
-
-	keepGroupContract, err :=
-		contract.NewKeepGroup(
-			*address,
-			pv.accountKey,
-			pv.client,
-			pv.transactionMutex,
-		)
-	if err != nil {
-		return nil, fmt.Errorf("error attaching to KeepGroup contract: [%v]", err)
-	}
-	pv.keepGroupContract = keepGroupContract
-
-	address, err = addressForContract(config, "StakingProxy")
-	if err != nil {
-		return nil, fmt.Errorf("error resolving StakingProxy contract: [%v]", err)
+		return nil, fmt.Errorf("error resolving TokenStaking contract: [%v]", err)
 	}
 
 	stakingContract, err :=
-		contract.NewStakingProxy(
+		contract.NewTokenStaking(
 			*address,
 			pv.accountKey,
 			pv.client,
@@ -131,6 +111,47 @@ func Connect(config Config) (chain.Handle, error) {
 	pv.stakingContract = stakingContract
 
 	return pv, nil
+}
+
+// ConnectUtility makes the network connection to the Ethereum network and
+// returns a utility handle to the chain interface with additional methods for
+// non- standard client interactions. Note: for other things to work correctly
+// the configuration will need to reference a websocket, "ws://", or local IPC
+// connection.
+func ConnectUtility(config Config) (chain.Utility, error) {
+	base, err := connect(config)
+	if err != nil {
+		return nil, err
+	}
+
+	address, err := addressForContract(config, "KeepRandomBeaconService")
+	if err != nil {
+		return nil, fmt.Errorf("error resolving KeepRandomBeaconService contract: [%v]", err)
+	}
+
+	keepRandomBeaconServiceContract, err :=
+		contract.NewKeepRandomBeaconService(
+			*address,
+			base.accountKey,
+			base.client,
+			base.transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf("error attaching to KeepRandomBeaconService contract: [%v]", err)
+	}
+
+	return &ethereumUtilityChain{
+		*base,
+		keepRandomBeaconServiceContract,
+	}, nil
+}
+
+// Connect makes the network connection to the Ethereum network and returns a
+// standard handle to the chain interface. Note: for other things to work
+// correctly the configuration will need to reference a websocket, "ws://", or
+// local IPC connection.
+func Connect(config Config) (chain.Handle, error) {
+	return connect(config)
 }
 
 func addressForContract(config Config, contractName string) (*common.Address, error) {

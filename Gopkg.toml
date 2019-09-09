@@ -148,9 +148,10 @@ required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereu
   revision = "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
   source = "https://github.com/keep-network/cli.git"
 
+# Punisher (v1.8.27)
 [[constraint]]
   name = "github.com/ethereum/go-ethereum"
-  revision = "477eb0933b9529f7deeccc233cc815fe34a8ea56"
+  revision = "4bcc0a37ab70cb79b16893556cffdaad6974e7d8"
   source = "https://github.com/keep-network/go-ethereum.git"
 
 [[constraint]]

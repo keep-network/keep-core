@@ -1,0 +1,65 @@
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: keep-network-relay-request-submitter
+  labels:     
+    app: keep-network
+    type: relay-request-submitter
+spec:
+  schedule: '*/5 * * * *'
+  jobTemplate:
+    metadata:
+      labels:
+        app: keep-network
+        type: relay-request-submitter
+    spec:
+      activeDeadlineSeconds: 600
+      template:
+        spec:
+          initContainers:
+          - name: initcontainer-provision-keep-client
+            image: gcr.io/keep-test-f3e0/keep-client-initcontainer
+            env:
+              - name: KEEP_CLIENT_TYPE
+                value: standard
+              - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: eth-account-passphrase
+                    key: eth-account-passphrase
+            volumeMounts:
+              - name: keep-client-relay-request-submitter
+                mountPath: /mnt/keep-client/config
+            command: ["node", "/tmp/provision-keep-client.js"]
+          containers:
+          - name: keep-client-relay-request-submitter
+            image: gcr.io/keep-test-f3e0/keep-client
+            ports:
+              - containerPort: 3919
+            env:
+              - name: KEEP_ETHEREUM_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: eth-account-passphrase
+                    key: eth-account-passphrase
+            volumeMounts:
+              - name: keep-client-relay-request-submitter
+                mountPath: /mnt/keep-client/config
+            command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "relay", "request"]
+          volumes:
+          - name: keep-client-relay-request-submitter
+            persistentVolumeClaim:
+              claimName: keep-client-relay-request-submitter
+          restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keep-client-relay-request-submitter
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Mi

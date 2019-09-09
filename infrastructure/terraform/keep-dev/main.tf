@@ -218,9 +218,22 @@ module "push_deployment_infrastructure" {
   utility_box {
     name         = "${var.utility_box["name"]}"
     machine_type = "${var.utility_box["machine_type"]}"
+    tools        = "${var.utility_box["tools"]}"
     zone         = "${var.region_data["zone_a"]}"
     tags         = "${module.nat_gateway_zone_a.routing_tag_regional},${var.utility_box["tags"]}"
   }
 
   labels = "${local.labels}"
+}
+
+resource "google_storage_bucket" "keep_dev_contract_data" {
+  name          = "keep-dev-contract-data"
+  project       = "${module.project.project_id}"
+  location      = "US-CENTRAL1"
+  storage_class = "REGIONAL"
+  labels        = "${local.labels}"
+
+  versioning {
+    enabled = true
+  }
 }
