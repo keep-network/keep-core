@@ -112,23 +112,24 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 }
 
 // isValidEphemeralPublicKeyMessage validates a given EphemeralPublicKeyMessage.
-// Message is considered valid if it contains ephemeral public keys for all sender's peers.
+// Message is considered valid if it contains ephemeral public keys for
+// all other group members.
 func (sm *SymmetricKeyGeneratingMember) isValidEphemeralPublicKeyMessage(
 	message *EphemeralPublicKeyMessage,
 ) bool {
-	for _, checkedMemberID := range sm.group.MemberIDs() {
-		if checkedMemberID == message.senderID {
-			// Message contains ephemeral public keys only for sender's peers
+	for _, memberID := range sm.group.MemberIDs() {
+		if memberID == message.senderID {
+			// Message contains ephemeral public keys only for other group members
 			continue
 		}
 
-		if _, ok := message.ephemeralPublicKeys[checkedMemberID]; !ok {
+		if _, ok := message.ephemeralPublicKeys[memberID]; !ok {
 			logger.Warningf(
 				"[member:%v] ephemeral public key message from member [%v] "+
-					"doesn't contain public key for member [%v]",
+					"does not contain public key for member [%v]",
 				sm.ID,
 				message.senderID,
-				checkedMemberID,
+				memberID,
 			)
 			return false
 		}

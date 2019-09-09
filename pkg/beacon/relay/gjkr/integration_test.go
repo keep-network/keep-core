@@ -234,7 +234,7 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 }
 
 // Phase 2 test case - a member sends an invalid ephemeral public key message.
-// Message payload doesn't contain public keys for all sender's peers.
+// Message payload doesn't contain public keys for all other group members.
 // Sender of the invalid message is disqualified by all of the receivers.
 func TestExecute_DQ_member1_invalidMessage_phase2(t *testing.T) {
 	t.Parallel()
