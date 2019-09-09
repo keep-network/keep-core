@@ -5,7 +5,7 @@ Summary of Keep private testnet releases in reverse chronological order.
 == 2019-09-06
 
 === NEW FEATURES
-- Allow for libp2p NAT support:  This takes shape in the form of a new configuration option in your `keep-client-confg.toml` file.  If enabled this feature will attempt to connect with auto-discovered network firewall using UPnP, open a port, and configure the mapping internally.  To enable this feature set `NAT = true` in your `keep-client-confg.toml`.
+- Allow for libp2p NAT support:  This takes shape in the form of a new configuration option in your `keep-client-confg.toml` file.  If enabled this feature will attempt to connect with auto-discovered network firewall using UPnP, open a port, and configure the mapping internally.  To enable this feature set `NAT = true` under section `[libp2p]` in your `keep-client-confg.toml`.
 
 === OTHERS
 - Added enhanced logging around group statistics and network connection details.
