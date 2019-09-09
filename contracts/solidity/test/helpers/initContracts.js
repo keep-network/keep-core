@@ -8,7 +8,9 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract, groupContract;
 
-  let minimumGasPrice = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei) TODO: Use historical average of recently served requests?
+  // (20 Gwei) TODO: Use historical average of recently served requests?
+  // Adding 1.5 fluctuation safety factor to cover rise in gas fees during DKG execution
+  let minimumGasPrice = web3.utils.toBN(20*1.5).mul(web3.utils.toBN(10**9)),
     profitMargin = 1, // Signing group reward per each member in % of the entry fee.
     createGroupFee = 10, // Fraction in % of the estimated cost of group creation that is included in relay request payment.
     withdrawalDelay = 1;

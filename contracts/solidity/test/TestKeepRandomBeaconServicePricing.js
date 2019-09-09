@@ -53,8 +53,9 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
   it("should successfully refund callback gas surplus to the requestor if gas price was high", async function() {
 
     // Set higher gas price
-    await serviceContract.setMinimumGasPrice(web3.utils.toWei(web3.utils.toBN(200), 'gwei'));
+    let defaultMinimumGasPrice = await serviceContract.minimumGasPrice();
 
+    await serviceContract.setMinimumGasPrice(defaultMinimumGasPrice.mul(web3.utils.toBN(10)));
     let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
     let minimumPayment = await serviceContract.minimumPayment(callbackGas)
     let excessCallbackPayment = await serviceContract.minimumCallbackPayment(callbackGas)
@@ -72,9 +73,8 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
     // Put back the default gas price
-    await serviceContract.setMinimumGasPrice(web3.utils.toWei(web3.utils.toBN(20), 'gwei'));
-
-    let expectedCallbackPayment = await serviceContract.minimumCallbackPayment(callbackGas)
+    await serviceContract.setMinimumGasPrice(defaultMinimumGasPrice);
+    let expectedCallbackPayment = await serviceContract.minimumCallbackPayment((callbackGas/1.5).toFixed()) // Remove 1.5 fluctuation safety margin
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
     // Ethereum transaction min cost varies i.e. 20864-21000 Gas resulting slightly different
@@ -87,7 +87,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
   it("should successfully refund callback gas surplus to the requestor if gas estimation was high", async function() {
 
     let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
-    let expectedCallbackPayment = await serviceContract.minimumCallbackPayment(callbackGas);
+    let expectedCallbackPayment = await serviceContract.minimumCallbackPayment((callbackGas/1.5).toFixed()); // Remove 1.5 fluctuation safety margin
 
     let excessCallbackGas = web3.utils.toBN(callbackGas).mul(web3.utils.toBN(2)); // Set higher callback gas estimate.
     let excessCallbackPayment = await serviceContract.minimumCallbackPayment(excessCallbackGas);
