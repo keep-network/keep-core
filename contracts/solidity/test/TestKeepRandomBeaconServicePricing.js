@@ -57,15 +57,16 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
     let minimumPayment = await serviceContract.minimumPayment(callbackGas)
+    let excessCallbackPayment = await serviceContract.minimumCallbackPayment(callbackGas)
+
     await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
       callbackContract.address,
       "callback(uint256)",
-      0,
+      callbackGas,
       {value: minimumPayment, from: requestor}
     );
 
-    let minimumCallbackPayment = await serviceContract.minimumCallbackPayment(0)
     let requestorBalance = await web3.eth.getBalance(requestor);
 
     await operatorContract.relayEntry(bls.nextGroupSignature);
@@ -73,14 +74,14 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     // Put back the default gas price
     await serviceContract.setMinimumGasPrice(web3.utils.toWei(web3.utils.toBN(20), 'gwei'));
 
-    let updatedMinimumCallbackPayment = await serviceContract.minimumCallbackPayment(0)
+    let expectedCallbackPayment = await serviceContract.minimumCallbackPayment(callbackGas)
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
-    let surplus = web3.utils.toBN(minimumCallbackPayment).sub(web3.utils.toBN(updatedMinimumCallbackPayment))
-    let refund = web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance))
-
-    assert.isTrue(refund.eq(surplus), "Callback gas surplus should be refunded to the requestor.");
-
+    // Ethereum transaction min cost varies i.e. 20864-21000 Gas resulting slightly different
+    // eth amounts: Surplus 0.00219018 vs Refund 0.00218752 so rounding up those for the tests
+    let surplus = web3.utils.fromWei(web3.utils.toBN(excessCallbackPayment).sub(web3.utils.toBN(expectedCallbackPayment)), 'ether')
+    let refund = web3.utils.fromWei(web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance)), 'ether')
+    assert.isTrue(Math.round(surplus*10000)/10000 === Math.round(refund*10000)/10000, "Callback gas surplus should be refunded to the requestor.");
   });
 
   it("should successfully refund callback gas surplus to the requestor if gas estimation was high", async function() {
