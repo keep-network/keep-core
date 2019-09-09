@@ -5,6 +5,7 @@ package entrytest
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"math/big"
 	"sync"
@@ -84,8 +85,15 @@ func executeSigning(
 		return nil, err
 	}
 
+	// local broadcast channel implementation is global for all tests;
+	// to avoid conflicts between tests we need to randomize channel name
+	// so that no channel name is shared between two tests
+	randomSelector, err := rand.Int(rand.Reader, big.NewInt(10000000000))
+	if err != nil {
+		return nil, err
+	}
 	broadcastChannel, err := network.ChannelFor(
-		fmt.Sprintf("entry-test-%v-%v", previousEntry, seed),
+		fmt.Sprintf("entry-test-%v", randomSelector),
 	)
 	if err != nil {
 		return nil, err
