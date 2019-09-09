@@ -377,7 +377,7 @@ func TestExecute_DQ_members25_revealWrongPrivateKey_phase9(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 7
-	threshold := 4
+	honestThreshold := 4
 
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 
@@ -407,7 +407,7 @@ func TestExecute_DQ_members25_revealWrongPrivateKey_phase9(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
 	if err != nil {
 		t.Fatal(err)
 	}
