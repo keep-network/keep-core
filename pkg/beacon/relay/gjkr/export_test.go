@@ -13,10 +13,13 @@ func (mcm *MemberCommitmentsMessage) SetCommitment(
 	mcm.commitments[index] = commitment
 }
 
-func (mcm *MemberCommitmentsMessage) SetCommitments(
-	commitments []*bn256.G1,
+func (mcm *MemberCommitmentsMessage) RemoveCommitment(
+	index int,
 ) {
-	mcm.commitments = commitments
+	mcm.commitments = append(
+		mcm.commitments[:index],
+		mcm.commitments[index+1:]...,
+	)
 }
 
 func (psm *PeerSharesMessage) SetShares(
@@ -29,9 +32,7 @@ func (psm *PeerSharesMessage) SetShares(
 	}
 }
 
-func (psm *PeerSharesMessage) RemoveShares(
-	memberIndex group.MemberIndex,
-) {
+func (psm *PeerSharesMessage) RemoveShares(memberIndex group.MemberIndex) {
 	delete(psm.shares, memberIndex)
 }
 

@@ -234,7 +234,7 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 }
 
 // Phase 4 test case - a member sends an invalid member commitments message.
-// Message payload doesn't contain correct number of commitments.
+// Message payload doesn't contain a correct number of commitments.
 // Sender of the invalid message is disqualified by all of the receivers.
 func TestExecute_DQ_member5_invalidCommitmentsMessage_phase4(t *testing.T) {
 	t.Parallel()
@@ -245,7 +245,7 @@ func TestExecute_DQ_member5_invalidCommitmentsMessage_phase4(t *testing.T) {
 	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
 		if ok && commitmentsMessage.SenderID() == group.MemberIndex(5) {
-			commitmentsMessage.SetCommitments([]*bn256.G1{})
+			commitmentsMessage.RemoveCommitment(1)
 			return commitmentsMessage
 		}
 
@@ -269,7 +269,7 @@ func TestExecute_DQ_member5_invalidCommitmentsMessage_phase4(t *testing.T) {
 }
 
 // Phase 4 test case - a member sends an invalid peer shares message.
-// Message payload doesn't contain shares for all sender's peers.
+// Message payload doesn't contain shares for all other group members.
 // Sender of the invalid message is disqualified by all of the receivers.
 func TestExecute_DQ_member4_invalidSharesMessage_phase4(t *testing.T) {
 	t.Parallel()

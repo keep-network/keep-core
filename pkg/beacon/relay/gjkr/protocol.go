@@ -391,15 +391,19 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 func (cvm *CommitmentsVerifyingMember) isValidMemberCommitmentsMessage(
 	message *MemberCommitmentsMessage,
 ) bool {
-	expectedCommitmentsNumber := cvm.group.DishonestThreshold() + 1
-	if len(message.commitments) != expectedCommitmentsNumber {
+	// A commitment is generated for each coefficient of the polynomial.
+	// The polynomial is of degree equal to the dishonest threshold, thus we
+	// have dishonest threshold + 1 coefficients in the polynomial including a
+	// constant coefficient. It implicates the same count of commitments.
+	expectedCommitmentsCount := cvm.group.DishonestThreshold() + 1
+	if len(message.commitments) != expectedCommitmentsCount {
 		logger.Warningf(
-			"[member:%v] member [%v] sent message with number of "+
-				"commitments [%v] instead of [%v]",
+			"[member:%v] member [%v] sent a message with a wrong number "+
+				"of commitments: [%v] instead of expected [%v]",
 			cvm.ID,
 			message.senderID,
 			len(message.commitments),
-			expectedCommitmentsNumber,
+			expectedCommitmentsCount,
 		)
 		return false
 	}
@@ -408,23 +412,23 @@ func (cvm *CommitmentsVerifyingMember) isValidMemberCommitmentsMessage(
 }
 
 // isValidPeerSharesMessage validates a given PeerSharesMessage.
-// Message is considered valid if it contains shares for all sender's peers.
+// Message is considered valid if it contains shares for all other group members.
 func (cvm *CommitmentsVerifyingMember) isValidPeerSharesMessage(
 	message *PeerSharesMessage,
 ) bool {
-	for _, checkedMemberID := range cvm.group.OperatingMemberIDs() {
-		if checkedMemberID == message.senderID {
-			// Message contains shares only for sender's peers
+	for _, memberID := range cvm.group.OperatingMemberIDs() {
+		if memberID == message.senderID {
+			// Message contains shares only for other group members.
 			continue
 		}
 
-		if _, ok := message.shares[checkedMemberID]; !ok {
+		if _, ok := message.shares[memberID]; !ok {
 			logger.Warningf(
-				"[member:%v] peer shares message from member [%v] doesn't "+
+				"[member:%v] peer shares message from member [%v] does not "+
 					"contain shares for member [%v]",
 				cvm.ID,
 				message.senderID,
-				checkedMemberID,
+				memberID,
 			)
 			return false
 		}
