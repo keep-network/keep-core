@@ -31,6 +31,13 @@ type Result struct {
 	memberFailures      []error
 }
 
+// GetSigners returns all signers created from DKG protocol execution.
+// If no signers were created because of protocol failures, empty slice
+// is returned.
+func (r *Result) GetSigners() []*dkg.ThresholdSigner {
+	return r.signers
+}
+
 // RunTest executes the full DKG roundrip test for the provided group size
 // and honest threshold. The provided interception rules are applied in the
 // broadcast channel for the time of DKG execution.
