@@ -6,6 +6,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+func (epkm *EphemeralPublicKeyMessage) RemovePublicKey(
+	memberIndex group.MemberIndex,
+) {
+	delete(epkm.ephemeralPublicKeys, memberIndex)
+}
+
 func (mcm *MemberCommitmentsMessage) SetCommitment(
 	index int,
 	commitment *bn256.G1,
