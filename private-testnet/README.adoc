@@ -86,7 +86,7 @@ There are 3 scripts that make up preparing deployment bundles:
 
 === Dependencies
 
-Script excution requires the following NPM packages:
+Script execution requires the following NPM packages:
 
 * web3@1.0.0-beta.55
 * fs
