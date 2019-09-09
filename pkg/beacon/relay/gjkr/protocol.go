@@ -761,7 +761,13 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 			sm.receivedValidSharesS[message.senderID],
 			message.publicKeySharePoints,
 		) {
-			// TODO in next PR: mark message sender as disqualified
+			logger.Warningf(
+				"[member:%v] member [%v] disqualified because of "+
+					"invalid public key share points",
+				sm.ID,
+				message.senderID,
+			)
+			sm.group.MarkMemberAsDisqualified(message.senderID)
 			accusedMembersKeys[message.senderID] = sm.ephemeralKeyPairs[message.senderID].PrivateKey
 			continue
 		}
@@ -839,14 +845,49 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
-
-			// TODO in next PR: change this condition similarly as in phase 5
-			if pjm.ID == message.senderID || pjm.ID == accusedID {
-				// The member cannot resolve the dispute in which it's involved.
+			if pjm.ID == accusedID {
+				// The member does not resolve the dispute as an accused.
+				// Mark the accuser as disqualified immediately,
+				// as each member consider itself as a honest participant.
+				pjm.group.MarkMemberAsDisqualified(accuserID)
 				continue
 			}
 
 			evidenceLog := pjm.evidenceLog
+
+			accuserPublicKey := findPublicKey(
+				evidenceLog,
+				accuserID,
+				accusedID,
+			)
+			if accuserPublicKey == nil {
+				// Ephemeral public key of the accuser, generated for the sake
+				// of communication with the accused member should be present
+				// in the evidence log. The key is not there only if it was not
+				// sent by the accuser in the first phase of the protocol and
+				// such behaviour results in marking that member as disqualified
+				// in the second phase. As a result, we no longer accept
+				// messages from that member and it is not possible we will
+				// receive an accusation from an inactive member in this phase.
+				// If the public key could not be found we consider this a
+				// fatal error. Such a situation should never happen.
+				return fmt.Errorf(
+					"could not find public key sent by [%v] to [%v]",
+					accuserID,
+					accusedID,
+				)
+			}
+
+			if !accuserPublicKey.IsKeyMatching(revealedAccuserPrivateKey) {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"revealing private key not matching the public key",
+					pjm.ID,
+					accuserID,
+				)
+				pjm.group.MarkMemberAsDisqualified(accuserID)
+				continue
+			}
 
 			// TODO Replace as in phase 5.
 			recoveredSymmetricKey, err := recoverSymmetricKey(
