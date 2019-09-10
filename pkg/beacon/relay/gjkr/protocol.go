@@ -1296,6 +1296,11 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 
 	for _, message := range messages {
 		revealingMemberID := message.senderID
+
+		// TODO According to protocol spec one should check if all expected
+		//  private keys are revealed in the message. If not, the
+		//  revealingMemberID should be disqualified.
+
 		for disqualifiedMemberID, revealedPrivateKey := range message.privateKeys {
 			if rm.ID == disqualifiedMemberID {
 				// Mark the revealing member as disqualified immediately,
@@ -1319,9 +1324,31 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				continue
 			}
 
-			publicKey := rm.evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
-				ephemeralPublicKeys[disqualifiedMemberID]
-			if !publicKey.IsKeyMatching(revealedPrivateKey) {
+			revealingMemberPublicKey := findPublicKey(
+				rm.evidenceLog,
+				revealingMemberID,
+				disqualifiedMemberID,
+			)
+			if revealingMemberPublicKey == nil {
+				// Ephemeral public key of the revealing member, generated for
+				// the sake of communication with the disqualified member should
+				// be present in the evidence log. The key is not there only if
+				// it was not sent by the revealing member in the first phase of
+				// the protocol and such behaviour results in marking that
+				// member as disqualified in the second phase. As a result, we
+				// no longer accept messages from that member and it is not
+				// possible we will receive a DisqualifiedEphemeralKeysMessage
+				// from an inactive member in this phase. If the public key
+				// could not be found we consider this a fatal error.
+				// Such a situation should never happen.
+				return nil, fmt.Errorf(
+					"could not find public key sent by [%v] to [%v]",
+					revealingMemberID,
+					disqualifiedMemberID,
+				)
+			}
+
+			if !revealingMemberPublicKey.IsKeyMatching(revealedPrivateKey) {
 				logger.Warningf(
 					"[member:%v] member [%v] disqualified because of "+
 						"revealing private key not matching the public key",
@@ -1332,32 +1359,91 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				continue
 			}
 
-			// TODO Replace as in phase 5.
-			recoveredSymmetricKey, err := recoverSymmetricKey(
+			// Recover symmetric key based on ephemeral public key message sent
+			// by the disqualified member. If the message is not present in the
+			// evidence log, it means the disqualified member did not sent us
+			// their public key in the first phase of the protocol and we
+			// marked the disqualified member as inactive in the second phase
+			// of the protocol. Assuming everyone in the group has the same view
+			// on who is inactive, it means the revealing member sent a
+			// DisqualifiedEphemeralKeysMessage revealing an inactive member.
+			// As a result, we should mark the revealing member as disqualified.
+			//
+			// If the message is present in the evidence log but it does not
+			// contain a public key generated for the revealing member, it means
+			// we have already marked the disqualified member as disqualified
+			// when performing a validation of a message with public keys in the
+			// first phase of the protocol. Assuming everyone in the group has
+			// the same view on who is disqualified after the second phase of
+			// the protocol, it means the revealing member sent a
+			// DisqualifiedEphemeralKeysMessage revealing a disqualified
+			// member which didn't manage to send any shares in phase 3.
+			// As a result, we should mark the revealing member as disqualified.
+			disqualifiedMemberPublicKey := findPublicKey(
 				rm.evidenceLog,
-				disqualifiedMemberID, // m
-				revealingMemberID,    // k
-				revealedPrivateKey,
+				disqualifiedMemberID,
+				revealingMemberID,
 			)
-			if err != nil {
-				logger.Errorf("cannot recover symmetric key: [%v]", err)
-				// TODO Disqualify the revealing member
+			if disqualifiedMemberPublicKey == nil {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because could not "+
+						"recover symmetric key; disqualified member [%v] is "+
+						"already marked as inactive or disqualified in phase 2",
+					rm.ID,
+					revealingMemberID,
+					disqualifiedMemberID,
+				)
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
+				continue
+			}
+			recoveredSymmetricKey := revealedPrivateKey.Ecdh(disqualifiedMemberPublicKey)
+
+			// Get from evidence log peer shares message sent by the disqualified
+			// member. If the message is not present, this means the disqualified
+			// member has been already marked as inactive in phase 4.
+			// Assuming that each other member consider the disqualified member
+			// as inactive, the revealing member should be disqualified because
+			// of revealing an inactive member knowing we can not perform this
+			// reconstruction.
+			disqualifiedMemberSharesMessage := rm.evidenceLog.peerSharesMessage(disqualifiedMemberID)
+			if disqualifiedMemberSharesMessage == nil {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because could not "+
+						"get peer shares message from evidence log; "+
+						"disqualified member [%v] is already marked as inactive",
+					rm.ID,
+					revealingMemberID,
+					disqualifiedMemberID,
+				)
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
 			}
 
-			// TODO Replace as in phase 5
-			shareS, _, err := recoverShares(
-				rm.evidenceLog,
-				disqualifiedMemberID,  // m
-				revealingMemberID,     // k
-				recoveredSymmetricKey, // s_mk
+			// In this phase, we assume that each revealed disqualified member
+			// was disqualified after phase 5 so it has provided valid shares in
+			// phase 3. If shares could not be decrypted here is because
+			// the revealing member revealed a disqualified member who has
+			// been disqualified before it was able to provide shares in phase 3.
+			// In result the revealing member violated the protocol and
+			// should be marked as disqualified.
+			shareS, _, err := disqualifiedMemberSharesMessage.decryptShares(
+				revealingMemberID,
+				recoveredSymmetricKey,
 			)
 			if err != nil {
-				logger.Errorf("cannot decrypt share S: [%v]", err)
-				// TODO Disqualify the revealing member
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of revealing "+
+						"member which didn't provide valid shares in phase 3",
+					rm.ID,
+					revealingMemberID,
+				)
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
 			}
 
+			// TODO According to protocol spec, one should invoke
+			//  areSharesValidAgainstCommitments first. If true share should be
+			//  added, if false revealingMemberID should be disqualified.
 			addShare(disqualifiedMemberID, revealingMemberID, shareS)
 		}
 	}
