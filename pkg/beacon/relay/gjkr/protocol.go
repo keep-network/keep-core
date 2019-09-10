@@ -741,68 +741,6 @@ func findPublicKey(
 	return senderPublicKey
 }
 
-// Recover ephemeral symmetric key used to encrypt communication between sender
-// and receiver assuming that receiver revealed its private ephemeral key.
-//
-// Finds ephemeral public key sent by sender to the receiver. Performs ECDH
-// operation between sender's public key and receiver's private key to recover
-// the ephemeral symmetric key.
-//
-// Deprecated: Body of this function should be used directly in order to
-// explain intentions more expressively in the client code.
-// TODO Remove when all usages will be replaced.
-func recoverSymmetricKey(
-	evidenceLog evidenceLog,
-	senderID, receiverID group.MemberIndex,
-	receiverPrivateKey *ephemeral.PrivateKey,
-) (ephemeral.SymmetricKey, error) {
-	senderPublicKey := findPublicKey(evidenceLog, senderID, receiverID)
-	if senderPublicKey == nil {
-		return nil, fmt.Errorf(
-			"could not find public key sent by [%v] to [%v]",
-			senderID,
-			receiverID,
-		)
-	}
-
-	return receiverPrivateKey.Ecdh(senderPublicKey), nil
-}
-
-// Recovers from the evidence log share S and share T sent by sender to the
-// receiver.
-//
-// First it finds in the evidence log the Peer Shares Message sent by the sender
-// to the receiver. Then it decrypts the decrypted shares with provided symmetric
-// key.
-//
-// Deprecated: Should be replaced. `peerSharesMessage` should be obtained and
-// `decryptShares` method from `PeerSharesMessage` should be used to decrypt shares.
-// TODO Remove when all usages will be replaced.
-func recoverShares(
-	evidenceLog evidenceLog,
-	senderID, receiverID group.MemberIndex,
-	symmetricKey ephemeral.SymmetricKey,
-) (*big.Int, *big.Int, error) {
-	peerSharesMessage := evidenceLog.peerSharesMessage(senderID)
-	if peerSharesMessage == nil {
-		return nil, nil, fmt.Errorf(
-			"no peer shares message for sender %v",
-			senderID,
-		)
-	}
-
-	shareS, err := peerSharesMessage.decryptShareS(receiverID, symmetricKey) // s_mj
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot decrypt share S [%v]", err)
-	}
-	shareT, err := peerSharesMessage.decryptShareT(receiverID, symmetricKey) // t_mj
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot decrypt share T [%v]", err)
-	}
-
-	return shareS, shareT, nil
-}
-
 // CombineMemberShares sums up all `s` shares intended for this member.
 // Combines secret shares calculated by current member `i` for itself `s_ii`
 // with shares calculated by peer members `j` for this member `s_ji`.
