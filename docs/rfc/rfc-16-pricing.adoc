@@ -157,9 +157,7 @@ the callback is called using the callback gas amount as the maximum gas.
 
 After the callback is made
 the amount of gas spent on the call
-is multiplied with the lower of the
-_estimated gas price_ at the time of the request,
-or the actual gas price of the transaction,
+is multiplied with the actual gas price of the transaction,
 to get the _callback expenditure_.
 
 ===== Requester refund
