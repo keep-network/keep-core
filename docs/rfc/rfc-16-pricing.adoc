@@ -16,11 +16,11 @@ or can be broken by relatively simple third-party contracts.
 == Proposal
 
 Beacon entries are priced
-based on a _cost estimate_ which covers entry verification and DKG,
+based on a cost estimate which covers entry verification and DKG,
 and a _profit margin_ that scales linearly in group size.
 An interface is provided
 for customer applications to query the current _entry fee estimate_.
-The customer should provide a _callback address_ to receive the entry,
+The customer may provide a _callback address_ to receive the entry,
 and ensure they provide a sufficient _callback allowance_
 to cover the gas fees of the callback.
 Any surplus is returned to the customer.
