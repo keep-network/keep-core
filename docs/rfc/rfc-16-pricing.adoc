@@ -16,7 +16,7 @@ or can be broken by relatively simple third-party contracts.
 == Proposal
 
 Beacon entries are priced
-based on a cost estimate which covers entry verification and DKG,
+based on a _cost estimate_ which covers entry verification and DKG,
 and a _profit margin_ that scales linearly in group size.
 An interface is provided
 for customer applications to query the current _entry fee estimate_.
@@ -62,7 +62,8 @@ Thus the request should be made immediately after receiving the estimate.
 Paying more than the applicable entry fee estimate
 has a minimal cost to the requester
 as excess fees will be refunded.
-Insufficient payment will lead to the request being rejected.
+Insufficient payment will lead to the request being rejected
+and the transaction reverted.
 
 To make a request after determining the applicable fee
 the customer must call the request method on the beacon,
