@@ -339,6 +339,8 @@ as they can provide an arbitrarily low price.
 ===== DKG cost estimate
 
 The gas required for DKG should be calculated.
+DKG gas cost should include only DKG result submission. Ticket submission
+costs are covered by the expected return from getting into a signing group.
 Multiply DKG gas by gas estimate to get DKG cost estimate.
 Use a DKG frequency divider _d_ to set the group creation rate;
 once every _d_ entries on average.
