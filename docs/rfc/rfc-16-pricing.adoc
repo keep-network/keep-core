@@ -20,7 +20,7 @@ based on a _cost estimate_ which covers entry verification and DKG,
 and a _profit margin_ that scales linearly in group size.
 An interface is provided
 for customer applications to query the current _entry fee estimate_.
-The customer may provide a _callback address_ to receive the entry,
+The customer may provide a callback to receive the entry,
 and ensure they provide a sufficient _callback allowance_
 to cover the gas fees of the callback.
 Any surplus is returned to the customer.
@@ -152,7 +152,7 @@ and fees, rewards and refunds are paid out.
 
 ===== Callback processing
 
-If the requester specified a callback address and gas amount,
+If the requester specified a callback,
 the callback is called using the callback gas amount as the maximum gas.
 
 After the callback is made
