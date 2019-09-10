@@ -71,6 +71,9 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
 
     selectedParticipants = await operatorContract.selectedParticipants();
 
+    signingMemberIndices = [];
+    signatures = undefined;
+
     for(let i = 0; i < selectedParticipants.length; i++) {
       let signature = await sign(resultHash, selectedParticipants[i]);
       signingMemberIndices.push(i+1);
