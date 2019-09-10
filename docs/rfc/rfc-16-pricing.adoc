@@ -92,8 +92,7 @@ the _entry fee estimate_ with the _callback gas amount_ from the request.
 
 Once the request has been verified to be sufficiently funded,
 the previous entry is used to select the signing group
-by `selected_group = active_groups.pick(sha3(previous_entry, retry_counter))`
-where the _retry counter_ starting at 0.
+by `selected_group = previous_entry MOD len(active_groups)`.
 The selected group is tasked with producing the new entry.
 
 it is queued as the _pending request_
@@ -101,7 +100,7 @@ including the following information:
 
 - the _requester address_
 
-- the _callback address_ and _callback gas amount_, if applicable
+- the _callback address_, _callback function_, and _callback gas amount_, if applicable
 
 - the _assigned signing group_{blank}footnote:[This is needed
 if changes to the active groups can be made
@@ -113,10 +112,6 @@ the number of the block the request was received in,
 plus 1{blank}footnote:[The way of calculating rewards
 is inevitably prone to off-by-one errors _somewhere_
 and doing the incrementing at request time seems the simplest.
-]
-
-- the _retry counter_{blank}footnote:[As the retry counter starts at 0,
-including it in the request data doesn't add a cost to request processing.
 ]
 
 - the _estimated gas price_ at the time of the request{blank}footnote:[This
@@ -146,7 +141,6 @@ a submission timeout can be called by anyone.
 If the submission times out,
 the failing group is terminated and its members slashed.
 A new signing group is assigned from the remaining active groups
-by incrementing the _retry counter_
 and the submission delay calculation is reset
 by setting the _submission delay base time_
 to the previous _submission deadline_.
@@ -409,7 +403,6 @@ Additionally, if a field remains nonzero but unchanged between requests
 even greater gas savings can be obtained.
 
 The field used to determine the presence of a pending request must be wiped.
-So must the retry counter, if nonzero.
 
 The requester address,
 assigned signing group,
