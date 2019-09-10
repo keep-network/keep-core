@@ -157,8 +157,33 @@ the callback is called using the callback gas amount as the maximum gas.
 
 After the callback is made
 the amount of gas spent on the call
-is multiplied with the actual gas price of the transaction,
+is multiplied with the lower of the
+_estimated gas price_ at the time of the request,
+or the actual gas price of the transaction,
 to get the _callback expenditure_.
+
+The minimum of the gas price protects the beacon and requester against
+malicious miner-submitters.
+
+If the submitter is also a miner, they can place any arbitrary gas 
+price on the transaction. If the gas price used for calculating the callback 
+expenditure is higher than the quoted amount and the amount of gas used on the 
+call is close to the maximum specified by the requester, the requester refund 
+can go negative. If the negative requester refund is added to the 1% surplus 
+pool subsidy it can permit the miner-submitter to steal the subsidy.
+
+On the other hand, if the amount of gas spent on the callback is less than the 
+provided maximum, a miner submitter can set the gas price to such an amount that 
+the requester is billed for the entire gas budget even if they really only spent 
+a small fraction of it. This means a miner submitter can steal the requester's 
+refund.
+
+If the callback execution uses more gas than specified in the request, it should 
+run out of gas. Thus the only scenario where the callback execution can cost more 
+than was quoted and paid for, is when the gas cost of the transaction exceeds the 
+quoted estimate (which includes the safety margin mentioned in the gas price feed
+section). The submitter is supposed to take the hit for submitting with a gas price 
+that exceeds the estimate.
 
 ===== Requester refund
 
