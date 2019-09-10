@@ -71,8 +71,9 @@ transferring enough currency to cover the fee:
 `request_entry.value(entry_fee_estimate)()`.
 
 If the customer wishes to receive the generated random number in a callback,
-they should also specify the _callback address_ and _callback gas amount_:
-`request_entry.value(entry_fee_estimate)(callback_address, callback_gas)`.
+they should also specify the _callback address_, _callback function_, 
+and _callback gas amount_:
+`request_entry.value(entry_fee_estimate)(callback_address, callback_function, callback_gas)`.
 
 No new requests should be made
 while the beacon is already processing another request.
