@@ -14,7 +14,7 @@ import (
 )
 
 func TestFullStateTransitions(t *testing.T) {
-	threshold := 2
+	dishonestThreshold := 2
 	groupSize := 5
 
 	seed := big.NewInt(18293712839)
@@ -36,7 +36,7 @@ func TestFullStateTransitions(t *testing.T) {
 		member, err := NewMember(
 			group.MemberIndex(i+1),
 			groupSize,
-			threshold,
+			dishonestThreshold,
 			seed,
 		)
 		if err != nil {
