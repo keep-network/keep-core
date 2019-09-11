@@ -155,6 +155,10 @@ and fees, rewards and refunds are paid out.
 If the requester specified a callback,
 the callback is called using the callback gas amount as the maximum gas.
 
+If the callback gas amount turns to be not enough to execute the callback,
+callback execution is skipped and the rest of the relay entry submission code
+is processed as usual.
+
 After the callback is made
 the amount of gas spent on the call
 is multiplied with the lower of the
