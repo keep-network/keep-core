@@ -292,7 +292,10 @@ Block 1025 is the deadline block:
 no submissions are accepted and the delay factor is 0.
 
 If the entry is submitted in block 1009,
-the delay factor is `((1025 - 1009) / (1025 - 1005))^2 = 0.8^2 = 0.64`.
+the delay factor is:
+```
+((1025 - 1009) / (1025 - 1005))^2 = 0.8^2 = 0.64
+```
 Thus the _group reward = base reward * 0.64_,
 with the difference being the _delay penalty = base reward * (1 - 0.64)_.
 
