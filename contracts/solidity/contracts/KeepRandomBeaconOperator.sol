@@ -130,9 +130,10 @@ contract KeepRandomBeaconOperator {
      * @dev Triggers the first group selection. Genesis can be called only when
      * there are no groups on the operator contract.
      */
-    function genesis() public {
+    function genesis() public payable {
+        require(msg.value >= tx.gasprice.mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
         require(numberOfGroups() == 0, "There can be no groups.");
-        startGroupSelection(_genesisGroupSeed, 0);
+        startGroupSelection(_genesisGroupSeed, msg.value);
     }
 
     /**
@@ -430,10 +431,23 @@ contract KeepRandomBeaconOperator {
 
         groupContract.addGroup(groupPubKey);
 
-        // TODO: punish/reward logic
-        uint256 rewards = dkgSubmitterReward;
-        dkgSubmitterReward = 0;
-        stakingContract.magpieOf(msg.sender).transfer(rewards);
+        uint256 dkgCost = dkgGasEstimate.mul(tx.gasprice);
+        uint256 surplus = 0;
+        address payable magpie = stakingContract.magpieOf(msg.sender);
+
+        if (dkgCost < dkgSubmitterReward) {
+            surplus = dkgSubmitterReward.sub(dkgCost);
+            dkgSubmitterReward = 0;
+            // Reimburse submitter with actual DKG cost.
+            magpie.transfer(dkgCost);
+            // TODO: Return surplus to the DKG fee pool (split between pools on all service contracts)?.
+        } else {
+            // If submitter used higher gas price reimburse only dkgSubmitterReward max.
+            uint256 reward = dkgSubmitterReward;
+            dkgSubmitterReward = 0;
+            magpie.transfer(reward);
+        }
+ 
         cleanup();
         emit DkgResultPublishedEvent(groupPubKey);
 

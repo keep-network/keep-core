@@ -229,4 +229,39 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
 
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
   });
+
+  it("should send reward to the DKG submitter.", async function() {
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(resultPublicationTime - currentBlock);
+
+    let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
+    let dkgGasEstimate = await operatorContract.dkgGasEstimate();
+    let submitterCustomGasPrice = web3.utils.toWei(web3.utils.toBN(25), 'gwei');
+    let expectedSubmitterReward = dkgGasEstimate.mul(submitterCustomGasPrice);
+
+    await operatorContract.submitDkgResult(
+      1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      {from: selectedParticipants[0], gasPrice: submitterCustomGasPrice}
+    )
+
+    let updatedMagpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
+    assert.isTrue(updatedMagpieBalance.eq(magpieBalance.add(expectedSubmitterReward)), "Submitter should receive expected reward.");
+  });
+
+  it("should send max dkgSubmitterReward to the submitter in case of a much higher price than minimumGasPrice.", async function() {
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(resultPublicationTime - currentBlock);
+
+    let dkgSubmitterReward = web3.utils.toBN(await web3.eth.getBalance(operatorContract.address));
+    let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
+
+    await operatorContract.submitDkgResult(
+      1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      {from: selectedParticipants[0], gasPrice: web3.utils.toWei(web3.utils.toBN(100), 'gwei')}
+    )
+    let updatedMagpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
+    assert.isTrue(updatedMagpieBalance.eq(magpieBalance.add(dkgSubmitterReward)), "Submitter should receive dkgSubmitterReward");
+  });
 })

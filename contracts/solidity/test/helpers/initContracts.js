@@ -36,10 +36,11 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await serviceContract.initialize(minimumGasPrice, profitMargin, dkgFee, withdrawalDelay, operatorContract.address);
 
   // Add initial funds to the fee pool to trigger group creation without waiting for DKG fee accumulation
-  let dkgGasEstimateCost = await operatorContract.dkgGasEstimate();
-  await serviceContract.fundDKGFeePool({value: dkgGasEstimateCost.mul(minimumGasPrice)});
+  let dkgGasEstimate = await operatorContract.dkgGasEstimate();
+  await serviceContract.fundDKGFeePool({value: dkgGasEstimate.mul(minimumGasPrice)});
 
-  await operatorContract.genesis();
+  // Genesis should include payment to cover DKG cost to create first group
+  await operatorContract.genesis({value: dkgGasEstimate.mul(minimumGasPrice)});
 
   return {
     token: token,
