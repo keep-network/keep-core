@@ -87,7 +87,7 @@ contract KeepRandomBeaconOperator {
     uint256 public relayEntryTimeout = 24;
 
     uint256 public signingGasEstimate = 1240000; // TODO: Update once alt_bn128 gas costs reduction is implemented.
-    uint256 public createGroupGasEstimate = 2260000;
+    uint256 public dkgGasEstimate = 2260000; // Gas required to submit DKG result with verifying threshold amount of signatures.
 
     uint256 public dkgSubmitterReward;
 
