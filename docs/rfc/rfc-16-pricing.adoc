@@ -375,6 +375,10 @@ Use a DKG frequency divider _d_ to set the group creation rate;
 once every _d_ entries on average.
 Divide DKG cost estimate by _d_ to get DKG contribution for each entry.
 
+The maximum DKG gas cost should be hardcoded in the operator contract.
+The service contract takes the highest applicable gas cost and multiplies
+it by the fluctuation margin times gas price feed's estimate.
+
 Because DKG is performed when sufficient gas money has accumulated,
 fluctuations in gas prices don't need special consideration.
 When gas costs are rising,
@@ -387,10 +391,11 @@ Similarly, when gas costs fall DKG gets triggered faster.
 
 ===== Entry verification fee
 
-Calculate gas required for verifying entry
-and associated support operations.
-Multiply by gas price plus a fluctuation margin (e.g. 1.5)
-to get entry verification fee.
+Calculate gas required for verifying entry and associated support operations.
+The maximum entry verification gas cost should be hardcoded in the operator
+contract. The service contract takes the highest applicable gas cost and 
+multiplies it by the fluctuation margin (e.g. 1.5) times gas price feed's 
+estimate to get entry verification fee.
 
 ==== Cleanup gas efficiency
 
