@@ -618,6 +618,25 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 //  there is a need to obtain ephemeral private key for the accused member which
 //  is stored in accuser internal map called 'ephemeralKeyPairs'.
 
+// TODO Test case Phase 9: 'accuser accuse an inactive member ->
+//  expected result: disqualify accuser'.
+//  Public key share points broadcast in the previous phase are necessary to
+//  resolve an accusation against the member. Member marked as inactive in any
+//  previous phase should not be accused because the accusation can't be resolved.
+//  This case is difficult to implement for now because it needs
+//  access to member internals. In order to make an accusation against inactive
+//  member, there is a need to obtain ephemeral private key for the accused
+//  member which is stored in accuser internal map called 'ephemeralKeyPairs'.
+
+// TODO Test case Phase 9: 'cannot decrypt shares ->
+//  expected result: disqualify both'.
+//  Only happens if the complainer failed to complain earlier
+//  and thus both violated the protocol.
+//  This case is difficult to implement for now because it needs
+//  access to member internals. In order to screw up shares decryption
+//  in this phase, there is a need to alter an already received message
+//  which is stored in the evidence log.
+
 // Phase 11 test case - a member misbehaved by revealing key of an operating
 // member. The revealing member becomes disqualified by all other members which
 // consider the member for which the key has been revealed as normally operating.
