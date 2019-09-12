@@ -531,8 +531,8 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 //
 // Accuser is disqualified if:
 // - accused the current member
-// - revealed public key does not match the public key previously broadcast
-//   by that member
+// - the revealed private key does not match the public key previously broadcast
+//   by the accuser
 // - accused inactive or already disqualified member and as a result, we do not
 //   have enough information to resolve that accusation
 // - shares of the accused member are valid against commitments
@@ -860,6 +860,17 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 	// `product = Π (A_j[k] ^ (i^k)) mod p` for k in [0..T],
 	// where: j is sender's ID, i is current member ID, T is dishonest threshold.
 	for _, message := range messages {
+		if !sm.isValidMemberPublicKeySharePointsMessage(message) {
+			logger.Warningf(
+				"[member:%v] member [%v] disqualified because of "+
+					"sending invalid member public key share points message",
+				sm.ID,
+				message.senderID,
+			)
+			sm.group.MarkMemberAsDisqualified(message.senderID)
+			continue
+		}
+
 		if !sm.isShareValidAgainstPublicKeySharePoints(
 			sm.ID,
 			sm.receivedValidSharesS[message.senderID],
@@ -882,6 +893,33 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 		senderID:           sm.ID,
 		accusedMembersKeys: accusedMembersKeys,
 	}, nil
+}
+
+// isValidMemberPublicKeySharePointsMessage validates a given
+// MemberPublicKeySharePointsMessage. Message is considered valid if it
+// contains an expected number of public key share points.
+func (sm *SharingMember) isValidMemberPublicKeySharePointsMessage(
+	message *MemberPublicKeySharePointsMessage,
+) bool {
+	// A public key share point is generated for each coefficient of the
+	// polynomial. The polynomial is of degree equal to the dishonest threshold,
+	// thus we have dishonest threshold + 1 coefficients in the polynomial
+	// including a constant coefficient. It implicates the same count of
+	// public key share points.
+	expectedPointsCount := sm.group.DishonestThreshold() + 1
+	if len(message.publicKeySharePoints) != expectedPointsCount {
+		logger.Warningf(
+			"[member:%v] member [%v] sent a message with a wrong number "+
+				"of public key share points: [%v] instead of expected [%v]",
+			sm.ID,
+			message.senderID,
+			len(message.publicKeySharePoints),
+			expectedPointsCount,
+		)
+		return false
+	}
+
+	return true
 }
 
 // isShareValidAgainstPublicKeySharePoints verifies if public key share points
@@ -944,8 +982,8 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 //
 // Accuser is disqualified if:
 // - accused the current member
-// - revealed public key does not match the public key previously broadcast
-//   by that member
+// - the revealed private key does not match the public key previously broadcast
+//   by the accuser
 // - accused inactive or already disqualified member and as a result, we do not
 //   have enough information to resolve that accusation
 // - shares of the accused member are valid against public key share points
@@ -1082,7 +1120,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 				logger.Warningf(
 					"[member:%v] member [%v] disqualified because of sending "+
 						"shares that could not be decrypted; "+
-						"member [%v] disqualified because didn't complain "+
+						"member [%v] disqualified because did not complain "+
 						"about invalid shares earlier",
 					pjm.ID,
 					accusedID,
