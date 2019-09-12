@@ -622,7 +622,7 @@ contract KeepRandomBeaconOperator {
         entryInProgress = false;
 
         // Calculate each group member reward = baseReward * delayFactor / groupSize
-        uint256 decimals = 1e4; // Adding 4 decimals to perform float division.
+        uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
         uint256 profitMargin = signingRequest.payment.sub(signingRequest.signingFee).sub(signingRequest.callbackFee);
         uint256 baseReward = profitMargin.div(groupSize);
         uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
