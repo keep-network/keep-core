@@ -531,8 +531,8 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 //
 // Accuser is disqualified if:
 // - accused the current member
-// - revealed public key does not match the public key previously broadcast
-//   by that member
+// - the revealed private key does not match the public key previously broadcast
+//   by the accuser
 // - accused inactive or already disqualified member and as a result, we do not
 //   have enough information to resolve that accusation
 // - shares of the accused member are valid against commitments
@@ -944,8 +944,8 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 //
 // Accuser is disqualified if:
 // - accused the current member
-// - revealed public key does not match the public key previously broadcast
-//   by that member
+// - the revealed private key does not match the public key previously broadcast
+//   by the accuser
 // - accused inactive or already disqualified member and as a result, we do not
 //   have enough information to resolve that accusation
 // - shares of the accused member are valid against public key share points
@@ -1082,7 +1082,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 				logger.Warningf(
 					"[member:%v] member [%v] disqualified because of sending "+
 						"shares that could not be decrypted; "+
-						"member [%v] disqualified because didn't complain "+
+						"member [%v] disqualified because did not complain "+
 						"about invalid shares earlier",
 					pjm.ID,
 					accusedID,
