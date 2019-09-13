@@ -34,7 +34,7 @@ contract KeepRandomBeaconOperator {
     event DkgResultPublishedEvent(bytes groupPubKey);
 
     // These are the public events that are used by clients
-    event SignatureRequested(uint256 payment, uint256 previousEntry, uint256 seed, bytes groupPublicKey);
+    event SignatureRequested(uint256 previousEntry, uint256 seed, bytes groupPublicKey);
     event SignatureSubmitted(uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     event GroupSelectionStarted(uint256 newEntry);
@@ -586,7 +586,7 @@ contract KeepRandomBeaconOperator {
             serviceContract
         );
 
-        emit SignatureRequested(payment, previousEntry, seed, groupPubKey);
+        emit SignatureRequested(previousEntry, seed, groupPubKey);
     }
 
     /**
