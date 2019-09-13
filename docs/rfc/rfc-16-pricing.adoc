@@ -495,11 +495,6 @@ but other factors apart from gas fees do not impact the price.
 
 Processing entries one-by-one doesn't scale.
 
-If the submitter of some entry is a miner,
-they can set an arbitrarily high gas fee to DOS the requester
-by making their callback run out of gas.
-The current design does not include mitigations for this attack.
-
 == Future Work
 
 Instead of rejecting new requests when one has already been made,
