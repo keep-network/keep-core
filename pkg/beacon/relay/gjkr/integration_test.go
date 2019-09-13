@@ -637,6 +637,59 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 //  in this phase, there is a need to alter an already received message
 //  which is stored in the evidence log.
 
+// Phase 11 test case - a member misbehaved by not revealing key of an another
+// disqualified member. The revealing member becomes disqualified by all other
+// members which consider the member for which the key has not been revealed as
+// disqualified. After phase 9, all group members should have the same view on who
+// is disqualified. Not revealing the key of an actually disqualified member
+// is forbidden and leads to disqualifying the revealing member.
+func TestExecute_DQ_member2_notRevealedDisqualifiedMember_phase11(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	threshold := 3
+
+	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		// Member 1 actually misbehaves by sending an accusation with wrong
+		// private key. As result, they should be disqualified by other members.
+		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
+		if ok && accusationsMessage.SenderID() == group.MemberIndex(1) {
+			randomKeyPair, _ := ephemeral.GenerateKeyPair()
+			accusationsMessage.SetAccusedMemberKey(
+				group.MemberIndex(2),
+				randomKeyPair.PrivateKey,
+			)
+			return accusationsMessage
+		}
+
+		// Member 2 doesn't reveal member 1 as disqualified in their
+		// DisqualifiedEphemeralKeysMessage, despite of actual situation.
+		// As result, they should be also disqualified by other members.
+		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
+		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(2) {
+			disqualifiedKeysMessage.RemovePrivateKey(group.MemberIndex(1))
+			return disqualifiedKeysMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 2)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, []group.MemberIndex{1, 2}...)
+	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5}...)
+}
+
 // Phase 11 test case - a member misbehaved by revealing key of an operating
 // member. The revealing member becomes disqualified by all other members which
 // consider the member for which the key has been revealed as normally operating.

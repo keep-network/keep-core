@@ -99,9 +99,9 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				modifiedShareT = test.modifyShareT(modifiedShareT)
 			}
 			if test.modifyCommitments != nil {
-				justifyingMember.receivedValidPeerCommitments[test.accusedID] =
+				justifyingMember.receivedPeerCommitments[test.accusedID] =
 					test.modifyCommitments(
-						justifyingMember.receivedValidPeerCommitments[test.accusedID],
+						justifyingMember.receivedPeerCommitments[test.accusedID],
 					)
 			}
 
@@ -353,7 +353,7 @@ func initializeSharesJustifyingMemberGroup(dishonestThreshold, groupSize int) (
 			if m.ID != p.ID {
 				p.receivedValidSharesS[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
 				p.receivedValidSharesT[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
-				p.receivedValidPeerCommitments[m.ID] = groupCommitments[m.ID]
+				p.receivedPeerCommitments[m.ID] = groupCommitments[m.ID]
 			}
 		}
 	}

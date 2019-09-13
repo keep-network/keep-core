@@ -91,9 +91,9 @@ type CommitmentsVerifyingMember struct {
 	// receivedValidSharesS are defined as `s_ji` and receivedValidSharesT are
 	// defined as `t_ji` across the protocol specification.
 	receivedValidSharesS, receivedValidSharesT map[group.MemberIndex]*big.Int
-	// Valid commitments to secret shares polynomial coefficients received from
+	// Commitments to secret shares polynomial coefficients received from
 	// other group members.
-	receivedValidPeerCommitments map[group.MemberIndex][]*bn256.G1
+	receivedPeerCommitments map[group.MemberIndex][]*bn256.G1
 }
 
 // SharesJustifyingMember represents one member in a threshold key sharing group,
@@ -103,6 +103,9 @@ type CommitmentsVerifyingMember struct {
 // Executes Phase 5 of the protocol.
 type SharesJustifyingMember struct {
 	*CommitmentsVerifyingMember
+	// justifiedSharesAccusations stores all justified shares accusations
+	// resolved by the member as a mapping: accuserID -> justly accusedIDs.
+	justifiedSharesAccusations map[group.MemberIndex][]group.MemberIndex
 }
 
 // QualifiedMember represents one member in a threshold key sharing group, after
@@ -245,16 +248,19 @@ func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting() *CommittingMemb
 // InitializeCommitmentsVerification returns a member to perform next protocol operations.
 func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVerifyingMember {
 	return &CommitmentsVerifyingMember{
-		CommittingMember:             cm,
-		receivedValidSharesS:         make(map[group.MemberIndex]*big.Int),
-		receivedValidSharesT:         make(map[group.MemberIndex]*big.Int),
-		receivedValidPeerCommitments: make(map[group.MemberIndex][]*bn256.G1),
+		CommittingMember:        cm,
+		receivedValidSharesS:    make(map[group.MemberIndex]*big.Int),
+		receivedValidSharesT:    make(map[group.MemberIndex]*big.Int),
+		receivedPeerCommitments: make(map[group.MemberIndex][]*bn256.G1),
 	}
 }
 
 // InitializeSharesJustification returns a member to perform next protocol operations.
 func (cvm *CommitmentsVerifyingMember) InitializeSharesJustification() *SharesJustifyingMember {
-	return &SharesJustifyingMember{cvm}
+	return &SharesJustifyingMember{
+		cvm,
+		make(map[group.MemberIndex][]group.MemberIndex),
+	}
 }
 
 // InitializeQualified returns a member to perform next protocol operations.

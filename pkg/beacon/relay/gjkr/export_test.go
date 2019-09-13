@@ -6,6 +6,13 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+func (epkm *EphemeralPublicKeyMessage) SetPublicKey(
+	memberIndex group.MemberIndex,
+	publicKey *ephemeral.PublicKey,
+) {
+	epkm.ephemeralPublicKeys[memberIndex] = publicKey
+}
+
 func (epkm *EphemeralPublicKeyMessage) RemovePublicKey(
 	memberIndex group.MemberIndex,
 ) {
@@ -49,6 +56,12 @@ func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKey(
 	ssam.accusedMembersKeys[memberIndex] = privateKey
 }
 
+func (ssam *SecretSharesAccusationsMessage) RemoveAccusedMemberKey(
+	memberIndex group.MemberIndex,
+) {
+	delete(ssam.accusedMembersKeys, memberIndex)
+}
+
 func (mpkspm *MemberPublicKeySharePointsMessage) SetPublicKeyShare(
 	index int,
 	publicKeyShare *bn256.G2,
@@ -77,4 +90,10 @@ func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
 	privateKey *ephemeral.PrivateKey,
 ) {
 	dekm.privateKeys[memberIndex] = privateKey
+}
+
+func (dekm *DisqualifiedEphemeralKeysMessage) RemovePrivateKey(
+	memberIndex group.MemberIndex,
+) {
+	delete(dekm.privateKeys, memberIndex)
 }

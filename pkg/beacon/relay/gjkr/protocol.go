@@ -325,6 +325,9 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 			continue
 		}
 
+		cvm.receivedPeerCommitments[commitmentsMessage.senderID] =
+			commitmentsMessage.commitments
+
 		// Find share message sent by the same member who sent commitment message
 		sharesMessageFound := false
 		for _, sharesMessage := range sharesMessages {
@@ -401,9 +404,6 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 				}
 				cvm.receivedValidSharesS[commitmentsMessage.senderID] = shareS
 				cvm.receivedValidSharesT[commitmentsMessage.senderID] = shareT
-				cvm.receivedValidPeerCommitments[commitmentsMessage.senderID] =
-					commitmentsMessage.commitments
-
 				break
 			}
 		}
@@ -547,6 +547,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 ) error {
 	for _, message := range messages {
 		accuserID := message.senderID
+		justlyAccusedMembers := make([]group.MemberIndex, 0)
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
 			if sjm.ID == accusedID {
 				// The member does not resolve the dispute as an accused.
@@ -668,13 +669,14 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accusedID)
+				justlyAccusedMembers = append(justlyAccusedMembers, accusedID)
 				continue
 			}
 
 			if sjm.areSharesValidAgainstCommitments(
 				shareS, shareT, // s_mj, t_mj
-				sjm.receivedValidPeerCommitments[accusedID], // C_m
-				accuserID, // j
+				sjm.receivedPeerCommitments[accusedID], // C_m
+				accuserID,                              // j
 			) {
 				logger.Warningf(
 					"[member:%v] member [%v] disqualified because of "+
@@ -693,7 +695,11 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accusedID)
+				justlyAccusedMembers = append(justlyAccusedMembers, accusedID)
 			}
+		}
+		if len(justlyAccusedMembers) > 0 {
+			sjm.justifiedSharesAccusations[accuserID] = justlyAccusedMembers
 		}
 	}
 	return nil
@@ -1232,12 +1238,29 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 		)
 	}
 
+	// Prepare list of expected disqualified members before messages processing.
+	// Validated messages should be checked against state expected at the
+	// beginning of phase 11.
+	disqualifiedSharingMembers := rm.disqualifiedSharingMembers()
+
 	for _, message := range messages {
 		revealingMemberID := message.senderID
 
-		// TODO According to protocol spec one should check if all expected
-		//  private keys are revealed in the message. If not, the
-		//  revealingMemberID should be disqualified.
+		// Validate received message. If message is invalid, sender should
+		// be considered as misbehaving and marked as disqualified.
+		if !rm.isValidDisqualifiedEphemeralKeysMessage(
+			message,
+			disqualifiedSharingMembers,
+		) {
+			logger.Warningf(
+				"[member:%v] member [%v] disqualified because of "+
+					"sending invalid disqualified ephemeral keys message",
+				rm.ID,
+				revealingMemberID,
+			)
+			rm.group.MarkMemberAsDisqualified(revealingMemberID)
+			continue
+		}
 
 		for disqualifiedMemberID, revealedPrivateKey := range message.privateKeys {
 			if rm.ID == disqualifiedMemberID {
@@ -1364,7 +1387,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			// been disqualified before it was able to provide shares in phase 3.
 			// In result the revealing member violated the protocol and
 			// should be marked as disqualified.
-			shareS, _, err := disqualifiedMemberSharesMessage.decryptShares(
+			shareS, shareT, err := disqualifiedMemberSharesMessage.decryptShares(
 				revealingMemberID,
 				recoveredSymmetricKey,
 			)
@@ -1379,13 +1402,81 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				continue
 			}
 
-			// TODO According to protocol spec, one should invoke
-			//  areSharesValidAgainstCommitments first. If true share should be
-			//  added, if false revealingMemberID should be disqualified.
-			addShare(disqualifiedMemberID, revealingMemberID, shareS)
+			if rm.areSharesValidAgainstCommitments(
+				shareS, shareT,
+				rm.receivedPeerCommitments[disqualifiedMemberID],
+				revealingMemberID,
+			) {
+				addShare(disqualifiedMemberID, revealingMemberID, shareS)
+			} else {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of "+
+						"not complaining about inconsistent shares earlier ",
+					rm.ID,
+					revealingMemberID,
+				)
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
+			}
 		}
 	}
 	return revealedDisqualifiedShares, nil
+}
+
+// isValidDisqualifiedEphemeralKeysMessage validates a given
+// DisqualifiedEphemeralKeysMessage. Message is considered valid if it reveals
+// all expected disqualified sharing members.
+func (rm *ReconstructingMember) isValidDisqualifiedEphemeralKeysMessage(
+	message *DisqualifiedEphemeralKeysMessage,
+	disqualifiedSharingMembers []group.MemberIndex,
+) bool {
+	// Checks if everyone of the disqualified sharing members is also revealed
+	// as disqualified in the received message.
+	for _, disqualifiedMemberID := range disqualifiedSharingMembers {
+		isMemberRevealed := false
+		for revealedMemberID := range message.privateKeys {
+			if revealedMemberID == disqualifiedMemberID {
+				isMemberRevealed = true
+				break
+			}
+		}
+
+		// Message is considered as invalid if an expected disqualified member
+		// is not revealed and the message sender didn't performed any justified
+		// shares accusation against the expected disqualified member.
+		//
+		// If such accusation exists, this means the message sender didn't
+		// receive valid shares from disqualified member in phase 4 and could
+		// not reveal they as a disqualified sharing member in phase 10. In this
+		// case, we should not consider this message as invalid.
+		if !isMemberRevealed && !rm.existsJustifiedSharesAccusation(
+			message.senderID,
+			disqualifiedMemberID,
+		) {
+			logger.Warningf(
+				"[member:%v] member [%v] sent message which doesn't "+
+					"reveal private key of disqualified member [%v]",
+				rm.ID,
+				message.senderID,
+				disqualifiedMemberID,
+			)
+			return false
+		}
+	}
+	return true
+}
+
+func (rm *ReconstructingMember) existsJustifiedSharesAccusation(
+	accuserID group.MemberIndex,
+	accusedID group.MemberIndex,
+) bool {
+	if justlyAccusedMembers, ok := rm.justifiedSharesAccusations[accuserID]; ok {
+		for _, justlyAccusedID := range justlyAccusedMembers {
+			if justlyAccusedID == accusedID {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // disqualifiedShares contains shares `s_mk` calculated by the disqualified

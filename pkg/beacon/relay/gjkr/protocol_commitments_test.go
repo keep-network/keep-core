@@ -282,10 +282,10 @@ func assertValidSharesAndCommitments(
 			len(verifyingMember.receivedValidSharesT),
 		)
 	}
-	if len(verifyingMember.receivedValidPeerCommitments) != expectedReceivedSharesLength {
+	if len(verifyingMember.receivedPeerCommitments) != groupSize-1 {
 		t.Errorf("\nexpected: %v received commitments\nactual:   %v\n",
 			expectedReceivedSharesLength,
-			len(verifyingMember.receivedValidPeerCommitments),
+			len(verifyingMember.receivedPeerCommitments),
 		)
 	}
 }
