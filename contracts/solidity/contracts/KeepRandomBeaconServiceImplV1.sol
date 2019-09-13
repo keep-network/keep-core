@@ -206,8 +206,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             "Payment is less than required minimum."
         );
 
-        (uint256 signingFee, uint256 dkgFee, uint256 profitMargin) = entryFeeBreakdown();
-        uint256 callbackPayment = msg.value.sub(signingFee).sub(dkgFee).sub(profitMargin);
+        (uint256 signingFee, uint256 dkgFee, uint256 groupProfitMargin) = entryFeeBreakdown();
+        uint256 callbackPayment = msg.value.sub(signingFee).sub(dkgFee).sub(groupProfitMargin);
         require(
             callbackPayment >= minimumCallbackPayment(callbackGas),
             "Callback payment is less than required minimum."
@@ -219,7 +219,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 requestId = _requestCounter;
 
         OperatorContract(selectOperatorContract(_previousEntry)).sign.value(
-            signingFee.add(callbackPayment).add(profitMargin)
+            signingFee.add(callbackPayment).add(groupProfitMargin)
         )(requestId, seed, _previousEntry, signingFee, callbackPayment);
 
         if (callbackContract != address(0)) {
@@ -289,22 +289,22 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
-     * @dev Set the minimum gas price for relay entry request.
-     * @param minGasPrice is the minimum gas price required for relay entry request.
+     * @dev Set the minimum gas price in wei for estimating relay entry request payment.
+     * @param minGasPrice is the minimum gas price required for estimating relay entry request payment.
      */
     function setMinimumGasPrice(uint256 minGasPrice) public onlyOwner {
         _minGasPrice = minGasPrice;
     }
 
     /**
-     * @dev Get the minimum gas price for relay entry request.
+     * @dev Get the minimum gas price in wei that is used to estimate relay entry request payment.
      */
     function minimumGasPrice() public view returns(uint256) {
         return _minGasPrice;
     }
 
     /**
-     * @dev Get the minimum payment for relay entry callback.
+     * @dev Get the minimum payment in wei for relay entry callback.
      * @param callbackGas Gas required for the callback.
      */
     function minimumCallbackPayment(uint256 callbackGas) public view returns(uint256) {
@@ -312,18 +312,18 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
-     * @dev Get the minimum payment for relay entry request.
+     * @dev Get the minimum payment in wei for relay entry request.
      * @param callbackGas Gas required for the callback.
      */
     function minimumPayment(uint256 callbackGas) public view returns(uint256) {
-        (uint256 signingFee, uint256 dkgFee, uint256 profitMargin) = entryFeeBreakdown();
-        return signingFee.add(dkgFee).add(profitMargin).add(minimumCallbackPayment(callbackGas));
+        (uint256 signingFee, uint256 dkgFee, uint256 groupProfitMargin) = entryFeeBreakdown();
+        return signingFee.add(dkgFee).add(groupProfitMargin).add(minimumCallbackPayment(callbackGas));
     }
 
     /**
-     * @dev Get the entry fee breakdown for relay entry request.
+     * @dev Get the entry fee breakdown in wei for relay entry request.
      */
-    function entryFeeBreakdown() public view returns(uint256 signingFee, uint256 dkgFee, uint256 profitMargin) {
+    function entryFeeBreakdown() public view returns(uint256 signingFee, uint256 dkgFee, uint256 groupProfitMargin) {
         uint256 signingGas;
         uint256 dkgGas;
         uint256 groupSize;

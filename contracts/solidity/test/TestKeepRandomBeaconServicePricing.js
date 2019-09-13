@@ -134,14 +134,14 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     let decimalPoints = web3.utils.toBN(1e16);
     let delayFactor = (deadlineBlock.sub(currentBlock)).mul(decimalPoints).div(relayEntryTimeout.sub(web3.utils.toBN(1))).pow(web3.utils.toBN(2));
-    let baseReward = entryFee.profitMargin.div(groupSize)
-    let expectedGroupReward = baseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
+    let memberBaseReward = entryFee.groupProfitMargin.div(groupSize)
+    let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
 
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
-    assert.isTrue(magpie1balance.add(expectedGroupReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive group reward.");
-    assert.isTrue(magpie2balance.add(expectedGroupReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive group reward.");
-    assert.isTrue(magpie3balance.add(expectedGroupReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive group reward.");
+    assert.isTrue(magpie1balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive group reward.");
+    assert.isTrue(magpie2balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive group reward.");
+    assert.isTrue(magpie3balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive group reward.");
   });
 
   it("should send part of the group reward to request subsidy pool based on the submission block .", async function() {
@@ -170,19 +170,19 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let delayFactor = (deadlineBlock.sub(currentBlock)).mul(decimalPoints).div(relayEntryTimeout.sub(web3.utils.toBN(1))).pow(web3.utils.toBN(2));
     let delayFactorInverse = decimalPoints.pow(web3.utils.toBN(2)).sub(delayFactor);
 
-    let baseReward = entryFee.profitMargin.div(groupSize)
-    let expectedGroupReward = baseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
-    let expectedDelayPenalty = baseReward.mul(delayFactorInverse).div(decimalPoints.pow(web3.utils.toBN(2)));
-    let expectedExtraReward = expectedDelayPenalty.mul(groupSize).mul(web3.utils.toBN(5)).div(web3.utils.toBN(100));
-    let requestSubsidy = entryFee.profitMargin.sub(expectedGroupReward.mul(groupSize)).sub(expectedExtraReward);
+    let memberBaseReward = entryFee.groupProfitMargin.div(groupSize)
+    let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
+    let expectedDelayPenalty = memberBaseReward.mul(delayFactorInverse).div(decimalPoints.pow(web3.utils.toBN(2)));
+    let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).mul(web3.utils.toBN(5)).div(web3.utils.toBN(100));
+    let requestSubsidy = entryFee.groupProfitMargin.sub(expectedGroupMemberReward.mul(groupSize)).sub(expectedSubmitterExtraReward);
 
     let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
 
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
-    assert.isTrue(magpie1balance.add(expectedGroupReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive reduced group reward.");
-    assert.isTrue(magpie2balance.add(expectedGroupReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive reduced group reward.");
-    assert.isTrue(magpie3balance.add(expectedGroupReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive reduced group reward.");
+    assert.isTrue(magpie1balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive reduced group reward.");
+    assert.isTrue(magpie2balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive reduced group reward.");
+    assert.isTrue(magpie3balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive reduced group reward.");
     assert.isTrue(serviceContractBalance.add(requestSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(serviceContract.address))), "Service contract should receive request subsidy.");
   });
 });

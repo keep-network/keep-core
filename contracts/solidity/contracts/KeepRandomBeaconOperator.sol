@@ -623,28 +623,28 @@ contract KeepRandomBeaconOperator {
 
         // Calculate each group member reward = baseReward * delayFactor / groupSize
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-        uint256 profitMargin = signingRequest.payment.sub(signingRequest.signingFee).sub(signingRequest.callbackFee);
-        uint256 baseReward = profitMargin.div(groupSize);
+        uint256 groupProfitMargin = signingRequest.payment.sub(signingRequest.signingFee).sub(signingRequest.callbackFee);
+        uint256 memberBaseReward = groupProfitMargin.div(groupSize);
         uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
         uint256 delayFactor = entryTimeout.sub(block.number).mul(decimals).div(relayEntryTimeout.sub(1))**2;
         uint256 delayFactorInverse = uint256(1).mul(decimals**2).sub(delayFactor);
-        uint256 groupReward = baseReward.mul(delayFactor).div(decimals**2);
-        uint256 delayPenalty = baseReward.mul(delayFactorInverse).div(decimals**2);
+        uint256 groupMemberReward = memberBaseReward.mul(delayFactor).div(decimals**2);
+        uint256 delayPenalty = memberBaseReward.mul(delayFactorInverse).div(decimals**2);
         
         for (uint i = 0; i < groupSize; i++) {
             address payable operator = address(uint160(groupContract.getGroupMember(groupPubKey, i)));
-            stakingContract.magpieOf(operator).transfer(groupReward);
+            stakingContract.magpieOf(operator).transfer(groupMemberReward);
         }
 
         // The submitter reward consists of:
         // The callback gas expenditure (reimbursed by the service contract)
         // The entry verification fee to cover the cost of verifying the submission
-        // Extra reward - 5% of the delay penalties of the entire group
-        uint256 extraReward = delayPenalty.mul(groupSize).mul(5).div(100); 
-        stakingContract.magpieOf(msg.sender).transfer(signingRequest.signingFee.add(extraReward));
+        // Submitter extra reward - 5% of the delay penalties of the entire group
+        uint256 submitterExtraReward = delayPenalty.mul(groupSize).mul(5).div(100);
+        stakingContract.magpieOf(msg.sender).transfer(signingRequest.signingFee.add(submitterExtraReward));
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
-        uint256 subsidy = profitMargin.sub(groupReward.mul(groupSize)).sub(extraReward);
+        uint256 subsidy = groupProfitMargin.sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
         }
