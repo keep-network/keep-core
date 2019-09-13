@@ -329,6 +329,25 @@ _base reward * 0.36 * 100 * 0.05 = base reward * 1.8_.
 In this scenario the full submitter reward would be
 _base reward * (1.8 + 0.64) + callback expenditure + entry verification fee_.
 
+==== DKG submitter reimbursement
+
+Getting to participate in a formed group is already valuable so there is no
+additional reward for a DKG result submitter. The only thing necessary is a gas
+cost reimbursement for the submitter.
+
+After DKG result is submitted, the amount of gas spent on the call is 
+multiplied with the lower of the estimated gas price at the time of submitting
+the result, or the actual gas price of the transaction to get the _DKG result
+submission expenditure_.
+
+The entire DKG result submission expenditure is returned to the submitter
+from the _DKG fee pool_.
+
+The minimum of the gas price protects the beacon against malicious 
+miner-submitters. If the submitter is also a miner, they can place any 
+arbitrary gas price on the transaction. Without taking the minimum, 
+miner-submitter would be able to steal from _DKG fee pool_.
+
 ==== Cost estimates
 
 ===== Gas price feed
