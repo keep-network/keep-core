@@ -14,8 +14,7 @@ interface OperatorContract {
         uint256 requestId,
         uint256 seed,
         uint256 previousEntry,
-        uint256 signingFee,
-        uint256 callbackPayment
+        uint256 signingFee
     ) payable external;
     function numberOfGroups() external view returns(uint256);
     function createGroup(uint256 newEntry) payable external;
@@ -219,8 +218,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 requestId = _requestCounter;
 
         OperatorContract(selectOperatorContract(_previousEntry)).sign.value(
-            signingFee.add(callbackPayment).add(groupProfitMargin)
-        )(requestId, seed, _previousEntry, signingFee, callbackPayment);
+            signingFee.add(groupProfitMargin)
+        )(requestId, seed, _previousEntry, signingFee);
 
         if (callbackContract != address(0)) {
             _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackPayment, callbackGas, msg.sender);
