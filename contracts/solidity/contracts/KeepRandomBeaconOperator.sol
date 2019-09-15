@@ -115,7 +115,7 @@ contract KeepRandomBeaconOperator {
     struct SigningRequest {
         uint256 relayRequestId;
         uint256 payment;
-        uint256 signingFee;
+        uint256 entryVerificationFee;
         uint256 groupIndex;
         uint256 previousEntry;
         uint256 seed;
@@ -550,15 +550,15 @@ contract KeepRandomBeaconOperator {
      * @param requestId Request Id trackable by service contract.
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
-     * @param signingFee Amount in wei included in msg.value to cover the cost of signing to produce relay entry.
+     * @param entryVerificationFee Amount in wei included in msg.value to cover the cost of verifying BLS signature to produce relay entry.
      */
     function sign(
         uint256 requestId,
         uint256 seed,
         uint256 previousEntry,
-        uint256 signingFee
+        uint256 entryVerificationFee
     ) public payable onlyServiceContract {
-        signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value, signingFee);
+        signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value, entryVerificationFee);
     }
 
     function signRelayEntry(
@@ -567,7 +567,7 @@ contract KeepRandomBeaconOperator {
         uint256 previousEntry,
         address serviceContract,
         uint256 payment,
-        uint256 signingFee
+        uint256 entryVerificationFee
     ) internal {
         require(!entryInProgress || hasEntryTimedOut(), "Relay entry is in progress.");
 
@@ -580,7 +580,7 @@ contract KeepRandomBeaconOperator {
         signingRequest = SigningRequest(
             requestId,
             payment,
-            signingFee,
+            entryVerificationFee,
             groupIndex,
             previousEntry,
             seed,
@@ -666,7 +666,7 @@ contract KeepRandomBeaconOperator {
         // subsidy = 5250000000000000 - 207407407407407 * 5 - 210648148148148 = 4002314814814817 wei
 
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-        uint256 groupProfitMargin = signingRequest.payment.sub(signingRequest.signingFee);
+        uint256 groupProfitMargin = signingRequest.payment.sub(signingRequest.entryVerificationFee);
         uint256 memberBaseReward = groupProfitMargin.div(groupSize);
         uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
         uint256 delayFactor = entryTimeout.sub(block.number).mul(decimals).div(relayEntryTimeout.sub(1))**2;
@@ -680,7 +680,7 @@ contract KeepRandomBeaconOperator {
         // The entry verification fee to cover the cost of verifying the submission
         // Submitter extra reward - 5% of the delay penalties of the entire group
         uint256 submitterExtraReward = delayPenalty.mul(groupSize).mul(5).div(100);
-        submitterReward = signingRequest.signingFee.add(submitterExtraReward);
+        submitterReward = signingRequest.entryVerificationFee.add(submitterExtraReward);
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
         subsidy = groupProfitMargin.sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
@@ -716,7 +716,7 @@ contract KeepRandomBeaconOperator {
                 signingRequest.previousEntry,
                 signingRequest.serviceContract,
                 signingRequest.payment,
-                signingRequest.signingFee
+                signingRequest.entryVerificationFee
             );
         }
     }

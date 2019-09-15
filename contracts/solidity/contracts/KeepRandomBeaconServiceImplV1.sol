@@ -14,7 +14,7 @@ interface OperatorContract {
         uint256 requestId,
         uint256 seed,
         uint256 previousEntry,
-        uint256 signingFee
+        uint256 entryVerificationFee
     ) payable external;
     function numberOfGroups() external view returns(uint256);
     function createGroup(uint256 newEntry) payable external;
@@ -205,8 +205,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             "Payment is less than required minimum."
         );
 
-        (uint256 signingFee, uint256 dkgFee, uint256 groupProfitMargin) = entryFeeBreakdown();
-        uint256 callbackPayment = msg.value.sub(signingFee).sub(dkgFee).sub(groupProfitMargin);
+        (uint256 entryVerificationFee, uint256 dkgFee, uint256 groupProfitMargin) = entryFeeBreakdown();
+        uint256 callbackPayment = msg.value.sub(entryVerificationFee).sub(dkgFee).sub(groupProfitMargin);
         require(
             callbackPayment >= minimumCallbackPayment(callbackGas),
             "Callback payment is less than required minimum."
@@ -218,8 +218,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 requestId = _requestCounter;
 
         OperatorContract(selectOperatorContract(_previousEntry)).sign.value(
-            signingFee.add(groupProfitMargin)
-        )(requestId, seed, _previousEntry, signingFee);
+            entryVerificationFee.add(groupProfitMargin)
+        )(requestId, seed, _previousEntry, entryVerificationFee);
 
         if (callbackContract != address(0)) {
             _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackPayment, callbackGas, msg.sender);
@@ -315,14 +315,14 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param callbackGas Gas required for the callback.
      */
     function entryFeeEstimate(uint256 callbackGas) public view returns(uint256) {
-        (uint256 signingFee, uint256 dkgFee, uint256 groupProfitMargin) = entryFeeBreakdown();
-        return signingFee.add(dkgFee).add(groupProfitMargin).add(minimumCallbackPayment(callbackGas));
+        (uint256 entryVerificationFee, uint256 dkgFee, uint256 groupProfitMargin) = entryFeeBreakdown();
+        return entryVerificationFee.add(dkgFee).add(groupProfitMargin).add(minimumCallbackPayment(callbackGas));
     }
 
     /**
      * @dev Get the entry fee breakdown in wei for relay entry request.
      */
-    function entryFeeBreakdown() public view returns(uint256 signingFee, uint256 dkgFee, uint256 groupProfitMargin) {
+    function entryFeeBreakdown() public view returns(uint256 entryVerificationFee, uint256 dkgFee, uint256 groupProfitMargin) {
         uint256 signingGas;
         uint256 dkgGas;
         uint256 groupSize;
