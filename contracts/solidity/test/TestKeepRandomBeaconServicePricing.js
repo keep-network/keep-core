@@ -119,7 +119,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
+    let tx = await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
       callbackContract.address,
       "callback(uint256)",
@@ -127,7 +127,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
       {value: entryFeeEstimate, from: requestor}
     );
 
-    let currentEntryStartBlock = await operatorContract.currentEntryStartBlock();
+    let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
     let relayEntryTimeout = await operatorContract.relayEntryTimeout();
     let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
     let currentBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
@@ -151,7 +151,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
+    let tx = await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
       callbackContract.address,
       "callback(uint256)",
@@ -159,7 +159,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
       {value: entryFeeEstimate, from: requestor}
     );
 
-    let currentEntryStartBlock = await operatorContract.currentEntryStartBlock();
+    let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
     let relayEntryTimeout = await operatorContract.relayEntryTimeout();
     let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
     let decimalPoints = web3.utils.toBN(1e16);

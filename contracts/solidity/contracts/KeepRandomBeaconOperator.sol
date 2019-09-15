@@ -122,7 +122,7 @@ contract KeepRandomBeaconOperator {
         address serviceContract;
     }
 
-    uint256 public currentEntryStartBlock;
+    uint256 internal currentEntryStartBlock;
     SigningRequest internal signingRequest;
 
     bool internal entryInProgress;
