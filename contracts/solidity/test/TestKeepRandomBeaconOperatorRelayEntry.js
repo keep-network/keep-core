@@ -28,8 +28,8 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
     await operatorContract.addGroupMember(group, accounts[1]);
     await operatorContract.addGroupMember(group, accounts[2]);
 
-    let minimumPayment = await serviceContract.minimumPayment(0)
-    await serviceContract.requestRelayEntry(bls.seed, {value: minimumPayment});
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
+    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
   });
 
   it("should not be able to submit invalid relay entry", async function() {

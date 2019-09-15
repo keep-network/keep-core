@@ -12,7 +12,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2],
-    minimumPayment, minimumCallbackPayment, entryFee;
+    entryFeeEstimate, minimumCallbackPayment, entryFee;
 
   beforeEach(async () => {
     let contracts = await initContracts(
@@ -34,7 +34,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     let group = await groupContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, accounts[0]);
 
-    minimumPayment = await serviceContract.minimumPayment(0)
+    entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     minimumCallbackPayment = await serviceContract.minimumCallbackPayment(0)
     entryFee = await serviceContract.entryFeeBreakdown()
   });
@@ -55,9 +55,9 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     let contractPreviousBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
     let dkgSubmitterReimbursement = await operatorContract.dkgSubmitterReimbursement()
 
-    let tx = await serviceContract.requestRelayEntry(0, {from: account_two, value: minimumPayment})
+    let tx = await serviceContract.requestRelayEntry(0, {from: account_two, value: entryFeeEstimate})
     let transactionCost = web3.utils.toBN(tx.receipt.gasUsed).mul(web3.utils.toWei(web3.utils.toBN(20), 'gwei')); // 20 default gasPrice
-    assert.isTrue(web3.utils.toBN(account_two_balance).sub(minimumPayment).sub(transactionCost).add(requestorSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(account_two))), "Requestor should receive 1% subsidy.");
+    assert.isTrue(web3.utils.toBN(account_two_balance).sub(entryFeeEstimate).sub(transactionCost).add(requestorSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(account_two))), "Requestor should receive 1% subsidy.");
 
     assert.equal((await operatorContract.getPastEvents())[0].event, 'SignatureRequested', "SignatureRequested event should occur on operator contract.");
 
@@ -73,14 +73,14 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("should be able to request relay entry via serviceContractProxy contract with enough ether", async function() {
-    await expectThrow(serviceContractProxy.sendTransaction({from: account_two, value: minimumPayment}));
+    await expectThrow(serviceContractProxy.sendTransaction({from: account_two, value: entryFeeEstimate}));
 
     let contractPreviousBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
     let dkgSubmitterReimbursement = await operatorContract.dkgSubmitterReimbursement()
 
     await web3.eth.sendTransaction({
       // if you see a plain 'revert' error, it's probably because of not enough gas
-      from: account_two, value: minimumPayment, gas: 400000, to: serviceContractProxy.address,
+      from: account_two, value: entryFeeEstimate, gas: 400000, to: serviceContractProxy.address,
       data: encodeCall('requestRelayEntry', ['uint256'], [0])
     });
 
@@ -97,8 +97,8 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {
-    let minimumPayment = await serviceContract.minimumPayment(0)
-    await serviceContract.requestRelayEntry(0, {from: account_one, value: minimumPayment})
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
+    await serviceContract.requestRelayEntry(0, {from: account_one, value: entryFeeEstimate})
 
     // should fail to withdraw if not owner
     await expectThrow(serviceContract.initiateWithdrawal({from: account_two}));
@@ -129,6 +129,6 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   it("should be able to update minimum gas price by the owner", async function() {
     await serviceContract.setMinimumGasPrice(123);
     let newMinGasPrice = await serviceContract.minimumGasPrice();
-    assert.equal(newMinGasPrice, 123, "Should be able to get updated minimum payment.");
+    assert.equal(newMinGasPrice, 123, "Should be able to get updated minimum gas price.");
   });
 });

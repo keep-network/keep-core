@@ -647,7 +647,7 @@ contract KeepRandomBeaconOperator {
         // dkgFee: 10%
         // profitMargin: 1%
         // groupSize: 5
-        // minimum payment: 49230000000000000 wei
+        // entry fee estimate: 49230000000000000 wei
         // signing fee: 37200000000000000 wei
         // DKG fee: 6780000000000000 wei
         // relayEntryTimeout: 10 blocks

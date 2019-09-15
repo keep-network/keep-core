@@ -118,8 +118,8 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     let groupSelectionStartBlock = await operatorContract.ticketSubmissionStartBlock();
     let groupSelectionRelayEntry = await operatorContract.groupSelectionRelayEntry();
 
-    let minimumPayment = await serviceContract.minimumPayment(0)
-    await serviceContract.requestRelayEntry(bls.seed, {value: minimumPayment});
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
+    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
     assert.isTrue((await operatorContract.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
@@ -152,9 +152,9 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
     mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
 
-    let minimumPayment = await serviceContract.minimumPayment(0)
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     let minimumGasPrice = await serviceContract.minimumGasPrice()
-    await serviceContract.requestRelayEntry(bls.seed, {value: minimumPayment});
+    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
 
     // Add initial funds to the fee pool to trigger group creation on relay entry without waiting for DKG fee accumulation
     let dkgGasEstimateCost = await operatorContract.dkgGasEstimate();

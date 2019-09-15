@@ -57,7 +57,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     await serviceContract.setMinimumGasPrice(defaultMinimumGasPrice.mul(web3.utils.toBN(10)));
     let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
-    let minimumPayment = await serviceContract.minimumPayment(callbackGas)
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     let excessCallbackPayment = await serviceContract.minimumCallbackPayment(callbackGas)
 
     await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
@@ -65,7 +65,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
       callbackContract.address,
       "callback(uint256)",
       callbackGas,
-      {value: minimumPayment, from: requestor}
+      {value: entryFeeEstimate, from: requestor}
     );
 
     let requestorBalance = await web3.eth.getBalance(requestor);
@@ -92,13 +92,13 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let excessCallbackGas = web3.utils.toBN(callbackGas).mul(web3.utils.toBN(2)); // Set higher callback gas estimate.
     let excessCallbackPayment = await serviceContract.minimumCallbackPayment(excessCallbackGas);
 
-    let minimumPayment = await serviceContract.minimumPayment(excessCallbackGas)
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(excessCallbackGas)
     await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
       callbackContract.address,
       "callback(uint256)",
       excessCallbackGas,
-      {value: minimumPayment, from: requestor}
+      {value: entryFeeEstimate, from: requestor}
     );
 
     let requestorBalance = await web3.eth.getBalance(requestor);
@@ -118,13 +118,13 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let magpie2balance = web3.utils.toBN(await web3.eth.getBalance(magpie2));
     let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
 
-    let minimumPayment = await serviceContract.minimumPayment(0)
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
       callbackContract.address,
       "callback(uint256)",
       0,
-      {value: minimumPayment, from: requestor}
+      {value: entryFeeEstimate, from: requestor}
     );
 
     let currentEntryStartBlock = await operatorContract.currentEntryStartBlock();
@@ -150,13 +150,13 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let magpie2balance = web3.utils.toBN(await web3.eth.getBalance(magpie2));
     let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
 
-    let minimumPayment = await serviceContract.minimumPayment(0)
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
       callbackContract.address,
       "callback(uint256)",
       0,
-      {value: minimumPayment, from: requestor}
+      {value: entryFeeEstimate, from: requestor}
     );
 
     let currentEntryStartBlock = await operatorContract.currentEntryStartBlock();
