@@ -7,7 +7,7 @@ import "./DelayedWithdrawal.sol";
 
 
 interface OperatorContract {
-    function signingGasEstimate() external view returns(uint256);
+    function entryVerificationGasEstimate() external view returns(uint256);
     function dkgGasEstimate() external view returns(uint256);
     function groupSize() external view returns(uint256);
     function sign(
@@ -332,7 +332,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             OperatorContract operator = OperatorContract(_operatorContracts[i]);
 
             if (operator.numberOfGroups() > 0) {
-                signingGas = operator.signingGasEstimate() > signingGas ? operator.signingGasEstimate():signingGas;
+                signingGas = operator.entryVerificationGasEstimate() > signingGas ? operator.entryVerificationGasEstimate():signingGas;
                 dkgGas = operator.dkgGasEstimate() > dkgGas ? operator.dkgGasEstimate():dkgGas;
                 groupSize = operator.groupSize() > groupSize ? operator.groupSize():groupSize;
             }

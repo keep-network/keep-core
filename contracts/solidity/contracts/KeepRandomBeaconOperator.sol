@@ -86,9 +86,15 @@ contract KeepRandomBeaconOperator {
     // eligible to submit the result plus at least one block to submit it.
     uint256 public relayEntryTimeout = 24;
 
-    uint256 public signingGasEstimate = 1240000; // TODO: Update once alt_bn128 gas costs reduction is implemented.
-    uint256 public dkgGasEstimate = 2260000; // Gas required to submit DKG result with verifying threshold amount of signatures.
+    // Gas required to verify BLS signature and produce successful relay
+    // entry. Excludes callback and dkg gas. TODO: Update once alt_bn128
+    // gas costs reduction is implemented.
+    uint256 public entryVerificationGasEstimate = 1240000;
 
+    // Gas required to submit DKG result.
+    uint256 public dkgGasEstimate = 2260000;
+
+    // Reimbursement for the submitter of the DKG result.
     uint256 public dkgSubmitterReimbursement;
 
     struct Proof {
