@@ -12,7 +12,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2],
-    entryFeeEstimate, minimumCallbackPayment, entryFee;
+    entryFeeEstimate, minimumCallbackFee, entryFee;
 
   beforeEach(async () => {
     let contracts = await initContracts(
@@ -35,7 +35,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     await operatorContract.addGroupMember(group, accounts[0]);
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    minimumCallbackPayment = await serviceContract.minimumCallbackPayment(0)
+    minimumCallbackFee = await serviceContract.minimumCallbackFee(0)
     entryFee = await serviceContract.entryFeeBreakdown()
   });
 
@@ -68,7 +68,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.isTrue(web3.utils.toBN(contractBalanceViaProxy).eq(contractPreviousBalance.add(entryFee.dkgFee).sub(requestorSubsidy)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
-    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.entryVerificationFee.add(minimumCallbackPayment).add(entryFee.groupProfitMargin).add(dkgSubmitterReimbursement)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and DKG payment.");
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.entryVerificationFee.add(minimumCallbackFee).add(entryFee.groupProfitMargin).add(dkgSubmitterReimbursement)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and DKG payment.");
   
   });
 
@@ -93,7 +93,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.isTrue(web3.utils.toBN(contractBalanceServiceContract).eq(contractPreviousBalance.add(entryFee.dkgFee)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
-    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.entryVerificationFee.add(minimumCallbackPayment).add(entryFee.groupProfitMargin).add(dkgSubmitterReimbursement)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and dkg submitter reward.");
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.entryVerificationFee.add(minimumCallbackFee).add(entryFee.groupProfitMargin).add(dkgSubmitterReimbursement)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and dkg submitter reward.");
   });
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {

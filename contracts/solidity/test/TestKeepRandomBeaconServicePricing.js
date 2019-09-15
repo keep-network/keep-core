@@ -58,7 +58,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     await serviceContract.setMinimumGasPrice(defaultMinimumGasPrice.mul(web3.utils.toBN(10)));
     let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    let excessCallbackPayment = await serviceContract.minimumCallbackPayment(callbackGas)
+    let excessCallbackFee = await serviceContract.minimumCallbackFee(callbackGas)
 
     await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
@@ -74,12 +74,12 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     // Put back the default gas price
     await serviceContract.setMinimumGasPrice(defaultMinimumGasPrice);
-    let expectedCallbackPayment = await serviceContract.minimumCallbackPayment((callbackGas/1.5).toFixed()) // Remove 1.5 fluctuation safety margin
+    let expectedCallbackFee = await serviceContract.minimumCallbackFee((callbackGas/1.5).toFixed()) // Remove 1.5 fluctuation safety margin
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
     // Ethereum transaction min cost varies i.e. 20864-21000 Gas resulting slightly different
     // eth amounts: Surplus 0.00219018 vs Refund 0.00218752 so rounding up those for the tests
-    let surplus = web3.utils.fromWei(web3.utils.toBN(excessCallbackPayment).sub(web3.utils.toBN(expectedCallbackPayment)), 'ether')
+    let surplus = web3.utils.fromWei(web3.utils.toBN(excessCallbackFee).sub(web3.utils.toBN(expectedCallbackFee)), 'ether')
     let refund = web3.utils.fromWei(web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance)), 'ether')
     assert.isTrue(Math.round(surplus*10000)/10000 === Math.round(refund*10000)/10000, "Callback gas surplus should be refunded to the requestor.");
   });
@@ -87,10 +87,10 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
   it("should successfully refund callback gas surplus to the requestor if gas estimation was high", async function() {
 
     let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
-    let expectedCallbackPayment = await serviceContract.minimumCallbackPayment((callbackGas/1.5).toFixed()); // Remove 1.5 fluctuation safety margin
+    let expectedCallbackFee = await serviceContract.minimumCallbackFee((callbackGas/1.5).toFixed()); // Remove 1.5 fluctuation safety margin
 
     let excessCallbackGas = web3.utils.toBN(callbackGas).mul(web3.utils.toBN(2)); // Set higher callback gas estimate.
-    let excessCallbackPayment = await serviceContract.minimumCallbackPayment(excessCallbackGas);
+    let excessCallbackFee = await serviceContract.minimumCallbackFee(excessCallbackGas);
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(excessCallbackGas)
     await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
@@ -107,7 +107,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     // Ethereum transaction min cost varies i.e. 20864-21000 Gas resulting slightly different
     // eth amounts: Surplus 0.00219018 vs Refund 0.00218752 so rounding up those for the tests
-    let surplus = web3.utils.fromWei(web3.utils.toBN(excessCallbackPayment).sub(web3.utils.toBN(expectedCallbackPayment)), 'ether')
+    let surplus = web3.utils.fromWei(web3.utils.toBN(excessCallbackFee).sub(web3.utils.toBN(expectedCallbackFee)), 'ether')
     let refund = web3.utils.fromWei(web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance)), 'ether')
     assert.isTrue(Math.round(surplus*10000)/10000 === Math.round(refund*10000)/10000, "Callback gas surplus should be refunded to the requestor.");
   });

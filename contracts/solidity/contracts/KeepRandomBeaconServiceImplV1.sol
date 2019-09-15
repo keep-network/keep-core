@@ -57,7 +57,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     struct Callback {
         address callbackContract;
         string callbackMethod;
-        uint256 callbackPayment;
+        uint256 callbackFee;
         uint256 callbackGas;
         address payable surplusRecipient;
     }
@@ -206,9 +206,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         );
 
         (uint256 entryVerificationFee, uint256 dkgFee, uint256 groupProfitMargin) = entryFeeBreakdown();
-        uint256 callbackPayment = msg.value.sub(entryVerificationFee).sub(dkgFee).sub(groupProfitMargin);
+        uint256 callbackFee = msg.value.sub(entryVerificationFee).sub(dkgFee).sub(groupProfitMargin);
         require(
-            callbackPayment >= minimumCallbackPayment(callbackGas),
+            callbackFee >= minimumCallbackFee(callbackGas),
             "Callback payment is less than required minimum."
         );
 
@@ -222,7 +222,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         )(requestId, seed, _previousEntry, entryVerificationFee);
 
         if (callbackContract != address(0)) {
-            _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackPayment, callbackGas, msg.sender);
+            _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackFee, callbackGas, msg.sender);
         }
 
         // Send 1% of the request subsidy pool to the requestor.
@@ -263,17 +263,17 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             // Obtain the actual callback gas expenditure and refund the surplus.
             uint256 callbackSurplus = 0;
             uint256 callbackCost = gasSpent.mul(tx.gasprice);
-            uint256 minimumCallbackPayment = minimumCallbackPayment(_callbacks[requestId].callbackGas);
+            uint256 minimumCallbackFee = minimumCallbackFee(_callbacks[requestId].callbackGas);
 
-            if (callbackCost < minimumCallbackPayment) {
-                callbackSurplus = minimumCallbackPayment.sub(callbackCost);
+            if (callbackCost < minimumCallbackFee) {
+                callbackSurplus = minimumCallbackFee.sub(callbackCost);
                 // Reimburse submitter with his actual callback cost.
                 submitter.transfer(callbackCost);
                 // Return callback surplus to the requestor.
                 _callbacks[requestId].surplusRecipient.transfer(callbackSurplus);
             } else {
                 // Reimburse submitter with the callback payment sent by the requestor.
-                submitter.transfer(minimumCallbackPayment);
+                submitter.transfer(minimumCallbackFee);
             }
 
             delete _callbacks[requestId];
@@ -306,7 +306,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Get the minimum payment in wei for relay entry callback.
      * @param callbackGas Gas required for the callback.
      */
-    function minimumCallbackPayment(uint256 callbackGas) public view returns(uint256) {
+    function minimumCallbackFee(uint256 callbackGas) public view returns(uint256) {
         return callbackGas.mul(_minGasPrice);
     }
 
@@ -316,7 +316,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function entryFeeEstimate(uint256 callbackGas) public view returns(uint256) {
         (uint256 entryVerificationFee, uint256 dkgFee, uint256 groupProfitMargin) = entryFeeBreakdown();
-        return entryVerificationFee.add(dkgFee).add(groupProfitMargin).add(minimumCallbackPayment(callbackGas));
+        return entryVerificationFee.add(dkgFee).add(groupProfitMargin).add(minimumCallbackFee(callbackGas));
     }
 
     /**
