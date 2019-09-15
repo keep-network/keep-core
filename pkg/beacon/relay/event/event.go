@@ -21,7 +21,6 @@ type Entry struct {
 
 // Request represents a request for an entry in the threshold relay.
 type Request struct {
-	Payment        *big.Int
 	PreviousEntry  *big.Int
 	Seed           *big.Int
 	GroupPublicKey []byte
