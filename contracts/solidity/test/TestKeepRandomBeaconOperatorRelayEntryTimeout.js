@@ -30,21 +30,21 @@ contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
     });
 
     it("should not throw an error when sigining is in progress and the block number > relay entry timeout", async function() {
-      await operatorContract.sign(requestCounter, bls.seed, bls.previousEntry, 0, 0);
+      await operatorContract.sign(requestCounter, bls.seed, bls.previousEntry, 0);
       mineBlocks(blocksForward)
-      await operatorContract.sign(requestCounter, bls.seed, bls.previousEntry, 0, 0);
+      await operatorContract.sign(requestCounter, bls.seed, bls.previousEntry, 0);
 
       assert.equal((await operatorContract.getPastEvents())[0].event, 'SignatureRequested', "SignatureRequested event should occur on operator contract.");
     })
 
     it("should throw an error when signing is in progress and the block number <= relay entry timeout", async function() {
-      await operatorContract.sign(requestCounter, bls.seed, bls.previousEntry, 0, 0);
+      await operatorContract.sign(requestCounter, bls.seed, bls.previousEntry, 0);
 
-      await expectThrowWithMessage(operatorContract.sign(requestCounter, bls.seed, bls.previousEntry, 0, 0), 'Relay entry is in progress.');
+      await expectThrowWithMessage(operatorContract.sign(requestCounter, bls.seed, bls.previousEntry, 0), 'Relay entry is in progress.');
     })
 
     it("should not throw an error when sigining is not in progress and the block number > relay entry timeout", async function() {
-      await operatorContract.sign(requestCounter, bls.seed, bls.previousEntry, 0, 0);
+      await operatorContract.sign(requestCounter, bls.seed, bls.previousEntry, 0);
 
       assert.equal((await operatorContract.getPastEvents())[0].event, 'SignatureRequested', "SignatureRequested event should occur on operator contract.");
     })
