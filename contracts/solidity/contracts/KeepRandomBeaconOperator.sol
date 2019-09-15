@@ -89,7 +89,7 @@ contract KeepRandomBeaconOperator {
     uint256 public signingGasEstimate = 1240000; // TODO: Update once alt_bn128 gas costs reduction is implemented.
     uint256 public dkgGasEstimate = 2260000; // Gas required to submit DKG result with verifying threshold amount of signatures.
 
-    uint256 public dkgSubmitterReward;
+    uint256 public dkgSubmitterReimbursement;
 
     struct Proof {
         address sender;
@@ -230,7 +230,7 @@ contract KeepRandomBeaconOperator {
         groupSelectionRelayEntry = _newEntry;
         groupSelectionInProgress = true;
         emit GroupSelectionStarted(_newEntry);
-        dkgSubmitterReward = _payment;
+        dkgSubmitterReimbursement = _payment;
     }
 
     /**
@@ -434,16 +434,16 @@ contract KeepRandomBeaconOperator {
         uint256 surplus = 0;
         address payable magpie = stakingContract.magpieOf(msg.sender);
 
-        if (dkgCost < dkgSubmitterReward) {
-            surplus = dkgSubmitterReward.sub(dkgCost);
-            dkgSubmitterReward = 0;
+        if (dkgCost < dkgSubmitterReimbursement) {
+            surplus = dkgSubmitterReimbursement.sub(dkgCost);
+            dkgSubmitterReimbursement = 0;
             // Reimburse submitter with actual DKG cost.
             magpie.transfer(dkgCost);
             // TODO: Return surplus to the DKG fee pool (split between pools on all service contracts)?.
         } else {
-            // If submitter used higher gas price reimburse only dkgSubmitterReward max.
-            uint256 reward = dkgSubmitterReward;
-            dkgSubmitterReward = 0;
+            // If submitter used higher gas price reimburse only dkgSubmitterReimbursement max.
+            uint256 reward = dkgSubmitterReimbursement;
+            dkgSubmitterReimbursement = 0;
             magpie.transfer(reward);
         }
  
