@@ -493,7 +493,8 @@ $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config
 
 == Genesis entry
 
-In order to trigger creation of the first group genesis entry must be submitted. 
+In order to trigger creation of the first group genesis entry must be submitted. The script includes
+the required DKG fee.
 ```
 $ truffle exec ./scripts/genesis.js --network local
 
