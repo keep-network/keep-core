@@ -11,12 +11,14 @@ module.exports = async function() {
   const contractService = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address)
   const callbackContract = await CallbackContract.deployed();
   // const delay = 600000 //10 min in milliseconds
-  const delay = 120000 //2 min in milliseconds
+  // const delay = 120000 //2 min in milliseconds
+  const delay = 360000 //6 min in milliseconds
   
   let accounts = await web3.eth.getAccounts();
   let requestor = accounts[4]
   let count = 0
   let requestorAccountBalance = await web3.eth.getBalance(requestor)
+
   let requestorPrevAccountBalance = 0;
 
   try {
@@ -24,7 +26,7 @@ module.exports = async function() {
       console.log("--- count:", count)
 
       let callbackGas = await callbackContract.callback.estimateGas(seed)
-      let recommendedPayment = await contractService.minimumPayment(callbackGas)
+      let entryFeeEstimate = await contractService.entryFeeEstimate(callbackGas)
       requestorPrevAccountBalance = requestorAccountBalance;
 
       let prevKeep1Balance = await web3.eth.getBalance(accounts[0])
@@ -37,7 +39,7 @@ module.exports = async function() {
         callbackContract.address,
         "callback(uint256)",
         callbackGas,
-        {value: recommendedPayment, from: requestor}
+        {value: entryFeeEstimate, from: requestor}
       );
 
       wait(delay); 
