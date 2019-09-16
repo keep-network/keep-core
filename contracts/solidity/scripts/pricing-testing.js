@@ -60,8 +60,8 @@ module.exports = async function() {
       let keep4Balance = await web3.eth.getBalance(accounts[3])
       let keep4Earned = web3.utils.toBN(keep4Balance).sub(web3.utils.toBN(prevKeep4Balance)).toString()
       
-      recommendedPayment = recommendedPayment.toString()
-      let pricing = new Pricing(callbackGas, recommendedPayment, requestorAccountBalance, total,
+      entryFeeEstimate = entryFeeEstimate.toString()
+      let pricing = new Pricing(callbackGas, entryFeeEstimate, requestorAccountBalance, total,
         keep1Balance, keep1Earned, keep2Balance, keep2Earned,
         keep3Balance, keep3Earned, keep4Balance, keep4Earned)
 
@@ -82,11 +82,11 @@ module.exports = async function() {
   // process.exit()
 }
 
-function Pricing(callbackGas, recommendedPayment, requestorAccountBalance, totalForRelayEntry,
+function Pricing(callbackGas, entryFeeEstimate, requestorAccountBalance, totalForRelayEntry,
   keep1Balance, keep1Earned, keep2Balance, keep2Earned, 
   keep3Balance, keep3Earned, keep4Balance, keep4Earned) {
     this.callbackGas = callbackGas,
-    this.recommendedPayment = recommendedPayment,
+    this.entryFeeEstimate = entryFeeEstimate,
     this.requestorAccountBalance = requestorAccountBalance,
     this.totalForRelayEntry = totalForRelayEntry,
     this.keep1Balance = keep1Balance,
@@ -100,7 +100,7 @@ function Pricing(callbackGas, recommendedPayment, requestorAccountBalance, total
   }
 
 Pricing.prototype.toString = function pricingToString() {
-  return '' + this.callbackGas + ', ' + this.recommendedPayment + ', ' + this.requestorAccountBalance + ', ' + this.totalForRelayEntry + ', '
+  return '' + this.callbackGas + ', ' + this.entryFeeEstimate + ', ' + this.requestorAccountBalance + ', ' + this.totalForRelayEntry + ', '
   + this.keep1Balance + ', ' + this.keep1Earned + ', ' + this.keep2Balance + ', ' + this.keep2Earned
   + this.keep3Balance + ', ' + this.keep3Earned + ', ' + this.keep4Balance + ', ' + this.keep4Earned + '\n';
 }
