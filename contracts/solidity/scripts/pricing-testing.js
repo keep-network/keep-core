@@ -18,7 +18,6 @@ module.exports = async function() {
   let requestor = accounts[4]
   let count = 0
   let requestorAccountBalance = await web3.eth.getBalance(requestor)
-
   let requestorPrevAccountBalance = 0;
 
   try {
