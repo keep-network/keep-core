@@ -243,7 +243,7 @@ contract KeepRandomBeaconOperator {
         }
 
         // Invalid tickets are rejected and their senders penalized.
-        if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
+        if (!ticketCheck(msg.sender, ticketValue, stakerValue, virtualStakerIndex)) {
             // TODO: replace with a secure authorization protocol (addressed in RFC 4).
             stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
         } else {
@@ -330,22 +330,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Performs surface-level validation of the ticket.
-     * @param staker Address of the staker.
-     * @param stakerValue Staker-specific value. Currently uint representation of staker address.
-     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
-     */
-    function cheapCheck(
-        address staker,
-        uint256 stakerValue,
-        uint256 virtualStakerIndex
-    ) public view returns(bool) {
-        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight(staker);
-        bool isStakerValueValid = uint256(staker) == stakerValue;
-        return isVirtualStakerIndexValid && isStakerValueValid;
-    }
-
-    /**
      * @dev Performs full verification of the ticket.
      * @param staker Address of the staker.
      * @param ticketValue Result of a pseudorandom function with input values of
@@ -353,15 +337,17 @@ contract KeepRandomBeaconOperator {
      * @param stakerValue Staker-specific value. Currently uint representation of staker address.
      * @param virtualStakerIndex Number within a range of 1 to staker's weight.
      */
-    function costlyCheck(
+    function ticketCheck(
         address staker,
         uint256 ticketValue,
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public view returns(bool) {
-        bool passedCheapCheck = cheapCheck(staker, stakerValue, virtualStakerIndex);
-        uint256 expected = uint256(keccak256(abi.encodePacked(groupSelectionRelayEntry, stakerValue, virtualStakerIndex)));
-        return passedCheapCheck && ticketValue == expected;
+        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight(staker);
+        bool isStakerValueValid = uint256(staker) == stakerValue;
+        bool isTicketValueValid = uint256(keccak256(abi.encodePacked(groupSelectionRelayEntry, stakerValue, virtualStakerIndex))) == ticketValue;
+
+        return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
     }
 
     /**
