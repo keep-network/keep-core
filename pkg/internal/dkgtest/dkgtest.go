@@ -4,7 +4,6 @@ package dkgtest
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"math/big"
 	"sync"
@@ -31,12 +30,13 @@ type Result struct {
 	memberFailures      []error
 }
 
-// RunTest executes the full DKG roundrip test for the provided group size
-// and honest threshold. The provided interception rules are applied in the
-// broadcast channel for the time of DKG execution.
+// RunTest executes the full DKG roundrip test for the provided group size,
+// seed, and honest threshold. The provided interception rules are applied in
+// the broadcast channel for the time of DKG execution.
 func RunTest(
 	groupSize int,
 	honestThreshold int,
+	seed *big.Int,
 	rules interception.Rules,
 ) (*Result, error) {
 	privateKey, publicKey, err := operator.GenerateKeyPair()
@@ -53,10 +53,11 @@ func RunTest(
 
 	chain := chainLocal.ConnectWithKey(groupSize, honestThreshold, minimumStake, privateKey)
 
-	return executeDKG(chain, network)
+	return executeDKG(seed, chain, network)
 }
 
 func executeDKG(
+	seed *big.Int,
 	chain chainLocal.Chain,
 	network interception.Network,
 ) (*Result, error) {
@@ -66,11 +67,6 @@ func executeDKG(
 	}
 
 	blockCounter, err := chain.BlockCounter()
-	if err != nil {
-		return nil, err
-	}
-
-	seed, err := rand.Int(rand.Reader, big.NewInt(100000))
 	if err != nil {
 		return nil, err
 	}
