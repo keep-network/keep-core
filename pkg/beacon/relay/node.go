@@ -84,7 +84,7 @@ func (n *Node) JoinGroupIfEligible(
 					newEntry,
 					playerIndex,
 					n.chainConfig.GroupSize,
-					n.chainConfig.Threshold,
+					n.chainConfig.DishonestThreshold(),
 					dkgStartBlockHeight,
 					n.blockCounter,
 					relayChain,

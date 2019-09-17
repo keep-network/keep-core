@@ -9,7 +9,7 @@ import (
 )
 
 func TestGenerateResult(t *testing.T) {
-	threshold := 5
+	dishonestThreshold := 3
 	groupSize := 8
 
 	var tests = map[string]struct {
@@ -17,85 +17,100 @@ func TestGenerateResult(t *testing.T) {
 		inactiveMemberIDs     []group.MemberIndex
 		expectedResult        func(groupPublicKey *bn256.G2) *Result
 	}{
-		"no disqualified or inactive members - success": {
+		"success: no disqualified or inactive members": {
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: groupPublicKey,
 					Group: initializeGroup(
 						groupSize,
-						threshold,
+						dishonestThreshold,
 						[]group.MemberIndex{},
 						[]group.MemberIndex{},
 					),
 				}
 			},
 		},
-		"one disqualified member - success": {
+		"success: one disqualified member": {
 			disqualifiedMemberIDs: []group.MemberIndex{2},
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: groupPublicKey,
 					Group: initializeGroup(
 						groupSize,
-						threshold,
+						dishonestThreshold,
 						[]group.MemberIndex{2},
 						[]group.MemberIndex{},
 					),
 				}
 			},
 		},
-		"two inactive members - success": {
+		"success: dishonest threshold - 1 inactive members": {
 			inactiveMemberIDs: []group.MemberIndex{3, 7},
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: groupPublicKey,
 					Group: initializeGroup(
 						groupSize,
-						threshold,
+						dishonestThreshold,
 						[]group.MemberIndex{},
 						[]group.MemberIndex{3, 7},
 					),
 				}
 			},
 		},
-		"more than half of threshold disqualified and inactive members - failure": {
+		"success: dishonest threshold disqualified and inactive members": {
 			disqualifiedMemberIDs: []group.MemberIndex{2},
 			inactiveMemberIDs:     []group.MemberIndex{3, 7},
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
-					GroupPublicKey: nil,
+					GroupPublicKey: groupPublicKey,
 					Group: initializeGroup(
 						groupSize,
-						threshold,
+						dishonestThreshold,
 						[]group.MemberIndex{2},
 						[]group.MemberIndex{3, 7},
 					),
 				}
 			},
 		},
-		"more than half of threshold inactive members - failure": {
-			inactiveMemberIDs: []group.MemberIndex{3, 5, 7},
+		"failure: total number of disqualified and inactive members is greater than dishonest threshold": {
+			disqualifiedMemberIDs: []group.MemberIndex{2, 5},
+			inactiveMemberIDs:     []group.MemberIndex{3, 7},
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: nil,
 					Group: initializeGroup(
 						groupSize,
-						threshold,
-						nil,
-						[]group.MemberIndex{3, 5, 7},
+						dishonestThreshold,
+						[]group.MemberIndex{2, 5},
+						[]group.MemberIndex{3, 7},
 					),
 				}
 			},
 		},
-		"more than half of threshold disqualified members - failure": {
-			disqualifiedMemberIDs: []group.MemberIndex{3, 5, 7},
+		"failure: more than dishonest threshold inactive members": {
+			inactiveMemberIDs: []group.MemberIndex{3, 2, 5, 7},
 			expectedResult: func(groupPublicKey *bn256.G2) *Result {
 				return &Result{
 					GroupPublicKey: nil,
 					Group: initializeGroup(
 						groupSize,
-						threshold,
-						[]group.MemberIndex{3, 5, 7},
+						dishonestThreshold,
+						nil,
+						[]group.MemberIndex{3, 2, 5, 7},
+					),
+				}
+			},
+		},
+		"failure: more than dishonest threshold disqualified members": {
+			disqualifiedMemberIDs: []group.MemberIndex{3, 2, 5, 7},
+			expectedResult: func(groupPublicKey *bn256.G2) *Result {
+				return &Result{
+					GroupPublicKey: nil,
+					Group: initializeGroup(
+						groupSize,
+						dishonestThreshold,
+						[]group.MemberIndex{3, 2, 5, 7},
 						[]group.MemberIndex{},
 					),
 				}
@@ -104,7 +119,7 @@ func TestGenerateResult(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			members, err := initializeFinalizingMembersGroup(threshold, groupSize)
+			members, err := initializeFinalizingMembersGroup(dishonestThreshold, groupSize)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -151,8 +166,8 @@ func publicKeysEqual(expectedKey *bn256.G2, actualKey *bn256.G2) bool {
 	return expectedKey == actualKey
 }
 
-func initializeFinalizingMembersGroup(threshold, groupSize int) ([]*FinalizingMember, error) {
-	combiningMembers, err := initializeCombiningMembersGroup(threshold, groupSize)
+func initializeFinalizingMembersGroup(dishonestThreshold, groupSize int) ([]*FinalizingMember, error) {
+	combiningMembers, err := initializeCombiningMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		return nil, err
 	}
@@ -166,11 +181,11 @@ func initializeFinalizingMembersGroup(threshold, groupSize int) ([]*FinalizingMe
 
 func initializeGroup(
 	groupSize int,
-	threshold int,
+	dishonestThreshold int,
 	disqualifiedMembers []group.MemberIndex,
 	inactiveMembers []group.MemberIndex,
 ) *group.Group {
-	dkgGroup := group.NewDkgGroup(threshold, groupSize)
+	dkgGroup := group.NewDkgGroup(dishonestThreshold, groupSize)
 
 	for _, disqualified := range disqualifiedMembers {
 		dkgGroup.MarkMemberAsDisqualified(disqualified)
