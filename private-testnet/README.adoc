@@ -87,5 +87,5 @@ There are 3 scripts that make up preparing deployment bundles:
 === Dependencies
 
 Package dependencies are listed in `keep-core/private-testnet/scripts/package.json`.
-you can install these by running `npm i` from the scripts dir.
+You can install these by running `npm i` from the scripts dir.
 
