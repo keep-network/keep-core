@@ -22,13 +22,13 @@ jobs:
   test_solidity:
     executor: docker-node
     steps:
-        - checkout
-        - run: sudo npm install -g ganache-cli@6.4.2
-        - run:
-            name: Running testrpc
-            command: ganache-cli
-            background: true
-        - run: cd contracts/solidity && npm install && npm run test
+      - checkout
+      - run: sudo npm install -g ganache-cli@6.4.2
+      - run:
+          name: Running testrpc
+          command: ganache-cli
+          background: true
+      - run: cd contracts/solidity && npm install && npm run test
   generate_docs_solidity:
     docker:
       - image: keepnetwork/nodejs-python-solc:5
@@ -63,8 +63,8 @@ jobs:
       - run:
           name: Run Docker build
           command: |
-            docker build --target gobuild -t go-build-env .
-            docker build -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client .
+            docker build --build-arg GITHUBTOKEN=$GITHUBTOKEN --target gobuild -t go-build-env .
+            docker build --build-arg GITHUBTOKEN=$GITHUBTOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client .
       - run:
           name: Run Go tests
           command: |
