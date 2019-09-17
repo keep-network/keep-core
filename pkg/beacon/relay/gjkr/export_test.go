@@ -1,10 +1,25 @@
 package gjkr
 
 import (
+	"math/big"
+
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
+
+func (epkm *EphemeralPublicKeyMessage) SetPublicKey(
+	memberIndex group.MemberIndex,
+	publicKey *ephemeral.PublicKey,
+) {
+	epkm.ephemeralPublicKeys[memberIndex] = publicKey
+}
+
+func (epkm *EphemeralPublicKeyMessage) GetPublicKey(
+	memberIndex group.MemberIndex,
+) *ephemeral.PublicKey {
+	return epkm.ephemeralPublicKeys[memberIndex]
+}
 
 func (epkm *EphemeralPublicKeyMessage) RemovePublicKey(
 	memberIndex group.MemberIndex,
@@ -36,6 +51,15 @@ func (psm *PeerSharesMessage) SetShares(
 		encryptedShareS: encryptedShareS,
 		encryptedShareT: encryptedShareT,
 	}
+}
+
+func (psm *PeerSharesMessage) AddShares(
+	receiverID group.MemberIndex,
+	shareS *big.Int,
+	shareT *big.Int,
+	symmetricKey ephemeral.SymmetricKey,
+) error {
+	return psm.addShares(receiverID, shareS, shareT, symmetricKey)
 }
 
 func (psm *PeerSharesMessage) RemoveShares(memberIndex group.MemberIndex) {

@@ -4,10 +4,12 @@
 package gjkr_test
 
 import (
+	"crypto/rand"
 	"math/big"
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/altbn128"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/internal/dkgtest"
@@ -473,12 +475,57 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 4}...)
 }
 
-// TODO Test case Phase 5: 'shares consistent ->
-//  expected result: disqualify accuser'.
-//  This case is difficult to implement for now because it needs
-//  access to member internals. In order to make a false accusation
-//  there is a need to obtain ephemeral private key for the accused member which
-//  is stored in accuser internal map called 'ephemeralKeyPairs'.
+// Phase 5 test case - a member misbehaved by performing a false accusation
+// against another member. The accusation is checked by another members
+// and because it is unfounded, the accuser is disqualified in phase 5.
+func TestExecute_DQ_member4_falseAccusation_phase5(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+	seed := big.NewInt(14)
+
+	manInTheMiddle, err := newManInTheMiddle(
+		group.MemberIndex(4), // sender
+		group.MemberIndex(1), // receiver
+		seed,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		manInTheMiddle.interceptCommunication(msg)
+
+		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
+		// Accuser performs false accusation against the accused member
+		// using the ephemeral private key generated before.
+		if ok && accusationsMessage.SenderID() == group.MemberIndex(4) {
+			accusationsMessage.SetAccusedMemberKey(
+				group.MemberIndex(1),
+				manInTheMiddle.ephemeralKeyPair.PrivateKey,
+			)
+			return accusationsMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(4))
+	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 5}...)
+}
 
 // TODO Test case Phase 5: 'accuser accuse an inactive member ->
 //  expected result: disqualify accuser'.
@@ -495,7 +542,7 @@ func TestExecute_DQ_member2_invalidMessage_phase8(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(14)
+	seed := big.NewInt(15)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		sharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
@@ -532,7 +579,7 @@ func TestExecute_DQ_members25_revealWrongPrivateKey_phase9(t *testing.T) {
 
 	groupSize := 7
 	honestThreshold := 4
-	seed := big.NewInt(15)
+	seed := big.NewInt(16)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		accusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
@@ -586,7 +633,7 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(16)
+	seed := big.NewInt(17)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		publicKeyShareMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
@@ -662,7 +709,7 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(17)
+	seed := big.NewInt(18)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
@@ -692,4 +739,137 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 	dkgtest.AssertNoInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 4, 5}...)
+}
+
+// manInTheMiddle is a helper tool allowing to easily intercept communication
+// between two group members for the first three phases of DKG protocol and to
+// set up symmetric key, member shares, and commitments that can be later
+// accessed in test.
+//
+// In a test not using manInTheMiddle we don't have an access to symmetric key
+// established between two group members. Knowledge of that symmetric key
+// is required to test some scenarios.
+type manInTheMiddle struct {
+	senderIndex   group.MemberIndex
+	receiverIndex group.MemberIndex
+
+	seed *big.Int
+
+	ephemeralKeyPair *ephemeral.KeyPair
+	symmetricKey     *ephemeral.SymmetricEcdhKey
+
+	shareS *big.Int
+	shareT *big.Int
+}
+
+// newManInTheMiddle creates a new instance of manInTheMiddle tool.
+// It will intercept messages sent from the sender with the given index and
+// modify the part of the message intended for the receiver with the given
+// index. It will intercept the symmetric key handshake as well as generate
+// peer shares and commitments based on the established symmetric key.
+func newManInTheMiddle(
+	senderIndex group.MemberIndex,
+	receiverIndex group.MemberIndex,
+	seed *big.Int,
+) (*manInTheMiddle, error) {
+	// ephemeral key pair - we'll create symmetric key between
+	// sender and receiver using this key pair in phase 1 and 2
+	// of the protocol
+	keyPair, err := ephemeral.GenerateKeyPair()
+	if err != nil {
+		return nil, err
+	}
+
+	// shares used in the third phase of the protocol
+	// those shares will be encrypted with the symmetric key and
+	// used as shares of sender generated for the receiver
+	shareS, err := rand.Int(rand.Reader, big.NewInt(100000))
+	if err != nil {
+		return nil, err
+	}
+	shareT, err := rand.Int(rand.Reader, big.NewInt(100000))
+	if err != nil {
+		return nil, err
+	}
+
+	return &manInTheMiddle{
+		senderIndex:   senderIndex,
+		receiverIndex: receiverIndex,
+		seed:          seed,
+
+		ephemeralKeyPair: keyPair,
+
+		shareS: shareS,
+		shareT: shareT,
+	}, nil
+}
+
+// interceptCommunication intercepts the first three phases of DKG protocol
+// to set up symmetric key between sender and receiver such that it can be later
+// accessed and used in test.
+// It also intercepts commitments and peer shares messages and modify the
+// original values, replacing them with new ones generated based on the
+// established (intercepted) symmetric key.
+func (mitm *manInTheMiddle) interceptCommunication(
+	msg net.TaggedMarshaler,
+) net.TaggedMarshaler {
+
+	publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
+	// Act 1:
+	// Original sender broadcasts EphemeralPublicKeyMessage.
+	// We intercept that message and replace the public key generated for the
+	// given receiver with public key generated earlier by the man in the middle.
+	if ok && publicKeyMessage.SenderID() == group.MemberIndex(mitm.senderIndex) {
+		publicKeyMessage.SetPublicKey(
+			mitm.receiverIndex,
+			mitm.ephemeralKeyPair.PublicKey,
+		)
+		return publicKeyMessage
+	}
+	// Act 2:
+	// The receiver we are intercepting the communication with generated and
+	// broadcast ephemeral public keys. We follow the protocol and
+	// perform ECDH against receiver's public key generated for the sake of
+	// communication with our sender and private ephemeral key generated
+	// earlier by the man in the middle.
+	if ok && publicKeyMessage.SenderID() == group.MemberIndex(mitm.receiverIndex) {
+		mitm.symmetricKey = mitm.ephemeralKeyPair.PrivateKey.Ecdh(
+			publicKeyMessage.GetPublicKey(group.MemberIndex(mitm.senderIndex)),
+		)
+		return publicKeyMessage
+	}
+
+	// Act 3:
+	// Original sender broadcasts PeerSharesMessage and MemberCommitmentsMessage.
+	// We intercept those messages and replace shares and commitments with the
+	// ones generated by man-in-the-middle.
+	// We do that because the receiver established symmetric key with the
+	// man-in-the-middle and not with the original sender. Thus, we need to
+	// encrypt shares using that symmetric key and regenerate commitments
+	// to match the shares.
+	peerSharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
+	if ok && peerSharesMessage.SenderID() == group.MemberIndex(mitm.senderIndex) {
+		peerSharesMessage.AddShares(
+			mitm.receiverIndex,
+			mitm.shareS,
+			mitm.shareT,
+			mitm.symmetricKey,
+		)
+		return peerSharesMessage
+	}
+	commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
+	if ok && commitmentsMessage.SenderID() == group.MemberIndex(mitm.senderIndex) {
+		H := altbn128.G1HashToPoint(mitm.seed.Bytes())
+		// G * s + H * t
+		commitment := new(bn256.G1).Add(
+			new(bn256.G1).ScalarBaseMult(mitm.shareS),
+			new(bn256.G1).ScalarMult(H, mitm.shareT),
+		)
+
+		commitmentsMessage.SetCommitment(int(mitm.receiverIndex), commitment)
+
+		return commitmentsMessage
+	}
+
+	return msg
 }
