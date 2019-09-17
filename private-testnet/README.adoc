@@ -15,7 +15,7 @@ Scripts should be run from `keep-core/private-testnet/scripts`
 * Update `keep-client-quickstart.adoc` with any changes
 * Run `prepare-participant-bundles.sh`
 * Run `fetch-contract-data.js`
-* Run  `stake-accounts.js`
+* Run `stake-accounts.js`
 
 == Directory Structure
 
@@ -27,24 +27,11 @@ but should cover the bits that must be honored.
 On `keep-core/private-testnet` we store files that are generally applicable to
 external participants.  This should look like:
 
-```
-.
-├── KeepToken.json
-├── README.adoc
-├── TokenStaking.json
-├── changelog.adoc
-├── eth-account-password.txt
-├── keep-client-snapshot.tar
-├── keyfiles
-├── participants
-└── scripts
-```
-
 Files the bundling script expects to be on this level:
 
-* keep-client-snapshot.tar
-* eth-account-password.txt
-* changelog.adoc
+* `keep-client-snapshot.tar`
+* `eth-account-password.txt`
+* `changelog.adoc`
 
 === Participants
 
@@ -53,31 +40,23 @@ Each particpant must get their own directory.  The bundling script and quickstar
 guide both operate under the assumption that each participant directory is
 structured in the format highlighted below:
 
+Files/Directories the bundling script expects to be on this level:
 
-*Top-level in `keep-core/participants`:*
-```
-.
-├── bisontrails
-├── figment
-└── staked
-```
+* `config/eth-account-keyfile`
+* `config/keep-client-config.toml`
+* `persistence/`
 
-*Individual participant directory structure:*
-```
-.
-├── config
-│   ├── eth-account-keyfile
-│   └── keep-client-config.toml
-└── persistence
-```
 
 == Scripts
 
 There are 3 scripts that make up preparing deployment bundles:
 
-* `fetch-contract-data.js`:: Grabs the latest contract data for `KeepToken` and `TokenStaking`. These are used in the `stake-accounts.js` script
-* `stake-accounts.js`:: Stakes each ETH account that is assigned to a participant.
-* `prepare-participant-bundles.js`:: Creates a `.tar.gz` bundle to be distributed to each participant.  The file is stored on the top level of the particpant directory.
+* `fetch-contract-data.js`::
+Grabs the latest contract data for `KeepToken` and `TokenStaking`. These are used in the `stake-accounts.js` script
+* `stake-accounts.js`::
+Stakes each ETH account that is assigned to a participant.
+* `prepare-participant-bundles.js`::
+Creates a `.tar.gz` bundle to be distributed to each participant.  The file is stored on the top level of the particpant directory.
 
 === Dependencies
 
