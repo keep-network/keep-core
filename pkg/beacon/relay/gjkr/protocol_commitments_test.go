@@ -148,13 +148,6 @@ func TestSharesAndCommitmentsCalculationAndVerification(t *testing.T) {
 			},
 			expectedAccusedIDs: []group.MemberIndex{member2.ID},
 		},
-		"no commitments at all": {
-			modifyCommitmentsMessage: func(messages map[group.MemberIndex]*MemberCommitmentsMessage) {
-				message := messages[member1.ID]
-				message.commitments = []*bn256.G1{}
-			},
-			expectedAccusedIDs: []group.MemberIndex{member1.ID},
-		},
 	}
 
 	for testName, test := range tests {

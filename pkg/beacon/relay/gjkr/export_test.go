@@ -6,11 +6,26 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+func (epkm *EphemeralPublicKeyMessage) RemovePublicKey(
+	memberIndex group.MemberIndex,
+) {
+	delete(epkm.ephemeralPublicKeys, memberIndex)
+}
+
 func (mcm *MemberCommitmentsMessage) SetCommitment(
 	index int,
 	commitment *bn256.G1,
 ) {
 	mcm.commitments[index] = commitment
+}
+
+func (mcm *MemberCommitmentsMessage) RemoveCommitment(
+	index int,
+) {
+	mcm.commitments = append(
+		mcm.commitments[:index],
+		mcm.commitments[index+1:]...,
+	)
 }
 
 func (psm *PeerSharesMessage) SetShares(
@@ -21,6 +36,10 @@ func (psm *PeerSharesMessage) SetShares(
 		encryptedShareS: encryptedShareS,
 		encryptedShareT: encryptedShareT,
 	}
+}
+
+func (psm *PeerSharesMessage) RemoveShares(memberIndex group.MemberIndex) {
+	delete(psm.shares, memberIndex)
 }
 
 func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKey(
@@ -35,6 +54,22 @@ func (mpkspm *MemberPublicKeySharePointsMessage) SetPublicKeyShare(
 	publicKeyShare *bn256.G2,
 ) {
 	mpkspm.publicKeySharePoints[index] = publicKeyShare
+}
+
+func (mpkspm *MemberPublicKeySharePointsMessage) RemovePublicKeyShare(
+	index int,
+) {
+	mpkspm.publicKeySharePoints = append(
+		mpkspm.publicKeySharePoints[:index],
+		mpkspm.publicKeySharePoints[index+1:]...,
+	)
+}
+
+func (pam *PointsAccusationsMessage) SetAccusedMemberKey(
+	memberIndex group.MemberIndex,
+	privateKey *ephemeral.PrivateKey,
+) {
+	pam.accusedMembersKeys[memberIndex] = privateKey
 }
 
 func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
