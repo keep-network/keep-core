@@ -25,7 +25,7 @@ module "helm_provider_helper" {
 }
 
 provider "helm" {
-  version = "<= 0.7.0"
+  version = "<= 0.10.2"
 
   kubernetes {
     host                   = "https://${var.gke_cluster["master_private_endpoint"]}"

@@ -169,7 +169,6 @@ jobs:
           command: |
             cd /tmp/keep-client/contracts
             gsutil -m cp * gs://$GOOGLE_PROJECT_NAME-contract-data/keep-core
-
   generate_docs_tex:
     docker:
       - image: keepnetwork/texlive:3
