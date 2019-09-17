@@ -51,11 +51,11 @@ Files/Directories the bundling script expects to be on this level:
 
 There are 3 scripts that make up preparing deployment bundles:
 
-* `fetch-contract-data.js`::
+`fetch-contract-data.js`::
 Grabs the latest contract data for `KeepToken` and `TokenStaking`. These are used in the `stake-accounts.js` script
-* `stake-accounts.js`::
+`stake-accounts.js`::
 Stakes each ETH account that is assigned to a participant.
-* `prepare-participant-bundles.js`::
+`prepare-participant-bundles.js`::
 Creates a `.tar.gz` bundle to be distributed to each participant.  The file is stored on the top level of the particpant directory.
 
 === Dependencies
