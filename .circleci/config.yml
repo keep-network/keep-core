@@ -63,8 +63,8 @@ jobs:
       - run:
           name: Run Docker build
           command: |
-            docker build --build-arg GITHUBTOKEN=$GITHUBTOKEN --target gobuild -t go-build-env .
-            docker build --build-arg GITHUBTOKEN=$GITHUBTOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client .
+            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN --target gobuild -t go-build-env .
+            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client .
       - run:
           name: Run Go tests
           command: |
