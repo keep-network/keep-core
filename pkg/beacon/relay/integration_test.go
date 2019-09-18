@@ -118,8 +118,8 @@ func runTest(t *testing.T, groupSize, honestThreshold, honestSignersCount int) (
 		return msg
 	}
 
-	seed := dkgtest.RandomSeed(t)
-	dkgResult, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	dkgSeed := dkgtest.RandomSeed(t)
+	dkgResult, err := dkgtest.RunTest(groupSize, honestThreshold, dkgSeed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
