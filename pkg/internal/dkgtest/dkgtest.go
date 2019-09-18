@@ -33,6 +33,13 @@ type Result struct {
 	memberFailures      []error
 }
 
+// GetSigners returns all signers created from DKG protocol execution.
+// If no signers were created because of protocol failures, empty slice
+// is returned.
+func (r *Result) GetSigners() []*dkg.ThresholdSigner {
+	return r.signers
+}
+
 // RandomSeed generates a random DKG seed value. It is important to do not
 // reuse the same seed value between integration tests run in parallel.
 // Broadcast channel name contains a seed to avoid mixing up channel messages

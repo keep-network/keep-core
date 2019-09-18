@@ -1,6 +1,5 @@
-/*
-  Integration tests for the full DKG affecting result publication parts.
-*/
+// Package result_test contains integration tests for the full roundtrip of
+// result-publication-specific parts of DKG.
 package result_test
 
 import (

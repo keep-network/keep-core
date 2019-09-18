@@ -28,6 +28,10 @@ RUN mkdir -p $APP_DIR
 
 WORKDIR $APP_DIR
 
+# Configure GitHub token to be able to get private repositories.
+ARG GITHUBTOKEN
+RUN git config --global url."https://$GITHUBTOKEN:@github.com/".insteadOf "https://github.com/"
+
 RUN go get -u github.com/golang/dep/cmd/dep
 
 COPY ./Gopkg.toml ./Gopkg.lock ./
