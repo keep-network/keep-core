@@ -243,7 +243,7 @@ contract KeepRandomBeaconOperator {
         }
 
         // Invalid tickets are rejected and their senders penalized.
-        if (!ticketCheck(msg.sender, ticketValue, stakerValue, virtualStakerIndex)) {
+        if (!isTicketValid(msg.sender, ticketValue, stakerValue, virtualStakerIndex)) {
             // TODO: replace with a secure authorization protocol (addressed in RFC 4).
             stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
         } else {
@@ -337,7 +337,7 @@ contract KeepRandomBeaconOperator {
      * @param stakerValue Staker-specific value. Currently uint representation of staker address.
      * @param virtualStakerIndex Number within a range of 1 to staker's weight.
      */
-    function ticketCheck(
+    function isTicketValid(
         address staker,
         uint256 ticketValue,
         uint256 stakerValue,

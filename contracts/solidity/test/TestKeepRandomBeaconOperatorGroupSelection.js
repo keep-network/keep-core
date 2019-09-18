@@ -101,19 +101,19 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
   it("should be able to verify a ticket", async function() {
     await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
 
-    assert.isTrue(await operatorContract.ticketCheck(
+    assert.isTrue(await operatorContract.isTicketValid(
       operator1, tickets1[0].value, operator1, tickets1[0].virtualStakerIndex
     ), "Should be able to verify a valid ticket.");
     
-    assert.isFalse(await operatorContract.ticketCheck(
+    assert.isFalse(await operatorContract.isTicketValid(
       operator1, 0, operator2, tickets1[0].virtualStakerIndex
     ), "Should fail verifying invalid ticket due to invalid ticket value");
     
-    assert.isFalse(await operatorContract.ticketCheck(
+    assert.isFalse(await operatorContract.isTicketValid(
       operator1, tickets1[0].value, operator2, tickets1[0].virtualStakerIndex
       ), "Should fail verifying invalid ticket due to invalid stake value");
       
-    assert.isFalse(await operatorContract.ticketCheck(
+    assert.isFalse(await operatorContract.isTicketValid(
       operator1, tickets1[0].value, operator1, 2
     ), "Should fail verifying invalid ticket due to invalid virtual staker index");
 
