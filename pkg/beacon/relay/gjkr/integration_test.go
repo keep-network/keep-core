@@ -4,7 +4,6 @@
 package gjkr_test
 
 import (
-	"crypto/rand"
 	"math/big"
 	"testing"
 
@@ -487,7 +486,8 @@ func TestExecute_DQ_member4_falseAccusation_phase5(t *testing.T) {
 
 	manInTheMiddle, err := newManInTheMiddle(
 		group.MemberIndex(4), // sender
-		group.MemberIndex(1), // receiver
+		groupSize,
+		honestThreshold,
 		seed,
 	)
 	if err != nil {
@@ -499,12 +499,14 @@ func TestExecute_DQ_member4_falseAccusation_phase5(t *testing.T) {
 
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
 		// Accuser performs false accusation against the accused member
-		// using the ephemeral private key generated before.
+		// using the ephemeral private key generated before. We replace
+		// the whole accusedMemberKeys because the real member covered by
+		// the MiM performs their own accusations.
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(4) {
-			accusationsMessage.SetAccusedMemberKey(
-				group.MemberIndex(1),
-				manInTheMiddle.ephemeralKeyPair.PrivateKey,
-			)
+			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
+			accusedMembersKeys[group.MemberIndex(1)] =
+				manInTheMiddle.ephemeralKeyPairs[group.MemberIndex(1)].PrivateKey
+			accusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
 			return accusationsMessage
 		}
 
@@ -742,74 +744,100 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 }
 
 // manInTheMiddle is a helper tool allowing to easily intercept communication
-// between two group members for the first three phases of DKG protocol and to
-// set up symmetric key, member shares, and commitments that can be later
-// accessed in test.
+// of a chosen member with the rest of the members, for the first three phases
+// of DKG protocol and to set up symmetric keys, member shares, and commitments
+// that can be later accessed in test.
 //
-// In a test not using manInTheMiddle we don't have an access to symmetric key
-// established between two group members. Knowledge of that symmetric key
-// is required to test some scenarios.
+// In a test not using manInTheMiddle we don't have an access to symmetric keys
+// of a chosen member established with the rest of the members. Knowledge of
+// these symmetric keys is required to test some scenarios.
 type manInTheMiddle struct {
 	senderIndex   group.MemberIndex
 	receiverIndex group.MemberIndex
 
 	seed *big.Int
 
-	ephemeralKeyPair *ephemeral.KeyPair
-	symmetricKey     *ephemeral.SymmetricEcdhKey
+	ephemeralKeyPairs map[group.MemberIndex]*ephemeral.KeyPair
+	symmetricKeys     map[group.MemberIndex]*ephemeral.SymmetricEcdhKey
 
-	shareS *big.Int
-	shareT *big.Int
+	sharesS     map[group.MemberIndex]*big.Int
+	sharesT     map[group.MemberIndex]*big.Int
+	commitments []*bn256.G1
 }
 
 // newManInTheMiddle creates a new instance of manInTheMiddle tool.
 // It will intercept messages sent from the sender with the given index and
-// modify the part of the message intended for the receiver with the given
-// index. It will intercept the symmetric key handshake as well as generate
+// modify the part of the message intended for the rest of the members.
+// It will intercept the symmetric key handshake as well as generate
 // peer shares and commitments based on the established symmetric key.
 func newManInTheMiddle(
 	senderIndex group.MemberIndex,
-	receiverIndex group.MemberIndex,
+	groupSize, honestThreshold int,
 	seed *big.Int,
 ) (*manInTheMiddle, error) {
-	// ephemeral key pair - we'll create symmetric key between
-	// sender and receiver using this key pair in phase 1 and 2
-	// of the protocol
-	keyPair, err := ephemeral.GenerateKeyPair()
-	if err != nil {
-		return nil, err
+	ephemeralKeyPairs := make(map[group.MemberIndex]*ephemeral.KeyPair, groupSize-1)
+	sharesS := make(map[group.MemberIndex]*big.Int, groupSize-1)
+	sharesT := make(map[group.MemberIndex]*big.Int, groupSize-1)
+
+	dishonestThreshold := groupSize - honestThreshold
+	coefficientsA, _ := gjkr.GeneratePolynomial(dishonestThreshold)
+	coefficientsB, _ := gjkr.GeneratePolynomial(dishonestThreshold)
+
+	for i := 1; i <= groupSize; i++ {
+		receiverIndex := group.MemberIndex(i)
+		if receiverIndex == senderIndex {
+			continue
+		}
+
+		// ephemeral key pair - we'll create symmetric key between
+		// sender and receiver using this key pair in phase 1 and 2
+		// of the protocol
+		keyPair, err := ephemeral.GenerateKeyPair()
+		if err != nil {
+			return nil, err
+		}
+		ephemeralKeyPairs[receiverIndex] = keyPair
+
+		// shares used in the third phase of the protocol
+		// those shares will be encrypted with the symmetric key and
+		// used as shares of sender generated for the receiver
+		sharesS[receiverIndex] = gjkr.EvaluateMemberShare(receiverIndex, coefficientsA)
+		sharesT[receiverIndex] = gjkr.EvaluateMemberShare(receiverIndex, coefficientsB)
 	}
 
-	// shares used in the third phase of the protocol
-	// those shares will be encrypted with the symmetric key and
-	// used as shares of sender generated for the receiver
-	shareS, err := rand.Int(rand.Reader, big.NewInt(100000))
-	if err != nil {
-		return nil, err
-	}
-	shareT, err := rand.Int(rand.Reader, big.NewInt(100000))
-	if err != nil {
-		return nil, err
+	// commitments to the coefficients of the generated polynomial used
+	// to evaluate shares for all of the receivers
+	// those commitments will be used to alter the MemberCommitmentsMessage
+	// sent by original sender
+	commitments := make([]*bn256.G1, len(coefficientsA))
+	H := altbn128.G1HashToPoint(seed.Bytes())
+	for k := range commitments {
+		// G * s + H * t
+		commitments[k] = new(bn256.G1).Add(
+			new(bn256.G1).ScalarBaseMult(coefficientsA[k]),
+			new(bn256.G1).ScalarMult(H, coefficientsB[k]),
+		)
 	}
 
 	return &manInTheMiddle{
-		senderIndex:   senderIndex,
-		receiverIndex: receiverIndex,
-		seed:          seed,
+		senderIndex: senderIndex,
+		seed:        seed,
 
-		ephemeralKeyPair: keyPair,
+		ephemeralKeyPairs: ephemeralKeyPairs,
+		symmetricKeys:     make(map[group.MemberIndex]*ephemeral.SymmetricEcdhKey),
 
-		shareS: shareS,
-		shareT: shareT,
+		sharesS:     sharesS,
+		sharesT:     sharesT,
+		commitments: commitments,
 	}, nil
 }
 
 // interceptCommunication intercepts the first three phases of DKG protocol
-// to set up symmetric key between sender and receiver such that it can be later
-// accessed and used in test.
+// to set up symmetric keys between a chosen sender and the rest of the members
+// such that it can be later accessed and used in test.
 // It also intercepts commitments and peer shares messages and modify the
 // original values, replacing them with new ones generated based on the
-// established (intercepted) symmetric key.
+// established (intercepted) symmetric keys.
 func (mitm *manInTheMiddle) interceptCommunication(
 	msg net.TaggedMarshaler,
 ) net.TaggedMarshaler {
@@ -817,25 +845,27 @@ func (mitm *manInTheMiddle) interceptCommunication(
 	publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
 	// Act 1:
 	// Original sender broadcasts EphemeralPublicKeyMessage.
-	// We intercept that message and replace the public key generated for the
-	// given receiver with public key generated earlier by the man in the middle.
-	if ok && publicKeyMessage.SenderID() == group.MemberIndex(mitm.senderIndex) {
-		publicKeyMessage.SetPublicKey(
-			mitm.receiverIndex,
-			mitm.ephemeralKeyPair.PublicKey,
-		)
+	// We intercept that message and replace the public key generated for
+	// each receiver with public key generated earlier by the man in the middle.
+	if ok && publicKeyMessage.SenderID() == mitm.senderIndex {
+		for receiverIndex, ephemeralKeyPair := range mitm.ephemeralKeyPairs {
+			publicKeyMessage.SetPublicKey(
+				receiverIndex,
+				ephemeralKeyPair.PublicKey,
+			)
+		}
 		return publicKeyMessage
 	}
 	// Act 2:
-	// The receiver we are intercepting the communication with generated and
-	// broadcast ephemeral public keys. We follow the protocol and
-	// perform ECDH against receiver's public key generated for the sake of
-	// communication with our sender and private ephemeral key generated
-	// earlier by the man in the middle.
-	if ok && publicKeyMessage.SenderID() == group.MemberIndex(mitm.receiverIndex) {
-		mitm.symmetricKey = mitm.ephemeralKeyPair.PrivateKey.Ecdh(
-			publicKeyMessage.GetPublicKey(group.MemberIndex(mitm.senderIndex)),
-		)
+	// The rest of the members generated and broadcast ephemeral public keys.
+	// We follow the protocol and perform ECDH against given member's public
+	// key generated for the sake of communication with our sender and private
+	// ephemeral key generated earlier by the man in the middle.
+	if ok && publicKeyMessage.SenderID() != mitm.senderIndex {
+		mitm.symmetricKeys[publicKeyMessage.SenderID()] =
+			mitm.ephemeralKeyPairs[publicKeyMessage.SenderID()].PrivateKey.Ecdh(
+				publicKeyMessage.GetPublicKey(mitm.senderIndex),
+			)
 		return publicKeyMessage
 	}
 
@@ -843,31 +873,27 @@ func (mitm *manInTheMiddle) interceptCommunication(
 	// Original sender broadcasts PeerSharesMessage and MemberCommitmentsMessage.
 	// We intercept those messages and replace shares and commitments with the
 	// ones generated by man-in-the-middle.
-	// We do that because the receiver established symmetric key with the
+	// We do that because each receiver established symmetric key with the
 	// man-in-the-middle and not with the original sender. Thus, we need to
 	// encrypt shares using that symmetric key and regenerate commitments
 	// to match the shares.
 	peerSharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
-	if ok && peerSharesMessage.SenderID() == group.MemberIndex(mitm.senderIndex) {
-		peerSharesMessage.AddShares(
-			mitm.receiverIndex,
-			mitm.shareS,
-			mitm.shareT,
-			mitm.symmetricKey,
-		)
+	if ok && peerSharesMessage.SenderID() == mitm.senderIndex {
+		for receiverIndex, shareS := range mitm.sharesS {
+			peerSharesMessage.AddShares(
+				receiverIndex,
+				shareS,
+				mitm.sharesT[receiverIndex],
+				mitm.symmetricKeys[receiverIndex],
+			)
+		}
 		return peerSharesMessage
 	}
 	commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
-	if ok && commitmentsMessage.SenderID() == group.MemberIndex(mitm.senderIndex) {
-		H := altbn128.G1HashToPoint(mitm.seed.Bytes())
-		// G * s + H * t
-		commitment := new(bn256.G1).Add(
-			new(bn256.G1).ScalarBaseMult(mitm.shareS),
-			new(bn256.G1).ScalarMult(H, mitm.shareT),
-		)
-
-		commitmentsMessage.SetCommitment(int(mitm.receiverIndex), commitment)
-
+	if ok && commitmentsMessage.SenderID() == mitm.senderIndex {
+		for i, commitment := range mitm.commitments {
+			commitmentsMessage.SetCommitment(i, commitment)
+		}
 		return commitmentsMessage
 	}
 

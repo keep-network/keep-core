@@ -73,6 +73,12 @@ func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKey(
 	ssam.accusedMembersKeys[memberIndex] = privateKey
 }
 
+func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKeys(
+	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey,
+) {
+	ssam.accusedMembersKeys = accusedMembersKeys
+}
+
 func (mpkspm *MemberPublicKeySharePointsMessage) SetPublicKeyShare(
 	index int,
 	publicKeyShare *bn256.G2,
@@ -101,4 +107,18 @@ func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
 	privateKey *ephemeral.PrivateKey,
 ) {
 	dekm.privateKeys[memberIndex] = privateKey
+}
+
+func GeneratePolynomial(degree int) ([]*big.Int, error) {
+	return generatePolynomial(degree)
+}
+
+func EvaluateMemberShare(
+	memberID group.MemberIndex,
+	coefficients []*big.Int,
+) *big.Int {
+	// evaluateMemberShare method is stateless so we use it via
+	// a fake CommittingMember in order to avoid code duplication
+	cm := &CommittingMember{}
+	return cm.evaluateMemberShare(memberID, coefficients)
 }
