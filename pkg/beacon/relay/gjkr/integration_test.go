@@ -22,7 +22,7 @@ func TestExecute_HappyPath(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(1)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		return msg
@@ -47,7 +47,7 @@ func TestExecute_IA_member1_phase1(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(2)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
@@ -79,7 +79,7 @@ func TestExecute_IA_members12_phase3(t *testing.T) {
 
 	groupSize := 7
 	honestThreshold := 4
-	seed := big.NewInt(3)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		// drop commitment message from member 1
@@ -118,7 +118,7 @@ func TestExecute_IA_member1_phase4(t *testing.T) {
 
 	groupSize := 3
 	honestThreshold := 2
-	seed := big.NewInt(4)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
@@ -150,7 +150,7 @@ func TestExecute_IA_member1_phase7(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(5)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		sharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
@@ -182,7 +182,7 @@ func TestExecute_IA_member1_phase8(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(6)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		accusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
@@ -214,7 +214,7 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(7)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
@@ -250,7 +250,7 @@ func TestExecute_DQ_member1_invalidMessage_phase2(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(8)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
@@ -286,7 +286,7 @@ func TestExecute_DQ_member5_invalidCommitmentsMessage_phase4(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(9)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
@@ -322,7 +322,7 @@ func TestExecute_DQ_member4_invalidSharesMessage_phase4(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(10)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
@@ -359,7 +359,7 @@ func TestExecute_DQ_member3_revealsWrongPrivateKey_phase5(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(11)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
@@ -403,7 +403,7 @@ func TestExecute_DQ_member2_cannotDecryptTheirShares_phase5(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(12)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
@@ -444,7 +444,7 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(13)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
@@ -483,7 +483,7 @@ func TestExecute_DQ_member4_falseAccusation_phase5(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(14)
+	seed := dkgtest.RandomSeed(t)
 
 	manInTheMiddle, err := newManInTheMiddle(
 		group.MemberIndex(4), // sender
@@ -542,7 +542,7 @@ func TestExecute_DQ_member2_invalidMessage_phase8(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(15)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		sharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
@@ -579,7 +579,7 @@ func TestExecute_DQ_members25_revealWrongPrivateKey_phase9(t *testing.T) {
 
 	groupSize := 7
 	honestThreshold := 4
-	seed := big.NewInt(16)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		accusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
@@ -633,7 +633,7 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(17)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		publicKeyShareMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
@@ -709,7 +709,7 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
-	seed := big.NewInt(18)
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)

@@ -4,9 +4,12 @@ package dkgtest
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"math"
 	"math/big"
 	"sync"
+	"testing"
 	"time"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -28,6 +31,18 @@ type Result struct {
 	dkgResultSignatures map[group.MemberIndex][]byte
 	signers             []*dkg.ThresholdSigner
 	memberFailures      []error
+}
+
+// RandomSeed generates a random DKG seed value. It is important to do not
+// reuse the same seed value between integration tests run in parallel.
+// Broadcast channel name contains a seed to avoid mixing up channel messages
+// between two or more tests executed in parallel.
+func RandomSeed(t *testing.T) *big.Int {
+	seed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return seed
 }
 
 // RunTest executes the full DKG roundrip test for the provided group size,
