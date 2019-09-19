@@ -4,6 +4,7 @@ package gjkr_test
 
 import (
 	"math/big"
+	"sync"
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -969,13 +970,19 @@ type manInTheMiddle struct {
 
 	seed *big.Int
 
+	// phase 1
 	ephemeralKeyPairs map[group.MemberIndex]*ephemeral.KeyPair
-	symmetricKeys     map[group.MemberIndex]*ephemeral.SymmetricEcdhKey
 
+	// phase 2
+	symmetricKeys      map[group.MemberIndex]*ephemeral.SymmetricEcdhKey
+	symmetricKeysMutex sync.Mutex
+
+	// phase 3
 	sharesS     map[group.MemberIndex]*big.Int
 	sharesT     map[group.MemberIndex]*big.Int
 	commitments []*bn256.G1
 
+	// phase 7
 	publicKeySharePoints []*bn256.G2
 }
 
@@ -1044,7 +1051,9 @@ func newManInTheMiddle(
 		seed:        seed,
 
 		ephemeralKeyPairs: ephemeralKeyPairs,
-		symmetricKeys:     make(map[group.MemberIndex]*ephemeral.SymmetricEcdhKey),
+
+		symmetricKeys:      make(map[group.MemberIndex]*ephemeral.SymmetricEcdhKey),
+		symmetricKeysMutex: sync.Mutex{},
 
 		sharesS:     sharesS,
 		sharesT:     sharesT,
@@ -1083,10 +1092,15 @@ func (mitm *manInTheMiddle) interceptCommunication(
 	// key generated for the sake of communication with our sender and private
 	// ephemeral key generated earlier by the man in the middle.
 	if ok && publicKeyMessage.SenderID() != mitm.senderIndex {
-		mitm.symmetricKeys[publicKeyMessage.SenderID()] =
-			mitm.ephemeralKeyPairs[publicKeyMessage.SenderID()].PrivateKey.Ecdh(
-				publicKeyMessage.GetPublicKey(mitm.senderIndex),
-			)
+		keyPair := mitm.ephemeralKeyPairs[publicKeyMessage.SenderID()]
+		symmetricKey := keyPair.PrivateKey.Ecdh(
+			publicKeyMessage.GetPublicKey(mitm.senderIndex),
+		)
+
+		mitm.symmetricKeysMutex.Lock()
+		mitm.symmetricKeys[publicKeyMessage.SenderID()] = symmetricKey
+		mitm.symmetricKeysMutex.Unlock()
+
 		return publicKeyMessage
 	}
 
