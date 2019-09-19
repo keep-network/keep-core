@@ -559,9 +559,9 @@ func TestExecute_DQ_member2_accusesInactiveMember_phase5(t *testing.T) {
 
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
 		// Accuser performs accusation against the inactive accused member
-		// using the ephemeral private key generated before. We replace
-		// the whole accusedMemberKeys because the real member covered by
-		// the MiM performs their own accusations.
+		// using the ephemeral private key generated before.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 2.
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(2) {
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusedMembersKeys[group.MemberIndex(1)] =
@@ -751,9 +751,8 @@ func TestExecute_DQ_member4_falseAccusation_phase9(t *testing.T) {
 		manInTheMiddle.interceptCommunication(msg)
 
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
-		// We clear the whole accusedMemberKeys in phase 4 because the real
-		// member covered by the MiM performs their own accusations and we
-		// should bypass them.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 4 and clears up all accusations
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(4) {
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
@@ -762,9 +761,9 @@ func TestExecute_DQ_member4_falseAccusation_phase9(t *testing.T) {
 
 		pointsAccusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
 		// Accuser performs false accusation against the accused member
-		// using the ephemeral private key generated before. We replace
-		// the whole accusedMemberKeys because the real member covered by
-		// the MiM performs their own accusations.
+		// using the ephemeral private key generated before.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 4.
 		if ok && pointsAccusationsMessage.SenderID() == group.MemberIndex(4) {
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusedMembersKeys[group.MemberIndex(1)] =
@@ -822,9 +821,8 @@ func TestExecute_DQ_member2_accusesInactiveMember_phase9(t *testing.T) {
 		}
 
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
-		// We clear the whole accusedMemberKeys in phase 4 because the real
-		// member covered by the MiM performs their own accusations and we
-		// should bypass them.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 2.
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(2) {
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
@@ -833,9 +831,9 @@ func TestExecute_DQ_member2_accusesInactiveMember_phase9(t *testing.T) {
 
 		pointsAccusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
 		// Accuser performs accusation against the inactive accused member
-		// using the ephemeral private key generated before. We replace
-		// the whole accusedMemberKeys because the real member covered by
-		// the MiM performs their own accusations.
+		// using the ephemeral private key generated before.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 2.
 		if ok && pointsAccusationsMessage.SenderID() == group.MemberIndex(2) {
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusedMembersKeys[group.MemberIndex(1)] =
@@ -889,8 +887,8 @@ func TestExecute_DQ_members12_cannotDecryptTheirShares_phase9(t *testing.T) {
 		manInTheMiddle.interceptCommunication(msg)
 
 		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
-		// Accused member actually misbehaves by sending shares which
-		// cannot be decrypted by the accuser.
+		// Accused member misbehaves by sending shares which cannot be
+		// decrypted by the accuser.
 		if ok && sharesMessage.SenderID() == group.MemberIndex(2) {
 			sharesMessage.SetShares(
 				1,
@@ -901,9 +899,8 @@ func TestExecute_DQ_members12_cannotDecryptTheirShares_phase9(t *testing.T) {
 		}
 
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
-		// We clear the whole accusedMemberKeys in phase 4 because the real
-		// member covered by the MiM performs their own accusations and we
-		// should bypass them.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 1.
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(1) {
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
@@ -912,9 +909,9 @@ func TestExecute_DQ_members12_cannotDecryptTheirShares_phase9(t *testing.T) {
 
 		pointsAccusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
 		// Accuser performs accusation against the accused member only in
-		// phase 8 using the ephemeral private key generated before. We replace
-		// the whole accusedMemberKeys because the real member covered by
-		// the MiM performs their own accusations.
+		// phase 8 using the ephemeral private key generated before.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 1.
 		if ok && pointsAccusationsMessage.SenderID() == group.MemberIndex(1) {
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusedMembersKeys[group.MemberIndex(2)] =
@@ -955,8 +952,8 @@ func TestExecute_DQ_member2_notRevealedDisqualifiedMember_phase11(t *testing.T) 
 	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-		// Member 1 actually misbehaves by sending an accusation with wrong
-		// private key. As result, they should be disqualified by other members.
+		// Member 1 misbehaves by sending an accusation with wrong private key.
+		// As result, they should be disqualified by other members.
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(1) {
 			randomKeyPair, _ := ephemeral.GenerateKeyPair()
@@ -1051,7 +1048,7 @@ func TestExecute_DQ_member5_revealsWrongPrivateKey_phase11(t *testing.T) {
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 
-		// Member 4 actually misbehaves by sending invalid public key shares.
+		// Member 4 misbehaves by sending invalid public key shares.
 		// As result it become disqualified in phase 9.
 		publicKeyShareMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
 		if ok && publicKeyShareMessage.SenderID() == group.MemberIndex(4) {
@@ -1123,9 +1120,8 @@ func TestExecute_DQ_member2_revealsInactiveMember_phase11(t *testing.T) {
 		}
 
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
-		// We clear the whole accusedMemberKeys in phase 4 because the real
-		// member covered by the MiM performs their own accusations and we
-		// should bypass them.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 2.
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(2) {
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
@@ -1133,9 +1129,8 @@ func TestExecute_DQ_member2_revealsInactiveMember_phase11(t *testing.T) {
 		}
 
 		pointsAccusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
-		// We clear the whole accusedMemberKeys in phase 8 because the real
-		// member covered by the MiM performs their own accusations and we
-		// should bypass them.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 2.
 		if ok && pointsAccusationsMessage.SenderID() == group.MemberIndex(2) {
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			pointsAccusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
@@ -1144,9 +1139,9 @@ func TestExecute_DQ_member2_revealsInactiveMember_phase11(t *testing.T) {
 
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
 		// Revealing member reveals the inactive revealed member using the
-		// ephemeral private key generated before. We replace the whole
-		// privateKeys because the real member covered by the MiM may reveal
-		// their own private keys.
+		// ephemeral private key generated before.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 2.
 		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(2) {
 			privateKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			privateKeys[group.MemberIndex(1)] =
@@ -1202,8 +1197,8 @@ func TestExecute_DQ_members34_cannotDecryptTheirShares_phase11(t *testing.T) {
 		manInTheMiddle.interceptCommunication(msg)
 
 		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
-		// Revealed member actually misbehaves by sending shares which
-		// cannot be decrypted by the revealing member.
+		// Revealed member misbehaves by sending shares which cannot be
+		// decrypted by the revealing member.
 		if ok && sharesMessage.SenderID() == group.MemberIndex(4) {
 			sharesMessage.SetShares(
 				3,
@@ -1214,10 +1209,8 @@ func TestExecute_DQ_members34_cannotDecryptTheirShares_phase11(t *testing.T) {
 		}
 
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
-		// In order to achieve a successful revealed member disqualification,
-		// we must intercept the accusation made by the real member covered
-		// by the MiM and change the accused member private key to the one
-		// generated by the MiM.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 3.
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(3) {
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusedMembersKeys[group.MemberIndex(4)] =
@@ -1228,8 +1221,9 @@ func TestExecute_DQ_members34_cannotDecryptTheirShares_phase11(t *testing.T) {
 
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
 		// Revealing member perform reveal using the ephemeral private key
-		// generated before. We replace the whole privateKeys because the real
-		// member covered by the MiM may reveal their own private keys.
+		// generated before.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 3.
 		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(3) {
 			privateKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			privateKeys[group.MemberIndex(4)] =
