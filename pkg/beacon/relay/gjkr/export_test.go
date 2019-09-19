@@ -102,6 +102,12 @@ func (pam *PointsAccusationsMessage) SetAccusedMemberKey(
 	pam.accusedMembersKeys[memberIndex] = privateKey
 }
 
+func (pam *PointsAccusationsMessage) SetAccusedMemberKeys(
+	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey,
+) {
+	pam.accusedMembersKeys = accusedMembersKeys
+}
+
 func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
 	memberIndex group.MemberIndex,
 	privateKey *ephemeral.PrivateKey,
@@ -121,4 +127,11 @@ func EvaluateMemberShare(
 	// a fake CommittingMember in order to avoid code duplication
 	cm := &CommittingMember{}
 	return cm.evaluateMemberShare(memberID, coefficients)
+}
+
+func (ms *messageStorage) removeMessage(sender group.MemberIndex) {
+	ms.cacheLock.Lock()
+	defer ms.cacheLock.Unlock()
+
+	delete(ms.cache, sender)
 }
