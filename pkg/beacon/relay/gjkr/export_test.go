@@ -1,6 +1,8 @@
 package gjkr
 
 import (
+	"math/big"
+
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
@@ -11,6 +13,12 @@ func (epkm *EphemeralPublicKeyMessage) SetPublicKey(
 	publicKey *ephemeral.PublicKey,
 ) {
 	epkm.ephemeralPublicKeys[memberIndex] = publicKey
+}
+
+func (epkm *EphemeralPublicKeyMessage) GetPublicKey(
+	memberIndex group.MemberIndex,
+) *ephemeral.PublicKey {
+	return epkm.ephemeralPublicKeys[memberIndex]
 }
 
 func (epkm *EphemeralPublicKeyMessage) RemovePublicKey(
@@ -45,6 +53,15 @@ func (psm *PeerSharesMessage) SetShares(
 	}
 }
 
+func (psm *PeerSharesMessage) AddShares(
+	receiverID group.MemberIndex,
+	shareS *big.Int,
+	shareT *big.Int,
+	symmetricKey ephemeral.SymmetricKey,
+) error {
+	return psm.addShares(receiverID, shareS, shareT, symmetricKey)
+}
+
 func (psm *PeerSharesMessage) RemoveShares(memberIndex group.MemberIndex) {
 	delete(psm.shares, memberIndex)
 }
@@ -56,10 +73,10 @@ func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKey(
 	ssam.accusedMembersKeys[memberIndex] = privateKey
 }
 
-func (ssam *SecretSharesAccusationsMessage) RemoveAccusedMemberKey(
-	memberIndex group.MemberIndex,
+func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKeys(
+	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey,
 ) {
-	delete(ssam.accusedMembersKeys, memberIndex)
+	ssam.accusedMembersKeys = accusedMembersKeys
 }
 
 func (mpkspm *MemberPublicKeySharePointsMessage) SetPublicKeyShare(
@@ -96,4 +113,18 @@ func (dekm *DisqualifiedEphemeralKeysMessage) RemovePrivateKey(
 	memberIndex group.MemberIndex,
 ) {
 	delete(dekm.privateKeys, memberIndex)
+}
+
+func GeneratePolynomial(degree int) ([]*big.Int, error) {
+	return generatePolynomial(degree)
+}
+
+func EvaluateMemberShare(
+	memberID group.MemberIndex,
+	coefficients []*big.Int,
+) *big.Int {
+	// evaluateMemberShare method is stateless so we use it via
+	// a fake CommittingMember in order to avoid code duplication
+	cm := &CommittingMember{}
+	return cm.evaluateMemberShare(memberID, coefficients)
 }

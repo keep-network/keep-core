@@ -38,7 +38,10 @@ feel free.  This guide will assume you use the default paths.*
 
 === Unzip the bundle
 
-`tar -xvf keep-client-deployment-bundle.tar.gz`
+```
+mkdir keep-client-deployment-bundle
+tar -xvf keep-client-deployment-bundle.tar.gz -C keep-client-deployment-bundle
+```
 
 Resulting directory should look like:
 
