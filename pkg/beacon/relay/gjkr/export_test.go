@@ -140,3 +140,10 @@ func EvaluateMemberShare(
 	cm := &CommittingMember{}
 	return cm.evaluateMemberShare(memberID, coefficients)
 }
+
+func (ms *messageStorage) removeMessage(sender group.MemberIndex) {
+	ms.cacheLock.Lock()
+	defer ms.cacheLock.Unlock()
+
+	delete(ms.cache, sender)
+}

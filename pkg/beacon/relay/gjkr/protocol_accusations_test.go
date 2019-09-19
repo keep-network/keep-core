@@ -21,6 +21,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 	var tests = map[string]struct {
 		accuserID               group.MemberIndex // j
 		accusedID               group.MemberIndex // m
+		modifyEvidenceLog       func(evidenceLog evidenceLog) evidenceLog
 		modifyShareS            func(shareS *big.Int) *big.Int
 		modifyShareT            func(shareT *big.Int) *big.Int
 		modifyCommitments       func(commitments []*bn256.G1) []*bn256.G1
@@ -68,6 +69,14 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			},
 			expectedResult: []group.MemberIndex{4},
 		},
+		"no commitments - accused member is disqualified": {
+			accuserID: 3,
+			accusedID: 4,
+			modifyCommitments: func(commitments []*bn256.G1) []*bn256.G1 {
+				return []*bn256.G1{}
+			},
+			expectedResult: []group.MemberIndex{4},
+		},
 		"incorrect accused private key - accuser is disqualified": {
 			accuserID: 3,
 			accusedID: 4,
@@ -75,6 +84,52 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				return &ephemeral.PrivateKey{D: big.NewInt(12)}
 			},
 			expectedResult: []group.MemberIndex{3},
+		},
+		"inactive member as an accused (no EphemeralPublicKeyMessage sent) - " +
+			"accuser is disqualified": {
+			accuserID: 3,
+			accusedID: 5,
+			modifyEvidenceLog: func(evidenceLog evidenceLog) evidenceLog {
+				if dkgEvidenceLog, ok := evidenceLog.(*dkgEvidenceLog); ok {
+					dkgEvidenceLog.pubKeyMessageLog.removeMessage(
+						group.MemberIndex(5),
+					)
+					return dkgEvidenceLog
+				}
+				return evidenceLog
+			},
+			expectedResult: []group.MemberIndex{3},
+		},
+		"inactive member as an accused (no PeerSharesMessage sent) - " +
+			"accuser is disqualified": {
+			accuserID: 3,
+			accusedID: 5,
+			modifyEvidenceLog: func(evidenceLog evidenceLog) evidenceLog {
+				if dkgEvidenceLog, ok := evidenceLog.(*dkgEvidenceLog); ok {
+					dkgEvidenceLog.peerSharesMessageLog.removeMessage(
+						group.MemberIndex(5),
+					)
+					return dkgEvidenceLog
+				}
+				return evidenceLog
+			},
+			expectedResult: []group.MemberIndex{3},
+		},
+		"shares could not be decrypted - accused member is disqualified": {
+			accuserID: 3,
+			accusedID: 4,
+			modifyEvidenceLog: func(evidenceLog evidenceLog) evidenceLog {
+				if dkgEvidenceLog, ok := evidenceLog.(*dkgEvidenceLog); ok {
+					message := dkgEvidenceLog.peerSharesMessage(group.MemberIndex(4))
+					message.shares[group.MemberIndex(3)] = &peerShares{
+						[]byte{0x00},
+						[]byte{0x00},
+					}
+					return dkgEvidenceLog
+				}
+				return evidenceLog
+			},
+			expectedResult: []group.MemberIndex{4},
 		},
 	}
 	for testName, test := range tests {
@@ -124,6 +179,12 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				},
 			)
 
+			if test.modifyEvidenceLog != nil {
+				justifyingMember.evidenceLog = test.modifyEvidenceLog(
+					justifyingMember.evidenceLog,
+				)
+			}
+
 			// Generate SecretSharesAccusationsMessages
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusedMembersKeys[test.accusedID] = accuser.ephemeralKeyPairs[test.accusedID].PrivateKey
@@ -162,11 +223,13 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 	var tests = map[string]struct {
 		accuserID                  group.MemberIndex // j
 		accusedID                  group.MemberIndex // m
+		modifyEvidenceLog          func(evidenceLog evidenceLog) evidenceLog
 		modifyShareS               func(shareS *big.Int) *big.Int
 		modifyPublicKeySharePoints func(points []*bn256.G2) []*bn256.G2
+		modifyAccusedPrivateKey    func(symmetricKey *ephemeral.PrivateKey) *ephemeral.PrivateKey
 		expectedResult             []group.MemberIndex
 	}{
-		"false accusation - sender is disqualified": {
+		"false accusation - accuser is disqualified": {
 			accuserID:      3,
 			accusedID:      4,
 			expectedResult: []group.MemberIndex{3},
@@ -205,6 +268,60 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 				return []*bn256.G2{}
 			},
 			expectedResult: []group.MemberIndex{4},
+		},
+		"incorrect accused private key - accuser is disqualified": {
+			accuserID: 3,
+			accusedID: 4,
+			modifyAccusedPrivateKey: func(symmetricKey *ephemeral.PrivateKey) *ephemeral.PrivateKey {
+				return &ephemeral.PrivateKey{D: big.NewInt(12)}
+			},
+			expectedResult: []group.MemberIndex{3},
+		},
+		"inactive member as an accused (no EphemeralPublicKeyMessage sent) - " +
+			"accuser is disqualified": {
+			accuserID: 3,
+			accusedID: 5,
+			modifyEvidenceLog: func(evidenceLog evidenceLog) evidenceLog {
+				if dkgEvidenceLog, ok := evidenceLog.(*dkgEvidenceLog); ok {
+					dkgEvidenceLog.pubKeyMessageLog.removeMessage(
+						group.MemberIndex(5),
+					)
+					return dkgEvidenceLog
+				}
+				return evidenceLog
+			},
+			expectedResult: []group.MemberIndex{3},
+		},
+		"inactive member as an accused (no PeerSharesMessage sent) - " +
+			"accuser is disqualified": {
+			accuserID: 3,
+			accusedID: 5,
+			modifyEvidenceLog: func(evidenceLog evidenceLog) evidenceLog {
+				if dkgEvidenceLog, ok := evidenceLog.(*dkgEvidenceLog); ok {
+					dkgEvidenceLog.peerSharesMessageLog.removeMessage(
+						group.MemberIndex(5),
+					)
+					return dkgEvidenceLog
+				}
+				return evidenceLog
+			},
+			expectedResult: []group.MemberIndex{3},
+		},
+		"shares could not be decrypted - both are disqualified": {
+			accuserID: 3,
+			accusedID: 4,
+			modifyEvidenceLog: func(evidenceLog evidenceLog) evidenceLog {
+				if dkgEvidenceLog, ok := evidenceLog.(*dkgEvidenceLog); ok {
+					message := dkgEvidenceLog.peerSharesMessage(group.MemberIndex(4))
+					message.shares[group.MemberIndex(3)] = &peerShares{
+						[]byte{0x00},
+						[]byte{0x00},
+					}
+					return dkgEvidenceLog
+				}
+				return evidenceLog
+			},
+			expectedResult: []group.MemberIndex{3, 4},
 		},
 	}
 	for testName, test := range tests {
@@ -246,10 +363,18 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 				&PeerSharesMessage{test.accusedID, shares},
 			)
 
+			if test.modifyEvidenceLog != nil {
+				justifyingMember.evidenceLog = test.modifyEvidenceLog(
+					justifyingMember.evidenceLog,
+				)
+			}
+
 			// Generate PointsAccusationMessages
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusedMembersKeys[test.accusedID] = accuser.ephemeralKeyPairs[test.accusedID].PrivateKey
-
+			if test.modifyAccusedPrivateKey != nil {
+				accusedMembersKeys[test.accusedID] = test.modifyAccusedPrivateKey(accusedMembersKeys[test.accusedID])
+			}
 			var messages []*PointsAccusationsMessage
 			messages = append(messages, &PointsAccusationsMessage{
 				senderID:           test.accuserID,
