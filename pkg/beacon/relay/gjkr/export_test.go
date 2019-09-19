@@ -102,11 +102,23 @@ func (pam *PointsAccusationsMessage) SetAccusedMemberKey(
 	pam.accusedMembersKeys[memberIndex] = privateKey
 }
 
+func (pam *PointsAccusationsMessage) SetAccusedMemberKeys(
+	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey,
+) {
+	pam.accusedMembersKeys = accusedMembersKeys
+}
+
 func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
 	memberIndex group.MemberIndex,
 	privateKey *ephemeral.PrivateKey,
 ) {
 	dekm.privateKeys[memberIndex] = privateKey
+}
+
+func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKeys(
+	privateKeys map[group.MemberIndex]*ephemeral.PrivateKey,
+) {
+	dekm.privateKeys = privateKeys
 }
 
 func (dekm *DisqualifiedEphemeralKeysMessage) RemovePrivateKey(
