@@ -73,12 +73,6 @@ func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKey(
 	ssam.accusedMembersKeys[memberIndex] = privateKey
 }
 
-func (ssam *SecretSharesAccusationsMessage) RemoveAccusedMemberKey(
-	memberIndex group.MemberIndex,
-) {
-	delete(ssam.accusedMembersKeys, memberIndex)
-}
-
 func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKeys(
 	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey,
 ) {
@@ -106,6 +100,12 @@ func (pam *PointsAccusationsMessage) SetAccusedMemberKey(
 	privateKey *ephemeral.PrivateKey,
 ) {
 	pam.accusedMembersKeys[memberIndex] = privateKey
+}
+
+func (pam *PointsAccusationsMessage) SetAccusedMemberKeys(
+	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey,
+) {
+	pam.accusedMembersKeys = accusedMembersKeys
 }
 
 func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
