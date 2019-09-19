@@ -16,8 +16,9 @@ func TestExecute_IA_members24_phase13(t *testing.T) {
 
 	groupSize := 5
 	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		hashSignatureMessage, ok := msg.(*result.DKGResultHashSignatureMessage)
 		if ok && (hashSignatureMessage.SenderID() == group.MemberIndex(2) ||
 			hashSignatureMessage.SenderID() == group.MemberIndex(4)) {
@@ -27,7 +28,7 @@ func TestExecute_IA_members24_phase13(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, honestThreshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
