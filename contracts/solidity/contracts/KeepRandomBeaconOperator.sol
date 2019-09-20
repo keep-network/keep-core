@@ -136,7 +136,8 @@ contract KeepRandomBeaconOperator {
      * there are no groups on the operator contract.
      */
     function genesis() public payable {
-        require(msg.value >= tx.gasprice.mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
+        uint256 minGasPrice = 22*1e9; // (22 Gwei) Update if necessary to match average gas price at the time of deployment.
+        require(msg.value >= minGasPrice.mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
         require(numberOfGroups() == 0, "There can be no groups.");
         startGroupSelection(_genesisGroupSeed, msg.value);
     }
