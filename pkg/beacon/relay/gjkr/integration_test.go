@@ -400,8 +400,10 @@ func TestExecute_DQ_member3_revealsWrongPrivateKey_phase5(t *testing.T) {
 func TestExecute_DQ_member2_cannotDecryptTheirShares_phase5(t *testing.T) {
 	t.Parallel()
 
-	groupSize := 5
-	honestThreshold := 3
+	// Do not change groupSize and honestThreshold, such values are chosen
+	// intentionally to check the behavior on the minimum honest threshold.
+	groupSize := 3
+	honestThreshold := 2
 	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
@@ -425,13 +427,13 @@ func TestExecute_DQ_member2_cannotDecryptTheirShares_phase5(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
-	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3, 4, 5}...)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
 	dkgtest.AssertNoInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
-	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 4, 5}...)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3}...)
 }
 
 // Phase 5 test case - a member misbehaved by sending invalid commitment

@@ -29,7 +29,7 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 	firstMember.group.MarkMemberAsDisqualified(disqualifiedNotSharingMember)
 
 	// Simulate a case where member is disqualified in Phase 5.
-	delete(firstMember.receivedValidSharesS, disqualifiedNotSharingMember)
+	delete(firstMember.receivedQualifiedSharesS, disqualifiedNotSharingMember)
 
 	expectedDisqualifiedKeys := map[group.MemberIndex]*ephemeral.PrivateKey{
 		disqualifiedSharingMember1: firstMember.ephemeralKeyPairs[disqualifiedSharingMember1].PrivateKey,
@@ -206,7 +206,7 @@ func generateDisqualifiedMemberShares(
 
 		// Add current member own shareS received from disqualified member
 		disqualifiedMemberShares[disqualifiedMember.ID][currentMember.ID] =
-			currentMember.receivedValidSharesS[disqualifiedMember.ID]
+			currentMember.receivedQualifiedSharesS[disqualifiedMember.ID]
 	}
 	return disqualifiedMemberShares
 }
@@ -515,7 +515,7 @@ func disqualifyMembers(
 			if !contains(disqualifiedMembersIDs, m.ID) {
 				// collect all shares which this member received from disqualified
 				// member and store them in sharesReceivedFromDisqualifiedMember
-				for peerID, receivedShare := range m.receivedValidSharesS {
+				for peerID, receivedShare := range m.receivedQualifiedSharesS {
 					if peerID == disqualifiedMemberID {
 						sharesReceivedFromDisqualifiedMember[m.ID] = receivedShare
 						break
