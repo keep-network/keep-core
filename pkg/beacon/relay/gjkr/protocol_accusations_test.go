@@ -13,7 +13,7 @@ import (
 
 // TODO Add test with many messages from accusers and many accused in the message.
 func TestResolveSecretSharesAccusations(t *testing.T) {
-	threshold := 3
+	dishonestThreshold := 2
 	groupSize := 5
 
 	currentMemberID := group.MemberIndex(2) // i
@@ -21,6 +21,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 	var tests = map[string]struct {
 		accuserID               group.MemberIndex // j
 		accusedID               group.MemberIndex // m
+		modifyEvidenceLog       func(evidenceLog evidenceLog) evidenceLog
 		modifyShareS            func(shareS *big.Int) *big.Int
 		modifyShareT            func(shareT *big.Int) *big.Int
 		modifyCommitments       func(commitments []*bn256.G1) []*bn256.G1
@@ -68,6 +69,14 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			},
 			expectedResult: []group.MemberIndex{4},
 		},
+		"no commitments - accused member is disqualified": {
+			accuserID: 3,
+			accusedID: 4,
+			modifyCommitments: func(commitments []*bn256.G1) []*bn256.G1 {
+				return []*bn256.G1{}
+			},
+			expectedResult: []group.MemberIndex{4},
+		},
 		"incorrect accused private key - accuser is disqualified": {
 			accuserID: 3,
 			accusedID: 4,
@@ -76,11 +85,57 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			},
 			expectedResult: []group.MemberIndex{3},
 		},
+		"inactive member as an accused (no EphemeralPublicKeyMessage sent) - " +
+			"accuser is disqualified": {
+			accuserID: 3,
+			accusedID: 5,
+			modifyEvidenceLog: func(evidenceLog evidenceLog) evidenceLog {
+				if dkgEvidenceLog, ok := evidenceLog.(*dkgEvidenceLog); ok {
+					dkgEvidenceLog.pubKeyMessageLog.removeMessage(
+						group.MemberIndex(5),
+					)
+					return dkgEvidenceLog
+				}
+				return evidenceLog
+			},
+			expectedResult: []group.MemberIndex{3},
+		},
+		"inactive member as an accused (no PeerSharesMessage sent) - " +
+			"accuser is disqualified": {
+			accuserID: 3,
+			accusedID: 5,
+			modifyEvidenceLog: func(evidenceLog evidenceLog) evidenceLog {
+				if dkgEvidenceLog, ok := evidenceLog.(*dkgEvidenceLog); ok {
+					dkgEvidenceLog.peerSharesMessageLog.removeMessage(
+						group.MemberIndex(5),
+					)
+					return dkgEvidenceLog
+				}
+				return evidenceLog
+			},
+			expectedResult: []group.MemberIndex{3},
+		},
+		"shares could not be decrypted - accused member is disqualified": {
+			accuserID: 3,
+			accusedID: 4,
+			modifyEvidenceLog: func(evidenceLog evidenceLog) evidenceLog {
+				if dkgEvidenceLog, ok := evidenceLog.(*dkgEvidenceLog); ok {
+					message := dkgEvidenceLog.peerSharesMessage(group.MemberIndex(4))
+					message.shares[group.MemberIndex(3)] = &peerShares{
+						[]byte{0x00},
+						[]byte{0x00},
+					}
+					return dkgEvidenceLog
+				}
+				return evidenceLog
+			},
+			expectedResult: []group.MemberIndex{4},
+		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			members, err := initializeSharesJustifyingMemberGroup(
-				threshold,
+				dishonestThreshold,
 				groupSize,
 			)
 			if err != nil {
@@ -89,8 +144,8 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			justifyingMember := findSharesJustifyingMemberByID(members, currentMemberID)
 
 			accuser := findSharesJustifyingMemberByID(members, test.accuserID)
-			modifiedShareS := accuser.receivedValidSharesS[test.accusedID]
-			modifiedShareT := accuser.receivedValidSharesT[test.accusedID]
+			modifiedShareS := accuser.receivedQualifiedSharesS[test.accusedID]
+			modifiedShareT := accuser.receivedQualifiedSharesT[test.accusedID]
 
 			if test.modifyShareS != nil {
 				modifiedShareS = test.modifyShareS(modifiedShareS)
@@ -123,6 +178,12 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 					shares:   shares,
 				},
 			)
+
+			if test.modifyEvidenceLog != nil {
+				justifyingMember.evidenceLog = test.modifyEvidenceLog(
+					justifyingMember.evidenceLog,
+				)
+			}
 
 			// Generate SecretSharesAccusationsMessages
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
@@ -284,7 +345,7 @@ func TestRecoverShares(t *testing.T) {
 
 // TODO Add test with many messages from accusers and many accused in the message.
 func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
-	threshold := 3
+	dishonestThreshold := 2
 	groupSize := 5
 
 	currentMemberID := group.MemberIndex(2) // i
@@ -292,24 +353,21 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 	var tests = map[string]struct {
 		accuserID                  group.MemberIndex // j
 		accusedID                  group.MemberIndex // m
+		modifyEvidenceLog          func(evidenceLog evidenceLog) evidenceLog
 		modifyShareS               func(shareS *big.Int) *big.Int
 		modifyPublicKeySharePoints func(points []*bn256.G2) []*bn256.G2
+		modifyAccusedPrivateKey    func(symmetricKey *ephemeral.PrivateKey) *ephemeral.PrivateKey
 		expectedResult             []group.MemberIndex
 	}{
-		"false accusation - sender is disqualified": {
+		"false accusation - accuser is disqualified": {
 			accuserID:      3,
 			accusedID:      4,
 			expectedResult: []group.MemberIndex{3},
 		},
-		"current member as a sender - accusation skipped": {
-			accuserID:      currentMemberID,
-			accusedID:      3,
-			expectedResult: []group.MemberIndex{},
-		},
-		"current member as an accused - accusation skipped": {
+		"current member as an accused - accuser is disqualified": {
 			accuserID:      3,
 			accusedID:      currentMemberID,
-			expectedResult: []group.MemberIndex{},
+			expectedResult: []group.MemberIndex{3},
 		},
 		"incorrect shareS - accused member is disqualified": {
 			accuserID: 3,
@@ -341,11 +399,65 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			},
 			expectedResult: []group.MemberIndex{4},
 		},
+		"incorrect accused private key - accuser is disqualified": {
+			accuserID: 3,
+			accusedID: 4,
+			modifyAccusedPrivateKey: func(symmetricKey *ephemeral.PrivateKey) *ephemeral.PrivateKey {
+				return &ephemeral.PrivateKey{D: big.NewInt(12)}
+			},
+			expectedResult: []group.MemberIndex{3},
+		},
+		"inactive member as an accused (no EphemeralPublicKeyMessage sent) - " +
+			"accuser is disqualified": {
+			accuserID: 3,
+			accusedID: 5,
+			modifyEvidenceLog: func(evidenceLog evidenceLog) evidenceLog {
+				if dkgEvidenceLog, ok := evidenceLog.(*dkgEvidenceLog); ok {
+					dkgEvidenceLog.pubKeyMessageLog.removeMessage(
+						group.MemberIndex(5),
+					)
+					return dkgEvidenceLog
+				}
+				return evidenceLog
+			},
+			expectedResult: []group.MemberIndex{3},
+		},
+		"inactive member as an accused (no PeerSharesMessage sent) - " +
+			"accuser is disqualified": {
+			accuserID: 3,
+			accusedID: 5,
+			modifyEvidenceLog: func(evidenceLog evidenceLog) evidenceLog {
+				if dkgEvidenceLog, ok := evidenceLog.(*dkgEvidenceLog); ok {
+					dkgEvidenceLog.peerSharesMessageLog.removeMessage(
+						group.MemberIndex(5),
+					)
+					return dkgEvidenceLog
+				}
+				return evidenceLog
+			},
+			expectedResult: []group.MemberIndex{3},
+		},
+		"shares could not be decrypted - both are disqualified": {
+			accuserID: 3,
+			accusedID: 4,
+			modifyEvidenceLog: func(evidenceLog evidenceLog) evidenceLog {
+				if dkgEvidenceLog, ok := evidenceLog.(*dkgEvidenceLog); ok {
+					message := dkgEvidenceLog.peerSharesMessage(group.MemberIndex(4))
+					message.shares[group.MemberIndex(3)] = &peerShares{
+						[]byte{0x00},
+						[]byte{0x00},
+					}
+					return dkgEvidenceLog
+				}
+				return evidenceLog
+			},
+			expectedResult: []group.MemberIndex{3, 4},
+		},
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			members, err := initializePointsJustifyingMemberGroup(
-				threshold,
+				dishonestThreshold,
 				groupSize,
 			)
 			if err != nil {
@@ -354,7 +466,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			justifyingMember := findCoefficientsJustifyingMemberByID(members, currentMemberID)
 
 			accuser := findCoefficientsJustifyingMemberByID(members, test.accuserID)
-			modifiedShareS := accuser.receivedValidSharesS[test.accusedID]
+			modifiedShareS := accuser.receivedQualifiedSharesS[test.accusedID]
 			if test.modifyShareS != nil {
 				modifiedShareS = test.modifyShareS(modifiedShareS)
 			}
@@ -381,10 +493,18 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 				&PeerSharesMessage{test.accusedID, shares},
 			)
 
+			if test.modifyEvidenceLog != nil {
+				justifyingMember.evidenceLog = test.modifyEvidenceLog(
+					justifyingMember.evidenceLog,
+				)
+			}
+
 			// Generate PointsAccusationMessages
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusedMembersKeys[test.accusedID] = accuser.ephemeralKeyPairs[test.accusedID].PrivateKey
-
+			if test.modifyAccusedPrivateKey != nil {
+				accusedMembersKeys[test.accusedID] = test.modifyAccusedPrivateKey(accusedMembersKeys[test.accusedID])
+			}
 			var messages []*PointsAccusationsMessage
 			messages = append(messages, &PointsAccusationsMessage{
 				senderID:           test.accuserID,
@@ -434,12 +554,12 @@ func findCoefficientsJustifyingMemberByID(
 // It generates coefficients for each group member, calculates commitments and
 // shares for each peer member individually. At the end it stores values for each
 // member just like they would be received from peers.
-func initializeSharesJustifyingMemberGroup(threshold, groupSize int) (
+func initializeSharesJustifyingMemberGroup(dishonestThreshold, groupSize int) (
 	[]*SharesJustifyingMember,
 	error,
 ) {
 	commitmentsVerifyingMembers, err :=
-		initializeCommitmentsVerifiyingMembersGroup(threshold, groupSize)
+		initializeCommitmentsVerifiyingMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
@@ -456,18 +576,19 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) (
 	groupCoefficientsB := make(map[group.MemberIndex][]*big.Int, groupSize)
 	groupCommitments := make(map[group.MemberIndex][]*bn256.G1, groupSize)
 
-	// Generate threshold+1 coefficients and commitments for each group member.
 	for _, m := range sharesJustifyingMembers {
-		memberCoefficientsA, err := generatePolynomial(threshold)
+		memberCoefficientsA, err := generatePolynomial(dishonestThreshold)
 		if err != nil {
 			return nil, fmt.Errorf("polynomial generation failed [%s]", err)
 		}
-		memberCoefficientsB, err := generatePolynomial(threshold)
+		memberCoefficientsB, err := generatePolynomial(dishonestThreshold)
 		if err != nil {
 			return nil, fmt.Errorf("polynomial generation failed [%s]", err)
 		}
 
-		commitments := make([]*bn256.G1, threshold+1)
+		// polynomial is of degree dishonestThreshold so it has
+		// dishonestThreshold+1 coefficients including a constant coefficient
+		commitments := make([]*bn256.G1, dishonestThreshold+1)
 		for k := range memberCoefficientsA {
 
 			commitments[k] = m.calculateCommitment(
@@ -485,8 +606,8 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) (
 	for _, m := range sharesJustifyingMembers {
 		for _, p := range sharesJustifyingMembers {
 			if m.ID != p.ID {
-				p.receivedValidSharesS[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
-				p.receivedValidSharesT[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
+				p.receivedQualifiedSharesS[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
+				p.receivedQualifiedSharesT[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
 				p.receivedValidPeerCommitments[m.ID] = groupCommitments[m.ID]
 			}
 		}
@@ -501,9 +622,9 @@ func initializeSharesJustifyingMemberGroup(threshold, groupSize int) (
 // secretCoefficients field for each group member. At the end it stores
 // values for each member just like they would be received from peers.
 func initializePointsJustifyingMemberGroup(
-	threshold, groupSize int,
+	dishonestThreshold, groupSize int,
 ) ([]*PointsJustifyingMember, error) {
-	sharingMembers, err := initializeSharingMembersGroup(threshold, groupSize)
+	sharingMembers, err := initializeSharingMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}

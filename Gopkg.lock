@@ -308,6 +308,13 @@
   revision = "e92bd71e8199b1d75295ea70846d29910e434070"
 
 [[projects]]
+  digest = "1:9c186bfc3815a24e49549b888c0f7f8a1a01c819130cb21bb491a00441ecb5ff"
+  name = "github.com/keep-network/keep-common"
+  packages = ["pkg/logging"]
+  pruneopts = ""
+  revision = "8724d3522a8d7d30c983b173461f6a9fc46b0c17"
+
+[[projects]]
   digest = "1:083b726d999fff7a2fcd09b779598cddcb642628bc028e4cfe46e81b18bf0d26"
   name = "github.com/koron/go-ssdp"
   packages = ["."]
@@ -1052,7 +1059,9 @@
     "github.com/gogo/protobuf/sortkeys",
     "github.com/ipfs/go-datastore",
     "github.com/ipfs/go-datastore/sync",
+    "github.com/ipfs/go-log",
     "github.com/keep-network/go-libp2p-bootstrap",
+    "github.com/keep-network/keep-common/pkg/logging",
     "github.com/libp2p/go-addr-util",
     "github.com/libp2p/go-conn-security",
     "github.com/libp2p/go-libp2p",
@@ -1060,6 +1069,7 @@
     "github.com/libp2p/go-libp2p-crypto",
     "github.com/libp2p/go-libp2p-host",
     "github.com/libp2p/go-libp2p-kad-dht",
+    "github.com/libp2p/go-libp2p-net",
     "github.com/libp2p/go-libp2p-peer",
     "github.com/libp2p/go-libp2p-peerstore",
     "github.com/libp2p/go-libp2p-pubsub",

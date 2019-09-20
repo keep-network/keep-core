@@ -12,11 +12,12 @@ import (
 
 func TestSaveEphemeralKeyMessagesForEvidence(t *testing.T) {
 	groupSize := 2
+	dishonestThreshold := 0
 
 	// Create a group of 2 members
 	ephemeralGeneratingMembers := initializeEphemeralKeyPairMembersGroup(
+		dishonestThreshold,
 		groupSize,
-		groupSize, // threshold = groupSize
 	)
 
 	member1 := ephemeralGeneratingMembers[0]
@@ -53,11 +54,12 @@ func TestSaveEphemeralKeyMessagesForEvidence(t *testing.T) {
 
 func TestGenerateEphemeralKeys(t *testing.T) {
 	groupSize := 3
+	dishonestThreshold := 0
 
 	// Create a group of 3 members
 	ephemeralGeneratingMembers := initializeEphemeralKeyPairMembersGroup(
+		dishonestThreshold,
 		groupSize,
-		groupSize, // threshold = groupSize
 	)
 
 	// generate ephemeral key pairs for each group member; prepare messages
@@ -137,10 +139,10 @@ func TestGenerateEphemeralKeys(t *testing.T) {
 }
 
 func initializeEphemeralKeyPairMembersGroup(
-	threshold int,
+	dishonestThreshold int,
 	groupSize int,
 ) []*EphemeralKeyPairGeneratingMember {
-	dkgGroup := group.NewDkgGroup(threshold, groupSize)
+	dkgGroup := group.NewDkgGroup(dishonestThreshold, groupSize)
 
 	protocolParameters := newProtocolParameters(big.NewInt(18313131145))
 
@@ -164,10 +166,10 @@ func initializeEphemeralKeyPairMembersGroup(
 }
 
 func initializeSymmetricKeyMembersGroup(
-	threshold int,
+	dishonestThreshold int,
 	groupSize int,
 ) ([]*SymmetricKeyGeneratingMember, error) {
-	keyPairMembers := initializeEphemeralKeyPairMembersGroup(threshold, groupSize)
+	keyPairMembers := initializeEphemeralKeyPairMembersGroup(dishonestThreshold, groupSize)
 
 	// generate ephemeral key pairs for all other members of the group
 	for _, member1 := range keyPairMembers {
@@ -198,11 +200,11 @@ func initializeSymmetricKeyMembersGroup(
 // returns a fully initialized group of `SymmetricKeyGeneratingMember`s with all
 // ephemeral keys generated (private, public, and symmetric key).
 func generateGroupWithEphemeralKeys(
-	threshold int,
+	dishonestThreshold int,
 	groupSize int,
 ) ([]*SymmetricKeyGeneratingMember, error) {
 	symmetricKeyMembers, err := initializeSymmetricKeyMembersGroup(
-		threshold,
+		dishonestThreshold,
 		groupSize,
 	)
 	if err != nil {

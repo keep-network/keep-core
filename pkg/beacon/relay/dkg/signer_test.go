@@ -41,22 +41,27 @@ func TestSignAndComplete(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		threshold              int
+		honestThreshold        int
 		numberPrivateKeyShares int
 		expectedError          string
 	}{
 		"success: all members sign the message": {
-			threshold:              6,
+			honestThreshold:        4,
 			numberPrivateKeyShares: 6,
 			expectedError:          "",
 		},
-		"success: at least t members sign the message": {
-			threshold:              3,
+		"success: t+1 members sign the message": {
+			honestThreshold:        4,
+			numberPrivateKeyShares: 5,
+			expectedError:          "",
+		},
+		"success: t members sign the message": {
+			honestThreshold:        4,
 			numberPrivateKeyShares: 4,
 			expectedError:          "",
 		},
-		"failure: less than t members sign a message": {
-			threshold:              4,
+		"failure: t-1 members sign a message": {
+			honestThreshold:        4,
 			numberPrivateKeyShares: 3,
 			expectedError:          "not enough shares to reconstruct signature: has [3] shares, threshold is [4]",
 		},
@@ -91,7 +96,7 @@ func TestSignAndComplete(t *testing.T) {
 		}
 
 		// Attempt to recover a signature from the present shares.
-		signature, err := signers[0].CompleteSignature(shares, test.threshold)
+		signature, err := signers[0].CompleteSignature(shares, test.honestThreshold)
 		if err != nil {
 			if err.Error() != test.expectedError {
 				t.Errorf(

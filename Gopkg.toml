@@ -22,6 +22,10 @@
 
 required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereum/go-ethereum/cmd/abigen"]
 
+[[override]]
+  name = "github.com/keep-network/keep-common"
+  revision = "8724d3522a8d7d30c983b173461f6a9fc46b0c17"
+
 # libp2p
 [[override]]
   name = "github.com/keep-network/go-libp2p-bootstrap"

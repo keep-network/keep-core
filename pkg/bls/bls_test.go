@@ -3,7 +3,6 @@ package bls
 import (
 	"crypto/rand"
 	"math/big"
-	mrand "math/rand"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -87,24 +86,71 @@ func TestThresholdBLS(t *testing.T) {
 		})
 	}
 
-	// Shuffle signatureShares array. It's irrelevant which signatures shares
-	// are used and in what order as long as they carry the corresponding
-	// participant index.
-	for i := range signatureShares {
-		j := mrand.Intn(1 + i)
-		signatureShares[i], signatureShares[j] = signatureShares[j], signatureShares[i]
+	var tests = map[string]struct {
+		signatureShares func() []*SignatureShare
+	}{
+		"all shares in order": {
+			signatureShares: func() []*SignatureShare {
+				return signatureShares
+			},
+		},
+		"all shares shuffled": {
+			signatureShares: func() []*SignatureShare {
+				return []*SignatureShare{
+					signatureShares[1],
+					signatureShares[0],
+					signatureShares[3],
+					signatureShares[2],
+					signatureShares[4],
+				}
+			},
+		},
+		"shares [1,2,3,4]": {
+			signatureShares: func() []*SignatureShare {
+				return signatureShares[0:4]
+			},
+		},
+		"shares [1,2,3]": {
+			signatureShares: func() []*SignatureShare {
+				return signatureShares[0:3]
+			},
+		},
+		"shares [2,3,4,5]": {
+			signatureShares: func() []*SignatureShare {
+				return signatureShares[1:5]
+			},
+		},
+		"shares [3,4,5]": {
+			signatureShares: func() []*SignatureShare {
+				return signatureShares[2:5]
+			},
+		},
+		"shares [1,5,3]": {
+			signatureShares: func() []*SignatureShare {
+				return []*SignatureShare{
+					signatureShares[0],
+					signatureShares[4],
+					signatureShares[2],
+				}
+			},
+		},
 	}
 
-	// Get full BLS signature. Only threshold amount  of valid shared will be
-	// used to reconstruct the signature. The resulting signature is the same
-	// as if it was produced using master secret key.
-	signature, _ := RecoverSignature(signatureShares, threshold)
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			// Get full BLS signature. Only threshold amount  of valid shared will be
+			// used to reconstruct the signature. The resulting signature is the same
+			// as if it was produced using master secret key.
+			signature, _ := RecoverSignature(test.signatureShares(), threshold)
 
-	// Recovered public key should be the same as the main public key.
-	publicKey, _ := RecoverPublicKey(publicKeyShares, threshold)
-	testutils.AssertBytesEqual(t, publicKey.Marshal(), masterPublicKey[0].Marshal())
+			// Recovered public key should be the same as the main public key.
+			publicKey, _ := RecoverPublicKey(publicKeyShares, threshold)
+			testutils.AssertBytesEqual(t, publicKey.Marshal(), masterPublicKey[0].Marshal())
 
-	if !Verify(publicKey, message, signature) {
-		t.Errorf("Error verifying BLS threshold signature.")
+			if !Verify(publicKey, message, signature) {
+				t.Errorf("Error verifying BLS threshold signature.")
+			}
+		})
 	}
+
 }

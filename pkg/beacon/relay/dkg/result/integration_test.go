@@ -1,6 +1,5 @@
-/*
-  Integration tests for the full DKG affecting result publication parts.
-*/
+// Package result_test contains integration tests for the full roundtrip of
+// result-publication-specific parts of DKG.
 package result_test
 
 import (
@@ -16,9 +15,10 @@ func TestExecute_IA_members24_phase13(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		hashSignatureMessage, ok := msg.(*result.DKGResultHashSignatureMessage)
 		if ok && (hashSignatureMessage.SenderID() == group.MemberIndex(2) ||
 			hashSignatureMessage.SenderID() == group.MemberIndex(4)) {
@@ -28,7 +28,7 @@ func TestExecute_IA_members24_phase13(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}

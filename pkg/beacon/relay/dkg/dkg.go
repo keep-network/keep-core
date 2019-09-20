@@ -17,7 +17,7 @@ func ExecuteDKG(
 	seed *big.Int,
 	index int, // starts with 0
 	groupSize int,
-	threshold int,
+	dishonestThreshold int,
 	startBlockHeight uint64,
 	blockCounter chain.BlockCounter,
 	relayChain relayChain.Interface,
@@ -32,7 +32,7 @@ func ExecuteDKG(
 		groupSize,
 		blockCounter,
 		channel,
-		threshold,
+		dishonestThreshold,
 		seed,
 		startBlockHeight,
 	)

@@ -246,7 +246,7 @@ func (c *localChain) ThresholdRelay() relaychain.Interface {
 // interfaces for testing. It uses auto-generated operator key.
 func Connect(
 	groupSize int,
-	threshold int,
+	honestThreshold int,
 	minimumStake *big.Int,
 ) Chain {
 	operatorKey, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
@@ -254,14 +254,14 @@ func Connect(
 		panic(err)
 	}
 
-	return ConnectWithKey(groupSize, threshold, minimumStake, operatorKey)
+	return ConnectWithKey(groupSize, honestThreshold, minimumStake, operatorKey)
 }
 
 // ConnectWithKey initializes a local stub implementation of the chain
 // interfaces for testing.
 func ConnectWithKey(
 	groupSize int,
-	threshold int,
+	honestThreshold int,
 	minimumStake *big.Int,
 	operatorKey *ecdsa.PrivateKey,
 ) Chain {
@@ -281,7 +281,7 @@ func ConnectWithKey(
 	return &localChain{
 		relayConfig: &relayconfig.Chain{
 			GroupSize:                       groupSize,
-			Threshold:                       threshold,
+			HonestThreshold:                 honestThreshold,
 			TicketInitialSubmissionTimeout:  2,
 			TicketReactiveSubmissionTimeout: 3,
 			TicketChallengeTimeout:          4,
@@ -374,11 +374,11 @@ func (c *localChain) SubmitDKGResult(
 ) *async.DKGResultSubmissionPromise {
 	dkgResultPublicationPromise := &async.DKGResultSubmissionPromise{}
 
-	if len(signatures) < c.relayConfig.Threshold {
+	if len(signatures) < c.relayConfig.HonestThreshold {
 		dkgResultPublicationPromise.Fail(fmt.Errorf(
-			"failed to submit result with [%v] signatures for threshold [%v]",
+			"failed to submit result with [%v] signatures for honest threshold [%v]",
 			len(signatures),
-			c.relayConfig.Threshold,
+			c.relayConfig.HonestThreshold,
 		))
 		return dkgResultPublicationPromise
 	}

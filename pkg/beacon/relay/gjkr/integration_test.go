@@ -1,13 +1,14 @@
-/*
-  Integration tests for the full DKG affecting GJKR-specific parts.
-*/
+// Package gjkr_test contains integration tests for the full roundtrip
+// of GJKR-specific parts of DKG.
 package gjkr_test
 
 import (
 	"math/big"
+	"sync"
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/altbn128"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/internal/dkgtest"
@@ -19,13 +20,14 @@ func TestExecute_HappyPath(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptor)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,9 +45,10 @@ func TestExecute_IA_member1_phase1(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
 		if ok && publicKeyMessage.SenderID() == group.MemberIndex(1) {
 			return nil
@@ -54,7 +57,7 @@ func TestExecute_IA_member1_phase1(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,9 +77,10 @@ func TestExecute_IA_members12_phase3(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 7
-	threshold := 4
+	honestThreshold := 4
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		// drop commitment message from member 1
 		commitmentMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
 		if ok && commitmentMessage.SenderID() == group.MemberIndex(1) {
@@ -92,7 +96,7 @@ func TestExecute_IA_members12_phase3(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,9 +116,10 @@ func TestExecute_IA_member1_phase4(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 3
-	threshold := 2
+	honestThreshold := 2
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(1) {
 			return nil
@@ -123,7 +128,7 @@ func TestExecute_IA_member1_phase4(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,9 +148,10 @@ func TestExecute_IA_member1_phase7(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		sharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
 		if ok && sharePointsMessage.SenderID() == group.MemberIndex(1) {
 			return nil
@@ -154,7 +160,7 @@ func TestExecute_IA_member1_phase7(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,9 +180,10 @@ func TestExecute_IA_member1_phase8(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		accusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(1) {
 			return nil
@@ -185,7 +192,7 @@ func TestExecute_IA_member1_phase8(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -205,9 +212,10 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
 		if ok && (disqualifiedKeysMessage.SenderID() == group.MemberIndex(3) ||
 			disqualifiedKeysMessage.SenderID() == group.MemberIndex(5)) {
@@ -217,7 +225,7 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -233,6 +241,114 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 4}...)
 }
 
+// Phase 2 test case - a member sends an invalid ephemeral public key message.
+// Message payload doesn't contain public keys for all other group members.
+// Sender of the invalid message is disqualified by all of the receivers.
+func TestExecute_DQ_member1_invalidMessage_phase2(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
+		if ok && publicKeyMessage.SenderID() == group.MemberIndex(1) {
+			publicKeyMessage.RemovePublicKey(group.MemberIndex(2))
+			return publicKeyMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 4, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 4, 5}...)
+}
+
+// Phase 4 test case - a member sends an invalid member commitments message.
+// Message payload doesn't contain a correct number of commitments.
+// Sender of the invalid message is disqualified by all of the receivers.
+func TestExecute_DQ_member5_invalidCommitmentsMessage_phase4(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
+		if ok && commitmentsMessage.SenderID() == group.MemberIndex(5) {
+			commitmentsMessage.RemoveCommitment(1)
+			return commitmentsMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 4}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(5))
+	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 4}...)
+}
+
+// Phase 4 test case - a member sends an invalid peer shares message.
+// Message payload doesn't contain shares for all other group members.
+// Sender of the invalid message is disqualified by all of the receivers.
+func TestExecute_DQ_member4_invalidSharesMessage_phase4(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
+		if ok && sharesMessage.SenderID() == group.MemberIndex(4) {
+			sharesMessage.RemoveShares(group.MemberIndex(1))
+			return sharesMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(4))
+	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 5}...)
+}
+
 // Phase 5 test case - a member performs an accusation but reveals an
 // ephemeral private key which doesn't correspond to the previously broadcast
 // public key, generated for the sake of communication with the accused member.
@@ -241,9 +357,10 @@ func TestExecute_DQ_member3_revealsWrongPrivateKey_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(3) {
 			// accuser (member 3) reveals a random private key which doesn't
@@ -260,7 +377,7 @@ func TestExecute_DQ_member3_revealsWrongPrivateKey_phase5(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -271,7 +388,7 @@ func TestExecute_DQ_member3_revealsWrongPrivateKey_phase5(t *testing.T) {
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(3))
-	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertNoInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 4, 5}...)
 }
@@ -283,10 +400,13 @@ func TestExecute_DQ_member3_revealsWrongPrivateKey_phase5(t *testing.T) {
 func TestExecute_DQ_member2_cannotDecryptTheirShares_phase5(t *testing.T) {
 	t.Parallel()
 
-	groupSize := 5
-	threshold := 3
+	// Do not change groupSize and honestThreshold, such values are chosen
+	// intentionally to check the behavior on the minimum honest threshold.
+	groupSize := 3
+	honestThreshold := 2
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
 		if ok && sharesMessage.SenderID() == group.MemberIndex(2) {
 			sharesMessage.SetShares(
@@ -300,20 +420,20 @@ func TestExecute_DQ_member2_cannotDecryptTheirShares_phase5(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
-	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3, 4, 5}...)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
 	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
 	dkgtest.AssertNoInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
-	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 4, 5}...)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3}...)
 }
 
 // Phase 5 test case - a member misbehaved by sending invalid commitment
@@ -324,9 +444,10 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
 		if ok && commitmentsMessage.SenderID() == group.MemberIndex(5) {
 			commitmentsMessage.SetCommitment(
@@ -339,7 +460,7 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -355,22 +476,211 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 4}...)
 }
 
-// TODO Test case Phase 5: 'shares consistent ->
-//  expected result: disqualify accuser'.
-//  This case is difficult to implement for now because it needs
-//  access to member internals. In order to make a false accusation
-//  there is a need to obtain ephemeral private key for the accused member which
-//  is stored in accuser internal map called 'ephemeralKeyPairs'.
+// Phase 5 test case - a member misbehaved by performing a false accusation
+// against another member. The accusation is checked by another members
+// and because it is unfounded, the accuser is disqualified in phase 5.
+func TestExecute_DQ_member4_falseAccusation_phase5(t *testing.T) {
+	t.Parallel()
 
-// TODO Test case Phase 5: 'accuser accuse an inactive member ->
-//  expected result: disqualify accuser'.
-//  This case is difficult to implement for now because it needs
-//  access to member internals. In order to make an accusation against inactive
-//  member, there is a need to obtain ephemeral private key for the accused
-//  member which is stored in accuser internal map called 'ephemeralKeyPairs'.
+	groupSize := 5
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
 
-// TODO Test case Phase 9: 'presented private key does not correspond
-//  to the published public key -> result: disqualify accuser'
+	manInTheMiddle, err := newManInTheMiddle(
+		group.MemberIndex(4), // sender
+		groupSize,
+		honestThreshold,
+		seed,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		manInTheMiddle.interceptCommunication(msg)
+
+		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
+		// Accuser performs false accusation against the accused member
+		// using the ephemeral private key generated before. We replace
+		// the whole accusedMemberKeys because the real member covered by
+		// the MiM performs their own accusations.
+		if ok && accusationsMessage.SenderID() == group.MemberIndex(4) {
+			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
+			accusedMembersKeys[group.MemberIndex(1)] =
+				manInTheMiddle.ephemeralKeyPairs[group.MemberIndex(1)].PrivateKey
+			accusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
+			return accusationsMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(4))
+	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 5}...)
+}
+
+// Phase 5 test case - a member misbehaved by performing an accusation against
+// an inactive member. The accusation could not be resolved by other members so
+// the accuser is disqualified in phase 5.
+func TestExecute_DQ_member2_accusesInactiveMember_phase5(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
+
+	manInTheMiddle, err := newManInTheMiddle(
+		group.MemberIndex(2), // sender
+		groupSize,
+		honestThreshold,
+		seed,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		manInTheMiddle.interceptCommunication(msg)
+
+		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
+		// Drop message from accused member in order to simulate its inactivity.
+		if ok && publicKeyMessage.SenderID() == group.MemberIndex(1) {
+			return nil
+		}
+
+		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
+		// Accuser performs accusation against the inactive accused member
+		// using the ephemeral private key generated before.
+		// Man-in-the-middle intercepts and replaces entire communication
+		// with member 2.
+		if ok && accusationsMessage.SenderID() == group.MemberIndex(2) {
+			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
+			accusedMembersKeys[group.MemberIndex(1)] =
+				manInTheMiddle.ephemeralKeyPairs[group.MemberIndex(1)].PrivateKey
+			accusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
+			return accusationsMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 2)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
+	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5}...)
+}
+
+// Phase 8 test case - a member sends an invalid member public key share points
+// message. Message payload doesn't contain correct number of public key share
+// points. Sender of the invalid message is disqualified by all of the receivers.
+func TestExecute_DQ_member2_invalidMessage_phase8(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		sharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
+		if ok && sharePointsMessage.SenderID() == group.MemberIndex(2) {
+			sharePointsMessage.RemovePublicKeyShare(0)
+			return sharePointsMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3, 4, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
+	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 4, 5}...)
+}
+
+// Phase 9 test case - some members perform an accusation but reveal
+// ephemeral private keys which don't correspond to the previously broadcast
+// public keys, generated for the sake of communication with the accused members.
+// Due to such behaviour, the accusers are marked as disqualified in phase 9.
+func TestExecute_DQ_members25_revealWrongPrivateKey_phase9(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 7
+	honestThreshold := 4
+	seed := dkgtest.RandomSeed(t)
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		accusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
+		if ok && accusationsMessage.SenderID() == group.MemberIndex(2) {
+			randomKeyPair, _ := ephemeral.GenerateKeyPair()
+			accusationsMessage.SetAccusedMemberKey(
+				group.MemberIndex(1),
+				randomKeyPair.PrivateKey,
+			)
+			accusationsMessage.SetAccusedMemberKey(
+				group.MemberIndex(3),
+				randomKeyPair.PrivateKey,
+			)
+			return accusationsMessage
+		}
+
+		if ok && accusationsMessage.SenderID() == group.MemberIndex(5) {
+			randomKeyPair, _ := ephemeral.GenerateKeyPair()
+			accusationsMessage.SetAccusedMemberKey(
+				group.MemberIndex(4),
+				randomKeyPair.PrivateKey,
+			)
+			return accusationsMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3, 4, 6, 7}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 2)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, []group.MemberIndex{2, 5}...)
+	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 4, 6, 7}...)
+}
 
 // Phase 9 test case - some members misbehaved by sending in phase 7
 // invalid public key shares to another members. They became accused in phase 8
@@ -380,10 +690,10 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		publicKeyShareMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
 		if ok && publicKeyShareMessage.SenderID() == group.MemberIndex(1) {
 			publicKeyShareMessage.SetPublicKeyShare(
@@ -404,7 +714,7 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -420,12 +730,187 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 5}...)
 }
 
-// TODO Test case Phase 9: 'public key share valid ->
-//  expected result: disqualify accuser'.
-//  This case is difficult to implement for now because it needs
-//  access to member internals. In order to make a false accusation
-//  there is a need to obtain ephemeral private key for the accused member which
-//  is stored in accuser internal map called 'ephemeralKeyPairs'.
+// Phase 9 test case - a member misbehaved by performing a false accusation
+// against another member. The accusation is checked by another members
+// and because it is unfounded, the accuser is disqualified in phase 9.
+func TestExecute_DQ_member4_falseAccusation_phase9(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
+
+	manInTheMiddle, err := newManInTheMiddle(
+		group.MemberIndex(4), // sender
+		groupSize,
+		honestThreshold,
+		seed,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		pointsAccusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
+		// Modify default man-in-the-middle behavior: accuser performs false
+		// accusation against the accused member using the ephemeral private key
+		// generated before.
+		if ok && pointsAccusationsMessage.SenderID() == group.MemberIndex(4) {
+			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
+			accusedMembersKeys[group.MemberIndex(1)] =
+				manInTheMiddle.ephemeralKeyPairs[group.MemberIndex(1)].PrivateKey
+			pointsAccusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
+			return pointsAccusationsMessage
+		}
+
+		manInTheMiddle.interceptCommunication(msg)
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(4))
+	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 5}...)
+}
+
+// Phase 9 test case - a member misbehaved by performing an accusation against
+// an inactive member. The accusation could not be resolved by other members so
+// the accuser is disqualified in phase 9.
+func TestExecute_DQ_member2_accusesInactiveMember_phase9(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
+
+	manInTheMiddle, err := newManInTheMiddle(
+		group.MemberIndex(2), // sender
+		groupSize,
+		honestThreshold,
+		seed,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		pointsAccusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
+		// Modify default man-in-the-middle behavior: accuser performs
+		// accusation against the inactive member
+		// using the ephemeral private key generated before.
+		if ok && pointsAccusationsMessage.SenderID() == group.MemberIndex(2) {
+			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
+			accusedMembersKeys[group.MemberIndex(1)] =
+				manInTheMiddle.ephemeralKeyPairs[group.MemberIndex(1)].PrivateKey
+			pointsAccusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
+			return pointsAccusationsMessage
+		}
+
+		manInTheMiddle.interceptCommunication(msg)
+
+		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
+		// Drop message from accused member in order to simulate its inactivity.
+		if ok && publicKeyMessage.SenderID() == group.MemberIndex(1) {
+			return nil
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 2)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
+	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5}...)
+}
+
+// Phase 9 test case - a member misbehaved by sending shares which
+// cannot be decrypted by the receiver. The receiver breaks the protocol
+// and doesn't complain about this situation in phase 4. Instead of,
+// the receiver performs an accusation in phase 8. In result both are marked
+// as disqualified in phase 9.
+func TestExecute_DQ_members12_cannotDecryptTheirShares_phase9(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
+
+	manInTheMiddle, err := newManInTheMiddle(
+		group.MemberIndex(1), // sender
+		groupSize,
+		honestThreshold,
+		seed,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		pointsAccusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
+		// Modify default man-in-the-middle behavior: accuser performs
+		// accusation against the member only in phase 8 using the ephemeral
+		// private key generated before.
+		if ok && pointsAccusationsMessage.SenderID() == group.MemberIndex(1) {
+			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
+			accusedMembersKeys[group.MemberIndex(2)] =
+				manInTheMiddle.ephemeralKeyPairs[group.MemberIndex(2)].PrivateKey
+			pointsAccusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
+			return pointsAccusationsMessage
+		}
+
+		manInTheMiddle.interceptCommunication(msg)
+
+		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
+		// Accused member actually misbehaves by sending shares which
+		// cannot be decrypted by the accuser.
+		if ok && sharesMessage.SenderID() == group.MemberIndex(2) {
+			sharesMessage.SetShares(
+				1,
+				[]byte{0x00},
+				[]byte{0x00},
+			)
+			return sharesMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 2)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertDisqualifiedMembers(t, result, []group.MemberIndex{1, 2}...)
+	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5}...)
+}
 
 // Phase 11 test case - a member misbehaved by revealing key of an operating
 // member. The revealing member becomes disqualified by all other members which
@@ -437,9 +922,10 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
-	threshold := 3
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
 
-	interceptorRules := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
 		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(2) {
 			randomKeyPair, _ := ephemeral.GenerateKeyPair()
@@ -453,7 +939,7 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 		return msg
 	}
 
-	result, err := dkgtest.RunTest(groupSize, threshold, interceptorRules)
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -467,4 +953,219 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 	dkgtest.AssertNoInactiveMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 4, 5}...)
+}
+
+// manInTheMiddle is a helper tool allowing to easily intercept communication
+// of a chosen member with the rest of the members for all phases of DKG.
+// Man in the middle sets up symmetric keys, member shares, and commitments
+// that can be later accessed in test. It also publishes matching public
+// key share points. By default, man-in-the-middle drops all accusations from
+// the original member. This behavior can be overwitten in test before
+// man-in-the-middle intercepts.
+//
+// In a test not using manInTheMiddle we don't have an access to symmetric keys
+// of a chosen member established with the rest of the members. Knowledge of
+// these symmetric keys is required to test some scenarios.
+type manInTheMiddle struct {
+	senderIndex   group.MemberIndex
+	receiverIndex group.MemberIndex
+
+	seed *big.Int
+
+	// phase 1
+	ephemeralKeyPairs map[group.MemberIndex]*ephemeral.KeyPair
+
+	// phase 2
+	symmetricKeys      map[group.MemberIndex]*ephemeral.SymmetricEcdhKey
+	symmetricKeysMutex sync.Mutex
+
+	// phase 3
+	sharesS     map[group.MemberIndex]*big.Int
+	sharesT     map[group.MemberIndex]*big.Int
+	commitments []*bn256.G1
+
+	// phase 7
+	publicKeySharePoints []*bn256.G2
+}
+
+// newManInTheMiddle creates a new instance of manInTheMiddle tool.
+// It will intercept messages sent from the sender with the given index.
+func newManInTheMiddle(
+	senderIndex group.MemberIndex,
+	groupSize, honestThreshold int,
+	seed *big.Int,
+) (*manInTheMiddle, error) {
+	ephemeralKeyPairs := make(map[group.MemberIndex]*ephemeral.KeyPair, groupSize-1)
+	sharesS := make(map[group.MemberIndex]*big.Int, groupSize-1)
+	sharesT := make(map[group.MemberIndex]*big.Int, groupSize-1)
+
+	dishonestThreshold := groupSize - honestThreshold
+	coefficientsA, _ := gjkr.GeneratePolynomial(dishonestThreshold)
+	coefficientsB, _ := gjkr.GeneratePolynomial(dishonestThreshold)
+
+	for i := 1; i <= groupSize; i++ {
+		receiverIndex := group.MemberIndex(i)
+		if receiverIndex == senderIndex {
+			continue
+		}
+
+		// ephemeral key pair - we'll create symmetric key between
+		// sender and receiver using this key pair in phase 1 and 2
+		// of the protocol
+		keyPair, err := ephemeral.GenerateKeyPair()
+		if err != nil {
+			return nil, err
+		}
+		ephemeralKeyPairs[receiverIndex] = keyPair
+
+		// shares used in the third phase of the protocol
+		// those shares will be encrypted with the symmetric key and
+		// used as shares of sender generated for the receiver
+		sharesS[receiverIndex] = gjkr.EvaluateMemberShare(receiverIndex, coefficientsA)
+		sharesT[receiverIndex] = gjkr.EvaluateMemberShare(receiverIndex, coefficientsB)
+	}
+
+	// commitments to the coefficients of the generated polynomial used
+	// to evaluate shares for all of the receivers
+	// those commitments will be used to alter the MemberCommitmentsMessage
+	// sent by original sender
+	commitments := make([]*bn256.G1, len(coefficientsA))
+	H := altbn128.G1HashToPoint(seed.Bytes())
+	for k := range commitments {
+		// G * s + H * t
+		commitments[k] = new(bn256.G1).Add(
+			new(bn256.G1).ScalarBaseMult(coefficientsA[k]),
+			new(bn256.G1).ScalarMult(H, coefficientsB[k]),
+		)
+	}
+
+	// publicKeySharePoints calculated using the coefficients of the generated
+	// polynomial used to evaluate shares for all of the receivers
+	// those points will be used to alter the MemberPublicKeySharePointsMessage
+	// sent by original sender
+	publicKeySharePoints := make([]*bn256.G2, len(coefficientsA))
+	for i, a := range coefficientsA {
+		publicKeySharePoints[i] = new(bn256.G2).ScalarBaseMult(a)
+	}
+
+	return &manInTheMiddle{
+		senderIndex: senderIndex,
+		seed:        seed,
+
+		ephemeralKeyPairs: ephemeralKeyPairs,
+
+		symmetricKeys:      make(map[group.MemberIndex]*ephemeral.SymmetricEcdhKey),
+		symmetricKeysMutex: sync.Mutex{},
+
+		sharesS:     sharesS,
+		sharesT:     sharesT,
+		commitments: commitments,
+
+		publicKeySharePoints: publicKeySharePoints,
+	}, nil
+}
+
+// interceptCommunication intercepts communication for all phases of DKG protocol.
+// Man in the middle sets up symmetric keys, member shares, and commitments.
+// It also publishes matching public key share points. Man-in-the-middle drops
+// all accusations from the original member.
+// This behavior can be overwitten in test before man-in-the-middle intercepts.
+func (mitm *manInTheMiddle) interceptCommunication(
+	msg net.TaggedMarshaler,
+) net.TaggedMarshaler {
+
+	publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
+	// Phase 1:
+	// Original sender broadcasts EphemeralPublicKeyMessage.
+	// We intercept that message and replace the public key generated for
+	// each receiver with public key generated earlier by the man in the middle.
+	if ok && publicKeyMessage.SenderID() == mitm.senderIndex {
+		for receiverIndex, ephemeralKeyPair := range mitm.ephemeralKeyPairs {
+			publicKeyMessage.SetPublicKey(
+				receiverIndex,
+				ephemeralKeyPair.PublicKey,
+			)
+		}
+		return publicKeyMessage
+	}
+	// Phase 2:
+	// The rest of the members generated and broadcast ephemeral public keys.
+	// We follow the protocol and perform ECDH against given member's public
+	// key generated for the sake of communication with our sender and private
+	// ephemeral key generated earlier by the man in the middle.
+	if ok && publicKeyMessage.SenderID() != mitm.senderIndex {
+		keyPair := mitm.ephemeralKeyPairs[publicKeyMessage.SenderID()]
+		symmetricKey := keyPair.PrivateKey.Ecdh(
+			publicKeyMessage.GetPublicKey(mitm.senderIndex),
+		)
+
+		mitm.symmetricKeysMutex.Lock()
+		mitm.symmetricKeys[publicKeyMessage.SenderID()] = symmetricKey
+		mitm.symmetricKeysMutex.Unlock()
+
+		return publicKeyMessage
+	}
+
+	// Phase 3:
+	// Original sender broadcasts PeerSharesMessage and MemberCommitmentsMessage.
+	// We intercept those messages and replace shares and commitments with the
+	// ones generated by man-in-the-middle.
+	// We do that because each receiver established symmetric key with the
+	// man-in-the-middle and not with the original sender. Thus, we need to
+	// encrypt shares using that symmetric key and regenerate commitments
+	// to match the shares.
+	peerSharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
+	if ok && peerSharesMessage.SenderID() == mitm.senderIndex {
+		for receiverIndex, shareS := range mitm.sharesS {
+			peerSharesMessage.AddShares(
+				receiverIndex,
+				shareS,
+				mitm.sharesT[receiverIndex],
+				mitm.symmetricKeys[receiverIndex],
+			)
+		}
+		return peerSharesMessage
+	}
+	commitmentsMessage, ok := msg.(*gjkr.MemberCommitmentsMessage)
+	if ok && commitmentsMessage.SenderID() == mitm.senderIndex {
+		for i, commitment := range mitm.commitments {
+			commitmentsMessage.SetCommitment(i, commitment)
+		}
+		return commitmentsMessage
+	}
+
+	// Phase 7:
+	// Original sender broadcasts MemberPublicKeySharePointsMessage.
+	// We intercept this message and replace public key share points with the
+	// ones generated by man-in-the-middle.
+	publicKeySharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
+	if ok && publicKeySharePointsMessage.SenderID() == mitm.senderIndex {
+		for i, publicKeyShare := range mitm.publicKeySharePoints {
+			publicKeySharePointsMessage.SetPublicKeyShare(i, publicKeyShare)
+		}
+		return publicKeySharePointsMessage
+	}
+
+	// Phases 4, 8, 10:
+	// By design, man-in-the-middle does not perform any accusations and do not
+	// resolve them. All accusation are dropped by default. This behavior may be
+	// overwritten by test.
+	secretSharesAccusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
+	if ok && secretSharesAccusationsMessage.SenderID() == mitm.senderIndex {
+		accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
+		secretSharesAccusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
+		return secretSharesAccusationsMessage
+	}
+	pointsAccusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
+	if ok && pointsAccusationsMessage.SenderID() == mitm.senderIndex {
+		accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
+		pointsAccusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
+		return pointsAccusationsMessage
+	}
+	disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
+	if ok && disqualifiedKeysMessage.SenderID() == mitm.senderIndex {
+		return nil
+	}
+
+	return msg
 }

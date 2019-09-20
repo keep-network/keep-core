@@ -6,8 +6,10 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"math"
 	"math/big"
 	"sync"
+	"testing"
 	"time"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -31,12 +33,32 @@ type Result struct {
 	memberFailures      []error
 }
 
-// RunTest executes the full DKG roundrip test for the provided group size
-// and threshold. The provided interception rules are applied in the broadcast
-// channel for the time of DKG execution.
+// GetSigners returns all signers created from DKG protocol execution.
+// If no signers were created because of protocol failures, empty slice
+// is returned.
+func (r *Result) GetSigners() []*dkg.ThresholdSigner {
+	return r.signers
+}
+
+// RandomSeed generates a random DKG seed value. It is important to do not
+// reuse the same seed value between integration tests run in parallel.
+// Broadcast channel name contains a seed to avoid mixing up channel messages
+// between two or more tests executed in parallel.
+func RandomSeed(t *testing.T) *big.Int {
+	seed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return seed
+}
+
+// RunTest executes the full DKG roundrip test for the provided group size,
+// seed, and honest threshold. The provided interception rules are applied in
+// the broadcast channel for the time of DKG execution.
 func RunTest(
 	groupSize int,
-	threshold int,
+	honestThreshold int,
+	seed *big.Int,
 	rules interception.Rules,
 ) (*Result, error) {
 	privateKey, publicKey, err := operator.GenerateKeyPair()
@@ -51,23 +73,22 @@ func RunTest(
 		rules,
 	)
 
-	chain := chainLocal.ConnectWithKey(groupSize, threshold, minimumStake, privateKey)
+	chain := chainLocal.ConnectWithKey(groupSize, honestThreshold, minimumStake, privateKey)
 
-	return executeDKG(groupSize, threshold, chain, network)
+	return executeDKG(seed, chain, network)
 }
 
 func executeDKG(
-	groupSize int,
-	threshold int,
+	seed *big.Int,
 	chain chainLocal.Chain,
 	network interception.Network,
 ) (*Result, error) {
-	blockCounter, err := chain.BlockCounter()
+	relayConfig, err := chain.ThresholdRelay().GetConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	seed, err := rand.Int(rand.Reader, big.NewInt(100000))
+	blockCounter, err := chain.BlockCounter()
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +111,7 @@ func executeDKG(
 	var memberFailures []error
 
 	var wg sync.WaitGroup
-	wg.Add(groupSize)
+	wg.Add(relayConfig.GroupSize)
 
 	currentBlockHeight, err := blockCounter.CurrentBlock()
 	if err != nil {
@@ -101,14 +122,14 @@ func executeDKG(
 	// make sure all members are up.
 	startBlockHeight := currentBlockHeight + 3
 
-	for i := 0; i < groupSize; i++ {
+	for i := 0; i < relayConfig.GroupSize; i++ {
 		i := i // capture for goroutine
 		go func() {
 			signer, err := dkg.ExecuteDKG(
 				seed,
 				i,
-				groupSize,
-				threshold,
+				relayConfig.GroupSize,
+				relayConfig.DishonestThreshold(),
 				startBlockHeight,
 				blockCounter,
 				chain.ThresholdRelay(),

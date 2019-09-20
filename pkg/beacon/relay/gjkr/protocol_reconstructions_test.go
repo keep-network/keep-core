@@ -12,10 +12,10 @@ import (
 )
 
 func TestRevealDisqualifiedMembersKeys(t *testing.T) {
-	threshold := 2
+	dishonestThreshold := 3
 	groupSize := 8
 
-	members, err := initializeRevealingMembersGroup(threshold, groupSize)
+	members, err := initializeRevealingMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,7 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 	firstMember.group.MarkMemberAsDisqualified(disqualifiedNotSharingMember)
 
 	// Simulate a case where member is disqualified in Phase 5.
-	delete(firstMember.receivedValidSharesS, disqualifiedNotSharingMember)
+	delete(firstMember.receivedQualifiedSharesS, disqualifiedNotSharingMember)
 
 	expectedDisqualifiedKeys := map[group.MemberIndex]*ephemeral.PrivateKey{
 		disqualifiedSharingMember1: firstMember.ephemeralKeyPairs[disqualifiedSharingMember1].PrivateKey,
@@ -51,10 +51,10 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 }
 
 func TestRevealDisqualifiedShares(t *testing.T) {
-	threshold := 2
+	dishonestThreshold := 2
 	groupSize := 6
 
-	members, err := initializeReconstructingMembersGroup(threshold, groupSize)
+	members, err := initializeReconstructingMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,18 +193,18 @@ func generateDisqualifiedMemberShares(
 
 		// Add current member own shareS received from disqualified member
 		disqualifiedMemberShares[disqualifiedMember.ID][currentMember.ID] =
-			currentMember.receivedValidSharesS[disqualifiedMember.ID]
+			currentMember.receivedQualifiedSharesS[disqualifiedMember.ID]
 	}
 	return disqualifiedMemberShares
 }
 
 func TestReconstructIndividualPrivateKeys(t *testing.T) {
-	threshold := 2
+	dishonestThreshold := 2
 	groupSize := 5
 
 	disqualifiedMembersIDs := []group.MemberIndex{3, 5}
 
-	group, err := initializeReconstructingMembersGroup(threshold, groupSize)
+	group, err := initializeReconstructingMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -250,7 +250,7 @@ func contains(slice []group.MemberIndex, value group.MemberIndex) bool {
 
 func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 	groupSize := 3
-	threshold := 2
+	dishonestThreshold := 1
 
 	disqualifiedMembersIDs := []int{4, 5} // m
 
@@ -272,7 +272,7 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 		reconstructedIndividualPrivateKeys[5],
 	)
 
-	members, err := initializeReconstructingMembersGroup(threshold, groupSize)
+	members, err := initializeReconstructingMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -298,13 +298,13 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 }
 
 func TestCombineGroupPublicKey(t *testing.T) {
-	threshold := 2
+	dishonestThreshold := 1
 	groupSize := 3
 
 	expectedGroupPublicKey := new(bn256.G2).ScalarBaseMult(
 		big.NewInt(243), // 10 + 20 + 30 + 91 + 92
 	)
-	members, err := initializeCombiningMembersGroup(threshold, groupSize)
+	members, err := initializeCombiningMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -353,10 +353,10 @@ func TestCombineGroupPublicKey(t *testing.T) {
 }
 
 func TestReconstructDisqualifiedIndividualKeys(t *testing.T) {
-	threshold := 2
+	dishonestThreshold := 2
 	groupSize := 6
 
-	members, err := initializeReconstructingMembersGroup(threshold, groupSize)
+	members, err := initializeReconstructingMembersGroup(dishonestThreshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -433,9 +433,12 @@ func TestReconstructDisqualifiedIndividualKeys(t *testing.T) {
 }
 
 func initializeRevealingMembersGroup(
-	threshold, groupSize int,
+	dishonestThreshold, groupSize int,
 ) ([]*RevealingMember, error) {
-	pointsJustifyingMembers, err := initializePointsJustifyingMemberGroup(threshold, groupSize)
+	pointsJustifyingMembers, err := initializePointsJustifyingMemberGroup(
+		dishonestThreshold,
+		groupSize,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("group initialization failed [%s]", err)
 	}
@@ -449,11 +452,11 @@ func initializeRevealingMembersGroup(
 }
 
 func initializeReconstructingMembersGroup(
-	threshold,
+	dishonestThreshold,
 	groupSize int,
 ) ([]*ReconstructingMember, error) {
 	revealingMembers, err := initializeRevealingMembersGroup(
-		threshold,
+		dishonestThreshold,
 		groupSize,
 	)
 	if err != nil {
@@ -484,7 +487,7 @@ func disqualifyMembers(
 			if !contains(disqualifiedMembersIDs, m.ID) {
 				// collect all shares which this member received from disqualified
 				// member and store them in sharesReceivedFromDisqualifiedMember
-				for peerID, receivedShare := range m.receivedValidSharesS {
+				for peerID, receivedShare := range m.receivedQualifiedSharesS {
 					if peerID == disqualifiedMemberID {
 						sharesReceivedFromDisqualifiedMember[m.ID] = receivedShare
 						break
@@ -502,11 +505,11 @@ func disqualifyMembers(
 }
 
 func initializeCombiningMembersGroup(
-	threshold,
+	dishonestThreshold,
 	groupSize int,
 ) ([]*CombiningMember, error) {
 	reconstructingMembers, err := initializeReconstructingMembersGroup(
-		threshold,
+		dishonestThreshold,
 		groupSize,
 	)
 	if err != nil {
