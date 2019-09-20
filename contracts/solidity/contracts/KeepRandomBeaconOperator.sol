@@ -12,6 +12,7 @@ import "./cryptography/BLS.sol";
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
     function fundRequestSubsidyFeePool() payable external;
+    function fundDKGFeePool() payable external;
 }
 
 /**
@@ -225,6 +226,14 @@ contract KeepRandomBeaconOperator {
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
+        // If previous group selection failed and there is reimbursement left
+        // return it to the DKG fee pool.
+        if (dkgSubmitterReimbursement > 0) {
+            uint256 surplus = dkgSubmitterReimbursement;
+            dkgSubmitterReimbursement = 0;
+            ServiceContract(msg.sender).fundDKGFeePool.value(surplus)();
+        }
+
         // dkgTimeout is the time after key generation protocol is expected to
         // be complete plus the expected time to submit the result.
         uint256 dkgTimeout = ticketSubmissionStartBlock +
