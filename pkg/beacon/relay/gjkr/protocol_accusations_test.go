@@ -144,8 +144,8 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			justifyingMember := findSharesJustifyingMemberByID(members, currentMemberID)
 
 			accuser := findSharesJustifyingMemberByID(members, test.accuserID)
-			modifiedShareS := accuser.receivedValidSharesS[test.accusedID]
-			modifiedShareT := accuser.receivedValidSharesT[test.accusedID]
+			modifiedShareS := accuser.receivedQualifiedSharesS[test.accusedID]
+			modifiedShareT := accuser.receivedQualifiedSharesT[test.accusedID]
 
 			if test.modifyShareS != nil {
 				modifiedShareS = test.modifyShareS(modifiedShareS)
@@ -466,7 +466,7 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			justifyingMember := findCoefficientsJustifyingMemberByID(members, currentMemberID)
 
 			accuser := findCoefficientsJustifyingMemberByID(members, test.accuserID)
-			modifiedShareS := accuser.receivedValidSharesS[test.accusedID]
+			modifiedShareS := accuser.receivedQualifiedSharesS[test.accusedID]
 			if test.modifyShareS != nil {
 				modifiedShareS = test.modifyShareS(modifiedShareS)
 			}
@@ -606,8 +606,8 @@ func initializeSharesJustifyingMemberGroup(dishonestThreshold, groupSize int) (
 	for _, m := range sharesJustifyingMembers {
 		for _, p := range sharesJustifyingMembers {
 			if m.ID != p.ID {
-				p.receivedValidSharesS[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
-				p.receivedValidSharesT[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
+				p.receivedQualifiedSharesS[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
+				p.receivedQualifiedSharesT[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
 				p.receivedValidPeerCommitments[m.ID] = groupCommitments[m.ID]
 			}
 		}
