@@ -547,7 +547,6 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 ) error {
 	for _, message := range messages {
 		accuserID := message.senderID
-		justlyAccusedMembers := make([]group.MemberIndex, 0)
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
 			if sjm.ID == accusedID {
 				// The member does not resolve the dispute as an accused.
@@ -669,7 +668,6 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accusedID)
-				justlyAccusedMembers = append(justlyAccusedMembers, accusedID)
 				continue
 			}
 
@@ -695,11 +693,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accusedID)
-				justlyAccusedMembers = append(justlyAccusedMembers, accusedID)
 			}
-		}
-		if len(justlyAccusedMembers) > 0 {
-			sjm.justifiedSharesAccusations[accuserID] = justlyAccusedMembers
 		}
 	}
 	return nil
@@ -1440,18 +1434,7 @@ func (rm *ReconstructingMember) isValidDisqualifiedEphemeralKeysMessage(
 			}
 		}
 
-		// Message is considered as invalid if an expected disqualified member
-		// is not revealed and the message sender didn't performed any justified
-		// shares accusation against the expected disqualified member.
-		//
-		// If such accusation exists, this means the message sender didn't
-		// receive valid shares from disqualified member in phase 4 and could
-		// not reveal they as a disqualified sharing member in phase 10. In this
-		// case, we should not consider this message as invalid.
-		if !isMemberRevealed && !rm.existsJustifiedSharesAccusation(
-			message.senderID,
-			disqualifiedMemberID,
-		) {
+		if !isMemberRevealed {
 			logger.Warningf(
 				"[member:%v] member [%v] sent message which doesn't "+
 					"reveal private key of disqualified member [%v]",
@@ -1463,20 +1446,6 @@ func (rm *ReconstructingMember) isValidDisqualifiedEphemeralKeysMessage(
 		}
 	}
 	return true
-}
-
-func (rm *ReconstructingMember) existsJustifiedSharesAccusation(
-	accuserID group.MemberIndex,
-	accusedID group.MemberIndex,
-) bool {
-	if justlyAccusedMembers, ok := rm.justifiedSharesAccusations[accuserID]; ok {
-		for _, justlyAccusedID := range justlyAccusedMembers {
-			if justlyAccusedID == accusedID {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 // disqualifiedShares contains shares `s_mk` calculated by the disqualified

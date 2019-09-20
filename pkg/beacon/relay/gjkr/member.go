@@ -103,9 +103,6 @@ type CommitmentsVerifyingMember struct {
 // Executes Phase 5 of the protocol.
 type SharesJustifyingMember struct {
 	*CommitmentsVerifyingMember
-	// justifiedSharesAccusations stores all justified shares accusations
-	// resolved by the member as a mapping: accuserID -> justly accusedIDs.
-	justifiedSharesAccusations map[group.MemberIndex][]group.MemberIndex
 }
 
 // QualifiedMember represents one member in a threshold key sharing group, after
@@ -257,10 +254,7 @@ func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVeri
 
 // InitializeSharesJustification returns a member to perform next protocol operations.
 func (cvm *CommitmentsVerifyingMember) InitializeSharesJustification() *SharesJustifyingMember {
-	return &SharesJustifyingMember{
-		cvm,
-		make(map[group.MemberIndex][]group.MemberIndex),
-	}
+	return &SharesJustifyingMember{cvm}
 }
 
 // InitializeQualified returns a member to perform next protocol operations.

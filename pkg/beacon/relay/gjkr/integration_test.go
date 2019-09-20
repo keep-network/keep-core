@@ -926,7 +926,7 @@ func TestExecute_DQ_member2_notRevealedDisqualifiedMember_phase11(t *testing.T) 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		// Member 1 misbehaves by sending an accusation with wrong private key.
 		// As result, they should be disqualified by other members.
-		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
+		accusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(1) {
 			randomKeyPair, _ := ephemeral.GenerateKeyPair()
 			accusationsMessage.SetAccusedMemberKey(
