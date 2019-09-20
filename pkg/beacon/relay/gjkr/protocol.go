@@ -706,8 +706,24 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	return nil
 }
 
-// discardReceivedShares removes shares received from given member from
-// current member's state.
+// Once phase 5 completes, all group members should have the same view
+// on who is disqualified and who is inactive. All properly behaving group
+// members belong to QUAL set.
+//
+// In the last phase of GJKR (phase 12), we reconstruct group public key
+// from public key share points of all members from QUAL set. We need
+// exactly the same number of public key share points as the number of QUAL
+// members.
+//
+// Since it is possible that one or more members of QUAL will misbehave
+// after phase 5 completed and QUAL established, we need to store shares S
+// from all QUAL members. From those shares, we can recover public key share
+// point of a misbehaving member from QUAL set.
+//
+// For the recovery of a missing public key share point, we must use shares of
+// QUAL members only. For this reason, we discard all the shares we received
+// from other group members which - because of their misbehaviour - do not
+// qualified to QUAL.
 func (sjm *SharesJustifyingMember) discardReceivedShares(
 	memberID group.MemberIndex,
 ) {
