@@ -553,6 +553,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				// Mark the accuser as disqualified immediately,
 				// as each member consider itself as a honest participant.
 				sjm.group.MarkMemberAsDisqualified(accuserID)
+				sjm.discardReceivedShares(accuserID)
 				continue
 			}
 
@@ -587,6 +588,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
+				sjm.discardReceivedShares(accuserID)
 				continue
 			}
 
@@ -624,6 +626,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accusedID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
+				sjm.discardReceivedShares(accuserID)
 				continue
 			}
 			symmetricKey := revealedAccuserPrivateKey.Ecdh(accusedPublicKey)
@@ -646,6 +649,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accusedID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
+				sjm.discardReceivedShares(accuserID)
 				continue
 			}
 
@@ -668,6 +672,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accusedID)
+				sjm.discardReceivedShares(accusedID)
 				continue
 			}
 
@@ -684,6 +689,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accusedID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
+				sjm.discardReceivedShares(accuserID)
 			} else {
 				logger.Warningf(
 					"[member:%v] member [%v] disqualified because of "+
@@ -693,10 +699,20 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accusedID)
+				sjm.discardReceivedShares(accusedID)
 			}
 		}
 	}
 	return nil
+}
+
+// discardReceivedShares removes shares received from given member from
+// current member's state.
+func (sjm *SharesJustifyingMember) discardReceivedShares(
+	memberID group.MemberIndex,
+) {
+	delete(sjm.receivedValidSharesS, memberID)
+	delete(sjm.receivedValidSharesT, memberID)
 }
 
 // Inspects evidence log looking for ephemeral public key message sent in phase
