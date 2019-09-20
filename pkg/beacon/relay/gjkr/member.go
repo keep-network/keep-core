@@ -88,9 +88,10 @@ type CommitmentsVerifyingMember struct {
 	// Shares calculated for the current member by peer group members which passed
 	// the validation.
 	//
-	// receivedValidSharesS are defined as `s_ji` and receivedValidSharesT are
+	// receivedQualifiedSharesS are defined as `s_ji` and receivedQualifiedSharesT are
 	// defined as `t_ji` across the protocol specification.
-	receivedValidSharesS, receivedValidSharesT map[group.MemberIndex]*big.Int
+	// TODO remove receivedQualifiedSharesT - exists only for unit tests purpose
+	receivedQualifiedSharesS, receivedQualifiedSharesT map[group.MemberIndex]*big.Int
 	// Valid commitments to secret shares polynomial coefficients received from
 	// other group members.
 	receivedValidPeerCommitments map[group.MemberIndex][]*bn256.G1
@@ -246,8 +247,8 @@ func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting() *CommittingMemb
 func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVerifyingMember {
 	return &CommitmentsVerifyingMember{
 		CommittingMember:             cm,
-		receivedValidSharesS:         make(map[group.MemberIndex]*big.Int),
-		receivedValidSharesT:         make(map[group.MemberIndex]*big.Int),
+		receivedQualifiedSharesS:     make(map[group.MemberIndex]*big.Int),
+		receivedQualifiedSharesT:     make(map[group.MemberIndex]*big.Int),
 		receivedValidPeerCommitments: make(map[group.MemberIndex][]*bn256.G1),
 	}
 }

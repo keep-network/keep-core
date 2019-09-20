@@ -399,8 +399,8 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 						cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
 					break
 				}
-				cvm.receivedValidSharesS[commitmentsMessage.senderID] = shareS
-				cvm.receivedValidSharesT[commitmentsMessage.senderID] = shareT
+				cvm.receivedQualifiedSharesS[commitmentsMessage.senderID] = shareS
+				cvm.receivedQualifiedSharesT[commitmentsMessage.senderID] = shareT
 				cvm.receivedValidPeerCommitments[commitmentsMessage.senderID] =
 					commitmentsMessage.commitments
 
@@ -711,8 +711,8 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 func (sjm *SharesJustifyingMember) discardReceivedShares(
 	memberID group.MemberIndex,
 ) {
-	delete(sjm.receivedValidSharesS, memberID)
-	delete(sjm.receivedValidSharesT, memberID)
+	delete(sjm.receivedQualifiedSharesS, memberID)
+	delete(sjm.receivedQualifiedSharesT, memberID)
 }
 
 // Inspects evidence log looking for ephemeral public key message sent in phase
@@ -830,7 +830,7 @@ func recoverShares(
 // See Phase 6 of the protocol specification.
 func (qm *QualifiedMember) CombineMemberShares() {
 	combinedSharesS := qm.selfSecretShareS // s_ii
-	for _, s := range qm.receivedValidSharesS {
+	for _, s := range qm.receivedQualifiedSharesS {
 		combinedSharesS = new(big.Int).Mod(
 			new(big.Int).Add(combinedSharesS, s),
 			bn256.Order,
@@ -889,7 +889,7 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 
 		if !sm.isShareValidAgainstPublicKeySharePoints(
 			sm.ID,
-			sm.receivedValidSharesS[message.senderID],
+			sm.receivedQualifiedSharesS[message.senderID],
 			message.publicKeySharePoints,
 		) {
 			logger.Warningf(
@@ -1212,7 +1212,7 @@ func (rm *RevealingMember) disqualifiedSharingMembers() []group.MemberIndex {
 	// Phase 3 and are sharing the group private key.
 	disqualifiedSharingMembers := make([]group.MemberIndex, 0)
 	for _, disqualifiedMemberID := range disqualifiedMembersIDs {
-		if _, ok := rm.receivedValidSharesS[disqualifiedMemberID]; ok {
+		if _, ok := rm.receivedQualifiedSharesS[disqualifiedMemberID]; ok {
 			disqualifiedSharingMembers = append(
 				disqualifiedSharingMembers,
 				disqualifiedMemberID,
@@ -1259,7 +1259,7 @@ func (rm *ReconstructingMember) revealDisqualifiedShares(
 	for _, disqualifiedMemberID := range rm.group.DisqualifiedMemberIDs() {
 		for _, shares := range disqualifiedShares {
 			if shares.disqualifiedMemberID == disqualifiedMemberID {
-				if currentMemberShare, ok := rm.receivedValidSharesS[disqualifiedMemberID]; ok {
+				if currentMemberShare, ok := rm.receivedQualifiedSharesS[disqualifiedMemberID]; ok {
 					shares.peerSharesS[rm.ID] = currentMemberShare
 				}
 				break
