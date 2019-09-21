@@ -243,12 +243,12 @@ contract KeepRandomBeaconOperator {
         }
 
         // Invalid tickets are rejected and their senders penalized.
-        if (!isTicketValid(msg.sender, ticketValue, stakerValue, virtualStakerIndex)) {
-            // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-            stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
-        } else {
+        if (isTicketValid(msg.sender, ticketValue, stakerValue, virtualStakerIndex)) {
             tickets.push(ticketValue);
             proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+        } else {
+            // TODO: replace with a secure authorization protocol (addressed in RFC 4).
+            stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
         }
     }
 

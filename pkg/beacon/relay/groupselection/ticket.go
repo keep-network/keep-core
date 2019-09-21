@@ -5,8 +5,10 @@ package groupselection
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
 // Ticket is a message containing a pseudorandomly generated value, W_k, which is
@@ -46,6 +48,7 @@ func NewTicket(
 	}
 }
 
+// IsFromStaker compare bytes
 func (t *Ticket) IsFromStaker(stakerAddress []byte) bool {
 	return bytes.Compare(t.Proof.StakerValue, stakerAddress) == 0
 }
@@ -60,11 +63,19 @@ func CalculateTicketValue(
 	virtualStakerIndex *big.Int,
 ) SHAValue {
 	var combinedValue []byte
-	combinedValue = append(combinedValue, beaconOutput...)
-	combinedValue = append(combinedValue, stakerValue...)
-	combinedValue = append(combinedValue, virtualStakerIndex.Bytes()...)
 
-	return SHAValue(sha256.Sum256(combinedValue[:]))
+	beaconOutputPadded, _ := byteutils.LeftPadTo32Bytes(beaconOutput)
+	stakerValuePadded, _ := byteutils.LeftPadTo32Bytes(stakerValue)
+	virtualStakerIndexPadded, _ := byteutils.LeftPadTo32Bytes(virtualStakerIndex.Bytes())
+
+	combinedValue = append(combinedValue, beaconOutputPadded...)
+	combinedValue = append(combinedValue, stakerValuePadded...)
+	combinedValue = append(combinedValue, virtualStakerIndexPadded...)
+
+	var keccak256Hash SHAValue
+	copy(keccak256Hash[:], crypto.Keccak256(combinedValue[:]))
+
+	return SHAValue(keccak256Hash)
 
 }
 

@@ -140,7 +140,7 @@ func (n *Node) submitTickets(
 
 func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
 	return &relaychain.Ticket{
-		Value: ticket.Value.Int(),
+		Value: new(big.Int).SetBytes(ticket.Value[:]),
 		Proof: &relaychain.TicketProof{
 			StakerValue:        new(big.Int).SetBytes(ticket.Proof.StakerValue),
 			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
