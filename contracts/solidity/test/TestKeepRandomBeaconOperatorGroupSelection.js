@@ -91,13 +91,6 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
   });
 
-  it("should be able to submit a ticket during ticket submission period", async function() {
-    await operatorContract.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
-    let proof = await operatorContract.getTicketProof(tickets1[0].value);
-    assert.isTrue(proof[1].eq(web3.utils.toBN(operator1)), "Should be able to get submitted ticket proof.");
-    assert.equal(proof[2], tickets1[0].virtualStakerIndex, "Should be able to get submitted ticket proof.");
-  });
-
   it("should be able to verify a ticket", async function() {
     await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
 

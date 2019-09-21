@@ -319,17 +319,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets ticket proof.
-     */
-    function getTicketProof(uint256 ticketValue) public view returns (address sender, uint256 stakerValue, uint256 virtualStakerIndex) {
-        return (
-            proofs[ticketValue].sender,
-            proofs[ticketValue].stakerValue,
-            proofs[ticketValue].virtualStakerIndex
-        );
-    }
-
-    /**
      * @dev Performs full verification of the ticket.
      * @param staker Address of the staker.
      * @param ticketValue Result of a pseudorandom function with input values of
