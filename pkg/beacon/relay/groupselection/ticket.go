@@ -48,7 +48,7 @@ func NewTicket(
 	}
 }
 
-// IsFromStaker compare bytes
+// IsFromStaker compare ticket staker value against staker address
 func (t *Ticket) IsFromStaker(stakerAddress []byte) bool {
 	return bytes.Compare(t.Proof.StakerValue, stakerAddress) == 0
 }
