@@ -1495,9 +1495,10 @@ func (rm *ReconstructingMember) isValidDisqualifiedEphemeralKeysMessage(
 		if rm.group.IsOperating(disqualifiedMemberID) {
 			logger.Warningf(
 				"[member:%v] member [%v] sent message which reveals "+
-					"private key of non-disqualified member",
+					"private key of non-disqualified member [%v]",
 				rm.ID,
 				message.senderID,
+				disqualifiedMemberID,
 			)
 			return false
 		}
