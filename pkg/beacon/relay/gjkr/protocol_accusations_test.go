@@ -154,9 +154,9 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 				modifiedShareT = test.modifyShareT(modifiedShareT)
 			}
 			if test.modifyCommitments != nil {
-				justifyingMember.receivedValidPeerCommitments[test.accusedID] =
+				justifyingMember.receivedPeerCommitments[test.accusedID] =
 					test.modifyCommitments(
-						justifyingMember.receivedValidPeerCommitments[test.accusedID],
+						justifyingMember.receivedPeerCommitments[test.accusedID],
 					)
 			}
 
@@ -208,136 +208,6 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			result := justifyingMember.group.DisqualifiedMemberIDs()
 			if !reflect.DeepEqual(result, test.expectedResult) {
 				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
-			}
-		})
-	}
-}
-
-func TestRecoverSymmetricKey(t *testing.T) {
-	member1ID := group.MemberIndex(1)
-	member1KeyPair, err := ephemeral.GenerateKeyPair()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	member2ID := group.MemberIndex(2)
-	member2KeyPair, err := ephemeral.GenerateKeyPair()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	expectedSymmetricKey := member1KeyPair.PrivateKey.Ecdh(member2KeyPair.PublicKey)
-
-	messageBuffer := newDkgEvidenceLog()
-
-	ephemeralPublicKeys1 := make(map[group.MemberIndex]*ephemeral.PublicKey)
-	ephemeralPublicKeys1[member2ID] = member1KeyPair.PublicKey
-	messageBuffer.PutEphemeralMessage(&EphemeralPublicKeyMessage{
-		member1ID,
-		ephemeralPublicKeys1,
-	})
-
-	ephemeralPublicKeys2 := make(map[group.MemberIndex]*ephemeral.PublicKey)
-	ephemeralPublicKeys2[member1ID] = member2KeyPair.PublicKey
-	messageBuffer.PutEphemeralMessage(&EphemeralPublicKeyMessage{
-		member2ID,
-		ephemeralPublicKeys2,
-	})
-
-	recoveredSymmetricKey, err := recoverSymmetricKey(
-		messageBuffer,
-		member1ID,                 // sender
-		member2ID,                 // receiver
-		member2KeyPair.PrivateKey, // receiver's private key
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !reflect.DeepEqual(expectedSymmetricKey, recoveredSymmetricKey) {
-		t.Fatalf("\nexpected: %s\nactual:   %s\n", expectedSymmetricKey, recoveredSymmetricKey)
-	}
-}
-
-func TestRecoverShares(t *testing.T) {
-	member1KeyPair, err := ephemeral.GenerateKeyPair()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	member2KeyPair, err := ephemeral.GenerateKeyPair()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	member3KeyPair, err := ephemeral.GenerateKeyPair()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	symmetricKey := member1KeyPair.PrivateKey.Ecdh(member2KeyPair.PublicKey)
-
-	shareS := big.NewInt(21)
-	shareT := big.NewInt(22)
-	encryptedShareS, err := symmetricKey.Encrypt(shareS.Bytes())
-	if err != nil {
-		t.Fatal(err)
-	}
-	encryptedShareT, err := symmetricKey.Encrypt(shareT.Bytes())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	member1ID := group.MemberIndex(1)
-	member2ID := group.MemberIndex(2)
-	messageBuffer := newDkgEvidenceLog()
-	shares := make(map[group.MemberIndex]*peerShares)
-	shares[member2ID] = &peerShares{encryptedShareS, encryptedShareT}
-	messageBuffer.PutPeerSharesMessage(&PeerSharesMessage{member1ID, shares})
-
-	var tests = map[string]struct {
-		symmetricKey   ephemeral.SymmetricKey
-		expectedShareS *big.Int
-		expectedShareT *big.Int
-		expectedError  error
-	}{
-		"shares successfully recovered": {
-			expectedShareS: shareS,
-			expectedShareT: shareT,
-			symmetricKey:   symmetricKey,
-		},
-		"shares recovery failed - incorrect symmetric key": {
-			symmetricKey:  member1KeyPair.PrivateKey.Ecdh(member3KeyPair.PublicKey),
-			expectedError: fmt.Errorf("cannot decrypt share S [could not decrypt S share [symmetric key decryption failed]]"),
-		},
-	}
-
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			recoveredShareS, recoveredShareT, err := recoverShares(
-				messageBuffer,
-				member1ID,
-				member2ID,
-				test.symmetricKey,
-			)
-			if !reflect.DeepEqual(err, test.expectedError) {
-				t.Fatalf("\nexpected: %s\nactual:   %s\n", test.expectedError, err)
-			}
-			if test.expectedShareS != nil {
-				if test.expectedShareS.Cmp(recoveredShareS) != 0 {
-					t.Fatalf("\nexpected: %s\nactual:   %s\n",
-						test.expectedShareS,
-						recoveredShareS,
-					)
-				}
-			}
-			if test.expectedShareT != nil {
-				if test.expectedShareT.Cmp(recoveredShareT) != 0 {
-					t.Fatalf("\nexpected: %s\nactual:   %s\n",
-						test.expectedShareT,
-						recoveredShareT,
-					)
-				}
 			}
 		})
 	}
@@ -608,7 +478,7 @@ func initializeSharesJustifyingMemberGroup(dishonestThreshold, groupSize int) (
 			if m.ID != p.ID {
 				p.receivedQualifiedSharesS[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsA[m.ID])
 				p.receivedQualifiedSharesT[m.ID] = m.evaluateMemberShare(p.ID, groupCoefficientsB[m.ID])
-				p.receivedValidPeerCommitments[m.ID] = groupCommitments[m.ID]
+				p.receivedPeerCommitments[m.ID] = groupCommitments[m.ID]
 			}
 		}
 	}

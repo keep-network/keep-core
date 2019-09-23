@@ -115,6 +115,18 @@ func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
 	dekm.privateKeys[memberIndex] = privateKey
 }
 
+func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKeys(
+	privateKeys map[group.MemberIndex]*ephemeral.PrivateKey,
+) {
+	dekm.privateKeys = privateKeys
+}
+
+func (dekm *DisqualifiedEphemeralKeysMessage) RemovePrivateKey(
+	memberIndex group.MemberIndex,
+) {
+	delete(dekm.privateKeys, memberIndex)
+}
+
 func GeneratePolynomial(degree int) ([]*big.Int, error) {
 	return generatePolynomial(degree)
 }

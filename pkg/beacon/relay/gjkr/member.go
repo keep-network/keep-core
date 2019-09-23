@@ -92,9 +92,9 @@ type CommitmentsVerifyingMember struct {
 	// defined as `t_ji` across the protocol specification.
 	// TODO remove receivedQualifiedSharesT - exists only for unit tests purpose
 	receivedQualifiedSharesS, receivedQualifiedSharesT map[group.MemberIndex]*big.Int
-	// Valid commitments to secret shares polynomial coefficients received from
+	// Commitments to secret shares polynomial coefficients received from
 	// other group members.
-	receivedValidPeerCommitments map[group.MemberIndex][]*bn256.G1
+	receivedPeerCommitments map[group.MemberIndex][]*bn256.G1
 }
 
 // SharesJustifyingMember represents one member in a threshold key sharing group,
@@ -246,10 +246,10 @@ func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting() *CommittingMemb
 // InitializeCommitmentsVerification returns a member to perform next protocol operations.
 func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVerifyingMember {
 	return &CommitmentsVerifyingMember{
-		CommittingMember:             cm,
-		receivedQualifiedSharesS:     make(map[group.MemberIndex]*big.Int),
-		receivedQualifiedSharesT:     make(map[group.MemberIndex]*big.Int),
-		receivedValidPeerCommitments: make(map[group.MemberIndex][]*bn256.G1),
+		CommittingMember:         cm,
+		receivedQualifiedSharesS: make(map[group.MemberIndex]*big.Int),
+		receivedQualifiedSharesT: make(map[group.MemberIndex]*big.Int),
+		receivedPeerCommitments:  make(map[group.MemberIndex][]*bn256.G1),
 	}
 }
 
