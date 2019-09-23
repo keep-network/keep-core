@@ -1193,6 +1193,28 @@ func (rm *RevealingMember) disqualifiedSharingMembers() []group.MemberIndex {
 func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
 	messages []*DisqualifiedEphemeralKeysMessage,
 ) error {
+	// Prepare list of expected disqualified members before messages processing.
+	// Validated messages should be checked against the state from the beginning
+	// of phase 11.
+	disqualifiedSharingMembers := rm.disqualifiedSharingMembers()
+
+	for _, message := range messages {
+		// Validate received message. If message is invalid, sender should
+		// be considered as misbehaving and marked as disqualified.
+		if !rm.isValidDisqualifiedEphemeralKeysMessage(
+			message,
+			disqualifiedSharingMembers,
+		) {
+			logger.Warningf(
+				"[member:%v] member [%v] disqualified because of "+
+					"sending invalid disqualified ephemeral keys message",
+				rm.ID,
+				message.senderID,
+			)
+			rm.group.MarkMemberAsDisqualified(message.senderID)
+		}
+	}
+
 	revealedDisqualifiedShares, err := rm.revealDisqualifiedShares(messages)
 	if err != nil {
 		return fmt.Errorf("revealing disqualified shares failed [%v]", err)
@@ -1270,29 +1292,8 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 		)
 	}
 
-	// Prepare list of expected disqualified members before messages processing.
-	// Validated messages should be checked against the state from the beginning
-	// of phase 11.
-	disqualifiedSharingMembers := rm.disqualifiedSharingMembers()
-
 	for _, message := range messages {
 		revealingMemberID := message.senderID
-
-		// Validate received message. If message is invalid, sender should
-		// be considered as misbehaving and marked as disqualified.
-		if !rm.isValidDisqualifiedEphemeralKeysMessage(
-			message,
-			disqualifiedSharingMembers,
-		) {
-			logger.Warningf(
-				"[member:%v] member [%v] disqualified because of "+
-					"sending invalid disqualified ephemeral keys message",
-				rm.ID,
-				revealingMemberID,
-			)
-			rm.group.MarkMemberAsDisqualified(revealingMemberID)
-			continue
-		}
 
 		for disqualifiedMemberID, revealedPrivateKey := range message.privateKeys {
 			if rm.ID == disqualifiedMemberID {
@@ -1306,14 +1307,9 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			// After phase 9, all group members should have the same view on
 			// who is disqualified. Revealing key of non-disqualified members
 			// is forbidden and leads to disqualifying the revealing member.
+			// This situation should be already handled by message validation
+			// so we just skip and continue.
 			if rm.group.IsOperating(disqualifiedMemberID) {
-				logger.Warningf(
-					"[member:%v] member [%v] disqualified because "+
-						"revealing key of non-disqualified member",
-					rm.ID,
-					revealingMemberID,
-				)
-				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
 			}
 
@@ -1494,6 +1490,19 @@ func (rm *ReconstructingMember) isValidDisqualifiedEphemeralKeysMessage(
 			return false
 		}
 	}
+
+	for disqualifiedMemberID := range message.privateKeys {
+		if rm.group.IsOperating(disqualifiedMemberID) {
+			logger.Warningf(
+				"[member:%v] member [%v] sent message which reveals "+
+					"private key of non-disqualified member",
+				rm.ID,
+				message.senderID,
+			)
+			return false
+		}
+	}
+
 	return true
 }
 
