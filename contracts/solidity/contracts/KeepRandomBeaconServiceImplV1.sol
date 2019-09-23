@@ -35,13 +35,19 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     event RelayEntryRequested(uint256 requestId);
     event RelayEntryGenerated(uint256 requestId, uint256 entry);
 
+    // Minimum gas price for relay entry request.
     uint256 internal _minGasPrice;
-    uint256 internal _profitMargin;
+
+    // Each signing group member reward in % of the relay entry cost.
+    uint256 internal _groupMemberProfitMargin;
+
+    // Fraction in % of the estimated cost of DKG that is included 
+    // in relay request fee.
+    uint256 internal _dkgContributionFee;
 
     // Every relay request payment includes DKG contribution that is added to
     // the DKG fee pool, once the pool amount reaches DKG cost estimate the relay
     // entry will trigger the creation of a new group.
-    uint256 internal _dkgFee;
     uint256 internal _dkgFeePool;
 
     // Rewards not paid out to the operators are sent to request subsidy pool to
@@ -77,16 +83,16 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param minGasPrice Minimum gas price for relay entry request.
-     * @param profitMargin Each signing group member reward in % of the relay entry cost.
-     * @param dkgFee Fraction in % of the estimated cost of dkg that is included in relay
-     * request payment.
+     * @param groupMemberProfitMargin Each signing group member reward in % of the relay entry cost.
+     * @param dkgContributionFee Fraction in % of the estimated cost of DKG that is included in relay
+     * request fee.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param operatorContract Operator contract linked to this contract.
      */
     function initialize(
         uint256 minGasPrice,
-        uint256 profitMargin,
-        uint256 dkgFee,
+        uint256 groupMemberProfitMargin,
+        uint256 dkgContributionFee,
         uint256 withdrawalDelay,
         address operatorContract
     )
@@ -96,8 +102,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         require(!initialized(), "Contract is already initialized.");
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _minGasPrice = minGasPrice;
-        _profitMargin = profitMargin;
-        _dkgFee = dkgFee;
+        _groupMemberProfitMargin = groupMemberProfitMargin;
+        _dkgContributionFee = dkgContributionFee;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _operatorContracts.push(operatorContract);
@@ -205,8 +211,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             "Payment is less than required minimum."
         );
 
-        (uint256 entryVerificationFee, uint256 dkgFee, uint256 groupProfitMargin) = entryFeeBreakdown();
-        uint256 callbackFee = msg.value.sub(entryVerificationFee).sub(dkgFee).sub(groupProfitMargin);
+        (uint256 entryVerificationFee, uint256 dkgFee, uint256 groupProfitFee) = entryFeeBreakdown();
+        uint256 callbackFee = msg.value.sub(entryVerificationFee).sub(dkgFee).sub(groupProfitFee);
         require(
             callbackFee >= minimumCallbackFee(callbackGas),
             "Callback payment is less than required minimum."
@@ -218,7 +224,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 requestId = _requestCounter;
 
         OperatorContract(selectOperatorContract(_previousEntry)).sign.value(
-            entryVerificationFee.add(groupProfitMargin)
+            entryVerificationFee.add(groupProfitFee)
         )(requestId, seed, _previousEntry, entryVerificationFee);
 
         if (callbackContract != address(0)) {
@@ -315,14 +321,18 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param callbackGas Gas required for the callback.
      */
     function entryFeeEstimate(uint256 callbackGas) public view returns(uint256) {
-        (uint256 entryVerificationFee, uint256 dkgFee, uint256 groupProfitMargin) = entryFeeBreakdown();
-        return entryVerificationFee.add(dkgFee).add(groupProfitMargin).add(minimumCallbackFee(callbackGas));
+        (uint256 entryVerificationFee, uint256 dkgFee, uint256 groupProfitFee) = entryFeeBreakdown();
+        return entryVerificationFee.add(dkgFee).add(groupProfitFee).add(minimumCallbackFee(callbackGas));
     }
 
     /**
      * @dev Get the entry fee breakdown in wei for relay entry request.
      */
-    function entryFeeBreakdown() public view returns(uint256 entryVerificationFee, uint256 dkgFee, uint256 groupProfitMargin) {
+    function entryFeeBreakdown() public view returns(
+        uint256 entryVerificationFee,
+        uint256 dkgFee,
+        uint256 groupProfitFee
+    ) {
         uint256 signingGas;
         uint256 dkgGas;
         uint256 groupSize;
@@ -340,8 +350,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         return (
             signingGas.mul(_minGasPrice),
-            dkgGas.mul(_minGasPrice).mul(_dkgFee).div(100),
-            (signingGas.add(dkgGas)).mul(_minGasPrice).mul(_profitMargin).mul(groupSize).div(100)
+            dkgGas.mul(_minGasPrice).mul(_dkgContributionFee).div(100),
+            (signingGas.add(dkgGas)).mul(_minGasPrice).mul(_groupMemberProfitMargin).mul(groupSize).div(100)
         );
     }
 
