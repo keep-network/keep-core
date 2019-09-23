@@ -912,13 +912,12 @@ func TestExecute_DQ_members12_cannotDecryptTheirShares_phase9(t *testing.T) {
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5}...)
 }
 
-// Phase 11 test case - a member misbehaved by not revealing key of an another
-// disqualified member. The revealing member becomes disqualified by all other
-// members which consider the member for which the key has not been revealed as
-// disqualified. After phase 9, all group members should have the same view on who
-// is disqualified. Not revealing the key of an actually disqualified member
-// is forbidden and leads to disqualifying the revealing member.
-func TestExecute_DQ_member2_notRevealedDisqualifiedMember_phase11(t *testing.T) {
+// Phase 11 test case - a member misbehaved by not revealing its private key
+// generated for the sake of communication with a disqualified QUAL member.
+// After phase 9, all group members should have the same view on who is disqualified.
+// Not revealing key of any disqualified member from QUAL is considered as misbehaviour
+// and leads to disqualification of the member which was supposed to reveal the key.
+func TestExecute_DQ_member2_notRevealsDisqualifiedQualMemberKey_phase11(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -938,9 +937,10 @@ func TestExecute_DQ_member2_notRevealedDisqualifiedMember_phase11(t *testing.T) 
 			return accusationsMessage
 		}
 
-		// Member 2 doesn't reveal member 1 as disqualified in their
-		// DisqualifiedEphemeralKeysMessage, despite of actual situation.
-		// As result, they should be also disqualified by other members.
+		// Member 2 does not reveal private key generated for the sake
+		// of communication with disqualified member 1 and member 1
+		// is in QUAL set so it has been disqualified after phase 5.
+		// For this reason, member 2 should be also disqualified.
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
 		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(2) {
 			disqualifiedKeysMessage.RemovePrivateKey(group.MemberIndex(1))
@@ -1023,7 +1023,7 @@ func TestExecute_DQ_member5_revealsWrongPrivateKey_phase11(t *testing.T) {
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 
 		// Member 4 misbehaves by sending invalid public key shares.
-		// As result it become disqualified in phase 9.
+		// As a result it become disqualified in phase 9.
 		publicKeyShareMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
 		if ok && publicKeyShareMessage.SenderID() == group.MemberIndex(4) {
 			publicKeyShareMessage.SetPublicKeyShare(
@@ -1033,8 +1033,10 @@ func TestExecute_DQ_member5_revealsWrongPrivateKey_phase11(t *testing.T) {
 			return publicKeyShareMessage
 		}
 
-		// Member 5 reveals member 4 as disqualified in phase 10, but provides
-		// a wrong ephemeral private key.
+		// Member 5 should reveal private key generated for the sake of
+		// communication with disqualified member 4. Instead of revealing
+		// private key matching previously announced public key, member 5
+		// reveals some other key. As a result, member 5 should be disqualified.
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
 		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(5) {
 			randomKeyPair, _ := ephemeral.GenerateKeyPair()
@@ -1064,10 +1066,11 @@ func TestExecute_DQ_member5_revealsWrongPrivateKey_phase11(t *testing.T) {
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3}...)
 }
 
-// Phase 11 test case - a member misbehaved by revealing an inactive member.
+// Phase 11 test case - a member misbehaved by revealing private key generated for
+// the sake of communication with a member which became inactive before phase 5.
 // Shares reconstruction could not be resolved by other members so the revealing
 // member is disqualified in phase 11.
-func TestExecute_DQ_member2_revealsInactiveMember_phase11(t *testing.T) {
+func TestExecute_DQ_member2_revealsInactiveNonQualMemberKey_phase11(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -1086,9 +1089,9 @@ func TestExecute_DQ_member2_revealsInactiveMember_phase11(t *testing.T) {
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
-		// Modify default man-in-the-middle behavior: revealing member reveals
-		// the inactive revealed member using the ephemeral private key
-		// generated before.
+		// Modify default man-in-the-middle behavior: reveals private key
+		// generated for the sake of communication with member marked as
+		// inactive before phase 5
 		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(2) {
 			privateKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			privateKeys[group.MemberIndex(1)] =
@@ -1099,9 +1102,9 @@ func TestExecute_DQ_member2_revealsInactiveMember_phase11(t *testing.T) {
 
 		manInTheMiddle.interceptCommunication(msg)
 
-		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
+		sharesMessage, ok := msg.(*gjkr.PeerSharesMessage)
 		// Drop message from revealed member in order to simulate its inactivity.
-		if ok && publicKeyMessage.SenderID() == group.MemberIndex(1) {
+		if ok && sharesMessage.SenderID() == group.MemberIndex(1) {
 			return nil
 		}
 
@@ -1125,13 +1128,14 @@ func TestExecute_DQ_member2_revealsInactiveMember_phase11(t *testing.T) {
 }
 
 // Phase 11 test case - a member misbehaved by sending shares which
-// cannot be decrypted by the receiver. The receiver reveals the misbehaved
-// member as disqualified in phase 10. This is a protocol violation because
-// only disqualified sharing members should be revealed in phase 10.
-// In result, the reconstructing members are not able to decrypt shares sent by
-// revealed member to the revealing member and the revealing member is marked
-// as disqualified in phase 11.
-func TestExecute_DQ_members34_cannotDecryptTheirShares_phase11(t *testing.T) {
+// cannot be decrypted by the receiver. For this reason, member is disqualified
+// in phase 5.
+// In phase 10, the receiver reveals private key generated for the sake of
+// communication with that member.
+// This is a protocol violation because only disqualified sharing members (QUAL)
+// should be included when revealing keys generated for them.
+// As a result, the revealing member is disqualified in phase 11.
+func TestExecute_DQ_member3_revealsDisqualifiedNonQualMemberKey_phase11(t *testing.T) {
 	t.Parallel()
 
 	groupSize := 5
@@ -1150,8 +1154,8 @@ func TestExecute_DQ_members34_cannotDecryptTheirShares_phase11(t *testing.T) {
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
 		accusationsMessage, ok := msg.(*gjkr.SecretSharesAccusationsMessage)
-		// Modify default man-in-the-middle behavior: revealing member perform
-		// a justified accusation against revealed member.
+		// Modify default man-in-the-middle behavior: revealing member perform a
+		// justified accusation against member 4 which sent invalid shares.
 		if ok && accusationsMessage.SenderID() == group.MemberIndex(3) {
 			accusedMembersKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			accusedMembersKeys[group.MemberIndex(4)] =
@@ -1161,8 +1165,8 @@ func TestExecute_DQ_members34_cannotDecryptTheirShares_phase11(t *testing.T) {
 		}
 
 		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
-		// Modify default man-in-the-middle behavior: revealing member perform
-		// reveal using the ephemeral private key generated before.
+		// Modify default man-in-the-middle behavior: revealing member reveals
+		// private key generated for the sake of communication with member 4.
 		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(3) {
 			privateKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			privateKeys[group.MemberIndex(4)] =

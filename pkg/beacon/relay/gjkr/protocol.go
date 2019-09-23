@@ -1159,6 +1159,12 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys() (
 	}, nil
 }
 
+// disqualifiedSharingMembers returns all members from QUAL set disqualified
+// in later phases for any reason.
+//
+// Once phase 5 completes, all group members should have the same view
+// on who is disqualified and who is inactive. All properly behaving group
+// members at that point belong to QUAL set.
 func (rm *RevealingMember) disqualifiedSharingMembers() []group.MemberIndex {
 	disqualifiedMembersIDs := rm.group.DisqualifiedMemberIDs()
 
@@ -1265,8 +1271,8 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 	}
 
 	// Prepare list of expected disqualified members before messages processing.
-	// Validated messages should be checked against state expected at the
-	// beginning of phase 11.
+	// Validated messages should be checked against the state from the beginning
+	// of phase 11.
 	disqualifiedSharingMembers := rm.disqualifiedSharingMembers()
 
 	for _, message := range messages {
@@ -1347,25 +1353,28 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			}
 
 			// Recover symmetric key based on ephemeral public key message sent
-			// by the disqualified member. If the message is not present in the
-			// evidence log, it means the disqualified member did not sent us
-			// their public key in the first phase of the protocol and we
-			// marked the disqualified member as inactive in the second phase
-			// of the protocol. Assuming everyone in the group has the same view
-			// on who is inactive, it means the revealing member sent a
-			// DisqualifiedEphemeralKeysMessage revealing an inactive member.
-			// As a result, we should mark the revealing member as disqualified.
+			// by the disqualified QUAL member.
+			//
+			// If the message is not present in the evidence log it means the
+			// member is neither QUAL nor disqualified.
+			// That member was marked as inactive in phase 2 because they did
+			// not broadcast ephemeral public key message.
 			//
 			// If the message is present in the evidence log but it does not
-			// contain a public key generated for the revealing member, it means
-			// we have already marked the disqualified member as disqualified
-			// when performing a validation of a message with public keys in the
-			// first phase of the protocol. Assuming everyone in the group has
-			// the same view on who is disqualified after the second phase of
-			// the protocol, it means the revealing member sent a
-			// DisqualifiedEphemeralKeysMessage revealing a disqualified
-			// member which didn't manage to send any shares in phase 3.
-			// As a result, we should mark the revealing member as disqualified.
+			// contain public key generated for the sake of communication
+			// with the revealing member, it means the member which sent that
+			// message is not QUAL.
+			// That member was marked as disqualified in phase 2 because their
+			// ephemeral public key message did not contain public keys for all
+			// group members.
+			//
+			// Revealing private key generated for the sake of communication
+			// with a member out of the disqualified QUAL members group is
+			// considered as misbehavior and leads to disqualification of
+			// the revealing member. This was already checked during the
+			// validation of the message and disqualification - if needed - was
+			// performed there, so in the case when we can not find ephemeral
+			// public key, we just skip and continue.
 			disqualifiedMemberPublicKey := findPublicKey(
 				rm.evidenceLog,
 				disqualifiedMemberID,
@@ -1385,44 +1394,44 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			}
 			recoveredSymmetricKey := revealedPrivateKey.Ecdh(disqualifiedMemberPublicKey)
 
-			// Get from evidence log peer shares message sent by the disqualified
-			// member. If the message is not present, this means the disqualified
-			// member has been already marked as inactive in phase 4.
-			// Assuming that each other member consider the disqualified member
-			// as inactive, the revealing member should be disqualified because
-			// of revealing an inactive member knowing we can not perform this
-			// reconstruction.
+			// Get from the evidence log peer shares message sent by the member
+			// for which the private key has been revealed.
+			// If the message is not present there, it means that member has
+			// been marked as inactive in phase 4. Since we expect the revealing
+			// member to reveal private keys generated for the sake of
+			// communication only with inactive and disqualified members of QUAL
+			// set, this situation is a misbehaviour. Member which has been
+			// disqualified in phase 4 does not belong to QUAL set.
 			disqualifiedMemberSharesMessage := rm.evidenceLog.peerSharesMessage(disqualifiedMemberID)
 			if disqualifiedMemberSharesMessage == nil {
 				logger.Warningf(
-					"[member:%v] member [%v] disqualified because could not "+
-						"get peer shares message from evidence log; "+
-						"disqualified member [%v] is already marked as inactive",
+					"[member:%v] member [%v] disqualified because of revealing "+
+						"private key of a member which did not provide shares in phase 3",
 					rm.ID,
 					revealingMemberID,
-					disqualifiedMemberID,
 				)
 				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
 			}
 
-			// In this phase, we assume that each revealed disqualified member
-			// was disqualified after phase 5 so it has provided valid shares in
-			// phase 3. If shares could not be decrypted here is because
-			// the revealing member revealed a disqualified member who has
-			// been disqualified before it was able to provide shares in phase 3.
-			// In result the revealing member violated the protocol and
-			// should be marked as disqualified.
+			// If shares can not be decrypted, it means the revealing member
+			// knew about this fact in phase 3 and did not complain in phase 4.
+			// As a result, we did not mark the member for which the private key
+			// has been revealed as disqualified earlier, in phase 5.
+			// Not reporting misbehaviour is also a protocol violation, so we
+			// disqualify the revealing member.
 			shareS, shareT, err := disqualifiedMemberSharesMessage.decryptShares(
 				revealingMemberID,
 				recoveredSymmetricKey,
 			)
 			if err != nil {
 				logger.Warningf(
-					"[member:%v] member [%v] disqualified because of revealing "+
-						"member which didn't provide valid shares in phase 3",
+					"[member:%v] member [%v] disqualified because of not "+
+						"reporting protocol violation in phase 3 by member [%v] - "+
+						"shares can not be decrypted",
 					rm.ID,
 					revealingMemberID,
+					disqualifiedMemberID,
 				)
 				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
@@ -1435,11 +1444,20 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			) {
 				addShare(disqualifiedMemberID, revealingMemberID, shareS)
 			} else {
+				// Similar situation as for shares that can not be decrypted.
+				// The revealing member knew about the fact shares are
+				// inconsistent in phase 3 and did not complain in phase 4.
+				// As a result, we did not mark the member for which the private
+				// key has been revealed as disqualified earlier, in phase 5.
+				// Not reporting misbehavior is also a protocol violation, so we
+				// disqualify the revealing member.
 				logger.Warningf(
-					"[member:%v] member [%v] disqualified because of "+
-						"not complaining about inconsistent shares earlier ",
+					"[member:%v] member [%v] disqualified because of not "+
+						"reporting protocol violation in phase 3 by member [%v] - "+
+						"shares are inconsistent",
 					rm.ID,
 					revealingMemberID,
+					disqualifiedMemberID,
 				)
 				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 			}
@@ -1450,25 +1468,24 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 
 // isValidDisqualifiedEphemeralKeysMessage validates a given
 // DisqualifiedEphemeralKeysMessage. Message is considered valid if it reveals
-// all expected disqualified sharing members.
+// all private keys generated for the sake of communication with all
+// disqualified QUAL (sharing) members.
 func (rm *ReconstructingMember) isValidDisqualifiedEphemeralKeysMessage(
 	message *DisqualifiedEphemeralKeysMessage,
 	disqualifiedSharingMembers []group.MemberIndex,
 ) bool {
-	// Checks if everyone of the disqualified sharing members is also revealed
-	// as disqualified in the received message.
 	for _, disqualifiedMemberID := range disqualifiedSharingMembers {
-		isMemberRevealed := false
-		for revealedMemberID := range message.privateKeys {
-			if revealedMemberID == disqualifiedMemberID {
-				isMemberRevealed = true
+		isKeyForMemberRevealed := false
+		for memberID := range message.privateKeys {
+			if memberID == disqualifiedMemberID {
+				isKeyForMemberRevealed = true
 				break
 			}
 		}
 
-		if !isMemberRevealed {
+		if !isKeyForMemberRevealed {
 			logger.Warningf(
-				"[member:%v] member [%v] sent message which doesn't "+
+				"[member:%v] member [%v] sent message which does not "+
 					"reveal private key of disqualified member [%v]",
 				rm.ID,
 				message.senderID,
