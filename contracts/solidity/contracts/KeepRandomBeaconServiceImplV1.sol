@@ -43,7 +43,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     // Fraction in % of the estimated cost of DKG that is included 
     // in relay request fee.
-    uint256 internal _dkgContributionFee;
+    uint256 internal _dkgContributionMargin;
 
     // Every relay request payment includes DKG contribution that is added to
     // the DKG fee pool, once the pool amount reaches DKG cost estimate the relay
@@ -84,7 +84,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param minGasPrice Minimum gas price for relay entry request.
      * @param groupMemberProfitMargin Each signing group member reward in % of the relay entry cost.
-     * @param dkgContributionFee Fraction in % of the estimated cost of DKG that is included in relay
+     * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param operatorContract Operator contract linked to this contract.
@@ -92,7 +92,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     function initialize(
         uint256 minGasPrice,
         uint256 groupMemberProfitMargin,
-        uint256 dkgContributionFee,
+        uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
         address operatorContract
     )
@@ -103,7 +103,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _minGasPrice = minGasPrice;
         _groupMemberProfitMargin = groupMemberProfitMargin;
-        _dkgContributionFee = dkgContributionFee;
+        _dkgContributionMargin = dkgContributionMargin;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _operatorContracts.push(operatorContract);
@@ -211,14 +211,14 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             "Payment is less than required minimum."
         );
 
-        (uint256 entryVerificationFee, uint256 dkgFee, uint256 groupProfitFee) = entryFeeBreakdown();
-        uint256 callbackFee = msg.value.sub(entryVerificationFee).sub(dkgFee).sub(groupProfitFee);
+        (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
+        uint256 callbackFee = msg.value.sub(entryVerificationFee).sub(dkgContributionFee).sub(groupProfitFee);
         require(
             callbackFee >= minimumCallbackFee(callbackGas),
             "Callback payment is less than required minimum."
         );
 
-        _dkgFeePool += dkgFee;
+        _dkgFeePool += dkgContributionFee;
 
         _requestCounter++;
         uint256 requestId = _requestCounter;
@@ -321,8 +321,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param callbackGas Gas required for the callback.
      */
     function entryFeeEstimate(uint256 callbackGas) public view returns(uint256) {
-        (uint256 entryVerificationFee, uint256 dkgFee, uint256 groupProfitFee) = entryFeeBreakdown();
-        return entryVerificationFee.add(dkgFee).add(groupProfitFee).add(minimumCallbackFee(callbackGas));
+        (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
+        return entryVerificationFee.add(dkgContributionFee).add(groupProfitFee).add(minimumCallbackFee(callbackGas));
     }
 
     /**
@@ -330,7 +330,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function entryFeeBreakdown() public view returns(
         uint256 entryVerificationFee,
-        uint256 dkgFee,
+        uint256 dkgContributionFee,
         uint256 groupProfitFee
     ) {
         uint256 signingGas;
@@ -350,7 +350,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         return (
             signingGas.mul(_minGasPrice),
-            dkgGas.mul(_minGasPrice).mul(_dkgContributionFee).div(100),
+            dkgGas.mul(_minGasPrice).mul(_dkgContributionMargin).div(100),
             (signingGas.add(dkgGas)).mul(_minGasPrice).mul(_groupMemberProfitMargin).mul(groupSize).div(100)
         );
     }
