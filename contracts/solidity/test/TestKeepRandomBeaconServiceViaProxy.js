@@ -62,13 +62,13 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.equal((await operatorContract.getPastEvents())[0].event, 'SignatureRequested', "SignatureRequested event should occur on operator contract.");
 
     let contractBalance = await web3.eth.getBalance(serviceContract.address);
-    assert.isTrue(web3.utils.toBN(contractBalance).eq(contractPreviousBalance.add(entryFee.dkgFee).sub(requestorSubsidy)), "Keep Random Beacon service contract should receive DKG fee fraction.");
+    assert.isTrue(web3.utils.toBN(contractBalance).eq(contractPreviousBalance.add(entryFee.dkgContributionFee).sub(requestorSubsidy)), "Keep Random Beacon service contract should receive DKG fee fraction.");
 
     let contractBalanceViaProxy = await web3.eth.getBalance(serviceContractProxy.address);
-    assert.isTrue(web3.utils.toBN(contractBalanceViaProxy).eq(contractPreviousBalance.add(entryFee.dkgFee).sub(requestorSubsidy)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
+    assert.isTrue(web3.utils.toBN(contractBalanceViaProxy).eq(contractPreviousBalance.add(entryFee.dkgContributionFee).sub(requestorSubsidy)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
-    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.entryVerificationFee.add(minimumCallbackFee).add(entryFee.groupProfitMargin).add(dkgSubmitterReimbursement)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and DKG payment.");
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.entryVerificationFee.add(minimumCallbackFee).add(entryFee.groupProfitFee).add(dkgSubmitterReimbursement)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and DKG payment.");
   
   });
 
@@ -87,13 +87,13 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.equal((await operatorContract.getPastEvents())[0].event, 'SignatureRequested', "SignatureRequested event should occur on the operator contract.");
 
     let contractBalance = await web3.eth.getBalance(serviceContract.address);
-    assert.isTrue(web3.utils.toBN(contractBalance).eq(contractPreviousBalance.add(entryFee.dkgFee)), "Keep Random Beacon service contract should receive DKG fee fraction.");
+    assert.isTrue(web3.utils.toBN(contractBalance).eq(contractPreviousBalance.add(entryFee.dkgContributionFee)), "Keep Random Beacon service contract should receive DKG fee fraction.");
 
     let contractBalanceServiceContract = await web3.eth.getBalance(serviceContractProxy.address);
-    assert.isTrue(web3.utils.toBN(contractBalanceServiceContract).eq(contractPreviousBalance.add(entryFee.dkgFee)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
+    assert.isTrue(web3.utils.toBN(contractBalanceServiceContract).eq(contractPreviousBalance.add(entryFee.dkgContributionFee)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
-    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.entryVerificationFee.add(minimumCallbackFee).add(entryFee.groupProfitMargin).add(dkgSubmitterReimbursement)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and dkg submitter reward.");
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.entryVerificationFee.add(minimumCallbackFee).add(entryFee.groupProfitFee).add(dkgSubmitterReimbursement)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and dkg submitter reward.");
   });
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {

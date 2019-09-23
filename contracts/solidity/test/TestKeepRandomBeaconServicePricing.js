@@ -134,7 +134,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     let decimalPoints = web3.utils.toBN(1e16);
     let delayFactor = (deadlineBlock.sub(currentBlock)).mul(decimalPoints).div(relayEntryTimeout.sub(web3.utils.toBN(1))).pow(web3.utils.toBN(2));
-    let memberBaseReward = entryFee.groupProfitMargin.div(groupSize)
+    let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
     let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
 
     await operatorContract.relayEntry(bls.nextGroupSignature);
@@ -170,11 +170,11 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let delayFactor = (deadlineBlock.sub(currentBlock)).mul(decimalPoints).div(relayEntryTimeout.sub(web3.utils.toBN(1))).pow(web3.utils.toBN(2));
     let delayFactorInverse = decimalPoints.pow(web3.utils.toBN(2)).sub(delayFactor);
 
-    let memberBaseReward = entryFee.groupProfitMargin.div(groupSize)
+    let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
     let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
     let expectedDelayPenalty = memberBaseReward.mul(delayFactorInverse).div(decimalPoints.pow(web3.utils.toBN(2)));
     let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).mul(web3.utils.toBN(5)).div(web3.utils.toBN(100));
-    let requestSubsidy = entryFee.groupProfitMargin.sub(expectedGroupMemberReward.mul(groupSize)).sub(expectedSubmitterExtraReward);
+    let requestSubsidy = entryFee.groupProfitFee.sub(expectedGroupMemberReward.mul(groupSize)).sub(expectedSubmitterExtraReward);
 
     let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
 

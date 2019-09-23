@@ -11,8 +11,8 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   // (20 Gwei) TODO: Use historical average of recently served requests?
   // Adding 1.5 fluctuation safety factor to cover rise in gas fees during DKG execution
   let minimumGasPrice = web3.utils.toBN(20*1.5).mul(web3.utils.toBN(10**9)),
-    profitMargin = 1, // Signing group reward per each member in % of the entry fee.
-    dkgFee = 10, // Fraction in % of the estimated cost of DKG that is included in relay request payment.
+    groupMemberProfitMargin = 1, // Signing group reward per each member in % of the entry fee.
+    dkgContributionMargin = 10, // Fraction in % of the estimated cost of DKG that is included in relay request payment.
     withdrawalDelay = 1;
 
   // Initialize Keep token contract
@@ -33,7 +33,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address, groupContract.address);
   await groupContract.setOperatorContract(operatorContract.address);
 
-  await serviceContract.initialize(minimumGasPrice, profitMargin, dkgFee, withdrawalDelay, operatorContract.address);
+  await serviceContract.initialize(minimumGasPrice, groupMemberProfitMargin, dkgContributionMargin, withdrawalDelay, operatorContract.address);
 
   // Add initial funds to the fee pool to trigger group creation without waiting for DKG fee accumulation
   let dkgGasEstimate = await operatorContract.dkgGasEstimate();
