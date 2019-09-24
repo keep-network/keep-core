@@ -333,7 +333,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 dkgContributionFee,
         uint256 groupProfitFee
     ) {
-        uint256 signingGas;
+        uint256 entryVerificationGas;
         uint256 dkgGas;
         uint256 groupSize;
 
@@ -342,16 +342,16 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             OperatorContract operator = OperatorContract(_operatorContracts[i]);
 
             if (operator.numberOfGroups() > 0) {
-                signingGas = operator.entryVerificationGasEstimate() > signingGas ? operator.entryVerificationGasEstimate():signingGas;
+                entryVerificationGas = operator.entryVerificationGasEstimate() > entryVerificationGas ? operator.entryVerificationGasEstimate():entryVerificationGas;
                 dkgGas = operator.dkgGasEstimate() > dkgGas ? operator.dkgGasEstimate():dkgGas;
                 groupSize = operator.groupSize() > groupSize ? operator.groupSize():groupSize;
             }
         }
 
         return (
-            signingGas.mul(_minGasPrice),
+            entryVerificationGas.mul(_minGasPrice),
             dkgGas.mul(_minGasPrice).mul(_dkgContributionMargin).div(100),
-            (signingGas.add(dkgGas)).mul(_minGasPrice).add(_groupMemberBaseReward.mul(groupSize))
+            (entryVerificationGas.add(dkgGas)).mul(_minGasPrice).add(_groupMemberBaseReward.mul(groupSize))
         );
     }
 

@@ -653,7 +653,7 @@ contract KeepRandomBeaconOperator {
      */
     function rewardsBreakdown() public view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
         // Example breakdown:
-        // signingGas: 1240000
+        // entryVerificationGas: 1240000
         // dkgGas: 2260000
         // dkgFee: 10%
         // profitMargin: 1%
