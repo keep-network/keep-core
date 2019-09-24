@@ -286,10 +286,10 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         }
 
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 dkgCostEstimate = _minGasPrice.mul(OperatorContract(latestOperatorContract).dkgGasEstimate());
-        if (_dkgFeePool >= dkgCostEstimate) {
-            _dkgFeePool = _dkgFeePool.sub(dkgCostEstimate);
-            (success, data) = latestOperatorContract.call.value(dkgCostEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));
+        uint256 dkgFeeEstimate = _minGasPrice.mul(OperatorContract(latestOperatorContract).dkgGasEstimate());
+        if (_dkgFeePool >= dkgFeeEstimate) {
+            _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
+            (success, data) = latestOperatorContract.call.value(dkgFeeEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));
         }
     }
 
