@@ -213,10 +213,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
         uint256 callbackFee = msg.value.sub(entryVerificationFee).sub(dkgContributionFee).sub(groupProfitFee);
-        require(
-            callbackFee >= minimumCallbackFee(callbackGas),
-            "Callback payment is less than required minimum."
-        );
 
         _dkgFeePool += dkgContributionFee;
 
