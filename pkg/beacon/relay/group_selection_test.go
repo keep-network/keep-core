@@ -1,7 +1,6 @@
 package relay
 
 import (
-	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
@@ -64,10 +63,7 @@ func TestSubmitAllTickets(t *testing.T) {
 	}
 
 	for i, ticket := range tickets {
-		submitted, err := fromChainTicket(submittedTickets[i])
-		if err != nil {
-			t.Fatal(err)
-		}
+		submitted := fromChainTicket(submittedTickets[i], t)
 
 		if !reflect.DeepEqual(ticket, submitted) {
 			t.Errorf(
@@ -80,15 +76,15 @@ func TestSubmitAllTickets(t *testing.T) {
 	}
 }
 
-func fromChainTicket(ticket *chain.Ticket) (*groupselection.Ticket, error) {
+func fromChainTicket(ticket *chain.Ticket, t *testing.T) *groupselection.Ticket {
 	paddedTicketValue, err := byteutils.LeftPadTo32Bytes((ticket.Value.Bytes()))
 	if err != nil {
-		return nil, fmt.Errorf("could not pad ticket value [%v]", err)
+		t.Errorf("could not pad ticket value [%v]", err)
 	}
 
 	value, err := groupselection.SHAValue{}.SetBytes(paddedTicketValue)
 	if err != nil {
-		return nil, fmt.Errorf(
+		t.Errorf(
 			"could not transform ticket from chain representation [%v]",
 			err,
 		)
@@ -100,7 +96,7 @@ func fromChainTicket(ticket *chain.Ticket) (*groupselection.Ticket, error) {
 			StakerValue:        ticket.Proof.StakerValue.Bytes(),
 			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
 		},
-	}, nil
+	}
 }
 
 func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
