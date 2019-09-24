@@ -265,17 +265,18 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             // Obtain the actual callback gas expenditure and refund the surplus.
             uint256 callbackSurplus = 0;
             uint256 callbackCost = gasSpent.mul(tx.gasprice);
-            uint256 minimumCallbackFee = minimumCallbackFee(_callbacks[requestId].callbackGas);
 
-            if (callbackCost < minimumCallbackFee) {
-                callbackSurplus = minimumCallbackFee.sub(callbackCost);
+            // If we spent less on the callback than the customer transferred for the
+            // callback execution, we need to reimburse the difference.
+            if (callbackCost < _callbacks[requestId].callbackFee) {
+                callbackSurplus = _callbacks[requestId].callbackFee.sub(callbackCost);
                 // Reimburse submitter with his actual callback cost.
                 submitter.transfer(callbackCost);
                 // Return callback surplus to the requestor.
                 _callbacks[requestId].surplusRecipient.transfer(callbackSurplus);
             } else {
                 // Reimburse submitter with the callback payment sent by the requestor.
-                submitter.transfer(minimumCallbackFee);
+                submitter.transfer(_callbacks[requestId].callbackFee);
             }
 
             delete _callbacks[requestId];
