@@ -91,11 +91,10 @@ it first checks that the _request fee_ exceeds
 the _entry fee estimate_ with the _callback gas amount_ from the request.
 
 Once the request has been verified to be sufficiently funded,
-the previous entry is used to select the signing group
-by `selected_group = previous_entry MOD len(active_groups)`.
+the beacon select the new signing group.
 The selected group is tasked with producing the new entry.
 
-it is queued as the _pending request_
+The request is set as the _pending request_
 including the following information:
 
 - the _requester address_
