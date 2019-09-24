@@ -334,24 +334,26 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 groupProfitFee
     ) {
         uint256 entryVerificationGas;
-        uint256 dkgGas;
         uint256 groupSize;
 
-        // Use most expensive operator contract for estimated gas values.
+        // Use most expensive operator contract for estimated entry verification gas value.
         for (uint i = 0; i < _operatorContracts.length; i++) {
             OperatorContract operator = OperatorContract(_operatorContracts[i]);
 
             if (operator.numberOfGroups() > 0) {
                 entryVerificationGas = operator.entryVerificationGasEstimate() > entryVerificationGas ? operator.entryVerificationGasEstimate():entryVerificationGas;
-                dkgGas = operator.dkgGasEstimate() > dkgGas ? operator.dkgGasEstimate():dkgGas;
                 groupSize = operator.groupSize() > groupSize ? operator.groupSize():groupSize;
             }
         }
 
+        // Use DKG gas estimate from the latest operator contract since it will be used for the next group creation.
+        address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
+        uint256 dkgGas = OperatorContract(latestOperatorContract).dkgGasEstimate();
+
         return (
             entryVerificationGas.mul(_minGasPrice),
             dkgGas.mul(_minGasPrice).mul(_dkgContributionMargin).div(100),
-            (entryVerificationGas.add(dkgGas)).mul(_minGasPrice).add(_groupMemberBaseReward.mul(groupSize))
+            entryVerificationGas.mul(_minGasPrice).add(_groupMemberBaseReward.mul(groupSize))
         );
     }
 
