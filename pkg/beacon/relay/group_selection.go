@@ -21,8 +21,7 @@ const getTicketListInterval = 5 * time.Second
 // generate the appropriate number of tickets for the staker. After ticket
 // generation begins an interactive process, where the staker submits tickets
 // that fall under the natural threshold, while challenging tickets on chain
-// that fail verification. Submission ends at the end of the submission period,
-// and the staker can only contest incorrect tickets up to the challenge period.
+// that fail verification. Submission ends at the end of the submission period.
 //
 // See the group selection protocol specification for more information.
 func (n *Node) SubmitTicketsForGroupSelection(
@@ -54,13 +53,6 @@ func (n *Node) SubmitTicketsForGroupSelection(
 		return err
 	}
 
-	challengeTimeout, err := blockCounter.BlockHeightWaiter(
-		startBlockHeight + n.chainConfig.TicketChallengeTimeout,
-	)
-	if err != nil {
-		return err
-	}
-
 	var (
 		errorChannel         = make(chan error, len(tickets))
 		quitTicketSubmission = make(chan struct{}, 1)
@@ -81,13 +73,13 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				"error during ticket submission: [%v]",
 				err,
 			)
-		case <-submissionTimeout:
+		case submissionEndBlockHeight := <-submissionTimeout:
 			quitTicketSubmission <- struct{}{}
-		case challengeEndBlockHeight := <-challengeTimeout:
+
 			selectedParticipants, err := relayChain.GetSelectedParticipants()
 			if err != nil {
 				return fmt.Errorf(
-					"could not fetch selected participants after challenge timeout [%v]",
+					"could not fetch selected participants after submission timeout [%v]",
 					err,
 				)
 			}
@@ -105,7 +97,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				signing,
 				&groupselection.Result{SelectedStakers: selectedStakers},
 				newEntry,
-				challengeEndBlockHeight,
+				submissionEndBlockHeight,
 			)
 			return nil
 		}

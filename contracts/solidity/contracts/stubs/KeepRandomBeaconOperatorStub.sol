@@ -17,7 +17,6 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         relayEntryTimeout = 10;
         ticketInitialSubmissionTimeout = 20;
         ticketReactiveSubmissionTimeout = 100;
-        ticketChallengeTimeout = 60;
         resultPublicationBlockStep = 3;
     }
 
