@@ -38,8 +38,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     // Minimum gas price for relay entry request.
     uint256 internal _minGasPrice;
 
-    // Each signing group member reward in % of the relay entry cost.
-    uint256 internal _groupMemberProfitMargin;
+    // Each signing group member reward in wei.
+    uint256 internal _groupMemberBaseReward;
 
     // Fraction in % of the estimated cost of DKG that is included 
     // in relay request fee.
@@ -83,7 +83,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param minGasPrice Minimum gas price for relay entry request.
-     * @param groupMemberProfitMargin Each signing group member reward in % of the relay entry cost.
+     * @param groupMemberBaseReward Each signing group member reward in wei.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
@@ -91,7 +91,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function initialize(
         uint256 minGasPrice,
-        uint256 groupMemberProfitMargin,
+        uint256 groupMemberBaseReward,
         uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
         address operatorContract
@@ -102,7 +102,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         require(!initialized(), "Contract is already initialized.");
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _minGasPrice = minGasPrice;
-        _groupMemberProfitMargin = groupMemberProfitMargin;
+        _groupMemberBaseReward = groupMemberBaseReward;
         _dkgContributionMargin = dkgContributionMargin;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
@@ -351,7 +351,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         return (
             signingGas.mul(_minGasPrice),
             dkgGas.mul(_minGasPrice).mul(_dkgContributionMargin).div(100),
-            (signingGas.add(dkgGas)).mul(_minGasPrice).mul(_groupMemberProfitMargin).mul(groupSize).div(100)
+            (signingGas.add(dkgGas)).mul(_minGasPrice).add(_groupMemberBaseReward.mul(groupSize))
         );
     }
 
