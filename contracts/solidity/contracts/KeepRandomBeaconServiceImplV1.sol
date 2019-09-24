@@ -353,7 +353,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         return (
             entryVerificationGas.mul(_minGasPrice),
             dkgGas.mul(_minGasPrice).mul(_dkgContributionMargin).div(100),
-            entryVerificationGas.mul(_minGasPrice).add(_groupMemberBaseReward.mul(groupSize))
+            _groupMemberBaseReward.mul(groupSize)
         );
     }
 
