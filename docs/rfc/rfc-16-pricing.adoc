@@ -185,7 +185,7 @@ If the callback execution uses more gas than specified in the request, it should
 run out of gas. Thus the only scenario where the callback execution can cost more 
 than was quoted and paid for, is when the gas cost of the transaction exceeds the 
 quoted estimate (which includes the safety margin mentioned in the gas price feed
-section). The submitter is supposed to take the hit for submitting with a gas price 
+section). The submitter is intended to take the hit for submitting with a gas price 
 that exceeds the estimate.
 
 ===== Requester refund
