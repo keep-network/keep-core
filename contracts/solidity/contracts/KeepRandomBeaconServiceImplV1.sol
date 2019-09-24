@@ -198,6 +198,10 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param callbackMethod Callback contract method signature. String representation of your method with a single
      * uint256 input parameter i.e. "relayEntryCallback(uint256)".
      * @param callbackGas Gas required for the callback.
+     * The customer needs to ensure they provide a sufficient callback gas
+     * to cover the gas fee of executing the callback. Any surplus is returned
+     * to the customer. If the callback gas amount turns to be not enough to
+     * execute the callback, callback execution is skipped.
      * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
      */
     function requestRelayEntry(
