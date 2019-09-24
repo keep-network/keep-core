@@ -647,16 +647,15 @@ contract KeepRandomBeaconOperator {
         }
     }
 
-
     /**
      * @dev Get rewards breakdown in wei for successful entry for the current signing request.
      */
     function rewardsBreakdown() public view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
         // Example breakdown:
-        // entryVerificationGas: 1240000
-        // dkgGas: 2260000
-        // dkgFee: 10%
-        // profitMargin: 1%
+        // entryVerificationGasEstimate: 1240000
+        // dkgGasEstimate: 2260000
+        // dkgContributionMargin: 10%
+        // groupMemberBaseReward: 1050000000000000
         // groupSize: 5
         // entry fee estimate: 49230000000000000 wei
         // signing fee: 37200000000000000 wei
