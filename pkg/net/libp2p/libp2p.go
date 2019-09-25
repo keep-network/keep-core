@@ -62,7 +62,6 @@ type Config struct {
 	Peers []string
 	Port  int
 	Seed  int
-	NAT   bool
 }
 
 type provider struct {
@@ -184,7 +183,6 @@ func Connect(
 		ctx,
 		identity,
 		config.Port,
-		config.NAT,
 		stakeMonitor,
 	)
 	if err != nil {
@@ -231,7 +229,6 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
-	nat bool,
 	stakeMonitor chain.StakeMonitor,
 ) (host.Host, error) {
 	var err error
@@ -264,13 +261,6 @@ func discoverAndListen(
 				DefaultConnMgrGracePeriod,
 			),
 		),
-	}
-
-	if nat {
-		logger.Info("enabling NAT support; will attempt to open a port in " +
-			"your network's firewall using UPnP")
-
-		options = append(options, libp2p.NATPortMap())
 	}
 
 	return libp2p.New(ctx, options...)

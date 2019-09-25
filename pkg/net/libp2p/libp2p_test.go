@@ -210,7 +210,6 @@ func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
 		ctx,
 		identity,
 		config.Port,
-		config.NAT,
 		local.NewStakeMonitor(big.NewInt(200)),
 	)
 	if err != nil {
