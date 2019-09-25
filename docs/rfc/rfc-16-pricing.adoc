@@ -335,12 +335,19 @@ the result, or the actual gas price of the transaction to get the _DKG result
 submission expenditure_.
 
 The entire DKG result submission expenditure is returned to the submitter
-from the _DKG fee pool_.
+from the _DKG fee pool_ of the operator contract.
 
 The minimum of the gas price protects the beacon against malicious 
 miner-submitters. If the submitter is also a miner, they can place any 
 arbitrary gas price on the transaction. Without taking the minimum, 
-miner-submitter would be able to steal from _DKG fee pool_.
+miner-submitter would be able to steal from _DKG fee pool_ of the operator 
+contract.
+
+Any surplus between the _DKG fee pool_ of the operator contract and 
+the actual cost of DKG result submission is returned back to the service 
+contract. In the case when the entire DKG fails, the unspent fee will be 
+transferred back to the service contract upon the next DKG triggered by the 
+service contract.
 
 ==== Cost estimates
 
