@@ -129,6 +129,8 @@ until a valid entry is received, this is not necessary.
 When the assigned signing group has produced a valid entry,
 one of its members should submit it to the beacon.
 The first member to submit a valid entry is the _submitter_.
+_Submission deadline_ is the block number before which the 
+valid entry must be submitted.
 
 Submissions that fail verification are ignored.
 Repeat submissions for a request that has already been served
