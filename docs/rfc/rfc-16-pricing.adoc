@@ -243,14 +243,6 @@ with higher demand the number of groups
 tends to be proportional to _(number of entries in expiration period)^2/3^_.
 ]
 
-===== Cleanup
-
-After the request has been served and rewards etc. given out,
-the request data should be wiped by setting the necessary fields to zero.
-
-After the cleanup is performed,
-the beacon finishes and can accept requests again.
-
 ==== Rewards
 
 A _base reward_ for each member of a signing group that produces an entry
