@@ -24,8 +24,6 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
   const groupSize = 20;
   const groupThreshold = 15;  
   const minimumStake = web3.utils.toBN(200000);
-  const ticketInitialSubmissionTimeout = 20;
-  const ticketReactiveSubmissionTimeout = 100;
   const resultPublicationBlockStep = 3;
 
   beforeEach(async () => {
