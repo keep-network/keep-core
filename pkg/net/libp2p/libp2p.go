@@ -59,9 +59,10 @@ const (
 
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
-	Peers []string
-	Port  int
-	Seed  int
+	Peers              []string
+	Port               int
+	Seed               int
+	AnnouncedAddresses []string
 }
 
 type provider struct {
@@ -183,6 +184,7 @@ func Connect(
 		ctx,
 		identity,
 		config.Port,
+		config.AnnouncedAddresses,
 		stakeMonitor,
 	)
 	if err != nil {
@@ -229,6 +231,7 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
+	announcedAddrStrings []string,
 	stakeMonitor chain.StakeMonitor,
 ) (host.Host, error) {
 	var err error
@@ -263,6 +266,18 @@ func discoverAndListen(
 		),
 	}
 
+	if announcedAddrs := parseAddrs(announcedAddrStrings); len(announcedAddrs) > 0 {
+		addrsFactory := func(addrs []ma.Multiaddr) []ma.Multiaddr {
+			logger.Debugf(
+				"replace default announced addresses [%v] with [%v]",
+				addrs,
+				announcedAddrs,
+			)
+			return announcedAddrs
+		}
+		options = append(options, libp2p.AddrsFactory(addrsFactory))
+	}
+
 	return libp2p.New(ctx, options...)
 }
 
@@ -280,6 +295,25 @@ func getListenAddrs(port int) ([]ma.Multiaddr, error) {
 		addrs = append(addrs, addr.Encapsulate(portAddr))
 	}
 	return addrs, nil
+}
+
+func parseAddrs(addrStrings []string) []ma.Multiaddr {
+	addrs := make([]ma.Multiaddr, 0)
+	if len(addrStrings) > 0 {
+		for _, addrString := range addrStrings {
+			addr, err := ma.NewMultiaddr(addrString)
+			if err != nil {
+				logger.Warningf(
+					"could not parse address string [%v]: [%v]",
+					addrString,
+					err,
+				)
+				continue
+			}
+			addrs = append(addrs, addr)
+		}
+	}
+	return addrs
 }
 
 func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {
