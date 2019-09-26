@@ -41,8 +41,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     // Each signing group member reward in wei.
     uint256 internal _groupMemberBaseReward;
 
-    // Fraction in % of the estimated cost of DKG that is included 
-    // in relay request fee.
+    // Fraction in % of the estimated cost of DKG that is included
+    // in relay request fee. Must be presented as a big number with
+    // 18 decimals i.e. 1.5% as 1.5*1e18.
     uint256 internal _dkgContributionMargin;
 
     // Every relay request payment includes DKG contribution that is added to
@@ -85,7 +86,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param minGasPrice Minimum gas price for relay entry request.
      * @param groupMemberBaseReward Each signing group member reward in wei.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
-     * request fee.
+     * request fee. Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param operatorContract Operator contract linked to this contract.
      */
@@ -353,7 +354,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         return (
             entryVerificationGas.mul(_minGasPrice),
-            dkgGas.mul(_minGasPrice).mul(_dkgContributionMargin).div(100),
+            dkgGas.mul(_minGasPrice).mul(_dkgContributionMargin).div(100).div(1e18),
             _groupMemberBaseReward.mul(groupSize)
         );
     }

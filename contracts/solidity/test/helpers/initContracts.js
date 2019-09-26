@@ -12,7 +12,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   // Adding 1.5 fluctuation safety factor to cover rise in gas fees during DKG execution
   let minimumGasPrice = web3.utils.toBN(20*1.5).mul(web3.utils.toBN(10**9)),
     groupMemberBaseReward = web3.utils.toWei('0.001', 'Ether'), // Signing group reward for each member in wei.
-    dkgContributionMargin = 10, // Fraction in % of the estimated cost of DKG that is included in relay request payment.
+    dkgContributionMargin = web3.utils.toBN(10).mul(web3.utils.toBN(10**18)), // Fraction in % of the estimated cost of DKG that is included in relay request payment. Must include 18 decimal points.
     withdrawalDelay = 1;
 
   // Initialize Keep token contract
