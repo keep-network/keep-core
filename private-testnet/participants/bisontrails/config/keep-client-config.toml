@@ -16,7 +16,12 @@
 [LibP2P]
   Peers = ["/dns4/bootstrap.test.keep.network/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r"]
   Port = 3919
-  NAT = false
+  # AnnouncedAddresses:
+  # Leaving AnnouncedAddresses empty will set a default address to be
+  # announced to the network.  The default address will vary by deploy
+  # conditions.  Set AnnouncedAddresses if you have a known external
+  # IPs or DNS entries you want to route traffic through.
+  AnnouncedAddresses = []
 
 # In the real world this directory should be on persistent storage.
 [Storage]
