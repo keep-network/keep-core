@@ -33,6 +33,7 @@ func TestSubmitAllTickets(t *testing.T) {
 	candidate := &Node{
 		chainConfig: &config.Chain{
 			NaturalThreshold: naturalThreshold,
+			GroupSize:        4,
 		},
 	}
 
@@ -99,6 +100,7 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	candidate := &Node{
 		chainConfig: &config.Chain{
 			NaturalThreshold: naturalThreshold,
+			GroupSize:        6,
 		},
 	}
 
