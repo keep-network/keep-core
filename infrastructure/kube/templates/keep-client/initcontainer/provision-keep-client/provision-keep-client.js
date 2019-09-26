@@ -223,6 +223,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
       parsedConfigFile.LibP2P.Seed = 2;
       parsedConfigFile.LibP2P.Port = 3919;
+      parsedConfigFile.LibP2P.AnnouncedAddresses = [process.env.KEEP_CLIENT_BOOTSTRAP_PEER_LIBP2P_ANNOUNCED_ADDRESSES];
 
       /*
       tomlify.toToml() writes our Seed/Port values as a float.  The added precision renders our config
