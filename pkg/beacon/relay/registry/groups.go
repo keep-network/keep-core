@@ -8,7 +8,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 
-	"github.com/keep-network/keep-core/pkg/persistence"
+	"github.com/keep-network/keep-common/pkg/persistence"
 )
 
 // Groups represents a collection of Keep groups in which the given
