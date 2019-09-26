@@ -267,7 +267,7 @@ func discoverAndListen(
 	}
 
 	if addresses := parseMultiaddresses(announcedAddresses); len(addresses) > 0 {
-		addrsFactory := func(addrs []ma.Multiaddr) []ma.Multiaddr {
+		addressFactory := func(addrs []ma.Multiaddr) []ma.Multiaddr {
 			logger.Debugf(
 				"replacing default announced addresses [%v] with [%v]",
 				addrs,
@@ -275,7 +275,7 @@ func discoverAndListen(
 			)
 			return addresses
 		}
-		options = append(options, libp2p.AddrsFactory(addrsFactory))
+		options = append(options, libp2p.AddrsFactory(addressFactory))
 	}
 
 	return libp2p.New(ctx, options...)
@@ -297,23 +297,22 @@ func getListenAddrs(port int) ([]ma.Multiaddr, error) {
 	return addrs, nil
 }
 
-func parseMultiaddresses(addrStrings []string) []ma.Multiaddr {
-	addrs := make([]ma.Multiaddr, 0)
-	if len(addrStrings) > 0 {
-		for _, addrString := range addrStrings {
-			addr, err := ma.NewMultiaddr(addrString)
-			if err != nil {
-				logger.Warningf(
-					"could not parse address string [%v]: [%v]",
-					addrString,
-					err,
-				)
-				continue
-			}
-			addrs = append(addrs, addr)
+func parseMultiaddresses(addresses []string) []ma.Multiaddr {
+	multiaddresses := make([]ma.Multiaddr, 0)
+	for _, address := range addresses {
+		multiaddress, err := ma.NewMultiaddr(address)
+		if err != nil {
+			logger.Warningf(
+				"could not parse address string [%v]: [%v]",
+				address,
+				err,
+			)
+			continue
 		}
+		multiaddresses = append(multiaddresses, multiaddress)
 	}
-	return addrs
+
+	return multiaddresses
 }
 
 func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {

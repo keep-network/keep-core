@@ -157,7 +157,7 @@ func TestProviderSetAnnouncedAddresses(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	privKey, _, err := key.GenerateStaticNetworkKey()
+	privateKey, _, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,7 +173,7 @@ func TestProviderSetAnnouncedAddresses(t *testing.T) {
 	provider, err := Connect(
 		ctx,
 		config,
-		privKey,
+		privateKey,
 		local.NewStakeMonitor(big.NewInt(200)),
 	)
 	if err != nil {
