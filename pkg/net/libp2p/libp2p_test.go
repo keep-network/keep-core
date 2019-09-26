@@ -153,7 +153,7 @@ func TestSendReceive(t *testing.T) {
 	}
 }
 
-func TestProviderReturnsAddrs(t *testing.T) {
+func TestProviderSetAnnouncedAddresses(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
@@ -180,16 +180,16 @@ func TestProviderReturnsAddrs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedAddrs := []string{
+	expectedAddresses := []string{
 		fmt.Sprintf("/dns4/address.com/tcp/3919/ipfs/%v", provider.ID()),
 		fmt.Sprintf("/ip4/100.20.50.30/tcp/3919/ipfs/%v", provider.ID()),
 	}
-	providerAddrs := provider.AddrStrings()
-	if strings.Join(expectedAddrs, " ") != strings.Join(providerAddrs, " ") {
+	providerAddresses := provider.AddrStrings()
+	if strings.Join(expectedAddresses, " ") != strings.Join(providerAddresses, " ") {
 		t.Fatalf(
 			"expected: provider addresses [%v]\nactual: provider addresses [%v]",
-			expectedAddrs,
-			providerAddrs,
+			expectedAddresses,
+			providerAddresses,
 		)
 	}
 }

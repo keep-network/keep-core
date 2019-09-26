@@ -231,7 +231,7 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
-	announcedAddrStrings []string,
+	announcedAddresses []string,
 	stakeMonitor chain.StakeMonitor,
 ) (host.Host, error) {
 	var err error
@@ -266,14 +266,14 @@ func discoverAndListen(
 		),
 	}
 
-	if announcedAddrs := parseAddrs(announcedAddrStrings); len(announcedAddrs) > 0 {
+	if addresses := parseMultiaddresses(announcedAddresses); len(addresses) > 0 {
 		addrsFactory := func(addrs []ma.Multiaddr) []ma.Multiaddr {
 			logger.Debugf(
-				"replace default announced addresses [%v] with [%v]",
+				"replacing default announced addresses [%v] with [%v]",
 				addrs,
-				announcedAddrs,
+				addresses,
 			)
-			return announcedAddrs
+			return addresses
 		}
 		options = append(options, libp2p.AddrsFactory(addrsFactory))
 	}
@@ -297,7 +297,7 @@ func getListenAddrs(port int) ([]ma.Multiaddr, error) {
 	return addrs, nil
 }
 
-func parseAddrs(addrStrings []string) []ma.Multiaddr {
+func parseMultiaddresses(addrStrings []string) []ma.Multiaddr {
 	addrs := make([]ma.Multiaddr, 0)
 	if len(addrStrings) > 0 {
 		for _, addrString := range addrStrings {
