@@ -97,6 +97,8 @@ jobs:
               --build-arg ETH_RPC_PORT=$ETH_RPC_PORT \
               --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
               --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
+              --build-arg KEEP_CLIENT_STANDARD_PEER_LIBP2P_ANNOUNCED_ADDRESSES=$KEEP_CLIENT_STANDARD_PEER_LIBP2P_ANNOUNCED_ADDRESSES \
+              --build-arg KEEP_CLIENT_BOOTSTRAP_PEER_LIBP2P_ANNOUNCED_ADDRESSES=$KEEP_CLIENT_BOOTSTRAP_PEER_LIBP2P_ANNOUNCED_ADDRESSES
               -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer .
       - run:
           name: Save keep-client-initcontainer image
