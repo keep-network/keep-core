@@ -28,6 +28,24 @@ The ingress port is configurable and can be set in the included `keep-client-con
 
 `Port` is in section `[libp2p]`.
 
+=== AnnouncedAddresses
+
+Depending on your deployment conditions it's possible the address registered with the Keep Network
+is not publicly accessible.  When this happens peers on the network will not be able to communicate
+directly with your nodes.
+
+If you have a list of publicly accessible IP addresses or DNS hostnames that can route traffic to
+your nodes you can configure them under `AnnouncedAddresses` in section `[libp2p]`.  When your
+client starts up it will annouce the provided list instead of the default.  If you want to use the
+default then leave `AnnouncedAddresses` set to `[]`.
+
+`AnnouncedAddresses` will be part of a multiaddr and should be formatted accordingly. See link:[https://github.com/multiformats/multiaddr]
+Below are a few examples:
+
+`AnnouncedAddresses = ["/type/value/protocol/port"]`
+
+`AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]`
+
 == Starting The Client
 
 *Depending on how you orchestrate containers, these steps will vary.  Here we illustrate
