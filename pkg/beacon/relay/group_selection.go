@@ -120,13 +120,13 @@ func (n *Node) submitTickets(
 	quit <-chan struct{},
 	errCh chan<- error,
 ) {
-	for _, ticket := range tickets {
+	for i := 0; i < n.chainConfig.GroupSize; i++ {
 		select {
 		case <-quit:
 			// Exit this loop when we get a signal from quit.
 			return
 		default:
-			chainTicket, err := toChainTicket(ticket)
+			chainTicket, err := toChainTicket(tickets[i])
 			if err != nil {
 				errCh <- err
 				continue
