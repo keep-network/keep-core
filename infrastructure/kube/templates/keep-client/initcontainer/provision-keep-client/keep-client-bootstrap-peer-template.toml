@@ -21,7 +21,14 @@
 [LibP2P]
   Seed = "Set by Kube"
   Port = "Set by Kube"
-  NAT = true
+  # AnnouncedAddresses:
+  # Leaving AnnouncedAddresses empty will set a default address to be
+  # announced to the network.  The default address will vary by deploy
+  # conditions.  Set AnnouncedAddresses if you have a known external
+  # IPs or DNS entries you want to route traffic through.
+  # Keep internal environments will use default or be set by Circle
+  # context.
+  AnnouncedAddresses = []
 
 [Storage]
   DataDir = "/tmp"
