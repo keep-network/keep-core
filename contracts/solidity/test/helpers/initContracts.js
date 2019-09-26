@@ -9,8 +9,8 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     operatorContract, groupContract;
 
   // (20 Gwei) TODO: Use historical average of recently served requests?
-  // Adding 1.5 fluctuation safety factor to cover rise in gas fees during DKG execution
-  let minimumGasPrice = web3.utils.toBN(20*1.5).mul(web3.utils.toBN(10**9)),
+  let minimumGasPrice = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)),
+    fluctuationMargin = web3.utils.toBN(1.5*10**18), // Fluctuation safety factor to cover the immediate rise in gas fees during. Must include 18 decimal points.
     groupMemberBaseReward = web3.utils.toWei('0.001', 'Ether'), // Signing group reward for each member in wei.
     dkgContributionMargin = web3.utils.toBN(10).mul(web3.utils.toBN(10**18)), // Fraction in % of the estimated cost of DKG that is included in relay request payment. Must include 18 decimal points.
     withdrawalDelay = 1;
@@ -33,14 +33,14 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address, groupContract.address);
   await groupContract.setOperatorContract(operatorContract.address);
 
-  await serviceContract.initialize(minimumGasPrice, groupMemberBaseReward, dkgContributionMargin, withdrawalDelay, operatorContract.address);
+  await serviceContract.initialize(minimumGasPrice, fluctuationMargin, groupMemberBaseReward, dkgContributionMargin, withdrawalDelay, operatorContract.address);
 
   // Add initial funds to the fee pool to trigger group creation without waiting for DKG fee accumulation
   let dkgGasEstimate = await operatorContract.dkgGasEstimate();
   await serviceContract.fundDKGFeePool({value: dkgGasEstimate.mul(minimumGasPrice)});
 
   // Genesis should include payment to cover DKG cost to create first group
-  await operatorContract.genesis({value: dkgGasEstimate.mul(minimumGasPrice)});
+  await operatorContract.genesis({value: dkgGasEstimate.mul(web3.utils.toBN(22).mul(web3.utils.toBN(10**9)))});
 
   return {
     token: token,
