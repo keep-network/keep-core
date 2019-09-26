@@ -22,6 +22,12 @@ ENV ETH_WS_PORT=$ETH_WS_PORT
 ARG ETH_NETWORK_ID
 ENV ETH_NETWORK_ID=$ETH_NETWORK_ID
 
+ARG KEEP_CLIENT_STANDARD_PEER_LIBP2P_ANNOUNCED_ADDRESSES
+ENV KEEP_CLIENT_STANDARD_PEER_LIBP2P_ANNOUNCED_ADDRESSES=$KEEP_CLIENT_STANDARD_PEER_LIBP2P_ANNOUNCED_ADDRESSES
+
+ARG KEEP_CLIENT_BOOTSTRAP_PEER_LIBP2P_ANNOUNCED_ADDRESSES
+ENV KEEP_CLIENT_BOOTSTRAP_PEER_LIBP2P_ANNOUNCED_ADDRESSES=$KEEP_CLIENT_BOOTSTRAP_PEER_LIBP2P_ANNOUNCED_ADDRESSES
+
 COPY ./TokenStaking.json /tmp/TokenStaking.json
 COPY ./KeepToken.json /tmp/KeepToken.json
 COPY ./KeepRandomBeaconService.json /tmp/KeepRandomBeaconService.json
@@ -31,7 +37,5 @@ COPY ./keep-client-bootstrap-peer-template.toml /tmp/keep-client-bootstrap-peer-
 COPY ./keep-client-standard-peer-template.toml /tmp/keep-client-standard-peer-template.toml
 
 COPY ./provision-keep-client.js /tmp/provision-keep-client.js
-
-
 
 ENTRYPOINT ["node", "./provision-keep-client.js"]
