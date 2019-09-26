@@ -68,7 +68,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.isTrue(web3.utils.toBN(contractBalanceViaProxy).eq(contractPreviousBalance.add(entryFee.dkgContributionFee).sub(requestorSubsidy)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
-    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.entryVerificationFee.add(minimumCallbackFee).add(entryFee.groupProfitFee).add(dkgSubmitterReimbursement)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and DKG payment.");
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.entryVerificationFee.add(minimumCallbackFee).add(entryFee.groupProfitFee).add(dkgSubmitterReimbursement)), "Keep Random Beacon operator contract should receive entry fee, callback payment, group profit fee and dkg submitter reimbursement.");
   
   });
 
@@ -93,7 +93,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.isTrue(web3.utils.toBN(contractBalanceServiceContract).eq(contractPreviousBalance.add(entryFee.dkgContributionFee)), "Keep Random Beacon service contract new balance should be visible via serviceContractProxy.");
 
     let operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
-    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.entryVerificationFee.add(minimumCallbackFee).add(entryFee.groupProfitFee).add(dkgSubmitterReimbursement)), "Keep Random Beacon operator contract should receive entry fee, callback payment, profit margin and dkg submitter reward.");
+    assert.isTrue(web3.utils.toBN(operatorContractBalance).eq(entryFee.entryVerificationFee.add(minimumCallbackFee).add(entryFee.groupProfitFee).add(dkgSubmitterReimbursement)), "Keep Random Beacon operator contract should receive entry fee, callback payment, group profit fee and dkg submitter reimbursement.");
   });
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {

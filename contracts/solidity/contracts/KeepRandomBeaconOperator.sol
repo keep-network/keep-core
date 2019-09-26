@@ -664,7 +664,7 @@ contract KeepRandomBeaconOperator {
         // currentEntryStartBlock: 38
         // relay entry submission block: 44
         // decimals: 1e16
-        // groupProfitMargin: 42450000000000000 - 37200000000000000 = 5250000000000000 wei
+        // groupProfitFee: 42450000000000000 - 37200000000000000 = 5250000000000000 wei
         // memberBaseReward: 5250000000000000 / 5 = 1050000000000000 wei
         // entryTimeout: 38 + 10 = 48
         // delayFactor: ((48 - 44) * 1e16 / (10 - 1)) ^ 2 = 19753086419753082469135802469136
@@ -676,8 +676,8 @@ contract KeepRandomBeaconOperator {
         // subsidy = 5250000000000000 - 207407407407407 * 5 - 210648148148148 = 4002314814814817 wei
 
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-        uint256 groupProfitMargin = signingRequest.payment.sub(signingRequest.entryVerificationFee);
-        uint256 memberBaseReward = groupProfitMargin.div(groupSize);
+        uint256 groupProfitFee = signingRequest.payment.sub(signingRequest.entryVerificationFee);
+        uint256 memberBaseReward = groupProfitFee.div(groupSize);
         uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
         uint256 delayFactor = entryTimeout.sub(block.number).mul(decimals).div(relayEntryTimeout.sub(1))**2;
         uint256 delayFactorInverse = uint256(1).mul(decimals**2).sub(delayFactor);
@@ -693,7 +693,7 @@ contract KeepRandomBeaconOperator {
         submitterReward = signingRequest.entryVerificationFee.add(submitterExtraReward);
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
-        subsidy = groupProfitMargin.sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
+        subsidy = groupProfitFee.sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
     }
 
     /**
