@@ -129,6 +129,8 @@ until a valid entry is received, this is not necessary.
 When the assigned signing group has produced a valid entry,
 one of its members should submit it to the beacon.
 The first member to submit a valid entry is the _submitter_.
+_Submission deadline_ is the block number before which the 
+valid entry must be submitted.
 
 Submissions that fail verification are ignored.
 Repeat submissions for a request that has already been served
@@ -241,14 +243,6 @@ with higher demand the number of groups
 tends to be proportional to _(number of entries in expiration period)^2/3^_.
 ]
 
-===== Cleanup
-
-After the request has been served and rewards etc. given out,
-the request data should be wiped by setting the necessary fields to zero.
-
-After the cleanup is performed,
-the beacon finishes and can accept requests again.
-
 ==== Rewards
 
 A _base reward_ for each member of a signing group that produces an entry
@@ -328,6 +322,38 @@ the submitter receives an extra reward of
 _base reward * 0.36 * 100 * 0.05 = base reward * 1.8_.
 In this scenario the full submitter reward would be
 _base reward * (1.8 + 0.64) + callback expenditure + entry verification fee_.
+
+==== DKG submitter reimbursement
+
+Getting to participate in a formed group is already valuable so there is no
+additional reward for a DKG result submitter. The only thing necessary is a gas
+cost reimbursement for the submitter.
+
+After DKG result is submitted, the amount of gas spent on the call is 
+multiplied with the lower of the estimated gas price at the time of submitting
+the result, or the actual gas price of the transaction to get the _DKG result
+submission expenditure_.
+
+The entire DKG result submission expenditure is returned to the submitter
+from the _DKG fee pool_ of the operator contract.
+
+Any surplus between the _DKG fee pool_ of the operator contract and 
+the actual cost of DKG result submission is returned back to the service 
+contract. In the case when the entire DKG fails, the unspent fee will be 
+transferred back to the service contract upon the next DKG triggered by the 
+service contract.
+
+The minimum of the gas price protects the beacon against malicious 
+miner-submitters. If the submitter is also a miner, they can place any 
+arbitrary gas price on the transaction. Without taking the minimum, 
+miner-submitter would be able to steal from _DKG fee pool_ of the operator 
+contract.
+
+The on-chain DKG result submission code needs to have all deterministic 
+and time-bounded run paths that are independent of miner-controlled inputs. 
+If the miner-submitter pays the gas price estimated by the price feed, but 
+tricks the contract into consuming twice the gas as normal, they will be able 
+to get twice the reimbursement as well. 
 
 ==== Cost estimates
 
