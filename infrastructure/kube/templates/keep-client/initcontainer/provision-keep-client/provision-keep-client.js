@@ -250,6 +250,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
       parsedConfigFile.LibP2P.Port = 3919;
+      parsedConfigFile.LibP2P.AnnouncedAddresses = [process.env.KEEP_CLIENT_STANDARD_PEER_LIBP2P_ANNOUNCED_ADDRESSES];
 
       let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
         replace: (key, value) => { return key == 'Port' ? value.toFixed(0) : false }
