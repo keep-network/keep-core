@@ -325,6 +325,9 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 			continue
 		}
 
+		cvm.receivedPeerCommitments[commitmentsMessage.senderID] =
+			commitmentsMessage.commitments
+
 		// Find share message sent by the same member who sent commitment message
 		sharesMessageFound := false
 		for _, sharesMessage := range sharesMessages {
@@ -399,11 +402,8 @@ func (cvm *CommitmentsVerifyingMember) VerifyReceivedSharesAndCommitmentsMessage
 						cvm.ephemeralKeyPairs[commitmentsMessage.senderID].PrivateKey
 					break
 				}
-				cvm.receivedValidSharesS[commitmentsMessage.senderID] = shareS
-				cvm.receivedValidSharesT[commitmentsMessage.senderID] = shareT
-				cvm.receivedValidPeerCommitments[commitmentsMessage.senderID] =
-					commitmentsMessage.commitments
-
+				cvm.receivedQualifiedSharesS[commitmentsMessage.senderID] = shareS
+				cvm.receivedQualifiedSharesT[commitmentsMessage.senderID] = shareT
 				break
 			}
 		}
@@ -553,6 +553,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 				// Mark the accuser as disqualified immediately,
 				// as each member consider itself as a honest participant.
 				sjm.group.MarkMemberAsDisqualified(accuserID)
+				sjm.discardReceivedShares(accuserID)
 				continue
 			}
 
@@ -587,6 +588,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
+				sjm.discardReceivedShares(accuserID)
 				continue
 			}
 
@@ -624,6 +626,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accusedID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
+				sjm.discardReceivedShares(accuserID)
 				continue
 			}
 			symmetricKey := revealedAccuserPrivateKey.Ecdh(accusedPublicKey)
@@ -646,6 +649,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accusedID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
+				sjm.discardReceivedShares(accuserID)
 				continue
 			}
 
@@ -668,13 +672,14 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accusedID)
+				sjm.discardReceivedShares(accusedID)
 				continue
 			}
 
 			if sjm.areSharesValidAgainstCommitments(
 				shareS, shareT, // s_mj, t_mj
-				sjm.receivedValidPeerCommitments[accusedID], // C_m
-				accuserID, // j
+				sjm.receivedPeerCommitments[accusedID], // C_m
+				accuserID,                              // j
 			) {
 				logger.Warningf(
 					"[member:%v] member [%v] disqualified because of "+
@@ -684,6 +689,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accusedID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accuserID)
+				sjm.discardReceivedShares(accuserID)
 			} else {
 				logger.Warningf(
 					"[member:%v] member [%v] disqualified because of "+
@@ -693,10 +699,36 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 					accuserID,
 				)
 				sjm.group.MarkMemberAsDisqualified(accusedID)
+				sjm.discardReceivedShares(accusedID)
 			}
 		}
 	}
 	return nil
+}
+
+// Once phase 5 completes, all group members should have the same view
+// on who is disqualified and who is inactive. All properly behaving group
+// members belong to QUAL set.
+//
+// In the last phase of GJKR (phase 12), we reconstruct group public key
+// from public key share points of all members from QUAL set. We need
+// exactly the same number of public key share points as the number of QUAL
+// members.
+//
+// Since it is possible that one or more members of QUAL will misbehave
+// after phase 5 completed and QUAL established, we need to store shares S
+// from all QUAL members. From those shares, we can recover public key share
+// point of a misbehaving member from QUAL set.
+//
+// For the recovery of a missing public key share point, we must use shares of
+// QUAL members only. For this reason, we discard all the shares we received
+// from other group members which - because of their misbehaviour - do not
+// qualified to QUAL.
+func (sjm *SharesJustifyingMember) discardReceivedShares(
+	memberID group.MemberIndex,
+) {
+	delete(sjm.receivedQualifiedSharesS, memberID)
+	delete(sjm.receivedQualifiedSharesT, memberID)
 }
 
 // Inspects evidence log looking for ephemeral public key message sent in phase
@@ -741,68 +773,6 @@ func findPublicKey(
 	return senderPublicKey
 }
 
-// Recover ephemeral symmetric key used to encrypt communication between sender
-// and receiver assuming that receiver revealed its private ephemeral key.
-//
-// Finds ephemeral public key sent by sender to the receiver. Performs ECDH
-// operation between sender's public key and receiver's private key to recover
-// the ephemeral symmetric key.
-//
-// Deprecated: Body of this function should be used directly in order to
-// explain intentions more expressively in the client code.
-// TODO Remove when all usages will be replaced.
-func recoverSymmetricKey(
-	evidenceLog evidenceLog,
-	senderID, receiverID group.MemberIndex,
-	receiverPrivateKey *ephemeral.PrivateKey,
-) (ephemeral.SymmetricKey, error) {
-	senderPublicKey := findPublicKey(evidenceLog, senderID, receiverID)
-	if senderPublicKey == nil {
-		return nil, fmt.Errorf(
-			"could not find public key sent by [%v] to [%v]",
-			senderID,
-			receiverID,
-		)
-	}
-
-	return receiverPrivateKey.Ecdh(senderPublicKey), nil
-}
-
-// Recovers from the evidence log share S and share T sent by sender to the
-// receiver.
-//
-// First it finds in the evidence log the Peer Shares Message sent by the sender
-// to the receiver. Then it decrypts the decrypted shares with provided symmetric
-// key.
-//
-// Deprecated: Should be replaced. `peerSharesMessage` should be obtained and
-// `decryptShares` method from `PeerSharesMessage` should be used to decrypt shares.
-// TODO Remove when all usages will be replaced.
-func recoverShares(
-	evidenceLog evidenceLog,
-	senderID, receiverID group.MemberIndex,
-	symmetricKey ephemeral.SymmetricKey,
-) (*big.Int, *big.Int, error) {
-	peerSharesMessage := evidenceLog.peerSharesMessage(senderID)
-	if peerSharesMessage == nil {
-		return nil, nil, fmt.Errorf(
-			"no peer shares message for sender %v",
-			senderID,
-		)
-	}
-
-	shareS, err := peerSharesMessage.decryptShareS(receiverID, symmetricKey) // s_mj
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot decrypt share S [%v]", err)
-	}
-	shareT, err := peerSharesMessage.decryptShareT(receiverID, symmetricKey) // t_mj
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot decrypt share T [%v]", err)
-	}
-
-	return shareS, shareT, nil
-}
-
 // CombineMemberShares sums up all `s` shares intended for this member.
 // Combines secret shares calculated by current member `i` for itself `s_ii`
 // with shares calculated by peer members `j` for this member `s_ji`.
@@ -814,7 +784,7 @@ func recoverShares(
 // See Phase 6 of the protocol specification.
 func (qm *QualifiedMember) CombineMemberShares() {
 	combinedSharesS := qm.selfSecretShareS // s_ii
-	for _, s := range qm.receivedValidSharesS {
+	for _, s := range qm.receivedQualifiedSharesS {
 		combinedSharesS = new(big.Int).Mod(
 			new(big.Int).Add(combinedSharesS, s),
 			bn256.Order,
@@ -873,7 +843,7 @@ func (sm *SharingMember) VerifyPublicKeySharePoints(
 
 		if !sm.isShareValidAgainstPublicKeySharePoints(
 			sm.ID,
-			sm.receivedValidSharesS[message.senderID],
+			sm.receivedQualifiedSharesS[message.senderID],
 			message.publicKeySharePoints,
 		) {
 			logger.Warningf(
@@ -1189,6 +1159,12 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys() (
 	}, nil
 }
 
+// disqualifiedSharingMembers returns all members from QUAL set disqualified
+// in later phases for any reason.
+//
+// Once phase 5 completes, all group members should have the same view
+// on who is disqualified and who is inactive. All properly behaving group
+// members at that point belong to QUAL set.
 func (rm *RevealingMember) disqualifiedSharingMembers() []group.MemberIndex {
 	disqualifiedMembersIDs := rm.group.DisqualifiedMemberIDs()
 
@@ -1196,7 +1172,7 @@ func (rm *RevealingMember) disqualifiedSharingMembers() []group.MemberIndex {
 	// Phase 3 and are sharing the group private key.
 	disqualifiedSharingMembers := make([]group.MemberIndex, 0)
 	for _, disqualifiedMemberID := range disqualifiedMembersIDs {
-		if _, ok := rm.receivedValidSharesS[disqualifiedMemberID]; ok {
+		if _, ok := rm.receivedQualifiedSharesS[disqualifiedMemberID]; ok {
 			disqualifiedSharingMembers = append(
 				disqualifiedSharingMembers,
 				disqualifiedMemberID,
@@ -1217,6 +1193,28 @@ func (rm *RevealingMember) disqualifiedSharingMembers() []group.MemberIndex {
 func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
 	messages []*DisqualifiedEphemeralKeysMessage,
 ) error {
+	// Prepare list of expected disqualified members before messages processing.
+	// Validated messages should be checked against the state from the beginning
+	// of phase 11.
+	disqualifiedSharingMembers := rm.disqualifiedSharingMembers()
+
+	for _, message := range messages {
+		// Validate received message. If message is invalid, sender should
+		// be considered as misbehaving and marked as disqualified.
+		if !rm.isValidDisqualifiedEphemeralKeysMessage(
+			message,
+			disqualifiedSharingMembers,
+		) {
+			logger.Warningf(
+				"[member:%v] member [%v] disqualified because of "+
+					"sending invalid disqualified ephemeral keys message",
+				rm.ID,
+				message.senderID,
+			)
+			rm.group.MarkMemberAsDisqualified(message.senderID)
+		}
+	}
+
 	revealedDisqualifiedShares, err := rm.revealDisqualifiedShares(messages)
 	if err != nil {
 		return fmt.Errorf("revealing disqualified shares failed [%v]", err)
@@ -1243,7 +1241,7 @@ func (rm *ReconstructingMember) revealDisqualifiedShares(
 	for _, disqualifiedMemberID := range rm.group.DisqualifiedMemberIDs() {
 		for _, shares := range disqualifiedShares {
 			if shares.disqualifiedMemberID == disqualifiedMemberID {
-				if currentMemberShare, ok := rm.receivedValidSharesS[disqualifiedMemberID]; ok {
+				if currentMemberShare, ok := rm.receivedQualifiedSharesS[disqualifiedMemberID]; ok {
 					shares.peerSharesS[rm.ID] = currentMemberShare
 				}
 				break
@@ -1296,6 +1294,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 
 	for _, message := range messages {
 		revealingMemberID := message.senderID
+
 		for disqualifiedMemberID, revealedPrivateKey := range message.privateKeys {
 			if rm.ID == disqualifiedMemberID {
 				// Mark the revealing member as disqualified immediately,
@@ -1308,20 +1307,37 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			// After phase 9, all group members should have the same view on
 			// who is disqualified. Revealing key of non-disqualified members
 			// is forbidden and leads to disqualifying the revealing member.
+			// This situation should be already handled by message validation
+			// so we just skip and continue.
 			if rm.group.IsOperating(disqualifiedMemberID) {
-				logger.Warningf(
-					"[member:%v] member [%v] disqualified because "+
-						"revealing key of non-disqualified member",
-					rm.ID,
-					revealingMemberID,
-				)
-				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
 			}
 
-			publicKey := rm.evidenceLog.ephemeralPublicKeyMessage(revealingMemberID).
-				ephemeralPublicKeys[disqualifiedMemberID]
-			if !publicKey.IsKeyMatching(revealedPrivateKey) {
+			revealingMemberPublicKey := findPublicKey(
+				rm.evidenceLog,
+				revealingMemberID,
+				disqualifiedMemberID,
+			)
+			if revealingMemberPublicKey == nil {
+				// Ephemeral public key of the revealing member, generated for
+				// the sake of communication with the disqualified member should
+				// be present in the evidence log. The key is not there only if
+				// it was not sent by the revealing member in the first phase of
+				// the protocol and such behaviour results in marking that
+				// member as disqualified in the second phase. As a result, we
+				// no longer accept messages from that member and it is not
+				// possible we will receive a DisqualifiedEphemeralKeysMessage
+				// from an inactive member in this phase. If the public key
+				// could not be found we consider this a fatal error.
+				// Such a situation should never happen.
+				return nil, fmt.Errorf(
+					"could not find public key sent by [%v] to [%v]",
+					revealingMemberID,
+					disqualifiedMemberID,
+				)
+			}
+
+			if !revealingMemberPublicKey.IsKeyMatching(revealedPrivateKey) {
 				logger.Warningf(
 					"[member:%v] member [%v] disqualified because of "+
 						"revealing private key not matching the public key",
@@ -1332,36 +1348,163 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				continue
 			}
 
-			// TODO Replace as in phase 5.
-			recoveredSymmetricKey, err := recoverSymmetricKey(
+			// Recover symmetric key based on ephemeral public key message sent
+			// by the disqualified QUAL member.
+			//
+			// If the message is not present in the evidence log it means the
+			// member is neither QUAL nor disqualified.
+			// That member was marked as inactive in phase 2 because they did
+			// not broadcast ephemeral public key message.
+			//
+			// If the message is present in the evidence log but it does not
+			// contain public key generated for the sake of communication
+			// with the revealing member, it means the member which sent that
+			// message is not QUAL.
+			// That member was marked as disqualified in phase 2 because their
+			// ephemeral public key message did not contain public keys for all
+			// group members.
+			//
+			// Revealing private key generated for the sake of communication
+			// with a member out of the disqualified QUAL members group is
+			// considered as misbehavior and leads to disqualification of
+			// the revealing member. This was already checked during the
+			// validation of the message and disqualification - if needed - was
+			// performed there, so in the case when we can not find ephemeral
+			// public key, we just skip and continue.
+			disqualifiedMemberPublicKey := findPublicKey(
 				rm.evidenceLog,
-				disqualifiedMemberID, // m
-				revealingMemberID,    // k
-				revealedPrivateKey,
+				disqualifiedMemberID,
+				revealingMemberID,
 			)
-			if err != nil {
-				logger.Errorf("cannot recover symmetric key: [%v]", err)
-				// TODO Disqualify the revealing member
+			if disqualifiedMemberPublicKey == nil {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because could not "+
+						"recover symmetric key; disqualified member [%v] is "+
+						"already marked as inactive or disqualified in phase 2",
+					rm.ID,
+					revealingMemberID,
+					disqualifiedMemberID,
+				)
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
+				continue
+			}
+			recoveredSymmetricKey := revealedPrivateKey.Ecdh(disqualifiedMemberPublicKey)
+
+			// Get from the evidence log peer shares message sent by the member
+			// for which the private key has been revealed.
+			// If the message is not present there, it means that member has
+			// been marked as inactive in phase 4. Since we expect the revealing
+			// member to reveal private keys generated for the sake of
+			// communication only with inactive and disqualified members of QUAL
+			// set, this situation is a misbehaviour. Member which has been
+			// disqualified in phase 4 does not belong to QUAL set.
+			disqualifiedMemberSharesMessage := rm.evidenceLog.peerSharesMessage(disqualifiedMemberID)
+			if disqualifiedMemberSharesMessage == nil {
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of revealing "+
+						"private key of a member which did not provide shares in phase 3",
+					rm.ID,
+					revealingMemberID,
+				)
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
 			}
 
-			// TODO Replace as in phase 5
-			shareS, _, err := recoverShares(
-				rm.evidenceLog,
-				disqualifiedMemberID,  // m
-				revealingMemberID,     // k
-				recoveredSymmetricKey, // s_mk
+			// If shares can not be decrypted, it means the revealing member
+			// knew about this fact in phase 3 and did not complain in phase 4.
+			// As a result, we did not mark the member for which the private key
+			// has been revealed as disqualified earlier, in phase 5.
+			// Not reporting misbehaviour is also a protocol violation, so we
+			// disqualify the revealing member.
+			shareS, shareT, err := disqualifiedMemberSharesMessage.decryptShares(
+				revealingMemberID,
+				recoveredSymmetricKey,
 			)
 			if err != nil {
-				logger.Errorf("cannot decrypt share S: [%v]", err)
-				// TODO Disqualify the revealing member
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of not "+
+						"reporting protocol violation in phase 3 by member [%v] - "+
+						"shares can not be decrypted",
+					rm.ID,
+					revealingMemberID,
+					disqualifiedMemberID,
+				)
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
 			}
 
-			addShare(disqualifiedMemberID, revealingMemberID, shareS)
+			if rm.areSharesValidAgainstCommitments(
+				shareS, shareT,
+				rm.receivedPeerCommitments[disqualifiedMemberID],
+				revealingMemberID,
+			) {
+				addShare(disqualifiedMemberID, revealingMemberID, shareS)
+			} else {
+				// Similar situation as for shares that can not be decrypted.
+				// The revealing member knew about the fact shares are
+				// inconsistent in phase 3 and did not complain in phase 4.
+				// As a result, we did not mark the member for which the private
+				// key has been revealed as disqualified earlier, in phase 5.
+				// Not reporting misbehavior is also a protocol violation, so we
+				// disqualify the revealing member.
+				logger.Warningf(
+					"[member:%v] member [%v] disqualified because of not "+
+						"reporting protocol violation in phase 3 by member [%v] - "+
+						"shares are inconsistent",
+					rm.ID,
+					revealingMemberID,
+					disqualifiedMemberID,
+				)
+				rm.group.MarkMemberAsDisqualified(revealingMemberID)
+			}
 		}
 	}
 	return revealedDisqualifiedShares, nil
+}
+
+// isValidDisqualifiedEphemeralKeysMessage validates a given
+// DisqualifiedEphemeralKeysMessage. Message is considered valid if it reveals
+// all private keys generated for the sake of communication with all
+// disqualified QUAL (sharing) members.
+func (rm *ReconstructingMember) isValidDisqualifiedEphemeralKeysMessage(
+	message *DisqualifiedEphemeralKeysMessage,
+	disqualifiedSharingMembers []group.MemberIndex,
+) bool {
+	for _, disqualifiedMemberID := range disqualifiedSharingMembers {
+		isKeyForMemberRevealed := false
+		for memberID := range message.privateKeys {
+			if memberID == disqualifiedMemberID {
+				isKeyForMemberRevealed = true
+				break
+			}
+		}
+
+		if !isKeyForMemberRevealed {
+			logger.Warningf(
+				"[member:%v] member [%v] sent message which does not "+
+					"reveal private key of disqualified member [%v]",
+				rm.ID,
+				message.senderID,
+				disqualifiedMemberID,
+			)
+			return false
+		}
+	}
+
+	for disqualifiedMemberID := range message.privateKeys {
+		if rm.group.IsOperating(disqualifiedMemberID) {
+			logger.Warningf(
+				"[member:%v] member [%v] sent message which reveals "+
+					"private key of non-disqualified member [%v]",
+				rm.ID,
+				message.senderID,
+				disqualifiedMemberID,
+			)
+			return false
+		}
+	}
+
+	return true
 }
 
 // disqualifiedShares contains shares `s_mk` calculated by the disqualified

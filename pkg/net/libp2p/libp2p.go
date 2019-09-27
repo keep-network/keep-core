@@ -59,10 +59,10 @@ const (
 
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
-	Peers []string
-	Port  int
-	Seed  int
-	NAT   bool
+	Peers              []string
+	Port               int
+	Seed               int
+	AnnouncedAddresses []string
 }
 
 type provider struct {
@@ -184,7 +184,7 @@ func Connect(
 		ctx,
 		identity,
 		config.Port,
-		config.NAT,
+		config.AnnouncedAddresses,
 		stakeMonitor,
 	)
 	if err != nil {
@@ -231,7 +231,7 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
-	nat bool,
+	announcedAddresses []string,
 	stakeMonitor chain.StakeMonitor,
 ) (host.Host, error) {
 	var err error
@@ -266,11 +266,16 @@ func discoverAndListen(
 		),
 	}
 
-	if nat {
-		logger.Info("enabling NAT support; will attempt to open a port in " +
-			"your network's firewall using UPnP")
-
-		options = append(options, libp2p.NATPortMap())
+	if addresses := parseMultiaddresses(announcedAddresses); len(addresses) > 0 {
+		addressFactory := func(addrs []ma.Multiaddr) []ma.Multiaddr {
+			logger.Debugf(
+				"replacing default announced addresses [%v] with [%v]",
+				addrs,
+				addresses,
+			)
+			return addresses
+		}
+		options = append(options, libp2p.AddrsFactory(addressFactory))
 	}
 
 	return libp2p.New(ctx, options...)
@@ -290,6 +295,24 @@ func getListenAddrs(port int) ([]ma.Multiaddr, error) {
 		addrs = append(addrs, addr.Encapsulate(portAddr))
 	}
 	return addrs, nil
+}
+
+func parseMultiaddresses(addresses []string) []ma.Multiaddr {
+	multiaddresses := make([]ma.Multiaddr, 0)
+	for _, address := range addresses {
+		multiaddress, err := ma.NewMultiaddr(address)
+		if err != nil {
+			logger.Warningf(
+				"could not parse address string [%v]: [%v]",
+				address,
+				err,
+			)
+			continue
+		}
+		multiaddresses = append(multiaddresses, multiaddress)
+	}
+
+	return multiaddresses
 }
 
 func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {

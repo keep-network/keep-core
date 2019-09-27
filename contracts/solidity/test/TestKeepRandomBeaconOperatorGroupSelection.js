@@ -89,28 +89,24 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
   });
 
-  it("should be able to submit a ticket during ticket submission period", async function() {
-    await operatorContract.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
-    let proof = await operatorContract.getTicketProof(tickets1[0].value);
-    assert.isTrue(proof[1].eq(web3.utils.toBN(operator1)), "Should be able to get submitted ticket proof.");
-    assert.equal(proof[2], tickets1[0].virtualStakerIndex, "Should be able to get submitted ticket proof.");
-  });
-
   it("should be able to verify a ticket", async function() {
-
     await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
 
-    assert.isTrue(await operatorContract.cheapCheck(
-      operator1, operator1, 1
-    ), "Should be able to verify a valid ticket.");
-    
-    assert.isTrue(await operatorContract.costlyCheck(
+    assert.isTrue(await operatorContract.isTicketValid(
       operator1, tickets1[0].value, operator1, tickets1[0].virtualStakerIndex
     ), "Should be able to verify a valid ticket.");
-  
-    assert.isFalse(await operatorContract.costlyCheck(
-      operator1, 0, operator1, tickets1[0].virtualStakerIndex
-    ), "Should fail verifying invalid ticket.");
+    
+    assert.isFalse(await operatorContract.isTicketValid(
+      operator1, 0, operator2, tickets1[0].virtualStakerIndex
+    ), "Should fail verifying invalid ticket due to invalid ticket value");
+    
+    assert.isFalse(await operatorContract.isTicketValid(
+      operator1, tickets1[0].value, operator2, tickets1[0].virtualStakerIndex
+      ), "Should fail verifying invalid ticket due to invalid stake value");
+      
+    assert.isFalse(await operatorContract.isTicketValid(
+      operator1, tickets1[0].value, operator1, 2
+    ), "Should fail verifying invalid ticket due to invalid virtual staker index");
 
   });
 

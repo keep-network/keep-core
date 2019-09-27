@@ -29,7 +29,7 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 	firstMember.group.MarkMemberAsDisqualified(disqualifiedNotSharingMember)
 
 	// Simulate a case where member is disqualified in Phase 5.
-	delete(firstMember.receivedValidSharesS, disqualifiedNotSharingMember)
+	delete(firstMember.receivedQualifiedSharesS, disqualifiedNotSharingMember)
 
 	expectedDisqualifiedKeys := map[group.MemberIndex]*ephemeral.PrivateKey{
 		disqualifiedSharingMember1: firstMember.ephemeralKeyPairs[disqualifiedSharingMember1].PrivateKey,
@@ -173,8 +173,9 @@ func generateDisqualifiedMemberShares(
 		disqualifiedMemberShares[disqualifiedMember.ID] = make(map[group.MemberIndex]*big.Int)
 		// Simulate message broadcasted by disqualified member in Phase 3.
 		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID)
+		commitments := make([]*bn256.G1, 0)
 
-		for _, otherMember := range otherMembers {
+		for i, otherMember := range otherMembers {
 			// Simulate shares evaluation from Phase 3.
 			shareS := disqualifiedMember.evaluateMemberShare(
 				otherMember.ID,
@@ -185,15 +186,27 @@ func generateDisqualifiedMemberShares(
 			peerSharesMessage.addShares(
 				otherMember.ID,
 				shareS,
-				big.NewInt(0), // share T is not needed
+				shareS, // In the sake of simplicity shareT == shareS
 				disqualifiedMember.symmetricKeys[otherMember.ID],
+			)
+
+			coefficient := disqualifiedMember.secretCoefficients[i]
+			commitments = append(
+				commitments,
+				// Same coefficient is used as shareT == shareS
+				currentMember.calculateCommitment(coefficient, coefficient),
 			)
 		}
 		currentMember.evidenceLog.PutPeerSharesMessage(peerSharesMessage)
 
+		// Prepare commitments valid with simulated PeerSharesMessage as this
+		// condition is checked before a share is added to te reconstruction process.
+		currentMember.receivedPeerCommitments[disqualifiedMember.ID] =
+			commitments
+
 		// Add current member own shareS received from disqualified member
 		disqualifiedMemberShares[disqualifiedMember.ID][currentMember.ID] =
-			currentMember.receivedValidSharesS[disqualifiedMember.ID]
+			currentMember.receivedQualifiedSharesS[disqualifiedMember.ID]
 	}
 	return disqualifiedMemberShares
 }
@@ -396,19 +409,34 @@ func TestReconstructDisqualifiedIndividualKeys(t *testing.T) {
 	for _, disqualifiedMember := range disqualifiedMembers {
 		// Simulate message broadcasted by disqualified member in Phase 3.
 		peerSharesMessage := newPeerSharesMessage(disqualifiedMember.ID)
+		commitments := make([]*bn256.G1, 0)
 
-		for _, otherMember := range otherMembers {
+		for i, otherMember := range otherMembers {
 			// Evaluate shares which were calculated in Phase 3.
-			shareS := disqualifiedMember.evaluateMemberShare(otherMember.ID, disqualifiedMember.secretCoefficients)
+			shareS := disqualifiedMember.evaluateMemberShare(
+				otherMember.ID,
+				disqualifiedMember.secretCoefficients,
+			)
 
 			peerSharesMessage.addShares(
 				otherMember.ID,
 				shareS,
-				big.NewInt(0), // share T is not needed
+				shareS, // In the sake of simplicity shareT == shareS
 				disqualifiedMember.symmetricKeys[otherMember.ID],
+			)
+
+			coefficient := disqualifiedMember.secretCoefficients[i]
+			commitments = append(
+				commitments,
+				// Same coefficient is used as shareT == shareS
+				member1.calculateCommitment(coefficient, coefficient),
 			)
 		}
 		member1.evidenceLog.PutPeerSharesMessage(peerSharesMessage)
+
+		// Prepare commitments valid with simulated PeerSharesMessage as this
+		// condition is checked before a share is added to te reconstruction process.
+		member1.receivedPeerCommitments[disqualifiedMember.ID] = commitments
 	}
 
 	member1.ReconstructDisqualifiedIndividualKeys(disqualifiedEphemeralKeysMessages)
@@ -487,7 +515,7 @@ func disqualifyMembers(
 			if !contains(disqualifiedMembersIDs, m.ID) {
 				// collect all shares which this member received from disqualified
 				// member and store them in sharesReceivedFromDisqualifiedMember
-				for peerID, receivedShare := range m.receivedValidSharesS {
+				for peerID, receivedShare := range m.receivedQualifiedSharesS {
 					if peerID == disqualifiedMemberID {
 						sharesReceivedFromDisqualifiedMember[m.ID] = receivedShare
 						break

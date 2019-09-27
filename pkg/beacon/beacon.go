@@ -10,7 +10,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/persistence"
+	"github.com/keep-network/keep-common/pkg/persistence"
 )
 
 var logger = log.Logger("keep-beacon")
