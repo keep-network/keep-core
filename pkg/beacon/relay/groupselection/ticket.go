@@ -5,8 +5,12 @@ package groupselection
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"math/big"
+
+	"fmt"
+
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
 // Ticket is a message containing a pseudorandomly generated value, W_k, which is
@@ -31,21 +35,22 @@ func NewTicket(
 	beaconOutput []byte, // V_i
 	stakerValue []byte, // Q_j
 	virtualStakerIndex *big.Int, // vs
-) *Ticket {
-	value := CalculateTicketValue(
-		beaconOutput,
-		stakerValue,
-		virtualStakerIndex,
-	)
+) (*Ticket, error) {
+	value, err := CalculateTicketValue(beaconOutput, stakerValue, virtualStakerIndex)
+	if err != nil {
+		return nil, fmt.Errorf("ticket value calculation failed [%v]", err)
+	}
+
 	return &Ticket{
 		Value: value,
 		Proof: &Proof{
 			StakerValue:        stakerValue,
 			VirtualStakerIndex: virtualStakerIndex,
 		},
-	}
+	}, nil
 }
 
+// IsFromStaker compare ticket staker value against staker address
 func (t *Ticket) IsFromStaker(stakerAddress []byte) bool {
 	return bytes.Compare(t.Proof.StakerValue, stakerAddress) == 0
 }
@@ -58,13 +63,32 @@ func CalculateTicketValue(
 	beaconOutput []byte,
 	stakerValue []byte,
 	virtualStakerIndex *big.Int,
-) SHAValue {
+) (SHAValue, error) {
 	var combinedValue []byte
-	combinedValue = append(combinedValue, beaconOutput...)
-	combinedValue = append(combinedValue, stakerValue...)
-	combinedValue = append(combinedValue, virtualStakerIndex.Bytes()...)
+	var keccak256Hash SHAValue
 
-	return SHAValue(sha256.Sum256(combinedValue[:]))
+	beaconOutputPadded, err := byteutils.LeftPadTo32Bytes(beaconOutput)
+	if err != nil {
+		return keccak256Hash, fmt.Errorf("cannot pad a becon output, [%v]", err)
+	}
+
+	stakerValuePadded, err := byteutils.LeftPadTo32Bytes(stakerValue)
+	if err != nil {
+		return keccak256Hash, fmt.Errorf("cannot pad a staker value, [%v]", err)
+	}
+
+	virtualStakerIndexPadded, err := byteutils.LeftPadTo32Bytes(virtualStakerIndex.Bytes())
+	if err != nil {
+		return keccak256Hash, fmt.Errorf("cannot pad a virtual staker index, [%v]", err)
+	}
+
+	combinedValue = append(combinedValue, beaconOutputPadded...)
+	combinedValue = append(combinedValue, stakerValuePadded...)
+	combinedValue = append(combinedValue, virtualStakerIndexPadded...)
+
+	copy(keccak256Hash[:], crypto.Keccak256(combinedValue[:]))
+
+	return SHAValue(keccak256Hash), nil
 
 }
 
