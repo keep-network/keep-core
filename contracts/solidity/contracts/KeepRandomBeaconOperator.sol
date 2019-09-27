@@ -433,7 +433,8 @@ contract KeepRandomBeaconOperator {
 
         groupContract.addGroup(groupPubKey);
 
-        uint256 dkgCost = dkgGasEstimate.mul(tx.gasprice);
+        uint256 gasPrice = tx.gasprice < minGasPrice ? tx.gasprice : minGasPrice;
+        uint256 dkgCost = dkgGasEstimate.mul(gasPrice);
         uint256 surplus = 0;
         address payable magpie = stakingContract.magpieOf(msg.sender);
 
