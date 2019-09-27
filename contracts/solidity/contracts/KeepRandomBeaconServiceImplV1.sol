@@ -258,9 +258,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param submitter Relay entry submitter.
      */
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) public {
-        bool success; // Store status of external contract call.
-        bytes memory data; // Store result data of external contract call.
-
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."
@@ -273,12 +270,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             executeEntryCreatedCallback(requestId, entry, submitter);
         }
 
-        address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 dkgFeeEstimate = _minGasPrice.mul(OperatorContract(latestOperatorContract).dkgGasEstimate()).mul(_fluctuationMargin).div(1e18);
-        if (_dkgFeePool >= dkgFeeEstimate) {
-            _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
-            (success, data) = latestOperatorContract.call.value(dkgFeeEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));
-        }
+        triggerDkgIfApplicable(entry);
     }
 
     /**
@@ -313,6 +305,22 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         }
 
         delete _callbacks[requestId];
+    }
+
+    /**
+     * @dev Triggers the selection process of a new candidate group.
+     * @param entry The generated random number.
+     */
+    function triggerDkgIfApplicable(uint256 entry) internal {
+        bool success; // Store status of external contract call.
+        bytes memory data; // Store result data of external contract call.
+
+        address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
+        uint256 dkgFeeEstimate = _minGasPrice.mul(OperatorContract(latestOperatorContract).dkgGasEstimate()).mul(_fluctuationMargin).div(1e18);
+        if (_dkgFeePool >= dkgFeeEstimate) {
+            _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
+            (success, data) = latestOperatorContract.call.value(dkgFeeEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));
+        }
     }
 
     /**
