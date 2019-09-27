@@ -50,6 +50,10 @@ contract KeepRandomBeaconOperator {
 
     KeepRandomBeaconOperatorGroups public groupContract;
 
+    // Minimum gas price for calculating reimbursements.
+    // TODO: Replace with price feed estimate.
+    uint256 public minGasPrice = 20*1e9; // (20 Gwei)
+
     // Size of a group in the threshold relay.
     uint256 public groupSize = 5;
 
@@ -138,7 +142,6 @@ contract KeepRandomBeaconOperator {
      * there are no groups on the operator contract.
      */
     function genesis() public payable {
-        uint256 minGasPrice = 22*1e9; // (22 Gwei) Update if necessary to match average gas price at the time of deployment.
         require(msg.value >= minGasPrice.mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
         require(numberOfGroups() == 0, "There can be no groups.");
         startGroupSelection(_genesisGroupSeed, msg.value);
@@ -214,6 +217,14 @@ contract KeepRandomBeaconOperator {
      */
     function removeServiceContract(address serviceContract) public onlyOwner {
         serviceContracts.removeAddress(serviceContract);
+    }
+
+    /**
+     * @dev Set the minimum gas price in wei for calculating reimbursements.
+     * @param _minGasPrice is the gas price for calculating reimbursements.
+     */
+    function setMinimumGasPrice(uint256 _minGasPrice) public onlyOwner {
+        minGasPrice = _minGasPrice;
     }
 
     /**
