@@ -270,29 +270,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         emit RelayEntryGenerated(requestId, entry);
 
         if (_callbacks[requestId].callbackContract != address(0)) {
-
-            uint256 gasBeforeCallback = gasleft();
-            (success, data) = _callbacks[requestId].callbackContract.call.gas(_callbacks[requestId].callbackGas)(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
-            uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 gas (ethereum transaction minimum gas)
-
-            // Obtain the actual callback gas expenditure and refund the surplus.
-            uint256 callbackSurplus = 0;
-            uint256 callbackFee = gasSpent.mul(tx.gasprice);
-
-            // If we spent less on the callback than the customer transferred for the
-            // callback execution, we need to reimburse the difference.
-            if (callbackFee < _callbacks[requestId].callbackFee) {
-                callbackSurplus = _callbacks[requestId].callbackFee.sub(callbackFee);
-                // Reimburse submitter with his actual callback cost.
-                submitter.transfer(callbackFee);
-                // Return callback surplus to the requestor.
-                _callbacks[requestId].surplusRecipient.transfer(callbackSurplus);
-            } else {
-                // Reimburse submitter with the callback payment sent by the requestor.
-                submitter.transfer(_callbacks[requestId].callbackFee);
-            }
-
-            delete _callbacks[requestId];
+            executeEntryCreatedCallback(requestId, entry, submitter);
         }
 
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
@@ -301,6 +279,40 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
             (success, data) = latestOperatorContract.call.value(dkgFeeEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));
         }
+    }
+
+    /**
+     * @dev Executes customer specified callback for the relay entry request.
+     * @param requestId Request id tracked internally by this contract.
+     * @param entry The generated random number.
+     * @param submitter Relay entry submitter.
+     */
+    function executeEntryCreatedCallback(uint256 requestId, uint256 entry, address payable submitter) internal {
+        bool success; // Store status of external contract call.
+        bytes memory data; // Store result data of external contract call.
+
+        uint256 gasBeforeCallback = gasleft();
+        (success, data) = _callbacks[requestId].callbackContract.call.gas(_callbacks[requestId].callbackGas)(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
+        uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 gas (ethereum transaction minimum gas)
+
+        // Obtain the actual callback gas expenditure and refund the surplus.
+        uint256 callbackSurplus = 0;
+        uint256 callbackFee = gasSpent.mul(tx.gasprice);
+
+        // If we spent less on the callback than the customer transferred for the
+        // callback execution, we need to reimburse the difference.
+        if (callbackFee < _callbacks[requestId].callbackFee) {
+            callbackSurplus = _callbacks[requestId].callbackFee.sub(callbackFee);
+            // Reimburse submitter with his actual callback cost.
+            submitter.transfer(callbackFee);
+            // Return callback surplus to the requestor.
+            _callbacks[requestId].surplusRecipient.transfer(callbackSurplus);
+        } else {
+            // Reimburse submitter with the callback payment sent by the requestor.
+            submitter.transfer(_callbacks[requestId].callbackFee);
+        }
+
+        delete _callbacks[requestId];
     }
 
     /**
