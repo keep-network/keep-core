@@ -30,16 +30,17 @@ The ingress port is configurable and can be set in the included `keep-client-con
 
 === AnnouncedAddresses
 
-Depending on your deployment conditions it's possible the address registered with the Keep Network
-is not publicly accessible.  When this happens peers on the network will not be able to communicate
-directly with your nodes.
+Depending on your deployment conditions it's possible your node address announced with the Keep
+Network is not publicly accessible.  When this happens other peers on the network will not be able
+to communicate directly with your nodes.
 
 If you have a list of publicly accessible IP addresses or DNS hostnames that can route traffic to
 your nodes you can configure them under `AnnouncedAddresses` in section `[libp2p]`.  When your
 client starts up it will annouce the provided list instead of the default.  If you want to use the
 default then leave `AnnouncedAddresses` set to `[]`.
 
-`AnnouncedAddresses` will be part of a multiaddr and should be formatted accordingly. See link:[https://github.com/multiformats/multiaddr]
+`AnnouncedAddresses` will be part of a multiaddr and should be formatted accordingly. See link:[https://github.com/multiformats/multiaddr] for more information on formatting.
+
 Below are a few examples:
 
 `AnnouncedAddresses = ["/type/value/protocol/port"]`
@@ -85,6 +86,12 @@ docker load -i keep-client-snapshot.tar
 Resulting image should be listed in `docker image ls` as:
 
 `gcr.io/keep-test-f3e0/keep-client:latest`
+
+=== Make configuration changes
+
+If you want to alter default configurations it needs to be done before the service is started. For
+now the only configuration that is configurable beyond what's already set is `AnnouncedAddresses` in
+section `LibP2P`.  See section <<AnnouncedAddresses>> for configuration examples.
 
 === Run the container
 
