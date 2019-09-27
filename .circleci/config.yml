@@ -61,6 +61,10 @@ jobs:
           docker_layer_caching: true
       - checkout
       - run:
+          name: Create test results directory
+          command: |
+            mkdir -p /tmp/test-results/keep-core-go
+      - run:
           name: Run Docker build
           command: |
             docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN --target gobuild -t go-build-env .
@@ -68,7 +72,10 @@ jobs:
       - run:
           name: Run Go tests
           command: |
-            docker run -w /go/src/github.com/keep-network/keep-core go-build-env go test ./.../
+            docker run -v /tmp/test-results:/mnt/test-results -w /go/src/github.com/keep-network/keep-core go-build-env gotestsum --junitfile /mnt/test-results/unit-tests.xml
+            docker run -v /tmp/test-results:/mnt/test-results -w /go/src/github.com/keep-network/keep-core go-build-env cat /mnt/test-results/unit-tests.xml > /tmp/test-results/keep-core-go/unit-tests.xml
+      - store_test_results:
+          path: /tmp/test-results
       - run:
           name: Save keep-client image
           command: |
