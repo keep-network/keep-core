@@ -2,12 +2,13 @@ package groupselection
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"fmt"
 	"math/big"
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
 func TestGenerateTickets(t *testing.T) {
@@ -19,11 +20,13 @@ func TestGenerateTickets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	stakingPublicKeyECDSA := stakingPublicKey.ToECDSA()
+	stakingAddress := crypto.PubkeyToAddress(*stakingPublicKeyECDSA)
 	previousBeaconOutput := []byte("test beacon output")
 
 	tickets, err := GenerateTickets(
 		previousBeaconOutput,
-		stakingPublicKey.SerializeCompressed(),
+		stakingAddress.Bytes(),
 		availableStake,
 		minimumStake,
 	)
@@ -58,29 +61,34 @@ func TestGenerateTickets(t *testing.T) {
 }
 
 func TestValidateProofs(t *testing.T) {
-	minimumStake := big.NewInt(1)
-	availableStake := big.NewInt(1)
-	virtualStakers := big.NewInt(0).Quo(availableStake, minimumStake) // 1
+	beaconOutput := []byte("test beacon output")
+	beaconOutputPadded, _ := byteutils.LeftPadTo32Bytes(beaconOutput)
 
 	stakingPublicKey, err := newTestPublicKey()
 	if err != nil {
 		t.Fatal(err)
 	}
+	stakingPublicKeyECDSA := stakingPublicKey.ToECDSA()
+	stakingAddress := crypto.PubkeyToAddress(*stakingPublicKeyECDSA)
+	stakerValuePadded, _ := byteutils.LeftPadTo32Bytes(stakingAddress.Bytes())
 
-	beaconOutput := []byte("test beacon output")
+	minimumStake := big.NewInt(1)
+	availableStake := big.NewInt(1)
+	virtualStakers := big.NewInt(0).Quo(availableStake, minimumStake) // 1
+	virtualStakerIndexPadded, _ := byteutils.LeftPadTo32Bytes(virtualStakers.Bytes())
 
-	// hash(proof) == expected value?
 	var valueBytes []byte
-	valueBytes = append(valueBytes, beaconOutput...)                           // V_i
-	valueBytes = append(valueBytes, stakingPublicKey.SerializeCompressed()...) // Q_j
-	// only 1 virtual staker, which corresponds to the index, vs
-	valueBytes = append(valueBytes, virtualStakers.Bytes()...)
 
-	expectedValue := SHAValue(sha256.Sum256(valueBytes[:]))
+	valueBytes = append(valueBytes, beaconOutputPadded...) // V_i
+	valueBytes = append(valueBytes, stakerValuePadded...)  // Q_j
+	// only 1 virtual staker, which corresponds to the index, vs
+	valueBytes = append(valueBytes, virtualStakerIndexPadded...)
+
+	expectedValue := crypto.Keccak256(valueBytes[:])
 
 	tickets, err := GenerateTickets(
 		beaconOutput,
-		stakingPublicKey.SerializeCompressed(),
+		stakingAddress.Bytes(),
 		availableStake,
 		minimumStake,
 	)
@@ -99,7 +107,7 @@ func TestValidateProofs(t *testing.T) {
 
 	if bytes.Compare(
 		tickets[0].Value.Bytes(),
-		expectedValue.Bytes(),
+		expectedValue,
 	) != 0 {
 		t.Fatalf(
 			"hashed value (%v) doesn't match ticket value (%v)",

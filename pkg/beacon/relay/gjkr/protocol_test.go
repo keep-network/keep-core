@@ -63,16 +63,16 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	for _, member := range sharingMembers {
-		if len(member.receivedValidSharesS) != groupSize-1 {
+		if len(member.receivedQualifiedSharesS) != groupSize-1 {
 			t.Fatalf("\nexpected: %d received shares S\nactual:   %d\n",
 				groupSize-1,
-				len(member.receivedValidSharesS),
+				len(member.receivedQualifiedSharesS),
 			)
 		}
-		if len(member.receivedValidSharesT) != groupSize-1 {
+		if len(member.receivedQualifiedSharesT) != groupSize-1 {
 			t.Fatalf("\nexpected: %d received shares T\nactual:   %d\n",
 				groupSize-1,
-				len(member.receivedValidSharesT),
+				len(member.receivedQualifiedSharesT),
 			)
 		}
 		member.CombineMemberShares()
