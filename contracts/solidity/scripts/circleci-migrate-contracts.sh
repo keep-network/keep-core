@@ -71,6 +71,6 @@ echo ">>>>>>FINISH Contract Copy>>>>>>"
 
 echo "<<<<<<START Migration Dir Cleanup START<<<<<<"
 echo "ssh utilitybox rm -rf /tmp/$BUILD_TAG"
-ssh utilitybox rm -rf /tmp/$BUILD_TAG
+#ssh utilitybox rm -rf /tmp/$BUILD_TAG
 echo ">>>>>>FINISH Migration Dir Cleanup FINISH>>>>>>"
 
