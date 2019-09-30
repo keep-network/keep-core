@@ -120,7 +120,7 @@ contract KeepRandomBeaconOperator {
 
     struct SigningRequest {
         uint256 relayRequestId;
-        uint256 payment;
+        uint256 groupProfitFee;
         uint256 entryVerificationFee;
         uint256 groupIndex;
         uint256 previousEntry;
@@ -556,7 +556,7 @@ contract KeepRandomBeaconOperator {
         uint256 previousEntry,
         uint256 entryVerificationFee
     ) public payable onlyServiceContract {
-        signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value, entryVerificationFee);
+        signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value.sub(entryVerificationFee), entryVerificationFee);
     }
 
     function signRelayEntry(
@@ -564,7 +564,7 @@ contract KeepRandomBeaconOperator {
         uint256 seed,
         uint256 previousEntry,
         address serviceContract,
-        uint256 payment,
+        uint256 groupProfitFee,
         uint256 entryVerificationFee
     ) internal {
         require(!entryInProgress || hasEntryTimedOut(), "Relay entry is in progress.");
@@ -577,7 +577,7 @@ contract KeepRandomBeaconOperator {
 
         signingRequest = SigningRequest(
             requestId,
-            payment,
+            groupProfitFee,
             entryVerificationFee,
             groupIndex,
             previousEntry,
@@ -663,7 +663,7 @@ contract KeepRandomBeaconOperator {
         // subsidy = 5250000000000000 - 207407407407407 * 5 - 210648148148148 = 4002314814814817 wei
 
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-        uint256 groupProfitFee = signingRequest.payment.sub(signingRequest.entryVerificationFee);
+        uint256 groupProfitFee = signingRequest.groupProfitFee;
         uint256 memberBaseReward = groupProfitFee.div(groupSize);
         uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
         uint256 delayFactor = entryTimeout.sub(block.number).mul(decimals).div(relayEntryTimeout.sub(1))**2;
@@ -712,7 +712,7 @@ contract KeepRandomBeaconOperator {
                 signingRequest.seed,
                 signingRequest.previousEntry,
                 signingRequest.serviceContract,
-                signingRequest.payment,
+                signingRequest.groupProfitFee,
                 signingRequest.entryVerificationFee
             );
         }
