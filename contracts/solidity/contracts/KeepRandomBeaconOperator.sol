@@ -435,15 +435,15 @@ contract KeepRandomBeaconOperator {
         groupContract.addGroup(groupPubKey);
 
         uint256 gasPrice = tx.gasprice < minGasPrice ? tx.gasprice : minGasPrice;
-        uint256 dkgCost = dkgGasEstimate.mul(gasPrice);
+        uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
         uint256 surplus = 0;
         address payable magpie = stakingContract.magpieOf(msg.sender);
 
-        if (dkgCost < dkgSubmitterReimbursement) {
-            surplus = dkgSubmitterReimbursement.sub(dkgCost);
+        if (reimbursementFee < dkgSubmitterReimbursement) {
+            surplus = dkgSubmitterReimbursement.sub(reimbursementFee);
             dkgSubmitterReimbursement = 0;
             // Reimburse submitter with actual DKG cost.
-            magpie.transfer(dkgCost);
+            magpie.transfer(reimbursementFee);
             // TODO: Return surplus to the DKG fee pool (split between pools on all service contracts)?.
         } else {
             // If submitter used higher gas price reimburse only dkgSubmitterReimbursement max.
