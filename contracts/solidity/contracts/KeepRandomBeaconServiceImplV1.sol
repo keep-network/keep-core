@@ -10,6 +10,7 @@ interface OperatorContract {
     function entryVerificationGasEstimate() external view returns(uint256);
     function dkgGasEstimate() external view returns(uint256);
     function groupSize() external view returns(uint256);
+    function groupMemberBaseReward() external view returns(uint256);
     function sign(
         uint256 requestId,
         uint256 seed,
@@ -41,9 +42,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     // Fluctuation safety factor to cover the immediate rise in gas fees during DKG execution.
     // Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
     uint256 internal _fluctuationMargin;
-
-    // Each signing group member reward in wei.
-    uint256 internal _groupMemberBaseReward;
 
     // Fraction in % of the estimated cost of DKG that is included
     // in relay request fee. Must be presented as a big number with
@@ -90,7 +88,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param minGasPrice Minimum gas price for relay entry request.
      * @param fluctuationMargin Fluctuation safety factor to cover the immediate rise in gas fees during 
      * DKG execution. Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
-     * @param groupMemberBaseReward Each signing group member reward in wei.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee. Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
@@ -99,7 +96,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     function initialize(
         uint256 minGasPrice,
         uint256 fluctuationMargin,
-        uint256 groupMemberBaseReward,
         uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
         address operatorContract
@@ -111,7 +107,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _minGasPrice = minGasPrice;
         _fluctuationMargin = fluctuationMargin;
-        _groupMemberBaseReward = groupMemberBaseReward;
         _dkgContributionMargin = dkgContributionMargin;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
@@ -364,6 +359,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 groupProfitFee
     ) {
         uint256 entryVerificationGas;
+        uint256 groupMemberBaseReward;
         uint256 groupSize;
 
         // Use most expensive operator contract for estimated entry verification gas value.
@@ -373,6 +369,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             if (operator.numberOfGroups() > 0) {
                 entryVerificationGas = operator.entryVerificationGasEstimate() > entryVerificationGas ? operator.entryVerificationGasEstimate():entryVerificationGas;
                 groupSize = operator.groupSize() > groupSize ? operator.groupSize():groupSize;
+                groupMemberBaseReward = operator.groupMemberBaseReward() > groupMemberBaseReward ? operator.groupMemberBaseReward():groupMemberBaseReward;
             }
         }
 
@@ -383,7 +380,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         return (
             entryVerificationGas.mul(_minGasPrice),
             dkgGas.mul(_minGasPrice.mul(_fluctuationMargin).div(1e18)).mul(_dkgContributionMargin).div(100).div(1e18),
-            _groupMemberBaseReward.mul(groupSize)
+            groupMemberBaseReward.mul(groupSize)
         );
     }
 

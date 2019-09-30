@@ -50,6 +50,9 @@ contract KeepRandomBeaconOperator {
 
     KeepRandomBeaconOperatorGroups public groupContract;
 
+    // Each signing group member reward in wei.
+    uint256 public groupMemberBaseReward = 1000000000000000; //0.001 Ether
+
     // Minimum gas price for calculating reimbursements.
     // TODO: Replace with price feed estimate.
     uint256 public minGasPrice = 20*1e9; // (20 Gwei)
