@@ -225,9 +225,17 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         _requestCounter++;
         uint256 requestId = _requestCounter;
 
-        OperatorContract(selectOperatorContract(_previousEntry)).sign.value(
-            entryVerificationFee.add(groupProfitFee)
+        OperatorContract operatorContract = OperatorContract(selectOperatorContract(_previousEntry));
+        uint256 selectedOperatorContractFee = operatorContract.groupProfitFee().add(
+            operatorContract.entryVerificationGasEstimate().mul(_minGasPrice));
+
+        operatorContract.sign.value(
+            selectedOperatorContractFee
         )(requestId, seed, _previousEntry);
+
+        // If selected operator contract is cheaper than expected return the surplus to the subsidy fee pool.
+        uint256 surplus = entryVerificationFee.add(groupProfitFee).sub(selectedOperatorContractFee);
+        _requestSubsidyFeePool = _requestSubsidyFeePool.add(surplus);
 
         if (callbackContract != address(0)) {
             _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackFee, callbackGas, msg.sender);
