@@ -721,6 +721,13 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
+     * @dev Gets group profit fee.
+     */
+    function groupProfitFee() public view returns(uint256) {
+        return groupMemberBaseReward.mul(groupSize);
+    }
+
+    /**
      * @dev Checks that the specified user has enough stake.
      * @param staker Specifies the identity of the staker.
      * @return True if staked enough to participate in the group, false otherwise.

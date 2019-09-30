@@ -9,8 +9,7 @@ import "./DelayedWithdrawal.sol";
 interface OperatorContract {
     function entryVerificationGasEstimate() external view returns(uint256);
     function dkgGasEstimate() external view returns(uint256);
-    function groupSize() external view returns(uint256);
-    function groupMemberBaseReward() external view returns(uint256);
+    function groupProfitFee() external view returns(uint256);
     function sign(
         uint256 requestId,
         uint256 seed,
@@ -359,17 +358,14 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 groupProfitFee
     ) {
         uint256 entryVerificationGas;
-        uint256 groupMemberBaseReward;
-        uint256 groupSize;
 
-        // Use most expensive operator contract for estimated entry verification gas value.
+        // Use most expensive operator contract for estimated entry verification gas value and group profit fee.
         for (uint i = 0; i < _operatorContracts.length; i++) {
             OperatorContract operator = OperatorContract(_operatorContracts[i]);
 
             if (operator.numberOfGroups() > 0) {
                 entryVerificationGas = operator.entryVerificationGasEstimate() > entryVerificationGas ? operator.entryVerificationGasEstimate():entryVerificationGas;
-                groupSize = operator.groupSize() > groupSize ? operator.groupSize():groupSize;
-                groupMemberBaseReward = operator.groupMemberBaseReward() > groupMemberBaseReward ? operator.groupMemberBaseReward():groupMemberBaseReward;
+                groupProfitFee = operator.groupProfitFee() > groupProfitFee ? operator.groupProfitFee():groupProfitFee;
             }
         }
 
@@ -380,7 +376,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         return (
             entryVerificationGas.mul(_minGasPrice),
             dkgGas.mul(_minGasPrice.mul(_fluctuationMargin).div(1e18)).mul(_dkgContributionMargin).div(100).div(1e18),
-            groupMemberBaseReward.mul(groupSize)
+            groupProfitFee
         );
     }
 
