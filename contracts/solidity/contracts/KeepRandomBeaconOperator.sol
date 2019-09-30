@@ -101,6 +101,11 @@ contract KeepRandomBeaconOperator {
     uint256 public dkgGasEstimate = 2260000;
 
     // Reimbursement for the submitter of the DKG result.
+    // This value is set when a new DKG request comes to the operator contract.
+    // It contains a full payment for DKG multiplied by the fluctuation margin.
+    // When submitting DKG result, the submitter is reimbursed with the actual cost
+    // and some part of the fee stored in this field may be returned to the service
+    // contract.
     uint256 public dkgSubmitterReimbursement;
 
     struct Proof {
