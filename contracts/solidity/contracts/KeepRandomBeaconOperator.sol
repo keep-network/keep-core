@@ -531,13 +531,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets version of the current implementation.
-     */
-    function version() public pure returns (string memory) {
-        return "V1";
-    }
-
-    /**
      * @dev Cleanup data of previous group selection.
      */
     function cleanup() private {
