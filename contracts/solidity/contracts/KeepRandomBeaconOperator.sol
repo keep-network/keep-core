@@ -143,6 +143,9 @@ contract KeepRandomBeaconOperator {
     // https://www.wolframalpha.com/input/?i=pi+to+78+digits
     uint256 internal _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
+    // Service contract that triggered current group selection.
+    ServiceContract internal groupSelectionStarterContract;
+
     /**
      * @dev Triggers the first group selection. Genesis can be called only when
      * there are no groups on the operator contract.
@@ -239,6 +242,7 @@ contract KeepRandomBeaconOperator {
      * generate their tickets.
      */
     function createGroup(uint256 _newEntry) public payable onlyServiceContract {
+        groupSelectionStarterContract = ServiceContract(msg.sender);
         startGroupSelection(_newEntry, msg.value);
     }
 
@@ -450,7 +454,8 @@ contract KeepRandomBeaconOperator {
             dkgSubmitterReimbursement = 0;
             // Reimburse submitter with actual DKG cost.
             magpie.transfer(reimbursementFee);
-            // TODO: Return surplus to the DKG fee pool (split between pools on all service contracts)?.
+            // Return surplus to the contract that started DKG.
+            groupSelectionStarterContract.fundDkgFeePool.value(surplus)();
         } else {
             // If submitter used higher gas price reimburse only dkgSubmitterReimbursement max.
             reimbursementFee = dkgSubmitterReimbursement;
