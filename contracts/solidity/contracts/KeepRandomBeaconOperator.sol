@@ -128,8 +128,7 @@ contract KeepRandomBeaconOperator {
 
     struct SigningRequest {
         uint256 relayRequestId;
-        uint256 groupProfitFee;
-        uint256 entryVerificationFee;
+        uint256 fees;
         uint256 groupIndex;
         uint256 previousEntry;
         uint256 seed;
@@ -550,15 +549,13 @@ contract KeepRandomBeaconOperator {
      * @param requestId Request Id trackable by service contract.
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
-     * @param entryVerificationFee Amount in wei included in msg.value to cover the cost of verifying BLS signature to produce relay entry.
      */
     function sign(
         uint256 requestId,
         uint256 seed,
-        uint256 previousEntry,
-        uint256 entryVerificationFee
+        uint256 previousEntry
     ) public payable onlyServiceContract {
-        signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value.sub(entryVerificationFee), entryVerificationFee);
+        signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value);
     }
 
     function signRelayEntry(
@@ -566,8 +563,7 @@ contract KeepRandomBeaconOperator {
         uint256 seed,
         uint256 previousEntry,
         address serviceContract,
-        uint256 groupProfitFee,
-        uint256 entryVerificationFee
+        uint256 fees
     ) internal {
         require(!entryInProgress || hasEntryTimedOut(), "Relay entry is in progress.");
 
@@ -579,8 +575,7 @@ contract KeepRandomBeaconOperator {
 
         signingRequest = SigningRequest(
             requestId,
-            groupProfitFee,
-            entryVerificationFee,
+            fees,
             groupIndex,
             previousEntry,
             seed,
@@ -665,24 +660,22 @@ contract KeepRandomBeaconOperator {
         // subsidy = 5250000000000000 - 207407407407407 * 5 - 210648148148148 = 4002314814814817 wei
 
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-        uint256 groupProfitFee = signingRequest.groupProfitFee;
-        uint256 memberBaseReward = groupProfitFee.div(groupSize);
         uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
         uint256 delayFactor = entryTimeout.sub(block.number).mul(decimals).div(relayEntryTimeout.sub(1))**2;
         uint256 delayFactorInverse = uint256(1).mul(decimals**2).sub(delayFactor);
-        uint256 delayPenalty = memberBaseReward.mul(delayFactorInverse).div(decimals**2);
-
-        groupMemberReward = memberBaseReward.mul(delayFactor).div(decimals**2);
+        uint256 delayPenalty = groupMemberBaseReward.mul(delayFactorInverse).div(decimals**2);
+        groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals**2);
 
         // The submitter reward consists of:
         // The callback gas expenditure (reimbursed by the service contract)
         // The entry verification fee to cover the cost of verifying the submission
         // Submitter extra reward - 5% of the delay penalties of the entire group
         uint256 submitterExtraReward = delayPenalty.mul(groupSize).mul(5).div(100);
-        submitterReward = signingRequest.entryVerificationFee.add(submitterExtraReward);
+        uint256 entryVerificationFee = signingRequest.fees.sub(groupProfitFee());
+        submitterReward = entryVerificationFee.add(submitterExtraReward);
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
-        subsidy = groupProfitFee.sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
+        subsidy = groupProfitFee().sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
     }
 
     /**
@@ -714,8 +707,7 @@ contract KeepRandomBeaconOperator {
                 signingRequest.seed,
                 signingRequest.previousEntry,
                 signingRequest.serviceContract,
-                signingRequest.groupProfitFee,
-                signingRequest.entryVerificationFee
+                signingRequest.fees
             );
         }
     }
