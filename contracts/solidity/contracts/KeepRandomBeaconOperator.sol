@@ -237,14 +237,6 @@ contract KeepRandomBeaconOperator {
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
-        // If previous group selection failed and there is reimbursement left
-        // return it to the DKG fee pool.
-        if (dkgSubmitterReimbursement > 0) {
-            uint256 surplus = dkgSubmitterReimbursement;
-            dkgSubmitterReimbursement = 0;
-            ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
-        }
-
         // dkgTimeout is the time after key generation protocol is expected to
         // be complete plus the expected time to submit the result.
         uint256 dkgTimeout = ticketSubmissionStartBlock +
@@ -253,6 +245,15 @@ contract KeepRandomBeaconOperator {
             groupSize * resultPublicationBlockStep;
 
         require(!groupSelectionInProgress || block.number > dkgTimeout, "Group selection is in progress.");
+
+        // If previous group selection failed and there is reimbursement left
+        // return it to the DKG fee pool.
+        if (dkgSubmitterReimbursement > 0) {
+            uint256 surplus = dkgSubmitterReimbursement;
+            dkgSubmitterReimbursement = 0;
+            ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
+        }
+
         cleanup();
         ticketSubmissionStartBlock = block.number;
         groupSelectionRelayEntry = _newEntry;
