@@ -447,9 +447,9 @@ contract KeepRandomBeaconOperator {
             // TODO: Return surplus to the DKG fee pool (split between pools on all service contracts)?.
         } else {
             // If submitter used higher gas price reimburse only dkgSubmitterReimbursement max.
-            uint256 reward = dkgSubmitterReimbursement;
+            reimbursementFee = dkgSubmitterReimbursement;
             dkgSubmitterReimbursement = 0;
-            magpie.transfer(reward);
+            magpie.transfer(reimbursementFee);
         }
  
         cleanup();
