@@ -154,7 +154,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
     // Add initial funds to the fee pool to trigger group creation on relay entry without waiting for DKG fee accumulation
     let dkgGasEstimateCost = await operatorContract.dkgGasEstimate();
-    await serviceContract.fundDKGFeePool({value: dkgGasEstimateCost.mul(minimumGasPrice)});
+    await serviceContract.fundDkgFeePool({value: dkgGasEstimateCost.mul(minimumGasPrice)});
 
     await operatorContract.relayEntry(bls.nextNextGroupSignature);
 

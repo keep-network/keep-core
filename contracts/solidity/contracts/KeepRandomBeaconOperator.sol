@@ -12,7 +12,7 @@ import "./cryptography/BLS.sol";
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
     function fundRequestSubsidyFeePool() payable external;
-    function fundDKGFeePool() payable external;
+    function fundDkgFeePool() payable external;
 }
 
 /**
@@ -92,7 +92,7 @@ contract KeepRandomBeaconOperator {
     uint256 public relayEntryTimeout = 24;
 
     // Gas required to verify BLS signature and produce successful relay
-    // entry. Excludes callback and dkg gas.
+    // entry. Excludes callback and DKG gas.
     // TODO: Update once alt_bn128 gas costs reduction is implemented.
     uint256 public entryVerificationGasEstimate = 1240000;
 
@@ -242,7 +242,7 @@ contract KeepRandomBeaconOperator {
         if (dkgSubmitterReimbursement > 0) {
             uint256 surplus = dkgSubmitterReimbursement;
             dkgSubmitterReimbursement = 0;
-            ServiceContract(msg.sender).fundDKGFeePool.value(surplus)();
+            ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
         }
 
         // dkgTimeout is the time after key generation protocol is expected to

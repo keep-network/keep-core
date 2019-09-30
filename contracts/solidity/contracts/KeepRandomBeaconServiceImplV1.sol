@@ -146,7 +146,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     /**
      * @dev Add funds to DKG fee pool.
      */
-    function fundDKGFeePool() public payable {
+    function fundDkgFeePool() public payable {
         _dkgFeePool += msg.value;
     }
 
