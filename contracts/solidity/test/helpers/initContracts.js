@@ -39,7 +39,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await serviceContract.fundDkgFeePool({value: dkgGasEstimate.mul(priceFeedEstimate)});
 
   // Genesis should include payment to cover DKG cost to create first group
-  await operatorContract.genesis({value: dkgGasEstimate.mul(web3.utils.toBN(22).mul(web3.utils.toBN(10**9)))});
+  await operatorContract.genesis({value: dkgGasEstimate.mul(web3.utils.toBN(20*1.5).mul(web3.utils.toBN(10**9)))});
 
   return {
     token: token,

@@ -56,6 +56,10 @@ contract KeepRandomBeaconOperator {
     // Gas price for calculating reimbursements.
     uint256 public priceFeedEstimate = 20*1e9; // (20 Gwei)
 
+    // Fluctuation safety factor to cover the immediate rise in gas fees during DKG execution.
+    // Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
+    uint256 public fluctuationMargin = 15*1e17; // 1.5%
+
     // Size of a group in the threshold relay.
     uint256 public groupSize = 5;
 
@@ -243,7 +247,7 @@ contract KeepRandomBeaconOperator {
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
-        require(_payment >= priceFeedEstimate.mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
+        require(_payment >= priceFeedEstimate.mul(dkgGasEstimate).mul(fluctuationMargin).div(1e18), "Must include payment to cover DKG cost.");
 
         // dkgTimeout is the time after key generation protocol is expected to
         // be complete plus the expected time to submit the result.
