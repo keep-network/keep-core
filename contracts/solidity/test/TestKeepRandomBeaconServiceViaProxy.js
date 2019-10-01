@@ -122,13 +122,13 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
   });
 
-  it("should fail to update minimum gas price by non owner", async function() {
-    await expectThrow(serviceContract.setMinimumGasPrice(123, {from: account_two}));
+  it("should fail to update gas price by non owner", async function() {
+    await expectThrow(serviceContract.setPriceFeedEstimate(123, {from: account_two}));
   });
 
-  it("should be able to update minimum gas price by the owner", async function() {
-    await serviceContract.setMinimumGasPrice(123);
-    let newMinGasPrice = await serviceContract.minimumGasPrice();
-    assert.equal(newMinGasPrice, 123, "Should be able to get updated minimum gas price.");
+  it("should be able to update gas price by the owner", async function() {
+    await serviceContract.setPriceFeedEstimate(123);
+    let newGasPrice = await serviceContract.priceFeedEstimate();
+    assert.equal(newGasPrice, 123, "Should be able to get updated gas price.");
   });
 });

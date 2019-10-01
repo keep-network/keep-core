@@ -238,7 +238,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
     let dkgGasEstimate = await operatorContract.dkgGasEstimate();
     let submitterCustomGasPrice = web3.utils.toWei(web3.utils.toBN(25), 'gwei');
-    let expectedSubmitterReward = dkgGasEstimate.mul(await operatorContract.minGasPrice());
+    let expectedSubmitterReward = dkgGasEstimate.mul(await operatorContract.priceFeedEstimate());
 
     await operatorContract.submitDkgResult(
       1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
@@ -249,7 +249,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     assert.isTrue(updatedMagpieBalance.eq(magpieBalance.add(expectedSubmitterReward)), "Submitter should receive expected reward.");
   });
 
-  it("should send max dkgSubmitterReimbursement to the submitter in case of a much higher price than minimumGasPrice.", async function() {
+  it("should send max dkgSubmitterReimbursement to the submitter in case of a much higher price than priceFeedEstimate.", async function() {
     // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
@@ -257,7 +257,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     let dkgSubmitterReimbursement = web3.utils.toBN(await web3.eth.getBalance(operatorContract.address));
     let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
 
-    await operatorContract.setMinimumGasPrice(web3.utils.toWei(web3.utils.toBN(100), 'gwei'));
+    await operatorContract.setPriceFeedEstimate(web3.utils.toWei(web3.utils.toBN(100), 'gwei'));
 
     await operatorContract.submitDkgResult(
       1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,

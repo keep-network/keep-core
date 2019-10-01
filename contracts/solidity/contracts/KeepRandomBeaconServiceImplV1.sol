@@ -34,8 +34,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     event RelayEntryRequested(uint256 requestId);
     event RelayEntryGenerated(uint256 requestId, uint256 entry);
 
-    // Minimum gas price for relay entry request.
-    uint256 internal _minGasPrice;
+    // Gas price for relay entry request.
+    uint256 internal _priceFeedEstimate;
 
     // Fluctuation safety factor to cover the immediate rise in gas fees during DKG execution.
     // Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
@@ -83,7 +83,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
-     * @param minGasPrice Minimum gas price for relay entry request.
+     * @param priceFeedEstimate Gas price for relay entry request.
      * @param fluctuationMargin Fluctuation safety factor to cover the immediate rise in gas fees during 
      * DKG execution. Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
@@ -92,7 +92,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param operatorContract Operator contract linked to this contract.
      */
     function initialize(
-        uint256 minGasPrice,
+        uint256 priceFeedEstimate,
         uint256 fluctuationMargin,
         uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
@@ -103,7 +103,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     {
         require(!initialized(), "Contract is already initialized.");
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
-        _minGasPrice = minGasPrice;
+        _priceFeedEstimate = priceFeedEstimate;
         _fluctuationMargin = fluctuationMargin;
         _dkgContributionMargin = dkgContributionMargin;
         _withdrawalDelay = withdrawalDelay;
@@ -227,7 +227,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         OperatorContract operatorContract = OperatorContract(selectOperatorContract(_previousEntry));
         uint256 selectedOperatorContractFee = operatorContract.groupProfitFee().add(
-            operatorContract.entryVerificationGasEstimate().mul(_minGasPrice));
+            operatorContract.entryVerificationGasEstimate().mul(_priceFeedEstimate));
 
         operatorContract.sign.value(
             selectedOperatorContractFee
@@ -317,7 +317,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         bytes memory data; // Store result data of external contract call.
 
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 dkgFeeEstimate = _minGasPrice.mul(OperatorContract(latestOperatorContract).dkgGasEstimate()).mul(_fluctuationMargin).div(1e18);
+        uint256 dkgFeeEstimate = _priceFeedEstimate.mul(OperatorContract(latestOperatorContract).dkgGasEstimate()).mul(_fluctuationMargin).div(1e18);
         if (_dkgFeePool >= dkgFeeEstimate) {
             _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
             (success, data) = latestOperatorContract.call.value(dkgFeeEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));
@@ -325,18 +325,18 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
-     * @dev Set the minimum gas price in wei for estimating relay entry request payment.
-     * @param minGasPrice is the minimum gas price required for estimating relay entry request payment.
+     * @dev Set the gas price in wei for estimating relay entry request payment.
+     * @param priceFeedEstimate is the gas price required for estimating relay entry request payment.
      */
-    function setMinimumGasPrice(uint256 minGasPrice) public onlyOwner {
-        _minGasPrice = minGasPrice;
+    function setPriceFeedEstimate(uint256 priceFeedEstimate) public onlyOwner {
+        _priceFeedEstimate = priceFeedEstimate;
     }
 
     /**
-     * @dev Get the minimum gas price in wei that is used to estimate relay entry request payment.
+     * @dev Get the gas price in wei that is used to estimate relay entry request payment.
      */
-    function minimumGasPrice() public view returns(uint256) {
-        return _minGasPrice;
+    function priceFeedEstimate() public view returns(uint256) {
+        return _priceFeedEstimate;
     }
 
     /**
@@ -344,7 +344,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param callbackGas Gas required for the callback.
      */
     function minimumCallbackFee(uint256 callbackGas) public view returns(uint256) {
-        return callbackGas.mul(_minGasPrice).mul(_fluctuationMargin).div(1e18);
+        return callbackGas.mul(_priceFeedEstimate).mul(_fluctuationMargin).div(1e18);
     }
 
     /**
@@ -381,8 +381,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 dkgGas = OperatorContract(latestOperatorContract).dkgGasEstimate();
 
         return (
-            entryVerificationGas.mul(_minGasPrice),
-            dkgGas.mul(_minGasPrice.mul(_fluctuationMargin).div(1e18)).mul(_dkgContributionMargin).div(100).div(1e18),
+            entryVerificationGas.mul(_priceFeedEstimate),
+            dkgGas.mul(_priceFeedEstimate.mul(_fluctuationMargin).div(1e18)).mul(_dkgContributionMargin).div(100).div(1e18),
             groupProfitFee
         );
     }

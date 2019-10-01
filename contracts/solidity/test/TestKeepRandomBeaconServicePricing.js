@@ -52,10 +52,10 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
   it("should successfully refund callback gas surplus to the requestor if gas price was high", async function() {
 
-    // Set higher gas price
-    let defaultMinimumGasPrice = await serviceContract.minimumGasPrice();
+    let defaultPriceFeedEstimate = await serviceContract.priceFeedEstimate();
 
-    await serviceContract.setMinimumGasPrice(defaultMinimumGasPrice.mul(web3.utils.toBN(10)));
+    // Set higher gas price
+    await serviceContract.setPriceFeedEstimate(defaultPriceFeedEstimate.mul(web3.utils.toBN(10)));
     let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     let excessCallbackFee = await serviceContract.minimumCallbackFee(callbackGas)
@@ -73,7 +73,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
     // Put back the default gas price
-    await serviceContract.setMinimumGasPrice(defaultMinimumGasPrice);
+    await serviceContract.setPriceFeedEstimate(defaultPriceFeedEstimate);
     let expectedCallbackFee = await serviceContract.minimumCallbackFee((callbackGas/1.5).toFixed()) // Remove 1.5 fluctuation safety margin
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 

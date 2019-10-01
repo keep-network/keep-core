@@ -53,9 +53,8 @@ contract KeepRandomBeaconOperator {
     // Each signing group member reward in wei.
     uint256 public groupMemberBaseReward = 1000000000000000; //0.001 Ether
 
-    // Minimum gas price for calculating reimbursements.
-    // TODO: Replace with price feed estimate.
-    uint256 public minGasPrice = 20*1e9; // (20 Gwei)
+    // Gas price for calculating reimbursements.
+    uint256 public priceFeedEstimate = 20*1e9; // (20 Gwei)
 
     // Size of a group in the threshold relay.
     uint256 public groupSize = 5;
@@ -151,7 +150,7 @@ contract KeepRandomBeaconOperator {
      * there are no groups on the operator contract.
      */
     function genesis() public payable {
-        require(msg.value >= minGasPrice.mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
+        require(msg.value >= priceFeedEstimate.mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
         require(numberOfGroups() == 0, "There can be no groups.");
         // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
         groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
@@ -231,11 +230,11 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Set the minimum gas price in wei for calculating reimbursements.
-     * @param _minGasPrice is the gas price for calculating reimbursements.
+     * @dev Set the gas price in wei for calculating reimbursements.
+     * @param _priceFeedEstimate is the gas price for calculating reimbursements.
      */
-    function setMinimumGasPrice(uint256 _minGasPrice) public onlyOwner {
-        minGasPrice = _minGasPrice;
+    function setPriceFeedEstimate(uint256 _priceFeedEstimate) public onlyOwner {
+        priceFeedEstimate = _priceFeedEstimate;
     }
 
     /**
@@ -446,7 +445,7 @@ contract KeepRandomBeaconOperator {
 
         groupContract.addGroup(groupPubKey);
 
-        uint256 gasPrice = tx.gasprice < minGasPrice ? tx.gasprice : minGasPrice;
+        uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
         uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
         uint256 surplus = 0;
         address payable magpie = stakingContract.magpieOf(msg.sender);
