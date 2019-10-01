@@ -21,10 +21,11 @@ func GenerateTickets(
 
 	tickets := make(tickets, 0)
 	for virtualStaker := one; virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
-		tickets = append(
-			tickets,
-			NewTicket(beaconValue, stakerValue, big.NewInt(virtualStaker)), // prf
-		)
+		ticket, err := NewTicket(beaconValue, stakerValue, big.NewInt(virtualStaker)) // prf
+		if err != nil {
+			return nil, err
+		}
+		tickets = append(tickets, ticket)
 	}
 	sort.Stable(tickets)
 

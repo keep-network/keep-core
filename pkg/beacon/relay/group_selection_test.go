@@ -1,7 +1,6 @@
 package relay
 
 import (
-	"encoding/hex"
 	"math/big"
 	"reflect"
 	"testing"
@@ -12,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -23,11 +23,10 @@ func TestSubmitAllTickets(t *testing.T) {
 	beaconOutput := big.NewInt(10).Bytes()
 	stakerValue := []byte("StakerValue1001")
 
-	tickets := []*groupselection.Ticket{
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(1)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(2)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(3)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(4)),
+	tickets := make([]*groupselection.Ticket, 0)
+	for i := 1; i <= 4; i++ {
+		ticket, _ := groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
+		tickets = append(tickets, ticket)
 	}
 
 	candidate := &Node{
@@ -63,10 +62,7 @@ func TestSubmitAllTickets(t *testing.T) {
 	}
 
 	for i, ticket := range tickets {
-		submitted, err := fromChainTicket(submittedTickets[i])
-		if err != nil {
-			t.Fatal(err)
-		}
+		submitted := fromChainTicket(submittedTickets[i], t)
 
 		if !reflect.DeepEqual(ticket, submitted) {
 			t.Errorf(
@@ -79,6 +75,29 @@ func TestSubmitAllTickets(t *testing.T) {
 	}
 }
 
+func fromChainTicket(ticket *chain.Ticket, t *testing.T) *groupselection.Ticket {
+	paddedTicketValue, err := byteutils.LeftPadTo32Bytes((ticket.Value.Bytes()))
+	if err != nil {
+		t.Errorf("could not pad ticket value [%v]", err)
+	}
+
+	value, err := groupselection.SHAValue{}.SetBytes(paddedTicketValue)
+	if err != nil {
+		t.Errorf(
+			"could not transform ticket from chain representation [%v]",
+			err,
+		)
+	}
+
+	return &groupselection.Ticket{
+		Value: value,
+		Proof: &groupselection.Proof{
+			StakerValue:        ticket.Proof.StakerValue.Bytes(),
+			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
+		},
+	}
+}
+
 func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	// 2^257 is bigger than any SHA256 generated number. We want all tickets to
 	// be accepted
@@ -87,13 +106,10 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	beaconOutput := big.NewInt(10).Bytes()
 	stakerValue := []byte("StakerValue1001")
 
-	tickets := []*groupselection.Ticket{
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(1)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(2)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(3)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(4)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(5)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(6)),
+	tickets := make([]*groupselection.Ticket, 0)
+	for i := 1; i <= 6; i++ {
+		ticket, _ := groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
+		tickets = append(tickets, ticket)
 	}
 
 	candidate := &Node{
@@ -134,59 +150,6 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 
 	if len(tickets) == len(submittedTickets) {
 		t.Errorf("ticket submission has not been cancelled")
-	}
-}
-
-func TestToFromChainTicket(t *testing.T) {
-	tests := map[string]struct {
-		shaValue      string
-		expectedError error
-	}{
-		"ticket sha value": {
-			shaValue: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
-		},
-		"ticket sha value starts with zeros": {
-			shaValue: "00de2289dfca6b3f9034688598756c996eda3e29eb665240d137248610b4137e",
-		},
-	}
-
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			hash, err := hex.DecodeString(test.shaValue)
-			if err != nil {
-				t.Fatal(err)
-			}
-			var array [32]byte
-			copy(array[:], hash[:])
-			ticketValue := groupselection.SHAValue(array)
-
-			ticket := &groupselection.Ticket{
-				Value: ticketValue,
-				Proof: &groupselection.Proof{
-					StakerValue:        []byte("staker-value"),
-					VirtualStakerIndex: big.NewInt(123),
-				},
-			}
-
-			chainTicket, err := toChainTicket(ticket)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			actualTicket, err := fromChainTicket(chainTicket)
-
-			if !reflect.DeepEqual(err, test.expectedError) {
-				t.Fatalf("\nexpected: [%+v]\nactual: [%+v]", test.expectedError, err)
-			}
-
-			if !reflect.DeepEqual(actualTicket, ticket) {
-				t.Fatalf(
-					"\nexpected: [%+v]\nactual:   [%+v]",
-					ticket,
-					actualTicket,
-				)
-			}
-		})
 	}
 }
 

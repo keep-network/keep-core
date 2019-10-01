@@ -3,7 +3,9 @@ package libp2p
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/big"
+	"strings"
 	"testing"
 	"time"
 
@@ -151,6 +153,47 @@ func TestSendReceive(t *testing.T) {
 	}
 }
 
+func TestProviderSetAnnouncedAddresses(t *testing.T) {
+	ctx, cancel := newTestContext()
+	defer cancel()
+
+	privateKey, _, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config := generateDeterministicNetworkConfig()
+	config.AnnouncedAddresses = []string{
+		"/bad/address",
+		"/dns4/address.com/tcp/3919",
+		"totallyBadAddress",
+		"/ip4/100.20.50.30/tcp/3919",
+	}
+
+	provider, err := Connect(
+		ctx,
+		config,
+		privateKey,
+		local.NewStakeMonitor(big.NewInt(200)),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedAddresses := []string{
+		fmt.Sprintf("/dns4/address.com/tcp/3919/ipfs/%v", provider.ID()),
+		fmt.Sprintf("/ip4/100.20.50.30/tcp/3919/ipfs/%v", provider.ID()),
+	}
+	providerAddresses := provider.AddrStrings()
+	if strings.Join(expectedAddresses, " ") != strings.Join(providerAddresses, " ") {
+		t.Fatalf(
+			"expected: provider addresses [%v]\nactual: provider addresses [%v]",
+			expectedAddresses,
+			providerAddresses,
+		)
+	}
+}
+
 type protocolIdentifier struct {
 	id string
 }
@@ -210,7 +253,7 @@ func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
 		ctx,
 		identity,
 		config.Port,
-		config.NAT,
+		config.AnnouncedAddresses,
 		local.NewStakeMonitor(big.NewInt(200)),
 	)
 	if err != nil {
