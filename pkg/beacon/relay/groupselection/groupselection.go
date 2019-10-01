@@ -104,7 +104,7 @@ func SubmitTickets(
 // submitTickets submits tickets to the chain. It checks to see if the submission
 // period is over in between ticket submits.
 func submitTickets(
-	tickets []*Ticket,
+	tickets []*ticket,
 	relayChain relaychain.GroupSelectionInterface,
 	quit <-chan struct{},
 	errCh chan<- error,
@@ -128,7 +128,7 @@ func submitTickets(
 	}
 }
 
-func toChainTicket(ticket *Ticket) (*relaychain.Ticket, error) {
+func toChainTicket(ticket *ticket) (*relaychain.Ticket, error) {
 	return &relaychain.Ticket{
 		Value: ticket.Value.Int(),
 		Proof: &relaychain.TicketProof{
@@ -147,12 +147,12 @@ func generateTickets(
 	stakerValue []byte, // Q_j
 	availableStake *big.Int, // S_j
 	minimumStake *big.Int,
-) ([]*Ticket, error) {
+) ([]*ticket, error) {
 	stakingWeight := (&big.Int{}).Quo(availableStake, minimumStake) // W_j
 
 	tickets := make(tickets, 0)
 	for virtualStaker := int64(1); virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
-		ticket, err := NewTicket(beaconValue, stakerValue, big.NewInt(virtualStaker)) // prf
+		ticket, err := newTicket(beaconValue, stakerValue, big.NewInt(virtualStaker)) // prf
 		if err != nil {
 			return nil, err
 		}

@@ -139,9 +139,9 @@ func TestSubmitAllTickets(t *testing.T) {
 	beaconOutput := big.NewInt(10).Bytes()
 	stakerValue := []byte("StakerValue1001")
 
-	tickets := make([]*Ticket, 0)
+	tickets := make([]*ticket, 0)
 	for i := 1; i <= 4; i++ {
-		ticket, _ := NewTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
+		ticket, _ := newTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
 		tickets = append(tickets, ticket)
 	}
 
@@ -185,8 +185,8 @@ func TestSubmitAllTickets(t *testing.T) {
 	}
 }
 
-func fromChainTicket(ticket *chain.Ticket, t *testing.T) *Ticket {
-	paddedTicketValue, err := byteutils.LeftPadTo32Bytes((ticket.Value.Bytes()))
+func fromChainTicket(chainTicket *chain.Ticket, t *testing.T) *ticket {
+	paddedTicketValue, err := byteutils.LeftPadTo32Bytes((chainTicket.Value.Bytes()))
 	if err != nil {
 		t.Errorf("could not pad ticket value [%v]", err)
 	}
@@ -199,11 +199,11 @@ func fromChainTicket(ticket *chain.Ticket, t *testing.T) *Ticket {
 		)
 	}
 
-	return &Ticket{
+	return &ticket{
 		Value: value,
 		Proof: &Proof{
-			StakerValue:        ticket.Proof.StakerValue.Bytes(),
-			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
+			StakerValue:        chainTicket.Proof.StakerValue.Bytes(),
+			VirtualStakerIndex: chainTicket.Proof.VirtualStakerIndex,
 		},
 	}
 }
@@ -212,9 +212,9 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	beaconOutput := big.NewInt(10).Bytes()
 	stakerValue := []byte("StakerValue1001")
 
-	tickets := make([]*Ticket, 0)
+	tickets := make([]*ticket, 0)
 	for i := 1; i <= 6; i++ {
-		ticket, _ := NewTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
+		ticket, _ := newTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
 		tickets = append(tickets, ticket)
 	}
 
