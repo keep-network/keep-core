@@ -153,6 +153,8 @@ contract KeepRandomBeaconOperator {
     function genesis() public payable {
         require(msg.value >= minGasPrice.mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
         require(numberOfGroups() == 0, "There can be no groups.");
+        // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
+        groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
         startGroupSelection(_genesisGroupSeed, msg.value);
     }
 
