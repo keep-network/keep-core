@@ -1,14 +1,11 @@
 package groupselection
 
 import (
-	"fmt"
 	"math/big"
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/btcsuite/btcd/btcec"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -21,17 +18,12 @@ func TestGenerateTickets(t *testing.T) {
 	availableStake := big.NewInt(10)
 	virtualStakers := availableStake.Int64() / minimumStake.Int64()
 
-	stakingPublicKey, err := newTestPublicKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-	stakingPublicKeyECDSA := stakingPublicKey.ToECDSA()
-	stakingAddress := crypto.PubkeyToAddress(*stakingPublicKeyECDSA)
+	stakingAddress := []byte("staking address")
 	previousBeaconOutput := []byte("test beacon output")
 
 	tickets, err := generateTickets(
 		previousBeaconOutput,
-		stakingAddress.Bytes(),
+		stakingAddress,
 		availableStake,
 		minimumStake,
 	)
@@ -63,18 +55,6 @@ func TestGenerateTickets(t *testing.T) {
 			t.Fatal("virutal stakers should be 1-indexed, not 0-indexed")
 		}
 	}
-}
-
-func newTestPublicKey() (*btcec.PublicKey, error) {
-	ecdsaPrivateKey, err := btcec.NewPrivateKey(btcec.S256())
-	if err != nil {
-		return nil, fmt.Errorf(
-			"could not generate new ephemeral keypair [%v]",
-			err,
-		)
-	}
-
-	return ecdsaPrivateKey.PubKey(), nil
 }
 
 func TestSubmitAllTickets(t *testing.T) {
