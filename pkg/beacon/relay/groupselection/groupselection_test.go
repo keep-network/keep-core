@@ -1,7 +1,6 @@
 package groupselection
 
 import (
-	"bytes"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -53,73 +52,16 @@ func TestGenerateTickets(t *testing.T) {
 		expectedIndex := int64(i + 1)
 		// Tickets should be sorted in ascending order
 		if expectedIndex != ticket.proof.virtualStakerIndex.Int64() {
-			t.Fatalf("Got index [%d], want index [%d]",
+			t.Fatalf(
+				"got index [%d], want index [%d]",
 				ticket.proof.virtualStakerIndex,
 				expectedIndex,
 			)
 		}
 
 		if ticket.proof.virtualStakerIndex == big.NewInt(0) {
-			t.Fatal("Virutal stakers should be 1-indexed, not 0-indexed")
+			t.Fatal("virutal stakers should be 1-indexed, not 0-indexed")
 		}
-	}
-
-}
-
-func TestValidateProofs(t *testing.T) {
-	beaconOutput := []byte("test beacon output")
-	beaconOutputPadded, _ := byteutils.LeftPadTo32Bytes(beaconOutput)
-
-	stakingPublicKey, err := newTestPublicKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-	stakingPublicKeyECDSA := stakingPublicKey.ToECDSA()
-	stakingAddress := crypto.PubkeyToAddress(*stakingPublicKeyECDSA)
-	stakerValuePadded, _ := byteutils.LeftPadTo32Bytes(stakingAddress.Bytes())
-
-	minimumStake := big.NewInt(1)
-	availableStake := big.NewInt(1)
-	virtualStakers := big.NewInt(0).Quo(availableStake, minimumStake) // 1
-	virtualStakerIndexPadded, _ := byteutils.LeftPadTo32Bytes(virtualStakers.Bytes())
-
-	var valueBytes []byte
-
-	valueBytes = append(valueBytes, beaconOutputPadded...) // V_i
-	valueBytes = append(valueBytes, stakerValuePadded...)  // Q_j
-	// only 1 virtual staker, which corresponds to the index, vs
-	valueBytes = append(valueBytes, virtualStakerIndexPadded...)
-
-	expectedValue := crypto.Keccak256(valueBytes[:])
-
-	tickets, err := generateTickets(
-		beaconOutput,
-		stakingAddress.Bytes(),
-		availableStake,
-		minimumStake,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// we should have virtualStaker number of tickets
-	if len(tickets) != int(virtualStakers.Int64()) {
-		t.Fatalf(
-			"expected [%d] tickets, received [%d] tickets",
-			virtualStakers,
-			len(tickets),
-		)
-	}
-
-	if bytes.Compare(
-		tickets[0].value[:],
-		expectedValue,
-	) != 0 {
-		t.Fatalf(
-			"hashed value (%v) doesn't match ticket value (%v)",
-			tickets[0].value,
-			expectedValue,
-		)
 	}
 }
 
