@@ -24,9 +24,6 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
   const groupSize = 20;
   const groupThreshold = 15;  
   const minimumStake = web3.utils.toBN(200000);
-  const ticketInitialSubmissionTimeout = 20;
-  const ticketReactiveSubmissionTimeout = 100;
-  const ticketChallengeTimeout = 60;
   const resultPublicationBlockStep = 3;
 
   beforeEach(async () => {
@@ -68,7 +65,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     }
 
     let ticketSubmissionStartBlock = (await operatorContract.ticketSubmissionStartBlock()).toNumber();
-    let timeoutChallenge = (await operatorContract.ticketChallengeTimeout()).toNumber();
+    let timeoutChallenge = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
     resultPublicationTime = ticketSubmissionStartBlock + timeoutChallenge + timeDKG;
 

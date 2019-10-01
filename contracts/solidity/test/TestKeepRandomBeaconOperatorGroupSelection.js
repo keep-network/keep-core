@@ -60,11 +60,11 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     assert.isTrue(web3.utils.toBN(3000).eq(await operatorContract.stakingWeight(operator3)), "Should have expected staking weight.");
   });
 
-  it("should fail to get selected tickets before challenge period is over", async function() {
+  it("should fail to get selected tickets before submission period is over", async function() {
     await expectThrow(operatorContract.selectedTickets());
   });
 
-  it("should fail to get selected participants before challenge period is over", async function() {
+  it("should fail to get selected participants before submission period is over", async function() {
     await expectThrow(operatorContract.selectedParticipants());
   });
 
@@ -122,7 +122,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     assert.isTrue((await operatorContract.groupSelectionRelayEntry()).eq(groupSelectionRelayEntry), "Random beacon value for the current group selection should not change.");
   });
 
-  it("should be able to get selected tickets and participants after challenge period is over", async function() {
+  it("should be able to get selected tickets and participants after submission period is over", async function() {
 
     let groupSize = await operatorContract.groupSize();
 
@@ -130,7 +130,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
       await operatorContract.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
     }
 
-    mineBlocks(await operatorContract.ticketChallengeTimeout());
+    mineBlocks(await operatorContract.ticketReactiveSubmissionTimeout());
     let selectedTickets = await operatorContract.selectedTickets();
     assert.equal(selectedTickets.length, groupSize, "Should be trimmed to groupSize length.");
 
@@ -142,7 +142,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     let groupSelectionStartBlock = await operatorContract.ticketSubmissionStartBlock();
 
     // Calculate the block time when the group selection should be finished
-    let timeoutChallenge = (await operatorContract.ticketChallengeTimeout()).toNumber();
+    let timeoutChallenge = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
     let groupSize = (await operatorContract.groupSize()).toNumber();
     let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
