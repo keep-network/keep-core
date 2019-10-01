@@ -284,7 +284,6 @@ func ConnectWithKey(
 			HonestThreshold:                 honestThreshold,
 			TicketInitialSubmissionTimeout:  2,
 			TicketReactiveSubmissionTimeout: 3,
-			TicketChallengeTimeout:          4,
 			ResultPublicationBlockStep:      3,
 			MinimumStake:                    minimumStake,
 			TokenSupply:                     tokenSupply,
