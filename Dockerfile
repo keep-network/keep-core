@@ -9,6 +9,7 @@ ENV GOPATH=/go \
 	GOBIN=/go/bin \
 	APP_NAME=keep-client \
 	APP_DIR=/go/src/github.com/keep-network/keep-core \
+	TEST_RESULTS_DIR=/mnt/test-results \
 	BIN_PATH=/usr/local/bin \
 	LD_LIBRARY_PATH=/usr/local/lib/
 
@@ -24,7 +25,9 @@ RUN apk add --update --no-cache \
 
 COPY --from=ethereum/solc:0.5.4 /usr/bin/solc /usr/bin/solc
 
-RUN mkdir -p $APP_DIR
+RUN go get gotest.tools/gotestsum
+
+RUN mkdir -p $APP_DIR $TEST_RESULTS_DIR
 
 WORKDIR $APP_DIR
 

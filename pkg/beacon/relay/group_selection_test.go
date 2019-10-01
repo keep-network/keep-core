@@ -23,11 +23,10 @@ func TestSubmitAllTickets(t *testing.T) {
 	beaconOutput := big.NewInt(10).Bytes()
 	stakerValue := []byte("StakerValue1001")
 
-	tickets := []*groupselection.Ticket{
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(1)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(2)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(3)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(4)),
+	tickets := make([]*groupselection.Ticket, 0)
+	for i := 1; i <= 4; i++ {
+		ticket, _ := groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
+		tickets = append(tickets, ticket)
 	}
 
 	candidate := &Node{
@@ -107,13 +106,10 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	beaconOutput := big.NewInt(10).Bytes()
 	stakerValue := []byte("StakerValue1001")
 
-	tickets := []*groupselection.Ticket{
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(1)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(2)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(3)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(4)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(5)),
-		groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(6)),
+	tickets := make([]*groupselection.Ticket, 0)
+	for i := 1; i <= 6; i++ {
+		ticket, _ := groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
+		tickets = append(tickets, ticket)
 	}
 
 	candidate := &Node{

@@ -1,7 +1,6 @@
 package relay
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -136,23 +135,6 @@ func (n *Node) submitTickets(
 			)
 		}
 	}
-}
-
-// costlyCheck takes the on-chain Proof, computes the sha256 hash from the Proof,
-// and then uses a constant time compare to determine if the on-chain value
-// matches the value the client computes for them.
-func costlyCheck(beaconValue []byte, ticket *groupselection.Ticket) bool {
-	// cheapCheck is done on chain
-	computedValue := groupselection.CalculateTicketValue(
-		beaconValue,
-		ticket.Proof.StakerValue,
-		ticket.Proof.VirtualStakerIndex,
-	)
-	switch bytes.Compare(computedValue[:], ticket.Value[:]) {
-	case 0:
-		return true
-	}
-	return false
 }
 
 func toChainTicket(ticket *groupselection.Ticket) (*relaychain.Ticket, error) {
