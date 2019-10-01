@@ -109,7 +109,7 @@ contract KeepRandomBeaconOperator {
     // When submitting DKG result, the submitter is reimbursed with the actual cost
     // and some part of the fee stored in this field may be returned to the service
     // contract.
-    uint256 public dkgSubmitterReimbursement;
+    uint256 public dkgSubmitterReimbursementFee;
 
     struct Proof {
         address sender;
@@ -260,9 +260,9 @@ contract KeepRandomBeaconOperator {
 
         // If previous group selection failed and there is reimbursement left
         // return it to the DKG fee pool.
-        if (dkgSubmitterReimbursement > 0) {
-            uint256 surplus = dkgSubmitterReimbursement;
-            dkgSubmitterReimbursement = 0;
+        if (dkgSubmitterReimbursementFee > 0) {
+            uint256 surplus = dkgSubmitterReimbursementFee;
+            dkgSubmitterReimbursementFee = 0;
             ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
         }
 
@@ -271,7 +271,7 @@ contract KeepRandomBeaconOperator {
         groupSelectionRelayEntry = _newEntry;
         groupSelectionInProgress = true;
         emit GroupSelectionStarted(_newEntry);
-        dkgSubmitterReimbursement = _payment;
+        dkgSubmitterReimbursementFee = _payment;
     }
 
     /**
@@ -451,17 +451,17 @@ contract KeepRandomBeaconOperator {
         uint256 surplus = 0;
         address payable magpie = stakingContract.magpieOf(msg.sender);
 
-        if (reimbursementFee < dkgSubmitterReimbursement) {
-            surplus = dkgSubmitterReimbursement.sub(reimbursementFee);
-            dkgSubmitterReimbursement = 0;
+        if (reimbursementFee < dkgSubmitterReimbursementFee) {
+            surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
+            dkgSubmitterReimbursementFee = 0;
             // Reimburse submitter with actual DKG cost.
             magpie.transfer(reimbursementFee);
             // Return surplus to the contract that started DKG.
             groupSelectionStarterContract.fundDkgFeePool.value(surplus)();
         } else {
-            // If submitter used higher gas price reimburse only dkgSubmitterReimbursement max.
-            reimbursementFee = dkgSubmitterReimbursement;
-            dkgSubmitterReimbursement = 0;
+            // If submitter used higher gas price reimburse only dkgSubmitterReimbursementFee max.
+            reimbursementFee = dkgSubmitterReimbursementFee;
+            dkgSubmitterReimbursementFee = 0;
             magpie.transfer(reimbursementFee);
         }
  
