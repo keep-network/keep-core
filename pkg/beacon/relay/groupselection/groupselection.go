@@ -15,8 +15,6 @@ import (
 
 var logger = log.Logger("keep-groupselection")
 
-var one = int64(1)
-
 // SubmitTickets takes the previous beacon value and attempts to
 // generate the appropriate number of tickets for the staker. After ticket
 // generation begins an interactive process, where the staker submits tickets
@@ -39,7 +37,7 @@ func SubmitTickets(
 		return err
 	}
 	tickets, err :=
-		GenerateTickets(
+		generateTickets(
 			newEntry.Bytes(),
 			staker.ID(),
 			availableStake,
@@ -140,11 +138,11 @@ func toChainTicket(ticket *Ticket) (*relaychain.Ticket, error) {
 	}, nil
 }
 
-// GenerateTickets generates a set of tickets for the given staker and relay
+// generateTickets generates a set of tickets for the given staker and relay
 // entry value given the specified minimum stake. Returns the resulting
 // tickets in sorted order, or an error if there were issues computing the
 // tickets.
-func GenerateTickets(
+func generateTickets(
 	beaconValue []byte, // V_i
 	stakerValue []byte, // Q_j
 	availableStake *big.Int, // S_j
@@ -153,7 +151,7 @@ func GenerateTickets(
 	stakingWeight := (&big.Int{}).Quo(availableStake, minimumStake) // W_j
 
 	tickets := make(tickets, 0)
-	for virtualStaker := one; virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
+	for virtualStaker := int64(1); virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
 		ticket, err := NewTicket(beaconValue, stakerValue, big.NewInt(virtualStaker)) // prf
 		if err != nil {
 			return nil, err

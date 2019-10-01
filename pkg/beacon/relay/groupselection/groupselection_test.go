@@ -30,7 +30,7 @@ func TestGenerateTickets(t *testing.T) {
 	stakingAddress := crypto.PubkeyToAddress(*stakingPublicKeyECDSA)
 	previousBeaconOutput := []byte("test beacon output")
 
-	tickets, err := GenerateTickets(
+	tickets, err := generateTickets(
 		previousBeaconOutput,
 		stakingAddress.Bytes(),
 		availableStake,
@@ -92,7 +92,7 @@ func TestValidateProofs(t *testing.T) {
 
 	expectedValue := crypto.Keccak256(valueBytes[:])
 
-	tickets, err := GenerateTickets(
+	tickets, err := generateTickets(
 		beaconOutput,
 		stakingAddress.Bytes(),
 		availableStake,
