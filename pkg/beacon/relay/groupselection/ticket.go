@@ -13,9 +13,8 @@ import (
 // used to determine whether a given virtual staker is eligible for the group P
 // (the lowest N tickets will be chosen) and a proof of the validity of the value
 type ticket struct {
-	value shaValue // W_k
-
-	proof *proof // proof_k = Proof(Q_j, vs)
+	value [32]byte // W_k
+	proof *proof   // proof_k = Proof(Q_j, vs)
 }
 
 // proof consists of the components needed to construct the ticket's value, and
@@ -25,7 +24,7 @@ type proof struct {
 	virtualStakerIndex *big.Int // vs
 }
 
-// newTicket calculates a ticket Value (SHAValue), and returns the ticket with
+// newTicket calculates a ticket value and returns the ticket with
 // the associated Proof.
 func newTicket(
 	beaconOutput []byte, // V_i
@@ -54,9 +53,9 @@ func calculateTicketValue(
 	beaconOutput []byte,
 	stakerValue []byte,
 	virtualStakerIndex *big.Int,
-) (shaValue, error) {
+) ([32]byte, error) {
 	var combinedValue []byte
-	var keccak256Hash shaValue
+	var keccak256Hash [32]byte
 
 	beaconOutputPadded, err := byteutils.LeftPadTo32Bytes(beaconOutput)
 	if err != nil {
@@ -79,5 +78,9 @@ func calculateTicketValue(
 
 	copy(keccak256Hash[:], crypto.Keccak256(combinedValue[:]))
 
-	return shaValue(keccak256Hash), nil
+	return keccak256Hash, nil
+}
+
+func (t *ticket) intValue() *big.Int {
+	return new(big.Int).SetBytes(t.value[:])
 }

@@ -15,6 +15,12 @@ import (
 
 var logger = log.Logger("keep-groupselection")
 
+// Result represents ordered, selected tickets from those submitted to the chain.
+type Result struct {
+	SelectedStakers        [][]byte
+	GroupSelectionEndBlock uint64
+}
+
 // SubmitTickets takes the previous beacon value and attempts to
 // generate the appropriate number of tickets for the staker. After ticket
 // generation begins an interactive process, where the staker submits tickets
@@ -130,7 +136,7 @@ func submitTickets(
 
 func toChainTicket(ticket *ticket) (*relaychain.Ticket, error) {
 	return &relaychain.Ticket{
-		Value: ticket.value.int(),
+		Value: ticket.intValue(),
 		Proof: &relaychain.TicketProof{
 			StakerValue:        new(big.Int).SetBytes(ticket.proof.stakerValue),
 			VirtualStakerIndex: ticket.proof.virtualStakerIndex,
@@ -161,10 +167,4 @@ func generateTickets(
 	sort.Stable(tickets)
 
 	return tickets, nil
-}
-
-// Result represents ordered, selected tickets from those submitted to the chain.
-type Result struct {
-	SelectedStakers        [][]byte
-	GroupSelectionEndBlock uint64
 }
