@@ -4,16 +4,11 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
-	"time"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
-
-// getTicketListInterval is the number of seconds we wait before requesting the
-// ordered ticket list (to run ticket verification)from the chain.
-const getTicketListInterval = 5 * time.Second
 
 // SubmitTicketsForGroupSelection takes the previous beacon value and attempts to
 // generate the appropriate number of tickets for the staker. After ticket
