@@ -94,7 +94,7 @@ func Initialize(
 		}
 
 		go func() {
-			err := relay.SubmitTicketsForGroupSelection(
+			err := groupselection.SubmitTickets(
 				relayChain,
 				blockCounter,
 				signing,
