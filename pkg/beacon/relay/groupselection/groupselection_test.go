@@ -112,7 +112,7 @@ func TestValidateProofs(t *testing.T) {
 	}
 
 	if bytes.Compare(
-		tickets[0].Value.Bytes(),
+		tickets[0].Value.bytes(),
 		expectedValue,
 	) != 0 {
 		t.Fatalf(
@@ -191,7 +191,7 @@ func fromChainTicket(chainTicket *chain.Ticket, t *testing.T) *ticket {
 		t.Errorf("could not pad ticket value [%v]", err)
 	}
 
-	value, err := SHAValue{}.SetBytes(paddedTicketValue)
+	value, err := shaValue{}.setBytes(paddedTicketValue)
 	if err != nil {
 		t.Errorf(
 			"could not transform ticket from chain representation [%v]",

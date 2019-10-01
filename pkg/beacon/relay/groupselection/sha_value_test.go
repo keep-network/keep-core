@@ -43,7 +43,7 @@ func TestSetBytes(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			shaValue, err := SHAValue{}.SetBytes(test.inputBytes)
+			shaValue, err := shaValue{}.setBytes(test.inputBytes)
 
 			if !reflect.DeepEqual(test.expectedError, err) {
 				t.Errorf(
@@ -54,7 +54,7 @@ func TestSetBytes(t *testing.T) {
 			}
 
 			if test.expectedError == nil {
-				testutils.AssertBytesEqual(t, test.inputBytes, shaValue.Bytes())
+				testutils.AssertBytesEqual(t, test.inputBytes, shaValue.bytes())
 			}
 		})
 	}

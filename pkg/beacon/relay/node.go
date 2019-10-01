@@ -119,9 +119,9 @@ func channelNameForGroup(group *groupselection.Result) string {
 	for _, staker := range group.SelectedStakers {
 		channelNameBytes = append(channelNameBytes, staker...)
 	}
-	hexChannelName := hex.EncodeToString(
-		groupselection.SHAValue(sha256.Sum256(channelNameBytes)).Bytes(),
-	)
+
+	hash := sha256.Sum256(channelNameBytes)
+	hexChannelName := hex.EncodeToString(hash[:])
 
 	return hexChannelName
 }

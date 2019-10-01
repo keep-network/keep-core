@@ -13,7 +13,7 @@ import (
 // used to determine whether a given virtual staker is eligible for the group P
 // (the lowest N tickets will be chosen) and a proof of the validity of the value
 type ticket struct {
-	Value SHAValue // W_k
+	Value shaValue // W_k
 
 	Proof *Proof // proof_k = Proof(Q_j, vs)
 }
@@ -46,7 +46,7 @@ func newTicket(
 	}, nil
 }
 
-// calculateTicketValue generates a SHAValue from the previous beacon output, the
+// calculateTicketValue generates a shaValue from the previous beacon output, the
 // staker-specific value, and the virtual staker index.
 //
 // See Phase 2 of the Group Selection protocol specification.
@@ -54,9 +54,9 @@ func calculateTicketValue(
 	beaconOutput []byte,
 	stakerValue []byte,
 	virtualStakerIndex *big.Int,
-) (SHAValue, error) {
+) (shaValue, error) {
 	var combinedValue []byte
-	var keccak256Hash SHAValue
+	var keccak256Hash shaValue
 
 	beaconOutputPadded, err := byteutils.LeftPadTo32Bytes(beaconOutput)
 	if err != nil {
@@ -79,5 +79,5 @@ func calculateTicketValue(
 
 	copy(keccak256Hash[:], crypto.Keccak256(combinedValue[:]))
 
-	return SHAValue(keccak256Hash), nil
+	return shaValue(keccak256Hash), nil
 }
