@@ -1,3 +1,6 @@
+// Package groupselection implements the random beacon group selection protocol
+// - an interactive, ticket-based method of selecting a candidate group from
+// the set of all stakers given a pseudorandom seed value.
 package groupselection
 
 import (
@@ -15,19 +18,16 @@ import (
 
 var logger = log.Logger("keep-groupselection")
 
-// Result represents ordered, selected tickets from those submitted to the chain.
+// Result represents the result of group selection protocol. It contains the
+// list of all stakers selected to the candidate group as well as the number of
+// block at which the group selection protocol completed.
 type Result struct {
 	SelectedStakers        [][]byte
 	GroupSelectionEndBlock uint64
 }
 
-// SubmitTickets takes the previous beacon value and attempts to
-// generate the appropriate number of tickets for the staker. After ticket
-// generation begins an interactive process, where the staker submits tickets
-// that fall under the natural threshold, while challenging tickets on chain
-// that fail verification. Submission ends at the end of the submission period.
-//
-// See the group selection protocol specification for more information.
+// SubmitTickets attempts to generate and submit tickets for the staker to join
+// a new candidate group.
 func SubmitTickets(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
@@ -65,7 +65,6 @@ func SubmitTickets(
 		quitTicketSubmission = make(chan struct{}, 1)
 	)
 
-	// submit all tickets
 	go submitTickets(
 		tickets,
 		relayChain,

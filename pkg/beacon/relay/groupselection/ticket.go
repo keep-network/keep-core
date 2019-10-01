@@ -25,7 +25,7 @@ type proof struct {
 }
 
 // newTicket calculates a ticket value and returns the ticket with
-// the associated Proof.
+// the associated proof.
 func newTicket(
 	beaconOutput []byte, // V_i
 	stakerValue []byte, // Q_j
@@ -45,10 +45,8 @@ func newTicket(
 	}, nil
 }
 
-// calculateTicketValue generates a shaValue from the previous beacon output, the
-// staker-specific value, and the virtual staker index.
-//
-// See Phase 2 of the Group Selection protocol specification.
+// calculateTicketValue generates a shaValue from the previous beacon output,
+// the staker-specific value, and the virtual staker index.
 func calculateTicketValue(
 	beaconOutput []byte,
 	stakerValue []byte,
