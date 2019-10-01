@@ -7,11 +7,11 @@ import (
 )
 
 // shaValue is a wrapper type for a fixed-size byte array that contains an SHA
-// signature. It can be represented as a byte slice (Bytes()), *big.Int (Int()),
-// or the raw underlying fixed-size array (Raw()).
+// signature. It can be represented as a byte slice (bytes()), *big.Int (int()),
+// or the raw underlying fixed-size array (raw()).
 type shaValue [sha256.Size]byte
 
-// bytes returns a byte slice of a copy of the SHAValue byte array.
+// bytes returns a byte slice of a copy of the shaValue byte array.
 func (v shaValue) bytes() []byte {
 	var byteSlice []byte
 	for _, byte := range v {

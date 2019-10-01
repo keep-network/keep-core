@@ -13,16 +13,16 @@ import (
 // used to determine whether a given virtual staker is eligible for the group P
 // (the lowest N tickets will be chosen) and a proof of the validity of the value
 type ticket struct {
-	Value shaValue // W_k
+	value shaValue // W_k
 
-	Proof *Proof // proof_k = Proof(Q_j, vs)
+	proof *proof // proof_k = Proof(Q_j, vs)
 }
 
-// Proof consists of the components needed to construct the ticket's value, and
+// proof consists of the components needed to construct the ticket's value, and
 // also acts as evidence for an accusing challenge against the ticket's value.
-type Proof struct {
-	StakerValue        []byte   // Q_j, a staker-specific value
-	VirtualStakerIndex *big.Int // vs
+type proof struct {
+	stakerValue        []byte   // Q_j, a staker-specific value
+	virtualStakerIndex *big.Int // vs
 }
 
 // newTicket calculates a ticket Value (SHAValue), and returns the ticket with
@@ -38,10 +38,10 @@ func newTicket(
 	}
 
 	return &ticket{
-		Value: value,
-		Proof: &Proof{
-			StakerValue:        stakerValue,
-			VirtualStakerIndex: virtualStakerIndex,
+		value: value,
+		proof: &proof{
+			stakerValue:        stakerValue,
+			virtualStakerIndex: virtualStakerIndex,
 		},
 	}, nil
 }

@@ -130,10 +130,10 @@ func submitTickets(
 
 func toChainTicket(ticket *ticket) (*relaychain.Ticket, error) {
 	return &relaychain.Ticket{
-		Value: ticket.Value.int(),
+		Value: ticket.value.int(),
 		Proof: &relaychain.TicketProof{
-			StakerValue:        new(big.Int).SetBytes(ticket.Proof.StakerValue),
-			VirtualStakerIndex: ticket.Proof.VirtualStakerIndex,
+			StakerValue:        new(big.Int).SetBytes(ticket.proof.stakerValue),
+			VirtualStakerIndex: ticket.proof.virtualStakerIndex,
 		},
 	}, nil
 }

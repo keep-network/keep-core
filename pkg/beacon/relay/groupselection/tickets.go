@@ -10,14 +10,14 @@ func (ts tickets) Len() int {
 
 // Swap is the sort.Interface requirement for Tickets
 func (ts tickets) Swap(i, j int) {
-	ts[i].Proof.VirtualStakerIndex, ts[j].Proof.VirtualStakerIndex =
-		ts[j].Proof.VirtualStakerIndex, ts[i].Proof.VirtualStakerIndex
+	ts[i].proof.virtualStakerIndex, ts[j].proof.virtualStakerIndex =
+		ts[j].proof.virtualStakerIndex, ts[i].proof.virtualStakerIndex
 }
 
 // Less is the sort.Interface requirement for Tickets
 func (ts tickets) Less(i, j int) bool {
-	iVirtualStakeIndex := ts[i].Proof.VirtualStakerIndex
-	jVirtualStakerIndex := ts[j].Proof.VirtualStakerIndex
+	iVirtualStakeIndex := ts[i].proof.virtualStakerIndex
+	jVirtualStakerIndex := ts[j].proof.virtualStakerIndex
 
 	switch iVirtualStakeIndex.Cmp(jVirtualStakerIndex) {
 	case -1:

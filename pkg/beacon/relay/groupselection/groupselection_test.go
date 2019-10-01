@@ -52,14 +52,14 @@ func TestGenerateTickets(t *testing.T) {
 	for i, ticket := range tickets {
 		expectedIndex := int64(i + 1)
 		// Tickets should be sorted in ascending order
-		if expectedIndex != ticket.Proof.VirtualStakerIndex.Int64() {
+		if expectedIndex != ticket.proof.virtualStakerIndex.Int64() {
 			t.Fatalf("Got index [%d], want index [%d]",
-				ticket.Proof.VirtualStakerIndex,
+				ticket.proof.virtualStakerIndex,
 				expectedIndex,
 			)
 		}
 
-		if ticket.Proof.VirtualStakerIndex == big.NewInt(0) {
+		if ticket.proof.virtualStakerIndex == big.NewInt(0) {
 			t.Fatal("Virutal stakers should be 1-indexed, not 0-indexed")
 		}
 	}
@@ -112,12 +112,12 @@ func TestValidateProofs(t *testing.T) {
 	}
 
 	if bytes.Compare(
-		tickets[0].Value.bytes(),
+		tickets[0].value.bytes(),
 		expectedValue,
 	) != 0 {
 		t.Fatalf(
 			"hashed value (%v) doesn't match ticket value (%v)",
-			tickets[0].Value,
+			tickets[0].value,
 			expectedValue,
 		)
 	}
@@ -200,10 +200,10 @@ func fromChainTicket(chainTicket *chain.Ticket, t *testing.T) *ticket {
 	}
 
 	return &ticket{
-		Value: value,
-		Proof: &Proof{
-			StakerValue:        chainTicket.Proof.StakerValue.Bytes(),
-			VirtualStakerIndex: chainTicket.Proof.VirtualStakerIndex,
+		value: value,
+		proof: &proof{
+			stakerValue:        chainTicket.Proof.StakerValue.Bytes(),
+			virtualStakerIndex: chainTicket.Proof.VirtualStakerIndex,
 		},
 	}
 }
