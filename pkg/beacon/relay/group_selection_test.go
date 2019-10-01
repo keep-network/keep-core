@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -16,10 +15,6 @@ import (
 )
 
 func TestSubmitAllTickets(t *testing.T) {
-	// 2^257 is bigger than any SHA256 generated number. We want all tickets to
-	// be accepted
-	naturalThreshold := new(big.Int).Exp(big.NewInt(2), big.NewInt(257), nil)
-
 	beaconOutput := big.NewInt(10).Bytes()
 	stakerValue := []byte("StakerValue1001")
 
@@ -27,12 +22,6 @@ func TestSubmitAllTickets(t *testing.T) {
 	for i := 1; i <= 4; i++ {
 		ticket, _ := groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
 		tickets = append(tickets, ticket)
-	}
-
-	candidate := &Node{
-		chainConfig: &config.Chain{
-			NaturalThreshold: naturalThreshold,
-		},
 	}
 
 	errCh := make(chan error, len(tickets))
@@ -51,7 +40,7 @@ func TestSubmitAllTickets(t *testing.T) {
 		},
 	}
 
-	candidate.submitTickets(tickets, mockInterface, quit, errCh)
+	submitTickets(tickets, mockInterface, quit, errCh)
 
 	if len(tickets) != len(submittedTickets) {
 		t.Errorf(
@@ -99,10 +88,6 @@ func fromChainTicket(ticket *chain.Ticket, t *testing.T) *groupselection.Ticket 
 }
 
 func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
-	// 2^257 is bigger than any SHA256 generated number. We want all tickets to
-	// be accepted
-	naturalThreshold := new(big.Int).Exp(big.NewInt(2), big.NewInt(257), nil)
-
 	beaconOutput := big.NewInt(10).Bytes()
 	stakerValue := []byte("StakerValue1001")
 
@@ -110,12 +95,6 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	for i := 1; i <= 6; i++ {
 		ticket, _ := groupselection.NewTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
 		tickets = append(tickets, ticket)
-	}
-
-	candidate := &Node{
-		chainConfig: &config.Chain{
-			NaturalThreshold: naturalThreshold,
-		},
 	}
 
 	errCh := make(chan error, len(tickets))
@@ -142,7 +121,7 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 		quit <- struct{}{}
 	}()
 
-	candidate.submitTickets(tickets, mockInterface, quit, errCh)
+	submitTickets(tickets, mockInterface, quit, errCh)
 
 	if len(submittedTickets) == 0 {
 		t.Errorf("no tickets submitted")

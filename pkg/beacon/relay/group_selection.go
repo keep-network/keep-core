@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
@@ -17,30 +18,33 @@ import (
 // that fail verification. Submission ends at the end of the submission period.
 //
 // See the group selection protocol specification for more information.
-func (n *Node) SubmitTicketsForGroupSelection(
+func SubmitTicketsForGroupSelection(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
 	signing chain.Signing,
+	chainConfig *config.Chain,
+	staker chain.Staker,
 	newEntry *big.Int,
 	startBlockHeight uint64,
+	onGroupSelected func(*groupselection.Result),
 ) error {
-	availableStake, err := n.Staker.Stake()
+	availableStake, err := staker.Stake()
 	if err != nil {
 		return err
 	}
 	tickets, err :=
 		groupselection.GenerateTickets(
 			newEntry.Bytes(),
-			n.Staker.ID(),
+			staker.ID(),
 			availableStake,
-			n.chainConfig.MinimumStake,
+			chainConfig.MinimumStake,
 		)
 	if err != nil {
 		return err
 	}
 
 	submissionTimeout, err := blockCounter.BlockHeightWaiter(
-		startBlockHeight + n.chainConfig.TicketReactiveSubmissionTimeout,
+		startBlockHeight + chainConfig.TicketReactiveSubmissionTimeout,
 	)
 	if err != nil {
 		return err
@@ -52,7 +56,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 	)
 
 	// submit all tickets
-	go n.submitTickets(
+	go submitTickets(
 		tickets,
 		relayChain,
 		quitTicketSubmission,
@@ -83,15 +87,11 @@ func (n *Node) SubmitTicketsForGroupSelection(
 				logger.Infof("new group member: [0x%v]", hex.EncodeToString(participant))
 			}
 
-			// Read the selected, ordered tickets from the chain,
-			// determine if we're eligible for the next group.
-			go n.JoinGroupIfEligible(
-				relayChain,
-				signing,
-				&groupselection.Result{SelectedStakers: selectedStakers},
-				newEntry,
-				submissionEndBlockHeight,
-			)
+			go onGroupSelected(&groupselection.Result{
+				SelectedStakers:        selectedStakers,
+				GroupSelectionEndBlock: submissionEndBlockHeight,
+			})
+
 			return nil
 		}
 	}
@@ -99,7 +99,7 @@ func (n *Node) SubmitTicketsForGroupSelection(
 
 // submitTickets submits tickets to the chain. It checks to see if the submission
 // period is over in between ticket submits.
-func (n *Node) submitTickets(
+func submitTickets(
 	tickets []*groupselection.Ticket,
 	relayChain relaychain.GroupSelectionInterface,
 	quit <-chan struct{},

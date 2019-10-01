@@ -34,5 +34,6 @@ func GenerateTickets(
 
 // Result represents ordered, selected tickets from those submitted to the chain.
 type Result struct {
-	SelectedStakers [][]byte
+	SelectedStakers        [][]byte
+	GroupSelectionEndBlock uint64
 }

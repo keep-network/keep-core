@@ -51,8 +51,8 @@ func (n *Node) JoinGroupIfEligible(
 	signing chain.Signing,
 	groupSelectionResult *groupselection.Result,
 	newEntry *big.Int,
-	dkgStartBlockHeight uint64,
 ) {
+	dkgStartBlockHeight := groupSelectionResult.GroupSelectionEndBlock
 
 	for index, selectedStaker := range groupSelectionResult.SelectedStakers {
 		// If we are amongst those chosen, kick off an instance of DKG. We may
