@@ -61,7 +61,7 @@ const (
 type Config struct {
 	Peers              []string
 	Port               int
-	Seed               int
+	Bootstrap          bool
 	AnnouncedAddresses []string
 }
 

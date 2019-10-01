@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/urfave/cli"
 )
 
@@ -93,8 +93,7 @@ func Start(c *cli.Context) error {
 		return err
 	}
 
-	isBootstrapNode := config.LibP2P.Seed != 0
-	nodeHeader(isBootstrapNode, netProvider.AddrStrings(), port)
+	nodeHeader(config.LibP2P.Bootstrap, netProvider.AddrStrings(), port)
 
 	persistence := persistence.NewEncryptedPersistence(
 		persistence.NewDiskHandle(config.Storage.DataDir),

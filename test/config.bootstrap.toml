@@ -15,4 +15,4 @@
 
 [libp2p]
 	Port = 27001
-	Seed = 2
+	Bootstrap = true
