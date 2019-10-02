@@ -56,9 +56,9 @@ contract KeepRandomBeaconOperator {
     // Gas price for calculating reimbursements.
     uint256 public priceFeedEstimate = 20*1e9; // (20 Gwei)
 
-    // Fluctuation safety factor to cover the immediate rise in gas fees during DKG execution.
-    // Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
-    uint256 public fluctuationMargin = 15*1e17; // 1.5%
+    // Fluctuation margin to cover the immediate rise in gas price.
+    // Expressed in percentage.
+    uint256 public fluctuationMargin = 50; // 50%
 
     // Size of a group in the threshold relay.
     uint256 public groupSize = 5;
@@ -237,6 +237,18 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
+     * @dev Adds a safety margin for gas price fluctuations to the current gas price.
+     * The gas price for DKG or relay entry is set when the request is processed
+     * but the result submission transaction will be sent later. We add a safety
+     * margin that should be sufficient for getting requests processed within a
+     * a deadline under all circumstances.
+     * @param gasPrice Gas price in wei.
+     */
+    function gasPriceWithFluctuationMargin(uint256 gasPrice) internal view returns (uint256) {
+        gasPrice.add(gasPrice.mul(fluctuationMargin).div(100));
+    }
+
+    /**
      * @dev Triggers the selection process of a new candidate group.
      * @param _newEntry New random beacon value that stakers will use to
      * generate their tickets.
@@ -247,7 +259,7 @@ contract KeepRandomBeaconOperator {
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
-        require(_payment >= priceFeedEstimate.mul(dkgGasEstimate).mul(fluctuationMargin).div(1e18), "Must include payment to cover DKG cost.");
+        require(_payment >= gasPriceWithFluctuationMargin(priceFeedEstimate).mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
 
         // dkgTimeout is the time after key generation protocol is expected to
         // be complete plus the expected time to submit the result.
