@@ -118,6 +118,9 @@ contract KeepRandomBeaconOperator {
 
     mapping(uint256 => Proof) public proofs;
 
+    // Service contract that triggered current group selection.
+    ServiceContract internal groupSelectionStarterContract;
+
     bool public groupSelectionInProgress;
 
     uint256 public ticketSubmissionStartBlock;
@@ -141,9 +144,6 @@ contract KeepRandomBeaconOperator {
     // Seed value used for the genesis group selection.
     // https://www.wolframalpha.com/input/?i=pi+to+78+digits
     uint256 internal _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
-
-    // Service contract that triggered current group selection.
-    ServiceContract internal groupSelectionStarterContract;
 
     /**
      * @dev Triggers the first group selection. Genesis can be called only when
@@ -448,11 +448,15 @@ contract KeepRandomBeaconOperator {
 
         uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
         uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
-        uint256 surplus = 0;
         address payable magpie = stakingContract.magpieOf(msg.sender);
 
+        // Comparing the reimbursement fee calculated based on the current
+        // transaction gas price and the current price feed estimate with the DKG
+        // reimbursement fee calculated and paid at the moment when the DKG was requested.
+        // If there is any surplus, it will be returned to the DKG fee pool of the service
+        // contract which triggered the DKG.
         if (reimbursementFee < dkgSubmitterReimbursementFee) {
-            surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
+            uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
             dkgSubmitterReimbursementFee = 0;
             // Reimburse submitter with actual DKG cost.
             magpie.transfer(reimbursementFee);
