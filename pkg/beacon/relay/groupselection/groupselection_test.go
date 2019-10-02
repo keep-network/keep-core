@@ -52,7 +52,7 @@ func TestGenerateTickets(t *testing.T) {
 		}
 
 		if ticket.proof.virtualStakerIndex == big.NewInt(0) {
-			t.Fatal("virutal stakers should be 1-indexed, not 0-indexed")
+			t.Fatal("virtual stakers should be 1-indexed, not 0-indexed")
 		}
 	}
 }
