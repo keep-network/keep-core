@@ -1,14 +1,16 @@
 package groupselection
 
 import (
-	"bytes"
-	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
+	"time"
 
-	"github.com/btcsuite/btcd/btcec"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
+	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
 func TestGenerateTickets(t *testing.T) {
@@ -16,17 +18,12 @@ func TestGenerateTickets(t *testing.T) {
 	availableStake := big.NewInt(10)
 	virtualStakers := availableStake.Int64() / minimumStake.Int64()
 
-	stakingPublicKey, err := newTestPublicKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-	stakingPublicKeyECDSA := stakingPublicKey.ToECDSA()
-	stakingAddress := crypto.PubkeyToAddress(*stakingPublicKeyECDSA)
+	stakingAddress := []byte("staking address")
 	previousBeaconOutput := []byte("test beacon output")
 
-	tickets, err := GenerateTickets(
+	tickets, err := generateTickets(
 		previousBeaconOutput,
-		stakingAddress.Bytes(),
+		stakingAddress,
 		availableStake,
 		minimumStake,
 	)
@@ -46,85 +43,153 @@ func TestGenerateTickets(t *testing.T) {
 	for i, ticket := range tickets {
 		expectedIndex := int64(i + 1)
 		// Tickets should be sorted in ascending order
-		if expectedIndex != ticket.Proof.VirtualStakerIndex.Int64() {
-			t.Fatalf("Got index [%d], want index [%d]",
-				ticket.Proof.VirtualStakerIndex,
+		if expectedIndex != ticket.proof.virtualStakerIndex.Int64() {
+			t.Fatalf(
+				"got index [%d], want index [%d]",
+				ticket.proof.virtualStakerIndex,
 				expectedIndex,
 			)
 		}
 
-		if ticket.Proof.VirtualStakerIndex == big.NewInt(0) {
-			t.Fatal("Virutal stakers should be 1-indexed, not 0-indexed")
+		if ticket.proof.virtualStakerIndex == big.NewInt(0) {
+			t.Fatal("virtual stakers should be 1-indexed, not 0-indexed")
 		}
 	}
-
 }
 
-func TestValidateProofs(t *testing.T) {
-	beaconOutput := []byte("test beacon output")
-	beaconOutputPadded, _ := byteutils.LeftPadTo32Bytes(beaconOutput)
+func TestSubmitAllTickets(t *testing.T) {
+	beaconOutput := big.NewInt(10).Bytes()
+	stakerValue := []byte("StakerValue1001")
 
-	stakingPublicKey, err := newTestPublicKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-	stakingPublicKeyECDSA := stakingPublicKey.ToECDSA()
-	stakingAddress := crypto.PubkeyToAddress(*stakingPublicKeyECDSA)
-	stakerValuePadded, _ := byteutils.LeftPadTo32Bytes(stakingAddress.Bytes())
-
-	minimumStake := big.NewInt(1)
-	availableStake := big.NewInt(1)
-	virtualStakers := big.NewInt(0).Quo(availableStake, minimumStake) // 1
-	virtualStakerIndexPadded, _ := byteutils.LeftPadTo32Bytes(virtualStakers.Bytes())
-
-	var valueBytes []byte
-
-	valueBytes = append(valueBytes, beaconOutputPadded...) // V_i
-	valueBytes = append(valueBytes, stakerValuePadded...)  // Q_j
-	// only 1 virtual staker, which corresponds to the index, vs
-	valueBytes = append(valueBytes, virtualStakerIndexPadded...)
-
-	expectedValue := crypto.Keccak256(valueBytes[:])
-
-	tickets, err := GenerateTickets(
-		beaconOutput,
-		stakingAddress.Bytes(),
-		availableStake,
-		minimumStake,
-	)
-	if err != nil {
-		t.Fatal(err)
+	tickets := make([]*ticket, 0)
+	for i := 1; i <= 4; i++ {
+		ticket, _ := newTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
+		tickets = append(tickets, ticket)
 	}
 
-	// we should have virtualStaker number of tickets
-	if len(tickets) != int(virtualStakers.Int64()) {
-		t.Fatalf(
-			"expected [%d] tickets, received [%d] tickets",
-			virtualStakers,
+	errCh := make(chan error, len(tickets))
+	quit := make(chan struct{}, 0)
+	submittedTickets := make([]*chain.Ticket, 0)
+
+	mockInterface := &mockGroupInterface{
+		mockSubmitTicketFn: func(t *chain.Ticket) *async.GroupTicketPromise {
+			submittedTickets = append(submittedTickets, t)
+			promise := &async.GroupTicketPromise{}
+			promise.Fulfill(&event.GroupTicketSubmission{
+				TicketValue: t.Value,
+				BlockNumber: 111,
+			})
+			return promise
+		},
+	}
+
+	submitTickets(tickets, mockInterface, quit, errCh)
+
+	if len(tickets) != len(submittedTickets) {
+		t.Errorf(
+			"unexpected number of tickets submitted\nexpected: [%v]\nactual: [%v]",
 			len(tickets),
+			len(submittedTickets),
 		)
 	}
 
-	if bytes.Compare(
-		tickets[0].Value.Bytes(),
-		expectedValue,
-	) != 0 {
-		t.Fatalf(
-			"hashed value (%v) doesn't match ticket value (%v)",
-			tickets[0].Value,
-			expectedValue,
-		)
+	for i, ticket := range tickets {
+		submitted := fromChainTicket(submittedTickets[i], t)
+
+		if !reflect.DeepEqual(ticket, submitted) {
+			t.Errorf(
+				"unexpected ticket at index [%v]\nexpected: [%v]\nactual: [%v]",
+				i,
+				ticket,
+				submitted,
+			)
+		}
 	}
 }
 
-func newTestPublicKey() (*btcec.PublicKey, error) {
-	ecdsaPrivateKey, err := btcec.NewPrivateKey(btcec.S256())
+func fromChainTicket(chainTicket *chain.Ticket, t *testing.T) *ticket {
+	paddedTicketValue, err := byteutils.LeftPadTo32Bytes((chainTicket.Value.Bytes()))
 	if err != nil {
-		return nil, fmt.Errorf(
-			"could not generate new ephemeral keypair [%v]",
-			err,
-		)
+		t.Errorf("could not pad ticket value [%v]", err)
 	}
 
-	return ecdsaPrivateKey.PubKey(), nil
+	var value [32]byte
+	copy(value[:], paddedTicketValue)
+
+	return &ticket{
+		value: value,
+		proof: &proof{
+			stakerValue:        chainTicket.Proof.StakerValue.Bytes(),
+			virtualStakerIndex: chainTicket.Proof.VirtualStakerIndex,
+		},
+	}
+}
+
+func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
+	beaconOutput := big.NewInt(10).Bytes()
+	stakerValue := []byte("StakerValue1001")
+
+	tickets := make([]*ticket, 0)
+	for i := 1; i <= 6; i++ {
+		ticket, _ := newTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
+		tickets = append(tickets, ticket)
+	}
+
+	errCh := make(chan error, len(tickets))
+	quit := make(chan struct{}, 0)
+	submittedTickets := make([]*chain.Ticket, 0)
+
+	mockInterface := &mockGroupInterface{
+		mockSubmitTicketFn: func(t *chain.Ticket) *async.GroupTicketPromise {
+			submittedTickets = append(submittedTickets, t)
+			promise := &async.GroupTicketPromise{}
+
+			time.Sleep(500 * time.Millisecond)
+
+			promise.Fulfill(&event.GroupTicketSubmission{
+				TicketValue: t.Value,
+				BlockNumber: 222,
+			})
+			return promise
+		},
+	}
+
+	go func() {
+		time.Sleep(1 * time.Second)
+		quit <- struct{}{}
+	}()
+
+	submitTickets(tickets, mockInterface, quit, errCh)
+
+	if len(submittedTickets) == 0 {
+		t.Errorf("no tickets submitted")
+	}
+
+	if len(tickets) == len(submittedTickets) {
+		t.Errorf("ticket submission has not been cancelled")
+	}
+}
+
+type mockGroupInterface struct {
+	mockSubmitTicketFn func(t *chain.Ticket) *async.GroupTicketPromise
+}
+
+func (mgi *mockGroupInterface) SubmitTicket(
+	ticket *chain.Ticket,
+) *async.GroupTicketPromise {
+	if mgi.mockSubmitTicketFn != nil {
+		return mgi.mockSubmitTicketFn(ticket)
+	}
+
+	panic("unexpected")
+}
+
+func (mgi *mockGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress, error) {
+	panic("unexpected")
+}
+
+func (mgi *mockGroupInterface) OnGroupSelectionStarted(
+	func(groupSelectionStart *event.GroupSelectionStart),
+) (subscription.EventSubscription, error) {
+	panic("not implemented")
 }
