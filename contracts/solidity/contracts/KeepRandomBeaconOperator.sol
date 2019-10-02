@@ -53,7 +53,10 @@ contract KeepRandomBeaconOperator {
     // Each signing group member reward in wei.
     uint256 public groupMemberBaseReward = 1000000000000000; //0.001 Ether
 
-    // Gas price for calculating reimbursements.
+    // The price feed estimate is used to calculate the gas price for reimbursement
+    // next to the actual gas price from the transaction. We use both values to
+    // defend against malicious miner-submitters who can manipulate transaction
+    // gas price.// Gas price for calculating reimbursements.
     uint256 public priceFeedEstimate = 20*1e9; // (20 Gwei)
 
     // Fluctuation margin to cover the immediate rise in gas price.
@@ -96,6 +99,7 @@ contract KeepRandomBeaconOperator {
     // Gas required to verify BLS signature and produce successful relay
     // entry. Excludes callback and DKG gas.
     // TODO: Update once alt_bn128 gas costs reduction is implemented.
+    // TODO: Update if we change group size.
     uint256 public entryVerificationGasEstimate = 1240000;
 
     // Gas required to submit DKG result.
