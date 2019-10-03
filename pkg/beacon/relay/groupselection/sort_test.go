@@ -15,7 +15,7 @@ func TestSortByValue(t *testing.T) {
 	ticket4 := newTestTicket(3, 1004)
 	ticket5 := newTestTicket(2, 1005)
 
-	tickets := tickets{
+	tickets := []*ticket{
 		ticket3,
 		ticket5,
 		ticket4,
@@ -23,7 +23,7 @@ func TestSortByValue(t *testing.T) {
 		ticket2,
 	}
 
-	sort.Stable(tickets)
+	sort.Stable(byValue(tickets))
 
 	assertTicketAtIndex(t, tickets, 0, ticket1)
 	assertTicketAtIndex(t, tickets, 1, ticket2)
@@ -32,7 +32,7 @@ func TestSortByValue(t *testing.T) {
 	assertTicketAtIndex(t, tickets, 4, ticket5)
 }
 
-func assertTicketAtIndex(t *testing.T, tickets tickets, index int, ticket *ticket) {
+func assertTicketAtIndex(t *testing.T, tickets []*ticket, index int, ticket *ticket) {
 	if !reflect.DeepEqual(ticket, tickets[index]) {
 		t.Errorf(
 			"unexpected ticket at index [%v]\nexpected: [%+v]\nactual:   [%+v]",
