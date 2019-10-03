@@ -40,19 +40,14 @@ func TestGenerateTickets(t *testing.T) {
 		)
 	}
 
-	for i, ticket := range tickets {
-		expectedIndex := int64(i + 1)
+	for i := 0; i < len(tickets)-1; i++ {
 		// Tickets should be sorted in ascending order
-		if expectedIndex != ticket.proof.virtualStakerIndex.Int64() {
-			t.Fatalf(
-				"got index [%d], want index [%d]",
-				ticket.proof.virtualStakerIndex,
-				expectedIndex,
-			)
+		if tickets[i].intValue().Cmp(tickets[i+1].intValue()) > 0 {
+			t.Fatalf("tickets not sorted by their value")
 		}
 
-		if ticket.proof.virtualStakerIndex == big.NewInt(0) {
-			t.Fatal("virtual stakers should be 1-indexed, not 0-indexed")
+		if tickets[i].proof.virtualStakerIndex.Cmp(big.NewInt(0)) <= 0 {
+			t.Fatal("virtual staker index should be greater than 0")
 		}
 	}
 }
