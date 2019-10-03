@@ -38,11 +38,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     // next to the actual gas price from the transaction. We use both values to
     // defend against malicious miner-submitters who can manipulate transaction
     // gas price.
-    uint256 public _priceFeedEstimate = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
+    uint256 internal _priceFeedEstimate = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
 
     // Fluctuation margin to cover the immediate rise in gas price.
     // Expressed in percentage.
-    uint256 public _fluctuationMargin = 50; // 50%
+    uint256 internal _fluctuationMargin = 50; // 50%
 
     // Fraction in % of the estimated cost of DKG that is included
     // in relay request fee. Must be presented as a big number with
