@@ -222,12 +222,12 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         _dkgFeePool += dkgContributionFee;
 
-        _requestCounter++;
-        uint256 requestId = _requestCounter;
-
         OperatorContract operatorContract = OperatorContract(selectOperatorContract(_previousEntry));
         uint256 selectedOperatorContractFee = operatorContract.groupProfitFee().add(
             operatorContract.entryVerificationGasEstimate().mul(_priceFeedEstimate));
+
+        _requestCounter++;
+        uint256 requestId = _requestCounter;
 
         operatorContract.sign.value(
             selectedOperatorContractFee

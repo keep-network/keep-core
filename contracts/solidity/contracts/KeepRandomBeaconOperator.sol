@@ -744,7 +744,7 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets group profit fee.
+     * @dev Gets group profit fee expressed in wei.
      */
     function groupProfitFee() public view returns(uint256) {
         return groupMemberBaseReward.mul(groupSize);
