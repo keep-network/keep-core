@@ -51,13 +51,13 @@ contract KeepRandomBeaconOperator {
     KeepRandomBeaconOperatorGroups public groupContract;
 
     // Each signing group member reward in wei.
-    uint256 public groupMemberBaseReward = 1000000000000000; //0.001 Ether
+    uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
 
     // The price feed estimate is used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use both values to
     // defend against malicious miner-submitters who can manipulate transaction
-    // gas price.// Gas price for calculating reimbursements.
-    uint256 public priceFeedEstimate = 20*1e9; // (20 Gwei)
+    // gas price.
+    uint256 public priceFeedEstimate = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
 
     // Fluctuation margin to cover the immediate rise in gas price.
     // Expressed in percentage.
@@ -133,7 +133,7 @@ contract KeepRandomBeaconOperator {
 
     struct SigningRequest {
         uint256 relayRequestId;
-        uint256 fees;
+        uint256 entryVerificationAndProfitFee;
         uint256 groupIndex;
         uint256 previousEntry;
         uint256 seed;
@@ -593,7 +593,7 @@ contract KeepRandomBeaconOperator {
         uint256 seed,
         uint256 previousEntry,
         address serviceContract,
-        uint256 fees
+        uint256 entryVerificationAndProfitFee
     ) internal {
         require(!entryInProgress || hasEntryTimedOut(), "Relay entry is in progress.");
 
@@ -605,7 +605,7 @@ contract KeepRandomBeaconOperator {
 
         signingRequest = SigningRequest(
             requestId,
-            fees,
+            entryVerificationAndProfitFee,
             groupIndex,
             previousEntry,
             seed,
@@ -698,10 +698,11 @@ contract KeepRandomBeaconOperator {
 
         // The submitter reward consists of:
         // The callback gas expenditure (reimbursed by the service contract)
-        // The entry verification fee to cover the cost of verifying the submission
+        // The entry verification fee to cover the cost of verifying the submission,
+        // paid regardless of their gas expenditure
         // Submitter extra reward - 5% of the delay penalties of the entire group
         uint256 submitterExtraReward = delayPenalty.mul(groupSize).mul(5).div(100);
-        uint256 entryVerificationFee = signingRequest.fees.sub(groupProfitFee());
+        uint256 entryVerificationFee = signingRequest.entryVerificationAndProfitFee.sub(groupProfitFee());
         submitterReward = entryVerificationFee.add(submitterExtraReward);
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
@@ -737,7 +738,7 @@ contract KeepRandomBeaconOperator {
                 signingRequest.seed,
                 signingRequest.previousEntry,
                 signingRequest.serviceContract,
-                signingRequest.fees
+                signingRequest.entryVerificationAndProfitFee
             );
         }
     }
