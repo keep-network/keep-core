@@ -8,9 +8,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract, groupContract;
 
-  // (20 Gwei) TODO: Use historical average of recently served requests?
-  let priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)),
-    fluctuationMargin = web3.utils.toBN(1.5*10**18), // Fluctuation safety factor to cover the immediate rise in gas fees during. Must include 18 decimal points.
+  let fluctuationMargin = web3.utils.toBN(1.5*10**18), // Fluctuation safety factor to cover the immediate rise in gas fees during. Must include 18 decimal points.
     dkgContributionMargin = web3.utils.toBN(10).mul(web3.utils.toBN(10**18)), // Fraction in % of the estimated cost of DKG that is included in relay request payment. Must include 18 decimal points.
     withdrawalDelay = 1;
 
@@ -32,10 +30,11 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address, groupContract.address);
   await groupContract.setOperatorContract(operatorContract.address);
 
-  await serviceContract.initialize(priceFeedEstimate, fluctuationMargin, dkgContributionMargin, withdrawalDelay, operatorContract.address);
+  await serviceContract.initialize(fluctuationMargin, dkgContributionMargin, withdrawalDelay, operatorContract.address);
 
   // Add initial funds to the fee pool to trigger group creation without waiting for DKG fee accumulation
   let dkgGasEstimate = await operatorContract.dkgGasEstimate();
+  let priceFeedEstimate = await serviceContract.priceFeedEstimate();
   await serviceContract.fundDkgFeePool({value: dkgGasEstimate.mul(priceFeedEstimate)});
 
   // Genesis should include payment to cover DKG cost to create first group

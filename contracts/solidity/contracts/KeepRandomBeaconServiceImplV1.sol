@@ -34,8 +34,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     event RelayEntryRequested(uint256 requestId);
     event RelayEntryGenerated(uint256 requestId, uint256 entry);
 
-    // Gas price for relay entry request.
-    uint256 internal _priceFeedEstimate;
+    // The price feed estimate is used to calculate the gas price for reimbursement
+    // next to the actual gas price from the transaction. We use both values to
+    // defend against malicious miner-submitters who can manipulate transaction
+    // gas price.
+    uint256 public _priceFeedEstimate = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
 
     // Fluctuation safety factor to cover the immediate rise in gas fees during DKG execution.
     // Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
@@ -83,7 +86,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
-     * @param priceFeedEstimate Gas price for relay entry request.
      * @param fluctuationMargin Fluctuation safety factor to cover the immediate rise in gas fees during 
      * DKG execution. Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
@@ -92,7 +94,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param operatorContract Operator contract linked to this contract.
      */
     function initialize(
-        uint256 priceFeedEstimate,
         uint256 fluctuationMargin,
         uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
@@ -103,7 +104,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     {
         require(!initialized(), "Contract is already initialized.");
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
-        _priceFeedEstimate = priceFeedEstimate;
         _fluctuationMargin = fluctuationMargin;
         _dkgContributionMargin = dkgContributionMargin;
         _withdrawalDelay = withdrawalDelay;
