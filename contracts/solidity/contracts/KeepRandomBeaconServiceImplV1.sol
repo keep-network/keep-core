@@ -40,9 +40,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     // gas price.
     uint256 public _priceFeedEstimate = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
 
-    // Fluctuation safety factor to cover the immediate rise in gas fees during DKG execution.
-    // Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
-    uint256 internal _fluctuationMargin;
+    // Fluctuation margin to cover the immediate rise in gas price.
+    // Expressed in percentage.
+    uint256 public _fluctuationMargin = 50; // 50%
 
     // Fraction in % of the estimated cost of DKG that is included
     // in relay request fee. Must be presented as a big number with
@@ -86,15 +86,12 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
-     * @param fluctuationMargin Fluctuation safety factor to cover the immediate rise in gas fees during 
-     * DKG execution. Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee. Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param operatorContract Operator contract linked to this contract.
      */
     function initialize(
-        uint256 fluctuationMargin,
         uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
         address operatorContract
@@ -104,7 +101,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     {
         require(!initialized(), "Contract is already initialized.");
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
-        _fluctuationMargin = fluctuationMargin;
         _dkgContributionMargin = dkgContributionMargin;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
@@ -317,7 +313,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         bytes memory data; // Store result data of external contract call.
 
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 dkgFeeEstimate = _priceFeedEstimate.mul(OperatorContract(latestOperatorContract).dkgGasEstimate()).mul(_fluctuationMargin).div(1e18);
+        uint256 dkgFeeEstimate = OperatorContract(latestOperatorContract).dkgGasEstimate().mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
         if (_dkgFeePool >= dkgFeeEstimate) {
             _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
             (success, data) = latestOperatorContract.call.value(dkgFeeEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));
@@ -340,11 +336,23 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
+     * @dev Adds a safety margin for gas price fluctuations to the current gas price.
+     * The gas price for DKG or relay entry is set when the request is processed
+     * but the result submission transaction will be sent later. We add a safety
+     * margin that should be sufficient for getting requests processed within a
+     * a deadline under all circumstances.
+     * @param gasPrice Gas price in wei.
+     */
+    function gasPriceWithFluctuationMargin(uint256 gasPrice) internal view returns (uint256) {
+        gasPrice.add(gasPrice.mul(_fluctuationMargin).div(100));
+    }
+
+    /**
      * @dev Get the minimum payment in wei for relay entry callback.
      * @param callbackGas Gas required for the callback.
      */
     function minimumCallbackFee(uint256 callbackGas) public view returns(uint256) {
-        return callbackGas.mul(_priceFeedEstimate).mul(_fluctuationMargin).div(1e18);
+        return callbackGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
     }
 
     /**
@@ -382,7 +390,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         return (
             entryVerificationGas.mul(_priceFeedEstimate),
-            dkgGas.mul(_priceFeedEstimate.mul(_fluctuationMargin).div(1e18)).mul(_dkgContributionMargin).div(100).div(1e18),
+            dkgGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)).mul(_dkgContributionMargin).div(1e18),
             groupProfitFee
         );
     }
