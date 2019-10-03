@@ -50,7 +50,6 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error reading config file: %v", err)
 	}
 
-	var port int
 	if c.Int(portFlag) > 0 {
 		config.LibP2P.Port = c.Int(portFlag)
 	}
@@ -93,7 +92,7 @@ func Start(c *cli.Context) error {
 		return err
 	}
 
-	nodeHeader(config.LibP2P.Bootstrap, netProvider.AddrStrings(), port)
+	nodeHeader(netProvider.AddrStrings(), config.LibP2P.Port)
 
 	persistence := persistence.NewEncryptedPersistence(
 		persistence.NewDiskHandle(config.Storage.DataDir),

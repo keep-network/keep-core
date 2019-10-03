@@ -60,10 +60,6 @@ func ReadConfig(filePath string) (*Config, error) {
 		return nil, fmt.Errorf("missing value for port; see node section in config file or use --port flag")
 	}
 
-	if !config.LibP2P.Bootstrap && len(config.LibP2P.Peers) == 0 {
-		return nil, fmt.Errorf("non-bootstrap node should have bootstrap URLs")
-	}
-
 	if config.Storage.DataDir == "" {
 		return nil, fmt.Errorf("missing value for storage directory data")
 	}

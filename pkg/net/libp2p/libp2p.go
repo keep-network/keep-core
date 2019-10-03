@@ -61,7 +61,6 @@ const (
 type Config struct {
 	Peers              []string
 	Port               int
-	Bootstrap          bool
 	AnnouncedAddresses []string
 }
 
