@@ -129,7 +129,7 @@ contract KeepRandomBeaconOperator {
 
     uint256 public ticketSubmissionStartBlock;
     uint256 public groupSelectionRelayEntry;
-    uint256[] public tickets;
+    uint256[] internal tickets;
 
     struct SigningRequest {
         uint256 relayRequestId;
