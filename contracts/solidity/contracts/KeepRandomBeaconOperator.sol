@@ -87,14 +87,13 @@ contract KeepRandomBeaconOperator {
         uint256 virtualStakerIndex;
     }
 
-    mapping(uint256 => Proof) public proofs;
+    mapping(uint256 => Proof) internal proofs;
 
-    bool public groupSelectionInProgress;
+    bool internal groupSelectionInProgress;
 
-    uint256 public ticketSubmissionStartBlock;
-    uint256 public groupSelectionRelayEntry;
-    uint256[] public tickets;
-    bytes[] public submissions;
+    uint256 internal ticketSubmissionStartBlock;
+    uint256 internal groupSelectionRelayEntry;
+    uint256[] internal tickets;
 
     struct SigningRequest {
         uint256 relayRequestId;
@@ -274,22 +273,6 @@ contract KeepRandomBeaconOperator {
         }
 
         return selected;
-    }
-
-    /**
-     * @dev Gets participants ordered by their lowest-valued ticket.
-     */
-    function orderedParticipants() public view returns (address[] memory) {
-
-        uint256[] memory ordered = orderedTickets();
-        address[] memory participants = new address[](ordered.length);
-
-        for (uint i = 0; i < ordered.length; i++) {
-            Proof memory proof = proofs[ordered[i]];
-            participants[i] = proof.sender;
-        }
-
-        return participants;
     }
 
     /**
