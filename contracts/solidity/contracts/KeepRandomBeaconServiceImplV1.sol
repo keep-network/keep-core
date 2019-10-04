@@ -344,7 +344,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param gasPrice Gas price in wei.
      */
     function gasPriceWithFluctuationMargin(uint256 gasPrice) internal view returns (uint256) {
-        gasPrice.add(gasPrice.mul(_fluctuationMargin).div(100));
+        return gasPrice.add(gasPrice.mul(_fluctuationMargin).div(100));
     }
 
     /**
