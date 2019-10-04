@@ -52,7 +52,7 @@ func SubmitTickets(
 		return err
 	}
 
-	logger.Info(
+	logger.Infof(
 		"generated [%v] tickets for initial submission phase and [%v] "+
 			"tickets for reactive submission phase",
 		len(initialSubmissionTickets),
