@@ -144,8 +144,31 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     assert.isTrue(magpie3balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive group reward.");
   });
 
-  it("should send part of the group reward to request subsidy pool based on the submission block .", async function() {
-
+  it("should send part of the group reward to request subsidy pool based on the submission block.", async function() {
+    // Example rewards breakdown:
+    // entryVerificationGasEstimate: 1240000
+    // dkgGasEstimate: 2260000
+    // dkgContributionMargin: 10%
+    // groupMemberBaseReward: 1050000000000000
+    // groupSize: 5
+    // entry fee estimate: 49230000000000000 wei
+    // signing fee: 37200000000000000 wei
+    // DKG fee: 6780000000000000 wei
+    // relayEntryTimeout: 10 blocks
+    // currentEntryStartBlock: 38
+    // relay entry submission block: 44
+    // decimals: 1e16
+    // groupProfitFee: 42450000000000000 - 37200000000000000 = 5250000000000000 wei
+    // memberBaseReward: 5250000000000000 / 5 = 1050000000000000 wei
+    // entryTimeout: 38 + 10 = 48
+    // delayFactor: ((48 - 44) * 1e16 / (10 - 1)) ^ 2 = 19753086419753082469135802469136
+    // delayFactorInverse: 1 * 1e16 ^ 2 - 19753086419753082469135802469136 = 80246913580246917530864197530864
+    // delayPenalty: 1050000000000000 * 80246913580246917530864197530864 / (1e16 ^ 2) = 842592592592592
+    // groupMemberReward: 1050000000000000 * 19753086419753082469135802469136) / (1e16 ^ 2) = 207407407407407 wei
+    // submitterExtraReward: 842592592592592 * 5 * 5 / 100 = 210648148148148 wei
+    // submitterReward: 37200000000000000 + 210648148148148 = 37410648148148148 wei
+    // subsidy = 5250000000000000 - 207407407407407 * 5 - 210648148148148 = 4002314814814817 wei
+  
     let magpie1balance = web3.utils.toBN(await web3.eth.getBalance(magpie1));
     let magpie2balance = web3.utils.toBN(await web3.eth.getBalance(magpie2));
     let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
