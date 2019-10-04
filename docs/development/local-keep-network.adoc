@@ -309,7 +309,7 @@ successfully staked KEEP tokens for account 0xc4cba981a8edb64276f71a49f9392bad7a
 
 For each Keep peer we need to create a separate configuration file. We need at
 least one bootstrap peer in the network. Here, we will create one bootstrap peer
-and 4 non-bootstrap peers pointing to it.
+and 4 other peers pointing to it.
 
 Let's create a configuration for the bootstrap peer first:
 ```
@@ -334,7 +334,7 @@ deployed contract instances. Please use addresses of `KeepRandomBeaconOperator`,
         TokenStaking = "0xDfc7251170abd753342B585Adcd8BCEE48aDb379"
 ```
 
-Next, create configuration files for non-bootstrap peers:
+Next, create configuration files for other peers:
 ```
 $ cp config.local.1.toml config.local.2.toml
 $ cp config.local.1.toml config.local.3.toml
@@ -373,8 +373,8 @@ $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config
 ------------------------------------------------------------------------------------------------
 ```
 
-The next thing we need to do is to alter configuration file of each
-non-bootstrap peer. Please modify `Port` number so that it is unique for each
+The next thing we need to do is to alter configuration file of each peer.
+Please modify `Port` number so that it is unique for each
 peer and update the address of the bootstrap peer. We also need to update
 ethereum account and key file so that each Keep client uses a different account.
 
@@ -442,7 +442,7 @@ In `config.local.5.toml`:
   DataDir = "/Users/username/keepdata/5"
 ```
 
-Finally, we can start each non-bootstrap instance:
+Finally, we can start each instance:
 ```
 $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.2.toml start
 ------------------------------------------------------------------------------------------------
