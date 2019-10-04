@@ -25,6 +25,8 @@ interface OperatorContract {
  * Beacon proxy and allows upgradability. The purpose of the contract is to have
  * up-to-date logic for threshold random number generation. Updated contracts
  * must inherit from this contract and have to be initialized under updated version name
+ * Warning: you can't set constants directly in the contract and must use initialize()
+ * please see openzeppelin upgradeable contracts approach for more info.
  */
 contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     using SafeMath for uint256;
@@ -38,11 +40,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     // next to the actual gas price from the transaction. We use both values to
     // defend against malicious miner-submitters who can manipulate transaction
     // gas price.
-    uint256 internal _priceFeedEstimate = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
+    uint256 internal _priceFeedEstimate;
 
     // Fluctuation margin to cover the immediate rise in gas price.
     // Expressed in percentage.
-    uint256 internal _fluctuationMargin = 50; // 50%
+    uint256 internal _fluctuationMargin;
 
     // Fraction in % of the estimated cost of DKG that is included
     // in relay request fee. Must be presented as a big number with
@@ -86,12 +88,19 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
+     * @param priceFeedEstimate The price feed estimate is used to calculate the gas price for
+     * reimbursement next to the actual gas price from the transaction. We use both values to defend
+     * against malicious miner-submitters who can manipulate transaction gas price.
+     * @param fluctuationMargin Fluctuation margin to cover the immediate rise in gas price.
+     * Expressed in percentage.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee. Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param operatorContract Operator contract linked to this contract.
      */
     function initialize(
+        uint256 priceFeedEstimate,
+        uint256 fluctuationMargin,
         uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
         address operatorContract
@@ -101,6 +110,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     {
         require(!initialized(), "Contract is already initialized.");
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
+        _priceFeedEstimate = priceFeedEstimate;
+        _fluctuationMargin = fluctuationMargin;
         _dkgContributionMargin = dkgContributionMargin;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
