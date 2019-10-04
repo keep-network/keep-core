@@ -25,9 +25,9 @@ type Result struct {
 	GroupSelectionEndBlock uint64
 }
 
-// SubmitTickets attempts to generate and submit tickets for the staker to join
+// CandidateToNewGroup attempts to generate and submit tickets for the staker to join
 // a new candidate group.
-func SubmitTickets(
+func CandidateToNewGroup(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
 	chainConfig *config.Chain,
