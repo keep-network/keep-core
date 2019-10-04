@@ -87,13 +87,13 @@ contract KeepRandomBeaconOperator {
         uint256 virtualStakerIndex;
     }
 
-    mapping(uint256 => Proof) public proofs;
+    mapping(uint256 => Proof) internal proofs;
 
-    bool public groupSelectionInProgress;
+    bool internal groupSelectionInProgress;
 
-    uint256 public ticketSubmissionStartBlock;
-    uint256 public groupSelectionRelayEntry;
-    uint256[] public tickets;
+    uint256 internal ticketSubmissionStartBlock;
+    uint256 internal groupSelectionRelayEntry;
+    uint256[] internal tickets;
 
     struct SigningRequest {
         uint256 relayRequestId;
