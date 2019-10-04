@@ -12,22 +12,28 @@ func submitTickets(
 	tickets []*ticket,
 	relayChain relaychain.GroupSelectionInterface,
 	quit <-chan struct{},
-	errCh chan<- error,
 ) {
 	for _, ticket := range tickets {
 		select {
 		case <-quit:
-			// Exit this loop when we get a signal from quit.
 			return
 		default:
 			chainTicket, err := toChainTicket(ticket)
 			if err != nil {
-				errCh <- err
+				logger.Errorf(
+					"could not transform ticket to chain format: [%v]",
+					err,
+				)
 				continue
 			}
 
 			relayChain.SubmitTicket(chainTicket).OnFailure(
-				func(err error) { errCh <- err },
+				func(err error) {
+					logger.Errorf(
+						"ticket submission failed: [%v]",
+						err,
+					)
+				},
 			)
 		}
 	}

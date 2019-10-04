@@ -30,7 +30,7 @@ type Result struct {
 func SubmitTickets(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
-	signing chain.Signing,
+	signing chain.Signing, //TODO: eliminate, not used
 	chainConfig *config.Chain,
 	staker chain.Staker,
 	newEntry *big.Int,
@@ -53,35 +53,101 @@ func SubmitTickets(
 		return err
 	}
 
-	tickets := append(initialSubmissionTickets, reactiveSubmissionTickets...)
+	logger.Info(
+		"generated [%v] tickets for initial submission phase and [%v] "+
+			"tickets for reactive submission phase",
+		len(initialSubmissionTickets),
+		len(reactiveSubmissionTickets),
+	)
 
-	submissionTimeout, err := blockCounter.BlockHeightWaiter(
+	return startTicketSubmission(
+		initialSubmissionTickets,
+		reactiveSubmissionTickets,
+		relayChain,
+		blockCounter,
+		chainConfig,
+		startBlockHeight,
+		onGroupSelected,
+	)
+}
+
+func startTicketSubmission(
+	initialSubmissionTickets []*ticket,
+	reactiveSubmissionTickets []*ticket,
+	relayChain relaychain.GroupSelectionInterface,
+	blockCounter chain.BlockCounter,
+	chainConfig *config.Chain,
+	startBlockHeight uint64,
+	onGroupSelected func(*Result),
+) error {
+	initialSubmissionTimeout, err := blockCounter.BlockHeightWaiter(
+		startBlockHeight + chainConfig.TicketInitialSubmissionTimeout,
+	)
+	if err != nil {
+		return err
+	}
+
+	reactiveSubmissionTimeout, err := blockCounter.BlockHeightWaiter(
 		startBlockHeight + chainConfig.TicketReactiveSubmissionTimeout,
 	)
 	if err != nil {
 		return err
 	}
 
-	var (
-		errorChannel         = make(chan error, len(tickets))
-		quitTicketSubmission = make(chan struct{}, 1)
-	)
+	quitTicketSubmission := make(chan struct{}, 1)
 
 	go submitTickets(
-		tickets,
+		initialSubmissionTickets,
 		relayChain,
 		quitTicketSubmission,
-		errorChannel,
 	)
 
 	for {
 		select {
-		case err := <-errorChannel:
-			logger.Errorf(
-				"error during ticket submission: [%v]",
-				err,
+		case initialSubmissionEndBlockHeight := <-initialSubmissionTimeout:
+			logger.Infof(
+				"initial ticket submission ended at block [%v]",
+				initialSubmissionEndBlockHeight,
 			)
-		case submissionEndBlockHeight := <-submissionTimeout:
+
+			ticketsCount, err := relayChain.GetSubmittedTicketsCount()
+			if err != nil {
+				return fmt.Errorf(
+					"could not get submitted tickets count: [%v]",
+					err,
+				)
+			}
+
+			groupSize := big.NewInt(int64(chainConfig.GroupSize))
+			if ticketsCount.Cmp(groupSize) >= 0 {
+				logger.Infof(
+					"[%v] tickets submitted by candidates; "+
+						"skipping reactive submission",
+					ticketsCount,
+				)
+
+				quitTicketSubmission <- struct{}{}
+				return nil
+			}
+
+			logger.Infof(
+				"[%v] tickets submitted by candidates; "+
+					"entering reactive submission",
+				ticketsCount,
+			)
+
+			go submitTickets(
+				reactiveSubmissionTickets,
+				relayChain,
+				quitTicketSubmission,
+			)
+
+		case reactiveSubmissionEndBlockHeight := <-reactiveSubmissionTimeout:
+			logger.Infof(
+				"reactive ticket submission ended at block [%v]",
+				reactiveSubmissionEndBlockHeight,
+			)
+
 			quitTicketSubmission <- struct{}{}
 
 			selectedParticipants, err := relayChain.GetSelectedParticipants()
@@ -100,7 +166,7 @@ func SubmitTickets(
 
 			go onGroupSelected(&Result{
 				SelectedStakers:        selectedStakers,
-				GroupSelectionEndBlock: submissionEndBlockHeight,
+				GroupSelectionEndBlock: reactiveSubmissionEndBlockHeight,
 			})
 
 			return nil

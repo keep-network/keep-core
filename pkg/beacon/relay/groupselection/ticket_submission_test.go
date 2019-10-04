@@ -23,7 +23,6 @@ func TestSubmitAllTickets(t *testing.T) {
 		tickets = append(tickets, ticket)
 	}
 
-	errCh := make(chan error, len(tickets))
 	quit := make(chan struct{}, 0)
 	submittedTickets := make([]*chain.Ticket, 0)
 
@@ -39,7 +38,7 @@ func TestSubmitAllTickets(t *testing.T) {
 		},
 	}
 
-	submitTickets(tickets, mockInterface, quit, errCh)
+	submitTickets(tickets, mockInterface, quit)
 
 	if len(tickets) != len(submittedTickets) {
 		t.Errorf(
@@ -91,7 +90,6 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 		tickets = append(tickets, ticket)
 	}
 
-	errCh := make(chan error, len(tickets))
 	quit := make(chan struct{}, 0)
 	submittedTickets := make([]*chain.Ticket, 0)
 
@@ -115,7 +113,7 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 		quit <- struct{}{}
 	}()
 
-	submitTickets(tickets, mockInterface, quit, errCh)
+	submitTickets(tickets, mockInterface, quit)
 
 	if len(submittedTickets) == 0 {
 		t.Errorf("no tickets submitted")
