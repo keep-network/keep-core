@@ -256,6 +256,13 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
+     * @dev Gets the number of submitted group candidate tickets so far.
+     */
+    function submittedTicketsCount() public view returns (uint256) {
+        return tickets.length;
+    }
+
+    /**
      * @dev Gets selected tickets in ascending order.
      */
     function selectedTickets() public view whenTicketSubmissionIsOver returns (uint256[] memory) {

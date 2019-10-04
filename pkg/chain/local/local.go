@@ -120,6 +120,10 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketP
 	return promise
 }
 
+func (c *localChain) GetSubmittedTicketsCount() (*big.Int, error) {
+	return big.NewInt(int64(len(c.tickets))), nil
+}
+
 func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, error) {
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
