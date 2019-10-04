@@ -276,22 +276,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets participants ordered by their lowest-valued ticket.
-     */
-    function orderedParticipants() public view returns (address[] memory) {
-
-        uint256[] memory ordered = orderedTickets();
-        address[] memory participants = new address[](ordered.length);
-
-        for (uint i = 0; i < ordered.length; i++) {
-            Proof memory proof = proofs[ordered[i]];
-            participants[i] = proof.sender;
-        }
-
-        return participants;
-    }
-
-    /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
     function selectedParticipants() public view whenTicketSubmissionIsOver returns (address[] memory) {
