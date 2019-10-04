@@ -155,15 +155,16 @@ func generateTickets(
 ) ([]*ticket, error) {
 	stakingWeight := (&big.Int{}).Quo(availableStake, minimumStake) // W_j
 
-	tickets := make(tickets, 0)
+	tickets := make([]*ticket, 0)
 	for virtualStaker := int64(1); virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
-		ticket, err := newTicket(beaconValue, stakerValue, big.NewInt(virtualStaker)) // prf
+		ticket, err := newTicket(beaconValue, stakerValue, big.NewInt(virtualStaker))
 		if err != nil {
 			return nil, err
 		}
 		tickets = append(tickets, ticket)
 	}
-	sort.Stable(tickets)
+
+	sort.Stable(byValue(tickets))
 
 	return tickets, nil
 }

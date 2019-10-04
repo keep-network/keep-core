@@ -243,8 +243,8 @@ contract KeepRandomBeaconOperator {
             tickets.push(ticketValue);
             proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
         } else {
-            // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-            stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
+            // TODO: should we slash instead of reverting?
+            revert("Invalid ticket");
         }
     }
 
