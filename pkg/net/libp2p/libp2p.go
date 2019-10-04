@@ -207,9 +207,8 @@ func Connect(
 		addrs:         host.Addrs(),
 	}
 
-	// FIXME: return an error if we don't provide bootstrap peers
 	if len(config.Peers) == 0 {
-		return provider, nil
+		logger.Infof("node's peers list is empty")
 	}
 
 	if err := provider.bootstrap(ctx, config.Peers); err != nil {
