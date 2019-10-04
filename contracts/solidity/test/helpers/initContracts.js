@@ -8,7 +8,9 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract, groupContract;
 
-  let dkgContributionMargin = web3.utils.toBN(10).mul(web3.utils.toBN(10**18)), // Fraction in % of the estimated cost of DKG that is included in relay request payment. Must include 18 decimal points.
+  let priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei = 20 * 10^9 wei)
+    fluctuationMargin = 50, // 50%
+    dkgContributionMargin = web3.utils.toBN(10).mul(web3.utils.toBN(10**18)), // Fraction in % of the estimated cost of DKG that is included in relay request payment. Must include 18 decimal points.
     withdrawalDelay = 1;
 
   // Initialize Keep token contract
@@ -29,15 +31,16 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address, groupContract.address);
   await groupContract.setOperatorContract(operatorContract.address);
 
-  await serviceContract.initialize(dkgContributionMargin, withdrawalDelay, operatorContract.address);
+  await serviceContract.initialize(priceFeedEstimate, fluctuationMargin, dkgContributionMargin, withdrawalDelay, operatorContract.address);
+
+  let dkgGasEstimate = await operatorContract.dkgGasEstimate();
+  let gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(web3.utils.toBN(fluctuationMargin)).div(web3.utils.toBN(100)));
 
   // Add initial funds to the fee pool to trigger group creation without waiting for DKG fee accumulation
-  let dkgGasEstimate = await operatorContract.dkgGasEstimate();
-  let priceFeedEstimate = await serviceContract.priceFeedEstimate();
-  await serviceContract.fundDkgFeePool({value: dkgGasEstimate.mul(priceFeedEstimate)});
+  await serviceContract.fundDkgFeePool({value: dkgGasEstimate.mul(gasPriceWithFluctuationMargin)});
 
   // Genesis should include payment to cover DKG cost to create first group
-  await operatorContract.genesis({value: dkgGasEstimate.mul(web3.utils.toBN(20*1.5).mul(web3.utils.toBN(10**9)))});
+  await operatorContract.genesis({value: dkgGasEstimate.mul(gasPriceWithFluctuationMargin)});
 
   return {
     token: token,
