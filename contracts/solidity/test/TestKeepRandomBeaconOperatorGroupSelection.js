@@ -15,8 +15,6 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
   operator3 = accounts[4], tickets3;
 
   const minimumStake = web3.utils.toBN(200000);
-  const ticketInitialSubmissionTimeout = 20;
-  const ticketReactiveSubmissionTimeout = 100;
 
   before(async () => {
 
