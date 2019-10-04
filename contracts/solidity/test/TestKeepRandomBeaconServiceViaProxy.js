@@ -98,7 +98,9 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
   it("owner should be able to withdraw ether from random beacon service contract", async function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.requestRelayEntry(0, {from: account_one, value: entryFeeEstimate})
+
+    // Send higher fee than entryFeeEstimate
+    await serviceContract.requestRelayEntry(0, {from: account_one, value: entryFeeEstimate.mul(web3.utils.toBN(2))})
 
     // should fail to withdraw if not owner
     await expectThrow(serviceContract.initiateWithdrawal({from: account_two}));
