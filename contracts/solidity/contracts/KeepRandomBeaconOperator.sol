@@ -582,8 +582,8 @@ contract KeepRandomBeaconOperator {
         uint256 previousEntry
     ) public payable onlyServiceContract {
         require(
-            msg.value >= gasPriceWithFluctuationMargin(priceFeedEstimate).mul(entryVerificationGasEstimate),
-            "Must include payment to cover entry verification cost."
+            msg.value >= groupProfitFee().add(entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate))),
+            "Must include group profit fee and entry verification fee."
         );
         signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value);
     }
