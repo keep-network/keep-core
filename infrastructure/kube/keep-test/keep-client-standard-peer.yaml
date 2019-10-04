@@ -25,7 +25,7 @@ metadata:
     app: keep-client
     type: standard-peer
 spec:
-  replicas: 5
+  replicas: 4
   selector:
     matchLabels:
       app: keep-client
