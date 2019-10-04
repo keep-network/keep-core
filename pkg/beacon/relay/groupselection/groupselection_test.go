@@ -19,8 +19,10 @@ func TestSubmission(t *testing.T) {
 		reactiveSubmissionTickets     []*ticket
 		expectedSubmittedTicketsCount int
 	}{
-		// Enough tickets submitted in the initial submission phase to form
-		// a new group. Reactive ticket submission should not be executed.
+		// Client has the same number of tickets below the natural threshold
+		// (initial submission tickets) as the group size.
+		// All initial submission tickets should be submitted to the chain.
+		// Reactive ticket submission should not be executed.
 		"only initial submission - the same number of tickets as group size": {
 			groupSize: 4,
 			initialSubmissionTickets: []*ticket{
@@ -35,8 +37,10 @@ func TestSubmission(t *testing.T) {
 			},
 			expectedSubmittedTicketsCount: 4,
 		},
-		// Enough tickets submitted in the initial submission phase to form
-		// a new group. Reactive ticket submission should not be executed.
+		// Client has more tickets below the natural threshold (initial
+		// submission tickets) than the group size. Only #group_size of initial
+		// submission tickets should be submitted to the chain.
+		// Reactive ticket submission should not be executed.
 		"only initial submission - more tickets than group size": {
 			groupSize: 2,
 			initialSubmissionTickets: []*ticket{
@@ -49,11 +53,12 @@ func TestSubmission(t *testing.T) {
 				newTestTicket(5, 1005),
 				newTestTicket(6, 1006),
 			},
-			expectedSubmittedTicketsCount: 4,
+			expectedSubmittedTicketsCount: 2,
 		},
-		// Not enough tickets submitted in the initial submission phase to form
-		// a new group. Reactive ticket submission should be executed.
-		"with reactive submission phase": {
+		// Client has less tickets below the natural threshold (initial
+		// submission tickets) than the group size. Since no one else submitted
+		// their tickets, reactive ticket submission should be executed.
+		"with reactive submission phase - the same number of tickets as group size": {
 			groupSize: 6,
 			initialSubmissionTickets: []*ticket{
 				newTestTicket(1, 1001),
@@ -66,6 +71,43 @@ func TestSubmission(t *testing.T) {
 				newTestTicket(6, 1006),
 			},
 			expectedSubmittedTicketsCount: 6,
+		},
+		// Client has less tickets below the natural threshold (initial
+		// submission tickets) than the group size. Since no one else submitted
+		// their tickets, reactive ticket submission should be executed.
+		// No more tickets should be submitted by the client at overall than the
+		// #group_size, though.
+		"with reactive submission phase - more tickets than group size": {
+			groupSize: 5,
+			initialSubmissionTickets: []*ticket{
+				newTestTicket(1, 1001),
+				newTestTicket(2, 1002),
+				newTestTicket(3, 1003),
+				newTestTicket(4, 1004),
+			},
+			reactiveSubmissionTickets: []*ticket{
+				newTestTicket(5, 1005),
+				newTestTicket(6, 1006),
+				newTestTicket(7, 1007),
+				newTestTicket(8, 1008),
+			},
+			expectedSubmittedTicketsCount: 5,
+		},
+		// Client has no tickets below the natural threshold (initial
+		// submission tickets). Since no one else submitted their tickets,
+		// reactive ticket submission should be executed.
+		// No more tickets should be submitted by the client at overall than the
+		// #group_size, though.
+		"with reactive submission phase - no initial submission tickets": {
+			groupSize:                3,
+			initialSubmissionTickets: []*ticket{},
+			reactiveSubmissionTickets: []*ticket{
+				newTestTicket(5, 1005),
+				newTestTicket(6, 1006),
+				newTestTicket(7, 1007),
+				newTestTicket(8, 1008),
+			},
+			expectedSubmittedTicketsCount: 3,
 		},
 	}
 

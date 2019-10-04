@@ -95,8 +95,15 @@ func startTicketSubmission(
 
 	quitTicketSubmission := make(chan struct{}, 1)
 
+	var numberOfTicketsToSubmit int
+	if len(initialSubmissionTickets) > chainConfig.GroupSize {
+		numberOfTicketsToSubmit = chainConfig.GroupSize
+	} else {
+		numberOfTicketsToSubmit = len(initialSubmissionTickets)
+	}
+
 	go submitTickets(
-		initialSubmissionTickets,
+		initialSubmissionTickets[:numberOfTicketsToSubmit],
 		relayChain,
 		quitTicketSubmission,
 	)
@@ -120,7 +127,7 @@ func startTicketSubmission(
 			groupSize := big.NewInt(int64(chainConfig.GroupSize))
 			if ticketsCount.Cmp(groupSize) >= 0 {
 				logger.Infof(
-					"[%v] tickets submitted by candidates; "+
+					"[%v] tickets submitted by group member candidates; "+
 						"skipping reactive submission",
 					ticketsCount,
 				)
@@ -130,13 +137,14 @@ func startTicketSubmission(
 			}
 
 			logger.Infof(
-				"[%v] tickets submitted by candidates; "+
+				"[%v] tickets submitted by group member candidates; "+
 					"entering reactive submission",
 				ticketsCount,
 			)
 
+			numberOfTicketsToSubmit = chainConfig.GroupSize - len(initialSubmissionTickets)
 			go submitTickets(
-				reactiveSubmissionTickets,
+				reactiveSubmissionTickets[:numberOfTicketsToSubmit],
 				relayChain,
 				quitTicketSubmission,
 			)
