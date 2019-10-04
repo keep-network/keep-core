@@ -269,7 +269,7 @@ func ConnectWithKey(
 	minimumStake *big.Int,
 	operatorKey *ecdsa.PrivateKey,
 ) Chain {
-	bc, _ := blockCounter()
+	bc, _ := BlockCounter()
 
 	tokenSupply, naturalThreshold := calculateGroupSelectionParameters(
 		groupSize,
@@ -343,7 +343,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	bc, _ := blockCounter()
+	bc, _ := BlockCounter()
 	bc.WaitForBlockHeight(c.simulatedHeight)
 	currentBlock, err := bc.CurrentBlock()
 
