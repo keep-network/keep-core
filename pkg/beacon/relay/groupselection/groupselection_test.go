@@ -55,6 +55,19 @@ func TestSubmission(t *testing.T) {
 			},
 			expectedSubmittedTicketsCount: 2,
 		},
+		// Client has less tickets than the group size. Two tickets have value
+		// below the natural threshold, and there are no tickets with value
+		// above the natural threshold. All tickets should be submitted to
+		// the chain.
+		"only initial submission - less tickets than the group size": {
+			groupSize: 5,
+			initialSubmissionTickets: []*ticket{
+				newTestTicket(1, 1001),
+				newTestTicket(2, 1002),
+			},
+			reactiveSubmissionTickets:     []*ticket{},
+			expectedSubmittedTicketsCount: 2,
+		},
 		// Client has less tickets below the natural threshold (initial
 		// submission tickets) than the group size. Since no one else submitted
 		// their tickets, reactive ticket submission should be executed.
@@ -108,6 +121,20 @@ func TestSubmission(t *testing.T) {
 				newTestTicket(8, 1008),
 			},
 			expectedSubmittedTicketsCount: 3,
+		},
+		// Client has less tickets than the group size. One ticket has value
+		// below the natural threshold, the other ticket has value above
+		// the natural threshold. Both those tickets should be submitted to
+		// the chain.
+		"with reactive submission phase - less tickets than the group size": {
+			groupSize: 5,
+			initialSubmissionTickets: []*ticket{
+				newTestTicket(1, 1001),
+			},
+			reactiveSubmissionTickets: []*ticket{
+				newTestTicket(2, 1002),
+			},
+			expectedSubmittedTicketsCount: 2,
 		},
 	}
 

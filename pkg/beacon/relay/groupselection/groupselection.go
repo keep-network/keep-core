@@ -25,8 +25,25 @@ type Result struct {
 	GroupSelectionEndBlock uint64
 }
 
-// CandidateToNewGroup attempts to generate and submit tickets for the staker to join
-// a new candidate group.
+// CandidateToNewGroup attempts to generate and submit tickets for the staker to
+// join a new group.
+//
+// There are two phases of ticket submission:
+// - initial ticket submission,
+// - reactive ticket submission.
+//
+// During the initial ticket submission, only tickets with a value below the
+// natural threshold are submitted to the chain. Those tickets have the highest
+// chance of being selected to the group and this way we minimize staker's
+// gas expenditure.
+//
+// During the reactive ticket submission, all other staker's tickets are
+// submitted. Reactive ticket submission is skipped if during the initial
+// ticket submission there was enough tickets submitted to a chain to form
+// a group. Those tickets could be submitted by any stakers participating in
+// a new group selection.
+//
+// The function never submits more tickets than the group size.
 func CandidateToNewGroup(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
@@ -93,8 +110,15 @@ func startTicketSubmission(
 		return err
 	}
 
-	quitTicketSubmission := make(chan struct{}, 1)
+	// buffer quit signals - we never know if the goroutine finished
+	// before we try to cancel it
+	quitInitialTicketSubmission := make(chan struct{}, 2)
+	quitReactiveTicketSubmission := make(chan struct{}, 1)
 
+	// Check how many tickets with values below the natural threshold has been
+	// generated and compare this number with the group size. Decide how many
+	// tickets should be submitted. It does not make sense to submit more
+	// tickets than the group size.
 	var numberOfTicketsToSubmit int
 	if len(initialSubmissionTickets) > chainConfig.GroupSize {
 		numberOfTicketsToSubmit = chainConfig.GroupSize
@@ -102,15 +126,22 @@ func startTicketSubmission(
 		numberOfTicketsToSubmit = len(initialSubmissionTickets)
 	}
 
+	// Submit tickets with values below the natural threshold.
+	// Do not submit more tickets than the group size.
 	go submitTickets(
 		initialSubmissionTickets[:numberOfTicketsToSubmit],
 		relayChain,
-		quitTicketSubmission,
+		quitInitialTicketSubmission,
 	)
 
 	for {
 		select {
 		case initialSubmissionEndBlockHeight := <-initialSubmissionTimeout:
+			// Initial ticket submission phase has ended. We need to determine
+			// the total number of tickets submitted by all stakers who
+			// candidate to a new group and decide whether to stop or to
+			// enter reactive ticket submission.
+
 			logger.Infof(
 				"initial ticket submission ended at block [%v]",
 				initialSubmissionEndBlockHeight,
@@ -126,36 +157,66 @@ func startTicketSubmission(
 
 			groupSize := big.NewInt(int64(chainConfig.GroupSize))
 			if ticketsCount.Cmp(groupSize) >= 0 {
+				// If there has been enough tickets submitted to form a new
+				// group we stop ticket submission skipping the reactive ticket
+				// submission phase.
 				logger.Infof(
 					"[%v] tickets submitted by group member candidates; "+
 						"skipping reactive submission",
 					ticketsCount,
 				)
 
-				quitTicketSubmission <- struct{}{}
-				return nil
+				quitInitialTicketSubmission <- struct{}{}
+			} else {
+				// If there has been not enough tickets submitted to form a new
+				// group, we enter reactive ticket submission where we'll submit
+				// remaining tickets. Note we are not stopping the goroutine
+				// potentially still submitting tickets with values below the
+				// initial threshold.
+				// The number of remaining tickets is never larger than the
+				// group size, including tickets with values below the natural
+				// threshold.
+				logger.Infof(
+					"[%v] tickets submitted by group member candidates; "+
+						"entering reactive submission",
+					ticketsCount,
+				)
+
+				// Check how many tickets have been generated and compare this
+				// value with the group size. Decide how many tickets should be
+				// submitted. It does not make sense to submit more tickets
+				// than the group size.
+				if len(initialSubmissionTickets)+
+					len(reactiveSubmissionTickets) > chainConfig.GroupSize {
+					numberOfTicketsToSubmit = chainConfig.GroupSize -
+						len(initialSubmissionTickets)
+				} else {
+					numberOfTicketsToSubmit = len(reactiveSubmissionTickets)
+				}
+
+				// Submit tickets with values above the natural threshold.
+				// Do not submit more tickets than the group size including
+				// tickets with values below the natural threshold.
+				go submitTickets(
+					reactiveSubmissionTickets[:numberOfTicketsToSubmit],
+					relayChain,
+					quitReactiveTicketSubmission,
+				)
 			}
 
-			logger.Infof(
-				"[%v] tickets submitted by group member candidates; "+
-					"entering reactive submission",
-				ticketsCount,
-			)
-
-			numberOfTicketsToSubmit = chainConfig.GroupSize - len(initialSubmissionTickets)
-			go submitTickets(
-				reactiveSubmissionTickets[:numberOfTicketsToSubmit],
-				relayChain,
-				quitTicketSubmission,
-			)
-
 		case reactiveSubmissionEndBlockHeight := <-reactiveSubmissionTimeout:
+			// Reactive ticket submission phase has ended. We need to quite two
+			// potentially still running ticket submission goroutines, figure
+			// out which stakers have been selected to the group and trigger
+			// appropriate callback.
+
 			logger.Infof(
 				"reactive ticket submission ended at block [%v]",
 				reactiveSubmissionEndBlockHeight,
 			)
 
-			quitTicketSubmission <- struct{}{}
+			quitInitialTicketSubmission <- struct{}{}
+			quitReactiveTicketSubmission <- struct{}{}
 
 			selectedParticipants, err := relayChain.GetSelectedParticipants()
 			if err != nil {
@@ -168,7 +229,10 @@ func startTicketSubmission(
 			selectedStakers := make([][]byte, len(selectedParticipants))
 			for i, participant := range selectedParticipants {
 				selectedStakers[i] = participant
-				logger.Infof("new group member: [0x%v]", hex.EncodeToString(participant))
+				logger.Infof(
+					"new candidate group member: [0x%v]",
+					hex.EncodeToString(participant),
+				)
 			}
 
 			go onGroupSelected(&Result{
