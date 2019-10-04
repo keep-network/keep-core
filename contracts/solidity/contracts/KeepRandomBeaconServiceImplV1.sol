@@ -400,7 +400,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         uint256 dkgGas = OperatorContract(latestOperatorContract).dkgGasEstimate();
 
         return (
-            entryVerificationGas.mul(_priceFeedEstimate),
+            entryVerificationGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)),
             dkgGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)).mul(_dkgContributionMargin).div(1e18),
             groupProfitFee
         );
