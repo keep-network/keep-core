@@ -97,7 +97,6 @@ func Initialize(
 			err := groupselection.SubmitTickets(
 				relayChain,
 				blockCounter,
-				signing,
 				chainConfig,
 				staker,
 				event.NewEntry,

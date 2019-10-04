@@ -30,7 +30,6 @@ type Result struct {
 func SubmitTickets(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
-	signing chain.Signing, //TODO: eliminate, not used
 	chainConfig *config.Chain,
 	staker chain.Staker,
 	newEntry *big.Int,
