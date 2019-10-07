@@ -362,7 +362,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Get the minimum payment in wei for relay entry callback.
      * @param callbackGas Gas required for the callback.
      */
-    function minimumCallbackFee(uint256 callbackGas) public view returns(uint256) {
+    function callbackFee(uint256 callbackGas) public view returns(uint256) {
         return callbackGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
     }
 
@@ -372,7 +372,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function entryFeeEstimate(uint256 callbackGas) public view returns(uint256) {
         (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
-        return entryVerificationFee.add(dkgContributionFee).add(groupProfitFee).add(minimumCallbackFee(callbackGas));
+        return entryVerificationFee.add(dkgContributionFee).add(groupProfitFee).add(callbackFee(callbackGas));
     }
 
     /**

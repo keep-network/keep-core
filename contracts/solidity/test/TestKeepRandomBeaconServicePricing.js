@@ -58,7 +58,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     await serviceContract.setPriceFeedEstimate(defaultPriceFeedEstimate.mul(web3.utils.toBN(10)));
     let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    let excessCallbackFee = await serviceContract.minimumCallbackFee(callbackGas)
+    let excessCallbackFee = await serviceContract.callbackFee(callbackGas)
 
     await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
@@ -74,7 +74,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     // Put back the default gas price
     await serviceContract.setPriceFeedEstimate(defaultPriceFeedEstimate);
-    let expectedCallbackFee = await serviceContract.minimumCallbackFee((callbackGas/1.5).toFixed()) // Remove 1.5 fluctuation safety margin
+    let expectedCallbackFee = await serviceContract.callbackFee((callbackGas/1.5).toFixed()) // Remove 1.5 fluctuation safety margin
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
     // Ethereum transaction min cost varies i.e. 20864-21000 Gas resulting slightly different
@@ -87,10 +87,10 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
   it("should successfully refund callback gas surplus to the requestor if gas estimation was high", async function() {
 
     let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
-    let expectedCallbackFee = await serviceContract.minimumCallbackFee((callbackGas/1.5).toFixed()); // Remove 1.5 fluctuation safety margin
+    let expectedCallbackFee = await serviceContract.callbackFee((callbackGas/1.5).toFixed()); // Remove 1.5 fluctuation safety margin
 
     let excessCallbackGas = web3.utils.toBN(callbackGas).mul(web3.utils.toBN(2)); // Set higher callback gas estimate.
-    let excessCallbackFee = await serviceContract.minimumCallbackFee(excessCallbackGas);
+    let excessCallbackFee = await serviceContract.callbackFee(excessCallbackGas);
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(excessCallbackGas)
     await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
