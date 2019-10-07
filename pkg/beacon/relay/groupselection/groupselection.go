@@ -109,8 +109,14 @@ func startTicketSubmission(
 		return err
 	}
 
-	// buffer quit signals - we never know if the goroutine finished
-	// before we try to cancel it
+	// Buffer quit signals - we never know if the goroutine finished
+	// before we try to cancel it. The initial ticket submission may be
+	// cancelled right after the initial submission timeout and after the
+	// reactive submission timeout and it is possible it already completed.
+	// Hence, we buffer two quit signals. The reactive ticket submission
+	// is cancelled right after the reactive submission timeout. Here as well,
+	// we do not know if the goroutine already completed, so we need to buffer
+	// one quit signal.
 	quitInitialTicketSubmission := make(chan struct{}, 2)
 	quitReactiveTicketSubmission := make(chan struct{}, 1)
 
