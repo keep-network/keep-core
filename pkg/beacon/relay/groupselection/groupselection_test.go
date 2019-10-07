@@ -2,272 +2,227 @@ package groupselection
 
 import (
 	"math/big"
-	"reflect"
 	"testing"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/gen/async"
-	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
-var stakingAddress = []byte("staking address")
-var previousBeaconOutput = []byte("test beacon output")
-
-func naturalThreshold() *big.Int { // 2^256 / 2
-	return new(big.Int).Div(
-		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
-		big.NewInt(2),
-	)
-}
-
-func TestAllTicketsGenerated(t *testing.T) {
-	minimumStake := big.NewInt(20)
-	availableStake := big.NewInt(1000)
-	virtualStakers := availableStake.Int64() / minimumStake.Int64()
-
-	initialTickets, reactiveTickets, err := generateTickets(
-		previousBeaconOutput,
-		stakingAddress,
-		availableStake,
-		minimumStake,
-		naturalThreshold(),
-	)
-	if err != nil {
-		t.Fatal(err)
+func TestSubmission(t *testing.T) {
+	var tests = map[string]struct {
+		groupSize                     int
+		initialSubmissionTickets      []*ticket
+		reactiveSubmissionTickets     []*ticket
+		expectedSubmittedTicketsCount int
+	}{
+		// Client has the same number of tickets below the natural threshold
+		// (initial submission tickets) as the group size.
+		// All initial submission tickets should be submitted to the chain.
+		// Reactive ticket submission should not be executed.
+		"only initial submission - the same number of tickets as group size": {
+			groupSize: 4,
+			initialSubmissionTickets: []*ticket{
+				newTestTicket(1, 1001),
+				newTestTicket(2, 1002),
+				newTestTicket(3, 1003),
+				newTestTicket(4, 1004),
+			},
+			reactiveSubmissionTickets: []*ticket{
+				newTestTicket(5, 1005),
+				newTestTicket(6, 1006),
+			},
+			expectedSubmittedTicketsCount: 4,
+		},
+		// Client has more tickets below the natural threshold (initial
+		// submission tickets) than the group size. Only #group_size of initial
+		// submission tickets should be submitted to the chain.
+		// Reactive ticket submission should not be executed.
+		"only initial submission - more tickets than group size": {
+			groupSize: 2,
+			initialSubmissionTickets: []*ticket{
+				newTestTicket(1, 1001),
+				newTestTicket(2, 1002),
+				newTestTicket(3, 1003),
+				newTestTicket(4, 1004),
+			},
+			reactiveSubmissionTickets: []*ticket{
+				newTestTicket(5, 1005),
+				newTestTicket(6, 1006),
+			},
+			expectedSubmittedTicketsCount: 2,
+		},
+		// Client has less tickets than the group size. Two tickets have value
+		// below the natural threshold, and there are no tickets with value
+		// above the natural threshold. All tickets should be submitted to
+		// the chain.
+		"only initial submission - less tickets than the group size": {
+			groupSize: 5,
+			initialSubmissionTickets: []*ticket{
+				newTestTicket(1, 1001),
+				newTestTicket(2, 1002),
+			},
+			reactiveSubmissionTickets:     []*ticket{},
+			expectedSubmittedTicketsCount: 2,
+		},
+		// Client has less tickets below the natural threshold (initial
+		// submission tickets) than the group size. Since no one else submitted
+		// their tickets, reactive ticket submission should be executed.
+		"with reactive submission phase - the same number of tickets as group size": {
+			groupSize: 6,
+			initialSubmissionTickets: []*ticket{
+				newTestTicket(1, 1001),
+				newTestTicket(2, 1002),
+				newTestTicket(3, 1003),
+				newTestTicket(4, 1004),
+			},
+			reactiveSubmissionTickets: []*ticket{
+				newTestTicket(5, 1005),
+				newTestTicket(6, 1006),
+			},
+			expectedSubmittedTicketsCount: 6,
+		},
+		// Client has less tickets below the natural threshold (initial
+		// submission tickets) than the group size. Since no one else submitted
+		// their tickets, reactive ticket submission should be executed.
+		// No more tickets should be submitted by the client at overall than the
+		// #group_size, though.
+		"with reactive submission phase - more tickets than group size": {
+			groupSize: 5,
+			initialSubmissionTickets: []*ticket{
+				newTestTicket(1, 1001),
+				newTestTicket(2, 1002),
+				newTestTicket(3, 1003),
+				newTestTicket(4, 1004),
+			},
+			reactiveSubmissionTickets: []*ticket{
+				newTestTicket(5, 1005),
+				newTestTicket(6, 1006),
+				newTestTicket(7, 1007),
+				newTestTicket(8, 1008),
+			},
+			expectedSubmittedTicketsCount: 5,
+		},
+		// Client has no tickets below the natural threshold (initial
+		// submission tickets). Since no one else submitted their tickets,
+		// reactive ticket submission should be executed.
+		// No more tickets should be submitted by the client at overall than the
+		// #group_size, though.
+		"with reactive submission phase - no initial submission tickets": {
+			groupSize:                3,
+			initialSubmissionTickets: []*ticket{},
+			reactiveSubmissionTickets: []*ticket{
+				newTestTicket(5, 1005),
+				newTestTicket(6, 1006),
+				newTestTicket(7, 1007),
+				newTestTicket(8, 1008),
+			},
+			expectedSubmittedTicketsCount: 3,
+		},
+		// Client has less tickets than the group size. One ticket has value
+		// below the natural threshold, the other ticket has value above
+		// the natural threshold. Both those tickets should be submitted to
+		// the chain.
+		"with reactive submission phase - less tickets than the group size": {
+			groupSize: 5,
+			initialSubmissionTickets: []*ticket{
+				newTestTicket(1, 1001),
+			},
+			reactiveSubmissionTickets: []*ticket{
+				newTestTicket(2, 1002),
+			},
+			expectedSubmittedTicketsCount: 2,
+		},
 	}
 
-	// We should have 1000/20 = 50 tickets
-	allTicketsCount := len(initialTickets) + len(reactiveTickets)
-	if allTicketsCount != int(virtualStakers) {
-		t.Fatalf(
-			"expected [%d] tickets, has [%d] tickets",
-			virtualStakers,
-			allTicketsCount,
+	for _, test := range tests {
+		chainConfig := &config.Chain{
+			GroupSize:                       test.groupSize,
+			TicketInitialSubmissionTimeout:  3,
+			TicketReactiveSubmissionTimeout: 5,
+		}
+
+		chain := &stubGroupInterface{
+			groupSize: test.groupSize,
+		}
+
+		blockCounter, err := local.BlockCounter()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		onGroupSelected := func(result *Result) {}
+
+		err = startTicketSubmission(
+			test.initialSubmissionTickets,
+			test.reactiveSubmissionTickets,
+			chain,
+			blockCounter,
+			chainConfig,
+			0, // start block height
+			onGroupSelected,
 		)
-	}
-}
-
-func TestTicketsGeneratedInOrder(t *testing.T) {
-	minimumStake := big.NewInt(1)
-	availableStake := big.NewInt(100)
-
-	initialTickets, reactiveTickets, err := generateTickets(
-		previousBeaconOutput,
-		stakingAddress,
-		availableStake,
-		minimumStake,
-		naturalThreshold(),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	allTickets := append(initialTickets, reactiveTickets...)
-
-	// Tickets should be sorted in ascending order
-	for i := 0; i < len(allTickets)-1; i++ {
-		value := allTickets[i].intValue()
-		nextValue := allTickets[i+1].intValue()
-
-		if value.Cmp(nextValue) > 0 {
-			t.Errorf("tickets not sorted in ascending order")
+		if err != nil {
+			t.Fatal(err)
 		}
-	}
-}
 
-func TestInitialTicketsGeneatedBelowNaturalThreshold(t *testing.T) {
-	minimumStake := big.NewInt(1)
-	availableStake := big.NewInt(10000)
-
-	initialTickets, _, err := generateTickets(
-		previousBeaconOutput,
-		stakingAddress,
-		availableStake,
-		minimumStake,
-		naturalThreshold(),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// All initial submission tickets should have value below the natural
-	// threshold
-	for _, ticket := range initialTickets {
-		if ticket.intValue().Cmp(naturalThreshold()) >= 0 {
-			t.Errorf(
-				"initial submission ticket value should be below natural "+
-					"threshold\nvalue:     [%v]\nthreshold: [%v]",
-				ticket.intValue(),
-				naturalThreshold(),
-			)
-		}
-	}
-}
-
-func TestReactiveTicketsGeneatedAboveNaturalThreshold(t *testing.T) {
-	minimumStake := big.NewInt(1)
-	availableStake := big.NewInt(10000)
-
-	_, reactiveTickets, err := generateTickets(
-		previousBeaconOutput,
-		stakingAddress,
-		availableStake,
-		minimumStake,
-		naturalThreshold(),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// All reactive submission tickets should have value equal or above
-	// the natural threshold
-	for _, ticket := range reactiveTickets {
-		if ticket.intValue().Cmp(naturalThreshold()) <= 0 {
-			t.Errorf(
-				"reactive submission ticket value should not be below natural "+
-					"threshold\nvalue:     [%v]\nthreshold: [%v]",
-				ticket.intValue(),
-				naturalThreshold(),
-			)
-		}
-	}
-}
-
-func TestSubmitAllTickets(t *testing.T) {
-	beaconOutput := big.NewInt(10).Bytes()
-	stakerValue := []byte("StakerValue1001")
-
-	tickets := make([]*ticket, 0)
-	for i := 1; i <= 4; i++ {
-		ticket, _ := newTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
-		tickets = append(tickets, ticket)
-	}
-
-	errCh := make(chan error, len(tickets))
-	quit := make(chan struct{}, 0)
-	submittedTickets := make([]*chain.Ticket, 0)
-
-	mockInterface := &mockGroupInterface{
-		mockSubmitTicketFn: func(t *chain.Ticket) *async.GroupTicketPromise {
-			submittedTickets = append(submittedTickets, t)
-			promise := &async.GroupTicketPromise{}
-			promise.Fulfill(&event.GroupTicketSubmission{
-				TicketValue: t.Value,
-				BlockNumber: 111,
-			})
-			return promise
-		},
-	}
-
-	submitTickets(tickets, mockInterface, quit, errCh)
-
-	if len(tickets) != len(submittedTickets) {
-		t.Errorf(
-			"unexpected number of tickets submitted\nexpected: [%v]\nactual: [%v]",
-			len(tickets),
-			len(submittedTickets),
+		err = blockCounter.WaitForBlockHeight(
+			chainConfig.TicketReactiveSubmissionTimeout,
 		)
-	}
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	for i, ticket := range tickets {
-		submitted := fromChainTicket(submittedTickets[i], t)
+		submittedTicketsCount, err := chain.GetSubmittedTicketsCount()
+		if err != nil {
+			t.Fatal(err)
+		}
 
-		if !reflect.DeepEqual(ticket, submitted) {
-			t.Errorf(
-				"unexpected ticket at index [%v]\nexpected: [%v]\nactual: [%v]",
-				i,
-				ticket,
-				submitted,
+		expectedCount := big.NewInt(int64(test.expectedSubmittedTicketsCount))
+		if expectedCount.Cmp(submittedTicketsCount) != 0 {
+			t.Fatalf(
+				"unexpected number of submitted tickets\nexpected: [%v]\nactual:   [%v]",
+				expectedCount,
+				submittedTicketsCount,
 			)
 		}
 	}
 }
 
-func fromChainTicket(chainTicket *chain.Ticket, t *testing.T) *ticket {
-	paddedTicketValue, err := byteutils.LeftPadTo32Bytes((chainTicket.Value.Bytes()))
-	if err != nil {
-		t.Errorf("could not pad ticket value [%v]", err)
-	}
-
-	var value [32]byte
-	copy(value[:], paddedTicketValue)
-
-	return &ticket{
-		value: value,
-		proof: &proof{
-			stakerValue:        chainTicket.Proof.StakerValue.Bytes(),
-			virtualStakerIndex: chainTicket.Proof.VirtualStakerIndex,
-		},
-	}
+type stubGroupInterface struct {
+	groupSize        int
+	submittedTickets []*chain.Ticket
 }
 
-func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
-	beaconOutput := big.NewInt(10).Bytes()
-	stakerValue := []byte("StakerValue1001")
+func (stg *stubGroupInterface) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
+	stg.submittedTickets = append(stg.submittedTickets, ticket)
+	promise := &async.GroupTicketPromise{}
 
-	tickets := make([]*ticket, 0)
-	for i := 1; i <= 6; i++ {
-		ticket, _ := newTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
-		tickets = append(tickets, ticket)
-	}
+	promise.Fulfill(&event.GroupTicketSubmission{
+		TicketValue: ticket.Value,
+		BlockNumber: 222,
+	})
 
-	errCh := make(chan error, len(tickets))
-	quit := make(chan struct{}, 0)
-	submittedTickets := make([]*chain.Ticket, 0)
-
-	mockInterface := &mockGroupInterface{
-		mockSubmitTicketFn: func(t *chain.Ticket) *async.GroupTicketPromise {
-			submittedTickets = append(submittedTickets, t)
-			promise := &async.GroupTicketPromise{}
-
-			time.Sleep(500 * time.Millisecond)
-
-			promise.Fulfill(&event.GroupTicketSubmission{
-				TicketValue: t.Value,
-				BlockNumber: 222,
-			})
-			return promise
-		},
-	}
-
-	go func() {
-		time.Sleep(1 * time.Second)
-		quit <- struct{}{}
-	}()
-
-	submitTickets(tickets, mockInterface, quit, errCh)
-
-	if len(submittedTickets) == 0 {
-		t.Errorf("no tickets submitted")
-	}
-
-	if len(tickets) == len(submittedTickets) {
-		t.Errorf("ticket submission has not been cancelled")
-	}
+	return promise
 }
 
-type mockGroupInterface struct {
-	mockSubmitTicketFn func(t *chain.Ticket) *async.GroupTicketPromise
+func (stg *stubGroupInterface) GetSubmittedTicketsCount() (*big.Int, error) {
+	return big.NewInt(int64(len(stg.submittedTickets))), nil
 }
 
-func (mgi *mockGroupInterface) SubmitTicket(
-	ticket *chain.Ticket,
-) *async.GroupTicketPromise {
-	if mgi.mockSubmitTicketFn != nil {
-		return mgi.mockSubmitTicketFn(ticket)
+func (stg *stubGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress, error) {
+	selected := make([]chain.StakerAddress, stg.groupSize)
+	for i := 0; i < stg.groupSize; i++ {
+		selected[i] = []byte("whatever")
 	}
 
-	panic("unexpected")
+	return selected, nil
 }
 
-func (mgi *mockGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress, error) {
-	panic("unexpected")
-}
-
-func (mgi *mockGroupInterface) OnGroupSelectionStarted(
+func (stg *stubGroupInterface) OnGroupSelectionStarted(
 	func(groupSelectionStart *event.GroupSelectionStart),
 ) (subscription.EventSubscription, error) {
 	panic("not implemented")

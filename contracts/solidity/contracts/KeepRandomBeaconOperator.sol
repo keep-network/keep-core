@@ -60,10 +60,10 @@ contract KeepRandomBeaconOperator {
     uint256 public minimumStake = 200000 * 1e18;
 
     // Timeout in blocks after the initial ticket submission is finished.
-    uint256 public ticketInitialSubmissionTimeout = 4;
+    uint256 public ticketInitialSubmissionTimeout = 3;
 
     // Timeout in blocks after the reactive ticket submission is finished.
-    uint256 public ticketReactiveSubmissionTimeout = 4;
+    uint256 public ticketReactiveSubmissionTimeout = 6;
 
     // Time in blocks after which the next group member is eligible
     // to submit the result.
@@ -252,6 +252,13 @@ contract KeepRandomBeaconOperator {
      */
     function orderedTickets() public view returns (uint256[] memory) {
         return UintArrayUtils.sort(tickets);
+    }
+
+    /**
+     * @dev Gets the number of submitted group candidate tickets so far.
+     */
+    function submittedTicketsCount() public view returns (uint256) {
+        return tickets.length;
     }
 
     /**
