@@ -212,7 +212,7 @@ func startTicketSubmission(
 			}
 
 		case reactiveSubmissionEndBlockHeight := <-reactiveSubmissionTimeout:
-			// Reactive ticket submission phase has ended. We need to quite two
+			// Reactive ticket submission phase has ended. We need to quit two
 			// potentially still running ticket submission goroutines, figure
 			// out which stakers have been selected to the group and trigger
 			// appropriate callback.
