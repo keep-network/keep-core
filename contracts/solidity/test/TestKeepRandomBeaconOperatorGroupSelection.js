@@ -16,7 +16,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
   const minimumStake = web3.utils.toBN(200000);
 
-  before(async () => {
+  beforeEach(async () => {
 
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
@@ -156,10 +156,10 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     let dkgGasEstimateCost = await operatorContract.dkgGasEstimate();
     await serviceContract.fundDkgFeePool({value: dkgGasEstimateCost.mul(priceFeedEstimate)});
 
-    await operatorContract.relayEntry(bls.nextNextGroupSignature);
+    await operatorContract.relayEntry(bls.nextGroupSignature);
 
     assert.isFalse((await operatorContract.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
-    assert.isTrue((await operatorContract.groupSelectionRelayEntry()).eq(bls.nextNextGroupSignature), "Random beacon value for the current group selection should be updated.");
+    assert.isTrue((await operatorContract.groupSelectionRelayEntry()).eq(bls.nextGroupSignature), "Random beacon value for the current group selection should be updated.");
   });
 
 });
