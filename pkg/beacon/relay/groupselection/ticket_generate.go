@@ -27,7 +27,7 @@ func generateTickets(
 	reactiveSubmissionTickets []*ticket,
 	err error,
 ) {
-	stakingWeight := (&big.Int{}).Quo(availableStake, minimumStake) // W_j
+	stakingWeight := new(big.Int).Quo(availableStake, minimumStake) // W_j
 
 	tickets := make([]*ticket, 0)
 	for virtualStaker := int64(1); virtualStaker <= stakingWeight.Int64(); virtualStaker++ {
