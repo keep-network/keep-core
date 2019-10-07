@@ -309,7 +309,7 @@ successfully staked KEEP tokens for account 0xc4cba981a8edb64276f71a49f9392bad7a
 
 For each Keep peer we need to create a separate configuration file. We need at
 least one bootstrap peer in the network. Here, we will create one bootstrap peer
-and 4 non-bootstrap peers pointing to it.
+and 4 other peers pointing to it.
 
 Let's create a configuration for the bootstrap peer first:
 ```
@@ -334,7 +334,7 @@ deployed contract instances. Please use addresses of `KeepRandomBeaconOperator`,
         TokenStaking = "0xDfc7251170abd753342B585Adcd8BCEE48aDb379"
 ```
 
-Next, create configuration files for non-bootstrap peers:
+Next, create configuration files for other peers:
 ```
 $ cp config.local.1.toml config.local.2.toml
 $ cp config.local.1.toml config.local.3.toml
@@ -345,7 +345,6 @@ $ cp config.local.1.toml config.local.5.toml
 In the `config.local.1.toml` enable network settings for bootstrap peer:
 ```
 [LibP2P]
-        Seed = 2
         Port = 3919
 ```
 
@@ -367,18 +366,16 @@ And start the peer:
 ```
 $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.1.toml start
 ------------------------------------------------------------------------------------------------
-| Node: BOOTSTRAP node                                                                         |
-| Port: 0                                                                                      |
+| Port: 3919                                                                                   |
 | IPs : /ip6/::1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca           |
 |       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca |
 |       /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca     |
 ------------------------------------------------------------------------------------------------
 ```
 
-The next thing we need to do is to alter configuration file of each
-non-bootstrap peer. Please modify `Port` number so that it is unique for each
-peer and update the address of the bootstrap peer. For a non-bootstrap peer,
-`Seed` value should be removed or remain commented out. We also need to update
+The next thing we need to do is to alter configuration file of each peer.
+Please modify `Port` number so that it is unique for each
+peer and update the address of the bootstrap peer. We also need to update
 ethereum account and key file so that each Keep client uses a different account.
 
 In `config.local.2.toml`:
@@ -445,12 +442,11 @@ In `config.local.5.toml`:
   DataDir = "/Users/username/keepdata/5"
 ```
 
-Finally, we can start each non-bootstrap instance:
+Finally, we can start each instance:
 ```
 $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.2.toml start
 ------------------------------------------------------------------------------------------------
-| Node: BOOTSTRAP node                                                                         |
-| Port: 0                                                                                      |
+| Port: 3920                                                                                   |
 | IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmGsfKJaP4UGoGWYV6nxY8RPhVoHxT9rUQbPsxFedMHzEr     |
 |       /ip6/::1/tcp/3919/ipfs/16Uiu2HAmGsfKJaP4UGoGWYV6nxY8RPhVoHxT9rUQbPsxFedMHzEr           |
 |       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAmGsfKJaP4UGoGWYV6nxY8RPhVoHxT9rUQbPsxFedMHzEr |
@@ -460,8 +456,7 @@ $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config
 ```
 $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.3.toml start
 ------------------------------------------------------------------------------------------------
-| Node: BOOTSTRAP node                                                                         |
-| Port: 0                                                                                      |
+| Port: 3921                                                                                   |
 | IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmAeFbeTZstFhAiEL8jGQiNR9sygKstrhpG4F2wKmt1784     |
 |       /ip6/::1/tcp/3919/ipfs/16Uiu2HAmAeFbeTZstFhAiEL8jGQiNR9sygKstrhpG4F2wKmt1784           |
 |       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAmAeFbeTZstFhAiEL8jGQiNR9sygKstrhpG4F2wKmt1784 |
@@ -471,8 +466,7 @@ $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config
 ```
 $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.4.toml start
 ------------------------------------------------------------------------------------------------
-| Node: BOOTSTRAP node                                                                         |
-| Port: 0                                                                                      |
+| Port: 3922                                                                                   |
 | IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmQcPbBVftPR8SKctpG9ToDmu7kLpaKPUc3AreEwzWbuyb     |
 |       /ip6/::1/tcp/3919/ipfs/16Uiu2HAmQcPbBVftPR8SKctpG9ToDmu7kLpaKPUc3AreEwzWbuyb           |
 |       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAmQcPbBVftPR8SKctpG9ToDmu7kLpaKPUc3AreEwzWbuyb |
@@ -482,8 +476,7 @@ $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config
 ```
 $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.5.toml start
 ------------------------------------------------------------------------------------------------
-| Node: BOOTSTRAP node                                                                         |
-| Port: 0                                                                                      |
+| Port: 3923                                                                                   |
 | IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAm7wzWEs3fUbA9rgzKRP82Zhtnq2CxZZdXPMrJJgNNra1p     |
 |       /ip6/::1/tcp/3919/ipfs/16Uiu2HAm7wzWEs3fUbA9rgzKRP82Zhtnq2CxZZdXPMrJJgNNra1p           |
 |       /ip4/192.168.1.103/tcp/3919/ipfs/16Uiu2HAm7wzWEs3fUbA9rgzKRP82Zhtnq2CxZZdXPMrJJgNNra1p |

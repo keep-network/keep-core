@@ -20,17 +20,11 @@
 	# relay subcommand).
 	KeepRandomBeaconService = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 
-# Non-bootstrap node connecting to an existing network.
 # [LibP2P]
 # 	Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1"]
 # 	Port = 3920
 #   # Uncomment to override the node's default addresses announced in the network
 #   # AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
-
-# Bootstrap node creating a new network.
-# [LibP2P]
-# 	Seed = 2
-# 	Port = 3919
 
 [Storage]
   DataDir = "/my/secure/location"
