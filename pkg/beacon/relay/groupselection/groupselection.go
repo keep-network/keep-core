@@ -125,6 +125,11 @@ func startTicketSubmission(
 		numberOfTicketsToSubmit = len(initialSubmissionTickets)
 	}
 
+	logger.Infof(
+		"entering initial ticket submission phase with [%v] tickets",
+		numberOfTicketsToSubmit,
+	)
+
 	// Submit tickets with values below the natural threshold.
 	// Do not submit more tickets than the group size.
 	go submitTickets(
@@ -175,11 +180,6 @@ func startTicketSubmission(
 				// The number of remaining tickets is never larger than the
 				// group size, including tickets with values below the natural
 				// threshold.
-				logger.Infof(
-					"[%v] tickets submitted by group member candidates; "+
-						"entering reactive submission",
-					ticketsCount,
-				)
 
 				// Check how many tickets have been generated and compare this
 				// value with the group size. Decide how many tickets should be
@@ -192,6 +192,14 @@ func startTicketSubmission(
 				} else {
 					numberOfTicketsToSubmit = len(reactiveSubmissionTickets)
 				}
+
+				logger.Infof(
+					"[%v] tickets submitted by group member candidates; "+
+						"entering reactive submission phase with [%v] "+
+						"additional tickets",
+					ticketsCount,
+					numberOfTicketsToSubmit,
+				)
 
 				// Submit tickets with values above the natural threshold.
 				// Do not submit more tickets than the group size including
