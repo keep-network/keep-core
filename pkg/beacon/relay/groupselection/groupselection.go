@@ -4,7 +4,6 @@
 package groupselection
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math/big"
 
@@ -21,7 +20,7 @@ var logger = log.Logger("keep-groupselection")
 // list of all stakers selected to the candidate group as well as the number of
 // block at which the group selection protocol completed.
 type Result struct {
-	SelectedStakers        [][]byte
+	SelectedStakers        []relaychain.StakerAddress
 	GroupSelectionEndBlock uint64
 }
 
@@ -218,20 +217,11 @@ func startTicketSubmission(
 			quitInitialTicketSubmission <- struct{}{}
 			quitReactiveTicketSubmission <- struct{}{}
 
-			selectedParticipants, err := relayChain.GetSelectedParticipants()
+			selectedStakers, err := relayChain.GetSelectedParticipants()
 			if err != nil {
 				return fmt.Errorf(
 					"could not fetch selected participants after submission timeout [%v]",
 					err,
-				)
-			}
-
-			selectedStakers := make([][]byte, len(selectedParticipants))
-			for i, participant := range selectedParticipants {
-				selectedStakers[i] = participant
-				logger.Infof(
-					"new candidate group member: [0x%v]",
-					hex.EncodeToString(participant),
 				)
 			}
 

@@ -2,6 +2,7 @@ package beacon
 
 import (
 	"context"
+	"encoding/hex"
 
 	"github.com/ipfs/go-log"
 
@@ -85,6 +86,12 @@ func Initialize(
 		logger.Infof("group selection started: [%+v]", event)
 
 		onGroupSelected := func(group *groupselection.Result) {
+			for _, staker := range group.SelectedStakers {
+				logger.Infof(
+					"new candidate group member: [0x%v]",
+					hex.EncodeToString(staker),
+				)
+			}
 			node.JoinGroupIfEligible(
 				relayChain,
 				signing,
