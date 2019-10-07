@@ -138,6 +138,25 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     assert.equal(selectedParticipants.length, groupSize, "Should be trimmed to groupSize length.");
   });
 
+  it("should not trigger new group selection when there are not enough funds in the DKG fee pool", async function() {
+    let groupSelectionStartBlock = await operatorContract.ticketSubmissionStartBlock();
+    let groupSelectionRelayEntry = await operatorContract.groupSelectionRelayEntry();
+
+    // Calculate the block time when the group selection should be finished
+    let timeoutChallenge = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
+    let timeDKG = (await operatorContract.timeDKG()).toNumber();
+    let groupSize = (await operatorContract.groupSize()).toNumber();
+    let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
+    mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
+
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
+    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
+    await operatorContract.relayEntry(bls.nextGroupSignature);
+
+    assert.isTrue((await operatorContract.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
+    assert.isTrue((await operatorContract.groupSelectionRelayEntry()).eq(groupSelectionRelayEntry), "Random beacon value for the current group selection should not change.");
+  });
+
   it("should trigger new group selection when the last one is over", async function() {
     let groupSelectionStartBlock = await operatorContract.ticketSubmissionStartBlock();
 
