@@ -120,7 +120,7 @@ contract KeepRandomBeaconOperator {
         uint256 virtualStakerIndex;
     }
 
-    mapping(uint256 => Proof) public proofs;
+    mapping(uint256 => Proof) internal proofs;
 
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
