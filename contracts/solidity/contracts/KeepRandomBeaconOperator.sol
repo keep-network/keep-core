@@ -88,13 +88,17 @@ contract KeepRandomBeaconOperator {
     // by clients.
     uint256 public timeDKG = 7*(3+1);
 
+    // Time in blocks it takes off-chain cluster to generate a new relay entry
+    // and be ready to submit it to the chain.
+    uint256 internal relayEntryGenerationTime = (3+1);
+
     // Timeout in blocks for a relay entry to appear on the chain. Blocks are
     // counted from the moment relay request occur.
     //
     // Timeout is never shorter than the time needed by clients to generate
     // relay entry and the time it takes for the last group member to become
     // eligible to submit the result plus at least one block to submit it.
-    uint256 public relayEntryTimeout = 24;
+    uint256 public relayEntryTimeout = relayEntryGenerationTime.add(groupSize.mul(resultPublicationBlockStep));
 
     // Gas required to verify BLS signature and produce successful relay
     // entry. Excludes callback and DKG gas.
