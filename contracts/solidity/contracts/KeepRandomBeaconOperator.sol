@@ -670,9 +670,7 @@ contract KeepRandomBeaconOperator {
      */
     function rewardsBreakdown() public view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-        uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
-        uint256 delayFactor = entryTimeout.sub(block.number).mul(decimals).div(relayEntryTimeout.sub(1))**2;
-        uint256 delayFactorInverse = uint256(1).mul(decimals**2).sub(delayFactor);
+        (uint256 delayFactor, uint256 delayFactorInverse) = getDelayFactor();
         uint256 delayPenalty = groupMemberBaseReward.mul(delayFactorInverse).div(decimals**2);
         groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals**2);
 
@@ -687,6 +685,16 @@ contract KeepRandomBeaconOperator {
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
         subsidy = groupProfitFee().sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
+    }
+
+    /**
+     * @dev Gets delay factor for rewards calculation.
+     */
+    function getDelayFactor() internal view returns(uint256 delayFactor, uint256 delayFactorInverse) {
+        uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
+        uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
+        delayFactor = entryTimeout.sub(block.number).mul(decimals).div(relayEntryTimeout.sub(1))**2;
+        delayFactorInverse = uint256(1).mul(decimals**2).sub(delayFactor);
     }
 
     /**
