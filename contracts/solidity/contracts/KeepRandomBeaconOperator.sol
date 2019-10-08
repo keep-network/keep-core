@@ -692,8 +692,23 @@ contract KeepRandomBeaconOperator {
      */
     function getDelayFactor() internal view returns(uint256 delayFactor, uint256 delayFactorInverse) {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-        uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
-        delayFactor = entryTimeout.sub(block.number).mul(decimals).div(relayEntryTimeout.sub(1))**2;
+
+        // T_deadline (no submissions are accepted, entry timed out)
+        uint256 deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
+
+        // T_remaining = T_deadline - T_received
+        uint256 remainingBlocks = deadlineBlock.sub(block.number);
+        
+        // T_begin is the earliest block the result can be published in.
+        // It takes relayEntryGenerationTime to generate a new entry, so it can be published
+        // at block relayEntryGenerationTime + 1 the earliest.
+        uint256 submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(1);
+
+        // T_deadline - T_begin
+        uint256 submissionWindow = deadlineBlock.sub(submissionStartBlock);
+
+        // delay factor = [ T_remaining / (T_deadline - T_begin)]^2
+        delayFactor = (remainingBlocks.mul(decimals).div(submissionWindow))**2;
         delayFactorInverse = uint256(1).mul(decimals**2).sub(delayFactor);
     }
 
