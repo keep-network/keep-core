@@ -11,7 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-func TestRevealDisqualifiedMembersKeys(t *testing.T) {
+func TestRevealMisbehavedMembersKeys(t *testing.T) {
 	dishonestThreshold := 3
 	groupSize := 8
 
@@ -40,7 +40,7 @@ func TestRevealDisqualifiedMembersKeys(t *testing.T) {
 		privateKeys: expectedDisqualifiedKeys,
 	}
 
-	result, err := firstMember.RevealDisqualifiedMembersKeys()
+	result, err := firstMember.RevealMisbehavedMembersKeys()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -161,7 +161,7 @@ func generateDisqualifiedEphemeralKeysMessages(
 		for _, disqualifiedMember := range disqualifiedMembers {
 			otherMember.group.MarkMemberAsDisqualified(disqualifiedMember.ID)
 		}
-		disqualifiedEphemeralKeysMessage, err := otherMember.RevealDisqualifiedMembersKeys()
+		disqualifiedEphemeralKeysMessage, err := otherMember.RevealMisbehavedMembersKeys()
 		if err != nil {
 			return nil, err
 		}

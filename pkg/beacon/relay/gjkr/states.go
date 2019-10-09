@@ -556,7 +556,7 @@ func (rs *keyRevealState) ActiveBlocks() uint64 {
 }
 
 func (rs *keyRevealState) Initiate() error {
-	revealMsg, err := rs.member.RevealDisqualifiedMembersKeys()
+	revealMsg, err := rs.member.RevealMisbehavedMembersKeys()
 	if err != nil {
 		return err
 	}

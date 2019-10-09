@@ -1129,14 +1129,14 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 	return nil
 }
 
-// RevealDisqualifiedMembersKeys reveals ephemeral private keys used to create an
+// RevealMisbehavedMembersKeys reveals ephemeral private keys used to create an
 // ephemeral symmetric key with members whose shares needs to be reconstructed.
 // Those are members who provided valid shares in Phase 3 and qualified to QUAL set
 // but were either marked as inactive or disqualified later.
 // It returns a message containing a map of ephemeral private key for each member.
 //
 // See Phase 10 of the protocol specification.
-func (rm *RevealingMember) RevealDisqualifiedMembersKeys() (
+func (rm *RevealingMember) RevealMisbehavedMembersKeys() (
 	*DisqualifiedEphemeralKeysMessage,
 	error,
 ) {
@@ -1195,12 +1195,14 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 	return result
 }
 
-// ReconstructDisqualifiedIndividualKeys reconstructs individual private key `z_m` and  public
-// key `y_m` of disqualified members `m`. To do that, it first needs to recover
-// shares calculated by disqualified members `m` in Phase 3 for other members `k`.
-// The shares were encrypted before broadcast, so ephemeral symmetric key needs
-// to be recovered. This requires messages containing ephemeral private key
-// revealed by member `k` used in communication with disqualified member `m`.
+// ReconstructDisqualifiedIndividualKeys reconstructs individual private key
+// `z_m` and  public key `y_m` of every disqualified or inactive member `m` from
+// QUAL set. QUAL contains all group members which provided valid shares in
+// Phase 3. To do that, it first needs to recover shares calculated by IA/DQ QUAL
+// members `m` in Phase 3 for other members `k`. The shares were encrypted
+// before broadcast, so ephemeral symmetric key needs to be recovered. This
+// requires messages containing ephemeral private key revealed by member `k`
+// used in communication with disqualified member `m`.
 //
 // See Phase 11 of the protocol specification.
 func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
