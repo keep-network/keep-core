@@ -375,7 +375,7 @@ func TestCombineGroupPublicKey(t *testing.T) {
 	}
 }
 
-func TestReconstructDisqualifiedIndividualKeys(t *testing.T) {
+func TestReconstructMisbehavedIndividualKeys(t *testing.T) {
 	dishonestThreshold := 2
 	groupSize := 6
 
@@ -449,7 +449,7 @@ func TestReconstructDisqualifiedIndividualKeys(t *testing.T) {
 		member1.receivedPeerCommitments[disqualifiedMember.ID] = commitments
 	}
 
-	member1.ReconstructDisqualifiedIndividualKeys(misbehavedEphemeralKeysMessages)
+	member1.ReconstructMisbehavedIndividualKeys(misbehavedEphemeralKeysMessages)
 
 	for _, disqualifiedMember := range disqualifiedMembers {
 		if disqualifiedMember.individualPrivateKey().

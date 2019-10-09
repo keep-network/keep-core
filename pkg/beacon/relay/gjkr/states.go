@@ -614,7 +614,7 @@ func (rs *reconstructionState) ActiveBlocks() uint64 {
 
 func (rs *reconstructionState) Initiate() error {
 	rs.member.MarkInactiveMembers(rs.previousPhaseMessages)
-	if err := rs.member.ReconstructDisqualifiedIndividualKeys(
+	if err := rs.member.ReconstructMisbehavedIndividualKeys(
 		rs.previousPhaseMessages,
 	); err != nil {
 		return err

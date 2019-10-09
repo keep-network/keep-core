@@ -1195,7 +1195,7 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 	return result
 }
 
-// ReconstructDisqualifiedIndividualKeys reconstructs individual private key
+// ReconstructMisbehavedIndividualKeys reconstructs individual private key
 // `z_m` and  public key `y_m` of every disqualified or inactive member `m` from
 // QUAL set. QUAL contains all group members which provided valid shares in
 // Phase 3. To do that, it first needs to recover shares calculated by IA/DQ QUAL
@@ -1205,7 +1205,7 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 // used in communication with disqualified member `m`.
 //
 // See Phase 11 of the protocol specification.
-func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
+func (rm *ReconstructingMember) ReconstructMisbehavedIndividualKeys(
 	messages []*MisbehavedEphemeralKeysMessage,
 ) error {
 	for _, message := range messages {
