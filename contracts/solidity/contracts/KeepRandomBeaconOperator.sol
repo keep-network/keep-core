@@ -90,7 +90,7 @@ contract KeepRandomBeaconOperator {
 
     // Time in blocks it takes off-chain cluster to generate a new relay entry
     // and be ready to submit it to the chain.
-    uint256 internal relayEntryGenerationTime = (3+1);
+    uint256 public relayEntryGenerationTime = (3+1);
 
     // Timeout in blocks for a relay entry to appear on the chain. Blocks are
     // counted from the moment relay request occur.
