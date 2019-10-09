@@ -1,22 +1,6 @@
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: keep-client-bootstrap-peer-0
-  labels:
-    app: keep-client
-    type: bootstrap-peer-0
-spec:
-  ports:
-  - port: 3919
-    targetPort: 3919
-    name: tcp-3919
-  selector:
-    app: keep-client
-    type: bootstrap-peer-0
----
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
   name: keep-client-bootstrap-peer-0
   labels:
@@ -29,27 +13,28 @@ spec:
     matchLabels:
       app: keep-client
       type: bootstrap-peer-0
+  serviceName: keep-client-bootstrap-peer-0
+  volumeClaimTemplates:
+  - metadata:
+      name: keep-client-bootstrap-peer-0-data
+    spec:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 512Mi
+  - metadata:
+      name: keep-client-bootstrap-peer-0-config
+    spec:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 5Mi
   template:
     metadata:
       labels:
         app: keep-client
         type: bootstrap-peer-0
     spec:
-      initContainers:
-      - name: initcontainer-provision-keep-client
-        image: gcr.io/keep-dev-fe24/keep-client-initcontainer
-        env:
-          - name: KEEP_CLIENT_TYPE
-            value: bootstrap
-          - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: eth-account-passphrase
-                key: account-passphrase
-        volumeMounts:
-          - name: keep-client-bootstrap-peer-0
-            mountPath: /mnt/keep-client/config
-        command: ["node", "/tmp/provision-keep-client.js"]
       containers:
       - name: keep-client-bootstrap-peer-0
         image: gcr.io/keep-dev-fe24/keep-client
@@ -64,29 +49,34 @@ spec:
           - name: LOG_LEVEL
             value: debug
         volumeMounts:
-          - name: keep-client-bootstrap-peer-0
+          - name: keep-client-bootstrap-peer-0-config
             mountPath: /mnt/keep-client/config
           - name: eth-keyfile
             mountPath: /mnt/eth-data
         command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "start"]
       volumes:
-      - name: keep-client-bootstrap-peer-0
-        persistentVolumeClaim:
-          claimName: keep-client-bootstrap-peer-0
       - name: eth-keyfile
         configMap:
           name: keep-client-bootstrap-peer-0
           items:
             - key: eth-keyfile
               path: eth-keyfile
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: keep-client-bootstrap-peer-0
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Mi
+      initContainers:
+      - name: initcontainer-provision-keep-client
+        image: gcr.io/keep-dev-fe24/keep-client-initcontainer
+        env:
+          - name: KEEP_CLIENT_TYPE
+            value: bootstrap
+          - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: eth-account-passphrase
+                key: account-passphrase
+          - name: KEEP_DATA_DIR
+            value: /mnt/keep-client/data
+        volumeMounts:
+          - name: keep-client-bootstrap-peer-0-config
+            mountPath: /mnt/keep-client/config
+          - name: keep-client-bootstrap-peer-0-data
+            mountPath: /mnt/keep-client/data
+        command: ["node", "/tmp/provision-keep-client.js"]
