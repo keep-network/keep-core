@@ -1131,6 +1131,8 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 
 // RevealDisqualifiedMembersKeys reveals ephemeral private keys used to create an
 // ephemeral symmetric key with members whose shares needs to be reconstructed.
+// Those are members who provided valid shares in Phase 3 and qualified to QUAL set
+// but were either marked as inactive or disqualified later.
 // It returns a message containing a map of ephemeral private key for each member.
 //
 // See Phase 10 of the protocol specification.
@@ -1159,19 +1161,19 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys() (
 
 // membersForReconstruction returns all members whose shares needs to be
 // reconstructed. Specifically, returns all members from QUAL set disqualified
-// in later phases for any reason or marked as inactive in phase 8.
+// or marked as inactive in later phases, after QUAL set has been established.
 //
 // Once phase 5 completes, all group members should have the same view
 // on who is disqualified and who is inactive. All properly behaving group
 // members at that point belong to QUAL set.
 func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
-	resultMembers := make(map[group.MemberIndex]bool)
+	members := make(map[group.MemberIndex]bool)
 
 	// From disqualified members list filter those who provided valid shares in
 	// Phase 3 and are sharing the group private key.
 	for _, disqualifiedMemberID := range rm.group.DisqualifiedMemberIDs() {
 		if _, ok := rm.receivedQualifiedSharesS[disqualifiedMemberID]; ok {
-			resultMembers[disqualifiedMemberID] = true
+			members[disqualifiedMemberID] = true
 		}
 	}
 
@@ -1190,13 +1192,13 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 	for _, inactiveMemberID := range rm.group.InactiveMemberIDs() {
 		if _, ok := rm.receivedQualifiedSharesS[inactiveMemberID]; ok {
 			if _, ok := rm.receivedValidPeerPublicKeySharePoints[inactiveMemberID]; !ok {
-				resultMembers[inactiveMemberID] = true
+				members[inactiveMemberID] = true
 			}
 		}
 	}
 
 	result := make([]group.MemberIndex, 0)
-	for memberID := range resultMembers {
+	for memberID := range members {
 		result = append(result, memberID)
 	}
 
