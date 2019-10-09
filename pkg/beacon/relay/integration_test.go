@@ -9,6 +9,8 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/bls"
 
 	"github.com/keep-network/keep-core/pkg/altbn128"
@@ -110,6 +112,55 @@ func TestExecute_LessThanHonestThresholdMembersSigning(t *testing.T) {
 	entrytest.AssertSignerFailuresCount(t, signingResult, signingMembersCount)
 }
 
+// Success: honest threshold of the signing group members participate in
+// signing.
+//
+// In this scenario, one of the members doesn't send `MemberPublicKeySharePointsMessage`
+// thus they become inactive at the beginning of phase 8 during DKG. Despite of
+// this, BLS verification is successful because other members perform a
+// reconstruction of shares received from the inactive member.
+func TestExecute_HonestThresholdWithInactivityMembersSigning(t *testing.T) {
+	t.Parallel()
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		sharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
+		if ok && sharePointsMessage.SenderID() == group.MemberIndex(1) {
+			return nil
+		}
+
+		return msg
+	}
+
+	signingMembersCount := honestThreshold
+	dkgResult, signingResult := runInterceptedTest(
+		t,
+		groupSize,
+		honestThreshold,
+		signingMembersCount,
+		interceptor,
+	)
+
+	dkgtest.AssertDkgResultPublished(t, dkgResult)
+	dkgtest.AssertSamePublicKey(t, dkgResult)
+	entrytest.AssertEntryPublished(t, signingResult)
+	entrytest.AssertNoSignerFailures(t, signingResult)
+
+	groupPublicKey, err := getFirstGroupPublicKey(dkgResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signature, err := getSignature(signingResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entryToSign := entry.CombineToSign(previousEntry, seed)
+	if !bls.Verify(groupPublicKey, entryToSign, signature) {
+		t.Errorf("threshold signature failed BLS verification")
+	}
+}
+
 func runTest(t *testing.T, groupSize, honestThreshold, honestSignersCount int) (
 	*dkgtest.Result,
 	*entrytest.Result,
@@ -118,6 +169,23 @@ func runTest(t *testing.T, groupSize, honestThreshold, honestSignersCount int) (
 		return msg
 	}
 
+	return runInterceptedTest(
+		t,
+		groupSize,
+		honestThreshold,
+		honestSignersCount,
+		interceptor,
+	)
+}
+
+func runInterceptedTest(
+	t *testing.T,
+	groupSize, honestThreshold, honestSignersCount int,
+	interceptor func(msg net.TaggedMarshaler) net.TaggedMarshaler,
+) (
+	*dkgtest.Result,
+	*entrytest.Result,
+) {
 	dkgSeed := dkgtest.RandomSeed(t)
 	dkgResult, err := dkgtest.RunTest(groupSize, honestThreshold, dkgSeed, interceptor)
 	if err != nil {
