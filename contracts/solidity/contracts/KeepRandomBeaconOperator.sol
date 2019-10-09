@@ -696,13 +696,16 @@ contract KeepRandomBeaconOperator {
         // T_deadline (no submissions are accepted, entry timed out)
         uint256 deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
 
-        // T_remaining = T_deadline - T_received
-        uint256 remainingBlocks = deadlineBlock.sub(block.number);
-        
         // T_begin is the earliest block the result can be published in.
         // It takes relayEntryGenerationTime to generate a new entry, so it can be published
         // at block relayEntryGenerationTime + 1 the earliest.
         uint256 submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(1);
+
+        // Use submissionStartBlock block as entryReceivedBlock if entry submitted earlier than expected.
+        uint256 entryReceivedBlock = block.number <= submissionStartBlock ? submissionStartBlock:block.number;
+
+        // T_remaining = T_deadline - T_received
+        uint256 remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
 
         // T_deadline - T_begin
         uint256 submissionWindow = deadlineBlock.sub(submissionStartBlock);
