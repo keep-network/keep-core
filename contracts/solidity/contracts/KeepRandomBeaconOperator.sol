@@ -661,9 +661,11 @@ contract KeepRandomBeaconOperator {
      */
     function rewardsBreakdown() public view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-        (uint256 delayFactor, uint256 delayFactorInverse) = getDelayFactor();
-        uint256 delayPenalty = groupMemberBaseReward.mul(delayFactorInverse).div(decimals**2);
+        uint256 delayFactor = getDelayFactor();
         groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals**2);
+
+        // delay penalty = base reward * (1 - delay factor)
+        uint256 delayPenalty = groupMemberBaseReward.sub(groupMemberBaseReward.mul(delayFactor).div(decimals**2));
 
         // The submitter reward consists of:
         // The callback gas expenditure (reimbursed by the service contract)
@@ -681,7 +683,7 @@ contract KeepRandomBeaconOperator {
     /**
      * @dev Gets delay factor for rewards calculation.
      */
-    function getDelayFactor() internal view returns(uint256 delayFactor, uint256 delayFactorInverse) {
+    function getDelayFactor() internal view returns(uint256 delayFactor) {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
 
         // T_deadline (no submissions are accepted, entry timed out)
@@ -703,7 +705,6 @@ contract KeepRandomBeaconOperator {
 
         // delay factor = [ T_remaining / (T_deadline - T_begin)]^2
         delayFactor = (remainingBlocks.mul(decimals).div(submissionWindow))**2;
-        delayFactorInverse = uint256(1).mul(decimals**2).sub(delayFactor);
     }
 
     /**

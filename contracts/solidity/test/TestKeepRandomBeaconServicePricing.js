@@ -165,7 +165,6 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     // memberBaseReward: 5250000000000000 / 5 = 1050000000000000 wei
     // entryTimeout: 38 + 10 = 48
     // delayFactor: ((48 - 44) * 1e16 / (10 - 1)) ^ 2 = 19753086419753082469135802469136
-    // delayFactorInverse: 1 * 1e16 ^ 2 - 19753086419753082469135802469136 = 80246913580246917530864197530864
     // delayPenalty: 1050000000000000 * 80246913580246917530864197530864 / (1e16 ^ 2) = 842592592592592
     // groupMemberReward: 1050000000000000 * 19753086419753082469135802469136) / (1e16 ^ 2) = 207407407407407 wei
     // submitterExtraReward: 842592592592592 * 5 * 5 / 100 = 210648148148148 wei
@@ -198,11 +197,10 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
     let submissionWindow = deadlineBlock.sub(submissionStartBlock);
     let delayFactor = (remainingBlocks.mul(decimalPoints).div(submissionWindow)).pow(web3.utils.toBN(2));
-    let delayFactorInverse = decimalPoints.pow(web3.utils.toBN(2)).sub(delayFactor);
 
     let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
     let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
-    let expectedDelayPenalty = memberBaseReward.mul(delayFactorInverse).div(decimalPoints.pow(web3.utils.toBN(2)));
+    let expectedDelayPenalty = memberBaseReward.sub(memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2))));
     let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).mul(web3.utils.toBN(5)).div(web3.utils.toBN(100));
     let requestSubsidy = entryFee.groupProfitFee.sub(expectedGroupMemberReward.mul(groupSize)).sub(expectedSubmitterExtraReward);
 
@@ -243,10 +241,9 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
     let submissionWindow = deadlineBlock.sub(submissionStartBlock);
     let delayFactor = (remainingBlocks.mul(decimalPoints).div(submissionWindow)).pow(web3.utils.toBN(2));
-    let delayFactorInverse = decimalPoints.pow(web3.utils.toBN(2)).sub(delayFactor);
 
     let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
-    let expectedDelayPenalty = memberBaseReward.mul(delayFactorInverse).div(decimalPoints.pow(web3.utils.toBN(2)));
+    let expectedDelayPenalty = memberBaseReward.sub(memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2))));
     let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).mul(web3.utils.toBN(5)).div(web3.utils.toBN(100));
     let requestSubsidy = entryFee.groupProfitFee.sub(expectedSubmitterExtraReward);
 
