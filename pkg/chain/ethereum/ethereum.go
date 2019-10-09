@@ -135,6 +135,10 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 	return submittedTicketPromise
 }
 
+func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
+	return ec.keepRandomBeaconOperatorContract.SubmittedTicketsCount()
+}
+
 func (ec *ethereumChain) GetSelectedParticipants() (
 	[]chain.StakerAddress,
 	error,

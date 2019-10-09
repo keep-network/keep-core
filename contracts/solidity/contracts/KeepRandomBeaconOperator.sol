@@ -75,10 +75,10 @@ contract KeepRandomBeaconOperator {
     uint256 public minimumStake = 200000 * 1e18;
 
     // Timeout in blocks after the initial ticket submission is finished.
-    uint256 internal ticketInitialSubmissionTimeout = 4;
+    uint256 public ticketInitialSubmissionTimeout = 3;
 
     // Timeout in blocks after the reactive ticket submission is finished.
-    uint256 internal ticketReactiveSubmissionTimeout = 4;
+    uint256 public ticketReactiveSubmissionTimeout = 6;
 
     // Time in blocks after which the next group member is eligible
     // to submit the result.
@@ -129,10 +129,10 @@ contract KeepRandomBeaconOperator {
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
 
-    bool public groupSelectionInProgress;
+    bool internal groupSelectionInProgress;
 
-    uint256 public ticketSubmissionStartBlock;
-    uint256 public groupSelectionRelayEntry;
+    uint256 internal ticketSubmissionStartBlock;
+    uint256 internal groupSelectionRelayEntry;
     uint256[] internal tickets;
 
     struct SigningRequest {
@@ -316,8 +316,8 @@ contract KeepRandomBeaconOperator {
             tickets.push(ticketValue);
             proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
         } else {
-            // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-            stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
+            // TODO: should we slash instead of reverting?
+            revert("Invalid ticket");
         }
     }
 
@@ -326,6 +326,13 @@ contract KeepRandomBeaconOperator {
      */
     function orderedTickets() public view returns (uint256[] memory) {
         return UintArrayUtils.sort(tickets);
+    }
+
+    /**
+     * @dev Gets the number of submitted group candidate tickets so far.
+     */
+    function submittedTicketsCount() public view returns (uint256) {
+        return tickets.length;
     }
 
     /**
@@ -347,22 +354,6 @@ contract KeepRandomBeaconOperator {
         }
 
         return selected;
-    }
-
-    /**
-     * @dev Gets participants ordered by their lowest-valued ticket.
-     */
-    function orderedParticipants() public view returns (address[] memory) {
-
-        uint256[] memory ordered = orderedTickets();
-        address[] memory participants = new address[](ordered.length);
-
-        for (uint i = 0; i < ordered.length; i++) {
-            Proof memory proof = proofs[ordered[i]];
-            participants[i] = proof.sender;
-        }
-
-        return participants;
     }
 
     /**

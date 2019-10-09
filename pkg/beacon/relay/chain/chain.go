@@ -52,6 +52,9 @@ type GroupSelectionInterface interface {
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
 	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
+	// GetSubmittedTicketsCount gets the number of submitted group candidate
+	// tickets so far.
+	GetSubmittedTicketsCount() (*big.Int, error)
 	// GetSelectedParticipants returns `GroupSize` slice of addresses of
 	// candidates which have been selected to the currently assembling group.
 	GetSelectedParticipants() ([]StakerAddress, error)
