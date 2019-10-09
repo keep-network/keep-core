@@ -120,6 +120,10 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketP
 	return promise
 }
 
+func (c *localChain) GetSubmittedTicketsCount() (*big.Int, error) {
+	return big.NewInt(int64(len(c.tickets))), nil
+}
+
 func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, error) {
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
@@ -265,7 +269,7 @@ func ConnectWithKey(
 	minimumStake *big.Int,
 	operatorKey *ecdsa.PrivateKey,
 ) Chain {
-	bc, _ := blockCounter()
+	bc, _ := BlockCounter()
 
 	tokenSupply, naturalThreshold := calculateGroupSelectionParameters(
 		groupSize,
@@ -339,7 +343,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	bc, _ := blockCounter()
+	bc, _ := BlockCounter()
 	bc.WaitForBlockHeight(c.simulatedHeight)
 	currentBlock, err := bc.CurrentBlock()
 
