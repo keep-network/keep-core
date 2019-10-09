@@ -133,10 +133,10 @@ func TestRevealMisbehavedMembersShares(t *testing.T) {
 
 	for _, recoveredDisqualifiedShare := range recoveredDisqualifiedShares {
 		for _, disqualifiedMember := range disqualifiedMembers {
-			if recoveredDisqualifiedShare.disqualifiedMemberID == disqualifiedMember.ID {
-				expectedRecoveredDisqualifiedShares := &disqualifiedShares{
-					disqualifiedMemberID: disqualifiedMember.ID,
-					peerSharesS:          expectedDisqualifiedShares[disqualifiedMember.ID],
+			if recoveredDisqualifiedShare.misbehavedMemberID == disqualifiedMember.ID {
+				expectedRecoveredDisqualifiedShares := &misbehavedShares{
+					misbehavedMemberID: disqualifiedMember.ID,
+					peerSharesS:        expectedDisqualifiedShares[disqualifiedMember.ID],
 				}
 
 				if !reflect.DeepEqual(
@@ -514,8 +514,8 @@ func initializeReconstructingMembersGroup(
 // shares calculated by disqualified members for their peers and reveals them.
 func disqualifyMembers(
 	members []*ReconstructingMember,
-	disqualifiedMembersIDs []group.MemberIndex) []*disqualifiedShares {
-	allDisqualifiedShares := make([]*disqualifiedShares, len(disqualifiedMembersIDs))
+	disqualifiedMembersIDs []group.MemberIndex) []*misbehavedShares {
+	allDisqualifiedShares := make([]*misbehavedShares, len(disqualifiedMembersIDs))
 	for i, disqualifiedMemberID := range disqualifiedMembersIDs {
 		sharesReceivedFromDisqualifiedMember := make(map[group.MemberIndex]*big.Int,
 			len(members)-len(disqualifiedMembersIDs))
@@ -533,9 +533,9 @@ func disqualifyMembers(
 				}
 			}
 		}
-		allDisqualifiedShares[i] = &disqualifiedShares{
-			disqualifiedMemberID: disqualifiedMemberID,
-			peerSharesS:          sharesReceivedFromDisqualifiedMember,
+		allDisqualifiedShares[i] = &misbehavedShares{
+			misbehavedMemberID: disqualifiedMemberID,
+			peerSharesS:        sharesReceivedFromDisqualifiedMember,
 		}
 	}
 

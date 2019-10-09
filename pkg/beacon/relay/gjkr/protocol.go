@@ -1202,7 +1202,7 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 // members `m` in Phase 3 for other members `k`. The shares were encrypted
 // before broadcast, so ephemeral symmetric key needs to be recovered. This
 // requires messages containing ephemeral private key revealed by member `k`
-// used in communication with disqualified member `m`.
+// used in communication with misbehaved member `m`.
 //
 // See Phase 11 of the protocol specification.
 func (rm *ReconstructingMember) ReconstructMisbehavedIndividualKeys(
@@ -1238,8 +1238,8 @@ func (rm *ReconstructingMember) ReconstructMisbehavedIndividualKeys(
 // reconstruction of individual private keys is possible.
 func (rm *ReconstructingMember) revealMisbehavedMembersShares(
 	messages []*MisbehavedEphemeralKeysMessage,
-) ([]*disqualifiedShares, error) {
-	recoveredShares, err := rm.recoverDisqualifiedShares(messages)
+) ([]*misbehavedShares, error) {
+	recoveredShares, err := rm.recoverMisbehavedShares(messages)
 	if err != nil {
 		return nil, err
 	}
@@ -1247,7 +1247,7 @@ func (rm *ReconstructingMember) revealMisbehavedMembersShares(
 	// Add reconstructed member shares generated for the current member.
 	for _, memberID := range rm.revealedMembersForReconstruction {
 		for _, shares := range recoveredShares {
-			if shares.disqualifiedMemberID == memberID {
+			if shares.misbehavedMemberID == memberID {
 				if currentMemberShare, ok := rm.receivedQualifiedSharesS[memberID]; ok {
 					shares.peerSharesS[rm.ID] = currentMemberShare
 				}
@@ -1266,45 +1266,45 @@ func (rm *ReconstructingMember) revealMisbehavedMembersShares(
 // recover a symmetric key to decode the shares messages. It returns a slice
 // containing shares `s_mk` recovered for each member `m` whose ephemeral key
 // was revealed in provided MisbehavedEphemeralKeysMessage.
-func (rm *ReconstructingMember) recoverDisqualifiedShares(
+func (rm *ReconstructingMember) recoverMisbehavedShares(
 	messages []*MisbehavedEphemeralKeysMessage,
-) ([]*disqualifiedShares, error) {
-	revealedDisqualifiedShares := make([]*disqualifiedShares, 0)
+) ([]*misbehavedShares, error) {
+	revealedMisbehavedShares := make([]*misbehavedShares, 0)
 
-	// For disqualified member `m` add shares `s_mk` the member calculated for
+	// For misbehaved member `m` add shares `s_mk` the member calculated for
 	// other members `k` who revealed the ephemeral key.
 	addShare := func(
-		disqualifiedMemberID, revealingMemberID group.MemberIndex, // m, k
+		misbehavedMemberID, revealingMemberID group.MemberIndex, // m, k
 		shareS *big.Int, // s_mk
 	) {
-		// If a `disqualifiedShares` entry already exists in the slice for given
-		// disqualified member add the share.
-		for _, disqualifiedShares := range revealedDisqualifiedShares {
-			if disqualifiedShares.disqualifiedMemberID == disqualifiedMemberID {
-				disqualifiedShares.peerSharesS[revealingMemberID] = shareS
+		// If a `misbehavedShares` entry already exists in the slice for given
+		// misbehaved member add the share.
+		for _, misbehavedShares := range revealedMisbehavedShares {
+			if misbehavedShares.misbehavedMemberID == misbehavedMemberID {
+				misbehavedShares.peerSharesS[revealingMemberID] = shareS
 				return
 			}
 		}
 
-		// When a `disqualifiedShares` entry doesn't exist yet in the slice for given
-		// disqualified member initialize it with the share.
-		newDisqualifiedShares := &disqualifiedShares{
-			disqualifiedMemberID: disqualifiedMemberID,
-			peerSharesS:          make(map[group.MemberIndex]*big.Int),
+		// When a `misbehavedShares` entry doesn't exist yet in the slice for given
+		// misbehaved member initialize it with the share.
+		newMisbehavedShares := &misbehavedShares{
+			misbehavedMemberID: misbehavedMemberID,
+			peerSharesS:        make(map[group.MemberIndex]*big.Int),
 		}
-		newDisqualifiedShares.peerSharesS[revealingMemberID] = shareS
+		newMisbehavedShares.peerSharesS[revealingMemberID] = shareS
 
-		revealedDisqualifiedShares = append(
-			revealedDisqualifiedShares,
-			newDisqualifiedShares,
+		revealedMisbehavedShares = append(
+			revealedMisbehavedShares,
+			newMisbehavedShares,
 		)
 	}
 
 	for _, message := range messages {
 		revealingMemberID := message.senderID
 
-		for disqualifiedMemberID, revealedPrivateKey := range message.privateKeys {
-			if rm.ID == disqualifiedMemberID {
+		for misbehavedMemberID, revealedPrivateKey := range message.privateKeys {
+			if rm.ID == misbehavedMemberID {
 				// Mark the revealing member as disqualified immediately,
 				// as each member consider itself as a honest participant.
 				// Continue as there is no sense to recover own shares.
@@ -1313,22 +1313,22 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			}
 
 			// After phase 9, all group members should have the same view on
-			// who is disqualified. Revealing key of non-disqualified members
+			// who is disqualified. Revealing key of non-misbehaved members
 			// is forbidden and leads to disqualifying the revealing member.
 			// This situation should be already handled by message validation
 			// so we just skip and continue.
-			if rm.group.IsOperating(disqualifiedMemberID) {
+			if rm.group.IsOperating(misbehavedMemberID) {
 				continue
 			}
 
 			revealingMemberPublicKey := findPublicKey(
 				rm.evidenceLog,
 				revealingMemberID,
-				disqualifiedMemberID,
+				misbehavedMemberID,
 			)
 			if revealingMemberPublicKey == nil {
 				// Ephemeral public key of the revealing member, generated for
-				// the sake of communication with the disqualified member should
+				// the sake of communication with the misbehaved member should
 				// be present in the evidence log. The key is not there only if
 				// it was not sent by the revealing member in the first phase of
 				// the protocol and such behaviour results in marking that
@@ -1341,7 +1341,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				return nil, fmt.Errorf(
 					"could not find public key sent by [%v] to [%v]",
 					revealingMemberID,
-					disqualifiedMemberID,
+					misbehavedMemberID,
 				)
 			}
 
@@ -1357,10 +1357,10 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			}
 
 			// Recover symmetric key based on ephemeral public key message sent
-			// by the disqualified QUAL member.
+			// by the disqualified or inactive QUAL member.
 			//
 			// If the message is not present in the evidence log it means the
-			// member is neither QUAL nor disqualified.
+			// member is neither QUAL nor DQ/IA.
 			// That member was marked as inactive in phase 2 because they did
 			// not broadcast ephemeral public key message.
 			//
@@ -1373,30 +1373,30 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			// group members.
 			//
 			// Revealing private key generated for the sake of communication
-			// with a member out of the disqualified QUAL members group is
+			// with a member out of the DQ/IA QUAL members group is
 			// considered as misbehavior and leads to disqualification of
 			// the revealing member. This was already checked during the
 			// validation of the message and disqualification - if needed - was
 			// performed there, so in the case when we can not find ephemeral
 			// public key, we just skip and continue.
-			disqualifiedMemberPublicKey := findPublicKey(
+			misbehavedMemberPublicKey := findPublicKey(
 				rm.evidenceLog,
-				disqualifiedMemberID,
+				misbehavedMemberID,
 				revealingMemberID,
 			)
-			if disqualifiedMemberPublicKey == nil {
+			if misbehavedMemberPublicKey == nil {
 				logger.Warningf(
 					"[member:%v] member [%v] disqualified because could not "+
-						"recover symmetric key; disqualified member [%v] is "+
+						"recover symmetric key; misbehaved member [%v] is "+
 						"already marked as inactive or disqualified in phase 2",
 					rm.ID,
 					revealingMemberID,
-					disqualifiedMemberID,
+					misbehavedMemberID,
 				)
 				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
 			}
-			recoveredSymmetricKey := revealedPrivateKey.Ecdh(disqualifiedMemberPublicKey)
+			recoveredSymmetricKey := revealedPrivateKey.Ecdh(misbehavedMemberPublicKey)
 
 			// Get from the evidence log peer shares message sent by the member
 			// for which the private key has been revealed.
@@ -1406,8 +1406,8 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			// communication only with inactive and disqualified members of QUAL
 			// set, this situation is a misbehaviour. Member which has been
 			// disqualified in phase 4 does not belong to QUAL set.
-			disqualifiedMemberSharesMessage := rm.evidenceLog.peerSharesMessage(disqualifiedMemberID)
-			if disqualifiedMemberSharesMessage == nil {
+			misbehavedMemberSharesMessage := rm.evidenceLog.peerSharesMessage(misbehavedMemberID)
+			if misbehavedMemberSharesMessage == nil {
 				logger.Warningf(
 					"[member:%v] member [%v] disqualified because of revealing "+
 						"private key of a member which did not provide shares in phase 3",
@@ -1424,7 +1424,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 			// has been revealed as disqualified earlier, in phase 5.
 			// Not reporting misbehaviour is also a protocol violation, so we
 			// disqualify the revealing member.
-			shareS, shareT, err := disqualifiedMemberSharesMessage.decryptShares(
+			shareS, shareT, err := misbehavedMemberSharesMessage.decryptShares(
 				revealingMemberID,
 				recoveredSymmetricKey,
 			)
@@ -1435,7 +1435,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 						"shares can not be decrypted",
 					rm.ID,
 					revealingMemberID,
-					disqualifiedMemberID,
+					misbehavedMemberID,
 				)
 				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 				continue
@@ -1443,10 +1443,10 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 
 			if rm.areSharesValidAgainstCommitments(
 				shareS, shareT,
-				rm.receivedPeerCommitments[disqualifiedMemberID],
+				rm.receivedPeerCommitments[misbehavedMemberID],
 				revealingMemberID,
 			) {
-				addShare(disqualifiedMemberID, revealingMemberID, shareS)
+				addShare(misbehavedMemberID, revealingMemberID, shareS)
 			} else {
 				// Similar situation as for shares that can not be decrypted.
 				// The revealing member knew about the fact shares are
@@ -1461,13 +1461,13 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 						"shares are inconsistent",
 					rm.ID,
 					revealingMemberID,
-					disqualifiedMemberID,
+					misbehavedMemberID,
 				)
 				rm.group.MarkMemberAsDisqualified(revealingMemberID)
 			}
 		}
 	}
-	return revealedDisqualifiedShares, nil
+	return revealedMisbehavedShares, nil
 }
 
 // isValidMisbehavedEphemeralKeysMessage validates a given
@@ -1514,37 +1514,35 @@ func (rm *ReconstructingMember) isValidMisbehavedEphemeralKeysMessage(
 	return true
 }
 
-// disqualifiedShares contains shares `s_mk` calculated by the disqualified
-// member `m` for peer members `k`. The shares were revealed due to disqualification
-// of the member `m` from the protocol execution.
-type disqualifiedShares struct {
-	disqualifiedMemberID group.MemberIndex              // m
-	peerSharesS          map[group.MemberIndex]*big.Int // <k, s_mk>
+// misbehavedShares contains shares `s_mk` calculated by the misbehaved
+// member `m` for peer members `k`. The shares were revealed due to
+// disqualification or inactivity of the member `m` from the protocol execution.
+type misbehavedShares struct {
+	misbehavedMemberID group.MemberIndex              // m
+	peerSharesS        map[group.MemberIndex]*big.Int // <k, s_mk>
 }
 
-// reconstructIndividualPrivateKeys reconstructs disqualified members' individual
-// private keys `z_m` from provided revealed shares calculated by disqualified
+// reconstructIndividualPrivateKeys reconstructs misbehaved members' individual
+// private keys `z_m` from provided revealed shares calculated by misbehaved
 // members for peer members.
 //
-// Function need to be executed for qualified members that presented valid shares
-// and commitments and were approved for Phase 6 but were disqualified on public
-// key shares validation stage (Phase 9).
+// Function need to be executed for QUAL members marked as disqualified or inactive.
 //
-// It stores a map of reconstructed individual private keys for each disqualified
+// It stores a map of reconstructed individual private keys for each misbehaved
 // member in a current member's reconstructedIndividualPrivateKeys field:
-// <disqualifiedMemberID, privateKeyShare>
+// <misbehavedMemberID, privateKeyShare>
 func (rm *ReconstructingMember) reconstructIndividualPrivateKeys(
-	revealedDisqualifiedShares []*disqualifiedShares,
+	revealedMisbehavedShares []*misbehavedShares,
 ) {
-	rm.reconstructedIndividualPrivateKeys = make(map[group.MemberIndex]*big.Int, len(revealedDisqualifiedShares))
+	rm.reconstructedIndividualPrivateKeys = make(map[group.MemberIndex]*big.Int, len(revealedMisbehavedShares))
 
-	for _, ds := range revealedDisqualifiedShares { // for each disqualified member
+	for _, ds := range revealedMisbehavedShares { // for each misbehaved member
 		// Reconstruct individual private key `z_m = Σ (s_mk * a_mk) mod q` where:
-		// - `z_m` is disqualified member's individual private key
-		// - `s_mk` is a share calculated by disqualified member `m` for peer member `k`
+		// - `z_m` is misbehaved member's individual private key
+		// - `s_mk` is a share calculated by misbehaved member `m` for peer member `k`
 		// - `a_mk` is lagrange coefficient for peer member k (see below)
 		individualPrivateKey := big.NewInt(0)
-		// Get IDs of all peer members from disqualified shares.
+		// Get IDs of all peer members from misbehaved shares.
 		var peerIDs []group.MemberIndex
 		for k := range ds.peerSharesS {
 			peerIDs = append(peerIDs, k)
@@ -1565,7 +1563,7 @@ func (rm *ReconstructingMember) reconstructIndividualPrivateKeys(
 			)
 		}
 		// <m, z_m>
-		rm.reconstructedIndividualPrivateKeys[ds.disqualifiedMemberID] =
+		rm.reconstructedIndividualPrivateKeys[ds.misbehavedMemberID] =
 			individualPrivateKey
 	}
 }
@@ -1645,9 +1643,9 @@ func pow(id group.MemberIndex, y int) *big.Int {
 // 2. Peer members' individual public keys - for members who passed a public key
 //    share points validation in Phase 8 and accusations resolution in Phase 9 and
 //    are still active group members.
-// 3. Disqualified members' individual public keys - for members who were disqualified
-//    in Phase 9 and theirs individual private and public keys were reconstructed
-//    in Phase 11.
+// 3. Misbehaved members' individual public keys - for QUAL members who were
+//    marked as disqualified or inactive and theirs individual private and
+//    public keys were reconstructed in Phase 11.
 //
 // See Phase 12 of the protocol specification.
 func (rm *CombiningMember) CombineGroupPublicKey() {
@@ -1659,7 +1657,7 @@ func (rm *CombiningMember) CombineGroupPublicKey() {
 		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
 	}
 
-	// Add reconstructed disqualified members' individual public keys `G * z_m`.
+	// Add reconstructed misbehaved members' individual public keys `G * z_m`.
 	for _, peerPublicKey := range rm.reconstructedIndividualPublicKeys {
 		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
 
