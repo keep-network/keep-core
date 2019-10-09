@@ -24,7 +24,7 @@ metadata:
     app: keep-client
     type: standard-peer
 spec:
-  replicas: 5
+  replicas: 4
   selector:
     matchLabels:
       app: keep-client
@@ -38,6 +38,13 @@ spec:
       resources:
         requests:
           storage: 512Mi
+  - metadata:
+      name: keep-client-standard-peer-config
+    spec:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 5Mi
   template:
     metadata:
       labels:
@@ -62,13 +69,6 @@ spec:
             mountPath: /mnt/keep-client/config
           - name: keep-client-standard-peer-data
             mountPath: /mnt/keep-client/data
-      volumes:
-      - name: keep-client-standard-peer-config
-        persistentVolumeClaim:
-          claimName: keep-client-standard-peer-config
-      - name: keep-client-standard-peer-data
-        persistentVolumeClaim:
-          claimName: keep-client-standard-peer-data
         command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "start"]
       initContainers:
       - name: initcontainer-provision-keep-client
@@ -87,16 +87,5 @@ spec:
           - name: keep-client-standard-peer-config
             mountPath: /mnt/keep-client/config
         command: ["node", "/tmp/provision-keep-client.js"]
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: keep-client-standard-peer-config
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Mi
 
 
