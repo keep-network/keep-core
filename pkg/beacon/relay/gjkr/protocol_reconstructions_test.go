@@ -50,7 +50,7 @@ func TestRevealMisbehavedMembersKeys(t *testing.T) {
 	}
 }
 
-func TestRevealDisqualifiedShares(t *testing.T) {
+func TestRevealMisbehavedMembersShares(t *testing.T) {
 	dishonestThreshold := 2
 	groupSize := 6
 
@@ -107,7 +107,7 @@ func TestRevealDisqualifiedShares(t *testing.T) {
 	}
 
 	// TEST
-	recoveredDisqualifiedShares, err := member1.revealDisqualifiedShares(misbehavedEphemeralKeysMessages)
+	recoveredDisqualifiedShares, err := member1.revealMisbehavedMembersShares(misbehavedEphemeralKeysMessages)
 	if err != nil {
 		t.Fatal(err)
 	}

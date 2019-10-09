@@ -1222,21 +1222,21 @@ func (rm *ReconstructingMember) ReconstructMisbehavedIndividualKeys(
 		}
 	}
 
-	revealedDisqualifiedShares, err := rm.revealDisqualifiedShares(messages)
+	revealedMisbehavedMembersShares, err := rm.revealMisbehavedMembersShares(messages)
 	if err != nil {
-		return fmt.Errorf("revealing disqualified shares failed [%v]", err)
+		return fmt.Errorf("revealing misbehaved shares failed [%v]", err)
 	}
-	rm.reconstructIndividualPrivateKeys(revealedDisqualifiedShares) // z_m
-	rm.reconstructIndividualPublicKeys()                            // y_m
+	rm.reconstructIndividualPrivateKeys(revealedMisbehavedMembersShares) // z_m
+	rm.reconstructIndividualPublicKeys()                                 // y_m
 	return nil
 }
 
-// Reveal shares calculated by members disqualified in previous phases.
-// First, perform shares recovery based on received MisbehavedEphemeralKeysMessage.
-// Then, add disqualified member shares generated for the current member.
-// In result, a complete slice of shares is returned and reconstruction
-// of individual private keys is possible.
-func (rm *ReconstructingMember) revealDisqualifiedShares(
+// Reveal shares calculated by QUAL members disqualified or marked as inactive
+// in previous phases. First, perform shares recovery based on received
+// MisbehavedEphemeralKeysMessage. Then, add misbehaved member shares generated
+// for the current member. In result, a complete slice of shares is returned and
+// reconstruction of individual private keys is possible.
+func (rm *ReconstructingMember) revealMisbehavedMembersShares(
 	messages []*MisbehavedEphemeralKeysMessage,
 ) ([]*disqualifiedShares, error) {
 	recoveredShares, err := rm.recoverDisqualifiedShares(messages)
