@@ -111,8 +111,8 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
   });
 
   it("should not trigger group selection while one is in progress", async function() {
-    let groupSelectionStartBlock = await operatorContract.ticketSubmissionStartBlock();
-    let groupSelectionRelayEntry = await operatorContract.groupSelectionRelayEntry();
+    let groupSelectionStartBlock = await operatorContract.getTicketSubmissionStartBlock();
+    let groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry();
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
@@ -147,8 +147,8 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
   });
 
   it("should not trigger new group selection when there are not enough funds in the DKG fee pool", async function() {
-    let groupSelectionStartBlock = await operatorContract.ticketSubmissionStartBlock();
-    let groupSelectionRelayEntry = await operatorContract.groupSelectionRelayEntry();
+    let groupSelectionStartBlock = await operatorContract.getTicketSubmissionStartBlock();
+    let groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry();
 
     // Calculate the block time when the group selection should be finished
     let timeoutChallenge = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
@@ -161,8 +161,8 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
-    assert.isTrue((await operatorContract.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
-    assert.isTrue((await operatorContract.groupSelectionRelayEntry()).eq(groupSelectionRelayEntry), "Random beacon value for the current group selection should not change.");
+    assert.isTrue((await operatorContract.getTicketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
+    assert.isTrue((await operatorContract.getGroupSelectionRelayEntry()).eq(groupSelectionRelayEntry), "Random beacon value for the current group selection should not change.");
   });
 
   it("should trigger new group selection when the last one is over", async function() {
