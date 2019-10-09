@@ -188,7 +188,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
     assert.isFalse((await operatorContract.getTicketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
-    assert.isTrue((await operatorContract.getGroupSelectionRelayEntry()).eq(bls.nextNextGroupSignature), "Random beacon value for the current group selection should be updated.");
+    assert.isTrue((await operatorContract.getGroupSelectionRelayEntry()).eq(bls.nextGroupSignature), "Random beacon value for the current group selection should be updated.");
   });
 
 });
