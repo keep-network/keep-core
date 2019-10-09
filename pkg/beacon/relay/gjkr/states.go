@@ -544,7 +544,7 @@ type keyRevealState struct {
 	channel net.BroadcastChannel
 	member  *RevealingMember // TODO: Rename to KeyRevealingMember
 
-	phaseMessages []*DisqualifiedEphemeralKeysMessage
+	phaseMessages []*MisbehavedEphemeralKeysMessage
 }
 
 func (rs *keyRevealState) DelayBlocks() uint64 {
@@ -570,7 +570,7 @@ func (rs *keyRevealState) Initiate() error {
 
 func (rs *keyRevealState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
-	case *DisqualifiedEphemeralKeysMessage:
+	case *MisbehavedEphemeralKeysMessage:
 		if !group.IsMessageFromSelf(rs.member.ID, phaseMessage) &&
 			group.IsSenderAccepted(rs.member, phaseMessage) {
 			rs.phaseMessages = append(rs.phaseMessages, phaseMessage)
@@ -601,7 +601,7 @@ type reconstructionState struct {
 	channel net.BroadcastChannel
 	member  *ReconstructingMember
 
-	previousPhaseMessages []*DisqualifiedEphemeralKeysMessage
+	previousPhaseMessages []*MisbehavedEphemeralKeysMessage
 }
 
 func (rs *reconstructionState) DelayBlocks() uint64 {

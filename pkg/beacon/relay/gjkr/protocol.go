@@ -1137,7 +1137,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 //
 // See Phase 10 of the protocol specification.
 func (rm *RevealingMember) RevealMisbehavedMembersKeys() (
-	*DisqualifiedEphemeralKeysMessage,
+	*MisbehavedEphemeralKeysMessage,
 	error,
 ) {
 	privateKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
@@ -1155,7 +1155,7 @@ func (rm *RevealingMember) RevealMisbehavedMembersKeys() (
 		privateKeys[memberID] = ephemeralKeyPair.PrivateKey
 	}
 
-	return &DisqualifiedEphemeralKeysMessage{
+	return &MisbehavedEphemeralKeysMessage{
 		senderID:    rm.ID,
 		privateKeys: privateKeys,
 	}, nil
@@ -1206,15 +1206,15 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 //
 // See Phase 11 of the protocol specification.
 func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
-	messages []*DisqualifiedEphemeralKeysMessage,
+	messages []*MisbehavedEphemeralKeysMessage,
 ) error {
 	for _, message := range messages {
 		// Validate received message. If message is invalid, sender should
 		// be considered as misbehaving and marked as disqualified.
-		if !rm.isValidDisqualifiedEphemeralKeysMessage(message) {
+		if !rm.isValidMisbehavedEphemeralKeysMessage(message) {
 			logger.Warningf(
 				"[member:%v] member [%v] disqualified because of "+
-					"sending invalid disqualified ephemeral keys message",
+					"sending invalid misbehaved ephemeral keys message",
 				rm.ID,
 				message.senderID,
 			)
@@ -1232,12 +1232,12 @@ func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
 }
 
 // Reveal shares calculated by members disqualified in previous phases.
-// First, perform shares recovery based on received DisqualifiedEphemeralKeysMessage.
+// First, perform shares recovery based on received MisbehavedEphemeralKeysMessage.
 // Then, add disqualified member shares generated for the current member.
 // In result, a complete slice of shares is returned and reconstruction
 // of individual private keys is possible.
 func (rm *ReconstructingMember) revealDisqualifiedShares(
-	messages []*DisqualifiedEphemeralKeysMessage,
+	messages []*MisbehavedEphemeralKeysMessage,
 ) ([]*disqualifiedShares, error) {
 	recoveredShares, err := rm.recoverDisqualifiedShares(messages)
 	if err != nil {
@@ -1259,14 +1259,15 @@ func (rm *ReconstructingMember) revealDisqualifiedShares(
 	return recoveredShares, nil
 }
 
-// Recover shares `s_mk` calculated by members `m` disqualified in Phase 9.
+// Recover shares `s_mk` calculated by members `m` being in QUAL set and marked
+// as disqualified or inactive.
 // The shares were evaluated in Phase 3 by `m` for other members `k` and
 // broadcasted in an encrypted fashion, hence reconstructing member has to
 // recover a symmetric key to decode the shares messages. It returns a slice
 // containing shares `s_mk` recovered for each member `m` whose ephemeral key
-// was revealed in provided DisqualifiedMembersKeysMessage.
+// was revealed in provided MisbehavedEphemeralKeysMessage.
 func (rm *ReconstructingMember) recoverDisqualifiedShares(
-	messages []*DisqualifiedEphemeralKeysMessage,
+	messages []*MisbehavedEphemeralKeysMessage,
 ) ([]*disqualifiedShares, error) {
 	revealedDisqualifiedShares := make([]*disqualifiedShares, 0)
 
@@ -1333,7 +1334,7 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 				// the protocol and such behaviour results in marking that
 				// member as disqualified in the second phase. As a result, we
 				// no longer accept messages from that member and it is not
-				// possible we will receive a DisqualifiedEphemeralKeysMessage
+				// possible we will receive a MisbehavedEphemeralKeysMessage
 				// from an inactive member in this phase. If the public key
 				// could not be found we consider this a fatal error.
 				// Such a situation should never happen.
@@ -1469,12 +1470,12 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 	return revealedDisqualifiedShares, nil
 }
 
-// isValidDisqualifiedEphemeralKeysMessage validates a given
-// DisqualifiedEphemeralKeysMessage. Message is considered valid if it reveals
+// isValidMisbehavedEphemeralKeysMessage validates a given
+// MisbehavedEphemeralKeysMessage. Message is considered valid if it reveals
 // all private keys generated for the sake of communication with all
 // QUAL (sharing) members whose shares needs to be reconstructed.
-func (rm *ReconstructingMember) isValidDisqualifiedEphemeralKeysMessage(
-	message *DisqualifiedEphemeralKeysMessage,
+func (rm *ReconstructingMember) isValidMisbehavedEphemeralKeysMessage(
+	message *MisbehavedEphemeralKeysMessage,
 ) bool {
 	for _, memberForReconstruction := range rm.revealedMembersForReconstruction {
 		isKeyForMemberRevealed := false

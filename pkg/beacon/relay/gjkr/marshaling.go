@@ -253,37 +253,37 @@ func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
-// Type returns a string describing DisqualifiedEphemeralKeysMessage type for
+// Type returns a string describing MisbehavedEphemeralKeysMessage type for
 // marshalling purposes.
-func (dekm *DisqualifiedEphemeralKeysMessage) Type() string {
-	return "gjkr/disqualified_ephemeral_keys_message"
+func (mekm *MisbehavedEphemeralKeysMessage) Type() string {
+	return "gjkr/misbehaved_ephemeral_keys_message"
 }
 
-// Marshal converts this DisqualifiedEphemeralKeysMessage to a byte array
+// Marshal converts this MisbehavedEphemeralKeysMessage to a byte array
 // suitable for network communication.
-func (dekm *DisqualifiedEphemeralKeysMessage) Marshal() ([]byte, error) {
-	return (&pb.DisqualifiedEphemeralKeys{
-		SenderID:    uint32(dekm.senderID),
-		PrivateKeys: marshalPrivateKeyMap(dekm.privateKeys),
+func (mekm *MisbehavedEphemeralKeysMessage) Marshal() ([]byte, error) {
+	return (&pb.MisbehavedEphemeralKeys{
+		SenderID:    uint32(mekm.senderID),
+		PrivateKeys: marshalPrivateKeyMap(mekm.privateKeys),
 	}).Marshal()
 }
 
 // Unmarshal converts a byte array produced by Marshal to
-// a DisqualifiedEphemeralKeysMessage.
-func (dekm *DisqualifiedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
-	pbMsg := pb.DisqualifiedEphemeralKeys{}
+// a MisbehavedEphemeralKeysMessage.
+func (mekm *MisbehavedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
+	pbMsg := pb.MisbehavedEphemeralKeys{}
 	if err := pbMsg.Unmarshal(bytes); err != nil {
 		return err
 	}
 
-	dekm.senderID = group.MemberIndex(pbMsg.SenderID)
+	mekm.senderID = group.MemberIndex(pbMsg.SenderID)
 
 	privateKeys, err := unmarshalPrivateKeyMap(pbMsg.PrivateKeys)
 	if err != nil {
 		return err
 	}
 
-	dekm.privateKeys = privateKeys
+	mekm.privateKeys = privateKeys
 
 	return nil
 }

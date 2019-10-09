@@ -86,6 +86,6 @@ func initializeChannel(channel net.BroadcastChannel) {
 		return &PointsAccusationsMessage{}
 	})
 	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &DisqualifiedEphemeralKeysMessage{}
+		return &MisbehavedEphemeralKeysMessage{}
 	})
 }
