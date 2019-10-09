@@ -75,10 +75,10 @@ contract KeepRandomBeaconOperator {
     uint256 public minimumStake = 200000 * 1e18;
 
     // Timeout in blocks after the initial ticket submission is finished.
-    uint256 public ticketInitialSubmissionTimeout = 4;
+    uint256 internal ticketInitialSubmissionTimeout = 4;
 
     // Timeout in blocks after the reactive ticket submission is finished.
-    uint256 public ticketReactiveSubmissionTimeout = 4;
+    uint256 internal ticketReactiveSubmissionTimeout = 4;
 
     // Time in blocks after which the next group member is eligible
     // to submit the result.
