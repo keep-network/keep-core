@@ -1142,7 +1142,9 @@ func (rm *RevealingMember) RevealDisqualifiedMembersKeys() (
 ) {
 	privateKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 
-	for _, memberID := range rm.membersForReconstruction() {
+	rm.revealedMembersForReconstruction = rm.membersForReconstruction()
+
+	for _, memberID := range rm.revealedMembersForReconstruction {
 		ephemeralKeyPair, ok := rm.ephemeralKeyPairs[memberID]
 		if !ok {
 			return nil, fmt.Errorf(
@@ -1178,22 +1180,10 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 	}
 
 	// From inactive members list filter those who provided valid shares in
-	// Phase 3 and are sharing the group private key but didn't send
-	// MemberPublicKeySharePointsMessage at all.
-	//
-	// Functionally this corresponds to all members from QUAL set marked as
-	// inactive in phase 8. We need to take only these inactive members because
-	// their input is used in the shared key but they failed to provide public
-	// key share points. Because of that, their shares should be reconstructed.
-	//
-	// All members marked as inactive after phase 8 could be ignored as there is
-	// no need to reconstruct their shares because they have published public
-	// key share points already and they're presumably valid.
+	// Phase 3 and are sharing the group private key.
 	for _, inactiveMemberID := range rm.group.InactiveMemberIDs() {
 		if _, ok := rm.receivedQualifiedSharesS[inactiveMemberID]; ok {
-			if _, ok := rm.receivedValidPeerPublicKeySharePoints[inactiveMemberID]; !ok {
-				members[inactiveMemberID] = true
-			}
+			members[inactiveMemberID] = true
 		}
 	}
 
@@ -1216,18 +1206,10 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 func (rm *ReconstructingMember) ReconstructDisqualifiedIndividualKeys(
 	messages []*DisqualifiedEphemeralKeysMessage,
 ) error {
-	// Prepare list of expected members whose shares needs to be reconstructed,
-	// before messages processing. Validated messages should be checked against
-	// the state from the beginning of phase 11.
-	membersForReconstruction := rm.membersForReconstruction()
-
 	for _, message := range messages {
 		// Validate received message. If message is invalid, sender should
 		// be considered as misbehaving and marked as disqualified.
-		if !rm.isValidDisqualifiedEphemeralKeysMessage(
-			message,
-			membersForReconstruction,
-		) {
+		if !rm.isValidDisqualifiedEphemeralKeysMessage(message) {
 			logger.Warningf(
 				"[member:%v] member [%v] disqualified because of "+
 					"sending invalid disqualified ephemeral keys message",
@@ -1261,7 +1243,7 @@ func (rm *ReconstructingMember) revealDisqualifiedShares(
 	}
 
 	// Add reconstructed member shares generated for the current member.
-	for _, memberID := range rm.membersForReconstruction() {
+	for _, memberID := range rm.revealedMembersForReconstruction {
 		for _, shares := range recoveredShares {
 			if shares.disqualifiedMemberID == memberID {
 				if currentMemberShare, ok := rm.receivedQualifiedSharesS[memberID]; ok {
@@ -1491,9 +1473,8 @@ func (rm *ReconstructingMember) recoverDisqualifiedShares(
 // QUAL (sharing) members whose shares needs to be reconstructed.
 func (rm *ReconstructingMember) isValidDisqualifiedEphemeralKeysMessage(
 	message *DisqualifiedEphemeralKeysMessage,
-	membersForReconstruction []group.MemberIndex,
 ) bool {
-	for _, memberForReconstruction := range membersForReconstruction {
+	for _, memberForReconstruction := range rm.revealedMembersForReconstruction {
 		isKeyForMemberRevealed := false
 		for memberID := range message.privateKeys {
 			if memberID == memberForReconstruction {

@@ -152,6 +152,12 @@ type PointsJustifyingMember struct {
 // Executes Phase 10 of the protocol.
 type RevealingMember struct {
 	*PointsJustifyingMember
+
+	// Slice of revealed members whose shares needs to be reconstructed.
+	// This is actually a snapshot taken at the beginning of phase 10.
+	// It must be stored in member's state because the same slice must be
+	// used during shares reconstruction process in phase 11.
+	revealedMembersForReconstruction []group.MemberIndex
 }
 
 // ReconstructingMember represents one member in a threshold sharing group who
@@ -277,8 +283,11 @@ func (sm *SharingMember) InitializePointsJustification() *PointsJustifyingMember
 }
 
 // InitializeRevealing returns a member to perform next protocol operations.
-func (sm *PointsJustifyingMember) InitializeRevealing() *RevealingMember {
-	return &RevealingMember{sm}
+func (pjm *PointsJustifyingMember) InitializeRevealing() *RevealingMember {
+	return &RevealingMember{
+		PointsJustifyingMember:           pjm,
+		revealedMembersForReconstruction: make([]group.MemberIndex, 0),
+	}
 }
 
 // InitializeReconstruction returns a member to perform next protocol operations.
