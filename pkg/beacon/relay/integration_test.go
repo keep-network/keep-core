@@ -27,7 +27,7 @@ var previousEntry, _ = new(big.Int).SetString("132847218974128941824981812", 10)
 var seed, _ = new(big.Int).SetString("123789127389127398172398123", 10)
 
 // Success: all members of the signing group participate in signing.
-func TestExecute_AllMembersSigning(t *testing.T) {
+func TestAllMembersSigning(t *testing.T) {
 	t.Parallel()
 
 	signingMembersCount := groupSize
@@ -61,7 +61,7 @@ func TestExecute_AllMembersSigning(t *testing.T) {
 
 // Success: honest threshold of the signing group members participate in
 // signing.
-func TestExecute_HonestThresholdMembersSigning(t *testing.T) {
+func TestHonestThresholdMembersSigning(t *testing.T) {
 	t.Parallel()
 
 	signingMembersCount := honestThreshold
@@ -95,7 +95,7 @@ func TestExecute_HonestThresholdMembersSigning(t *testing.T) {
 
 // Failure: Less than honest threshold signing group members participate in
 // signing.
-func TestExecute_LessThanHonestThresholdMembersSigning(t *testing.T) {
+func TestLessThanHonestThresholdMembersSigning(t *testing.T) {
 	t.Parallel()
 
 	signingMembersCount := honestThreshold - 1
@@ -116,10 +116,15 @@ func TestExecute_LessThanHonestThresholdMembersSigning(t *testing.T) {
 // signing.
 //
 // In this scenario, one of the members doesn't send `MemberPublicKeySharePointsMessage`
-// thus they become inactive at the beginning of phase 8 during DKG. Despite of
-// this, BLS verification is successful because other members perform a
-// reconstruction of shares received from the inactive member.
-func TestExecute_HonestThresholdWithInactivityMembersSigning(t *testing.T) {
+// thus they become inactive at the beginning of phase 8 during DKG.
+// This is problematic because that member provided valid shares in phase 3
+// and all group members include that shares in their private key shares.
+// Since that member did not provide public key share points, shares from that
+// member are not included in the information we use to calculate the public key
+// of the group. If we do not reconstruct and include shares of that member,
+// we may end up with a situation when a signature does not match the
+// group public key.
+func TestInactiveMemberPublicKeySharesReconstructionAndSigning(t *testing.T) {
 	t.Parallel()
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
@@ -132,7 +137,7 @@ func TestExecute_HonestThresholdWithInactivityMembersSigning(t *testing.T) {
 	}
 
 	signingMembersCount := honestThreshold
-	dkgResult, signingResult := runInterceptedTest(
+	dkgResult, signingResult := runTestWithInterceptor(
 		t,
 		groupSize,
 		honestThreshold,
@@ -169,7 +174,7 @@ func runTest(t *testing.T, groupSize, honestThreshold, honestSignersCount int) (
 		return msg
 	}
 
-	return runInterceptedTest(
+	return runTestWithInterceptor(
 		t,
 		groupSize,
 		honestThreshold,
@@ -178,7 +183,7 @@ func runTest(t *testing.T, groupSize, honestThreshold, honestSignersCount int) (
 	)
 }
 
-func runInterceptedTest(
+func runTestWithInterceptor(
 	t *testing.T,
 	groupSize, honestThreshold, honestSignersCount int,
 	interceptor func(msg net.TaggedMarshaler) net.TaggedMarshaler,
