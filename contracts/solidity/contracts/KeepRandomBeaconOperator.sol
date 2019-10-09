@@ -682,6 +682,7 @@ contract KeepRandomBeaconOperator {
 
     /**
      * @dev Gets delay factor for rewards calculation.
+     * @return Integer representing floating-point number with 16 decimals places.
      */
     function getDelayFactor() internal view returns(uint256 delayFactor) {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
