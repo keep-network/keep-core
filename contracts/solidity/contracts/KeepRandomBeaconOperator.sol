@@ -457,15 +457,24 @@ contract KeepRandomBeaconOperator {
 
         groupContract.addGroup(groupPubKey);
 
+        reimburseDkgSubmitter();
+        cleanup();
+        emit DkgResultPublishedEvent(groupPubKey);
+
+        groupSelectionInProgress = false;
+    }
+
+    /**
+     * @dev Compare the reimbursement fee calculated based on the current transaction gas
+     * price and the current price feed estimate with the DKG reimbursement fee calculated
+     * and paid at the moment when the DKG was requested. If there is any surplus, it will
+     * be returned to the DKG fee pool of the service contract which triggered the DKG.
+     */
+    function reimburseDkgSubmitter() internal {
         uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
         uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
         address payable magpie = stakingContract.magpieOf(msg.sender);
 
-        // Comparing the reimbursement fee calculated based on the current
-        // transaction gas price and the current price feed estimate with the DKG
-        // reimbursement fee calculated and paid at the moment when the DKG was requested.
-        // If there is any surplus, it will be returned to the DKG fee pool of the service
-        // contract which triggered the DKG.
         if (reimbursementFee < dkgSubmitterReimbursementFee) {
             uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
             dkgSubmitterReimbursementFee = 0;
@@ -479,11 +488,6 @@ contract KeepRandomBeaconOperator {
             dkgSubmitterReimbursementFee = 0;
             magpie.transfer(reimbursementFee);
         }
- 
-        cleanup();
-        emit DkgResultPublishedEvent(groupPubKey);
-
-        groupSelectionInProgress = false;
     }
 
     /**
