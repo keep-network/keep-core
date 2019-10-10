@@ -52,13 +52,13 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     uint256 internal _dkgContributionMargin;
 
     // Every relay request payment includes DKG contribution that is added to
-    // the DKG fee pool, once the pool amount reaches DKG cost estimate the relay
-    // entry will trigger the creation of a new group. Expressed in wei.
+    // the DKG fee pool, once the pool value reaches the required minimum, a new
+    // relay entry will trigger the creation of a new group. Expressed in wei.
     uint256 internal _dkgFeePool;
 
     // Rewards not paid out to the operators are sent to request subsidy pool to
-    // subsidize new requests: 1% is returned to the requester's surplus address.
-    // Expressed in wei.
+    // subsidize new requests: 1% of the subsidy pool is returned to the requester's
+    // surplus address. Expressed in wei.
     uint256 internal _requestSubsidyFeePool;
 
     uint256 internal _previousEntry;
