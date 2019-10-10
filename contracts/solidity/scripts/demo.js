@@ -35,8 +35,11 @@ module.exports = async function() {
   for(let i = 0; i < 5; i++) {
     let operator = accounts[i]
 
-    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator)).substr(2), 'hex');
-    let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
+    let signature = web3.utils.toBN(await web3.eth.sign(web3.utils.soliditySha3(owner), operator)).add(web3.utils.toBN(27));
+    let delegation = Buffer.concat(
+      [Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(signature.toBuffer(), 'hex')
+    ]);
 
     staked = await token.approveAndCall(
       tokenStaking.address, 
