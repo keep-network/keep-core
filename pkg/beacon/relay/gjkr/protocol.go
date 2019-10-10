@@ -1355,7 +1355,7 @@ func (rm *ReconstructingMember) recoverMisbehavedShares(
 			// by the disqualified or inactive QUAL member.
 			//
 			// If the message is not present in the evidence log it means the
-			// member is neither QUAL nor DQ/IA.
+			// member is not in QUAL.
 			// That member was marked as inactive in phase 2 because they did
 			// not broadcast ephemeral public key message.
 			//
@@ -1467,7 +1467,7 @@ func (rm *ReconstructingMember) recoverMisbehavedShares(
 
 // isValidMisbehavedEphemeralKeysMessage validates a given
 // MisbehavedEphemeralKeysMessage. Message is considered valid if it reveals
-// all private keys generated for the sake of communication with all
+// all private keys generated for the sake of communication with all IA/DQ
 // QUAL (sharing) members whose shares needs to be reconstructed.
 func (rm *ReconstructingMember) isValidMisbehavedEphemeralKeysMessage(
 	message *MisbehavedEphemeralKeysMessage,
@@ -1484,7 +1484,7 @@ func (rm *ReconstructingMember) isValidMisbehavedEphemeralKeysMessage(
 		if !isKeyForMemberRevealed {
 			logger.Warningf(
 				"[member:%v] member [%v] sent message which does not "+
-					"reveal private key of member for reconstruction [%v]",
+					"reveal private key of inactive/disqualified QUAL member [%v]",
 				rm.ID,
 				message.senderID,
 				memberForReconstruction,
