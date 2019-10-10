@@ -1,20 +1,4 @@
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: keep-client-standard-peer
-  labels:
-    app: keep-client
-    type: standard-peer
-spec:
-  ports:
-  - port: 3919
-    targetPort: 3919
-    name: tcp-3919
-  selector:
-    app: keep-client
-    type: standard-peer
----
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
