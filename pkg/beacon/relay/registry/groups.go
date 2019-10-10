@@ -132,6 +132,15 @@ func (g *Groups) LoadExistingGroups() {
 			groupPublicKey := groupKeyToString(
 				membership.Signer.GroupPublicKeyBytes(),
 			)
+
+			logger.Infof(
+				"Group [%v] member [%v] private key share [%v] group bytes [%v]",
+				groupPublicKey,
+				membership.Signer.MemberID(),
+				membership.Signer.PrivateKeyShare(),
+				membership.Signer.GroupPublicKeyBytes(),
+			)
+
 			g.myGroups[groupPublicKey] = append(
 				g.myGroups[groupPublicKey],
 				membership,

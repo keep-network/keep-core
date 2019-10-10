@@ -33,6 +33,10 @@ func NewThresholdSigner(
 	}
 }
 
+func (ts *ThresholdSigner) PrivateKeyShare() *big.Int {
+	return ts.groupPrivateKeyShare
+}
+
 // MemberID returns GJKR MemberID represented by this ThresholdSigner.
 func (ts *ThresholdSigner) MemberID() group.MemberIndex {
 	return ts.memberIndex
