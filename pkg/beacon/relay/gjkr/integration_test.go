@@ -216,9 +216,9 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
-		if ok && (disqualifiedKeysMessage.SenderID() == group.MemberIndex(3) ||
-			disqualifiedKeysMessage.SenderID() == group.MemberIndex(5)) {
+		misbehavedKeysMessage, ok := msg.(*gjkr.MisbehavedEphemeralKeysMessage)
+		if ok && (misbehavedKeysMessage.SenderID() == group.MemberIndex(3) ||
+			misbehavedKeysMessage.SenderID() == group.MemberIndex(5)) {
 			return nil
 		}
 
@@ -941,10 +941,10 @@ func TestExecute_DQ_member2_notRevealsDisqualifiedQualMemberKey_phase11(t *testi
 		// of communication with disqualified member 1 and member 1
 		// is in QUAL set so it has been disqualified after phase 5.
 		// For this reason, member 2 should be also disqualified.
-		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
-		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(2) {
-			disqualifiedKeysMessage.RemovePrivateKey(group.MemberIndex(1))
-			return disqualifiedKeysMessage
+		misbehavedKeysMessage, ok := msg.(*gjkr.MisbehavedEphemeralKeysMessage)
+		if ok && misbehavedKeysMessage.SenderID() == group.MemberIndex(2) {
+			misbehavedKeysMessage.RemovePrivateKey(group.MemberIndex(1))
+			return misbehavedKeysMessage
 		}
 
 		return msg
@@ -980,14 +980,14 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
-		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(2) {
+		misbehavedKeysMessage, ok := msg.(*gjkr.MisbehavedEphemeralKeysMessage)
+		if ok && misbehavedKeysMessage.SenderID() == group.MemberIndex(2) {
 			randomKeyPair, _ := ephemeral.GenerateKeyPair()
-			disqualifiedKeysMessage.SetPrivateKey(
+			misbehavedKeysMessage.SetPrivateKey(
 				group.MemberIndex(3),
 				randomKeyPair.PrivateKey,
 			)
-			return disqualifiedKeysMessage
+			return misbehavedKeysMessage
 		}
 
 		return msg
@@ -1037,14 +1037,14 @@ func TestExecute_DQ_member5_revealsWrongPrivateKey_phase11(t *testing.T) {
 		// communication with disqualified member 4. Instead of revealing
 		// private key matching previously announced public key, member 5
 		// reveals some other key. As a result, member 5 should be disqualified.
-		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
-		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(5) {
+		misbehavedKeysMessage, ok := msg.(*gjkr.MisbehavedEphemeralKeysMessage)
+		if ok && misbehavedKeysMessage.SenderID() == group.MemberIndex(5) {
 			randomKeyPair, _ := ephemeral.GenerateKeyPair()
-			disqualifiedKeysMessage.SetPrivateKey(
+			misbehavedKeysMessage.SetPrivateKey(
 				group.MemberIndex(4),
 				randomKeyPair.PrivateKey,
 			)
-			return disqualifiedKeysMessage
+			return misbehavedKeysMessage
 		}
 
 		return msg
@@ -1088,16 +1088,16 @@ func TestExecute_DQ_member2_revealsInactiveNonQualMemberKey_phase11(t *testing.T
 	}
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
+		misbehavedKeysMessage, ok := msg.(*gjkr.MisbehavedEphemeralKeysMessage)
 		// Modify default man-in-the-middle behavior: reveals private key
 		// generated for the sake of communication with member marked as
 		// inactive before phase 5
-		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(2) {
+		if ok && misbehavedKeysMessage.SenderID() == group.MemberIndex(2) {
 			privateKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			privateKeys[group.MemberIndex(1)] =
 				manInTheMiddle.ephemeralKeyPairs[group.MemberIndex(1)].PrivateKey
-			disqualifiedKeysMessage.SetPrivateKeys(privateKeys)
-			return disqualifiedKeysMessage
+			misbehavedKeysMessage.SetPrivateKeys(privateKeys)
+			return misbehavedKeysMessage
 		}
 
 		manInTheMiddle.interceptCommunication(msg)
@@ -1164,15 +1164,15 @@ func TestExecute_DQ_member3_revealsDisqualifiedNonQualMemberKey_phase11(t *testi
 			return accusationsMessage
 		}
 
-		disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
+		misbehavedKeysMessage, ok := msg.(*gjkr.MisbehavedEphemeralKeysMessage)
 		// Modify default man-in-the-middle behavior: revealing member reveals
 		// private key generated for the sake of communication with member 4.
-		if ok && disqualifiedKeysMessage.SenderID() == group.MemberIndex(3) {
+		if ok && misbehavedKeysMessage.SenderID() == group.MemberIndex(3) {
 			privateKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 			privateKeys[group.MemberIndex(4)] =
 				manInTheMiddle.ephemeralKeyPairs[group.MemberIndex(4)].PrivateKey
-			disqualifiedKeysMessage.SetPrivateKeys(privateKeys)
-			return disqualifiedKeysMessage
+			misbehavedKeysMessage.SetPrivateKeys(privateKeys)
+			return misbehavedKeysMessage
 		}
 
 		manInTheMiddle.interceptCommunication(msg)
@@ -1415,8 +1415,8 @@ func (mitm *manInTheMiddle) interceptCommunication(
 		pointsAccusationsMessage.SetAccusedMemberKeys(accusedMembersKeys)
 		return pointsAccusationsMessage
 	}
-	disqualifiedKeysMessage, ok := msg.(*gjkr.DisqualifiedEphemeralKeysMessage)
-	if ok && disqualifiedKeysMessage.SenderID() == mitm.senderIndex {
+	misbehavedKeysMessage, ok := msg.(*gjkr.MisbehavedEphemeralKeysMessage)
+	if ok && misbehavedKeysMessage.SenderID() == mitm.senderIndex {
 		return nil
 	}
 

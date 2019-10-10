@@ -43,7 +43,7 @@ message PointsAccusations {
     map<uint32, bytes> accusedMembersKeys = 2;
 }
 
-message DisqualifiedEphemeralKeys {
+message MisbehavedEphemeralKeys {
     uint32 senderID = 1;
     map<uint32, bytes> privateKeys = 2;
 }
