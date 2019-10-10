@@ -60,12 +60,30 @@ func SignAndSubmit(
 }
 
 // CombineToSign takes the previous relay entry value and the current
-// requests's seed and combines it into a slice of bytes that is going to be
-// signed by the selected group and as a result, will form a new relay entry
-// value.
+// requests's seed and:
+// - pad them with zeros if their byte length is less than 32 bytes. These
+//   values are used later on-chain as `uint256` values and are combined using
+//   `abi.encodePacked` function during signature verification. This function
+//   pads `uint256` type values with zeros, if they byte length is less than 32.
+//   If such values are not also padding off-chain, the on-chain verification
+//   will fail because of the padding difference.
+// - combines it into a slice of bytes that is going to be signed by the
+//   selected group and as a result, will form a new relay entry value.
 func CombineToSign(previousEntry *big.Int, seed *big.Int) []byte {
+	previousEntryBytes := toPaddedBytes(previousEntry, 32)
+	seedBytes := toPaddedBytes(seed, 32)
+
 	combinedEntryToSign := make([]byte, 0)
-	combinedEntryToSign = append(combinedEntryToSign, previousEntry.Bytes()...)
-	combinedEntryToSign = append(combinedEntryToSign, seed.Bytes()...)
+	combinedEntryToSign = append(combinedEntryToSign, previousEntryBytes...)
+	combinedEntryToSign = append(combinedEntryToSign, seedBytes...)
 	return combinedEntryToSign
+}
+
+func toPaddedBytes(value *big.Int, minimumByteLength int) []byte {
+	valueBytes := value.Bytes()
+	valuePaddingBytes := minimumByteLength - len(valueBytes)
+	for i := 0; i < valuePaddingBytes; i++ {
+		valueBytes = append([]byte{0x00}, valueBytes...)
+	}
+	return valueBytes
 }
