@@ -1142,9 +1142,9 @@ func (rm *RevealingMember) RevealMisbehavedMembersKeys() (
 ) {
 	privateKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
 
-	rm.revealedMembersForReconstruction = rm.membersForReconstruction()
+	rm.expectedMembersForReconstruction = rm.membersForReconstruction()
 
-	for _, memberID := range rm.revealedMembersForReconstruction {
+	for _, memberID := range rm.expectedMembersForReconstruction {
 		ephemeralKeyPair, ok := rm.ephemeralKeyPairs[memberID]
 		if !ok {
 			return nil, fmt.Errorf(
@@ -1240,7 +1240,7 @@ func (rm *ReconstructingMember) revealMisbehavedMembersShares(
 	}
 
 	// Add reconstructed member shares generated for the current member.
-	for _, memberID := range rm.revealedMembersForReconstruction {
+	for _, memberID := range rm.expectedMembersForReconstruction {
 		for _, shares := range recoveredShares {
 			if shares.misbehavedMemberID == memberID {
 				if currentMemberShare, ok := rm.receivedQualifiedSharesS[memberID]; ok {
@@ -1472,7 +1472,7 @@ func (rm *ReconstructingMember) recoverMisbehavedShares(
 func (rm *ReconstructingMember) isValidMisbehavedEphemeralKeysMessage(
 	message *MisbehavedEphemeralKeysMessage,
 ) bool {
-	for _, memberForReconstruction := range rm.revealedMembersForReconstruction {
+	for _, memberForReconstruction := range rm.expectedMembersForReconstruction {
 		isKeyForMemberRevealed := false
 		for memberID := range message.privateKeys {
 			if memberID == memberForReconstruction {

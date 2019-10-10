@@ -96,12 +96,12 @@ func TestRevealMisbehavedMembersShares(t *testing.T) {
 		delete(expectedDisqualifiedShares[clearedMember.ID], invalidRevealingMember.ID)
 	}
 
-	// Fill `revealedMembersForReconstruction` slice stored in `member1` state
+	// Fill `expectedMembersForReconstruction` slice stored in `member1` state
 	// with disqualified members ids. Without this, `member1` will not be able
 	// to add their own shares received from disqualified members.
 	for _, member := range disqualifiedMembers {
-		member1.revealedMembersForReconstruction = append(
-			member1.revealedMembersForReconstruction,
+		member1.expectedMembersForReconstruction = append(
+			member1.expectedMembersForReconstruction,
 			member.ID,
 		)
 	}
