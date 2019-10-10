@@ -1,17 +1,18 @@
 package entry
 
 import (
+	"fmt"
 	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
-
-import "github.com/ipfs/go-log"
 
 var logger = log.Logger("keep-entry")
 
@@ -69,21 +70,31 @@ func SignAndSubmit(
 //   will fail because of the padding difference.
 // - combines it into a slice of bytes that is going to be signed by the
 //   selected group and as a result, will form a new relay entry value.
-func CombineToSign(previousEntry *big.Int, seed *big.Int) []byte {
-	previousEntryBytes := toPaddedBytes(previousEntry, 32)
-	seedBytes := toPaddedBytes(seed, 32)
+//
+// TODO: move this function to relay chain interface
+func CombineToSign(previousEntry *big.Int, seed *big.Int) ([]byte, error) {
+	previousEntryBytes := previousEntry.Bytes()
+	seedBytes := seed.Bytes()
+
+	if len(previousEntryBytes) > 32 {
+		return nil, fmt.Errorf("entry can not be longer than 32 bytes")
+	}
+	if len(seedBytes) > 32 {
+		return nil, fmt.Errorf("seed can not be longer than 32 bytes")
+	}
+
+	previousEntryPadded, err := byteutils.LeftPadTo32Bytes(previousEntryBytes)
+	if err != nil {
+		return nil, err
+	}
+	seedPadded, err := byteutils.LeftPadTo32Bytes(seedBytes)
+	if err != nil {
+		return nil, err
+	}
 
 	combinedEntryToSign := make([]byte, 0)
-	combinedEntryToSign = append(combinedEntryToSign, previousEntryBytes...)
-	combinedEntryToSign = append(combinedEntryToSign, seedBytes...)
-	return combinedEntryToSign
-}
+	combinedEntryToSign = append(combinedEntryToSign, previousEntryPadded...)
+	combinedEntryToSign = append(combinedEntryToSign, seedPadded...)
 
-func toPaddedBytes(value *big.Int, minimumByteLength int) []byte {
-	valueBytes := value.Bytes()
-	valuePaddingBytes := minimumByteLength - len(valueBytes)
-	for i := 0; i < valuePaddingBytes; i++ {
-		valueBytes = append([]byte{0x00}, valueBytes...)
-	}
-	return valueBytes
+	return combinedEntryToSign, nil
 }
