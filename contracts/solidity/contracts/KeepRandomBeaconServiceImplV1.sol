@@ -39,7 +39,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     // The price feed estimate is used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use both values to
     // defend against malicious miner-submitters who can manipulate transaction
-    // gas price.
+    // gas price. Expressed in wei.
     uint256 internal _priceFeedEstimate;
 
     // Fluctuation margin to cover the immediate rise in gas price.
@@ -53,11 +53,12 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     // Every relay request payment includes DKG contribution that is added to
     // the DKG fee pool, once the pool amount reaches DKG cost estimate the relay
-    // entry will trigger the creation of a new group.
+    // entry will trigger the creation of a new group. Expressed in wei.
     uint256 internal _dkgFeePool;
 
     // Rewards not paid out to the operators are sent to request subsidy pool to
     // subsidize new requests: 1% is returned to the requester's surplus address.
+    // Expressed in wei.
     uint256 internal _requestSubsidyFeePool;
 
     uint256 internal _previousEntry;
@@ -377,6 +378,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     /**
      * @dev Get the entry fee breakdown in wei for relay entry request.
+     * Entry verification fee returned contains safety margin for gas price fluctuations.
      */
     function entryFeeBreakdown() public view returns(
         uint256 entryVerificationFee,
@@ -385,7 +387,12 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     ) {
         uint256 entryVerificationGas;
 
-        // Use most expensive operator contract for estimated entry verification gas value and group profit fee.
+        // Select the most expensive entry verification from all the operator contracts
+        // and the highest group profit fee from all the operator contracts. We do not
+        // know what is going to be the gas price at the moment of submitting an entry,
+        // thus we can't calculate at this point which contract is the most expensive
+        // based on the entry verification gas and group profit fee. Hence, we need to
+        // select maximum of both those values separately.
         for (uint i = 0; i < _operatorContracts.length; i++) {
             OperatorContract operator = OperatorContract(_operatorContracts[i]);
 
