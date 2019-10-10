@@ -21,16 +21,6 @@ type Config struct {
 	Storage  Storage
 }
 
-type node struct {
-	Port                  int
-	MyPreferredOutboundIP string
-}
-
-type bootstrap struct {
-	URLs []string
-	Seed int
-}
-
 // Storage stores meta-info about keeping data on disk
 type Storage struct {
 	DataDir string
@@ -68,14 +58,6 @@ func ReadConfig(filePath string) (*Config, error) {
 
 	if config.LibP2P.Port == 0 {
 		return nil, fmt.Errorf("missing value for port; see node section in config file or use --port flag")
-	}
-
-	if config.LibP2P.Seed == 0 && len(config.LibP2P.Peers) == 0 {
-		return nil, fmt.Errorf("either supply a valid bootstrap seed or valid bootstrap URLs")
-	}
-
-	if config.LibP2P.Seed != 0 && len(config.LibP2P.Peers) > 0 {
-		return nil, fmt.Errorf("non-bootstrap node should have bootstrap URLs and a seed of 0")
 	}
 
 	if config.Storage.DataDir == "" {

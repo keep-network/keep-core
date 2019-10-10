@@ -12,6 +12,7 @@ import "./cryptography/BLS.sol";
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
     function fundRequestSubsidyFeePool() payable external;
+    function fundDkgFeePool() payable external;
 }
 
 /**
@@ -49,6 +50,19 @@ contract KeepRandomBeaconOperator {
 
     KeepRandomBeaconOperatorGroups public groupContract;
 
+    // Each signing group member reward in wei.
+    uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
+
+    // The price feed estimate is used to calculate the gas price for reimbursement
+    // next to the actual gas price from the transaction. We use both values to
+    // defend against malicious miner-submitters who can manipulate transaction
+    // gas price.
+    uint256 public priceFeedEstimate = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
+
+    // Fluctuation margin to cover the immediate rise in gas price.
+    // Expressed in percentage.
+    uint256 public fluctuationMargin = 50; // 50%
+
     // Size of a group in the threshold relay.
     uint256 public groupSize = 5;
 
@@ -61,14 +75,10 @@ contract KeepRandomBeaconOperator {
     uint256 public minimumStake = 200000 * 1e18;
 
     // Timeout in blocks after the initial ticket submission is finished.
-    uint256 public ticketInitialSubmissionTimeout = 4;
+    uint256 public ticketInitialSubmissionTimeout = 3;
 
     // Timeout in blocks after the reactive ticket submission is finished.
-    uint256 public ticketReactiveSubmissionTimeout = 4;
-
-    // Timeout in blocks after the period where tickets can be challenged is
-    // finished.
-    uint256 public ticketChallengeTimeout = 4;
+    uint256 public ticketReactiveSubmissionTimeout = 6;
 
     // Time in blocks after which the next group member is eligible
     // to submit the result.
@@ -78,24 +88,35 @@ contract KeepRandomBeaconOperator {
     // by clients.
     uint256 public timeDKG = 7*(3+1);
 
+    // Time in blocks it takes off-chain cluster to generate a new relay entry
+    // and be ready to submit it to the chain.
+    uint256 public relayEntryGenerationTime = (3+1);
+
     // Timeout in blocks for a relay entry to appear on the chain. Blocks are
     // counted from the moment relay request occur.
     //
     // Timeout is never shorter than the time needed by clients to generate
     // relay entry and the time it takes for the last group member to become
     // eligible to submit the result plus at least one block to submit it.
-    uint256 public relayEntryTimeout = 24;
+    uint256 public relayEntryTimeout = relayEntryGenerationTime.add(groupSize.mul(resultPublicationBlockStep));
 
     // Gas required to verify BLS signature and produce successful relay
-    // entry. Excludes callback and dkg gas. TODO: Update once alt_bn128
-    // gas costs reduction is implemented.
+    // entry. Excludes callback and DKG gas.
+    // TODO: Update once alt_bn128 gas costs reduction is implemented.
+    // TODO: Update if we change group size.
     uint256 public entryVerificationGasEstimate = 1240000;
 
     // Gas required to submit DKG result.
+    // TODO: Update if we change group size.
     uint256 public dkgGasEstimate = 2260000;
 
     // Reimbursement for the submitter of the DKG result.
-    uint256 public dkgSubmitterReimbursement;
+    // This value is set when a new DKG request comes to the operator contract.
+    // It contains a full payment for DKG multiplied by the fluctuation margin.
+    // When submitting DKG result, the submitter is reimbursed with the actual cost
+    // and some part of the fee stored in this field may be returned to the service
+    // contract.
+    uint256 public dkgSubmitterReimbursementFee;
 
     struct Proof {
         address sender;
@@ -103,19 +124,20 @@ contract KeepRandomBeaconOperator {
         uint256 virtualStakerIndex;
     }
 
-    mapping(uint256 => Proof) public proofs;
+    mapping(uint256 => Proof) internal proofs;
 
-    bool public groupSelectionInProgress;
+    // Service contract that triggered current group selection.
+    ServiceContract internal groupSelectionStarterContract;
 
-    uint256 public ticketSubmissionStartBlock;
-    uint256 public groupSelectionRelayEntry;
-    uint256[] public tickets;
-    bytes[] public submissions;
+    bool internal groupSelectionInProgress;
+
+    uint256 internal ticketSubmissionStartBlock;
+    uint256 internal groupSelectionRelayEntry;
+    uint256[] internal tickets;
 
     struct SigningRequest {
         uint256 relayRequestId;
-        uint256 payment;
-        uint256 entryVerificationFee;
+        uint256 entryVerificationAndProfitFee;
         uint256 groupIndex;
         uint256 previousEntry;
         uint256 seed;
@@ -136,8 +158,9 @@ contract KeepRandomBeaconOperator {
      * there are no groups on the operator contract.
      */
     function genesis() public payable {
-        require(msg.value >= tx.gasprice.mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
         require(numberOfGroups() == 0, "There can be no groups.");
+        // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
+        groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
         startGroupSelection(_genesisGroupSeed, msg.value);
     }
 
@@ -157,7 +180,7 @@ contract KeepRandomBeaconOperator {
         uint256[] memory selected = selectedTickets();
         require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
         require(proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
-        uint T_init = ticketSubmissionStartBlock + ticketChallengeTimeout + timeDKG;
+        uint T_init = ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout + timeDKG;
         require(block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
         _;
     }
@@ -174,12 +197,12 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Reverts if ticket challenge period is not over.
+     * @dev Reverts if ticket submission period is not over.
      */
-    modifier whenTicketChallengeIsOver() {
+    modifier whenTicketSubmissionIsOver() {
         require(
-            block.number >= ticketSubmissionStartBlock + ticketChallengeTimeout,
-            "Ticket submission challenge period must be over."
+            block.number >= ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout,
+            "Ticket submission submission period must be over."
         );
         _;
     }
@@ -214,29 +237,61 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
+     * @dev Set the gas price in wei for calculating reimbursements.
+     * @param _priceFeedEstimate is the gas price for calculating reimbursements.
+     */
+    function setPriceFeedEstimate(uint256 _priceFeedEstimate) public onlyOwner {
+        priceFeedEstimate = _priceFeedEstimate;
+    }
+
+    /**
+     * @dev Adds a safety margin for gas price fluctuations to the current gas price.
+     * The gas price for DKG or relay entry is set when the request is processed
+     * but the result submission transaction will be sent later. We add a safety
+     * margin that should be sufficient for getting requests processed within a
+     * a deadline under all circumstances.
+     * @param gasPrice Gas price in wei.
+     */
+    function gasPriceWithFluctuationMargin(uint256 gasPrice) internal view returns (uint256) {
+        return gasPrice.add(gasPrice.mul(fluctuationMargin).div(100));
+    }
+
+    /**
      * @dev Triggers the selection process of a new candidate group.
      * @param _newEntry New random beacon value that stakers will use to
      * generate their tickets.
      */
     function createGroup(uint256 _newEntry) public payable onlyServiceContract {
+        groupSelectionStarterContract = ServiceContract(msg.sender);
         startGroupSelection(_newEntry, msg.value);
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
+        require(_payment >= gasPriceWithFluctuationMargin(priceFeedEstimate).mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
+
         // dkgTimeout is the time after key generation protocol is expected to
         // be complete plus the expected time to submit the result.
         uint256 dkgTimeout = ticketSubmissionStartBlock +
-            ticketChallengeTimeout +
+            ticketReactiveSubmissionTimeout +
             timeDKG +
             groupSize * resultPublicationBlockStep;
 
         require(!groupSelectionInProgress || block.number > dkgTimeout, "Group selection is in progress.");
+
+        // If previous group selection failed and there is reimbursement left
+        // return it to the DKG fee pool.
+        if (dkgSubmitterReimbursementFee > 0) {
+            uint256 surplus = dkgSubmitterReimbursementFee;
+            dkgSubmitterReimbursementFee = 0;
+            ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
+        }
+
         cleanup();
         ticketSubmissionStartBlock = block.number;
         groupSelectionRelayEntry = _newEntry;
         groupSelectionInProgress = true;
         emit GroupSelectionStarted(_newEntry);
-        dkgSubmitterReimbursement = _payment;
+        dkgSubmitterReimbursementFee = _payment;
     }
 
     /**
@@ -257,12 +312,12 @@ contract KeepRandomBeaconOperator {
         }
 
         // Invalid tickets are rejected and their senders penalized.
-        if (!cheapCheck(msg.sender, stakerValue, virtualStakerIndex)) {
-            // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-            stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
-        } else {
+        if (isTicketValid(msg.sender, ticketValue, stakerValue, virtualStakerIndex)) {
             tickets.push(ticketValue);
             proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+        } else {
+            // TODO: should we slash instead of reverting?
+            revert("Invalid ticket");
         }
     }
 
@@ -274,9 +329,16 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
+     * @dev Gets the number of submitted group candidate tickets so far.
+     */
+    function submittedTicketsCount() public view returns (uint256) {
+        return tickets.length;
+    }
+
+    /**
      * @dev Gets selected tickets in ascending order.
      */
-    function selectedTickets() public view whenTicketChallengeIsOver returns (uint256[] memory) {
+    function selectedTickets() public view whenTicketSubmissionIsOver returns (uint256[] memory) {
 
         uint256[] memory ordered = orderedTickets();
 
@@ -295,25 +357,9 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets participants ordered by their lowest-valued ticket.
-     */
-    function orderedParticipants() public view returns (address[] memory) {
-
-        uint256[] memory ordered = orderedTickets();
-        address[] memory participants = new address[](ordered.length);
-
-        for (uint i = 0; i < ordered.length; i++) {
-            Proof memory proof = proofs[ordered[i]];
-            participants[i] = proof.sender;
-        }
-
-        return participants;
-    }
-
-    /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
-    function selectedParticipants() public view whenTicketChallengeIsOver returns (address[] memory) {
+    function selectedParticipants() public view whenTicketSubmissionIsOver returns (address[] memory) {
 
         uint256[] memory ordered = orderedTickets();
 
@@ -333,33 +379,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets ticket proof.
-     */
-    function getTicketProof(uint256 ticketValue) public view returns (address sender, uint256 stakerValue, uint256 virtualStakerIndex) {
-        return (
-            proofs[ticketValue].sender,
-            proofs[ticketValue].stakerValue,
-            proofs[ticketValue].virtualStakerIndex
-        );
-    }
-
-    /**
-     * @dev Performs surface-level validation of the ticket.
-     * @param staker Address of the staker.
-     * @param stakerValue Staker-specific value. Currently uint representation of staker address.
-     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
-     */
-    function cheapCheck(
-        address staker,
-        uint256 stakerValue,
-        uint256 virtualStakerIndex
-    ) public view returns(bool) {
-        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight(staker);
-        bool isStakerValueValid = uint256(staker) == stakerValue;
-        return isVirtualStakerIndexValid && isStakerValueValid;
-    }
-
-    /**
      * @dev Performs full verification of the ticket.
      * @param staker Address of the staker.
      * @param ticketValue Result of a pseudorandom function with input values of
@@ -367,15 +386,17 @@ contract KeepRandomBeaconOperator {
      * @param stakerValue Staker-specific value. Currently uint representation of staker address.
      * @param virtualStakerIndex Number within a range of 1 to staker's weight.
      */
-    function costlyCheck(
+    function isTicketValid(
         address staker,
         uint256 ticketValue,
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public view returns(bool) {
-        bool passedCheapCheck = cheapCheck(staker, stakerValue, virtualStakerIndex);
-        uint256 expected = uint256(keccak256(abi.encodePacked(groupSelectionRelayEntry, stakerValue, virtualStakerIndex)));
-        return passedCheapCheck && ticketValue == expected;
+        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight(staker);
+        bool isStakerValueValid = uint256(staker) == stakerValue;
+        bool isTicketValueValid = uint256(keccak256(abi.encodePacked(groupSelectionRelayEntry, stakerValue, virtualStakerIndex))) == ticketValue;
+
+        return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
     }
 
     /**
@@ -436,27 +457,37 @@ contract KeepRandomBeaconOperator {
 
         groupContract.addGroup(groupPubKey);
 
-        uint256 dkgCost = dkgGasEstimate.mul(tx.gasprice);
-        uint256 surplus = 0;
-        address payable magpie = stakingContract.magpieOf(msg.sender);
-
-        if (dkgCost < dkgSubmitterReimbursement) {
-            surplus = dkgSubmitterReimbursement.sub(dkgCost);
-            dkgSubmitterReimbursement = 0;
-            // Reimburse submitter with actual DKG cost.
-            magpie.transfer(dkgCost);
-            // TODO: Return surplus to the DKG fee pool (split between pools on all service contracts)?.
-        } else {
-            // If submitter used higher gas price reimburse only dkgSubmitterReimbursement max.
-            uint256 reward = dkgSubmitterReimbursement;
-            dkgSubmitterReimbursement = 0;
-            magpie.transfer(reward);
-        }
- 
+        reimburseDkgSubmitter();
         cleanup();
         emit DkgResultPublishedEvent(groupPubKey);
 
         groupSelectionInProgress = false;
+    }
+
+    /**
+     * @dev Compare the reimbursement fee calculated based on the current transaction gas
+     * price and the current price feed estimate with the DKG reimbursement fee calculated
+     * and paid at the moment when the DKG was requested. If there is any surplus, it will
+     * be returned to the DKG fee pool of the service contract which triggered the DKG.
+     */
+    function reimburseDkgSubmitter() internal {
+        uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
+        uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
+        address payable magpie = stakingContract.magpieOf(msg.sender);
+
+        if (reimbursementFee < dkgSubmitterReimbursementFee) {
+            uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
+            dkgSubmitterReimbursementFee = 0;
+            // Reimburse submitter with actual DKG cost.
+            magpie.transfer(reimbursementFee);
+            // Return surplus to the contract that started DKG.
+            groupSelectionStarterContract.fundDkgFeePool.value(surplus)();
+        } else {
+            // If submitter used higher gas price reimburse only dkgSubmitterReimbursementFee max.
+            reimbursementFee = dkgSubmitterReimbursementFee;
+            dkgSubmitterReimbursementFee = 0;
+            magpie.transfer(reimbursementFee);
+        }
     }
 
     /**
@@ -524,13 +555,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets version of the current implementation.
-     */
-    function version() public pure returns (string memory) {
-        return "V1";
-    }
-
-    /**
      * @dev Cleanup data of previous group selection.
      */
     function cleanup() private {
@@ -550,15 +574,17 @@ contract KeepRandomBeaconOperator {
      * @param requestId Request Id trackable by service contract.
      * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
      * @param previousEntry Previous relay entry that is used to select a signing group for this request.
-     * @param entryVerificationFee Amount in wei included in msg.value to cover the cost of verifying BLS signature to produce relay entry.
      */
     function sign(
         uint256 requestId,
         uint256 seed,
-        uint256 previousEntry,
-        uint256 entryVerificationFee
+        uint256 previousEntry
     ) public payable onlyServiceContract {
-        signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value, entryVerificationFee);
+        require(
+            msg.value >= groupProfitFee().add(entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate))),
+            "Must include group profit fee and entry verification fee."
+        );
+        signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value);
     }
 
     function signRelayEntry(
@@ -566,8 +592,7 @@ contract KeepRandomBeaconOperator {
         uint256 seed,
         uint256 previousEntry,
         address serviceContract,
-        uint256 payment,
-        uint256 entryVerificationFee
+        uint256 entryVerificationAndProfitFee
     ) internal {
         require(!entryInProgress || hasEntryTimedOut(), "Relay entry is in progress.");
 
@@ -579,8 +604,7 @@ contract KeepRandomBeaconOperator {
 
         signingRequest = SigningRequest(
             requestId,
-            payment,
-            entryVerificationFee,
+            entryVerificationAndProfitFee,
             groupIndex,
             previousEntry,
             seed,
@@ -636,54 +660,57 @@ contract KeepRandomBeaconOperator {
         }
     }
 
-
     /**
      * @dev Get rewards breakdown in wei for successful entry for the current signing request.
      */
     function rewardsBreakdown() public view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
-        // Example breakdown:
-        // signingGas: 1240000
-        // dkgGas: 2260000
-        // dkgFee: 10%
-        // profitMargin: 1%
-        // groupSize: 5
-        // entry fee estimate: 49230000000000000 wei
-        // signing fee: 37200000000000000 wei
-        // DKG fee: 6780000000000000 wei
-        // relayEntryTimeout: 10 blocks
-        // currentEntryStartBlock: 38
-        // relay entry submission block: 44
-        // decimals: 1e16
-        // groupProfitMargin: 42450000000000000 - 37200000000000000 = 5250000000000000 wei
-        // memberBaseReward: 5250000000000000 / 5 = 1050000000000000 wei
-        // entryTimeout: 38 + 10 = 48
-        // delayFactor: ((48 - 44) * 1e16 / (10 - 1)) ^ 2 = 19753086419753082469135802469136
-        // delayFactorInverse: 1 * 1e16 ^ 2 - 19753086419753082469135802469136 = 80246913580246917530864197530864
-        // delayPenalty: 1050000000000000 * 80246913580246917530864197530864 / (1e16 ^ 2) = 842592592592592
-        // groupMemberReward: 1050000000000000 * 19753086419753082469135802469136) / (1e16 ^ 2) = 207407407407407 wei
-        // submitterExtraReward: 842592592592592 * 5 * 5 / 100 = 210648148148148 wei
-        // submitterReward: 37200000000000000 + 210648148148148 = 37410648148148148 wei
-        // subsidy = 5250000000000000 - 207407407407407 * 5 - 210648148148148 = 4002314814814817 wei
-
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-        uint256 groupProfitMargin = signingRequest.payment.sub(signingRequest.entryVerificationFee);
-        uint256 memberBaseReward = groupProfitMargin.div(groupSize);
-        uint256 entryTimeout = currentEntryStartBlock.add(relayEntryTimeout);
-        uint256 delayFactor = entryTimeout.sub(block.number).mul(decimals).div(relayEntryTimeout.sub(1))**2;
-        uint256 delayFactorInverse = uint256(1).mul(decimals**2).sub(delayFactor);
-        uint256 delayPenalty = memberBaseReward.mul(delayFactorInverse).div(decimals**2);
 
-        groupMemberReward = memberBaseReward.mul(delayFactor).div(decimals**2);
+        uint256 delayFactor = getDelayFactor();
+        groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals**2);
+
+        // delay penalty = base reward * (1 - delay factor)
+        uint256 groupMemberDelayPenalty = groupMemberBaseReward.sub(groupMemberBaseReward.mul(delayFactor).div(decimals**2));
 
         // The submitter reward consists of:
         // The callback gas expenditure (reimbursed by the service contract)
-        // The entry verification fee to cover the cost of verifying the submission
+        // The entry verification fee to cover the cost of verifying the submission,
+        // paid regardless of their gas expenditure
         // Submitter extra reward - 5% of the delay penalties of the entire group
-        uint256 submitterExtraReward = delayPenalty.mul(groupSize).mul(5).div(100);
-        submitterReward = signingRequest.entryVerificationFee.add(submitterExtraReward);
+        uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).mul(5).div(100);
+        uint256 entryVerificationFee = signingRequest.entryVerificationAndProfitFee.sub(groupProfitFee());
+        submitterReward = entryVerificationFee.add(submitterExtraReward);
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
-        subsidy = groupProfitMargin.sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
+        subsidy = groupProfitFee().sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
+    }
+
+    /**
+     * @dev Gets delay factor for rewards calculation.
+     * @return Integer representing floating-point number with 16 decimals places.
+     */
+    function getDelayFactor() internal view returns(uint256 delayFactor) {
+        uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
+
+        // T_deadline (no submissions are accepted, entry timed out)
+        uint256 deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
+
+        // T_begin is the earliest block the result can be published in.
+        // It takes relayEntryGenerationTime to generate a new entry, so it can be published
+        // at block relayEntryGenerationTime + 1 the earliest.
+        uint256 submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(1);
+
+        // Use submissionStartBlock block as entryReceivedBlock if entry submitted earlier than expected.
+        uint256 entryReceivedBlock = block.number <= submissionStartBlock ? submissionStartBlock:block.number;
+
+        // T_remaining = T_deadline - T_received
+        uint256 remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
+
+        // T_deadline - T_begin
+        uint256 submissionWindow = deadlineBlock.sub(submissionStartBlock);
+
+        // delay factor = [ T_remaining / (T_deadline - T_begin)]^2
+        delayFactor = (remainingBlocks.mul(decimals).div(submissionWindow))**2;
     }
 
     /**
@@ -715,10 +742,16 @@ contract KeepRandomBeaconOperator {
                 signingRequest.seed,
                 signingRequest.previousEntry,
                 signingRequest.serviceContract,
-                signingRequest.payment,
-                signingRequest.entryVerificationFee
+                signingRequest.entryVerificationAndProfitFee
             );
         }
+    }
+
+    /**
+     * @dev Gets group profit fee expressed in wei.
+     */
+    function groupProfitFee() public view returns(uint256) {
+        return groupMemberBaseReward.mul(groupSize);
     }
 
     /**

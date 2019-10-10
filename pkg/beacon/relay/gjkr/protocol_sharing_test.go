@@ -38,7 +38,7 @@ func TestCombineReceivedShares(t *testing.T) {
 
 	// Replace initialized values with values declared at the begining.
 	member.selfSecretShareS = selfShareS
-	member.receivedValidSharesS = receivedShareS
+	member.receivedQualifiedSharesS = receivedShareS
 
 	member.CombineMemberShares()
 
@@ -229,7 +229,7 @@ func initializeSharingMembersGroup(dishonestThreshold, groupSize int) (
 
 	for _, sm := range sharingMembers {
 		for _, sjm := range qualifiedMembers {
-			sm.receivedValidSharesS[sjm.ID] = sjm.evaluateMemberShare(sm.ID, sjm.secretCoefficients)
+			sm.receivedQualifiedSharesS[sjm.ID] = sjm.evaluateMemberShare(sm.ID, sjm.secretCoefficients)
 		}
 	}
 

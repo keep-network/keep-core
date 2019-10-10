@@ -19,9 +19,9 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
      * same number/types of inputs.
      */
     function initialize(
-        uint256 minGasPrice,
-        uint256 profitMargin,
-        uint256 dkgFee,
+        uint256 priceFeedEstimate,
+        uint256 fluctuationMargin,
+        uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
         address operatorContract
     )
@@ -34,9 +34,9 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
         _newVar = 1234;
 
         // silence solc warnings, it's just an example
-        minGasPrice;
-        profitMargin;
-        dkgFee;
+        priceFeedEstimate;
+        fluctuationMargin;
+        dkgContributionMargin;
         withdrawalDelay;
         operatorContract;
     }

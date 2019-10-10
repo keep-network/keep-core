@@ -10,9 +10,9 @@ const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.s
 const KeepRandomBeaconOperatorGroups = artifacts.require("./KeepRandomBeaconOperatorGroups.sol");
 
 const withdrawalDelay = 86400; // 1 day
-const minimumGasPrice = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei) TODO: Use historical average of recently served requests?
-const profitMargin = 1; // Signing group reward per each member in % of the entry fee.
-const dkgFee = 10; // Fraction in % of the estimated cost of group creation that is included in relay request payment.
+const priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei = 20 * 10^9 wei)
+const fluctuationMargin = 50; // 50%
+const dkgContributionMargin = web3.utils.toBN(10).mul(web3.utils.toBN(10**18)); // Fraction in % of the estimated cost of group creation that is included in relay request payment. Must include 18 decimal points.
 
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
@@ -38,9 +38,9 @@ module.exports = async function(deployer) {
   await keepRandomBeaconOperatorGroups.setOperatorContract(keepRandomBeaconOperator.address);
 
   keepRandomBeaconService.initialize(
-    minimumGasPrice,
-    profitMargin,
-    dkgFee,
+    priceFeedEstimate,
+    fluctuationMargin,
+    dkgContributionMargin,
     withdrawalDelay,
     keepRandomBeaconOperator.address
   );
