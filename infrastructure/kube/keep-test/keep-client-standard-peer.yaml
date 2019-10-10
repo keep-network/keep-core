@@ -44,21 +44,6 @@ spec:
         app: keep-client
         type: standard-peer
     spec:
-      initContainers:
-      - name: initcontainer-provision-keep-client
-        image: gcr.io/keep-test-f3e0/keep-client-initcontainer
-        env:
-          - name: KEEP_CLIENT_TYPE
-            value: standard
-          - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: eth-account-passphrase
-                key: eth-account-passphrase
-        volumeMounts:
-          - name: keep-client-standard-peer
-            mountPath: /mnt/keep-client/config
-        command: ["node", "/tmp/provision-keep-client.js"]
       containers:
       - name: keep-client-standard-peer
         image: gcr.io/keep-test-f3e0/keep-client
@@ -76,4 +61,20 @@ spec:
           - name: keep-client-standard-peer
             mountPath: /mnt/keep-client/config
         command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "start"]
+      initContainers:
+      - name: initcontainer-provision-keep-client
+        image: gcr.io/keep-test-f3e0/keep-client-initcontainer
+        env:
+          - name: KEEP_CLIENT_TYPE
+            value: standard
+          - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: eth-account-passphrase
+                key: eth-account-passphrase
+        volumeMounts:
+          - name: keep-client-standard-peer
+            mountPath: /mnt/keep-client/config
+        command: ["node", "/tmp/provision-keep-client.js"]
+
 
