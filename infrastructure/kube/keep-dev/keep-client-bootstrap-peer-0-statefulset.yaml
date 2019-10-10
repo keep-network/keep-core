@@ -51,6 +51,8 @@ spec:
         volumeMounts:
           - name: keep-client-bootstrap-peer-0-config
             mountPath: /mnt/keep-client/config
+          - name: keep-client-bootstrap-peer-0-data
+            mountPath: /mnt/keep-client/data
           - name: eth-keyfile
             mountPath: /mnt/eth-data
         command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "start"]
@@ -77,6 +79,4 @@ spec:
         volumeMounts:
           - name: keep-client-bootstrap-peer-0-config
             mountPath: /mnt/keep-client/config
-          - name: keep-client-bootstrap-peer-0-data
-            mountPath: /mnt/keep-client/data
         command: ["node", "/tmp/provision-keep-client.js"]
