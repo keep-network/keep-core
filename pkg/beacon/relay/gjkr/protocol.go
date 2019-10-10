@@ -1169,13 +1169,13 @@ func (rm *RevealingMember) RevealMisbehavedMembersKeys() (
 // on who is disqualified and who is inactive. All properly behaving group
 // members at that point belong to QUAL set.
 func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
-	members := make(map[group.MemberIndex]bool)
+	members := make([]group.MemberIndex, 0)
 
 	// From disqualified members list filter those who provided valid shares in
 	// Phase 3 and are sharing the group private key.
 	for _, disqualifiedMemberID := range rm.group.DisqualifiedMemberIDs() {
 		if _, ok := rm.receivedQualifiedSharesS[disqualifiedMemberID]; ok {
-			members[disqualifiedMemberID] = true
+			members = append(members, disqualifiedMemberID)
 		}
 	}
 
@@ -1183,16 +1183,11 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 	// Phase 3 and are sharing the group private key.
 	for _, inactiveMemberID := range rm.group.InactiveMemberIDs() {
 		if _, ok := rm.receivedQualifiedSharesS[inactiveMemberID]; ok {
-			members[inactiveMemberID] = true
+			members = append(members, inactiveMemberID)
 		}
 	}
 
-	result := make([]group.MemberIndex, 0)
-	for memberID := range members {
-		result = append(result, memberID)
-	}
-
-	return result
+	return members
 }
 
 // ReconstructMisbehavedIndividualKeys reconstructs individual private key
