@@ -46,7 +46,7 @@ type TaggedMarshaler interface {
 type Provider interface {
 	ID() TransportIdentifier
 
-	ChannelFor(name string) (BroadcastChannel, error)
+	ChannelFor(name string, options ...ChannelOption) (BroadcastChannel, error)
 	Type() string
 	AddrStrings() []string
 
@@ -55,6 +55,24 @@ type Provider interface {
 	Peers() []string
 
 	ConnectionManager() ConnectionManager
+}
+
+// ChannelConfig describes a set of settings for a broadcast channel
+type ChannelConfig interface {
+	SetAuthorizedAddresses(addresses [][]byte) error
+}
+
+// ChannelOption is a broadcast channel config option that can be given
+// to the broadcast channel constructor
+type ChannelOption func(config ChannelConfig) error
+
+// ChannelWithAuthorization configures an authorized broadcast channel
+// where messages are considered valid only if their authors are in
+// the authorized addresses set
+func ChannelWithAuthorization(addresses [][]byte) ChannelOption {
+	return func(config ChannelConfig) error {
+		return config.SetAuthorizedAddresses(addresses)
+	}
 }
 
 // ConnectionManager is an interface which exposes peers a client is connected

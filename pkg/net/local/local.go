@@ -42,7 +42,10 @@ func (lp *localProvider) ID() net.TransportIdentifier {
 	return lp.id
 }
 
-func (lp *localProvider) ChannelFor(name string) (net.BroadcastChannel, error) {
+func (lp *localProvider) ChannelFor(
+	name string,
+	options ...net.ChannelOption,
+) (net.BroadcastChannel, error) {
 	return channel(name, lp.staticKey), nil
 }
 

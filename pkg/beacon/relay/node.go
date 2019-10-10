@@ -65,10 +65,16 @@ func (n *Node) JoinGroupIfEligible(
 			// build the channel name and get the broadcast channel
 			broadcastChannelName := channelNameForGroup(groupSelectionResult)
 
+			selectedStakers := make([][]byte, len(groupSelectionResult.SelectedStakers))
+			for i := range selectedStakers {
+				selectedStakers[i] = groupSelectionResult.SelectedStakers[i]
+			}
+
 			// We should only join the broadcast channel if we're
 			// elligible for the group
 			broadcastChannel, err := n.netProvider.ChannelFor(
 				broadcastChannelName,
+				net.ChannelWithAuthorization(selectedStakers),
 			)
 			if err != nil {
 				logger.Errorf(
