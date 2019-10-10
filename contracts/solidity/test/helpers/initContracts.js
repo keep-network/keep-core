@@ -10,7 +10,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   let priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei = 20 * 10^9 wei)
     fluctuationMargin = 50, // 50%
-    dkgContributionMargin = web3.utils.toBN(10).mul(web3.utils.toBN(10**18)), // Fraction in % of the estimated cost of DKG that is included in relay request payment. Must include 18 decimal points.
+    dkgContributionMargin = 10, // 10%
     withdrawalDelay = 1;
 
   // Initialize Keep token contract

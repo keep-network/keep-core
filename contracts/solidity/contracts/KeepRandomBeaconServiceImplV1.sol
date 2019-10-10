@@ -47,8 +47,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     uint256 internal _fluctuationMargin;
 
     // Fraction in % of the estimated cost of DKG that is included
-    // in relay request fee. Must be presented as a big number with
-    // 18 decimals i.e. 1.5% as 1.5*1e18.
+    // in relay request fee.
     uint256 internal _dkgContributionMargin;
 
     // Every relay request payment includes DKG contribution that is added to
@@ -95,7 +94,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param fluctuationMargin Fluctuation margin to cover the immediate rise in gas price.
      * Expressed in percentage.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
-     * request fee. Must be presented as a big number with 18 decimals i.e. 1.5% as 1.5*1e18.
+     * request fee.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param operatorContract Operator contract linked to this contract.
      */
@@ -408,7 +407,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         return (
             entryVerificationGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)),
-            dkgGas.mul(_priceFeedEstimate).mul(_dkgContributionMargin).div(1e18).div(100),
+            dkgGas.mul(_priceFeedEstimate).mul(_dkgContributionMargin).div(100),
             groupProfitFee
         );
     }
