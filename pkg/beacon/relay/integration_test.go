@@ -53,7 +53,11 @@ func TestAllMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign := entry.CombineToSign(previousEntry, seed)
+	entryToSign, err := entry.CombineToSign(previousEntry, seed)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if !bls.Verify(groupPublicKey, entryToSign, signature) {
 		t.Errorf("threshold signature failed BLS verification")
 	}
@@ -87,7 +91,11 @@ func TestHonestThresholdMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign := entry.CombineToSign(previousEntry, seed)
+	entryToSign, err := entry.CombineToSign(previousEntry, seed)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if !bls.Verify(groupPublicKey, entryToSign, signature) {
 		t.Errorf("threshold signature failed BLS verification")
 	}
@@ -160,7 +168,11 @@ func TestInactiveMemberPublicKeySharesReconstructionAndSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign := entry.CombineToSign(previousEntry, seed)
+	entryToSign, err := entry.CombineToSign(previousEntry, seed)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if !bls.Verify(groupPublicKey, entryToSign, signature) {
 		t.Errorf("threshold signature failed BLS verification")
 	}
