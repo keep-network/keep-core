@@ -152,6 +152,19 @@ type PointsJustifyingMember struct {
 // Executes Phase 10 of the protocol.
 type RevealingMember struct {
 	*PointsJustifyingMember
+
+	// Slice of disqualified or inactive QUAL members whose phase 3 shares need
+	// to be reconstructed.
+	// We snapshot this information at the beginning of phase 10 to make sure no
+	// new disqualifications can affect the validation of the message with
+	// ephemeral keys in phase 11. Specifically, that we do not disqualify
+	// everyone when one of the group members do not deliver phase 11 message
+	// at all. This can happen if we mark that member as inactive and then,
+	// disqualify everyone else because all the messages do not contain a
+	// revealed key for that inactive member. For this reason, it is safer
+	// to use a snapshotted set of misbehaved members whose keys are expected
+	// to be revealed.
+	expectedMembersForReconstruction []group.MemberIndex
 }
 
 // ReconstructingMember represents one member in a threshold sharing group who
@@ -277,8 +290,11 @@ func (sm *SharingMember) InitializePointsJustification() *PointsJustifyingMember
 }
 
 // InitializeRevealing returns a member to perform next protocol operations.
-func (sm *PointsJustifyingMember) InitializeRevealing() *RevealingMember {
-	return &RevealingMember{sm}
+func (pjm *PointsJustifyingMember) InitializeRevealing() *RevealingMember {
+	return &RevealingMember{
+		PointsJustifyingMember:           pjm,
+		expectedMembersForReconstruction: make([]group.MemberIndex, 0),
+	}
 }
 
 // InitializeReconstruction returns a member to perform next protocol operations.

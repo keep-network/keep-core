@@ -60,14 +60,10 @@ contract KeepRandomBeaconOperator {
     uint256 public minimumStake = 200000 * 1e18;
 
     // Timeout in blocks after the initial ticket submission is finished.
-    uint256 public ticketInitialSubmissionTimeout = 4;
+    uint256 public ticketInitialSubmissionTimeout = 3;
 
     // Timeout in blocks after the reactive ticket submission is finished.
-    uint256 public ticketReactiveSubmissionTimeout = 4;
-
-    // Timeout in blocks after the period where tickets can be challenged is
-    // finished.
-    uint256 public ticketChallengeTimeout = 4;
+    uint256 public ticketReactiveSubmissionTimeout = 6;
 
     // Time in blocks after which the next group member is eligible
     // to submit the result.
@@ -91,14 +87,13 @@ contract KeepRandomBeaconOperator {
         uint256 virtualStakerIndex;
     }
 
-    mapping(uint256 => Proof) public proofs;
+    mapping(uint256 => Proof) internal proofs;
 
-    bool public groupSelectionInProgress;
+    bool internal groupSelectionInProgress;
 
-    uint256 public ticketSubmissionStartBlock;
-    uint256 public groupSelectionRelayEntry;
-    uint256[] public tickets;
-    bytes[] public submissions;
+    uint256 internal ticketSubmissionStartBlock;
+    uint256 internal groupSelectionRelayEntry;
+    uint256[] internal tickets;
 
     struct SigningRequest {
         uint256 relayRequestId;
@@ -143,7 +138,7 @@ contract KeepRandomBeaconOperator {
         uint256[] memory selected = selectedTickets();
         require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
         require(proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
-        uint T_init = ticketSubmissionStartBlock + ticketChallengeTimeout + timeDKG;
+        uint T_init = ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout + timeDKG;
         require(block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
         _;
     }
@@ -160,12 +155,12 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Reverts if ticket challenge period is not over.
+     * @dev Reverts if ticket submission period is not over.
      */
-    modifier whenTicketChallengeIsOver() {
+    modifier whenTicketSubmissionIsOver() {
         require(
-            block.number >= ticketSubmissionStartBlock + ticketChallengeTimeout,
-            "Ticket submission challenge period must be over."
+            block.number >= ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout,
+            "Ticket submission submission period must be over."
         );
         _;
     }
@@ -212,7 +207,7 @@ contract KeepRandomBeaconOperator {
         // dkgTimeout is the time after key generation protocol is expected to
         // be complete plus the expected time to submit the result.
         uint256 dkgTimeout = ticketSubmissionStartBlock +
-            ticketChallengeTimeout +
+            ticketReactiveSubmissionTimeout +
             timeDKG +
             groupSize * resultPublicationBlockStep;
 
@@ -247,8 +242,8 @@ contract KeepRandomBeaconOperator {
             tickets.push(ticketValue);
             proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
         } else {
-            // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-            stakingContract.authorizedTransferFrom(msg.sender, address(this), minimumStake);
+            // TODO: should we slash instead of reverting?
+            revert("Invalid ticket");
         }
     }
 
@@ -260,9 +255,16 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
+     * @dev Gets the number of submitted group candidate tickets so far.
+     */
+    function submittedTicketsCount() public view returns (uint256) {
+        return tickets.length;
+    }
+
+    /**
      * @dev Gets selected tickets in ascending order.
      */
-    function selectedTickets() public view whenTicketChallengeIsOver returns (uint256[] memory) {
+    function selectedTickets() public view whenTicketSubmissionIsOver returns (uint256[] memory) {
 
         uint256[] memory ordered = orderedTickets();
 
@@ -281,25 +283,9 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets participants ordered by their lowest-valued ticket.
-     */
-    function orderedParticipants() public view returns (address[] memory) {
-
-        uint256[] memory ordered = orderedTickets();
-        address[] memory participants = new address[](ordered.length);
-
-        for (uint i = 0; i < ordered.length; i++) {
-            Proof memory proof = proofs[ordered[i]];
-            participants[i] = proof.sender;
-        }
-
-        return participants;
-    }
-
-    /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
-    function selectedParticipants() public view whenTicketChallengeIsOver returns (address[] memory) {
+    function selectedParticipants() public view whenTicketSubmissionIsOver returns (address[] memory) {
 
         uint256[] memory ordered = orderedTickets();
 

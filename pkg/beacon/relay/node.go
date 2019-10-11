@@ -51,8 +51,8 @@ func (n *Node) JoinGroupIfEligible(
 	signing chain.Signing,
 	groupSelectionResult *groupselection.Result,
 	newEntry *big.Int,
-	dkgStartBlockHeight uint64,
 ) {
+	dkgStartBlockHeight := groupSelectionResult.GroupSelectionEndBlock
 
 	for index, selectedStaker := range groupSelectionResult.SelectedStakers {
 		// If we are amongst those chosen, kick off an instance of DKG. We may
@@ -119,9 +119,9 @@ func channelNameForGroup(group *groupselection.Result) string {
 	for _, staker := range group.SelectedStakers {
 		channelNameBytes = append(channelNameBytes, staker...)
 	}
-	hexChannelName := hex.EncodeToString(
-		groupselection.SHAValue(sha256.Sum256(channelNameBytes)).Bytes(),
-	)
+
+	hash := sha256.Sum256(channelNameBytes)
+	hexChannelName := hex.EncodeToString(hash[:])
 
 	return hexChannelName
 }

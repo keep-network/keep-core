@@ -88,11 +88,11 @@ type PointsAccusationsMessage struct {
 	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey
 }
 
-// DisqualifiedEphemeralKeysMessage is a message payload that carries sender's
+// MisbehavedEphemeralKeysMessage is a message payload that carries sender's
 // ephemeral private keys used to generate ephemeral symmetric keys to encrypt
-// communication with members disqualified when points accusations were resolved.
-// It is expected to be broadcast.
-type DisqualifiedEphemeralKeysMessage struct {
+// communication with members from QUAL set which were marked as disqualified
+// or inactive. It is expected to be broadcast.
+type MisbehavedEphemeralKeysMessage struct {
 	senderID group.MemberIndex
 
 	privateKeys map[group.MemberIndex]*ephemeral.PrivateKey
@@ -129,8 +129,8 @@ func (pam *PointsAccusationsMessage) SenderID() group.MemberIndex {
 }
 
 // SenderID returns protocol-level identifier of the message sender.
-func (dekm *DisqualifiedEphemeralKeysMessage) SenderID() group.MemberIndex {
-	return dekm.senderID
+func (mekm *MisbehavedEphemeralKeysMessage) SenderID() group.MemberIndex {
+	return mekm.senderID
 }
 
 func newPeerSharesMessage(senderID group.MemberIndex) *PeerSharesMessage {
