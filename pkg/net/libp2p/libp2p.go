@@ -76,13 +76,10 @@ type provider struct {
 	connectionManager *connectionManager
 }
 
-func (p *provider) ChannelFor(
-	name string,
-	options ...net.ChannelOption,
-) (net.BroadcastChannel, error) {
+func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
-	return p.channelManagr.getChannel(name, options...)
+	return p.channelManagr.getChannel(name)
 }
 
 func (p *provider) Type() string {
