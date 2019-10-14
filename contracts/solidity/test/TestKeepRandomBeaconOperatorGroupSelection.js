@@ -4,6 +4,7 @@ import {bls} from './helpers/data';
 import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
 import {initContracts} from './helpers/initContracts';
+import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 
 
 contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
@@ -16,7 +17,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
   const minimumStake = web3.utils.toBN(200000);
 
-  before(async () => {
+  beforeEach(async () => {
 
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
@@ -110,6 +111,15 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
   });
 
+  it("should revert the transaction when the ticket has been already registerd", async function() {
+    await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
+
+    await expectThrowWithMessage(
+      operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1}),
+      "Ticket has already been registered."
+    );
+  })
+
   it("should not trigger group selection while one is in progress", async function() {
     let groupSelectionStartBlock = await operatorContract.getTicketSubmissionStartBlock();
     let groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry();
@@ -137,6 +147,9 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
   });
 
   it("should trigger new group selection when the last one is over", async function() {
+    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
+    await operatorContract.relayEntry(bls.nextGroupSignature);
+
     let groupSelectionStartBlock = await operatorContract.getTicketSubmissionStartBlock();
 
     // Calculate the block time when the group selection should be finished
