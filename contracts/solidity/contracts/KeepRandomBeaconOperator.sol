@@ -85,6 +85,7 @@ contract KeepRandomBeaconOperator {
         address sender;
         uint256 stakerValue;
         uint256 virtualStakerIndex;
+        bool exists;
     }
 
     mapping(uint256 => Proof) internal proofs;
@@ -237,10 +238,14 @@ contract KeepRandomBeaconOperator {
             revert("Ticket submission period is over.");
         }
 
+        if (proofs[ticketValue].exists) {
+            revert("Ticket has already been registered.");
+        }
+
         // Invalid tickets are rejected and their senders penalized.
         if (isTicketValid(msg.sender, ticketValue, stakerValue, virtualStakerIndex)) {
             tickets.push(ticketValue);
-            proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+            proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex, true);
         } else {
             // TODO: should we slash instead of reverting?
             revert("Invalid ticket");
