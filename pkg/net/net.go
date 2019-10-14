@@ -1,6 +1,8 @@
 package net
 
 import (
+	"crypto/ecdsa"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
@@ -75,6 +77,16 @@ type TaggedUnmarshaler interface {
 	Type() string
 }
 
+// BroadcastChannelMessage represents a broadcast channel message
+type BroadcastChannelMessage interface {
+	AuthorPublicKey() (*ecdsa.PublicKey, error)
+}
+
+// BroadcastChannelFilter represents a broadcast channel message filter
+// which allows to trigger a logic in order to determine if message
+// should be processed by the receivers.
+type BroadcastChannelFilter func(BroadcastChannelMessage) bool
+
 // BroadcastChannel represents a named pubsub channel. It allows Group Members
 // to send messages on the channel (via Send), and to access a low-level receive chan
 // that furnishes messages sent onto the BroadcastChannel. Messages are not
@@ -101,4 +113,8 @@ type BroadcastChannel interface {
 	// The string type associated with the unmarshaler is the result of calling
 	// Type() on a raw unmarshaler.
 	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
+	// AddFilter registers a broadcast channel filter which will be used
+	// to determine if given broadcast channel message should be processed
+	// by the receivers.
+	AddFilter(filter BroadcastChannelFilter) error
 }

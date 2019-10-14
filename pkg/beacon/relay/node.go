@@ -5,7 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"math/big"
+	"strings"
 	"sync"
+
+	"github.com/ethereum/go-ethereum/crypto"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -79,6 +82,17 @@ func (n *Node) JoinGroupIfEligible(
 				return
 			}
 
+			err = broadcastChannel.AddFilter(
+				newAuthorizedAuthorsFilter(groupSelectionResult.SelectedStakers),
+			)
+			if err != nil {
+				logger.Errorf(
+					"could not add filter for channel [%v] due to: [%v]",
+					broadcastChannel.Name(),
+					err,
+				)
+			}
+
 			go func() {
 				signer, err := dkg.ExecuteDKG(
 					newEntry,
@@ -124,4 +138,28 @@ func channelNameForGroup(group *groupselection.Result) string {
 	hexChannelName := hex.EncodeToString(hash[:])
 
 	return hexChannelName
+}
+
+func newAuthorizedAuthorsFilter(
+	authorizedAuthorsAddresses []relaychain.StakerAddress,
+) net.BroadcastChannelFilter {
+	authorizations := make(map[string]bool, len(authorizedAuthorsAddresses))
+	for _, address := range authorizedAuthorsAddresses {
+		encodedAddress := strings.ToLower("0x" + hex.EncodeToString(address))
+		authorizations[encodedAddress] = true
+	}
+
+	return func(message net.BroadcastChannelMessage) bool {
+		authorPublicKey, err := message.AuthorPublicKey()
+		if err != nil {
+			logger.Warningf("dropping message due to: [%v]", err)
+			return false
+		}
+
+		authorAddress := strings.ToLower(
+			crypto.PubkeyToAddress(*authorPublicKey).String(),
+		)
+		_, isAuthorized := authorizations[authorAddress]
+		return isAuthorized
+	}
 }
