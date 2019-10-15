@@ -23,11 +23,11 @@ spec:
           storage: 5Mi
   - metadata:
       name: keep-client-standard-peer-data
-        spec:
-          accessModes: [ReadWriteOnce]
-          resources:
-            requests:
-              storage: 512Mi
+    spec:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 512Mi
   template:
     metadata:
       labels:
