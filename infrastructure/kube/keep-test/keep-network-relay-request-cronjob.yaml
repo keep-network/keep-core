@@ -17,23 +17,6 @@ spec:
       activeDeadlineSeconds: 600
       template:
         spec:
-          initContainers:
-          - name: initcontainer-provision-keep-client
-            image: gcr.io/keep-test-f3e0/keep-client-initcontainer
-            env:
-              - name: KEEP_CLIENT_TYPE
-                value: standard
-              - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
-                valueFrom:
-                  secretKeyRef:
-                    name: eth-account-passphrase
-                    key: eth-account-passphrase
-              - name: KEEP_DATA_DIR
-                value: /tmp
-            volumeMounts:
-              - name: keep-network-relay-request-submitter
-                mountPath: /mnt/keep-client/config
-            command: ["node", "/tmp/provision-keep-client.js"]
           containers:
           - name: keep-network-relay-request-submitter
             image: gcr.io/keep-test-f3e0/keep-client
@@ -54,6 +37,23 @@ spec:
             persistentVolumeClaim:
               claimName: keep-network-relay-request-submitter
           restartPolicy: OnFailure
+          initContainers:
+          - name: initcontainer-provision-keep-client
+            image: gcr.io/keep-test-f3e0/keep-client-initcontainer
+            env:
+              - name: KEEP_CLIENT_TYPE
+                value: standard
+              - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: eth-account-passphrase
+                    key: eth-account-passphrase
+              - name: KEEP_DATA_DIR
+                value: /tmp
+            volumeMounts:
+              - name: keep-network-relay-request-submitter
+                mountPath: /mnt/keep-client/config
+            command: ["node", "/tmp/provision-keep-client.js"]
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
