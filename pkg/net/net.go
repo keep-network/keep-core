@@ -77,15 +77,10 @@ type TaggedUnmarshaler interface {
 	Type() string
 }
 
-// BroadcastChannelMessage represents a broadcast channel message
-type BroadcastChannelMessage interface {
-	AuthorPublicKey() (*ecdsa.PublicKey, error)
-}
-
-// BroadcastChannelFilter represents a broadcast channel message filter
-// which allows to trigger a logic in order to determine if message
-// should be processed by the receivers.
-type BroadcastChannelFilter func(BroadcastChannelMessage) bool
+// BroadcastChannelFilter represents a filter which determine if the incoming
+// message should be processed by the receivers. It takes the message author's
+// public key as its argument.
+type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
 
 // BroadcastChannel represents a named pubsub channel. It allows Group Members
 // to send messages on the channel (via Send), and to access a low-level receive chan

@@ -248,7 +248,15 @@ func (c *channel) AddFilter(filter net.BroadcastChannelFilter) error {
 	defer c.pubsubMutex.Unlock()
 
 	validator := func(_ context.Context, _ peer.ID, message *pubsub.Message) bool {
-		return filter(&topicMessage{message})
+		authorPublicKey, err := extractPublicKey(message.GetFrom())
+		if err != nil {
+			logger.Warningf(
+				"could not retrieve message author public key: [%v]",
+				err,
+			)
+			return false
+		}
+		return filter(authorPublicKey)
 	}
 
 	return c.pubsub.RegisterTopicValidator(
@@ -258,14 +266,8 @@ func (c *channel) AddFilter(filter net.BroadcastChannelFilter) error {
 	)
 }
 
-type topicMessage struct {
-	*pubsub.Message
-}
-
-func (tm *topicMessage) AuthorPublicKey() (*ecdsa.PublicKey, error) {
-	author := tm.GetFrom()
-
-	publicKey, err := author.ExtractPublicKey()
+func extractPublicKey(peer peer.ID) (*ecdsa.PublicKey, error) {
+	publicKey, err := peer.ExtractPublicKey()
 	if err != nil {
 		return nil, err
 	}
