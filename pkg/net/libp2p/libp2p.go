@@ -153,8 +153,14 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 	return key.Libp2pKeyToNetworkKey(peerPublicKey), nil
 }
 
-func (cm *connectionManager) DisconnectPeer(connectedPeer string) {
-	connections := cm.Network().ConnsToPeer(peer.ID(connectedPeer))
+func (cm *connectionManager) DisconnectPeer(peerHash string) {
+	peerID, err := peer.IDB58Decode(peerHash)
+	if err != nil {
+		logger.Errorf("failed to decode peer hash: [%v] [%v]", peerHash, err)
+		return
+	}
+
+	connections := cm.Network().ConnsToPeer(peerID)
 	for _, connection := range connections {
 		if err := connection.Close(); err != nil {
 			logger.Errorf("failed to disconnect: [%v]", err)
@@ -207,9 +213,8 @@ func Connect(
 		addrs:         host.Addrs(),
 	}
 
-	// FIXME: return an error if we don't provide bootstrap peers
 	if len(config.Peers) == 0 {
-		return provider, nil
+		logger.Infof("node's peers list is empty")
 	}
 
 	if err := provider.bootstrap(ctx, config.Peers); err != nil {

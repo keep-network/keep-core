@@ -9,6 +9,8 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/bls"
 
 	"github.com/keep-network/keep-core/pkg/altbn128"
@@ -25,7 +27,7 @@ var previousEntry, _ = new(big.Int).SetString("132847218974128941824981812", 10)
 var seed, _ = new(big.Int).SetString("123789127389127398172398123", 10)
 
 // Success: all members of the signing group participate in signing.
-func TestExecute_AllMembersSigning(t *testing.T) {
+func TestAllMembersSigning(t *testing.T) {
 	t.Parallel()
 
 	signingMembersCount := groupSize
@@ -51,7 +53,11 @@ func TestExecute_AllMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign := entry.CombineToSign(previousEntry, seed)
+	entryToSign, err := entry.CombineToSign(previousEntry, seed)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if !bls.Verify(groupPublicKey, entryToSign, signature) {
 		t.Errorf("threshold signature failed BLS verification")
 	}
@@ -59,7 +65,7 @@ func TestExecute_AllMembersSigning(t *testing.T) {
 
 // Success: honest threshold of the signing group members participate in
 // signing.
-func TestExecute_HonestThresholdMembersSigning(t *testing.T) {
+func TestHonestThresholdMembersSigning(t *testing.T) {
 	t.Parallel()
 
 	signingMembersCount := honestThreshold
@@ -85,7 +91,11 @@ func TestExecute_HonestThresholdMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign := entry.CombineToSign(previousEntry, seed)
+	entryToSign, err := entry.CombineToSign(previousEntry, seed)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if !bls.Verify(groupPublicKey, entryToSign, signature) {
 		t.Errorf("threshold signature failed BLS verification")
 	}
@@ -93,7 +103,7 @@ func TestExecute_HonestThresholdMembersSigning(t *testing.T) {
 
 // Failure: Less than honest threshold signing group members participate in
 // signing.
-func TestExecute_LessThanHonestThresholdMembersSigning(t *testing.T) {
+func TestLessThanHonestThresholdMembersSigning(t *testing.T) {
 	t.Parallel()
 
 	signingMembersCount := honestThreshold - 1
@@ -110,6 +120,64 @@ func TestExecute_LessThanHonestThresholdMembersSigning(t *testing.T) {
 	entrytest.AssertSignerFailuresCount(t, signingResult, signingMembersCount)
 }
 
+// Success: honest threshold of the signing group members participate in
+// signing.
+//
+// In this scenario, one of the members doesn't send `MemberPublicKeySharePointsMessage`
+// thus they become inactive at the beginning of phase 8 during DKG.
+// This is problematic because that member provided valid shares in phase 3
+// and all group members include that shares in their private key shares.
+// Since that member did not provide public key share points, shares from that
+// member are not included in the information we use to calculate the public key
+// of the group. If we do not reconstruct and include shares of that member,
+// we may end up with a situation when a signature does not match the
+// group public key.
+func TestInactiveMemberPublicKeySharesReconstructionAndSigning(t *testing.T) {
+	t.Parallel()
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		sharePointsMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
+		if ok && sharePointsMessage.SenderID() == group.MemberIndex(1) {
+			return nil
+		}
+
+		return msg
+	}
+
+	signingMembersCount := honestThreshold
+	dkgResult, signingResult := runTestWithInterceptor(
+		t,
+		groupSize,
+		honestThreshold,
+		signingMembersCount,
+		interceptor,
+	)
+
+	dkgtest.AssertDkgResultPublished(t, dkgResult)
+	dkgtest.AssertSamePublicKey(t, dkgResult)
+	entrytest.AssertEntryPublished(t, signingResult)
+	entrytest.AssertNoSignerFailures(t, signingResult)
+
+	groupPublicKey, err := getFirstGroupPublicKey(dkgResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signature, err := getSignature(signingResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entryToSign, err := entry.CombineToSign(previousEntry, seed)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !bls.Verify(groupPublicKey, entryToSign, signature) {
+		t.Errorf("threshold signature failed BLS verification")
+	}
+}
+
 func runTest(t *testing.T, groupSize, honestThreshold, honestSignersCount int) (
 	*dkgtest.Result,
 	*entrytest.Result,
@@ -118,6 +186,23 @@ func runTest(t *testing.T, groupSize, honestThreshold, honestSignersCount int) (
 		return msg
 	}
 
+	return runTestWithInterceptor(
+		t,
+		groupSize,
+		honestThreshold,
+		honestSignersCount,
+		interceptor,
+	)
+}
+
+func runTestWithInterceptor(
+	t *testing.T,
+	groupSize, honestThreshold, honestSignersCount int,
+	interceptor func(msg net.TaggedMarshaler) net.TaggedMarshaler,
+) (
+	*dkgtest.Result,
+	*entrytest.Result,
+) {
 	dkgSeed := dkgtest.RandomSeed(t)
 	dkgResult, err := dkgtest.RunTest(groupSize, honestThreshold, dkgSeed, interceptor)
 	if err != nil {

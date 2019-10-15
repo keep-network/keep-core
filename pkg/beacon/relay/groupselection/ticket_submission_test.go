@@ -27,9 +27,9 @@ func TestSubmitAllTickets(t *testing.T) {
 	submittedTickets := make([]*chain.Ticket, 0)
 
 	mockInterface := &mockGroupInterface{
-		mockSubmitTicketFn: func(t *chain.Ticket) *async.GroupTicketPromise {
+		mockSubmitTicketFn: func(t *chain.Ticket) *async.EventGroupTicketSubmissionPromise {
 			submittedTickets = append(submittedTickets, t)
-			promise := &async.GroupTicketPromise{}
+			promise := &async.EventGroupTicketSubmissionPromise{}
 			promise.Fulfill(&event.GroupTicketSubmission{
 				TicketValue: t.Value,
 				BlockNumber: 111,
@@ -94,9 +94,9 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 	submittedTickets := make([]*chain.Ticket, 0)
 
 	mockInterface := &mockGroupInterface{
-		mockSubmitTicketFn: func(t *chain.Ticket) *async.GroupTicketPromise {
+		mockSubmitTicketFn: func(t *chain.Ticket) *async.EventGroupTicketSubmissionPromise {
 			submittedTickets = append(submittedTickets, t)
-			promise := &async.GroupTicketPromise{}
+			promise := &async.EventGroupTicketSubmissionPromise{}
 
 			time.Sleep(500 * time.Millisecond)
 
@@ -125,12 +125,12 @@ func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
 }
 
 type mockGroupInterface struct {
-	mockSubmitTicketFn func(t *chain.Ticket) *async.GroupTicketPromise
+	mockSubmitTicketFn func(t *chain.Ticket) *async.EventGroupTicketSubmissionPromise
 }
 
 func (mgi *mockGroupInterface) SubmitTicket(
 	ticket *chain.Ticket,
-) *async.GroupTicketPromise {
+) *async.EventGroupTicketSubmissionPromise {
 	if mgi.mockSubmitTicketFn != nil {
 		return mgi.mockSubmitTicketFn(ticket)
 	}
