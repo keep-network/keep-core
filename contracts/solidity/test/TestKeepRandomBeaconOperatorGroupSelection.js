@@ -111,7 +111,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
   });
 
-  it("should revert the transaction when the ticket has been already registerd", async function() {
+  it("should revert the transaction when the ticket has been already submitted", async function() {
     await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
 
     await expectThrowWithMessage(
