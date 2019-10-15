@@ -29,11 +29,11 @@ spec:
                     name: eth-account-passphrase
                     key: eth-account-passphrase
             volumeMounts:
-              - name: keep-client-relay-request-submitter
+              - name: keep-network-relay-request-submitter
                 mountPath: /mnt/keep-client/config
             command: ["node", "/tmp/provision-keep-client.js"]
           containers:
-          - name: keep-client-relay-request-submitter
+          - name: keep-network-relay-request-submitter
             image: gcr.io/keep-test-f3e0/keep-client
             ports:
               - containerPort: 3919
@@ -46,19 +46,19 @@ spec:
               - name: KEEP_DATA_DIR
                 value: /tmp
             volumeMounts:
-              - name: keep-client-relay-request-submitter
+              - name: keep-network-relay-request-submitter
                 mountPath: /mnt/keep-client/config
             command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "relay", "request"]
           volumes:
-          - name: keep-client-relay-request-submitter
+          - name: keep-network-relay-request-submitter
             persistentVolumeClaim:
-              claimName: keep-client-relay-request-submitter
+              claimName: keep-network-relay-request-submitter
           restartPolicy: OnFailure
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: keep-client-relay-request-submitter
+  name: keep-network-relay-request-submitter
 spec:
   accessModes:
     - ReadWriteOnce
