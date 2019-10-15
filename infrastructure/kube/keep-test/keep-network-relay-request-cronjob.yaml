@@ -28,6 +28,8 @@ spec:
                   secretKeyRef:
                     name: eth-account-passphrase
                     key: eth-account-passphrase
+              - name: KEEP_DATA_DIR
+                value: /tmp
             volumeMounts:
               - name: keep-network-relay-request-submitter
                 mountPath: /mnt/keep-client/config
@@ -43,8 +45,6 @@ spec:
                   secretKeyRef:
                     name: eth-account-passphrase
                     key: eth-account-passphrase
-              - name: KEEP_DATA_DIR
-                value: /tmp
             volumeMounts:
               - name: keep-network-relay-request-submitter
                 mountPath: /mnt/keep-client/config
