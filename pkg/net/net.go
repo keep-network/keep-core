@@ -79,7 +79,8 @@ type TaggedUnmarshaler interface {
 
 // BroadcastChannelFilter represents a filter which determine if the incoming
 // message should be processed by the receivers. It takes the message author's
-// public key as its argument.
+// public key as its argument and returns true if the message should be
+// processed or false otherwise.
 type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
 
 // BroadcastChannel represents a named pubsub channel. It allows Group Members

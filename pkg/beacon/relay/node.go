@@ -88,7 +88,7 @@ func (n *Node) JoinGroupIfEligible(
 			)
 			if err != nil {
 				logger.Errorf(
-					"could not add filter for channel [%v] due to: [%v]",
+					"could not add filter for channel [%v]: [%v]",
 					broadcastChannel.Name(),
 					err,
 				)

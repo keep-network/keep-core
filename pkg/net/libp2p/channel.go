@@ -247,11 +247,7 @@ func (c *channel) AddFilter(filter net.BroadcastChannelFilter) error {
 	c.pubsubMutex.Lock()
 	defer c.pubsubMutex.Unlock()
 
-	return c.pubsub.RegisterTopicValidator(
-		c.name,
-		createTopicValidator(filter),
-		pubsub.WithValidatorInline(true),
-	)
+	return c.pubsub.RegisterTopicValidator(c.name, createTopicValidator(filter))
 }
 
 func createTopicValidator(filter net.BroadcastChannelFilter) pubsub.Validator {
