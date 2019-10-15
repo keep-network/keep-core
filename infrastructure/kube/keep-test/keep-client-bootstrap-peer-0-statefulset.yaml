@@ -44,7 +44,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: eth-account-passphrase
-                key: account-passphrase
+                key: eth-account-passphrase
           - name: LOG_LEVEL
             value: debug
         volumeMounts:
@@ -72,7 +72,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: eth-account-passphrase
-                key: account-passphrase
+                key: eth-account-passphrase
           - name: KEEP_DATA_DIR
             value: /mnt/keep-client/data
         volumeMounts:
