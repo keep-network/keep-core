@@ -116,7 +116,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
     await expectThrowWithMessage(
       operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1}),
-      "Ticket has already been registered."
+      "Ticket with the given value has already been submitted."
     );
   })
 
