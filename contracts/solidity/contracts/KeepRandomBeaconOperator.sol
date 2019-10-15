@@ -238,7 +238,7 @@ contract KeepRandomBeaconOperator {
         }
 
         if (proofs[ticketValue].sender != address(0)) {
-            revert("Ticket has already been registered.");
+            revert("Ticket with the given value has already been submitted.");
         }
 
         // Invalid tickets are rejected and their senders penalized.
