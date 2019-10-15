@@ -3,7 +3,7 @@ apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: keep-network-relay-request-submitter
-  labels:     
+  labels:
     app: keep-network
     type: relay-request-submitter
 spec:
@@ -43,6 +43,8 @@ spec:
                   secretKeyRef:
                     name: eth-account-passphrase
                     key: eth-account-passphrase
+              - name: KEEP_DATA_DIR
+                value: /tmp
             volumeMounts:
               - name: keep-client-relay-request-submitter
                 mountPath: /mnt/keep-client/config
