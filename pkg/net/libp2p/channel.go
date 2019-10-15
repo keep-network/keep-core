@@ -247,7 +247,15 @@ func (c *channel) AddFilter(filter net.BroadcastChannelFilter) error {
 	c.pubsubMutex.Lock()
 	defer c.pubsubMutex.Unlock()
 
-	validator := func(_ context.Context, _ peer.ID, message *pubsub.Message) bool {
+	return c.pubsub.RegisterTopicValidator(
+		c.name,
+		createTopicValidator(filter),
+		pubsub.WithValidatorInline(true),
+	)
+}
+
+func createTopicValidator(filter net.BroadcastChannelFilter) pubsub.Validator {
+	return func(_ context.Context, _ peer.ID, message *pubsub.Message) bool {
 		authorPublicKey, err := extractPublicKey(message.GetFrom())
 		if err != nil {
 			logger.Warningf(
@@ -258,12 +266,6 @@ func (c *channel) AddFilter(filter net.BroadcastChannelFilter) error {
 		}
 		return filter(authorPublicKey)
 	}
-
-	return c.pubsub.RegisterTopicValidator(
-		c.name,
-		validator,
-		pubsub.WithValidatorInline(true),
-	)
 }
 
 func extractPublicKey(peer peer.ID) (*ecdsa.PublicKey, error) {
