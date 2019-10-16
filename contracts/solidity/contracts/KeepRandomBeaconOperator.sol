@@ -646,7 +646,7 @@ contract KeepRandomBeaconOperator {
 
         entryInProgress = false;
 
-        (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = rewardsBreakdown();
+        (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
 
         for (uint i = 0; i < groupSize; i++) {
             address payable operator = address(uint160(groupContract.getGroupMember(groupPubKey, i)));
@@ -663,7 +663,7 @@ contract KeepRandomBeaconOperator {
     /**
      * @dev Get rewards breakdown in wei for successful entry for the current signing request.
      */
-    function rewardsBreakdown() public view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
+    function newEntryRewardsBreakdown() public view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
 
         uint256 delayFactor = getDelayFactor();
