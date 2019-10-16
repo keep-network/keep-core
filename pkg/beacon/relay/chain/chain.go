@@ -37,6 +37,11 @@ type RelayEntryInterface interface {
 	// supposed to submit a relay entry, did not deliver it within a specified
 	// time frame (relayEntryTimeout) counted in blocks.
 	ReportRelayEntryTimeout() error
+	// CombineToSign takes the previous relay entry value and the current
+	// requests's seed and combines it into a slice of bytes that is going to be
+	// signed by the selected group and as a result, will form a new relay entry
+	// value.
+	CombineToSign(previousEntry *big.Int, seed *big.Int) ([]byte, error)
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that

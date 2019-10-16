@@ -15,6 +15,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
@@ -474,4 +475,43 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Disqualified, dkgResult.Inactive)
 
 	return relaychain.DKGResultHashFromBytes(hash)
+}
+
+// CombineToSign takes the previous relay entry value and the current
+// requests's seed and:
+//  - pads them with zeros if their byte length is less than 32 bytes. These
+//   values are used later on-chain as `uint256` values and combined with
+//   `abi.encodePacked` during signature verification. `uint256` is always
+//   packed to 256-bits with leading zeros if needed,
+// - combines them into a single slice of bytes.
+//
+// Function returns an error if previous entry or seed takes more than 32 bytes.
+func (ec *ethereumChain) CombineToSign(
+	previousEntry *big.Int,
+	seed *big.Int,
+) ([]byte, error) {
+	previousEntryBytes := previousEntry.Bytes()
+	seedBytes := seed.Bytes()
+
+	if len(previousEntryBytes) > 32 {
+		return nil, fmt.Errorf("entry can not be longer than 32 bytes")
+	}
+	if len(seedBytes) > 32 {
+		return nil, fmt.Errorf("seed can not be longer than 32 bytes")
+	}
+
+	previousEntryPadded, err := byteutils.LeftPadTo32Bytes(previousEntryBytes)
+	if err != nil {
+		return nil, err
+	}
+	seedPadded, err := byteutils.LeftPadTo32Bytes(seedBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	combinedEntryToSign := make([]byte, 0)
+	combinedEntryToSign = append(combinedEntryToSign, previousEntryPadded...)
+	combinedEntryToSign = append(combinedEntryToSign, seedPadded...)
+
+	return combinedEntryToSign, nil
 }

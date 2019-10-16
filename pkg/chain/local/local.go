@@ -485,3 +485,24 @@ func (c *localChain) CalculateDKGResultHash(
 
 	return dkgResultHash, nil
 }
+
+func (c *localChain) CombineToSign(
+	previousEntry *big.Int,
+	seed *big.Int,
+) ([]byte, error) {
+	return CombineToSign(previousEntry, seed)
+}
+
+// CombineToSign takes the previous relay entry value and the current
+// requests's seed and combines it into a slice of bytes that is going to be
+// signed by the selected group and as a result, will form a new relay entry
+// value.
+func CombineToSign(
+	previousEntry *big.Int,
+	seed *big.Int,
+) ([]byte, error) {
+	combinedEntryToSign := make([]byte, 0)
+	combinedEntryToSign = append(combinedEntryToSign, previousEntry.Bytes()...)
+	combinedEntryToSign = append(combinedEntryToSign, seed.Bytes()...)
+	return combinedEntryToSign, nil
+}
