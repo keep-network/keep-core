@@ -5,7 +5,7 @@ import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
 import {initContracts} from './helpers/initContracts';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage';
-
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 
 contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
@@ -17,7 +17,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
   const minimumStake = web3.utils.toBN(200000);
 
-  beforeEach(async () => {
+  before(async () => {
 
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
@@ -52,6 +52,14 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     await operatorContract.addGroupMember(group, accounts[1]);
     await operatorContract.addGroupMember(group, accounts[2]);
 
+  });
+
+  beforeEach(async () => {
+    await createSnapshot()
+  });
+
+  afterEach(async () => {
+    await restoreSnapshot()
   });
 
   it("should be able to get staking weight", async function() {

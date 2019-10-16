@@ -4,6 +4,7 @@ import latestTime from './helpers/latestTime';
 import expectThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
 import {initContracts} from './helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
 
 contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
@@ -13,7 +14,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     account_two = accounts[1],
     account_three = accounts[2];
 
-  beforeEach(async () => {
+  before(async () => {
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStaking.sol'),
@@ -32,6 +33,14 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     await operatorContract.registerNewGroup(bls.groupPubKey);
     let group = await groupContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, accounts[0]);
+  });
+
+  beforeEach(async () => {
+    await createSnapshot()
+  });
+
+  afterEach(async () => {
+    await restoreSnapshot()
   });
 
   it("should be able to check if the service contract was initialized", async function() {
