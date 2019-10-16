@@ -50,13 +50,13 @@ contract KeepRandomBeaconOperator {
 
     KeepRandomBeaconOperatorGroups public groupContract;
 
-    // Each signing group member reward in wei.
+    // Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
 
     // The price feed estimate is used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use both values to
     // defend against malicious miner-submitters who can manipulate transaction
-    // gas price.
+    // gas price. Expressed in wei.
     uint256 public priceFeedEstimate = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
 
     // Fluctuation margin to cover the immediate rise in gas price.
@@ -71,7 +71,7 @@ contract KeepRandomBeaconOperator {
     uint256 public groupThreshold = 3;
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
-    // the Keep network.
+    // the Keep network. Expressed in wei.
     uint256 public minimumStake = 200000 * 1e18;
 
     // Timeout in blocks after the initial ticket submission is finished.
