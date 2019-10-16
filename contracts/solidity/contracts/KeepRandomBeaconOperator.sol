@@ -667,10 +667,10 @@ contract KeepRandomBeaconOperator {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
 
         uint256 delayFactor = getDelayFactor();
-        groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals**2);
+        groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals);
 
         // delay penalty = base reward * (1 - delay factor)
-        uint256 groupMemberDelayPenalty = groupMemberBaseReward.sub(groupMemberBaseReward.mul(delayFactor).div(decimals**2));
+        uint256 groupMemberDelayPenalty = groupMemberBaseReward.sub(groupMemberBaseReward.mul(delayFactor).div(decimals));
 
         // The submitter reward consists of:
         // The callback gas expenditure (reimbursed by the service contract)
@@ -710,7 +710,11 @@ contract KeepRandomBeaconOperator {
         uint256 submissionWindow = deadlineBlock.sub(submissionStartBlock);
 
         // delay factor = [ T_remaining / (T_deadline - T_begin)]^2
-        delayFactor = (remainingBlocks.mul(decimals).div(submissionWindow))**2;
+        //
+        // Since we add 16 decimal places to perform float division, we do:
+        // delay factor = [ T_temaining * decimals / (T_deadline - T_begin)]^2 / decimals =
+        //    = [T_remaining / (T_deadline - T_begin) ]^2 * decimals
+        delayFactor = ((remainingBlocks.mul(decimals).div(submissionWindow))**2).div(decimals);
     }
 
     /**
