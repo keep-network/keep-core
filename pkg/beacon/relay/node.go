@@ -63,38 +63,38 @@ func (n *Node) JoinGroupIfEligible(
 		}
 	}
 
-	// build the channel name and get the broadcast channel
-	broadcastChannelName := channelNameForGroup(groupSelectionResult)
-
-	// We should only join the broadcast channel if we're
-	// elligible for the group
-	broadcastChannel, err := n.netProvider.ChannelFor(
-		broadcastChannelName,
-	)
-	if err != nil {
-		logger.Errorf(
-			"failed to get broadcastChannel for name [%s] with err: [%v]",
-			broadcastChannelName,
-			err,
-		)
-		return
-	}
-
-	err = broadcastChannel.AddFilter(
-		candidateGroupMembersFilter(
-			groupSelectionResult.SelectedStakers,
-			signing,
-		),
-	)
-	if err != nil {
-		logger.Errorf(
-			"could not add filter for channel [%v]: [%v]",
-			broadcastChannel.Name(),
-			err,
-		)
-	}
-
 	if len(indexes) > 0 {
+		// build the channel name and get the broadcast channel
+		broadcastChannelName := channelNameForGroup(groupSelectionResult)
+
+		// We should only join the broadcast channel if we're
+		// elligible for the group
+		broadcastChannel, err := n.netProvider.ChannelFor(
+			broadcastChannelName,
+		)
+		if err != nil {
+			logger.Errorf(
+				"failed to get broadcastChannel for name [%s] with err: [%v]",
+				broadcastChannelName,
+				err,
+			)
+			return
+		}
+
+		err = broadcastChannel.AddFilter(
+			candidateGroupMembersFilter(
+				groupSelectionResult.SelectedStakers,
+				signing,
+			),
+		)
+		if err != nil {
+			logger.Errorf(
+				"could not add filter for channel [%v]: [%v]",
+				broadcastChannel.Name(),
+				err,
+			)
+		}
+
 		for _, index := range indexes {
 			// capture player index for goroutine
 			playerIndex := index
