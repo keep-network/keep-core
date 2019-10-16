@@ -131,7 +131,6 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
   });
 
   it("should be able to get selected tickets and participants after submission period is over", async function() {
-
     let groupSize = await operatorContract.groupSize();
 
     for (let i = 0; i < groupSize*2; i++) {
@@ -151,11 +150,11 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     let groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry();
 
     // Calculate the block time when the group selection should be finished
-    let timeoutChallenge = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
+    let ticketSubmissionTimeout = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
     let groupSize = (await operatorContract.groupSize()).toNumber();
     let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
-    mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
+    mineBlocks(ticketSubmissionTimeout + timeDKG + groupSize * resultPublicationBlockStep);
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
@@ -169,11 +168,11 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     let groupSelectionStartBlock = await operatorContract.getTicketSubmissionStartBlock();
 
     // Calculate the block time when the group selection should be finished
-    let timeoutChallenge = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
+    let ticketSubmissionTimeout = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
     let groupSize = (await operatorContract.groupSize()).toNumber();
     let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
-    mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
+    mineBlocks(ticketSubmissionTimeout + timeDKG + groupSize * resultPublicationBlockStep);
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     let priceFeedEstimate = await serviceContract.priceFeedEstimate()
@@ -190,5 +189,4 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     assert.isFalse((await operatorContract.getTicketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
     assert.isTrue((await operatorContract.getGroupSelectionRelayEntry()).eq(bls.nextGroupSignature), "Random beacon value for the current group selection should be updated.");
   });
-
 });
