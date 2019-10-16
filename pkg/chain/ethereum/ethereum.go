@@ -481,14 +481,13 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 
 // CombineToSign takes the previous relay entry value and the current
 // requests's seed and:
-// - pad them with zeros if their byte length is less than 32 bytes. These
-//   values are used later on-chain as `uint256` values and are combined using
-//   `abi.encodePacked` function during signature verification. This function
-//   pads `uint256` type values with zeros, if they byte length is less than 32.
-//   If such values are not also padding off-chain, the on-chain verification
-//   will fail because of the padding difference.
-// - combines it into a slice of bytes that is going to be signed by the
-//   selected group and as a result, will form a new relay entry value.
+//  - pads them with zeros if their byte length is less than 32 bytes. These
+//   values are used later on-chain as `uint256` values and combined with
+//   `abi.encodePacked` during signature verification. `uint256` is always
+//   packed to 256-bits with leading zeros if needed,
+// - combines them into a single slice of bytes.
+//
+// Function returns an error if previous entry or seed takes more than 32 bytes.
 func (ec *ethereumChain) CombineToSign(
 	previousEntry *big.Int,
 	seed *big.Int,

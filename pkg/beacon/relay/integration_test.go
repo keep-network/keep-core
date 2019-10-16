@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/bls"
+	"github.com/keep-network/keep-core/pkg/chain/local"
 
 	"github.com/keep-network/keep-core/pkg/altbn128"
 
@@ -52,7 +53,7 @@ func TestAllMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign, err := combineToSign(previousEntry, seed)
+	entryToSign, err := local.CombineToSign(previousEntry, seed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +91,7 @@ func TestHonestThresholdMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign, err := combineToSign(previousEntry, seed)
+	entryToSign, err := local.CombineToSign(previousEntry, seed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +168,7 @@ func TestInactiveMemberPublicKeySharesReconstructionAndSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign, err := combineToSign(previousEntry, seed)
+	entryToSign, err := local.CombineToSign(previousEntry, seed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -240,11 +241,4 @@ func getFirstGroupPublicKey(result *dkgtest.Result) (*bn256.G2, error) {
 	}
 
 	return altbn128.DecompressToG2(signers[0].GroupPublicKeyBytes())
-}
-
-func combineToSign(previousEntry *big.Int, seed *big.Int) ([]byte, error) {
-	combinedEntryToSign := make([]byte, 0)
-	combinedEntryToSign = append(combinedEntryToSign, previousEntry.Bytes()...)
-	combinedEntryToSign = append(combinedEntryToSign, seed.Bytes()...)
-	return combinedEntryToSign, nil
 }
