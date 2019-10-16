@@ -276,6 +276,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         if (_callbacks[requestId].callbackContract != address(0)) {
             executeEntryCreatedCallback(requestId, entry, submitter);
+            delete _callbacks[requestId];
         }
 
         triggerDkgIfApplicable(entry);
@@ -311,8 +312,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             // Reimburse submitter with the callback payment sent by the requestor.
             submitter.transfer(_callbacks[requestId].callbackFee);
         }
-
-        delete _callbacks[requestId];
     }
 
     /**
