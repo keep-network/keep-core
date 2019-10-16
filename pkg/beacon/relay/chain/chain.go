@@ -117,6 +117,11 @@ type Interface interface {
 	// GetKeys returns the key pair used to attest for messages being sent to
 	// the chain.
 	GetKeys() (*operator.PrivateKey, *operator.PublicKey)
+	// CombineToSign takes the previous relay entry value and the current
+	// requests's seed and combines it into a slice of bytes that is going to be
+	// signed by the selected group and as a result, will form a new relay entry
+	// value.
+	CombineToSign(previousEntry *big.Int, seed *big.Int) ([]byte, error)
 
 	GroupInterface
 	RelayEntryInterface

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/bls"
@@ -53,7 +52,7 @@ func TestAllMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign, err := entry.CombineToSign(previousEntry, seed)
+	entryToSign, err := combineToSign(previousEntry, seed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +90,7 @@ func TestHonestThresholdMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign, err := entry.CombineToSign(previousEntry, seed)
+	entryToSign, err := combineToSign(previousEntry, seed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +167,7 @@ func TestInactiveMemberPublicKeySharesReconstructionAndSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign, err := entry.CombineToSign(previousEntry, seed)
+	entryToSign, err := combineToSign(previousEntry, seed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -241,4 +240,11 @@ func getFirstGroupPublicKey(result *dkgtest.Result) (*bn256.G2, error) {
 	}
 
 	return altbn128.DecompressToG2(signers[0].GroupPublicKeyBytes())
+}
+
+func combineToSign(previousEntry *big.Int, seed *big.Int) ([]byte, error) {
+	combinedEntryToSign := make([]byte, 0)
+	combinedEntryToSign = append(combinedEntryToSign, previousEntry.Bytes()...)
+	combinedEntryToSign = append(combinedEntryToSign, seed.Bytes()...)
+	return combinedEntryToSign, nil
 }

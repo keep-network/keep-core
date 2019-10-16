@@ -485,3 +485,13 @@ func (c *localChain) CalculateDKGResultHash(
 
 	return dkgResultHash, nil
 }
+
+func (c *localChain) CombineToSign(
+	previousEntry *big.Int,
+	seed *big.Int,
+) ([]byte, error) {
+	combinedEntryToSign := make([]byte, 0)
+	combinedEntryToSign = append(combinedEntryToSign, previousEntry.Bytes()...)
+	combinedEntryToSign = append(combinedEntryToSign, seed.Bytes()...)
+	return combinedEntryToSign, nil
+}
