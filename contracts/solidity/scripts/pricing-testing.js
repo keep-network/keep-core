@@ -20,8 +20,8 @@ module.exports = async function() {
   let requestorAccountBalance = await web3.eth.getBalance(requestor)
   let requestorPrevAccountBalance = 0;
 
-  try {
-    for (;;) {
+  for (;;) {
+    try {
       console.log("--- count:", count)
 
       let callbackGas = await callbackContract.callback.estimateGas(seed)
@@ -74,12 +74,10 @@ module.exports = async function() {
 
       count++
         
+    } catch(error) {
+      console.error('Request failed with', error)
     }
-  } catch(error) {
-    console.error('Request failed with', error)
   }
-
-  // process.exit()
 }
 
 function Pricing(callbackGas, entryFeeEstimate, requestorAccountBalance, totalForRelayEntry,
