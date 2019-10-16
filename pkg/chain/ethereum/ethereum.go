@@ -59,15 +59,6 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		)
 	}
 
-	ticketChallengeTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketChallengeTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketChallengeTimeout: [%v]",
-			err,
-		)
-	}
-
 	resultPublicationBlockStep, err := ec.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -101,7 +92,6 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		HonestThreshold:                 int(threshold.Int64()),
 		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout.Uint64(),
 		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout.Uint64(),
-		TicketChallengeTimeout:          ticketChallengeTimeout.Uint64(),
 		ResultPublicationBlockStep:      resultPublicationBlockStep.Uint64(),
 		MinimumStake:                    minimumStake,
 		TokenSupply:                     tokenSupply,
@@ -117,8 +107,8 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.HasMinimumStake(address)
 }
 
-func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
-	submittedTicketPromise := &async.GroupTicketPromise{}
+func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTicketSubmissionPromise {
+	submittedTicketPromise := &async.EventGroupTicketSubmissionPromise{}
 
 	failPromise := func(err error) {
 		failErr := submittedTicketPromise.Fail(err)
@@ -145,6 +135,10 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 	return submittedTicketPromise
 }
 
+func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
+	return ec.keepRandomBeaconOperatorContract.SubmittedTicketsCount()
+}
+
 func (ec *ethereumChain) GetSelectedParticipants() (
 	[]chain.StakerAddress,
 	error,
@@ -164,8 +158,8 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 
 func (ec *ethereumChain) SubmitRelayEntry(
 	entryValue *big.Int,
-) *async.RelayEntryPromise {
-	relayEntryPromise := &async.RelayEntryPromise{}
+) *async.EventEntryPromise {
+	relayEntryPromise := &async.EventEntryPromise{}
 
 	failPromise := func(err error) {
 		failErr := relayEntryPromise.Fail(err)
@@ -363,8 +357,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 	participantIndex group.MemberIndex,
 	result *relaychain.DKGResult,
 	signatures map[group.MemberIndex][]byte,
-) *async.DKGResultSubmissionPromise {
-	resultPublicationPromise := &async.DKGResultSubmissionPromise{}
+) *async.EventDKGResultSubmissionPromise {
+	resultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
 	failPromise := func(err error) {
 		failErr := resultPublicationPromise.Fail(err)

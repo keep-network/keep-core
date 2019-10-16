@@ -308,6 +308,18 @@
   revision = "e92bd71e8199b1d75295ea70846d29910e434070"
 
 [[projects]]
+  digest = "1:59199f93dc143d682ccaab13b3d47777685d0d7d684d64006ec0ccf09e5dbeef"
+  name = "github.com/keep-network/keep-common"
+  packages = [
+    "pkg/chain/ethereum/ethutil",
+    "pkg/encryption",
+    "pkg/logging",
+    "pkg/persistence",
+  ]
+  pruneopts = ""
+  revision = "787318dfe0401a634c395683cdb368e5282c7e49"
+
+[[projects]]
   digest = "1:083b726d999fff7a2fcd09b779598cddcb642628bc028e4cfe46e81b18bf0d26"
   name = "github.com/koron/go-ssdp"
   packages = ["."]
@@ -1043,7 +1055,6 @@
     "github.com/ethereum/go-ethereum/crypto",
     "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare",
     "github.com/ethereum/go-ethereum/crypto/secp256k1",
-    "github.com/ethereum/go-ethereum/ethclient",
     "github.com/ethereum/go-ethereum/event",
     "github.com/ethereum/go-ethereum/rpc",
     "github.com/gogo/protobuf/io",
@@ -1052,7 +1063,12 @@
     "github.com/gogo/protobuf/sortkeys",
     "github.com/ipfs/go-datastore",
     "github.com/ipfs/go-datastore/sync",
+    "github.com/ipfs/go-log",
     "github.com/keep-network/go-libp2p-bootstrap",
+    "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil",
+    "github.com/keep-network/keep-common/pkg/encryption",
+    "github.com/keep-network/keep-common/pkg/logging",
+    "github.com/keep-network/keep-common/pkg/persistence",
     "github.com/libp2p/go-addr-util",
     "github.com/libp2p/go-conn-security",
     "github.com/libp2p/go-libp2p",
@@ -1060,6 +1076,7 @@
     "github.com/libp2p/go-libp2p-crypto",
     "github.com/libp2p/go-libp2p-host",
     "github.com/libp2p/go-libp2p-kad-dht",
+    "github.com/libp2p/go-libp2p-net",
     "github.com/libp2p/go-libp2p-peer",
     "github.com/libp2p/go-libp2p-peerstore",
     "github.com/libp2p/go-libp2p-pubsub",
@@ -1067,7 +1084,6 @@
     "github.com/multiformats/go-multiaddr",
     "github.com/pborman/uuid",
     "github.com/urfave/cli",
-    "golang.org/x/crypto/nacl/secretbox",
     "golang.org/x/crypto/sha3",
     "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/tools/imports",

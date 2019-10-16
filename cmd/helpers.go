@@ -2,18 +2,15 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
-func nodeHeader(isBootstrapNode bool, addrStrings []string, port int) {
+func nodeHeader(addrStrings []string, port int) {
 	prefix := "| "
 	suffix := " |"
 
-	nodeName := "node"
-	if isBootstrapNode {
-		nodeName = "BOOTSTRAP node"
-	}
-	maxLineLength := len(nodeName)
+	maxLineLength := len(strconv.Itoa(port))
 
 	for _, addrString := range addrStrings {
 		if addrLength := len(addrString); addrLength > maxLineLength {
@@ -27,11 +24,9 @@ func nodeHeader(isBootstrapNode bool, addrStrings []string, port int) {
 	fmt.Printf(
 		"%s\n"+
 			"%s\n"+
-			"%s\n"+
 			"%s"+
 			"%s\n",
 		dashes,
-		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Node: %s", nodeName)),
 		buildLine(maxLineLength, prefix, suffix, fmt.Sprintf("Port: %d", port)),
 		buildMultiLine(maxLineLength, prefix, suffix, "IPs : ", addrStrings),
 		dashes,

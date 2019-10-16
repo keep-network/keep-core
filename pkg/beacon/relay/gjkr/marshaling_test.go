@@ -173,7 +173,7 @@ func TestPointsAccusationsMessageRoundtrip(t *testing.T) {
 	}
 }
 
-func TestDisqualifiedEphemeralKeysMessageRoundtrip(t *testing.T) {
+func TestMisbehavedEphemeralKeysMessageRoundtrip(t *testing.T) {
 	keyPair1, err := ephemeral.GenerateKeyPair()
 	if err != nil {
 		t.Fatal(err)
@@ -184,14 +184,14 @@ func TestDisqualifiedEphemeralKeysMessageRoundtrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	msg := &DisqualifiedEphemeralKeysMessage{
+	msg := &MisbehavedEphemeralKeysMessage{
 		senderID: group.MemberIndex(181811),
 		privateKeys: map[group.MemberIndex]*ephemeral.PrivateKey{
 			group.MemberIndex(1821881): keyPair1.PrivateKey,
 			group.MemberIndex(8181818): keyPair2.PrivateKey,
 		},
 	}
-	unmarshaled := &DisqualifiedEphemeralKeysMessage{}
+	unmarshaled := &MisbehavedEphemeralKeysMessage{}
 
 	err = pbutils.RoundTrip(msg, unmarshaled)
 	if err != nil {

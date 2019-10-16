@@ -21,6 +21,7 @@
 [LibP2P]
   Peers = ["/dns4/keep-client-bootstrap-peer-0.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r"]
   Port = "Set by Kube."
+  NAT = true
 
 [Storage]
-  DataDir = "/tmp"
+  DataDir = "Set by Kube"

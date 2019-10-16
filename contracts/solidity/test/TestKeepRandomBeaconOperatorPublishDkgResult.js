@@ -48,9 +48,9 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(2000)))
     await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake.mul(web3.utils.toBN(3000)))
 
-    let tickets1 = generateTickets(await operatorContract.groupSelectionRelayEntry(), operator1, 2000);
-    let tickets2 = generateTickets(await operatorContract.groupSelectionRelayEntry(), operator2, 2000);
-    let tickets3 = generateTickets(await operatorContract.groupSelectionRelayEntry(), operator3, 3000);
+    let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, 2000);
+    let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, 2000);
+    let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, 3000);
 
     for(let i = 0; i < groupSize; i++) {
       await operatorContract.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
@@ -64,8 +64,8 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
       await operatorContract.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
     }
 
-    let ticketSubmissionStartBlock = (await operatorContract.ticketSubmissionStartBlock()).toNumber();
-    let timeoutChallenge = (await operatorContract.ticketChallengeTimeout()).toNumber();
+    let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
+    let timeoutChallenge = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
     resultPublicationTime = ticketSubmissionStartBlock + timeoutChallenge + timeDKG;
 

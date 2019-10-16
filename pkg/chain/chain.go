@@ -83,5 +83,5 @@ type Utility interface {
 	Handle
 
 	Genesis() error
-	RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
+	RequestRelayEntry(seed *big.Int) *async.EventRequestPromise
 }

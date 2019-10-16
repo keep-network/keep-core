@@ -2,15 +2,17 @@ package beacon
 
 import (
 	"context"
+	"encoding/hex"
 
 	"github.com/ipfs/go-log"
 
+	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/persistence"
 )
 
 var logger = log.Logger("keep-beacon")
@@ -83,13 +85,30 @@ func Initialize(
 	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
 		logger.Infof("group selection started: [%+v]", event)
 
+		onGroupSelected := func(group *groupselection.Result) {
+			for _, staker := range group.SelectedStakers {
+				logger.Infof(
+					"new candidate group member: [0x%v]",
+					hex.EncodeToString(staker),
+				)
+			}
+			node.JoinGroupIfEligible(
+				relayChain,
+				signing,
+				group,
+				event.NewEntry,
+			)
+		}
+
 		go func() {
-			err := node.SubmitTicketsForGroupSelection(
+			err := groupselection.CandidateToNewGroup(
 				relayChain,
 				blockCounter,
-				signing,
+				chainConfig,
+				staker,
 				event.NewEntry,
 				event.BlockNumber,
+				onGroupSelected,
 			)
 			if err != nil {
 				logger.Errorf("Tickets submission failed: [%v]", err)

@@ -18,9 +18,6 @@ type Chain struct {
 	// final chance to submit tickets is called reactive ticket submission
 	// (defined in the group selection algorithm, 2b).
 	TicketReactiveSubmissionTimeout uint64
-	// TicketChallengeTimeout is the duration (in blocks) the staker has to
-	// submit any challenges for tickets that fail any checks.
-	TicketChallengeTimeout uint64
 	// ResultPublicationBlockStep is the duration (in blocks) that has to pass
 	// before group member with the given index is eligible to submit the
 	// result.

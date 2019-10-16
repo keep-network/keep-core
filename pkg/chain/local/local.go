@@ -101,8 +101,8 @@ func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
-func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketPromise {
-	promise := &async.GroupTicketPromise{}
+func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTicketSubmissionPromise {
+	promise := &async.EventGroupTicketSubmissionPromise{}
 
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
@@ -118,6 +118,10 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketP
 	})
 
 	return promise
+}
+
+func (c *localChain) GetSubmittedTicketsCount() (*big.Int, error) {
+	return big.NewInt(int64(len(c.tickets))), nil
 }
 
 func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, error) {
@@ -144,12 +148,12 @@ func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, erro
 	return selectedParticipants, nil
 }
 
-func (c *localChain) SubmitRelayEntry(newEntry *big.Int) *async.RelayEntryPromise {
+func (c *localChain) SubmitRelayEntry(newEntry *big.Int) *async.EventEntryPromise {
 	c.ticketsMutex.Lock()
 	c.tickets = make([]*relaychain.Ticket, 0)
 	c.ticketsMutex.Unlock()
 
-	relayEntryPromise := &async.RelayEntryPromise{}
+	relayEntryPromise := &async.EventEntryPromise{}
 
 	entry := &event.Entry{
 		Value: newEntry,
@@ -265,7 +269,7 @@ func ConnectWithKey(
 	minimumStake *big.Int,
 	operatorKey *ecdsa.PrivateKey,
 ) Chain {
-	bc, _ := blockCounter()
+	bc, _ := BlockCounter()
 
 	tokenSupply, naturalThreshold := calculateGroupSelectionParameters(
 		groupSize,
@@ -284,7 +288,6 @@ func ConnectWithKey(
 			HonestThreshold:                 honestThreshold,
 			TicketInitialSubmissionTimeout:  2,
 			TicketReactiveSubmissionTimeout: 3,
-			TicketChallengeTimeout:          4,
 			ResultPublicationBlockStep:      3,
 			MinimumStake:                    minimumStake,
 			TokenSupply:                     tokenSupply,
@@ -340,7 +343,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	bc, _ := blockCounter()
+	bc, _ := BlockCounter()
 	bc.WaitForBlockHeight(c.simulatedHeight)
 	currentBlock, err := bc.CurrentBlock()
 
@@ -371,8 +374,8 @@ func (c *localChain) SubmitDKGResult(
 	participantIndex group.MemberIndex,
 	resultToPublish *relaychain.DKGResult,
 	signatures map[group.MemberIndex][]byte,
-) *async.DKGResultSubmissionPromise {
-	dkgResultPublicationPromise := &async.DKGResultSubmissionPromise{}
+) *async.EventDKGResultSubmissionPromise {
+	dkgResultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
 	if len(signatures) < c.relayConfig.HonestThreshold {
 		dkgResultPublicationPromise.Fail(fmt.Errorf(
