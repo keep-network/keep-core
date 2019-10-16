@@ -240,7 +240,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             selectedOperatorContractFee
         )(requestId, seed, _previousEntry);
 
-        // If selected operator contract is cheaper than expected return the surplus to the subsidy fee pool.
+        // If selected operator contract is cheaper than expected return the
+        // surplus to the subsidy fee pool.
+        // We do that instead of returning the surplus to the requestor to have
+        // a consistent beacon pricing for customers without fluctuations caused
+        // by different operator contracts being selected.
         uint256 surplus = entryVerificationFee.add(groupProfitFee).sub(selectedOperatorContractFee);
         _requestSubsidyFeePool = _requestSubsidyFeePool.add(surplus);
 
@@ -315,7 +319,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
-     * @dev Triggers the selection process of a new candidate group.
+     * @dev Triggers the selection process of a new candidate group if the DKG
+     * fee pool equals or exceeds DKG cost estimate.
      * @param entry The generated random number.
      */
     function triggerDkgIfApplicable(uint256 entry) internal {
@@ -359,9 +364,13 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     /**
      * @dev Get the minimum payment in wei for relay entry callback.
+     * The returned value includes safety margin for gas price fluctuations.
      * @param callbackGas Gas required for the callback.
      */
     function callbackFee(uint256 callbackGas) public view returns(uint256) {
+        // We take the gas price from the price feed to not let malicious
+        // miner-requestors manipulate the gas price when requesting relay entry
+        // and underpricing expensive callbacks.
         return callbackGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
     }
 
