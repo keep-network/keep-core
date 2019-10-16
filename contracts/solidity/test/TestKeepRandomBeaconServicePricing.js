@@ -52,13 +52,13 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
   it("should successfully refund callback gas surplus to the requestor if gas price was high", async function() {
 
-    // Set higher gas price
-    let defaultMinimumGasPrice = await serviceContract.minimumGasPrice();
+    let defaultPriceFeedEstimate = await serviceContract.priceFeedEstimate();
 
-    await serviceContract.setMinimumGasPrice(defaultMinimumGasPrice.mul(web3.utils.toBN(10)));
+    // Set higher gas price
+    await serviceContract.setPriceFeedEstimate(defaultPriceFeedEstimate.mul(web3.utils.toBN(10)));
     let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    let excessCallbackFee = await serviceContract.minimumCallbackFee(callbackGas)
+    let excessCallbackFee = await serviceContract.callbackFee(callbackGas)
 
     await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
@@ -73,8 +73,8 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
     // Put back the default gas price
-    await serviceContract.setMinimumGasPrice(defaultMinimumGasPrice);
-    let expectedCallbackFee = await serviceContract.minimumCallbackFee((callbackGas/1.5).toFixed()) // Remove 1.5 fluctuation safety margin
+    await serviceContract.setPriceFeedEstimate(defaultPriceFeedEstimate);
+    let expectedCallbackFee = await serviceContract.callbackFee((callbackGas/1.5).toFixed()) // Remove 1.5 fluctuation safety margin
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
     // Ethereum transaction min cost varies i.e. 20864-21000 Gas resulting slightly different
@@ -87,10 +87,10 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
   it("should successfully refund callback gas surplus to the requestor if gas estimation was high", async function() {
 
     let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
-    let expectedCallbackFee = await serviceContract.minimumCallbackFee((callbackGas/1.5).toFixed()); // Remove 1.5 fluctuation safety margin
+    let expectedCallbackFee = await serviceContract.callbackFee((callbackGas/1.5).toFixed()); // Remove 1.5 fluctuation safety margin
 
     let excessCallbackGas = web3.utils.toBN(callbackGas).mul(web3.utils.toBN(2)); // Set higher callback gas estimate.
-    let excessCallbackFee = await serviceContract.minimumCallbackFee(excessCallbackGas);
+    let excessCallbackFee = await serviceContract.callbackFee(excessCallbackGas);
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(excessCallbackGas)
     await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
@@ -129,23 +129,48 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
     let relayEntryTimeout = await operatorContract.relayEntryTimeout();
+    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
     let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
-    let currentBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
-
+    let entryReceivedBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(web3.utils.toBN(1));
+    let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
+    let submissionWindow = deadlineBlock.sub(entryReceivedBlock);
     let decimalPoints = web3.utils.toBN(1e16);
-    let delayFactor = (deadlineBlock.sub(currentBlock)).mul(decimalPoints).div(relayEntryTimeout.sub(web3.utils.toBN(1))).pow(web3.utils.toBN(2));
-    let memberBaseReward = entryFee.groupProfitMargin.div(groupSize)
+    let delayFactor = (remainingBlocks.mul(decimalPoints).div(submissionWindow)).pow(web3.utils.toBN(2));
+    let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
     let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
 
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
+    assert.isTrue(delayFactor.eq(web3.utils.toBN(1e16).pow(web3.utils.toBN(2))), "Delay factor expected to be 1 * 1e16 ^ 2.");
     assert.isTrue(magpie1balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive group reward.");
     assert.isTrue(magpie2balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive group reward.");
     assert.isTrue(magpie3balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive group reward.");
   });
 
-  it("should send part of the group reward to request subsidy pool based on the submission block .", async function() {
-
+  it("should send part of the group reward to request subsidy pool based on the submission block.", async function() {
+    // Example rewards breakdown:
+    // entryVerificationGasEstimate: 1240000
+    // dkgGasEstimate: 2260000
+    // dkgContributionMargin: 10%
+    // groupMemberBaseReward: 1050000000000000
+    // groupSize: 5
+    // entry fee estimate: 49230000000000000 wei
+    // signing fee: 37200000000000000 wei
+    // DKG fee: 6780000000000000 wei
+    // relayEntryTimeout: 10 blocks
+    // currentEntryStartBlock: 38
+    // relay entry submission block: 44
+    // decimals: 1e16
+    // groupProfitFee: 42450000000000000 - 37200000000000000 = 5250000000000000 wei
+    // memberBaseReward: 5250000000000000 / 5 = 1050000000000000 wei
+    // entryTimeout: 38 + 10 = 48
+    // delayFactor: ((48 - 44) * 1e16 / (10 - 1)) ^ 2 = 19753086419753082469135802469136
+    // groupMemberDelayPenalty: 1050000000000000 * 80246913580246917530864197530864 / (1e16 ^ 2) = 842592592592592
+    // groupMemberReward: 1050000000000000 * 19753086419753082469135802469136) / (1e16 ^ 2) = 207407407407407 wei
+    // submitterExtraReward: 842592592592592 * 5 * 5 / 100 = 210648148148148 wei
+    // submitterReward: 37200000000000000 + 210648148148148 = 37410648148148148 wei
+    // subsidy = 5250000000000000 - 207407407407407 * 5 - 210648148148148 = 4002314814814817 wei
+  
     let magpie1balance = web3.utils.toBN(await web3.eth.getBalance(magpie1));
     let magpie2balance = web3.utils.toBN(await web3.eth.getBalance(magpie2));
     let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
@@ -161,20 +186,23 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
     let relayEntryTimeout = await operatorContract.relayEntryTimeout();
+    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
     let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
+    let submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(web3.utils.toBN(1));
     let decimalPoints = web3.utils.toBN(1e16);
 
-    mineBlocks(relayEntryTimeout.toNumber()/2);
+    mineBlocks(relayEntryGenerationTime.toNumber() + 1);
 
-    let currentBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
-    let delayFactor = (deadlineBlock.sub(currentBlock)).mul(decimalPoints).div(relayEntryTimeout.sub(web3.utils.toBN(1))).pow(web3.utils.toBN(2));
-    let delayFactorInverse = decimalPoints.pow(web3.utils.toBN(2)).sub(delayFactor);
+    let entryReceivedBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
+    let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
+    let submissionWindow = deadlineBlock.sub(submissionStartBlock);
+    let delayFactor = (remainingBlocks.mul(decimalPoints).div(submissionWindow)).pow(web3.utils.toBN(2));
 
-    let memberBaseReward = entryFee.groupProfitMargin.div(groupSize)
+    let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
     let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
-    let expectedDelayPenalty = memberBaseReward.mul(delayFactorInverse).div(decimalPoints.pow(web3.utils.toBN(2)));
+    let expectedDelayPenalty = memberBaseReward.sub(memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2))));
     let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).mul(web3.utils.toBN(5)).div(web3.utils.toBN(100));
-    let requestSubsidy = entryFee.groupProfitMargin.sub(expectedGroupMemberReward.mul(groupSize)).sub(expectedSubmitterExtraReward);
+    let requestSubsidy = entryFee.groupProfitFee.sub(expectedGroupMemberReward.mul(groupSize)).sub(expectedSubmitterExtraReward);
 
     let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
 
@@ -183,6 +211,49 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     assert.isTrue(magpie1balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive reduced group reward.");
     assert.isTrue(magpie2balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive reduced group reward.");
     assert.isTrue(magpie3balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive reduced group reward.");
+    assert.isTrue(serviceContractBalance.add(requestSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(serviceContract.address))), "Service contract should receive request subsidy.");
+  });
+
+  it("should send no rewards to members and send group reward to request subsidy pool based on the submission block.", async function() {
+    let magpie1balance = web3.utils.toBN(await web3.eth.getBalance(magpie1));
+    let magpie2balance = web3.utils.toBN(await web3.eth.getBalance(magpie2));
+    let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
+
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
+    let tx = await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
+      bls.seed,
+      callbackContract.address,
+      "callback(uint256)",
+      0,
+      {value: entryFeeEstimate, from: requestor}
+    );
+
+    let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
+    let relayEntryTimeout = await operatorContract.relayEntryTimeout();
+    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
+    let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
+    let submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(web3.utils.toBN(1));
+    let decimalPoints = web3.utils.toBN(1e16);
+
+    mineBlocks(relayEntryTimeout.sub(web3.utils.toBN(1)));
+
+    let entryReceivedBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
+    let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
+    let submissionWindow = deadlineBlock.sub(submissionStartBlock);
+    let delayFactor = (remainingBlocks.mul(decimalPoints).div(submissionWindow)).pow(web3.utils.toBN(2));
+
+    let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
+    let expectedDelayPenalty = memberBaseReward.sub(memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2))));
+    let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).mul(web3.utils.toBN(5)).div(web3.utils.toBN(100));
+    let requestSubsidy = entryFee.groupProfitFee.sub(expectedSubmitterExtraReward);
+
+    let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
+
+    await operatorContract.relayEntry(bls.nextGroupSignature);
+    assert.isTrue(delayFactor.isZero(), "Delay factor expected to be 0.");
+    assert.isTrue(magpie1balance.eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive no reward.");
+    assert.isTrue(magpie2balance.eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive no reward.");
+    assert.isTrue(magpie3balance.eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive no reward.");
     assert.isTrue(serviceContractBalance.add(requestSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(serviceContract.address))), "Service contract should receive request subsidy.");
   });
 });

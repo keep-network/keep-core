@@ -4,8 +4,10 @@ module.exports = async function () {
 
   const contract = await KeepRandomBeaconOperator.deployed()
   const dkgGas = await contract.dkgGasEstimate()
-  const gasPrice = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)) // 20 Gwei
-  const dkgFee = dkgGas.mul(gasPrice)
+  const fluctuationMargin = await contract.fluctuationMargin()
+  const priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)) // 20 Gwei
+  const gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
+  const dkgFee = dkgGas.mul(gasPriceWithFluctuationMargin)
 
   try {
     await contract.genesis({value: dkgFee})
