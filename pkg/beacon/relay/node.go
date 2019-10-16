@@ -55,11 +55,16 @@ func (n *Node) JoinGroupIfEligible(
 ) {
 	dkgStartBlockHeight := groupSelectionResult.GroupSelectionEndBlock
 
+	indexes := make([]int, 0)
 	for index, selectedStaker := range groupSelectionResult.SelectedStakers {
-		// If we are amongst those chosen, kick off an instance of DKG. We may
-		// have been selected multiple times (which would result in multiple
-		// instances of DKG).
+		// See if we are amongst those chosen
 		if bytes.Compare(selectedStaker, n.Staker.ID()) == 0 {
+			indexes = append(indexes, index)
+		}
+	}
+
+	if len(indexes) > 0 {
+		for _, index := range indexes {
 			// capture player index for goroutine
 			playerIndex := index
 
