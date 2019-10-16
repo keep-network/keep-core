@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/bls"
+	"github.com/keep-network/keep-core/pkg/chain/local"
 
 	"github.com/keep-network/keep-core/pkg/altbn128"
 
@@ -53,7 +53,7 @@ func TestAllMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign, err := entry.CombineToSign(previousEntry, seed)
+	entryToSign, err := local.CombineToSign(previousEntry, seed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func TestHonestThresholdMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign, err := entry.CombineToSign(previousEntry, seed)
+	entryToSign, err := local.CombineToSign(previousEntry, seed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +168,7 @@ func TestInactiveMemberPublicKeySharesReconstructionAndSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign, err := entry.CombineToSign(previousEntry, seed)
+	entryToSign, err := local.CombineToSign(previousEntry, seed)
 	if err != nil {
 		t.Fatal(err)
 	}
