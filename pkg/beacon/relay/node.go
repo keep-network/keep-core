@@ -160,6 +160,14 @@ func candidateGroupMembersFilter(
 			signing.PublicKeyToAddress(*authorPublicKey),
 		)
 		_, isAuthorized := authorizations[authorAddress]
+
+		if !isAuthorized {
+			logger.Debugf(
+				"rejecting message from [%v] not qualified to DKG group",
+				authorAddress,
+			)
+		}
+
 		return isAuthorized
 	}
 }
