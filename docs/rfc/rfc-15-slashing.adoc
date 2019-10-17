@@ -11,8 +11,11 @@ toc::[]
 To incentivize correct behavior in the Keep network,
 misbehaving participants need to be punished.
 In some situations,
-another participant's cooperation is required to prove misbehavior.
-This coordination is incentivized by rewarding the _tattletale_.
+proving misbehavior requires cooperation from another participant,
+a _tattletale_.
+This coordination is incentivized by rewarding the _tattletale_
+by granting them a fraction of the tokens
+taken from the misbehaving participant.
 
 == Proposal
 
@@ -37,40 +40,64 @@ they will receive 5% of the slashed tokens,
 the remainder being burned.
 
 When an operator is punished for misbehavior,
-they should be removed from the group/keep the misbehavior occurred in.
+they should generally be removed
+from the group/keep the misbehavior occurred in.
 
-==== Authorization and slashing
+==== Authorization
 
 _Operator contracts_ are authorized to impose penalties
 by stakers' _authorizers_.
 All stakers using the same _authorizer_
 share the set of authorized operator contracts.
-Once given, this authorization cannot be revoked.
+Once given, this authorization cannot be revoked by the authorizer.
 
 When a staker wishes to join a group
 the contract responsible for creating the group
 must be authorized by the staker's authorizer.
-The operator contract checks its authorization status
+The operator contract must check its authorization status
 when determining a staker's eligibility.
 
-===== Directly authorized operator contracts
+In the random beacon a staker's eligibility is checked
+when tickets are submitted;
+this means that authorization must be checked
+when validating a ticket.
+If an operator submits a ticket to an unauthorized operator contract,
+the ticket must be rejected as invalid.
+
+==== Penalties
 
 When an operator misbehaves on-chain,
 the operator contract calls the staking contract to punish the operator.
 The staking contract checks
 that the operator contract is authorized to punish the staker,
-and if true,
-applies the penalty
-by subtracting the applicable penalty from the operator's stake
+and if true, applies the penalty.
+
+===== Pure slashing
+
+When misbehavior is detected without third-party input,
+a _pure slashing_ penalty is applied.
+Pure slashing means that the staking contract
+subtracts the applicable penalty from the operator's stake
 and burns tokens equal to the penalty amount.
 
+An example of a pure slashing penalty would be
+when a beacon group fails to produce a signature within the deadline.
+In this case all members of the group are punished,
+and nobody is rewarded.
+
+===== Seizing
+
 When a tattletale proves another operator's misbehavior,
+a fraction of the penalty amount is _seized_ and transferred to the tattletale,
+while the rest is burned.
+
+To apply a seizing penalty,
 the operator contract includes the tattletale operator's address in the call.
 The staking contract subtracts the applicable penalty from the operator's stake
 and burns 95% of it.
 The remaining 5% is transferred to the tattletale's _beneficiary_ address.
 
-==== Penalty amounts
+===== Penalty amounts
 
 Penalties for misbehavior could be adjusted
 to match the severity of the misbehavior.
@@ -137,6 +164,12 @@ to the stake actually corresponding to the operations.
 This RFC doesn't cover authorizing individual keeps,
 or situations where a trusted application
 has the authority to impose a penalty.
+
+Because authorizations cannot be revoked,
+operator contracts can safely cache positive authorization
+after the first lookup to the staking contract.
+Lack of authorization cannot be cached,
+as the operator contract could later become authorized.
 
 [bibliography]
 == Related Links
