@@ -100,9 +100,15 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
       operator1, tickets1[0].value, operator1, tickets1[0].virtualStakerIndex
     ), "Should be able to verify a valid ticket.");
 
-    let invalidStakerIndex = operator1StakingWeight + 1;
+    let lastTicketIndex = tickets1.length - 1;
+    let maxVirtualStakerIndexTicket = tickets1[lastTicketIndex].virtualStakerIndex;
+    assert.isTrue(await operatorContract.isTicketValid(
+      operator1, tickets1[lastTicketIndex].value, operator1, maxVirtualStakerIndexTicket
+    ), "Should be able to verify a valid ticket with the maximum allowed staker index");
+
+    let invalidVirtualStakerIndex = operator1StakingWeight + 1;
     assert.isFalse(await operatorContract.isTicketValid(
-      operator1, tickets1[0].value, operator1, invalidStakerIndex
+      operator1, tickets1[0].value, operator1, invalidVirtualStakerIndex
     ), "Should fail while verifying a submitted ticket due to invalid number of virtual stakers");
     
     assert.isFalse(await operatorContract.isTicketValid(
