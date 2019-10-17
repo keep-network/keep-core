@@ -147,11 +147,125 @@ Check if the authorizer `by` has authorized `op_contract`.
 Any address that holds tokens can call `burn(amount sum)`
 to burn `sum` tokens, limited by tokens held by the address.
 
+=== Misbehavior and penalties in the Random Beacon
+
+==== DKG
+
+===== Invalid ticket
+
+An operator might submit an invalid ticket in the DKG.
+
+Invalid tickets are detected automatically
+without the need for a tattletale.
+
+Proof of invalid tickets is _objective_,
+as all information required to verify tickets is available on-chain.
+
+Because the cost of ticket submission is paid by the submitter,
+the ticket can be simply rejected and the transaction reverted.
+
+===== Failure to produce a DKG result
+
+The created group might fail to produce a valid result.
+
+Failure to finish DKG is detected automatically.
+
+Failure to finish DKG is _objective_.
+
+Failure to produce a result means
+that a honest and available majority
+was not present in the DKG for some reason or other.
+The precise reasons can be unpredictable.
+Failing to finish DKG is inherently punished
+by the opportunity cost of not getting into a signing group
+despite having paid the ticket submission fees.
+Because of this,
+failure to produce a valid DKG result should not be separately penalized
+without further examination of the possible causes of failure
+and the effects of collective punishment.
+
+===== Submitting an invalid DKG result
+
+An operator might submit an invalid result for the DKG.
+
+Invalid DKG results are detected automatically.
+
+Proof of invalid DKG results is _objective_.
+
+Because the cost of verifying a DKG result is paid by the submitter,
+and the submitter is reimbursed only for valid results,
+submitting invalid results inherently punishes itself
+and no further penalty is needed beyond reverting the transaction.
+
+===== Inactivity in DKG
+
+An operator might fail to send a required message during DKG.
+This lowers the effective safety margin of the group
+against lynchpinning and inability to produce a signature.
+
+Inactivity in DKG is determined by
+the list of inactive members in the DKG result submission.
+
+Unless DKG is performed on-chain,
+proof of inactivity in DKG is _subjective_
+and subject to the honest majority assumption;
+a dishonest majority could always forge a false proof of inactivity.
+It is not possible to make off-chain DKG inactivity objectively provable.
+
+Inactive members shall be removed from the group,
+but not otherwise punished;
+the opportunity cost of not being included in the group
+already provides an incentive to be active.
+
+===== Disqualification in DKG
+
+An operator might misbehave in a variety of ways during DKG.
+Active misbehavior can lower the effective safety margin of the group
+against frontrunning, lynchpinning, or signature failure.
+
+Disqualification in DKG is determined like inactivity,
+by the list of disqualified members being included in the result submission.
+
+On-chain proof of disqualification is _subjective_
+and a dishonest majority could forge a false proof.
+
+Punishing disqualified members based on subjective proof
+creates opportunities for dishonest majorities
+to attack other stakers
+in a way which extends beyond the damage caused by frontrunning the beacon.
+Because of this,
+punishing disqualified members without objective proof
+requires further examination of the associated risks and incentives.
+
+However, misbehavior is defined by there being _objective_ off-chain proof,
+so the operator contract could be made to verify DKG transcripts
+to render DKG disqualification _objective_ on-chain as well.
+
+Disqualified members must be removed from the group.
+If disqualification is objectively proven,
+the operator must be punished with _seizing_ their stake.
+The submitter of the transaction containing the DKG transcript
+shall be the _tattletale_.
+
+==== Signing
+
+===== Invalid signature share
+
+===== Submitting an invalid signature
+
+===== Unauthorized use of keyshare
+
+===== Creating an unauthorized signature
+
 === Limitations
 
 Slashing is not limited to the amount originally staked
 for participating in the relevant operations;
 a malfunctioning operator contract could cause a staker to lose all stake.
+
+Chain reorganizations may lead to honest behavior in one fork
+being punishable misbehavior in another.
+Mitigations for this have not been included in this RFC.
 
 == Future Work
 
@@ -170,6 +284,17 @@ operator contracts can safely cache positive authorization
 after the first lookup to the staking contract.
 Lack of authorization cannot be cached,
 as the operator contract could later become authorized.
+
+Punishing the failure to produce a DKG result
+has interesting implications that could be explored further.
+
+Punishing disqualified DKG members on subjective proof
+creates opportunities to attack honest stakers
+but can also provide a way for compromised groups
+to profitably reveal and remove themselves
+if seizing on subjective proof is permitted.
+The implications and tradeoffs of
+concentrated vs. distributed risk are interesting.
 
 [bibliography]
 == Related Links
