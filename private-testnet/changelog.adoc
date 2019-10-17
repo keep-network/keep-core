@@ -2,6 +2,16 @@
 
 Summary of Keep private testnet releases in reverse chronological order.
 
+== 2019-10-15
+
+=== BUGFIXES
+
+- on-chain BLS verification spuriously failing: In some cases our off-chain calculations for BLS
+  verification were not matching the on-chain counterpart.  This happened when calculated values were
+  shorter than 32 bytes in length. The on-chain implementation was properly padding these cases, our
+  off-chain implementation was not.  We've added padding to the off-chain piece so that we have a
+  proper match in these cases.
+
 == 2019-09-27
 
 === NEW FEATURES
