@@ -251,11 +251,91 @@ shall be the _tattletale_.
 
 ===== Invalid signature share
 
+An operator may broadcast an invalid signature share to other operators
+when reconstructing the threshold signature.
+
+Invalid signature shares can only be detected on-chain
+if a tattletale submits a proof
+that includes the signature share and the information required to verify it.
+If the DKG result includes a merkle root
+of each member's individual public key,
+this proof can be relatively compact and inexpensive to verify.
+
+Proof of an invalid signature share is _objective_.
+
+If the broadcast of an invalid signature share is proven
+the responsible operator shall be punished by _seizing_,
+with the submitter of the proof receiving the tattletale reward.
+
+===== Failing to broadcast a signature share
+
+When a signing group is tasked with producing an entry,
+its members are expected to broadcast signature shares.
+An operator might fail to broadcast its signature share,
+either due to actual inactivity
+or as an attempt to gain a lynchpin position and guaranteed submitter reward.
+
+Failure of an individual member to broadcast a signature share
+can not be reliably detected on-chain,
+even in the event the group as a whole fails to produce a signature.
+Thus, individual failures to broadcast shares shall not be punished.
+
 ===== Submitting an invalid signature
 
-===== Unauthorized use of keyshare
+An operator may submit an invalid threshold signature on-chain
+when generating a beacon entry.
+
+Invalid signatures are automatically detected.
+
+Proof of an invalid threshold signature is _objective_.
+
+As verifying a threshold signature is relatively expensive,
+no separate punishment is needed beyond reverting the transaction.
+
+===== Unauthorized use of individual private key
+
+An operator's individual private key may be leaked
+and used inappropriately.
+
+Unauthorized use of a member's individual private key
+can be proven on-chain by the submission of a suitable proof.
+The proof must contain the DKG merkle root,
+a merkle path to the individual public key,
+some value that isn't a requested entry,
+and a valid signature of that value with the individual public key.
+
+Such proof is _objective_.
+
+Unauthorized use of an individual private key
+shall be punished by _seizing_,
+with the submitter of the proof as the _tattletale_.
 
 ===== Creating an unauthorized signature
+
+An entire signing group's private key could be abused
+to create an unauthorized signature.
+
+Unauthorized threshold signing can be proven by publishing
+a value the group hasn't been previously requested to sign,
+and a valid signature for the value.
+
+Proof of unauthorized signing is _objective_.
+
+Unauthorized signing shall be punished
+by _seizing_ tokens from all members,
+with the submitter of the proof as the _tattletale_.
+
+===== Failure to produce a signature
+
+A signing group may fail to produce a new entry within the deadline.
+
+Failure to generate an entry is automatically detected on-chain.
+
+The proof of failure is _objective_.
+
+When a group fails to produce an entry,
+all of its members shall be _slashed_
+and the group itself shall be terminated.
 
 === Limitations
 
@@ -263,7 +343,7 @@ Slashing is not limited to the amount originally staked
 for participating in the relevant operations;
 a malfunctioning operator contract could cause a staker to lose all stake.
 
-Chain reorganizations may lead to honest behavior in one fork
+Chain reorganizations may lead to honest behavior in one branch
 being punishable misbehavior in another.
 Mitigations for this have not been included in this RFC.
 
@@ -295,6 +375,17 @@ to profitably reveal and remove themselves
 if seizing on subjective proof is permitted.
 The implications and tradeoffs of
 concentrated vs. distributed risk are interesting.
+
+When chain reorganizations happen,
+a honest entry generation in one branch
+can be indistinguishable from frontrunning in the other.
+It is easy to punish the generation of unauthorized threshold signatures
+on values that aren't a part of the entry chain,
+and this can serve as a way to incentivize actors
+that have compromised the group private key of some group
+to destroy the group for immediate profit
+instead of covertly frontrunning the beacon.
+However, actual frontrunning is more difficult to deal with.
 
 [bibliography]
 == Related Links
