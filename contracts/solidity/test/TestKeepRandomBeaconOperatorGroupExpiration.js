@@ -6,9 +6,9 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
 
   let operatorContract, groupContract;
 
-  const groupActiveTime = 300;
+  const groupActiveTime = 20;
   const activeGroupsThreshold = 5;
-  const relayEntryTimeout = 24;
+  const relayEntryTimeout = 10;
 
   before(async () => {
     let contracts = await initContracts(
