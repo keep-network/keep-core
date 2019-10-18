@@ -485,3 +485,7 @@ func (c *localChain) CalculateDKGResultHash(
 
 	return dkgResultHash, nil
 }
+
+func (c *localChain) Test() error {
+	return nil
+}

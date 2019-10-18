@@ -353,6 +353,11 @@ func (ec *ethereumChain) ReportRelayEntryTimeout() error {
 	return nil
 }
 
+func (ec *ethereumChain) Test() error {
+	ec.testContract.FunctionFour()
+	return nil
+}
+
 func (ec *ethereumChain) SubmitDKGResult(
 	participantIndex group.MemberIndex,
 	result *relaychain.DKGResult,
@@ -426,6 +431,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 		signaturesOnChainFormat,
 		membersIndicesOnChainFormat,
 	); err != nil {
+		logger.Error(err)
 		subscription.Unsubscribe()
 		close(publishedResult)
 		failPromise(err)

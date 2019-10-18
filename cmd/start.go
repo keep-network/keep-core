@@ -64,6 +64,8 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
+	chainProvider.Test()
+
 	stakeMonitor, err := chainProvider.StakeMonitor()
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)

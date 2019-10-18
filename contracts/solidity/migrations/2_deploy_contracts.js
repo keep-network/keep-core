@@ -8,6 +8,7 @@ const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol
 const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
 const KeepRandomBeaconOperatorGroups = artifacts.require("./KeepRandomBeaconOperatorGroups.sol");
+const MyTestContractOperator = artifacts.require("./MyTestContractOperator.sol");
 
 const withdrawalDelay = 86400; // 1 day
 const priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei = 20 * 10^9 wei)
@@ -15,6 +16,7 @@ const fluctuationMargin = 50; // 50%
 const dkgContributionMargin = 10; // 10%
 
 module.exports = async function(deployer) {
+  await deployer.deploy(MyTestContractOperator);
   await deployer.deploy(ModUtils);
   await deployer.link(ModUtils, AltBn128);
   await deployer.deploy(AltBn128);

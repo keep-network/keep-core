@@ -73,6 +73,8 @@ type Handle interface {
 	StakeMonitor() (StakeMonitor, error)
 	ThresholdRelay() relaychain.Interface
 	Signing() Signing
+
+	Test() error
 }
 
 // Utility represents a handle to a blockchain that provides access to certain

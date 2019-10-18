@@ -20,6 +20,7 @@ type ethereumChain struct {
 	clientWS                         *rpc.Client
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
 	stakingContract                  *contract.TokenStaking
+	testContract                     *contract.MyTestContractOperator
 	accountKey                       *keystore.Key
 
 	// transactionMutex allows interested parties to forcibly serialize
@@ -109,6 +110,23 @@ func connect(config Config) (*ethereumChain, error) {
 		return nil, fmt.Errorf("error attaching to TokenStaking contract: [%v]", err)
 	}
 	pv.stakingContract = stakingContract
+
+	address, err = addressForContract(config, "TestContract")
+	if err != nil {
+		return nil, fmt.Errorf("error resolving TokenStaking contract: [%v]", err)
+	}
+
+	testContract, err :=
+		contract.NewMyTestContractOperator(
+			*address,
+			pv.accountKey,
+			pv.client,
+			pv.transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf("error attaching to MyTestContractOperator contract: [%v]", err)
+	}
+	pv.testContract = testContract
 
 	return pv, nil
 }
