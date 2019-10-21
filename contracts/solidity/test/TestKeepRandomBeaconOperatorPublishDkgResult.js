@@ -5,6 +5,7 @@ import stakeDelegate from './helpers/stakeDelegate';
 import expectThrow from './helpers/expectThrow';
 import shuffleArray from './helpers/shuffle';
 import {initContracts} from './helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 
 
 contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
@@ -26,7 +27,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
   const minimumStake = web3.utils.toBN(200000);
   const resultPublicationBlockStep = 3;
 
-  beforeEach(async () => {
+  before(async () => {
 
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
@@ -80,6 +81,14 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
       if (signatures == undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
     }
+  });
+
+  beforeEach(async () => {
+    await createSnapshot()
+  });
+
+  afterEach(async () => {
+    await restoreSnapshot()
   });
 
   it("should be able to submit correct result as first member after DKG finished.", async function() {

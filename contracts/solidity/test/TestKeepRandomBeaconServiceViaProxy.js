@@ -4,6 +4,7 @@ import latestTime from './helpers/latestTime';
 import expectThrow from './helpers/expectThrow';
 import encodeCall from './helpers/encodeCall';
 import {initContracts} from './helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
 
 contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
@@ -14,7 +15,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     account_three = accounts[2],
     entryFeeEstimate, callbackFee, entryFee;
 
-  beforeEach(async () => {
+  before(async () => {
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStaking.sol'),
@@ -37,6 +38,14 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     callbackFee = await serviceContract.callbackFee(0)
     entryFee = await serviceContract.entryFeeBreakdown()
+  });
+
+  beforeEach(async () => {
+    await createSnapshot()
+  });
+
+  afterEach(async () => {
+    await restoreSnapshot()
   });
 
   it("should be able to check if the service contract was initialized", async function() {

@@ -115,8 +115,8 @@ func TestFilterReconstructingMember(t *testing.T) {
 		InitializeRevealing().
 		InitializeReconstruction()
 
-	messages := []*DisqualifiedEphemeralKeysMessage{
-		&DisqualifiedEphemeralKeysMessage{senderID: 41},
+	messages := []*MisbehavedEphemeralKeysMessage{
+		{senderID: 41},
 	}
 
 	member.MarkInactiveMembers(messages)

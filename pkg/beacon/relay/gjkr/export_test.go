@@ -108,23 +108,23 @@ func (pam *PointsAccusationsMessage) SetAccusedMemberKeys(
 	pam.accusedMembersKeys = accusedMembersKeys
 }
 
-func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
+func (mekm *MisbehavedEphemeralKeysMessage) SetPrivateKey(
 	memberIndex group.MemberIndex,
 	privateKey *ephemeral.PrivateKey,
 ) {
-	dekm.privateKeys[memberIndex] = privateKey
+	mekm.privateKeys[memberIndex] = privateKey
 }
 
-func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKeys(
+func (mekm *MisbehavedEphemeralKeysMessage) SetPrivateKeys(
 	privateKeys map[group.MemberIndex]*ephemeral.PrivateKey,
 ) {
-	dekm.privateKeys = privateKeys
+	mekm.privateKeys = privateKeys
 }
 
-func (dekm *DisqualifiedEphemeralKeysMessage) RemovePrivateKey(
+func (mekm *MisbehavedEphemeralKeysMessage) RemovePrivateKey(
 	memberIndex group.MemberIndex,
 ) {
-	delete(dekm.privateKeys, memberIndex)
+	delete(mekm.privateKeys, memberIndex)
 }
 
 func GeneratePolynomial(degree int) ([]*big.Int, error) {

@@ -101,8 +101,8 @@ func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
 	return c.relayConfig, nil
 }
 
-func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.GroupTicketPromise {
-	promise := &async.GroupTicketPromise{}
+func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTicketSubmissionPromise {
+	promise := &async.EventGroupTicketSubmissionPromise{}
 
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
@@ -148,12 +148,12 @@ func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, erro
 	return selectedParticipants, nil
 }
 
-func (c *localChain) SubmitRelayEntry(newEntry *big.Int) *async.RelayEntryPromise {
+func (c *localChain) SubmitRelayEntry(newEntry *big.Int) *async.EventEntryPromise {
 	c.ticketsMutex.Lock()
 	c.tickets = make([]*relaychain.Ticket, 0)
 	c.ticketsMutex.Unlock()
 
-	relayEntryPromise := &async.RelayEntryPromise{}
+	relayEntryPromise := &async.EventEntryPromise{}
 
 	entry := &event.Entry{
 		Value: newEntry,
@@ -374,8 +374,8 @@ func (c *localChain) SubmitDKGResult(
 	participantIndex group.MemberIndex,
 	resultToPublish *relaychain.DKGResult,
 	signatures map[group.MemberIndex][]byte,
-) *async.DKGResultSubmissionPromise {
-	dkgResultPublicationPromise := &async.DKGResultSubmissionPromise{}
+) *async.EventDKGResultSubmissionPromise {
+	dkgResultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
 	if len(signatures) < c.relayConfig.HonestThreshold {
 		dkgResultPublicationPromise.Fail(fmt.Errorf(
@@ -484,4 +484,25 @@ func (c *localChain) CalculateDKGResultHash(
 	)
 
 	return dkgResultHash, nil
+}
+
+func (c *localChain) CombineToSign(
+	previousEntry *big.Int,
+	seed *big.Int,
+) ([]byte, error) {
+	return CombineToSign(previousEntry, seed)
+}
+
+// CombineToSign takes the previous relay entry value and the current
+// requests's seed and combines it into a slice of bytes that is going to be
+// signed by the selected group and as a result, will form a new relay entry
+// value.
+func CombineToSign(
+	previousEntry *big.Int,
+	seed *big.Int,
+) ([]byte, error) {
+	combinedEntryToSign := make([]byte, 0)
+	combinedEntryToSign = append(combinedEntryToSign, previousEntry.Bytes()...)
+	combinedEntryToSign = append(combinedEntryToSign, seed.Bytes()...)
+	return combinedEntryToSign, nil
 }

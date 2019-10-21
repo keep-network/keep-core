@@ -20,11 +20,12 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
-required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereum/go-ethereum/cmd/abigen"]
+required = ["github.com/gogo/protobuf/protoc-gen-gogoslick", "github.com/ethereum/go-ethereum/cmd/abigen", "github.com/keep-network/keep-common/tools/generators/promise"]
 
-[[override]]
+# libp2p
+[[constraint]]
   name = "github.com/keep-network/keep-common"
-  revision = "18ec764f799e4b0a3795837d66fc7142f5048c1e"
+  revision = "787318dfe0401a634c395683cdb368e5282c7e49"
 
 # libp2p
 [[override]]

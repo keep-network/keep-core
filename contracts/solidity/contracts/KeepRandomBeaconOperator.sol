@@ -311,6 +311,10 @@ contract KeepRandomBeaconOperator {
             revert("Ticket submission period is over.");
         }
 
+        if (proofs[ticketValue].sender != address(0)) {
+            revert("Ticket with the given value has already been submitted.");
+        }
+
         // Invalid tickets are rejected and their senders penalized.
         if (isTicketValid(msg.sender, ticketValue, stakerValue, virtualStakerIndex)) {
             tickets.push(ticketValue);

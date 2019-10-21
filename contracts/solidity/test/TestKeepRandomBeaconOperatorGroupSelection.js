@@ -4,7 +4,8 @@ import {bls} from './helpers/data';
 import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
 import {initContracts} from './helpers/initContracts';
-
+import expectThrowWithMessage from './helpers/expectThrowWithMessage';
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 
 contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
@@ -15,6 +16,9 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
   operator3 = accounts[4], tickets3;
 
   const minimumStake = web3.utils.toBN(200000);
+  const operator1StakingWeight = 2000;
+  const operator2StakingWeight = 2000;
+  const operator3StakingWeight = 3000;
 
   beforeEach(async () => {
 
@@ -35,13 +39,13 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
     operatorContract.setMinimumStake(minimumStake)
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake.mul(web3.utils.toBN(3000)))
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)))
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)))
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake.mul(web3.utils.toBN(operator3StakingWeight)))
 
-    tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, 2000);
-    tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, 2000);
-    tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, 3000);
+    tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, operator1StakingWeight);
+    tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, operator2StakingWeight);
+    tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, operator3StakingWeight);
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
@@ -51,6 +55,14 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     await operatorContract.addGroupMember(group, accounts[1]);
     await operatorContract.addGroupMember(group, accounts[2]);
 
+  });
+
+  beforeEach(async () => {
+    await createSnapshot()
+  });
+
+  afterEach(async () => {
+    await restoreSnapshot()
   });
 
   it("should be able to get staking weight", async function() {
@@ -95,20 +107,40 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     assert.isTrue(await operatorContract.isTicketValid(
       operator1, tickets1[0].value, operator1, tickets1[0].virtualStakerIndex
     ), "Should be able to verify a valid ticket.");
+
+    let lastTicketIndex = tickets1.length - 1;
+    let maxVirtualStakerIndexTicket = tickets1[lastTicketIndex].virtualStakerIndex;
+    assert.isTrue(await operatorContract.isTicketValid(
+      operator1, tickets1[lastTicketIndex].value, operator1, maxVirtualStakerIndexTicket
+    ), "Should be able to verify a valid ticket with the maximum allowed staker index");
+
+    let invalidVirtualStakerIndex = operator1StakingWeight + 1;
+    assert.isFalse(await operatorContract.isTicketValid(
+      operator1, tickets1[0].value, operator1, invalidVirtualStakerIndex
+    ), "Should fail while verifying a submitted ticket due to invalid number of virtual stakers");
     
     assert.isFalse(await operatorContract.isTicketValid(
       operator1, 0, operator2, tickets1[0].virtualStakerIndex
-    ), "Should fail verifying invalid ticket due to invalid ticket value");
+    ), "Should fail while verifying a submitted ticket due to invalid ticket value");
     
     assert.isFalse(await operatorContract.isTicketValid(
       operator1, tickets1[0].value, operator2, tickets1[0].virtualStakerIndex
-      ), "Should fail verifying invalid ticket due to invalid stake value");
+      ), "Should fail while verifying a submitted ticket due to invalid stake value");
       
     assert.isFalse(await operatorContract.isTicketValid(
       operator1, tickets1[0].value, operator1, 2
-    ), "Should fail verifying invalid ticket due to invalid virtual staker index");
+    ), "Should fail while verifying a submitted ticket due to invalid virtual staker index");
 
   });
+
+  it("should revert the transaction when the ticket has been already submitted", async function() {
+    await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
+
+    await expectThrowWithMessage(
+      operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1}),
+      "Ticket with the given value has already been submitted."
+    );
+  })
 
   it("should not trigger group selection while one is in progress", async function() {
     let groupSelectionStartBlock = await operatorContract.getTicketSubmissionStartBlock();

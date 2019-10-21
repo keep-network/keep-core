@@ -250,6 +250,10 @@ func (lc *localChannel) RegisterUnmarshaler(
 	return
 }
 
+func (lc *localChannel) AddFilter(filter net.BroadcastChannelFilter) error {
+	return nil // no-op
+}
+
 type localConnectionManager struct {
 	mutex sync.Mutex
 

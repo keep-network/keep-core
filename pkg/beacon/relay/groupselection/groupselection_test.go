@@ -197,9 +197,9 @@ type stubGroupInterface struct {
 	submittedTickets []*chain.Ticket
 }
 
-func (stg *stubGroupInterface) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
+func (stg *stubGroupInterface) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTicketSubmissionPromise {
 	stg.submittedTickets = append(stg.submittedTickets, ticket)
-	promise := &async.GroupTicketPromise{}
+	promise := &async.EventGroupTicketSubmissionPromise{}
 
 	promise.Fulfill(&event.GroupTicketSubmission{
 		TicketValue: ticket.Value,

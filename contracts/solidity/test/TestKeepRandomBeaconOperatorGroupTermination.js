@@ -1,6 +1,7 @@
 import mineBlocks from './helpers/mineBlocks';
 import {initContracts} from './helpers/initContracts';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage';
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 
 contract('TestKeepRandomBeaconOperatorGroupTermination', function(accounts) {
 
@@ -21,11 +22,17 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function(accounts) {
 
       groupContract = contracts.groupContract;
       await groupContract.setOperatorContract(accounts[0]); // Let us pass onlyOperatorContract check
+
+      groupContract.clearGroups();
+      groupContract.setActiveGroupsThreshold(activeGroupsThreshold);
     });
 
     beforeEach(async () => {
-      groupContract.clearGroups();
-      groupContract.setActiveGroupsThreshold(activeGroupsThreshold);
+      await createSnapshot()
+    });
+
+    afterEach(async () => {
+      await restoreSnapshot()
     });
 
     async function runTerminationTest(groupsCount, expiredCount, terminatedGroups, beaconValue ) {

@@ -2,14 +2,18 @@ package libp2p
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"sync"
+
+	"github.com/btcsuite/btcd/btcec"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	crypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -237,4 +241,39 @@ func (c *channel) deliver(message net.Message) error {
 	}
 
 	return nil
+}
+
+func (c *channel) AddFilter(filter net.BroadcastChannelFilter) error {
+	c.pubsubMutex.Lock()
+	defer c.pubsubMutex.Unlock()
+
+	return c.pubsub.RegisterTopicValidator(c.name, createTopicValidator(filter))
+}
+
+func createTopicValidator(filter net.BroadcastChannelFilter) pubsub.Validator {
+	return func(_ context.Context, _ peer.ID, message *pubsub.Message) bool {
+		authorPublicKey, err := extractPublicKey(message.GetFrom())
+		if err != nil {
+			logger.Warningf(
+				"could not retrieve message author public key: [%v]",
+				err,
+			)
+			return false
+		}
+		return filter(authorPublicKey)
+	}
+}
+
+func extractPublicKey(peer peer.ID) (*ecdsa.PublicKey, error) {
+	publicKey, err := peer.ExtractPublicKey()
+	if err != nil {
+		return nil, err
+	}
+
+	secp256k1PublicKey, ok := publicKey.(*crypto.Secp256k1PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("public key is of type other than Secp256k1")
+	}
+
+	return (*btcec.PublicKey)(secp256k1PublicKey).ToECDSA(), nil
 }

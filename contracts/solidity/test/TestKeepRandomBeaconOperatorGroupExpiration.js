@@ -1,15 +1,16 @@
 import mineBlocks from './helpers/mineBlocks';
 import {initContracts} from './helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 
 contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
 
   let operatorContract, groupContract;
 
-  const groupActiveTime = 300;
+  const groupActiveTime = 20;
   const activeGroupsThreshold = 5;
-  const relayEntryTimeout = 24;
+  const relayEntryTimeout = 10;
 
-  beforeEach(async () => {
+  before(async () => {
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStaking.sol'),
@@ -22,6 +23,14 @@ contract('TestKeepRandomBeaconOperatorGroupExpiration', function(accounts) {
     operatorContract = contracts.operatorContract;
     groupContract = contracts.groupContract;
     await groupContract.setOperatorContract(accounts[0]); // Let us pass onlyOperatorContract check
+  });
+
+  beforeEach(async () => {
+    await createSnapshot()
+  });
+
+  afterEach(async () => {
+    await restoreSnapshot()
   });
 
   async function addGroups(numberOfGroups) {

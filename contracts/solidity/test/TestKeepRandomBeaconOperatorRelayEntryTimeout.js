@@ -2,6 +2,7 @@ import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 import mineBlocks from './helpers/mineBlocks';
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 
 contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
   let operatorContract, serviceContract, fee;
@@ -10,8 +11,7 @@ contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
 
   describe("RelayEntryTimeout", function() {
 
-    beforeEach(async () => {
-
+    before(async () => {
       let contracts = await initContracts(
         artifacts.require('./KeepToken.sol'),
         artifacts.require('./TokenStaking.sol'),
@@ -29,6 +29,14 @@ contract('TestKeepRandomBeaconOperatorRelayEntryTimeout', function(accounts) {
       // Passing a sender's authorization. accounts[0] is a msg.sender on blockchain
       await operatorContract.addServiceContract(accounts[0])
       fee = await serviceContract.entryFeeEstimate(0);
+    });
+
+    beforeEach(async () => {
+      await createSnapshot()
+    });
+
+    afterEach(async () => {
+      await restoreSnapshot()
     });
 
     it("should not throw an error when sigining is in progress and the block number > relay entry timeout", async function() {
