@@ -2,7 +2,7 @@ const MyTestContract = artifacts.require('MyTestContractOperator.sol');
 
 module.exports = async function () {
 
-    const myTestContract = await MyTestContract.at("0x15Ae06754d7E10Ed3D5b23bb934D9c633517577a");
+    const myTestContract = await MyTestContract.at("0x09d68CDdEe8A06720a89A3Aa0AAC7f737Db070b3");
 
   async function callFunctionOne() {
     try {
@@ -97,8 +97,34 @@ module.exports = async function () {
       }
   }
 
+
+  async function callFunctionFive() {
+    try {
+        console.log("f5 gas estimated: " + (await myTestContract.functionFive.estimateGas()));
+
+        const startBlockNumber = await web3.eth.getBlock('latest').number
+    
+        let tx = await myTestContract.functionFive();
+
+        console.log('f5 tx hash: ' + tx.receipt.transactionHash);
+        console.log("f5 gas used: " + tx.receipt.gasUsed);
+    
+        const eventList = await myTestContract.getPastEvents('MyEvent', {
+            fromBlock: startBlockNumber,
+            toBlock: 'latest',
+        });
+    
+
+        console.log("f5 value: " + eventList[0].returnValues.value);
+    
+      } catch (err) {
+          console.log(err)
+      }
+  }
+
   await callFunctionOne();
   await callFunctionTwo();
   await callFunctionThree();
   await callFunctionFour();
+  await callFunctionFive();
 }

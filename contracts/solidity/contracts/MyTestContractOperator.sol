@@ -2,7 +2,7 @@ pragma solidity ^0.5.4;
 
 contract MyTestContractOperator {
 
-  event MyEvent(uint256 value);
+  
   
   function functionOne() public {
       uint256 val = tx.gasprice;
@@ -19,12 +19,17 @@ contract MyTestContractOperator {
       emit MyEvent(val);
   }
 
-  uint256 public priceFeedEstimate = 20*1e9;
+  event MyEvent(uint256 value);
 
-  uint256 public dkgGasEstimate = 2260000;
+  uint256 public averagePrice = 20*1e9;
 
   function functionFour() public {
-      uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
+      uint256 gasPrice = tx.gasprice < averagePrice ? tx.gasprice : averagePrice;
+      emit MyEvent(gasPrice);
+  }
+
+  function functionFive() public {
+      uint256 gasPrice = tx.gasprice;
       emit MyEvent(gasPrice);
   }
 }
