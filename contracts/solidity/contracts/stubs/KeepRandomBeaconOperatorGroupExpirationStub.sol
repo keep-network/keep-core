@@ -9,9 +9,9 @@ import "../KeepRandomBeaconOperatorGroups.sol";
 contract KeepRandomBeaconOperatorGroupExpirationStub is KeepRandomBeaconOperatorGroups {
 
     constructor() KeepRandomBeaconOperatorGroups() public {
-        groupActiveTime = 300;
+        groupActiveTime = 20;
         activeGroupsThreshold = 5;
-        relayEntryTimeout = 24;
+        relayEntryTimeout = 10;
     }
 
     function addGroup(bytes memory groupPubKey) public {
