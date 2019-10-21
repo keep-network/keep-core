@@ -5,7 +5,7 @@
 const snapshotIdsStack = [];
 
 /**
- * Create a snapshot
+ * Snapshot the state of the blockchain at the current block
  */
 export async function createSnapshot() {
     return await new Promise((res, rej) => {
@@ -23,7 +23,7 @@ export async function createSnapshot() {
 }
 
 /**
- * Restores the chain to a snapshot
+ * Restores the chain to a latest snapshot
  */
 export async function restoreSnapshot() {
     const snapshotId = snapshotIdsStack.pop();
