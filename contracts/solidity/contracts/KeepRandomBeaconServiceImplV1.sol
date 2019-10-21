@@ -14,9 +14,9 @@ interface OperatorContract {
         uint256 requestId,
         uint256 seed,
         uint256 previousEntry
-    ) payable external;
+    ) external payable;
     function numberOfGroups() external view returns(uint256);
-    function createGroup(uint256 newEntry) payable external;
+    function createGroup(uint256 newEntry) external payable;
 }
 
 /**
@@ -297,7 +297,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         bytes memory data; // Store result data of external contract call.
 
         uint256 gasBeforeCallback = gasleft();
-        (success, data) = _callbacks[requestId].callbackContract.call.gas(_callbacks[requestId].callbackGas)(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
+        (success, data) = _callbacks[requestId].callbackContract.call.gas(
+            _callbacks[requestId].callbackGas
+        )(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
         uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 gas (ethereum transaction minimum gas)
 
         uint256 gasPrice = _priceFeedEstimate;
@@ -336,7 +338,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         bytes memory data; // Store result data of external contract call.
 
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 dkgFeeEstimate = OperatorContract(latestOperatorContract).dkgGasEstimate().mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
+        uint256 dkgFeeEstimate = OperatorContract(latestOperatorContract).dkgGasEstimate().mul(
+            gasPriceWithFluctuationMargin(_priceFeedEstimate)
+        );
         if (_dkgFeePool >= dkgFeeEstimate) {
             _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
             (success, data) = latestOperatorContract.call.value(dkgFeeEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));

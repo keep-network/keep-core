@@ -11,8 +11,8 @@ import "./cryptography/BLS.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
-    function fundRequestSubsidyFeePool() payable external;
-    function fundDkgFeePool() payable external;
+    function fundRequestSubsidyFeePool() external payable;
+    function fundDkgFeePool() external payable;
 }
 
 /**
@@ -181,7 +181,10 @@ contract KeepRandomBeaconOperator {
         require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
         require(proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
         uint T_init = ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout + timeDKG;
-        require(block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
+        require(
+            block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
+            "Submitter is not eligible to submit at the current block."
+        );
         _;
     }
 
