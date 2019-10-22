@@ -101,6 +101,13 @@ contract KeepRandomBeaconOperatorGroups {
     }
 
     /**
+     * @dev Gets group member.
+     */
+    function getGroupMember(bytes memory groupPubKey, uint256 memberIndex) public view returns (address) {
+        return groupMembers[groupPubKey][memberIndex];
+    }
+
+    /**
      * @dev Terminates group.
      */
     function terminateGroup(uint256 groupIndex) public onlyOperatorContract {

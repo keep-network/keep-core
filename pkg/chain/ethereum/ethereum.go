@@ -256,14 +256,12 @@ func (ec *ethereumChain) OnSignatureRequested(
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchSignatureRequested(
 		func(
-			payment *big.Int,
 			previousEntry *big.Int,
 			seed *big.Int,
 			groupPublicKey []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.Request{
-				Payment:        payment,
 				PreviousEntry:  previousEntry,
 				Seed:           seed,
 				GroupPublicKey: groupPublicKey,
