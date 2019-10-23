@@ -175,7 +175,12 @@ the ticket can be simply rejected and the transaction reverted.
 
 The created group might fail to produce a valid result.
 
-Failure to finish DKG is detected automatically.
+Failure to finish DKG is verifiable without additional proof,
+but requires a trigger transaction for this verification
+after the deadline for completing DKG has passed.
+If no other trigger transaction is made,
+the trigger transaction for another DKG shall check
+if the previous attempt at DKG has failed to produce a result.
 
 Failure to finish DKG is _objective_.
 
@@ -318,13 +323,20 @@ with the submitter of the proof as the _tattletale_.
 
 A signing group may fail to produce a new entry within the deadline.
 
-Failure to generate an entry is automatically detected on-chain.
+Failure to generate an entry can be verified on-chain without a separate proof,
+but requires a transaction to trigger this check.
 
 The proof of failure is _objective_.
 
 When a group fails to produce an entry,
-all of its members shall be _slashed_
+all of its members shall be subject to _seizing_
 and the group itself shall be terminated.
+The submitter of the trigger transaction shall be treated as the _tattletale_,
+but the tattletale reward shall be limited to
+`min(1, 20 / group_size)` of the maximum,
+or effectively the minimum stake of a single member.
+This is to prevent actors in a lynchpin position
+from profitably stealing other stakers' funds.
 
 === Limitations
 
