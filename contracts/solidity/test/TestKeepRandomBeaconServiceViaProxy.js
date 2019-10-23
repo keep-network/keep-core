@@ -126,10 +126,6 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
   });
 
   it("should be able to request relay entry via serviceContractProxy contract with enough ether", async function() {
-    await expectThrow(serviceContractProxy.sendTransaction(
-      {from: account_two, value: entryFeeEstimate}
-    ));
-
     let contractPreviousBalance = web3.utils.toBN(
       await web3.eth.getBalance(serviceContract.address)
     );
