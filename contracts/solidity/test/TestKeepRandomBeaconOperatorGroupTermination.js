@@ -9,7 +9,6 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function(accounts) {
 
     const groupActiveTime = 5;
     const activeGroupsThreshold = 1;
-    const relayEntryTimeout = 10;
 
     before(async () => {
       let contracts = await initContracts(

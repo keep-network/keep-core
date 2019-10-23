@@ -31,7 +31,8 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should produce entry if callback contract was not provided", async function() {
-    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
+    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
     let result = await serviceContract.previousEntry();
@@ -39,7 +40,9 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should successfully call method on a callback contract", async function() {
-    await serviceContract.methods['requestRelayEntry(uint256,address,string)'](bls.seed, callbackContract.address, "callback(uint256)", {value: 10});
+    let callbackGas = await callbackContract.callback.estimateGas(bls.nextNextGroupSignature);
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
+    await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](bls.seed, callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
 
     await operatorContract.relayEntry(bls.nextNextGroupSignature);
 

@@ -15,7 +15,7 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
       artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
       artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
     );
-  
+
     operatorContract = contracts.operatorContract;
     groupContract = contracts.groupContract;
     serviceContract = contracts.serviceContract;
@@ -28,7 +28,8 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
     await operatorContract.addGroupMember(group, accounts[1]);
     await operatorContract.addGroupMember(group, accounts[2]);
 
-    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
+    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
   });
 
   it("should not be able to submit invalid relay entry", async function() {
