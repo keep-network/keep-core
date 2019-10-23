@@ -244,15 +244,9 @@ Because of this,
 punishing disqualified members without objective proof
 requires further examination of the associated risks and incentives.
 
-However, misbehavior is defined by there being _objective_ off-chain proof,
-so the operator contract could be made to verify DKG transcripts
-to render DKG disqualification _objective_ on-chain as well.
-
-Disqualified members must be removed from the group.
-If disqualification is objectively proven,
-the operator must be punished with _seizing_ their stake.
-The submitter of the transaction containing the DKG transcript
-shall be the _tattletale_.
+For the first version,
+disqualification shall be treated like inactivity
+and only punished with removal from the group.
 
 ==== Signing
 
@@ -264,15 +258,10 @@ when reconstructing the threshold signature.
 Invalid signature shares can only be detected on-chain
 if a tattletale submits a proof
 that includes the signature share and the information required to verify it.
-If the DKG result includes a merkle root
-of each member's individual public key,
-this proof can be relatively compact and inexpensive to verify.
 
-Proof of an invalid signature share is _objective_.
-
-If the broadcast of an invalid signature share is proven
-the responsible operator shall be punished by _seizing_,
-with the submitter of the proof receiving the tattletale reward.
+In the first version,
+the infrastructure for verifying these proofs is not yet in place.
+Invalid signature shares shall be simply rejected by the other members.
 
 ===== Failing to broadcast a signature share
 
@@ -306,16 +295,9 @@ and used inappropriately.
 
 Unauthorized use of a member's individual private key
 can be proven on-chain by the submission of a suitable proof.
-The proof must contain the DKG merkle root,
-a merkle path to the individual public key,
-some value that isn't a requested entry,
-and a valid signature of that value with the individual public key.
 
-Such proof is _objective_.
-
-Unauthorized use of an individual private key
-shall be punished by _seizing_,
-with the submitter of the proof as the _tattletale_.
+The first version is not yet able to verify these proofs,
+so unauthorized use of individual private keys is not separately penalized.
 
 ===== Creating an unauthorized signature
 
@@ -362,6 +344,8 @@ it is possible to limit the risk
 from malfunctioning operator contracts or trusted applications
 to the stake actually corresponding to the operations.
 
+=== Authorization
+
 This RFC doesn't cover authorizing individual keeps,
 or situations where a trusted application
 has the authority to impose a penalty.
@@ -372,8 +356,16 @@ after the first lookup to the staking contract.
 Lack of authorization cannot be cached,
 as the operator contract could later become authorized.
 
+=== Punishments
+
+==== DKG
+
+===== Failure to produce a DKG result
+
 Punishing the failure to produce a DKG result
 has interesting implications that could be explored further.
+
+===== Disqualification in DKG
 
 Punishing disqualified DKG members on subjective proof
 creates opportunities to attack honest stakers
@@ -382,6 +374,50 @@ to profitably reveal and remove themselves
 if seizing on subjective proof is permitted.
 The implications and tradeoffs of
 concentrated vs. distributed risk are interesting.
+
+However, disqualification is defined by there being _objective_ off-chain proof,
+so the operator contract could be made to verify DKG transcripts
+to render DKG disqualification _objective_ on-chain as well.
+
+Disqualified members must be removed from the group.
+If disqualification is objectively proven,
+the operator must be punished with _seizing_ their stake.
+The submitter of the transaction containing the DKG transcript
+shall be the _tattletale_.
+
+==== Signing
+
+===== Invalid signature share
+
+Invalid signature shares can only be detected on-chain
+if a tattletale submits a proof
+that includes the signature share and the information required to verify it.
+If the DKG result includes a merkle root
+of each member's individual public key,
+this proof can be relatively compact and inexpensive to verify.
+
+Proof of an invalid signature share is _objective_.
+
+If the broadcast of an invalid signature share is proven
+the responsible operator shall be punished by _seizing_,
+with the submitter of the proof receiving the tattletale reward.
+
+===== Unauthorized use of individual private key
+
+Unauthorized use of a member's individual private key
+can be proven on-chain by the submission of a suitable proof.
+The proof must contain the DKG merkle root,
+a merkle path to the individual public key,
+some value that isn't a requested entry,
+and a valid signature of that value with the individual public key.
+
+Such proof is _objective_.
+
+Unauthorized use of an individual private key
+shall be punished by _seizing_,
+with the submitter of the proof as the _tattletale_.
+
+=== Chain reorganizations
 
 When chain reorganizations happen,
 a honest entry generation in one branch
