@@ -117,24 +117,26 @@ _Foo_ should slash a misbehaving virtual staker by 10,000 KEEP.
 
 ===== Staking contract: slashing
 
-`slash(tokens sum, address[] perps)`::
+`slash(tokens sum, address[] misbehavers)`::
 
-Check that `msg.sender` is authorized to slash each `perp` in `perps`:
-`isAuthorized(msg.sender, perp.authorizer) == true`.
+Check that `msg.sender` is authorized
+to slash each `misbehaver` in `misbehavers`:
+`isAuthorized(msg.sender, misbehaver.authorizer) == true`.
 +
-Subtract `sum` tokens from the stake of each `perp`
-and burn `sum * length(perps)` tokens.
+Subtract `sum` tokens from the stake of each `misbehaver`
+and burn `sum * length(misbehavers)` tokens.
 
-`seize(tokens sum, float pay, address mole, address[] perps)`::
+`seize(tokens sum, float pay, address tattletale, address[] misbehavers)`::
 
-Check that `msg.sender` is authorized to slash each `perp` in `perps`:
-`isAuthorized(msg.sender, perp.authorizer) == true`.
+Check that `msg.sender` is authorized
+to slash each `misbehaver` in `misbehavers`:
+`isAuthorized(msg.sender, misbehaver.authorizer) == true`.
 
-Check that `0 < pay <= 1`
+Check that `0 < pay <= 1`.
 +
-Subtract `sum` tokens from the stake of each `perp`;
-set `total = sum * length(perps)` and `reward = total * 0.05 * pay`;
-burn `total - reward`; transfer `reward` to beneficiary of staker `mole`.
+Subtract `sum` tokens from the stake of each `misbehaver`;
+set `total = sum * length(misbehavers)` and `reward = total * 0.05 * pay`;
+burn `total - reward`; transfer `reward` to beneficiary of staker `tattletale`.
 
 ===== Staking contract: authorizations
 
