@@ -1,7 +1,17 @@
-FROM lispmeister/geth-dev
-MAINTAINER "Markus Fix <Markus.Fix@keep.network>
+FROM ethereum/client-go:v1.9.6
+MAINTAINER "Thesis.co"
+
+RUN apk add --no-cache --update git
+RUN apk add --no-cache --update python
+RUN apk add --no-cache --update build-base
+RUN apk add --no-cache --update nodejs npm
+RUN apk add --no-cache --update bash
+RUN apk add --no-cache --update jq
+RUN apk add --no-cache --update curl
 
 # configure log rotation
+
+RUN npm install pm2 -g
 RUN pm2 install pm2-logrotate
 RUN pm2 set pm2-logrotate:max_size 100M
 RUN pm2 set pm2-logrotate:compress true
@@ -20,15 +30,18 @@ RUN npm install
 # Change to /root before provisioning our services
 WORKDIR /root
 
+RUN mkdir .geth
+
 # copy passphrase file
 COPY testnet-account-passphrase.txt passphrase
 
-# define default for KEEP_ACCOUNTS
-ARG KEEP_ACCOUNTS=100
-# create mining account, KEEP_ACCOUNTS client accounts and generate genesis.json
+# copy keystore
+ADD keystore .geth/keystore
+
+# Create genesis file
 COPY genesis-template.json genesis-template.json
 COPY geth-init.sh geth-init.sh
-RUN /root/geth-init.sh $KEEP_ACCOUNTS
+RUN /root/geth-init.sh
 
 # provision our three services (check app.json for details)
 COPY app.json app.json
