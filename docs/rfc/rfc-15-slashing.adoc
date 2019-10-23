@@ -72,6 +72,9 @@ The staking contract checks
 that the operator contract is authorized to punish the staker,
 and if true, applies the penalty.
 
+A penalty can be applied to one or more stakers simultaneously.
+Each affected staker is penalized by the same amount.
+
 ===== Pure slashing
 
 When misbehavior is detected without third-party input,
@@ -112,20 +115,24 @@ _Foo_ should slash a misbehaving virtual staker by 10,000 KEEP.
 
 ===== Staking contract: slashing
 
-`slash(address perp, tokens sum)`::
+`slash(tokens sum, address[] perps)`::
 
-Check that `msg.sender` is authorized to slash `perp`:
+Check that `msg.sender` is authorized to slash each `perp` in `perps`:
 `isAuthorized(msg.sender, perp.authorizer) == true`.
 +
-Take `sum` tokens from stake of `perp` and burn them.
+Subtract `sum` tokens from the stake of each `perp`
+and burn `sum * length(perps)` tokens.
 
-`seize(address perp, tokens sum, address mole)`::
+`seize(tokens sum, float pay, address mole, address[] perps)`::
 
-Check that `msg.sender` is authorized to slash `perp`:
+Check that `msg.sender` is authorized to slash each `perp` in `perps`:
 `isAuthorized(msg.sender, perp.authorizer) == true`.
+
+Check that `0 < pay <= 1`
 +
-Take `sum` tokens from stake of `perp`;
-burn `sum * 0.95`; transfer `sum * 0.05` to beneficiary of staker `mole`.
+Subtract `sum` tokens from the stake of each `perp`;
+set `total = sum * length(perps)` and `reward = total * 0.05 * pay`;
+burn `total - reward`; transfer `reward` to beneficiary of staker `mole`.
 
 ===== Staking contract: authorizations
 
