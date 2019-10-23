@@ -93,12 +93,14 @@ and nobody is rewarded.
 When a tattletale proves another operator's misbehavior,
 a fraction of the penalty amount is _seized_ and transferred to the tattletale,
 while the rest is burned.
+The tattletale reward can be set to any value
+between 0 and the maximum of 5% of the penalty.
 
 To apply a seizing penalty,
 the operator contract includes the tattletale operator's address in the call.
 The staking contract subtracts the applicable penalty from the operator's stake
-and burns 95% of it.
-The remaining 5% is transferred to the tattletale's _beneficiary_ address.
+and transfers the reward to the tattletale's _beneficiary_ address.
+The remainder is burned.
 
 ===== Penalty amounts
 
