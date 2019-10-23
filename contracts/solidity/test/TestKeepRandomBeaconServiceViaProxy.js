@@ -36,7 +36,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     await operatorContract.addGroupMember(group, accounts[0]);
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    callbackFee = await serviceContract.callbackFee(0)
+    callbackFee = await serviceContract.callbackFee(20000)
     entryFeeBreakdown = await serviceContract.entryFeeBreakdown()
   });
 
@@ -77,7 +77,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     let transactionCost = web3.utils
       .toBN(tx.receipt.gasUsed)
       .mul(web3.utils.toWei(web3.utils.toBN(20), 'gwei')); // 20 default gasPrice
-  
+
     assert.isTrue(
       web3.utils.toBN(initialRequesterBalance)
         .sub(entryFeeEstimate)
@@ -117,12 +117,11 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.isTrue(
       web3.utils.toBN(operatorContractBalance)
       .eq(entryFeeBreakdown.entryVerificationFee
-        .add(callbackFee)
         .add(entryFeeBreakdown.groupProfitFee)
         .add(dkgSubmitterReimbursementFee)
       ), 
-      "Keep Random Beacon operator contract should receive entry fee, callback " +
-      "payment, group profit fee and dkg submitter reimbursement."
+      "Keep Random Beacon operator contract should receive entry fee, " +
+      "group profit fee and dkg submitter reimbursement."
     );
   });
 
@@ -170,12 +169,11 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.isTrue(
       web3.utils.toBN(operatorContractBalance)
       .eq(entryFeeBreakdown.entryVerificationFee
-        .add(callbackFee)
         .add(entryFeeBreakdown.groupProfitFee)
         .add(dkgSubmitterReimbursementFee)
       ), 
-      "Keep Random Beacon operator contract should receive entry fee, callback " + 
-      "payment, group profit fee and dkg submitter reimbursement."
+      "Keep Random Beacon operator contract should receive entry fee, " + 
+      "group profit fee and dkg submitter reimbursement."
     );
   });
 
