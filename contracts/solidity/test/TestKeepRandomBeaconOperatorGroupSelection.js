@@ -78,28 +78,24 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     await expectThrow(operatorContract.selectedParticipants());
   });
 
-  it("should be able to output submited tickets in ascending ordered", async function() {
-
+  it("should sort ticket values in ascending order", async function() {
     let tickets = [];
+    let numberOfTicketsToTest = 50;
 
-    await operatorContract.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
-    tickets.push(tickets1[0].value);
+    for (let i = 0; i < numberOfTicketsToTest; i++) {
+      await operatorContract.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
+      tickets.push(tickets1[i].value);
+    }
 
-    await operatorContract.submitTicket(tickets2[0].value, operator2, tickets2[0].virtualStakerIndex, {from: operator2});
-    tickets.push(tickets2[0].value);
-
-    await operatorContract.submitTicket(tickets3[0].value, operator3, tickets3[0].virtualStakerIndex, {from: operator3});
-    tickets.push(tickets3[0].value);
-
-    tickets = tickets.sort(function(a, b){return a-b}); // Sort numbers in ascending order
-
-    // Test tickets ordering
-    let orderedTickets = await operatorContract.orderedTickets();
-    assert.isTrue(orderedTickets[0].eq(tickets[0]), "Tickets should be in ascending order.");
-    assert.isTrue(orderedTickets[1].eq(tickets[1]), "Tickets should be in ascending order.");
-    assert.isTrue(orderedTickets[2].eq(tickets[2]), "Tickets should be in ascending order.");
-
-  });
+    let expectedOrderedTickets = tickets.sort(function(a, b){return a - b}); // ascending order
+    let actualOrderedTickets = await operatorContract.orderedTickets()
+    
+    assert.equal(expectedOrderedTickets.length, actualOrderedTickets.length, "Actual and expected tickets arrays size should be the same.");
+    assert.equal(actualOrderedTickets.length, numberOfTicketsToTest, "Tickets array size should be " + numberOfTicketsToTest);
+    for (let i = 0; i < actualOrderedTickets.length; i++) {
+      assert.isTrue(actualOrderedTickets[i].eq(expectedOrderedTickets[i]), "Tickets should be in ascending order.");
+    }
+  })
 
   it("should be able to verify a ticket", async function() {
     await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
@@ -221,4 +217,6 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     assert.isFalse((await operatorContract.getTicketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
     assert.isTrue((await operatorContract.getGroupSelectionRelayEntry()).eq(bls.nextGroupSignature), "Random beacon value for the current group selection should be updated.");
   });
+
+  
 });
