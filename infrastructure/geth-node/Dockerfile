@@ -35,7 +35,8 @@ RUN mkdir .geth
 # copy passphrase file
 COPY testnet-account-passphrase.txt passphrase
 
-# copy keystore
+# Copy keystore
+# If you need a copy of the keystore it's in /keep-core/private-testnet/keyfles
 ADD keystore .geth/keystore
 
 # Create genesis file
