@@ -86,11 +86,11 @@ contract KeepRandomBeaconOperator {
 
     // Time in blocks after DKG result is complete and ready to be published
     // by clients.
-    uint256 public timeDKG = 7*(3+1);
+    uint256 public timeDKG = 7*(1+1);
 
     // Time in blocks it takes off-chain cluster to generate a new relay entry
     // and be ready to submit it to the chain.
-    uint256 public relayEntryGenerationTime = (3+1);
+    uint256 public relayEntryGenerationTime = (1+1);
 
     // Timeout in blocks for a relay entry to appear on the chain. Blocks are
     // counted from the moment relay request occur.
