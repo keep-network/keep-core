@@ -132,7 +132,7 @@ Check that `msg.sender` is authorized
 to slash each `misbehaver` in `misbehavers`:
 `isAuthorized(msg.sender, misbehaver.authorizer) == true`.
 
-Check that `0 < pay <= 1`.
+Check that `0 < pay {lt}= 1`.
 +
 Subtract `sum` tokens from the stake of each `misbehaver`;
 set `total = sum * length(misbehavers)` and `reward = total * 0.05 * pay`;
