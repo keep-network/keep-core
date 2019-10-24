@@ -106,4 +106,6 @@ geth --datadir $DATADIR --ethash.dagdir $DATADIR --ipcpath $ETH_IPC_PATH \
       --rpcapi $RPCAPI \
       --identity $NODE_NAME \
       --syncmode "fast" \
+      --allow-insecure-unlock \
+      --targetgaslimit "7000000" \
       $GETHARGS
