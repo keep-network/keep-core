@@ -4,7 +4,7 @@ import {bls} from './helpers/data';
 import stakeDelegate from './helpers/stakeDelegate';
 import runGenesisGroupSelection from './helpers/runGenesisGroupSelection';
 
-contract('KeepRandomBeacon pricing', function(accounts) {
+contract('KeepRandomBeaconService', function(accounts) {
 
     const groupSize = 20;
     const minimumStake = web3.utils.toBN(200000);
