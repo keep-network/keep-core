@@ -83,11 +83,6 @@ Pure slashing means that the staking contract
 subtracts the applicable penalty from the operator's stake
 and burns tokens equal to the penalty amount.
 
-An example of a pure slashing penalty would be
-when a beacon group fails to produce a signature within the deadline.
-In this case all members of the group are punished,
-and nobody is rewarded.
-
 ===== Seizing
 
 When a tattletale proves another operator's misbehavior,
