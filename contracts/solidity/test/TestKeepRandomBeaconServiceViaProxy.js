@@ -36,7 +36,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     await operatorContract.addGroupMember(group, accounts[0]);
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    callbackFee = await serviceContract.callbackFee(0)
+    callbackFee = await serviceContract.callbackFee(20000)
     entryFeeBreakdown = await serviceContract.entryFeeBreakdown()
   });
 
@@ -77,7 +77,13 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     let transactionCost = web3.utils
       .toBN(tx.receipt.gasUsed)
       .mul(web3.utils.toWei(web3.utils.toBN(20), 'gwei')); // 20 default gasPrice
-  
+
+    assert.equal(
+      (await operatorContract.getPastEvents())[0].event, 
+      'SignatureRequested', 
+      "SignatureRequested event should occur on operator contract."
+    );
+
     assert.isTrue(
       web3.utils.toBN(initialRequesterBalance)
         .sub(entryFeeEstimate)
@@ -85,12 +91,6 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
         .add(requestorSubsidy)
         .eq(web3.utils.toBN(await web3.eth.getBalance(account_two))), 
       "Requestor should receive 1% subsidy."
-    );
-
-    assert.equal(
-      (await operatorContract.getPastEvents())[0].event, 
-      'SignatureRequested', 
-      "SignatureRequested event should occur on operator contract."
     );
 
     let serviceContractBalance = await web3.eth.getBalance(serviceContract.address);
@@ -117,29 +117,37 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.isTrue(
       web3.utils.toBN(operatorContractBalance)
       .eq(entryFeeBreakdown.entryVerificationFee
-        .add(callbackFee)
         .add(entryFeeBreakdown.groupProfitFee)
         .add(dkgSubmitterReimbursementFee)
       ), 
-      "Keep Random Beacon operator contract should receive entry fee, callback " +
-      "payment, group profit fee and dkg submitter reimbursement."
+      "Keep Random Beacon operator contract should receive entry fee, " +
+      "group profit fee and dkg submitter reimbursement."
     );
   });
 
   it("should be able to request relay entry via serviceContractProxy contract with enough ether", async function() {
-    await expectThrow(serviceContractProxy.sendTransaction(
-      {from: account_two, value: entryFeeEstimate}
-    ));
+    let initialRequesterBalance = await web3.eth.getBalance(account_two);
+    await serviceContract.fundRequestSubsidyFeePool({from: account_one, value: 100});
+    let requestorSubsidy = web3.utils.toBN(1); // 1% is returned to the requestor.
 
-    let contractPreviousBalance = web3.utils.toBN(
+    let initialServiceContractBalance = web3.utils.toBN(
       await web3.eth.getBalance(serviceContract.address)
     );
     let dkgSubmitterReimbursementFee = await operatorContract.dkgSubmitterReimbursementFee()
 
+    let gasPrice = web3.utils.toWei(web3.utils.toBN(20), 'gwei');
+    let transactionCost; 
+
     await web3.eth.sendTransaction({
       // if you see a plain 'revert' error, it's probably because of not enough gas
-      from: account_two, value: entryFeeEstimate, gas: 400000, to: serviceContractProxy.address,
+      from: account_two, 
+      value: entryFeeEstimate, 
+      gas: 400000, 
+      gasPrice: gasPrice,
+      to: serviceContractProxy.address,
       data: encodeCall('requestRelayEntry', ['uint256'], [0])
+    }).then(function(receipt){
+      transactionCost = web3.utils.toBN(receipt.gasUsed).mul(gasPrice);
     });
 
     assert.equal(
@@ -147,12 +155,22 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
       'SignatureRequested', 
       "SignatureRequested event should occur on the operator contract."
     );
+    
+    assert.isTrue(
+      web3.utils.toBN(initialRequesterBalance)
+        .sub(entryFeeEstimate)
+        .sub(transactionCost)
+        .add(requestorSubsidy)
+        .eq(web3.utils.toBN(await web3.eth.getBalance(account_two))), 
+      "Requestor should receive 1% subsidy."
+    );
 
     let contractBalance = await web3.eth.getBalance(serviceContract.address);
     assert.isTrue(
       web3.utils.toBN(contractBalance)
-      .eq(contractPreviousBalance
+      .eq(initialServiceContractBalance
         .add(entryFeeBreakdown.dkgContributionFee)
+        .sub(requestorSubsidy)
       ), 
       "Keep Random Beacon service contract should receive DKG fee fraction."
     );
@@ -160,8 +178,9 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     let contractBalanceServiceContract = await web3.eth.getBalance(serviceContractProxy.address);
     assert.isTrue(
       web3.utils.toBN(contractBalanceServiceContract)
-      .eq(contractPreviousBalance
+      .eq(initialServiceContractBalance
         .add(entryFeeBreakdown.dkgContributionFee)
+        .sub(requestorSubsidy)
       ), 
       "Keep Random Beacon service contract new balance should be visible via serviceContractProxy."
     );
@@ -170,12 +189,11 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     assert.isTrue(
       web3.utils.toBN(operatorContractBalance)
       .eq(entryFeeBreakdown.entryVerificationFee
-        .add(callbackFee)
         .add(entryFeeBreakdown.groupProfitFee)
         .add(dkgSubmitterReimbursementFee)
       ), 
-      "Keep Random Beacon operator contract should receive entry fee, callback " + 
-      "payment, group profit fee and dkg submitter reimbursement."
+      "Keep Random Beacon operator contract should receive entry fee, " + 
+      "group profit fee and dkg submitter reimbursement."
     );
   });
 
