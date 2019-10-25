@@ -2,26 +2,16 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
-
-
-interface OperatorContract {
-    function relayEntryTimeout() external view returns(uint256);
-}
+import "./KeepRandomBeaconOperatorLinkedContract.sol";
 
 /**
  * @title KeepRandomBeaconOperatorGroups
  * @dev A helper contract for operator contract to store groups and 
  * perform logic to expire and terminate groups.
  */
-contract KeepRandomBeaconOperatorGroups {
+contract KeepRandomBeaconOperatorGroups is KeepRandomBeaconOperatorLinkedContract {
     using SafeMath for uint256;
     using BytesLib for bytes;
-
-    // Contract owner.
-    address public owner;
-
-    // Operator contract that is linked to this contract.
-    address public operatorContract;
 
     // The minimal number of groups that should not expire to protect the
     // minimal network throughput.
@@ -29,10 +19,6 @@ contract KeepRandomBeaconOperatorGroups {
  
     // Time in blocks after which a group expires.
     uint256 public groupActiveTime = 3000;
-
-    // Duplicated constant from operator contract to avoid extra call.
-    // The value is set when the operator contract is added.
-    uint256 public relayEntryTimeout;
 
     struct Group {
         bytes groupPubKey;
@@ -46,38 +32,6 @@ contract KeepRandomBeaconOperatorGroups {
     // expiredGroupOffset is pointing to the first active group, it is also the
     // expired groups counter
     uint256 internal expiredGroupOffset = 0;
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(owner == msg.sender, "Caller is not the owner.");
-        _;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the authorized address.
-     */
-    modifier onlyOperatorContract() {
-        require(operatorContract == msg.sender, "Caller is not authorized.");
-        _;
-    }
-
-    /**
-     * @dev Initializes the contract with deployer as the contract owner.
-     */
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    /**
-     * @dev Sets operator contract.
-     */
-    function setOperatorContract(address _operatorContract) public onlyOwner {
-        require(operatorContract == address(0), "Operator contract can only be set once.");
-        operatorContract = _operatorContract;
-        relayEntryTimeout = OperatorContract(operatorContract).relayEntryTimeout();
-    }
 
     /**
      * @dev Adds group.
