@@ -1,8 +1,9 @@
 import {initContracts} from './helpers/initContracts';
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 import {bls} from './helpers/data';
+import mineBlocks from './helpers/mineBlocks';
 
-contract('Keep Random Beacon pricing', function(accounts) {
+describe('Keep random beacon pricing', function(accounts) {
     let serviceContract;
     let operatorContract;
 
@@ -30,7 +31,7 @@ contract('Keep Random Beacon pricing', function(accounts) {
       await restoreSnapshot()
     });
 
-    it("should correctly evaluate entry verification fee", async function() {
+    it("should correctly evaluate entry verification fee", async () => {
         await serviceContract.setPriceFeedEstimate(200);
         await operatorContract.setEntryVerificationGasEstimate(12);        
 
@@ -41,7 +42,7 @@ contract('Keep Random Beacon pricing', function(accounts) {
         assert.equal(expectedEntryVerificationFee, entryVerificationFee);
     });
 
-    it("should correctly evaluate DKG contribution fee", async function() {
+    it("should correctly evaluate DKG contribution fee", async () => {
         await serviceContract.setPriceFeedEstimate(123);
         await operatorContract.setDkgGasEstimate(13);
 
@@ -63,7 +64,7 @@ contract('Keep Random Beacon pricing', function(accounts) {
         assert.equal(expectedCallbackFee, callbackFee);
     });
 
-    it("should correctly evaluate entry fee estimate", async function() {
+    it("should correctly evaluate entry fee estimate", async () => {
         await serviceContract.setPriceFeedEstimate(200);
         await operatorContract.setEntryVerificationGasEstimate(12); 
         await operatorContract.setDkgGasEstimate(14); 
@@ -83,5 +84,51 @@ contract('Keep Random Beacon pricing', function(accounts) {
         // entry fee = 3600 + 280 + 39 + 2100 = 6019
         let expectedEntryFeeEstimate = 6019;
         assert.equal(expectedEntryFeeEstimate, entryFeeEstimate)
+    });
+
+    it("should correctly evaluate delay factor right after the request", async () => {
+        let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
+        await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
+
+        let delayFactor = await operatorContract.delayFactor();        
+
+        let expectedDelayFactor = web3.utils.toBN(10000000000000000);
+        assert.isTrue(expectedDelayFactor.eq(delayFactor));
+    });
+
+    it("should correctly evaluate delay factor at the first submission block", async () => {
+        let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
+        await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
+
+        mineBlocks(await operatorContract.relayEntryGenerationTime());
+
+        let delayFactor = await operatorContract.delayFactor();
+
+        let expectedDelayFactor = web3.utils.toBN(10000000000000000);
+        assert.isTrue(expectedDelayFactor.eq(delayFactor));
+    });
+
+    it("should correctly evaluate delay factor at the second submission block", async () => {
+        let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
+        await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
+
+        mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1));
+
+        let delayFactor = await operatorContract.delayFactor();
+
+        let expectedDelayFactor = web3.utils.toBN(8711111111111110);
+        assert.isTrue(expectedDelayFactor.eq(delayFactor));
+    });
+
+    it("should correctly evaluate delay factor in the last block before timeout", async () => {
+        let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
+        await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
+
+        mineBlocks((await operatorContract.relayEntryTimeout()).subn(1));
+
+        let delayFactor = await operatorContract.delayFactor();        
+
+        let expectedDelayFactor = web3.utils.toBN(44444444444444);
+        assert.isTrue(expectedDelayFactor.eq(delayFactor));        
     });
 });

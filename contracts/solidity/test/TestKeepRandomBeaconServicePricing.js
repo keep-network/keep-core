@@ -187,7 +187,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
     let relayEntryTimeout = await operatorContract.relayEntryTimeout();
     let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
-    let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
+    let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout).addn(1);
     let submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(web3.utils.toBN(1));
     let decimalPoints = web3.utils.toBN(1e16);
 
@@ -211,49 +211,6 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     assert.isTrue(magpie1balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive reduced group reward.");
     assert.isTrue(magpie2balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive reduced group reward.");
     assert.isTrue(magpie3balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive reduced group reward.");
-    assert.isTrue(serviceContractBalance.add(requestSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(serviceContract.address))), "Service contract should receive request subsidy.");
-  });
-
-  it("should send no rewards to members and send group reward to request subsidy pool based on the submission block.", async function() {
-    let magpie1balance = web3.utils.toBN(await web3.eth.getBalance(magpie1));
-    let magpie2balance = web3.utils.toBN(await web3.eth.getBalance(magpie2));
-    let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
-
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    let tx = await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
-      bls.seed,
-      callbackContract.address,
-      "callback(uint256)",
-      0,
-      {value: entryFeeEstimate, from: requestor}
-    );
-
-    let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
-    let relayEntryTimeout = await operatorContract.relayEntryTimeout();
-    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
-    let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
-    let submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(web3.utils.toBN(1));
-    let decimalPoints = web3.utils.toBN(1e16);
-
-    mineBlocks(relayEntryTimeout.sub(web3.utils.toBN(1)));
-
-    let entryReceivedBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
-    let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
-    let submissionWindow = deadlineBlock.sub(submissionStartBlock);
-    let delayFactor = (remainingBlocks.mul(decimalPoints).div(submissionWindow)).pow(web3.utils.toBN(2));
-
-    let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
-    let expectedDelayPenalty = memberBaseReward.sub(memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2))));
-    let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).mul(web3.utils.toBN(5)).div(web3.utils.toBN(100));
-    let requestSubsidy = entryFee.groupProfitFee.sub(expectedSubmitterExtraReward);
-
-    let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
-
-    await operatorContract.relayEntry(bls.nextGroupSignature);
-    assert.isTrue(delayFactor.isZero(), "Delay factor expected to be 0.");
-    assert.isTrue(magpie1balance.eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive no reward.");
-    assert.isTrue(magpie2balance.eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive no reward.");
-    assert.isTrue(magpie3balance.eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive no reward.");
     assert.isTrue(serviceContractBalance.add(requestSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(serviceContract.address))), "Service contract should receive request subsidy.");
   });
 });

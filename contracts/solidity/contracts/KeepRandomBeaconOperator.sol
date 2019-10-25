@@ -706,12 +706,16 @@ contract KeepRandomBeaconOperator {
     function getDelayFactor() internal view returns(uint256 delayFactor) {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
 
-        // T_deadline (no submissions are accepted, entry timed out)
-        uint256 deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
+        // T_deadline is the earlies block when no submissions are accepted
+        // and entry timed out. The last block the entry can be published in is
+        //     currentEntryStartBlock + relayEntryTimeout
+        // and submission are no longer accepted from block
+        //     currentEntryStartBlock + relayEntryTimeout + 1.
+        uint256 deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout).add(1);
 
         // T_begin is the earliest block the result can be published in.
-        // It takes relayEntryGenerationTime to generate a new entry, so it can be published
-        // at block relayEntryGenerationTime + 1 the earliest.
+        // It takes relayEntryGenerationTime to generate a new entry, so it can
+        // be published at block relayEntryGenerationTime + 1 the earliest.
         uint256 submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(1);
 
         // Use submissionStartBlock block as entryReceivedBlock if entry submitted earlier than expected.
