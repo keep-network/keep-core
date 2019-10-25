@@ -708,4 +708,18 @@ contract KeepRandomBeaconOperator {
     function numberOfGroups() public view returns(uint256) {
         return groupContract.numberOfGroups();
     }
+
+    /**
+     * @dev Gets timeout in blocks after the initial ticket submission is finished.
+     */
+    function ticketInitialSubmissionTimeout() public view returns(uint256) {
+        return ticketContract.ticketInitialSubmissionTimeout();
+    }
+
+    /**
+     * @dev Gets timeout in blocks after the reactive ticket submission is finished.
+     */
+    function ticketReactiveSubmissionTimeout() public view returns(uint256) {
+        return ticketContract.ticketReactiveSubmissionTimeout();
+    }
 }
