@@ -11,12 +11,11 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
     constructor(
         address _serviceContract,
         address _stakingContract,
-        address payable _groupContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract, _groupContract) public {
+        address payable _groupContract,
+        address _ticketsContract
+    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract, _groupContract, _ticketsContract) public {
         groupThreshold = 15;
         relayEntryTimeout = 10;
-        ticketInitialSubmissionTimeout = 20;
-        ticketReactiveSubmissionTimeout = 65;
         resultPublicationBlockStep = 3;
     }
 
@@ -37,6 +36,6 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
     }
 
     function getTicketSubmissionStartBlock() public view returns (uint256) {
-        return ticketSubmissionStartBlock;
+        return ticketContract.ticketSubmissionStartBlock();
     }
 }
