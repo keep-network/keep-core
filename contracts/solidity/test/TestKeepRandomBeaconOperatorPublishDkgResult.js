@@ -10,7 +10,7 @@ import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 
 contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
 
-  let resultPublicationTime, token, stakingContract, operatorContract,
+  let resultPublicationTime, token, stakingContract, operatorContract, ticketContract,
   owner = accounts[0], magpie = accounts[4],
   operator1 = accounts[0],
   operator2 = accounts[1],
@@ -35,12 +35,14 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+      artifacts.require('./KeepRandomBeaconOperatorGroups.sol'),
+      artifacts.require('./KeepRandomBeaconOperatorTicketsStub.sol')
     );
 
     token = contracts.token;
     stakingContract = contracts.stakingContract;
     operatorContract = contracts.operatorContract;
+    ticketContract = contracts.ticketContract;
 
     operatorContract.setGroupSize(groupSize);
     operatorContract.setMinimumStake(minimumStake);
@@ -66,7 +68,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     }
 
     let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
-    let timeoutChallenge = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
+    let timeoutChallenge = (await ticketContract.ticketReactiveSubmissionTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
     resultPublicationTime = ticketSubmissionStartBlock + timeoutChallenge + timeDKG;
 

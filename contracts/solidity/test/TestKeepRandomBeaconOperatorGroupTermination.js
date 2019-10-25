@@ -17,7 +17,8 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function(accounts) {
         artifacts.require('./KeepRandomBeaconService.sol'),
         artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
         artifacts.require('./KeepRandomBeaconOperator.sol'),
-        artifacts.require('./stubs/KeepRandomBeaconOperatorGroupTerminationStub.sol')
+        artifacts.require('./stubs/KeepRandomBeaconOperatorGroupTerminationStub.sol'),
+        artifacts.require('./KeepRandomBeaconOperatorTickets.sol')
       );
 
       groupContract = contracts.groupContract;

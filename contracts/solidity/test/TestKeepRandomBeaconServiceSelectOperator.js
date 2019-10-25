@@ -3,10 +3,11 @@ import {initContracts} from './helpers/initContracts';
 import {bls} from './helpers/data';
 const OperatorContract = artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
 const GroupContract = artifacts.require('./stubs/KeepRandomBeaconOperatorGroups.sol')
+const TicketContract = artifacts.require('./stubs/KeepRandomBeaconOperatorTickets.sol')
 
 contract('TestKeepRandomBeaconServiceSelectOperator', function() {
 
-  let stakingContract, serviceContract, operatorContract, groupContract,
+  let stakingContract, serviceContract, operatorContract, ticketContract,
     groupContract2, operatorContract2,
     groupContract3, operatorContract3;
 
@@ -17,20 +18,21 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function() {
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       OperatorContract,
-      GroupContract
+      GroupContract,
+      TicketContract
     );
 
     stakingContract = contracts.stakingContract;
     serviceContract = contracts.serviceContract;
     operatorContract = contracts.operatorContract;
-    groupContract = contracts.groupContract;
+    ticketContract = contracts.ticketContract;
 
     // Create and initialize additional operator contracts
     groupContract2 = await GroupContract.new();
-    operatorContract2 = await OperatorContract.new(serviceContract.address, stakingContract.address, groupContract2.address);
+    operatorContract2 = await OperatorContract.new(serviceContract.address, stakingContract.address, groupContract2.address, ticketContract.address);
     await groupContract2.setOperatorContract(operatorContract2.address);
     groupContract3 = await GroupContract.new();
-    operatorContract3 = await OperatorContract.new(serviceContract.address, stakingContract.address, groupContract3.address);
+    operatorContract3 = await OperatorContract.new(serviceContract.address, stakingContract.address, groupContract3.address, ticketContract.address);
     await groupContract3.setOperatorContract(operatorContract3.address);
 
     operatorContract.registerNewGroup("0x0");

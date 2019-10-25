@@ -9,11 +9,12 @@ import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 
 contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
 
-  let token, stakingContract, serviceContract, operatorContract, groupContract,
+  let token, stakingContract, serviceContract, operatorContract, groupContract, ticketContract,
   owner = accounts[0], magpie = accounts[1],
   operator1 = accounts[2], tickets1,
   operator2 = accounts[3], tickets2,
-  operator3 = accounts[4], tickets3;
+  operator3 = accounts[4], tickets3,
+  groupSelectionRelayEntry;
 
   const minimumStake = web3.utils.toBN(200000);
   const operator1StakingWeight = 2000;
@@ -28,24 +29,26 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+      artifacts.require('./KeepRandomBeaconOperatorGroups.sol'),
+      artifacts.require('./KeepRandomBeaconOperatorTicketsStub.sol')
     );
     
     token = contracts.token;
     serviceContract = contracts.serviceContract;
     operatorContract = contracts.operatorContract;
     groupContract = contracts.groupContract;
+    ticketContract = contracts.ticketContract;
     stakingContract = contracts.stakingContract;
-
+    groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry();
     operatorContract.setMinimumStake(minimumStake)
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)))
     await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)))
     await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake.mul(web3.utils.toBN(operator3StakingWeight)))
 
-    tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, operator1StakingWeight);
-    tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, operator2StakingWeight);
-    tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, operator3StakingWeight);
+    tickets1 = generateTickets(groupSelectionRelayEntry, operator1, operator1StakingWeight);
+    tickets2 = generateTickets(groupSelectionRelayEntry, operator2, operator2StakingWeight);
+    tickets3 = generateTickets(groupSelectionRelayEntry, operator3, operator3StakingWeight);
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
@@ -94,7 +97,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     tickets = tickets.sort(function(a, b){return a-b}); // Sort numbers in ascending order
 
     // Test tickets ordering
-    let orderedTickets = await operatorContract.orderedTickets();
+    let orderedTickets = await ticketContract.orderedTickets();
     assert.isTrue(orderedTickets[0].eq(tickets[0]), "Tickets should be in ascending order.");
     assert.isTrue(orderedTickets[1].eq(tickets[1]), "Tickets should be in ascending order.");
     assert.isTrue(orderedTickets[2].eq(tickets[2]), "Tickets should be in ascending order.");
@@ -104,31 +107,31 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
   it("should be able to verify a ticket", async function() {
     await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
 
-    assert.isTrue(await operatorContract.isTicketValid(
-      operator1, tickets1[0].value, operator1, tickets1[0].virtualStakerIndex
+    assert.isTrue(await ticketContract.isTicketValid(
+      operator1, tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, operator1StakingWeight, groupSelectionRelayEntry
     ), "Should be able to verify a valid ticket.");
 
     let lastTicketIndex = tickets1.length - 1;
     let maxVirtualStakerIndexTicket = tickets1[lastTicketIndex].virtualStakerIndex;
-    assert.isTrue(await operatorContract.isTicketValid(
-      operator1, tickets1[lastTicketIndex].value, operator1, maxVirtualStakerIndexTicket
+    assert.isTrue(await ticketContract.isTicketValid(
+      operator1, tickets1[lastTicketIndex].value, operator1, maxVirtualStakerIndexTicket, operator1StakingWeight, groupSelectionRelayEntry
     ), "Should be able to verify a valid ticket with the maximum allowed staker index");
 
     let invalidVirtualStakerIndex = operator1StakingWeight + 1;
-    assert.isFalse(await operatorContract.isTicketValid(
-      operator1, tickets1[0].value, operator1, invalidVirtualStakerIndex
+    assert.isFalse(await ticketContract.isTicketValid(
+      operator1, tickets1[0].value, operator1, invalidVirtualStakerIndex, operator1StakingWeight, groupSelectionRelayEntry
     ), "Should fail while verifying a submitted ticket due to invalid number of virtual stakers");
     
-    assert.isFalse(await operatorContract.isTicketValid(
-      operator1, 0, operator2, tickets1[0].virtualStakerIndex
+    assert.isFalse(await ticketContract.isTicketValid(
+      operator1, 0, operator2, tickets1[0].virtualStakerIndex, operator1StakingWeight, groupSelectionRelayEntry
     ), "Should fail while verifying a submitted ticket due to invalid ticket value");
     
-    assert.isFalse(await operatorContract.isTicketValid(
-      operator1, tickets1[0].value, operator2, tickets1[0].virtualStakerIndex
+    assert.isFalse(await ticketContract.isTicketValid(
+      operator1, tickets1[0].value, operator2, tickets1[0].virtualStakerIndex, operator1StakingWeight, groupSelectionRelayEntry
       ), "Should fail while verifying a submitted ticket due to invalid stake value");
       
-    assert.isFalse(await operatorContract.isTicketValid(
-      operator1, tickets1[0].value, operator1, 2
+    assert.isFalse(await ticketContract.isTicketValid(
+      operator1, tickets1[0].value, operator1, 2, operator1StakingWeight, groupSelectionRelayEntry
     ), "Should fail while verifying a submitted ticket due to invalid virtual staker index");
 
   });
@@ -169,7 +172,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
       await operatorContract.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
     }
 
-    mineBlocks(await operatorContract.ticketReactiveSubmissionTimeout());
+    mineBlocks(await ticketContract.ticketReactiveSubmissionTimeout());
     let selectedTickets = await operatorContract.selectedTickets();
     assert.equal(selectedTickets.length, groupSize, "Should be trimmed to groupSize length.");
 
@@ -182,7 +185,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     let groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry();
 
     // Calculate the block time when the group selection should be finished
-    let ticketSubmissionTimeout = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
+    let ticketSubmissionTimeout = (await ticketContract.ticketReactiveSubmissionTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
     let groupSize = (await operatorContract.groupSize()).toNumber();
     let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
@@ -200,7 +203,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     let groupSelectionStartBlock = await operatorContract.getTicketSubmissionStartBlock();
 
     // Calculate the block time when the group selection should be finished
-    let ticketSubmissionTimeout = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
+    let ticketSubmissionTimeout = (await ticketContract.ticketReactiveSubmissionTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
     let groupSize = (await operatorContract.groupSize()).toNumber();
     let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();

@@ -13,7 +13,8 @@ contract('Keep Random Beacon pricing', function(accounts) {
           artifacts.require('./KeepRandomBeaconService.sol'),
           artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
           artifacts.require('./stubs/KeepRandomBeaconOperatorPricingStub.sol'),
-          artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+          artifacts.require('./KeepRandomBeaconOperatorGroups.sol'),
+          artifacts.require('./KeepRandomBeaconOperatorTickets.sol')
         );
     
         serviceContract = contracts.serviceContract;
