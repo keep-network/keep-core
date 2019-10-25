@@ -4,7 +4,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./TokenStaking.sol";
 import "./KeepRandomBeaconOperatorGroups.sol";
-import "./utils/UintArrayUtils.sol";
+import "./KeepRandomBeaconOperatorTickets.sol";
 import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
@@ -49,6 +49,7 @@ contract KeepRandomBeaconOperator {
     TokenStaking public stakingContract;
 
     KeepRandomBeaconOperatorGroups public groupContract;
+    KeepRandomBeaconOperatorTickets public ticketContract;
 
     // Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
@@ -73,12 +74,6 @@ contract KeepRandomBeaconOperator {
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
     // the Keep network. Expressed in wei.
     uint256 public minimumStake = 200000 * 1e18;
-
-    // Timeout in blocks after the initial ticket submission is finished.
-    uint256 public ticketInitialSubmissionTimeout = 3;
-
-    // Timeout in blocks after the reactive ticket submission is finished.
-    uint256 public ticketReactiveSubmissionTimeout = 6;
 
     // Time in blocks after which the next group member is eligible
     // to submit the result.
@@ -118,22 +113,11 @@ contract KeepRandomBeaconOperator {
     // contract.
     uint256 public dkgSubmitterReimbursementFee;
 
-    struct Proof {
-        address sender;
-        uint256 stakerValue;
-        uint256 virtualStakerIndex;
-    }
-
-    mapping(uint256 => Proof) internal proofs;
-
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
 
     bool internal groupSelectionInProgress;
-
-    uint256 internal ticketSubmissionStartBlock;
     uint256 internal groupSelectionRelayEntry;
-    uint256[] internal tickets;
 
     struct SigningRequest {
         uint256 relayRequestId;
@@ -179,8 +163,12 @@ contract KeepRandomBeaconOperator {
     modifier onlyEligibleSubmitter(uint256 submitterMemberIndex) {
         uint256[] memory selected = selectedTickets();
         require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
-        require(proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
-        uint T_init = ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout + timeDKG;
+        require(
+            ticketContract.getProofSender(selected[submitterMemberIndex - 1]) == msg.sender, 
+            "Submitter member index does not match sender address."
+        );
+
+        uint T_init = ticketContract.ticketSubmissionStartBlock() + ticketContract.ticketReactiveSubmissionTimeout() + timeDKG;
         require(
             block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
             "Submitter is not eligible to submit at the current block."
@@ -200,26 +188,16 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Reverts if ticket submission period is not over.
-     */
-    modifier whenTicketSubmissionIsOver() {
-        require(
-            block.number >= ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout,
-            "Ticket submission submission period must be over."
-        );
-        _;
-    }
-
-    /**
      * @dev Initializes the contract with service and staking contract addresses and
      * the deployer as the contract owner.
      */
-    constructor(address _serviceContract, address _stakingContract, address _groupContract) public {
+    constructor(address _serviceContract, address _stakingContract, address _groupContract, address _ticketContract) public {
         require(_serviceContract != address(0), "Service contract address can't be zero.");
         require(_stakingContract != address(0), "Staking contract address can't be zero.");
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
         groupContract = KeepRandomBeaconOperatorGroups(_groupContract);
+        ticketContract = KeepRandomBeaconOperatorTickets(_ticketContract);
         owner = msg.sender;
     }
 
@@ -274,8 +252,8 @@ contract KeepRandomBeaconOperator {
 
         // dkgTimeout is the time after key generation protocol is expected to
         // be complete plus the expected time to submit the result.
-        uint256 dkgTimeout = ticketSubmissionStartBlock +
-            ticketReactiveSubmissionTimeout +
+        uint256 dkgTimeout = ticketContract.ticketSubmissionStartBlock() +
+            ticketContract.ticketReactiveSubmissionTimeout() +
             timeDKG +
             groupSize * resultPublicationBlockStep;
 
@@ -289,8 +267,8 @@ contract KeepRandomBeaconOperator {
             ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
         }
 
-        cleanup();
-        ticketSubmissionStartBlock = block.number;
+        ticketContract.cleanup();
+        ticketContract.setTicketSubmissionStartBlock(block.number);
         groupSelectionRelayEntry = _newEntry;
         groupSelectionInProgress = true;
         emit GroupSelectionStarted(_newEntry);
@@ -309,101 +287,28 @@ contract KeepRandomBeaconOperator {
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public {
-
-        if (block.number > ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout) {
-            revert("Ticket submission period is over.");
-        }
-
-        if (proofs[ticketValue].sender != address(0)) {
-            revert("Ticket with the given value has already been submitted.");
-        }
-
-        // Invalid tickets are rejected and their senders penalized.
-        if (isTicketValid(msg.sender, ticketValue, stakerValue, virtualStakerIndex)) {
-            tickets.push(ticketValue);
-            proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
-        } else {
-            // TODO: should we slash instead of reverting?
-            revert("Invalid ticket");
-        }
-    }
-
-    /**
-     * @dev Gets submitted tickets in ascending order.
-     */
-    function orderedTickets() public view returns (uint256[] memory) {
-        return UintArrayUtils.sort(tickets);
+        ticketContract.submitTicket(msg.sender, ticketValue, stakerValue, virtualStakerIndex, stakingWeight(msg.sender), groupSelectionRelayEntry);
     }
 
     /**
      * @dev Gets the number of submitted group candidate tickets so far.
      */
     function submittedTicketsCount() public view returns (uint256) {
-        return tickets.length;
+        return ticketContract.submittedTicketsCount();
     }
 
     /**
      * @dev Gets selected tickets in ascending order.
      */
-    function selectedTickets() public view whenTicketSubmissionIsOver returns (uint256[] memory) {
-
-        uint256[] memory ordered = orderedTickets();
-
-        require(
-            ordered.length >= groupSize,
-            "The number of submitted tickets is less than specified group size."
-        );
-
-        uint256[] memory selected = new uint256[](groupSize);
-
-        for (uint i = 0; i < groupSize; i++) {
-            selected[i] = ordered[i];
-        }
-
-        return selected;
+    function selectedTickets() public view returns (uint256[] memory) {
+        return ticketContract.selectedTickets(groupSize);
     }
 
     /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
-    function selectedParticipants() public view whenTicketSubmissionIsOver returns (address[] memory) {
-
-        uint256[] memory ordered = orderedTickets();
-
-        require(
-            ordered.length >= groupSize,
-            "The number of submitted tickets is less than specified group size."
-        );
-
-        address[] memory selected = new address[](groupSize);
-
-        for (uint i = 0; i < groupSize; i++) {
-            Proof memory proof = proofs[ordered[i]];
-            selected[i] = proof.sender;
-        }
-
-        return selected;
-    }
-
-    /**
-     * @dev Performs full verification of the ticket.
-     * @param staker Address of the staker.
-     * @param ticketValue Result of a pseudorandom function with input values of
-     * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
-     * @param stakerValue Staker-specific value. Currently uint representation of staker address.
-     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
-     */
-    function isTicketValid(
-        address staker,
-        uint256 ticketValue,
-        uint256 stakerValue,
-        uint256 virtualStakerIndex
-    ) public view returns(bool) {
-        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight(staker);
-        bool isStakerValueValid = uint256(staker) == stakerValue;
-        bool isTicketValueValid = uint256(keccak256(abi.encodePacked(groupSelectionRelayEntry, stakerValue, virtualStakerIndex))) == ticketValue;
-
-        return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
+    function selectedParticipants() public view returns (address[] memory) {
+        return ticketContract.selectedParticipants(groupSize);
     }
 
     /**
@@ -465,7 +370,7 @@ contract KeepRandomBeaconOperator {
         groupContract.addGroup(groupPubKey);
 
         reimburseDkgSubmitter();
-        cleanup();
+        ticketContract.cleanup();
         emit DkgResultPublishedEvent(groupPubKey);
 
         groupSelectionInProgress = false;
@@ -535,7 +440,7 @@ contract KeepRandomBeaconOperator {
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
             require(
-                proofs[selected[signingMemberIndices[i] - 1]].sender == recoveredAddress,
+                ticketContract.getProofSender(selected[signingMemberIndices[i] - 1]) == recoveredAddress,
                 "Invalid signature. Signer and recovered address at provided index don't match."
             );
         }
@@ -566,20 +471,6 @@ contract KeepRandomBeaconOperator {
     function naturalThreshold() public view returns (uint256) {
         uint256 space = 2**256-1; // Space consisting of all possible tickets.
         return groupSize.mul(space.div(tokenSupply().div(minimumStake)));
-    }
-
-    /**
-     * @dev Cleanup data of previous group selection.
-     */
-    function cleanup() private {
-
-        for (uint i = 0; i < tickets.length; i++) {
-            delete proofs[tickets[i]];
-        }
-
-        delete tickets;
-
-        // TODO: cleanup DkgResults
     }
 
     /**
