@@ -2,11 +2,11 @@ import { duration } from './increaseTime';
 const BLS = artifacts.require('./cryptography/BLS.sol');
 
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
-  KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator, KeepRandomBeaconOperatorGroups) {
+  KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator, KeepRandomBeaconOperatorGroups, KeepRandomBeaconOperatorTickets) {
 
   let token, stakingContract,
     serviceContractImplV1, serviceContractProxy, serviceContract,
-    operatorContract, groupContract;
+    operatorContract, groupContract, ticketContract;
 
   let priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei = 20 * 10^9 wei)
     fluctuationMargin = 50, // 50%
@@ -28,8 +28,10 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   const bls = await BLS.new();
   await KeepRandomBeaconOperator.link("BLS", bls.address);
   groupContract = await KeepRandomBeaconOperatorGroups.new();
-  operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address, groupContract.address);
+  ticketContract = await KeepRandomBeaconOperatorTickets.new();
+  operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address, groupContract.address, ticketContract.address);
   await groupContract.setOperatorContract(operatorContract.address);
+  await ticketContract.setOperatorContract(operatorContract.address);
 
   await serviceContract.initialize(priceFeedEstimate, fluctuationMargin, dkgContributionMargin, withdrawalDelay, operatorContract.address);
 
@@ -44,7 +46,8 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     stakingContract: stakingContract,
     serviceContract: serviceContract,
     operatorContract: operatorContract,
-    groupContract: groupContract
+    groupContract: groupContract,
+    ticketContract: ticketContract
   };
 };
 
