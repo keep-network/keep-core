@@ -786,7 +786,7 @@ contract KeepRandomBeaconOperator {
      * @param staker Specifies the identity of the staker.
      * @return Number of how many virtual stakers can staker represent.
      */
-    function stakingWeight(address staker) public view returns(uint256) {
+    function stakingWeight(address staker) internal view returns(uint256) {
         return stakingContract.balanceOf(staker).div(minimumStake);
     }
 

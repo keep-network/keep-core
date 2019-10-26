@@ -65,11 +65,6 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     await restoreSnapshot()
   });
 
-  it("should be able to get staking weight", async function() {
-    assert.isTrue(web3.utils.toBN(2000).eq(await operatorContract.stakingWeight(operator1)), "Should have expected staking weight.");
-    assert.isTrue(web3.utils.toBN(3000).eq(await operatorContract.stakingWeight(operator3)), "Should have expected staking weight.");
-  });
-
   it("should fail to get selected tickets before submission period is over", async function() {
     await expectThrow(operatorContract.selectedTickets());
   });
