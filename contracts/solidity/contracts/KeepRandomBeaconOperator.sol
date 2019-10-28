@@ -184,17 +184,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Reverts if ticket submission period is not over.
-     */
-    modifier whenTicketSubmissionIsOver() {
-        require(
-            block.number >= ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout,
-            "Ticket submission submission period must be over."
-        );
-        _;
-    }
-
-    /**
      * @dev Initializes the contract with service and staking contract addresses and
      * the deployer as the contract owner.
      */
@@ -329,7 +318,11 @@ contract KeepRandomBeaconOperator {
     /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
-    function selectedParticipants() public view whenTicketSubmissionIsOver returns (address[] memory) {
+    function selectedParticipants() public view returns (address[] memory) {
+        require(
+            block.number >= ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout,
+            "Ticket submission submission period must be over."
+        );
 
         uint256[] memory ordered = orderedTickets();
 
