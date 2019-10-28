@@ -325,10 +325,11 @@ contract KeepRandomBeaconOperator {
         bytes memory signatures,
         uint[] memory signingMembersIndexes
     ) public {
-        uint256[] memory selectedTickets = ticketContract.selectedTickets(groupSize);
+        address[] memory members = selectedParticipants();
+
         require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
         require(
-            ticketContract.getProofSender(selectedTickets[submitterMemberIndex - 1]) == msg.sender, 
+            members[submitterMemberIndex - 1] == msg.sender, 
             "Submitter member index does not match sender address."
         );
 
@@ -344,8 +345,7 @@ contract KeepRandomBeaconOperator {
         );
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
-        verifySignatures(signatures, signingMembersIndexes, resultHash, selectedTickets);
-        address[] memory members = selectedParticipants();
+        verifySignatures(signatures, signingMembersIndexes, resultHash, members);
 
         for (uint i = 0; i < groupSize; i++) {
             if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i)) {
@@ -402,14 +402,14 @@ contract KeepRandomBeaconOperator {
     * @param signatures Concatenation of user-generated signatures.
     * @param resultHash The result hash signed by the users.
     * @param signingMemberIndices Indices of members corresponding to each signature.
-    * @param selectedTickets Array of selected tickets.
+    * @param members Array of selected participants.
     * @return Array of member indices with a boolean value of their signature validity.
     */
     function verifySignatures(
         bytes memory signatures,
         uint256[] memory signingMemberIndices,
         bytes32 resultHash,
-        uint256[] memory selectedTickets
+        address[] memory members
     ) internal view returns (bool) {
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Signatures bytes array is too short.");
@@ -421,12 +421,12 @@ contract KeepRandomBeaconOperator {
 
         for(uint i = 0; i < signaturesCount; i++){
             require(signingMemberIndices[i] > 0, "Index should be greater than zero.");
-            require(signingMemberIndices[i] <= selectedTickets.length, "Provided index is out of acceptable tickets bound.");
+            require(signingMemberIndices[i] <= members.length, "Provided index is out of acceptable tickets bound.");
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
             require(
-                ticketContract.getProofSender(selectedTickets[signingMemberIndices[i] - 1]) == recoveredAddress,
+                members[signingMemberIndices[i] - 1] == recoveredAddress,
                 "Invalid signature. Signer and recovered address at provided index don't match."
             );
         }

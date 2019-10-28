@@ -90,28 +90,6 @@ contract KeepRandomBeaconOperatorTickets is KeepRandomBeaconOperatorLinkedContra
     }
 
     /**
-     * @dev Gets selected tickets in ascending order.
-     * @param groupSize Size of a group in the threshold relay.
-     */
-    function selectedTickets(uint256 groupSize) public view whenTicketSubmissionIsOver returns (uint256[] memory) {
-
-        uint256[] memory ordered = orderedTickets();
-
-        require(
-            ordered.length >= groupSize,
-            "The number of submitted tickets is less than specified group size."
-        );
-
-        uint256[] memory selected = new uint256[](groupSize);
-
-        for (uint i = 0; i < groupSize; i++) {
-            selected[i] = ordered[i];
-        }
-
-        return selected;
-    }
-
-    /**
      * @dev Gets selected participants in ascending order of their tickets.
      * @param groupSize Size of a group in the threshold relay.
      */
@@ -164,13 +142,6 @@ contract KeepRandomBeaconOperatorTickets is KeepRandomBeaconOperatorLinkedContra
      */
     function setTicketSubmissionStartBlock(uint256 value) public onlyOperatorContract {
         ticketSubmissionStartBlock = value;
-    }
-
-    /**
-     * @dev Gets sender of the ticket proof by its index.
-     */
-    function getProofSender(uint256 index) public view returns (address sender) {
-        return proofs[index].sender;
     }
 
     /**
