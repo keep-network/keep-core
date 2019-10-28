@@ -157,26 +157,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Checks if submitter is eligible to submit.
-     * @param submitterMemberIndex The claimed index of the submitter.
-     */
-    modifier onlyEligibleSubmitter(uint256 submitterMemberIndex) {
-        uint256[] memory selected = selectedTickets();
-        require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
-        require(
-            ticketContract.getProofSender(selected[submitterMemberIndex - 1]) == msg.sender, 
-            "Submitter member index does not match sender address."
-        );
-
-        uint T_init = ticketContract.ticketSubmissionStartBlock() + ticketContract.ticketReactiveSubmissionTimeout() + timeDKG;
-        require(
-            block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
-            "Submitter is not eligible to submit at the current block."
-        );
-        _;
-    }
-
-    /**
      * @dev Checks if sender is authorized.
      */
     modifier onlyServiceContract() {
@@ -298,13 +278,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets selected tickets in ascending order.
-     */
-    function selectedTickets() internal view returns (uint256[] memory) {
-        return ticketContract.selectedTickets(groupSize);
-    }
-
-    /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
     function selectedParticipants() public view returns (address[] memory) {
@@ -351,14 +324,27 @@ contract KeepRandomBeaconOperator {
         bytes memory inactive,
         bytes memory signatures,
         uint[] memory signingMembersIndexes
-    ) public onlyEligibleSubmitter(submitterMemberIndex) {
+    ) public {
+        uint256[] memory selectedTickets = ticketContract.selectedTickets(groupSize);
+        require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
+        require(
+            ticketContract.getProofSender(selectedTickets[submitterMemberIndex - 1]) == msg.sender, 
+            "Submitter member index does not match sender address."
+        );
+
+        uint T_init = ticketContract.ticketSubmissionStartBlock() + ticketContract.ticketReactiveSubmissionTimeout() + timeDKG;
+        require(
+            block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
+            "Submitter is not eligible to submit at the current block."
+        );
+
         require(
             disqualified.length == groupSize && inactive.length == groupSize,
             "Inactive and disqualified bytes arrays don't match the group size."
         );
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
-        verifySignatures(signatures, signingMembersIndexes, resultHash);
+        verifySignatures(signatures, signingMembersIndexes, resultHash, selectedTickets);
         address[] memory members = selectedParticipants();
 
         for (uint i = 0; i < groupSize; i++) {
@@ -416,14 +402,15 @@ contract KeepRandomBeaconOperator {
     * @param signatures Concatenation of user-generated signatures.
     * @param resultHash The result hash signed by the users.
     * @param signingMemberIndices Indices of members corresponding to each signature.
+    * @param selectedTickets Array of selected tickets.
     * @return Array of member indices with a boolean value of their signature validity.
     */
     function verifySignatures(
         bytes memory signatures,
         uint256[] memory signingMemberIndices,
-        bytes32 resultHash
+        bytes32 resultHash,
+        uint256[] memory selectedTickets
     ) internal view returns (bool) {
-
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Signatures bytes array is too short.");
         require(signatures.length % 65 == 0, "Signatures in the bytes array should be 65 bytes long.");
@@ -431,16 +418,15 @@ contract KeepRandomBeaconOperator {
         require(signaturesCount >= groupThreshold, "Number of signatures is below honest majority threshold.");
 
         bytes memory current; // Current signature to be checked.
-        uint256[] memory selected = selectedTickets();
 
         for(uint i = 0; i < signaturesCount; i++){
             require(signingMemberIndices[i] > 0, "Index should be greater than zero.");
-            require(signingMemberIndices[i] <= selected.length, "Provided index is out of acceptable tickets bound.");
+            require(signingMemberIndices[i] <= selectedTickets.length, "Provided index is out of acceptable tickets bound.");
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
             require(
-                ticketContract.getProofSender(selected[signingMemberIndices[i] - 1]) == recoveredAddress,
+                ticketContract.getProofSender(selectedTickets[signingMemberIndices[i] - 1]) == recoveredAddress,
                 "Invalid signature. Signer and recovered address at provided index don't match."
             );
         }
