@@ -357,26 +357,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Checks if member is disqualified.
-     * @param dqBytes bytes representing disqualified members.
-     * @param memberIndex position of the member to check.
-     * @return true if staker is disqualified, false otherwise.
-     */
-    function _isDisqualified(bytes memory dqBytes, uint256 memberIndex) internal pure returns (bool){
-        return dqBytes[memberIndex] != 0x00;
-    }
-
-     /**
-     * @dev Checks if member is inactive.
-     * @param iaBytes bytes representing inactive members.
-     * @param memberIndex position of the member to check.
-     * @return true if staker is inactive, false otherwise.
-     */
-    function _isInactive(bytes memory iaBytes, uint256 memberIndex) internal pure returns (bool){
-        return iaBytes[memberIndex] != 0x00;
-    }
-
-    /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
      * @param submitterMemberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
      * @param groupPubKey Group public key generated as a result of protocol execution.
@@ -420,7 +400,8 @@ contract KeepRandomBeaconOperator {
         verifySignatures(signatures, signingMembersIndexes, resultHash, members);
 
         for (uint i = 0; i < groupSize; i++) {
-            if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i)) {
+            // Check member was neither marked as inactive nor as disqualified
+            if(inactive[i] == 0x00 && disqualified[i] == 0x00) {
                 groupContract.addGroupMember(groupPubKey, members[i]);
             }
         }
