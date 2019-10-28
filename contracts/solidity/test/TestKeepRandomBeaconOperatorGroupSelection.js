@@ -68,10 +68,6 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     await restoreSnapshot()
   });
 
-  it("should fail to get selected tickets before submission period is over", async function() {
-    await expectThrow(operatorContract.selectedTickets());
-  });
-
   it("should fail to get selected participants before submission period is over", async function() {
     await expectThrow(operatorContract.selectedParticipants());
   });
@@ -168,8 +164,6 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     }
 
     mineBlocks(await ticketContract.ticketReactiveSubmissionTimeout());
-    let selectedTickets = await operatorContract.selectedTickets();
-    assert.equal(selectedTickets.length, groupSize, "Should be trimmed to groupSize length.");
 
     let selectedParticipants = await operatorContract.selectedParticipants();
     assert.equal(selectedParticipants.length, groupSize, "Should be trimmed to groupSize length.");

@@ -300,7 +300,7 @@ contract KeepRandomBeaconOperator {
     /**
      * @dev Gets selected tickets in ascending order.
      */
-    function selectedTickets() public view returns (uint256[] memory) {
+    function selectedTickets() internal view returns (uint256[] memory) {
         return ticketContract.selectedTickets(groupSize);
     }
 
