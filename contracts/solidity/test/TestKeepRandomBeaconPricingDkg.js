@@ -1,21 +1,15 @@
 import {initContracts} from './helpers/initContracts';
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 import {bls} from './helpers/data';
-import stakeDelegate from './helpers/stakeDelegate';
-import runGenesisGroupSelection from './helpers/runGenesisGroupSelection';
+
+import stakeAndGenesis from './helpers/stakeAndGenesis';
 
 contract('KeepRandomBeaconService', function(accounts) {
 
     const groupSize = 20;
-    const minimumStake = web3.utils.toBN(200000);
 
-    const operator1StakingWeight = 2000;
-    const operator2StakingWeight = 2000;
-    const operator3StakingWeight = 3000;
-    
     let serviceContract;
     let operatorContract
-
     let dkgPayment;
 
     before(async () => {
@@ -31,22 +25,9 @@ contract('KeepRandomBeaconService', function(accounts) {
         serviceContract = contracts.serviceContract;
         operatorContract = contracts.operatorContract;
     
-        operatorContract.setGroupSize(groupSize);
-        operatorContract.setMinimumStake(minimumStake);
+        await operatorContract.setGroupSize(groupSize);
 
-        let stakingContract = contracts.stakingContract;
-        let token = contracts.token;
-  
-        let owner = accounts[0];
-        let operator1 = accounts[1];
-        let operator2 = accounts[2];
-        let operator3 = accounts[3];
-
-        await stakeDelegate(stakingContract, token, owner, operator1, operator1, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)));
-        await stakeDelegate(stakingContract, token, owner, operator2, operator2, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)));
-        await stakeDelegate(stakingContract, token, owner, operator3, operator3, minimumStake.mul(web3.utils.toBN(operator3StakingWeight)));
-
-        await runGenesisGroupSelection(operatorContract, operator1, operator2, operator3);    
+        await stakeAndGenesis(accounts, contracts);    
 
         let dkgGasEstimateCost = await operatorContract.dkgGasEstimate();
         let fluctuationMargin = await operatorContract.fluctuationMargin();
