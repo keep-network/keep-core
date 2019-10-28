@@ -631,6 +631,8 @@ contract KeepRandomBeaconOperator {
      * previous entry and seed.
      */
     function relayEntry(uint256 _groupSignature) public {
+        require(!hasEntryTimedOut(), "Can not submit after the timeout");
+
         bytes memory groupPubKey = groupContract.getGroupPublicKey(signingRequest.groupIndex);
 
         require(
@@ -641,7 +643,7 @@ contract KeepRandomBeaconOperator {
             ),
             "Group signature failed to pass BLS verification."
         );
-        
+
         emit SignatureSubmitted(
             _groupSignature,
             groupPubKey,

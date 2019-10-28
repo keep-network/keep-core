@@ -39,4 +39,8 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
     function getTicketSubmissionStartBlock() public view returns (uint256) {
         return ticketSubmissionStartBlock;
     }
+
+    function getRelayEntryTimeout() public view returns (uint256) {
+        return relayEntryTimeout;
+    }
 }
