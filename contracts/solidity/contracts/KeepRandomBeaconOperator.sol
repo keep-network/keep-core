@@ -327,27 +327,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets selected tickets in ascending order.
-     */
-    function selectedTickets() public view whenTicketSubmissionIsOver returns (uint256[] memory) {
-
-        uint256[] memory ordered = orderedTickets();
-
-        require(
-            ordered.length >= groupSize,
-            "The number of submitted tickets is less than specified group size."
-        );
-
-        uint256[] memory selected = new uint256[](groupSize);
-
-        for (uint i = 0; i < groupSize; i++) {
-            selected[i] = ordered[i];
-        }
-
-        return selected;
-    }
-
-    /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
     function selectedParticipants() public view whenTicketSubmissionIsOver returns (address[] memory) {
