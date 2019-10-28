@@ -383,7 +383,8 @@ contract KeepRandomBeaconOperator {
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public view returns(bool) {
-        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight(staker);
+        uint256 stakingWeight = stakingContract.balanceOf(staker).div(minimumStake);
+        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight;
         bool isStakerValueValid = uint256(staker) == stakerValue;
         bool isTicketValueValid = uint256(keccak256(abi.encodePacked(groupSelectionRelayEntry, stakerValue, virtualStakerIndex))) == ticketValue;
 
@@ -776,15 +777,6 @@ contract KeepRandomBeaconOperator {
      */
     function hasMinimumStake(address staker) public view returns(bool) {
         return stakingContract.balanceOf(staker) >= minimumStake;
-    }
-
-    /**
-     * @dev Gets staking weight.
-     * @param staker Specifies the identity of the staker.
-     * @return Number of how many virtual stakers can staker represent.
-     */
-    function stakingWeight(address staker) internal view returns(uint256) {
-        return stakingContract.balanceOf(staker).div(minimumStake);
     }
 
     /**
