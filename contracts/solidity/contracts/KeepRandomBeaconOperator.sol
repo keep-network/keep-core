@@ -173,22 +173,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Checks if submitter is eligible to submit.
-     * @param submitterMemberIndex The claimed index of the submitter.
-     */
-    modifier onlyEligibleSubmitter(uint256 submitterMemberIndex) {
-        uint256[] memory selected = selectedTickets();
-        require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
-        require(proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
-        uint T_init = ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout + timeDKG;
-        require(
-            block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
-            "Submitter is not eligible to submit at the current block."
-        );
-        _;
-    }
-
-    /**
      * @dev Checks if sender is authorized.
      */
     modifier onlyServiceContract() {
@@ -446,15 +430,28 @@ contract KeepRandomBeaconOperator {
         bytes memory inactive,
         bytes memory signatures,
         uint[] memory signingMembersIndexes
-    ) public onlyEligibleSubmitter(submitterMemberIndex) {
+    ) public {
+        address[] memory members = selectedParticipants();
+
+        require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
+        require(
+            members[submitterMemberIndex - 1] == msg.sender, 
+            "Submitter member index does not match sender address."
+        );
+
+        uint T_init = ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout + timeDKG;
+        require(
+            block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
+            "Submitter is not eligible to submit at the current block."
+        );
+
         require(
             disqualified.length == groupSize && inactive.length == groupSize,
             "Inactive and disqualified bytes arrays don't match the group size."
         );
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
-        verifySignatures(signatures, signingMembersIndexes, resultHash);
-        address[] memory members = selectedParticipants();
+        verifySignatures(signatures, signingMembersIndexes, resultHash, members);
 
         for (uint i = 0; i < groupSize; i++) {
             if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i)) {
@@ -511,14 +508,15 @@ contract KeepRandomBeaconOperator {
     * @param signatures Concatenation of user-generated signatures.
     * @param resultHash The result hash signed by the users.
     * @param signingMemberIndices Indices of members corresponding to each signature.
+    * @param members Array of selected participants.
     * @return Array of member indices with a boolean value of their signature validity.
     */
     function verifySignatures(
         bytes memory signatures,
         uint256[] memory signingMemberIndices,
-        bytes32 resultHash
+        bytes32 resultHash,
+        address[] memory members
     ) internal view returns (bool) {
-
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Signatures bytes array is too short.");
         require(signatures.length % 65 == 0, "Signatures in the bytes array should be 65 bytes long.");
@@ -526,16 +524,15 @@ contract KeepRandomBeaconOperator {
         require(signaturesCount >= groupThreshold, "Number of signatures is below honest majority threshold.");
 
         bytes memory current; // Current signature to be checked.
-        uint256[] memory selected = selectedTickets();
 
         for(uint i = 0; i < signaturesCount; i++){
             require(signingMemberIndices[i] > 0, "Index should be greater than zero.");
-            require(signingMemberIndices[i] <= selected.length, "Provided index is out of acceptable tickets bound.");
+            require(signingMemberIndices[i] <= members.length, "Provided index is out of acceptable tickets bound.");
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
             require(
-                proofs[selected[signingMemberIndices[i] - 1]].sender == recoveredAddress,
+                members[signingMemberIndices[i] - 1] == recoveredAddress,
                 "Invalid signature. Signer and recovered address at provided index don't match."
             );
         }
@@ -786,7 +783,7 @@ contract KeepRandomBeaconOperator {
      * @param staker Specifies the identity of the staker.
      * @return Number of how many virtual stakers can staker represent.
      */
-    function stakingWeight(address staker) public view returns(uint256) {
+    function stakingWeight(address staker) internal view returns(uint256) {
         return stakingContract.balanceOf(staker).div(minimumStake);
     }
 
