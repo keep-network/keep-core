@@ -69,29 +69,6 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     await expectThrow(operatorContract.selectedParticipants());
   });
 
-  it("should be able to output submited tickets in ascending ordered", async function() {
-
-    let tickets = [];
-
-    await operatorContract.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
-    tickets.push(tickets1[0].value);
-
-    await operatorContract.submitTicket(tickets2[0].value, operator2, tickets2[0].virtualStakerIndex, {from: operator2});
-    tickets.push(tickets2[0].value);
-
-    await operatorContract.submitTicket(tickets3[0].value, operator3, tickets3[0].virtualStakerIndex, {from: operator3});
-    tickets.push(tickets3[0].value);
-
-    tickets = tickets.sort(function(a, b){return a-b}); // Sort numbers in ascending order
-
-    // Test tickets ordering
-    let orderedTickets = await operatorContract.orderedTickets();
-    assert.isTrue(orderedTickets[0].eq(tickets[0]), "Tickets should be in ascending order.");
-    assert.isTrue(orderedTickets[1].eq(tickets[1]), "Tickets should be in ascending order.");
-    assert.isTrue(orderedTickets[2].eq(tickets[2]), "Tickets should be in ascending order.");
-
-  });
-
   it("should be able to verify a ticket", async function() {
     await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
 
@@ -153,7 +130,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     assert.isTrue((await operatorContract.getGroupSelectionRelayEntry()).eq(groupSelectionRelayEntry), "Random beacon value for the current group selection should not change.");
   });
 
-  it("should be able to get selected tickets and participants after submission period is over", async function() {
+  it("should trim selected participants to the group size", async function() {
     let groupSize = await operatorContract.groupSize();
 
     for (let i = 0; i < groupSize*2; i++) {
@@ -163,7 +140,32 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     mineBlocks(await operatorContract.ticketReactiveSubmissionTimeout());
 
     let selectedParticipants = await operatorContract.selectedParticipants();
-    assert.equal(selectedParticipants.length, groupSize, "Should be trimmed to groupSize length.");
+    assert.equal(
+      selectedParticipants.length, 
+      groupSize, 
+      "Selected participants list should be trimmed to groupSize length"
+    );
+  });
+
+  it("should select participants by tickets in ascending order", async function() {
+    let tickets = [
+      {value: tickets1[0].value, operator: operator1},
+      {value: tickets2[0].value, operator: operator2},
+      {value: tickets3[0].value, operator: operator3}
+    ];
+
+    tickets = tickets.sort(function(a, b){return a.value-b.value}); // Sort tickets in ascending order
+
+    await operatorContract.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
+    await operatorContract.submitTicket(tickets2[0].value, operator2, tickets2[0].virtualStakerIndex, {from: operator2});
+    await operatorContract.submitTicket(tickets3[0].value, operator3, tickets3[0].virtualStakerIndex, {from: operator3});
+
+    mineBlocks(await operatorContract.ticketReactiveSubmissionTimeout());
+
+    let selectedParticipants = await operatorContract.selectedParticipants();
+    assert.equal(selectedParticipants[0], tickets[0].operator, "Unexpected operator selected at position 0");
+    assert.equal(selectedParticipants[1], tickets[1].operator, "Unexpected operator selected at position 1");
+    assert.equal(selectedParticipants[2], tickets[2].operator, "Unexpected operator selected at position 2");
   });
 
   it("should not trigger new group selection when there are not enough funds in the DKG fee pool", async function() {

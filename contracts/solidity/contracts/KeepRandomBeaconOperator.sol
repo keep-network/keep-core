@@ -302,13 +302,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets submitted tickets in ascending order.
-     */
-    function orderedTickets() public view returns (uint256[] memory) {
-        return UintArrayUtils.sort(tickets);
-    }
-
-    /**
      * @dev Gets the number of submitted group candidate tickets so far.
      */
     function submittedTicketsCount() public view returns (uint256) {
@@ -324,12 +317,12 @@ contract KeepRandomBeaconOperator {
             "Ticket submission submission period must be over."
         );
 
-        uint256[] memory ordered = orderedTickets();
-
         require(
-            ordered.length >= groupSize,
+            tickets.length >= groupSize,
             "The number of submitted tickets is less than specified group size."
         );
+
+        uint256[] memory ordered = UintArrayUtils.sort(tickets);
 
         address[] memory selected = new address[](groupSize);
 
