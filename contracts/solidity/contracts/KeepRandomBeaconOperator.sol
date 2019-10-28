@@ -640,7 +640,7 @@ contract KeepRandomBeaconOperator {
     /**
      * @dev Get rewards breakdown in wei for successful entry for the current signing request.
      */
-    function newEntryRewardsBreakdown() public view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
+    function newEntryRewardsBreakdown() internal view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
 
         uint256 delayFactor = getDelayFactor();
