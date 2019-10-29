@@ -4,7 +4,7 @@ import {bls} from './helpers/data';
 
 import stakeAndGenesis from './helpers/stakeAndGenesis';
 
-contract('KeepRandomBeaconService', function(accounts) {
+describe('Keep random beacon pricing', function(accounts) {
 
     const groupSize = 20;
 
