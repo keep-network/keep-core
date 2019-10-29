@@ -4,7 +4,7 @@ import {bls} from './helpers/data';
 
 import stakeAndGenesis from './helpers/stakeAndGenesis';
 
-describe('Keep random beacon pricing', function(accounts) {
+contract('KeepRandomBeaconService', (accounts) => {
 
     const groupSize = 20;
 
@@ -45,7 +45,7 @@ describe('Keep random beacon pricing', function(accounts) {
     });
 
     it("should not trigger new group selection when there are not sufficient " +
-       "funds in the DKG fee pool", async function() { 
+       "funds in the DKG fee pool", async () => { 
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
         await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
 
@@ -66,7 +66,7 @@ describe('Keep random beacon pricing', function(accounts) {
     });
 
     it("should trigger new group selection when there are sufficient funds in the " +
-       "DKG fee pool", async function() {
+       "DKG fee pool", async () => {
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
         await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
 
@@ -85,7 +85,7 @@ describe('Keep random beacon pricing', function(accounts) {
         );
     });
 
-    it("should not trigger group selection while one is in progress", async function() {
+    it("should not trigger group selection while one is in progress", async () => {
         await serviceContract.fundDkgFeePool({value: 3 * dkgPayment});
   
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
