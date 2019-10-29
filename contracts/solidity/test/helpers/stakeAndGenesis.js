@@ -78,12 +78,12 @@ export default async function stakeAndGenesis(accounts, contracts) {
     for(let i = 0; i < selectedParticipants.length; i++) {
       let signature = await sign(resultHash, selectedParticipants[i]);
       signingMemberIndices.push(i+1);
-      if (signatures == undefined) signatures = signature
+      if (signatures === undefined) signatures = signature
       else signatures += signature.slice(2, signature.length);
     }
 
     await operatorContract.submitDkgResult(
       1, bls.groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
       {from: selectedParticipants[0]}
-    )
+    );
 }
