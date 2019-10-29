@@ -496,20 +496,15 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Return total number of all tokens issued.
-     */
-    function tokenSupply() public pure returns (uint256) {
-        return (10**9) * (10**18);
-    }
-
-    /**
-     * @dev Return natural threshold, the value N virtual stakers' tickets would be expected
-     * to fall below if the tokens were optimally staked, and the tickets' values were evenly
-     * distributed in the domain of the pseudorandom function.
+     * @dev Return natural threshold, the value N virtual stakers' tickets would
+     * be expected to fall below if the tokens were optimally staked, and the
+     * tickets' values were evenly distributed in the domain of the pseudorandom
+     * function.
      */
     function naturalThreshold() public view returns (uint256) {
-        uint256 space = 2**256-1; // Space consisting of all possible tickets.
-        return groupSize.mul(space.div(tokenSupply().div(minimumStake)));
+        uint256 tokenSupply = (10**9) * (10**18); // Supply of KEEP tokens
+        uint256 space = 2**256-1; // All possible ticket values
+        return groupSize.mul(space.div(tokenSupply.div(minimumStake)));
     }
 
     /**
