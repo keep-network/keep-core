@@ -94,6 +94,16 @@ contract KeepRandomBeaconOperatorGroups {
     }
 
     /**
+     * @dev Removes group member.
+     */
+    function removeGroupMember(bytes memory groupPubKey, address member, uint256 memberIndex) public onlyOperatorContract {
+        require(isStaleGroup(groupPubKey), "Group must be stale.");
+        require(member != address(0), "Group member must exist.");
+        require(member == getGroupMember(groupPubKey, memberIndex), "Group member index and address should match.");
+        delete groupMembers[groupPubKey][memberIndex];
+    }
+
+    /**
      * @dev Gets group public key.
      */
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {

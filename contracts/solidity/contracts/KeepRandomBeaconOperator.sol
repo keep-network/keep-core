@@ -53,6 +53,9 @@ contract KeepRandomBeaconOperator {
     // Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
 
+    // Sum of group member rewards of each entry to allow gas efficient withdrawals.
+    mapping (bytes => uint256) internal accumulatedGroupMemberReward;
+
     // The price feed estimate is used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use both values to
     // defend against malicious miner-submitters who can manipulate transaction
@@ -602,11 +605,7 @@ contract KeepRandomBeaconOperator {
         entryInProgress = false;
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
-
-        for (uint i = 0; i < groupSize; i++) {
-            address payable operator = address(uint160(groupContract.getGroupMember(groupPubKey, i)));
-            stakingContract.magpieOf(operator).transfer(groupMemberReward);
-        }
+        accumulatedGroupMemberReward[groupPubKey] = accumulatedGroupMemberReward[groupPubKey].add(groupMemberReward);
 
         stakingContract.magpieOf(msg.sender).transfer(submitterReward);
 
@@ -708,6 +707,17 @@ contract KeepRandomBeaconOperator {
                 signingRequest.entryVerificationAndProfitFee
             );
         }
+    }
+
+    /**
+     * @dev Withdraws accumulated group member rewards from a staled group.
+     * Finds and makes sure to remove member first before the withdrawal.
+     * Reverts if any of the required checks to find group and remove group
+     * member are failed.
+     */
+    function withdrawGroupMemberReward(bytes memory groupPubKey, address groupMember, uint256 memberIndex) public {
+        groupContract.removeGroupMember(groupPubKey, groupMember, memberIndex);
+        stakingContract.magpieOf(groupMember).transfer(accumulatedGroupMemberReward[groupPubKey]);
     }
 
     /**
