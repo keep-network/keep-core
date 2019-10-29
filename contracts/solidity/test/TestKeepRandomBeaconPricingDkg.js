@@ -44,18 +44,18 @@ contract('KeepRandomBeaconService', function(accounts) {
         await restoreSnapshot()
     });
 
-    it("should not trigger new group selection when there are not enough " +
+    it("should not trigger new group selection when there are not sufficient " +
        "funds in the DKG fee pool", async function() { 
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
         await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
 
         let contractBalance = await web3.eth.getBalance(serviceContract.address);
 
-        let notEnough = web3.utils.toBN(dkgPayment)
+        let insufficientPoolFunds = web3.utils.toBN(dkgPayment)
           .sub(web3.utils.toBN(contractBalance))
           .sub(web3.utils.toBN(1));
         
-        await serviceContract.fundDkgFeePool({value: notEnough});
+        await serviceContract.fundDkgFeePool({value: insufficientPoolFunds});
 
         await operatorContract.relayEntry(bls.nextGroupSignature);
         
@@ -65,17 +65,17 @@ contract('KeepRandomBeaconService', function(accounts) {
         );
     });
 
-    it("should trigger new group selection when there are enough funds in the " +
+    it("should trigger new group selection when there are sufficient funds in the " +
        "DKG fee pool", async function() {
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
         await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
 
         let contractBalance = await web3.eth.getBalance(serviceContract.address);
 
-        let enough = web3.utils.toBN(dkgPayment)
+        let sufficientPoolFunds = web3.utils.toBN(dkgPayment)
           .sub(web3.utils.toBN(contractBalance));
         
-        await serviceContract.fundDkgFeePool({value: enough});
+        await serviceContract.fundDkgFeePool({value: sufficientPoolFunds});
 
         await operatorContract.relayEntry(bls.nextGroupSignature);
         
