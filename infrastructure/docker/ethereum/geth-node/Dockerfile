@@ -1,10 +1,12 @@
-# Be explicit about the ethereum go client installed
+# Be explicit about the ethereum go client version installed
+# This version should be used to tag the resulting image that's pushed
+# to Keeps container registry
 FROM ethereum/client-go:v1.9.6
 MAINTAINER "Thesis.co"
 
 # Install dependencies required for downstream commands
-# These commands can be here, in geth-init.sh or run-geth.sh
-RUN apk add --no-cache --update git
+# These dependencies can be used here, in geth-init.sh, or run-geth.sh
+
 RUN apk add --no-cache --update python
 RUN apk add --no-cache --update build-base
 RUN apk add --no-cache --update nodejs npm
@@ -26,6 +28,7 @@ WORKDIR /root/lib/bootnode
 RUN npm install
 
 # Install ethStatsApi to report local stats to dashboard
+RUN apk add --no-cache --update git
 RUN git clone https://github.com/lispmeister/eth-net-intelligence-api.git /root/lib/ethStatsApi
 WORKDIR /root/lib/ethStatsApi
 RUN npm install
