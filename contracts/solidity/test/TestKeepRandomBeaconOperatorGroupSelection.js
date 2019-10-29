@@ -1,15 +1,13 @@
 import expectThrow from './helpers/expectThrow';
 import mineBlocks from './helpers/mineBlocks';
-import {bls} from './helpers/data';
 import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
 import {initContracts} from './helpers/initContracts';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 
-contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
-
-  let token, stakingContract, serviceContract, operatorContract, groupContract,
+contract('KeepRandomBeaconOperator', function(accounts) {
+  let token, stakingContract, operatorContract,
   owner = accounts[0], magpie = accounts[1],
   operator1 = accounts[2], tickets1,
   operator2 = accounts[3], tickets2,
@@ -20,8 +18,7 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
   const operator2StakingWeight = 2000;
   const operator3StakingWeight = 3000;
 
-  beforeEach(async () => {
-
+  before(async () => {
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStaking.sol'),
@@ -32,12 +29,11 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     );
     
     token = contracts.token;
-    serviceContract = contracts.serviceContract;
     operatorContract = contracts.operatorContract;
-    groupContract = contracts.groupContract;
     stakingContract = contracts.stakingContract;
 
-    operatorContract.setMinimumStake(minimumStake)
+    await operatorContract.setMinimumStake(minimumStake)
+    await operatorContract.setGroupSize(3);
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)))
     await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)))
@@ -46,15 +42,6 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, operator1StakingWeight);
     tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, operator2StakingWeight);
     tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, operator3StakingWeight);
-
-    // Using stub method to add first group to help testing.
-    await operatorContract.registerNewGroup(bls.groupPubKey);
-    operatorContract.setGroupSize(3);
-    let group = await groupContract.getGroupPublicKey(0);
-    await operatorContract.addGroupMember(group, accounts[0]);
-    await operatorContract.addGroupMember(group, accounts[1]);
-    await operatorContract.addGroupMember(group, accounts[2]);
-
   });
 
   beforeEach(async () => {
@@ -93,12 +80,11 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     
     assert.isFalse(await operatorContract.isTicketValid(
       operator1, tickets1[0].value, operator2, tickets1[0].virtualStakerIndex
-      ), "Should fail while verifying a submitted ticket due to invalid stake value");
+    ), "Should fail while verifying a submitted ticket due to invalid stake value");
       
     assert.isFalse(await operatorContract.isTicketValid(
       operator1, tickets1[0].value, operator1, 2
     ), "Should fail while verifying a submitted ticket due to invalid virtual staker index");
-
   });
 
   it("should revert the transaction when the ticket has been already submitted", async function() {
@@ -110,35 +96,14 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     );
   })
 
-  it("should not trigger group selection while one is in progress", async function() {
-    let groupSelectionStartBlock = await operatorContract.getTicketSubmissionStartBlock();
-    let groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry();
-
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
-
-    // Add initial funds to the fee pool to trigger group creation on relay entry without waiting for DKG fee accumulation
-    let dkgGasEstimateCost = await operatorContract.dkgGasEstimate();
-    let fluctuationMargin = await operatorContract.fluctuationMargin();
-    let priceFeedEstimate = await serviceContract.priceFeedEstimate();
-    let gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
-    await serviceContract.fundDkgFeePool({value: dkgGasEstimateCost.mul(gasPriceWithFluctuationMargin)});
-
-    await operatorContract.relayEntry(bls.nextGroupSignature);
-
-    assert.isTrue((await operatorContract.getTicketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
-    assert.isTrue((await operatorContract.getGroupSelectionRelayEntry()).eq(groupSelectionRelayEntry), "Random beacon value for the current group selection should not change.");
-  });
-
   it("should trim selected participants to the group size", async function() {
     let groupSize = await operatorContract.groupSize();
-
+  
     for (let i = 0; i < groupSize*2; i++) {
       await operatorContract.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
     }
-
+  
     mineBlocks(await operatorContract.ticketReactiveSubmissionTimeout());
-
     let selectedParticipants = await operatorContract.selectedParticipants();
     assert.equal(
       selectedParticipants.length, 
@@ -166,50 +131,5 @@ contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
     assert.equal(selectedParticipants[0], tickets[0].operator, "Unexpected operator selected at position 0");
     assert.equal(selectedParticipants[1], tickets[1].operator, "Unexpected operator selected at position 1");
     assert.equal(selectedParticipants[2], tickets[2].operator, "Unexpected operator selected at position 2");
-  });
-
-  it("should not trigger new group selection when there are not enough funds in the DKG fee pool", async function() {
-    let groupSelectionStartBlock = await operatorContract.getTicketSubmissionStartBlock();
-    let groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry();
-
-    // Calculate the block time when the group selection should be finished
-    let ticketSubmissionTimeout = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
-    let timeDKG = (await operatorContract.timeDKG()).toNumber();
-    let groupSize = (await operatorContract.groupSize()).toNumber();
-    let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
-    mineBlocks(ticketSubmissionTimeout + timeDKG + groupSize * resultPublicationBlockStep);
-
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
-    await operatorContract.relayEntry(bls.nextGroupSignature);
-
-    assert.isTrue((await operatorContract.getTicketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
-    assert.isTrue((await operatorContract.getGroupSelectionRelayEntry()).eq(groupSelectionRelayEntry), "Random beacon value for the current group selection should not change.");
-  });
-
-  it("should trigger new group selection when there are enough funds in the DKG fee pool", async function() {
-    let groupSelectionStartBlock = await operatorContract.getTicketSubmissionStartBlock();
-
-    // Calculate the block time when the group selection should be finished
-    let ticketSubmissionTimeout = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
-    let timeDKG = (await operatorContract.timeDKG()).toNumber();
-    let groupSize = (await operatorContract.groupSize()).toNumber();
-    let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
-    mineBlocks(ticketSubmissionTimeout + timeDKG + groupSize * resultPublicationBlockStep);
-
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    let priceFeedEstimate = await serviceContract.priceFeedEstimate()
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
-
-    // Add initial funds to the fee pool to trigger group creation on relay entry without waiting for DKG fee accumulation
-    let dkgGasEstimateCost = await operatorContract.dkgGasEstimate();
-    let fluctuationMargin = await operatorContract.fluctuationMargin();
-    let gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
-    await serviceContract.fundDkgFeePool({value: dkgGasEstimateCost.mul(gasPriceWithFluctuationMargin)});
-
-    await operatorContract.relayEntry(bls.nextGroupSignature);
-
-    assert.isFalse((await operatorContract.getTicketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
-    assert.isTrue((await operatorContract.getGroupSelectionRelayEntry()).eq(bls.nextGroupSignature), "Random beacon value for the current group selection should be updated.");
   });
 });
