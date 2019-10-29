@@ -184,17 +184,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Reverts if ticket submission period is not over.
-     */
-    modifier whenTicketSubmissionIsOver() {
-        require(
-            block.number >= ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout,
-            "Ticket submission submission period must be over."
-        );
-        _;
-    }
-
-    /**
      * @dev Initializes the contract with service and staking contract addresses and
      * the deployer as the contract owner.
      */
@@ -313,13 +302,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets submitted tickets in ascending order.
-     */
-    function orderedTickets() public view returns (uint256[] memory) {
-        return UintArrayUtils.sort(tickets);
-    }
-
-    /**
      * @dev Gets the number of submitted group candidate tickets so far.
      */
     function submittedTicketsCount() public view returns (uint256) {
@@ -327,37 +309,20 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets selected tickets in ascending order.
-     */
-    function selectedTickets() public view whenTicketSubmissionIsOver returns (uint256[] memory) {
-
-        uint256[] memory ordered = orderedTickets();
-
-        require(
-            ordered.length >= groupSize,
-            "The number of submitted tickets is less than specified group size."
-        );
-
-        uint256[] memory selected = new uint256[](groupSize);
-
-        for (uint i = 0; i < groupSize; i++) {
-            selected[i] = ordered[i];
-        }
-
-        return selected;
-    }
-
-    /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
-    function selectedParticipants() public view whenTicketSubmissionIsOver returns (address[] memory) {
-
-        uint256[] memory ordered = orderedTickets();
+    function selectedParticipants() public view returns (address[] memory) {
+        require(
+            block.number >= ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout,
+            "Ticket submission submission period must be over."
+        );
 
         require(
-            ordered.length >= groupSize,
+            tickets.length >= groupSize,
             "The number of submitted tickets is less than specified group size."
         );
+
+        uint256[] memory ordered = UintArrayUtils.sort(tickets);
 
         address[] memory selected = new address[](groupSize);
 
@@ -383,31 +348,12 @@ contract KeepRandomBeaconOperator {
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public view returns(bool) {
-        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight(staker);
+        uint256 stakingWeight = stakingContract.balanceOf(staker).div(minimumStake);
+        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight;
         bool isStakerValueValid = uint256(staker) == stakerValue;
         bool isTicketValueValid = uint256(keccak256(abi.encodePacked(groupSelectionRelayEntry, stakerValue, virtualStakerIndex))) == ticketValue;
 
         return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
-    }
-
-    /**
-     * @dev Checks if member is disqualified.
-     * @param dqBytes bytes representing disqualified members.
-     * @param memberIndex position of the member to check.
-     * @return true if staker is disqualified, false otherwise.
-     */
-    function _isDisqualified(bytes memory dqBytes, uint256 memberIndex) internal pure returns (bool){
-        return dqBytes[memberIndex] != 0x00;
-    }
-
-     /**
-     * @dev Checks if member is inactive.
-     * @param iaBytes bytes representing inactive members.
-     * @param memberIndex position of the member to check.
-     * @return true if staker is inactive, false otherwise.
-     */
-    function _isInactive(bytes memory iaBytes, uint256 memberIndex) internal pure returns (bool){
-        return iaBytes[memberIndex] != 0x00;
     }
 
     /**
@@ -454,7 +400,8 @@ contract KeepRandomBeaconOperator {
         verifySignatures(signatures, signingMembersIndexes, resultHash, members);
 
         for (uint i = 0; i < groupSize; i++) {
-            if(!_isInactive(inactive, i) && !_isDisqualified(disqualified, i)) {
+            // Check member was neither marked as inactive nor as disqualified
+            if(inactive[i] == 0x00 && disqualified[i] == 0x00) {
                 groupContract.addGroupMember(groupPubKey, members[i]);
             }
         }
@@ -674,7 +621,7 @@ contract KeepRandomBeaconOperator {
     /**
      * @dev Get rewards breakdown in wei for successful entry for the current signing request.
      */
-    function newEntryRewardsBreakdown() public view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
+    function newEntryRewardsBreakdown() internal view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
 
         uint256 delayFactor = getDelayFactor();
@@ -776,15 +723,6 @@ contract KeepRandomBeaconOperator {
      */
     function hasMinimumStake(address staker) public view returns(bool) {
         return stakingContract.balanceOf(staker) >= minimumStake;
-    }
-
-    /**
-     * @dev Gets staking weight.
-     * @param staker Specifies the identity of the staker.
-     * @return Number of how many virtual stakers can staker represent.
-     */
-    function stakingWeight(address staker) internal view returns(uint256) {
-        return stakingContract.balanceOf(staker).div(minimumStake);
     }
 
     /**
