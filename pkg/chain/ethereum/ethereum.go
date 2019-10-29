@@ -73,11 +73,6 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
 	}
 
-	tokenSupply, err := ec.keepRandomBeaconOperatorContract.TokenSupply()
-	if err != nil {
-		return nil, fmt.Errorf("error calling TokenSupply: [%v]", err)
-	}
-
 	naturalThreshold, err := ec.keepRandomBeaconOperatorContract.NaturalThreshold()
 	if err != nil {
 		return nil, fmt.Errorf("error calling NaturalThreshold: [%v]", err)
@@ -95,7 +90,6 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout.Uint64(),
 		ResultPublicationBlockStep:      resultPublicationBlockStep.Uint64(),
 		MinimumStake:                    minimumStake,
-		TokenSupply:                     tokenSupply,
 		NaturalThreshold:                naturalThreshold,
 		RelayEntryTimeout:               relayEntryTimeout.Uint64(),
 	}, nil

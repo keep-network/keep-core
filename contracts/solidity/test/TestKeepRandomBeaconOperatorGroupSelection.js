@@ -32,7 +32,8 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     operatorContract = contracts.operatorContract;
     stakingContract = contracts.stakingContract;
 
-    operatorContract.setMinimumStake(minimumStake)
+    await operatorContract.setMinimumStake(minimumStake)
+    await operatorContract.setGroupSize(3);
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)))
     await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)))
@@ -51,38 +52,8 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await restoreSnapshot()
   });
 
-  it("should be able to get staking weight", async function() {
-    assert.isTrue(web3.utils.toBN(2000).eq(await operatorContract.stakingWeight(operator1)), "Should have expected staking weight.");
-    assert.isTrue(web3.utils.toBN(3000).eq(await operatorContract.stakingWeight(operator3)), "Should have expected staking weight.");
-  });
-
-  it("should fail to get selected tickets before submission period is over", async function() {
-    await expectThrow(operatorContract.selectedTickets());
-  });
-
   it("should fail to get selected participants before submission period is over", async function() {
     await expectThrow(operatorContract.selectedParticipants());
-  });
-
-  it("should be able to output submitted tickets in ascending ordered", async function() {
-    let tickets = [];
-
-    await operatorContract.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
-    tickets.push(tickets1[0].value);
-
-    await operatorContract.submitTicket(tickets2[0].value, operator2, tickets2[0].virtualStakerIndex, {from: operator2});
-    tickets.push(tickets2[0].value);
-
-    await operatorContract.submitTicket(tickets3[0].value, operator3, tickets3[0].virtualStakerIndex, {from: operator3});
-    tickets.push(tickets3[0].value);
-
-    tickets = tickets.sort(function(a, b){return a-b}); // Sort numbers in ascending order
-
-    // Test tickets ordering
-    let orderedTickets = await operatorContract.orderedTickets();
-    assert.isTrue(orderedTickets[0].eq(tickets[0]), "Tickets should be in ascending order.");
-    assert.isTrue(orderedTickets[1].eq(tickets[1]), "Tickets should be in ascending order.");
-    assert.isTrue(orderedTickets[2].eq(tickets[2]), "Tickets should be in ascending order.");
   });
 
   it("should be able to verify a ticket", async function() {
@@ -125,7 +96,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     );
   })
 
-  it("should be able to get selected tickets and participants after submission period is over", async function() {
+  it("should trim selected participants to the group size", async function() {
     let groupSize = await operatorContract.groupSize();
   
     for (let i = 0; i < groupSize*2; i++) {
@@ -133,10 +104,32 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     }
   
     mineBlocks(await operatorContract.ticketReactiveSubmissionTimeout());
-    let selectedTickets = await operatorContract.selectedTickets();
-    assert.equal(selectedTickets.length, groupSize, "Should be trimmed to groupSize length.");
-  
     let selectedParticipants = await operatorContract.selectedParticipants();
-    assert.equal(selectedParticipants.length, groupSize, "Should be trimmed to groupSize length.");
+    assert.equal(
+      selectedParticipants.length, 
+      groupSize, 
+      "Selected participants list should be trimmed to groupSize length"
+    );
+  });
+
+  it("should select participants by tickets in ascending order", async function() {
+    let tickets = [
+      {value: tickets1[0].value, operator: operator1},
+      {value: tickets2[0].value, operator: operator2},
+      {value: tickets3[0].value, operator: operator3}
+    ];
+
+    tickets = tickets.sort(function(a, b){return a.value-b.value}); // Sort tickets in ascending order
+
+    await operatorContract.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
+    await operatorContract.submitTicket(tickets2[0].value, operator2, tickets2[0].virtualStakerIndex, {from: operator2});
+    await operatorContract.submitTicket(tickets3[0].value, operator3, tickets3[0].virtualStakerIndex, {from: operator3});
+
+    mineBlocks(await operatorContract.ticketReactiveSubmissionTimeout());
+
+    let selectedParticipants = await operatorContract.selectedParticipants();
+    assert.equal(selectedParticipants[0], tickets[0].operator, "Unexpected operator selected at position 0");
+    assert.equal(selectedParticipants[1], tickets[1].operator, "Unexpected operator selected at position 1");
+    assert.equal(selectedParticipants[2], tickets[2].operator, "Unexpected operator selected at position 2");
   });
 });
