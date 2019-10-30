@@ -90,3 +90,10 @@ type Utility interface {
 	Genesis() error
 	RequestRelayEntry(seed *big.Int) *async.EventRequestPromise
 }
+
+// TransactionOptions represents custom transaction options which will be
+// used while invoking contracts methods.
+type TransactionOptions struct {
+	GasLimit uint64
+	GasPrice *big.Int
+}
