@@ -33,11 +33,13 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     serviceContract = contracts.serviceContract;
     callbackContract = await CallbackContract.new();
 
-    // Using stub method to add first group to help testing.
-    await operatorContract.registerNewGroup(bls.groupPubKey);
-
     groupSize = web3.utils.toBN(3);
+    let relayEntryTimeout = 11; // 2 + 3*3
+
     await operatorContract.setGroupSize(groupSize);
+    await operatorContract.setRelayEntryTimeout(relayEntryTimeout);
+
+    await operatorContract.registerNewGroup(bls.groupPubKey);
     let group = await groupContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, operator1);
     await operatorContract.addGroupMember(group, operator2);
@@ -207,7 +209,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
 
     await operatorContract.relayEntry(bls.nextGroupSignature);
-
+ 
     assert.isTrue(magpie1balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive reduced group reward.");
     assert.isTrue(magpie2balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive reduced group reward.");
     assert.isTrue(magpie3balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive reduced group reward.");

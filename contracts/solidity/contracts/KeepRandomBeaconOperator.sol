@@ -8,6 +8,7 @@ import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
+import "./KeepRandomBeaconOperatorPricing.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
@@ -27,6 +28,9 @@ contract KeepRandomBeaconOperator {
     using BytesLib for bytes;
     using ECDSA for bytes32;
     using AddressArrayUtils for address[];
+
+    using KeepRandomBeaconOperatorPricing for KeepRandomBeaconOperatorPricing.Options;
+    KeepRandomBeaconOperatorPricing.Options pricing;
 
     event OnGroupRegistered(bytes groupPubKey);
 
@@ -188,11 +192,16 @@ contract KeepRandomBeaconOperator {
      * the deployer as the contract owner.
      */
     constructor(address _serviceContract, address _stakingContract, address _groupContract) public {
-        require(_serviceContract != address(0), "Service contract address can't be zero.");
-        require(_stakingContract != address(0), "Staking contract address can't be zero.");
+        require(_serviceContract != address(0), "Service contract address can't be zero");
+        require(_stakingContract != address(0), "Staking contract address can't be zero");
+        require(_groupContract != address(0), "Group contract address can't be zero");
+
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
         groupContract = KeepRandomBeaconOperatorGroups(_groupContract);
+
+        pricing.init(relayEntryGenerationTime, relayEntryTimeout);
+
         owner = msg.sender;
     }
 
@@ -621,7 +630,7 @@ contract KeepRandomBeaconOperator {
     function newEntryRewardsBreakdown() internal view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
 
-        uint256 delayFactor = getDelayFactor();
+        uint256 delayFactor = pricing.getDelayFactor(currentEntryStartBlock);
         groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals);
 
         // delay penalty = base reward * (1 - delay factor)
@@ -638,42 +647,6 @@ contract KeepRandomBeaconOperator {
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
         subsidy = groupProfitFee().sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
-    }
-
-    /**
-     * @dev Gets delay factor for rewards calculation.
-     * @return Integer representing floating-point number with 16 decimals places.
-     */
-    function getDelayFactor() internal view returns(uint256 delayFactor) {
-        uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-
-        // T_deadline is the earliest block when no submissions are accepted
-        // and an entry timed out. The last block the entry can be published in is
-        //     currentEntryStartBlock + relayEntryTimeout
-        // and submission are no longer accepted from block
-        //     currentEntryStartBlock + relayEntryTimeout + 1.
-        uint256 deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout).add(1);
-
-        // T_begin is the earliest block the result can be published in.
-        // It takes relayEntryGenerationTime to generate a new entry, so it can
-        // be published at block relayEntryGenerationTime + 1 the earliest.
-        uint256 submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(1);
-
-        // Use submissionStartBlock block as entryReceivedBlock if entry submitted earlier than expected.
-        uint256 entryReceivedBlock = block.number <= submissionStartBlock ? submissionStartBlock:block.number;
-
-        // T_remaining = T_deadline - T_received
-        uint256 remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
-
-        // T_deadline - T_begin
-        uint256 submissionWindow = deadlineBlock.sub(submissionStartBlock);
-
-        // delay factor = [ T_remaining / (T_deadline - T_begin)]^2
-        //
-        // Since we add 16 decimal places to perform float division, we do:
-        // delay factor = [ T_temaining * decimals / (T_deadline - T_begin)]^2 / decimals =
-        //    = [T_remaining / (T_deadline - T_begin) ]^2 * decimals
-        delayFactor = ((remainingBlocks.mul(decimals).div(submissionWindow))**2).div(decimals);
     }
 
     /**

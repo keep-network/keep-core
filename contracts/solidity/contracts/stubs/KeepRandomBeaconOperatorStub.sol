@@ -32,6 +32,11 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         groupSize = size;
     }
 
+    function setRelayEntryTimeout(uint256 timeout) public {
+        relayEntryTimeout = timeout;
+        pricing.init(relayEntryGenerationTime, relayEntryTimeout);
+    }
+
     function getGroupSelectionRelayEntry() public view returns (uint256) {
         return groupSelectionRelayEntry;
     }
