@@ -188,9 +188,6 @@ contract KeepRandomBeaconOperator {
      * the deployer as the contract owner.
      */
     constructor(address _serviceContract, address _stakingContract, address _groupContract) public {
-        // TODO: do we need those validations?
-        require(_serviceContract != address(0), "Service contract address can't be zero.");
-        require(_stakingContract != address(0), "Staking contract address can't be zero.");
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
         groupContract = KeepRandomBeaconOperatorGroups(_groupContract);
