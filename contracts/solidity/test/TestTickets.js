@@ -56,6 +56,7 @@ contract('TestTickets', function(accounts) {
       // let expectedOrderedIndices = [0, 0, 4, 6, 1, 3, 2]
       // let expectedOrderedIndices = [0, 0, 4, 2, 1, 3]
       // let expectedOrderedIndices = [0, 0, 4, 2, 1]
+
       // await logTicketStatus(ticketsToSubmit, expectedOrderedIndices)
 
       for (let i = 0; i < ticketsToSubmit.length; i++) {
@@ -73,9 +74,17 @@ contract('TestTickets', function(accounts) {
         await ticketsContract.submitTicket(ticketsToSubmit[i]);
       }
 
+      let tickets = await ticketsContract.getTickets();
+      assert.equal(tickets.length, ticketsToSubmit.length, "array of tickets should be the size of: " + ticketsToSubmit.length)
+      
+      let tail = await ticketsContract.getTail()
+      assert.equal(6, tail.toString(), "tail index should be equal to 6")
+
       let expectedOrderedIndices = [0, 0, 4, 7, 1, 3, 5, 2]
       // let expectedOrderedIndices = [0, 0, 4, 2, 1, 3, 5]
+      
       // await logTicketStatus(ticketsToSubmit, expectedOrderedIndices)
+
       for (let i = 0; i < ticketsToSubmit.length; i++) {
         let prevByIndex = await ticketsContract.getPreviousTicketsByIndex(i)
         assert.equal(expectedOrderedIndices[i] + '', prevByIndex.toString())
@@ -83,20 +92,22 @@ contract('TestTickets', function(accounts) {
     });
 
     it("should be able to track order when a last ticket is the smallest", async function() {
-      // let ticketsToSubmit = [2, 3, 5, 7, 4, 9, 11, 1]; //expectedOrderedIndices = [7, 0, 4, 2, 1, 3, 5, 0]
-      let ticketsToSubmit = [2, 3, 5, 7, 4, 9, 11]; 
+      let ticketsToSubmit = [2, 3, 5, 7, 4, 9, 11, 1]; //expectedOrderedIndices = [7, 0, 4, 2, 1, 3, 5, 0]
+      // let ticketsToSubmit = [2, 3, 5, 7, 4, 9, 11]; 
       
       for (let i = 0; i < ticketsToSubmit.length; i++) {
         await ticketsContract.submitTicket(ticketsToSubmit[i]);
       }
 
-      // let expectedOrderedIndices = [7, 0, 4, 2, 1, 3, 5, 0]
-      // // let expectedOrderedIndices = [0, 0, 4, 2, 1, 3, 5]
+      let expectedOrderedIndices = [7, 0, 4, 2, 1, 3, 5, 7]
+      // let expectedOrderedIndices = [0, 0, 4, 2, 1, 3, 5]
+
       // await logTicketStatus(ticketsToSubmit, expectedOrderedIndices)
-      // for (let i = 0; i < ticketsToSubmit.length; i++) {
-      //   let prevByIndex = await ticketsContract.getPreviousTicketsByIndex(i)
-      //   assert.equal(expectedOrderedIndices[i] + '', prevByIndex.toString())
-      // }
+
+      for (let i = 0; i < ticketsToSubmit.length; i++) {
+        let prevByIndex = await ticketsContract.getPreviousTicketsByIndex(i)
+        assert.equal(expectedOrderedIndices[i] + '', prevByIndex.toString())
+      }
     });
 
     async function logTicketStatus(ticketsToSubmit, expectedPrev) {

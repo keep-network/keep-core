@@ -56,14 +56,20 @@ contract Tickets  {
         orderedTickets = ordered;
 
         if (tickets.length < groupSize) {
-            // add to tickets when tickets accept all
+            // bigger than the biggest
             if (tickets.length == 0 || newTicketValue > tickets[tail]) {
                 tickets.push(newTicketValue);
                 if (tickets.length > 1) {
                     tail = tickets.length-1;
                     previousTicketsByIndex[tail] = oldTail;
                 }
-            } else { // tickets[0] < newTicketValue < tickets[max]
+            // smaller than the smallest
+            } else if (newTicketValue < tickets[ordered[0]]) {
+                tickets.push(newTicketValue);
+                previousTicketsByIndex[tickets.length - 1] = tickets.length - 1; // last element point to itself
+                previousTicketsByIndex[ordered[0]] = tickets.length - 1;
+            // tickets[smallest] < newTicketValue < tickets[max]
+            } else {
                 uint j = findIndexForNewTicket(newTicketValue, ordered);
                 tickets.push(newTicketValue);
                 previousTicketsByIndex[tickets.length - 1] = previousTicketsByIndex[j];
@@ -105,13 +111,13 @@ contract Tickets  {
         return tickets.length;
     }
 
-    /* debug helper */
+    /* debug helper - can be removed later*/
     uint256[] internal orderedTickets;
     function getOrdered() public view returns (uint256[] memory) {
         return orderedTickets;
     }
 
-    /* debug helper */
+    /* debug helper - can be removed later*/
     uint256 jIndex;
     function getJIndex() public view returns (uint256) {
         return jIndex;
