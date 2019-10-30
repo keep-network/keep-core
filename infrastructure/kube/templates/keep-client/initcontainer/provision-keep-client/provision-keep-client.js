@@ -139,13 +139,13 @@ async function stakeOperatorAccount(operator, contractOwner) {
   as a consumer of the network, rather than an operator.
   */
   if (process.env.KEEP_CLIENT_TYPE === 'relay-requester') {
-    console.log('Client type relay-requester, exiting staking!');
+    console.log('Subtype relay-requester set. No staking needed, exiting staking!');
     return;
   } else if (staked === true) {
-    console.log('Already Staked, exiting staking!');
+    console.log('Staked client operator account set, exiting staking!');
     return;
   } else {
-    console.log('Not staked, continuing!');
+    console.log('Unstaked client operator account set, staking!');
   }
 
   /*
