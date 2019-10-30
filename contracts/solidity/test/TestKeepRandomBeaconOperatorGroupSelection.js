@@ -92,7 +92,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     await expectThrowWithMessage(
       operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1}),
-      "Ticket with the given value has already been submitted."
+      "Duplicate ticket"
     );
   })
 
