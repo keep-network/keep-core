@@ -18,20 +18,6 @@ contract Tickets  {
         previousTicketsByIndex[tail] = 0; // simulate nil, refer to an index outside tickets array.
     }
 
-    function createOrderedTicketIndexes() internal view returns (uint256[] memory) {
-        uint256[] memory ordered = new uint256[](tickets.length);
-        if (ordered.length > 0) {
-            ordered[tickets.length-1] = tail;
-            if (ordered.length > 1) {
-                for (uint i = tickets.length - 2; i > 0; i--) {
-                    ordered[i] = previousTicketsByIndex[ordered[i + 1]];
-                }
-            }
-        }
-
-        return ordered;
-    }
-
     // use binary search to find an index for a new ticket
     function findIndexForNewTicket(uint256 newTicketValue, uint256[] memory ordered) internal view returns (uint256) {
         uint lo = 0;
@@ -50,28 +36,48 @@ contract Tickets  {
         return ordered[lo];
     }
 
+    function createOrderedTicketIndices() internal view returns (uint256[] memory) {
+        uint256[] memory ordered = new uint256[](tickets.length);
+        if (ordered.length > 0) {
+            ordered[tickets.length-1] = tail;
+            if (ordered.length > 1) {
+                // Todo: see if you can make it a for loop
+                int i = int(tickets.length - 2);
+                while (i != -1) {
+                    ordered[uint(i)] = previousTicketsByIndex[ordered[uint(i) + 1]];
+                    i--;
+                }
+                // for (int i = tickets.length - 2; i >= 0; i--) {
+                //     ordered[i] = previousTicketsByIndex[ordered[uint(i) + 1]];
+                // }
+            }
+        }
+
+        return ordered;
+    }
+
     function submitTicket(uint256 newTicketValue) public {
         uint256 oldTail = tail;
-        uint256[] memory ordered = createOrderedTicketIndexes();
+        uint256[] memory ordered = createOrderedTicketIndices();
         orderedTickets = ordered;
 
         if (tickets.length < groupSize) {
-            // bigger than the biggest
+            // bigger than the existing biggest
             if (tickets.length == 0 || newTicketValue > tickets[tail]) {
                 tickets.push(newTicketValue);
                 if (tickets.length > 1) {
                     tail = tickets.length-1;
                     previousTicketsByIndex[tail] = oldTail;
                 }
-            // smaller than the smallest
+            // smaller than the existing smallest
             } else if (newTicketValue < tickets[ordered[0]]) {
                 tickets.push(newTicketValue);
                 previousTicketsByIndex[tickets.length - 1] = tickets.length - 1; // last element point to itself
                 previousTicketsByIndex[ordered[0]] = tickets.length - 1;
             // tickets[smallest] < newTicketValue < tickets[max]
             } else {
-                uint j = findIndexForNewTicket(newTicketValue, ordered);
                 tickets.push(newTicketValue);
+                uint j = findIndexForNewTicket(newTicketValue, ordered);
                 previousTicketsByIndex[tickets.length - 1] = previousTicketsByIndex[j];
                 previousTicketsByIndex[j] = tickets.length - 1;
 
@@ -79,13 +85,15 @@ contract Tickets  {
             }
         } else {
             //TODO replacing part
-            //isSmallerThanCurrentHighestValue(newTicketValue)
+            if (newTicketValue < tickets[tail]) {
+                tickets.push(newTicketValue);
+                uint j = findIndexForNewTicket(newTicketValue, ordered);
+
+                jIndex = j;
+            }
         }
     }
 
-    function isSmallerThanCurrentHighestValue(uint256 ticketValue) public view returns (bool) {
-        return tickets[tail] > ticketValue;
-    }
 
     function getTail() public view returns (uint256) {
         return tail;

@@ -34,7 +34,79 @@ contract('TestTickets', function(accounts) {
   //   }
   // })
 
-  describe("when tickets array size is less than a group size", function() {
+  describe("tickets array size is at its max capacity", function() {
+
+    it("when a new ticket is bigger than a current biggest one", async function() {
+      let ticketsToSubmit = [1, 3, 5, 7, 4, 9, 6, 11, 8, 12, 100, 200, 300];
+    
+      for (let i = 0; i < ticketsToSubmit.length; i++) {
+        await ticketsContract.submitTicket(ticketsToSubmit[i]);
+      }
+
+      let ticketsLength = await ticketsContract.getTicketLength();
+      let groupSize = await ticketsContract.groupSize()
+      assert.equal(ticketsLength.toString(), groupSize.toString(), "number of tickets should be equal to: " + groupSize)
+    });
+
+    it("when a new ticket is bigger than an existing biggest one", async function() {
+      let ticketsToSubmit = [151, 42, 175, 7, 128, 190, 74, 143, 88, 130, 135]; // 190 -> out
+      // let ticketsToSubmit = [151, 42, 175, 7]; // expectedOrderedIndices = [1, 1, 0]
+      // let ticketsToSubmit = [151, 42, 175]; // expectedOrderedIndices = [1, 1, 0]
+      // let ticketsToSubmit = [151, 42]; // expectedOrderedIndices = [0]
+
+      for (let i = 0; i < ticketsToSubmit.length; i++) {
+        await ticketsContract.submitTicket(ticketsToSubmit[i]);
+      }
+
+      console.log("--------------")
+      let ordered = await ticketsContract.getOrdered();
+      console.log("ordered[" + ordered.toString() + "]")
+
+      // let expectedOrderedIndices = [1, 3, 0, 3];
+      // let expectedOrderedIndices = [1, 1, 0];
+      // let expectedOrderedIndices = [1, 1];
+
+      // await logTicketStatus(ticketsToSubmit, expectedOrderedIndices)
+
+      // for (let i = 0; i < ticketsToSubmit.length; i++) {
+      //   let prevByIndex = await ticketsContract.getPreviousTicketsByIndex(i)
+      //   assert.equal(expectedOrderedIndices[i] + '', prevByIndex.toString())
+      // }
+
+    });
+
+  });
+
+  async function logTicketStatus(ticketsToSubmit, expectedPrev) {
+    console.log("--------------")
+    console.log("submitted tickets: [" + ticketsToSubmit.toString() + "]")
+
+    console.log("--------------")
+    console.log("submitted tickets length: ", ticketsToSubmit.length)
+
+    console.log("--------------")
+    let tail = await ticketsContract.getTail();
+    console.log("tail index: ", tail.toString());
+
+    console.log("--------------")
+    let ticketMaxValue = await ticketsContract.getTicketMaxValue();
+    console.log("max value ticket[tail]: ", ticketMaxValue.toString());
+
+    console.log("--------------")
+    let ordered = await ticketsContract.getOrdered();
+    console.log("ordered[" + ordered.toString() + "]")
+    
+    console.log("--------------")
+    for (let i = 0; i < ticketsToSubmit.length; i++) {
+      console.log("prev_tickets[" + i + "] -> " + await ticketsContract.getPreviousTicketsByIndex(i) + " | " + expectedPrev[i]);
+    }
+    
+    console.log("--------------")
+    let j = await ticketsContract.getJIndex();
+    console.log("j: ", j.toString())
+  }
+
+  describe("tickets array size is less than a group size", function() {
 
     it("should be able to track tickets order when a last ticket is the biggest", async function() {
       let ticketsToSubmit = [1, 3, 5, 7, 4, 9, 6, 11]; // expectedOrderedIndices = [0, 0, 4, 6, 1, 3, 2, 5] works
@@ -63,7 +135,6 @@ contract('TestTickets', function(accounts) {
         let prevByIndex = await ticketsContract.getPreviousTicketsByIndex(i)
         assert.equal(expectedOrderedIndices[i] + '', prevByIndex.toString())
       }
-
     });
 
     it("should be able to track tickets order when a last ticket is between smallest and biggest", async function() {
@@ -82,7 +153,7 @@ contract('TestTickets', function(accounts) {
 
       let expectedOrderedIndices = [0, 0, 4, 7, 1, 3, 5, 2]
       // let expectedOrderedIndices = [0, 0, 4, 2, 1, 3, 5]
-      
+
       // await logTicketStatus(ticketsToSubmit, expectedOrderedIndices)
 
       for (let i = 0; i < ticketsToSubmit.length; i++) {
@@ -110,36 +181,11 @@ contract('TestTickets', function(accounts) {
       }
     });
 
-    async function logTicketStatus(ticketsToSubmit, expectedPrev) {
-      console.log("--------------")
-      console.log("submitted tickets: [" + ticketsToSubmit.toString() + "]")
-
-      console.log("--------------")
-      console.log("submitted tickets length: ", ticketsToSubmit.length)
-
-      console.log("--------------")
-      let tail = await ticketsContract.getTail();
-      console.log("tail index: ", tail.toString());
-
-      console.log("--------------")
-      let ticketMaxValue = await ticketsContract.getTicketMaxValue();
-      console.log("max value ticket[tail]: ", ticketMaxValue.toString());
-
-      console.log("--------------")
-      let ordered = await ticketsContract.getOrdered();
-      console.log("ordered[" + ordered.toString() + "]")
-      
-      console.log("--------------")
-      for (let i = 0; i < ticketsToSubmit.length; i++) {
-        console.log("prev_tickets[" + i + "] -> " + await ticketsContract.getPreviousTicketsByIndex(i) + " | " + expectedPrev[i]);
-      }
-      
-      console.log("--------------")
-      let j = await ticketsContract.getJIndex();
-      console.log("j: ", j.toString())
-    }
+    
 
   });
+
+  
 
   // it("should not be able to add a new ticket with higher value than existing highest", async function() {
 
