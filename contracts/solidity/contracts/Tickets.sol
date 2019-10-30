@@ -32,7 +32,7 @@ contract Tickets  {
         return ordered;
     }
 
-    // use binary search to find an index to a new ticket
+    // use binary search to find an index for a new ticket
     function findIndexForNewTicket(uint256 newTicketValue, uint256[] memory ordered) internal view returns (uint256) {
         uint lo = 0;
         uint hi = ordered.length - 1;
@@ -44,10 +44,10 @@ contract Tickets  {
             } else if (newTicketValue > tickets[ordered[mid]]) {
                 lo = mid + 1;
             } else {
-                return mid;
+                return ordered[mid];
             }
         }
-        return mid;
+        return ordered[lo];
     }
 
     function submitTicket(uint256 newTicketValue) public {
@@ -66,9 +66,9 @@ contract Tickets  {
             } else { // tickets[0] < newTicketValue < tickets[max]
                 uint j = findIndexForNewTicket(newTicketValue, ordered);
                 tickets.push(newTicketValue);
-                uint temp = previousTicketsByIndex[j];
+                previousTicketsByIndex[tickets.length - 1] = previousTicketsByIndex[j];
                 previousTicketsByIndex[j] = tickets.length - 1;
-                previousTicketsByIndex[tickets.length - 1] = temp;
+
                 jIndex = j;
             }
         } else {
