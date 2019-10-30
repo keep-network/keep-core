@@ -1,3 +1,4 @@
+import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 import mineBlocks from './helpers/mineBlocks';
 import {bls} from './helpers/data';
 import stakeDelegate from './helpers/stakeDelegate';
@@ -23,7 +24,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+      artifacts.require('./KeepRandomBeaconOperatorGroupTerminationStub.sol')
     );
 
     token = contracts.token;
@@ -141,6 +142,35 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
+    let group = await groupContract.getGroupPublicKey(0);
+
+    await expectThrowWithMessage(
+      operatorContract.withdrawGroupMemberReward(group, operator1, 0),
+      "Group must be stale."
+    );
+
+    // Add extra group so we can expire the first one.
+    // New relay request will trigger first group to expire
+    await operatorContract.registerNewGroup("0x01");
+    await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
+      bls.seed,
+      callbackContract.address,
+      "callback(uint256)",
+      0,
+      {value: entryFeeEstimate, from: requestor}
+    );
+
+    assert.isTrue(await groupContract.isStaleGroup(group), "Group should be stale.");
+
+    await expectThrowWithMessage(
+      operatorContract.withdrawGroupMemberReward(group, operator1, 1),
+      "Group member index and address should match."
+    );
+
+    await operatorContract.withdrawGroupMemberReward(group, operator1, 0);
+    await operatorContract.withdrawGroupMemberReward(group, operator2, 1);
+    await operatorContract.withdrawGroupMemberReward(group, operator3, 2);
+
     assert.isTrue(delayFactor.eq(web3.utils.toBN(1e16).pow(web3.utils.toBN(2))), "Delay factor expected to be 1 * 1e16 ^ 2.");
     assert.isTrue(magpie1balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive group reward.");
     assert.isTrue(magpie2balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive group reward.");
@@ -207,10 +237,26 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
 
     await operatorContract.relayEntry(bls.nextGroupSignature);
+    assert.isTrue(serviceContractBalance.add(requestSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(serviceContract.address))), "Service contract should receive request subsidy.");
+
+    // Add extra group so we can expire the first one.
+    // New relay request will trigger first group to expire
+    await operatorContract.registerNewGroup("0x01");
+    await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
+      bls.seed,
+      callbackContract.address,
+      "callback(uint256)",
+      0,
+      {value: entryFeeEstimate, from: requestor}
+    );
+
+    let group = await groupContract.getGroupPublicKey(0);
+    await operatorContract.withdrawGroupMemberReward(group, operator1, 0);
+    await operatorContract.withdrawGroupMemberReward(group, operator2, 1);
+    await operatorContract.withdrawGroupMemberReward(group, operator3, 2);
 
     assert.isTrue(magpie1balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive reduced group reward.");
     assert.isTrue(magpie2balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive reduced group reward.");
     assert.isTrue(magpie3balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive reduced group reward.");
-    assert.isTrue(serviceContractBalance.add(requestSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(serviceContract.address))), "Service contract should receive request subsidy.");
   });
 });
