@@ -168,6 +168,13 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     );
 
     await operatorContract.withdrawGroupMemberReward(group, operator1, 0);
+
+    // Member is removed by now and withdraw should revert.
+    await expectThrowWithMessage(
+      operatorContract.withdrawGroupMemberReward(group, operator1, 0),
+      "Group member index and address should match."
+    );
+
     await operatorContract.withdrawGroupMemberReward(group, operator2, 1);
     await operatorContract.withdrawGroupMemberReward(group, operator3, 2);
 
