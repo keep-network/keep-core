@@ -200,7 +200,12 @@ contract KeepRandomBeaconOperator {
         stakingContract = TokenStaking(_stakingContract);
         groupContract = KeepRandomBeaconOperatorGroups(_groupContract);
 
-        pricing.init(relayEntryGenerationTime, relayEntryTimeout);
+        pricing.init(
+            groupSize,
+            relayEntryGenerationTime,
+            relayEntryTimeout,
+            groupMemberBaseReward
+        );
 
         owner = msg.sender;
     }
@@ -610,7 +615,14 @@ contract KeepRandomBeaconOperator {
 
         entryInProgress = false;
 
-        (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
+        (
+            uint256 groupMemberReward,
+            uint256 submitterReward,
+            uint256 subsidy
+        ) = pricing.newEntryRewardsBreakdown(
+            currentEntryStartBlock,
+            signingRequest.entryVerificationAndProfitFee
+        );
 
         for (uint i = 0; i < groupSize; i++) {
             address payable operator = address(uint160(groupContract.getGroupMember(groupPubKey, i)));
@@ -622,31 +634,6 @@ contract KeepRandomBeaconOperator {
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
         }
-    }
-
-    /**
-     * @dev Get rewards breakdown in wei for successful entry for the current signing request.
-     */
-    function newEntryRewardsBreakdown() internal view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
-        uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-
-        uint256 delayFactor = pricing.getDelayFactor(currentEntryStartBlock);
-        groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals);
-
-        // delay penalty = base reward * (1 - delay factor)
-        uint256 groupMemberDelayPenalty = groupMemberBaseReward.sub(groupMemberBaseReward.mul(delayFactor).div(decimals));
-
-        // The submitter reward consists of:
-        // The callback gas expenditure (reimbursed by the service contract)
-        // The entry verification fee to cover the cost of verifying the submission,
-        // paid regardless of their gas expenditure
-        // Submitter extra reward - 5% of the delay penalties of the entire group
-        uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).mul(5).div(100);
-        uint256 entryVerificationFee = signingRequest.entryVerificationAndProfitFee.sub(groupProfitFee());
-        submitterReward = entryVerificationFee.add(submitterExtraReward);
-
-        // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
-        subsidy = groupProfitFee().sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
     }
 
     /**
