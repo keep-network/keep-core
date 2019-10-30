@@ -24,7 +24,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
+      artifacts.require('./stubs/KeepRandomBeaconOperatorGroupSelectionStub.sol'),
       artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
     );
     
@@ -59,30 +59,30 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   it("should be able to verify a ticket", async function() {
     await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
 
-    assert.isTrue(await operatorContract.isTicketValid(
+    assert.isTrue(await operatorContract.callIsTicketValid(
       operator1, tickets1[0].value, operator1, tickets1[0].virtualStakerIndex
     ), "Should be able to verify a valid ticket.");
 
     let lastTicketIndex = tickets1.length - 1;
     let maxVirtualStakerIndexTicket = tickets1[lastTicketIndex].virtualStakerIndex;
-    assert.isTrue(await operatorContract.isTicketValid(
+    assert.isTrue(await operatorContract.callIsTicketValid(
       operator1, tickets1[lastTicketIndex].value, operator1, maxVirtualStakerIndexTicket
     ), "Should be able to verify a valid ticket with the maximum allowed staker index");
 
     let invalidVirtualStakerIndex = operator1StakingWeight + 1;
-    assert.isFalse(await operatorContract.isTicketValid(
+    assert.isFalse(await operatorContract.callIsTicketValid(
       operator1, tickets1[0].value, operator1, invalidVirtualStakerIndex
     ), "Should fail while verifying a submitted ticket due to invalid number of virtual stakers");
     
-    assert.isFalse(await operatorContract.isTicketValid(
+    assert.isFalse(await operatorContract.callIsTicketValid(
       operator1, 0, operator2, tickets1[0].virtualStakerIndex
     ), "Should fail while verifying a submitted ticket due to invalid ticket value");
     
-    assert.isFalse(await operatorContract.isTicketValid(
+    assert.isFalse(await operatorContract.callIsTicketValid(
       operator1, tickets1[0].value, operator2, tickets1[0].virtualStakerIndex
     ), "Should fail while verifying a submitted ticket due to invalid stake value");
       
-    assert.isFalse(await operatorContract.isTicketValid(
+    assert.isFalse(await operatorContract.callIsTicketValid(
       operator1, tickets1[0].value, operator1, 2
     ), "Should fail while verifying a submitted ticket due to invalid virtual staker index");
   });

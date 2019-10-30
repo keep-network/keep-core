@@ -348,7 +348,7 @@ contract KeepRandomBeaconOperator {
         uint256 ticketValue,
         uint256 stakerValue,
         uint256 virtualStakerIndex
-    ) public view returns(bool) {
+    ) internal view returns(bool) {
         uint256 stakingWeight = stakingContract.balanceOf(staker).div(minimumStake);
         bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight;
         bool isStakerValueValid = uint256(staker) == stakerValue;
@@ -508,7 +508,7 @@ contract KeepRandomBeaconOperator {
     /**
      * @dev Cleanup data of previous group selection.
      */
-    function cleanup() private {
+    function cleanup() internal {
 
         for (uint i = 0; i < tickets.length; i++) {
             delete proofs[tickets[i]];
