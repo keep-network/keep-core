@@ -343,6 +343,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         );
         if (_dkgFeePool >= dkgFeeEstimate) {
             _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
+            // Disabling ethlint error message. No security implications, we're calling audited and trusted contract here.
+            // solium-disable-next-line
             (success, data) = latestOperatorContract.call.value(dkgFeeEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));
         }
     }
