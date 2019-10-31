@@ -26,7 +26,6 @@ contract Tickets  {
     function submitTicket(uint256 newTicketValue) public {
         uint256 oldTail = tail;
         uint256[] memory ordered = createOrderedLinkedTicketIndices();
-        orderedTickets = ordered;
 
         if (tickets.length < groupSize) {
             // bigger than the existing biggest
@@ -39,7 +38,8 @@ contract Tickets  {
             // smaller than the existing smallest
             } else if (newTicketValue < tickets[ordered[0]]) {
                 tickets.push(newTicketValue);
-                orderedLinkedTicketIndices[tickets.length - 1] = tickets.length - 1; // last element point to itself
+                // last element points to itself
+                orderedLinkedTicketIndices[tickets.length - 1] = tickets.length - 1;
                 orderedLinkedTicketIndices[ordered[0]] = tickets.length - 1;
             // tickets[smallest] < newTicketValue < tickets[max]
             } else {
@@ -47,8 +47,6 @@ contract Tickets  {
                 uint j = findIndexForNewTicket(newTicketValue, ordered);
                 orderedLinkedTicketIndices[tickets.length - 1] = orderedLinkedTicketIndices[j];
                 orderedLinkedTicketIndices[j] = tickets.length - 1;
-
-                jIndex = j;
             }
         } else if (newTicketValue < tickets[tail]) { // tickets[groupSize]
             // replacing existing smallest with a smaller
@@ -64,7 +62,6 @@ contract Tickets  {
                     orderedLinkedTicketIndices[tail] = tickets.length - 1;
                     tail = newTail;
                 }
-                jIndex = j;
             }
         }
     }
@@ -109,32 +106,12 @@ contract Tickets  {
         return tickets[tail];
     }
 
-    function cleanup() public {
-        delete tickets;
-    }
-
     function getTickets() public view returns (uint256[] memory) {
         return tickets;
     }
 
     function getOrderedLinkedTicketIndices(uint index) public view returns (uint256) {
         return orderedLinkedTicketIndices[index];
-    }
-    
-    function getTicketLength() public view returns (uint256) {
-        return tickets.length;
-    }
-
-    /* debug helper - can be removed later*/
-    uint256[] internal orderedTickets;
-    function getOrdered() public view returns (uint256[] memory) {
-        return orderedTickets;
-    }
-
-    /* debug helper - can be removed later*/
-    uint256 jIndex;
-    function getJIndex() public view returns (uint256) {
-        return jIndex;
     }
 
 }

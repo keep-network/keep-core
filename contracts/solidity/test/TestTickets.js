@@ -9,7 +9,6 @@ contract('TestTickets', function() {
     beforeEach(async () => {
       ticketsContract = await Tickets.new();
       groupSize = await ticketsContract.groupSize() // should be 10
-      await ticketsContract.cleanup()
     });
 
     describe("tickets array size is at its max capacity", function() {
@@ -140,10 +139,6 @@ contract('TestTickets', function() {
       for (let i = 0; i < tickets.length; i++) {
         console.log("prev_tickets[" + i + "] -> " + await ticketsContract.getPreviousTicketsByIndex(i) + " | " + expectedPrev[i]);
       }
-      
-      console.log("--------------")
-      let j = await ticketsContract.getJIndex();
-      console.log("j: ", j.toString())
     }
 
   }) 
