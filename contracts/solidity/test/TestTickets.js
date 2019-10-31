@@ -1,213 +1,151 @@
-import { AssertionError } from 'assert';
+contract('TestTickets', function() {
 
-contract('TestTickets', function(accounts) {
-
-  let ticketsContract;
+  let ticketsContract, groupSize;
 
   const Tickets = artifacts.require('./Tickets.sol');
   
-  beforeEach(async () => {
-    ticketsContract = await Tickets.new();
-    await ticketsContract.cleanup()
-  });
+  describe("ticket insertion", function() {
 
-
-  // it("should be able to add tickets and read from the chain!!!", async function() {
-
-  //   let numberOfTicketsToSubmit = 10;
-  //   let randomNumbersArray = [];
-
-  //   for (let i = 0; i < numberOfTicketsToSubmit; i++) {
-  //      let randomNumber = Math.floor((Math.random() * 100) + 1); // 1 to 100
-  //      if (!randomNumbersArray.includes(randomNumber)) {
-  //        randomNumbersArray.push(randomNumber);
-  //        await ticketsContract.submitTicket(randomNumber);
-  //      }
-  //   }
-  //   let tail = await ticketsContract.getTail()
-  //   console.log("ticketsContract.getTail()", tail.toString())
-
-  //   let tickets = await ticketsContract.getTickets();
-  //   console.log("tickets.lenght", tickets.length)
-  //   for (let i = 0; i < tickets.length; i++) {
-  //     console.log(tickets[i].toString())
-  //   }
-  // })
-
-  describe("tickets array size is at its max capacity", function() {
-
-    it("when a new ticket is bigger than a current biggest one", async function() {
-      let ticketsToSubmit = [1, 3, 5, 7, 4, 9, 6, 11, 8, 12, 100, 200, 300];
-    
-      for (let i = 0; i < ticketsToSubmit.length; i++) {
-        await ticketsContract.submitTicket(ticketsToSubmit[i]);
-      }
-
-      let ticketsLength = await ticketsContract.getTicketLength();
-      let groupSize = await ticketsContract.groupSize()
-      assert.equal(ticketsLength.toString(), groupSize.toString(), "number of tickets should be equal to: " + groupSize)
+    beforeEach(async () => {
+      ticketsContract = await Tickets.new();
+      groupSize = await ticketsContract.groupSize() // should be 10
+      await ticketsContract.cleanup()
     });
 
-    it("when a new ticket is bigger than an existing biggest one", async function() {
-      let ticketsToSubmit = [151, 42, 175, 7, 128, 190, 74, 143, 88, 130, 135]; // 190 -> out
-      // let ticketsToSubmit = [151, 42, 175, 7]; // expectedOrderedIndices = [1, 1, 0]
-      // let ticketsToSubmit = [151, 42, 175]; // expectedOrderedIndices = [1, 1, 0]
-      // let ticketsToSubmit = [151, 42]; // expectedOrderedIndices = [0]
+    describe("tickets array size is at its max capacity", function() {
+      it("should reject a new ticket when it is higher than an existing highest one.", async function() {
+        let ticketsToSubmit = [1, 3, 5, 7, 4, 9, 6, 11, 8, 12, 100, 200, 300];
+        
+        await submitTickets(ticketsToSubmit)
 
+        let expectedTail = 9;
+        // smallest index points to itself
+        let expectedOrderedIndices = [0, 0, 4, 6, 1, 8, 2, 5, 3, 7];
+        // await logTicketStatus(ticketsToSubmit, expectedOrderedIndices)
+        await assertTicketsProperties(expectedTail, expectedOrderedIndices)
+
+      });
+      
+      it("should replace the highest existing with new ticket which is somewhere in the middle value range", async function() {
+        let ticketsToSubmit = [151, 42, 175, 7, 128, 190, 74, 143, 88, 130, 135]; // 190 -> out
+
+        await submitTickets(ticketsToSubmit)
+        
+        let expectedTail = 2;
+        let expectedOrderedIndices = [7, 3, 0, 3, 8, 9, 1, 5, 6, 4];
+        await assertTicketsProperties(expectedTail, expectedOrderedIndices)
+      });
+
+      it("should replace highest ticket (tail) and become a new highest one (also tail)", async function() {
+        let ticketsToSubmit = [151, 42, 175, 7, 128, 190, 74, 143, 88, 130, 185]; // 190 -> out
+
+        await submitTickets(ticketsToSubmit)
+        
+        let expectedTail = 5;
+        let expectedOrderedIndices = [7, 3, 0, 3, 8, 2, 1, 9, 6, 4];
+        await assertTicketsProperties(expectedTail, expectedOrderedIndices)
+      });
+
+      it("should add a new smallest ticket and remove the highest", async function() {
+        let ticketsToSubmit = [151, 42, 175, 7, 128, 190, 74, 143, 88, 130, 2]; // 190 -> out
+
+        await submitTickets(ticketsToSubmit)
+        
+        let expectedTail = 5;
+        let expectedOrderedIndices = [7, 3, 0, 3, 8, 2, 1, 9, 6, 4];
+        await assertTicketsProperties(expectedTail, expectedOrderedIndices)
+      });
+    });
+
+    
+    describe("tickets array size is less than a group size", function() {
+      it("should add all the tickets and keep track the order", async function() {
+        let ticketsToSubmit = [1, 3, 5, 7, 4, 9, 6, 11];
+
+        await submitTickets(ticketsToSubmit)
+        
+        let expectedTail = 7;
+        let expectedOrderedIndices = [0, 0, 4, 6, 1, 3, 2, 5];
+        await assertTicketsProperties(expectedTail, expectedOrderedIndices)
+      });
+
+      it("should add all the tickets and track the order when a latest ticket is between smallest and biggest", async function() {
+        let ticketsToSubmit = [1, 3, 5, 7, 4, 9, 11, 6];
+
+        await submitTickets(ticketsToSubmit)
+        
+        let expectedTail = 6;
+        let expectedOrderedIndices = [0, 0, 4, 7, 1, 3, 5, 2];
+        await assertTicketsProperties(expectedTail, expectedOrderedIndices)
+
+      });
+
+      it("should add all the tickets and track the order when a last added ticket is the smallest", async function() {
+        let ticketsToSubmit = [2, 3, 5, 7, 4, 9, 11, 1];
+
+        await submitTickets(ticketsToSubmit)
+        
+        let expectedTail = 6;
+        let expectedOrderedIndices = [7, 0, 4, 2, 1, 3, 5, 7];
+        await assertTicketsProperties(expectedTail, expectedOrderedIndices)
+      });
+
+    });
+
+    async function submitTickets(ticketsToSubmit) {
       for (let i = 0; i < ticketsToSubmit.length; i++) {
         await ticketsContract.submitTicket(ticketsToSubmit[i]);
       }
+    }
 
+    async function assertTicketsProperties(expectedTail, expectedOrderedIndices) {
+      let tickets = await ticketsContract.getTickets();
+      let correctNumberOfTickets = tickets.length < groupSize ? tickets.length : groupSize;
+      assert.equal(tickets.length, correctNumberOfTickets, "array of tickets should be the size of: " + correctNumberOfTickets)
+      
+      let tail = await ticketsContract.getTail()
+      assert.equal(expectedTail, tail.toString(), "tail index should be equal to " + expectedTail)
+
+      for (let i = 0; i < tickets.length; i++) {
+        let prevByIndex = await ticketsContract.getPreviousTicketsByIndex(i)
+        assert.equal(expectedOrderedIndices[i] + '', prevByIndex.toString())
+      }
+    }
+
+    // I'd leave it for debugging purposes.
+    async function logTicketStatus(ticketsToSubmit, expectedPrev) {
+      console.log("--------------")
+      console.log("submitted tickets: [" + ticketsToSubmit.toString() + "]")
+  
+      console.log("--------------")
+      console.log("number submitted tickets: ", ticketsToSubmit.length)
+  
+      console.log("--------------")
+      let tail = await ticketsContract.getTail();
+      console.log("tail index: ", tail.toString());
+  
+      console.log("--------------")
+      let ticketMaxValue = await ticketsContract.getTicketMaxValue();
+      console.log("max value ticket[tail]: ", ticketMaxValue.toString());
+  
       console.log("--------------")
       let ordered = await ticketsContract.getOrdered();
       console.log("ordered[" + ordered.toString() + "]")
 
-      // let expectedOrderedIndices = [1, 3, 0, 3];
-      // let expectedOrderedIndices = [1, 1, 0];
-      // let expectedOrderedIndices = [1, 1];
-
-      // await logTicketStatus(ticketsToSubmit, expectedOrderedIndices)
-
-      // for (let i = 0; i < ticketsToSubmit.length; i++) {
-      //   let prevByIndex = await ticketsContract.getPreviousTicketsByIndex(i)
-      //   assert.equal(expectedOrderedIndices[i] + '', prevByIndex.toString())
-      // }
-
-    });
-
-  });
-
-  async function logTicketStatus(ticketsToSubmit, expectedPrev) {
-    console.log("--------------")
-    console.log("submitted tickets: [" + ticketsToSubmit.toString() + "]")
-
-    console.log("--------------")
-    console.log("submitted tickets length: ", ticketsToSubmit.length)
-
-    console.log("--------------")
-    let tail = await ticketsContract.getTail();
-    console.log("tail index: ", tail.toString());
-
-    console.log("--------------")
-    let ticketMaxValue = await ticketsContract.getTicketMaxValue();
-    console.log("max value ticket[tail]: ", ticketMaxValue.toString());
-
-    console.log("--------------")
-    let ordered = await ticketsContract.getOrdered();
-    console.log("ordered[" + ordered.toString() + "]")
-    
-    console.log("--------------")
-    for (let i = 0; i < ticketsToSubmit.length; i++) {
-      console.log("prev_tickets[" + i + "] -> " + await ticketsContract.getPreviousTicketsByIndex(i) + " | " + expectedPrev[i]);
+      console.log("--------------")
+      let tickets = await ticketsContract.getTickets();
+      console.log("tickets on chain[" + tickets.toString() + "]")
+      
+      console.log("--------------")
+      for (let i = 0; i < tickets.length; i++) {
+        console.log("prev_tickets[" + i + "] -> " + await ticketsContract.getPreviousTicketsByIndex(i) + " | " + expectedPrev[i]);
+      }
+      
+      console.log("--------------")
+      let j = await ticketsContract.getJIndex();
+      console.log("j: ", j.toString())
     }
-    
-    console.log("--------------")
-    let j = await ticketsContract.getJIndex();
-    console.log("j: ", j.toString())
-  }
 
-  describe("tickets array size is less than a group size", function() {
-
-    it("should be able to track tickets order when a last ticket is the biggest", async function() {
-      let ticketsToSubmit = [1, 3, 5, 7, 4, 9, 6, 11]; // expectedOrderedIndices = [0, 0, 4, 6, 1, 3, 2, 5] works
-      // let ticketsToSubmit = [1, 3, 5, 7, 4, 9, 6]; //expectedOrderedIndices = [0, 0, 4, 6, 1, 3, 2] works
-      // let ticketsToSubmit = [1, 3, 5, 7, 4, 9]; //expectedOrderedIndices = [0, 0, 4, 2, 1, 3] works
-      // let ticketsToSubmit = [1, 3, 5, 7, 4]; //expectedOrderedIndices = [0, 0, 4, 2, 1] works
-
-      for (let i = 0; i < ticketsToSubmit.length; i++) {
-          await ticketsContract.submitTicket(ticketsToSubmit[i]);
-      }
-      
-      let tickets = await ticketsContract.getTickets();
-      assert.equal(tickets.length, ticketsToSubmit.length, "array of tickets should be the size of: " + ticketsToSubmit.length)
-      
-      let tail = await ticketsContract.getTail()
-      assert.equal(7, tail.toString(), "tail index should be equal to 7")
-      
-      let expectedOrderedIndices = [0, 0, 4, 6, 1, 3, 2, 5]
-      // let expectedOrderedIndices = [0, 0, 4, 6, 1, 3, 2]
-      // let expectedOrderedIndices = [0, 0, 4, 2, 1, 3]
-      // let expectedOrderedIndices = [0, 0, 4, 2, 1]
-
-      // await logTicketStatus(ticketsToSubmit, expectedOrderedIndices)
-
-      for (let i = 0; i < ticketsToSubmit.length; i++) {
-        let prevByIndex = await ticketsContract.getPreviousTicketsByIndex(i)
-        assert.equal(expectedOrderedIndices[i] + '', prevByIndex.toString())
-      }
-    });
-
-    it("should be able to track tickets order when a last ticket is between smallest and biggest", async function() {
-      let ticketsToSubmit = [1, 3, 5, 7, 4, 9, 11, 6]; // expectedOrderedIndices = [0, 0, 4, 7, 1, 3, 5, 2]
-      // let ticketsToSubmit = [1, 3, 5, 7, 4, 9, 11]; // expectedOrderedIndices = [0, 0, 4, 2, 1, 3, 5] works
-
-      for (let i = 0; i < ticketsToSubmit.length; i++) {
-        await ticketsContract.submitTicket(ticketsToSubmit[i]);
-      }
-
-      let tickets = await ticketsContract.getTickets();
-      assert.equal(tickets.length, ticketsToSubmit.length, "array of tickets should be the size of: " + ticketsToSubmit.length)
-      
-      let tail = await ticketsContract.getTail()
-      assert.equal(6, tail.toString(), "tail index should be equal to 6")
-
-      let expectedOrderedIndices = [0, 0, 4, 7, 1, 3, 5, 2]
-      // let expectedOrderedIndices = [0, 0, 4, 2, 1, 3, 5]
-
-      // await logTicketStatus(ticketsToSubmit, expectedOrderedIndices)
-
-      for (let i = 0; i < ticketsToSubmit.length; i++) {
-        let prevByIndex = await ticketsContract.getPreviousTicketsByIndex(i)
-        assert.equal(expectedOrderedIndices[i] + '', prevByIndex.toString())
-      }
-    });
-
-    it("should be able to track order when a last ticket is the smallest", async function() {
-      let ticketsToSubmit = [2, 3, 5, 7, 4, 9, 11, 1]; //expectedOrderedIndices = [7, 0, 4, 2, 1, 3, 5, 0]
-      // let ticketsToSubmit = [2, 3, 5, 7, 4, 9, 11]; 
-      
-      for (let i = 0; i < ticketsToSubmit.length; i++) {
-        await ticketsContract.submitTicket(ticketsToSubmit[i]);
-      }
-
-      let expectedOrderedIndices = [7, 0, 4, 2, 1, 3, 5, 7]
-      // let expectedOrderedIndices = [0, 0, 4, 2, 1, 3, 5]
-
-      // await logTicketStatus(ticketsToSubmit, expectedOrderedIndices)
-
-      for (let i = 0; i < ticketsToSubmit.length; i++) {
-        let prevByIndex = await ticketsContract.getPreviousTicketsByIndex(i)
-        assert.equal(expectedOrderedIndices[i] + '', prevByIndex.toString())
-      }
-    });
-
-    
-
-  });
-
-  
-
-  // it("should not be able to add a new ticket with higher value than existing highest", async function() {
-
-    //   let numberOfTicketsToSubmit = 10;
-    //   let randomNumbersArray = [];
-    //   let maxRandomTicketValue = 100;
-
-    //   for (let i = 0; i < numberOfTicketsToSubmit;) {
-    //     let randomNumber = Math.floor((Math.random() * maxRandomTicketValue) + 1); // 1 to 100
-    //     if (!randomNumbersArray.includes(randomNumber)) {
-    //       randomNumbersArray.push(randomNumber);
-    //       await ticketsContract.submitTicket(randomNumber);
-    //       i++;
-    //     }
-    //   }
-
-    //   await ticketsContract.submitTicket(maxRandomTicketValue + 1);
-
-    //   let tickets = await ticketsContract.getTickets();
-      
-    //   assert.equal(tickets.length, numberOfTicketsToSubmit, "array of tickets should be the size of: " + numberOfTicketsToSubmit)
-    // });
-
+  }) 
 
 });

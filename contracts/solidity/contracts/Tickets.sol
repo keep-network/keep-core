@@ -36,7 +36,7 @@ contract Tickets  {
         return ordered[lo];
     }
 
-    function createOrderedTicketIndices() internal view returns (uint256[] memory) {
+    function createOrderedTicketIndices() public view returns (uint256[] memory) {
         uint256[] memory ordered = new uint256[](tickets.length);
         if (ordered.length > 0) {
             ordered[tickets.length-1] = tail;
@@ -84,12 +84,24 @@ contract Tickets  {
                 jIndex = j;
             }
         } else {
-            //TODO replacing part
             if (newTicketValue < tickets[tail]) {
-                tickets.push(newTicketValue);
-                uint j = findIndexForNewTicket(newTicketValue, ordered);
+                // replacing existing smallest with a smaller
+                if (newTicketValue < ordered[0]) {
+                    tickets[ordered[0]] = newTicketValue;
+                } else {
+                    uint j = findIndexForNewTicket(newTicketValue, ordered);
+                    tickets[tail] = newTicketValue;
+                    // do not change the order if a new ticket is still highest
+                    if (j != tail) {
+                        uint newTail = previousTicketsByIndex[tail];
+                        previousTicketsByIndex[j] = tail;
+                        previousTicketsByIndex[tail] = tickets.length - 1;
+                        tail = newTail;
+                    }
+                    jIndex = j;
 
-                jIndex = j;
+                }
+
             }
         }
     }
