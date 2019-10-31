@@ -35,7 +35,7 @@ library GroupSelection {
     }
 
     struct Storage {
-        // All tickets submitted by member candidates during the current group
+        // Tickets submitted by member candidates during the current group
         // selection execution and accepted by the protocol for the
         // consideration.
         uint256[] tickets;
@@ -50,8 +50,8 @@ library GroupSelection {
         // Timeout in blocks after the reactive ticket submission is finished.
         uint256 ticketReactiveSubmissionTimeout;
 
-        // Number of block at which the group selection started and ticket
-        // submissions are accepted.
+        // Number of block at which the group selection started and from which
+        // ticket submissions are accepted.
         uint256 ticketSubmissionStartBlock;
 
         // Indicates whether a group selection is currently in progress.
@@ -59,6 +59,12 @@ library GroupSelection {
         bool inProgress;
     }
 
+    /**
+     * @dev Starts group selection protocol.
+     * @param _seed pseudorandom seed value used as an input for the group
+     * selection. All submitted tickets needs to have the seed mixed-in into the
+     * value.
+     */
     function start(Storage storage self, uint256 _seed) public {
         cleanup(self);
         self.inProgress = true;
@@ -66,6 +72,10 @@ library GroupSelection {
         self.ticketSubmissionStartBlock = block.number;
     }
 
+    /**
+     * @dev Stops group selection protocol clearing up all the submitted
+     * tickets.
+     */
     function stop(Storage storage self) public {
         cleanup(self);
         self.inProgress = false;
@@ -73,10 +83,11 @@ library GroupSelection {
 
     /**
      * @dev Submits ticket to request to participate in a new candidate group.
-     * @param ticketValue Result of a pseudorandom function with input values of
-     * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
-     * @param stakerValue Staker-specific value. Currently uint representation of staker address.
-     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
+     * @param ticketValue Keccak-256 hash with input values of group selection
+     * seed, staker address and virtualStakerIndex.
+     * @param stakerValue Staker's address as an integer.
+     * @param virtualStakerIndex Index of a virtual staker - number within
+     * a range of 1 to staker's weight.
      */
     function submitTicket(
         Storage storage self,
@@ -85,7 +96,6 @@ library GroupSelection {
         uint256 virtualStakerIndex,
         uint256 stakingWeight
     ) public {
-
         if (block.number > self.ticketSubmissionStartBlock + self.ticketReactiveSubmissionTimeout) {
             revert("Ticket submission is over");
         }
@@ -111,10 +121,6 @@ library GroupSelection {
 
     /**
      * @dev Performs full verification of the ticket.
-     * @param ticketValue Result of a pseudorandom function with input values of
-     * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
-     * @param stakerValue Staker-specific value. Currently uint representation of staker address.
-     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
      */
     function isTicketValid(
         uint256 ticketValue,
@@ -124,8 +130,8 @@ library GroupSelection {
         uint256 groupSelectionSeed
     ) internal view returns(bool) {
         bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight;
-        bool isStakerValueValid = uint256(msg.sender) == stakerValue;
-        bool isTicketValueValid = uint256(keccak256(abi.encodePacked(groupSelectionSeed, stakerValue, virtualStakerIndex))) == ticketValue;
+        bool isStakerValueValid = stakerValue == uint256(msg.sender);
+        bool isTicketValueValid = ticketValue == uint256(keccak256(abi.encodePacked(groupSelectionSeed, stakerValue, virtualStakerIndex)));
 
         return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
     }
@@ -145,9 +151,7 @@ library GroupSelection {
         require(self.tickets.length >= groupSize, "Not enough tickets submitted");
 
         uint256[] memory ordered = UintArrayUtils.sort(self.tickets);
-
         address[] memory selected = new address[](groupSize);
-
         for (uint i = 0; i < groupSize; i++) {
             Proof memory proof = self.proofs[ordered[i]];
             selected[i] = proof.sender;
@@ -157,7 +161,7 @@ library GroupSelection {
     }
 
     /**
-     * @dev Cleanup data of previous group selection.
+     * @dev Clears up data of the group selection.
      */
     function cleanup(Storage storage self) internal {
         for (uint i = 0; i < self.tickets.length; i++) {
