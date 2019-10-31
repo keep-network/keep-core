@@ -107,7 +107,7 @@ contract('TestTickets', function() {
       assert.equal(expectedTail, tail.toString(), "tail index should be equal to " + expectedTail)
 
       for (let i = 0; i < tickets.length; i++) {
-        let prevByIndex = await ticketsContract.getPreviousTicketsByIndex(i)
+        let prevByIndex = await ticketsContract.getOrderedLinkedTicketIndices(i)
         assert.equal(expectedOrderedIndices[i] + '', prevByIndex.toString())
       }
     }

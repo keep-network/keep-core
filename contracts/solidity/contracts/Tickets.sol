@@ -8,14 +8,65 @@ pragma solidity ^0.5.4;
 contract Tickets  {
     uint256 public groupSize = 10;
     uint256[] internal tickets;
-    uint256 tail = 0;
+    uint256 internal tail = 0;
 
     // Map simulates a linked list. key -> value are both indices of the tickets array.
     // 'key' index holds a higher value and points to an index that holds a next lower value
-    mapping(uint256 => uint256) previousTicketsByIndex;
+    // Ex. tickets = [151, 42, 175, 7]
+    // orderedLinkedTicketIndices[0] -> 1
+    // orderedLinkedTicketIndices[1] -> 3
+    // orderedLinkedTicketIndices[2] -> 0
+    // orderedLinkedTicketIndices[3] -> 3 note: index that holds a smallest value points to itself.
+    mapping(uint256 => uint256) public orderedLinkedTicketIndices;
 
     constructor() public {
-        previousTicketsByIndex[tail] = 0; // simulate nil, refer to an index outside tickets array.
+        orderedLinkedTicketIndices[tail] = 0; // simulates nil
+    }
+
+    function submitTicket(uint256 newTicketValue) public {
+        uint256 oldTail = tail;
+        uint256[] memory ordered = createOrderedLinkedTicketIndices();
+        orderedTickets = ordered;
+
+        if (tickets.length < groupSize) {
+            // bigger than the existing biggest
+            if (tickets.length == 0 || newTicketValue > tickets[tail]) {
+                tickets.push(newTicketValue);
+                if (tickets.length > 1) {
+                    tail = tickets.length-1;
+                    orderedLinkedTicketIndices[tail] = oldTail;
+                }
+            // smaller than the existing smallest
+            } else if (newTicketValue < tickets[ordered[0]]) {
+                tickets.push(newTicketValue);
+                orderedLinkedTicketIndices[tickets.length - 1] = tickets.length - 1; // last element point to itself
+                orderedLinkedTicketIndices[ordered[0]] = tickets.length - 1;
+            // tickets[smallest] < newTicketValue < tickets[max]
+            } else {
+                tickets.push(newTicketValue);
+                uint j = findIndexForNewTicket(newTicketValue, ordered);
+                orderedLinkedTicketIndices[tickets.length - 1] = orderedLinkedTicketIndices[j];
+                orderedLinkedTicketIndices[j] = tickets.length - 1;
+
+                jIndex = j;
+            }
+        } else if (newTicketValue < tickets[tail]) { // tickets[groupSize]
+            // replacing existing smallest with a smaller
+            if (newTicketValue < ordered[0]) {
+                tickets[ordered[0]] = newTicketValue;
+            } else {
+                uint j = findIndexForNewTicket(newTicketValue, ordered);
+                tickets[tail] = newTicketValue;
+                // do not change the order if a new ticket is still highest
+                if (j != tail) {
+                    uint newTail = orderedLinkedTicketIndices[tail];
+                    orderedLinkedTicketIndices[j] = tail;
+                    orderedLinkedTicketIndices[tail] = tickets.length - 1;
+                    tail = newTail;
+                }
+                jIndex = j;
+            }
+        }
     }
 
     // use binary search to find an index for a new ticket
@@ -36,76 +87,19 @@ contract Tickets  {
         return ordered[lo];
     }
 
-    function createOrderedTicketIndices() public view returns (uint256[] memory) {
+    function createOrderedLinkedTicketIndices() internal view returns (uint256[] memory) {
         uint256[] memory ordered = new uint256[](tickets.length);
         if (ordered.length > 0) {
             ordered[tickets.length-1] = tail;
             if (ordered.length > 1) {
-                // Todo: see if you can make it a for loop
-                int i = int(tickets.length - 2);
-                while (i != -1) {
-                    ordered[uint(i)] = previousTicketsByIndex[ordered[uint(i) + 1]];
-                    i--;
+                for (int i = int(tickets.length - 2); i >= 0; i--) {
+                    ordered[uint(i)] = orderedLinkedTicketIndices[ordered[uint(i) + 1]];
                 }
-                // for (int i = tickets.length - 2; i >= 0; i--) {
-                //     ordered[i] = previousTicketsByIndex[ordered[uint(i) + 1]];
-                // }
             }
         }
 
         return ordered;
     }
-
-    function submitTicket(uint256 newTicketValue) public {
-        uint256 oldTail = tail;
-        uint256[] memory ordered = createOrderedTicketIndices();
-        orderedTickets = ordered;
-
-        if (tickets.length < groupSize) {
-            // bigger than the existing biggest
-            if (tickets.length == 0 || newTicketValue > tickets[tail]) {
-                tickets.push(newTicketValue);
-                if (tickets.length > 1) {
-                    tail = tickets.length-1;
-                    previousTicketsByIndex[tail] = oldTail;
-                }
-            // smaller than the existing smallest
-            } else if (newTicketValue < tickets[ordered[0]]) {
-                tickets.push(newTicketValue);
-                previousTicketsByIndex[tickets.length - 1] = tickets.length - 1; // last element point to itself
-                previousTicketsByIndex[ordered[0]] = tickets.length - 1;
-            // tickets[smallest] < newTicketValue < tickets[max]
-            } else {
-                tickets.push(newTicketValue);
-                uint j = findIndexForNewTicket(newTicketValue, ordered);
-                previousTicketsByIndex[tickets.length - 1] = previousTicketsByIndex[j];
-                previousTicketsByIndex[j] = tickets.length - 1;
-
-                jIndex = j;
-            }
-        } else {
-            if (newTicketValue < tickets[tail]) {
-                // replacing existing smallest with a smaller
-                if (newTicketValue < ordered[0]) {
-                    tickets[ordered[0]] = newTicketValue;
-                } else {
-                    uint j = findIndexForNewTicket(newTicketValue, ordered);
-                    tickets[tail] = newTicketValue;
-                    // do not change the order if a new ticket is still highest
-                    if (j != tail) {
-                        uint newTail = previousTicketsByIndex[tail];
-                        previousTicketsByIndex[j] = tail;
-                        previousTicketsByIndex[tail] = tickets.length - 1;
-                        tail = newTail;
-                    }
-                    jIndex = j;
-
-                }
-
-            }
-        }
-    }
-
 
     function getTail() public view returns (uint256) {
         return tail;
@@ -123,8 +117,8 @@ contract Tickets  {
         return tickets;
     }
 
-    function getPreviousTicketsByIndex(uint index) public view returns (uint256) {
-        return previousTicketsByIndex[index];
+    function getOrderedLinkedTicketIndices(uint index) public view returns (uint256) {
+        return orderedLinkedTicketIndices[index];
     }
     
     function getTicketLength() public view returns (uint256) {
