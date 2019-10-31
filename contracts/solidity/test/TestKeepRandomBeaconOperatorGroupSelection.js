@@ -33,7 +33,6 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     stakingContract = contracts.stakingContract;
 
     await operatorContract.setMinimumStake(minimumStake)
-    await operatorContract.setGroupSize(3);
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)))
     await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)))
@@ -52,46 +51,97 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await restoreSnapshot()
   });
 
-  it("should fail to get selected participants before submission period is over", async function() {
+  it("should fail to get selected participants before submission period is over", async () => {
     await expectThrow(operatorContract.selectedParticipants());
   });
 
-  it("should be able to verify a ticket", async function() {
-    await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
+  it("should accept valid ticket with minimum virtual staker index", async () => {
+    await operatorContract.submitTicket(
+      tickets1[0].value, 
+      operator1, 
+      1, 
+      {from: operator1}
+    );
 
-    assert.isTrue(await operatorContract.callIsTicketValid(
-      operator1, tickets1[0].value, operator1, tickets1[0].virtualStakerIndex
-    ), "Should be able to verify a valid ticket.");
-
-    let lastTicketIndex = tickets1.length - 1;
-    let maxVirtualStakerIndexTicket = tickets1[lastTicketIndex].virtualStakerIndex;
-    assert.isTrue(await operatorContract.callIsTicketValid(
-      operator1, tickets1[lastTicketIndex].value, operator1, maxVirtualStakerIndexTicket
-    ), "Should be able to verify a valid ticket with the maximum allowed staker index");
-
-    let invalidVirtualStakerIndex = operator1StakingWeight + 1;
-    assert.isFalse(await operatorContract.callIsTicketValid(
-      operator1, tickets1[0].value, operator1, invalidVirtualStakerIndex
-    ), "Should fail while verifying a submitted ticket due to invalid number of virtual stakers");
-    
-    assert.isFalse(await operatorContract.callIsTicketValid(
-      operator1, 0, operator2, tickets1[0].virtualStakerIndex
-    ), "Should fail while verifying a submitted ticket due to invalid ticket value");
-    
-    assert.isFalse(await operatorContract.callIsTicketValid(
-      operator1, tickets1[0].value, operator2, tickets1[0].virtualStakerIndex
-    ), "Should fail while verifying a submitted ticket due to invalid stake value");
-      
-    assert.isFalse(await operatorContract.callIsTicketValid(
-      operator1, tickets1[0].value, operator1, 2
-    ), "Should fail while verifying a submitted ticket due to invalid virtual staker index");
+    let submittedCount = await operatorContract.submittedTicketsCount();
+    assert.equal(1, submittedCount, "Ticket should be accepted");
   });
 
-  it("should revert the transaction when the ticket has been already submitted", async function() {
-    await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
+  it("should accept valid ticket with maximum virtual staker index", async () => {
+    await operatorContract.submitTicket(
+      tickets1[tickets1.length - 1].value,
+      operator1,
+      tickets1.length,
+      {from: operator1}
+    );
+
+    let submittedCount = await operatorContract.submittedTicketsCount();
+    assert.equal(1, submittedCount, "Ticket should be accepted");
+  });
+
+  it("should reject ticket with too high virtual staker index", async () => {
+    await expectThrowWithMessage(
+      operatorContract.submitTicket(
+        tickets1[tickets1.length - 1].value,
+        operator1,
+        tickets1.length + 1,
+        {from: operator1}
+      ),
+      "Invalid ticket"
+    );
+  });
+
+  it("should reject ticket with invalid value", async() => {
+    await expectThrowWithMessage(
+      operatorContract.submitTicket(
+        1337,
+        operator1,
+        1,
+        {from: operator1}
+      ),
+      "Invalid ticket"
+    );
+  });
+
+  it("should reject ticket with not matching operator", async() => {
+    await expectThrowWithMessage(
+      operatorContract.submitTicket(
+        tickets1[0].value, 
+        operator1, 
+        1, 
+        {from: operator2}
+      ),
+      "Invalid ticket"
+    )
+  });
+
+  it("should reject ticket with not matching virtual staker index", async() => {
+    await expectThrowWithMessage(
+      operatorContract.submitTicket(
+        tickets1[0].value, 
+        operator1, 
+        2, 
+        {from: operator1}
+      ),
+      "Invalid ticket"
+    )
+  });
+
+  it("should reject duplicate ticket", async () => {
+    await operatorContract.submitTicket(
+      tickets1[0].value, 
+      operator1, 
+      1, 
+      {from: operator1}
+    );
 
     await expectThrowWithMessage(
-      operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1}),
+      operatorContract.submitTicket(
+        tickets1[0].value, 
+        operator1, 
+        1, 
+        {from: operator1}
+      ),
       "Duplicate ticket"
     );
   })

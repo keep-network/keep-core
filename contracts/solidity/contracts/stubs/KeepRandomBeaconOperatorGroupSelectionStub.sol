@@ -8,26 +8,15 @@ contract KeepRandomBeaconOperatorGroupSelectionStub is KeepRandomBeaconOperator 
         address _stakingContract,
         address payable _groupContract
     ) KeepRandomBeaconOperator(_serviceContract, _stakingContract, _groupContract) public {
-        relayEntryTimeout = 10;
-        ticketInitialSubmissionTimeout = 20;
-        ticketReactiveSubmissionTimeout = 65;
-        resultPublicationBlockStep = 3;
-    }
-
-    function setGroupSize(uint256 size) public {
-        groupSize = size;
+        groupSize = 3;
+        groupSelection.ticketReactiveSubmissionTimeout = 65;
     }
 
     function getGroupSelectionRelayEntry() public view returns (uint256) {
-        return groupSelectionRelayEntry;
+        return groupSelection.seed;
     }
 
-    function callIsTicketValid(
-        address staker,
-        uint256 ticketValue,
-        uint256 stakerValue,
-        uint256 virtualStakerIndex
-    ) public view returns(bool) {
-        return super.isTicketValid(staker, ticketValue, stakerValue, virtualStakerIndex);
+    function ticketReactiveSubmissionTimeout() public view returns (uint256) {
+        return groupSelection.ticketReactiveSubmissionTimeout;
     }
 }
