@@ -13,6 +13,7 @@ RUN apk add --no-cache --update nodejs npm
 RUN apk add --no-cache --update bash
 RUN apk add --no-cache --update jq
 RUN apk add --no-cache --update curl
+RUN apk add --no-cache --update git
 
 # Configure log rotation
 
@@ -28,7 +29,6 @@ WORKDIR /root/lib/bootnode
 RUN npm install
 
 # Install ethStatsApi to report local stats to dashboard
-RUN apk add --no-cache --update git
 RUN git clone https://github.com/lispmeister/eth-net-intelligence-api.git /root/lib/ethStatsApi
 WORKDIR /root/lib/ethStatsApi
 RUN npm install
