@@ -271,16 +271,13 @@ func ConnectWithKey(
 ) Chain {
 	bc, _ := BlockCounter()
 
-	tokenSupply, naturalThreshold := calculateGroupSelectionParameters(
-		groupSize,
-		minimumStake,
-	)
-
 	currentBlock, _ := bc.CurrentBlock()
 	group := localGroup{
 		groupPublicKey:          seedGroupPublicKey,
 		registrationBlockHeight: currentBlock,
 	}
+
+	naturalThreshold := calculateNaturalThreshold(groupSize, minimumStake)
 
 	return &localChain{
 		relayConfig: &relayconfig.Chain{
@@ -290,7 +287,6 @@ func ConnectWithKey(
 			TicketReactiveSubmissionTimeout: 3,
 			ResultPublicationBlockStep:      3,
 			MinimumStake:                    minimumStake,
-			TokenSupply:                     tokenSupply,
 			NaturalThreshold:                naturalThreshold,
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.Entry)),
@@ -306,10 +302,7 @@ func ConnectWithKey(
 	}
 }
 
-func calculateGroupSelectionParameters(groupSize int, minimumStake *big.Int) (
-	tokenSupply *big.Int,
-	naturalThreshold *big.Int,
-) {
+func calculateNaturalThreshold(groupSize int, minimumStake *big.Int) *big.Int {
 	// (2^256)-1
 	ticketsSpace := new(big.Int).Sub(
 		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
@@ -317,18 +310,16 @@ func calculateGroupSelectionParameters(groupSize int, minimumStake *big.Int) (
 	)
 
 	// 10^9
-	tokenSupply = new(big.Int).Exp(big.NewInt(10), big.NewInt(9), nil)
+	tokenSupply := new(big.Int).Exp(big.NewInt(10), big.NewInt(9), nil)
 
 	// groupSize * ( ticketsSpace / (tokenSupply / minimumStake) )
-	naturalThreshold = new(big.Int).Mul(
+	return new(big.Int).Mul(
 		big.NewInt(int64(groupSize)),
 		new(big.Int).Div(
 			ticketsSpace,
 			new(big.Int).Div(tokenSupply, minimumStake),
 		),
 	)
-
-	return tokenSupply, naturalThreshold
 }
 
 func selectGroup(entry *big.Int, numberOfGroups int) int {
@@ -484,4 +475,25 @@ func (c *localChain) CalculateDKGResultHash(
 	)
 
 	return dkgResultHash, nil
+}
+
+func (c *localChain) CombineToSign(
+	previousEntry *big.Int,
+	seed *big.Int,
+) ([]byte, error) {
+	return CombineToSign(previousEntry, seed)
+}
+
+// CombineToSign takes the previous relay entry value and the current
+// requests's seed and combines it into a slice of bytes that is going to be
+// signed by the selected group and as a result, will form a new relay entry
+// value.
+func CombineToSign(
+	previousEntry *big.Int,
+	seed *big.Int,
+) ([]byte, error) {
+	combinedEntryToSign := make([]byte, 0)
+	combinedEntryToSign = append(combinedEntryToSign, previousEntry.Bytes()...)
+	combinedEntryToSign = append(combinedEntryToSign, seed.Bytes()...)
+	return combinedEntryToSign, nil
 }

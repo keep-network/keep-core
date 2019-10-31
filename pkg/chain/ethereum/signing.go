@@ -120,3 +120,7 @@ func unmarshalPublicKey(
 	ecdsaPublicKey := &ecdsa.PublicKey{Curve: curve, X: x, Y: y}
 	return (*ecdsa.PublicKey)(ecdsaPublicKey), nil
 }
+
+func (es *ethereumSigning) PublicKeyToAddress(publicKey ecdsa.PublicKey) []byte {
+	return crypto.PubkeyToAddress(publicKey).Bytes()
+}

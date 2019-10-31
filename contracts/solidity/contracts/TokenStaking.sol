@@ -51,12 +51,12 @@ contract TokenStaking is StakeDelegatable {
         require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
         require(_extraData.length == 85, "Stake delegation data must be provided.");
 
-        address magpie = _extraData.toAddress(0);
+        address payable magpie = address(uint160(_extraData.toAddress(0)));
         address operator = keccak256(abi.encodePacked(_from)).toEthSignedMessageHash().recover(_extraData.slice(20, 65));
         require(operatorToOwner[operator] == address(0), "Operator address is already in use.");
 
         operatorToOwner[operator] = _from;
-        magpieToOwner[magpie] = _from;
+        operatorToMagpie[operator] = magpie;
         ownerOperators[_from].push(operator);
 
         // Transfer tokens to this contract.

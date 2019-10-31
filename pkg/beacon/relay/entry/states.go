@@ -47,7 +47,7 @@ func (sss *signatureShareState) ActiveBlocks() uint64 {
 }
 
 func (sss *signatureShareState) Initiate() error {
-	entryToSign, err := CombineToSign(sss.previousEntry, sss.seed)
+	entryToSign, err := sss.relayChain.CombineToSign(sss.previousEntry, sss.seed)
 	if err != nil {
 		return err
 	}

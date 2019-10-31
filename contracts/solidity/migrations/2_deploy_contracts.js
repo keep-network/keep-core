@@ -10,7 +10,9 @@ const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.s
 const KeepRandomBeaconOperatorGroups = artifacts.require("./KeepRandomBeaconOperatorGroups.sol");
 
 const withdrawalDelay = 86400; // 1 day
-const minPayment = 1;
+const priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei = 20 * 10^9 wei)
+const fluctuationMargin = 50; // 50%
+const dkgContributionMargin = 10; // 10%
 
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
@@ -36,7 +38,9 @@ module.exports = async function(deployer) {
   await keepRandomBeaconOperatorGroups.setOperatorContract(keepRandomBeaconOperator.address);
 
   keepRandomBeaconService.initialize(
-    minPayment,
+    priceFeedEstimate,
+    fluctuationMargin,
+    dkgContributionMargin,
     withdrawalDelay,
     keepRandomBeaconOperator.address
   );

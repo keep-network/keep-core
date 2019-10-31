@@ -29,9 +29,6 @@ type Chain struct {
 	// MinimumStake is an on-chain value representing the minimum necessary
 	// amount a client must lock up to submit a single ticket
 	MinimumStake *big.Int
-	// TokenSupply represents the total number of tokens that can exist in
-	// the system
-	TokenSupply *big.Int
 	// NaturalThreshold is the value N virtual stakers' tickets would be
 	// expected to fall below if the tokens were optimally staked, and the
 	// tickets' values were evenly distributed in the domain of the
