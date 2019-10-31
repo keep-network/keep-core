@@ -16,6 +16,8 @@ contract ThrowProxy {
     }
 
     function execute() public returns (bool) {
+        // The contract is used only for tests, disabling ethlint warning.
+        // solium-disable-next-line
         (bool result, ) = target.call(data);
         return result;
     }
