@@ -158,7 +158,7 @@ contract KeepRandomBeaconOperator {
      * there are no groups on the operator contract.
      */
     function genesis() public payable {
-        require(numberOfGroups() == 0, "There can be no groups.");
+        require(numberOfGroups() == 0, "Groups exist");
         // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
         groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
         startGroupSelection(_genesisGroupSeed, msg.value);
@@ -168,7 +168,7 @@ contract KeepRandomBeaconOperator {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(owner == msg.sender, "Caller is not the owner.");
+        require(owner == msg.sender, "Caller is not the owner");
         _;
     }
 
@@ -178,7 +178,7 @@ contract KeepRandomBeaconOperator {
     modifier onlyServiceContract() {
         require(
             serviceContracts.contains(msg.sender),
-            "Only authorized service contract can call this method."
+            "Caller is not an authorized contract"
         );
         _;
     }
@@ -188,8 +188,6 @@ contract KeepRandomBeaconOperator {
      * the deployer as the contract owner.
      */
     constructor(address _serviceContract, address _stakingContract, address _groupContract) public {
-        require(_serviceContract != address(0), "Service contract address can't be zero.");
-        require(_stakingContract != address(0), "Staking contract address can't be zero.");
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
         groupContract = KeepRandomBeaconOperatorGroups(_groupContract);
@@ -243,7 +241,10 @@ contract KeepRandomBeaconOperator {
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
-        require(_payment >= gasPriceWithFluctuationMargin(priceFeedEstimate).mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
+        require(
+            _payment >= gasPriceWithFluctuationMargin(priceFeedEstimate).mul(dkgGasEstimate),
+            "Insufficient DKG fee"
+        );
 
         // dkgTimeout is the time after key generation protocol is expected to
         // be complete plus the expected time to submit the result.
@@ -252,7 +253,7 @@ contract KeepRandomBeaconOperator {
             timeDKG +
             groupSize * resultPublicationBlockStep;
 
-        require(!groupSelectionInProgress || block.number > dkgTimeout, "Group selection is in progress.");
+        require(!groupSelectionInProgress || block.number > dkgTimeout, "Group selection in progress");
 
         // If previous group selection failed and there is reimbursement left
         // return it to the DKG fee pool.
@@ -284,11 +285,11 @@ contract KeepRandomBeaconOperator {
     ) public {
 
         if (block.number > ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout) {
-            revert("Ticket submission period is over.");
+            revert("Ticket submission is over");
         }
 
         if (proofs[ticketValue].sender != address(0)) {
-            revert("Ticket with the given value has already been submitted.");
+            revert("Duplicate ticket");
         }
 
         // Invalid tickets are rejected and their senders penalized.
@@ -314,13 +315,10 @@ contract KeepRandomBeaconOperator {
     function selectedParticipants() public view returns (address[] memory) {
         require(
             block.number >= ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout,
-            "Ticket submission submission period must be over."
+            "Ticket submission in progress"
         );
 
-        require(
-            tickets.length >= groupSize,
-            "The number of submitted tickets is less than specified group size."
-        );
+        require(tickets.length >= groupSize, "Not enough tickets submitted");
 
         uint256[] memory ordered = UintArrayUtils.sort(tickets);
 
@@ -347,7 +345,7 @@ contract KeepRandomBeaconOperator {
         uint256 ticketValue,
         uint256 stakerValue,
         uint256 virtualStakerIndex
-    ) public view returns(bool) {
+    ) internal view returns(bool) {
         uint256 stakingWeight = stakingContract.balanceOf(staker).div(minimumStake);
         bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight;
         bool isStakerValueValid = uint256(staker) == stakerValue;
@@ -379,21 +377,21 @@ contract KeepRandomBeaconOperator {
     ) public {
         address[] memory members = selectedParticipants();
 
-        require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
+        require(submitterMemberIndex > 0, "Invalid submitter index");
         require(
-            members[submitterMemberIndex - 1] == msg.sender, 
-            "Submitter member index does not match sender address."
+            members[submitterMemberIndex - 1] == msg.sender,
+            "Unexpected submitter index"
         );
 
         uint T_init = ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout + timeDKG;
         require(
             block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
-            "Submitter is not eligible to submit at the current block."
+            "Submitter not eligible"
         );
 
         require(
             disqualified.length == groupSize && inactive.length == groupSize,
-            "Inactive and disqualified bytes arrays don't match the group size."
+            "Malformed misbehaving array"
         );
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
@@ -465,23 +463,20 @@ contract KeepRandomBeaconOperator {
         address[] memory members
     ) internal view returns (bool) {
         uint256 signaturesCount = signatures.length / 65;
-        require(signatures.length >= 65, "Signatures bytes array is too short.");
-        require(signatures.length % 65 == 0, "Signatures in the bytes array should be 65 bytes long.");
-        require(signaturesCount == signingMemberIndices.length, "Number of signatures and indices don't match.");
-        require(signaturesCount >= groupThreshold, "Number of signatures is below honest majority threshold.");
+        require(signatures.length >= 65, "Too short signatures array");
+        require(signatures.length % 65 == 0, "Malformed signatures array");
+        require(signaturesCount == signingMemberIndices.length, "Unexpected signatures count");
+        require(signaturesCount >= groupThreshold, "Too few signatures");
 
         bytes memory current; // Current signature to be checked.
 
         for(uint i = 0; i < signaturesCount; i++){
-            require(signingMemberIndices[i] > 0, "Index should be greater than zero.");
-            require(signingMemberIndices[i] <= members.length, "Provided index is out of acceptable tickets bound.");
+            require(signingMemberIndices[i] > 0, "Invalid index");
+            require(signingMemberIndices[i] <= members.length, "Index out of range");
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
-            require(
-                members[signingMemberIndices[i] - 1] == recoveredAddress,
-                "Invalid signature. Signer and recovered address at provided index don't match."
-            );
+            require(members[signingMemberIndices[i] - 1] == recoveredAddress, "Invalid signature");
         }
 
         return true;
@@ -510,7 +505,7 @@ contract KeepRandomBeaconOperator {
     /**
      * @dev Cleanup data of previous group selection.
      */
-    function cleanup() private {
+    function cleanup() internal {
 
         for (uint i = 0; i < tickets.length; i++) {
             delete proofs[tickets[i]];
@@ -535,7 +530,7 @@ contract KeepRandomBeaconOperator {
     ) public payable onlyServiceContract {
         require(
             msg.value >= groupProfitFee().add(entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate))),
-            "Must include group profit fee and entry verification fee."
+            "Insufficient new entry fee"
         );
         signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value);
     }
@@ -547,7 +542,7 @@ contract KeepRandomBeaconOperator {
         address serviceContract,
         uint256 entryVerificationAndProfitFee
     ) internal {
-        require(!entryInProgress || hasEntryTimedOut(), "Relay entry is in progress.");
+        require(!entryInProgress || hasEntryTimedOut(), "Beacon is busy");
 
         currentEntryStartBlock = block.number;
         entryInProgress = true;
@@ -573,7 +568,7 @@ contract KeepRandomBeaconOperator {
      * previous entry and seed.
      */
     function relayEntry(uint256 _groupSignature) public {
-        require(!hasEntryTimedOut(), "Can not submit after the timeout");
+        require(!hasEntryTimedOut(), "Entry timed out");
 
         bytes memory groupPubKey = groupContract.getGroupPublicKey(signingRequest.groupIndex);
 
@@ -583,7 +578,7 @@ contract KeepRandomBeaconOperator {
                 abi.encodePacked(signingRequest.previousEntry, signingRequest.seed),
                 bytes32(_groupSignature)
             ),
-            "Group signature failed to pass BLS verification."
+            "Invalid signature"
         );
 
         emit SignatureSubmitted(
@@ -692,7 +687,7 @@ contract KeepRandomBeaconOperator {
      * terminated and a new group is selected to produce a new relay entry.
      */
     function reportRelayEntryTimeout() public {
-        require(hasEntryTimedOut(), "Current relay entry did not time out");
+        require(hasEntryTimedOut(), "Entry did not time out");
 
         groupContract.terminateGroup(signingRequest.groupIndex);
 
