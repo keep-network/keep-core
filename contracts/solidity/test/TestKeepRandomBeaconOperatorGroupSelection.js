@@ -181,7 +181,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       );
     }
   
-    mineBlocks(await operatorContract.ticketReactiveSubmissionTimeout());
+    mineBlocks(await operatorContract.ticketSubmissionTimeout());
 
     let selectedParticipants = await operatorContract.selectedParticipants();
     assert.equal(
@@ -220,7 +220,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       {from: operator3}
     );
 
-    mineBlocks(await operatorContract.ticketReactiveSubmissionTimeout());
+    mineBlocks(await operatorContract.ticketSubmissionTimeout());
 
     let selectedParticipants = await operatorContract.selectedParticipants();
     assert.equal(

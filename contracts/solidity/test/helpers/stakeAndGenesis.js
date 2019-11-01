@@ -57,7 +57,7 @@ export default async function stakeAndGenesis(accounts, contracts) {
     }
 
     let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
-    let submissionTimeout = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
+    let submissionTimeout = (await operatorContract.ticketSubmissionTimeout()).toNumber();
 
     mineBlocks(submissionTimeout);
 

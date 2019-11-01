@@ -47,8 +47,8 @@ library GroupSelection {
         // Pseudorandom seed value used as an input for the group selection.
         uint256 seed;
 
-        // Timeout in blocks after the reactive ticket submission is finished.
-        uint256 ticketReactiveSubmissionTimeout;
+        // Timeout in blocks after which the ticket submission is finished.
+        uint256 ticketSubmissionTimeout;
 
         // Number of block at which the group selection started and from which
         // ticket submissions are accepted.
@@ -96,7 +96,7 @@ library GroupSelection {
         uint256 virtualStakerIndex,
         uint256 stakingWeight
     ) public {
-        if (block.number > self.ticketSubmissionStartBlock + self.ticketReactiveSubmissionTimeout) {
+        if (block.number > self.ticketSubmissionStartBlock + self.ticketSubmissionTimeout) {
             revert("Ticket submission is over");
         }
 
@@ -144,7 +144,7 @@ library GroupSelection {
         uint256 groupSize
     ) public view returns (address[] memory) {
         require(
-            block.number >= self.ticketSubmissionStartBlock + self.ticketReactiveSubmissionTimeout,
+            block.number >= self.ticketSubmissionStartBlock + self.ticketSubmissionTimeout,
             "Ticket submission in progress"
         );
 

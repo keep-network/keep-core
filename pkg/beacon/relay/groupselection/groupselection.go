@@ -96,14 +96,14 @@ func startTicketSubmission(
 	onGroupSelected func(*Result),
 ) error {
 	initialSubmissionTimeout, err := blockCounter.BlockHeightWaiter(
-		startBlockHeight + chainConfig.TicketInitialSubmissionTimeout,
+		startBlockHeight + chainConfig.TicketSubmissionTimeout/2,
 	)
 	if err != nil {
 		return err
 	}
 
 	reactiveSubmissionTimeout, err := blockCounter.BlockHeightWaiter(
-		startBlockHeight + chainConfig.TicketReactiveSubmissionTimeout,
+		startBlockHeight + chainConfig.TicketSubmissionTimeout,
 	)
 	if err != nil {
 		return err

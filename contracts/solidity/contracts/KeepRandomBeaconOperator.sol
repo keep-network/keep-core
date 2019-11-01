@@ -232,7 +232,7 @@ contract KeepRandomBeaconOperator {
         // dkgTimeout is the time after key generation protocol is expected to
         // be complete plus the expected time to submit the result.
         uint256 dkgTimeout = groupSelection.ticketSubmissionStartBlock +
-            groupSelection.ticketReactiveSubmissionTimeout +
+            groupSelection.ticketSubmissionTimeout +
             timeDKG +
             groupSize * resultPublicationBlockStep;
 
@@ -265,6 +265,14 @@ contract KeepRandomBeaconOperator {
     ) public {
         uint256 stakingWeight = stakingContract.balanceOf(msg.sender).div(minimumStake);
         groupSelection.submitTicket(ticketValue, stakerValue, virtualStakerIndex, stakingWeight);
+    }
+
+    /**
+     * @dev Gets the timeout in blocks after which group candidate ticket
+     * submission is finished.
+     */
+    function ticketSubmissionTimeout() public view returns (uint256) {
+        return groupSelection.ticketSubmissionTimeout;
     }
 
     /**
@@ -310,7 +318,7 @@ contract KeepRandomBeaconOperator {
             "Unexpected submitter index"
         );
 
-        uint T_init = groupSelection.ticketSubmissionStartBlock + groupSelection.ticketReactiveSubmissionTimeout + timeDKG;
+        uint T_init = groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout + timeDKG;
         require(
             block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
             "Submitter not eligible"

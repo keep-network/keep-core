@@ -281,13 +281,12 @@ func ConnectWithKey(
 
 	return &localChain{
 		relayConfig: &relayconfig.Chain{
-			GroupSize:                       groupSize,
-			HonestThreshold:                 honestThreshold,
-			TicketInitialSubmissionTimeout:  2,
-			TicketReactiveSubmissionTimeout: 3,
-			ResultPublicationBlockStep:      3,
-			MinimumStake:                    minimumStake,
-			NaturalThreshold:                naturalThreshold,
+			GroupSize:                  groupSize,
+			HonestThreshold:            honestThreshold,
+			TicketSubmissionTimeout:    4,
+			ResultPublicationBlockStep: 3,
+			MinimumStake:               minimumStake,
+			NaturalThreshold:           naturalThreshold,
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),

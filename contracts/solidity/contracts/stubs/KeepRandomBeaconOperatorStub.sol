@@ -15,7 +15,7 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
     ) KeepRandomBeaconOperator(_serviceContract, _stakingContract, _groupContract) public {
         groupThreshold = 15;
         relayEntryTimeout = 10;
-        groupSelection.ticketReactiveSubmissionTimeout = 65;
+        groupSelection.ticketSubmissionTimeout = 65;
         resultPublicationBlockStep = 3;
     }
 
@@ -41,10 +41,6 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
     function isGroupSelectionInProgress() public view returns (bool) {
         return groupSelection.inProgress;
-    }
-
-    function ticketReactiveSubmissionTimeout() public view returns (uint256) {
-        return groupSelection.ticketReactiveSubmissionTimeout;
     }
 
     function getRelayEntryTimeout() public view returns (uint256) {
