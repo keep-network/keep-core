@@ -59,10 +59,6 @@ library GroupSelection {
         bool inProgress;
     }
 
-    function init(Storage storage self) public {
-        self.ticketSubmissionTimeout = 6;
-    }
-
     /**
      * @dev Starts group selection protocol.
      * @param _seed pseudorandom seed value used as an input for the group
