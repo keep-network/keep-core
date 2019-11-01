@@ -23,11 +23,8 @@ type Chain struct {
 	// MinimumStake is an on-chain value representing the minimum necessary
 	// amount a client must lock up to submit a single ticket
 	MinimumStake *big.Int
-	// NaturalThreshold is the value N virtual stakers' tickets would be
-	// expected to fall below if the tokens were optimally staked, and the
-	// tickets' values were evenly distributed in the domain of the
-	// pseudorandom function
-	NaturalThreshold *big.Int
+	// TokenSupply represents the total number of KEEP tokens existing.
+	TokenSupply *big.Int
 	// RelayEntryTimeout is a timeout in blocks on-chain for a relay
 	// entry to be published by the selected group. Blocks are
 	// counted from the moment relay request occur.

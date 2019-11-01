@@ -62,7 +62,7 @@ func CandidateToNewGroup(
 			staker.ID(),
 			availableStake,
 			chainConfig.MinimumStake,
-			chainConfig.NaturalThreshold,
+			naturalThreshold(chainConfig),
 		)
 	if err != nil {
 		return err
@@ -247,4 +247,29 @@ func startTicketSubmission(
 			return nil
 		}
 	}
+}
+
+// naturalThreshold is the value for group size of N under which N virtual
+// stakers tickets would be expected to fall below if the tokens were optimally
+// staked, and the tickets values were evenly distributed in the domain of the
+// pseudorandom function.
+//
+// natural threshold =
+// (group size * number of all possible ticket values) /
+// (token supply / min stake)
+func naturalThreshold(chainConfig *config.Chain) *big.Int {
+	// (2^256)-1
+	ticketsSpace := new(big.Int).Sub(
+		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
+		big.NewInt(1),
+	)
+
+	// groupSize * ( ticketsSpace / (tokenSupply / minimumStake) )
+	return new(big.Int).Mul(
+		big.NewInt(int64(chainConfig.GroupSize)),
+		new(big.Int).Div(
+			ticketsSpace,
+			new(big.Int).Div(chainConfig.TokenSupply, chainConfig.MinimumStake),
+		),
+	)
 }

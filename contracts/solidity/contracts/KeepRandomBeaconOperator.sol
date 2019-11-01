@@ -50,6 +50,9 @@ contract KeepRandomBeaconOperator {
 
     KeepRandomBeaconOperatorGroups public groupContract;
 
+    // Total supply of KEEP tokens.
+    uint256 public constant tokenSupply = 10**9;
+
     // Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
 
@@ -420,20 +423,6 @@ contract KeepRandomBeaconOperator {
      */
     function setMinimumStake(uint256 _minimumStake) public onlyOwner {
         minimumStake = _minimumStake;
-    }
-
-
-    // TODO: this is off-chain optimization and it should stay off-chain
-    /**
-     * @dev Return natural threshold, the value N virtual stakers' tickets would
-     * be expected to fall below if the tokens were optimally staked, and the
-     * tickets' values were evenly distributed in the domain of the pseudorandom
-     * function.
-     */
-    function naturalThreshold() public view returns (uint256) {
-        uint256 tokenSupply = (10**9) * (10**18); // Supply of KEEP tokens
-        uint256 space = 2**256-1; // All possible ticket values
-        return groupSize.mul(space.div(tokenSupply.div(minimumStake)));
     }
 
     /**
