@@ -96,7 +96,7 @@ library GroupSelection {
         uint256 virtualStakerIndex,
         uint256 stakingWeight
     ) public {
-        if (block.number > self.ticketSubmissionStartBlock + self.ticketSubmissionTimeout) {
+        if (block.number > self.ticketSubmissionStartBlock.add(self.ticketSubmissionTimeout)) {
             revert("Ticket submission is over");
         }
 
