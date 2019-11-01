@@ -7,7 +7,7 @@ import "./KeepRandomBeaconOperatorGroups.sol";
 import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
-import "./GroupSelection.sol";
+import "./libraries/GroupSelection.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
@@ -174,7 +174,9 @@ contract KeepRandomBeaconOperator {
 
         owner = msg.sender;
 
-        groupSelection.ticketSubmissionTimeout = 6;
+        //groupSelection.ticketSubmissionTimeout = 6;
+
+        groupSelection.init();
     }
 
     /**

@@ -8,7 +8,7 @@ const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol
 const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
 const KeepRandomBeaconOperatorGroups = artifacts.require("./KeepRandomBeaconOperatorGroups.sol");
-const GroupSelection = artifacts.require("./GroupSelection.sol");
+const GroupSelection = artifacts.require("./libraries/GroupSelection.sol");
 
 const withdrawalDelay = 86400; // 1 day
 const priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei = 20 * 10^9 wei)

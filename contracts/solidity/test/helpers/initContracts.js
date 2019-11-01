@@ -1,6 +1,6 @@
 import { duration } from './increaseTime';
 const BLS = artifacts.require('./cryptography/BLS.sol');
-const GroupSelection = artifacts.require('./GroupSelection.sol');
+const GroupSelection = artifacts.require('./libraries/GroupSelection.sol');
 
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator, KeepRandomBeaconOperatorGroups) {

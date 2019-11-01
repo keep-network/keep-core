@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./utils/UintArrayUtils.sol";
+import "../utils/UintArrayUtils.sol";
 
 /**
  * The group selection protocol is an interactive method of selecting candidate
@@ -57,6 +57,10 @@ library GroupSelection {
         // Indicates whether a group selection is currently in progress.
         // Concurrent group selections are not allowed.
         bool inProgress;
+    }
+
+    function init(Storage storage self) public {
+        self.ticketSubmissionTimeout = 6;
     }
 
     /**
