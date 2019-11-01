@@ -140,9 +140,8 @@ func TestSubmission(t *testing.T) {
 
 	for _, test := range tests {
 		chainConfig := &config.Chain{
-			GroupSize:                       test.groupSize,
-			TicketInitialSubmissionTimeout:  3,
-			TicketReactiveSubmissionTimeout: 5,
+			GroupSize:               test.groupSize,
+			TicketSubmissionTimeout: 6,
 		}
 
 		chain := &stubGroupInterface{
@@ -170,7 +169,7 @@ func TestSubmission(t *testing.T) {
 		}
 
 		err = blockCounter.WaitForBlockHeight(
-			chainConfig.TicketReactiveSubmissionTimeout,
+			chainConfig.TicketSubmissionTimeout,
 		)
 		if err != nil {
 			t.Fatal(err)
