@@ -169,15 +169,15 @@ contract KeepRandomBeaconOperator {
         _;
     }
 
-    /**
-     * @dev Initializes the contract with service and staking contract addresses and
-     * the deployer as the contract owner.
-     */
     constructor(address _serviceContract, address _stakingContract, address _groupContract) public {
         serviceContracts.push(_serviceContract);
+
         stakingContract = TokenStaking(_stakingContract);
         groupContract = KeepRandomBeaconOperatorGroups(_groupContract);
+
         owner = msg.sender;
+
+        groupSelection.ticketSubmissionTimeout = 6;
     }
 
     /**
