@@ -144,7 +144,7 @@ library GroupSelection {
         uint256 groupSize
     ) public view returns (address[] memory) {
         require(
-            block.number >= self.ticketSubmissionStartBlock + self.ticketSubmissionTimeout,
+            block.number >= self.ticketSubmissionStartBlock.add(self.ticketSubmissionTimeout),
             "Ticket submission in progress"
         );
 
