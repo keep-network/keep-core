@@ -284,7 +284,6 @@ func ConnectWithKey(
 			TicketSubmissionTimeout:    4,
 			ResultPublicationBlockStep: 3,
 			MinimumStake:               minimumStake,
-			TokenSupply:                new(big.Int).Exp(big.NewInt(10), big.NewInt(9), nil),
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),

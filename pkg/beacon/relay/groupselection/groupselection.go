@@ -264,12 +264,15 @@ func naturalThreshold(chainConfig *config.Chain) *big.Int {
 		big.NewInt(1),
 	)
 
+	// 10^27
+	tokenSupply := new(big.Int).Exp(big.NewInt(10), big.NewInt(27), nil)
+
 	// groupSize * ( ticketsSpace / (tokenSupply / minimumStake) )
 	return new(big.Int).Mul(
 		big.NewInt(int64(chainConfig.GroupSize)),
 		new(big.Int).Div(
 			ticketsSpace,
-			new(big.Int).Div(chainConfig.TokenSupply, chainConfig.MinimumStake),
+			new(big.Int).Div(tokenSupply, chainConfig.MinimumStake),
 		),
 	)
 }

@@ -50,9 +50,6 @@ contract KeepRandomBeaconOperator {
 
     KeepRandomBeaconOperatorGroups public groupContract;
 
-    // Total supply of KEEP tokens. Expressed as number with 18-decimal places.
-    uint256 public constant tokenSupply = 10**9 * 1e18;
-
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
     // the Keep network. Expressed as number with 18-decimal places.
     uint256 public minimumStake = 200000 * 1e18;
