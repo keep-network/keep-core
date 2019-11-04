@@ -88,12 +88,13 @@ type CommitmentsVerifyingMember struct {
 	// Shares calculated for the current member by peer group members which passed
 	// the validation.
 	//
-	// receivedValidSharesS are defined as `s_ji` and receivedValidSharesT are
+	// receivedQualifiedSharesS are defined as `s_ji` and receivedQualifiedSharesT are
 	// defined as `t_ji` across the protocol specification.
-	receivedValidSharesS, receivedValidSharesT map[group.MemberIndex]*big.Int
-	// Valid commitments to secret shares polynomial coefficients received from
+	// TODO remove receivedQualifiedSharesT - exists only for unit tests purpose
+	receivedQualifiedSharesS, receivedQualifiedSharesT map[group.MemberIndex]*big.Int
+	// Commitments to secret shares polynomial coefficients received from
 	// other group members.
-	receivedValidPeerCommitments map[group.MemberIndex][]*bn256.G1
+	receivedPeerCommitments map[group.MemberIndex][]*bn256.G1
 }
 
 // SharesJustifyingMember represents one member in a threshold key sharing group,
@@ -151,6 +152,19 @@ type PointsJustifyingMember struct {
 // Executes Phase 10 of the protocol.
 type RevealingMember struct {
 	*PointsJustifyingMember
+
+	// Slice of disqualified or inactive QUAL members whose phase 3 shares need
+	// to be reconstructed.
+	// We snapshot this information at the beginning of phase 10 to make sure no
+	// new disqualifications can affect the validation of the message with
+	// ephemeral keys in phase 11. Specifically, that we do not disqualify
+	// everyone when one of the group members do not deliver phase 11 message
+	// at all. This can happen if we mark that member as inactive and then,
+	// disqualify everyone else because all the messages do not contain a
+	// revealed key for that inactive member. For this reason, it is safer
+	// to use a snapshotted set of misbehaved members whose keys are expected
+	// to be revealed.
+	expectedMembersForReconstruction []group.MemberIndex
 }
 
 // ReconstructingMember represents one member in a threshold sharing group who
@@ -245,10 +259,10 @@ func (skgm *SymmetricKeyGeneratingMember) InitializeCommitting() *CommittingMemb
 // InitializeCommitmentsVerification returns a member to perform next protocol operations.
 func (cm *CommittingMember) InitializeCommitmentsVerification() *CommitmentsVerifyingMember {
 	return &CommitmentsVerifyingMember{
-		CommittingMember:             cm,
-		receivedValidSharesS:         make(map[group.MemberIndex]*big.Int),
-		receivedValidSharesT:         make(map[group.MemberIndex]*big.Int),
-		receivedValidPeerCommitments: make(map[group.MemberIndex][]*bn256.G1),
+		CommittingMember:         cm,
+		receivedQualifiedSharesS: make(map[group.MemberIndex]*big.Int),
+		receivedQualifiedSharesT: make(map[group.MemberIndex]*big.Int),
+		receivedPeerCommitments:  make(map[group.MemberIndex][]*bn256.G1),
 	}
 }
 
@@ -276,8 +290,11 @@ func (sm *SharingMember) InitializePointsJustification() *PointsJustifyingMember
 }
 
 // InitializeRevealing returns a member to perform next protocol operations.
-func (sm *PointsJustifyingMember) InitializeRevealing() *RevealingMember {
-	return &RevealingMember{sm}
+func (pjm *PointsJustifyingMember) InitializeRevealing() *RevealingMember {
+	return &RevealingMember{
+		PointsJustifyingMember:           pjm,
+		expectedMembersForReconstruction: make([]group.MemberIndex, 0),
+	}
 }
 
 // InitializeReconstruction returns a member to perform next protocol operations.

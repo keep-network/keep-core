@@ -9,18 +9,9 @@ type Chain struct {
 	// HonestThreshold is the minimum number of active participants behaving
 	// according to the protocol needed to generate a new relay entry.
 	HonestThreshold int
-	// TicketInitialSubmissionTimeout is the duration (in blocks) the staker has to submit
-	// tickets that fall under the natural threshold to satisfy the initial
-	// ticket timeout (see group selection, phase 2a).
-	TicketInitialSubmissionTimeout uint64
-	// TicketReactiveSubmissionTimeout is the duration (in blocks) the staker has to
-	// submit any tickets that did not fall under the natural threshold. This
-	// final chance to submit tickets is called reactive ticket submission
-	// (defined in the group selection algorithm, 2b).
-	TicketReactiveSubmissionTimeout uint64
-	// TicketChallengeTimeout is the duration (in blocks) the staker has to
-	// submit any challenges for tickets that fail any checks.
-	TicketChallengeTimeout uint64
+	// TicketSubmissionTimeout is the duration (in blocks) the staker has to
+	// submit any tickets to candidate to a new group.
+	TicketSubmissionTimeout uint64
 	// ResultPublicationBlockStep is the duration (in blocks) that has to pass
 	// before group member with the given index is eligible to submit the
 	// result.
@@ -32,14 +23,6 @@ type Chain struct {
 	// MinimumStake is an on-chain value representing the minimum necessary
 	// amount a client must lock up to submit a single ticket
 	MinimumStake *big.Int
-	// TokenSupply represents the total number of tokens that can exist in
-	// the system
-	TokenSupply *big.Int
-	// NaturalThreshold is the value N virtual stakers' tickets would be
-	// expected to fall below if the tokens were optimally staked, and the
-	// tickets' values were evenly distributed in the domain of the
-	// pseudorandom function
-	NaturalThreshold *big.Int
 	// RelayEntryTimeout is a timeout in blocks on-chain for a relay
 	// entry to be published by the selected group. Blocks are
 	// counted from the moment relay request occur.

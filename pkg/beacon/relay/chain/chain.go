@@ -22,7 +22,7 @@ type RelayEntryInterface interface {
 	// promise to track the submission result. The promise is fulfilled with
 	// the entry as seen on-chain, or failed if there is an error submitting
 	// the entry.
-	SubmitRelayEntry(entryValue *big.Int) *async.RelayEntryPromise
+	SubmitRelayEntry(entryValue *big.Int) *async.EventEntryPromise
 	// OnSignatureSubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
 	OnSignatureSubmitted(
@@ -37,6 +37,11 @@ type RelayEntryInterface interface {
 	// supposed to submit a relay entry, did not deliver it within a specified
 	// time frame (relayEntryTimeout) counted in blocks.
 	ReportRelayEntryTimeout() error
+	// CombineToSign takes the previous relay entry value and the current
+	// requests's seed and combines it into a slice of bytes that is going to be
+	// signed by the selected group and as a result, will form a new relay entry
+	// value.
+	CombineToSign(previousEntry *big.Int, seed *big.Int) ([]byte, error)
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that
@@ -51,7 +56,10 @@ type GroupSelectionInterface interface {
 	// the chain, and returns a promise to track the submission. The promise
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
-	SubmitTicket(ticket *Ticket) *async.GroupTicketPromise
+	SubmitTicket(ticket *Ticket) *async.EventGroupTicketSubmissionPromise
+	// GetSubmittedTicketsCount gets the number of submitted group candidate
+	// tickets so far.
+	GetSubmittedTicketsCount() (*big.Int, error)
 	// GetSelectedParticipants returns `GroupSize` slice of addresses of
 	// candidates which have been selected to the currently assembling group.
 	GetSelectedParticipants() ([]StakerAddress, error)
@@ -92,7 +100,7 @@ type DistributedKeyGenerationInterface interface {
 		participantIndex group.MemberIndex,
 		dkgResult *DKGResult,
 		signatures map[group.MemberIndex][]byte,
-	) *async.DKGResultSubmissionPromise
+	) *async.EventDKGResultSubmissionPromise
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.
 	OnDKGResultSubmitted(

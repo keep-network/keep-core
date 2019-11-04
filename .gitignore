@@ -40,3 +40,8 @@ keep_accounts
 *.ipynb_checkpoints
 __pycache__
 *.pyc
+
+
+# Private testnet artifacts
+*-keep-client-deployment-bundle.tar.gz
+keep-client-snapshot.tar

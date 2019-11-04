@@ -15,6 +15,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
@@ -41,29 +42,11 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
 	}
 
-	ticketInitialSubmissionTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketInitialSubmissionTimeout()
+	ticketSubmissionTimeout, err :=
+		ec.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error calling TicketInitialSubmissionTimeout: [%v]",
-			err,
-		)
-	}
-
-	ticketReactiveSubmissionTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketReactiveSubmissionTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketReactiveSubmissionTimeout: [%v]",
-			err,
-		)
-	}
-
-	ticketChallengeTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketChallengeTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketChallengeTimeout: [%v]",
+			"error calling TicketSubmissionTimeout: [%v]",
 			err,
 		)
 	}
@@ -81,32 +64,18 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
 	}
 
-	tokenSupply, err := ec.keepRandomBeaconOperatorContract.TokenSupply()
-	if err != nil {
-		return nil, fmt.Errorf("error calling TokenSupply: [%v]", err)
-	}
-
-	naturalThreshold, err := ec.keepRandomBeaconOperatorContract.NaturalThreshold()
-	if err != nil {
-		return nil, fmt.Errorf("error calling NaturalThreshold: [%v]", err)
-	}
-
 	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
 	if err != nil {
 		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
 	}
 
 	return &relayconfig.Chain{
-		GroupSize:                       int(groupSize.Int64()),
-		HonestThreshold:                 int(threshold.Int64()),
-		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout.Uint64(),
-		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout.Uint64(),
-		TicketChallengeTimeout:          ticketChallengeTimeout.Uint64(),
-		ResultPublicationBlockStep:      resultPublicationBlockStep.Uint64(),
-		MinimumStake:                    minimumStake,
-		TokenSupply:                     tokenSupply,
-		NaturalThreshold:                naturalThreshold,
-		RelayEntryTimeout:               relayEntryTimeout.Uint64(),
+		GroupSize:                  int(groupSize.Int64()),
+		HonestThreshold:            int(threshold.Int64()),
+		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
+		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
+		MinimumStake:               minimumStake,
+		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
 	}, nil
 }
 
@@ -117,8 +86,8 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.HasMinimumStake(address)
 }
 
-func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPromise {
-	submittedTicketPromise := &async.GroupTicketPromise{}
+func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTicketSubmissionPromise {
+	submittedTicketPromise := &async.EventGroupTicketSubmissionPromise{}
 
 	failPromise := func(err error) {
 		failErr := submittedTicketPromise.Fail(err)
@@ -145,6 +114,10 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.GroupTicketPr
 	return submittedTicketPromise
 }
 
+func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
+	return ec.keepRandomBeaconOperatorContract.SubmittedTicketsCount()
+}
+
 func (ec *ethereumChain) GetSelectedParticipants() (
 	[]chain.StakerAddress,
 	error,
@@ -164,8 +137,8 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 
 func (ec *ethereumChain) SubmitRelayEntry(
 	entryValue *big.Int,
-) *async.RelayEntryPromise {
-	relayEntryPromise := &async.RelayEntryPromise{}
+) *async.EventEntryPromise {
+	relayEntryPromise := &async.EventEntryPromise{}
 
 	failPromise := func(err error) {
 		failErr := relayEntryPromise.Fail(err)
@@ -261,14 +234,12 @@ func (ec *ethereumChain) OnSignatureRequested(
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchSignatureRequested(
 		func(
-			payment *big.Int,
 			previousEntry *big.Int,
 			seed *big.Int,
 			groupPublicKey []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.Request{
-				Payment:        payment,
 				PreviousEntry:  previousEntry,
 				Seed:           seed,
 				GroupPublicKey: groupPublicKey,
@@ -365,8 +336,8 @@ func (ec *ethereumChain) SubmitDKGResult(
 	participantIndex group.MemberIndex,
 	result *relaychain.DKGResult,
 	signatures map[group.MemberIndex][]byte,
-) *async.DKGResultSubmissionPromise {
-	resultPublicationPromise := &async.DKGResultSubmissionPromise{}
+) *async.EventDKGResultSubmissionPromise {
+	resultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
 	failPromise := func(err error) {
 		failErr := resultPublicationPromise.Fail(err)
@@ -482,4 +453,43 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Disqualified, dkgResult.Inactive)
 
 	return relaychain.DKGResultHashFromBytes(hash)
+}
+
+// CombineToSign takes the previous relay entry value and the current
+// requests's seed and:
+//  - pads them with zeros if their byte length is less than 32 bytes. These
+//   values are used later on-chain as `uint256` values and combined with
+//   `abi.encodePacked` during signature verification. `uint256` is always
+//   packed to 256-bits with leading zeros if needed,
+// - combines them into a single slice of bytes.
+//
+// Function returns an error if previous entry or seed takes more than 32 bytes.
+func (ec *ethereumChain) CombineToSign(
+	previousEntry *big.Int,
+	seed *big.Int,
+) ([]byte, error) {
+	previousEntryBytes := previousEntry.Bytes()
+	seedBytes := seed.Bytes()
+
+	if len(previousEntryBytes) > 32 {
+		return nil, fmt.Errorf("entry can not be longer than 32 bytes")
+	}
+	if len(seedBytes) > 32 {
+		return nil, fmt.Errorf("seed can not be longer than 32 bytes")
+	}
+
+	previousEntryPadded, err := byteutils.LeftPadTo32Bytes(previousEntryBytes)
+	if err != nil {
+		return nil, err
+	}
+	seedPadded, err := byteutils.LeftPadTo32Bytes(seedBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	combinedEntryToSign := make([]byte, 0)
+	combinedEntryToSign = append(combinedEntryToSign, previousEntryPadded...)
+	combinedEntryToSign = append(combinedEntryToSign, seedPadded...)
+
+	return combinedEntryToSign, nil
 }

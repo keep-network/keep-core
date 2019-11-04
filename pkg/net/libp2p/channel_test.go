@@ -2,13 +2,22 @@ package libp2p
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"encoding/hex"
 	"reflect"
 	"sort"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/keep-network/keep-core/pkg/net"
+	crypto "github.com/libp2p/go-libp2p-crypto"
+	peer "github.com/libp2p/go-libp2p-peer"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	pubsubpb "github.com/libp2p/go-libp2p-pubsub/pb"
 )
 
 func TestRegisterAndFireHandler(t *testing.T) {
@@ -139,6 +148,56 @@ func TestUnregisterHandler(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCreateTopicValidator(t *testing.T) {
+	publicKeys := make([]crypto.PubKey, 5)
+	for i := range publicKeys {
+		_, publicKey, _ := crypto.GenerateSecp256k1Key(rand.Reader)
+		publicKeys[i] = publicKey
+	}
+
+	authorizations := map[string]bool{
+		toEncodedBytes(toEcdsaPublicKey(publicKeys[0])): true,
+		toEncodedBytes(toEcdsaPublicKey(publicKeys[3])): true,
+	}
+
+	filter := func(publicKey *ecdsa.PublicKey) bool {
+		_, isAuthorized := authorizations[toEncodedBytes(publicKey)]
+		return isAuthorized
+	}
+
+	validator := createTopicValidator(filter)
+
+	expectedResults := []bool{true, false, false, true, false}
+	for i, publicKey := range publicKeys {
+		authorID, _ := peer.IDFromPublicKey(publicKey)
+		authorIDBytes, _ := authorID.Marshal()
+		message := &pubsubpb.Message{From: authorIDBytes}
+
+		actualResult := validator(nil, peer.ID(i), &pubsub.Message{Message: message})
+
+		if expectedResults[i] != actualResult {
+			t.Errorf(
+				"Unexpected result for public key of index [%v]\n"+
+					"Expected: %v\nActual:   %v\n",
+				i,
+				expectedResults[i],
+				actualResult,
+			)
+		}
+	}
+}
+
+func toEcdsaPublicKey(publicKey crypto.PubKey) *ecdsa.PublicKey {
+	secp256k1PublicKey, _ := publicKey.(*crypto.Secp256k1PublicKey)
+	return (*btcec.PublicKey)(secp256k1PublicKey).ToECDSA()
+}
+
+func toEncodedBytes(publicKey *ecdsa.PublicKey) string {
+	return hex.EncodeToString(
+		elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y),
+	)
 }
 
 type mockNetMessage struct {

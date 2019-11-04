@@ -73,10 +73,10 @@ func (lbc *localBlockCounter) count() {
 	}
 }
 
-// blockCounter creates a BlockCounter that runs completely locally. It is
+// BlockCounter creates a BlockCounter that runs completely locally. It is
 // designed to simply increase block height at a set time interval in the
 // background.
-func blockCounter() (chain.BlockCounter, error) {
+func BlockCounter() (chain.BlockCounter, error) {
 	counter := localBlockCounter{blockHeight: 0, waiters: make(map[uint64][]chan uint64)}
 
 	go counter.count()

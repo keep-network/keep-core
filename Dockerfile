@@ -9,6 +9,7 @@ ENV GOPATH=/go \
 	GOBIN=/go/bin \
 	APP_NAME=keep-client \
 	APP_DIR=/go/src/github.com/keep-network/keep-core \
+	TEST_RESULTS_DIR=/mnt/test-results \
 	BIN_PATH=/usr/local/bin \
 	LD_LIBRARY_PATH=/usr/local/lib/
 
@@ -22,15 +23,17 @@ RUN apk add --update --no-cache \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
-COPY --from=ethereum/solc:0.5.4 /usr/bin/solc /usr/bin/solc
+COPY --from=ethereum/solc:0.5.10 /usr/bin/solc /usr/bin/solc
 
-RUN mkdir -p $APP_DIR
+RUN go get gotest.tools/gotestsum
+
+RUN mkdir -p $APP_DIR $TEST_RESULTS_DIR
 
 WORKDIR $APP_DIR
 
 # Configure GitHub token to be able to get private repositories.
-ARG GITHUBTOKEN
-RUN git config --global url."https://$GITHUBTOKEN:@github.com/".insteadOf "https://github.com/"
+ARG GITHUB_TOKEN
+RUN git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
 
 RUN go get -u github.com/golang/dep/cmd/dep
 

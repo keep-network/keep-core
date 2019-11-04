@@ -59,10 +59,9 @@ const (
 
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
-	Peers []string
-	Port  int
-	Seed  int
-	NAT   bool
+	Peers              []string
+	Port               int
+	AnnouncedAddresses []string
 }
 
 type provider struct {
@@ -154,8 +153,14 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 	return key.Libp2pKeyToNetworkKey(peerPublicKey), nil
 }
 
-func (cm *connectionManager) DisconnectPeer(connectedPeer string) {
-	connections := cm.Network().ConnsToPeer(peer.ID(connectedPeer))
+func (cm *connectionManager) DisconnectPeer(peerHash string) {
+	peerID, err := peer.IDB58Decode(peerHash)
+	if err != nil {
+		logger.Errorf("failed to decode peer hash: [%v] [%v]", peerHash, err)
+		return
+	}
+
+	connections := cm.Network().ConnsToPeer(peerID)
 	for _, connection := range connections {
 		if err := connection.Close(); err != nil {
 			logger.Errorf("failed to disconnect: [%v]", err)
@@ -184,7 +189,7 @@ func Connect(
 		ctx,
 		identity,
 		config.Port,
-		config.NAT,
+		config.AnnouncedAddresses,
 		stakeMonitor,
 	)
 	if err != nil {
@@ -208,9 +213,8 @@ func Connect(
 		addrs:         host.Addrs(),
 	}
 
-	// FIXME: return an error if we don't provide bootstrap peers
 	if len(config.Peers) == 0 {
-		return provider, nil
+		logger.Infof("node's peers list is empty")
 	}
 
 	if err := provider.bootstrap(ctx, config.Peers); err != nil {
@@ -231,7 +235,7 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
-	nat bool,
+	announcedAddresses []string,
 	stakeMonitor chain.StakeMonitor,
 ) (host.Host, error) {
 	var err error
@@ -266,11 +270,16 @@ func discoverAndListen(
 		),
 	}
 
-	if nat {
-		logger.Info("enabling NAT support; will attempt to open a port in " +
-			"your network's firewall using UPnP")
-
-		options = append(options, libp2p.NATPortMap())
+	if addresses := parseMultiaddresses(announcedAddresses); len(addresses) > 0 {
+		addressFactory := func(addrs []ma.Multiaddr) []ma.Multiaddr {
+			logger.Debugf(
+				"replacing default announced addresses [%v] with [%v]",
+				addrs,
+				addresses,
+			)
+			return addresses
+		}
+		options = append(options, libp2p.AddrsFactory(addressFactory))
 	}
 
 	return libp2p.New(ctx, options...)
@@ -290,6 +299,24 @@ func getListenAddrs(port int) ([]ma.Multiaddr, error) {
 		addrs = append(addrs, addr.Encapsulate(portAddr))
 	}
 	return addrs, nil
+}
+
+func parseMultiaddresses(addresses []string) []ma.Multiaddr {
+	multiaddresses := make([]ma.Multiaddr, 0)
+	for _, address := range addresses {
+		multiaddress, err := ma.NewMultiaddr(address)
+		if err != nil {
+			logger.Warningf(
+				"could not parse address string [%v]: [%v]",
+				address,
+				err,
+			)
+			continue
+		}
+		multiaddresses = append(multiaddresses, multiaddress)
+	}
+
+	return multiaddresses
 }
 
 func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {

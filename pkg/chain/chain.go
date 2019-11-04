@@ -1,6 +1,7 @@
 package chain
 
 import (
+	"crypto/ecdsa"
 	"math/big"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -64,6 +65,10 @@ type Signing interface {
 		signature []byte,
 		publicKey []byte,
 	) (bool, error)
+
+	// PubkeyToAddress converts operator's public key to an address associated
+	// with the chain.
+	PublicKeyToAddress(publicKey ecdsa.PublicKey) []byte
 }
 
 // Handle represents a handle to a blockchain that provides access to the core
@@ -83,5 +88,5 @@ type Utility interface {
 	Handle
 
 	Genesis() error
-	RequestRelayEntry(seed *big.Int) *async.RelayRequestPromise
+	RequestRelayEntry(seed *big.Int) *async.EventRequestPromise
 }

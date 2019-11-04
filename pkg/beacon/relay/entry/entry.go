@@ -3,15 +3,13 @@ package entry
 import (
 	"math/big"
 
+	"github.com/ipfs/go-log"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
-
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
-
-import "github.com/ipfs/go-log"
 
 var logger = log.Logger("keep-entry")
 
@@ -57,15 +55,4 @@ func SignAndSubmit(
 	_, _, err := stateMachine.Execute(startBlockHeight)
 
 	return err
-}
-
-// CombineToSign takes the previous relay entry value and the current
-// requests's seed and combines it into a slice of bytes that is going to be
-// signed by the selected group and as a result, will form a new relay entry
-// value.
-func CombineToSign(previousEntry *big.Int, seed *big.Int) []byte {
-	combinedEntryToSign := make([]byte, 0)
-	combinedEntryToSign = append(combinedEntryToSign, previousEntry.Bytes()...)
-	combinedEntryToSign = append(combinedEntryToSign, seed.Bytes()...)
-	return combinedEntryToSign
 }

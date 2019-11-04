@@ -22,8 +22,7 @@ module.exports = async function() {
   const tokenGrant = await TokenGrant.deployed();
 
   let owner = accounts[0]; // The address of an owner of the staked tokens.
-  let magpie = accounts[0]; // The address where the rewards for participation are sent.
-  // accounts[1]...[4] Operators for owner delegated stake.
+  // accounts[1]...[4] Operators for owner delegated stake and receivers of the rewards.
 
   // Token Grants demo accounts
   let grantee = accounts[0];
@@ -34,9 +33,14 @@ module.exports = async function() {
   // including the first account where owner operating for themself.
   for(let i = 0; i < 5; i++) {
     let operator = accounts[i]
+    let magpie = accounts[i] // The address where the rewards for participation are sent.
 
-    let signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator)).substr(2), 'hex');
-    let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
+    // The owner provides to the contract a signature of their address, signed by the operator. 
+    let signature = web3.utils.toBN(await web3.eth.sign(web3.utils.soliditySha3(owner), operator));
+    let delegation = Buffer.concat([
+      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(signature.toBuffer(), 'hex')
+    ]);
 
     staked = await token.approveAndCall(
       tokenStaking.address, 

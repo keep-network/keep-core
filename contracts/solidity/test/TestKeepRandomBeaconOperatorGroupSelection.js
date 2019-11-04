@@ -1,162 +1,242 @@
 import expectThrow from './helpers/expectThrow';
 import mineBlocks from './helpers/mineBlocks';
-import {bls} from './helpers/data';
 import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
 import {initContracts} from './helpers/initContracts';
+import expectThrowWithMessage from './helpers/expectThrowWithMessage';
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 
-
-contract('TestKeepRandomBeaconOperatorGroupSelection', function(accounts) {
-
-  let token, stakingContract, serviceContract, operatorContract, groupContract,
-  owner = accounts[0], magpie = accounts[1],
+contract('KeepRandomBeaconOperator', function(accounts) {
+  let operatorContract,
+  owner = accounts[0], 
+  magpie = accounts[1],
   operator1 = accounts[2], tickets1,
   operator2 = accounts[3], tickets2,
   operator3 = accounts[4], tickets3;
 
   const minimumStake = web3.utils.toBN(200000);
-  const ticketInitialSubmissionTimeout = 20;
-  const ticketReactiveSubmissionTimeout = 100;
+  const operator1StakingWeight = 2000;
+  const operator2StakingWeight = 2000;
+  const operator3StakingWeight = 3000;
 
   before(async () => {
-
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
+      artifacts.require('./stubs/KeepRandomBeaconOperatorGroupSelectionStub.sol'),
       artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
     );
     
-    token = contracts.token;
-    serviceContract = contracts.serviceContract;
+    let token = contracts.token;
+    let stakingContract = contracts.stakingContract;
+
     operatorContract = contracts.operatorContract;
-    groupContract = contracts.groupContract;
-    stakingContract = contracts.stakingContract;
 
-    operatorContract.setMinimumStake(minimumStake)
+    await operatorContract.setMinimumStake(minimumStake)
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake.mul(web3.utils.toBN(3000)))
+    await stakeDelegate(
+      stakingContract, token, owner, operator1, magpie, 
+      minimumStake.mul(web3.utils.toBN(operator1StakingWeight))
+    );
+    await stakeDelegate(
+      stakingContract, token, owner, operator2, magpie, 
+      minimumStake.mul(web3.utils.toBN(operator2StakingWeight))
+    );
+    await stakeDelegate(
+      stakingContract, token, owner, operator3, magpie, 
+      minimumStake.mul(web3.utils.toBN(operator3StakingWeight))
+    );
 
-    tickets1 = generateTickets(await operatorContract.groupSelectionRelayEntry(), operator1, 2000);
-    tickets2 = generateTickets(await operatorContract.groupSelectionRelayEntry(), operator2, 2000);
-    tickets3 = generateTickets(await operatorContract.groupSelectionRelayEntry(), operator3, 3000);
-
-    // Using stub method to add first group to help testing.
-    await operatorContract.registerNewGroup(bls.groupPubKey);
-    operatorContract.setGroupSize(3);
-    let group = await groupContract.getGroupPublicKey(0);
-    await operatorContract.addGroupMember(group, accounts[0]);
-    await operatorContract.addGroupMember(group, accounts[1]);
-    await operatorContract.addGroupMember(group, accounts[2]);
-
+    tickets1 = generateTickets(
+      await operatorContract.getGroupSelectionRelayEntry(), 
+      operator1, 
+      operator1StakingWeight
+    );
+    tickets2 = generateTickets(
+      await operatorContract.getGroupSelectionRelayEntry(), 
+      operator2, 
+      operator2StakingWeight
+    );
+    tickets3 = generateTickets(
+      await operatorContract.getGroupSelectionRelayEntry(), 
+      operator3, 
+      operator3StakingWeight
+    );
   });
 
-  it("should be able to get staking weight", async function() {
-    assert.isTrue(web3.utils.toBN(2000).eq(await operatorContract.stakingWeight(operator1)), "Should have expected staking weight.");
-    assert.isTrue(web3.utils.toBN(3000).eq(await operatorContract.stakingWeight(operator3)), "Should have expected staking weight.");
+  beforeEach(async () => {
+    await createSnapshot()
   });
 
-  it("should fail to get selected tickets before challenge period is over", async function() {
-    await expectThrow(operatorContract.selectedTickets());
+  afterEach(async () => {
+    await restoreSnapshot()
   });
 
-  it("should fail to get selected participants before challenge period is over", async function() {
+  it("should fail to get selected participants before submission period is over", async () => {
     await expectThrow(operatorContract.selectedParticipants());
   });
 
-  it("should be able to output submited tickets in ascending ordered", async function() {
+  it("should accept valid ticket with minimum virtual staker index", async () => {
+    await operatorContract.submitTicket(
+      tickets1[0].value, 
+      operator1, 
+      1, 
+      {from: operator1}
+    );
 
-    let tickets = [];
-
-    await operatorContract.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
-    tickets.push(tickets1[0].value);
-
-    await operatorContract.submitTicket(tickets2[0].value, operator2, tickets2[0].virtualStakerIndex, {from: operator2});
-    tickets.push(tickets2[0].value);
-
-    await operatorContract.submitTicket(tickets3[0].value, operator3, tickets3[0].virtualStakerIndex, {from: operator3});
-    tickets.push(tickets3[0].value);
-
-    tickets = tickets.sort(function(a, b){return a-b}); // Sort numbers in ascending order
-
-    // Test tickets ordering
-    let orderedTickets = await operatorContract.orderedTickets();
-    assert.isTrue(orderedTickets[0].eq(tickets[0]), "Tickets should be in ascending order.");
-    assert.isTrue(orderedTickets[1].eq(tickets[1]), "Tickets should be in ascending order.");
-    assert.isTrue(orderedTickets[2].eq(tickets[2]), "Tickets should be in ascending order.");
-
+    let submittedCount = await operatorContract.submittedTicketsCount();
+    assert.equal(1, submittedCount, "Ticket should be accepted");
   });
 
-  it("should be able to submit a ticket during ticket submission period", async function() {
-    await operatorContract.submitTicket(tickets1[0].value, operator1, tickets1[0].virtualStakerIndex, {from: operator1});
-    let proof = await operatorContract.getTicketProof(tickets1[0].value);
-    assert.isTrue(proof[1].eq(web3.utils.toBN(operator1)), "Should be able to get submitted ticket proof.");
-    assert.equal(proof[2], tickets1[0].virtualStakerIndex, "Should be able to get submitted ticket proof.");
+  it("should accept valid ticket with maximum virtual staker index", async () => {
+    await operatorContract.submitTicket(
+      tickets1[tickets1.length - 1].value,
+      operator1,
+      tickets1.length,
+      {from: operator1}
+    );
+
+    let submittedCount = await operatorContract.submittedTicketsCount();
+    assert.equal(1, submittedCount, "Ticket should be accepted");
   });
 
-  it("should be able to verify a ticket", async function() {
-
-    await operatorContract.submitTicket(tickets1[0].value, operator1, 1, {from: operator1});
-
-    assert.isTrue(await operatorContract.cheapCheck(
-      operator1, operator1, 1
-    ), "Should be able to verify a valid ticket.");
-    
-    assert.isTrue(await operatorContract.costlyCheck(
-      operator1, tickets1[0].value, operator1, tickets1[0].virtualStakerIndex
-    ), "Should be able to verify a valid ticket.");
-  
-    assert.isFalse(await operatorContract.costlyCheck(
-      operator1, 0, operator1, tickets1[0].virtualStakerIndex
-    ), "Should fail verifying invalid ticket.");
-
+  it("should reject ticket with too high virtual staker index", async () => {
+    await expectThrowWithMessage(
+      operatorContract.submitTicket(
+        tickets1[tickets1.length - 1].value,
+        operator1,
+        tickets1.length + 1,
+        {from: operator1}
+      ),
+      "Invalid ticket"
+    );
   });
 
-  it("should not trigger group selection while one is in progress", async function() {
-    let groupSelectionStartBlock = await operatorContract.ticketSubmissionStartBlock();
-    let groupSelectionRelayEntry = await operatorContract.groupSelectionRelayEntry();
-    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
-    await operatorContract.relayEntry(bls.nextGroupSignature);
-
-    assert.isTrue((await operatorContract.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should not be updated.");
-    assert.isTrue((await operatorContract.groupSelectionRelayEntry()).eq(groupSelectionRelayEntry), "Random beacon value for the current group selection should not change.");
+  it("should reject ticket with invalid value", async() => {
+    await expectThrowWithMessage(
+      operatorContract.submitTicket(
+        1337,
+        operator1,
+        1,
+        {from: operator1}
+      ),
+      "Invalid ticket"
+    );
   });
 
-  it("should be able to get selected tickets and participants after challenge period is over", async function() {
+  it("should reject ticket with not matching operator", async() => {
+    await expectThrowWithMessage(
+      operatorContract.submitTicket(
+        tickets1[0].value, 
+        operator1, 
+        1, 
+        {from: operator2}
+      ),
+      "Invalid ticket"
+    )
+  });
 
+  it("should reject ticket with not matching virtual staker index", async() => {
+    await expectThrowWithMessage(
+      operatorContract.submitTicket(
+        tickets1[0].value, 
+        operator1, 
+        2, 
+        {from: operator1}
+      ),
+      "Invalid ticket"
+    )
+  });
+
+  it("should reject duplicate ticket", async () => {
+    await operatorContract.submitTicket(
+      tickets1[0].value, 
+      operator1, 
+      1, 
+      {from: operator1}
+    );
+
+    await expectThrowWithMessage(
+      operatorContract.submitTicket(
+        tickets1[0].value, 
+        operator1, 
+        1, 
+        {from: operator1}
+      ),
+      "Duplicate ticket"
+    );
+  })
+
+  it("should trim selected participants to the group size", async () => {
     let groupSize = await operatorContract.groupSize();
-
+  
     for (let i = 0; i < groupSize*2; i++) {
-      await operatorContract.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
+      await operatorContract.submitTicket(
+        tickets1[i].value, 
+        operator1, 
+        tickets1[i].virtualStakerIndex, 
+        {from: operator1}
+      );
     }
-
-    mineBlocks(await operatorContract.ticketChallengeTimeout());
-    let selectedTickets = await operatorContract.selectedTickets();
-    assert.equal(selectedTickets.length, groupSize, "Should be trimmed to groupSize length.");
+  
+    mineBlocks(await operatorContract.ticketSubmissionTimeout());
 
     let selectedParticipants = await operatorContract.selectedParticipants();
-    assert.equal(selectedParticipants.length, groupSize, "Should be trimmed to groupSize length.");
+    assert.equal(
+      selectedParticipants.length, 
+      groupSize, 
+      "Selected participants list should be trimmed to groupSize length"
+    );
   });
 
-  it("should trigger new group selection when the last one is over", async function() {
-    let groupSelectionStartBlock = await operatorContract.ticketSubmissionStartBlock();
+  it("should select participants by tickets in ascending order", async function() {
+    let tickets = [
+      {value: tickets1[0].value, operator: operator1},
+      {value: tickets2[0].value, operator: operator2},
+      {value: tickets3[0].value, operator: operator3}
+    ];
 
-    // Calculate the block time when the group selection should be finished
-    let timeoutChallenge = (await operatorContract.ticketChallengeTimeout()).toNumber();
-    let timeDKG = (await operatorContract.timeDKG()).toNumber();
-    let groupSize = (await operatorContract.groupSize()).toNumber();
-    let resultPublicationBlockStep = (await operatorContract.resultPublicationBlockStep()).toNumber();
-    mineBlocks(timeoutChallenge + timeDKG + groupSize * resultPublicationBlockStep);
+    // Sort tickets in ascending order
+    tickets = tickets.sort(function(a, b){return a.value-b.value});
 
-    await serviceContract.requestRelayEntry(bls.seed, {value: 10});
-    await operatorContract.relayEntry(bls.nextNextGroupSignature);
+    await operatorContract.submitTicket(
+      tickets1[0].value, 
+      operator1, 
+      tickets1[0].virtualStakerIndex, 
+      {from: operator1}
+    );
+    await operatorContract.submitTicket(
+      tickets2[0].value, 
+      operator2, 
+      tickets2[0].virtualStakerIndex, 
+      {from: operator2}
+    );
+    await operatorContract.submitTicket(
+      tickets3[0].value, 
+      operator3, 
+      tickets3[0].virtualStakerIndex, 
+      {from: operator3}
+    );
 
-    assert.isFalse((await operatorContract.ticketSubmissionStartBlock()).eq(groupSelectionStartBlock), "Group selection start block should be updated.");
-    assert.isTrue((await operatorContract.groupSelectionRelayEntry()).eq(bls.nextNextGroupSignature), "Random beacon value for the current group selection should be updated.");
+    mineBlocks(await operatorContract.ticketSubmissionTimeout());
+
+    let selectedParticipants = await operatorContract.selectedParticipants();
+    assert.equal(
+      selectedParticipants[0], 
+      tickets[0].operator, 
+      "Unexpected operator selected at position 0"
+    );
+    assert.equal(
+      selectedParticipants[1], 
+      tickets[1].operator, 
+      "Unexpected operator selected at position 1"
+    );
+    assert.equal(
+      selectedParticipants[2], 
+      tickets[2].operator, 
+      "Unexpected operator selected at position 2"
+    );
   });
-
 });

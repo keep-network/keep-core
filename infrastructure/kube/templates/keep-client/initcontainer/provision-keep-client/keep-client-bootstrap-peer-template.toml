@@ -24,4 +24,4 @@
   NAT = true
 
 [Storage]
-  DataDir = "/tmp"
+  DataDir = "Set by Kube"

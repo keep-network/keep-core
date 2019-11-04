@@ -25,10 +25,24 @@ jobs:
       - checkout
       - run: sudo npm install -g ganache-cli@6.4.2
       - run:
+          name: Set up test and test result environment
+          command: |
+            mkdir -p /tmp/test-results/keep-core-contracts
+            cd contracts/solidity
+            npm install
+            # Adjust truffle-config.js to reference the JUnit reporter.
+            echo $(cat truffle-config.js) "console.log(JSON.stringify(module.exports))" | node | \
+              jq '.mocha.reporter|="mocha-junit-reporter" | .mocha.reporterOptions|={mochaFile:"/tmp/test-results/keep-core-contracts/unit-tests.xml"}' > \
+              junit-config.json
+            echo module.exports = >> truffle-config.js
+            cat junit-config.json >> truffle-config.js
+      - run:
           name: Running testrpc
           command: ganache-cli
           background: true
-      - run: cd contracts/solidity && npm install && npm run test
+      - run: cd contracts/solidity && npm run test
+      - store_test_results:
+          path: /tmp/test-results
   generate_docs_solidity:
     docker:
       - image: keepnetwork/nodejs-python-solc:5
@@ -61,14 +75,21 @@ jobs:
           docker_layer_caching: true
       - checkout
       - run:
+          name: Create test results directory
+          command: |
+            mkdir -p /tmp/test-results/keep-core-go
+      - run:
           name: Run Docker build
           command: |
-            docker build --build-arg GITHUBTOKEN=$GITHUBTOKEN --target gobuild -t go-build-env .
-            docker build --build-arg GITHUBTOKEN=$GITHUBTOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client .
+            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN --target gobuild -t go-build-env .
+            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client .
       - run:
           name: Run Go tests
           command: |
-            docker run -w /go/src/github.com/keep-network/keep-core go-build-env go test ./.../
+            docker run -v /tmp/test-results:/mnt/test-results -w /go/src/github.com/keep-network/keep-core go-build-env gotestsum --junitfile /mnt/test-results/unit-tests.xml
+            docker run -v /tmp/test-results:/mnt/test-results -w /go/src/github.com/keep-network/keep-core go-build-env cat /mnt/test-results/unit-tests.xml > /tmp/test-results/keep-core-go/unit-tests.xml
+      - store_test_results:
+          path: /tmp/test-results
       - run:
           name: Save keep-client image
           command: |

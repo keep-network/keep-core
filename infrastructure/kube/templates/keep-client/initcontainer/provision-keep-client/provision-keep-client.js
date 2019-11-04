@@ -70,24 +70,8 @@ async function provisionKeepClient() {
       console.log("Using pre-configured bootstrap peer account " + operator);
       console.log('Checking if bootstrap peer account is already staked:');
 
-      /*
-      Since the bootstrap peer operator account doesn't change we have to
-      take special consideration during pod restarts when there's no contract
-      migration.  If we have such a scenario we should exit the InitContainer
-      run before trying to stake the bootstrap peer operator account.  If
-      we don't, the staking operation will fail causing the InitContainer
-      to fail, throwing the pod into a crash loop.
-      */
-      let staked = await isStaked(operator);
-
-      if (staked === true) {
-        console.log('Already Staked, exiting InitContainer run!');
-        return;
-      } else {
-        console.log('Not staked, continuing!');
-      }
-    // We need to unlock the operator account only in bootstrap case since it's hosted on ETH node.
-    await unlockEthAccount(operator, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
+      // We need to unlock the operator account only in bootstrap case since it's hosted on ETH node.
+      await unlockEthAccount(operator, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
     } else {
       console.log('###########  Provisioning keep-client Standard Peer! ###########');
       console.log('\n<<<<<<<<<<<< Setting Up Operator Account ' + '>>>>>>>>>>>>');
@@ -145,6 +129,24 @@ async function stakeOperatorAccount(operator, contractOwner) {
 
   let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
   let contractOwnerSigned = await web3.eth.sign(web3.utils.soliditySha3(contractOwner), operator);
+  let staked = await isStaked(operator);
+
+  /*
+  We need to stake only in cases where an operator account is not already staked.  If the account
+  is staked, or the client type is relay-requester we need to exit staking, albeit for different
+  reasons.  In the case where the account is already staked, additional staking will fail.
+  Clients of type relay-requester don't need to be staked to submit a request, they're acting more
+  as a consumer of the network, rather than an operator.
+  */
+  if (process.env.KEEP_CLIENT_TYPE === 'relay-requester') {
+    console.log('Subtype relay-requester set. No staking needed, exiting staking!');
+    return;
+  } else if (staked === true) {
+    console.log('Staked client operator account set, exiting staking!');
+    return;
+  } else {
+    console.log('Unstaked client operator account set, staking!');
+  }
 
   /*
   This is really a bit stupid.  The return from web3.eth.sign is different depending on whether or not
@@ -223,6 +225,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
       parsedConfigFile.LibP2P.Seed = 2;
       parsedConfigFile.LibP2P.Port = 3919;
+      parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
       /*
       tomlify.toToml() writes our Seed/Port values as a float.  The added precision renders our config
@@ -249,6 +252,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
       parsedConfigFile.LibP2P.Port = 3919;
+      parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
       let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
         replace: (key, value) => { return key == 'Port' ? value.toFixed(0) : false }

@@ -1,13 +1,13 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"fmt"
 	"path"
 	"time"
 
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/logging"
 	"github.com/keep-network/keep-core/cmd"
 	"github.com/urfave/cli"
@@ -20,6 +20,8 @@ var (
 	revision string
 
 	configPath string
+
+	logger = log.Logger("keep-main")
 )
 
 func main() {
@@ -32,7 +34,7 @@ func main() {
 
 	err := logging.Configure(os.Getenv("LOG_LEVEL"))
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "failed to configure logging: [%v]\n", err)
 	}
 
 	app := cli.NewApp()
@@ -56,7 +58,6 @@ func main() {
 		},
 	}
 	app.Commands = []cli.Command{
-		cmd.SmokeTestCommand,
 		cmd.StartCommand,
 		cmd.RelayCommand,
 		cmd.PingCommand,
@@ -73,6 +74,6 @@ ENVIRONMENT VARIABLES:
 
 	err = app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 }

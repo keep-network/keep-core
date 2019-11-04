@@ -76,10 +76,10 @@ func (cvm *PointsJustifyingMember) MarkInactiveMembers(
 // MarkInactiveMembers takes all messages from the previous DKG protocol
 // execution phase and marks all member who did not send a message as IA.
 func (rm *ReconstructingMember) MarkInactiveMembers(
-	disqialifiedKeysMessages []*DisqualifiedEphemeralKeysMessage,
+	messages []*MisbehavedEphemeralKeysMessage,
 ) {
 	filter := rm.messageFilter()
-	for _, message := range disqialifiedKeysMessages {
+	for _, message := range messages {
 		filter.MarkMemberAsActive(message.senderID)
 	}
 

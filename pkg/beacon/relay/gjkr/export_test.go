@@ -1,10 +1,25 @@
 package gjkr
 
 import (
+	"math/big"
+
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
+
+func (epkm *EphemeralPublicKeyMessage) SetPublicKey(
+	memberIndex group.MemberIndex,
+	publicKey *ephemeral.PublicKey,
+) {
+	epkm.ephemeralPublicKeys[memberIndex] = publicKey
+}
+
+func (epkm *EphemeralPublicKeyMessage) GetPublicKey(
+	memberIndex group.MemberIndex,
+) *ephemeral.PublicKey {
+	return epkm.ephemeralPublicKeys[memberIndex]
+}
 
 func (epkm *EphemeralPublicKeyMessage) RemovePublicKey(
 	memberIndex group.MemberIndex,
@@ -38,6 +53,15 @@ func (psm *PeerSharesMessage) SetShares(
 	}
 }
 
+func (psm *PeerSharesMessage) AddShares(
+	receiverID group.MemberIndex,
+	shareS *big.Int,
+	shareT *big.Int,
+	symmetricKey ephemeral.SymmetricKey,
+) error {
+	return psm.addShares(receiverID, shareS, shareT, symmetricKey)
+}
+
 func (psm *PeerSharesMessage) RemoveShares(memberIndex group.MemberIndex) {
 	delete(psm.shares, memberIndex)
 }
@@ -47,6 +71,12 @@ func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKey(
 	privateKey *ephemeral.PrivateKey,
 ) {
 	ssam.accusedMembersKeys[memberIndex] = privateKey
+}
+
+func (ssam *SecretSharesAccusationsMessage) SetAccusedMemberKeys(
+	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey,
+) {
+	ssam.accusedMembersKeys = accusedMembersKeys
 }
 
 func (mpkspm *MemberPublicKeySharePointsMessage) SetPublicKeyShare(
@@ -72,9 +102,48 @@ func (pam *PointsAccusationsMessage) SetAccusedMemberKey(
 	pam.accusedMembersKeys[memberIndex] = privateKey
 }
 
-func (dekm *DisqualifiedEphemeralKeysMessage) SetPrivateKey(
+func (pam *PointsAccusationsMessage) SetAccusedMemberKeys(
+	accusedMembersKeys map[group.MemberIndex]*ephemeral.PrivateKey,
+) {
+	pam.accusedMembersKeys = accusedMembersKeys
+}
+
+func (mekm *MisbehavedEphemeralKeysMessage) SetPrivateKey(
 	memberIndex group.MemberIndex,
 	privateKey *ephemeral.PrivateKey,
 ) {
-	dekm.privateKeys[memberIndex] = privateKey
+	mekm.privateKeys[memberIndex] = privateKey
+}
+
+func (mekm *MisbehavedEphemeralKeysMessage) SetPrivateKeys(
+	privateKeys map[group.MemberIndex]*ephemeral.PrivateKey,
+) {
+	mekm.privateKeys = privateKeys
+}
+
+func (mekm *MisbehavedEphemeralKeysMessage) RemovePrivateKey(
+	memberIndex group.MemberIndex,
+) {
+	delete(mekm.privateKeys, memberIndex)
+}
+
+func GeneratePolynomial(degree int) ([]*big.Int, error) {
+	return generatePolynomial(degree)
+}
+
+func EvaluateMemberShare(
+	memberID group.MemberIndex,
+	coefficients []*big.Int,
+) *big.Int {
+	// evaluateMemberShare method is stateless so we use it via
+	// a fake CommittingMember in order to avoid code duplication
+	cm := &CommittingMember{}
+	return cm.evaluateMemberShare(memberID, coefficients)
+}
+
+func (ms *messageStorage) removeMessage(sender group.MemberIndex) {
+	ms.cacheLock.Lock()
+	defer ms.cacheLock.Unlock()
+
+	delete(ms.cache, sender)
 }

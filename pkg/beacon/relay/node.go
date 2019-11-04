@@ -2,6 +2,7 @@ package relay
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/hex"
 	"math/big"
@@ -51,33 +52,52 @@ func (n *Node) JoinGroupIfEligible(
 	signing chain.Signing,
 	groupSelectionResult *groupselection.Result,
 	newEntry *big.Int,
-	dkgStartBlockHeight uint64,
 ) {
+	dkgStartBlockHeight := groupSelectionResult.GroupSelectionEndBlock
 
+	indexes := make([]int, 0)
 	for index, selectedStaker := range groupSelectionResult.SelectedStakers {
-		// If we are amongst those chosen, kick off an instance of DKG. We may
-		// have been selected multiple times (which would result in multiple
-		// instances of DKG).
+		// See if we are amongst those chosen
 		if bytes.Compare(selectedStaker, n.Staker.ID()) == 0 {
+			indexes = append(indexes, index)
+		}
+	}
+
+	if len(indexes) > 0 {
+		// build the channel name and get the broadcast channel
+		broadcastChannelName := channelNameForGroup(groupSelectionResult)
+
+		// We should only join the broadcast channel if we're
+		// elligible for the group
+		broadcastChannel, err := n.netProvider.ChannelFor(
+			broadcastChannelName,
+		)
+		if err != nil {
+			logger.Errorf(
+				"failed to get broadcastChannel for name [%s] with err: [%v]",
+				broadcastChannelName,
+				err,
+			)
+			return
+		}
+
+		err = broadcastChannel.AddFilter(
+			candidateGroupMembersFilter(
+				groupSelectionResult.SelectedStakers,
+				signing,
+			),
+		)
+		if err != nil {
+			logger.Errorf(
+				"could not add filter for channel [%v]: [%v]",
+				broadcastChannel.Name(),
+				err,
+			)
+		}
+
+		for _, index := range indexes {
 			// capture player index for goroutine
 			playerIndex := index
-
-			// build the channel name and get the broadcast channel
-			broadcastChannelName := channelNameForGroup(groupSelectionResult)
-
-			// We should only join the broadcast channel if we're
-			// elligible for the group
-			broadcastChannel, err := n.netProvider.ChannelFor(
-				broadcastChannelName,
-			)
-			if err != nil {
-				logger.Errorf(
-					"failed to get broadcastChannel for name [%s] with err: [%v]",
-					broadcastChannelName,
-					err,
-				)
-				return
-			}
 
 			go func() {
 				signer, err := dkg.ExecuteDKG(
@@ -119,9 +139,35 @@ func channelNameForGroup(group *groupselection.Result) string {
 	for _, staker := range group.SelectedStakers {
 		channelNameBytes = append(channelNameBytes, staker...)
 	}
-	hexChannelName := hex.EncodeToString(
-		groupselection.SHAValue(sha256.Sum256(channelNameBytes)).Bytes(),
-	)
+
+	hash := sha256.Sum256(channelNameBytes)
+	hexChannelName := hex.EncodeToString(hash[:])
 
 	return hexChannelName
+}
+
+func candidateGroupMembersFilter(
+	selectedStakers []relaychain.StakerAddress,
+	signing chain.Signing,
+) net.BroadcastChannelFilter {
+	authorizations := make(map[string]bool, len(selectedStakers))
+	for _, address := range selectedStakers {
+		authorizations[hex.EncodeToString(address)] = true
+	}
+
+	return func(authorPublicKey *ecdsa.PublicKey) bool {
+		authorAddress := hex.EncodeToString(
+			signing.PublicKeyToAddress(*authorPublicKey),
+		)
+		_, isAuthorized := authorizations[authorAddress]
+
+		if !isAuthorized {
+			logger.Debugf(
+				"rejecting message from [%v] not qualified to DKG group",
+				authorAddress,
+			)
+		}
+
+		return isAuthorized
+	}
 }
