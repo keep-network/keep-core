@@ -246,7 +246,7 @@ contract KeepRandomBeaconOperator {
             ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
         }
 
-        groupSelection.start(_newEntry);
+        groupSelection.start(_newEntry, groupSize);
         emit GroupSelectionStarted(_newEntry);
         dkgSubmitterReimbursementFee = _payment;
     }

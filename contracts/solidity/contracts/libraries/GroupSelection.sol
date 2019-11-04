@@ -57,6 +57,25 @@ library GroupSelection {
         // Indicates whether a group selection is currently in progress.
         // Concurrent group selections are not allowed.
         bool inProgress;
+
+        // Map simulates a linked list. key -> value are both indices in the
+        // tickets[] array.
+        // 'key' index holds a higher number and points to an index that
+        // holds a next lower ticket number. That number is a ticket value.
+        // Ex. tickets = [151, 42, 175, 7]
+        // orderedLinkedTicketIndices[0] -> 1
+        // orderedLinkedTicketIndices[1] -> 3
+        // orderedLinkedTicketIndices[2] -> 0
+        // orderedLinkedTicketIndices[3] -> 3 note: index that holds a smallest
+        // value points to itself.
+        mapping(uint256 => uint256) orderedLinkedTicketIndices;
+
+        // Tail represents an index of a ticket in a tickets[] array which holds
+        // the largest ticket value.
+        uint256 tail;
+
+        // Size of a group in the threshold relay.
+        uint256 groupSize;
     }
 
     /**
@@ -64,12 +83,15 @@ library GroupSelection {
      * @param _seed pseudorandom seed value used as an input for the group
      * selection. All submitted tickets needs to have the seed mixed-in into the
      * value.
+     * @param _groupSize size of a member group that produce a relay.
      */
-    function start(Storage storage self, uint256 _seed) public {
+    function start(Storage storage self, uint256 _seed, uint256 _groupSize) public {
         cleanup(self);
         self.inProgress = true;
         self.seed = _seed;
         self.ticketSubmissionStartBlock = block.number;
+        self.orderedLinkedTicketIndices[self.tail] = 0; // simulates nil
+        self.groupSize = _groupSize;
     }
 
     /**
@@ -111,7 +133,7 @@ library GroupSelection {
             stakingWeight,
             self.seed
         )) {
-            self.tickets.push(ticketValue);
+            addTicket(self, ticketValue);
             self.proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
         } else {
             // TODO: should we slash instead of reverting?
@@ -134,6 +156,91 @@ library GroupSelection {
         bool isTicketValueValid = ticketValue == uint256(keccak256(abi.encodePacked(groupSelectionSeed, stakerValue, virtualStakerIndex)));
 
         return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
+    }
+
+    /**
+     * @dev Add a new verified ticket to the tickets[] array.
+     */
+    function addTicket(Storage storage self, uint256 newTicketValue) internal {
+        uint256 oldTail = self.tail;
+        uint256[] memory ordered = createOrderedLinkedTicketIndices(self);
+
+        if (self.tickets.length < self.groupSize) {
+            // larger than the existing largest
+            if (self.tickets.length == 0 || newTicketValue > self.tickets[self.tail]) {
+                self.tickets.push(newTicketValue);
+                if (self.tickets.length > 1) {
+                    self.tail = self.tickets.length-1;
+                    self.orderedLinkedTicketIndices[self.tail] = oldTail;
+                }
+            // smaller than the existing smallest
+            } else if (newTicketValue < self.tickets[ordered[0]]) {
+                self.tickets.push(newTicketValue);
+                // last element points to itself
+                self.orderedLinkedTicketIndices[self.tickets.length - 1] = self.tickets.length - 1;
+                self.orderedLinkedTicketIndices[ordered[0]] = self.tickets.length - 1;
+            // self.tickets[smallest] < newTicketValue < self.tickets[max]
+            } else {
+                self.tickets.push(newTicketValue);
+                uint j = findIndexForNewTicket(self, newTicketValue, ordered);
+                self.orderedLinkedTicketIndices[self.tickets.length - 1] = self.orderedLinkedTicketIndices[j];
+                self.orderedLinkedTicketIndices[j] = self.tickets.length - 1;
+            }
+        } else if (newTicketValue < self.tickets[self.tail]) {
+            // replacing existing smallest with a smaller
+            if (newTicketValue < ordered[0]) {
+                self.tickets[ordered[0]] = newTicketValue;
+            } else {
+                uint j = findIndexForNewTicket(self, newTicketValue, ordered);
+                self.tickets[self.tail] = newTicketValue;
+                // do not change the order if a new ticket is still largest
+                if (j != self.tail) {
+                    uint newTail = self.orderedLinkedTicketIndices[self.tail];
+                    self.orderedLinkedTicketIndices[j] = self.tail;
+                    self.orderedLinkedTicketIndices[self.tail] = self.tickets.length - 1;
+                    self.tail = newTail;
+                }
+            }
+        }
+    }
+
+    // use binary search to find an index for a new ticket in the tickets[] array
+    function findIndexForNewTicket(
+        Storage storage self,
+        uint256 newTicketValue,
+        uint256[] memory ordered
+    ) internal view returns (uint256) {
+        uint lo = 0;
+        uint hi = ordered.length - 1;
+        uint mid = 0;
+        while (lo <= hi) {
+            mid = lo + (hi - lo) / 2;
+            if (newTicketValue < self.tickets[ordered[mid]]) {
+                hi = mid - 1;
+            } else if (newTicketValue > self.tickets[ordered[mid]]) {
+                lo = mid + 1;
+            } else {
+                return ordered[mid];
+            }
+        }
+
+        return ordered[lo];
+    }
+
+    // Creates an array of ticket indexes based on their values in the ascending
+    // order.
+    function createOrderedLinkedTicketIndices(Storage storage self) internal view returns (uint256[] memory) {
+        uint256[] memory ordered = new uint256[](self.tickets.length);
+        if (ordered.length > 0) {
+            ordered[self.tickets.length-1] = self.tail;
+            if (ordered.length > 1) {
+                for (int i = int(self.tickets.length - 2); i >= 0; i--) {
+                    ordered[uint(i)] = self.orderedLinkedTicketIndices[ordered[uint(i) + 1]];
+                }
+            }
+        }
+
+        return ordered;
     }
 
     /**
