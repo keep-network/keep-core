@@ -68,11 +68,11 @@ contract KeepRandomBeaconOperator {
     uint256 public fluctuationMargin = 50; // 50%
 
     // Size of a group in the threshold relay.
-    uint256 public groupSize = 5;
+    uint256 public groupSize = 64;
 
     // Minimum number of group members needed to interact according to the
     // protocol to produce a relay entry.
-    uint256 public groupThreshold = 3;
+    uint256 public groupThreshold = 33;
 
     // Time in blocks after which the next group member is eligible
     // to submit the result.
@@ -174,7 +174,7 @@ contract KeepRandomBeaconOperator {
 
         owner = msg.sender;
 
-        groupSelection.ticketSubmissionTimeout = 6;
+        groupSelection.ticketSubmissionTimeout = 12;
     }
 
     /**
