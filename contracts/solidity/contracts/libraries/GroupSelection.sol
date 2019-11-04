@@ -1,7 +1,6 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "../utils/UintArrayUtils.sol";
 
 /**
  * The group selection protocol is an interactive method of selecting candidate
@@ -257,7 +256,7 @@ library GroupSelection {
 
         require(self.tickets.length >= groupSize, "Not enough tickets submitted");
 
-        uint256[] memory ordered = UintArrayUtils.sort(self.tickets);
+        uint256[] memory ordered = createOrderedLinkedTicketIndices(self);
         address[] memory selected = new address[](groupSize);
         for (uint i = 0; i < groupSize; i++) {
             Proof memory proof = self.proofs[ordered[i]];
