@@ -8,7 +8,7 @@ import (
 var stakingAddress = []byte("staking address")
 var previousBeaconOutput = []byte("test beacon output")
 
-func naturalThreshold() *big.Int { // 2^256 / 2
+func testNaturalThreshold() *big.Int { // 2^256 / 2
 	return new(big.Int).Div(
 		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
 		big.NewInt(2),
@@ -25,7 +25,7 @@ func TestAllTicketsGenerated(t *testing.T) {
 		stakingAddress,
 		availableStake,
 		minimumStake,
-		naturalThreshold(),
+		testNaturalThreshold(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -51,7 +51,7 @@ func TestTicketsGeneratedInOrder(t *testing.T) {
 		stakingAddress,
 		availableStake,
 		minimumStake,
-		naturalThreshold(),
+		testNaturalThreshold(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -79,7 +79,7 @@ func TestInitialTicketsGeneatedBelowNaturalThreshold(t *testing.T) {
 		stakingAddress,
 		availableStake,
 		minimumStake,
-		naturalThreshold(),
+		testNaturalThreshold(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -88,12 +88,12 @@ func TestInitialTicketsGeneatedBelowNaturalThreshold(t *testing.T) {
 	// All initial submission tickets should have value below the natural
 	// threshold
 	for _, ticket := range initialTickets {
-		if ticket.intValue().Cmp(naturalThreshold()) >= 0 {
+		if ticket.intValue().Cmp(testNaturalThreshold()) >= 0 {
 			t.Errorf(
 				"initial submission ticket value should be below natural "+
 					"threshold\nvalue:     [%v]\nthreshold: [%v]",
 				ticket.intValue(),
-				naturalThreshold(),
+				testNaturalThreshold(),
 			)
 		}
 	}
@@ -108,7 +108,7 @@ func TestReactiveTicketsGeneatedAboveNaturalThreshold(t *testing.T) {
 		stakingAddress,
 		availableStake,
 		minimumStake,
-		naturalThreshold(),
+		testNaturalThreshold(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -117,12 +117,12 @@ func TestReactiveTicketsGeneatedAboveNaturalThreshold(t *testing.T) {
 	// All reactive submission tickets should have value equal or above
 	// the natural threshold
 	for _, ticket := range reactiveTickets {
-		if ticket.intValue().Cmp(naturalThreshold()) <= 0 {
+		if ticket.intValue().Cmp(testNaturalThreshold()) <= 0 {
 			t.Errorf(
 				"reactive submission ticket value should not be below natural "+
 					"threshold\nvalue:     [%v]\nthreshold: [%v]",
 				ticket.intValue(),
-				naturalThreshold(),
+				testNaturalThreshold(),
 			)
 		}
 	}

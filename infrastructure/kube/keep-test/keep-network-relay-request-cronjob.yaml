@@ -5,14 +5,14 @@ metadata:
   name: keep-network-relay-request-submitter
   labels:
     app: keep-network
-    type: relay-request-submitter
+    type: relay-requester
 spec:
   schedule: '*/5 * * * *'
   jobTemplate:
     metadata:
       labels:
         app: keep-network
-        type: relay-request-submitter
+        type: relay-requester
     spec:
       activeDeadlineSeconds: 600
       template:
@@ -42,7 +42,7 @@ spec:
             image: gcr.io/keep-test-f3e0/keep-client-initcontainer
             env:
               - name: KEEP_CLIENT_TYPE
-                value: standard
+                value: relay-requester
               - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
                 valueFrom:
                   secretKeyRef:
