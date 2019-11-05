@@ -42,20 +42,11 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
 	}
 
-	ticketInitialSubmissionTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketInitialSubmissionTimeout()
+	ticketSubmissionTimeout, err :=
+		ec.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error calling TicketInitialSubmissionTimeout: [%v]",
-			err,
-		)
-	}
-
-	ticketReactiveSubmissionTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketReactiveSubmissionTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketReactiveSubmissionTimeout: [%v]",
+			"error calling TicketSubmissionTimeout: [%v]",
 			err,
 		)
 	}
@@ -73,25 +64,18 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
 	}
 
-	naturalThreshold, err := ec.keepRandomBeaconOperatorContract.NaturalThreshold()
-	if err != nil {
-		return nil, fmt.Errorf("error calling NaturalThreshold: [%v]", err)
-	}
-
 	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
 	if err != nil {
 		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
 	}
 
 	return &relayconfig.Chain{
-		GroupSize:                       int(groupSize.Int64()),
-		HonestThreshold:                 int(threshold.Int64()),
-		TicketInitialSubmissionTimeout:  ticketInitialSubmissionTimeout.Uint64(),
-		TicketReactiveSubmissionTimeout: ticketReactiveSubmissionTimeout.Uint64(),
-		ResultPublicationBlockStep:      resultPublicationBlockStep.Uint64(),
-		MinimumStake:                    minimumStake,
-		NaturalThreshold:                naturalThreshold,
-		RelayEntryTimeout:               relayEntryTimeout.Uint64(),
+		GroupSize:                  int(groupSize.Int64()),
+		HonestThreshold:            int(threshold.Int64()),
+		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
+		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
+		MinimumStake:               minimumStake,
+		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
 	}, nil
 }
 

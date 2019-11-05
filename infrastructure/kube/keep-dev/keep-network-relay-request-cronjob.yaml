@@ -19,7 +19,7 @@ spec:
         spec:
           containers:
           - name: keep-network-relay-request-submitter
-            image: gcr.io/keep-test-f3e0/keep-client
+            image: gcr.io/keep-dev-fe24/keep-client
             ports:
               - containerPort: 3919
             env:
@@ -27,7 +27,7 @@ spec:
                 valueFrom:
                   secretKeyRef:
                     name: eth-account-passphrase
-                    key: eth-account-passphrase
+                    key: account-passphrase
             volumeMounts:
               - name: keep-network-relay-request-submitter
                 mountPath: /mnt/keep-client/config
@@ -39,7 +39,7 @@ spec:
           restartPolicy: OnFailure
           initContainers:
           - name: initcontainer-provision-keep-client
-            image: gcr.io/keep-test-f3e0/keep-client-initcontainer
+            image: gcr.io/keep-dev-fe24/keep-client-initcontainer
             env:
               - name: KEEP_CLIENT_TYPE
                 value: relay-requester
@@ -47,7 +47,7 @@ spec:
                 valueFrom:
                   secretKeyRef:
                     name: eth-account-passphrase
-                    key: eth-account-passphrase
+                    key: account-passphrase
               - name: KEEP_DATA_DIR
                 value: /tmp
             volumeMounts:

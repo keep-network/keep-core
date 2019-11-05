@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "./cryptography/AltBn128.sol";
 
 
 interface OperatorContract {
@@ -108,6 +109,13 @@ contract KeepRandomBeaconOperatorGroups {
      */
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups[groupIndex].groupPubKey;
+    }
+
+    /**
+     * @dev Gets group public key in a compressed form.
+     */
+    function getGroupPublicKeyCompressed(uint256 groupIndex) public view returns (bytes memory) {
+        return AltBn128.g2Compress(AltBn128.g2Unmarshal(groups[groupIndex].groupPubKey));
     }
 
     /**

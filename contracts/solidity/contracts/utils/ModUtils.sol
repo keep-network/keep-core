@@ -11,12 +11,19 @@ library ModUtils {
         internal
         view returns(uint256)
     {
-        // Args for the pre-compile: [<length_of_BASE> <length_of_EXPONENT>
-        // <length_of_MODULUS> <BASE> <EXPONENT> <MODULUS>]
-        uint256[6] memory args = [32, 32, 32, base, exponent, p];
         uint256[1] memory output;
         /* solium-disable-next-line */
         assembly {
+            // Args for the precompile: [<length_of_BASE> <length_of_EXPONENT>
+            // <length_of_MODULUS> <BASE> <EXPONENT> <MODULUS>]
+            let args := mload(0x40)
+            mstore(args, 0x20)
+            mstore(add(args, 0x20), 0x20)
+            mstore(add(args, 0x40), 0x20)
+            mstore(add(args, 0x60), base)
+            mstore(add(args, 0x80), exponent)
+            mstore(add(args, 0xa0), p)
+
             // 0x05 is the modular exponent contract address
             if iszero(staticcall(not(0), 0x05, args, 0xc0, output, 0x20)) {
                 revert(0, 0)

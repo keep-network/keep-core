@@ -4,10 +4,10 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./TokenStaking.sol";
 import "./KeepRandomBeaconOperatorGroups.sol";
-import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
+import "./libraries/GroupSelection.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
@@ -50,6 +50,10 @@ contract KeepRandomBeaconOperator {
 
     KeepRandomBeaconOperatorGroups public groupContract;
 
+    // Minimum amount of KEEP that allows sMPC cluster client to participate in
+    // the Keep network. Expressed as number with 18-decimal places.
+    uint256 public minimumStake = 200000 * 1e18;
+
     // Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
 
@@ -72,16 +76,6 @@ contract KeepRandomBeaconOperator {
     // Minimum number of group members needed to interact according to the
     // protocol to produce a relay entry.
     uint256 public groupThreshold = 3;
-
-    // Minimum amount of KEEP that allows sMPC cluster client to participate in
-    // the Keep network. Expressed in wei.
-    uint256 public minimumStake = 200000 * 1e18;
-
-    // Timeout in blocks after the initial ticket submission is finished.
-    uint256 public ticketInitialSubmissionTimeout = 3;
-
-    // Timeout in blocks after the reactive ticket submission is finished.
-    uint256 public ticketReactiveSubmissionTimeout = 6;
 
     // Time in blocks after which the next group member is eligible
     // to submit the result.
@@ -121,22 +115,11 @@ contract KeepRandomBeaconOperator {
     // contract.
     uint256 public dkgSubmitterReimbursementFee;
 
-    struct Proof {
-        address sender;
-        uint256 stakerValue;
-        uint256 virtualStakerIndex;
-    }
-
-    mapping(uint256 => Proof) internal proofs;
+    using GroupSelection for GroupSelection.Storage;
+    GroupSelection.Storage groupSelection;
 
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
-
-    bool internal groupSelectionInProgress;
-
-    uint256 internal ticketSubmissionStartBlock;
-    uint256 internal groupSelectionRelayEntry;
-    uint256[] internal tickets;
 
     struct SigningRequest {
         uint256 relayRequestId;
@@ -161,7 +144,7 @@ contract KeepRandomBeaconOperator {
      * there are no groups on the operator contract.
      */
     function genesis() public payable {
-        require(numberOfGroups() == 0, "There can be no groups.");
+        require(numberOfGroups() == 0, "Groups exist");
         // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
         groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
         startGroupSelection(_genesisGroupSeed, msg.value);
@@ -171,7 +154,7 @@ contract KeepRandomBeaconOperator {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(owner == msg.sender, "Caller is not the owner.");
+        require(owner == msg.sender, "Caller is not the owner");
         _;
     }
 
@@ -181,22 +164,20 @@ contract KeepRandomBeaconOperator {
     modifier onlyServiceContract() {
         require(
             serviceContracts.contains(msg.sender),
-            "Only authorized service contract can call this method."
+            "Caller is not an authorized contract"
         );
         _;
     }
 
-    /**
-     * @dev Initializes the contract with service and staking contract addresses and
-     * the deployer as the contract owner.
-     */
     constructor(address _serviceContract, address _stakingContract, address _groupContract) public {
-        require(_serviceContract != address(0), "Service contract address can't be zero.");
-        require(_stakingContract != address(0), "Staking contract address can't be zero.");
         serviceContracts.push(_serviceContract);
+
         stakingContract = TokenStaking(_stakingContract);
         groupContract = KeepRandomBeaconOperatorGroups(_groupContract);
+
         owner = msg.sender;
+
+        groupSelection.ticketSubmissionTimeout = 6;
     }
 
     /**
@@ -246,16 +227,19 @@ contract KeepRandomBeaconOperator {
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
-        require(_payment >= gasPriceWithFluctuationMargin(priceFeedEstimate).mul(dkgGasEstimate), "Must include payment to cover DKG cost.");
+        require(
+            _payment >= gasPriceWithFluctuationMargin(priceFeedEstimate).mul(dkgGasEstimate),
+            "Insufficient DKG fee"
+        );
 
         // dkgTimeout is the time after key generation protocol is expected to
         // be complete plus the expected time to submit the result.
-        uint256 dkgTimeout = ticketSubmissionStartBlock +
-            ticketReactiveSubmissionTimeout +
+        uint256 dkgTimeout = groupSelection.ticketSubmissionStartBlock +
+            groupSelection.ticketSubmissionTimeout +
             timeDKG +
             groupSize * resultPublicationBlockStep;
 
-        require(!groupSelectionInProgress || block.number > dkgTimeout, "Group selection is in progress.");
+        require(!groupSelection.inProgress || block.number > dkgTimeout, "Group selection in progress");
 
         // If previous group selection failed and there is reimbursement left
         // return it to the DKG fee pool.
@@ -265,10 +249,7 @@ contract KeepRandomBeaconOperator {
             ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
         }
 
-        cleanup();
-        ticketSubmissionStartBlock = block.number;
-        groupSelectionRelayEntry = _newEntry;
-        groupSelectionInProgress = true;
+        groupSelection.start(_newEntry);
         emit GroupSelectionStarted(_newEntry);
         dkgSubmitterReimbursementFee = _payment;
     }
@@ -285,78 +266,30 @@ contract KeepRandomBeaconOperator {
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public {
+        uint256 stakingWeight = stakingContract.balanceOf(msg.sender).div(minimumStake);
+        groupSelection.submitTicket(ticketValue, stakerValue, virtualStakerIndex, stakingWeight);
+    }
 
-        if (block.number > ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout) {
-            revert("Ticket submission period is over.");
-        }
-
-        if (proofs[ticketValue].sender != address(0)) {
-            revert("Ticket with the given value has already been submitted.");
-        }
-
-        // Invalid tickets are rejected and their senders penalized.
-        if (isTicketValid(msg.sender, ticketValue, stakerValue, virtualStakerIndex)) {
-            tickets.push(ticketValue);
-            proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
-        } else {
-            // TODO: should we slash instead of reverting?
-            revert("Invalid ticket");
-        }
+    /**
+     * @dev Gets the timeout in blocks after which group candidate ticket
+     * submission is finished.
+     */
+    function ticketSubmissionTimeout() public view returns (uint256) {
+        return groupSelection.ticketSubmissionTimeout;
     }
 
     /**
      * @dev Gets the number of submitted group candidate tickets so far.
      */
     function submittedTicketsCount() public view returns (uint256) {
-        return tickets.length;
+        return groupSelection.tickets.length;
     }
 
     /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
     function selectedParticipants() public view returns (address[] memory) {
-        require(
-            block.number >= ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout,
-            "Ticket submission submission period must be over."
-        );
-
-        require(
-            tickets.length >= groupSize,
-            "The number of submitted tickets is less than specified group size."
-        );
-
-        uint256[] memory ordered = UintArrayUtils.sort(tickets);
-
-        address[] memory selected = new address[](groupSize);
-
-        for (uint i = 0; i < groupSize; i++) {
-            Proof memory proof = proofs[ordered[i]];
-            selected[i] = proof.sender;
-        }
-
-        return selected;
-    }
-
-    /**
-     * @dev Performs full verification of the ticket.
-     * @param staker Address of the staker.
-     * @param ticketValue Result of a pseudorandom function with input values of
-     * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
-     * @param stakerValue Staker-specific value. Currently uint representation of staker address.
-     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
-     */
-    function isTicketValid(
-        address staker,
-        uint256 ticketValue,
-        uint256 stakerValue,
-        uint256 virtualStakerIndex
-    ) public view returns(bool) {
-        uint256 stakingWeight = stakingContract.balanceOf(staker).div(minimumStake);
-        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight;
-        bool isStakerValueValid = uint256(staker) == stakerValue;
-        bool isTicketValueValid = uint256(keccak256(abi.encodePacked(groupSelectionRelayEntry, stakerValue, virtualStakerIndex))) == ticketValue;
-
-        return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
+        return groupSelection.selectedParticipants(groupSize);
     }
 
     /**
@@ -382,21 +315,21 @@ contract KeepRandomBeaconOperator {
     ) public {
         address[] memory members = selectedParticipants();
 
-        require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
+        require(submitterMemberIndex > 0, "Invalid submitter index");
         require(
-            members[submitterMemberIndex - 1] == msg.sender, 
-            "Submitter member index does not match sender address."
+            members[submitterMemberIndex - 1] == msg.sender,
+            "Unexpected submitter index"
         );
 
-        uint T_init = ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout + timeDKG;
+        uint T_init = groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout + timeDKG;
         require(
             block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
-            "Submitter is not eligible to submit at the current block."
+            "Submitter not eligible"
         );
 
         require(
             disqualified.length == groupSize && inactive.length == groupSize,
-            "Inactive and disqualified bytes arrays don't match the group size."
+            "Malformed misbehaving array"
         );
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
@@ -410,12 +343,9 @@ contract KeepRandomBeaconOperator {
         }
 
         groupContract.addGroup(groupPubKey);
-
         reimburseDkgSubmitter();
-        cleanup();
         emit DkgResultPublishedEvent(groupPubKey);
-
-        groupSelectionInProgress = false;
+        groupSelection.stop();
     }
 
     /**
@@ -468,23 +398,20 @@ contract KeepRandomBeaconOperator {
         address[] memory members
     ) internal view returns (bool) {
         uint256 signaturesCount = signatures.length / 65;
-        require(signatures.length >= 65, "Signatures bytes array is too short.");
-        require(signatures.length % 65 == 0, "Signatures in the bytes array should be 65 bytes long.");
-        require(signaturesCount == signingMemberIndices.length, "Number of signatures and indices don't match.");
-        require(signaturesCount >= groupThreshold, "Number of signatures is below honest majority threshold.");
+        require(signatures.length >= 65, "Too short signatures array");
+        require(signatures.length % 65 == 0, "Malformed signatures array");
+        require(signaturesCount == signingMemberIndices.length, "Unexpected signatures count");
+        require(signaturesCount >= groupThreshold, "Too few signatures");
 
         bytes memory current; // Current signature to be checked.
 
         for(uint i = 0; i < signaturesCount; i++){
-            require(signingMemberIndices[i] > 0, "Index should be greater than zero.");
-            require(signingMemberIndices[i] <= members.length, "Provided index is out of acceptable tickets bound.");
+            require(signingMemberIndices[i] > 0, "Invalid index");
+            require(signingMemberIndices[i] <= members.length, "Index out of range");
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
 
-            require(
-                members[signingMemberIndices[i] - 1] == recoveredAddress,
-                "Invalid signature. Signer and recovered address at provided index don't match."
-            );
+            require(members[signingMemberIndices[i] - 1] == recoveredAddress, "Invalid signature");
         }
 
         return true;
@@ -496,32 +423,6 @@ contract KeepRandomBeaconOperator {
      */
     function setMinimumStake(uint256 _minimumStake) public onlyOwner {
         minimumStake = _minimumStake;
-    }
-
-    /**
-     * @dev Return natural threshold, the value N virtual stakers' tickets would
-     * be expected to fall below if the tokens were optimally staked, and the
-     * tickets' values were evenly distributed in the domain of the pseudorandom
-     * function.
-     */
-    function naturalThreshold() public view returns (uint256) {
-        uint256 tokenSupply = (10**9) * (10**18); // Supply of KEEP tokens
-        uint256 space = 2**256-1; // All possible ticket values
-        return groupSize.mul(space.div(tokenSupply.div(minimumStake)));
-    }
-
-    /**
-     * @dev Cleanup data of previous group selection.
-     */
-    function cleanup() private {
-
-        for (uint i = 0; i < tickets.length; i++) {
-            delete proofs[tickets[i]];
-        }
-
-        delete tickets;
-
-        // TODO: cleanup DkgResults
     }
 
     /**
@@ -538,7 +439,7 @@ contract KeepRandomBeaconOperator {
     ) public payable onlyServiceContract {
         require(
             msg.value >= groupProfitFee().add(entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate))),
-            "Must include group profit fee and entry verification fee."
+            "Insufficient new entry fee"
         );
         signRelayEntry(requestId, seed, previousEntry, msg.sender, msg.value);
     }
@@ -550,14 +451,12 @@ contract KeepRandomBeaconOperator {
         address serviceContract,
         uint256 entryVerificationAndProfitFee
     ) internal {
-        require(!entryInProgress || hasEntryTimedOut(), "Relay entry is in progress.");
+        require(!entryInProgress || hasEntryTimedOut(), "Beacon is busy");
 
         currentEntryStartBlock = block.number;
         entryInProgress = true;
 
         uint256 groupIndex = groupContract.selectGroup(previousEntry);
-        bytes memory groupPubKey = groupContract.getGroupPublicKey(groupIndex);
-
         signingRequest = SigningRequest(
             requestId,
             entryVerificationAndProfitFee,
@@ -567,6 +466,7 @@ contract KeepRandomBeaconOperator {
             serviceContract
         );
 
+        bytes memory groupPubKey = groupContract.getGroupPublicKeyCompressed(groupIndex);
         emit SignatureRequested(previousEntry, seed, groupPubKey);
     }
 
@@ -576,7 +476,7 @@ contract KeepRandomBeaconOperator {
      * previous entry and seed.
      */
     function relayEntry(uint256 _groupSignature) public {
-        require(!hasEntryTimedOut(), "Can not submit after the timeout");
+        require(!hasEntryTimedOut(), "Entry timed out");
 
         bytes memory groupPubKey = groupContract.getGroupPublicKey(signingRequest.groupIndex);
 
@@ -586,7 +486,7 @@ contract KeepRandomBeaconOperator {
                 abi.encodePacked(signingRequest.previousEntry, signingRequest.seed),
                 bytes32(_groupSignature)
             ),
-            "Group signature failed to pass BLS verification."
+            "Invalid signature"
         );
 
         emit SignatureSubmitted(
@@ -691,7 +591,7 @@ contract KeepRandomBeaconOperator {
      * terminated and a new group is selected to produce a new relay entry.
      */
     function reportRelayEntryTimeout() public {
-        require(hasEntryTimedOut(), "Current relay entry did not time out");
+        require(hasEntryTimedOut(), "Entry did not time out");
 
         groupContract.terminateGroup(signingRequest.groupIndex);
 

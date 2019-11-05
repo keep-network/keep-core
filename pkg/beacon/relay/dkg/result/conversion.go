@@ -1,7 +1,6 @@
 package result
 
 import (
-	"github.com/keep-network/keep-core/pkg/altbn128"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -18,8 +17,7 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 	// We convert the point G2, to compress the point correctly
 	// (ensuring we encode the parity bit).
 	if gjkrResult.GroupPublicKey != nil {
-		altbn128GroupPublicKey := altbn128.G2Point{G2: gjkrResult.GroupPublicKey}
-		groupPublicKey = altbn128GroupPublicKey.Compress()
+		groupPublicKey = gjkrResult.GroupPublicKey.Marshal()
 	}
 
 	// convertToByteSlice converts slice containing members IDs to a slice of
