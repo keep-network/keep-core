@@ -4,10 +4,10 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./TokenStaking.sol";
 import "./KeepRandomBeaconOperatorGroups.sol";
-import "./utils/UintArrayUtils.sol";
 import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
+import "./libraries/GroupSelection.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
@@ -50,6 +50,10 @@ contract KeepRandomBeaconOperator {
 
     KeepRandomBeaconOperatorGroups public groupContract;
 
+    // Minimum amount of KEEP that allows sMPC cluster client to participate in
+    // the Keep network. Expressed as number with 18-decimal places.
+    uint256 public minimumStake = 200000 * 1e18;
+
     // Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
 
@@ -69,16 +73,6 @@ contract KeepRandomBeaconOperator {
     // Minimum number of group members needed to interact according to the
     // protocol to produce a relay entry.
     uint256 public groupThreshold = 3;
-
-    // Minimum amount of KEEP that allows sMPC cluster client to participate in
-    // the Keep network. Expressed in wei.
-    uint256 public minimumStake = 200000 * 1e18;
-
-    // Timeout in blocks after the initial ticket submission is finished.
-    uint256 public ticketInitialSubmissionTimeout = 3;
-
-    // Timeout in blocks after the reactive ticket submission is finished.
-    uint256 public ticketReactiveSubmissionTimeout = 6;
 
     // Time in blocks after which the next group member is eligible
     // to submit the result.
@@ -118,22 +112,11 @@ contract KeepRandomBeaconOperator {
     // contract.
     uint256 public dkgSubmitterReimbursementFee;
 
-    struct Proof {
-        address sender;
-        uint256 stakerValue;
-        uint256 virtualStakerIndex;
-    }
-
-    mapping(uint256 => Proof) internal proofs;
+    using GroupSelection for GroupSelection.Storage;
+    GroupSelection.Storage groupSelection;
 
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
-
-    bool internal groupSelectionInProgress;
-
-    uint256 internal ticketSubmissionStartBlock;
-    uint256 internal groupSelectionRelayEntry;
-    uint256[] internal tickets;
 
     struct SigningRequest {
         uint256 relayRequestId;
@@ -183,15 +166,15 @@ contract KeepRandomBeaconOperator {
         _;
     }
 
-    /**
-     * @dev Initializes the contract with service and staking contract addresses and
-     * the deployer as the contract owner.
-     */
     constructor(address _serviceContract, address _stakingContract, address _groupContract) public {
         serviceContracts.push(_serviceContract);
+
         stakingContract = TokenStaking(_stakingContract);
         groupContract = KeepRandomBeaconOperatorGroups(_groupContract);
+
         owner = msg.sender;
+
+        groupSelection.ticketSubmissionTimeout = 6;
     }
 
     /**
@@ -248,12 +231,12 @@ contract KeepRandomBeaconOperator {
 
         // dkgTimeout is the time after key generation protocol is expected to
         // be complete plus the expected time to submit the result.
-        uint256 dkgTimeout = ticketSubmissionStartBlock +
-            ticketReactiveSubmissionTimeout +
+        uint256 dkgTimeout = groupSelection.ticketSubmissionStartBlock +
+            groupSelection.ticketSubmissionTimeout +
             timeDKG +
             groupSize * resultPublicationBlockStep;
 
-        require(!groupSelectionInProgress || block.number > dkgTimeout, "Group selection in progress");
+        require(!groupSelection.inProgress || block.number > dkgTimeout, "Group selection in progress");
 
         // If previous group selection failed and there is reimbursement left
         // return it to the DKG fee pool.
@@ -263,10 +246,7 @@ contract KeepRandomBeaconOperator {
             ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
         }
 
-        cleanup();
-        ticketSubmissionStartBlock = block.number;
-        groupSelectionRelayEntry = _newEntry;
-        groupSelectionInProgress = true;
+        groupSelection.start(_newEntry);
         emit GroupSelectionStarted(_newEntry);
         dkgSubmitterReimbursementFee = _payment;
     }
@@ -283,75 +263,30 @@ contract KeepRandomBeaconOperator {
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public {
+        uint256 stakingWeight = stakingContract.balanceOf(msg.sender).div(minimumStake);
+        groupSelection.submitTicket(ticketValue, stakerValue, virtualStakerIndex, stakingWeight);
+    }
 
-        if (block.number > ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout) {
-            revert("Ticket submission is over");
-        }
-
-        if (proofs[ticketValue].sender != address(0)) {
-            revert("Duplicate ticket");
-        }
-
-        // Invalid tickets are rejected and their senders penalized.
-        if (isTicketValid(msg.sender, ticketValue, stakerValue, virtualStakerIndex)) {
-            tickets.push(ticketValue);
-            proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
-        } else {
-            // TODO: should we slash instead of reverting?
-            revert("Invalid ticket");
-        }
+    /**
+     * @dev Gets the timeout in blocks after which group candidate ticket
+     * submission is finished.
+     */
+    function ticketSubmissionTimeout() public view returns (uint256) {
+        return groupSelection.ticketSubmissionTimeout;
     }
 
     /**
      * @dev Gets the number of submitted group candidate tickets so far.
      */
     function submittedTicketsCount() public view returns (uint256) {
-        return tickets.length;
+        return groupSelection.tickets.length;
     }
 
     /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
     function selectedParticipants() public view returns (address[] memory) {
-        require(
-            block.number >= ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout,
-            "Ticket submission in progress"
-        );
-
-        require(tickets.length >= groupSize, "Not enough tickets submitted");
-
-        uint256[] memory ordered = UintArrayUtils.sort(tickets);
-
-        address[] memory selected = new address[](groupSize);
-
-        for (uint i = 0; i < groupSize; i++) {
-            Proof memory proof = proofs[ordered[i]];
-            selected[i] = proof.sender;
-        }
-
-        return selected;
-    }
-
-    /**
-     * @dev Performs full verification of the ticket.
-     * @param staker Address of the staker.
-     * @param ticketValue Result of a pseudorandom function with input values of
-     * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
-     * @param stakerValue Staker-specific value. Currently uint representation of staker address.
-     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
-     */
-    function isTicketValid(
-        address staker,
-        uint256 ticketValue,
-        uint256 stakerValue,
-        uint256 virtualStakerIndex
-    ) internal view returns(bool) {
-        uint256 stakingWeight = stakingContract.balanceOf(staker).div(minimumStake);
-        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight;
-        bool isStakerValueValid = uint256(staker) == stakerValue;
-        bool isTicketValueValid = uint256(keccak256(abi.encodePacked(groupSelectionRelayEntry, stakerValue, virtualStakerIndex))) == ticketValue;
-
-        return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
+        return groupSelection.selectedParticipants(groupSize);
     }
 
     /**
@@ -383,7 +318,7 @@ contract KeepRandomBeaconOperator {
             "Unexpected submitter index"
         );
 
-        uint T_init = ticketSubmissionStartBlock + ticketReactiveSubmissionTimeout + timeDKG;
+        uint T_init = groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout + timeDKG;
         require(
             block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
             "Submitter not eligible"
@@ -405,12 +340,9 @@ contract KeepRandomBeaconOperator {
         }
 
         groupContract.addGroup(groupPubKey);
-
         reimburseDkgSubmitter();
-        cleanup();
         emit DkgResultPublishedEvent(groupPubKey);
-
-        groupSelectionInProgress = false;
+        groupSelection.stop();
     }
 
     /**
@@ -491,32 +423,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Return natural threshold, the value N virtual stakers' tickets would
-     * be expected to fall below if the tokens were optimally staked, and the
-     * tickets' values were evenly distributed in the domain of the pseudorandom
-     * function.
-     */
-    function naturalThreshold() public view returns (uint256) {
-        uint256 tokenSupply = (10**9) * (10**18); // Supply of KEEP tokens
-        uint256 space = 2**256-1; // All possible ticket values
-        return groupSize.mul(space.div(tokenSupply.div(minimumStake)));
-    }
-
-    /**
-     * @dev Cleanup data of previous group selection.
-     */
-    function cleanup() internal {
-
-        for (uint i = 0; i < tickets.length; i++) {
-            delete proofs[tickets[i]];
-        }
-
-        delete tickets;
-
-        // TODO: cleanup DkgResults
-    }
-
-    /**
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
      * @param requestId Request Id trackable by service contract.
@@ -548,8 +454,6 @@ contract KeepRandomBeaconOperator {
         entryInProgress = true;
 
         uint256 groupIndex = groupContract.selectGroup(previousEntry);
-        bytes memory groupPubKey = groupContract.getGroupPublicKey(groupIndex);
-
         signingRequest = SigningRequest(
             requestId,
             entryVerificationAndProfitFee,
@@ -559,6 +463,7 @@ contract KeepRandomBeaconOperator {
             serviceContract
         );
 
+        bytes memory groupPubKey = groupContract.getGroupPublicKeyCompressed(groupIndex);
         emit SignatureRequested(previousEntry, seed, groupPubKey);
     }
 

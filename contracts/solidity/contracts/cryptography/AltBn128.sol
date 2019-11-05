@@ -117,7 +117,7 @@ library AltBn128 {
         uint256 b = 146360017852723390495514512480590656176144969185739259173561346299185050597;
   
         y = gfP2Multiply(gfP2Pow(gfP2Pow(x, a), a), gfP2Pow(x, b));
-
+        
         // Multiply y by hexRoot constant to find correct y.
         while (!g2X2y(x, y)) {
             y = gfP2Multiply(y, hexRoot());
@@ -209,6 +209,26 @@ library AltBn128 {
         require(isG1PointOnCurve(G1Point(x, y)), "Malformed bn256.G1 point.");
 
         return G1Point(x, y);
+    }
+
+    /**
+     * @dev Unmarshals a point on G2 from bytes in an uncompressed form.
+     */
+    function g2Unmarshal(bytes memory m) internal pure returns(G2Point memory) {
+        bytes32 xx;
+        bytes32 xy;
+        bytes32 yx;
+        bytes32 yy;
+
+        /* solium-disable-next-line */
+        assembly {
+            xx := mload(add(m, 0x20))
+            xy := mload(add(m, 0x40))
+            yx := mload(add(m, 0x60))
+            yy := mload(add(m, 0x80))
+        }
+
+        return G2Point(gfP2(uint256(xx), uint256(xy)), gfP2(uint256(yx),uint256(yy)));
     }
 
     /**
