@@ -126,6 +126,49 @@ contract KeepRandomBeaconOperatorGroups {
     }
 
     /**
+     * @dev Checks if member is part of the group.
+     */
+    function isGroupMember(bytes memory groupPubKey, address member) public view returns (bool) {
+        for (uint i = 0; i < groupMembers[groupPubKey].length; i++) {
+            if (groupMembers[groupPubKey][i] == member) {
+                return true;
+            }
+        }
+    }
+
+    /**
+     * @dev Gets member index in the provided group.
+     */
+    function getGroupMemberIndex(bytes memory groupPubKey, address member) public view returns (uint256) {
+        for (uint i = 0; i < groupMembers[groupPubKey].length; i++) {
+            if (groupMembers[groupPubKey][i] == member) {
+                return i;
+            }
+        }
+    }
+
+    /**
+     * @dev Gets list of indices of staled groups.
+     */
+    function staleGroupsIndices() public view returns(uint256[] memory indices) {
+        uint256 counter;
+        for (uint i = 0; i < groups.length; i++) {
+            if (isStaleGroup(groups[i].groupPubKey)) {
+                counter++;
+            }
+        }
+
+        indices = new uint256[](counter);
+        counter = 0;
+        for (uint i = 0; i < groups.length; i++) {
+            if (isStaleGroup(groups[i].groupPubKey)) {
+                indices[counter] = i;
+                counter++;
+            }
+        }
+    }
+
+    /**
      * @dev Terminates group.
      */
     function terminateGroup(uint256 groupIndex) public onlyOperatorContract {

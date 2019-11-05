@@ -149,6 +149,8 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
       "Group must be stale."
     );
 
+    assert.isTrue((await operatorContract.availableGroupMemberReward(group, operator1)).isZero(), "Should have no group member reward available to withdraw.");
+
     // Add extra group so we can expire the first one.
     // New relay request will trigger first group to expire
     await operatorContract.registerNewGroup("0x01");
@@ -161,6 +163,9 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     );
 
     assert.isTrue(await groupContract.isStaleGroup(group), "Group should be stale.");
+    assert.isTrue((await operatorContract.availableGroupMemberReward(group, operator1)).eq(expectedGroupMemberReward),
+      "Should have group member reward available to withdraw."
+    );
 
     await expectThrowWithMessage(
       operatorContract.withdrawGroupMemberReward(group, operator1, 1),
@@ -168,6 +173,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     );
 
     await operatorContract.withdrawGroupMemberReward(group, operator1, 0);
+    assert.isTrue((await operatorContract.availableGroupMemberReward(group, operator1)).isZero(), "Should have no group member reward available to withdraw.");
 
     // Member is removed by now and withdraw should revert.
     await expectThrowWithMessage(

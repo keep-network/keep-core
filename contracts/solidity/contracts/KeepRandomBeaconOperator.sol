@@ -621,6 +621,36 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
+     * @dev Gets list of indices of staled groups.
+     */
+    function staleGroupsIndices() public view returns(uint256[] memory) {
+        return groupContract.staleGroupsIndices();
+    }
+
+    /**
+     * @dev Gets group public key by its index.
+     */
+    function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
+        return groupContract.getGroupPublicKey(groupIndex);
+    }
+
+    /**
+     * @dev Gets group member index by its address.
+     */
+    function getGroupMemberIndex(bytes memory groupPubKey, address groupMember) public view returns(uint256) {
+        return groupContract.getGroupMemberIndex(groupPubKey, groupMember);
+    }
+
+    /**
+     * @dev Gets group member rewards available to withdraw.
+     */
+    function availableGroupMemberReward(bytes memory groupPublicKey, address groupMember) public view returns (uint256) {
+        if (groupContract.isStaleGroup(groupPublicKey) && groupContract.isGroupMember(groupPublicKey, groupMember)) {
+            return accumulatedGroupMemberReward[groupPublicKey];
+        }
+    }
+
+    /**
      * @dev Gets group profit fee expressed in wei.
      */
     function groupProfitFee() public view returns(uint256) {
