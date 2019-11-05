@@ -277,17 +277,13 @@ func ConnectWithKey(
 		registrationBlockHeight: currentBlock,
 	}
 
-	naturalThreshold := calculateNaturalThreshold(groupSize, minimumStake)
-
 	return &localChain{
 		relayConfig: &relayconfig.Chain{
-			GroupSize:                       groupSize,
-			HonestThreshold:                 honestThreshold,
-			TicketInitialSubmissionTimeout:  2,
-			TicketReactiveSubmissionTimeout: 3,
-			ResultPublicationBlockStep:      3,
-			MinimumStake:                    minimumStake,
-			NaturalThreshold:                naturalThreshold,
+			GroupSize:                  groupSize,
+			HonestThreshold:            honestThreshold,
+			TicketSubmissionTimeout:    4,
+			ResultPublicationBlockStep: 3,
+			MinimumStake:               minimumStake,
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.Entry)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
@@ -300,26 +296,6 @@ func ConnectWithKey(
 		groups:                   []localGroup{group},
 		operatorKey:              operatorKey,
 	}
-}
-
-func calculateNaturalThreshold(groupSize int, minimumStake *big.Int) *big.Int {
-	// (2^256)-1
-	ticketsSpace := new(big.Int).Sub(
-		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
-		big.NewInt(1),
-	)
-
-	// 10^9
-	tokenSupply := new(big.Int).Exp(big.NewInt(10), big.NewInt(9), nil)
-
-	// groupSize * ( ticketsSpace / (tokenSupply / minimumStake) )
-	return new(big.Int).Mul(
-		big.NewInt(int64(groupSize)),
-		new(big.Int).Div(
-			ticketsSpace,
-			new(big.Int).Div(tokenSupply, minimumStake),
-		),
-	)
 }
 
 func selectGroup(entry *big.Int, numberOfGroups int) int {

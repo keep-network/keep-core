@@ -90,7 +90,7 @@ fi
 # TODO: only initialize if DATADIR has no chain data
 if [ ! -d "$DATADIR/geth/chaindata" ]; then
   echo "-- No chaindata directory. Neet to Initialize. Writing genesis block..."
-  /geth --datadir $DATADIR init $GENESIS
+  geth --datadir $DATADIR init $GENESIS
 fi
 
 echo "-- BOOTNODES: $BOOTNODES"
@@ -98,7 +98,7 @@ echo "-- GETHARGS: $GETHARGS"
 
 echo "-- Starting geth..."
 
-/geth --datadir $DATADIR --ethash.dagdir $DATADIR --ipcpath $ETH_IPC_PATH \
+geth --datadir $DATADIR --ethash.dagdir $DATADIR --ipcpath $ETH_IPC_PATH \
       --nodiscover \
       --port $GETHPORT --networkid $NETWORKID \
       --ws --wsaddr "0.0.0.0" --wsport $WSPORT --wsorigins "*" \
@@ -106,4 +106,6 @@ echo "-- Starting geth..."
       --rpcapi $RPCAPI \
       --identity $NODE_NAME \
       --syncmode "fast" \
+      --allow-insecure-unlock \
+      --targetgaslimit "7000000" \
       $GETHARGS

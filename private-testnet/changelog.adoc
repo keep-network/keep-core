@@ -2,6 +2,16 @@
 
 Summary of Keep private testnet releases in reverse chronological order.
 
+== 2019-10-31
+
+=== OTHERS
+
+- Block times optimization: Distributed group key generation and relay entry signing are two times
+  faster now.
+- Relay entry timeout: Improved validation to do not accept relay entries after the deadline.
+- Improved validation: In the candidate group member ticket submission to reject duplicate tickets.
+- Beacon pricing: Experimental implementation of the pricing mechanism for the beacon.
+
 == 2019-10-15
 
 === BUGFIXES
