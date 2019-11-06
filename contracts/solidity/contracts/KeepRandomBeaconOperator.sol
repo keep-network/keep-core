@@ -57,9 +57,6 @@ contract KeepRandomBeaconOperator {
     // Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
 
-    // Sum of group member rewards of each entry to allow gas efficient withdrawals.
-    mapping (bytes => uint256) internal accumulatedGroupMemberReward;
-
     // The price feed estimate is used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use both values to
     // defend against malicious miner-submitters who can manipulate transaction
@@ -505,7 +502,7 @@ contract KeepRandomBeaconOperator {
         entryInProgress = false;
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
-        accumulatedGroupMemberReward[groupPubKey] = accumulatedGroupMemberReward[groupPubKey].add(groupMemberReward);
+        groupContract.addGroupMemberReward(groupPubKey, groupMemberReward);
 
         stakingContract.magpieOf(msg.sender).transfer(submitterReward);
 
