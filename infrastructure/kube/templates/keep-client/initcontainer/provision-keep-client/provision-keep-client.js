@@ -1,4 +1,4 @@
-aconst fs = require('fs');
+const fs = require('fs');
 const toml = require('toml');
 const tomlify = require('tomlify-j0.4');
 const concat = require('concat-stream');
