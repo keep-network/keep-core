@@ -2,6 +2,20 @@
 
 Summary of Keep private testnet releases in reverse chronological order.
 
+== 2019-11-06
+
+=== OTHERS
+
+- Relay entry gas cost optimizations:  Reduced gas cost in a few areas of relay entry generation.
+  This will be an ongoing process.
+
+=== BUGFIXES
+
+- Disabled staking for relay-request-submitter:  Our automated relay request generator was staking
+  Ethereum accounts with KEEP tokens on each relay request generated (every 5 min).  After a
+  number of days this resulted in exhausting our `KeepToken` contract supply.  It's not required for
+  our relay request accounts to be staked, we've disabled staking here as a result.
+
 == 2019-10-31
 
 === OTHERS
