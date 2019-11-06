@@ -66,6 +66,7 @@ spec:
       containers:
       - name: tx
         image: gcr.io/keep-dev-fe24/eth-geth-node:1.9.6
+        imagePullPolicy: Always
         ports:
         - containerPort: 8545
         - containerPort: 8546
