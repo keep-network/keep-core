@@ -34,48 +34,50 @@ contract('KeepRandomBeaconOperator', function() {
 
       it("should reject a new ticket when it is higher than the current highest one", async () => {
         let ticketsToAdd = [1, 3, 5, 7, 4, 9, 6, 11, 8, 12, 100, 200, 300];
-        let expectedTickets = [1, 3, 5, 7, 4, 9, 6, 11, 8, 12]; // 100, 200, 300 -> out
-
+        
         await addTickets(ticketsToAdd)
-
-        let expectedTail = 9;
+        
+        let expectedTickets = [1, 3, 5, 7, 4, 9, 6, 11, 8, 12]; // 100, 200, 300 -> out
         let expectedOrderedIndices = [0, 0, 4, 6, 1, 8, 2, 5, 3, 7];
-        await assertTicketsProperties(expectedTail, expectedOrderedIndices, expectedTickets)
+        let expectedTail = 9;
 
+        await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
       });
 
       it("should replace the highest current with a new ticket which is somewhere in the middle value range", async () => {
         let ticketsToAdd = [151, 42, 175, 7, 128, 190, 74, 143, 88, 130, 135];
-        let expectedTickets = [151, 42, 175, 7, 128, 135, 74, 143, 88, 130]; // 190 -> out
-
+        
         await addTickets(ticketsToAdd)
-
-        let expectedTail = 2;
+        
+        let expectedTickets = [151, 42, 175, 7, 128, 135, 74, 143, 88, 130]; // 190 -> out
         let expectedOrderedIndices = [7, 3, 0, 3, 8, 9, 1, 5, 6, 4];
-        await assertTicketsProperties(expectedTail, expectedOrderedIndices, expectedTickets)
+        let expectedTail = 2;
+
+        await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
       });
 
       it("should replace highest ticket (tail) and become a new highest one (also tail)", async () => {
         let ticketsToAdd = [151, 42, 175, 7, 128, 190, 74, 143, 88, 130, 185];
-        let expectedTickets = [151, 42, 175, 7, 128, 185, 74, 143, 88, 130]; // 190 -> out
-
+        
         await addTickets(ticketsToAdd)
-
-        let expectedTail = 5;
+        
+        let expectedTickets = [151, 42, 175, 7, 128, 185, 74, 143, 88, 130]; // 190 -> out
         let expectedOrderedIndices = [7, 3, 0, 3, 8, 2, 1, 9, 6, 4];
-        await assertTicketsProperties(expectedTail, expectedOrderedIndices, expectedTickets)
+        let expectedTail = 5;
+
+        await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
       });
 
       it("should add a new smallest ticket and remove the highest", async () => {
         let ticketsToAdd = [151, 42, 175, 7, 128, 190, 74, 143, 88, 130, 2];
-        let expectedTickets = [151, 42, 175, 7, 128, 2, 74, 143, 88, 130]; // 190 -> out
-
-        await addTickets(ticketsToAdd)
-
-        let expectedTail = 2;
-        let expectedOrderedIndices = [7, 3, 0, 5, 8, 5, 1, 9, 6, 4];
         
-        await assertTicketsProperties(expectedTail, expectedOrderedIndices, expectedTickets)
+        await addTickets(ticketsToAdd)
+        
+        let expectedTickets = [151, 42, 175, 7, 128, 2, 74, 143, 88, 130]; // 190 -> out
+        let expectedOrderedIndices = [7, 3, 0, 5, 8, 5, 1, 9, 6, 4];
+        let expectedTail = 2;
+    
+        await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
       });
 
     });
@@ -87,10 +89,10 @@ contract('KeepRandomBeaconOperator', function() {
 
         await addTickets(ticketsToAdd)
 
-        let expectedTail = 7;
         let expectedOrderedIndices = [0, 0, 4, 6, 1, 3, 2, 5];
+        let expectedTail = 7;
 
-        await assertTicketsProperties(expectedTail, expectedOrderedIndices, ticketsToAdd)
+        await assertTickets(expectedTail, expectedOrderedIndices, ticketsToAdd)
       });
 
       it("should add all the tickets and track the order when a latest ticket is between smallest and biggest", async () => {
@@ -98,10 +100,10 @@ contract('KeepRandomBeaconOperator', function() {
 
         await addTickets(ticketsToAdd)
 
-        let expectedTail = 6;
         let expectedOrderedIndices = [0, 0, 4, 7, 1, 3, 5, 2];
+        let expectedTail = 6;
 
-        await assertTicketsProperties(expectedTail, expectedOrderedIndices, ticketsToAdd)
+        await assertTickets(expectedTail, expectedOrderedIndices, ticketsToAdd)
       });
 
       it("should add all the tickets and track the order when a last added ticket is the smallest", async () => {
@@ -109,10 +111,10 @@ contract('KeepRandomBeaconOperator', function() {
 
         await addTickets(ticketsToAdd)
 
-        let expectedTail = 5;
         let expectedOrderedIndices = [4, 3, 0, 7, 6, 2, 1, 7];
+        let expectedTail = 5;
 
-        await assertTicketsProperties(expectedTail, expectedOrderedIndices, ticketsToAdd);
+        await assertTickets(expectedTail, expectedOrderedIndices, ticketsToAdd);
       });
 
     });
@@ -123,7 +125,7 @@ contract('KeepRandomBeaconOperator', function() {
       }
     };
 
-    async function assertTicketsProperties(expectedTail, expectedLinkedTicketIndices, expectedTickets) {
+    async function assertTickets(expectedTail, expectedLinkedTicketIndices, expectedTickets) {
       // Assert tickets size
       let tickets = await operatorContract.getTickets();
       assert.isAtMost(

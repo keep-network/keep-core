@@ -17,7 +17,6 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         relayEntryTimeout = 10;
         groupSelection.ticketSubmissionTimeout = 65;
         resultPublicationBlockStep = 3;
-        groupSelection.groupSize = 20;
     }
 
     function registerNewGroup(bytes memory groupPublicKey) public {
@@ -30,6 +29,7 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
     function setGroupSize(uint256 size) public {
         groupSize = size;
+        groupSelection.groupSize = size;
     }
 
     function getGroupSelectionRelayEntry() public view returns (uint256) {
