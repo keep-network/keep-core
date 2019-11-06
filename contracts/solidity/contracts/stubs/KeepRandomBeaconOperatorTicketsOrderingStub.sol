@@ -44,10 +44,10 @@ contract KeepRandomBeaconOperatorTicketsOrderingStub is KeepRandomBeaconOperator
     /**
     * @dev Gets an index of a ticket that a higherTicketValueIndex points to.
     * Ex. tickets[23, 5, 65]
-    * getOrderedLinkedTicketIndex(2) = 0
+    * getPreviousTicketIndex(2) = 0
     */
-    function getOrderedLinkedTicketIndex(uint256 higherTicketValueIndex) public view returns (uint256) {
-        return groupSelection.orderedLinkedTicketIndices[higherTicketValueIndex];
+    function getPreviousTicketIndex(uint256 higherTicketValueIndex) public view returns (uint256) {
+        return groupSelection.previousTicketIndex[higherTicketValueIndex];
     }
 
     function setGroupSize(uint256 size) public {

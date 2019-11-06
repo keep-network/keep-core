@@ -64,16 +64,16 @@ library GroupSelection {
         // descending order starting from the tail.
         // Ex. tickets = [151, 42, 175, 7]
         // tail: 2 because tickets[2] = 175
-        // orderedLinkedTicketIndices[0] -> 1
-        // orderedLinkedTicketIndices[1] -> 3
-        // orderedLinkedTicketIndices[2] -> 0
-        // orderedLinkedTicketIndices[3] -> 3 note: index that holds a lowest
+        // previousTicketIndex[0] -> 1
+        // previousTicketIndex[1] -> 3
+        // previousTicketIndex[2] -> 0
+        // previousTicketIndex[3] -> 3 note: index that holds a lowest
         // value points to itself because there is no `nil` in Solidity.
         // Traversing from tail: [2]->[0]->[1]->[3] result in 175->151->42->7
-        mapping(uint256 => uint256) orderedLinkedTicketIndices;
+        mapping(uint256 => uint256) previousTicketIndex;
 
         // Tail represents an index of a ticket in a tickets[] array which holds
-        // the largest ticket value and is used by `orderedLinkedTicketIndices`.
+        // the largest ticket value and is used by `previousTicketIndex`.
         uint256 tail;
 
         // Size of a group in the threshold relay.
@@ -171,40 +171,40 @@ library GroupSelection {
                 self.tickets.push(newTicketValue);
                 if (self.tickets.length > 1) {
                     self.tail = self.tickets.length-1;
-                    self.orderedLinkedTicketIndices[self.tail] = oldTail;
+                    self.previousTicketIndex[self.tail] = oldTail;
                 }
             // lower than the current lowest
             } else if (newTicketValue < self.tickets[ordered[0]]) {
                 self.tickets.push(newTicketValue);
                 // last element points to itself
-                self.orderedLinkedTicketIndices[self.tickets.length - 1] = self.tickets.length - 1;
+                self.previousTicketIndex[self.tickets.length - 1] = self.tickets.length - 1;
                 // prev index of a lowest ticket value points to a new lowest
-                self.orderedLinkedTicketIndices[ordered[0]] = self.tickets.length - 1;
+                self.previousTicketIndex[ordered[0]] = self.tickets.length - 1;
             // larger than the lowest ticket value and lower than the largest ticket value,
             } else {
                 self.tickets.push(newTicketValue);
                 uint j = findIndexForNewTicket(self, newTicketValue, ordered);
-                self.orderedLinkedTicketIndices[self.tickets.length - 1] = self.orderedLinkedTicketIndices[j];
-                self.orderedLinkedTicketIndices[j] = self.tickets.length - 1;
+                self.previousTicketIndex[self.tickets.length - 1] = self.previousTicketIndex[j];
+                self.previousTicketIndex[j] = self.tickets.length - 1;
             }
         } else if (newTicketValue < self.tickets[self.tail]) {
             // new ticket is lower than currently lowest
             if (newTicketValue < ordered[0]) {
                 // replacing largest ticket with a lowest
                 self.tickets[self.tail] = newTicketValue;
-                // updating the orderedLinkedTicketIndices map
-                uint newTail = self.orderedLinkedTicketIndices[self.tail];
-                self.orderedLinkedTicketIndices[ordered[0]] = self.tail;
-                self.orderedLinkedTicketIndices[self.tail] = self.tail;
+                // updating the previousTicketIndex map
+                uint newTail = self.previousTicketIndex[self.tail];
+                self.previousTicketIndex[ordered[0]] = self.tail;
+                self.previousTicketIndex[self.tail] = self.tail;
                 self.tail = newTail;
             } else { // new ticket is between lowest and largest
                 uint j = findIndexForNewTicket(self, newTicketValue, ordered);
                 self.tickets[self.tail] = newTicketValue;
                 // do not change the order if a new ticket is still largest
                 if (j != self.tail) {
-                    uint newTail = self.orderedLinkedTicketIndices[self.tail];
-                    self.orderedLinkedTicketIndices[j] = self.tail;
-                    self.orderedLinkedTicketIndices[self.tail] = self.tickets.length - 1;
+                    uint newTail = self.previousTicketIndex[self.tail];
+                    self.previousTicketIndex[j] = self.tail;
+                    self.previousTicketIndex[self.tail] = self.tickets.length - 1;
                     self.tail = newTail;
                 }
             }
@@ -237,8 +237,8 @@ library GroupSelection {
     // Creates an array of ticket indexes based on their values in the ascending
     // order. Below is the example how we build ordered[] array. n - size of tickets[]
     // ordered[n-1] = tail
-    // ordered[n-2] = orderedLinkedTicketIndices[tail]
-    // ordered[n-3] = orderedLinkedTicketIndices[ordered[n-2]]
+    // ordered[n-2] = previousTicketIndex[tail]
+    // ordered[n-3] = previousTicketIndex[ordered[n-2]]
     // etc..
     function createOrderedTicketIndicesByValues(Storage storage self) internal view returns (uint256[] memory) {
         uint256[] memory ordered = new uint256[](self.tickets.length);
@@ -246,7 +246,7 @@ library GroupSelection {
             ordered[self.tickets.length-1] = self.tail;
             if (ordered.length > 1) {
                 for (uint256 i = self.tickets.length - 1; i > 0; i--) {
-                    ordered[i-1] = self.orderedLinkedTicketIndices[ordered[i]];
+                    ordered[i-1] = self.previousTicketIndex[ordered[i]];
                 }
             }
         }
@@ -284,7 +284,7 @@ library GroupSelection {
     function cleanup(Storage storage self) internal {
         for (uint i = 0; i < self.tickets.length; i++) {
             delete self.proofs[self.tickets[i]];
-            delete self.orderedLinkedTicketIndices[i];
+            delete self.previousTicketIndex[i];
         }
         delete self.tickets;
     }

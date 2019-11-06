@@ -146,7 +146,7 @@ contract('KeepRandomBeaconOperator', function() {
       // Assert the order of the tickets[] indices
       let actualLinkedTicketIndices = [];
       for (let i = 0; i < tickets.length; i++) {
-        let actualIndex = await operatorContract.getOrderedLinkedTicketIndex(i)
+        let actualIndex = await operatorContract.getPreviousTicketIndex(i)
         actualLinkedTicketIndices.push(Number(actualIndex))
       }
       assert.sameOrderedMembers(
