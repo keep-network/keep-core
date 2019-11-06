@@ -607,44 +607,10 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Withdraws accumulated group member rewards from a staled group.
-     * Finds and makes sure to remove member first before the withdrawal.
-     * Reverts if any of the required checks to find group and remove group
-     * member are failed.
-     */
-    function withdrawGroupMemberReward(bytes memory groupPubKey, address groupMember, uint256 memberIndex) public {
-        groupContract.removeGroupMember(groupPubKey, groupMember, memberIndex);
-        stakingContract.magpieOf(groupMember).transfer(accumulatedGroupMemberReward[groupPubKey]);
-    }
-
-    /**
-     * @dev Gets list of indices of staled groups.
-     */
-    function staleGroupsIndices() public view returns(uint256[] memory) {
-        return groupContract.staleGroupsIndices();
-    }
-
-    /**
      * @dev Gets group public key by its index.
      */
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groupContract.getGroupPublicKey(groupIndex);
-    }
-
-    /**
-     * @dev Gets all indices in the provided group for a member.
-     */
-    function getGroupMemberIndices(bytes memory groupPubKey, address groupMember) public view returns(uint256[] memory) {
-        return groupContract.getGroupMemberIndices(groupPubKey, groupMember);
-    }
-
-    /**
-     * @dev Gets group member rewards available to withdraw.
-     */
-    function availableGroupMemberReward(bytes memory groupPublicKey, address groupMember) public view returns (uint256) {
-        if (isStaleGroup(groupPublicKey) && groupContract.isGroupMember(groupPublicKey, groupMember)) {
-            return accumulatedGroupMemberReward[groupPublicKey];
-        }
     }
 
     /**
