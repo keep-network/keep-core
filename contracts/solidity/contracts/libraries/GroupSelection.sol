@@ -73,7 +73,8 @@ library GroupSelection {
         mapping(uint256 => uint256) previousTicketIndex;
 
         // Tail represents an index of a ticket in a tickets[] array which holds
-        // the largest ticket value and is used by `previousTicketIndex`.
+        // the largest ticket value and is used by `previousTicketIndex`. It is
+        // a tail of the linked list defined by `previousTicketIndex`.
         uint256 tail;
 
         // Size of a group in the threshold relay.
@@ -211,7 +212,9 @@ library GroupSelection {
         }
     }
 
-    // use binary search to find an index for a new ticket in the tickets[] array
+    /**
+     * @dev Use binary search to find an index for a new ticket in the tickets[] array
+     */
     function findReplacementIndex(
         Storage storage self,
         uint256 newTicketValue,
@@ -234,12 +237,13 @@ library GroupSelection {
         return ordered[lo];
     }
 
-    // Creates an array of ticket indexes based on their values in the ascending
-    // order. Below is the example how we build ordered[] array. n - size of tickets[]
-    // ordered[n-1] = tail
-    // ordered[n-2] = previousTicketIndex[tail]
-    // ordered[n-3] = previousTicketIndex[ordered[n-2]]
-    // etc..
+    /**
+     * @dev Creates an array of ticket indexes based on their values in the ascending order:
+     *
+     * ordered[n-1] = tail
+     * ordered[n-2] = previousTicketIndex[tail]
+     * ordered[n-3] = previousTicketIndex[ordered[n-2]]
+     */
     function createOrderedTicketIndicesByValues(Storage storage self) internal view returns (uint256[] memory) {
         uint256[] memory ordered = new uint256[](self.tickets.length);
         if (ordered.length > 0) {
