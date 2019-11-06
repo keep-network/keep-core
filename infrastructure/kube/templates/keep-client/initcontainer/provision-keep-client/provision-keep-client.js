@@ -63,12 +63,8 @@ async function provisionKeepClient() {
       console.log('###########  Provisioning keep-client Bootstrap Peer! ###########');
       console.log('\n<<<<<<<<<<<< Setting Up Operator Account ' + '>>>>>>>>>>>>');
 
-      // Existing account is set on the bootstrap peer config template, we rip it out of that.
-      let bootstrapConfigFile = toml.parse(fs.readFileSync('/tmp/keep-client-bootstrap-peer-template.toml', 'utf8'));
-      var operator = bootstrapConfigFile.ethereum.account.Address;
-
+      var operator = process.env.KEEP_CLIENT_ETH_ACCOUNT;
       console.log("Using pre-configured bootstrap peer account " + operator);
-      console.log('Checking if bootstrap peer account is already staked:');
 
       // We need to unlock the operator account only in bootstrap case since it's hosted on ETH node.
       await unlockEthAccount(operator, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
@@ -121,6 +117,7 @@ async function provisionKeepClient() {
 
 async function isStaked(operator) {
 
+  console.log('Checking if operator account is already staked:');
   let stakedAmount = await tokenStakingContract.methods.balanceOf(operator).call();
   return stakedAmount != 0;
 }
@@ -142,10 +139,10 @@ async function stakeOperatorAccount(operator, contractOwner) {
     console.log('Subtype relay-requester set. No staking needed, exiting staking!');
     return;
   } else if (staked === true) {
-    console.log('Staked client operator account set, exiting staking!');
+    console.log('Staked operator account set, exiting staking!');
     return;
   } else {
-    console.log('Unstaked client operator account set, staking!');
+    console.log('Unstaked operator account set, staking account!');
   }
 
   /*
@@ -199,7 +196,6 @@ async function createEthAccountKeyfile(ethAccountPrivateKey, ethAccountPassword)
 async function unlockEthAccount(ethAccount, ethAccountPassword) {
 
   await web3.eth.personal.unlockAccount(ethAccount, ethAccountPassword, 150000);
-
   console.log('Account ' + ethAccount + ' unlocked!');
 };
 
@@ -214,55 +210,34 @@ async function fundOperatorAccount(operator, purse, etherToTransfer) {
 
 async function createKeepClientConfig(operator) {
 
-  if (process.env.KEEP_CLIENT_TYPE === 'bootstrap' ) {
-    fs.createReadStream('/tmp/keep-client-bootstrap-peer-template.toml', 'utf8').pipe(concat(function(data) {
-      let parsedConfigFile = toml.parse(data);
+  fs.createReadStream('/tmp/keep-client-bootstrap-peer-template.toml', 'utf8').pipe(concat(function(data) {
 
-      parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
-      parsedConfigFile.ethereum.URLRPC = ethHost + ':' + ethRpcPort;
-      parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
-      parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
-      parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
-      parsedConfigFile.LibP2P.Port = 3919;
-      parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
+    let parsedConfigFile = toml.parse(data);
 
-      /*
-      tomlify.toToml() writes our Seed/Port values as a float.  The added precision renders our config
-      file unreadable by the keep-client as it interprets 3919.0 as a string when it expects an int.
-      Here we format the default rendering to write the config file with Seed/Port values as needed.
-      */
-      let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
-        replace: (key, value) => { return (key == 'Seed' || key == 'Port') ? value.toFixed(0) : false }
-      });
+    parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
+    parsedConfigFile.ethereum.URLRPC = ethHost + ':' + ethRpcPort;
+    parsedConfigFile.ethereum.account.Address = operator;
+    parsedConfigFile.ethereum.account.KeyFile = '/mnt/keep-client/config/eth_account_keyfile';
+    parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
+    parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
+    parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
+    parsedConfigFile.LibP2P.Port = 3919;
+    parsedConfigFile.LibP2P.Peers = process.env.KEEP_NETWORK_BOOTSTRAP_PEERS;
+    parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
-      fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', formattedConfigFile, (error) => {
-        if (error) throw error;
-      });
-    }));
-  } else {
-    fs.createReadStream('/tmp/keep-client-standard-peer-template.toml', 'utf8').pipe(concat(function(data) {
-      let parsedConfigFile = toml.parse(data);
+    /*
+    tomlify.toToml() writes our Seed/Port values as a float.  The added precision renders our config
+    file unreadable by the keep-client as it interprets 3919.0 as a string when it expects an int.
+    Here we format the default rendering to write the config file with Seed/Port values as needed.
+    */
+    let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
+      replace: (key, value) => { return (key == 'Seed' || key == 'Port') ? value.toFixed(0) : false }
+    });
 
-      parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
-      parsedConfigFile.ethereum.URLRPC = ethHost + ':' + ethRpcPort;
-      parsedConfigFile.ethereum.account.Address = operator;
-      parsedConfigFile.ethereum.account.KeyFile = '/mnt/keep-client/config/eth_account_keyfile';
-      parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
-      parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
-      parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
-      parsedConfigFile.LibP2P.Port = 3919;
-      parsedConfigFile.LibP2P.Peers = process.env.KEEP_NETWORK_BOOTSTRAP_PEERS;
-      parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
-
-      let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
-        replace: (key, value) => { return key == 'Port' ? value.toFixed(0) : false }
-      });
-
-      fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', formattedConfigFile, (error) => {
-        if (error) throw error;
-      });
-    }));
-  }
+    fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', formattedConfigFile, (error) => {
+      if (error) throw error;
+    });
+  }));
   console.log("keep-client config written to /mnt/keep-client/config/keep-client-config.toml");
 };
 
