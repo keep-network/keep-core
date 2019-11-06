@@ -1,4 +1,4 @@
-const fs = require('fs');
+aconst fs = require('fs');
 const toml = require('toml');
 const tomlify = require('tomlify-j0.4');
 const concat = require('concat-stream');
@@ -210,7 +210,7 @@ async function fundOperatorAccount(operator, purse, etherToTransfer) {
 
 async function createKeepClientConfig(operator) {
 
-  fs.createReadStream('/tmp/keep-client-bootstrap-peer-template.toml', 'utf8').pipe(concat(function(data) {
+  fs.createReadStream('/tmp/keep-client-config-template.toml', 'utf8').pipe(concat(function(data) {
 
     let parsedConfigFile = toml.parse(data);
 
