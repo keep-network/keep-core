@@ -183,7 +183,7 @@ library GroupSelection {
             // larger than the lowest ticket value and lower than the largest ticket value,
             } else {
                 self.tickets.push(newTicketValue);
-                uint j = findIndexForNewTicket(self, newTicketValue, ordered);
+                uint j = findReplacementIndex(self, newTicketValue, ordered);
                 self.previousTicketIndex[self.tickets.length - 1] = self.previousTicketIndex[j];
                 self.previousTicketIndex[j] = self.tickets.length - 1;
             }
@@ -198,7 +198,7 @@ library GroupSelection {
                 self.previousTicketIndex[self.tail] = self.tail;
                 self.tail = newTail;
             } else { // new ticket is between lowest and largest
-                uint j = findIndexForNewTicket(self, newTicketValue, ordered);
+                uint j = findReplacementIndex(self, newTicketValue, ordered);
                 self.tickets[self.tail] = newTicketValue;
                 // do not change the order if a new ticket is still largest
                 if (j != self.tail) {
@@ -212,7 +212,7 @@ library GroupSelection {
     }
 
     // use binary search to find an index for a new ticket in the tickets[] array
-    function findIndexForNewTicket(
+    function findReplacementIndex(
         Storage storage self,
         uint256 newTicketValue,
         uint256[] memory ordered
