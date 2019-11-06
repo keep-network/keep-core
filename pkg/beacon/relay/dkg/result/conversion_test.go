@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/altbn128"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -15,7 +14,7 @@ func TestConvertResult(t *testing.T) {
 	groupSize := 5
 
 	publicKey := new(bn256.G2).ScalarBaseMult(big.NewInt(2))
-	compressedPublicKey := altbn128.G2Point{G2: publicKey}.Compress()
+	marshalledPublicKey := publicKey.Marshal()
 
 	var tests = map[string]struct {
 		disqualifiedMemberIDs []group.MemberIndex
@@ -44,7 +43,7 @@ func TestConvertResult(t *testing.T) {
 				Group:          group.NewDkgGroup(3, 5),
 			},
 			expectedResult: &relayChain.DKGResult{
-				GroupPublicKey: compressedPublicKey,
+				GroupPublicKey: marshalledPublicKey,
 				Disqualified:   []byte{0x01, 0x00, 0x01, 0x01, 0x00},
 				Inactive:       []byte{0x00, 0x00, 0x00, 0x00, 0x01},
 			},

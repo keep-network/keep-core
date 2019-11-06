@@ -57,6 +57,7 @@ spec:
       initContainers:
       - name: initcontainer-provision-keep-client
         image: gcr.io/keep-dev-fe24/keep-client-initcontainer
+        imagePullPolicy: Always
         env:
           - name: KEEP_CLIENT_TYPE
             value: standard
@@ -67,6 +68,8 @@ spec:
                 key: account-passphrase
           - name: KEEP_DATA_DIR
             value: /mnt/keep-client/data
+          - name: KEEP_NETWORK_BOOTSTRAP_PEERS
+            value: '[/dns4/keep-client-bootstrap-peer-0.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r]'
         volumeMounts:
           - name: keep-client-standard-peer-config
             mountPath: /mnt/keep-client/config
