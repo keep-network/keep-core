@@ -635,17 +635,17 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Gets group member index by its address.
+     * @dev Gets all indices in the provided group for a member.
      */
-    function getGroupMemberIndex(bytes memory groupPubKey, address groupMember) public view returns(uint256) {
-        return groupContract.getGroupMemberIndex(groupPubKey, groupMember);
+    function getGroupMemberIndices(bytes memory groupPubKey, address groupMember) public view returns(uint256[] memory) {
+        return groupContract.getGroupMemberIndices(groupPubKey, groupMember);
     }
 
     /**
      * @dev Gets group member rewards available to withdraw.
      */
     function availableGroupMemberReward(bytes memory groupPublicKey, address groupMember) public view returns (uint256) {
-        if (groupContract.isStaleGroup(groupPublicKey) && groupContract.isGroupMember(groupPublicKey, groupMember)) {
+        if (isStaleGroup(groupPublicKey) && groupContract.isGroupMember(groupPublicKey, groupMember)) {
             return accumulatedGroupMemberReward[groupPublicKey];
         }
     }

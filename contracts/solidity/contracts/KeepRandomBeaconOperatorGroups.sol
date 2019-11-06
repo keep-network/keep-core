@@ -137,12 +137,22 @@ contract KeepRandomBeaconOperatorGroups {
     }
 
     /**
-     * @dev Gets member index in the provided group.
+     * @dev Gets all indices in the provided group for a member.
      */
-    function getGroupMemberIndex(bytes memory groupPubKey, address member) public view returns (uint256) {
+    function getGroupMemberIndices(bytes memory groupPubKey, address member) public view returns (uint256[] memory indices) {
+        uint256 counter;
         for (uint i = 0; i < groupMembers[groupPubKey].length; i++) {
             if (groupMembers[groupPubKey][i] == member) {
-                return i;
+                counter++;
+            }
+        }
+
+        indices = new uint256[](counter);
+        counter = 0;
+        for (uint i = 0; i < groupMembers[groupPubKey].length; i++) {
+            if (groupMembers[groupPubKey][i] == member) {
+                indices[counter] = i;
+                counter++;
             }
         }
     }
