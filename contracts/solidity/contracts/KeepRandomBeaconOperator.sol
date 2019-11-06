@@ -175,6 +175,7 @@ contract KeepRandomBeaconOperator {
         owner = msg.sender;
 
         groupSelection.ticketSubmissionTimeout = 6;
+        groupSelection.groupSize = groupSize;
     }
 
     /**
@@ -246,7 +247,7 @@ contract KeepRandomBeaconOperator {
             ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
         }
 
-        groupSelection.start(_newEntry, groupSize);
+        groupSelection.start(_newEntry);
         emit GroupSelectionStarted(_newEntry);
         dkgSubmitterReimbursementFee = _payment;
     }

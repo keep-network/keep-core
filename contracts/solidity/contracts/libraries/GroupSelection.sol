@@ -57,20 +57,23 @@ library GroupSelection {
         // Concurrent group selections are not allowed.
         bool inProgress;
 
-        // Map simulates a linked list. key -> value are both indices in the
-        // tickets[] array.
-        // 'key' index holds a higher number and points to an index that
-        // holds a next lower ticket number. That number is a ticket value.
+        // Map simulates a sorted linked list of ticket values by their indexes.
+        // key -> value represent indices from the tickets[] array.
+        // 'key' index holds an index of a ticket and 'value' holds an index
+        // of the next ticket. Tickets are sorted by their value in
+        // descending order starting from the tail.
         // Ex. tickets = [151, 42, 175, 7]
+        // tail: 2 because tickets[2] = 175
         // orderedLinkedTicketIndices[0] -> 1
         // orderedLinkedTicketIndices[1] -> 3
         // orderedLinkedTicketIndices[2] -> 0
-        // orderedLinkedTicketIndices[3] -> 3 note: index that holds a smallest
-        // value points to itself.
+        // orderedLinkedTicketIndices[3] -> 3 note: index that holds a lowest
+        // value points to itself because there is no `nil` in Solidity.
+        // Traversing from tail: [2]->[0]->[1]->[3] result in 175->151->42->7
         mapping(uint256 => uint256) orderedLinkedTicketIndices;
 
         // Tail represents an index of a ticket in a tickets[] array which holds
-        // the largest ticket value.
+        // the largest ticket value and is used by `orderedLinkedTicketIndices`.
         uint256 tail;
 
         // Size of a group in the threshold relay.
@@ -82,15 +85,12 @@ library GroupSelection {
      * @param _seed pseudorandom seed value used as an input for the group
      * selection. All submitted tickets needs to have the seed mixed-in into the
      * value.
-     * @param _groupSize size of a member group that produce a relay.
      */
-    function start(Storage storage self, uint256 _seed, uint256 _groupSize) public {
+    function start(Storage storage self, uint256 _seed) public {
         cleanup(self);
         self.inProgress = true;
         self.seed = _seed;
         self.ticketSubmissionStartBlock = block.number;
-        self.orderedLinkedTicketIndices[self.tail] = 0; // simulates nil
-        self.groupSize = _groupSize;
     }
 
     /**
@@ -162,23 +162,25 @@ library GroupSelection {
      */
     function addTicket(Storage storage self, uint256 newTicketValue) internal {
         uint256 oldTail = self.tail;
-        uint256[] memory ordered = createOrderedLinkedTicketIndices(self);
+        uint256[] memory ordered = createOrderedTicketIndicesByValues(self);
 
+        // any ticket goes when the tickets array size is lower than the group size
         if (self.tickets.length < self.groupSize) {
-            // larger than the existing largest
+            // no tickets or larger than the current largest
             if (self.tickets.length == 0 || newTicketValue > self.tickets[self.tail]) {
                 self.tickets.push(newTicketValue);
                 if (self.tickets.length > 1) {
                     self.tail = self.tickets.length-1;
                     self.orderedLinkedTicketIndices[self.tail] = oldTail;
                 }
-            // smaller than the existing smallest
+            // lower than the current lowest
             } else if (newTicketValue < self.tickets[ordered[0]]) {
                 self.tickets.push(newTicketValue);
                 // last element points to itself
                 self.orderedLinkedTicketIndices[self.tickets.length - 1] = self.tickets.length - 1;
+                // prev index of a lowest ticket value points to a new lowest
                 self.orderedLinkedTicketIndices[ordered[0]] = self.tickets.length - 1;
-            // self.tickets[smallest] < newTicketValue < self.tickets[max]
+            // larger than the lowest ticket value and lower than the largest ticket value,
             } else {
                 self.tickets.push(newTicketValue);
                 uint j = findIndexForNewTicket(self, newTicketValue, ordered);
@@ -186,10 +188,16 @@ library GroupSelection {
                 self.orderedLinkedTicketIndices[j] = self.tickets.length - 1;
             }
         } else if (newTicketValue < self.tickets[self.tail]) {
-            // replacing existing smallest with a smaller
+            // new ticket is lower than currently lowest
             if (newTicketValue < ordered[0]) {
-                self.tickets[ordered[0]] = newTicketValue;
-            } else {
+                // replacing largest ticket with a lowest
+                self.tickets[self.tail] = newTicketValue;
+                // updating the orderedLinkedTicketIndices map
+                uint newTail = self.orderedLinkedTicketIndices[self.tail];
+                self.orderedLinkedTicketIndices[ordered[0]] = self.tail;
+                self.orderedLinkedTicketIndices[self.tail] = self.tail;
+                self.tail = newTail;
+            } else { // new ticket is between lowest and largest
                 uint j = findIndexForNewTicket(self, newTicketValue, ordered);
                 self.tickets[self.tail] = newTicketValue;
                 // do not change the order if a new ticket is still largest
@@ -209,11 +217,11 @@ library GroupSelection {
         uint256 newTicketValue,
         uint256[] memory ordered
     ) internal view returns (uint256) {
-        uint lo = 0;
-        uint hi = ordered.length - 1;
-        uint mid = 0;
+        uint256 lo = 0;
+        uint256 hi = ordered.length - 1;
+        uint256 mid = 0;
         while (lo <= hi) {
-            mid = lo + (hi - lo) / 2;
+            mid = (lo + hi) >> 1;
             if (newTicketValue < self.tickets[ordered[mid]]) {
                 hi = mid - 1;
             } else if (newTicketValue > self.tickets[ordered[mid]]) {
@@ -227,14 +235,18 @@ library GroupSelection {
     }
 
     // Creates an array of ticket indexes based on their values in the ascending
-    // order.
-    function createOrderedLinkedTicketIndices(Storage storage self) internal view returns (uint256[] memory) {
+    // order. Below is the example how we build ordered[] array. n - size of tickets[]
+    // ordered[n-1] = tail
+    // ordered[n-2] = orderedLinkedTicketIndices[tail]
+    // ordered[n-3] = orderedLinkedTicketIndices[ordered[n-2]]
+    // etc..
+    function createOrderedTicketIndicesByValues(Storage storage self) internal view returns (uint256[] memory) {
         uint256[] memory ordered = new uint256[](self.tickets.length);
         if (ordered.length > 0) {
             ordered[self.tickets.length-1] = self.tail;
             if (ordered.length > 1) {
-                for (int i = int(self.tickets.length - 2); i >= 0; i--) {
-                    ordered[uint(i)] = self.orderedLinkedTicketIndices[ordered[uint(i) + 1]];
+                for (uint256 i = self.tickets.length - 1; i > 0; i--) {
+                    ordered[i-1] = self.orderedLinkedTicketIndices[ordered[i]];
                 }
             }
         }
@@ -256,7 +268,7 @@ library GroupSelection {
 
         require(self.tickets.length >= groupSize, "Not enough tickets submitted");
 
-        uint256[] memory ordered = createOrderedLinkedTicketIndices(self);
+        uint256[] memory ordered = createOrderedTicketIndicesByValues(self);
         address[] memory selected = new address[](groupSize);
         for (uint i = 0; i < groupSize; i++) {
             Proof memory proof = self.proofs[ordered[i]];
@@ -272,6 +284,7 @@ library GroupSelection {
     function cleanup(Storage storage self) internal {
         for (uint i = 0; i < self.tickets.length; i++) {
             delete self.proofs[self.tickets[i]];
+            delete self.orderedLinkedTicketIndices[i];
         }
         delete self.tickets;
     }

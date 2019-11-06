@@ -13,7 +13,7 @@ contract KeepRandomBeaconOperatorTicketsOrderingStub is KeepRandomBeaconOperator
         address _stakingContract,
         address payable _groupContract
     ) KeepRandomBeaconOperator(_serviceContract, _stakingContract, _groupContract) public {
-        groupSize = 10;
+        groupSelection.groupSize = 10;
     }
 
     function addTicket(uint256 newTicketValue) public {
@@ -48,5 +48,9 @@ contract KeepRandomBeaconOperatorTicketsOrderingStub is KeepRandomBeaconOperator
     */
     function getOrderedLinkedTicketIndex(uint256 higherTicketValueIndex) public view returns (uint256) {
         return groupSelection.orderedLinkedTicketIndices[higherTicketValueIndex];
+    }
+
+    function setGroupSize(uint256 size) public {
+        groupSize = size;
     }
 }
