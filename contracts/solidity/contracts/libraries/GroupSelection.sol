@@ -163,7 +163,7 @@ library GroupSelection {
      */
     function addTicket(Storage storage self, uint256 newTicketValue) internal {
         uint256 oldTail = self.tail;
-        uint256[] memory ordered = createOrderedTicketIndicesByValues(self);
+        uint256[] memory ordered = createTicketValueOrderedIndices(self);
 
         // any ticket goes when the tickets array size is lower than the group size
         if (self.tickets.length < self.groupSize) {
@@ -244,7 +244,7 @@ library GroupSelection {
      * ordered[n-2] = previousTicketIndex[tail]
      * ordered[n-3] = previousTicketIndex[ordered[n-2]]
      */
-    function createOrderedTicketIndicesByValues(Storage storage self) internal view returns (uint256[] memory) {
+    function createTicketValueOrderedIndices(Storage storage self) internal view returns (uint256[] memory) {
         uint256[] memory ordered = new uint256[](self.tickets.length);
         if (ordered.length > 0) {
             ordered[self.tickets.length-1] = self.tail;
@@ -272,7 +272,7 @@ library GroupSelection {
 
         require(self.tickets.length >= groupSize, "Not enough tickets submitted");
 
-        uint256[] memory ordered = createOrderedTicketIndicesByValues(self);
+        uint256[] memory ordered = createTicketValueOrderedIndices(self);
         address[] memory selected = new address[](groupSize);
         for (uint i = 0; i < groupSize; i++) {
             Proof memory proof = self.proofs[ordered[i]];
