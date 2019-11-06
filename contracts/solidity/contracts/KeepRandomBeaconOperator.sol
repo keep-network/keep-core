@@ -502,11 +502,7 @@ contract KeepRandomBeaconOperator {
         entryInProgress = false;
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
-
-        for (uint i = 0; i < groupSize; i++) {
-            address payable operator = address(uint160(groupContract.getGroupMember(groupPubKey, i)));
-            stakingContract.magpieOf(operator).transfer(groupMemberReward);
-        }
+        groupContract.addGroupMemberReward(groupPubKey, groupMemberReward);
 
         stakingContract.magpieOf(msg.sender).transfer(submitterReward);
 

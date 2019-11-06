@@ -6,7 +6,7 @@ const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
 contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
-  let token, stakingContract, operatorContract, groupContract, serviceContract, callbackContract, entryFee, groupSize,
+  let token, stakingContract, operatorContract, groupContract, serviceContract, callbackContract, entryFee, groupSize, group,
     owner = accounts[0],
     requestor = accounts[1],
     operator1 = accounts[2],
@@ -38,7 +38,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     groupSize = web3.utils.toBN(3);
     await operatorContract.setGroupSize(groupSize);
-    let group = await groupContract.getGroupPublicKey(0);
+    group = await groupContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, operator1);
     await operatorContract.addGroupMember(group, operator2);
     await operatorContract.addGroupMember(group, operator3);
@@ -142,9 +142,9 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
     assert.isTrue(delayFactor.eq(web3.utils.toBN(1e16).pow(web3.utils.toBN(2))), "Delay factor expected to be 1 * 1e16 ^ 2.");
-    assert.isTrue(magpie1balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive group reward.");
-    assert.isTrue(magpie2balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive group reward.");
-    assert.isTrue(magpie3balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive group reward.");
+
+    let groupMemberRewards = await groupContract.getGroupMemberRewards(group);
+    assert.isTrue(groupMemberRewards.eq(expectedGroupMemberReward), "Group should have receive accumulated group rewards.");
   });
 
   it("should send part of the group reward to request subsidy pool based on the submission block.", async function() {
@@ -208,9 +208,8 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
-    assert.isTrue(magpie1balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie1))), "Beneficiary should receive reduced group reward.");
-    assert.isTrue(magpie2balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie2))), "Beneficiary should receive reduced group reward.");
-    assert.isTrue(magpie3balance.add(expectedGroupMemberReward).eq(web3.utils.toBN(await web3.eth.getBalance(magpie3))), "Beneficiary should receive reduced group reward.");
+    let groupMemberRewards = await groupContract.getGroupMemberRewards(group);
+    assert.isTrue(groupMemberRewards.eq(expectedGroupMemberReward), "Group should have receive accumulated group rewards.");
     assert.isTrue(serviceContractBalance.add(requestSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(serviceContract.address))), "Service contract should receive request subsidy.");
   });
 });
