@@ -454,8 +454,6 @@ contract KeepRandomBeaconOperator {
         entryInProgress = true;
 
         uint256 groupIndex = groupContract.selectGroup(previousEntry);
-        bytes memory groupPubKey = groupContract.getGroupPublicKey(groupIndex);
-
         signingRequest = SigningRequest(
             requestId,
             entryVerificationAndProfitFee,
@@ -465,6 +463,7 @@ contract KeepRandomBeaconOperator {
             serviceContract
         );
 
+        bytes memory groupPubKey = groupContract.getGroupPublicKeyCompressed(groupIndex);
         emit SignatureRequested(previousEntry, seed, groupPubKey);
     }
 
