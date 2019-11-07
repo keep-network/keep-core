@@ -36,5 +36,5 @@ spec:
         volumeMounts:
           - name: eth-tx
             mountPath: /root/.ethereum
-        args: ["--testnet", "--datadir=/root/.ethereum", "--syncmode=light", "--rpc", "--rpcapi=eth,web3,personal", "--rpcport=8545", "--rpcaddr=0.0.0.0", "--rpccorsdomain=\"\"", "--rpcvhosts=*", "--ws", "--wsport=8546", "--wsaddr=0.0.0.0", "--wsorigins=*"]
+        args: ["--testnet", "--datadir=/root/.ethereum", "--syncmode=light", "--rpc", "--rpcapi=eth,web3,personal", "--rpcport=8545", "--rpcaddr=0.0.0.0", "--rpccorsdomain=\"\"", "--rpcvhosts=*", "--ws", "--wsport=8546", "--wsaddr=0.0.0.0", "--wsorigins=*", "--txpool.accountslots 128", "--txpool.accountqueue 512"]
 
