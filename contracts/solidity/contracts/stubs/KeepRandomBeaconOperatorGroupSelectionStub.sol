@@ -8,11 +8,15 @@ contract KeepRandomBeaconOperatorGroupSelectionStub is KeepRandomBeaconOperator 
         address _stakingContract,
         address payable _groupContract
     ) KeepRandomBeaconOperator(_serviceContract, _stakingContract, _groupContract) public {
-        groupSize = 3;
         groupSelection.ticketSubmissionTimeout = 65;
     }
 
     function getGroupSelectionRelayEntry() public view returns (uint256) {
         return groupSelection.seed;
+    }
+
+    function setGroupSize(uint256 size) public {
+        groupSize = size;
+        groupSelection.groupSize = size;
     }
 }
