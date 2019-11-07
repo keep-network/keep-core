@@ -144,7 +144,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     assert.isTrue(delayFactor.eq(web3.utils.toBN(1e16).pow(web3.utils.toBN(2))), "Delay factor expected to be 1 * 1e16 ^ 2.");
 
     let groupMemberRewards = await groupContract.getGroupMemberRewards(group);
-    assert.isTrue(groupMemberRewards.eq(expectedGroupMemberReward), "Group should have receive accumulated group rewards.");
+    assert.isTrue(groupMemberRewards.eq(expectedGroupMemberReward), "Unexpected group member reward.");
   });
 
   it("should send part of the group reward to request subsidy pool based on the submission block.", async function() {
@@ -209,7 +209,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     await operatorContract.relayEntry(bls.nextGroupSignature);
 
     let groupMemberRewards = await groupContract.getGroupMemberRewards(group);
-    assert.isTrue(groupMemberRewards.eq(expectedGroupMemberReward), "Group should have receive accumulated group rewards.");
+    assert.isTrue(groupMemberRewards.eq(expectedGroupMemberReward), "Unexpected group member reward.");
     assert.isTrue(serviceContractBalance.add(requestSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(serviceContract.address))), "Service contract should receive request subsidy.");
   });
 });

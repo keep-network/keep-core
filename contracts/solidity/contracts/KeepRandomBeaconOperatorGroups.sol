@@ -44,7 +44,10 @@ contract KeepRandomBeaconOperatorGroups {
     uint256[] internal terminatedGroups;
     mapping (bytes => address[]) internal groupMembers;
 
-    // Sum of group member rewards of each entry to allow gas efficient withdrawals.
+    // Sum of all group member rewards earned so far. The value is the same for
+    // all group members. Submitter reward and reimbursement is paid immediately
+    // and is not included here. Each group member can withdraw no more than
+    // this value.
     mapping (bytes => uint256) internal groupMemberRewards;
 
     // expiredGroupOffset is pointing to the first active group, it is also the
