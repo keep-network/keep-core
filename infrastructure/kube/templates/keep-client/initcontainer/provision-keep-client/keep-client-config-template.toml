@@ -19,7 +19,7 @@
     KeepRandomBeaconService = "Set by Kube"
 
 [LibP2P]
-  Peers = "Set by Kube."
+  Peers = ["/dns4/keep-client-bootstrap-peer-0.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r", "/dns4/keep-client-bootstrap-peer-1.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm53SbohjCkhcbyMAaFHf7TQrf8BG6mY7sNc39Dg8c3Tuj"]
   Port = "Set by Kube."
   # AnnouncedAddresses:
   # Leaving AnnouncedAddresses empty will set a default address to be
