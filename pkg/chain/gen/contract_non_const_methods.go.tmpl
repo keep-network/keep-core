@@ -8,7 +8,7 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 	{{- if $method.Payable -}}
 	value *big.Int,
 	{{ end -}}
-	transactionOptions ...chain.TransactionOptions,
+	transactionOptions ...options.TransactionOptions,
 ) (*types.Transaction, error) {
 	{{$logger}}.Debug(
 		"submitting transaction {{$method.LowerName}}\n",
