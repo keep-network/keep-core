@@ -44,6 +44,12 @@ contract KeepRandomBeaconOperatorGroups {
     uint256[] internal terminatedGroups;
     mapping (bytes => address[]) internal groupMembers;
 
+    // Sum of all group member rewards earned so far. The value is the same for
+    // all group members. Submitter reward and reimbursement is paid immediately
+    // and is not included here. Each group member can withdraw no more than
+    // this value.
+    mapping (bytes => uint256) internal groupMemberRewards;
+
     // expiredGroupOffset is pointing to the first active group, it is also the
     // expired groups counter
     uint256 internal expiredGroupOffset = 0;
@@ -92,6 +98,20 @@ contract KeepRandomBeaconOperatorGroups {
      */
     function addGroupMember(bytes memory groupPubKey, address member) public onlyOperatorContract {
         groupMembers[groupPubKey].push(member);
+    }
+
+    /**
+     * @dev Adds group member reward per group so the accumulated amount can be withdrawn later.
+     */
+    function addGroupMemberReward(bytes memory groupPubKey, uint256 amount) public onlyOperatorContract {
+        groupMemberRewards[groupPubKey] = groupMemberRewards[groupPubKey].add(amount);
+    }
+
+    /**
+     * @dev Returns accumulated group member rewards for provided group.
+     */
+    function getGroupMemberRewards(bytes memory groupPubKey) public view returns (uint256) {
+        return groupMemberRewards[groupPubKey];
     }
 
     /**
