@@ -223,7 +223,7 @@ async function createKeepClientConfig(operator) {
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
     parsedConfigFile.LibP2P.Port = 3919;
-    parsedConfigFile.LibP2P.Peers = keepNetworkBootstrapPeers
+    parsedConfigFile.LibP2P.Peers = keepNetworkBootstrapPeers;
     parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
     /*
