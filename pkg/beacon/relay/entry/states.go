@@ -216,7 +216,7 @@ func (ess *entrySubmissionState) Initiate() error {
 		new(big.Int).SetBytes(ess.signature),
 		ess.previousEntry,
 		ess.seed,
-		ess.signer.GroupPublicKeyBytes(),
+		ess.signer.GroupPublicKeyBytesCompressed(),
 		ess.entrySubmissionStartBlockHeight,
 	)
 }
