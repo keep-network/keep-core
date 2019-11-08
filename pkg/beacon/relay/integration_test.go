@@ -240,5 +240,10 @@ func getFirstGroupPublicKey(result *dkgtest.Result) (*bn256.G2, error) {
 		return nil, fmt.Errorf("no signers in result")
 	}
 
-	return altbn128.DecompressToG2(signers[0].GroupPublicKeyBytes())
+	publicKey := new(bn256.G2)
+	_, err := publicKey.Unmarshal(signers[0].GroupPublicKeyBytes())
+	if err != nil {
+		return nil, err
+	}
+	return publicKey, nil
 }

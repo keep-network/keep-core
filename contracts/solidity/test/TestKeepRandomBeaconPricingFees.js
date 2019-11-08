@@ -3,7 +3,7 @@ import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 import {bls} from './helpers/data';
 import mineBlocks from './helpers/mineBlocks';
 
-describe('Keep random beacon pricing', function(accounts) {
+contract('Keep random beacon pricing', function(accounts) {
     let serviceContract;
     let operatorContract;
 
@@ -116,7 +116,7 @@ describe('Keep random beacon pricing', function(accounts) {
 
         let delayFactor = await operatorContract.delayFactor();
 
-        let expectedDelayFactor = web3.utils.toBN(8711111111111110);
+        let expectedDelayFactor = web3.utils.toBN('9896104600694443');
         assert.isTrue(expectedDelayFactor.eq(delayFactor));
     });
 
@@ -128,7 +128,7 @@ describe('Keep random beacon pricing', function(accounts) {
 
         let delayFactor = await operatorContract.delayFactor();        
 
-        let expectedDelayFactor = web3.utils.toBN(44444444444444);
+        let expectedDelayFactor = web3.utils.toBN('271267361111');
         assert.isTrue(expectedDelayFactor.eq(delayFactor));        
     });
 });

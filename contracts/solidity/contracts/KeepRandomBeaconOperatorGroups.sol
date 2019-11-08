@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "./cryptography/AltBn128.sol";
 
 
 interface OperatorContract {
@@ -42,6 +43,12 @@ contract KeepRandomBeaconOperatorGroups {
     Group[] internal groups;
     uint256[] internal terminatedGroups;
     mapping (bytes => address[]) internal groupMembers;
+
+    // Sum of all group member rewards earned so far. The value is the same for
+    // all group members. Submitter reward and reimbursement is paid immediately
+    // and is not included here. Each group member can withdraw no more than
+    // this value.
+    mapping (bytes => uint256) internal groupMemberRewards;
 
     // expiredGroupOffset is pointing to the first active group, it is also the
     // expired groups counter
@@ -94,10 +101,31 @@ contract KeepRandomBeaconOperatorGroups {
     }
 
     /**
+     * @dev Adds group member reward per group so the accumulated amount can be withdrawn later.
+     */
+    function addGroupMemberReward(bytes memory groupPubKey, uint256 amount) public onlyOperatorContract {
+        groupMemberRewards[groupPubKey] = groupMemberRewards[groupPubKey].add(amount);
+    }
+
+    /**
+     * @dev Returns accumulated group member rewards for provided group.
+     */
+    function getGroupMemberRewards(bytes memory groupPubKey) public view returns (uint256) {
+        return groupMemberRewards[groupPubKey];
+    }
+
+    /**
      * @dev Gets group public key.
      */
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups[groupIndex].groupPubKey;
+    }
+
+    /**
+     * @dev Gets group public key in a compressed form.
+     */
+    function getGroupPublicKeyCompressed(uint256 groupIndex) public view returns (bytes memory) {
+        return AltBn128.g2Compress(AltBn128.g2Unmarshal(groups[groupIndex].groupPubKey));
     }
 
     /**
