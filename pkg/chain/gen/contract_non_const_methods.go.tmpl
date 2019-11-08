@@ -8,6 +8,7 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 	{{- if $method.Payable -}}
 	value *big.Int,
 	{{ end -}}
+	transactionOptions ...options.TransactionOptions,
 ) (*types.Transaction, error) {
 	{{$logger}}.Debug(
 		"submitting transaction {{$method.LowerName}}\n",
@@ -26,6 +27,21 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) {{$method.CapsName}}(
 	{{- else -}}
 	transactorOptions := {{$contract.ShortVar}}.transactorOptions
 	{{- end }}
+
+    if len(transactionOptions) > 0 {
+        if len(transactionOptions) > 1 {
+            return nil, fmt.Errorf(
+                "could not process multiple transaction options sets",
+            )
+        }
+
+        if customGasLimit := transactionOptions[0].GasLimit; customGasLimit != 0 {
+            transactorOptions.GasLimit = customGasLimit
+        }
+        if customGasPrice := transactionOptions[0].GasPrice; customGasPrice != nil {
+            transactorOptions.GasPrice = customGasPrice
+        }
+    }
 
 	transaction, err := {{$contract.ShortVar}}.contract.{{$method.CapsName}}(
 		transactorOptions,
