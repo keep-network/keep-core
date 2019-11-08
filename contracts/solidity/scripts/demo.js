@@ -44,7 +44,7 @@ module.exports = async function() {
 
     staked = await token.approveAndCall(
       tokenStaking.address, 
-      formatAmount(1000000, 18),
+      formatAmount(20000000, 18),
       delegation,
       {from: owner}
     ).catch((err) => {

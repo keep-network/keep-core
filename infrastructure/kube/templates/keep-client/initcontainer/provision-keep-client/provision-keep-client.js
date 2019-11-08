@@ -166,7 +166,7 @@ async function stakeOperatorAccount(operator, contractOwner) {
 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
-    formatAmount(1000000, 18),
+    formatAmount(10000000, 18),
     delegation).send({from: contractOwner})
 
   console.log('Account ' + operator + ' staked!');
