@@ -48,7 +48,7 @@ spec:
         fsGroup: 1000
       containers:
       - name: miner
-        image: gcr.io/keep-dev-fe24/eth-geth-node
+        image: gcr.io/keep-dev-fe24/eth-geth-node:1.9.6
         ports:
         - containerPort: 8545
         - containerPort: 8546

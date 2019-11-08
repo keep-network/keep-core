@@ -31,7 +31,7 @@ func (ps *persistentStorage) save(membership *Membership) error {
 		return fmt.Errorf("marshalling of the membership failed: [%v]", err)
 	}
 
-	hexGroupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytes())
+	hexGroupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytesCompressed())
 
 	return ps.handle.Save(membershipBytes, hexGroupPublicKey, "/membership_"+fmt.Sprint(membership.Signer.MemberID()))
 }

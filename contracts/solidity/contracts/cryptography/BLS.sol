@@ -24,7 +24,7 @@ library BLS {
             AltBn128.G1Point(_signature.x, AltBn128.getP() - _signature.y),
             AltBn128.g2(),
             AltBn128.g1HashToPoint(message),
-            AltBn128.g2Decompress(publicKey)
+            AltBn128.g2Unmarshal(publicKey)
         );
     }
 }

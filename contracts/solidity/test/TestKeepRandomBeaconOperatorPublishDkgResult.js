@@ -66,7 +66,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     }
 
     let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
-    let timeoutChallenge = (await operatorContract.ticketReactiveSubmissionTimeout()).toNumber();
+    let timeoutChallenge = (await operatorContract.ticketSubmissionTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
     resultPublicationTime = ticketSubmissionStartBlock + timeoutChallenge + timeDKG;
 

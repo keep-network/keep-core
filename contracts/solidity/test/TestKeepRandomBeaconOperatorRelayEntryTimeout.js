@@ -65,7 +65,7 @@ contract("KeepRandomBeaconOperator", function(accounts) {
 
     await expectThrowWithMessage(
       operatorContract.sign(requestCounter, bls.seed, bls.previousEntry, {value: fee}), 
-      "Relay entry is in progress."
+      "Beacon is busy"
     );
   });
 
@@ -91,7 +91,7 @@ contract("KeepRandomBeaconOperator", function(accounts) {
 
     await expectThrowWithMessage(
       operatorContract.relayEntry(bls.groupSignature), 
-      "Can not submit after the timeout"
+      "Entry timed out"
     );
   });
 });
