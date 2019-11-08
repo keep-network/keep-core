@@ -38,11 +38,11 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 		)
 	}
 
-	onSubmittedResultChan := make(chan *event.Entry)
+	onSubmittedResultChan := make(chan uint64)
 
 	subscription, err := res.chain.OnSignatureSubmitted(
 		func(event *event.Entry) {
-			onSubmittedResultChan <- event
+			onSubmittedResultChan <- event.BlockNumber
 		},
 	)
 	if err != nil {
@@ -99,10 +99,11 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 					errorChannel <- err
 				})
 			return <-errorChannel
-		case <-onSubmittedResultChan:
+		case blockNumber := <-onSubmittedResultChan:
 			logger.Infof(
-				"[member:%v] leaving; relay entry submitted by other member",
+				"[member:%v] leaving; relay entry submitted by other member at block [%v]",
 				res.index,
+				blockNumber,
 			)
 			return returnWithError(nil)
 		}
