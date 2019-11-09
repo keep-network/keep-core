@@ -72,7 +72,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 
 	for {
 		select {
-		case <-eligibleToSubmitWaiter:
+		case blockNumber := <-eligibleToSubmitWaiter:
 			// Member becomes eligible to submit the result.
 			errorChannel := make(chan error)
 			defer close(errorChannel)
@@ -81,10 +81,12 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			close(onSubmittedResultChan)
 
 			logger.Infof(
-				"[member:%v] submitting relay entry [%v] on behalf of group [%x]",
+				"[member:%v] submitting relay entry [%v] on behalf of group "+
+					"[%x] at block [%v]",
 				res.index,
 				newEntry,
 				groupPublicKey,
+				blockNumber,
 			)
 
 			res.chain.SubmitRelayEntry(newEntry).OnComplete(
