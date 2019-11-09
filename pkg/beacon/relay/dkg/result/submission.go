@@ -128,7 +128,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			close(onSubmittedResultChan)
 
 			logger.Infof(
-				"[member:%v] submitting DKG result with public key [%x] and "+
+				"[member:%v] submitting DKG result with public key [0x%x] and "+
 					"[%v] supporting member signatures at block [%v]",
 				sm.index,
 				result.GroupPublicKey,

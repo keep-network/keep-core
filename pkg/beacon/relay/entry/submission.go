@@ -81,8 +81,8 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			close(onSubmittedResultChan)
 
 			logger.Infof(
-				"[member:%v] submitting relay entry [%v] on behalf of group "+
-					"[%x] at block [%v]",
+				"[member:%v] submitting relay entry [0x%x] on behalf of group "+
+					"[0x%x] at block [%v]",
 				res.index,
 				newEntry,
 				groupPublicKey,
