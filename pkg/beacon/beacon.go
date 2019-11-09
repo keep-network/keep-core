@@ -124,7 +124,11 @@ func Initialize(
 	})
 
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
-		logger.Infof("new group registered on chain: [%+v]", registration)
+		logger.Infof(
+			"new group with public key [%x] registered on-chain at block [%v]",
+			registration.GroupPublicKey,
+			registration.BlockNumber,
+		)
 		go groupRegistry.UnregisterStaleGroups()
 	})
 
