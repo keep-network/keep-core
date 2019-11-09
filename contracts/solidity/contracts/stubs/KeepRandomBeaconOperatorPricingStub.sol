@@ -30,6 +30,14 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
         groupSize = size;
     }
 
+    function getNewEntryRewardsBreakdown() public view returns(
+        uint256 groupMemberReward,
+        uint256 submitterReward,
+        uint256 subsidy
+    ) {
+        return super.newEntryRewardsBreakdown();
+    }
+
     function delayFactor() public view returns(uint256) {
         return super.getDelayFactor();
     }
