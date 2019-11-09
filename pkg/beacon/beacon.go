@@ -97,10 +97,11 @@ func Initialize(
 		)
 
 		onGroupSelected := func(group *groupselection.Result) {
-			for _, staker := range group.SelectedStakers {
+			for index, staker := range group.SelectedStakers {
 				logger.Infof(
-					"new candidate group member: [0x%v]",
+					"new candidate group member [0x%v] with index [%v]",
 					hex.EncodeToString(staker),
+					index,
 				)
 			}
 			node.JoinGroupIfEligible(
