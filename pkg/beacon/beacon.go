@@ -90,7 +90,11 @@ func Initialize(
 	})
 
 	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
-		logger.Infof("group selection started: [%+v]", event)
+		logger.Infof(
+			"group selection started with seed [%v] at block [%v]",
+			event.NewEntry.Text(16),
+			event.BlockNumber,
+		)
 
 		onGroupSelected := func(group *groupselection.Result) {
 			for _, staker := range group.SelectedStakers {
