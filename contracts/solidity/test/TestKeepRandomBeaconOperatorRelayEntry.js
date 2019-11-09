@@ -32,6 +32,14 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
     await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
   });
 
+  it("should keep relay entry submission at reasonable price", async () => {
+    let gasEstimate = await operatorContract.relayEntry.estimateGas(bls.nextGroupSignature);
+
+    // Make sure no change will make the verification more expensive than it is 
+    // now or that even if it happens, it will be a conscious change.
+    assert.isBelow(gasEstimate, 462415, "Relay entry submission is too expensive")
+  });
+
   it("should not be able to submit invalid relay entry", async function() {
     // Invalid signature
     let groupSignature = web3.utils.toBN('0x0fb34abfa2a9844a58776650e399bca3e08ab134e42595e03e3efc5a0472bcd8');
