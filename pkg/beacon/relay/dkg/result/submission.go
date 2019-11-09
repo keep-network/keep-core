@@ -119,7 +119,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 
 	for {
 		select {
-		case <-eligibleToSubmitWaiter:
+		case blockNumber := <-eligibleToSubmitWaiter:
 			// Member becomes eligible to submit the result.
 			errorChannel := make(chan error)
 			defer close(errorChannel)
@@ -127,7 +127,14 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
-			logger.Infof("[member:%v] submitting DKG result", sm.index)
+			logger.Infof(
+				"[member:%v] submitting DKG result with public key [%x] and "+
+					"[%v] supporting member signatures at block [%v]",
+				sm.index,
+				result.GroupPublicKey,
+				len(signatures),
+				blockNumber,
+			)
 			chainRelay.SubmitDKGResult(
 				sm.index,
 				result,
