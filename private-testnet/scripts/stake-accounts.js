@@ -25,6 +25,7 @@ const assignedAccounts = [
   '0x48f4bb2cf7379467c3052cb8c5d9e3892eeda487',
   '0x307bed667e177c7851779da0612c824d56ba097b',
   '0xa924d3a62b2d515235e5de5d903c405cba7f0e86',
+  '0x4902de99499ee74159779c0d92dd163bf689daf0'
   ]
 
 /*
@@ -70,7 +71,7 @@ async function stakeOperatorAccount(operator, contractOwner) {
 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
-    formatAmount(1000000, 18),
+    formatAmount(10000000, 18),
     delegation).send({from: contractOwner})
 
   console.log('Account ' + operator + ' staked!');

@@ -38,8 +38,14 @@ func (ts *ThresholdSigner) MemberID() group.MemberIndex {
 	return ts.memberIndex
 }
 
-// GroupPublicKeyBytes returns group public key representation in bytes.
+// GroupPublicKeyBytes returns group public key bytes in an uncompressed form.
 func (ts *ThresholdSigner) GroupPublicKeyBytes() []byte {
+	return ts.groupPublicKey.Marshal()
+}
+
+// GroupPublicKeyBytesCompressed returns group public key bytes in a compressed
+// form.
+func (ts *ThresholdSigner) GroupPublicKeyBytesCompressed() []byte {
 	altbn128GroupPublicKey := altbn128.G2Point{G2: ts.groupPublicKey}
 	return altbn128GroupPublicKey.Compress()
 }

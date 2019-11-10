@@ -68,11 +68,11 @@ contract KeepRandomBeaconOperator {
     uint256 public fluctuationMargin = 50; // 50%
 
     // Size of a group in the threshold relay.
-    uint256 public groupSize = 5;
+    uint256 public groupSize = 64;
 
     // Minimum number of group members needed to interact according to the
     // protocol to produce a relay entry.
-    uint256 public groupThreshold = 3;
+    uint256 public groupThreshold = 33;
 
     // Time in blocks after which the next group member is eligible
     // to submit the result.
@@ -80,11 +80,11 @@ contract KeepRandomBeaconOperator {
 
     // Time in blocks after DKG result is complete and ready to be published
     // by clients.
-    uint256 public timeDKG = 7*(1+1);
+    uint256 public timeDKG = 7*(1+3);
 
     // Time in blocks it takes off-chain cluster to generate a new relay entry
     // and be ready to submit it to the chain.
-    uint256 public relayEntryGenerationTime = (1+1);
+    uint256 public relayEntryGenerationTime = (1+3);
 
     // Timeout in blocks for a relay entry to appear on the chain. Blocks are
     // counted from the moment relay request occur.
@@ -97,12 +97,10 @@ contract KeepRandomBeaconOperator {
     // Gas required to verify BLS signature and produce successful relay
     // entry. Excludes callback and DKG gas.
     // TODO: Update once alt_bn128 gas costs reduction is implemented.
-    // TODO: Update if we change group size.
-    uint256 public entryVerificationGasEstimate = 1240000;
+    uint256 public entryVerificationGasEstimate = 523000;
 
     // Gas required to submit DKG result.
-    // TODO: Update if we change group size.
-    uint256 public dkgGasEstimate = 2260000;
+    uint256 public dkgGasEstimate = 8100000;
 
     // Reimbursement for the submitter of the DKG result.
     // This value is set when a new DKG request comes to the operator contract.
@@ -174,7 +172,7 @@ contract KeepRandomBeaconOperator {
 
         owner = msg.sender;
 
-        groupSelection.ticketSubmissionTimeout = 6;
+        groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
     }
 
@@ -455,8 +453,6 @@ contract KeepRandomBeaconOperator {
         entryInProgress = true;
 
         uint256 groupIndex = groupContract.selectGroup(previousEntry);
-        bytes memory groupPubKey = groupContract.getGroupPublicKey(groupIndex);
-
         signingRequest = SigningRequest(
             requestId,
             entryVerificationAndProfitFee,
@@ -466,6 +462,7 @@ contract KeepRandomBeaconOperator {
             serviceContract
         );
 
+        bytes memory groupPubKey = groupContract.getGroupPublicKeyCompressed(groupIndex);
         emit SignatureRequested(previousEntry, seed, groupPubKey);
     }
 
@@ -504,11 +501,7 @@ contract KeepRandomBeaconOperator {
         entryInProgress = false;
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
-
-        for (uint i = 0; i < groupSize; i++) {
-            address payable operator = address(uint160(groupContract.getGroupMember(groupPubKey, i)));
-            stakingContract.magpieOf(operator).transfer(groupMemberReward);
-        }
+        groupContract.addGroupMemberReward(groupPubKey, groupMemberReward);
 
         stakingContract.magpieOf(msg.sender).transfer(submitterReward);
 

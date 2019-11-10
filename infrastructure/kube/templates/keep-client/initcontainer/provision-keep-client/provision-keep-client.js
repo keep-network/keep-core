@@ -166,7 +166,7 @@ async function stakeOperatorAccount(operator, contractOwner) {
 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
-    formatAmount(1000000, 18),
+    formatAmount(10000000, 18),
     delegation).send({from: contractOwner})
 
   console.log('Account ' + operator + ' staked!');
@@ -223,7 +223,6 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
-      parsedConfigFile.LibP2P.Seed = 2;
       parsedConfigFile.LibP2P.Port = 3919;
       parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
@@ -252,6 +251,7 @@ async function createKeepClientConfig(operator) {
       parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
       parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
       parsedConfigFile.LibP2P.Port = 3919;
+      parsedConfigFile.LibP2P.Peers = process.env.KEEP_NETWORK_BOOTSTRAP_PEERS;
       parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
 
       let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
