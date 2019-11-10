@@ -190,7 +190,7 @@ library GroupSelection {
             }
         } else if (newTicketValue < self.tickets[self.tail]) {
             // new ticket is lower than currently lowest
-            if (newTicketValue < ordered[0]) {
+            if (newTicketValue < self.tickets[ordered[0]]) {
                 // replacing largest ticket with a lowest
                 self.tickets[self.tail] = newTicketValue;
                 // updating the previousTicketIndex map
@@ -204,8 +204,8 @@ library GroupSelection {
                 // do not change the order if a new ticket is still largest
                 if (j != self.tail) {
                     uint newTail = self.previousTicketIndex[self.tail];
+                    self.previousTicketIndex[self.tail] = self.previousTicketIndex[j];
                     self.previousTicketIndex[j] = self.tail;
-                    self.previousTicketIndex[self.tail] = self.tickets.length - 1;
                     self.tail = newTail;
                 }
             }
