@@ -26,17 +26,10 @@ contract KeepRandomBeaconOperatorTicketsOrderingStub is KeepRandomBeaconOperator
     }
 
     /**
-    * @dev Gets an index of a highest ticket value (tail).
+    * @dev Gets an index of the highest ticket value (tail).
     */
     function getTail() public view returns (uint256) {
         return groupSelection.tail;
-    }
-
-    /**
-    * @dev Gets a highest ticket value from the tickets[] array.
-    */
-    function getTicketMaxValue() public view returns (uint256) {
-        return groupSelection.tickets[groupSelection.tail];
     }
 
     /**
