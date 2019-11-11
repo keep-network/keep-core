@@ -28,9 +28,9 @@ contract('KeepRandomBeaconOperator', function() {
     await restoreSnapshot()
   });
 
-  describe("ticket insertion", function() {
+  describe("ticket insertion", () => {
 
-    describe("tickets array size is at its max capacity", function() {
+    describe("tickets array size is at its max capacity", () => {
 
       it("should reject a new ticket when it is higher than the current highest one", async () => {
         let ticketsToAdd = [1, 3, 5, 7, 4, 9, 6, 11, 8, 12, 100, 200, 300];
@@ -82,7 +82,7 @@ contract('KeepRandomBeaconOperator', function() {
 
     });
 
-    describe("tickets array size is less than a group size", function() {
+    describe("tickets array size is less than a group size", () => {
 
       it("should add all the tickets and keep track the order when the latest ticket is the highest one", async () => {
         let ticketsToAdd = [1, 3, 5, 7, 4, 9, 6, 11];
