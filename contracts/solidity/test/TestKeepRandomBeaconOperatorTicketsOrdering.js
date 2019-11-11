@@ -38,6 +38,8 @@ contract('KeepRandomBeaconOperator', function() {
         await addTickets(ticketsToAdd)
         
         let expectedTickets = [1, 3, 5, 7, 4, 9, 6, 11, 8, 12]; // 100, 200, 300 -> out
+        // 0->0    1->0    2->4    3->6    4->1
+        // 5->8    6->2    7->5    8->3    9->7
         let expectedOrderedIndices = [0, 0, 4, 6, 1, 8, 2, 5, 3, 7];
         let expectedTail = 9;
 
@@ -50,6 +52,11 @@ contract('KeepRandomBeaconOperator', function() {
         await addTickets(ticketsToAdd)
         
         let expectedTickets = [5986, 6782, 5161, 7009, 8086, 1035, 5294, 4293, 6475, 9520]; // 9826 -> out
+        // indices          = [ 0  ,  1  ,  2  ,  3  ,  4  ,  5  ,  6  ,  7  ,  8  ,  9  ]
+        // sorted tickets   = [1035, 4293, 5161, 5294, 5986, 6475, 6782, 7009, 8086, 9520]
+        // sorted indices   = [ 5  ,  7  ,  2  ,  6  ,  0  ,  8  ,  1  ,  3  ,  4  ,  9  ]
+        // 0->6    1->8    2->7    3->1    4->3
+        // 5->5    6->2    7->5    8->0    9->4
         let expectedOrderedIndices = [6, 8, 7, 1, 3, 5, 2, 5, 0, 4];
         let expectedTail = 9;
 
@@ -62,6 +69,8 @@ contract('KeepRandomBeaconOperator', function() {
         await addTickets(ticketsToAdd)
         
         let expectedTickets = [151, 42, 175, 7, 128, 185, 74, 143, 88, 130]; // 190 -> out
+        // 0->7    1->3    2->0    3->3    4->8
+        // 5->2    6->1    7->9    8->6    9->4
         let expectedOrderedIndices = [7, 3, 0, 3, 8, 2, 1, 9, 6, 4];
         let expectedTail = 5;
 
@@ -74,6 +83,8 @@ contract('KeepRandomBeaconOperator', function() {
         await addTickets(ticketsToAdd)
         
         let expectedTickets = [5986, 6782, 5161, 7009, 8086, 1035, 5294, 4293, 6475, 998]; // 9826 & 9520 -> out
+        // 0->6    1->8    2->7    3->1    4->3
+        // 5->9    6->2    7->5    8->0    9->9
         let expectedOrderedIndices = [6, 8, 7, 1, 3, 9, 2, 5, 0, 9];
         let expectedTail = 4;
 
@@ -89,6 +100,8 @@ contract('KeepRandomBeaconOperator', function() {
 
         await addTickets(ticketsToAdd)
 
+        // 0->0    1->0    2->4    3->6
+        // 4->1    5->3    6->2    7->5
         let expectedOrderedIndices = [0, 0, 4, 6, 1, 3, 2, 5];
         let expectedTail = 7;
 
@@ -100,6 +113,8 @@ contract('KeepRandomBeaconOperator', function() {
 
         await addTickets(ticketsToAdd)
 
+        // 0->0    1->0    2->4    3->7
+        // 4->1    5->3    6->5    7->2
         let expectedOrderedIndices = [0, 0, 4, 7, 1, 3, 5, 2];
         let expectedTail = 6;
 
@@ -111,6 +126,8 @@ contract('KeepRandomBeaconOperator', function() {
 
         await addTickets(ticketsToAdd)
 
+        // 0->4    1->3    2->0    3->7
+        // 4->6    5->2    6->1    7->7
         let expectedOrderedIndices = [4, 3, 0, 7, 6, 2, 1, 7];
         let expectedTail = 5;
 
