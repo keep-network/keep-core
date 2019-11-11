@@ -152,58 +152,24 @@ Operator Contracts disabled with the _Panic Button_ cannot be re-enabled.
 
 Operator contracts serve other contracts,
 and are responsible for all operations involving staked tokens.
+
 The requirement for stakers' funds to never be subject to
 code they haven't approved individually
-means that the staking contract/s used by the operator contract
+has certain implications on operator contracts:
+the contracts must be immutable;
+and any external sources of truth,
+e.g. token contract and staking contract/s,
 must be hard-coded.
-Operator Contracts are also aware of the token contract.
 
-Operator contracts can be exclusive or non-exclusive.
-Non-exclusive operator contracts provide services
+An operator contract can either provide services
 to any contract that makes a valid request and pays the correct fee,
-while each exclusive operator contract is owned by a specific contract,
-and only serves its owner.
+or it can be owned is owned by a specific contract and only serve its owner.
 
 Recognized staking contracts::
-
 Each operator contract specifies one or more _staking contracts_ it recognizes.
-Every operator contract must recognize at least one staking contract.
+Every operator contract that handles stakes
+must recognize at least one staking contract.
 Recognized staking contracts are hard-coded and unchangeable.
-
-===== Exclusive operator contracts
-
-Exclusive operator contracts are tied to an _owner contract_,
-only accepting and serving requests from that particular contract. 
-
-Owner contract::
-The contract an exclusive operator contract serves.
-
-===== Keep factories
-
-Keep factories are non-exclusive operator contracts
-that create keeps for customer applications.
-Any contract can request a keep factory to create a keep.
-
-Like all operator contracts,
-each Keep factory recognizes one or more staking contracts
-for the purpose of determining operators' eligibility to join keeps.
-
-Each keep factory implements one or more keep interfaces.
-The factory records its interfaces
-and the addresses of the corresponding keep vendors.
-
-===== Keeps
-
-Keeps are exclusive operator contracts created by keep factories.
-When a contract requests a keep from a factory,
-the factory creates a new contract owned by the customer contract, the keep,
-and hands it off to the customer contract.
-
-Keeps aren't individually authorized to slash stakers,
-instead, they rely on the authorization of their factory.
-
-Once created, a keep cannot be upgraded in any way,
-except by closing the keep and opening another one.
 
 ==== Service Contracts
 
@@ -216,72 +182,23 @@ To permit system upgrades,
 the list of used operator contracts can be updated with proper authorization.
 
 Used operator contracts::
-A soft list of operator contracts used by the service contract.
+A mutable list of operator contracts used by the service contract.
 
 Each service contract has a list
 of zero or more operator contracts it may use.
 
-For each operator contract, the service contract stores:
-
-- the status of the operator contract
-- the chronological position of that operator contract by creation date
-
-Each operator contract has a status of `NULL`, `ACTIVE` or `DEPRECATED`.
-A status of `NULL` is the default
-and means that the service contract does not use the operator contract.
-A status of `ACTIVE` means the service contract actively uses the operator contract
-for performing work.
-`DEPRECATED` means that the service contract has previously used the operator contract
-and some operations may still be underway,
-but the operator contract should not be selected for creating new Keeps.
-
 A service contract is deployed with zero operator contracts,
-rendering the service contract inactive until at least one operator contract is activated.
+rendering the service contract inactive
+until at least one operator contract is activated.
 
 Each service contract has a _Operator Contract Upgrader_
-who can activate or deprecate operator contracts.
-
-To activate a operator contract, the following conditions must apply:
-
-- the operator contract has been `APPROVED` on the _registry_
-- the service contract is included in the operator contract's _served contracts_
-- the operator contract's creation date is more recent
-than that of the most recent `ACTIVE` operator contract in the _used contracts_
-
-To deprecate a operator contract, the following conditions must apply:
-
-- the operator contract is `ACTIVE` in the _used contracts_
-- it is not the most recent (or only) operator contract in the _used contracts_
+who can add used operator contracts.
+To add a used operator contract,
+the operator contract must have been `APPROVED` on the _registry_.
 
 If a operator contract has been `DISABLED` by the _Panic Button_,
 it is ineligible for work selection.
-
-===== Keep vendors
-
-Keep vendors are a type of service contracts
-which perform version management of keep factories
-by abstracting over upgrades
-and providing customers a single unified interface to request up-to-date keeps.
-
-The upgrade process of the Keep Network
-is designed to eliminate the security threat
-posed by unilateral smart contract upgrades.
-However, the consent-centered upgrade process
-is inherently more complex to accommodate
-than a simple switchover to a new version.
-Stakers will authorize a new contract
-and operators will upgrade their client software
-on their own schedule,
-so the initial capacity of a new keep version will be seriously limited.
-
-Instead of updating the factory address when a type of keep is upgraded,
-and explicitly accommodating for the friction in the migration,
-a customer application can go through the vendor of the corresponding keep type
-to receive a recent version of the keep.
-For most applications,
-the convenience of having the version migration
-managed automatically by the keep vendor
-is likely to be more significant than the slight security impact.
+This must be checked when the service contract selects an operator contract.
 
 ==== Staking contracts
 
@@ -309,13 +226,14 @@ Staking contracts are also aware of the token contract by necessity.
 ===== Authorized operator contracts
 
 The _authorized operator contracts_ are a mapping
-of `(authorizer_address, operator contract_address) -> status`.
+of `(address authorizer, address operator_contract) -> status`.
 
 The status of a contract may be either `NULL` or `AUTHORIZED`.
-A status of `NULL` is the default and means the operator contract is not authorized.
-A status of `AUTHORIZED` means that the operator contract at `operator contract_address`
+A status of `NULL` is the default
+and means the operator contract is not authorized.
+A status of `AUTHORIZED` means that the operator contract
 may affect the stakes of those stakers
-who have assigned that `authorizer_address` as their _Authorizer_.
+who have assigned that `authorizer` as their _Authorizer_.
 
 To authorize a operator contract on a staking contract,
 the following conditions must apply:
@@ -334,9 +252,8 @@ may not punish stakers.
 
 . Deploy the new operator contract
 . Approve the operator contract on the registry
-. Activate the operator contract on the service contract
+. Activate the operator contract on the relevant service contract/s
 . Wait for stakers to authorize the operator contract
-. (Optional) Deprecate old operator contracts if needed
 
 ==== New service contract
 
@@ -371,7 +288,7 @@ that lets holders convert old tokens to new tokens
 stake on the new contract
 and authorize the new operator contracts
 
-=== Resistance to compromise
+=== Impact of compromise
 
 ==== Individual keys
 
@@ -389,8 +306,7 @@ and sends the tokens to an address controlled by the staker.
 
 A compromised Panic Button can disable all operator contracts
 and halt all network services.
-Recovery is impossible until Governance
-has rekeyed the Panic Button.
+Recovery is impossible until Governance has rekeyed the Panic Button.
 
 This is inevitable due to the functionality of the Panic Button,
 but the impact could be mitigated
@@ -401,7 +317,8 @@ by a mass approval of malicious contracts by the other roles.
 
 ===== Operator Contract Upgrader
 
-A compromised Operator Contract Upgrader can activate arbitrary operator contracts
+A compromised Operator Contract Upgrader
+can activate arbitrary operator contracts
 within the strict constraints of the upgrade process.
 Without compromise of the Registry Keeper
 to approve new malicious operator contracts,
@@ -450,8 +367,64 @@ These components could be upgraded
 with a process similar to that of operator contracts
 except without staker involvement.
 
-Customers could optionally specify to the service contract
-which operator contract they want to serve their request.
+=== Keeps, factories and vendors
+
+==== Operator contracts
+
+===== Keep factories
+
+Keep factories are operator contracts
+that create keeps for customer applications.
+
+Like all operator contracts,
+each Keep factory recognizes one or more staking contracts
+for the purpose of determining operators' eligibility to join keeps.
+
+Each keep factory implements one or more keep interfaces.
+The factory records its interfaces
+and the addresses of the corresponding keep vendors.
+
+===== Keeps
+
+Keeps are operator contracts created by keep factories.
+When a contract requests a keep from a factory,
+the factory creates a new contract owned by the customer contract, the keep,
+and hands it off to the customer contract.
+
+Keeps aren't individually authorized to slash stakers.
+Instead, they have to use the authorization of their creator factory.
+
+Once created, a keep cannot be upgraded in any way,
+except by closing the keep and opening another one.
+
+==== Service contracts
+
+===== Keep vendors
+
+Keep vendors are service contracts
+which perform version management of keep factories.
+Keep vendors provide customers
+a single unified interface to request up-to-date keeps.
+
+The upgrade process of the Keep Network
+is designed to eliminate the security threat
+posed by unilateral smart contract upgrades.
+However, the consent-centered upgrade process
+is inherently more complex to accommodate
+than a simple switchover to a new version.
+Stakers will authorize a new contract
+and operators will upgrade their client software
+on their own schedule,
+so the initial capacity of a new keep version will be seriously limited.
+
+Instead of updating the factory address when a type of keep is upgraded,
+and explicitly accommodating for the friction in the migration,
+a customer application can go through the vendor of the corresponding keep type
+to receive a recent version of the keep.
+For most applications,
+the convenience of having the version migration
+managed automatically by the keep vendor
+is likely to be more significant than the slight security impact.
 
 == Open Questions
 
