@@ -38,11 +38,11 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 		)
 	}
 
-	onSubmittedResultChan := make(chan *event.Entry)
+	onSubmittedResultChan := make(chan uint64)
 
 	subscription, err := res.chain.OnSignatureSubmitted(
 		func(event *event.Entry) {
-			onSubmittedResultChan <- event
+			onSubmittedResultChan <- event.BlockNumber
 		},
 	)
 	if err != nil {
@@ -72,7 +72,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 
 	for {
 		select {
-		case <-eligibleToSubmitWaiter:
+		case blockNumber := <-eligibleToSubmitWaiter:
 			// Member becomes eligible to submit the result.
 			errorChannel := make(chan error)
 			defer close(errorChannel)
@@ -81,10 +81,12 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			close(onSubmittedResultChan)
 
 			logger.Infof(
-				"[member:%v] submitting relay entry [%v] on behalf of group [%v]",
+				"[member:%v] submitting relay entry [0x%x] on behalf of group "+
+					"[0x%x] at block [%v]",
 				res.index,
 				newEntry,
 				groupPublicKey,
+				blockNumber,
 			)
 
 			res.chain.SubmitRelayEntry(newEntry).OnComplete(
@@ -99,10 +101,11 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 					errorChannel <- err
 				})
 			return <-errorChannel
-		case <-onSubmittedResultChan:
+		case blockNumber := <-onSubmittedResultChan:
 			logger.Infof(
-				"[member:%v] leaving; relay entry submitted by other member",
+				"[member:%v] leaving; relay entry submitted by other member at block [%v]",
 				res.index,
+				blockNumber,
 			)
 			return returnWithError(nil)
 		}
