@@ -116,7 +116,7 @@ contract('KeepRandomBeaconOperator', function() {
 
     describe("tickets array size is less than a group size", function() {
 
-      it("should add all the tickets and keep track the order", async () => {
+      it("should add all the tickets and keep track the order when the latest ticket is the highest one", async () => {
         let ticketsToAdd = [1, 3, 5, 7, 4, 9, 6, 11];
 
         await addTickets(ticketsToAdd)
@@ -127,7 +127,7 @@ contract('KeepRandomBeaconOperator', function() {
         await assertTickets(expectedTail, expectedOrderedIndices, ticketsToAdd)
       });
 
-      it("should add all the tickets and track the order when a latest ticket is between smallest and biggest", async () => {
+      it("should add all the tickets and track the order when the latest ticket is somewhere in the middle value range", async () => {
         let ticketsToAdd = [1, 3, 5, 7, 4, 9, 11, 6];
 
         await addTickets(ticketsToAdd)
@@ -138,7 +138,7 @@ contract('KeepRandomBeaconOperator', function() {
         await assertTickets(expectedTail, expectedOrderedIndices, ticketsToAdd)
       });
 
-      it("should add all the tickets and track the order when a last added ticket is the smallest", async () => {
+      it("should add all the tickets and track the order when the last added ticket is the smallest", async () => {
         let ticketsToAdd = [151, 42, 175, 7, 128, 190, 74, 4];
 
         await addTickets(ticketsToAdd)
@@ -171,7 +171,7 @@ contract('KeepRandomBeaconOperator', function() {
       for (let i = 0; i < tickets.length; i++) {
         actualTickets.push(Number(tickets[i]))
       }
-      assert.sameOrderedMembers(actualTickets, expectedTickets, "array values should be the same")
+      assert.sameOrderedMembers(actualTickets, expectedTickets, "unexpected ticket values")
 
       // Assert tail
       let tail = await operatorContract.getTail()
@@ -186,7 +186,7 @@ contract('KeepRandomBeaconOperator', function() {
       assert.sameOrderedMembers(
         actualLinkedTicketIndices,
         expectedLinkedTicketIndices,
-        'array values (indices) should be the same'
+        'unexpected order of tickets'
       );
     };
 
