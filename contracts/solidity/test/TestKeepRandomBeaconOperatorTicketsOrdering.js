@@ -44,36 +44,19 @@ contract('KeepRandomBeaconOperator', function() {
         await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
       });
 
-      describe("replacing a largest ticket with a new ticket which is somewhere in the middle value range", function() {
+      it("should replace the largest ticket with a new ticket which is somewhere in the middle value range", async () => {
+        let ticketsToAdd = [5986, 6782, 5161, 7009, 8086, 1035, 5294, 9826, 6475, 9520, 4293];
+        
+        await addTickets(ticketsToAdd)
+        
+        let expectedTickets = [5986, 6782, 5161, 7009, 8086, 1035, 5294, 4293, 6475, 9520]; // 9826 -> out
+        let expectedOrderedIndices = [6, 8, 7, 1, 3, 5, 2, 5, 0, 4];
+        let expectedTail = 9;
 
-        it("should test example - 1", async () => {
-          let ticketsToAdd = [151, 42, 175, 7, 128, 190, 74, 143, 88, 130, 135];
-          
-          await addTickets(ticketsToAdd)
-          
-          let expectedTickets = [151, 42, 175, 7, 128, 135, 74, 143, 88, 130]; // 190 -> out
-          let expectedOrderedIndices = [7, 3, 0, 3, 8, 9, 1, 5, 6, 4];
-          let expectedTail = 2;
-  
-          await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
-        });
-  
-        it("should test example - 2", async () => {
-          let ticketsToAdd = [5986, 6782, 5161, 7009, 8086, 1035, 5294, 9826, 6475, 9520, 4293];
-          
-          await addTickets(ticketsToAdd)
-          
-          let expectedTickets = [5986, 6782, 5161, 7009, 8086, 1035, 5294, 4293, 6475, 9520]; // 9826 -> out
-          let expectedOrderedIndices = [6, 8, 7, 1, 3, 5, 2, 5, 0, 4];
-          let expectedTail = 9;
-  
-          await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
-        });
-
+        await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
       });
 
-
-      it("should replace highest ticket (tail) and become a new highest one (also tail)", async () => {
+      it("should replace highest ticket (tail) and become a new highest (also tail)", async () => {
         let ticketsToAdd = [151, 42, 175, 7, 128, 190, 74, 143, 88, 130, 185];
         
         await addTickets(ticketsToAdd)
@@ -85,33 +68,18 @@ contract('KeepRandomBeaconOperator', function() {
         await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
       });
 
-      describe("adding a new smallest ticket and remove the highest", function() {
+      it("should add a new smallest ticket and remove the highest", async () => {
+        let ticketsToAdd = [5986, 6782, 5161, 7009, 8086, 1035, 5294, 9826, 6475, 9520, 4293, 998];
+        
+        await addTickets(ticketsToAdd)
+        
+        let expectedTickets = [5986, 6782, 5161, 7009, 8086, 1035, 5294, 4293, 6475, 998]; // 9826 & 9520 -> out
+        let expectedOrderedIndices = [6, 8, 7, 1, 3, 9, 2, 5, 0, 9];
+        let expectedTail = 4;
 
-        it("should test example 1", async () => {
-          let ticketsToAdd = [151, 42, 175, 7, 128, 190, 74, 143, 88, 130, 2];
-          
-          await addTickets(ticketsToAdd)
-          
-          let expectedTickets = [151, 42, 175, 7, 128, 2, 74, 143, 88, 130]; // 190 -> out
-          let expectedOrderedIndices = [7, 3, 0, 5, 8, 5, 1, 9, 6, 4];
-          let expectedTail = 2;
-      
-          await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
-        });
-  
-        it("should test example 2", async () => {
-          let ticketsToAdd = [5986, 6782, 5161, 7009, 8086, 1035, 5294, 9826, 6475, 9520, 4293, 998];
-          
-          await addTickets(ticketsToAdd)
-          
-          let expectedTickets = [5986, 6782, 5161, 7009, 8086, 1035, 5294, 4293, 6475, 998]; // 9826 & 9520 -> out
-          let expectedOrderedIndices = [6, 8, 7, 1, 3, 9, 2, 5, 0, 9];
-          let expectedTail = 4;
-  
-          await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
-        });
-
+        await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
       });
+
     });
 
     describe("tickets array size is less than a group size", function() {
