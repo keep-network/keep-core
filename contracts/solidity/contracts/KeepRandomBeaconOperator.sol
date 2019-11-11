@@ -573,6 +573,17 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
+     * @dev Withdraws accumulated group member rewards from a staled group.
+     * Finds and makes sure to remove member first before the withdrawal.
+     * Reverts if any of the required checks to find group and remove group
+     * member are failed.
+     */
+    function withdrawGroupMemberRewards(address groupMember) public {
+        uint256 accumulatedRewards = groupContract.withdraw(groupMember);
+        stakingContract.magpieOf(groupMember).transfer(accumulatedRewards);
+    }
+
+    /**
      * @dev Returns true if the currently ongoing new relay entry generation
      * operation timed out. There is a certain timeout for a new relay entry
      * to be produced, see `relayEntryTimeout` value.

@@ -199,6 +199,77 @@ contract KeepRandomBeaconOperatorGroups {
     }
 
     /**
+     * @dev Gets list of indices of staled groups.
+     */
+    function getStaleGroupsIndices() public view returns(uint256[] memory indices) {
+        uint256 counter;
+        for (uint i = 0; i < groups.length; i++) {
+            if (isStaleGroup(groups[i].groupPubKey)) {
+                counter++;
+            }
+        }
+
+        indices = new uint256[](counter);
+        counter = 0;
+        for (uint i = 0; i < groups.length; i++) {
+            if (isStaleGroup(groups[i].groupPubKey)) {
+                indices[counter] = i;
+                counter++;
+            }
+        }
+    }
+
+    /**
+     * @dev Gets all indices in the provided group for a member.
+     */
+    function getGroupMemberIndices(bytes memory groupPubKey, address member) public view returns (uint256[] memory indices) {
+        uint256 counter;
+        for (uint i = 0; i < groupMembers[groupPubKey].length; i++) {
+            if (groupMembers[groupPubKey][i] == member) {
+                counter++;
+            }
+        }
+
+        indices = new uint256[](counter);
+        counter = 0;
+        for (uint i = 0; i < groupMembers[groupPubKey].length; i++) {
+            if (groupMembers[groupPubKey][i] == member) {
+                indices[counter] = i;
+                counter++;
+            }
+        }
+    }
+
+    /**
+     * @dev Gets group member rewards available to withdraw for a member.
+     */
+    function availableRewards(address groupMember) public view returns (uint256 rewards) {
+        uint256[] memory staleGroupsIndices = getStaleGroupsIndices();
+        for (uint i = 0; i < staleGroupsIndices.length; i++) {
+            bytes memory groupPublicKey = getGroupPublicKey(staleGroupsIndices[i]);
+            uint256[] memory groupMemberIndices = getGroupMemberIndices(groupPublicKey, groupMember);
+            for (uint j = 0; j < groupMemberIndices.length; j++) {
+                rewards = rewards.add(groupMemberRewards[groupPublicKey]);
+            }
+        }
+    }
+
+    /**
+     * @dev Withdraw accumulated group member rewards for a member.
+     */
+    function withdraw(address groupMember) public returns (uint256 rewards) {
+        uint256[] memory staleGroupsIndices = getStaleGroupsIndices();
+        for (uint i = 0; i < staleGroupsIndices.length; i++) {
+            bytes memory groupPublicKey = getGroupPublicKey(staleGroupsIndices[i]);
+            uint256[] memory groupMemberIndices = getGroupMemberIndices(groupPublicKey, groupMember);
+            for (uint j = 0; j < groupMemberIndices.length; j++) {
+                delete groupMembers[groupPublicKey][groupMemberIndices[j]];
+                rewards = rewards.add(groupMemberRewards[groupPublicKey]);
+            }
+        }
+    }
+
+    /**
      * @dev Gets the number of active groups. Expired and terminated groups are
      * not counted as active.
      */
