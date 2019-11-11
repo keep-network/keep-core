@@ -175,7 +175,7 @@ contract('KeepRandomBeaconOperator', function() {
 
       // Assert tail
       let tail = await operatorContract.getTail()
-      assert.equal(expectedTail, tail.toString(), "unexpected tail index")
+      assert.equal(tail.toString(), expectedTail, "unexpected tail index")
 
       // Assert the order of the tickets[] indices
       let actualLinkedTicketIndices = [];
