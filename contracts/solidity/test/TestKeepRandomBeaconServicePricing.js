@@ -23,7 +23,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+      artifacts.require('./KeepRandomBeaconOperatorGroupTerminationStub.sol')
     );
 
     token = contracts.token;
@@ -145,6 +145,28 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     let groupMemberRewards = await groupContract.getGroupMemberRewards(group);
     assert.isTrue(groupMemberRewards.eq(expectedGroupMemberReward), "Unexpected group member reward.");
+
+    // Add extra group so we can expire the first one
+    await operatorContract.registerNewGroup("0x01");
+    // New relay request will trigger first group to expire
+    await serviceContract.methods['requestRelayEntry(uint256)'](bls.seed, {value: entryFeeEstimate, from: requestor});
+
+    assert.isTrue(await groupContract.isStaleGroup(group), "Group should be stale.");
+
+    assert.isTrue((await groupContract.availableRewards(operator1)).eq(expectedGroupMemberReward), "Unexpected group member reward.");
+    assert.isTrue((await groupContract.availableRewards(operator2)).eq(expectedGroupMemberReward), "Unexpected group member reward.");
+    assert.isTrue((await groupContract.availableRewards(operator3)).eq(expectedGroupMemberReward), "Unexpected group member reward.");
+
+    await operatorContract.withdrawGroupMemberRewards(operator1);
+    await operatorContract.withdrawGroupMemberRewards(operator2);
+    await operatorContract.withdrawGroupMemberRewards(operator3);
+    let magpie1balanceUpdated = web3.utils.toBN(await web3.eth.getBalance(magpie1));
+    let magpie2balanceUpdated = web3.utils.toBN(await web3.eth.getBalance(magpie2));
+    let magpie3balanceUpdated = web3.utils.toBN(await web3.eth.getBalance(magpie3));
+    assert.isTrue(magpie1balanceUpdated.eq(magpie1balance.add(expectedGroupMemberReward)), "Member haven't received expected rewards.");
+    assert.isTrue(magpie2balanceUpdated.eq(magpie1balance.add(expectedGroupMemberReward)), "Member haven't received expected rewards.");
+    assert.isTrue(magpie3balanceUpdated.eq(magpie1balance.add(expectedGroupMemberReward)), "Member haven't received expected rewards.");
+
   });
 
   it("should send part of the group reward to request subsidy pool based on the submission block.", async function() {
