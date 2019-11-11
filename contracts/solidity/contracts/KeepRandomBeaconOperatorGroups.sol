@@ -257,7 +257,7 @@ contract KeepRandomBeaconOperatorGroups {
     /**
      * @dev Withdraw accumulated group member rewards for a member.
      */
-    function withdraw(address groupMember) public returns (uint256 rewards) {
+    function withdraw(address groupMember) public onlyOperatorContract returns (uint256 rewards) {
         uint256[] memory staleGroupsIndices = getStaleGroupsIndices();
         for (uint i = 0; i < staleGroupsIndices.length; i++) {
             bytes memory groupPublicKey = getGroupPublicKey(staleGroupsIndices[i]);
