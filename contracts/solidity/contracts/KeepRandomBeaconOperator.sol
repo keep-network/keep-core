@@ -573,10 +573,10 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Withdraws accumulated group member rewards from a staled group.
-     * Finds and makes sure to remove member first before the withdrawal.
-     * Reverts if any of the required checks to find group and remove group
-     * member are failed.
+     * @dev Withdraws accumulated group member rewards from all staled
+     * groups for the given member. Finds and makes sure to remove member
+     * first before the withdrawal. Reverts if any of the required checks
+     * to find group and remove group member failed.
      */
     function withdrawGroupMemberRewards(address groupMember) public {
         uint256 accumulatedRewards = groupContract.withdraw(groupMember);
