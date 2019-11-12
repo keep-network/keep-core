@@ -519,14 +519,14 @@ contract KeepRandomBeaconOperator {
         groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals);
 
         // delay penalty = base reward * (1 - delay factor)
-        uint256 groupMemberDelayPenalty = groupMemberBaseReward.sub(groupMemberBaseReward.mul(delayFactor).div(decimals));
+        uint256 groupMemberDelayPenalty = groupMemberBaseReward.mul(decimals.sub(delayFactor));
 
         // The submitter reward consists of:
         // The callback gas expenditure (reimbursed by the service contract)
         // The entry verification fee to cover the cost of verifying the submission,
         // paid regardless of their gas expenditure
         // Submitter extra reward - 5% of the delay penalties of the entire group
-        uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).mul(5).div(100);
+        uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).mul(5).div(100).div(decimals);
         uint256 entryVerificationFee = signingRequest.entryVerificationAndProfitFee.sub(groupProfitFee());
         submitterReward = entryVerificationFee.add(submitterExtraReward);
 
