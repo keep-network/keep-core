@@ -78,6 +78,6 @@ output "nat_gateway_zone_c_route_tag" {
   value = "${module.nat_gateway_zone_c.routing_tag_zonal}"
 }
 
-output "atlantis_external_ip" {
-  value = "${google_compute_global_address.atlantis_external_ip.address}"
+output "eth_tx_ropsten_loadbalancer_external_ip" {
+  value = "${google_compute_address.eth_tx_ropsten_loadbalancer_ip.address}"
 }
