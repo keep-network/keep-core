@@ -204,7 +204,9 @@ contract KeepRandomBeaconOperatorGroups {
     function getStaleGroupsIndices() internal view returns(uint256[] memory indices) {
         uint256 counter;
         for (uint i = 0; i < groups.length; i++) {
-            if (isStaleGroup(groups[i].groupPubKey)) {
+            bool isExpired = expiredGroupOffset > i;
+            bool isStale = groupStaleTime(groups[i]) < block.number;
+            if (isExpired && isStale) {
                 counter++;
             }
         }
@@ -212,7 +214,9 @@ contract KeepRandomBeaconOperatorGroups {
         indices = new uint256[](counter);
         counter = 0;
         for (uint i = 0; i < groups.length; i++) {
-            if (isStaleGroup(groups[i].groupPubKey)) {
+            bool isExpired = expiredGroupOffset > i;
+            bool isStale = groupStaleTime(groups[i]) < block.number;
+            if (isExpired && isStale) {
                 indices[counter] = i;
                 counter++;
             }
