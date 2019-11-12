@@ -73,8 +73,8 @@ library GroupSelection {
         mapping(uint256 => uint256) previousTicketIndex;
 
         // Tail represents an index of a ticket in a tickets[] array which holds
-        // the largest ticket value and is used by `previousTicketIndex`. It is
-        // a tail of the linked list defined by `previousTicketIndex`.
+        // the highest ticket value. It is a tail of the linked list defined by
+        // `previousTicketIndex`.
         uint256 tail;
 
         // Size of a group in the threshold relay.
@@ -162,15 +162,15 @@ library GroupSelection {
      * @dev Add a new verified ticket to the tickets[] array.
      */
     function addTicket(Storage storage self, uint256 newTicketValue) internal {
-        uint256 oldTail = self.tail;
         uint256[] memory ordered = createTicketValueOrderedIndices(self);
 
         // any ticket goes when the tickets array size is lower than the group size
         if (self.tickets.length < self.groupSize) {
-            // no tickets or larger than the current largest
+            // no tickets or higher than the current highest
             if (self.tickets.length == 0 || newTicketValue > self.tickets[self.tail]) {
                 self.tickets.push(newTicketValue);
                 if (self.tickets.length > 1) {
+                    uint256 oldTail = self.tail;
                     self.tail = self.tickets.length-1;
                     self.previousTicketIndex[self.tail] = oldTail;
                 }
@@ -179,9 +179,9 @@ library GroupSelection {
                 self.tickets.push(newTicketValue);
                 // last element points to itself
                 self.previousTicketIndex[self.tickets.length - 1] = self.tickets.length - 1;
-                // prev index of a lowest ticket value points to a new lowest
+                // previous lowest ticket points to the new lowest
                 self.previousTicketIndex[ordered[0]] = self.tickets.length - 1;
-            // larger than the lowest ticket value and lower than the largest ticket value,
+            // higher than the lowest ticket value and lower than the highest ticket value
             } else {
                 self.tickets.push(newTicketValue);
                 uint j = findReplacementIndex(self, newTicketValue, ordered);
@@ -191,17 +191,16 @@ library GroupSelection {
         } else if (newTicketValue < self.tickets[self.tail]) {
             // new ticket is lower than currently lowest
             if (newTicketValue < self.tickets[ordered[0]]) {
-                // replacing largest ticket with a lowest
+                // replacing highest ticket with the new lowest
                 self.tickets[self.tail] = newTicketValue;
-                // updating the previousTicketIndex map
                 uint newTail = self.previousTicketIndex[self.tail];
                 self.previousTicketIndex[ordered[0]] = self.tail;
                 self.previousTicketIndex[self.tail] = self.tail;
                 self.tail = newTail;
-            } else { // new ticket is between lowest and largest
+            } else { // new ticket is between lowest and highest
                 uint j = findReplacementIndex(self, newTicketValue, ordered);
                 self.tickets[self.tail] = newTicketValue;
-                // do not change the order if a new ticket is still largest
+                // do not change the order if a new ticket is still highest
                 if (j != self.tail) {
                     uint newTail = self.previousTicketIndex[self.tail];
                     self.previousTicketIndex[self.tail] = self.previousTicketIndex[j];
@@ -272,7 +271,7 @@ library GroupSelection {
 
         require(self.tickets.length >= groupSize, "Not enough tickets submitted");
 
-        address[] memory selected = new address[](groupSize);
+        address[] memory selected = new address[](self.groupSize);
         uint256 linkedIndex;
         uint256 ticketValue;
 

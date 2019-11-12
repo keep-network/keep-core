@@ -38,6 +38,9 @@ contract('KeepRandomBeaconOperator', function() {
         await addTickets(ticketsToAdd)
         
         let expectedTickets = [1, 3, 5, 7, 4, 9, 6, 11, 8, 12]; // 100, 200, 300 -> out
+        // indices          = [0, 1, 2, 3, 4, 5, 6, 7,  8,  9]
+        // sorted tickets   = [1, 3, 4, 5, 6, 7, 8, 9, 11, 12]
+        // sorted indices   = [0, 1, 4, 2, 6, 3, 8, 5,  7,  9]
         // 0->0    1->0    2->4    3->6    4->1
         // 5->8    6->2    7->5    8->3    9->7
         let expectedOrderedIndices = [0, 0, 4, 6, 1, 8, 2, 5, 3, 7];
@@ -46,7 +49,7 @@ contract('KeepRandomBeaconOperator', function() {
         await assertTickets(expectedTail, expectedOrderedIndices, expectedTickets)
       });
 
-      it("should replace the largest ticket with a new ticket which is somewhere in the middle value range", async () => {
+      it("should replace the highest ticket with a new ticket which is somewhere in the middle value range", async () => {
         let ticketsToAdd = [5986, 6782, 5161, 7009, 8086, 1035, 5294, 9826, 6475, 9520, 4293];
         
         await addTickets(ticketsToAdd)
@@ -69,6 +72,9 @@ contract('KeepRandomBeaconOperator', function() {
         await addTickets(ticketsToAdd)
         
         let expectedTickets = [151, 42, 175, 7, 128, 185, 74, 143, 88, 130]; // 190 -> out
+        // indices          = [ 0,  1,  2,  3,  4,   5,   6,   7,   8,   9 ]
+        // sorted tickets   = [ 7, 42, 74, 88, 128, 130, 143, 151, 175, 185]
+        // sorted indices   = [ 3,  1,  6,  8,  4,   9,   7,   0,   2,   5 ]
         // 0->7    1->3    2->0    3->3    4->8
         // 5->2    6->1    7->9    8->6    9->4
         let expectedOrderedIndices = [7, 3, 0, 3, 8, 2, 1, 9, 6, 4];
@@ -83,6 +89,9 @@ contract('KeepRandomBeaconOperator', function() {
         await addTickets(ticketsToAdd)
         
         let expectedTickets = [5986, 6782, 5161, 7009, 8086, 1035, 5294, 4293, 6475, 998]; // 9826 & 9520 -> out
+        // indices          = [ 0  ,  1  ,  2  ,  3  ,  4  ,  5  ,  6  ,  7  ,  8  ,  9 ]
+        // sorted tickets   = [998, 1035, 4293, 5161, 5294, 5986, 6475, 6782, 7009, 8086]
+        // sorted indices   = [ 9  ,  5  ,  7 ,   2 ,  6  ,   0  ,  8  ,  1  ,  3  ,  4 ]
         // 0->6    1->8    2->7    3->1    4->3
         // 5->9    6->2    7->5    8->0    9->9
         let expectedOrderedIndices = [6, 8, 7, 1, 3, 9, 2, 5, 0, 9];
@@ -100,6 +109,10 @@ contract('KeepRandomBeaconOperator', function() {
 
         await addTickets(ticketsToAdd)
 
+        // expected tickets = [1, 3, 5, 7, 4, 9, 6, 11]
+        // indices          = [0, 1, 2, 3, 4, 5, 6,  7]
+        // sorted tickets   = [1, 3, 4, 5, 6, 7, 9, 11]
+        // sorted indices   = [0, 1, 4, 2, 6, 3, 5,  7]
         // 0->0    1->0    2->4    3->6
         // 4->1    5->3    6->2    7->5
         let expectedOrderedIndices = [0, 0, 4, 6, 1, 3, 2, 5];
@@ -113,6 +126,10 @@ contract('KeepRandomBeaconOperator', function() {
 
         await addTickets(ticketsToAdd)
 
+        // expected tickets = [1, 3, 5, 7, 4, 9, 6, 11]
+        // indices          = [0, 1, 2, 3, 4, 5, 6,  7]
+        // sorted tickets   = [1, 3, 4, 5, 6, 7, 9, 11]
+        // sorted indices   = [0, 1, 4, 2, 7, 3, 5,  6]
         // 0->0    1->0    2->4    3->7
         // 4->1    5->3    6->5    7->2
         let expectedOrderedIndices = [0, 0, 4, 7, 1, 3, 5, 2];
@@ -126,6 +143,10 @@ contract('KeepRandomBeaconOperator', function() {
 
         await addTickets(ticketsToAdd)
 
+        // expected tickets = [151, 42,  175,  7, 128, 190, 74,   4 ]
+        // indices          = [ 0,   1,   2,   3,  4,   5,   6,   7 ]
+        // sorted tickets   = [ 4,   7,  42,  74, 128, 151, 175, 190]
+        // sorted indices   = [ 7,   3,   1,   6,  4,   0,   2,   5 ]
         // 0->4    1->3    2->0    3->7
         // 4->6    5->2    6->1    7->7
         let expectedOrderedIndices = [4, 3, 0, 7, 6, 2, 1, 7];
@@ -154,9 +175,13 @@ contract('KeepRandomBeaconOperator', function() {
       // Assert ticket values
       let actualTickets = [];
       for (let i = 0; i < tickets.length; i++) {
-        actualTickets.push(Number(tickets[i]))
+        actualTickets.push(tickets[i])
       }
-      assert.sameOrderedMembers(actualTickets, expectedTickets, "unexpected ticket values")
+      assert.sameOrderedMembers(
+        actualTickets.map(bn => bn.toNumber()),
+        expectedTickets,
+        "unexpected ticket values"
+      )
 
       // Assert tail
       let tail = await operatorContract.getTail()
@@ -166,10 +191,10 @@ contract('KeepRandomBeaconOperator', function() {
       let actualLinkedTicketIndices = [];
       for (let i = 0; i < tickets.length; i++) {
         let actualIndex = await operatorContract.getPreviousTicketIndex(i)
-        actualLinkedTicketIndices.push(Number(actualIndex))
+        actualLinkedTicketIndices.push(actualIndex)
       }
       assert.sameOrderedMembers(
-        actualLinkedTicketIndices,
+        actualLinkedTicketIndices.map(bn => bn.toNumber()),
         expectedLinkedTicketIndices,
         'unexpected order of tickets'
       );
