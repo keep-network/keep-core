@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/BurntSushi/toml"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"golang.org/x/crypto/ssh/terminal"
 )
