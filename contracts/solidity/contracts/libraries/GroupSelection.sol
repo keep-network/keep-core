@@ -191,23 +191,23 @@ library GroupSelection {
             // higher than the lowest ticket value and lower than the highest ticket value
             } else {
                 self.tickets.push(newTicketValue);
-                uint j = findReplacementIndex(self, newTicketValue, ordered);
+                uint256 j = findReplacementIndex(self, newTicketValue, ordered);
                 self.previousTicketIndex[self.tickets.length - 1] = self.previousTicketIndex[j];
                 self.previousTicketIndex[j] = self.tickets.length - 1;
             }
             self.proofs[newTicketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
         } else if (newTicketValue < self.tickets[self.tail]) {
-            uint ticketToRemove = self.tickets[self.tail];
+            uint256 ticketToRemove = self.tickets[self.tail];
             // new ticket is lower than currently lowest
             if (newTicketValue < self.tickets[ordered[0]]) {
                 // replacing highest ticket with the new lowest
                 self.tickets[self.tail] = newTicketValue;
-                uint newTail = self.previousTicketIndex[self.tail];
+                uint256 newTail = self.previousTicketIndex[self.tail];
                 self.previousTicketIndex[ordered[0]] = self.tail;
                 self.previousTicketIndex[self.tail] = self.tail;
                 self.tail = newTail;
             } else { // new ticket is between lowest and highest
-                uint j = findReplacementIndex(self, newTicketValue, ordered);
+                uint256 j = findReplacementIndex(self, newTicketValue, ordered);
                 self.tickets[self.tail] = newTicketValue;
                 // do not change the order if a new ticket is still highest
                 if (j != self.tail) {
