@@ -269,21 +269,11 @@ library GroupSelection {
         require(self.tickets.length >= self.groupSize, "Not enough tickets submitted");
 
         address[] memory selected = new address[](self.groupSize);
-        uint256 linkedIndex;
-        uint256 ticketValue;
-
-        if (selected.length > 0) {
-            linkedIndex = self.tail;
-            ticketValue = self.tickets[linkedIndex];
-            selected[self.tickets.length-1] = self.proofs[ticketValue].sender;
-
-            if (selected.length > 1) {
-                for (uint256 i = self.tickets.length - 1; i > 0; i--) {
-                    ticketValue = self.tickets[self.previousTicketIndex[linkedIndex]];
-                    linkedIndex = self.previousTicketIndex[linkedIndex];
-                    selected[i-1] = self.proofs[ticketValue].sender;
-                }
-            }
+        uint256 ticketIndex = self.tail;
+        selected[self.tickets.length - 1] = self.proofs[self.tickets[ticketIndex]].sender;
+        for (uint256 i = self.tickets.length - 1; i > 0; i--) {
+            ticketIndex = self.previousTicketIndex[ticketIndex];
+            selected[i-1] = self.proofs[self.tickets[ticketIndex]].sender;
         }
 
         return selected;
