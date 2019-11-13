@@ -46,4 +46,13 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
     function getRelayEntryTimeout() public view returns (uint256) {
         return relayEntryTimeout;
     }
+
+    function stubRelayEntry() public returns (uint256) {
+        entryInProgress = false;
+        bytes memory groupPubKey = groupContract.getGroupPublicKey(signingRequest.groupIndex);
+        (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
+        submitterReward; // silence local var
+        subsidy; // silence local var
+        groupContract.addGroupMemberReward(groupPubKey, groupMemberReward);
+    }
 }
