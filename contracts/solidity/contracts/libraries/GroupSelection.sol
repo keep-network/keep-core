@@ -133,8 +133,7 @@ library GroupSelection {
             stakingWeight,
             self.seed
         )) {
-            addTicket(self, ticketValue);
-            self.proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+            addTicket(self, ticketValue, stakerValue, virtualStakerIndex);
         } else {
             // TODO: should we slash instead of reverting?
             revert("Invalid ticket");
@@ -159,9 +158,16 @@ library GroupSelection {
     }
 
     /**
-     * @dev Add a new verified ticket to the tickets[] array.
+     * @dev Adds a new, verified ticket. Ticket is accepted when it is lower
+     * than the currently highest ticket or when the number of tickets is still
+     * below the group size.
      */
-    function addTicket(Storage storage self, uint256 newTicketValue) internal {
+    function addTicket(
+        Storage storage self,
+        uint256 newTicketValue,
+        uint256 stakerValue,
+        uint256 virtualStakerIndex
+    ) internal {
         uint256[] memory ordered = getTicketValueOrderedIndices(self);
 
         // any ticket goes when the tickets array size is lower than the group size
@@ -189,7 +195,9 @@ library GroupSelection {
                 self.previousTicketIndex[self.tickets.length - 1] = self.previousTicketIndex[j];
                 self.previousTicketIndex[j] = self.tickets.length - 1;
             }
+            self.proofs[newTicketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
         } else if (newTicketValue < self.tickets[self.tail]) {
+            uint ticketToRemove = self.tickets[self.tail];
             // new ticket is lower than currently lowest
             if (newTicketValue < self.tickets[ordered[0]]) {
                 // replacing highest ticket with the new lowest
@@ -209,6 +217,9 @@ library GroupSelection {
                     self.tail = newTail;
                 }
             }
+            // deleting the proof for the old ticket that is being replaced by the new ticket
+            delete self.proofs[ticketToRemove];
+            self.proofs[newTicketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
         }
     }
 
@@ -289,5 +300,6 @@ library GroupSelection {
             delete self.previousTicketIndex[i];
         }
         delete self.tickets;
+        self.tail = 0;
     }
 }
