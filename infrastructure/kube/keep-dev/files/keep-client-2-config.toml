@@ -1,10 +1,10 @@
 [ethereum]
-  URL = "http://eth-tx.ropsten.svc.cluster.local:8546"
-  URLRPC = "http://eth-tx.ropsten.svc.cluster.local:8545"
+  URL = "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
+  URLRPC = "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
 
   [ethereum.account]
-    Address = ""
-    KeyFile = ""
+    Address = "0x4050aa55ae9bd11b7ea42d44dab3a6a1874dd751"
+    KeyFile = "/mnt/keep-client/config/eth_account_keyfile"
 
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeaconOperator contract
@@ -18,7 +18,7 @@
 
 [LibP2P]
   Peers = []
-  Port = "3919"
+  Port = 3919
   # AnnouncedAddresses:
   # Leaving AnnouncedAddresses empty will set a default address to be
   # announced to the network.  The default address will vary by deploy

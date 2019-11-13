@@ -3,7 +3,7 @@
   URLRPC = "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
 
   [ethereum.account]
-    Address = "0x186ab1ed890e341c9c882ba20459fd4f6ef18a30"
+    Address = "0x75353501e93ca9c9f48cb8ae82a7a218f1483267"
     KeyFile = "/mnt/keep-client/config/eth_account_keyfile"
 
   [ethereum.ContractAddresses]
