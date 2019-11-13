@@ -126,7 +126,7 @@ contract('KeepRandomBeaconOperator', function() {
 
         await addTickets(ticketsToAdd)
 
-        // expected tickets = [1, 3, 5, 7, 4, 9, 6, 11]
+        // expected tickets = [1, 3, 5, 7, 4, 9, 11, 6]
         // indices          = [0, 1, 2, 3, 4, 5, 6,  7]
         // sorted tickets   = [1, 3, 4, 5, 6, 7, 9, 11]
         // sorted indices   = [0, 1, 4, 2, 7, 3, 5,  6]
