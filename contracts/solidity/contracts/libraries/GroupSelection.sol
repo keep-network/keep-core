@@ -166,14 +166,15 @@ library GroupSelection {
 
         // any ticket goes when the tickets array size is lower than the group size
         if (self.tickets.length < self.groupSize) {
-            // no tickets or higher than the current highest
-            if (self.tickets.length == 0 || newTicketValue > self.tickets[self.tail]) {
+            // no tickets
+            if (self.tickets.length == 0) {
                 self.tickets.push(newTicketValue);
-                if (self.tickets.length > 1) {
-                    uint256 oldTail = self.tail;
-                    self.tail = self.tickets.length-1;
-                    self.previousTicketIndex[self.tail] = oldTail;
-                }
+            // higher than the current highest
+            } else if (newTicketValue > self.tickets[self.tail]) {
+                self.tickets.push(newTicketValue);
+                uint256 oldTail = self.tail;
+                self.tail = self.tickets.length-1;
+                self.previousTicketIndex[self.tail] = oldTail;
             // lower than the current lowest
             } else if (newTicketValue < self.tickets[ordered[0]]) {
                 self.tickets.push(newTicketValue);
