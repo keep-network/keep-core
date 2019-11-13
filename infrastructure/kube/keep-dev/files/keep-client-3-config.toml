@@ -8,13 +8,13 @@
 
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeaconOperator contract
-    KeepRandomBeaconOperator = "0x5Fb87812C312557f4F714093d71235316Eaf4582"
+    KeepRandomBeaconOperator = "0xd827DBbb5E70249B15Fa06C16072F91300b122bF"
     # TokenStaking
-    TokenStaking = "0x09D3e8E6300B4FC9f6B477F948c5532461bd8dAd"
+    TokenStaking = "0xDFCD401cCFf45Ad92e7091fc0e21157500D0673a"
     # Hex-encoded address of KeepRandomBeaconService contract. Only needed
     # in cases where the client's utility functions will be used (e.g., the
     # relay subcommand).
-    KeepRandomBeaconService = "0x40e6f6060708A48F01eDFEe7EF2D5964a132A0Ee"
+    KeepRandomBeaconService = "0x3f3da6d75392bC36FD75dC31342B1E213EA992E0"
 
 [LibP2P]
   Peers = []
