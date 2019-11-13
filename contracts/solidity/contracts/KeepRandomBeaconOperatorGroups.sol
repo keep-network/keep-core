@@ -259,15 +259,27 @@ contract KeepRandomBeaconOperatorGroups {
     }
 
     /**
-     * @dev Withdraw accumulated group member rewards for a member.
+     * @dev Withdraws accumulated group member rewards using the provided
+     * arrays of group and member indices. If groupMember is not found the
+     * reward is not included, otherwise it is included and member is
+     * removed from the group.
+     * @param groupMember Address of group member.
+     * @param groupMemberIndices Array of member indices for the group member.
+     * @param groupIndices Array of group indices corresponding to the member indices.
      */
-    function withdraw(address groupMember) public onlyOperatorContract returns (uint256 rewards) {
-        uint256[] memory staleGroupsIndices = getStaleGroupsIndices();
-        for (uint i = 0; i < staleGroupsIndices.length; i++) {
-            bytes memory groupPublicKey = getGroupPublicKey(staleGroupsIndices[i]);
-            uint256[] memory groupMemberIndices = getGroupMemberIndices(groupPublicKey, groupMember);
-            for (uint j = 0; j < groupMemberIndices.length; j++) {
-                delete groupMembers[groupPublicKey][groupMemberIndices[j]];
+    function withdraw(
+        address groupMember,
+        uint256[] memory groupMemberIndices,
+        uint256[] memory groupIndices
+    ) public onlyOperatorContract returns (uint256 rewards) {
+        for (uint i = 0; i < groupMemberIndices.length; i++) {
+            uint256 groupIndex = groupIndices[i];
+            bool isExpired = expiredGroupOffset > groupIndex;
+            bool isStale = groupStaleTime(groups[groupIndex]) < block.number;
+
+            bytes memory groupPublicKey = getGroupPublicKey(groupIndex);
+            if (isExpired && isStale && groupMember == groupMembers[groupPublicKey][groupMemberIndices[i]]) {
+                delete groupMembers[groupPublicKey][groupMemberIndices[i]];
                 rewards = rewards.add(groupMemberRewards[groupPublicKey]);
             }
         }

@@ -573,13 +573,16 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Withdraws accumulated group member rewards from all staled
-     * groups for the given member. Finds and makes sure to remove member
-     * first before the withdrawal. Reverts if any of the required checks
-     * to find group and remove group member failed.
+     * @dev Withdraws accumulated group member rewards using the provided
+     * arrays of group and member indices. If groupMember is not found the
+     * reward is not included, otherwise it is included and member is
+     * removed from the group.
+     * @param groupMember Address of group member.
+     * @param groupMemberIndices Array of member indices for the group member.
+     * @param groupIndices Array of group indices corresponding to the member indices.
      */
-    function withdrawGroupMemberRewards(address groupMember) public {
-        uint256 accumulatedRewards = groupContract.withdraw(groupMember);
+    function withdrawGroupMemberRewards(address groupMember, uint256[] memory groupMemberIndices, uint256[] memory groupIndices) public {
+        uint256 accumulatedRewards = groupContract.withdraw(groupMember, groupMemberIndices, groupIndices);
         stakingContract.magpieOf(groupMember).transfer(accumulatedRewards);
     }
 
