@@ -201,7 +201,7 @@ contract KeepRandomBeaconOperatorGroups {
     /**
      * @dev Gets list of indices of staled groups.
      */
-    function getStaleGroupsIndices() internal view returns(uint256[] memory indices) {
+    function getStaleGroupsIndices() public view returns(uint256[] memory indices) {
         uint256 counter;
         for (uint i = 0; i < groups.length; i++) {
             bool isExpired = expiredGroupOffset > i;
@@ -226,7 +226,7 @@ contract KeepRandomBeaconOperatorGroups {
     /**
      * @dev Gets all indices in the provided group for a member.
      */
-    function getGroupMemberIndices(bytes memory groupPubKey, address member) internal view returns (uint256[] memory indices) {
+    function getGroupMemberIndices(bytes memory groupPubKey, address member) public view returns (uint256[] memory indices) {
         uint256 counter;
         for (uint i = 0; i < groupMembers[groupPubKey].length; i++) {
             if (groupMembers[groupPubKey][i] == member) {
