@@ -18,6 +18,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
+	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 )
 
 var logger = log.Logger("keep-chain-ethereum")
@@ -104,6 +105,9 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 		ticket.Value,
 		ticket.Proof.StakerValue,
 		ticket.Proof.VirtualStakerIndex,
+		options.TransactionOptions {
+			GasLimit: 250000,
+		},
 	)
 	if err != nil {
 		failPromise(err)

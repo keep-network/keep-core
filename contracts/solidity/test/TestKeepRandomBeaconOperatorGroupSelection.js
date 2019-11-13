@@ -18,6 +18,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   const operator1StakingWeight = 2000;
   const operator2StakingWeight = 2000;
   const operator3StakingWeight = 3000;
+  const groupSize = 3;
 
   before(async () => {
     let contracts = await initContracts(
@@ -35,6 +36,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     operatorContract = contracts.operatorContract;
 
     await operatorContract.setMinimumStake(minimumStake)
+    await operatorContract.setGroupSize(groupSize)
 
     await stakeDelegate(
       stakingContract, token, owner, operator1, magpie, 
