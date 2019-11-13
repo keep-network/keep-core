@@ -113,11 +113,6 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
   });
 
   it("should send group reward to each operator.", async function() {
-
-    let magpie1balance = web3.utils.toBN(await web3.eth.getBalance(magpie1));
-    let magpie2balance = web3.utils.toBN(await web3.eth.getBalance(magpie2));
-    let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
-
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     let tx = await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
       bls.seed,
@@ -156,17 +151,6 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     assert.isTrue((await groupContract.availableRewards(operator1)).eq(expectedGroupMemberReward), "Unexpected group member reward.");
     assert.isTrue((await groupContract.availableRewards(operator2)).eq(expectedGroupMemberReward), "Unexpected group member reward.");
     assert.isTrue((await groupContract.availableRewards(operator3)).eq(expectedGroupMemberReward), "Unexpected group member reward.");
-
-    await operatorContract.withdrawGroupMemberRewards(operator1);
-    await operatorContract.withdrawGroupMemberRewards(operator2);
-    await operatorContract.withdrawGroupMemberRewards(operator3);
-    let magpie1balanceUpdated = web3.utils.toBN(await web3.eth.getBalance(magpie1));
-    let magpie2balanceUpdated = web3.utils.toBN(await web3.eth.getBalance(magpie2));
-    let magpie3balanceUpdated = web3.utils.toBN(await web3.eth.getBalance(magpie3));
-    assert.isTrue(magpie1balanceUpdated.eq(magpie1balance.add(expectedGroupMemberReward)), "Member haven't received expected rewards.");
-    assert.isTrue(magpie2balanceUpdated.eq(magpie1balance.add(expectedGroupMemberReward)), "Member haven't received expected rewards.");
-    assert.isTrue(magpie3balanceUpdated.eq(magpie1balance.add(expectedGroupMemberReward)), "Member haven't received expected rewards.");
-
   });
 
   it("should send part of the group reward to request subsidy pool based on the submission block.", async function() {
@@ -192,10 +176,6 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     // submitterExtraReward: 842592592592592 * 5 * 5 / 100 = 210648148148148 wei
     // submitterReward: 37200000000000000 + 210648148148148 = 37410648148148148 wei
     // subsidy = 5250000000000000 - 207407407407407 * 5 - 210648148148148 = 4002314814814817 wei
-  
-    let magpie1balance = web3.utils.toBN(await web3.eth.getBalance(magpie1));
-    let magpie2balance = web3.utils.toBN(await web3.eth.getBalance(magpie2));
-    let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     let tx = await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
