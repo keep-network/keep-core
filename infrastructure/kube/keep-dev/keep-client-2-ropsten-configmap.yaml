@@ -1,0 +1,46 @@
+apiVersion: v1
+data:
+  eth_account_keyfile: '{address:4050aa55ae9bd11b7ea42d44dab3a6a1874dd751,crypto:{cipher:aes-128-ctr,ciphertext:819c8bb66cae9132efc507551494618fcd89074a1ff07484175f8c2ebd932aab,cipherparams:{iv:39f688873ae15c4367fe80ec60542209},kdf:scrypt,kdfparams:{dklen:32,n:262144,p:1,r:8,salt:de608606f90333b0c91c507ea1bb83750bdbd46707ce5f6ef4462e30fcd78236},mac:f51d57721de2406864ffd1a04d4dc20c5d910c2c616f53257324e78897f6dcc1},id:f4a4670e-8700-4dc8-86ad-19d4d6b74856,version:3}'
+  eth_account_password: doughnut_armenian_parallel_firework_backbite_employer_singlet
+  keep-client-config.toml: |-
+    [ethereum]
+      URL = "http://eth-tx.ropsten.svc.cluster.local:8546"
+      URLRPC = "http://eth-tx.ropsten.svc.cluster.local:8545"
+
+      [ethereum.account]
+        Address = ""
+        KeyFile = ""
+
+      [ethereum.ContractAddresses]
+        # Hex-encoded address of KeepRandomBeaconOperator contract
+        KeepRandomBeaconOperator = "0x5Fb87812C312557f4F714093d71235316Eaf4582"
+        # TokenStaking
+        TokenStaking = "0x09D3e8E6300B4FC9f6B477F948c5532461bd8dAd"
+        # Hex-encoded address of KeepRandomBeaconService contract. Only needed
+        # in cases where the client's utility functions will be used (e.g., the
+        # relay subcommand).
+        KeepRandomBeaconService = "0x40e6f6060708A48F01eDFEe7EF2D5964a132A0Ee"
+
+    [LibP2P]
+      Peers = []
+      Port = 3919
+      # AnnouncedAddresses:
+      # Leaving AnnouncedAddresses empty will set a default address to be
+      # announced to the network.  The default address will vary by deploy
+      # conditions.  Set AnnouncedAddresses if you have known external IPs
+      # or DNS entries you want to route traffic through.
+      AnnouncedAddresses = []
+
+    [Storage]
+      DataDir = "/mnt/keep-client/data"
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"eth_account_keyfile":"{address:4050aa55ae9bd11b7ea42d44dab3a6a1874dd751,crypto:{cipher:aes-128-ctr,ciphertext:819c8bb66cae9132efc507551494618fcd89074a1ff07484175f8c2ebd932aab,cipherparams:{iv:39f688873ae15c4367fe80ec60542209},kdf:scrypt,kdfparams:{dklen:32,n:262144,p:1,r:8,salt:de608606f90333b0c91c507ea1bb83750bdbd46707ce5f6ef4462e30fcd78236},mac:f51d57721de2406864ffd1a04d4dc20c5d910c2c616f53257324e78897f6dcc1},id:f4a4670e-8700-4dc8-86ad-19d4d6b74856,version:3}","eth_account_password":"doughnut_armenian_parallel_firework_backbite_employer_singlet","keep-client-config.toml":"[ethereum]\n  URL = \"http://eth-tx.ropsten.svc.cluster.local:8546\"\n  URLRPC = \"http://eth-tx.ropsten.svc.cluster.local:8545\"\n\n  [ethereum.account]\n    Address = \"\"\n    KeyFile = \"\"\n\n  [ethereum.ContractAddresses]\n    # Hex-encoded address of KeepRandomBeaconOperator contract\n    KeepRandomBeaconOperator = \"0x5Fb87812C312557f4F714093d71235316Eaf4582\"\n    # TokenStaking\n    TokenStaking = \"0x09D3e8E6300B4FC9f6B477F948c5532461bd8dAd\"\n    # Hex-encoded address of KeepRandomBeaconService contract. Only needed\n    # in cases where the client's utility functions will be used (e.g., the\n    # relay subcommand).\n    KeepRandomBeaconService = \"0x40e6f6060708A48F01eDFEe7EF2D5964a132A0Ee\"\n\n[LibP2P]\n  Peers = []\n  Port = 3919\n  # AnnouncedAddresses:\n  # Leaving AnnouncedAddresses empty will set a default address to be\n  # announced to the network.  The default address will vary by deploy\n  # conditions.  Set AnnouncedAddresses if you have known external IPs\n  # or DNS entries you want to route traffic through.\n  AnnouncedAddresses = []\n\n[Storage]\n  DataDir = \"/mnt/keep-client/data\""},"kind":"ConfigMap","metadata":{"annotations":{},"creationTimestamp":null,"name":"keep-client-2","namespace":"ropsten"}}
+  creationTimestamp: "2019-11-13T14:34:52Z"
+  name: keep-client-2
+  namespace: ropsten
+  resourceVersion: "81370734"
+  selfLink: /api/v1/namespaces/ropsten/configmaps/keep-client-2
+  uid: c1034028-0622-11ea-9d01-4201ac100009
