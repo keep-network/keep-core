@@ -2,10 +2,10 @@ const fs = require('fs');
 const Web3 = require('web3');
 
 // ETH host info
-const ethHost = 'http://eth-tx.test.keep.network';
+const ethHost = 'https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5';
 const ethWsPort = '8546';
 const ethRpcPort = '8545';
-const ethNetworkId = '1101';
+const ethNetworkId = '3';
 
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
@@ -22,10 +22,11 @@ const web3_options = {
 const web3 = new Web3(new Web3.providers.HttpProvider(ethHost + ':' + ethRpcPort), null, web3_options);
 
 const assignedAccounts = [
-  '0x48f4bb2cf7379467c3052cb8c5d9e3892eeda487',
-  '0x307bed667e177c7851779da0612c824d56ba097b',
-  '0xa924d3a62b2d515235e5de5d903c405cba7f0e86',
-  '0x4902de99499ee74159779c0d92dd163bf689daf0'
+  '0x7fb43a257bf74904a41506fe38c87d32d91a77ae',
+  '0xb6eb060a8d82a0bec265298aaccbf3577c2a5825',
+  '0x4050aa55ae9bd11b7ea42d44dab3a6a1874dd751',
+  '0x186ab1ed890e341c9c882ba20459fd4f6ef18a30',
+  '0x75353501e93ca9c9f48cb8ae82a7a218f1483267'
   ]
 
 /*
@@ -52,7 +53,7 @@ async function stakeOperatorAccount(operator, contractOwner) {
   let ethAccountPassword = 'doughnut_armenian_parallel_firework_backbite_employer_singlet';
 
   await web3.eth.personal.unlockAccount(operator, ethAccountPassword, 150000);
-  await web3.eth.personal.unlockAccount(contractOwner, ethAccountPassword, 150000);
+  await web3.eth.personal.unlockAccount(contractOwner, 'password', 150000);
 
 
   let magpie = contractOwner;
@@ -82,7 +83,7 @@ function formatAmount(amount, decimals) {
 };
 
 assignedAccounts.forEach(account =>
-  stakeOperatorAccount(account, '0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB').catch(error => {
+  stakeOperatorAccount(account, '0x3EBA91FBff9793d4d1Da9F71272020773d0e537C').catch(error => {
   console.error(error);
   process.exit(1);
   })
