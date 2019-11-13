@@ -106,7 +106,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 		ticket.Proof.StakerValue,
 		ticket.Proof.VirtualStakerIndex,
 		options.TransactionOptions {
-			GasLimit: 180000,
+			GasLimit: 250000,
 		},
 	)
 	if err != nil {
