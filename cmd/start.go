@@ -54,7 +54,12 @@ func Start(c *cli.Context) error {
 		config.LibP2P.Port = c.Int(portFlag)
 	}
 
-	operatorPrivateKey, operatorPublicKey, err := loadStaticKey(config.Ethereum.Account)
+	// FIXME This needs to happen inside the `pkg/chain/ethereum` scope,
+	// FIXME probably.
+	operatorPrivateKey, operatorPublicKey, err := loadStaticKey(
+		config.Ethereum.Account.KeyFile,
+		config.Ethereum.Account.KeyFilePassword,
+	)
 	if err != nil {
 		return fmt.Errorf("error loading static peer's key [%v]", err)
 	}
@@ -121,15 +126,16 @@ func Start(c *cli.Context) error {
 }
 
 func loadStaticKey(
-	account ethereum.Account,
+	keyFile string,
+	keyFilePassword string,
 ) (*operator.PrivateKey, *operator.PublicKey, error) {
 	ethereumKey, err := ethutil.DecryptKeyFile(
-		account.KeyFile,
-		account.KeyFilePassword,
+		keyFile,
+		keyFilePassword,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
-			"failed to read KeyFile: %s [%v]", account.KeyFile, err,
+			"failed to read KeyFile: %s [%v]", keyFile, err,
 		)
 	}
 
