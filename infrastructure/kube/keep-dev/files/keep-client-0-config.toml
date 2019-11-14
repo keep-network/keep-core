@@ -1,6 +1,6 @@
 [ethereum]
-  URL = "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
-  URLRPC = "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
+  URL = "ws://eth-tx-light-rpc-ws.ropsten.svc.cluster.local:8546"
+  URLRPC = "http://eth-tx-light-rpc-ws.ropsten.svc.cluster.local:8545"
 
   [ethereum.account]
     Address = "0x7fb43a257bf74904a41506fe38c87d32d91a77ae"
@@ -17,7 +17,7 @@
     KeepRandomBeaconService = "0x3f3da6d75392bC36FD75dC31342B1E213EA992E0"
 
 [LibP2P]
-  Peers = ["/ip4/10.102.1.94/tcp/3919/ipfs/16Uiu2HAmHT8KUYvA2a83YH6JjaV7pz1C8gVVE7eUREae3KAGCzrX"]
+  Peers = ["/dns4/keep-client-1.ropsten.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmHT8KUYvA2a83YH6JjaV7pz1C8gVVE7eUREae3KAGCzrX", "/dns4/keep-client-2.ropsten.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAkvTsVErCJYgCKY9xCAkXrya1VxDQVDRGmxsxuKnkeJhPx", "/dns4/keep-client-4.ropsten.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmH77PqABP4HEsMhKCAPgb8M249Gg3EAscUBRDX9p7wASF", "/dns4/keep-client-3.ropsten.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmE9KE9PTsTaVJge7RPnvtNTsuRmWLRycYbwSY3vfnQvVx"]
   Port = 3919
   # AnnouncedAddresses:
   # Leaving AnnouncedAddresses empty will set a default address to be
