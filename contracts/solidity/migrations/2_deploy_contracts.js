@@ -9,6 +9,7 @@ const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServi
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
 const KeepRandomBeaconOperatorGroups = artifacts.require("./KeepRandomBeaconOperatorGroups.sol");
 const GroupSelection = artifacts.require("./libraries/GroupSelection.sol");
+const CallbackContract = artifacts.require("./examples/CallbackContract.sol");
 
 const withdrawalDelay = 86400; // 1 day
 const priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei = 20 * 10^9 wei)
@@ -30,6 +31,7 @@ module.exports = async function(deployer) {
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
   await deployer.deploy(KeepRandomBeaconOperatorGroups);
+  await deployer.deploy(CallbackContract);
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 11).
   await deployer.deploy(KeepRandomBeaconOperator, KeepRandomBeaconService.address, TokenStaking.address, KeepRandomBeaconOperatorGroups.address);
