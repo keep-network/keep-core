@@ -30,6 +30,61 @@ contract('KeepRandomBeaconOperator', function() {
 
   describe("ticket insertion", () => {
 
+    describe("tickets array size is less than a group size", () => {
+
+      it("should add all the tickets and keep track the order when the latest ticket is the highest one", async () => {
+        let ticketsToAdd = [1, 3, 5, 7, 4, 9, 6, 11];
+
+        await addTickets(ticketsToAdd)
+
+        // expected tickets = [1, 3, 5, 7, 4, 9, 6, 11]
+        // indices          = [0, 1, 2, 3, 4, 5, 6,  7]
+        // sorted tickets   = [1, 3, 4, 5, 6, 7, 9, 11]
+        // sorted indices   = [0, 1, 4, 2, 6, 3, 5,  7]
+        // 0->0    1->0    2->4    3->6
+        // 4->1    5->3    6->2    7->5
+        let expectedOrderedIndices = [0, 0, 4, 6, 1, 3, 2, 5];
+        let expectedTail = 7;
+
+        await assertTickets(expectedTail, expectedOrderedIndices, ticketsToAdd)
+      });
+
+      it("should add all the tickets and track the order when the latest ticket is somewhere in the middle value range", async () => {
+        let ticketsToAdd = [1, 3, 5, 7, 4, 9, 11, 6];
+
+        await addTickets(ticketsToAdd)
+
+        // expected tickets = [1, 3, 5, 7, 4, 9, 11, 6]
+        // indices          = [0, 1, 2, 3, 4, 5, 6,  7]
+        // sorted tickets   = [1, 3, 4, 5, 6, 7, 9, 11]
+        // sorted indices   = [0, 1, 4, 2, 7, 3, 5,  6]
+        // 0->0    1->0    2->4    3->7
+        // 4->1    5->3    6->5    7->2
+        let expectedOrderedIndices = [0, 0, 4, 7, 1, 3, 5, 2];
+        let expectedTail = 6;
+
+        await assertTickets(expectedTail, expectedOrderedIndices, ticketsToAdd)
+      });
+
+      it("should add all the tickets and track the order when the last added ticket is the smallest", async () => {
+        let ticketsToAdd = [151, 42, 175, 7, 128, 190, 74, 4];
+
+        await addTickets(ticketsToAdd)
+
+        // expected tickets = [151, 42,  175,  7, 128, 190, 74,   4 ]
+        // indices          = [ 0,   1,   2,   3,  4,   5,   6,   7 ]
+        // sorted tickets   = [ 4,   7,  42,  74, 128, 151, 175, 190]
+        // sorted indices   = [ 7,   3,   1,   6,  4,   0,   2,   5 ]
+        // 0->4    1->3    2->0    3->7
+        // 4->6    5->2    6->1    7->7
+        let expectedOrderedIndices = [4, 3, 0, 7, 6, 2, 1, 7];
+        let expectedTail = 5;
+
+        await assertTickets(expectedTail, expectedOrderedIndices, ticketsToAdd);
+      });
+
+    });
+
     describe("tickets array size is at its max capacity", () => {
 
       it("should reject a new ticket when it is higher than the current highest one", async () => {
@@ -102,60 +157,7 @@ contract('KeepRandomBeaconOperator', function() {
 
     });
 
-    describe("tickets array size is less than a group size", () => {
-
-      it("should add all the tickets and keep track the order when the latest ticket is the highest one", async () => {
-        let ticketsToAdd = [1, 3, 5, 7, 4, 9, 6, 11];
-
-        await addTickets(ticketsToAdd)
-
-        // expected tickets = [1, 3, 5, 7, 4, 9, 6, 11]
-        // indices          = [0, 1, 2, 3, 4, 5, 6,  7]
-        // sorted tickets   = [1, 3, 4, 5, 6, 7, 9, 11]
-        // sorted indices   = [0, 1, 4, 2, 6, 3, 5,  7]
-        // 0->0    1->0    2->4    3->6
-        // 4->1    5->3    6->2    7->5
-        let expectedOrderedIndices = [0, 0, 4, 6, 1, 3, 2, 5];
-        let expectedTail = 7;
-
-        await assertTickets(expectedTail, expectedOrderedIndices, ticketsToAdd)
-      });
-
-      it("should add all the tickets and track the order when the latest ticket is somewhere in the middle value range", async () => {
-        let ticketsToAdd = [1, 3, 5, 7, 4, 9, 11, 6];
-
-        await addTickets(ticketsToAdd)
-
-        // expected tickets = [1, 3, 5, 7, 4, 9, 11, 6]
-        // indices          = [0, 1, 2, 3, 4, 5, 6,  7]
-        // sorted tickets   = [1, 3, 4, 5, 6, 7, 9, 11]
-        // sorted indices   = [0, 1, 4, 2, 7, 3, 5,  6]
-        // 0->0    1->0    2->4    3->7
-        // 4->1    5->3    6->5    7->2
-        let expectedOrderedIndices = [0, 0, 4, 7, 1, 3, 5, 2];
-        let expectedTail = 6;
-
-        await assertTickets(expectedTail, expectedOrderedIndices, ticketsToAdd)
-      });
-
-      it("should add all the tickets and track the order when the last added ticket is the smallest", async () => {
-        let ticketsToAdd = [151, 42, 175, 7, 128, 190, 74, 4];
-
-        await addTickets(ticketsToAdd)
-
-        // expected tickets = [151, 42,  175,  7, 128, 190, 74,   4 ]
-        // indices          = [ 0,   1,   2,   3,  4,   5,   6,   7 ]
-        // sorted tickets   = [ 4,   7,  42,  74, 128, 151, 175, 190]
-        // sorted indices   = [ 7,   3,   1,   6,  4,   0,   2,   5 ]
-        // 0->4    1->3    2->0    3->7
-        // 4->6    5->2    6->1    7->7
-        let expectedOrderedIndices = [4, 3, 0, 7, 6, 2, 1, 7];
-        let expectedTail = 5;
-
-        await assertTickets(expectedTail, expectedOrderedIndices, ticketsToAdd);
-      });
-
-    });
+    
 
     async function addTickets(ticketsToAdd) {
       // addTicket does not perform validation so we can hardcode these
