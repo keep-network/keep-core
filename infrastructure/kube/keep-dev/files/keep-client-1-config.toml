@@ -8,13 +8,13 @@
 
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeaconOperator contract
-    KeepRandomBeaconOperator = "0xd827DBbb5E70249B15Fa06C16072F91300b122bF"
+    KeepRandomBeaconOperator = "0xFE699F17A506d2d702FB2477F319EFe7EF9474F3"
     # TokenStaking
-    TokenStaking = "0xDFCD401cCFf45Ad92e7091fc0e21157500D0673a"
+    TokenStaking = "0xc2BD5B9ff97b59629E436fC97E166Cba629270aa"
     # Hex-encoded address of KeepRandomBeaconService contract. Only needed
     # in cases where the client's utility functions will be used (e.g., the
     # relay subcommand).
-    KeepRandomBeaconService = "0x3f3da6d75392bC36FD75dC31342B1E213EA992E0"
+    KeepRandomBeaconService = "0xBB43CF30c07AC5F386a22314D378dc2e5c79746B"
 
 [LibP2P]
   Peers = ["/dns4/keep-client-2.ropsten.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAkvTsVErCJYgCKY9xCAkXrya1VxDQVDRGmxsxuKnkeJhPx", "/dns4/keep-client-4.ropsten.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmH77PqABP4HEsMhKCAPgb8M249Gg3EAscUBRDX9p7wASF", "/dns4/keep-client-3.ropsten.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAmE9KE9PTsTaVJge7RPnvtNTsuRmWLRycYbwSY3vfnQvVx",
