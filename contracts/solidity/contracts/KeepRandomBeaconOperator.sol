@@ -173,6 +173,7 @@ contract KeepRandomBeaconOperator {
         owner = msg.sender;
 
         groupSelection.ticketSubmissionTimeout = 12;
+        groupSelection.groupSize = groupSize;
     }
 
     /**
@@ -284,7 +285,7 @@ contract KeepRandomBeaconOperator {
      * @dev Gets selected participants in ascending order of their tickets.
      */
     function selectedParticipants() public view returns (address[] memory) {
-        return groupSelection.selectedParticipants(groupSize);
+        return groupSelection.selectedParticipants();
     }
 
     /**
