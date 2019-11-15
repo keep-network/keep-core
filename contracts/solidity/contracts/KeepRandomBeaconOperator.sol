@@ -173,7 +173,7 @@ contract KeepRandomBeaconOperator {
         owner = msg.sender;
 
         groupSelection.ticketSubmissionTimeout = 12;
-        groupSelection.groupSize = groupSize;
+        groupSelection.groupSize = uint8(groupSize);
     }
 
     /**

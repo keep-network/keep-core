@@ -45,7 +45,7 @@ contract KeepRandomBeaconOperatorTicketsOrderingStub is KeepRandomBeaconOperator
         return groupSelection.previousTicketIndex[higherTicketValueIndex];
     }
 
-    function setGroupSize(uint256 size) public {
+    function setGroupSize(uint8 size) public {
         groupSize = size;
         groupSelection.groupSize = size;
     }

@@ -157,8 +157,6 @@ contract('KeepRandomBeaconOperator', function() {
 
     });
 
-    
-
     async function addTickets(ticketsToAdd) {
       // addTicket does not perform validation so we can hardcode these
       // values for the simplicity of tests
