@@ -8,6 +8,8 @@ import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
 import "./libraries/GroupSelection.sol";
+import "./libraries/Groups.sol";
+
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
@@ -113,6 +115,9 @@ contract KeepRandomBeaconOperator {
     using GroupSelection for GroupSelection.Storage;
     GroupSelection.Storage groupSelection;
 
+    using Groups for Groups.Storage;
+    Groups.Storage groups;
+
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
 
@@ -174,6 +179,8 @@ contract KeepRandomBeaconOperator {
 
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
+        groups.activeGroupsThreshold = 5;
+        groups.groupActiveTime = 3000;
     }
 
     /**
@@ -334,11 +341,11 @@ contract KeepRandomBeaconOperator {
         for (uint i = 0; i < groupSize; i++) {
             // Check member was neither marked as inactive nor as disqualified
             if(inactive[i] == 0x00 && disqualified[i] == 0x00) {
-                groupContract.addGroupMember(groupPubKey, members[i]);
+                groups.addGroupMember(groupPubKey, members[i]);
             }
         }
 
-        groupContract.addGroup(groupPubKey);
+        groups.addGroup(groupPubKey);
         reimburseDkgSubmitter();
         emit DkgResultPublishedEvent(groupPubKey);
         groupSelection.stop();
@@ -452,7 +459,7 @@ contract KeepRandomBeaconOperator {
         currentEntryStartBlock = block.number;
         entryInProgress = true;
 
-        uint256 groupIndex = groupContract.selectGroup(previousEntry);
+        uint256 groupIndex = groups.selectGroup(previousEntry);
         signingRequest = SigningRequest(
             requestId,
             entryVerificationAndProfitFee,
@@ -462,7 +469,7 @@ contract KeepRandomBeaconOperator {
             serviceContract
         );
 
-        bytes memory groupPubKey = groupContract.getGroupPublicKeyCompressed(groupIndex);
+        bytes memory groupPubKey = groups.getGroupPublicKeyCompressed(groupIndex);
         emit SignatureRequested(previousEntry, seed, groupPubKey);
     }
 
@@ -474,7 +481,7 @@ contract KeepRandomBeaconOperator {
     function relayEntry(uint256 _groupSignature) public {
         require(!hasEntryTimedOut(), "Entry timed out");
 
-        bytes memory groupPubKey = groupContract.getGroupPublicKey(signingRequest.groupIndex);
+        bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
 
         require(
             BLS.verify(
@@ -501,7 +508,7 @@ contract KeepRandomBeaconOperator {
         entryInProgress = false;
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
-        groupContract.addGroupMemberReward(groupPubKey, groupMemberReward);
+        groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
         stakingContract.magpieOf(msg.sender).transfer(submitterReward);
 
@@ -589,7 +596,7 @@ contract KeepRandomBeaconOperator {
     function reportRelayEntryTimeout() public {
         require(hasEntryTimedOut(), "Entry did not time out");
 
-        groupContract.terminateGroup(signingRequest.groupIndex);
+        groups.terminateGroup(signingRequest.groupIndex);
 
         // We could terminate the last active group. If that's the case,
         // do not try to execute signing again because there is no group
@@ -625,7 +632,7 @@ contract KeepRandomBeaconOperator {
      * @dev Checks if group with the given public key is registered.
      */
     function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
-        return groupContract.isGroupRegistered(groupPubKey);
+        return groups.isGroupRegistered(groupPubKey);
     }
 
     /**
@@ -638,7 +645,7 @@ contract KeepRandomBeaconOperator {
      * the past.
      */
     function isStaleGroup(bytes memory groupPubKey) public view returns(bool) {
-        return groupContract.isStaleGroup(groupPubKey);
+        return groups.isStaleGroup(groupPubKey);
     }
 
     /**
@@ -646,6 +653,6 @@ contract KeepRandomBeaconOperator {
      * not counted as active.
      */
     function numberOfGroups() public view returns(uint256) {
-        return groupContract.numberOfGroups();
+        return groups.numberOfGroups();
     }
 }
