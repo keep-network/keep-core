@@ -651,4 +651,11 @@ contract KeepRandomBeaconOperator {
     function numberOfGroups() public view returns(uint256) {
         return groups.numberOfGroups();
     }
+
+    /**
+     * @dev Returns accumulated group member rewards for provided group.
+     */
+    function getGroupMemberRewards(bytes memory groupPubKey) public view returns (uint256) {
+        return groups.groupMemberRewards[groupPubKey];
+    }
 }
