@@ -34,8 +34,8 @@ contract('KeepRandomBeaconOperator', (accounts) => {
     let gasEstimate = await operatorContract.relayEntry.estimateGas(bls.nextGroupSignature);
 
     // Make sure no change will make the verification more expensive than it is 
-    // now or that even if it happens, it will be a conscious change.
-    assert.isBelow(gasEstimate, 462415, "Relay entry submission is too expensive")
+    // now or that even if it happens, it will be a conscious decision.
+    assert.isBelow(gasEstimate, 451688, "Relay entry submission is too expensive")
   });
 
   it("should not allow to submit invalid relay entry", async () => {
