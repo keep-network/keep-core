@@ -3,7 +3,6 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./TokenStaking.sol";
-import "./KeepRandomBeaconOperatorGroups.sol";
 import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
@@ -49,8 +48,6 @@ contract KeepRandomBeaconOperator {
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
     TokenStaking public stakingContract;
-
-    KeepRandomBeaconOperatorGroups public groupContract;
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
     // the Keep network. Expressed as number with 18-decimal places.
@@ -169,11 +166,10 @@ contract KeepRandomBeaconOperator {
         _;
     }
 
-    constructor(address _serviceContract, address _stakingContract, address _groupContract) public {
+    constructor(address _serviceContract, address _stakingContract) public {
         serviceContracts.push(_serviceContract);
 
         stakingContract = TokenStaking(_stakingContract);
-        groupContract = KeepRandomBeaconOperatorGroups(_groupContract);
 
         owner = msg.sender;
 
