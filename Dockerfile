@@ -1,4 +1,4 @@
-FROM golang:1.11.4-alpine3.7 AS runtime
+FROM golang:1.12-alpine3.10 AS runtime
 
 ENV APP_NAME=keep-client \
 	BIN_PATH=/usr/local/bin
@@ -21,6 +21,7 @@ RUN apk add --update --no-cache \
 	git \
 	make \
 	nodejs \
+	npm \
 	python && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
