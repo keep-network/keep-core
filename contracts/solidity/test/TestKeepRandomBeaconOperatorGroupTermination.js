@@ -11,7 +11,6 @@ contract('GroupsTerminationStub', function(accounts) {
 
     before(async () => {
       groups = await GroupsTerminationStub.new();
-      groups.clearGroups();
       groups.setActiveGroupsThreshold(activeGroupsThreshold);
     });
 
