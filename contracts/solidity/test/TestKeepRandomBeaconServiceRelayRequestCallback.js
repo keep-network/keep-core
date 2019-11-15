@@ -4,7 +4,7 @@ const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
 contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
 
-  let operatorContract, groupContract, serviceContract, callbackContract;
+  let operatorContract, serviceContract, callbackContract;
 
   before(async () => {
     let contracts = await initContracts(
@@ -12,19 +12,17 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
     );
 
     operatorContract = contracts.operatorContract;
-    groupContract = contracts.groupContract;
     serviceContract = contracts.serviceContract;
     callbackContract = await CallbackContract.new();
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
     operatorContract.setGroupSize(3);
-    let group = await groupContract.getGroupPublicKey(0);
+    let group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, accounts[0]);
     await operatorContract.addGroupMember(group, accounts[1]);
     await operatorContract.addGroupMember(group, accounts[2]);
