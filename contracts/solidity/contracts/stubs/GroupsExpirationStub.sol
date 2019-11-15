@@ -2,7 +2,6 @@ pragma solidity ^0.5.4;
 import "../libraries/Groups.sol";
 
 contract GroupsExpirationStub {
-    using Groups for Groups.Group;
     using Groups for Groups.Storage;
     Groups.Storage groups;
 
@@ -13,7 +12,7 @@ contract GroupsExpirationStub {
     }
 
     function addGroup(bytes memory groupPubKey) public {
-        groups.groups.push(Groups.Group(groupPubKey, block.number));
+        groups.addGroup(groupPubKey);
     }
 
     function getGroupRegistrationBlockHeight(uint256 groupIndex) public view returns(uint256) {
