@@ -1,13 +1,14 @@
 import { duration } from './increaseTime';
 const BLS = artifacts.require('./cryptography/BLS.sol');
 const GroupSelection = artifacts.require('./libraries/GroupSelection.sol');
+const Groups = artifacts.require('./libraries/Groups.sol');
 
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
-  KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator, KeepRandomBeaconOperatorGroups) {
+  KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
 
   let token, stakingContract,
     serviceContractImplV1, serviceContractProxy, serviceContract,
-    operatorContract, groupContract;
+    operatorContract;
 
   let priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei = 20 * 10^9 wei)
     fluctuationMargin = 50, // 50%
@@ -29,10 +30,10 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   const bls = await BLS.new();
   await KeepRandomBeaconOperator.link("BLS", bls.address);
   const groupSelection = await GroupSelection.new();
+  const groups = await Groups.new();
   await KeepRandomBeaconOperator.link("GroupSelection", groupSelection.address);
-  groupContract = await KeepRandomBeaconOperatorGroups.new();
-  operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address, groupContract.address);
-  await groupContract.setOperatorContract(operatorContract.address);
+  await KeepRandomBeaconOperator.link("Groups", groups.address);
+  operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address);
 
   await serviceContract.initialize(priceFeedEstimate, fluctuationMargin, dkgContributionMargin, withdrawalDelay, operatorContract.address);
 
@@ -46,8 +47,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     token: token,
     stakingContract: stakingContract,
     serviceContract: serviceContract,
-    operatorContract: operatorContract,
-    groupContract: groupContract
+    operatorContract: operatorContract
   };
 };
 
