@@ -27,8 +27,6 @@ RUN apk add --update --no-cache \
 
 COPY --from=ethereum/solc:0.5.10 /usr/bin/solc /usr/bin/solc
 
-RUN go get gotest.tools/gotestsum
-
 RUN mkdir -p $APP_DIR $TEST_RESULTS_DIR
 
 WORKDIR $APP_DIR
