@@ -1,25 +1,18 @@
 import mineBlocks from './helpers/mineBlocks';
-import {initContracts} from './helpers/initContracts';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
+const GroupsTerminationStub = artifacts.require('./stubs/GroupsTerminationStub.sol')
 
-contract('TestKeepRandomBeaconOperatorGroupTermination', function(accounts) {
-    let operatorContract;
+contract('GroupsTerminationStub', function(accounts) {
+    let groups;
+
     const groupActiveTime = 5;
     const activeGroupsThreshold = 1;
 
     before(async () => {
-      let contracts = await initContracts(
-        artifacts.require('./KeepToken.sol'),
-        artifacts.require('./TokenStaking.sol'),
-        artifacts.require('./KeepRandomBeaconService.sol'),
-        artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-        artifacts.require('./stubs/KeepRandomBeaconOperatorGroupTerminationStub.sol')
-      );
-
-      operatorContract = contracts.operatorContract;
-      operatorContract.clearGroups();
-      operatorContract.setActiveGroupsThreshold(activeGroupsThreshold);
+      groups = await GroupsTerminationStub.new();
+      groups.clearGroups();
+      groups.setActiveGroupsThreshold(activeGroupsThreshold);
     });
 
     beforeEach(async () => {
@@ -31,15 +24,15 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function(accounts) {
     });
 
     async function runTerminationTest(groupsCount, expiredCount, terminatedGroups, beaconValue ) {
-      await operatorContract.registerNewGroups(expiredCount);
+      await groups.registerNewGroups(expiredCount);
       mineBlocks(groupActiveTime);
-      await operatorContract.registerNewGroups(groupsCount - expiredCount);
+      await groups.registerNewGroups(groupsCount - expiredCount);
 
       for (const groupIndex of terminatedGroups) {
-        await operatorContract.terminateGroup(groupIndex);
+        await groups.terminateGroup(groupIndex);
       }
 
-      return operatorContract.selectGroup.call(beaconValue);
+      return groups.selectGroup.call(beaconValue);
     }
     
     describe("should not select terminated groups", async () => {
@@ -182,7 +175,7 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function(accounts) {
 
     describe("should include terminated groups when checking the minimum active groups threshold", async () => {    
       beforeEach(async () => {
-        await operatorContract.setActiveGroupsThreshold(5); 
+        await groups.setActiveGroupsThreshold(5); 
       });      
       /*
         We do not expire any more groups because the minimum active threshold
@@ -207,17 +200,17 @@ contract('TestKeepRandomBeaconOperatorGroupTermination', function(accounts) {
         group into account for group selection.
       */
       it("EEEEET beacon_value = 0, active threshold = 5", async function() {
-        operatorContract.setActiveGroupsThreshold(5); 
+        groups.setActiveGroupsThreshold(5); 
         let selectedIndex = await runTerminationTest(6, 5, [5], 0);
         assert.equal(0, selectedIndex)
       })
       it("EEEEET beacon_value = 4, active threshold = 5", async function() {
-        operatorContract.setActiveGroupsThreshold(5); 
+        groups.setActiveGroupsThreshold(5); 
         let selectedIndex = await runTerminationTest(6, 5, [5], 4);
         assert.equal(4, selectedIndex)
       })
       it("EEEEET beacon_value = 5, active threshold = 5", async function() {
-        operatorContract.setActiveGroupsThreshold(5); 
+        groups.setActiveGroupsThreshold(5); 
         let selectedIndex = await runTerminationTest(6, 5, [5], 5);
         assert.equal(0, selectedIndex)
       })
