@@ -16,7 +16,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
-	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
+	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
 )
 
