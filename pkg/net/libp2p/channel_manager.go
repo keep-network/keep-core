@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	host "github.com/libp2p/go-libp2p-host"
+	host "github.com/libp2p/go-libp2p-core/host"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
