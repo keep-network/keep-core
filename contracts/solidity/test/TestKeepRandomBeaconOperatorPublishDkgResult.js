@@ -34,8 +34,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
     );
 
     token = contracts.token;
