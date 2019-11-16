@@ -14,7 +14,6 @@ require (
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/ethereum/go-ethereum v0.0.0-00010101000000-000000000000
 	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
-	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gogo/protobuf v1.3.1
 	github.com/ipfs/go-datastore v0.1.1
 	github.com/ipfs/go-log v0.0.1
@@ -30,8 +29,6 @@ require (
 	github.com/libp2p/go-libp2p-pubsub v0.2.1
 	github.com/libp2p/go-yamux v1.2.4 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/multiformats/go-multiaddr v0.1.2
 	github.com/multiformats/go-multihash v0.0.9 // indirect
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
@@ -40,6 +37,5 @@ require (
 	go.opencensus.io v0.22.2 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/tools v0.0.0-20190925230517-ea99b82c7b93
-	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 )
