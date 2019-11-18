@@ -33,7 +33,7 @@ library GroupSelection {
         // consideration.
         uint256[] tickets;
 
-        // Information about ticket submiters (group member candidates).
+        // Information about ticket submitters (group member candidates).
         mapping(uint256 => address) candidate;
 
         // Pseudorandom seed value used as an input for the group selection.
@@ -205,7 +205,8 @@ library GroupSelection {
                     self.tail = newTail;
                 }
             }
-            // deleting the proof for the old ticket that is being replaced by the new ticket
+            // we are replacing tickets so we also need to replace information
+            // about the submitter
             delete self.candidate[ticketToRemove];
             self.candidate[newTicketValue] = msg.sender;
         }
