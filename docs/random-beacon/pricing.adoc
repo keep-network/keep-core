@@ -11,32 +11,14 @@ The pricing method avoids
 the known downfalls of previously considered, more complex, schemes,
 such as price discrimination being defeated by callback pooling.
 
-== Prior Work
-What is this pricing mechanism based on?
-
-=== Implementation
-
-Provide overview diagram?
-
 ==== Making requests
 How are requests made?
-
-When a customer wishes to receive an entry,
-they query the beacon for the _entry fee estimate_
-applicable for their request:
-`entry_fee_estimate = estimate_fee(callback_gas_amount)`.
-The _callback gas amount_ is the amount of gas required
-for the customer's callback to execute successfully;
-if no callback is required `callback_gas_amount = 0`.
-
+The first step to making a request is to estimate the entree fee using
+`entry_fee_estimate = estimate_fee(callback_gas_amount)`. if no callback is required `callback_gas_amount = 0`.
 The estimate returned is guaranteed to be valid
 only for the transaction it is called in,
 and for callback gas costs
-equal or lower than the provided callback gas amount.
-Thus the request should be made immediately after receiving the estimate.
-Paying more than the applicable entry fee estimate
-has a minimal cost to the requester
-as excess fees will be refunded.
+equal or lower than the provided callback gas amount. Thus the request should be made immediately after receiving the estimate.
 Insufficient payment will lead to the request being rejected
 and the transaction reverted.
 
@@ -45,9 +27,7 @@ the customer must call the request method on the beacon,
 transferring enough currency to cover the fee:
 `request_entry.value(entry_fee_estimate)()`.
 
-If the customer wishes to receive the generated random number in a callback,
-they should also specify the _callback address_, _callback function_, 
-and _callback gas amount_:
+If the customer wishes to receive the generated random number in a callback, they should also specify the _callback address_, _callback function_, and _callback gas amount_:
 `request_entry.value(entry_fee_estimate)(callback_address, callback_function, callback_gas)`.
 
 No new requests should be made
@@ -57,10 +37,6 @@ and the transaction reverted.
 
 ==== Receiving a request
 How are requests handled by the protocol?
-
-If the beacon is already serving an earlier request,
-it rejects any new requests
-(implicitly refunding the fees by reverting the transactions).
 
 When the beacon is non-busy and receives a request,
 it first checks that the _request fee_ exceeds
