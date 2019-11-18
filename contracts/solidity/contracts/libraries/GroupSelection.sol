@@ -1,7 +1,6 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "../utils/UintArrayUtils.sol";
 
 /**
  * The group selection protocol is an interactive method of selecting candidate
@@ -28,21 +27,14 @@ library GroupSelection {
 
     using SafeMath for uint256;
 
-    struct Proof {
-        address sender;
-        uint256 stakerValue;
-        uint256 virtualStakerIndex;
-    }
-
     struct Storage {
         // Tickets submitted by member candidates during the current group
         // selection execution and accepted by the protocol for the
         // consideration.
         uint256[] tickets;
 
-        // Information about each accepted ticket allowing to prove its
-        // validity.
-        mapping(uint256 => Proof) proofs;
+        // Information about ticket submitters (group member candidates).
+        mapping(uint256 => address) candidate;
 
         // Pseudorandom seed value used as an input for the group selection.
         uint256 seed;
@@ -57,6 +49,29 @@ library GroupSelection {
         // Indicates whether a group selection is currently in progress.
         // Concurrent group selections are not allowed.
         bool inProgress;
+
+        // Map simulates a sorted linked list of ticket values by their indexes.
+        // key -> value represent indices from the tickets[] array.
+        // 'key' index holds an index of a ticket and 'value' holds an index
+        // of the next ticket. Tickets are sorted by their value in
+        // descending order starting from the tail.
+        // Ex. tickets = [151, 42, 175, 7]
+        // tail: 2 because tickets[2] = 175
+        // previousTicketIndex[0] -> 1
+        // previousTicketIndex[1] -> 3
+        // previousTicketIndex[2] -> 0
+        // previousTicketIndex[3] -> 3 note: index that holds a lowest
+        // value points to itself because there is no `nil` in Solidity.
+        // Traversing from tail: [2]->[0]->[1]->[3] result in 175->151->42->7
+        mapping(uint256 => uint256) previousTicketIndex;
+
+        // Tail represents an index of a ticket in a tickets[] array which holds
+        // the highest ticket value. It is a tail of the linked list defined by
+        // `previousTicketIndex`.
+        uint256 tail;
+
+        // Size of a group in the threshold relay.
+        uint256 groupSize;
     }
 
     /**
@@ -100,7 +115,7 @@ library GroupSelection {
             revert("Ticket submission is over");
         }
 
-        if (self.proofs[ticketValue].sender != address(0)) {
+        if (self.candidate[ticketValue] != address(0)) {
             revert("Duplicate ticket");
         }
 
@@ -111,8 +126,7 @@ library GroupSelection {
             stakingWeight,
             self.seed
         )) {
-            self.tickets.push(ticketValue);
-            self.proofs[ticketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+            addTicket(self, ticketValue);
         } else {
             // TODO: should we slash instead of reverting?
             revert("Invalid ticket");
@@ -137,24 +151,130 @@ library GroupSelection {
     }
 
     /**
+     * @dev Adds a new, verified ticket. Ticket is accepted when it is lower
+     * than the currently highest ticket or when the number of tickets is still
+     * below the group size.
+     */
+    function addTicket(Storage storage self, uint256 newTicketValue) internal {
+        uint256[] memory ordered = getTicketValueOrderedIndices(self);
+
+        // any ticket goes when the tickets array size is lower than the group size
+        if (self.tickets.length < self.groupSize) {
+            // no tickets
+            if (self.tickets.length == 0) {
+                self.tickets.push(newTicketValue);
+            // higher than the current highest
+            } else if (newTicketValue > self.tickets[self.tail]) {
+                self.tickets.push(newTicketValue);
+                uint256 oldTail = self.tail;
+                self.tail = self.tickets.length-1;
+                self.previousTicketIndex[self.tail] = oldTail;
+            // lower than the current lowest
+            } else if (newTicketValue < self.tickets[ordered[0]]) {
+                self.tickets.push(newTicketValue);
+                // last element points to itself
+                self.previousTicketIndex[self.tickets.length - 1] = self.tickets.length - 1;
+                // previous lowest ticket points to the new lowest
+                self.previousTicketIndex[ordered[0]] = self.tickets.length - 1;
+            // higher than the lowest ticket value and lower than the highest ticket value
+            } else {
+                self.tickets.push(newTicketValue);
+                uint256 j = findReplacementIndex(self, newTicketValue, ordered);
+                self.previousTicketIndex[self.tickets.length - 1] = self.previousTicketIndex[j];
+                self.previousTicketIndex[j] = self.tickets.length - 1;
+            }
+            self.candidate[newTicketValue] = msg.sender;
+        } else if (newTicketValue < self.tickets[self.tail]) {
+            uint256 ticketToRemove = self.tickets[self.tail];
+            // new ticket is lower than currently lowest
+            if (newTicketValue < self.tickets[ordered[0]]) {
+                // replacing highest ticket with the new lowest
+                self.tickets[self.tail] = newTicketValue;
+                uint256 newTail = self.previousTicketIndex[self.tail];
+                self.previousTicketIndex[ordered[0]] = self.tail;
+                self.previousTicketIndex[self.tail] = self.tail;
+                self.tail = newTail;
+            } else { // new ticket is between lowest and highest
+                uint256 j = findReplacementIndex(self, newTicketValue, ordered);
+                self.tickets[self.tail] = newTicketValue;
+                // do not change the order if a new ticket is still highest
+                if (j != self.tail) {
+                    uint newTail = self.previousTicketIndex[self.tail];
+                    self.previousTicketIndex[self.tail] = self.previousTicketIndex[j];
+                    self.previousTicketIndex[j] = self.tail;
+                    self.tail = newTail;
+                }
+            }
+            // we are replacing tickets so we also need to replace information
+            // about the submitter
+            delete self.candidate[ticketToRemove];
+            self.candidate[newTicketValue] = msg.sender;
+        }
+    }
+
+    /**
+     * @dev Use binary search to find an index for a new ticket in the tickets[] array
+     */
+    function findReplacementIndex(
+        Storage storage self,
+        uint256 newTicketValue,
+        uint256[] memory ordered
+    ) internal view returns (uint256) {
+        uint256 lo = 0;
+        uint256 hi = ordered.length - 1;
+        uint256 mid = 0;
+        while (lo <= hi) {
+            mid = (lo + hi) >> 1;
+            if (newTicketValue < self.tickets[ordered[mid]]) {
+                hi = mid - 1;
+            } else if (newTicketValue > self.tickets[ordered[mid]]) {
+                lo = mid + 1;
+            } else {
+                return ordered[mid];
+            }
+        }
+
+        return ordered[lo];
+    }
+
+    /**
+     * @dev Creates an array of ticket indexes based on their values in the ascending order:
+     *
+     * ordered[n-1] = tail
+     * ordered[n-2] = previousTicketIndex[tail]
+     * ordered[n-3] = previousTicketIndex[ordered[n-2]]
+     */
+    function getTicketValueOrderedIndices(Storage storage self) internal view returns (uint256[] memory) {
+        uint256[] memory ordered = new uint256[](self.tickets.length);
+        if (ordered.length > 0) {
+            ordered[self.tickets.length-1] = self.tail;
+            if (ordered.length > 1) {
+                for (uint256 i = self.tickets.length - 1; i > 0; i--) {
+                    ordered[i-1] = self.previousTicketIndex[ordered[i]];
+                }
+            }
+        }
+
+        return ordered;
+    }
+
+    /**
      * @dev Gets selected participants in ascending order of their tickets.
      */
-    function selectedParticipants(
-        Storage storage self,
-        uint256 groupSize
-    ) public view returns (address[] memory) {
+    function selectedParticipants(Storage storage self) public view returns (address[] memory) {
         require(
             block.number >= self.ticketSubmissionStartBlock.add(self.ticketSubmissionTimeout),
             "Ticket submission in progress"
         );
 
-        require(self.tickets.length >= groupSize, "Not enough tickets submitted");
+        require(self.tickets.length >= self.groupSize, "Not enough tickets submitted");
 
-        uint256[] memory ordered = UintArrayUtils.sort(self.tickets);
-        address[] memory selected = new address[](groupSize);
-        for (uint i = 0; i < groupSize; i++) {
-            Proof memory proof = self.proofs[ordered[i]];
-            selected[i] = proof.sender;
+        address[] memory selected = new address[](self.groupSize);
+        uint256 ticketIndex = self.tail;
+        selected[self.tickets.length - 1] = self.candidate[self.tickets[ticketIndex]];
+        for (uint256 i = self.tickets.length - 1; i > 0; i--) {
+            ticketIndex = self.previousTicketIndex[ticketIndex];
+            selected[i-1] = self.candidate[self.tickets[ticketIndex]];
         }
 
         return selected;
@@ -165,8 +285,10 @@ library GroupSelection {
      */
     function cleanup(Storage storage self) internal {
         for (uint i = 0; i < self.tickets.length; i++) {
-            delete self.proofs[self.tickets[i]];
+            delete self.candidate[self.tickets[i]];
+            delete self.previousTicketIndex[i];
         }
         delete self.tickets;
+        self.tail = 0;
     }
 }

@@ -18,6 +18,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   const operator1StakingWeight = 2000;
   const operator2StakingWeight = 2000;
   const operator3StakingWeight = 3000;
+  const groupSize = 3;
 
   before(async () => {
     let contracts = await initContracts(
@@ -25,8 +26,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorGroupSelectionStub.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorGroupSelectionStub.sol')
     );
     
     let token = contracts.token;
@@ -35,6 +35,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     operatorContract = contracts.operatorContract;
 
     await operatorContract.setMinimumStake(minimumStake)
+    await operatorContract.setGroupSize(groupSize)
 
     await stakeDelegate(
       stakingContract, token, owner, operator1, magpie, 
@@ -167,7 +168,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       ),
       "Duplicate ticket"
     );
-  })
+  });
 
   it("should trim selected participants to the group size", async () => {
     let groupSize = await operatorContract.groupSize();

@@ -3,11 +3,12 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./TokenStaking.sol";
-import "./KeepRandomBeaconOperatorGroups.sol";
 import "./utils/AddressArrayUtils.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
 import "./libraries/GroupSelection.sol";
+import "./libraries/Groups.sol";
+
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
@@ -47,8 +48,6 @@ contract KeepRandomBeaconOperator {
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
     TokenStaking public stakingContract;
-
-    KeepRandomBeaconOperatorGroups public groupContract;
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
     // the Keep network. Expressed as number with 18-decimal places.
@@ -113,6 +112,9 @@ contract KeepRandomBeaconOperator {
     using GroupSelection for GroupSelection.Storage;
     GroupSelection.Storage groupSelection;
 
+    using Groups for Groups.Storage;
+    Groups.Storage groups;
+
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
 
@@ -164,15 +166,17 @@ contract KeepRandomBeaconOperator {
         _;
     }
 
-    constructor(address _serviceContract, address _stakingContract, address _groupContract) public {
+    constructor(address _serviceContract, address _stakingContract) public {
         serviceContracts.push(_serviceContract);
 
         stakingContract = TokenStaking(_stakingContract);
-        groupContract = KeepRandomBeaconOperatorGroups(_groupContract);
 
         owner = msg.sender;
 
         groupSelection.ticketSubmissionTimeout = 12;
+        groupSelection.groupSize = groupSize;
+        groups.activeGroupsThreshold = 5;
+        groups.groupActiveTime = 3000;
     }
 
     /**
@@ -284,7 +288,7 @@ contract KeepRandomBeaconOperator {
      * @dev Gets selected participants in ascending order of their tickets.
      */
     function selectedParticipants() public view returns (address[] memory) {
-        return groupSelection.selectedParticipants(groupSize);
+        return groupSelection.selectedParticipants();
     }
 
     /**
@@ -333,11 +337,11 @@ contract KeepRandomBeaconOperator {
         for (uint i = 0; i < groupSize; i++) {
             // Check member was neither marked as inactive nor as disqualified
             if(inactive[i] == 0x00 && disqualified[i] == 0x00) {
-                groupContract.addGroupMember(groupPubKey, members[i]);
+                groups.addGroupMember(groupPubKey, members[i]);
             }
         }
 
-        groupContract.addGroup(groupPubKey);
+        groups.addGroup(groupPubKey);
         reimburseDkgSubmitter();
         emit DkgResultPublishedEvent(groupPubKey);
         groupSelection.stop();
@@ -451,7 +455,7 @@ contract KeepRandomBeaconOperator {
         currentEntryStartBlock = block.number;
         entryInProgress = true;
 
-        uint256 groupIndex = groupContract.selectGroup(previousEntry);
+        uint256 groupIndex = groups.selectGroup(previousEntry);
         signingRequest = SigningRequest(
             requestId,
             entryVerificationAndProfitFee,
@@ -461,7 +465,7 @@ contract KeepRandomBeaconOperator {
             serviceContract
         );
 
-        bytes memory groupPubKey = groupContract.getGroupPublicKeyCompressed(groupIndex);
+        bytes memory groupPubKey = groups.getGroupPublicKeyCompressed(groupIndex);
         emit SignatureRequested(previousEntry, seed, groupPubKey);
     }
 
@@ -473,7 +477,7 @@ contract KeepRandomBeaconOperator {
     function relayEntry(uint256 _groupSignature) public {
         require(!hasEntryTimedOut(), "Entry timed out");
 
-        bytes memory groupPubKey = groupContract.getGroupPublicKey(signingRequest.groupIndex);
+        bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
 
         require(
             BLS.verify(
@@ -500,7 +504,7 @@ contract KeepRandomBeaconOperator {
         entryInProgress = false;
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
-        groupContract.addGroupMemberReward(groupPubKey, groupMemberReward);
+        groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
         stakingContract.magpieOf(msg.sender).transfer(submitterReward);
 
@@ -519,14 +523,14 @@ contract KeepRandomBeaconOperator {
         groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals);
 
         // delay penalty = base reward * (1 - delay factor)
-        uint256 groupMemberDelayPenalty = groupMemberBaseReward.sub(groupMemberBaseReward.mul(delayFactor).div(decimals));
+        uint256 groupMemberDelayPenalty = groupMemberBaseReward.mul(decimals.sub(delayFactor));
 
         // The submitter reward consists of:
         // The callback gas expenditure (reimbursed by the service contract)
         // The entry verification fee to cover the cost of verifying the submission,
         // paid regardless of their gas expenditure
         // Submitter extra reward - 5% of the delay penalties of the entire group
-        uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).mul(5).div(100);
+        uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).mul(5).div(100).div(decimals);
         uint256 entryVerificationFee = signingRequest.entryVerificationAndProfitFee.sub(groupProfitFee());
         submitterReward = entryVerificationFee.add(submitterExtraReward);
 
@@ -588,7 +592,7 @@ contract KeepRandomBeaconOperator {
     function reportRelayEntryTimeout() public {
         require(hasEntryTimedOut(), "Entry did not time out");
 
-        groupContract.terminateGroup(signingRequest.groupIndex);
+        groups.terminateGroup(signingRequest.groupIndex);
 
         // We could terminate the last active group. If that's the case,
         // do not try to execute signing again because there is no group
@@ -624,7 +628,7 @@ contract KeepRandomBeaconOperator {
      * @dev Checks if group with the given public key is registered.
      */
     function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
-        return groupContract.isGroupRegistered(groupPubKey);
+        return groups.isGroupRegistered(groupPubKey);
     }
 
     /**
@@ -637,7 +641,7 @@ contract KeepRandomBeaconOperator {
      * the past.
      */
     function isStaleGroup(bytes memory groupPubKey) public view returns(bool) {
-        return groupContract.isStaleGroup(groupPubKey);
+        return groups.isStaleGroup(groupPubKey);
     }
 
     /**
@@ -645,6 +649,13 @@ contract KeepRandomBeaconOperator {
      * not counted as active.
      */
     function numberOfGroups() public view returns(uint256) {
-        return groupContract.numberOfGroups();
+        return groups.numberOfGroups();
+    }
+
+    /**
+     * @dev Returns accumulated group member rewards for provided group.
+     */
+    function getGroupMemberRewards(bytes memory groupPubKey) public view returns (uint256) {
+        return groups.groupMemberRewards[groupPubKey];
     }
 }

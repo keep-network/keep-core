@@ -357,7 +357,6 @@ This directory must be created before peer start.
 
 Build the `keep-core` executable:
 ```
-dep ensure
 go generate ./...
 go build
 ```

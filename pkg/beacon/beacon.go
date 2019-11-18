@@ -63,7 +63,14 @@ func Initialize(
 	)
 
 	relayChain.OnSignatureRequested(func(request *event.Request) {
-		logger.Infof("new relay entry requested: [%+v]", request)
+		logger.Infof(
+			"new relay entry requested at block [%v] from group [0x%x] using "+
+				"previous entry [0x%x] and seed [0x%x]",
+			request.BlockNumber,
+			request.GroupPublicKey,
+			request.PreviousEntry,
+			request.Seed,
+		)
 
 		if node.IsInGroup(request.GroupPublicKey) {
 			go node.GenerateRelayEntry(
@@ -83,13 +90,18 @@ func Initialize(
 	})
 
 	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
-		logger.Infof("group selection started: [%+v]", event)
+		logger.Infof(
+			"group selection started with seed [0x%v] at block [%v]",
+			event.NewEntry.Text(16),
+			event.BlockNumber,
+		)
 
 		onGroupSelected := func(group *groupselection.Result) {
-			for _, staker := range group.SelectedStakers {
+			for index, staker := range group.SelectedStakers {
 				logger.Infof(
-					"new candidate group member: [0x%v]",
+					"new candidate group member [0x%v] with index [%v]",
 					hex.EncodeToString(staker),
+					index,
 				)
 			}
 			node.JoinGroupIfEligible(
@@ -117,7 +129,11 @@ func Initialize(
 	})
 
 	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
-		logger.Infof("new group registered on chain: [%+v]", registration)
+		logger.Infof(
+			"new group with public key [0x%x] registered on-chain at block [%v]",
+			registration.GroupPublicKey,
+			registration.BlockNumber,
+		)
 		go groupRegistry.UnregisterStaleGroups()
 	})
 

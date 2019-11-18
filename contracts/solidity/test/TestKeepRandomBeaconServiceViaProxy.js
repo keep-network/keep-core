@@ -9,7 +9,7 @@ const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
 
 contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
-  let serviceContract, serviceContractProxy, operatorContract, groupContract,
+  let serviceContract, serviceContractProxy, operatorContract,
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2],
@@ -21,18 +21,16 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       ServiceContractProxy,
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
     );
 
     operatorContract = contracts.operatorContract;
-    groupContract = contracts.groupContract;
     serviceContract = contracts.serviceContract;
     serviceContractProxy = await ServiceContractProxy.at(serviceContract.address);
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
-    let group = await groupContract.getGroupPublicKey(0);
+    let group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, accounts[0]);
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)

@@ -6,12 +6,11 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
 
     constructor(
         address _serviceContract,
-        address _stakingContract,
-        address payable _groupContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract, _groupContract) public {}
+        address _stakingContract
+    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {}
 
     function registerNewGroup(bytes memory groupPublicKey) public {
-        groupContract.addGroup(groupPublicKey);
+        groups.addGroup(groupPublicKey);
     }
 
     function setDkgGasEstimate(uint256 gasEstimate) public {
@@ -28,6 +27,14 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
 
     function setGroupSize(uint256 size) public {
         groupSize = size;
+    }
+
+    function getNewEntryRewardsBreakdown() public view returns(
+        uint256 groupMemberReward,
+        uint256 submitterReward,
+        uint256 subsidy
+    ) {
+        return super.newEntryRewardsBreakdown();
     }
 
     function delayFactor() public view returns(uint256) {
