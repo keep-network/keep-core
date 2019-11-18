@@ -6,12 +6,11 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
 
     constructor(
         address _serviceContract,
-        address _stakingContract,
-        address payable _groupContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract, _groupContract) public {}
+        address _stakingContract
+    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {}
 
     function registerNewGroup(bytes memory groupPublicKey) public {
-        groupContract.addGroup(groupPublicKey);
+        groups.addGroup(groupPublicKey);
     }
 
     function setDkgGasEstimate(uint256 gasEstimate) public {

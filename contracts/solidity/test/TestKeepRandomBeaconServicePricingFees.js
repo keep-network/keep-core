@@ -12,8 +12,7 @@ contract('KeepRandomBeaconService', function(accounts) {
           artifacts.require('./TokenStaking.sol'),
           artifacts.require('./KeepRandomBeaconService.sol'),
           artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-          artifacts.require('./stubs/KeepRandomBeaconOperatorPricingStub.sol'),
-          artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+          artifacts.require('./stubs/KeepRandomBeaconOperatorPricingStub.sol')
         );
     
         serviceContract = contracts.serviceContract;

@@ -3,7 +3,7 @@ import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
 
 contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
-  let serviceContract, operatorContract, groupContract;
+  let serviceContract, operatorContract;
 
   before(async () => {
 
@@ -12,18 +12,16 @@ contract('TestKeepRandomBeaconOperatorRelayEntry', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
     );
 
     operatorContract = contracts.operatorContract;
-    groupContract = contracts.groupContract;
     serviceContract = contracts.serviceContract;
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
     operatorContract.setGroupSize(3);
-    let group = await groupContract.getGroupPublicKey(0);
+    let group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, accounts[0]);
     await operatorContract.addGroupMember(group, accounts[1]);
     await operatorContract.addGroupMember(group, accounts[2]);
