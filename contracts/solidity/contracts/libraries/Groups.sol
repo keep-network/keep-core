@@ -102,6 +102,20 @@ library Groups {
     }
 
     /**
+     * @dev Gets group index.
+     */
+    function getGroupIndex(
+        Storage storage self,
+        bytes memory groupPubKey
+    ) internal view returns (uint256 groupIndex) {
+        for (uint i = 0; i < self.groups.length; i++) {
+            if (self.groups[i].groupPubKey.equalStorage(groupPubKey)) {
+                return i;
+            }
+        }
+    }
+
+    /**
      * @dev Gets group member.
      */
     function getGroupMember(
@@ -110,6 +124,31 @@ library Groups {
         uint256 memberIndex
     ) internal view returns (address) {
         return self.groupMembers[groupPubKey][memberIndex];
+    }
+
+    /**
+     * @dev Gets all indices in the provided group for a member.
+     */
+    function getGroupMemberIndices(
+        Storage storage self,
+        bytes memory groupPubKey,
+        address member
+    ) internal view returns (uint256[] memory indices) {
+        uint256 counter;
+        for (uint i = 0; i < self.groupMembers[groupPubKey].length; i++) {
+            if (self.groupMembers[groupPubKey][i] == member) {
+                counter++;
+            }
+        }
+
+        indices = new uint256[](counter);
+        counter = 0;
+        for (uint i = 0; i < self.groupMembers[groupPubKey].length; i++) {
+            if (self.groupMembers[groupPubKey][i] == member) {
+                indices[counter] = i;
+                counter++;
+            }
+        }
     }
 
     /**
@@ -279,4 +318,30 @@ library Groups {
         return shiftedIndex;
     }
 
+    /**
+     * @dev Withdraws accumulated group member rewards using the provided
+     * group index, member indices and member address. If groupMember is
+     * not found the reward is not included, otherwise it is included and
+     * member is removed from the group.
+     * @param groupIndex Group index.
+     * @param groupMemberIndices Array of member indices for the group member.
+     * @param groupMember Address of group member.
+     */
+    function withdrawFromGroup(
+        Storage storage self,
+        uint256 groupIndex,
+        uint256[] memory groupMemberIndices,
+        address groupMember
+    ) internal returns (uint256 rewards) {
+        for (uint i = 0; i < groupMemberIndices.length; i++) {
+            bool isExpired = self.expiredGroupOffset > groupIndex;
+            bool isStale = groupStaleTime(self, self.groups[groupIndex]) < block.number;
+
+            bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
+            if (isExpired && isStale && groupMember == self.groupMembers[groupPublicKey][groupMemberIndices[i]]) {
+                delete self.groupMembers[groupPublicKey][groupMemberIndices[i]];
+                rewards = rewards.add(self.groupMemberRewards[groupPublicKey]);
+            }
+        }
+    }
 }
