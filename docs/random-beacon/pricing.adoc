@@ -75,30 +75,31 @@ until a valid entry is received, this is not necessary.
 ===== Receiving submissions
 How does the protocol handle a submission from the relay?
 
-When the assigned signing group has produced a valid entry,
-one of its members should submit it to the beacon.
+Once the assigned signing group has produced a valid entry,
+one of its members submit it to the beacon.
 The first member to submit a valid entry is the _submitter_.
 _Submission deadline_ is the block number before which the 
 valid entry must be submitted.
 
-Submissions that fail verification are ignored.
-Repeat submissions for a request that has already been served
-should be dropped immediately,
+Submissions that fail verification are ignored, and repeat submissions for a request that has already been served are dropped immediately to
 minimizing the gas expenditure.
 
-If no valid entry has been received by the _submission deadline_,
-a submission timeout can be called by anyone.
-If the submission times out,
-the failing group is terminated and its members slashed.
-A new signing group is assigned from the remaining active groups
-and the submission delay calculation is reset
-by setting the _submission delay base time_
-to the previous _submission deadline_.
+A timeout can be called by anyone If no valid entry has been received by the _submission deadline_. If so, the following occur:
 
-When a valid entry submission is received on-chain
-it is emitted in an event,
-the requester's callback is called if applicable,
-and fees, rewards and refunds are paid out.
+- the failing group is terminated and its members slashed
+
+- A new signing group is assigned from the remaining active groups
+
+- and the submission delay calculation is reset by setting the _submission delay base time_ to the previous _submission deadline_.
+
+
+When a valid entry submission is received on-chain:
+
+- it is emitted in an event
+
+- the requester's callback is called if applicable
+
+- fees, rewards and refunds are paid out.
 
 ===== Callback processing
 How are callbacks processed?
