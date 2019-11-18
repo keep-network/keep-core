@@ -27,21 +27,14 @@ library GroupSelection {
 
     using SafeMath for uint256;
 
-    struct Proof {
-        address sender;
-        uint256 stakerValue;
-        uint256 virtualStakerIndex;
-    }
-
     struct Storage {
         // Tickets submitted by member candidates during the current group
         // selection execution and accepted by the protocol for the
         // consideration.
         uint256[] tickets;
 
-        // Information about each accepted ticket allowing to prove its
-        // validity.
-        mapping(uint256 => Proof) proofs;
+        // Information about ticket submitters (group member candidates).
+        mapping(uint256 => address) candidate;
 
         // Pseudorandom seed value used as an input for the group selection.
         uint256 seed;
@@ -124,7 +117,7 @@ library GroupSelection {
             revert("Ticket submission is over");
         }
 
-        if (self.proofs[ticketValue].sender != address(0)) {
+        if (self.candidate[ticketValue] != address(0)) {
             revert("Duplicate ticket");
         }
 
@@ -135,7 +128,7 @@ library GroupSelection {
             stakingWeight,
             self.seed
         )) {
-            addTicket(self, ticketValue, stakerValue, virtualStakerIndex);
+            addTicket(self, ticketValue);
         } else {
             // TODO: should we slash instead of reverting?
             revert("Invalid ticket");
@@ -164,13 +157,8 @@ library GroupSelection {
      * than the currently highest ticket or when the number of tickets is still
      * below the group size.
      */
-    function addTicket(
-        Storage storage self,
-        uint256 newTicketValue,
-        uint256 stakerValue,
-        uint256 virtualStakerIndex
-    ) internal {
-        uint8[] memory ordered = getTicketValueOrderedIndices(self);
+    function addTicket(Storage storage self, uint256 newTicketValue) internal {
+        uint256[] memory ordered = getTicketValueOrderedIndices(self);
 
         // any ticket goes when the tickets array size is lower than the group size
         if (self.tickets.length < self.groupSize) {
@@ -198,7 +186,7 @@ library GroupSelection {
                 self.previousTicketIndex[self.tickets.length - 1] = self.previousTicketIndex[j];
                 self.previousTicketIndex[j] = uint8(self.tickets.length - 1);
             }
-            self.proofs[newTicketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+            self.candidate[newTicketValue] = msg.sender;
         } else if (newTicketValue < self.tickets[self.tail]) {
             uint256 ticketToRemove = self.tickets[self.tail];
             // new ticket is lower than currently lowest
@@ -220,9 +208,10 @@ library GroupSelection {
                     self.tail = newTail;
                 }
             }
-            // deleting the proof for the old ticket that is being replaced by the new ticket
-            delete self.proofs[ticketToRemove];
-            self.proofs[newTicketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+            // we are replacing tickets so we also need to replace information
+            // about the submitter
+            delete self.candidate[ticketToRemove];
+            self.candidate[newTicketValue] = msg.sender;
         }
     }
 
@@ -285,10 +274,10 @@ library GroupSelection {
 
         address[] memory selected = new address[](self.groupSize);
         uint256 ticketIndex = self.tail;
-        selected[self.tickets.length - 1] = self.proofs[self.tickets[ticketIndex]].sender;
+        selected[self.tickets.length - 1] = self.candidate[self.tickets[ticketIndex]];
         for (uint256 i = self.tickets.length - 1; i > 0; i--) {
             ticketIndex = self.previousTicketIndex[ticketIndex];
-            selected[i-1] = self.proofs[self.tickets[ticketIndex]].sender;
+            selected[i-1] = self.candidate[self.tickets[ticketIndex]];
         }
 
         return selected;
@@ -299,7 +288,7 @@ library GroupSelection {
      */
     function cleanup(Storage storage self) internal {
         for (uint i = 0; i < self.tickets.length; i++) {
-            delete self.proofs[self.tickets[i]];
+            delete self.candidate[self.tickets[i]];
             delete self.previousTicketIndex[i];
         }
         delete self.tickets;

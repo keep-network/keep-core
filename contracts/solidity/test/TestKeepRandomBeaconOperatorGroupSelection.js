@@ -168,7 +168,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       ),
       "Duplicate ticket"
     );
-  })
+  });
 
   it("should trim selected participants to the group size", async () => {
     let groupSize = await operatorContract.groupSize();
