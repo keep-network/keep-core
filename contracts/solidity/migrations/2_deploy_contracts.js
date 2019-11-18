@@ -9,6 +9,7 @@ const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServi
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
 const GroupSelection = artifacts.require("./libraries/GroupSelection.sol");
 const Groups = artifacts.require("./libraries/Groups.sol");
+const Signatures = artifacts.require("./libraries/Signatures.sol");
 
 const withdrawalDelay = 86400; // 1 day
 const priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei = 20 * 10^9 wei)
@@ -28,6 +29,8 @@ module.exports = async function(deployer) {
   await deployer.link(GroupSelection, KeepRandomBeaconOperator);
   await deployer.deploy(Groups);
   await deployer.link(Groups, KeepRandomBeaconOperator);
+  await deployer.deploy(Signatures);
+  await deployer.link(Signatures, KeepRandomBeaconOperator);
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
