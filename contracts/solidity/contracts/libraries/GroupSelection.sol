@@ -28,13 +28,17 @@ library GroupSelection {
     using SafeMath for uint256;
 
     struct Storage {
+        // Indicates whether a group selection is currently in progress.
+        // Concurrent group selections are not allowed.
+        bool inProgress;
+
+        // Information about ticket submitters (group member candidates).
+        mapping(uint256 => address) candidate;
+
         // Tickets submitted by member candidates during the current group
         // selection execution and accepted by the protocol for the
         // consideration.
         uint256[] tickets;
-
-        // Information about ticket submitters (group member candidates).
-        mapping(uint256 => address) candidate;
 
         // Pseudorandom seed value used as an input for the group selection.
         uint256 seed;
@@ -45,10 +49,6 @@ library GroupSelection {
         // Number of block at which the group selection started and from which
         // ticket submissions are accepted.
         uint256 ticketSubmissionStartBlock;
-
-        // Indicates whether a group selection is currently in progress.
-        // Concurrent group selections are not allowed.
-        bool inProgress;
 
         // Tail represents an index of a ticket in a tickets[] array which holds
         // the highest ticket value. It is a tail of the linked list defined by
