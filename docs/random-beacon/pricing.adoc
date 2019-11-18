@@ -41,13 +41,9 @@ How are requests handled by the protocol?
 When the beacon is non-busy and receives a request,
 it first checks that the _request fee_ exceeds
 the _entry fee estimate_ with the _callback gas amount_ from the request.
-
 Once the request has been verified to be sufficiently funded,
-the beacon select the new signing group.
-The selected group is tasked with producing the new entry.
-
-The request is set as the _pending request_
-including the following information:
+the beacon selects the new signing group, which is tasked with producing the new entry. The request is then set as the _pending request_
+with the following:
 
 - the _requester address_
 
