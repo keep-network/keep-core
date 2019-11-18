@@ -170,38 +170,6 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     );
   });
 
-  it("should keep ticket submission at reasonable price", async() => {
-    let groupSize = 64;
-    await operatorContract.setGroupSize(groupSize)
-
-    let estimates = []
-
-    for (let i = 0; i < groupSize; i++) {
-      let estimate = await operatorContract.submitTicket.estimateGas(
-        tickets1[i].value,
-        operator1,
-        tickets1[i].virtualStakerIndex,
-        {from: operator1}
-      );
-
-      estimates.push(estimate);
-
-      await operatorContract.submitTicket(
-        tickets1[i].value,
-        operator1,
-        tickets1[i].virtualStakerIndex,
-        {from: operator1}
-      );
-    }
-
-    // Make sure no change will make the submission more expensive than it is 
-    // now or that even if it happens, it will be a conscious decision.
-    assert.isBelow(estimates[0], 93788, "Submission of the first ticket is too expensive");
-    assert.isBelow(estimates[estimates.length - 1], 137372, "Submission of the last ticket is too expensive");
-    let estimatesSum = estimates.reduce((acc, val) => acc + val, 0);
-    assert.isBelow(estimatesSum/groupSize, 126700, "Average ticket submission cost is too large");
-  });
-
   it("should trim selected participants to the group size", async () => {
     let groupSize = await operatorContract.groupSize();
   
