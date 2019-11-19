@@ -136,9 +136,6 @@ _actual entry price = callback expenditure +  entry base price_
 
 _entry base price = estimated gas price + profit margin + DKG contribution amortized over multiple entries + entry verification fee_
 
-===== Paying rewards and operational fees
-How are payments made to the various actors in this process?
-
 _Group & Submitter reward = F (submission delay, submission delay base time)_
 
 If the sum of rewards paid out
@@ -190,6 +187,14 @@ If the amount paid out to the signing group in _group rewards_
 and the submitter's _extra reward_ is less than the _profit margin_,
 the difference is added to the beacon's _request subsidy pool_
 to incentivize customers to request entries.
+
+===== Submitter reward
+_Submitter reward = F (submission delay, submission delay base time)_
+
+If the sum of rewards paid out
+is < _profit margin + entry verification fee_,
+the difference is added to the _request subsidy pool_.
+
 
 ===== Group reward
 How are group members compensated?
