@@ -2,7 +2,7 @@ import React from 'react'
 import { Navbar, NavbarBrand } from 'react-bootstrap'
 import * as Icons from './Icons'
 
-const Header = ({networkType}) => {
+const Header = ({networkType, tokenContract }) => {
   return (
     <Navbar>
       <Navbar.Header>
@@ -14,7 +14,7 @@ const Header = ({networkType}) => {
       <div className="pull-right">
         <div>
           <strong>KEEP Token: </strong>
-          <span className="txt-primary">{ process.env.REACT_APP_TOKEN_ADDRESS }</span>
+          <span className="txt-primary">{ tokenContract ? tokenContract.options.address : '' }</span>
         </div>
         <div>
           <strong>Network: </strong>
