@@ -37,18 +37,15 @@ Requests made while the beacon is busy will be rejected
 and the transaction reverted.
 
 ==== Receiving a request
-How are requests handled by the protocol?
+How are customer requests handled by the protocol?
 
-When the beacon is non-busy and receives a request,
-it first checks that the _request fee_ exceeds
-the _entry fee estimate_ with the _callback gas amount_ from the request. If the beacon is already serving an earlier request, it rejects any new requests and refunds the fee.
+A request sent to a non-busy beacon is checked for _request fee_ >= _entry fee estimate_ + _callback gas amount_ from the request. If the beacon is already serving an earlier request, it rejects any new requests and refunds the fee.
 
-Once the request has been verified to be sufficiently funded,
-the beacon selects the new signing group.
+A sufficiently funded request triggers the beacon to select the new signing group.
 The selected group is tasked with producing the new entry.
 
-The request is set as the _pending request_
-including the following information:
+The request is then set as the _pending request_
+with the following information:
 
 - the _requester address_
 
