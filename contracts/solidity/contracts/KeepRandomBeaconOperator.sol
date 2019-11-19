@@ -2,11 +2,11 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./TokenStaking.sol";
-import "./utils/AddressArrayUtils.sol";
 import "./cryptography/BLS.sol";
 import "./libraries/GroupSelection.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Signatures.sol";
+import "./libraries/OperatorUtils.sol";
 
 
 interface ServiceContract {
@@ -24,7 +24,6 @@ interface ServiceContract {
  */
 contract KeepRandomBeaconOperator {
     using SafeMath for uint256;
-    using AddressArrayUtils for address[];
 
     event OnGroupRegistered(bytes groupPubKey);
 
@@ -40,8 +39,6 @@ contract KeepRandomBeaconOperator {
 
     // Contract owner.
     address public owner;
-
-    address[] public serviceContracts;
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
     TokenStaking public stakingContract;
@@ -112,6 +109,9 @@ contract KeepRandomBeaconOperator {
     using Groups for Groups.Storage;
     Groups.Storage groups;
 
+    using OperatorUtils for OperatorUtils.Storage;
+    OperatorUtils.Storage utils;
+
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
 
@@ -140,7 +140,7 @@ contract KeepRandomBeaconOperator {
     function genesis() public payable {
         require(numberOfGroups() == 0, "Groups exist");
         // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
-        groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
+        groupSelectionStarterContract = ServiceContract(utils.latestServiceContract());
         startGroupSelection(_genesisGroupSeed, msg.value);
     }
 
@@ -157,18 +157,19 @@ contract KeepRandomBeaconOperator {
      */
     modifier onlyServiceContract() {
         require(
-            serviceContracts.contains(msg.sender),
+            utils.isServiceContract(msg.sender),
             "Caller is not an authorized contract"
         );
         _;
     }
 
     constructor(address _serviceContract, address _stakingContract) public {
-        serviceContracts.push(_serviceContract);
-
         stakingContract = TokenStaking(_stakingContract);
 
         owner = msg.sender;
+        utils.owner = msg.sender;
+
+        utils.addServiceContract(_serviceContract, msg.sender);
 
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
@@ -180,16 +181,16 @@ contract KeepRandomBeaconOperator {
      * @dev Adds service contract
      * @param serviceContract Address of the service contract.
      */
-    function addServiceContract(address serviceContract) public onlyOwner {
-        serviceContracts.push(serviceContract);
+    function addServiceContract(address serviceContract) public {
+        utils.addServiceContract(serviceContract, msg.sender);
     }
 
     /**
      * @dev Removes service contract
      * @param serviceContract Address of the service contract.
      */
-    function removeServiceContract(address serviceContract) public onlyOwner {
-        serviceContracts.removeAddress(serviceContract);
+    function removeServiceContract(address serviceContract) public {
+        utils.removeServiceContract(serviceContract, msg.sender);
     }
 
     /**
