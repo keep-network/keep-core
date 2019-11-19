@@ -259,25 +259,25 @@ may not punish stakers.
 
 . Deploy the new operator contract
 . Approve the operator contract on the registry
-. Activate the operator contract on the relevant service contract/s
 . Wait for stakers to authorize the operator contract
+. Activate the operator contract on the relevant service contract/s
 
 ==== New service contract
 
 . Deploy the new service contract
 . Deploy a new operator contract serving the new service contract
   . Approve the operator contract on the registry
-  . Activate the operator contract on the service contract
   . Wait for stakers to authorize the operator contract
+ . Activate the operator contract on the service contract
 
 ==== Staking contract upgrade
 
 . Deploy the new staking contract
 . Deploy new operator contracts recognizing the new staking contract
-  . Approve the operator contracts on the registry
-  . Activate the operator contracts on the service contracts
-. Wait for stakers to migrate to the new staking contract
-. Wait for stakers to authorize the new operator contracts
+ . Approve the operator contracts on the registry
+ . Wait for stakers to migrate to the new staking contract
+ . Wait for stakers to authorize the new operator contracts
+. Activate the operator contracts on the service contracts
 
 ==== Token upgrade
 
@@ -290,10 +290,10 @@ that lets holders convert old tokens to new tokens
 . Deploy a new staking contract for the new tokens
   . Deploy new operator contracts recognizing the new token and staking contract
     . Approve the operator contracts on the registry
-    . Activate the operator contracts on the service contracts
 . Wait for stakers to convert their tokens,
 stake on the new contract
 and authorize the new operator contracts
+. Activate the operator contracts on the service contracts
 
 === Impact of compromise
 
