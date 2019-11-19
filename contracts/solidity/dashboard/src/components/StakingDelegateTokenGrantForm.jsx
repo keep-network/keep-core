@@ -78,7 +78,8 @@ class StakingDelegateTokenGrantForm extends Component {
   async submit() {
     const { grantId, amount, magpie, operatorSignature1, operatorSignature2 } = this.state
     const { web3 } = this.props
-    const stakingContractAddress = web3.stakingContractAddress.options.address;    // Operator must sign grantee and token grant contract address since grant contract becomes the owner during grant staking.
+    const stakingContractAddress = web3.stakingContractAddress.options.address;
+    // Operator must sign grantee and token grant contract address since grant contract becomes the owner during grant staking.
     let delegation = Buffer.concat([
       Buffer.from(magpie.substr(2), 'hex'),
       Buffer.from(operatorSignature2.substr(2), 'hex'),
