@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "bignumber": "^1.1.0",
+    "bignumber.js": "9.0.0",
     "bootstrap": "^3.3.7",
     "chart.js": "^2.8.0",
     "less": "^3.9.0",
@@ -26,7 +26,7 @@
     "build-css": "lessc --clean-css src/css/app.less src/app.css",
     "watch-css": "npm run build-css && less-watch-compiler src/css src app.less",
     "start-js": "require-link && react-scripts start",
-    "start": "npm run env && npm-run-all -p watch-css start-js",
+    "start": "npm-run-all -p watch-css start-js",
     "build": "require-link && npm run build-css && react-scripts build",
     "test": "require-link && react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
