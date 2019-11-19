@@ -7,6 +7,9 @@ import (
 	"encoding/hex"
 	"math/big"
 	"sync"
+	"time"
+
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -95,6 +98,12 @@ func (n *Node) JoinGroupIfEligible(
 			)
 		}
 
+		retransmittingBroadcastChannel := retransmission.WithRetransmission(
+			broadcastChannel,
+			500*time.Millisecond,
+			3,
+		)
+
 		for _, index := range indexes {
 			// capture player index for goroutine
 			playerIndex := index
@@ -109,7 +118,7 @@ func (n *Node) JoinGroupIfEligible(
 					n.blockCounter,
 					relayChain,
 					signing,
-					broadcastChannel,
+					retransmittingBroadcastChannel,
 				)
 				if err != nil {
 					logger.Errorf("failed to execute dkg: [%v]", err)
