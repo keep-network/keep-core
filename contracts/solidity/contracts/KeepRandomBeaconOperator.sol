@@ -24,6 +24,9 @@ interface ServiceContract {
  */
 contract KeepRandomBeaconOperator {
     using SafeMath for uint256;
+    using GroupSelection for GroupSelection.Storage;
+    using Groups for Groups.Storage;
+    using OperatorUtils for OperatorUtils.Storage;
 
     event OnGroupRegistered(bytes groupPubKey);
 
@@ -36,6 +39,10 @@ contract KeepRandomBeaconOperator {
     event SignatureSubmitted(uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     event GroupSelectionStarted(uint256 newEntry);
+
+    GroupSelection.Storage groupSelection;
+    Groups.Storage groups;
+    OperatorUtils.Storage utils;
 
     // Contract owner.
     address public owner;
@@ -102,15 +109,6 @@ contract KeepRandomBeaconOperator {
     // and some part of the fee stored in this field may be returned to the service
     // contract.
     uint256 public dkgSubmitterReimbursementFee;
-
-    using GroupSelection for GroupSelection.Storage;
-    GroupSelection.Storage groupSelection;
-
-    using Groups for Groups.Storage;
-    Groups.Storage groups;
-
-    using OperatorUtils for OperatorUtils.Storage;
-    OperatorUtils.Storage utils;
 
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
