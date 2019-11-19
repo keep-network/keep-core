@@ -11,33 +11,14 @@ The pricing method avoids
 the known downfalls of previously considered, more complex, schemes,
 such as price discrimination being defeated by callback pooling.
 
-== Prior Work
-What is this pricing mechanism based on?
-
-=== Implementation
-
-Provide overview diagram?
-
 ==== Making requests
 How are requests made?
 
-When a customer wishes to receive an entry,
-they query the beacon for the _entry fee estimate_
-applicable for their request:
-`entry_fee_estimate = estimate_fee(callback_gas_amount)`.
-The _callback gas amount_ is the amount of gas required
-for the customer's callback to execute successfully;
-if no callback is required `callback_gas_amount = 0`.
-
-The estimate returned is guaranteed to be valid
-only for the transaction it is called in,
-and for callback gas costs
-equal or lower than the provided callback gas amount.
-Thus the request should be made immediately after receiving the estimate.
-Paying more than the applicable entry fee estimate
-has a minimal cost to the requester
-as excess fees will be refunded.
-Insufficient payment will lead to the request being rejected
+A request begins with the query 
+`entry_fee_estimate = estimate_fee(callback_gas_amount)`
+, which provides the customer with an estimated gas cost to use in the request. 
+The fee estimate is only valud for the transaction it is called in, so the customer must
+make the request immediately after obtaining the estimate. Insufficient payment will lead to the request being rejected
 and the transaction reverted.
 
 To make a request after determining the applicable fee
@@ -58,16 +39,12 @@ and the transaction reverted.
 ==== Receiving a request
 How are requests handled by the protocol?
 
-If the beacon is already serving an earlier request,
-it rejects any new requests
-(implicitly refunding the fees by reverting the transactions).
-
 When the beacon is non-busy and receives a request,
 it first checks that the _request fee_ exceeds
-the _entry fee estimate_ with the _callback gas amount_ from the request.
+the _entry fee estimate_ with the _callback gas amount_ from the request. If the beacon is already serving an earlier request, it rejects any new requests and refunds the fee.
 
 Once the request has been verified to be sufficiently funded,
-the beacon select the new signing group.
+the beacon selects the new signing group.
 The selected group is tasked with producing the new entry.
 
 The request is set as the _pending request_
