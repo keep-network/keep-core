@@ -86,9 +86,9 @@ class Main extends Component {
 
   getContracts = async (web3) => {
     try {
-      const token = await getKeepToken(web3, process.env.REACT_APP_TOKEN_ADDRESS)
-      const stakingContract = await getTokenStaking(web3, process.env.REACT_APP_STAKING_ADDRESS)
-      const grantContract = await getTokenGrant(web3, process.env.REACT_APP_TOKENGRANT_ADDRESS)
+      const token = await getKeepToken(web3)
+      const stakingContract = await getTokenStaking(web3)
+      const grantContract = await getTokenGrant(web3)
       return {
         token: token,
         stakingContract: stakingContract,
@@ -121,7 +121,7 @@ class Main extends Component {
     return (
       <Web3Context.Provider value={web3}>
         <div className="main">
-          <Header networkType={web3.networkType}/>
+          <Header networkType={web3.networkType} tokenContract={web3.token}/>
           <Grid>
             <Row>
               <Col xs={12}>
