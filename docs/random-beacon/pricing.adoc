@@ -12,6 +12,7 @@ the known downfalls of previously considered, more complex, schemes,
 such as price discrimination being defeated by callback pooling.
 
 ==== UML diagram
+[ditaa]
 +-----------------+            
 |  estimate_fee   |            
 +-----------------+       
@@ -82,8 +83,7 @@ until a valid entry is received, this is not necessary.
 ===== Receiving submissions
 How does the protocol handle a submission from the relay?
 
-When the assigned signing group has produced a valid entry,
-one of its members should submit it to the beacon.
+A valdid entry created by a signing group is submitted .
 The first member to submit a valid entry is the _submitter_.
 _Submission deadline_ is the block number before which the 
 valid entry must be submitted.
