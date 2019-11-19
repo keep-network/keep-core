@@ -161,21 +161,19 @@ library GroupSelection {
 
         // any ticket goes when the tickets array size is lower than the group size
         if (self.tickets.length < self.groupSize) {
+            self.previousTicketIndex.push(0);
             // no tickets
             if (self.tickets.length == 0) {
                 self.tickets.push(newTicketValue);
-                self.previousTicketIndex.push(0);
             // higher than the current highest
             } else if (newTicketValue > self.tickets[self.tail]) {
                 self.tickets.push(newTicketValue);
-                self.previousTicketIndex.push(0);
                 uint8 oldTail = uint8(self.tail);
                 self.tail = self.tickets.length-1;
                 self.previousTicketIndex[self.tail] = oldTail;
             // lower than the current lowest
             } else if (newTicketValue < self.tickets[ordered[0]]) {
                 self.tickets.push(newTicketValue);
-                self.previousTicketIndex.push(0);
                 uint8 lastIndex = uint8(self.tickets.length - 1);
                 // last element points to itself
                 self.previousTicketIndex[lastIndex] = lastIndex;
@@ -184,7 +182,6 @@ library GroupSelection {
             // higher than the lowest ticket value and lower than the highest ticket value
             } else {
                 self.tickets.push(newTicketValue);
-                self.previousTicketIndex.push(0);
                 uint256 j = findReplacementIndex(self, newTicketValue, ordered);
                 uint8 lastIndex = uint8(self.tickets.length - 1);
                 self.previousTicketIndex[lastIndex] = self.previousTicketIndex[j];
