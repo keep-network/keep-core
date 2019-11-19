@@ -459,13 +459,3 @@ Rate-limiting the Panic Button can help prevent total DoS
 if the panic button is ever compromised,
 but also permits flooding the system with malicious operator contracts
 unless the Registry Keeper is similarly rate-limited.
-
-[bibliography]
-== Related Links
-
-- Flowdock Links
-- Other links
-- If you have publications, you can include them in bibliography style. If you
-  start your bullet with an id in _triple_ square brackets (e.g. `+[[[AAKE]]]+`),
-  you can reference it in the content body using regular cross-reference syntax
-  (e.g. `+<<AAKE>>+`).
