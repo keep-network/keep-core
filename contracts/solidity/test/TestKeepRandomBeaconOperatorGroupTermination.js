@@ -2,6 +2,7 @@ import mineBlocks from './helpers/mineBlocks';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 const GroupsTerminationStub = artifacts.require('./stubs/GroupsTerminationStub.sol')
+const Groups = artifacts.require("./libraries/Groups.sol");
 
 contract('GroupsTerminationStub', function(accounts) {
     let groups;
@@ -10,6 +11,8 @@ contract('GroupsTerminationStub', function(accounts) {
     const activeGroupsThreshold = 1;
 
     before(async () => {
+      const groupsLibrary = await Groups.new();
+      await GroupsTerminationStub.link("Groups", groupsLibrary.address);
       groups = await GroupsTerminationStub.new();
       groups.setActiveGroupsThreshold(activeGroupsThreshold);
     });
