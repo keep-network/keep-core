@@ -1,7 +1,6 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./TokenStaking.sol";
 import "./cryptography/BLS.sol";
 import "./libraries/GroupSelection.sol";
 import "./libraries/Groups.sol";
@@ -46,9 +45,6 @@ contract KeepRandomBeaconOperator {
 
     // Contract owner.
     address public owner;
-
-    // TODO: replace with a secure authorization protocol (addressed in RFC 11).
-    TokenStaking public stakingContract;
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
     // the Keep network. Expressed as number with 18-decimal places.
@@ -162,11 +158,9 @@ contract KeepRandomBeaconOperator {
     }
 
     constructor(address _serviceContract, address _stakingContract) public {
-        stakingContract = TokenStaking(_stakingContract);
-
         owner = msg.sender;
         utils.owner = msg.sender;
-
+        utils.stakingContract = _stakingContract;
         utils.addServiceContract(_serviceContract, msg.sender);
 
         groupSelection.ticketSubmissionTimeout = 12;
@@ -261,7 +255,7 @@ contract KeepRandomBeaconOperator {
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public {
-        uint256 stakingWeight = stakingContract.balanceOf(msg.sender).div(minimumStake);
+        uint256 stakingWeight = utils.balanceOf(msg.sender).div(minimumStake);
         groupSelection.submitTicket(ticketValue, stakerValue, virtualStakerIndex, stakingWeight);
     }
 
@@ -359,7 +353,7 @@ contract KeepRandomBeaconOperator {
         }
 
         uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
-        address payable magpie = stakingContract.magpieOf(msg.sender);
+        address payable magpie = utils.magpieOf(msg.sender);
 
         if (reimbursementFee < dkgSubmitterReimbursementFee) {
             uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
@@ -466,7 +460,7 @@ contract KeepRandomBeaconOperator {
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        stakingContract.magpieOf(msg.sender).transfer(submitterReward);
+        utils.magpieOf(msg.sender).transfer(submitterReward);
 
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
@@ -581,7 +575,7 @@ contract KeepRandomBeaconOperator {
      * @return True if staked enough to participate in the group, false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return stakingContract.balanceOf(staker) >= minimumStake;
+        return utils.balanceOf(staker) >= minimumStake;
     }
 
     /**

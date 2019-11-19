@@ -3,6 +3,11 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../utils/AddressArrayUtils.sol";
 
+interface tokenStakingInterface {
+    function balanceOf(address _address) external view returns(uint256);
+    function magpieOf(address _address) external view returns(address payable);
+}
+
 library OperatorUtils {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
@@ -10,6 +15,8 @@ library OperatorUtils {
     struct Storage {
         address owner;
         address[] serviceContracts;
+        // TODO: replace with a secure authorization protocol (addressed in RFC 11).
+        address stakingContract;
     }
 
     /**
@@ -56,5 +63,28 @@ library OperatorUtils {
         Storage storage self
     ) public view returns (address) {
         return self.serviceContracts[self.serviceContracts.length.sub(1)];
+    }
+
+    /**
+     * @dev Gets the stake balance of the specified address.
+     * @param _address The address to query the balance of.
+     * @return An uint256 representing the amount staked by the passed address.
+     */
+    function balanceOf(
+        Storage storage self,
+        address _address
+    ) public view returns (uint256) {
+        return tokenStakingInterface(self.stakingContract).balanceOf(_address);
+    }
+
+    /**
+     * @dev Gets the magpie for the specified operator address.
+     * @return Magpie address.
+     */
+    function magpieOf(
+        Storage storage self,
+        address _address
+    ) public view returns (address payable) {
+        return tokenStakingInterface(self.stakingContract).magpieOf(_address);
     }
 }
