@@ -22,7 +22,6 @@
     "web3": "^1.0.0-beta.51"
   },
   "scripts": {
-    "env": "truffle exec ./scripts/env.js",
     "build-css": "lessc --clean-css src/css/app.less src/app.css",
     "watch-css": "npm run build-css && less-watch-compiler src/css src app.less",
     "start-js": "require-link && react-scripts start",
