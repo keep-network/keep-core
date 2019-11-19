@@ -39,9 +39,9 @@ class Main extends Component {
       web3: {
         yourAddress: undefined,
         networkType: undefined,
-        token: undefined,
-        stakingContract: undefined,
-        grantContract: undefined,
+        token: { options: { address: '' } },
+        stakingContract: { options: { address: '' } },
+        grantContract: { options: { address: '' } },
         utils: undefined,
         eth: undefined
       }
@@ -153,7 +153,8 @@ class Main extends Component {
                       <SigningForm description="Sign stake owner address" defaultMessageToSign="0x0" />
                       <SigningForm
                         description="(Optional) Sign Token Grant contract address. This is required only for Token Grants stake operators"
-                        defaultMessageToSign={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
+                        defaultMessageToSign={web3.grantContract.options.address}
+                      />
                     </div>
 
                   </div>:
@@ -183,9 +184,9 @@ class Main extends Component {
                           </Table>
 
                           {!isOperatorOfStakedTokenGrant ?
-                            <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>:
+                            <StakingForm btnText="Unstake" action="unstake" />:
                             <div>
-                              <StakingForm btnText="Unstake" action="unstake" stakingContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
+                              <StakingForm btnText="Unstake" action="unstake" />
                               <small>You can only unstake full amount. Partial unstake amounts are not yet supported.</small>
                             </div>
                           }
@@ -245,13 +246,13 @@ class Main extends Component {
                               with the private keys holding the tokens. This is achieved by stake delegation, where different
                               addresses hold different responsibilities and cold storage is supported to the highest extent practicable.
                             </p>
-                            <StakingDelegateForm tokenBalance={tokenBalance} stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS } />
+                            <StakingDelegateForm tokenBalance={tokenBalance} />
                             <hr></hr>
                             <h3>Stake Delegation (Simplified)</h3>
                             <p>
                               Simplified arrangement where you operate and receive rewards under one account.
                             </p>
-                            <StakingForm btnText="Stake" action="stake" stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }/>
+                            <StakingForm btnText="Stake" action="stake" />
                           </Col>
                         </Row>
                       </Tab>:null
@@ -285,8 +286,6 @@ class Main extends Component {
                             
                             <StakingDelegateTokenGrantForm
                               tokenBalance={grantBalance}
-                              tokenGrantContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }
-                              stakingContractAddress={ process.env.REACT_APP_STAKING_ADDRESS }
                             />
                           </Col>
                         </Row>
@@ -301,7 +300,7 @@ class Main extends Component {
                         </p>
                         <Row>
                           <Col xs={12} md={8}>
-                            <TokenGrantForm tokenGrantContractAddress={ process.env.REACT_APP_TOKENGRANT_ADDRESS }/>
+                            <TokenGrantForm />
                           </Col>
                         </Row>
                         <Row>
