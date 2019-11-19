@@ -55,8 +55,8 @@ class StakingForm extends Component {
 
   async submit() {
     const { amount } = this.state
-    const { action, web3, stakingContractAddress } = this.props
-
+    const { action, web3 } = this.props
+    const stakingContractAddress = web3.stakingContract.options.address;
     if (action === 'stake') {
       await web3.token.methods.approveAndCall(stakingContractAddress, formatAmount(amount, 18), "", {from: web3.yourAddress, gas: 150000})
     } else if (action === 'unstake') {
