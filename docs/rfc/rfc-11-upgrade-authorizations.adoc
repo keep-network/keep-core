@@ -161,6 +161,13 @@ and any external sources of truth,
 e.g. token contract and staking contract/s,
 must be hard-coded.
 
+In the current design,
+operator contracts authorized to punish the staker
+can never be deauthorized.
+Even if authorization was revokable,
+the stakers should not be expected to react promptly
+to malicious changes to operator contracts.
+
 An operator contract can either provide services
 to any contract that makes a valid request and pays the correct fee,
 or it can be owned is owned by a specific contract and only serve its owner.
