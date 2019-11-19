@@ -26,7 +26,8 @@
     "build-css": "lessc --clean-css src/css/app.less src/app.css",
     "watch-css": "npm run build-css && less-watch-compiler src/css src app.less",
     "start-js": "require-link && react-scripts start",
-    "start": "npm run env && npm-run-all -p watch-css start-js",
+    "setup": "./scripts/copy-contracts.sh ../build/contracts",
+    "start": "npm run setup && npm run env && npm-run-all -p watch-css start-js",
     "build": "require-link && npm run build-css && react-scripts build",
     "test": "require-link && react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
