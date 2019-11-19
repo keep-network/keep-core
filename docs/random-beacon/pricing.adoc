@@ -129,20 +129,14 @@ section). The submitter is intended to take the hit for submitting with a gas pr
 
 ===== Requester refund
 How is a refund to the requester processed?
-After the _callback expenditure_ has been determined,
-it is added to the _entry base price_ calculated with the _estimated gas price_
-to get the _actual entry price_.
 
-_actual entry price_ = _callback expenditure_ +  _entry base price_ (_estimated gas price_, _profit margin_, _DKG contribution_, _entry verification fee_)
+Note: when is a requester refund processed? - Ask promethea
 
-If no callback was specified in the request the _callback expenditure_ is 0
-and:
+_requester refund = actual entry price - requester fee + 1% of request subsidy pool_
 
-_actual entry price = entry base price_.
+_actual entry price = callback expenditure +  entry base price_ 
 
-The difference between the actual entry price and the _requester fee_
-is refunded to the requester,
-along with 1% of the _request subsidy pool_ of the beacon.
+_entry base price = estimated gas price + profit margin + DKG contribution + entry verification fee_
 
 ===== Paying rewards and operational fees
 How are payments made to the various actors in this process?
