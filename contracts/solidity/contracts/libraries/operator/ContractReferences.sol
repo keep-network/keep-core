@@ -8,7 +8,7 @@ interface tokenStakingInterface {
     function magpieOf(address _address) external view returns(address payable);
 }
 
-library OperatorUtils {
+library ContractReferences {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
 

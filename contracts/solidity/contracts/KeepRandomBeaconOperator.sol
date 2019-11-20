@@ -5,7 +5,7 @@ import "./cryptography/BLS.sol";
 import "./libraries/operator/GroupSelection.sol";
 import "./libraries/operator/Groups.sol";
 import "./libraries/operator/Signatures.sol";
-import "./libraries/operator/OperatorUtils.sol";
+import "./libraries/operator/ContractReferences.sol";
 
 
 interface ServiceContract {
@@ -25,7 +25,7 @@ contract KeepRandomBeaconOperator {
     using SafeMath for uint256;
     using GroupSelection for GroupSelection.Storage;
     using Groups for Groups.Storage;
-    using OperatorUtils for OperatorUtils.Storage;
+    using ContractReferences for ContractReferences.Storage;
 
     event OnGroupRegistered(bytes groupPubKey);
 
@@ -41,7 +41,7 @@ contract KeepRandomBeaconOperator {
 
     GroupSelection.Storage groupSelection;
     Groups.Storage groups;
-    OperatorUtils.Storage utils;
+    ContractReferences.Storage contractReferences;
 
     // Contract owner.
     address public owner;
@@ -134,7 +134,7 @@ contract KeepRandomBeaconOperator {
     function genesis() public payable {
         require(numberOfGroups() == 0, "Groups exist");
         // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
-        groupSelectionStarterContract = ServiceContract(utils.latestServiceContract());
+        groupSelectionStarterContract = ServiceContract(contractReferences.latestServiceContract());
         startGroupSelection(_genesisGroupSeed, msg.value);
     }
 
@@ -151,7 +151,7 @@ contract KeepRandomBeaconOperator {
      */
     modifier onlyServiceContract() {
         require(
-            utils.isServiceContract(msg.sender),
+            contractReferences.isServiceContract(msg.sender),
             "Caller is not an authorized contract"
         );
         _;
@@ -159,9 +159,9 @@ contract KeepRandomBeaconOperator {
 
     constructor(address _serviceContract, address _stakingContract) public {
         owner = msg.sender;
-        utils.owner = msg.sender;
-        utils.stakingContract = _stakingContract;
-        utils.addServiceContract(_serviceContract, msg.sender);
+        contractReferences.owner = msg.sender;
+        contractReferences.stakingContract = _stakingContract;
+        contractReferences.addServiceContract(_serviceContract, msg.sender);
 
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
@@ -174,7 +174,7 @@ contract KeepRandomBeaconOperator {
      * @param serviceContract Address of the service contract.
      */
     function addServiceContract(address serviceContract) public {
-        utils.addServiceContract(serviceContract, msg.sender);
+        contractReferences.addServiceContract(serviceContract, msg.sender);
     }
 
     /**
@@ -182,7 +182,7 @@ contract KeepRandomBeaconOperator {
      * @param serviceContract Address of the service contract.
      */
     function removeServiceContract(address serviceContract) public {
-        utils.removeServiceContract(serviceContract, msg.sender);
+        contractReferences.removeServiceContract(serviceContract, msg.sender);
     }
 
     /**
@@ -255,7 +255,7 @@ contract KeepRandomBeaconOperator {
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public {
-        uint256 stakingWeight = utils.balanceOf(msg.sender).div(minimumStake);
+        uint256 stakingWeight = contractReferences.balanceOf(msg.sender).div(minimumStake);
         groupSelection.submitTicket(ticketValue, stakerValue, virtualStakerIndex, stakingWeight);
     }
 
@@ -353,7 +353,7 @@ contract KeepRandomBeaconOperator {
         }
 
         uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
-        address payable magpie = utils.magpieOf(msg.sender);
+        address payable magpie = contractReferences.magpieOf(msg.sender);
 
         if (reimbursementFee < dkgSubmitterReimbursementFee) {
             uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
@@ -460,7 +460,7 @@ contract KeepRandomBeaconOperator {
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        utils.magpieOf(msg.sender).transfer(submitterReward);
+        contractReferences.magpieOf(msg.sender).transfer(submitterReward);
 
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
@@ -575,7 +575,7 @@ contract KeepRandomBeaconOperator {
      * @return True if staked enough to participate in the group, false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return utils.balanceOf(staker) >= minimumStake;
+        return contractReferences.balanceOf(staker) >= minimumStake;
     }
 
     /**
