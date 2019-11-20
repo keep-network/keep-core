@@ -3,8 +3,6 @@ package libp2p
 import (
 	"context"
 	"crypto/ecdsa"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -15,7 +13,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
-	"github.com/keep-network/keep-core/pkg/net/libp2p/retransmission"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
@@ -39,7 +36,7 @@ type channel struct {
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
 
-	messageCache *retransmission.SynchronizedTimeCache
+	retransmitter *retransmitter
 }
 
 func (c *channel) Name() string {
@@ -48,16 +45,13 @@ func (c *channel) Name() string {
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
 	// Transform net.TaggedMarshaler to a protobuf message
-	messageBytes, err := c.messageProto(message, 0)
+	pbMessage, err := c.messageProto(message)
 	if err != nil {
 		return err
 	}
 
-	c.pubsubMutex.Lock()
-	defer c.pubsubMutex.Unlock()
-
-	// Publish the proto to the network
-	return c.pubsub.Publish(c.name, messageBytes)
+	c.retransmitter.scheduleRetransmission(pbMessage, c.publishToPubSub)
+	return c.publishToPubSub(pbMessage)
 }
 
 func (c *channel) Recv(handler net.HandleMessageFunc) error {
@@ -107,8 +101,7 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 
 func (c *channel) messageProto(
 	message net.TaggedMarshaler,
-	retransmissionSequence int,
-) ([]byte, error) {
+) (*pb.NetworkMessage, error) {
 	payloadBytes, err := message.Marshal()
 	if err != nil {
 		return nil, err
@@ -119,17 +112,23 @@ func (c *channel) messageProto(
 		return nil, err
 	}
 
-	// TODO Will be changed
-	checksum := sha256.Sum256(append(payloadBytes, []byte(message.Type())...))
-	encodedChecksum := hex.EncodeToString(checksum[:])
+	return &pb.NetworkMessage{
+		Payload: payloadBytes,
+		Sender:  senderIdentityBytes,
+		Type:    []byte(message.Type()),
+	}, nil
+}
 
-	return (&pb.NetworkMessage{
-		Payload:                payloadBytes,
-		Sender:                 senderIdentityBytes,
-		Type:                   []byte(message.Type()),
-		Checksum:               encodedChecksum,
-		RetransmissionSequence: int32(retransmissionSequence),
-	}).Marshal()
+func (c *channel) publishToPubSub(message *pb.NetworkMessage) error {
+	messageBytes, err := message.Marshal()
+	if err != nil {
+		return err
+	}
+
+	c.pubsubMutex.Lock()
+	defer c.pubsubMutex.Unlock()
+
+	return c.pubsub.Publish(c.name, messageBytes)
 }
 
 func (c *channel) handleMessages(ctx context.Context) {
@@ -162,12 +161,16 @@ func (c *channel) handleMessages(ctx context.Context) {
 }
 
 func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
-	var protoMessage pb.NetworkMessage
-	if err := proto.Unmarshal(pubsubMessage.Data, &protoMessage); err != nil {
+	var pbMessage pb.NetworkMessage
+	if err := proto.Unmarshal(pubsubMessage.Data, &pbMessage); err != nil {
 		return err
 	}
 
-	return c.processContainerMessage(pubsubMessage.GetFrom(), protoMessage)
+	onFirstTimeReceived := func() error {
+		return c.processContainerMessage(pubsubMessage.GetFrom(), pbMessage)
+	}
+
+	return c.retransmitter.sweepReceived(&pbMessage, onFirstTimeReceived)
 }
 
 func (c *channel) processContainerMessage(
