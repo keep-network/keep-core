@@ -1,9 +1,9 @@
 import { duration } from './increaseTime';
 const BLS = artifacts.require('./cryptography/BLS.sol');
-const GroupSelection = artifacts.require('./libraries/GroupSelection.sol');
-const Groups = artifacts.require('./libraries/Groups.sol');
-const Signatures = artifacts.require("./libraries/Signatures.sol");
-const OperatorUtils = artifacts.require("./libraries/OperatorUtils.sol");
+const GroupSelection = artifacts.require('./libraries/operator/GroupSelection.sol');
+const Groups = artifacts.require('./libraries/operator/Groups.sol');
+const Signatures = artifacts.require("./libraries/operator/Signatures.sol");
+const OperatorUtils = artifacts.require("./libraries/operator/OperatorUtils.sol");
 
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {

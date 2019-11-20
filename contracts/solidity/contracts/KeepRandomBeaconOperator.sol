@@ -2,10 +2,10 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./cryptography/BLS.sol";
-import "./libraries/GroupSelection.sol";
-import "./libraries/Groups.sol";
-import "./libraries/Signatures.sol";
-import "./libraries/OperatorUtils.sol";
+import "./libraries/operator/GroupSelection.sol";
+import "./libraries/operator/Groups.sol";
+import "./libraries/operator/Signatures.sol";
+import "./libraries/operator/OperatorUtils.sol";
 
 
 interface ServiceContract {

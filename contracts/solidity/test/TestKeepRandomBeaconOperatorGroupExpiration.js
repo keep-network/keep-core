@@ -1,7 +1,7 @@
 import mineBlocks from './helpers/mineBlocks';
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 const GroupsExpirationStub = artifacts.require('./stubs/GroupsExpirationStub.sol')
-const Groups = artifacts.require("./libraries/Groups.sol");
+const Groups = artifacts.require("./libraries/operator/Groups.sol");
 
 contract('GroupsExpirationStub', function(accounts) {
 

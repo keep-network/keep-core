@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "../utils/AddressArrayUtils.sol";
+import "../../utils/AddressArrayUtils.sol";
 
 interface tokenStakingInterface {
     function balanceOf(address _address) external view returns(uint256);
