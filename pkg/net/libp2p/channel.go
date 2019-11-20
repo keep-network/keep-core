@@ -3,6 +3,8 @@ package libp2p
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -43,7 +45,7 @@ func (c *channel) Name() string {
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
 	// Transform net.TaggedMarshaler to a protobuf message
-	messageBytes, err := c.messageProto(message)
+	messageBytes, err := c.messageProto(message, 0)
 	if err != nil {
 		return err
 	}
@@ -102,6 +104,7 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 
 func (c *channel) messageProto(
 	message net.TaggedMarshaler,
+	retransmissionSequence int,
 ) ([]byte, error) {
 	payloadBytes, err := message.Marshal()
 	if err != nil {
@@ -113,10 +116,16 @@ func (c *channel) messageProto(
 		return nil, err
 	}
 
+	// TODO Will be changed
+	checksum := sha256.Sum256(append(payloadBytes, []byte(message.Type())...))
+	encodedChecksum := hex.EncodeToString(checksum[:])
+
 	return (&pb.NetworkMessage{
-		Payload: payloadBytes,
-		Sender:  senderIdentityBytes,
-		Type:    []byte(message.Type()),
+		Payload:                payloadBytes,
+		Sender:                 senderIdentityBytes,
+		Type:                   []byte(message.Type()),
+		Checksum:               encodedChecksum,
+		RetransmissionSequence: int32(retransmissionSequence),
 	}).Marshal()
 }
 
