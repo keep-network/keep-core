@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -181,12 +182,32 @@ func pingRequest(c *cli.Context) error {
 		break
 	}
 
-	if err := broadcastChannel.Send(
-		&PingMessage{Sender: netProvider.ID().String(), Payload: ping},
-	); err != nil {
-		return err
+	totalMsgNumber := 64 * 64
+	start := make(chan struct{})
+	receivedMessages := make(map[string]bool)
+
+	for i := 1; i <= totalMsgNumber; i++ {
+		message := &PingMessage{
+			Sender:  netProvider.ID().String(),
+			Payload: ping + " number " + strconv.Itoa(i),
+		}
+
+		go func(msg *PingMessage) {
+			<-start
+			err := broadcastChannel.Send(message)
+			if err != nil {
+				fmt.Printf(
+					"Error while sending PING with payload [%v]: [%v]\n",
+					message.Payload,
+					err,
+				)
+			} else {
+				fmt.Printf("Sent PING with payload [%v]\n", message.Payload)
+			}
+		}(message)
 	}
-	fmt.Println("Sent PING")
+
+	close(start)
 
 	for {
 		select {
@@ -203,18 +224,14 @@ func pingRequest(c *cli.Context) error {
 				)
 			}
 
-			err := broadcastChannel.Send(
-				&PongMessage{
-					Sender:  netProvider.ID().String(),
-					Payload: pong})
+			message := &PongMessage{
+				Sender:  netProvider.ID().String(),
+				Payload: pong + " corresponding to " + pingPayload.Payload,
+			}
+			err := broadcastChannel.Send(message)
 			if err != nil {
 				return err
 			}
-
-			// Help with synchronization between slow clients.
-			// Occasionally the client exits before successfully
-			// writing the ping to the wire.
-			time.Sleep(1 * time.Second)
 		case msg := <-pongChan:
 			// don't read our own pong
 			if msg.TransportSenderID().String() == netProvider.ID().String() {
@@ -229,8 +246,17 @@ func pingRequest(c *cli.Context) error {
 				)
 			}
 
-			fmt.Printf("Received PONG from %s", msg.TransportSenderID().String())
-			return nil
+			fmt.Printf(
+				"Received PONG from [%s] with payload [%v]\n",
+				msg.TransportSenderID().String(),
+				pongPayload.Payload,
+			)
+
+			receivedMessages[pongPayload.Payload] = true
+
+			if len(receivedMessages) == totalMsgNumber {
+				fmt.Println("All expected messages received")
+			}
 		case <-ctx.Done():
 			err := ctx.Err()
 			if err != nil {
