@@ -9,6 +9,7 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/keep-network/keep-core/pkg/internal/cache"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
@@ -35,6 +36,8 @@ type channel struct {
 
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
+
+	messageCache *cache.SynchronizedTimeCache
 }
 
 func (c *channel) Name() string {
