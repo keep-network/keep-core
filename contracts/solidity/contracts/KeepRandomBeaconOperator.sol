@@ -26,6 +26,7 @@ contract KeepRandomBeaconOperator {
     using GroupSelection for GroupSelection.Storage;
     using Groups for Groups.Storage;
     using ContractReferences for ContractReferences.Storage;
+    using DKGResultVerification for DKGResultVerification.Storage;
 
     event OnGroupRegistered(bytes groupPubKey);
 
@@ -42,6 +43,7 @@ contract KeepRandomBeaconOperator {
     GroupSelection.Storage groupSelection;
     Groups.Storage groups;
     ContractReferences.Storage contractReferences;
+    DKGResultVerification.Storage dkgResultVerification;
 
     // Contract owner.
     address public owner;
@@ -73,10 +75,6 @@ contract KeepRandomBeaconOperator {
     // Time in blocks after which the next group member is eligible
     // to submit the result.
     uint256 public resultPublicationBlockStep = 3;
-
-    // Time in blocks after DKG result is complete and ready to be published
-    // by clients.
-    uint256 public timeDKG = 7*(1+3);
 
     // Time in blocks it takes off-chain cluster to generate a new relay entry
     // and be ready to submit it to the chain.
@@ -167,6 +165,8 @@ contract KeepRandomBeaconOperator {
         groupSelection.groupSize = groupSize;
         groups.activeGroupsThreshold = 5;
         groups.groupActiveTime = 3000;
+
+        dkgResultVerification.timeDKG = 7*(1+3);
     }
 
     /**
@@ -225,7 +225,7 @@ contract KeepRandomBeaconOperator {
         // be complete plus the expected time to submit the result.
         uint256 dkgTimeout = groupSelection.ticketSubmissionStartBlock +
             groupSelection.ticketSubmissionTimeout +
-            timeDKG +
+            dkgResultVerification.timeDKG +
             groupSize * resultPublicationBlockStep;
 
         require(!groupSelection.inProgress || block.number > dkgTimeout, "Group selection in progress");
@@ -281,6 +281,10 @@ contract KeepRandomBeaconOperator {
         return groupSelection.selectedParticipants();
     }
 
+    function timeDKG() public view returns (uint256) {
+        return dkgResultVerification.timeDKG;
+    }
+
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
      * @param submitterMemberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
@@ -304,25 +308,23 @@ contract KeepRandomBeaconOperator {
     ) public {
         address[] memory members = selectedParticipants();
 
-        require(submitterMemberIndex > 0, "Invalid submitter index");
-        require(
-            members[submitterMemberIndex - 1] == msg.sender,
-            "Unexpected submitter index"
-        );
-
-        uint T_init = groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout + timeDKG;
-        require(
-            block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
-            "Submitter not eligible"
-        );
-
         require(
             disqualified.length == groupSize && inactive.length == groupSize,
             "Malformed misbehaving array"
         );
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
-        DKGResultVerification.verifySignatures(signatures, signingMembersIndexes, resultHash, members, groupThreshold);
+
+        dkgResultVerification.verify(
+            submitterMemberIndex,
+            signatures,
+            resultHash,
+            signingMembersIndexes,
+            members,
+            groupThreshold,
+            resultPublicationBlockStep,
+            groupSelection
+        );
 
         for (uint i = 0; i < groupSize; i++) {
             // Check member was neither marked as inactive nor as disqualified
