@@ -1,6 +1,7 @@
 #!/bin/bash
-# This script fetches contracts artifacts published to the keep-dev bucket.
-# These contracts are expected to be the ones deployed on keep-dev environment.
+# This script fetches contracts artifacts published to the GCP bucket. It is expected
+# that `CONTRACT_DATA_BUCKET` environment variable is set to the name of a bucket
+# from which contracts should be downloaded.
 
 CONTRACTS_NAMES=("KeepToken.json" "TokenStaking.json" "TokenGrant.json")
 
@@ -13,7 +14,7 @@ function create_destination_dir() {
 function fetch_contracts() {
   for CONTRACT_NAME in ${CONTRACTS_NAMES[@]}
   do
-    gsutil -q cp gs://keep-dev-contract-data/keep-core/${CONTRACT_NAME} $DESTINATION_DIR
+    gsutil -q cp gs://${CONTRACT_DATA_BUCKET}/keep-core/${CONTRACT_NAME} $DESTINATION_DIR
   done
 }
 
