@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "bignumber": "^1.1.0",
+    "bignumber.js": "9.0.0",
     "bootstrap": "^3.3.7",
     "chart.js": "^2.8.0",
     "less": "^3.9.0",
@@ -17,23 +17,18 @@
     "react-dom": "^16.6.3",
     "react-router-dom": "^4.2.2",
     "react-scripts": "^2.1.1",
-    "require-symlink": "^0.2.0",
     "truffle": "^5.0.10",
     "web3": "^1.0.0-beta.51"
   },
   "scripts": {
-    "env": "truffle exec ./scripts/env.js",
     "build-css": "lessc --clean-css src/css/app.less src/app.css",
     "watch-css": "npm run build-css && less-watch-compiler src/css src app.less",
-    "start-js": "require-link && react-scripts start",
+    "start-js": "react-scripts start",
     "setup": "./scripts/copy-contracts.sh ../build/contracts",
-    "start": "npm run setup && npm run env && npm-run-all -p watch-css start-js",
-    "build": "require-link && npm run build-css && react-scripts build",
-    "test": "require-link && react-scripts test --env=jsdom",
+    "start": "npm run setup && npm-run-all -p watch-css start-js",
+    "build": "npm run build-css && react-scripts build",
+    "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
-  },
-  "requireSymlinks": {
-    "contracts": "../build/contracts"
   },
   "browserslist": [
     ">0.2%",
