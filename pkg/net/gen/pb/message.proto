@@ -24,6 +24,12 @@ message NetworkMessage {
   // Channel names are Keccak(StakingPubKey1 || ... || StakingPubKeyN) of
   // all valid group members.
   bytes channel = 5;
+
+  // Unique identifier of the message.
+  string checksum = 6;
+
+  // Used to determine retransmission round which sent the message.
+  int32 retransmissionSequence = 7;
 }
 
 message Identity {
