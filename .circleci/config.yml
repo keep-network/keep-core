@@ -208,13 +208,13 @@ jobs:
           name: Run Docker build
           working_directory: ~/project/contracts/solidity/dashboard
           command: |
-            docker build -t build --target build .
+            docker build --tag keep-staking-dapp .
       - run:
           name: Save keep-staking-dapp image
           working_directory: ~/project/contracts/solidity/dashboard
           command: |
-            mkdir -p /tmp/keep-client/docker-images/
-            docker save -o /tmp/keep-client/docker-images/keep-staking-dapp.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-staking-dapp
+            mkdir -p /tmp/keep-staking-dapp/docker-images/
+            docker save -o /tmp/keep-staking-dapp/docker-images/keep-staking-dapp.tar keep-staking-dapp
       - persist_to_workspace:
           root: /tmp/keep-staking-dapp
           paths:
@@ -227,7 +227,11 @@ jobs:
       - run:
           name: Load keep-staking-dapp image
           command: |
-            docker load -i /tmp/keep-client/docker-images/keep-staking-dapp.tar
+            docker load -i /tmp/keep-staking-dapp/docker-images/keep-staking-dapp.tar
+      - run:
+          name: Tag Docker image
+          command: |
+            docker tag keep-staking-dapp $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-staking-dapp
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
