@@ -1,6 +1,10 @@
 package retransmission
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"sync"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -41,8 +45,10 @@ func (rbc *retransmittingBroadcastChannel) Send(m net.TaggedMarshaler) error {
 			if i != 0 {
 				time.Sleep(rbc.retransmissionInterval)
 			}
+
 			if err := rbc.delegate.Send(m); err != nil {
-				logger.Errorf("Could not send message of type %v: [%v]",
+				logger.Errorf(
+					"could not send message of type %v: [%v]",
 					m.Type(),
 					err,
 				)
@@ -54,9 +60,49 @@ func (rbc *retransmittingBroadcastChannel) Send(m net.TaggedMarshaler) error {
 }
 
 func (rbc *retransmittingBroadcastChannel) Recv(
-	h net.HandleMessageFunc,
+	handleMessageFunc net.HandleMessageFunc,
 ) error {
-	return rbc.delegate.Recv(h)
+	messageCache := make(map[string]bool)
+	messageCacheMutex := &sync.Mutex{}
+
+	cachingHandler := func(msg net.Message) error {
+		payloadChecksum, err := calculatePayloadChecksum(msg)
+		if err != nil {
+			return err
+		}
+
+		messageCacheMutex.Lock()
+		defer messageCacheMutex.Unlock()
+
+		if _, ok := messageCache[payloadChecksum]; !ok {
+			messageCache[payloadChecksum] = true
+			return handleMessageFunc.Handler(msg)
+		}
+
+		return nil
+	}
+
+	cachingHandleMessageFunc := net.HandleMessageFunc{
+		Type:    handleMessageFunc.Type,
+		Handler: cachingHandler,
+	}
+
+	return rbc.delegate.Recv(cachingHandleMessageFunc)
+}
+
+func calculatePayloadChecksum(message net.Message) (string, error) {
+	payload, ok := message.Payload().(net.TaggedMarshaler)
+	if !ok {
+		return "", fmt.Errorf("could not cast message payload")
+	}
+
+	payloadBytes, err := payload.Marshal()
+	if err != nil {
+		return "", err
+	}
+
+	sum := sha256.Sum256(payloadBytes)
+	return hex.EncodeToString(sum[:]), nil
 }
 
 func (rbc *retransmittingBroadcastChannel) UnregisterRecv(
