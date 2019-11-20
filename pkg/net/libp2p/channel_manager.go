@@ -5,9 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/internal/cache"
-
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/libp2p/retransmission"
 	"github.com/libp2p/go-libp2p-core/host"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -89,7 +88,7 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		subscription:       sub,
 		messageHandlers:    make([]net.HandleMessageFunc, 0),
 		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
-		messageCache:       cache.NewSynchronizedTimeCache(time.Minute),
+		messageCache:       retransmission.NewSynchronizedTimeCache(time.Minute),
 	}
 
 	go channel.handleMessages(cm.ctx)

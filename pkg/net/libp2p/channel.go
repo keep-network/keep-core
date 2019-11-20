@@ -9,13 +9,13 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/keep-network/keep-core/pkg/internal/cache"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
-	crypto "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
+	"github.com/keep-network/keep-core/pkg/net/libp2p/retransmission"
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
@@ -37,7 +37,7 @@ type channel struct {
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
 
-	messageCache *cache.SynchronizedTimeCache
+	messageCache *retransmission.SynchronizedTimeCache
 }
 
 func (c *channel) Name() string {

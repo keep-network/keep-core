@@ -34,7 +34,6 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
 	github.com/pborman/uuid v1.2.0
 	github.com/urfave/cli v0.0.0-00010101000000-000000000000
-	github.com/whyrusleeping/timecache v0.0.0-20160911033111-cfcb2f1abfee
 	go.opencensus.io v0.22.2 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/tools v0.0.0-20190925230517-ea99b82c7b93

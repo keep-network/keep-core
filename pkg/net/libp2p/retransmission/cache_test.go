@@ -1,4 +1,4 @@
-package cache
+package retransmission
 
 import (
 	"strconv"
@@ -24,8 +24,8 @@ func TestConcurrentAdd(t *testing.T) {
 	wg.Add(10)
 
 	for i := 0; i < 10; i++ {
-		go func(id int) {
-			cache.Add(strconv.Itoa(id))
+		go func(item int) {
+			cache.Add(strconv.Itoa(item))
 			wg.Done()
 		}(i)
 	}
@@ -41,7 +41,7 @@ func TestConcurrentAdd(t *testing.T) {
 
 func TestExpiration(t *testing.T) {
 	cache := NewSynchronizedTimeCache(500 * time.Millisecond)
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 5; i++ {
 		cache.Add(strconv.Itoa(i))
 		time.Sleep(100 * time.Millisecond)
 	}
@@ -66,8 +66,8 @@ func BenchmarkConcurrentAdd(b *testing.B) {
 	wg.Add(b.N)
 
 	for i := 0; i < b.N; i++ {
-		go func(id int) {
-			cache.Add(strconv.Itoa(id))
+		go func(item int) {
+			cache.Add(strconv.Itoa(item))
 			wg.Done()
 		}(i)
 	}
@@ -90,8 +90,8 @@ func BenchmarkConcurrentHas(b *testing.B) {
 	wg.Add(b.N)
 
 	for i := 0; i < b.N; i++ {
-		go func(id int) {
-			cache.Has(strconv.Itoa(id))
+		go func(item int) {
+			cache.Has(strconv.Itoa(item))
 			wg.Done()
 		}(i)
 	}
