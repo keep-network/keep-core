@@ -3,7 +3,7 @@ pragma solidity ^0.5.4;
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 
-library Signatures {
+library DKGResultVerification {
     using BytesLib for bytes;
     using ECDSA for bytes32;
 

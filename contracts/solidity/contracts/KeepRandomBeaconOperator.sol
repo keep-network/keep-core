@@ -4,7 +4,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./cryptography/BLS.sol";
 import "./libraries/operator/GroupSelection.sol";
 import "./libraries/operator/Groups.sol";
-import "./libraries/operator/Signatures.sol";
+import "./libraries/operator/DKGResultVerification.sol";
 import "./libraries/operator/ContractReferences.sol";
 
 
@@ -322,7 +322,7 @@ contract KeepRandomBeaconOperator {
         );
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
-        Signatures.verifySignatures(signatures, signingMembersIndexes, resultHash, members, groupThreshold);
+        DKGResultVerification.verifySignatures(signatures, signingMembersIndexes, resultHash, members, groupThreshold);
 
         for (uint i = 0; i < groupSize; i++) {
             // Check member was neither marked as inactive nor as disqualified
