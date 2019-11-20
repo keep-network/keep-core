@@ -27,5 +27,7 @@ function checkCodeIsValid(code) {
   if (!code || code === '0x0' || code === '0x') throw Error('No contract at address');
 }
 
-const getContractAddress = ({ networks }) => networks[Object.keys(networks)[0]].address;
+function getContractAddress({ networks }) {
+  return networks[Object.keys(networks)[0]].address
+};
 
