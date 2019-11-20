@@ -343,9 +343,9 @@ workflows:
           requires:
             - migrate_contracts
       - publish_staking_dapp:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - build_staking_dapp
