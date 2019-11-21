@@ -275,10 +275,9 @@ tricks the contract into consuming twice the gas as normal, they will be able
 to get twice the reimbursement as well. 
 
 ==== Cost estimates
-How do we estimate the various costs?
+todo: How do we estimate the various costs?
 
 ===== Gas price feed
-Where does the gas price come from?
 
 A short-term gas price feed is required
 to estimate the gas cost components.
@@ -302,17 +301,13 @@ The submitter's extra reward incentivizes submitting
 even when the entry verification fee cannot cover the gas costs.
 In the extreme,
 avoiding the severe penalty for failure to produce an entry
-should incentivize group members to pay the gas prices
+will incentivize group members to pay the gas prices
 up to the (theoretical) limit
 where gas for the entry submission transaction
 costs as much as the KEEP tokens at stake.
 
 The exact implementation of this gas price feed
-is out for scope for this RFC.footnote:[A rather obvious candidate
-is to use the gas price paid by the requester.
-This doesn't work if the requester is a miner
-as they can provide an arbitrarily low price.
-]
+is out for scope for this RFC.
 
 ===== DKG cost estimate
 How do we calculate the cost of running the DKG?
@@ -371,7 +366,6 @@ where applicable,
 could further reduce operating costs.
 
 ===== Zeroing everything
-
 
 Resetting all request fields to zero after serving a request
 increases the immediate gas cost of making a request,
