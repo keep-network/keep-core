@@ -212,10 +212,12 @@ In addition to the _group reward_,
 the submitter is reimbursed for gas fees
 and receives an extra reward.
 
-The _submitter reward_ consists of
-the _callback expenditure_ to cover the exact cost of the callback;
-the _entry verification fee_ to cover the cost of verifying the submission;
-and 5% of the _delay penalties_ of the entire group.
+The _submitter reward_ consists of:
+- _callback expenditure_ to cover the exact cost of the callback
+
+- the _entry verification fee_ to cover the cost of verifying the submission
+
+- 5% of the _delay penalties_ of the entire group
 
 Unlike the _callback allowance_,
 the entire _entry verification fee_ is paid to the submitter
@@ -225,14 +227,20 @@ keeping the surplus or paying the difference.
 This is to incentivize optimizing gas fees.
 
 To incentivize a race for the submitter position,
-the submitter receives _delay penalty * group size * 0.05_ as an extra reward.
+the submitter receives:
+
+ _delay penalty * group size * 0.05_ as an extra reward
+
 With realistic group sizes this is significant,
 but not high enough to render certain attacks profitable.
 If the group size is 100 and the delay factor is 0.64,
-the submitter receives an extra reward of
-_base reward * 0.36 * 100 * 0.05 = base reward * 1.8_.
-In this scenario the full submitter reward would be
-_base reward * (1.8 + 0.64) + callback expenditure + entry verification fee_.
+the submitter receives an extra reward of:
+
+_base reward * 0.36 * 100 * 0.05 = base reward * 1.8_
+
+In this scenario the full submitter reward would be:
+
+_base reward * (1.8 + 0.64) + callback expenditure + entry verification fee_
 
 ==== DKG submitter reimbursement
 How is the DKG submitter compensated?
