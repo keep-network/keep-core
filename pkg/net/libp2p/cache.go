@@ -17,20 +17,11 @@ type timeCache struct {
 
 // NewTimeCache creates a new cache instance with provided timespan.
 func newTimeCache(timespan time.Duration) *timeCache {
-	tc := &timeCache{
+	return &timeCache{
 		indexer:  list.New(),
 		cache:    make(map[string]time.Time),
 		timespan: timespan,
 	}
-
-	go func() {
-		for {
-			time.Sleep(timespan)
-			tc.sweep()
-		}
-	}()
-
-	return tc
 }
 
 // Add adds an entry to the cache. Returns `true` if entry was not present in
@@ -45,19 +36,11 @@ func (tc *timeCache) add(item string) bool {
 		return false
 	}
 
-	tc.cache[item] = time.Now()
-	tc.indexer.PushFront(item)
-	return true
-}
-
-func (tc *timeCache) sweep() {
-	tc.mutex.Lock()
-	defer tc.mutex.Unlock()
-
+	// sweep old entries
 	for {
 		back := tc.indexer.Back()
 		if back == nil {
-			return
+			break
 		}
 
 		item := back.Value.(string)
@@ -67,16 +50,20 @@ func (tc *timeCache) sweep() {
 				"inconsistent cache state - expected item [%v] is not present",
 				item,
 			)
-			return
+			break
 		}
 
 		if time.Since(itemTime) > tc.timespan {
 			tc.indexer.Remove(back)
 			delete(tc.cache, item)
 		} else {
-			return
+			break
 		}
 	}
+
+	tc.cache[item] = time.Now()
+	tc.indexer.PushFront(item)
+	return true
 }
 
 // Has checks presence of an entry in the cache. Returns `true` if entry is

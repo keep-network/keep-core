@@ -41,7 +41,7 @@ func TestConcurrentAdd(t *testing.T) {
 
 func TestExpiration(t *testing.T) {
 	cache := newTimeCache(500 * time.Millisecond)
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		cache.add(strconv.Itoa(i))
 		time.Sleep(100 * time.Millisecond)
 	}
