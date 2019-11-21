@@ -168,13 +168,11 @@ If the sum of rewards paid out
 is < _profit margin + entry verification fee_,
 the difference is added to the _request subsidy pool_.
 
-
 ===== Group reward
 How are group members compensated?
 
 The group reward is paid to every member of the signing group,
-including the submitter,
-upon submission of a valid entry.
+including the submitter, upon submission of a valid entry.
 
 The group reward equals the _base reward_
 multiplied by a _delay factor_
