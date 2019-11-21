@@ -37,12 +37,12 @@ func newRetransmitter(cycles uint32, interval time.Duration) *retransmitter {
 
 // scheduleRetransmission takes the provided message and retransmits it
 // according to the configured number of cycles and interval using the
-// provided sender function. For each retransmission, sender function is
+// provided send function. For each retransmission, send function is
 // called with a copy of the original message and message retransmission
 // counter set to the appropriate value.
 func (r *retransmitter) scheduleRetransmission(
 	message *pb.NetworkMessage,
-	sender func(*pb.NetworkMessage) error,
+	send func(*pb.NetworkMessage) error,
 ) {
 	go func() {
 		for i := uint32(1); i <= r.cycles; i++ {
@@ -52,7 +52,7 @@ func (r *retransmitter) scheduleRetransmission(
 			messageCopy.Retransmission = i
 
 			go func() {
-				if err := sender(&messageCopy); err != nil {
+				if err := send(&messageCopy); err != nil {
 					logger.Errorf(
 						"could not retransmit message: [%v]",
 						err,
