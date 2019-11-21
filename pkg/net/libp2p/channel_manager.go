@@ -2,13 +2,12 @@ package libp2p
 
 import (
 	"context"
+	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/libp2p/go-libp2p-core/host"
+	host "github.com/libp2p/go-libp2p-core/host"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-
-	"sync"
 )
 
 type channelManager struct {
