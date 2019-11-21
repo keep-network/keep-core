@@ -62,7 +62,10 @@ func (tc *TimeCache) sweep() {
 		item := back.Value.(string)
 		itemTime, ok := tc.cache[item]
 		if !ok {
-			logger.Fatalf("inconsistent cache state")
+			logger.Fatalf(
+				"inconsistent cache state - expected item %v is not present",
+				item,
+			)
 			return
 		}
 
