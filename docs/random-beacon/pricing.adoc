@@ -128,7 +128,7 @@ section). The submitter is intended to take the hit for submitting with a gas pr
 ===== Requester refund
 How is a refund to the requester processed?
 
-Todo: when is a requester refund processed? - Ask promethea
+Refunds are processed in the same transaction in which a new relay entry is submitted. 
 
 _requester refund = actual entry price - requester fee + 1% of request subsidy pool_
 
