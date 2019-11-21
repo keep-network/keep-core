@@ -64,14 +64,14 @@ func (r *retransmitter) scheduleRetransmission(
 	}()
 }
 
-// sweepReceived takes the received message and calls the provided receive
+// receive takes the received message and calls the provided onFirstTimeReceived
 // function only if the message was not received before. The message can be
 // the original one or a retransmission. To decide whether the given message
 // was received before, retransmitter evaluates a fingerprint of the message
 // which includes all the fields but the retransmission counter.
-func (r *retransmitter) sweepReceived(
+func (r *retransmitter) receive(
 	message *pb.NetworkMessage,
-	receive func() error,
+	onFirstTimeReceived func() error,
 ) error {
 	fingerprint, err := calculateFingerprint(message)
 	if err != nil {
@@ -83,7 +83,7 @@ func (r *retransmitter) sweepReceived(
 	}
 
 	if r.cache.add(fingerprint) {
-		return receive()
+		return onFirstTimeReceived()
 	}
 
 	return nil

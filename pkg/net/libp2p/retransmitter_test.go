@@ -132,7 +132,7 @@ func TestDoNotModifyOriginalMessage(t *testing.T) {
 	}
 }
 
-func TestSweepReceivedRetransmissions(t *testing.T) {
+func TestReceiveRetransmissions(t *testing.T) {
 	retransmitter := newRetransmitter(uint32(1), time.Millisecond)
 
 	var received []pb.NetworkMessage
@@ -142,13 +142,13 @@ func TestSweepReceivedRetransmissions(t *testing.T) {
 		Payload:        []byte("this is payload"),
 		Retransmission: 0,
 	}
-	retransmitter.sweepReceived(message, func() error {
+	retransmitter.receive(message, func() error {
 		received = append(received, *message)
 		return nil
 	})
 
 	message.Retransmission = 1
-	retransmitter.sweepReceived(message, func() error {
+	retransmitter.receive(message, func() error {
 		received = append(received, *message)
 		return nil
 	})
@@ -177,12 +177,12 @@ func TestPassReceivedUniqueMessages(t *testing.T) {
 		Payload:        []byte("conan the conqueror"),
 		Retransmission: 0,
 	}
-	retransmitter.sweepReceived(message1, func() error {
+	retransmitter.receive(message1, func() error {
 		received = append(received, message1)
 		return nil
 	})
 
-	retransmitter.sweepReceived(message2, func() error {
+	retransmitter.receive(message2, func() error {
 		received = append(received, message2)
 		return nil
 	})

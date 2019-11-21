@@ -170,7 +170,7 @@ func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
 		return c.processContainerMessage(pubsubMessage.GetFrom(), messageProto)
 	}
 
-	return c.retransmitter.sweepReceived(&messageProto, onFirstTimeReceived)
+	return c.retransmitter.receive(&messageProto, onFirstTimeReceived)
 }
 
 func (c *channel) processContainerMessage(
