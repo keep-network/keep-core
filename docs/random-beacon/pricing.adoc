@@ -152,17 +152,14 @@ group creation and a new DKG may be triggered.
 ==== Rewards
 
 A _base reward_ for each member of a signing group that produces an entry
-is specified in the system constants in the service contract.
-The nominal _profit margin_ of each entry
-equals the _base reward_ multiplied by the applicable _group size_.
+is specified in the system constants in the service contract and:
+
+_profit margin = base reward * group size_
 
 The exact rewards paid out to operators are based on the base reward
 but vary according to _submission delay_ and submitter position.
 
-If the amount paid out to the signing group in _group rewards_
-and the submitter's _extra reward_ is less than the _profit margin_,
-the difference is added to the beacon's _request subsidy pool_
-to incentivize customers to request entries.
+To incentivize customers to request entries, any amount in excess of the _profit margin_ is added to the beacons _request subsidy pool_
 
 ===== Submitter reward
 _Submitter reward = F (submission delay, submission delay base time)_
