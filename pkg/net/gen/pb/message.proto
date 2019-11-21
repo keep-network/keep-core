@@ -25,11 +25,8 @@ message NetworkMessage {
   // all valid group members.
   bytes channel = 5;
 
-  // Unique identifier of the message.
-  string checksum = 6;
-
-  // Used to determine retransmission round which sent the message.
-  int32 retransmissionSequence = 7;
+  // Retransmission round. 0 if the message is not a retransmission.
+  uint32 retransmission = 6;
 }
 
 message Identity {
