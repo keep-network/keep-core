@@ -249,25 +249,24 @@ Getting to participate in a formed group is already valuable so there is no
 additional reward for a DKG result submitter. The only thing necessary is a gas
 cost reimbursement for the submitter.
 
-After DKG result is submitted, the amount of gas spent on the call is 
-multiplied with the lower of the estimated gas price at the time of submitting
-the result, or the actual gas price of the transaction to get the _DKG result
-submission expenditure_.
+After the DKG result is submitted:
+
+_DKG result submission expenditure = minimum(estimated gas price at submission, actual gas price during transaction) * gas spent on call_
 
 The entire DKG result submission expenditure is returned to the submitter
 from the _DKG fee pool_ of the operator contract.
-
-Any surplus between the _DKG fee pool_ of the operator contract and 
-the actual cost of DKG result submission is returned back to the service 
-contract. In the case when the entire DKG fails, the unspent fee will be 
-transferred back to the service contract upon the next DKG triggered by the 
-service contract.
 
 The minimum of the gas price protects the beacon against malicious 
 miner-submitters. If the submitter is also a miner, they can place any 
 arbitrary gas price on the transaction. Without taking the minimum, 
 miner-submitter would be able to steal from _DKG fee pool_ of the operator 
 contract.
+
+Any surplus between the _DKG fee pool_ of the operator contract and 
+the actual cost of DKG result submission is returned back to the service 
+contract. In the case when the entire DKG fails, the unspent fee will be 
+transferred back to the service contract upon the next DKG triggered by the 
+service contract.
 
 The on-chain DKG result submission code needs to have all deterministic 
 and time-bounded run paths that are independent of miner-controlled inputs. 
