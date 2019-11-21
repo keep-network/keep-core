@@ -27,8 +27,9 @@ import (
 var PingCommand cli.Command
 
 const (
-	ping = "PING"
-	pong = "PONG"
+	ping           = "PING"
+	pong           = "PONG"
+	totalMsgNumber = 64 * 64
 )
 
 const pingDescription = `The ping command conducts a simple peer-to-peer test
@@ -182,7 +183,6 @@ func pingRequest(c *cli.Context) error {
 		break
 	}
 
-	totalMsgNumber := 64 * 64
 	start := make(chan struct{})
 	receivedMessages := make(map[string]bool)
 
