@@ -142,36 +142,12 @@ If the sum of rewards paid out
 is < _profit margin + entry verification fee_,
 the difference is added to the _request subsidy pool_.
 
----
-This section appears to be a bunch of options?
-
 The _DKG contribution_ is added to the _DKG fee pool_,
 and the state of the pool is checked.
 
 If the amount in the DKG fee pool equals or exceeds the _DKG cost estimate_,
-group creation and a new DKG may be triggered.footnote:[Whether
-DKG is actually triggered is open.
+group creation and a new DKG may be triggered.
 
-Always triggering DKG when the fee pool reaches a given level
-doesn't smooth out fluctuations in demand:
-a very large number of groups is created when demand is high,
-but those groups will expire on schedule if a slump occurs.
-
-A stochastic method for triggering DKG
-would permit smoothing out demand fluctuations:
-Take the current number of active groups,
-divide by a threshold number of groups,
-and e.g. square root the result to get a(n insensitivity) number;
-Trigger DKG if the entry (interpreted as a number from 0 to 1)
-is less than 1 divided by the above number.
-If the number of active groups is below the threshold,
-this attempts to create a new signing group
-every time sufficient funding is present;
-with higher demand the number of groups
-tends to be proportional to _(number of entries in expiration period)^2/3^_.
-]
-
----
 
 ==== Rewards
 
