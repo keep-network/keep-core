@@ -368,6 +368,4 @@ could further reduce operating costs.
 ////
 [bibliography]
 == Related Links
-
-- Flowdock Links
 ////
