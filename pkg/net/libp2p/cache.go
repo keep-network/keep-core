@@ -6,7 +6,8 @@ import (
 	"time"
 )
 
-// TimeCache provides a time cache.
+// TimeCache provides a time cache safe for concurrent use by
+// multiple goroutines without additional locking or coordination.
 type TimeCache struct {
 	indexer  *list.List
 	cache    map[string]time.Time
