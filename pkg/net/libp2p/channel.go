@@ -45,13 +45,13 @@ func (c *channel) Name() string {
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
 	// Transform net.TaggedMarshaler to a protobuf message
-	pbMessage, err := c.messageProto(message)
+	messageProto, err := c.messageProto(message)
 	if err != nil {
 		return err
 	}
 
-	c.retransmitter.scheduleRetransmission(pbMessage, c.publishToPubSub)
-	return c.publishToPubSub(pbMessage)
+	c.retransmitter.scheduleRetransmission(messageProto, c.publishToPubSub)
+	return c.publishToPubSub(messageProto)
 }
 
 func (c *channel) Recv(handler net.HandleMessageFunc) error {
@@ -161,16 +161,16 @@ func (c *channel) handleMessages(ctx context.Context) {
 }
 
 func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
-	var pbMessage pb.NetworkMessage
-	if err := proto.Unmarshal(pubsubMessage.Data, &pbMessage); err != nil {
+	var messageProto pb.NetworkMessage
+	if err := proto.Unmarshal(pubsubMessage.Data, &messageProto); err != nil {
 		return err
 	}
 
 	onFirstTimeReceived := func() error {
-		return c.processContainerMessage(pubsubMessage.GetFrom(), pbMessage)
+		return c.processContainerMessage(pubsubMessage.GetFrom(), messageProto)
 	}
 
-	return c.retransmitter.sweepReceived(&pbMessage, onFirstTimeReceived)
+	return c.retransmitter.sweepReceived(&messageProto, onFirstTimeReceived)
 }
 
 func (c *channel) processContainerMessage(
