@@ -196,7 +196,8 @@ func pingRequest(c *cli.Context) error {
 			<-start
 			err := broadcastChannel.Send(message)
 			if err != nil {
-				fmt.Printf(
+				fmt.Fprintf(
+					os.Stderr,
 					"Error while sending PING with payload [%v]: [%v]\n",
 					message.Payload,
 					err,
