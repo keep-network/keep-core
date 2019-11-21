@@ -365,38 +365,6 @@ Packing request data more densely,
 where applicable,
 could further reduce operating costs.
 
-=== Limitations
-
-Entry pricing is mostly static;
-entry quality has a slight effect on price
-(faster entries -> lower surplus -> lower request subsidies)
-but other factors apart from gas fees do not impact the price.
-
-Processing entries one-by-one doesn't scale.
-
-== Future Work
-
-Instead of rejecting new requests when one has already been made,
-the beacon could accept a single queued request,
-to be served after the active one.
-Other requesters could outbid the current queued request
-by paying enough to process the request and refund the previous one,
-and provide some specified (e.g. 1.2) increase in the profit margin.
-When the current active request is served,
-the queued request automatically becomes the next active request.
-
-This method would act as both a price floor and a supply cap,
-while capturing the effective price increase when demand exceeds supply,
-instead of letting it go to miners
-as customers try to get their requests processed first.
-
-== Open Questions
-
-The implementation of the gas price feed is out of scope.
-The method of estimating gas fees,
-the timespan over which the estimate should be calculated,
-and the fluctuation safety margin are not yet defined.
-
 ////
 [bibliography]
 == Related Links
