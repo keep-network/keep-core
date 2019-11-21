@@ -6,9 +6,9 @@ import (
 	"time"
 )
 
-// TimeCache provides a time cache safe for concurrent use by
+// timeCache provides a time cache safe for concurrent use by
 // multiple goroutines without additional locking or coordination.
-type TimeCache struct {
+type timeCache struct {
 	indexer  *list.List
 	cache    map[string]time.Time
 	timespan time.Duration
@@ -16,8 +16,8 @@ type TimeCache struct {
 }
 
 // NewTimeCache creates a new cache instance with provided timespan.
-func NewTimeCache(timespan time.Duration) *TimeCache {
-	tc := &TimeCache{
+func newTimeCache(timespan time.Duration) *timeCache {
+	tc := &timeCache{
 		indexer:  list.New(),
 		cache:    make(map[string]time.Time),
 		timespan: timespan,
@@ -36,7 +36,7 @@ func NewTimeCache(timespan time.Duration) *TimeCache {
 // Add adds an entry to the cache. Returns `true` if entry was not present in
 // the cache and was successfully added into it. Returns `false` if
 // entry is already in the cache. This method is synchronized.
-func (tc *TimeCache) Add(item string) bool {
+func (tc *timeCache) add(item string) bool {
 	tc.mutex.Lock()
 	defer tc.mutex.Unlock()
 
@@ -50,7 +50,7 @@ func (tc *TimeCache) Add(item string) bool {
 	return true
 }
 
-func (tc *TimeCache) sweep() {
+func (tc *timeCache) sweep() {
 	tc.mutex.Lock()
 	defer tc.mutex.Unlock()
 
@@ -64,7 +64,7 @@ func (tc *TimeCache) sweep() {
 		itemTime, ok := tc.cache[item]
 		if !ok {
 			logger.Fatalf(
-				"inconsistent cache state - expected item %v is not present",
+				"inconsistent cache state - expected item [%v] is not present",
 				item,
 			)
 			return
@@ -81,7 +81,7 @@ func (tc *TimeCache) sweep() {
 
 // Has checks presence of an entry in the cache. Returns `true` if entry is
 // present and `false` otherwise.
-func (tc *TimeCache) Has(item string) bool {
+func (tc *timeCache) has(item string) bool {
 	tc.mutex.RLock()
 	defer tc.mutex.RUnlock()
 
