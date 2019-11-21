@@ -7,22 +7,19 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
-	"github.com/keep-network/keep-core/pkg/net/libp2p/retransmission"
 )
 
 type retransmitter struct {
 	cycles   uint32
 	interval time.Duration
-	cache    *retransmission.SynchronizedTimeCache
+	cache    *timeCache
 }
 
 func newRetransmitter(cycles uint32, interval time.Duration) *retransmitter {
 	retransmissionDuration := time.Duration(cycles) * interval
 	cacheLifetime := 2 * time.Minute
 
-	cache := retransmission.NewSynchronizedTimeCache(
-		retransmissionDuration + cacheLifetime,
-	)
+	cache := newTimeCache(retransmissionDuration + cacheLifetime)
 
 	return &retransmitter{
 		cycles:   cycles,
@@ -64,11 +61,11 @@ func (r *retransmitter) sweepReceived(
 		return fmt.Errorf("could not calculate message fingerprint: [%v]", err)
 	}
 
-	if r.cache.Has(fingerprint) {
+	if r.cache.has(fingerprint) {
 		return nil
 	}
 
-	if r.cache.Add(fingerprint) {
+	if r.cache.add(fingerprint) {
 		return receive()
 	}
 

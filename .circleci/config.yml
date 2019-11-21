@@ -191,6 +191,58 @@ jobs:
             cd /tmp/keep-client/contracts
             gsutil -m cp * gs://keep-dev-contract-data/keep-core
 
+  build_staking_dapp:
+    executor: docker-node
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-client
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Copy contract artifacts
+          working_directory: ~/project/contracts/solidity/dashboard
+          command: |
+            ./scripts/copy-contracts.sh /tmp/keep-client/contracts
+      - run:
+          name: Run Docker build
+          working_directory: ~/project/contracts/solidity/dashboard
+          command: |
+            docker build --tag keep-staking-dapp .
+      - run:
+          name: Save keep-staking-dapp image
+          working_directory: ~/project/contracts/solidity/dashboard
+          command: |
+            mkdir -p /tmp/keep-staking-dapp/docker-images/
+            docker save -o /tmp/keep-staking-dapp/docker-images/keep-staking-dapp.tar keep-staking-dapp
+      - persist_to_workspace:
+          root: /tmp/keep-staking-dapp
+          paths:
+            - docker-images
+  publish_staking_dapp:
+    executor: gcp-gcr/default
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-staking-dapp
+      - run:
+          name: Load keep-staking-dapp image
+          command: |
+            docker load -i /tmp/keep-staking-dapp/docker-images/keep-staking-dapp.tar
+      - run:
+          name: Tag Docker image
+          command: |
+            docker tag keep-staking-dapp $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-staking-dapp
+      - gcp-gcr/gcr-auth:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+      - gcp-gcr/push-image:
+          google-project-id: GOOGLE_PROJECT_ID
+          registry-url: $GCR_REGISTRY_URL
+          image: keep-staking-dapp
+          tag: latest
+
   generate_docs_tex:
     docker:
       - image: keepnetwork/texlive:3
@@ -287,6 +339,16 @@ workflows:
           requires:
             - build_client_and_test_go
             - migrate_contracts
+      - build_staking_dapp:
+          requires:
+            - migrate_contracts
+      - publish_staking_dapp:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+          requires:
+            - build_staking_dapp
   docs:
     jobs:
       - generate_docs_tex
