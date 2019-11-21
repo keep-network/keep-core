@@ -365,60 +365,6 @@ Packing request data more densely,
 where applicable,
 could further reduce operating costs.
 
-
-===== Wiping the minimum necessary
-
-Wiping only the necessary fields results in higher operator revenue
-for the same net price paid by requesters.
-Additionally, if a field remains nonzero but unchanged between requests
-even greater gas savings can be obtained.
-
-The field used to determine the presence of a pending request must be wiped.
-
-The requester address,
-assigned signing group,
-submission delay base time,
-gas price estimate
-and request fee
-are always written when a request is received.
-These are not necessary to wipe,
-but one of them must be chosen to signify the presence of a pending request
-with a nonzero value.
-
-Requester address, signing group, gas price and fee
-can theoretically stay unchanged between requests.
-If a single heavy user makes a number of consecutive requests
-with the same callback (gas amount) and gas prices are stable,
-this would provide a minor reduction in beacon operating costs.
-
-The submission delay base time
-is guaranteed to change when a new request is made,
-and thus is the most efficient indicator of a pending request.
-Using the maximum value instead of zero for "no request"
-is slightly more efficient.
-
-The presence of a callback can be determined by either 
-the callback address or callback gas.
-
-The callback address is likely to remain the same
-only if the requester is the same.
-
-Because excess callback gas is refunded
-the only cost of setting a higher callback gas is the tied-up liquidity,
-with the exception of callbacks
-where excessive gas consumption indicates an error state
-where reverting is preferable to continuing.
-With well-programmed callback contracts,
-the callback gas amount is only necessary to modify
-if it needs to be increased,
-or if the requester cannot afford the higher gas allowance.
-
-This suggests that using callback address to denote the presence of a callback
-allows minor efficiency gains.
-Modifying the callback address when a request is processed,
-including setting it to zero in a no-callback request,
-further improves gas efficiency.
-
 === Limitations
 
 Entry pricing is mostly static;
