@@ -365,17 +365,6 @@ Packing request data more densely,
 where applicable,
 could further reduce operating costs.
 
-===== Zeroing everything
-
-Resetting all request fields to zero after serving a request
-increases the immediate gas cost of making a request,
-but reduces the entry verification fee by a roughly equal amount.
-
-This results in a slightly lower total revenue for operators,
-but reduces the possible space of programming errors marginally;
-false positives for pending requests are eliminated
-even if the wrong field is queried.
-In practice this benefit is negligible.
 
 ===== Wiping the minimum necessary
 
