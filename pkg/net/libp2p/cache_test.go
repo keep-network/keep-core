@@ -1,4 +1,4 @@
-package retransmission
+package libp2p
 
 import (
 	"strconv"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestAdd(t *testing.T) {
-	cache := NewSynchronizedTimeCache(time.Minute)
+	cache := NewTimeCache(time.Minute)
 
 	cache.Add("test")
 
@@ -18,7 +18,7 @@ func TestAdd(t *testing.T) {
 }
 
 func TestConcurrentAdd(t *testing.T) {
-	cache := NewSynchronizedTimeCache(time.Minute)
+	cache := NewTimeCache(time.Minute)
 
 	var wg sync.WaitGroup
 	wg.Add(10)
@@ -40,7 +40,7 @@ func TestConcurrentAdd(t *testing.T) {
 }
 
 func TestExpiration(t *testing.T) {
-	cache := NewSynchronizedTimeCache(500 * time.Millisecond)
+	cache := NewTimeCache(500 * time.Millisecond)
 	for i := 0; i < 5; i++ {
 		cache.Add(strconv.Itoa(i))
 		time.Sleep(100 * time.Millisecond)
@@ -52,7 +52,7 @@ func TestExpiration(t *testing.T) {
 }
 
 func BenchmarkAdd(b *testing.B) {
-	cache := NewSynchronizedTimeCache(time.Minute)
+	cache := NewTimeCache(time.Minute)
 
 	for i := 0; i < b.N; i++ {
 		cache.Add(strconv.Itoa(i))
@@ -60,7 +60,7 @@ func BenchmarkAdd(b *testing.B) {
 }
 
 func BenchmarkConcurrentAdd(b *testing.B) {
-	cache := NewSynchronizedTimeCache(time.Minute)
+	cache := NewTimeCache(time.Minute)
 
 	var wg sync.WaitGroup
 	wg.Add(b.N)
@@ -76,7 +76,13 @@ func BenchmarkConcurrentAdd(b *testing.B) {
 }
 
 func BenchmarkHas(b *testing.B) {
-	cache := NewSynchronizedTimeCache(time.Minute)
+	cache := NewTimeCache(time.Minute)
+
+	for i := 0; i < b.N; i++ {
+		cache.Add(strconv.Itoa(i))
+	}
+
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		cache.Has(strconv.Itoa(i))
@@ -84,7 +90,13 @@ func BenchmarkHas(b *testing.B) {
 }
 
 func BenchmarkConcurrentHas(b *testing.B) {
-	cache := NewSynchronizedTimeCache(time.Minute)
+	cache := NewTimeCache(time.Minute)
+
+	for i := 0; i < b.N; i++ {
+		cache.Add(strconv.Itoa(i))
+	}
+
+	b.ResetTimer()
 
 	var wg sync.WaitGroup
 	wg.Add(b.N)
