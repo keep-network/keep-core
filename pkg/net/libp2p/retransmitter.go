@@ -48,11 +48,11 @@ func (r *retransmitter) scheduleRetransmission(
 		for i := uint32(1); i <= r.cycles; i++ {
 			time.Sleep(r.interval)
 
-			copy := pb.NetworkMessage(*message)
-			copy.Retransmission = i
+			messageCopy := *message
+			messageCopy.Retransmission = i
 
 			go func() {
-				if err := sender(&copy); err != nil {
+				if err := sender(&messageCopy); err != nil {
 					logger.Errorf(
 						"could not retransmit message: [%v]",
 						err,
@@ -92,10 +92,10 @@ func (r *retransmitter) sweepReceived(
 func calculateFingerprint(message *pb.NetworkMessage) (string, error) {
 	// Reset retransmission counter to 0. We do not want the retransmission
 	// counter value to change the message fingerprint.
-	copy := pb.NetworkMessage(*message)
-	copy.Retransmission = 0
+	messageCopy := *message
+	messageCopy.Retransmission = 0
 
-	bytes, err := copy.Marshal()
+	bytes, err := messageCopy.Marshal()
 	if err != nil {
 		return "", err
 	}
