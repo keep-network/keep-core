@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	host "github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/host"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
@@ -20,12 +20,15 @@ type channelManager struct {
 	channels      map[string]*channel
 
 	pubsub *pubsub.PubSub
+
+	retransmitterOptions *retransmitterOptions
 }
 
 func newChannelManager(
 	ctx context.Context,
 	identity *identity,
 	p2phost host.Host,
+	retransmitterOptions *retransmitterOptions,
 ) (*channelManager, error) {
 	floodsub, err := pubsub.NewFloodSub(
 		ctx,
@@ -38,11 +41,12 @@ func newChannelManager(
 		return nil, err
 	}
 	return &channelManager{
-		channels:  make(map[string]*channel),
-		pubsub:    floodsub,
-		peerStore: p2phost.Peerstore(),
-		identity:  identity,
-		ctx:       ctx,
+		channels:             make(map[string]*channel),
+		pubsub:               floodsub,
+		peerStore:            p2phost.Peerstore(),
+		identity:             identity,
+		ctx:                  ctx,
+		retransmitterOptions: retransmitterOptions,
 	}, nil
 }
 
@@ -86,10 +90,7 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		subscription:       sub,
 		messageHandlers:    make([]net.HandleMessageFunc, 0),
 		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
-		retransmitter: newRetransmitter(
-			RetransmissionCycles,
-			RetransmissionInterval,
-		),
+		retransmitter:      newRetransmitter(cm.retransmitterOptions),
 	}
 
 	go channel.handleMessages(cm.ctx)

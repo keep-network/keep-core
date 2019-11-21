@@ -57,22 +57,13 @@ const (
 	BootstrapCheckPeriod = 10 * time.Second
 )
 
-// Message retransmission constants
-const (
-	// RetransmissionCycles is the number of retransmissions for each message
-	// send in the broadcast channel
-	RetransmissionCycles = 12
-
-	// RetransmissionInterval is the time interval between each retransmission
-	// of a message in the broadcast channel
-	RetransmissionInterval = time.Second * 10
-)
-
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
-	Peers              []string
-	Port               int
-	AnnouncedAddresses []string
+	Peers                              []string
+	Port                               int
+	AnnouncedAddresses                 []string
+	RetransmissionCycles               int
+	RetransmissionIntervalMilliseconds int
 }
 
 type provider struct {
@@ -209,7 +200,11 @@ func Connect(
 
 	host.Network().Notify(buildNotifiee())
 
-	cm, err := newChannelManager(ctx, identity, host)
+	retransmitterOptions := newRetransmitterOptions(
+		config.RetransmissionCycles,
+		config.RetransmissionIntervalMilliseconds,
+	)
+	cm, err := newChannelManager(ctx, identity, host, retransmitterOptions)
 	if err != nil {
 		return nil, err
 	}

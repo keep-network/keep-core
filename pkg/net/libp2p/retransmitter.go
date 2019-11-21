@@ -9,6 +9,21 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 )
 
+type retransmitterOptions struct {
+	cycles   uint32
+	interval time.Duration
+}
+
+func newRetransmitterOptions(
+	cycles int,
+	intervalMilliseconds int,
+) *retransmitterOptions {
+	return &retransmitterOptions{
+		cycles:   uint32(cycles),
+		interval: time.Duration(intervalMilliseconds) * time.Millisecond,
+	}
+}
+
 // retransmitter is a message retransmission strategy for libp2p broadcast
 // channel retransmitting message for the certain number of cycles and with the
 // given interval.
@@ -17,21 +32,19 @@ import (
 // message delivery. To improve the delivery rate, each message can be
 // retransmitted a certain number of times.
 type retransmitter struct {
-	cycles   uint32
-	interval time.Duration
-	cache    *timeCache
+	options *retransmitterOptions
+	cache   *timeCache
 }
 
-func newRetransmitter(cycles uint32, interval time.Duration) *retransmitter {
-	retransmissionDuration := time.Duration(cycles) * interval
+func newRetransmitter(options *retransmitterOptions) *retransmitter {
+	retransmissionDuration := time.Duration(options.cycles) * options.interval
 	cacheLifetime := 2 * time.Minute
 
 	cache := newTimeCache(retransmissionDuration + cacheLifetime)
 
 	return &retransmitter{
-		cycles:   cycles,
-		interval: interval,
-		cache:    cache,
+		options: options,
+		cache:   cache,
 	}
 }
 
@@ -45,8 +58,8 @@ func (r *retransmitter) scheduleRetransmission(
 	send func(*pb.NetworkMessage) error,
 ) {
 	go func() {
-		for i := uint32(1); i <= r.cycles; i++ {
-			time.Sleep(r.interval)
+		for i := uint32(1); i <= r.options.cycles; i++ {
+			time.Sleep(r.options.interval)
 
 			messageCopy := *message
 			messageCopy.Retransmission = i
