@@ -9,6 +9,13 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 )
 
+// retransmitter is a message retransmission strategy for libp2p broadcast
+// channel retransmitting message for the certain number of cycles and with the
+// given interval.
+//
+// libp2p pubsub used internally by the broadcast channel does not guarantee
+// message delivery. To improve the delivery rate, each message can be
+// retransmitted a certain number of times.
 type retransmitter struct {
 	cycles   uint32
 	interval time.Duration
@@ -28,6 +35,11 @@ func newRetransmitter(cycles uint32, interval time.Duration) *retransmitter {
 	}
 }
 
+// scheduleRetransmission takes the provided message and retransmits it
+// according to the configured number of cycles and interval using the
+// provided sender function. For each retransmission, sender function is
+// called with a copy of the original message and message retransmission
+// counter set to the appropriate value.
 func (r *retransmitter) scheduleRetransmission(
 	message *pb.NetworkMessage,
 	sender func(*pb.NetworkMessage) error,
@@ -52,6 +64,11 @@ func (r *retransmitter) scheduleRetransmission(
 	}()
 }
 
+// sweepReceived takes the received message and calls the provided receive
+// function only if the message was not received before. The message can be
+// the original one or a retransmission. To decide whether the given message
+// was received before, retransmitter evaluates a fingerprint of the message
+// which includes all the fields but the retransmission counter.
 func (r *retransmitter) sweepReceived(
 	message *pb.NetworkMessage,
 	receive func() error,
@@ -73,6 +90,8 @@ func (r *retransmitter) sweepReceived(
 }
 
 func calculateFingerprint(message *pb.NetworkMessage) (string, error) {
+	// Reset retransmission counter to 0. We do not want the retransmission
+	// counter value to change the message fingerprint.
 	copy := pb.NetworkMessage(*message)
 	copy.Retransmission = 0
 
