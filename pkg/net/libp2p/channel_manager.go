@@ -86,6 +86,10 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		subscription:       sub,
 		messageHandlers:    make([]net.HandleMessageFunc, 0),
 		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
+		retransmitter: newRetransmitter(
+			RetransmissionCycles,
+			RetransmissionInterval,
+		),
 	}
 
 	go channel.handleMessages(cm.ctx)
