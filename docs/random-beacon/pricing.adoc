@@ -322,8 +322,7 @@ Divide DKG cost estimate by _d_ to get DKG contribution for each entry.
 
 The maximum DKG gas cost should be hardcoded in the operator contract.
 The service contract takes the highest applicable gas cost from all operator
-contracts being used and multiplies it by the fluctuation margin times gas price 
-feed's estimate.
+contracts being used and multiplies it by the fluctuation margin times gas price feed's estimate.
 
 Because DKG is performed when sufficient gas money has accumulated,
 fluctuations in gas prices don't need special consideration.
@@ -339,7 +338,7 @@ Similarly, when gas costs fall DKG gets triggered faster.
 How do we calculate the gas required for entry verification?
 
 Calculate gas required for verifying entry and associated support operations.
-The maximum entry verification gas cost should be hardcoded in the operator
+The maximum entry verification gas cost are hardcoded in the operator
 contract. The service contract takes the highest applicable gas cost from all 
 operator contracts being used and  multiplies it by the fluctuation margin 
 (e.g. 1.5) times gas price feed's estimate to get entry verification fee.
@@ -361,6 +360,7 @@ making both options equal to the requester.
 The difference of 5,000 actual gas is effectively paid by the submitter
 in the form of a lower _entry verification fee_.
 
+TODO: Do we need the following?
 Packing request data more densely,
 where applicable,
 could further reduce operating costs.
