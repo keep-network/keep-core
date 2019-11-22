@@ -36,7 +36,8 @@ type retransmitter struct {
 	cache   *timeCache
 }
 
-func newRetransmitter(options *retransmissionOptions) *retransmitter {
+func newRetransmitter(cycles int, intervalMilliseconds int) *retransmitter {
+	options := newRetransmissionOptions(cycles, intervalMilliseconds)
 	retransmissionDuration := time.Duration(options.cycles) * options.interval
 	cacheLifetime := 2 * time.Minute
 
