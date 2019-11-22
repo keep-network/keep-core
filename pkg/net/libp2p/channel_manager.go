@@ -21,16 +21,14 @@ type channelManager struct {
 
 	pubsub *pubsub.PubSub
 
-	retransmissionCycles   int
-	retransmissionInterval int
+	retransmissionOptions *retransmissionOptions
 }
 
 func newChannelManager(
 	ctx context.Context,
 	identity *identity,
 	p2phost host.Host,
-	retransmissionCycles int,
-	retransmissionInterval int,
+	retransmissionOptions *retransmissionOptions,
 ) (*channelManager, error) {
 	floodsub, err := pubsub.NewFloodSub(
 		ctx,
@@ -43,13 +41,12 @@ func newChannelManager(
 		return nil, err
 	}
 	return &channelManager{
-		channels:               make(map[string]*channel),
-		pubsub:                 floodsub,
-		peerStore:              p2phost.Peerstore(),
-		identity:               identity,
-		ctx:                    ctx,
-		retransmissionCycles:   retransmissionCycles,
-		retransmissionInterval: retransmissionInterval,
+		channels:              make(map[string]*channel),
+		pubsub:                floodsub,
+		peerStore:             p2phost.Peerstore(),
+		identity:              identity,
+		ctx:                   ctx,
+		retransmissionOptions: retransmissionOptions,
 	}, nil
 }
 
@@ -94,8 +91,8 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		messageHandlers:    make([]net.HandleMessageFunc, 0),
 		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
 		retransmitter: newRetransmitter(
-			cm.retransmissionCycles,
-			cm.retransmissionInterval,
+			cm.retransmissionOptions.cycles,
+			cm.retransmissionOptions.intervalMilliseconds,
 		),
 	}
 

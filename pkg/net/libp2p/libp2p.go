@@ -66,6 +66,11 @@ type Config struct {
 	RetransmissionInterval int
 }
 
+type retransmissionOptions struct {
+	cycles               int
+	intervalMilliseconds int
+}
+
 type provider struct {
 	channelManagerMutex sync.Mutex
 	channelManagr       *channelManager
@@ -200,13 +205,11 @@ func Connect(
 
 	host.Network().Notify(buildNotifiee())
 
-	cm, err := newChannelManager(
-		ctx,
-		identity,
-		host,
-		config.RetransmissionCycles,
-		config.RetransmissionInterval,
-	)
+	retransmissionOptions := &retransmissionOptions{
+		cycles:               config.RetransmissionCycles,
+		intervalMilliseconds: config.RetransmissionInterval,
+	}
+	cm, err := newChannelManager(ctx, identity, host, retransmissionOptions)
 	if err != nil {
 		return nil, err
 	}
