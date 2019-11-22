@@ -13,7 +13,7 @@ func TestRetransmitExpectedNumberOfTimes(t *testing.T) {
 	interval := 10
 
 	message := &pb.NetworkMessage{}
-	retransmitter := newRetransmitter(newRetransmitterOptions(cycles, interval))
+	retransmitter := newRetransmitter(newRetransmissionOptions(cycles, interval))
 
 	retransmissions := make(chan *pb.NetworkMessage, cycles)
 
@@ -40,7 +40,7 @@ func TestUpdateRetransmissionCounter(t *testing.T) {
 	interval := 10
 
 	message := &pb.NetworkMessage{}
-	retransmitter := newRetransmitter(newRetransmitterOptions(cycles, interval))
+	retransmitter := newRetransmitter(newRetransmissionOptions(cycles, interval))
 
 	retransmissions := make(chan *pb.NetworkMessage, cycles)
 
@@ -83,7 +83,7 @@ func TestRetransmitOriginalContent(t *testing.T) {
 		Channel:   channel,
 	}
 
-	retransmitter := newRetransmitter(newRetransmitterOptions(cycles, interval))
+	retransmitter := newRetransmitter(newRetransmissionOptions(cycles, interval))
 
 	retransmissions := make(chan *pb.NetworkMessage, cycles)
 
@@ -114,7 +114,7 @@ func TestDoNotModifyOriginalMessage(t *testing.T) {
 	interval := 10
 
 	message := &pb.NetworkMessage{}
-	retransmitter := newRetransmitter(newRetransmitterOptions(cycles, interval))
+	retransmitter := newRetransmitter(newRetransmissionOptions(cycles, interval))
 
 	retransmissions := make(chan *pb.NetworkMessage, cycles)
 
@@ -133,7 +133,7 @@ func TestDoNotModifyOriginalMessage(t *testing.T) {
 }
 
 func TestReceiveRetransmissions(t *testing.T) {
-	retransmitter := newRetransmitter(newRetransmitterOptions(1, 1))
+	retransmitter := newRetransmitter(newRetransmissionOptions(1, 1))
 
 	var received []pb.NetworkMessage
 
@@ -163,7 +163,7 @@ func TestReceiveRetransmissions(t *testing.T) {
 }
 
 func TestPassReceivedUniqueMessages(t *testing.T) {
-	retransmitter := newRetransmitter(newRetransmitterOptions(1, 1))
+	retransmitter := newRetransmitter(newRetransmissionOptions(1, 1))
 
 	var received []*pb.NetworkMessage
 

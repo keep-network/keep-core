@@ -9,16 +9,16 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 )
 
-type retransmitterOptions struct {
+type retransmissionOptions struct {
 	cycles   uint32
 	interval time.Duration
 }
 
-func newRetransmitterOptions(
+func newRetransmissionOptions(
 	cycles int,
 	intervalMilliseconds int,
-) *retransmitterOptions {
-	return &retransmitterOptions{
+) *retransmissionOptions {
+	return &retransmissionOptions{
 		cycles:   uint32(cycles),
 		interval: time.Duration(intervalMilliseconds) * time.Millisecond,
 	}
@@ -32,11 +32,11 @@ func newRetransmitterOptions(
 // message delivery. To improve the delivery rate, each message can be
 // retransmitted a certain number of times.
 type retransmitter struct {
-	options *retransmitterOptions
+	options *retransmissionOptions
 	cache   *timeCache
 }
 
-func newRetransmitter(options *retransmitterOptions) *retransmitter {
+func newRetransmitter(options *retransmissionOptions) *retransmitter {
 	retransmissionDuration := time.Duration(options.cycles) * options.interval
 	cacheLifetime := 2 * time.Minute
 

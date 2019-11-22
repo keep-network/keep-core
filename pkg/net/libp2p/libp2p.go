@@ -200,11 +200,11 @@ func Connect(
 
 	host.Network().Notify(buildNotifiee())
 
-	retransmitterOptions := newRetransmitterOptions(
+	retransmissionOptions := newRetransmissionOptions(
 		config.RetransmissionCycles,
 		config.RetransmissionInterval,
 	)
-	cm, err := newChannelManager(ctx, identity, host, retransmitterOptions)
+	cm, err := newChannelManager(ctx, identity, host, retransmissionOptions)
 	if err != nil {
 		return nil, err
 	}
