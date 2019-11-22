@@ -16,9 +16,7 @@ export const Web3Context = React.createContext({
 const WithWeb3Context = (Component) => {
   return (props) => (
     <Web3Context.Consumer>
-      {web3 =>   {
-        return <Component {...props} web3={web3} />
-      }}
+      {web3 =>  <Component {...props} web3={web3} />}
     </Web3Context.Consumer>
   )
 }
