@@ -10,7 +10,6 @@ export const Web3Context = React.createContext({
   utils: {},
   eth: {},
   error: '',
-  dataIsReady: false,
 });
 
 const WithWeb3Context = (Component) => {
