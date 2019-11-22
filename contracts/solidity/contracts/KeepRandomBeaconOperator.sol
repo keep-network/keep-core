@@ -253,18 +253,36 @@ contract KeepRandomBeaconOperator {
         dkgSubmitterReimbursementFee = _payment;
     }
 
-    /**
-     * @dev Submits ticket to request to participate in a new candidate group.
-     * @param ticketValue Result of a pseudorandom function with input values of
-     * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
-     * @param stakerValue Staker-specific value. Currently uint representation of staker address.
-     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
-     */
+    // function submitTicket(
+    //     uint64 ticketValue,
+    //     uint256 stakerValue,
+    //     uint256 virtualStakerIndex
+    // ) public {
+    //     uint256 stakingWeight = stakingContract.balanceOf(msg.sender).div(minimumStake);
+    //     groupSelection.submitTicket(ticketValue, stakerValue, virtualStakerIndex, stakingWeight);
+    // }
+
+    // /**
+    //  * @dev Submits ticket to request to participate in a new candidate group.
+    //  * @param ticketValue Result of a pseudorandom function with input values of
+    //  * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
+    //  * @param stakerValue Staker-specific value. Currently uint representation of staker address.
+    //  * @param virtualStakerIndex Number within a range of 1 to staker's weight.
+    //  */
     function submitTicket(
-        uint64 ticketValue,
-        uint256 stakerValue,
-        uint256 virtualStakerIndex
+        bytes memory ticket
     ) public {
+
+        uint64 ticketValue;
+        uint256 stakerValue;
+        uint256 virtualStakerIndex;
+
+        assembly {
+            ticketValue := mload(add(ticket, 8))
+            stakerValue := mload(add(ticket, 28))
+            virtualStakerIndex := mload(add(ticket, 32))
+        }
+
         uint256 stakingWeight = stakingContract.balanceOf(msg.sender).div(minimumStake);
         groupSelection.submitTicket(ticketValue, stakerValue, virtualStakerIndex, stakingWeight);
     }
