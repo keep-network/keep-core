@@ -275,7 +275,7 @@ class Main extends Component {
         isTokenHolder = true;
       }
   
-      if (stakeOwner !== "0x0000000000000000000000000000000000000000" && stakeOwner !== yourAddress) {
+      if (stakeOwner !== "0x0000000000000000000000000000000000000000" && utils.toChecksumAddress(yourAddress) !== utils.toChecksumAddress(stakeOwner)) {
         isOperator = true;
       }
   
