@@ -10,10 +10,10 @@ import (
 
 func TestRetransmitExpectedNumberOfTimes(t *testing.T) {
 	cycles := 5
-	interval := 10 * time.Millisecond
+	interval := 10
 
 	message := &pb.NetworkMessage{}
-	retransmitter := newRetransmitter(uint32(cycles), interval)
+	retransmitter := newRetransmitter(cycles, interval)
 
 	retransmissions := make(chan *pb.NetworkMessage, cycles)
 
@@ -37,10 +37,10 @@ func TestRetransmitExpectedNumberOfTimes(t *testing.T) {
 
 func TestUpdateRetransmissionCounter(t *testing.T) {
 	cycles := 3
-	interval := 10 * time.Millisecond
+	interval := 10
 
 	message := &pb.NetworkMessage{}
-	retransmitter := newRetransmitter(uint32(cycles), interval)
+	retransmitter := newRetransmitter(cycles, interval)
 
 	retransmissions := make(chan *pb.NetworkMessage, cycles)
 
@@ -67,7 +67,7 @@ func TestUpdateRetransmissionCounter(t *testing.T) {
 
 func TestRetransmitOriginalContent(t *testing.T) {
 	cycles := 3
-	interval := 10 * time.Millisecond
+	interval := 10
 
 	sender := []byte("this is sender")
 	encrypted := true
@@ -83,7 +83,7 @@ func TestRetransmitOriginalContent(t *testing.T) {
 		Channel:   channel,
 	}
 
-	retransmitter := newRetransmitter(uint32(cycles), interval)
+	retransmitter := newRetransmitter(cycles, interval)
 
 	retransmissions := make(chan *pb.NetworkMessage, cycles)
 
@@ -111,10 +111,10 @@ func TestRetransmitOriginalContent(t *testing.T) {
 
 func TestDoNotModifyOriginalMessage(t *testing.T) {
 	cycles := 1
-	interval := 10 * time.Millisecond
+	interval := 10
 
 	message := &pb.NetworkMessage{}
-	retransmitter := newRetransmitter(uint32(cycles), interval)
+	retransmitter := newRetransmitter(cycles, interval)
 
 	retransmissions := make(chan *pb.NetworkMessage, cycles)
 
@@ -133,7 +133,7 @@ func TestDoNotModifyOriginalMessage(t *testing.T) {
 }
 
 func TestReceiveRetransmissions(t *testing.T) {
-	retransmitter := newRetransmitter(uint32(1), time.Millisecond)
+	retransmitter := newRetransmitter(1, 1)
 
 	var received []pb.NetworkMessage
 
@@ -163,7 +163,7 @@ func TestReceiveRetransmissions(t *testing.T) {
 }
 
 func TestPassReceivedUniqueMessages(t *testing.T) {
-	retransmitter := newRetransmitter(uint32(1), time.Millisecond)
+	retransmitter := newRetransmitter(1, 1)
 
 	var received []*pb.NetworkMessage
 

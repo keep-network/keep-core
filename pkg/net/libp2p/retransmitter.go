@@ -22,14 +22,15 @@ type retransmitter struct {
 	cache    *timeCache
 }
 
-func newRetransmitter(cycles uint32, interval time.Duration) *retransmitter {
+func newRetransmitter(cycles int, intervalMilliseconds int) *retransmitter {
+	interval := time.Duration(intervalMilliseconds) * time.Millisecond
 	retransmissionDuration := time.Duration(cycles) * interval
 	cacheLifetime := 2 * time.Minute
 
 	cache := newTimeCache(retransmissionDuration + cacheLifetime)
 
 	return &retransmitter{
-		cycles:   cycles,
+		cycles:   uint32(cycles),
 		interval: interval,
 		cache:    cache,
 	}
