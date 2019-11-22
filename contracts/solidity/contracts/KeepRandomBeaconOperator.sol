@@ -261,7 +261,7 @@ contract KeepRandomBeaconOperator {
      * @param virtualStakerIndex Number within a range of 1 to staker's weight.
      */
     function submitTicket(
-        uint256 ticketValue,
+        uint64 ticketValue,
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public {

@@ -31,7 +31,7 @@ library GroupSelection {
         // Tickets submitted by member candidates during the current group
         // selection execution and accepted by the protocol for the
         // consideration.
-        uint256[] tickets;
+        uint64[] tickets;
 
         // Information about ticket submitters (group member candidates).
         mapping(uint256 => address) candidate;
@@ -106,7 +106,7 @@ library GroupSelection {
      */
     function submitTicket(
         Storage storage self,
-        uint256 ticketValue,
+        uint64 ticketValue,
         uint256 stakerValue,
         uint256 virtualStakerIndex,
         uint256 stakingWeight
@@ -137,9 +137,9 @@ library GroupSelection {
      * @dev Performs full verification of the ticket.
      */
     function isTicketValid(
-        uint256 ticketValue,
-        uint256 stakerValue,
-        uint256 virtualStakerIndex,
+        uint64 ticketValue,
+        uint256 stakerValue, //ticket requires the submitter's address
+        uint256 virtualStakerIndex, //the virtual staker index corresponding to the ticket
         uint256 stakingWeight,
         uint256 groupSelectionSeed
     ) internal view returns(bool) {
@@ -155,7 +155,7 @@ library GroupSelection {
      * than the currently highest ticket or when the number of tickets is still
      * below the group size.
      */
-    function addTicket(Storage storage self, uint256 newTicketValue) internal {
+    function addTicket(Storage storage self, uint64 newTicketValue) internal {
         uint256[] memory ordered = getTicketValueOrderedIndices(self);
 
         // any ticket goes when the tickets array size is lower than the group size
@@ -217,7 +217,7 @@ library GroupSelection {
      */
     function findReplacementIndex(
         Storage storage self,
-        uint256 newTicketValue,
+        uint64 newTicketValue,
         uint256[] memory ordered
     ) internal view returns (uint256) {
         uint256 lo = 0;
