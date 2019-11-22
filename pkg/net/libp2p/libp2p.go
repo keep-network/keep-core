@@ -59,11 +59,11 @@ const (
 
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
-	Peers                              []string
-	Port                               int
-	AnnouncedAddresses                 []string
-	RetransmissionCycles               int
-	RetransmissionIntervalMilliseconds int
+	Peers                  []string
+	Port                   int
+	AnnouncedAddresses     []string
+	RetransmissionCycles   int
+	RetransmissionInterval int
 }
 
 type provider struct {
@@ -202,7 +202,7 @@ func Connect(
 
 	retransmitterOptions := newRetransmitterOptions(
 		config.RetransmissionCycles,
-		config.RetransmissionIntervalMilliseconds,
+		config.RetransmissionInterval,
 	)
 	cm, err := newChannelManager(ctx, identity, host, retransmitterOptions)
 	if err != nil {

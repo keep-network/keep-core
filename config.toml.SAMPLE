@@ -29,7 +29,7 @@
 #   # Number of retransmissions for each message
 #   RetransmissionCycles = 5
 #   # Milliseconds interval between each retransmission of a message
-#   RetransmissionIntervalMilliseconds = 1000
+#   RetransmissionInterval = 1000
 
 [Storage]
   DataDir = "/my/secure/location"
