@@ -3,7 +3,6 @@ import { getWeb3 } from '../utils';
 import { Web3Context } from './WithWeb3Context';
 import { getKeepToken, getTokenStaking, getTokenGrant } from '../contracts';
 
-
 export default class Web3ContextProvider extends React.Component {
 
     constructor(props) {
