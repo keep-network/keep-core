@@ -19,13 +19,12 @@ import VestingChart from './VestingChart'
 import VestingDetails from './VestingDetails'
 import TableRow from './TableRow'
 import { colors } from '../colors'
-import Web3ContextProvider from "./Web3ContextProvider"
 import WithWeb3Context from './WithWeb3Context';
 
 class Main extends Component {
 
-    constructor() {
-      super()
+    constructor(props) {
+      super(props);
       this.state = { operatorChartData: {}, stakeOwnerChartData: {} };
     }
   
@@ -54,12 +53,10 @@ class Main extends Component {
   
     render() {
       const { tokenBalance, operators, stakeBalance, grantBalance, grantStakeBalance,
-        isTokenHolder, isOperator, isOperatorOfStakedTokenGrant, stakedGrant, stakeOwner, operatorChartData, stakeOwnerChartData, chartOptions, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou,
-        error } = this.state
+        isTokenHolder, isOperator, isOperatorOfStakedTokenGrant, stakedGrant, stakeOwner, operatorChartData, stakeOwnerChartData, chartOptions, withdrawals, withdrawalsTotal, grantedToYou, grantedByYou } = this.state
   
-        const { web3 } = this.props;
-        console.log('props main', this.props);
-  
+      const { web3 } = this.props;
+      const { error } = web3;
       return (
           <div className="main">
             <Header networkType={web3.networkType} tokenContract={web3.token}/>
