@@ -27,9 +27,9 @@ import (
 var PingCommand cli.Command
 
 const (
-	ping           = "PING"
-	pong           = "PONG"
-	totalMsgNumber = 64 * 64
+	ping         = "PING"
+	pong         = "PONG"
+	messageCount = 64 * 64
 )
 
 const pingDescription = `The ping command conducts a simple peer-to-peer test
@@ -186,7 +186,7 @@ func pingRequest(c *cli.Context) error {
 	start := make(chan struct{})
 	receivedMessages := make(map[string]bool)
 
-	for i := 1; i <= totalMsgNumber; i++ {
+	for i := 1; i <= messageCount; i++ {
 		message := &PingMessage{
 			Sender:  netProvider.ID().String(),
 			Payload: ping + " number " + strconv.Itoa(i),
@@ -255,7 +255,7 @@ func pingRequest(c *cli.Context) error {
 
 			receivedMessages[pongPayload.Payload] = true
 
-			if len(receivedMessages) == totalMsgNumber {
+			if len(receivedMessages) == messageCount {
 				fmt.Println("All expected messages received")
 			}
 		case <-ctx.Done():
