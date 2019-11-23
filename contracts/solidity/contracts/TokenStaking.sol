@@ -6,7 +6,7 @@ import "./utils/UintArrayUtils.sol";
 
 /**
  * @title TokenStaking
- * @dev A token staking contract for a specified standard ERC20 token.
+ * @dev A token staking contract for a specified standard ERC20Burnable token.
  * A holder of the specified token can stake its tokens to this contract
  * and unstake after withdrawal delay is over.
  */
@@ -26,13 +26,13 @@ contract TokenStaking is StakeDelegatable {
     mapping(address => Withdrawal) public withdrawals;
 
     /**
-     * @dev Creates a token staking contract for a provided Standard ERC20 token.
+     * @dev Creates a token staking contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
      * @param _delay Withdrawal delay for unstake.
      */
     constructor(address _tokenAddress, uint256 _delay) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
-        token = ERC20(_tokenAddress);
+        token = ERC20Burnable(_tokenAddress);
         stakeWithdrawalDelay = _delay;
     }
 
@@ -47,7 +47,7 @@ contract TokenStaking is StakeDelegatable {
      * are sent and the operator's ECDSA (65 bytes) signature of the address of the stake owner.
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
-        require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
+        require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
         require(_extraData.length == 85, "Stake delegation data must be provided.");
 
