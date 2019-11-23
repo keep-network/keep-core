@@ -50,4 +50,8 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups.groups[groupIndex].groupPubKey;
     }
+
+    function timeDKG() public view returns (uint256) {
+        return dkgResultVerification.timeDKG;
+    }
 }

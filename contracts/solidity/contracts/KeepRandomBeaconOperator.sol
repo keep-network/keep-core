@@ -281,10 +281,6 @@ contract KeepRandomBeaconOperator {
         return groupSelection.selectedParticipants();
     }
 
-    function timeDKG() public view returns (uint256) {
-        return dkgResultVerification.timeDKG;
-    }
-
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
      * @param submitterMemberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
