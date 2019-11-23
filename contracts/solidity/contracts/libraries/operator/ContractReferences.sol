@@ -2,11 +2,8 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../utils/AddressArrayUtils.sol";
+import "../../TokenStaking.sol";
 
-interface tokenStakingInterface {
-    function balanceOf(address _address) external view returns(uint256);
-    function magpieOf(address _address) external view returns(address payable);
-}
 
 library ContractReferences {
     using SafeMath for uint256;
@@ -74,7 +71,7 @@ library ContractReferences {
         Storage storage self,
         address _address
     ) public view returns (uint256) {
-        return tokenStakingInterface(self.stakingContract).balanceOf(_address);
+        return TokenStaking(self.stakingContract).balanceOf(_address);
     }
 
     /**
@@ -85,6 +82,6 @@ library ContractReferences {
         Storage storage self,
         address _address
     ) public view returns (address payable) {
-        return tokenStakingInterface(self.stakingContract).magpieOf(_address);
+        return TokenStaking(self.stakingContract).magpieOf(_address);
     }
 }
