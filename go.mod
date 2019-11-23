@@ -2,24 +2,18 @@ module github.com/keep-network/keep-core
 
 go 1.12
 
-replace (
-	github.com/ethereum/go-ethereum => github.com/keep-network/go-ethereum v1.8.27
-	github.com/urfave/cli => github.com/keep-network/cli v1.20.0
-)
+replace github.com/urfave/cli => github.com/keep-network/cli v1.20.0
 
 require (
 	github.com/BurntSushi/toml v0.3.1
-	github.com/btcsuite/btcd v0.0.0-20190824003749-130ea5bddde3
-	github.com/cespare/cp v1.1.1 // indirect
-	github.com/edsrzf/mmap-go v1.0.0 // indirect
-	github.com/ethereum/go-ethereum v0.0.0-00010101000000-000000000000
-	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
+	github.com/btcsuite/btcd v0.20.1-beta
+	github.com/ethereum/go-ethereum v1.9.7
 	github.com/gogo/protobuf v1.3.1
 	github.com/ipfs/go-datastore v0.1.1
 	github.com/ipfs/go-log v0.0.1
 	github.com/karalabe/hid v1.0.0 // indirect
 	github.com/keep-network/go-libp2p-bootstrap v0.0.0-20190611114437-e92bd71e8199
-	github.com/keep-network/keep-common v0.0.0-20191002130723-787318dfe040
+	github.com/keep-network/keep-common v0.0.0-20191119165557-64b17f00daab
 	github.com/libp2p/go-addr-util v0.0.1
 	github.com/libp2p/go-libp2p v0.4.1
 	github.com/libp2p/go-libp2p-connmgr v0.1.0
@@ -37,5 +31,4 @@ require (
 	go.opencensus.io v0.22.2 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/tools v0.0.0-20190925230517-ea99b82c7b93
-	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 )
