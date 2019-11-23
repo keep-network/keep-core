@@ -137,4 +137,32 @@ contract TokenStaking is StakeDelegatable {
 
         token.burn(misbehavedOperators.length.mul(amount));
     }
+
+    // TODO: Implement token transfer authorization
+    /**
+     * @dev Seize provided token amount from every member in the misbehaved
+     * operators array, burn 95% of all the seized tokens and transfer the
+     * remaining 5% to the tattletale address.
+     * @param amount Token amount to seize from every misbehaved operator.
+     * @param pay Reward adjustment in percentage. Min 1% and 100% max.
+     * @param tattletale Address to receive the 5% reward.
+     * @param misbehavedOperators Array of addresses to seize the tokens from.
+     */
+    function seize(
+        uint256 amount,
+        uint256 pay,
+        address tattletale,
+        address[] memory misbehavedOperators
+    ) public {
+        for (uint i = 0; i < misbehavedOperators.length; i++) {
+            address operator = misbehavedOperators[i];
+            stakeBalances[operator] = stakeBalances[operator].sub(amount);
+        }
+
+        uint256 total = misbehavedOperators.length.mul(amount);
+        uint256 tattletaleReward = (total.mul(5).div(100)).mul(pay).div(100);
+
+        token.transfer(tattletale, tattletaleReward);
+        token.burn(total.sub(tattletaleReward));
+    }
 }
