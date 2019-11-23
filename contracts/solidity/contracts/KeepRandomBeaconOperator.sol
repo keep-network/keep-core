@@ -647,4 +647,20 @@ contract KeepRandomBeaconOperator {
         uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
         stakingContract.magpieOf(msg.sender).transfer(accumulatedRewards);
     }
+
+    /**
+     * @dev Reports unauthorized signing for the provided group. Must provide
+     * a valid signature of the group address as a message. Successful signature
+     * verification means the private key has been leaked and all group members
+     * should be punished by seizing their tokens. The submitter of this proof is
+     * rewarded with 5% of the total seized amount and the rest 95% is burned.
+     */
+    function reportUnauthorizedSigning(
+        bytes memory groupPubKey,
+        uint256 signedGroupPubKey
+    ) public {
+        if (groups.verifySignature(groupPubKey, groupPubKey, signedGroupPubKey)) {
+            stakingContract.seize(minimumStake, 100, msg.sender, groups.membersOf(groupPubKey));
+        }
+    }
 }
