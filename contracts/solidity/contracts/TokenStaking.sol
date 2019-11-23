@@ -128,4 +128,13 @@ contract TokenStaking is StakeDelegatable {
         stakeBalances[to] = stakeBalances[to].add(amount);
     }
 
+    // TODO: Implement token transfer authorization
+    function slash(uint256 amount, address[] memory misbehavedOperators) public {
+        for (uint i = 0; i < misbehavedOperators.length; i++) {
+            address operator = misbehavedOperators[i];
+            stakeBalances[operator] = stakeBalances[operator].sub(amount);
+        }
+
+        token.burn(misbehavedOperators.length.mul(amount));
+    }
 }
