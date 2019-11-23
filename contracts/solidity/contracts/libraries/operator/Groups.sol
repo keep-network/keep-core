@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "../../cryptography/AltBn128.sol";
+import "../../cryptography/BLS.sol";
 
 library Groups {
     using SafeMath for uint256;
@@ -344,5 +345,32 @@ library Groups {
                 rewards = rewards.add(self.groupMemberRewards[groupPublicKey]);
             }
         }
+    }
+
+    /**
+     * @dev Returns addresses of all the members in the provided group.
+     */
+    function membersOf(
+        Storage storage self,
+        bytes memory groupPubKey
+    ) public view returns (address[] memory members) {
+        return self.groupMembers[groupPubKey];
+    }
+
+    /**
+     * @dev Verifies if the provided signature was created by a registered group.
+     */
+    function verifySignature(
+        Storage storage self,
+        bytes memory groupPubKey,
+        bytes memory message,
+        uint256 signature
+    ) public view returns(bool) {
+        require(isGroupRegistered(self, groupPubKey), "Group not found");
+        return BLS.verify(
+            groupPubKey,
+            message,
+            bytes32(signature)
+        );
     }
 }
