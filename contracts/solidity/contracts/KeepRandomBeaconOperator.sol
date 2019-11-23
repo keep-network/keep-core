@@ -255,7 +255,7 @@ contract KeepRandomBeaconOperator {
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public {
-        uint256 stakingWeight = contractReferences.balanceOf(msg.sender).div(minimumStake);
+        uint256 stakingWeight = contractReferences.stakeBalanceOf(msg.sender).div(minimumStake);
         groupSelection.submitTicket(ticketValue, stakerValue, virtualStakerIndex, stakingWeight);
     }
 
@@ -577,7 +577,7 @@ contract KeepRandomBeaconOperator {
      * @return True if staked enough to participate in the group, false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return contractReferences.balanceOf(staker) >= minimumStake;
+        return contractReferences.stakeBalanceOf(staker) >= minimumStake;
     }
 
     /**

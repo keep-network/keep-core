@@ -70,7 +70,7 @@ library ContractReferences {
      * @param _address The address to query the balance of.
      * @return An uint256 representing the amount staked by the passed address.
      */
-    function balanceOf(
+    function stakeBalanceOf(
         Storage storage self,
         address _address
     ) public view returns (uint256) {
