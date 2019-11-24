@@ -11,7 +11,9 @@ contract KeepRandomBeaconOperatorTicketsPackingStub is KeepRandomBeaconOperator 
     constructor(
         address _serviceContract,
         address _stakingContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {}
+    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
+        groupSelection.ticketSubmissionTimeout = 300;
+    }
 
     function addTicket(uint64 newTicketValue) public {
         groupSelection.addTicket(newTicketValue);
@@ -20,6 +22,10 @@ contract KeepRandomBeaconOperatorTicketsPackingStub is KeepRandomBeaconOperator 
     function setGroupSize(uint256 size) public {
         groupSize = size;
         groupSelection.groupSize = size;
+    }
+
+    function getGroupSelectionRelayEntry() public view returns (uint256) {
+        return groupSelection.seed;
     }
 
 }

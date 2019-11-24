@@ -15,7 +15,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorTicketsOrderingStub.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorTicketsPackingStub.sol')
     );
 
     operatorContract = contracts.operatorContract;
@@ -34,65 +34,68 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
   describe("ticket packing estimation", () => {
 
-    // it("should estimate average gas usage for adding tickets when a ticket type is uint64", async () => {
-    //   // 2^64 - 1 = 18,446,744,073,709,551,615
-    //   // uint64 max number = 18446744073709551615
+    it("should estimate average gas usage for addTickets() when a ticket type is uint64", async () => {
+      // 2^64 - 1 = 18,446,744,073,709,551,615
+      // uint64 max number = 18446744073709551615
       
-    //   let estimates = [], ticketToAdd8Bytes;
+      let estimates = [], estimate, ticketToAdd8Bytes;
 
-    //   console.log("tickets.length:: ", tickets.length)
+      console.log("tickets.length:: ", tickets.length)
       
-    //   for (let i = 0; i < tickets.length; i++) {
-    //     ticketToAdd8Bytes = new web3.utils.BN(tickets[i].value.toString().slice(0, numbersToSlice))
-    //     // console.log(ticketToAdd8Bytes.toNumber())
+      for (let i = 0; i < tickets.length; i++) {
+        ticketToAdd8Bytes = new web3.utils.BN(tickets[i].value.toString().slice(0, numbersToSlice))
+        // console.log(ticketToAdd8Bytes.toNumber())
 
-    //     let estimate = await operatorContract.addTicket.estimateGas(ticketToAdd8Bytes)
-    //     estimates.push(estimate);
+        estimate = await operatorContract.addTicket.estimateGas(ticketToAdd8Bytes)
+        estimates.push(estimate);
 
-    //     await operatorContract.addTicket(ticketToAdd8Bytes);
-    //   }
+        await operatorContract.addTicket(ticketToAdd8Bytes);
+      }
 
-    //   let estimatesSum = estimates.reduce((acc, val) => acc + val, 0);
-    //   console.log('addTicket() average = ' + estimatesSum/tickets.length);
-    // });
+      let estimatesSum = estimates.reduce((acc, val) => acc + val, 0);
+      console.log('addTicket() average = ' + estimatesSum/tickets.length);
+    });
 
-    it("should estimate average gas usage for adding tickets when parameters are packed", async () => {
-      console.log(accounts[0].length)
-      console.log(accounts[0])
-
-      // ticket value - 8bytes
-      let ticket = new web3.utils.BN(tickets[0].value.toString().slice(0, numbersToSlice))
-      let ticketHex = web3.utils.toHex(ticket)
-      let ticketBytes = web3.utils.hexToBytes(ticketHex);
-      console.log("ticketBytes.length", ticketBytes.length)
-      // console.log("ticketBytes: ", ticketBytes)
+    it("should estimate average gas usage for submitTicket() when parameters are packed", async () => {
+      let ticket, ticketHex, ticketBytes, estimate,
+      virtualStakerHex, virtualStakerIndexBytes, ticketBytesCombined,
+      estimates = [];
 
       // staker value - 20bytes
       let stakerValueBytes = web3.utils.hexToBytes(accounts[0]) //staker address
-      console.log("stakerValueBytes.length", stakerValueBytes.length)
+      // console.log("stakerValueBytes.length", stakerValueBytes.length)
       // console.log("stakerValueBytes: ", stakerValueBytes)
-      
-      // add virtual staker index - 4bytes
-      var virtualIndex = 1
-      var virtualStakerHex = web3.utils.padLeft(virtualIndex, 8)
-      let virtualStakerIndexBytes = web3.utils.hexToBytes(virtualStakerHex)
-      console.log("virtualStakerBytes.length", virtualStakerIndexBytes.length)
-      // console.log("virtualStakerIndexBytes: ", virtualStakerIndexBytes)
 
-      let ticketBytesCombined = ticketBytes.concat(stakerValueBytes).concat(virtualStakerIndexBytes)
-      console.log("ticketBytesCombined.length", ticketBytesCombined.length)
-      // console.log("ticketBytesCombined: ", ticketBytesCombined)
-
-      let estimate = await operatorContract.submitTicket.estimateGas(ticketBytesCombined)
-      console.log(estimate)
-
-      await operatorContract.submitTicket(
-        ticketBytesCombined,
-        {from: accounts[0]}
-      );
+      for (let i = 0; i < tickets.length; i++) {
+        // ticket value - 8bytes
+        ticket = new web3.utils.BN(tickets[i].value.toString().slice(0, numbersToSlice))
+        ticketHex = web3.utils.toHex(ticket)
+        ticketBytes = web3.utils.hexToBytes(ticketHex);
+        // console.log("ticketBytes.length", ticketBytes.length)
+        // console.log("ticketBytes: ", ticketBytes)
+        
+        // add virtual staker index - 4bytes
+        virtualStakerHex = web3.utils.padLeft(i, 8)
+        virtualStakerIndexBytes = web3.utils.hexToBytes(virtualStakerHex)
+        // console.log("virtualStakerBytes.length", virtualStakerIndexBytes.length)
+        // console.log("virtualStakerIndexBytes: ", virtualStakerIndexBytes)
+        
+        ticketBytesCombined = ticketBytes.concat(stakerValueBytes).concat(virtualStakerIndexBytes)
+        // console.log("ticketBytesCombined.length", ticketBytesCombined.length)
+        // console.log("ticketBytesCombined: ", ticketBytesCombined)
+        
+        estimate = await operatorContract.submitTicket.estimateGas(ticketBytesCombined)
+        estimates.push(estimate);
   
-      // let submittedCount = await operatorContract.submittedTicketsCount();
-      // assert.equal(1, submittedCount, "Ticket should be accepted");
+        await operatorContract.submitTicket(
+          ticketBytesCombined,
+          {from: accounts[0]}
+        );
+      }
+
+      let estimatesSum = estimates.reduce((acc, val) => acc + val, 0);
+      console.log('submitTicket() average = ' + estimatesSum/tickets.length);
+  
     });
 
   });
