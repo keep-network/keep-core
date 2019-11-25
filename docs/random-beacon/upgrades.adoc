@@ -103,23 +103,14 @@ If a operator contract has been `DISABLED` by the _Panic Button_, it is ineligib
 
 ==== Staking contracts
 
-Staking contracts hold staked tokens and enforce staking rules.
-They must permit authorized operator contracts
-to slash the stakes of misbehaving operators,
-but stakers must be protected from code they haven't authorized individually.
+Staking contracts hold staked tokens and enforce staking rules. They permit authorized operator contracts to slash the stakes of misbehaving operators, but stakers are be protected from code they haven't authorized individually.
 
-For this purpose, each staking contract maintains a list
-of operator contracts that have been authorized by each staker's _Authorizer_.
-The list of operator contracts could also be maintained globally,
-removing the need for entry duplication
-when stakers on different staking contracts
-have the same Authorizer and operate on the same operator contract.
-However, maintaining the authorizations locally
-may be cheaper than cross-contract calls,
-and the scenario where gas would be saved is likely to be rare.
+For this purpose, each staking contract maintains a list of operator contracts that have been authorized by each staker's _Authorizer_. The list of operator contracts could also be maintained globally, removing the need for entry duplication when stakers on different staking contracts have the same Authorizer and operate on the same operator contract. 
 
-(If _fully backed operation_ is used,
-it may not be necessary to have separate authorizations
+TODO: did this get implemented?
+However, maintaining the authorizations locally may be cheaper than cross-contract calls, and the scenario where gas would be saved is likely to be rare.
+
+(If _fully backed operation_ is used, it may not be necessary to have separate authorizations
 as stakes are explicitly allocated for each operator contract.)
 
 Staking contracts are also aware of the token contract by necessity.
