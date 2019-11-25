@@ -107,7 +107,7 @@ library Groups {
     function getGroupIndex(
         Storage storage self,
         bytes memory groupPubKey
-    ) internal view returns (uint256 groupIndex) {
+    ) public view returns (uint256 groupIndex) {
         for (uint i = 0; i < self.groups.length; i++) {
             if (self.groups[i].groupPubKey.equalStorage(groupPubKey)) {
                 return i;
@@ -133,7 +133,7 @@ library Groups {
         Storage storage self,
         bytes memory groupPubKey,
         address member
-    ) internal view returns (uint256[] memory indices) {
+    ) public view returns (uint256[] memory indices) {
         uint256 counter;
         for (uint i = 0; i < self.groupMembers[groupPubKey].length; i++) {
             if (self.groupMembers[groupPubKey][i] == member) {
