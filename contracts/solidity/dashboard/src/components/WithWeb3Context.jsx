@@ -1,7 +1,15 @@
-
 import React from 'react'
 
-export const Web3Context = React.createContext()
+export const Web3Context = React.createContext({ 
+  yourAddress: '',
+  networkType: '',
+  token: { options: { address: '' } },
+  stakingContract: { options: { address: '' } },
+  grantContract: { options: { address: '' } },
+  utils: {},
+  eth: {},
+  error: '',
+});
 
 const WithWeb3Context = (Component) => {
   return (props) => (
