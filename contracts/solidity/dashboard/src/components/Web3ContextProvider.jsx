@@ -63,13 +63,13 @@ export default class Web3ContextProvider extends React.Component {
 
     changeDefaultContract = (defaultContract) => {
         this.setState({ defaultContract })
-    };
+    }
 
-      render() {
-          return (
-              <Web3Context.Provider value={{ ...this.state, changeDefaultContract: this.changeDefaultContract }}>
-                  {this.props.children}
-              </Web3Context.Provider>    
-          );
-      }
+    render() {
+        return (
+            <Web3Context.Provider value={{ ...this.state, changeDefaultContract: this.changeDefaultContract }}>
+                {this.props.children}
+            </Web3Context.Provider>    
+        );
+    }
 }
