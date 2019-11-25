@@ -32,6 +32,7 @@ main.test
 
 # Infrastructure
 .terraform
+service-accounts/
 
 # keys
 keystore

@@ -35,6 +35,8 @@ type channel struct {
 
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
+
+	retransmitter *retransmitter
 }
 
 func (c *channel) Name() string {
@@ -43,16 +45,13 @@ func (c *channel) Name() string {
 
 func (c *channel) Send(message net.TaggedMarshaler) error {
 	// Transform net.TaggedMarshaler to a protobuf message
-	messageBytes, err := c.messageProto(message)
+	messageProto, err := c.messageProto(message)
 	if err != nil {
 		return err
 	}
 
-	c.pubsubMutex.Lock()
-	defer c.pubsubMutex.Unlock()
-
-	// Publish the proto to the network
-	return c.pubsub.Publish(c.name, messageBytes)
+	c.retransmitter.scheduleRetransmission(messageProto, c.publishToPubSub)
+	return c.publishToPubSub(messageProto)
 }
 
 func (c *channel) Recv(handler net.HandleMessageFunc) error {
@@ -102,7 +101,7 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 
 func (c *channel) messageProto(
 	message net.TaggedMarshaler,
-) ([]byte, error) {
+) (*pb.NetworkMessage, error) {
 	payloadBytes, err := message.Marshal()
 	if err != nil {
 		return nil, err
@@ -113,11 +112,23 @@ func (c *channel) messageProto(
 		return nil, err
 	}
 
-	return (&pb.NetworkMessage{
+	return &pb.NetworkMessage{
 		Payload: payloadBytes,
 		Sender:  senderIdentityBytes,
 		Type:    []byte(message.Type()),
-	}).Marshal()
+	}, nil
+}
+
+func (c *channel) publishToPubSub(message *pb.NetworkMessage) error {
+	messageBytes, err := message.Marshal()
+	if err != nil {
+		return err
+	}
+
+	c.pubsubMutex.Lock()
+	defer c.pubsubMutex.Unlock()
+
+	return c.pubsub.Publish(c.name, messageBytes)
 }
 
 func (c *channel) handleMessages(ctx context.Context) {
@@ -150,12 +161,16 @@ func (c *channel) handleMessages(ctx context.Context) {
 }
 
 func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
-	var protoMessage pb.NetworkMessage
-	if err := proto.Unmarshal(pubsubMessage.Data, &protoMessage); err != nil {
+	var messageProto pb.NetworkMessage
+	if err := proto.Unmarshal(pubsubMessage.Data, &messageProto); err != nil {
 		return err
 	}
 
-	return c.processContainerMessage(pubsubMessage.GetFrom(), protoMessage)
+	onFirstTimeReceived := func() error {
+		return c.processContainerMessage(pubsubMessage.GetFrom(), messageProto)
+	}
+
+	return c.retransmitter.receive(&messageProto, onFirstTimeReceived)
 }
 
 func (c *channel) processContainerMessage(

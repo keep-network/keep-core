@@ -102,7 +102,7 @@ geth --datadir $DATADIR --ethash.dagdir $DATADIR --ipcpath $ETH_IPC_PATH \
       --nodiscover \
       --port $GETHPORT --networkid $NETWORKID \
       --ws --wsaddr "0.0.0.0" --wsport $WSPORT --wsorigins "*" \
-      --rpc --rpcport $RPCPORT --rpcaddr $RPCHOST --rpccorsdomain "" --rpcvhosts "*" \
+      --rpc --rpcport $RPCPORT --rpcaddr $RPCHOST --rpccorsdomain "*" --rpcvhosts "*" \
       --rpcapi $RPCAPI \
       --identity $NODE_NAME \
       --syncmode "fast" \
