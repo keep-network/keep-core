@@ -154,40 +154,28 @@ if the previous attempt at DKG has failed to produce a result.
 TODO: is objective a function?
 Failure to finish DKG is _objective_.
 
-Failure to produce a result will not be penalized as the participants will forfeit their ticket submission fees. 
+Failure to produce a result will not be explicitly penalized as the participants will forfeit their ticket submission fees. 
 
 ===== Submitting an invalid DKG result
-
-An operator might submit an invalid result for the DKG.
 
 Invalid DKG results are detected automatically.
 
 Proof of invalid DKG results is _objective_.
 
-Because the cost of verifying a DKG result is paid by the submitter,
-and the submitter is reimbursed only for valid results,
-submitting invalid results inherently punishes itself
-and no further penalty is needed beyond reverting the transaction.
+Submitters are not explicitly penalized for submitting an invalide ticket. They are however, not reimbursed. 
 
 ===== Inactivity in DKG
 
-An operator might fail to send a required message during DKG.
-This lowers the effective safety margin of the group
+An operator might fail to send a required message during DKG. This lowers the effective safety margin of the group
 against lynchpinning and inability to produce a signature.
 
-Inactivity in DKG is determined by
-the list of inactive members in the DKG result submission.
+Inactivity in DKG is determined by the list of inactive members in the DKG result submission.
 
-Unless DKG is performed on-chain,
-proof of inactivity in DKG is _subjective_
-and subject to the honest majority assumption;
-a dishonest majority could always forge a false proof of inactivity.
-It is not possible to make off-chain DKG inactivity objectively provable.
+TODO: are we following some specific techinical descriptions of _subjective_ and _objective_?
 
-Inactive members shall be removed from the group,
-but not otherwise punished;
-the opportunity cost of not being included in the group
-already provides an incentive to be active.
+Unless DKG is performed on-chain, proof of inactivity in DKG is _subjective_ and subject to the honest majority assumption; a dishonest majority could always forge a false proof of inactivity. It is not possible to make off-chain DKG inactivity objectively provable.
+
+Inactive members will be removed from the group, but not otherwise punished; the opportunity cost of not being included in the group already provides an incentive to be active.
 
 ===== Disqualification in DKG
 
