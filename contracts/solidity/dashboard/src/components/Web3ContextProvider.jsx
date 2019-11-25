@@ -48,7 +48,6 @@ export default class Web3ContextProvider extends React.Component {
             this.setState({
                 error: "Failed to load contracts. Please check if Metamask is enabled and connected to the correct network.",
             })
-            return;
         }
     }
 
