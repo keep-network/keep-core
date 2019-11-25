@@ -136,20 +136,13 @@ to burn `sum` tokens, limited by tokens held by the address.
 
 ===== Invalid ticket
 
-An operator might submit an invalid ticket in the DKG.
-
 Invalid tickets are detected automatically
-without the need for a tattletale.
-
-Proof of invalid tickets is _objective_,
-as all information required to verify tickets is available on-chain.
-
-Because the cost of ticket submission is paid by the submitter,
+without the need for a tattletale. Proof of invalid tickets is _objective_,
+as all information required to verify tickets is available on-chain. Because the cost of ticket submission is paid by the submitter,
 the ticket can be simply rejected and the transaction reverted.
 
 ===== Failure to produce a DKG result
-
-The created group might fail to produce a valid result.
+TODO: What is the trigger transaction?
 
 Failure to finish DKG is verifiable without additional proof,
 but requires a trigger transaction for this verification
@@ -158,19 +151,10 @@ If no other trigger transaction is made,
 the trigger transaction for another DKG shall check
 if the previous attempt at DKG has failed to produce a result.
 
+TODO: is objective a function?
 Failure to finish DKG is _objective_.
 
-Failure to produce a result means
-that a honest and available majority
-was not present in the DKG for some reason or other.
-The precise reasons can be unpredictable.
-Failing to finish DKG is inherently punished
-by the opportunity cost of not getting into a signing group
-despite having paid the ticket submission fees.
-Because of this,
-failure to produce a valid DKG result should not be separately penalized
-without further examination of the possible causes of failure
-and the effects of collective punishment.
+Failure to produce a result will not be penalized as the participants will forfeit their ticket submission fees. 
 
 ===== Submitting an invalid DKG result
 
