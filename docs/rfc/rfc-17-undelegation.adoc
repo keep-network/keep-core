@@ -223,6 +223,10 @@ simpler and cheaper,
 the staking contract must provide the `eligibleStake()` function
 which returns the number of KEEP tokens available for use as collateral.
 
+When calling `eligibleStake()`,
+the staking contract assumes `msg.sender` is an operator contract.
+`eligibleStake()` does not return meaningful results
+when called by an address that doesn't correspond to an operator contract.
 If the `operator` is ineligible for work selection on `msg.sender`,
 `eligibleStake()` returns `0`.
 Otherwise `eligibleStake()` returns `operator.stakedAmount`.
