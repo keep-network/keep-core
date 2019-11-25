@@ -1,5 +1,5 @@
 const crypto = require("crypto")
-import expectThrow from './helpers/expectThrow'
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 import {bls} from './helpers/data'
 import stakeDelegate from './helpers/stakeDelegate'
 import {initContracts} from './helpers/initContracts'
@@ -18,7 +18,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     beneficiary2 = accounts[6],
     beneficiary3 = accounts[7]
 
-  beforeEach(async () => {
+  before(async () => {
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStaking.sol'),
@@ -68,7 +68,15 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     memberBaseReward = entryFee.groupProfitFee.div(groupSize)
   })
 
-  it("should be able to withdraw group rewards from multiple staled groups", async function() {
+  beforeEach(async () => {
+    await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot()
+  })
+
+  it("should be able to withdraw group rewards from multiple staled groups", async () => {
     // Register new group and request new entry so we can expire the previous two groups
     await operatorContract.registerNewGroup(group3)
     await serviceContract.methods['requestRelayEntry(uint256)'](bls.seed, {value: entryFeeEstimate, from: requestor})
@@ -86,7 +94,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary1))).eq(beneficiary1balance.add(expectedReward)), "Unexpected beneficiary balance")
   })
 
-  it("should be able to withdraw group rewards from a staled group", async function() {
+  it("should be able to withdraw group rewards from a staled group", async () => {
     // Register new group and request new entry so we can expire the previous two groups
     await operatorContract.registerNewGroup(group3)
     await serviceContract.methods['requestRelayEntry(uint256)'](bls.seed, {value: entryFeeEstimate, from: requestor})
@@ -100,7 +108,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary2balance.add(expectedReward)), "Unexpected beneficiary balance")
   })
 
-  it("should not be able to withdraw group rewards without correct data", async function() {
+  it("should not be able to withdraw group rewards without correct data", async () => {
     // Register new group and request new entry so we can expire the previous two groups
     await operatorContract.registerNewGroup(group3)
     await serviceContract.methods['requestRelayEntry(uint256)'](bls.seed, {value: entryFeeEstimate, from: requestor})
