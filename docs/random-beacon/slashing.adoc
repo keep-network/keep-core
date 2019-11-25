@@ -14,18 +14,6 @@ proving misbehavior requires cooperation from another participant,
 a _tattletale_. This coordination is incentivized by rewarding the _tattletale_
 by granting them a fraction of the tokens taken from the misbehaving participant.
 
-== Proposal
-
-=== Goal
-
-Slashing should be simple to implement and reason about.
-The slashing method should implement the tattletale transfer mitigations
-defined in the link:rfc-14-token-grants.adoc[token grant RFC],
-always burning at least 95% of the penalty amount.
-
-To protect staker funds,
-only authorized operator contracts should be able to punish an operator.
-
 === Implementation
 
 Tokens are staked by transferring them to the staking contract.
@@ -34,13 +22,10 @@ Stakes can be _slashed_ to punish misbehavior.
 Tokens backing slashed stakes are burned;
 if a tattletale proves another operator's misbehavior
 they will receive 5% of the slashed tokens,
-the remainder being burned.
-
-When an operator is punished for misbehavior,
-they should generally be removed
-from the group/keep the misbehavior occurred in.
+the remainder being burned. The misbehaving operator will then be removed from its group.
 
 ==== Authorization
+TODO: Where are operator contracts described?
 
 _Operator contracts_ are authorized to impose penalties
 by stakers' _authorizers_.
@@ -50,16 +35,11 @@ Once given, this authorization cannot be revoked by the authorizer.
 
 When a staker wishes to join a group
 the contract responsible for creating the group
-must be authorized by the staker's authorizer.
-The operator contract must check its authorization status
+will be authorized by the staker's authorizer.
+The operator contract will check its authorization status
 when determining a staker's eligibility.
 
-In the random beacon a staker's eligibility is checked
-when tickets are submitted;
-this means that authorization must be checked
-when validating a ticket.
-If an operator submits a ticket to an unauthorized operator contract,
-the ticket must be rejected as invalid.
+Authorization is checked when a staker submits a ticket for validation. Tickets submited to an unauthorized contract will be rejected as invalid. 
 
 ==== Penalties
 
