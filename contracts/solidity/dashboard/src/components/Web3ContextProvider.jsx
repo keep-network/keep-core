@@ -24,7 +24,6 @@ export default class Web3ContextProvider extends React.Component {
     }
 
     initialize = async () => {
-
         const web3 = await getWeb3();
         if(!web3) {
             this.setState({ error: 'No network detected. Do you have Metamask installed?' });
