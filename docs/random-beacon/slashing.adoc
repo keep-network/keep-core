@@ -75,6 +75,7 @@ and transfers the reward to the tattletale's _beneficiary_ address.
 The remainder is burned.
 
 ===== Penalty amounts
+TODO: How are penalty amounts determined in the final implementation?
 
 Penalties for misbehavior could be adjusted
 to match the severity of the misbehavior.
