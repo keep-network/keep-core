@@ -158,7 +158,8 @@ The operator has been created in the same block the query was performed in.
 The operator is ineligible for work selection.
 
 An operator is `NotReady`
-if the current block is equal or less than the creation block.
+if the current block is equal or less than
+the creation block plus the initialization period.
 
 `block.number =< operator.createdAt + initializationPeriod`
 
@@ -168,7 +169,8 @@ The owner has delegated staked tokens to the operator,
 and the operator is eligible for work selection.
 
 An operator is `Active`
-if the current block is greater than the creation block,
+if the current block is greater than
+the creation block plus initialization period,
 and the undelegation block is either 0 or equal or greater than the current block.
 
 `block.number > operator.createdAt + initializationPeriod && (block.number =< operator.undelegatedAt || operator.undelegatedAt == 0)`
@@ -209,7 +211,12 @@ the operator's eligibility for work selection that started in an earlier block.
 
 It is the responsibility of each operator contract
 to query operator eligibility with the correct block number.
-Failure to 
+Failure to use the correct block leads to minor manipulation opportunities.
+For example, querying an operator's eligibility
+on the current block when they submit a ticket
+means that an ineligible operator whose initialization period is almost over
+could wait to submit their ticket
+until they become eligible for work selection.
 
 To make determining an operator's eligibility for work selection
 simpler and cheaper,
