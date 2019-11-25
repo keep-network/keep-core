@@ -9,13 +9,10 @@ toc::[]
 == Background
 
 To incentivize correct behavior in the Keep network,
-misbehaving participants need to be punished.
-In some situations,
+misbehaving participants will be punished. In some situations,
 proving misbehavior requires cooperation from another participant,
-a _tattletale_.
-This coordination is incentivized by rewarding the _tattletale_
-by granting them a fraction of the tokens
-taken from the misbehaving participant.
+a _tattletale_. This coordination is incentivized by rewarding the _tattletale_
+by granting them a fraction of the tokens taken from the misbehaving participant.
 
 == Proposal
 
