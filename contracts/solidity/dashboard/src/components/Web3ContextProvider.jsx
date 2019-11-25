@@ -1,12 +1,12 @@
-import React from 'react';
-import { getWeb3 } from '../utils';
-import { Web3Context } from './WithWeb3Context';
-import { getKeepToken, getTokenStaking, getTokenGrant } from '../contracts';
+import React from 'react'
+import { getWeb3 } from '../utils'
+import { Web3Context } from './WithWeb3Context'
+import { getKeepToken, getTokenStaking, getTokenGrant } from '../contracts'
 
 export default class Web3ContextProvider extends React.Component {
 
     constructor(props) {
-        super(props);
+        super(props)
         this.state = {
             yourAddress: '',
             networkType: '',
@@ -20,20 +20,20 @@ export default class Web3ContextProvider extends React.Component {
     }
 
     componentDidMount() {
-       this.initialize();
+       this.initialize()
     }
 
     initialize = async () => {
-        const web3 = await getWeb3();
+        const web3 = await getWeb3()
         if(!web3) {
-            this.setState({ error: 'No network detected. Do you have Metamask installed?' });
-            return;
+            this.setState({ error: 'No network detected. Do you have Metamask installed?' })
+            return
         }
        
         window.ethereum.on('accountsChanged', this.accountHasBeenChanged)
 
         try {
-            const [token, grantContract, stakingContract] = await this.getContracts(web3);
+            const [token, grantContract, stakingContract] = await this.getContracts(web3)
             this.setState({
                 token,
                 grantContract,
@@ -70,6 +70,6 @@ export default class Web3ContextProvider extends React.Component {
             <Web3Context.Provider value={{ ...this.state, changeDefaultContract: this.changeDefaultContract }}>
                 {this.props.children}
             </Web3Context.Provider>    
-        );
+        )
     }
 }
