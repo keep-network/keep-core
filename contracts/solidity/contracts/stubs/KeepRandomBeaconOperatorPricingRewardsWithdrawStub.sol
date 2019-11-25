@@ -10,6 +10,18 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
     ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
         groups.groupActiveTime = 5;
         groups.activeGroupsThreshold = 1;
+        groups.relayEntryTimeout = 10;
+    }
+
+    function isExpiredGroup(bytes memory groupPubKey) public view returns(bool) {
+        for (uint i = 0; i < groups.groups.length; i++) {
+            if (groups.groups[i].groupPubKey.equalStorage(groupPubKey)) {
+                bool isExpired = groups.expiredGroupOffset > i;
+                return isExpired;
+            }
+        }
+
+        return false;
     }
 
     function setGroupSize(uint256 size) public {
