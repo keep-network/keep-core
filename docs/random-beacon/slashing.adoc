@@ -202,12 +202,6 @@ Invalid signature shares shall be simply rejected by the other members.
 
 ===== Failing to broadcast a signature share
 
-When a signing group is tasked with producing an entry,
-its members are expected to broadcast signature shares.
-An operator might fail to broadcast its signature share,
-either due to actual inactivity
-or as an attempt to gain a lynchpin position and guaranteed submitter reward.
-
 Failure of an individual member to broadcast a signature share
 can not be reliably detected on-chain,
 even in the event the group as a whole fails to produce a signature.
@@ -216,11 +210,11 @@ Thus, individual failures to broadcast shares shall not be punished.
 ===== Submitting an invalid signature
 
 An operator may submit an invalid threshold signature on-chain
-when generating a beacon entry.
-
-Invalid signatures are automatically detected.
+when generating a beacon entry, and these are automatically detected.
 
 Proof of an invalid threshold signature is _objective_.
+
+TODO: Who is verifying the signature? The submitter or the group? 
 
 As verifying a threshold signature is relatively expensive,
 no separate punishment is needed beyond reverting the transaction.
