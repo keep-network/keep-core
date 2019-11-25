@@ -230,47 +230,26 @@ so unauthorized use of individual private keys is not separately penalized.
 
 ===== Creating an unauthorized signature
 
-An entire signing group's private key could be abused
-to create an unauthorized signature.
+An entire signing group's private key could be abused to create an unauthorized signature.
 
-Unauthorized threshold signing can be proven by publishing
-a value the group hasn't been previously requested to sign,
-and a valid signature for the value.
+Unauthorized threshold signing can be proven by publishing a value the group hasn't been previously requested to sign, and a valid signature for the value. Proof of unauthorized signing is _objective_.
 
-Proof of unauthorized signing is _objective_.
-
-Unauthorized signing shall be punished
-by _seizing_ tokens from all members,
-with the submitter of the proof as the _tattletale_.
+Unauthorized signing will be punished by _seizing_ tokens from all members, based on submission of a proof from the _tattletale_.
 
 ===== Failure to produce a signature
 
-A signing group may fail to produce a new entry within the deadline.
-
-Failure to generate an entry can be verified on-chain without a separate proof,
+A signing group may fail to produce a new entry within the deadline. This can be verified on-chain without a separate proof,
 but requires a transaction to trigger this check.
+
+TODO: What is the triggering transaction called?
 
 The proof of failure is _objective_.
 
-When a group fails to produce an entry,
-all of its members shall be subject to _seizing_
-and the group itself shall be terminated.
-The submitter of the trigger transaction shall be treated as the _tattletale_,
-but the tattletale reward shall be limited to
-`min(1, 20 / group_size)` of the maximum,
-or effectively the minimum stake of a single member.
-This is to prevent actors in a lynchpin position
-from profitably stealing other stakers' funds.
+When a group fails to produce an entry, all of its members will be subject to _seizing_ and the group itself will be terminated. The submitter of the trigger transaction will be treated as the _tattletale_, but the tattletale reward will be limited to `min(1, 20 / group_size)` of the maximum, or effectively the minimum stake of a single member. This is to prevent actors in a lynchpin position from profitably stealing other stakers' funds.
 
 === Limitations
 
-Slashing is not limited to the amount originally staked
-for participating in the relevant operations;
-a malfunctioning operator contract could cause a staker to lose all stake.
-
-Chain reorganizations may lead to honest behavior in one branch
-being punishable misbehavior in another.
-Mitigations for this have not been included in this RFC.
+Slashing is not limited to the amount originally staked for participating in the relevant operations; a malfunctioning operator contract could cause a staker to lose all stake. Chain reorganizations may lead to honest behavior in one branch being punishable misbehavior in another. Mitigations for this have not been included in this RFC.
 
 == Future Work
 
