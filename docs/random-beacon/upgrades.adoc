@@ -57,9 +57,7 @@ The Operator Contract Upgraders can be rekeyed by _Governance_.
 
 ==== Authorizer
 
-Each staker has an Authorizer
-whose purpose is to authorize operator contracts the staker wishes to operate on.
-Authorized operator contracts are permitted to impact the staker's staked tokens
+Each staker has an Authorizer whose purpose is to authorize operator contracts the staker wishes to operate on. Authorized operator contracts are permitted to impact the staker's staked tokens
 via punishments or rewards.
 
 The Authorizer cannot be rekeyed except by undelegating and redelegating.
@@ -92,31 +90,16 @@ Recognized staking contracts: Each operator contract specifies one or more _stak
 ==== Service Contracts
 
 Service contracts provide services without directly interacting with operators,
-but using a set of operator contracts in some way.
-Service Contracts don't need to be aware of tokens or staking in any way;
-these functions are entirely intermediated by the operator contracts.
-A service contract only needs a list of which operator contracts it uses.
-To permit system upgrades,
-the list of used operator contracts can be updated with proper authorization.
+but using a set of operator contracts in some way. Service Contracts don't need to be aware of tokens or staking in any way; these functions are entirely intermediated by the operator contracts. A service contract only needs a list of which operator contracts it uses.
+To permit system upgrades, the list of used operator contracts can be updated with proper authorization.
 
-Used operator contracts::
-A mutable list of operator contracts used by the service contract.
+Used operator contracts: A mutable list of operator contracts used by the service contract.
 
-Each service contract has a list
-of zero or more operator contracts it may use.
-
-A service contract is deployed with zero operator contracts,
-rendering the service contract inactive
-until at least one operator contract is activated.
-
-Each service contract has a _Operator Contract Upgrader_
-who can add used operator contracts.
-To add a used operator contract,
+Each service contract has a list of zero or more operator contracts it may use. A service contract is deployed with zero operator contracts, rendering the service contract inactive
+until at least one operator contract is activated. Each service contract also has a _Operator Contract Upgrader_ which can add used operator contracts. To add a used operator contract,
 the operator contract must have been `APPROVED` on the _registry_.
 
-If a operator contract has been `DISABLED` by the _Panic Button_,
-it is ineligible for work selection.
-This must be checked when the service contract selects an operator contract.
+If a operator contract has been `DISABLED` by the _Panic Button_, it is ineligible for work selection. This must be checked when the service contract selects an operator contract.
 
 ==== Staking contracts
 
