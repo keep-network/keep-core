@@ -179,39 +179,23 @@ Inactive members will be removed from the group, but not otherwise punished; the
 
 ===== Disqualification in DKG
 
-An operator might misbehave in a variety of ways during DKG.
-Active misbehavior can lower the effective safety margin of the group
-against frontrunning, lynchpinning, or signature failure.
-
 Disqualification in DKG is determined like inactivity,
-by the list of disqualified members being included in the result submission.
-
-On-chain proof of disqualification is _subjective_
+by the list of disqualified members being included in the result submission. On-chain proof of disqualification is _subjective_
 and a dishonest majority could forge a false proof.
 
-Punishing disqualified members based on subjective proof
-creates opportunities for dishonest majorities
-to attack other stakers
-in a way which extends beyond the damage caused by frontrunning the beacon.
-Because of this,
-punishing disqualified members without objective proof
-requires further examination of the associated risks and incentives.
+TODO: Is this true for the current implementation?
+Punishing disqualified members based on subjective proof creates opportunities for dishonest majorities to attack other stakers
+in a way which extends beyond the damage caused by frontrunning the beacon. Because of this, punishing disqualified members without objective proof requires further examination of the associated risks and incentives.
 
-For the first version,
-disqualification shall be treated like inactivity
-and only punished with removal from the group.
+For the first version, disqualification shall be treated like inactivity and only punished with removal from the group.
 
 ==== Signing
 
 ===== Invalid signature share
 
-An operator may broadcast an invalid signature share to other operators
-when reconstructing the threshold signature.
+Invalid signature shares can only be detected on-chain if a tattletale submits a proof that includes the signature share and the information required to verify it.
 
-Invalid signature shares can only be detected on-chain
-if a tattletale submits a proof
-that includes the signature share and the information required to verify it.
-
+TODO: What has been implemented in the current version?
 In the first version,
 the infrastructure for verifying these proofs is not yet in place.
 Invalid signature shares shall be simply rejected by the other members.
