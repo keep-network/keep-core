@@ -221,12 +221,10 @@ no separate punishment is needed beyond reverting the transaction.
 
 ===== Unauthorized use of individual private key
 
-An operator's individual private key may be leaked
-and used inappropriately.
-
 Unauthorized use of a member's individual private key
 can be proven on-chain by the submission of a suitable proof.
 
+TODO: Is this currently true?
 The first version is not yet able to verify these proofs,
 so unauthorized use of individual private keys is not separately penalized.
 
