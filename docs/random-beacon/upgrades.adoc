@@ -1,98 +1,38 @@
-:toc: macro
-
-= RFC 11: Authorizations in the upgrade scheme
-
 :icons: font
 :numbered:
 toc::[]
 
 == Background
 
-Securely upgradeable work contracts
-are important for protecting stakers' tokens.
-The current design for dividing work contracts
-into operator contract and service contract components
-permits secure upgrades of operator contracts
-without interfering with service functionality.
-To gain the theoretical benefits from this scheme,
-it is necessary to specify how contract upgrades should be authorized,
-and by whom.
+Securely upgradeable work contracts are important for protecting stakers' tokens.
+The current design for dividing work contractsinto operator contract and service contract components permits secure upgrades of operator contracts without interfering with service functionality. We specify here how contract upgrades are authorized, and by whom.
 
 === Current Functionality
 
-In link:rfc-9-upgradeable-contract-components.adoc[RFC 9: Upgrading contracts by separate components],
-the division between operator and service contracts is established.
-Apart from the existing consensus
-that stakers should authorize each operator contract individually,
-there is no overarching design for secure contract upgrades yet.
+TODO: Edit this after adding RFC 9 to this doc.
 
-== Proposal
-
-To achieve secure upgrades, this RFC proposes a scheme
-where the upgrade process is centered on operator contracts,
-which tie all components of the network together.
-
-Operator contracts are subject to approval
-globally on a _registry_,
-in their respective _service contracts_,
-and individually from each staker in the _staking contract_.
-This provides multilayered protection
-against a variety of different risks.
-
-Other contracts such as service contracts and staking contracts
-are hard-coded in operator contracts,
-so attackers are prevented from inserting arbitrary contracts of any type
-without needing to have separate approval processes
-for different contract types.
-
-Different keys are used in different parts of the upgrade process.
-The roles of global _Registry Keeper_ and _Panic Button_,
-service contract-specific _Operator Contract Upgraders_,
-and staker-specific _Authorizers_,
-are used to divide the responsibilities
-and to provide resiliency against compromise of individual keys.
-A _Governance_ scheme can be used to rekey the roles
-to recover from non-catastrophic compromise.
-
-The multilayered approach permits upgrading staking contracts,
-or even the token itself,
-without disrupting user experience on the service contract.
+In link:rfc-9-upgradeable-contract-components.adoc[RFC 9: Upgrading contracts by separate components], the division between operator and service contracts is established. Apart from the existing consensus that stakers should authorize each operator contract individually, there is no overarching design for secure contract upgrades yet.
 
 === Goal
 
-The main goals are to provide a smooth upgrade path for future functionality,
-limiting the impact of single-key compromise,
-and protecting stakers' funds from ever being subject
-to code they haven't individually authorized.
+The main goals are to provide a smooth upgrade path for future functionality, limiting the impact of single-key compromise, and protecting stakers' funds from ever being subject to code they haven't individually authorized.
 
 === Roles
 
 ==== Governance
 
-Governance is the final arbiter of authority in the Keep Network.
-While exact details of the implementation of Governance
-are out of scope for this RFC,
-the role of Governance in the upgrade process
-is to enable recovery from key compromise by rekeying other roles.
+Governance is the final arbiter of authority in the Keep Network. The role of Governance in the upgrade process is to enable recovery from key compromise by rekeying other roles.
 
-Governance has the authority to change the addresses of
-the _Registry Keeper_, _Panic Button_,
-and the service contracts' _Operator Contract Upgraders_.
+Governance has the authority to change the addresses of the _Registry Keeper_, _Panic Button_, and the service contracts' _Operator Contract Upgraders_.
 
-The rekeying process should prioritize security over convenience
-to the greatest feasible extent,
-being unsuitable for ordinary upgrades
-but permitting recovery from partial system compromise
-under extraordinary circumstances.
+The rekeying process prioritizes security over convenience to the greatest feasible extent, being unsuitable for ordinary upgrades but permitting recovery from partial system compromise under extraordinary circumstances.
 
 ==== Registry Keeper
 
-The Registry Keeper maintains the global _registry_
-of approved operator contracts.
-Each operator contract must be approved by the Registry Keeper
-before it can be authorized by a staker
-or used by a service contract.
+The Registry Keeper maintains the global _registry_ of approved operator contracts.
+Each operator contract is be approved by the Registry Keeper before it is authorized by a staker or used by a service contract. 
 
+TODO: are there other entities that can rekey this, or just governance?
 The Registry Keeper can be rekeyed by _Governance_.
 
 ==== Panic Button
@@ -104,15 +44,14 @@ its status on the _registry_ changes to reflect this,
 and it becomes ineligible to penalize stakers.
 Contracts disabled by the Panic Button can not be reactivated.
 
+TODO: are there other entities that can rekey this, or just governance?
 The Panic Button can be rekeyed by _Governance_.
 
 ==== Operator Contract Upgrader
 
-Each service contract has a Operator Contract Upgrader
-whose purpose is to manage operator contracts for that specific service contract.
-The Operator Contract Upgrader can add new operator contracts
-to the service contract's operator contract list,
-and deprecate old ones.
+Each service contract has an Operator Contract Upgrader whose purpose is to manage operator contracts for that specific service contract. The Operator Contract Upgrader can add new operator contracts to the service contract's operator contract list, and deprecate old ones.
+
+TODO: same as above
 
 The Operator Contract Upgraders can be rekeyed by _Governance_.
 
@@ -129,54 +68,26 @@ The Authorizer cannot be rekeyed except by undelegating and redelegating.
 
 ==== Registry
 
-A global registry is used to keep track of all operator contracts,
-ensuring that only Keep Org-approved operator contracts are used,
-and enabling the panic button to disable operator contracts in an emergency.
+A global registry is used to keep track of all operator contracts, ensuring that only Keep Org-approved operator contracts are used, and enabling the panic button to disable operator contracts in an emergency.
 
-The registry contains all operator contracts of the Keep network.
-Each contract's status may be `NULL`, `APPROVED` or `DISABLED`.
+The registry contains all operator contracts of the Keep network. Each contract's status may be `NULL`, `APPROVED` or `DISABLED`.
 
-A status of `NULL` is the default
-and means that the operator contract has not been approved by the _Registry Keeper_.
+A status of `NULL` is the default and means that the operator contract has not been approved by the _Registry Keeper_.
 
-When the _Registry Keeper_ approves a operator contract,
-its status switches to `APPROVED` in the registry.
-Approved operator contracts can be authorized by stakers to impact their stakes,
+When the _Registry Keeper_ approves a operator contract, its status switches to `APPROVED` in the registry. Approved operator contracts can be authorized by stakers to impact their stakes,
 and service contracts may utilize them.
 
-The _Panic Button_ can be used
-to set the status of an `APPROVED` contract to `DISABLED`.
-Operator Contracts disabled with the _Panic Button_ cannot be re-enabled.
+The _Panic Button_ can be used to set the status of an `APPROVED` contract to `DISABLED`. Operator Contracts disabled with the _Panic Button_ cannot be re-enabled.
 
 ==== Operator Contracts
 
-Operator contracts serve other contracts,
-and are responsible for all operations involving staked tokens.
+Operator contracts serve other contracts, and are responsible for all operations involving staked tokens. The requirement for stakers' funds to never be subject to code they haven't approved individually has certain implications on operator contracts: the contracts will be immutable; and any external sources of truth, e.g. token contract and staking contract/s, will be hard-coded.
 
-The requirement for stakers' funds to never be subject to
-code they haven't approved individually
-has certain implications on operator contracts:
-the contracts must be immutable;
-and any external sources of truth,
-e.g. token contract and staking contract/s,
-must be hard-coded.
+Operator contracts authorized to punish the staker can never be deauthorized.
 
-In the current design,
-operator contracts authorized to punish the staker
-can never be deauthorized.
-Even if authorization was revokable,
-the stakers should not be expected to react promptly
-to malicious changes to operator contracts.
+An operator contract can either provide services to any contract that makes a valid request and pays the correct fee, or it is owned by a specific contract and only serve its owner.
 
-An operator contract can either provide services
-to any contract that makes a valid request and pays the correct fee,
-or it can be owned is owned by a specific contract and only serve its owner.
-
-Recognized staking contracts::
-Each operator contract specifies one or more _staking contracts_ it recognizes.
-Every operator contract that handles stakes
-must recognize at least one staking contract.
-Recognized staking contracts are hard-coded and unchangeable.
+Recognized staking contracts: Each operator contract specifies one or more _staking contracts_ it recognizes. Every operator contract that handles stakes recognizes at least one staking contract. Recognized staking contracts are hard-coded and unchangeable.
 
 ==== Service Contracts
 
