@@ -319,7 +319,7 @@ contract KeepRandomBeaconOperator {
             members,
             groupThreshold,
             resultPublicationBlockStep,
-            groupSelection
+            groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout
         );
 
         for (uint i = 0; i < groupSize; i++) {

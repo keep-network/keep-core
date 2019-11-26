@@ -27,7 +27,7 @@ library DKGResultVerification {
     * @param members Array of selected participants.
     * @param groupThreshold Minimum number of members needed to produce a relay entry.
     * @param resultPublicationBlockStep Time in blocks after which the next group member is eligible to submit the result.
-    * @param groupSelection Group selection storage reference.
+    * @param groupSelectionEndBlock Block height at which the group selection ended.
     * @return true if submitter is eligible to submit and the signatures are valid.
     */
     function verify(
@@ -39,15 +39,15 @@ library DKGResultVerification {
         address[] memory members,
         uint256 groupThreshold,
         uint256 resultPublicationBlockStep,
-        GroupSelection.Storage storage groupSelection
+        uint256 groupSelectionEndBlock
     ) public view returns (bool) {
         require(submitterMemberIndex > 0, "Invalid submitter index");
         require(
             members[submitterMemberIndex - 1] == msg.sender,
             "Unexpected submitter index"
-        );  
+        );
 
-        uint T_init = groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout + self.timeDKG;
+        uint T_init = groupSelectionEndBlock + self.timeDKG;
         require(
             block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
             "Submitter not eligible"
