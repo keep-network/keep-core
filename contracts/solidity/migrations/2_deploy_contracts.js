@@ -32,7 +32,6 @@ module.exports = async function(deployer) {
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
-  await deployer.deploy(KeepRandomBeaconOperatorGroups);
   await deployer.deploy(CallbackContract);
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 11).
