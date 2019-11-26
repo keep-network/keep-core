@@ -85,6 +85,8 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     // Make sure expired groups become stale
     mineBlocks(10)
+    assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
+    assert.isTrue(await operatorContract.isStaleGroup('0x' + group2.toString('hex')), "Group should be stale")
 
     // operator1 has 1 member in group1 and 3 members in group2
     let expectedReward = memberBaseReward.muln(4)
@@ -106,6 +108,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     // Make sure expired groups become stale
     mineBlocks(10)
+    assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
 
     // operator2 has 2 members in group1 only
     let expectedReward = memberBaseReward.muln(2)
@@ -122,6 +125,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     // Make sure expired groups become stale
     mineBlocks(10)
+    assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
 
     // get indices for operator2 to be used by operator3 to withdraw
     let memberIndices = await operatorContract.getGroupMemberIndices(group1, operator2)
@@ -140,7 +144,6 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let groupIndex = await operatorContract.getGroupIndex('0x' + group2.toString('hex'))
 
     assert.isFalse(await operatorContract.isExpiredGroup('0x' + group2.toString('hex')), "Group should not be expired")
-    assert.isFalse(await operatorContract.isStaleGroup('0x' + group2.toString('hex')), "Group should not be stale")
     let beneficiary1balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary1))
 
     // Nothing can be withdrawn
