@@ -30,7 +30,7 @@ func (euc *ethereumUtilityChain) RequestRelayEntry(seed *big.Int) *async.EventRe
 		return promise
 	}
 
-	_, err = euc.keepRandomBeaconServiceContract.RequestRelayEntry(
+	_, err = euc.keepRandomBeaconServiceContract.RequestRelayEntry0(
 		seed,
 		common.BytesToAddress([]byte{}),
 		"",
