@@ -1,7 +1,8 @@
 import { duration } from './increaseTime';
 const BLS = artifacts.require('./cryptography/BLS.sol');
-const GroupSelection = artifacts.require('./libraries/GroupSelection.sol');
-const Groups = artifacts.require('./libraries/Groups.sol');
+const GroupSelection = artifacts.require('./libraries/operator/GroupSelection.sol');
+const Groups = artifacts.require('./libraries/operator/Groups.sol');
+const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
 
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
@@ -31,8 +32,10 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await KeepRandomBeaconOperator.link("BLS", bls.address);
   const groupSelection = await GroupSelection.new();
   const groups = await Groups.new();
+  const dkgResultVerification = await DKGResultVerification.new();
   await KeepRandomBeaconOperator.link("GroupSelection", groupSelection.address);
   await KeepRandomBeaconOperator.link("Groups", groups.address);
+  await KeepRandomBeaconOperator.link("DKGResultVerification", dkgResultVerification.address);
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address);
 
   await serviceContract.initialize(priceFeedEstimate, fluctuationMargin, dkgContributionMargin, withdrawalDelay, operatorContract.address);

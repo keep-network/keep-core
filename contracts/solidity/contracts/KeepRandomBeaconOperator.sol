@@ -1,14 +1,12 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "./TokenStaking.sol";
-import "./utils/AddressArrayUtils.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./cryptography/BLS.sol";
-import "./libraries/GroupSelection.sol";
-import "./libraries/Groups.sol";
-
+import "./utils/AddressArrayUtils.sol";
+import "./libraries/operator/GroupSelection.sol";
+import "./libraries/operator/Groups.sol";
+import "./libraries/operator/DKGResultVerification.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
@@ -25,9 +23,10 @@ interface ServiceContract {
  */
 contract KeepRandomBeaconOperator {
     using SafeMath for uint256;
-    using BytesLib for bytes;
-    using ECDSA for bytes32;
     using AddressArrayUtils for address[];
+    using GroupSelection for GroupSelection.Storage;
+    using Groups for Groups.Storage;
+    using DKGResultVerification for DKGResultVerification.Storage;
 
     event OnGroupRegistered(bytes groupPubKey);
 
@@ -40,6 +39,10 @@ contract KeepRandomBeaconOperator {
     event SignatureSubmitted(uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
 
     event GroupSelectionStarted(uint256 newEntry);
+
+    GroupSelection.Storage groupSelection;
+    Groups.Storage groups;
+    DKGResultVerification.Storage dkgResultVerification;
 
     // Contract owner.
     address public owner;
@@ -77,10 +80,6 @@ contract KeepRandomBeaconOperator {
     // to submit the result.
     uint256 public resultPublicationBlockStep = 3;
 
-    // Time in blocks after DKG result is complete and ready to be published
-    // by clients.
-    uint256 public timeDKG = 7*(1+3);
-
     // Time in blocks it takes off-chain cluster to generate a new relay entry
     // and be ready to submit it to the chain.
     uint256 public relayEntryGenerationTime = (1+3);
@@ -108,12 +107,6 @@ contract KeepRandomBeaconOperator {
     // and some part of the fee stored in this field may be returned to the service
     // contract.
     uint256 public dkgSubmitterReimbursementFee;
-
-    using GroupSelection for GroupSelection.Storage;
-    GroupSelection.Storage groupSelection;
-
-    using Groups for Groups.Storage;
-    Groups.Storage groups;
 
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
@@ -167,16 +160,23 @@ contract KeepRandomBeaconOperator {
     }
 
     constructor(address _serviceContract, address _stakingContract) public {
-        serviceContracts.push(_serviceContract);
-
-        stakingContract = TokenStaking(_stakingContract);
-
         owner = msg.sender;
+
+        serviceContracts.push(_serviceContract);
+        stakingContract = TokenStaking(_stakingContract);
 
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
         groups.activeGroupsThreshold = 5;
         groups.groupActiveTime = 3000;
+
+        dkgResultVerification.timeDKG = 7*(1+3);
+        dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;
+        dkgResultVerification.groupSize = groupSize;
+        // TODO: For now, the required number of signatures is equal to group
+        // threshold. This should be updated to keep a safety margin for
+        // participants misbehaving during signing.
+        dkgResultVerification.signatureThreshold = groupThreshold;
     }
 
     /**
@@ -235,7 +235,7 @@ contract KeepRandomBeaconOperator {
         // be complete plus the expected time to submit the result.
         uint256 dkgTimeout = groupSelection.ticketSubmissionStartBlock +
             groupSelection.ticketSubmissionTimeout +
-            timeDKG +
+            dkgResultVerification.timeDKG +
             groupSize * resultPublicationBlockStep;
 
         require(!groupSelection.inProgress || block.number > dkgTimeout, "Group selection in progress");
@@ -292,17 +292,23 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
-     * @param submitterMemberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
-     * @param groupPubKey Group public key generated as a result of protocol execution.
-     * @param disqualified bytes representing disqualified group members; 1 at the specific index
-     * means that the member has been disqualified. Indexes reflect positions of members in the
-     * group, as outputted by the group selection protocol.
-     * @param inactive bytes representing inactive group members; 1 at the specific index means
-     * that the member has been marked as inactive. Indexes reflect positions of members in the
-     * group, as outputted by the group selection protocol.
-     * @param signatures Concatenation of signed resultHashes collected off-chain.
-     * @param signingMembersIndexes indices of members corresponding to each signature.
+     * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of
+     * the protocol.
+     *
+     * @param submitterMemberIndex Claimed submitter candidate group member index
+     * @param groupPubKey Generated candidate group public key
+     * @param disqualified Bytes representing disqualified group members;
+     * 1 at the specific index means that the member has been disqualified.
+     * Indexes reflect positions of members in the group, as outputted by the
+     * group selection protocol.
+     * @param inactive Bytes representing inactive group members;
+     * 1 at the specific index means that the member has been marked as inactive.
+     * Indexes reflect positions of members in the group, as outputted by the
+     * group selection protocol.
+     * @param signatures Concatenation of signatures from members supporting the
+     * result.
+     * @param signingMembersIndexes Indices of members corresponding to each
+     * signature.
      */
     function submitDkgResult(
         uint256 submitterMemberIndex,
@@ -314,25 +320,16 @@ contract KeepRandomBeaconOperator {
     ) public {
         address[] memory members = selectedParticipants();
 
-        require(submitterMemberIndex > 0, "Invalid submitter index");
-        require(
-            members[submitterMemberIndex - 1] == msg.sender,
-            "Unexpected submitter index"
+        dkgResultVerification.verify(
+            submitterMemberIndex,
+            groupPubKey,
+            disqualified,
+            inactive,
+            signatures,
+            signingMembersIndexes,
+            members,
+            groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout
         );
-
-        uint T_init = groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout + timeDKG;
-        require(
-            block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
-            "Submitter not eligible"
-        );
-
-        require(
-            disqualified.length == groupSize && inactive.length == groupSize,
-            "Malformed misbehaving array"
-        );
-
-        bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
-        verifySignatures(signatures, signingMembersIndexes, resultHash, members);
 
         for (uint i = 0; i < groupSize; i++) {
             // Check member was neither marked as inactive nor as disqualified
@@ -378,42 +375,6 @@ contract KeepRandomBeaconOperator {
             dkgSubmitterReimbursementFee = 0;
             magpie.transfer(reimbursementFee);
         }
-    }
-
-    /**
-    * @dev Verifies that provided members signatures of the DKG result were produced
-    * by the members stored previously on-chain in the order of their ticket values
-    * and returns indices of members with a boolean value of their signature validity.
-    * @param signatures Concatenation of user-generated signatures.
-    * @param resultHash The result hash signed by the users.
-    * @param signingMemberIndices Indices of members corresponding to each signature.
-    * @param members Array of selected participants.
-    * @return Array of member indices with a boolean value of their signature validity.
-    */
-    function verifySignatures(
-        bytes memory signatures,
-        uint256[] memory signingMemberIndices,
-        bytes32 resultHash,
-        address[] memory members
-    ) internal view returns (bool) {
-        uint256 signaturesCount = signatures.length / 65;
-        require(signatures.length >= 65, "Too short signatures array");
-        require(signatures.length % 65 == 0, "Malformed signatures array");
-        require(signaturesCount == signingMemberIndices.length, "Unexpected signatures count");
-        require(signaturesCount >= groupThreshold, "Too few signatures");
-
-        bytes memory current; // Current signature to be checked.
-
-        for(uint i = 0; i < signaturesCount; i++){
-            require(signingMemberIndices[i] > 0, "Invalid index");
-            require(signingMemberIndices[i] <= members.length, "Index out of range");
-            current = signatures.slice(65*i, 65);
-            address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
-
-            require(members[signingMemberIndices[i] - 1] == recoveredAddress, "Invalid signature");
-        }
-
-        return true;
     }
 
     /**

@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
-import "../cryptography/AltBn128.sol";
+import "../../cryptography/AltBn128.sol";
 
 library Groups {
     using SafeMath for uint256;
@@ -97,7 +97,7 @@ library Groups {
     function getGroupPublicKeyCompressed(
         Storage storage self,
         uint256 groupIndex
-    ) internal view returns (bytes memory) {
+    ) public view returns (bytes memory) {
         return AltBn128.g2Compress(AltBn128.g2Unmarshal(self.groups[groupIndex].groupPubKey));
     }
 
@@ -177,7 +177,7 @@ library Groups {
     function isStaleGroup(
         Storage storage self,
         bytes memory groupPubKey
-    ) internal view returns(bool) {
+    ) public view returns(bool) {
         for (uint i = 0; i < self.groups.length; i++) {
             if (self.groups[i].groupPubKey.equalStorage(groupPubKey)) {
                 bool isExpired = self.expiredGroupOffset > i;
@@ -242,7 +242,7 @@ library Groups {
     function selectGroup(
         Storage storage self,
         uint256 seed
-    ) internal returns(uint256) {
+    ) public returns(uint256) {
         require(numberOfGroups(self) > 0, "At least one active group required");
 
         expireOldGroups(self);
