@@ -1,8 +1,11 @@
 pragma solidity ^0.5.4;
 
 import "../KeepRandomBeaconOperator.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconOperator {
+
+    using BytesLib for bytes;
 
     constructor(
         address _serviceContract,
