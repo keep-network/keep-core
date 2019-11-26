@@ -5,8 +5,8 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 
-	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
-	peer "github.com/libp2p/go-libp2p-peer"
+	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
+	peer "github.com/libp2p/go-libp2p-core/peer"
 )
 
 // identity represents a group member's network level identity. It
