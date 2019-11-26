@@ -14,11 +14,11 @@ import (
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
-	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 )
 
 var logger = log.Logger("keep-chain-ethereum")
@@ -101,11 +101,14 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 		}
 	}
 
-	_, err := ec.keepRandomBeaconOperatorContract.SubmitTicket(
-		ticket.Value,
-		ticket.Proof.StakerValue,
-		ticket.Proof.VirtualStakerIndex,
-		options.TransactionOptions {
+	ticketBytes, err := ec.packTicket(ticket)
+	if err != nil {
+		failPromise(err)
+	}
+
+	_, err = ec.keepRandomBeaconOperatorContract.SubmitTicket(
+		ticketBytes,
+		options.TransactionOptions{
 			GasLimit: 250000,
 		},
 	)
@@ -116,6 +119,51 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 	// TODO: fulfill when submitted
 
 	return submittedTicketPromise
+}
+
+func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) ([]uint8, error) {
+	ticketValueByteLength := 8
+	stakerValueByteLength := 20
+	virtualStakerIndexByteLength := 4
+
+	ticketValueBytes := ticket.Value.Bytes()
+	stakerValueBytes := ticket.Proof.StakerValue.Bytes()
+	virtualStakerIndexBytes := ticket.Proof.VirtualStakerIndex.Bytes()
+
+	if len(ticketValueBytes) < ticketValueByteLength {
+		return nil, fmt.Errorf(
+			"ticket value byte length is less than [%v] bytes",
+			ticketValueByteLength,
+		)
+	}
+
+	if len(stakerValueBytes) != stakerValueByteLength {
+		return nil, fmt.Errorf(
+			"staker value byte length is different than [%v] bytes",
+			stakerValueByteLength,
+		)
+	}
+
+	if len(virtualStakerIndexBytes) > virtualStakerIndexByteLength {
+		return nil, fmt.Errorf(
+			"virtual staker index byte length is greater than [%v] bytes",
+			virtualStakerIndexByteLength,
+		)
+	}
+
+	ticketValueBytes = ticketValueBytes[:ticketValueByteLength]
+
+	paddingBytes := virtualStakerIndexByteLength - len(virtualStakerIndexBytes)
+	for i := 0; i < paddingBytes; i++ {
+		virtualStakerIndexBytes = append([]byte{0}, virtualStakerIndexBytes...)
+	}
+
+	var ticketBytes []uint8
+	ticketBytes = append(ticketBytes, ticketValueBytes...)
+	ticketBytes = append(ticketBytes, stakerValueBytes...)
+	ticketBytes = append(ticketBytes, virtualStakerIndexBytes...)
+
+	return ticketBytes, nil
 }
 
 func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
