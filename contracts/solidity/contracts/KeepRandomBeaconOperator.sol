@@ -274,8 +274,8 @@ contract KeepRandomBeaconOperator {
     ) public {
 
         uint64 ticketValue;
-        uint256 stakerValue;
-        uint256 virtualStakerIndex;
+        uint160 stakerValue;
+        uint32 virtualStakerIndex;
 
         assembly {
             ticketValue := mload(add(ticket, 8))
@@ -284,7 +284,7 @@ contract KeepRandomBeaconOperator {
         }
 
         uint256 stakingWeight = stakingContract.balanceOf(msg.sender).div(minimumStake);
-        groupSelection.submitTicket(ticketValue, stakerValue, virtualStakerIndex, stakingWeight);
+        groupSelection.submitTicket(ticketValue, uint256(stakerValue), uint256(virtualStakerIndex), stakingWeight);
     }
 
     /**
