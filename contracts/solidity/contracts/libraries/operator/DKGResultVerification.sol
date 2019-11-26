@@ -10,35 +10,59 @@ library DKGResultVerification {
     using GroupSelection for GroupSelection.Storage;
 
     struct Storage {
-        // Time in blocks after DKG result is complete and ready to be published
-        // by clients.
+        // Time in blocks after which DKG result is complete and ready to be
+        // published by clients.
         uint256 timeDKG;
+
+        // Time in blocks after which the next group member is eligible
+        // to submit DKG result.
+        uint256 resultPublicationBlockStep;
+
+        // Size of a group in the threshold relay.
+        uint256 groupSize;
+
+        // The minimum number of signatures required to support DKG result.
+        // This number needs to be at least the same as the signing threshold
+        // and it is recommended to make it higher than the signing threshold
+        // to keep a safety margin for misbehaving members.
+        uint256 signatureThreshold;
     }
 
     /**
-    * @dev Verifies that submitter is eligible to submit the result and that the provided
-    * members signatures of the DKG result were produced by the members stored previously
-    * on-chain in the order of their ticket values and returns indices of members with a
-    * boolean value of their signature validity.
-    * @param submitterMemberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
-    * @param signatures Concatenation of user-generated signatures.
-    * @param resultHash The result hash signed by the users.
-    * @param signingMemberIndices Indices of members corresponding to each signature.
-    * @param members Array of selected participants.
-    * @param groupThreshold Minimum number of members needed to produce a relay entry.
-    * @param resultPublicationBlockStep Time in blocks after which the next group member is eligible to submit the result.
-    * @param groupSelectionEndBlock Block height at which the group selection ended.
-    * @return true if submitter is eligible to submit and the signatures are valid.
-    */
+     * @dev Verifies the submitted DKG result against supporting member
+     * signatures and if the submitter is eligible to submit at the current block.
+     *
+     * @param submitterMemberIndex Claimed submitter candidate group member index
+     * @param groupPubKey Generated candidate group public key
+     * @param disqualified Bytes representing disqualified group members;
+     * 1 at the specific index means that the member has been disqualified.
+     * Indexes reflect positions of members in the group, as outputted by the
+     * group selection protocol.
+     * @param inactive Bytes representing inactive group members;
+     * 1 at the specific index means that the member has been marked as inactive.
+     * Indexes reflect positions of members in the group, as outputted by the
+     * group selection protocol.
+     * @param signatures Concatenation of signatures from members supporting the
+     * result.
+     * @param signingMemberIndices Indices of members corresponding to each
+     * signature.
+     * @param members Addresses of candidate group members as outputted by the
+     * group selection protocol.
+     * @param groupSelectionEndBlock Block height at which the group selection
+     * protocol ended.
+     *
+     * @return true if submitter is eligible to submit and the result is valid;
+     * Otherwise, transaction is reverted.
+     */
     function verify(
         Storage storage self,
         uint256 submitterMemberIndex,
+        bytes memory groupPubKey,
+        bytes memory disqualified,
+        bytes memory inactive,
         bytes memory signatures,
-        bytes32 resultHash,
         uint256[] memory signingMemberIndices,
         address[] memory members,
-        uint256 groupThreshold,
-        uint256 resultPublicationBlockStep,
         uint256 groupSelectionEndBlock
     ) public view returns (bool) {
         require(submitterMemberIndex > 0, "Invalid submitter index");
@@ -49,7 +73,7 @@ library DKGResultVerification {
 
         uint T_init = groupSelectionEndBlock + self.timeDKG;
         require(
-            block.number >= (T_init + (submitterMemberIndex-1) * resultPublicationBlockStep),
+            block.number >= (T_init + (submitterMemberIndex-1) * self.resultPublicationBlockStep),
             "Submitter not eligible"
         );
 
@@ -57,7 +81,14 @@ library DKGResultVerification {
         require(signatures.length >= 65, "Too short signatures array");
         require(signatures.length % 65 == 0, "Malformed signatures array");
         require(signaturesCount == signingMemberIndices.length, "Unexpected signatures count");
-        require(signaturesCount >= groupThreshold, "Too few signatures");
+        require(signaturesCount >= self.signatureThreshold, "Too few signatures");
+
+        require(
+            disqualified.length == self.groupSize && inactive.length == self.groupSize,
+            "Malformed misbehaving array"
+        );
+
+        bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
 
         bytes memory current; // Current signature to be checked.
 

@@ -167,6 +167,12 @@ contract KeepRandomBeaconOperator {
         groups.groupActiveTime = 3000;
 
         dkgResultVerification.timeDKG = 7*(1+3);
+        dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;
+        dkgResultVerification.groupSize = groupSize;
+        // TODO: For now, the required number of signatures is equal to group
+        // threshold. This should be updated to keep a safety margin for
+        // participants misbehaving during signing.
+        dkgResultVerification.signatureThreshold = groupThreshold;
     }
 
     /**
@@ -282,17 +288,23 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of the protocol.
-     * @param submitterMemberIndex Claimed index of the staker. We pass this for gas efficiency purposes.
-     * @param groupPubKey Group public key generated as a result of protocol execution.
-     * @param disqualified bytes representing disqualified group members; 1 at the specific index
-     * means that the member has been disqualified. Indexes reflect positions of members in the
-     * group, as outputted by the group selection protocol.
-     * @param inactive bytes representing inactive group members; 1 at the specific index means
-     * that the member has been marked as inactive. Indexes reflect positions of members in the
-     * group, as outputted by the group selection protocol.
-     * @param signatures Concatenation of signed resultHashes collected off-chain.
-     * @param signingMembersIndexes indices of members corresponding to each signature.
+     * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of
+     * the protocol.
+     *
+     *  @param submitterMemberIndex Claimed submitter candidate group member index
+     * @param groupPubKey Generated candidate group public key
+     * @param disqualified Bytes representing disqualified group members;
+     * 1 at the specific index means that the member has been disqualified.
+     * Indexes reflect positions of members in the group, as outputted by the
+     * group selection protocol.
+     * @param inactive Bytes representing inactive group members;
+     * 1 at the specific index means that the member has been marked as inactive.
+     * Indexes reflect positions of members in the group, as outputted by the
+     * group selection protocol.
+     * @param signatures Concatenation of signatures from members supporting the
+     * result.
+     * @param signingMembersIndexes Indices of members corresponding to each
+     * signature.
      */
     function submitDkgResult(
         uint256 submitterMemberIndex,
@@ -304,21 +316,14 @@ contract KeepRandomBeaconOperator {
     ) public {
         address[] memory members = selectedParticipants();
 
-        require(
-            disqualified.length == groupSize && inactive.length == groupSize,
-            "Malformed misbehaving array"
-        );
-
-        bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
-
         dkgResultVerification.verify(
             submitterMemberIndex,
+            groupPubKey,
+            disqualified,
+            inactive,
             signatures,
-            resultHash,
             signingMembersIndexes,
             members,
-            groupThreshold,
-            resultPublicationBlockStep,
             groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout
         );
 
