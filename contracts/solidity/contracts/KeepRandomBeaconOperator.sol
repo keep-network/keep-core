@@ -635,15 +635,16 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Withdraws your accumulated member rewards using the provided
-     * group index and member indices. If groupMember is not found the
-     * reward is not included, otherwise it is included and member is
-     * removed from the group.
+     * @dev Withdraws accumulated group member rewards for msg.sender
+     * using the provided group index and member indices. Once the
+     * accumulated reward is withdrawn from the selected group, member is
+     * removed from it. Rewards can be withdrawn only from stale group.
+     *
      * @param groupIndex Group index.
      * @param groupMemberIndices Array of member indices for the group member.
      */
     function withdrawGroupMemberRewards(uint256 groupIndex, uint256[] memory groupMemberIndices) public {
-        uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices, msg.sender);
+        uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
         stakingContract.magpieOf(msg.sender).transfer(accumulatedRewards);
     }
 }
