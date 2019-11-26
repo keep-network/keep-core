@@ -5,9 +5,8 @@ import "../KeepRandomBeaconOperator.sol";
 contract KeepRandomBeaconOperatorGroupSelectionStub is KeepRandomBeaconOperator {
     constructor(
         address _serviceContract,
-        address _stakingContract,
-        address payable _groupContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract, _groupContract) public {
+        address _stakingContract
+    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
         groupSelection.ticketSubmissionTimeout = 65;
     }
 

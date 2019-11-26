@@ -27,8 +27,7 @@ COPY ./KeepToken.json /tmp/KeepToken.json
 COPY ./KeepRandomBeaconService.json /tmp/KeepRandomBeaconService.json
 COPY ./KeepRandomBeaconOperator.json /tmp/KeepRandomBeaconOperator.json
 
-COPY ./keep-client-bootstrap-peer-template.toml /tmp/keep-client-bootstrap-peer-template.toml
-COPY ./keep-client-standard-peer-template.toml /tmp/keep-client-standard-peer-template.toml
+COPY ./keep-client-config-template.toml /tmp/keep-client-config-template.toml
 
 COPY ./provision-keep-client.js /tmp/provision-keep-client.js
 

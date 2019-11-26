@@ -6,7 +6,7 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/operator"
-	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
+	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 )
 
 // NetworkPrivate represents peer's static key associated with an on-chain
