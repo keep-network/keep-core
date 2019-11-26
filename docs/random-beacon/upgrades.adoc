@@ -103,7 +103,7 @@ If a operator contract has been `DISABLED` by the _Panic Button_, it is ineligib
 
 ==== Staking contracts
 
-Staking contracts hold staked tokens and enforce staking rules. They permit authorized operator contracts to slash the stakes of misbehaving operators, but stakers are be protected from code they haven't authorized individually.
+Staking contracts hold staked tokens and enforce staking rules. They permit authorized operator contracts to slash the stakes of misbehaving operators, but stakers are protected from code they haven't authorized individually.
 
 For this purpose, each staking contract maintains a list of operator contracts that have been authorized by each staker's _Authorizer_. The list of operator contracts could also be maintained globally, removing the need for entry duplication when stakers on different staking contracts have the same Authorizer and operate on the same operator contract. 
 
@@ -117,26 +117,16 @@ Staking contracts are also aware of the token contract by necessity.
 
 ===== Authorized operator contracts
 
-The _authorized operator contracts_ are a mapping
-of `(address authorizer, address operator_contract) -> status`.
+The _authorized operator contracts_ are a mapping of `(address authorizer, address operator_contract) -> status`.
 
-The status of a contract may be either `NULL` or `AUTHORIZED`.
-A status of `NULL` is the default
-and means the operator contract is not authorized.
-A status of `AUTHORIZED` means that the operator contract
-may affect the stakes of those stakers
-who have assigned that `authorizer` as their _Authorizer_.
+The status of a contract may be either `NULL` or `AUTHORIZED`. A status of `NULL` is the default and means the operator contract is not authorized. A status of `AUTHORIZED` means that the operator contract may affect the stakes of those stakers who have assigned that `authorizer` as their _Authorizer_.
 
-To authorize a operator contract on a staking contract,
-the following conditions must apply:
+To authorize a operator contract on a staking contract, the following conditions must apply:
 
 - the operator contract has been `APPROVED` on the _registry_
 - the operator contract recognizes the staking contract
 
-Once a operator contract has been authorized,
-authorization cannot be withdrawn by the staker.
-However, a operator contract that has been `DISABLED` by the _Panic Button_
-may not punish stakers.
+Once a operator contract has been authorized, authorization cannot be withdrawn by the staker. However, a operator contract that has been `DISABLED` by the _Panic Button_ may not punish stakers.
 
 === Upgrade processes
 
@@ -170,14 +160,11 @@ The upgrade process makes it possible to even hard-fork the token
 without disrupting service contract user experience:
 
 . Deploy the new token contract
-. Deploy a migration contract
-that lets holders convert old tokens to new tokens
+. Deploy a migration contract that lets holders convert old tokens to new tokens
 . Deploy a new staking contract for the new tokens
   . Deploy new operator contracts recognizing the new token and staking contract
     . Approve the operator contracts on the registry
-. Wait for stakers to convert their tokens,
-stake on the new contract
-and authorize the new operator contracts
+. Wait for stakers to convert their tokens, stake on the new contract and authorize the new operator contracts
 . Activate the operator contracts on the service contracts
 
 === Impact of compromise
@@ -186,78 +173,40 @@ and authorize the new operator contracts
 
 ===== Registry Keeper
 
-A compromised Registry Keeper can approve arbitrary operator contracts.
-Because using those operator contracts for a service contract
-requires the service contract's Operator Contract Upgrader as well,
-the impact is limited to stakers being able to instantly unstake
-by authorizing a malicious operator contract
-which slashes their stakes
-and sends the tokens to an address controlled by the staker.
+A compromised Registry Keeper can approve arbitrary operator contracts. Because using those operator contracts for a service contract requires the service contract's Operator Contract Upgrader as well, the impact is limited to stakers being able to instantly unstake by authorizing a malicious operator contract which slashes their stakes and sends the tokens to an address controlled by the staker.
 
 ===== Panic Button
 
-A compromised Panic Button can disable all operator contracts
-and halt all network services.
-Recovery is impossible until Governance has rekeyed the Panic Button.
+A compromised Panic Button can disable all operator contracts and halt all network services. Recovery is impossible until Governance has rekeyed the Panic Button.
 
-This is inevitable due to the functionality of the Panic Button,
-but the impact could be mitigated
-by setting a cap on how many times the Panic Button can be invoked
-within a particular timeframe.
-However, such a cap would be overwhelmed
-by a mass approval of malicious contracts by the other roles.
+This is inevitable due to the functionality of the Panic Button, but the impact could be mitigated by setting a cap on how many times the Panic Button can be invoked within a particular timeframe. However, such a cap would be overwhelmed by a mass approval of malicious contracts by the other roles.
 
 ===== Operator Contract Upgrader
 
-A compromised Operator Contract Upgrader
-can activate arbitrary operator contracts
-within the strict constraints of the upgrade process.
-Without compromise of the Registry Keeper
-to approve new malicious operator contracts,
-it is unlikely that a compromised Operator Contract Upgrader alone
-would have significant impact on the network.
+A compromised Operator Contract Upgrader can activate arbitrary operator contracts within the strict constraints of the upgrade process. Without compromise of the Registry Keeper to approve new malicious operator contracts, it is unlikely that a compromised Operator Contract Upgrader alone would have significant impact on the network.
 
 ===== Authorizer
 
-If only the Authorizer of some staker is compromised,
-the attacker can authorize operator contracts
-that have been approved by the Registry Keeper,
-and that recognize the contract that staker stakes on.
+If only the Authorizer of some staker is compromised, the attacker can authorize operator contracts that have been approved by the Registry Keeper,and that recognize the contract that staker stakes on.
 
-This has a very limited negative impact
-unless the Registry Keeper has approved
-a faulty or malicious operator contract.
+This has a very limited negative impact unless the Registry Keeper has approved a faulty or malicious operator contract.
 
 ==== Key combinations
 
 ===== Registry Keeper + Operator Contract Upgrader
 
-If a malicious operator contract can get globally approved,
-the impacted service contract can be completely subverted
-by deprecating all other operator contracts
-and returning malicious values.
-While already existing operations should finish normally,
-the service contract can be rendered effectively useless for new requests.
+If a malicious operator contract can get globally approved, the impacted service contract can be completely subverted by deprecating all other operator contracts and returning malicious values. While already existing operations should finish normally, the service contract can be rendered effectively useless for new requests.
 
 ===== Registry Keeper + Authorizer
 
-Approving and authorizing a malicious operator contract
-permits theft of staked funds.
+TODO: Any advice on how to avoid this? Should this be in the YP?
+Approving and authorizing a malicious operator contract permits theft of staked funds.
 
 === Limitations
 
-Each operator contract upgrade requires participation
-from both the _Registry Keeper_ and the _Operator Contract Upgrader_.
-This increases the exposure of these keys,
-leading to a higher risk of simultaneous compromise.
-
-== Future Work
-
-Service contracts could have upgradeable components
-for performing various sub-tasks.
-These components could be upgraded
-with a process similar to that of operator contracts
-except without staker involvement.
+TODO: Do we have a strategy to reduce this risk? Should this be in the YP?
+Each operator contract upgrade requires participation from both the _Registry Keeper_ and the _Operator Contract Upgrader_.
+This increases the exposure of these keys, leading to a higher risk of simultaneous compromise.
 
 === Keeps, factories and vendors
 
@@ -265,82 +214,16 @@ except without staker involvement.
 
 ===== Keep factories
 
-Keep factories are operator contracts
-that create keeps for customer applications.
-
-Like all operator contracts,
-each Keep factory recognizes one or more staking contracts
-for the purpose of determining operators' eligibility to join keeps.
-
-Each keep factory implements one or more keep interfaces.
-The factory records its interfaces
-and the addresses of the corresponding keep vendors.
+Keep factories are operator contracts that create keeps for customer applications. Like all operator contracts, each Keep factory recognizes one or more staking contracts for the purpose of determining operators' eligibility to join keeps. Each keep factory implements one or more keep interfaces. The factory records its interfaces and the addresses of the corresponding keep vendors.
 
 ===== Keeps
 
-Keeps are operator contracts created by keep factories.
-When a contract requests a keep from a factory,
-the factory creates a new contract owned by the customer contract, the keep,
-and hands it off to the customer contract.
-
-Keeps aren't individually authorized to slash stakers.
-Instead, they have to use the authorization of their creator factory.
-
-Once created, a keep cannot be upgraded in any way,
-except by closing the keep and opening another one.
+Keeps are operator contracts created by keep factories. When a contract requests a keep from a factory, the factory creates a new contract owned by the customer contract, the keep, and hands it off to the customer contract. Keeps aren't individually authorized to slash stakers. Instead, they have to use the authorization of their creator factory. Once created, a keep cannot be upgraded in any way, except by closing the keep and opening another one.
 
 ==== Service contracts
 
 ===== Keep vendors
 
-Keep vendors are service contracts
-which perform version management of keep factories.
-Keep vendors provide customers
-a single unified interface to request up-to-date keeps.
+Keep vendors are service contracts which perform version management of keep factories. Keep vendors provide customers a single unified interface to request up-to-date keeps. The upgrade process of the Keep Network is designed to eliminate the security threat posed by unilateral smart contract upgrades. However, the consent-centered upgrade process is inherently more complex to accommodate than a simple switchover to a new version. Stakers will authorize a new contract and operators will upgrade their client software on their own schedule, so the initial capacity of a new keep version will be seriously limited.
 
-The upgrade process of the Keep Network
-is designed to eliminate the security threat
-posed by unilateral smart contract upgrades.
-However, the consent-centered upgrade process
-is inherently more complex to accommodate
-than a simple switchover to a new version.
-Stakers will authorize a new contract
-and operators will upgrade their client software
-on their own schedule,
-so the initial capacity of a new keep version will be seriously limited.
-
-Instead of updating the factory address when a type of keep is upgraded,
-and explicitly accommodating for the friction in the migration,
-a customer application can go through the vendor of the corresponding keep type
-to receive a recent version of the keep.
-For most applications,
-the convenience of having the version migration
-managed automatically by the keep vendor
-is likely to be more significant than the slight security impact.
-
-== Open Questions
-
-Some threats may be mitigated by allowing or requiring
-routine rekeying of the upgrade roles
-using the upgrade roles' own keys instead of relying on governance.
-This has not been investigated yet.
-Alternatively, each role could have a backup key in cold storage,
-usable as the first-line rekeying option.
-
-The governance process for recovery from key compromise is left open.
-Involving a significant fraction of stakers (e.g. 33-50%) 
-has the attractive property that
-an adversary capable of subverting the governance process
-would necessarily be powerful enough
-to subvert the honest majority assumption in individual Keeps.
-This means that rekeying is robust against attacks
-unless the network as a whole is compromised.
-
-It is not immediately clear whether service contracts should
-completely block operator contracts disabled with the panic button,
-or only deprecate them without regard for the normal limitations.
-
-Rate-limiting the Panic Button can help prevent total DoS
-if the panic button is ever compromised,
-but also permits flooding the system with malicious operator contracts
-unless the Registry Keeper is similarly rate-limited.
+Instead of updating the factory address when a type of keep is upgraded, and explicitly accommodating for the friction in the migration, a customer application can go through the vendor of the corresponding keep type to receive a recent version of the keep. For most applications, the convenience of having the version migration managed automatically by the keep vendor is likely to be more significant than the slight security impact.
