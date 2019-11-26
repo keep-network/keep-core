@@ -113,6 +113,8 @@ library Groups {
                 return i;
             }
         }
+
+        revert("Group does not exist");
     }
 
     /**

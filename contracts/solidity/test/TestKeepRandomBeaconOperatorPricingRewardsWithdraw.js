@@ -3,6 +3,7 @@ import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 import {bls} from './helpers/data'
 import stakeDelegate from './helpers/stakeDelegate'
 import {initContracts} from './helpers/initContracts'
+import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 import mineBlocks from './helpers/mineBlocks'
 
 contract('KeepRandomBeaconOperator', function(accounts) {
@@ -77,13 +78,32 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await restoreSnapshot()
   })
 
+  it("should allow fetching index of active group", async() => {
+    let index2 = await operatorContract.getGroupIndex('0x' + group2.toString('hex'))
+    assert.equal(index2, 1)
+  })
+
+  it("should allow fetching index of stale group", async() => {
+    mineBlocks(10)
+    assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
+
+    let index1 = await operatorContract.getGroupIndex('0x' + group1.toString('hex'))
+    assert.equal(index1, 0)
+  })
+
+  it("should fail when fetching index of a non-existing group", async() => {
+    await expectThrowWithMessage(
+      operatorContract.getGroupIndex('0x1337'),
+      "Group does not exist"
+    )
+  })
+
   it("should be able to withdraw group rewards from multiple staled groups", async () => {
     // Register new group and request new entry so we can expire the previous two groups
     await operatorContract.registerNewGroup(group3)
     await serviceContract.methods['requestRelayEntry(uint256)'](bls.seed, {value: entryFeeEstimate, from: requestor})
     let beneficiary1balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary1))
 
-    // Make sure expired groups become stale
     mineBlocks(10)
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group2.toString('hex')), "Group should be stale")
@@ -106,7 +126,6 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await serviceContract.methods['requestRelayEntry(uint256)'](bls.seed, {value: entryFeeEstimate, from: requestor})
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
-    // Make sure expired groups become stale
     mineBlocks(10)
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
 
@@ -123,7 +142,6 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await operatorContract.registerNewGroup(group3)
     await serviceContract.methods['requestRelayEntry(uint256)'](bls.seed, {value: entryFeeEstimate, from: requestor})
 
-    // Make sure expired groups become stale
     mineBlocks(10)
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
 

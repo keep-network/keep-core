@@ -24,7 +24,7 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
             }
         }
 
-        return false;
+        revert("Group does not exist");
     }
 
     function setGroupSize(uint256 size) public {
