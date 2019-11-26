@@ -1,12 +1,12 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "./TokenStaking.sol";
 import "./cryptography/BLS.sol";
+import "./utils/AddressArrayUtils.sol";
 import "./libraries/operator/GroupSelection.sol";
 import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
-import "./libraries/operator/ContractReferences.sol";
-
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
@@ -23,9 +23,9 @@ interface ServiceContract {
  */
 contract KeepRandomBeaconOperator {
     using SafeMath for uint256;
+    using AddressArrayUtils for address[];
     using GroupSelection for GroupSelection.Storage;
     using Groups for Groups.Storage;
-    using ContractReferences for ContractReferences.Storage;
     using DKGResultVerification for DKGResultVerification.Storage;
 
     event OnGroupRegistered(bytes groupPubKey);
@@ -42,11 +42,15 @@ contract KeepRandomBeaconOperator {
 
     GroupSelection.Storage groupSelection;
     Groups.Storage groups;
-    ContractReferences.Storage contractReferences;
     DKGResultVerification.Storage dkgResultVerification;
 
     // Contract owner.
     address public owner;
+
+    address[] public serviceContracts;
+
+    // TODO: replace with a secure authorization protocol (addressed in RFC 11).
+    TokenStaking public stakingContract;
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
     // the Keep network. Expressed as number with 18-decimal places.
@@ -132,7 +136,7 @@ contract KeepRandomBeaconOperator {
     function genesis() public payable {
         require(numberOfGroups() == 0, "Groups exist");
         // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
-        groupSelectionStarterContract = ServiceContract(contractReferences.latestServiceContract());
+        groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
         startGroupSelection(_genesisGroupSeed, msg.value);
     }
 
@@ -149,7 +153,7 @@ contract KeepRandomBeaconOperator {
      */
     modifier onlyServiceContract() {
         require(
-            contractReferences.isServiceContract(msg.sender),
+            serviceContracts.contains(msg.sender),
             "Caller is not an authorized contract"
         );
         _;
@@ -157,9 +161,9 @@ contract KeepRandomBeaconOperator {
 
     constructor(address _serviceContract, address _stakingContract) public {
         owner = msg.sender;
-        contractReferences.owner = msg.sender;
-        contractReferences.stakingContract = _stakingContract;
-        contractReferences.addServiceContract(_serviceContract, msg.sender);
+
+        serviceContracts.push(_serviceContract);
+        stakingContract = TokenStaking(_stakingContract);
 
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
@@ -179,16 +183,16 @@ contract KeepRandomBeaconOperator {
      * @dev Adds service contract
      * @param serviceContract Address of the service contract.
      */
-    function addServiceContract(address serviceContract) public {
-        contractReferences.addServiceContract(serviceContract, msg.sender);
+    function addServiceContract(address serviceContract) public onlyOwner {
+        serviceContracts.push(serviceContract);
     }
 
     /**
      * @dev Removes service contract
      * @param serviceContract Address of the service contract.
      */
-    function removeServiceContract(address serviceContract) public {
-        contractReferences.removeServiceContract(serviceContract, msg.sender);
+    function removeServiceContract(address serviceContract) public onlyOwner {
+        serviceContracts.removeAddress(serviceContract);
     }
 
     /**
@@ -261,7 +265,7 @@ contract KeepRandomBeaconOperator {
         uint256 stakerValue,
         uint256 virtualStakerIndex
     ) public {
-        uint256 stakingWeight = contractReferences.stakeBalanceOf(msg.sender).div(minimumStake);
+        uint256 stakingWeight = stakingContract.balanceOf(msg.sender).div(minimumStake);
         groupSelection.submitTicket(ticketValue, stakerValue, virtualStakerIndex, stakingWeight);
     }
 
@@ -291,7 +295,7 @@ contract KeepRandomBeaconOperator {
      * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of
      * the protocol.
      *
-     *  @param submitterMemberIndex Claimed submitter candidate group member index
+     * @param submitterMemberIndex Claimed submitter candidate group member index
      * @param groupPubKey Generated candidate group public key
      * @param disqualified Bytes representing disqualified group members;
      * 1 at the specific index means that the member has been disqualified.
@@ -356,7 +360,7 @@ contract KeepRandomBeaconOperator {
         }
 
         uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
-        address payable magpie = contractReferences.magpieOf(msg.sender);
+        address payable magpie = stakingContract.magpieOf(msg.sender);
 
         if (reimbursementFee < dkgSubmitterReimbursementFee) {
             uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
@@ -463,7 +467,7 @@ contract KeepRandomBeaconOperator {
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        contractReferences.magpieOf(msg.sender).transfer(submitterReward);
+        stakingContract.magpieOf(msg.sender).transfer(submitterReward);
 
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
@@ -578,7 +582,7 @@ contract KeepRandomBeaconOperator {
      * @return True if staked enough to participate in the group, false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return contractReferences.stakeBalanceOf(staker) >= minimumStake;
+        return stakingContract.balanceOf(staker) >= minimumStake;
     }
 
     /**
