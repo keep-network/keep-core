@@ -23,6 +23,10 @@ The basic parameters of a token grant include:
 
 Token grants may be _revocable_ or _non-revocable_. A non-revocable grant represents an irreversible transfer of tokens that, once initiated, cannot be stopped or altered. A revocable grant represents a conditional transfer, subject to continuing consent of the grant manager. The grant manager can revoke a revocable grant at any time. If a grant is revoked, all unvested tokens are returned to an address specified by the grant manager. Vested tokens remain in the grant and are available for the grantee to withdraw.
 
+===== Vesting status
+
+All grant tokens are either _vested_ or _unvested_. The vested amount at some time represents the maximum number of tokens that may be withdrawn at that time. Grant tokens vest linearly over the grant duration; when half of the grant duration has elapsed 50% of the grant tokens will have vested, and so on. However, until the vesting cliff is reached, the number of vested tokens is fixed at zero.
+
 ==== Tattletale transfer
 
 In the Keep network, staked tokens are used as collateral to enforce correct behavior. When staker _Alice's_ misbehavior is proven on-chain,
@@ -153,37 +157,7 @@ The _usage status_ of a grant's tokens tracks these developments.
 
 ===== Vesting status
 
-All grant tokens are either _vested_ or _unvested_.
-The vested amount at some time
-represents the maximum number of tokens that may be withdrawn at that time.
-Grant tokens vest linearly over the grant duration;
-when half of the grant duration has elapsed
-50% of the grant tokens will have vested, and so on.
-However, until the vesting cliff is reached,
-the number of vested tokens is fixed at zero.
-
-The amount of vested tokens at time `time_now` is calculated as follows:
-
-[source, python]
-----
-time_elapsed = time_now - time_starting
-cliff_reached = time_now >= vesting_cliff
-
-if cliff_reached:
-    vested_fraction = time_elapsed / grant_duration
-else:
-    vested_fraction = 0
-
-vested_tokens = grant_amount * vested_fraction
-----
-
-3 months in, Bob's vesting cliff has been reached,
-so the amount of vested tokens in Bob's grant equals
-`1000 KEEP * (3 months / 12 months) = 250 KEEP`.
-Carol's 6-month vesting cliff has not been reached;
-if it had, her grant would have
-`1000 KEEP * (3 months / 24 months) = 125 KEEP`
-available for withdrawal.
+All grant tokens are either _vested_ or _unvested_. The vested amount at some time represents the maximum number of tokens that may be withdrawn at that time. Grant tokens vest linearly over the grant duration; when half of the grant duration has elapsed 50% of the grant tokens will have vested, and so on. However, until the vesting cliff is reached, the number of vested tokens is fixed at zero.
 
 ===== Usage status
 
