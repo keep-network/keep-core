@@ -647,4 +647,19 @@ contract KeepRandomBeaconOperator {
         uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
         stakingContract.magpieOf(msg.sender).transfer(accumulatedRewards);
     }
+
+    /**
+    * @dev Gets the total number of groups. Expired and terminated groups are
+    * counted as well.
+    */
+    function totalNumberOfGroups() public view returns (uint256) {
+        return groups.groups.length;
+    }
+
+    /**
+    * @dev Gets group public key.
+    */
+    function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
+        return groups.getGroupPublicKey(groupIndex);
+    }
 }

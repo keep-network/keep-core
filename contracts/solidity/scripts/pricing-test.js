@@ -1,6 +1,6 @@
 const KeepRandomBeaconServiceImplV1 = artifacts.require("KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconService = artifacts.require('KeepRandomBeaconService.sol');
-const KeepRandomBeaconOperatorGroups = artifacts.require('KeepRandomBeaconOperatorGroups.sol');
+const KeepRandomBeaconOperator = artifacts.require('KeepRandomBeaconOperator.sol');
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 const fs = require('fs');
 
@@ -10,9 +10,9 @@ const seed = web3.utils.toBN('31415926535897932384626433832795028841971693993751
 module.exports = async function() {
     const keepRandomBeaconService = await KeepRandomBeaconService.deployed();
     const contractService = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address);
-    const contractGroups = await KeepRandomBeaconOperatorGroups.deployed();
+    const contractOperator = await KeepRandomBeaconOperator.deployed();
     const callbackContract = await CallbackContract.deployed();
-    const delay = 600; //10 min in milliseconds
+    const delay = 600000; //10 min in milliseconds
     const accountsCount = 4;
     const accounts = await web3.eth.getAccounts();
     const requestor = accounts[0];
@@ -34,7 +34,7 @@ module.exports = async function() {
 
             for (let i = 0; i < accountsCount; i++) {
                 prevBalances[i] = await web3.eth.getBalance(accounts[i+1]);
-                prevRewards[i] = (await contractGroups.availableRewards(accounts[i+1])).toString();
+                prevRewards[i] = (await availableRewards(accounts[i+1], contractOperator)).toString();
             }
 
             await contractService.methods['requestRelayEntry(uint256,address,string,uint256)'](
@@ -70,7 +70,7 @@ module.exports = async function() {
                 const balance = await web3.eth.getBalance(address);
                 const balanceChange = web3.utils.toBN(balance).sub(web3.utils.toBN(prevBalances[i])).toString();
 
-                const reward = (await contractGroups.availableRewards(address)).toString();
+                const reward = (await availableRewards(address, contractOperator)).toString();
                 const rewardChange = web3.utils.toBN(reward).sub(web3.utils.toBN(prevRewards[i])).toString();
 
                 const pricingClient = new PricingClient(
@@ -100,6 +100,26 @@ module.exports = async function() {
         }
     }
 };
+
+async function availableRewards(account, contractOperator) {
+    const numberOfGroups = (await contractOperator.totalNumberOfGroups()).toNumber();
+    const groupsPublicKeys = new Array(numberOfGroups);
+
+    for (let groupIndex = 0; groupIndex < numberOfGroups; groupIndex++) {
+        groupsPublicKeys[groupIndex] = await contractOperator.getGroupPublicKey(groupIndex);
+    }
+
+    let accountRewards = web3.utils.toBN(0);
+    for (let i = 0; i < groupsPublicKeys.length; i++) {
+        if (await contractOperator.isStaleGroup(groupsPublicKeys[i])) {
+            const groupMembersCount = (await contractOperator.getGroupMemberIndices(groupsPublicKeys[i], account)).length;
+            const groupMemberReward = await contractOperator.getGroupMemberRewards(groupsPublicKeys[i]);
+            accountRewards = accountRewards.add(web3.utils.toBN(groupMembersCount).mul(groupMemberReward));
+        }
+    }
+
+    return accountRewards;
+}
 
 function PricingSummary(
     callbackGas,
