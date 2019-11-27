@@ -135,6 +135,10 @@ can thus be packed in a single storage field.
 This makes it slightly cheaper for operator contracts
 to determine the operator's eligibility for work selection.
 
+The exact types are a recommendation,
+and the implementation is free to use larger unsigned integers
+if it yields favorable performance outcomes.
+
 ==== Operator status
 
 ----
