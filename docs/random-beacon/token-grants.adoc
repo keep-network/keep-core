@@ -19,6 +19,11 @@ The basic parameters of a token grant include:
 
 - the _revocability_ of the grant: Whether the grant is revocable (_True_) or non-revocable (_False_)
 
+
+===== Revocability
+
+Token grants may be _revocable_ or _non-revocable_. A non-revocable grant represents an irreversible transfer of tokens that, once initiated, cannot be stopped or altered. A revocable grant represents a conditional transfer, subject to continuing consent of the grant manager. The grant manager can revoke a revocable grant at any time. If a grant is revoked, all unvested tokens are returned to an address specified by the grant manager. Vested tokens remain in the grant and are available for the grantee to withdraw.
+
 ===== Grant stakes
 
 When non-revocable grant tokens are staked, some relevant information is stored in a _grant stake_ entry. Each non-revocable grant maintains a list of its grant stakes.
@@ -30,10 +35,6 @@ A grant stake entry includes:
 Grant stakes can be uniquely addressed by the pair `(staking_contract, operator_address)`.
 
 A grant stake entry is erased when its corresponding stake has finished unstaking and its tokens are successfully returned to the owner.
-
-===== Revocability
-
-Token grants may be _revocable_ or _non-revocable_. A non-revocable grant represents an irreversible transfer of tokens that, once initiated, cannot be stopped or altered. A revocable grant represents a conditional transfer, subject to continuing consent of the grant manager. The grant manager can revoke a revocable grant at any time. If a grant is revoked, all unvested tokens are returned to an address specified by the grant manager. Vested tokens remain in the grant and are available for the grantee to withdraw.
 
 ===== Vesting status
 
