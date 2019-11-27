@@ -8,6 +8,18 @@ A token grant represents a gradual transfer of KEEP tokens from the grant creato
 
 In addition, some grants will be _revocable_ so that the grant manager can _revoke_ the remaining grant and the remaining unvested tokens will return to an address specified by the grant manager.
 
+==== Basic parameters
+
+The basic parameters of a token grant include:
+- the _grant manager_ : The address appointed to manage the grant. If the grant is irrevocable, the grant manager may determine the _authorized staking contracts_ the grant can be staked on. If the grant is revocable, the grant manager may revoke the grant
+
+- the _grant recipient_: The address of the party receiving the grant. The recipient may withdraw vested tokens from the grant, or stake non-revocable grant tokens
+
+- the _grant amount_: The number of tokens involved in the grant
+
+- the _revocability_ of the grant: Whether the grant is revocable (_True_) or non-revocable (_False_)
+
+
 ==== Tattletale transfer
 
 In the Keep network, staked tokens are used as collateral to enforce correct behavior. When staker _Alice's_ misbehavior is proven on-chain,
@@ -57,33 +69,6 @@ If unvested grant tokens can be staked, staking contracts are privileged towards
 TODO: How does the current protocol address unstaking and staking during the upgrade process?
 This presents a problem with upgrades. The RFC 11 upgrade process consists of Keep Org deploying a new staking contract and stakers migrating their stakes by unstaking and re-staking. 
 The token grant scheme must not prevent staking upgrades while grants are active, but the addresses of future staking contracts are unknown.
-
-==== Basic parameters
-
-The basic parameters of a token grant
-include the _grant manager_,
-the _grant recipient_,
-the _grant amount_
-and the _revocability_ of the grant.
-
-Grant manager::
-The address appointed to manage the grant.
-If the grant is irrevocable,
-the grant manager may determine the _authorized staking contracts_
-the grant can be staked on.
-If the grant is revocable,
-the grant manager may revoke the grant.
-
-Grant recipient::
-The address of the party receiving the grant.
-The recipient may withdraw vested tokens from the grant,
-or stake non-revocable grant tokens.
-
-Grant amount::
-The number of tokens involved in the grant.
-
-Revocability::
-Whether the grant is revocable (_True_) or non-revocable (_False_).
 
 ===== Revocability
 
