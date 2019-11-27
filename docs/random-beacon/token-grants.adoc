@@ -19,6 +19,9 @@ The basic parameters of a token grant include:
 
 - the _revocability_ of the grant: Whether the grant is revocable (_True_) or non-revocable (_False_)
 
+===== Revocability
+
+Token grants may be _revocable_ or _non-revocable_. A non-revocable grant represents an irreversible transfer of tokens that, once initiated, cannot be stopped or altered. A revocable grant represents a conditional transfer, subject to continuing consent of the grant manager. The grant manager can revoke a revocable grant at any time. If a grant is revoked, all unvested tokens are returned to an address specified by the grant manager. Vested tokens remain in the grant and are available for the grantee to withdraw.
 
 ==== Tattletale transfer
 
@@ -70,18 +73,6 @@ TODO: How does the current protocol address unstaking and staking during the upg
 This presents a problem with upgrades. The RFC 11 upgrade process consists of Keep Org deploying a new staking contract and stakers migrating their stakes by unstaking and re-staking. 
 The token grant scheme must not prevent staking upgrades while grants are active, but the addresses of future staking contracts are unknown.
 
-===== Revocability
-
-Token grants may be _revocable_ or _non-revocable_.
-A non-revocable grant represents an irreversible transfer of tokens
-that, once initiated, cannot be stopped or altered.
-A revocable grant represents a conditional transfer,
-subject to continuing consent of the grant manager.
-The grant manager can revoke a revocable grant at any time.
-If a grant is revoked,
-all unvested tokens are returned to an address specified by the grant manager.
-Vested tokens remain in the grant
-and are available for the grantee to withdraw.
 
 ==== Vesting schedule
 
