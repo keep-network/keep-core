@@ -7,6 +7,7 @@ import stakeAndGenesis from './helpers/stakeAndGenesis';
 contract('KeepRandomBeaconService', (accounts) => {
 
     const groupSize = 20;
+    const groupThreshold = 11;
 
     let serviceContract;
     let operatorContract
@@ -25,6 +26,7 @@ contract('KeepRandomBeaconService', (accounts) => {
         operatorContract = contracts.operatorContract;
     
         await operatorContract.setGroupSize(groupSize);
+        await operatorContract.setGroupThreshold(groupThreshold);
 
         await stakeAndGenesis(accounts, contracts);    
 
