@@ -140,8 +140,8 @@ library GroupSelection {
      */
     function isTicketValid(
         uint64 ticketValue,
-        uint256 stakerValue, //ticket requires the submitter's address
-        uint256 virtualStakerIndex, //the virtual staker index corresponding to the ticket
+        uint256 stakerValue,
+        uint256 virtualStakerIndex,
         uint256 stakingWeight,
         uint256 groupSelectionSeed
     ) internal view returns(bool) {

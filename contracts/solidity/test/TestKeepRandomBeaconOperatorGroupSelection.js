@@ -155,7 +155,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       groupSize, 
       "Selected participants list should be trimmed to groupSize length"
     );
-  });1
+  });
 
   it("should select participants by tickets in ascending order", async function() {
     let tickets = [
