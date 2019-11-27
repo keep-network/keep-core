@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 /**
  * The group selection protocol is an interactive method of selecting candidate
@@ -26,6 +27,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 library GroupSelection {
 
     using SafeMath for uint256;
+    using BytesLib for bytes;
 
     struct Storage {
         // Tickets submitted by member candidates during the current group
@@ -143,12 +145,19 @@ library GroupSelection {
         uint256 stakingWeight,
         uint256 groupSelectionSeed
     ) internal view returns(bool) {
+        uint64 ticketValueExpected;
+        bytes32 ticketHashed = keccak256(abi.encodePacked(groupSelectionSeed, stakerValue, virtualStakerIndex));
+        bytes memory ticketBytes = abi.encodePacked(ticketHashed);
+        // use first 8 bytes to compare ticket values
+        assembly {
+            ticketValueExpected := mload(add(ticketBytes, 8))
+        }
+
         bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight;
         bool isStakerValueValid = stakerValue == uint256(msg.sender);
-        bool isTicketValueValid = ticketValue == uint256(keccak256(abi.encodePacked(groupSelectionSeed, stakerValue, virtualStakerIndex)));
+        bool isTicketValueValid = ticketValue == ticketValueExpected;
 
-        return true;
-        // return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
+        return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
     }
 
     /**
