@@ -619,4 +619,32 @@ contract KeepRandomBeaconOperator {
     function getGroupMemberRewards(bytes memory groupPubKey) public view returns (uint256) {
         return groups.groupMemberRewards[groupPubKey];
     }
+
+    /**
+     * @dev Returns index of the provided group.
+     */
+    function getGroupIndex(bytes memory groupPubKey) public view returns (uint256) {
+        return groups.getGroupIndex(groupPubKey);
+    }
+
+    /**
+     * @dev Gets all indices in the provided group for a member.
+     */
+    function getGroupMemberIndices(bytes memory groupPubKey, address member) public view returns (uint256[] memory indices) {
+        return groups.getGroupMemberIndices(groupPubKey, member);
+    }
+
+    /**
+     * @dev Withdraws accumulated group member rewards for msg.sender
+     * using the provided group index and member indices. Once the
+     * accumulated reward is withdrawn from the selected group, member is
+     * removed from it. Rewards can be withdrawn only from stale group.
+     *
+     * @param groupIndex Group index.
+     * @param groupMemberIndices Array of member indices for the group member.
+     */
+    function withdrawGroupMemberRewards(uint256 groupIndex, uint256[] memory groupMemberIndices) public {
+        uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
+        stakingContract.magpieOf(msg.sender).transfer(accumulatedRewards);
+    }
 }
