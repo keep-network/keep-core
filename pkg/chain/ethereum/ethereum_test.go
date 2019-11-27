@@ -2,7 +2,9 @@ package ethereum
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
+	"math/big"
 	"reflect"
 	"testing"
 
@@ -184,6 +186,91 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 						actualMemberIndex,
 						test.signaturesMap[memberIndex],
 						actualSignature,
+					)
+				}
+			}
+		})
+	}
+}
+
+func TestPackTicket(t *testing.T) {
+	chain := &ethereumChain{}
+	asBigInt := func(number string) *big.Int {
+		bigInt, _ := new(big.Int).SetString(number, 10)
+		return bigInt
+	}
+
+	ticketValue := asBigInt("77475267169740498967948014258679832639111923451618263020575217281118610489031")
+	stakerValue := asBigInt("471938313681866282067432403796053736964016932944")
+	virtualStakerIndex := asBigInt("89")
+
+	var tests = map[string]struct {
+		ticketValue        *big.Int
+		stakerValue        *big.Int
+		virtualStakerIndex *big.Int
+		expectedTicketHex  string
+		expectedError      error
+	}{
+		"common case": {
+			ticketValue:        ticketValue,
+			stakerValue:        stakerValue,
+			virtualStakerIndex: virtualStakerIndex,
+			expectedTicketHex:  "ab49727f1f1c661a52aa72262c904281c49765499f85a774c459885000000059",
+		},
+		"virtual staker index maximum value": {
+			ticketValue:        ticketValue,
+			stakerValue:        stakerValue,
+			virtualStakerIndex: asBigInt("4294967295"),
+			expectedTicketHex:  "ab49727f1f1c661a52aa72262c904281c49765499f85a774c4598850ffffffff",
+		},
+		"ticket value invalid byte length": {
+			ticketValue:        asBigInt("72057594037927935"),
+			stakerValue:        stakerValue,
+			virtualStakerIndex: virtualStakerIndex,
+			expectedError:      fmt.Errorf("ticket value byte length is less than [8] bytes"),
+		},
+		"staker value invalid byte length": {
+			ticketValue:        ticketValue,
+			stakerValue:        asBigInt("5708990770823839524233143877797980545530986495"),
+			virtualStakerIndex: virtualStakerIndex,
+			expectedError:      fmt.Errorf("staker value byte length is different than [20] bytes"),
+		},
+		"virtual staker index invalid byte length": {
+			ticketValue:        ticketValue,
+			stakerValue:        stakerValue,
+			virtualStakerIndex: asBigInt("4294967296"),
+			expectedError:      fmt.Errorf("virtual staker index byte length is greater than [4] bytes"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			ticket := &relaychain.Ticket{
+				Value: test.ticketValue,
+				Proof: &relaychain.TicketProof{
+					StakerValue:        test.stakerValue,
+					VirtualStakerIndex: test.virtualStakerIndex,
+				},
+			}
+
+			actualTicketBytes, err := chain.packTicket(ticket)
+
+			if !reflect.DeepEqual(err, test.expectedError) {
+				t.Errorf(
+					"invalid error\nexpected: %v\nactual:   %v\n",
+					test.expectedError,
+					err,
+				)
+			}
+
+			if test.expectedError == nil {
+				expectedTicketBytes, _ := hex.DecodeString(test.expectedTicketHex)
+
+				if !bytes.Equal(expectedTicketBytes, actualTicketBytes) {
+					t.Errorf(
+						"\nexpected: %v\nactual:   %x\n",
+						test.expectedTicketHex,
+						actualTicketBytes,
 					)
 				}
 			}
