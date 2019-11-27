@@ -1,16 +1,19 @@
-import React from 'react'
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
-import Main from './components/Main';
+import React, { Fragment } from 'react'
 import Web3ContextProvider from './components/Web3ContextProvider';
+import Footer from './components/Footer';
+import Header from './components/Header';
+import Routing from './components/Routing'
 
 const App = () => (
-  <Router>
-    <Switch>
-      <Web3ContextProvider>
-        <Route component={ Main } />
-      </Web3ContextProvider>
-    </Switch>
-  </Router>
+  <Web3ContextProvider>
+     <div className='main'>
+      <Fragment>
+        <Header />
+        <Routing />
+        <Footer />
+      </Fragment>
+    </div>
+  </Web3ContextProvider>
 )
 
 export default App
