@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { Pie } from 'react-chartjs-2'
 import { Table, Col, Grid, Row, Tabs, Tab } from 'react-bootstrap'
-import BigNumber from "bignumber.js"
 import moment from 'moment'
 import { displayAmount } from '../utils'
 import Header from './Header'
@@ -263,21 +262,13 @@ class Main extends Component {
       const { web3: { token, stakingContract, grantContract, yourAddress, changeDefaultContract, utils } } = this.props;
       if(!token.options.address || !stakingContract.options.address || !grantContract.options.address)
         return
-      const tokenBalance = await token.methods.balanceOf(yourAddress).call()
+      const tokenBalance = new utils.BN(await token.methods.balanceOf(yourAddress).call());
       const stakeOwner = await stakingContract.methods.ownerOf(yourAddress).call();
       const grantBalance = await grantContract.methods.balanceOf(yourAddress).call()
       const grantStakeBalance = displayAmount(await grantContract.methods.stakeBalanceOf(yourAddress).call(), 18, 3)
-  
-      let isTokenHolder = false;
-      let isOperator = false;
-  
-      if (tokenBalance.gt(0)) {
-        isTokenHolder = true;
-      }
-  
-      if (stakeOwner !== "0x0000000000000000000000000000000000000000" && utils.toChecksumAddress(yourAddress) !== utils.toChecksumAddress(stakeOwner)) {
-        isOperator = true;
-      }
+      
+      let isTokenHolder = tokenBalance.gt(new utils.BN(0));
+      let isOperator = stakeOwner !== "0x0000000000000000000000000000000000000000" && utils.toChecksumAddress(yourAddress) !== utils.toChecksumAddress(stakeOwner)
   
       // Check if your account is an operator for a staked Token Grant.
       let stakedGrant
@@ -291,16 +282,16 @@ class Main extends Component {
       }
   
       // Calculate delegated stake balances
-      let stakeBalance = await stakingContract.methods.balanceOf(yourAddress).call()
+      let stakeBalance = new utils.BN(await stakingContract.methods.balanceOf(yourAddress).call());
       const operatorsAddresses = await stakingContract.methods.operatorsOf(yourAddress).call()
       let operators = [];
   
       for(let i = 0; i < operatorsAddresses.length; i++) {
-        let balance = await stakingContract.methods.balanceOf(operatorsAddresses[i]).call();
+        let balance = new utils.BN(await stakingContract.methods.balanceOf(operatorsAddresses[i]).call())
         if (!balance.isZero()) {
           let operator = {
             'address': operatorsAddresses[i],
-            'amount': balance
+            'amount': balance.toString()
           }
           operators.push(operator)
           stakeBalance = balance.add(stakeBalance)
@@ -316,16 +307,17 @@ class Main extends Component {
         withdrawalsByOperator = operatorsAddresses;
       }
   
-      const withdrawalDelay = (await stakingContract.methods.stakeWithdrawalDelay().call()).toNumber()
+      const withdrawalDelay = await stakingContract.methods.stakeWithdrawalDelay().call();
       let withdrawals = []
-      let withdrawalsTotal = new BigNumber(0)
+      let withdrawalsTotal = new utils.BN(0);
   
       for(let i=0; i < withdrawalsByOperator.length; i++) {
         const withdrawal = await stakingContract.methods.getWithdrawal(withdrawalsByOperator[i]).call()
         if (withdrawal[0] > 0) {
-          const withdrawalAmount = displayAmount(withdrawal[0], 18, 3)
-          withdrawalsTotal = withdrawalsTotal.plus(withdrawal[0])
-          const availableAt = moment(withdrawal[1].toNumber()*1000).add(withdrawalDelay, 'seconds')
+          const withdrawalAmount = displayAmount(withdrawal.amount, 18, 3);
+          withdrawalsTotal = withdrawalsTotal.add(new utils.BN(withdrawal.amount))
+
+          const availableAt = moment(withdrawal.createdAt * 1000).add(withdrawalDelay, 'seconds')
           let available = false
           const now = moment()
           if (availableAt.isSameOrBefore(now)) {
@@ -342,25 +334,25 @@ class Main extends Component {
         }
       }
   
-      withdrawalsTotal = displayAmount(withdrawalsTotal, 18, 3)
-  
+      withdrawalsTotal = displayAmount(withdrawalsTotal, 18, 3);
+
       // Token Grants
       const grantIndexes = await grantContract.methods.getGrants(yourAddress).call()
       let grantedToYou = []
       let grantedByYou = []
   
       for(let i=0; i < grantIndexes.length; i++) {
-        const grant = await grantContract.methods.grants(grantIndexes[i].toNumber()).call()
-        const grantedAmount = await grantContract.methods.grantedAmount(grantIndexes[i].toNumber()).call()
+        const grant = await grantContract.methods.grants(grantIndexes[i]).call()
+        const grantedAmount = await grantContract.methods.grantedAmount(grantIndexes[i]).call()
         const data = {
-          'id': grantIndexes[i].toNumber(),
+          'id': grantIndexes[i],
           'grantManager': utils.toChecksumAddress(grant[0]),
           'grantee': utils.toChecksumAddress(grant[1]),
           'revoked': grant[2],
           'revocable': grant[3],
           'amount': grant[4],
           'grantedAmount': grantedAmount,
-          'end': grant[5].add(grant[6]),
+          'end': new utils.BN(grant[5]).add(new utils.BN(grant[6])),
           'start': grant[6],
           'cliff': grant[7],
           'withdrawn': grant[8],
@@ -369,10 +361,10 @@ class Main extends Component {
           'symbol': 'KEEP',
           'formatted': {
             'amount': displayAmount(grant[4], 18, 3),
-            'end': moment((grant[5].add(grant[6])).mul(1000)).format("MMMM Do YYYY, h:mm:ss a"),
-            'start': moment((grant[6].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
-            'cliff': moment((grant[7].toNumber())* 1000).format("MMMM Do YYYY, h:mm:ss a"),
-            'withdrawn': grant[8].toNumber()
+            'end': moment(grant[6]).format("MMMM Do YYYY, h:mm:ss a"),
+            'start': moment(grant[6] * 1000).format("MMMM Do YYYY, h:mm:ss a"),
+            'cliff': moment(grant[7] * 1000).format("MMMM Do YYYY, h:mm:ss a"),
+            'withdrawn': grant[8]
           }
         }
   
@@ -384,7 +376,7 @@ class Main extends Component {
       }
   
       let selectedGrantIndex = 0
-  
+
       const chartOptions = {
         legend: {
           position: 'right'
@@ -396,7 +388,7 @@ class Main extends Component {
           'Pending unstake'
         ],
         datasets: [{
-          data: [stakeBalance, withdrawalsTotal],
+          data: [displayAmount(stakeBalance, 18, 3), withdrawalsTotal],
           backgroundColor: [
             colors.nandor,
             colors.turquoise
@@ -412,7 +404,7 @@ class Main extends Component {
           'Token grants'
         ],
         datasets: [{
-          data: [tokenBalance, stakeBalance, withdrawalsTotal, grantBalance],
+          data: [displayAmount(tokenBalance, 18, 3), displayAmount(stakeBalance, 18, 3), withdrawalsTotal, displayAmount(grantBalance, 18, 3)],
           backgroundColor: [
             colors.nandor,
             colors.turquoise,
