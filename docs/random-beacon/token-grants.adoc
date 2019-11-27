@@ -58,55 +58,6 @@ TODO: How does the current protocol address unstaking and staking during the upg
 This presents a problem with upgrades. The RFC 11 upgrade process consists of Keep Org deploying a new staking contract and stakers migrating their stakes by unstaking and re-staking. 
 The token grant scheme must not prevent staking upgrades while grants are active, but the addresses of future staking contracts are unknown.
 
-== Proposal
-
-Non-revocable token grants are staked with unlimited stake-ahead,
-by transferring liquid tokens from the grant contract
-to a staking contract authorized by the grant's manager,
-appointed by the grant creator upon grant creation.
-Revocable grants can't be staked through the grant contract;
-instead, vested liquid tokens can be withdrawn and staked normally.
-
-_Authorized staking contracts_ are assumed to enforce the invariants
-a particular grant's manager wants enforced.
-For the use of Keep Org's grants,
-this consists of a _minimum burn fraction_ of 95%:
-when a staker is slashed,
-at least 95% of the tokens are burned and at most 5% are seized.
-
-Authorized staking contracts are identified
-using a two-role authorization from RFC 11:
-the grant manager can authorize contracts from a global master list
-of staking contracts sanctioned by the governance structure.
-
-Upgrades to staking contracts are accommodated
-by providing a way for the grant contract
-to pass arbitrary instructions from the grantee to the staking contract.
-
-=== Goal
-
-Unprivileged grant contract::
-The security of the Keep network as a whole should be unaffected
-even if the grant contract were to execute arbitrary malicious code.
-
-Upgradeable staking contract::
-The grant scheme should not prevent future improvements to the staking scheme
-as defined in RFC 11.
-
-Fair grant staking::
-The recipient of a non-revocable grant
-should be able to stake with the full grant.
-A grant's vesting schedule should only determine
-the amount of liquid tokens the grantee could withdraw at a given time.
-
-Limited tattletale transfer::
-Abusing tattletale transfer to violate the rules of a token grant
-should provide little benefit at a significant cost.
-
-No illusory stake::
-The need for a reliable deterrent to misbehavior is prioritized
-over revocable grantees' opportunity to obtain staking rewards.
-
 === Implementation
 
 A token grant represents a gradual transfer of KEEP tokens
