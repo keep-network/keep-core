@@ -58,14 +58,6 @@ TODO: How does the current protocol address unstaking and staking during the upg
 This presents a problem with upgrades. The RFC 11 upgrade process consists of Keep Org deploying a new staking contract and stakers migrating their stakes by unstaking and re-staking. 
 The token grant scheme must not prevent staking upgrades while grants are active, but the addresses of future staking contracts are unknown.
 
-=== Implementation
-
-A token grant represents a gradual transfer of KEEP tokens
-from the creator of the grant to the _grantee_ (grant recipient).
-
-A token grant is characterized by its _basic parameters_
-and its _vesting schedule_.
-
 ==== Basic parameters
 
 The basic parameters of a token grant
@@ -510,7 +502,6 @@ or no staking of unvested tokens at all
 [bibliography]
 == Related Links
 
-- Flowdock Links
 - Other links
 - If you have publications, you can include them in bibliography style. If you
   start your bullet with an id in _triple_ square brackets (e.g. `+[[[AAKE]]]+`),
