@@ -1,5 +1,6 @@
 import expectThrow from './helpers/expectThrow';
 import mineBlocks from './helpers/mineBlocks';
+import packTicket from './helpers/packTicket';
 import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
 import {initContracts} from './helpers/initContracts';
@@ -80,106 +81,70 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   });
 
   it("should accept valid ticket with minimum virtual staker index", async () => {
-    await operatorContract.submitTicket(
-      tickets1[0].value, 
-      operator1, 
-      1, 
-      {from: operator1}
-    );
+    let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
+    await operatorContract.submitTicket(ticket, {from: operator1});
 
     let submittedCount = await operatorContract.submittedTicketsCount();
     assert.equal(1, submittedCount, "Ticket should be accepted");
   });
 
   it("should accept valid ticket with maximum virtual staker index", async () => {
-    await operatorContract.submitTicket(
-      tickets1[tickets1.length - 1].value,
-      operator1,
-      tickets1.length,
-      {from: operator1}
-    );
+    let ticket = packTicket(tickets1[tickets1.length - 1].valueHex, tickets1.length, operator1);
+    await operatorContract.submitTicket(ticket,{from: operator1});
 
     let submittedCount = await operatorContract.submittedTicketsCount();
     assert.equal(1, submittedCount, "Ticket should be accepted");
   });
 
   it("should reject ticket with too high virtual staker index", async () => {
+    let ticket = packTicket(tickets1[tickets1.length - 1].valueHex, tickets1.length + 1, operator1);
     await expectThrowWithMessage(
-      operatorContract.submitTicket(
-        tickets1[tickets1.length - 1].value,
-        operator1,
-        tickets1.length + 1,
-        {from: operator1}
-      ),
+      operatorContract.submitTicket(ticket, {from: operator1}),
       "Invalid ticket"
     );
   });
 
   it("should reject ticket with invalid value", async() => {
+    let ticket = packTicket('0x1337', 1, operator1);
     await expectThrowWithMessage(
-      operatorContract.submitTicket(
-        1337,
-        operator1,
-        1,
-        {from: operator1}
-      ),
+      operatorContract.submitTicket(ticket, {from: operator1}),
       "Invalid ticket"
     );
   });
 
   it("should reject ticket with not matching operator", async() => {
+    let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
     await expectThrowWithMessage(
-      operatorContract.submitTicket(
-        tickets1[0].value, 
-        operator1, 
-        1, 
-        {from: operator2}
-      ),
+      operatorContract.submitTicket(ticket, {from: operator2}),
       "Invalid ticket"
     )
   });
 
   it("should reject ticket with not matching virtual staker index", async() => {
+    let ticket = packTicket(tickets1[0].valueHex, 2, operator1);
     await expectThrowWithMessage(
-      operatorContract.submitTicket(
-        tickets1[0].value, 
-        operator1, 
-        2, 
-        {from: operator1}
-      ),
+      operatorContract.submitTicket(ticket, {from: operator1}),
       "Invalid ticket"
     )
   });
 
   it("should reject duplicate ticket", async () => {
-    await operatorContract.submitTicket(
-      tickets1[0].value, 
-      operator1, 
-      1, 
-      {from: operator1}
-    );
+    let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
+    await operatorContract.submitTicket(ticket, {from: operator1});
 
     await expectThrowWithMessage(
-      operatorContract.submitTicket(
-        tickets1[0].value, 
-        operator1, 
-        1, 
-        {from: operator1}
-      ),
+      operatorContract.submitTicket(ticket, {from: operator1}),
       "Duplicate ticket"
     );
   });
 
   it("should trim selected participants to the group size", async () => {
     let groupSize = await operatorContract.groupSize();
+    let ticket;
   
     for (let i = 0; i < groupSize*2; i++) {
-      await operatorContract.submitTicket(
-        tickets1[i].value, 
-        operator1, 
-        tickets1[i].virtualStakerIndex, 
-        {from: operator1}
-      );
+      ticket = packTicket(tickets1[i].valueHex, tickets1[i].virtualStakerIndex, operator1);
+      await operatorContract.submitTicket(ticket, {from: operator1});
     }
   
     mineBlocks(await operatorContract.ticketSubmissionTimeout());
@@ -190,7 +155,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       groupSize, 
       "Selected participants list should be trimmed to groupSize length"
     );
-  });
+  });1
 
   it("should select participants by tickets in ascending order", async function() {
     let tickets = [
@@ -202,24 +167,14 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     // Sort tickets in ascending order
     tickets = tickets.sort(function(a, b){return a.value-b.value});
 
-    await operatorContract.submitTicket(
-      tickets1[0].value, 
-      operator1, 
-      tickets1[0].virtualStakerIndex, 
-      {from: operator1}
-    );
-    await operatorContract.submitTicket(
-      tickets2[0].value, 
-      operator2, 
-      tickets2[0].virtualStakerIndex, 
-      {from: operator2}
-    );
-    await operatorContract.submitTicket(
-      tickets3[0].value, 
-      operator3, 
-      tickets3[0].virtualStakerIndex, 
-      {from: operator3}
-    );
+    let ticket1 = packTicket(tickets1[0].valueHex, tickets1[0].virtualStakerIndex, operator1);
+    await operatorContract.submitTicket(ticket1, {from: operator1});
+
+    let ticket2 = packTicket(tickets2[0].valueHex, tickets2[0].virtualStakerIndex, operator2);
+    await operatorContract.submitTicket(ticket2, {from: operator2});
+
+    let ticket3 = packTicket(tickets3[0].valueHex, tickets3[0].virtualStakerIndex, operator3);
+    await operatorContract.submitTicket(ticket3, {from: operator3});
 
     mineBlocks(await operatorContract.ticketSubmissionTimeout());
 

@@ -1,5 +1,6 @@
 import generateTickets from './generateTickets';
 import mineBlocks from './mineBlocks';
+import packTicket from './packTicket';
 import {sign} from './signature';
 import {bls} from './data';
 import stakeDelegate from './stakeDelegate';
@@ -29,6 +30,7 @@ export default async function stakeAndGenesis(accounts, contracts) {
     let operatorContract = contracts.operatorContract;
     let stakingContract = contracts.stakingContract;
     let token = contracts.token;
+    let ticket;
 
     let owner = accounts[0];
 
@@ -45,15 +47,18 @@ export default async function stakeAndGenesis(accounts, contracts) {
     let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, 3000);
 
     for(let i = 0; i < groupSize; i++) {
-      await operatorContract.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
+      ticket = packTicket(tickets1[i].valueHex, tickets1[i].virtualStakerIndex, operator1);
+      await operatorContract.submitTicket(ticket, {from: operator1});
     }
 
     for(let i = 0; i < groupSize; i++) {
-      await operatorContract.submitTicket(tickets2[i].value, operator2, tickets2[i].virtualStakerIndex, {from: operator2});
+      ticket = packTicket(tickets2[i].valueHex, tickets2[i].virtualStakerIndex, operator2);
+      await operatorContract.submitTicket(ticket, {from: operator2});
     }
 
     for(let i = 0; i < groupSize; i++) {
-      await operatorContract.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
+      ticket = packTicket(tickets3[i].valueHex, tickets3[i].virtualStakerIndex, operator3);
+      await operatorContract.submitTicket(ticket, {from: operator3});
     }
 
     let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
