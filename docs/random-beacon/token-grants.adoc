@@ -27,6 +27,31 @@ Token grants may be _revocable_ or _non-revocable_. A non-revocable grant repres
 
 All grant tokens are either _vested_ or _unvested_. The vested amount at some time represents the maximum number of tokens that may be withdrawn at that time. Grant tokens vest linearly over the grant duration; when half of the grant duration has elapsed 50% of the grant tokens will have vested, and so on. However, until the vesting cliff is reached, the number of vested tokens is fixed at zero.
 
+===== Usage status
+
+The _usage status_ of a grant's tokens consists of :
+_Available_: Tokens in the grant that aren't _withdrawn_, _staked_, or _slashed_
+are _available_ by default. Available grant tokens can be withdrawn if the vesting schedule permits, or staked if the grant is non-revocable. The number of available grant tokens is calculated by subtracting _withdrawn_, _staked_ and _slashed_ tokens from the grant amount.
+
+_Withdrawn_ means tokens that have vested
+and been withdrawn from the grant as liquid tokens.
+The number of withdrawn tokens is tracked in its own entry,
+which is updated whenever a successful withdrawal is performed.
+
+_Staked_ grant tokens are actively being used
+as collateral for staking.
+The number of staked tokens is calculated
+by summing the _staked amount_ in each individual _grant stake_ of the grant.
+
+_Slashed_ grant tokens were staked and have been lost in a penalty.
+The grant tracks the number of slashed tokens explicitly.
+When a grant stake has finished unstaking and its tokens are returned,
+the difference between the returned amount and the original stake
+is added into the slashed tokens.
+With revocable tokens, the _slashed_ status is used for revocation.
+
+All grant tokens fall within one of these categories.
+
 ==== Tattletale transfer
 
 In the Keep network, staked tokens are used as collateral to enforce correct behavior. When staker _Alice's_ misbehavior is proven on-chain,
@@ -80,45 +105,21 @@ The token grant scheme must not prevent staking upgrades while grants are active
 
 ==== Vesting schedule
 
-Tokens in a grant are locked until _vested_
-according to a linear schedule defined by
-the _starting time_,
-_grant duration_
-and the _vesting cliff_.
+Tokens in a grant are locked until _vested_ according to a linear schedule defined by the _starting time_, _grant duration_ and the _vesting cliff_. Tokens in the grant start vesting at the starting time, becoming available for withdrawal gradually over the grant duration. The vesting cliff denotes the earliest time tokens can be withdrawn from the grant. Vested tokens that aren't otherwise in use can be withdrawn at the grantee's discretion.
 
-Tokens in the grant start vesting at the starting time,
-becoming available for withdrawal gradually over the grant duration.
-The vesting cliff denotes the earliest time
-tokens can be withdrawn from the grant.
+Starting time:The time the grant begins vesting. The starting time of a grant may differ from the exact time the grant creation transaction is processed.
 
-Vested tokens that aren't otherwise in use
-can be withdrawn at the grantee's discretion.
+Grant duration: Time after starting until the grant is fully vested and all tokens may be withdrawn.
 
-Starting time::
-The time the grant begins vesting.
-The starting time of a grant
-may differ from the exact time the grant creation transaction is processed.
-
-Grant duration::
-Time after starting until the grant is fully vested
-and all tokens may be withdrawn.
-
-Vesting cliff::
-The earliest time after starting tokens can be withdrawn from the grant.
+Vesting cliff: The earliest time after starting tokens can be withdrawn from the grant.
 
 ==== Creating a token grant
 
-A token grant is created by submitting a transaction
-defining the _basic parameters_ and the _vesting schedule_,
-and transferring the _grant amount_ of tokens to the grant contract.
+A token grant is created by submitting a transaction defining the _basic parameters_ and the _vesting schedule_, and transferring the _grant amount_ of tokens to the grant contract.
 
 ===== Example
 
-Alice wants to transfer 1,000 KEEP to Bob and Carol each.
-Bob should receive his tokens over 12 months,
-and be able to start withdrawing tokens after 1 month.
-Carol's grant should be revocable,
-lasting 24 months with a 6 month vesting cliff.
+Alice wants to transfer 1,000 KEEP to Bob and Carol each. Bob should receive his tokens over 12 months, and be able to start withdrawing tokens after 1 month. Carol's grant should be revocable, lasting 24 months with a 6 month vesting cliff.
 
 ----
 Grant 1
@@ -142,53 +143,13 @@ Revocable: True
 
 ==== Grant status
 
-When a grant is created,
-all grant tokens start unvested and unstaked.
+When a grant is created, all grant tokens start unvested and unstaked. Over time, grant tokens will vest and become available for withdrawal as liquid tokens. _Vesting status_ is calculated implicitly from the vesting schedule and the current time.
 
-Over time, grant tokens will vest
-and become available for withdrawal as liquid tokens.
-_Vesting status_ is calculated implicitly
-from the vesting schedule and the current time.
-
-Grant tokens can be withdrawn once vested.
-Non-revocable grant tokens can also be staked,
-and staked tokens can be lost as punishment.
-The _usage status_ of a grant's tokens tracks these developments.
+Grant tokens can be withdrawn once vested. Non-revocable grant tokens can also be staked, and staked tokens can be lost as punishment. The _usage status_ of a grant's token tracks these developments.
 
 ===== Vesting status
 
 All grant tokens are either _vested_ or _unvested_. The vested amount at some time represents the maximum number of tokens that may be withdrawn at that time. Grant tokens vest linearly over the grant duration; when half of the grant duration has elapsed 50% of the grant tokens will have vested, and so on. However, until the vesting cliff is reached, the number of vested tokens is fixed at zero.
-
-===== Usage status
-
-The _usage status_ of a grant's tokens consists of
-_available_, _withdrawn_, _staked_, and _slashed_;
-all grant tokens fall within one of these categories.
-
-_Withdrawn_ means tokens that have vested
-and been withdrawn from the grant as liquid tokens.
-The number of withdrawn tokens is tracked in its own entry,
-which is updated whenever a successful withdrawal is performed.
-
-_Staked_ grant tokens are actively being used
-as collateral for staking.
-The number of staked tokens is calculated
-by summing the _staked amount_ in each individual _grant stake_ of the grant.
-
-_Slashed_ grant tokens were staked and have been lost in a penalty.
-The grant tracks the number of slashed tokens explicitly.
-When a grant stake has finished unstaking and its tokens are returned,
-the difference between the returned amount and the original stake
-is added into the slashed tokens.
-With revocable tokens, the _slashed_ status is used for revocation.
-
-Tokens in the grant that aren't _withdrawn_, _staked_, or _slashed_
-are _available_ by default.
-Available grant tokens can be withdrawn if the vesting schedule permits,
-or staked if the grant is non-revocable.
-The number of available grant tokens is calculated
-by subtracting _withdrawn_, _staked_ and _slashed_ tokens
-from the grant amount.
 
 ===== Grant stakes
 
