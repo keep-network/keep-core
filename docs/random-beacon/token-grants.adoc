@@ -50,20 +50,13 @@ If Alice is expecting her grant to be revoked in the near future, the value of h
 
 ==== Trusted staking contracts and upgrading them
 
-If unvested grant tokens can be staked,
-staking contracts are privileged towards grants;
-the grant contract trusts the staking contract not to behave in certain ways
-without being able to enforce it.
-If a grantee could stake their grants on arbitrary contracts,
-they could make up their own "staking contracts"
-that exploit grant staking to the maximum possible extent.
+TODO: The following appears to be contingent on being able to stake unvested grants. Did the protocol implement this ability?
 
-This presents a problem with upgrades.
-The RFC 11 upgrade process consists of Keep Org deploying a new staking contract
-and stakers migrating their stakes by unstaking and re-staking.
-The token grant scheme must not prevent staking upgrades
-while grants are active,
-but the addresses of future staking contracts are unknown.
+If unvested grant tokens can be staked, staking contracts are privileged towards grants; the grant contract trusts the staking contract not to behave in certain ways without being able to enforce it. If a grantee could stake their grants on arbitrary contracts, they could make up their own "staking contracts" that exploit grant staking to the maximum possible extent.
+
+TODO: How does the current protocol address unstaking and staking during the upgrade process?
+This presents a problem with upgrades. The RFC 11 upgrade process consists of Keep Org deploying a new staking contract and stakers migrating their stakes by unstaking and re-staking. 
+The token grant scheme must not prevent staking upgrades while grants are active, but the addresses of future staking contracts are unknown.
 
 === Previously considered schemes
 
