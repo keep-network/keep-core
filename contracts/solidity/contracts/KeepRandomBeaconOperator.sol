@@ -255,10 +255,11 @@ contract KeepRandomBeaconOperator {
 
     /**
      * @dev Submits ticket to request to participate in a new candidate group.
-     * @param ticketValue Result of a pseudorandom function with input values of
-     * random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
-     * @param stakerValue Staker-specific value. Currently uint representation of staker address.
-     * @param virtualStakerIndex Number within a range of 1 to staker's weight.
+     * @param ticket Bytes representation of a ticket that holds the following:
+     * - ticketValue Result of a pseudorandom function with input values of
+     *   random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
+     * - stakerValue Staker-specific value. Currently uint representation of staker address.
+     * - virtualStakerIndex Number within a range of 1 to staker's weight.
      */
     function submitTicket(
         bytes memory ticket
