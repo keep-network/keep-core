@@ -277,57 +277,28 @@ In either case, the _grant stake_ is removed.
 
 ===== Revoking the grant
 
-A revocable grant can be revoked at any time by the grant manager.
-Revoking a grant slashes its unvested tokens,
-transferring them to an address specified by the manager.
+A revocable grant can be revoked at any time by the grant manager. Revoking a grant slashes its unvested tokens, transferring them to an address specified by the manager.
 
-Grants are revoked by submitting a transaction
-specifying the grant to be revoked
-and the recipient address.
+Grants are revoked by submitting a transaction specifying the grant to be revoked and the recipient address.
 
-The grant contract checks that the grant exists,
-is revocable,
-and the transaction was sent by the grant manager.
+The grant contract checks that the grant exists, is revocable, and the transaction was sent by the grant manager.
 
-A revocable grant cannot be staked,
-so the slashed amount on a revocable grant shows whether it has been revoked.
-If the grant already has slashed tokens,
-it has been revoked earlier and the repeat revocation is ignored.
+A revocable grant cannot be staked, so the slashed amount on a revocable grant shows whether it has been revoked. 
+TODO: This does not seem to make sense? Is this saying that a slashed amount is an indicator of revocablility? If so how can I find a revocable grant with no slashed tokens?
 
-If the checks pass,
-the amount of unvested tokens in the grant is calculated.
-The _unvested amount_ is added to the _slashed_ grant tokens
-and transferred to the recipient address.
+If the grant already has slashed tokens, it has been revoked earlier and the repeat revocation is ignored.
+
+If the checks pass, the amount of unvested tokens in the grant is calculated. The _unvested amount_ is added to the _slashed_ grant tokens and transferred to the recipient address.
 
 === Limitations
 
+TODO: Are these still limitations? Should we include these?
 Without TATTLETALE_LOCK,
 grantees can abuse t-transfers to withdraw more than the vested amount
 although at the expense of the remaining grant
 
 Even with TATTLETALE_LOCK, revocable grants can still be overwithdrawn
 if any level of stakeahead is permitted
-
-=== Proof of Concept
-
-If you have PoC code, refer to the relevant branch and give a brief summary.
-
-== Future Work (optional)
-
-If applicable, what future evolutions could you see this approach leading to?
-Particularly if these possibilities influenced your thinking about the main
-proposal, this is important.
-
-== Open Questions (optional)
-
-Should TATTLETALE_LOCK be implemented,
-or is the loss of MINIMUM_BURN_FRACTION sufficient
-to disincentivize tattletale transfer
-
-How to deal with revocable grants:
-unlimited stakeahead as with non-revocables,
-limited stakeahead,
-or no staking of unvested tokens at all
 
 [bibliography]
 == Related Links
