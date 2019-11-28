@@ -101,10 +101,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 		}
 	}
 
-	ticketBytes, err := ec.packTicket(ticket)
-	if err != nil {
-		failPromise(err)
-	}
+	ticketBytes := ec.packTicket(ticket)
 
 	_, err = ec.keepRandomBeaconOperatorContract.SubmitTicket(
 		ticketBytes,
@@ -121,35 +118,13 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 	return submittedTicketPromise
 }
 
-func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) ([]uint8, error) {
+func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) []uint8 {
 	ticketValueByteLength := 8
-	stakerValueByteLength := 20
 	virtualStakerIndexByteLength := 4
 
 	ticketValueBytes := ticket.Value.Bytes()
 	stakerValueBytes := ticket.Proof.StakerValue.Bytes()
 	virtualStakerIndexBytes := ticket.Proof.VirtualStakerIndex.Bytes()
-
-	if len(ticketValueBytes) < ticketValueByteLength {
-		return nil, fmt.Errorf(
-			"ticket value byte length is less than [%v] bytes",
-			ticketValueByteLength,
-		)
-	}
-
-	if len(stakerValueBytes) != stakerValueByteLength {
-		return nil, fmt.Errorf(
-			"staker value byte length is different than [%v] bytes",
-			stakerValueByteLength,
-		)
-	}
-
-	if len(virtualStakerIndexBytes) > virtualStakerIndexByteLength {
-		return nil, fmt.Errorf(
-			"virtual staker index byte length is greater than [%v] bytes",
-			virtualStakerIndexByteLength,
-		)
-	}
 
 	ticketValueBytes = ticketValueBytes[:ticketValueByteLength]
 
@@ -163,7 +138,7 @@ func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) ([]uint8, error) 
 	ticketBytes = append(ticketBytes, stakerValueBytes...)
 	ticketBytes = append(ticketBytes, virtualStakerIndexBytes...)
 
-	return ticketBytes, nil
+	return ticketBytes
 }
 
 func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
