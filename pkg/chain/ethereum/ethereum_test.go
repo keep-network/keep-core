@@ -238,7 +238,7 @@ func TestPackTicket(t *testing.T) {
 
 			expectedTicketBytes, _ := hex.DecodeString(test.expectedPacked)
 
-			if !bytes.Equal(expectedTicketBytes, actualTicketBytes) {
+			if !bytes.Equal(expectedTicketBytes, actualTicketBytes[:]) {
 				t.Errorf(
 					"\nexpected: %v\nactual:   %x\n",
 					test.expectedPacked,

@@ -118,13 +118,16 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 	return submittedTicketPromise
 }
 
-func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) []uint8 {
-	var ticketBytes []uint8
+func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) [32]byte {
+	ticketBytes := []byte{}
 	ticketBytes = append(ticketBytes, ticket.Value.Bytes()[:8]...)
 	ticketBytes = append(ticketBytes, ticket.Proof.StakerValue.Bytes()[0:20]...)
 	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.VirtualStakerIndex.Bytes(), 4)[0:4]...)
 
-	return ticketBytes
+	ticketFixedArray := [32]byte{}
+	copy(ticketFixedArray[:], ticketBytes[:32])
+
+	return ticketFixedArray
 }
 
 func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
