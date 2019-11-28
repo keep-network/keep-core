@@ -4,8 +4,9 @@ import { useHistory } from 'react-router-dom'
 
 
 export const RoutingTabs = (props) => {
-    const [activeKey, setActiveKey] = useState('overview')
-    const history = useHistory();
+    const history = useHistory()
+    const [activeKey, setActiveKey] = useState(history.location.pathname.split('/')[1])
+    
     useEffect(() => {
        setActiveKey(history.location.pathname.split('/')[1])
     }, []);
@@ -23,8 +24,8 @@ export const RoutingTabs = (props) => {
             <Tabs activeKey={activeKey} onSelect={onSelect} id='dashboard-tabs' >
                 <Tab eventKey='overview' title='Overview' />
                 <Tab eventKey='stake' title='Stake' />
-                <Tab eventKey='token-grants' title='Grant Token' />
-                <Tab eventKey='create-grant-token' title='Create Token' />
+                <Tab eventKey='token-grants' title='Token Grants' />
+                <Tab eventKey='create-token-grants' title='Create Token Grant' />
             </Tabs>
             {props.children}
         </>
