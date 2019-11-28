@@ -45,7 +45,7 @@ module.exports = async function() {
                 {value: entryFeeEstimate, from: requestor}
             );
 
-            wait(delay);
+            await wait(delay);
 
             requestorAccountBalance = await web3.eth.getBalance(requestor);
 
@@ -156,10 +156,6 @@ PricingClient.prototype.toString = function pricingClientToString() {
         this.rewardChange + ', ';
 };
 
-function wait(ms){
-    var start = new Date().getTime();
-    var end = start;
-    while(end < start + ms) {
-        end = new Date().getTime();
-    }
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
