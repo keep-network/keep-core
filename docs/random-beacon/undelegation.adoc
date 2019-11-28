@@ -1,38 +1,16 @@
-:toc: macro
-
-= RFC 17: Stake delegation and undelegation
-
 :icons: font
 :numbered:
 toc::[]
 
 == Background
 
-Token owners delegate staked tokens to operators.
-Owners need a way to cease staking at their discretion,
-subject to the controls necessary
-for the intended functioning of the Keep network.
+Token owners delegate staked tokens to operators. Owners need a way to cease staking at their discretion, subject to the controls necessary for the intended functioning of the Keep network.
 
-== Proposal
-
-Undelegation can be initiated by either the operator,
-or the owner of the tokens delegated to the operator.
-After a defined waiting period is over,
-the owner can recover the previously delegated tokens.
-
-=== Goal
-
-Delegation and undelegation should be
-conceptually simple and easy to understand.
-Operator contracts should be able to determine
-an operator's eligibility for work selection
-inexpensively and safely.
+Undelegation can be initiated by either the operator, or the owner of the tokens delegated to the operator. After a defined waiting period is over,the owner can recover the previously delegated tokens.
 
 === Implementation
 
-The staking contract records two time (blockheight) fields for each operator:
-the block the operator was created,
-and the block undelegating began.
+The staking contract records two time (blockheight) fields for each operator: the block the operator was created, and the block undelegating began.
 
 Operators can be:
 
@@ -42,17 +20,9 @@ Operators can be:
 - _winding down_ and ineligible for work selection but finishing earlier work
 - _finished_ undelegation so the owner can recover their tokens
 
-Using the systemwide constant _undelegation period_,
-the operator's _status_ can be determined
-from the creation and undelegation blocks.
+Using the systemwide constant _undelegation period_, the operator's _status_ can be determined from the creation and undelegation blocks. Operators are uniquely identified by their address and operator addresses cannot be reused, even after returning the tokens to the owner.
 
-Operators are uniquely identified by their address
-and operator addresses cannot be reused,
-even after returning the tokens to the owner.
-
-To reduce the impact of transaction reordering,
-both delegating and undelegating take effect on the next block
-after the block the transaction is processed in.
+To reduce the impact of transaction reordering, both delegating and undelegating take effect on the next block after the block the transaction is processed in.
 
 ==== Parameters
 
@@ -60,42 +30,14 @@ after the block the transaction is processed in.
 
 E.g. 50,000 (roughly 6 days)
 
-To avoid certain attacks on work selection,
-recently created operators must wait for a specific period of time
-before being eligible for work selection.
-This waiting period must be greater than the highest permissible time
-between the making of a beacon entry request
-and the request being served.
-In the ideal case, multiple entries would be requested and generated
-within the initialization period.
+To avoid certain attacks on work selection, recently created operators must wait for a specific period of time before being eligible for work selection. This waiting period must be greater than the highest permissible time between the making of a beacon entry request and the request being served. In the ideal case multiple entries would be requested and generated within the initialization period.
 
-If the initialization period is insufficiently long,
-the pseudorandom work selection process can be subverted
-by creating operators whose identifiers (addresses)
-are calculated to yield advantageous outputs in the selection function.
-This can let the adversary control the majority in the new signing group.
+If the initialization period is insufficiently long, the pseudorandom work selection process can be subverted by creating operators whose identifiers (addresses) are calculated to yield advantageous outputs in the selection function. This can let the adversary control the majority in the new signing group.
 
-If the new group is in line to sign the next entry,
-the adversary could choose the group's private key
-so that the following entry also gets signed
-by a group controlled by the same adversary.
-With sufficient calculation capability,
-this can be repeated _n_ times at the cost of roughly _O(k^n^)_ calculations
-where _k_ equals the number of active groups
-divided by the number of active adversary-controlled groups.
-If another signing group is created within this time,
-it can be similarly controlled.
-This can eventually lead to the adversary controlling the entire network.
+If the new group is in line to sign the next entry, the adversary could choose the group's private key so that the following entry also gets signed by a group controlled by the same adversary. With sufficient calculation capability, this can be repeated _n_ times at the cost of roughly _O(k^n^)_ calculations where _k_ equals the number of active groups divided by the number of active adversary-controlled groups. If another signing group is created within this time,
+it can be similarly controlled. This can eventually lead to the adversary controlling the entire network.
 
-With the initialization period,
-the adversary has to create the operators in advance
-long before they become eligible for work selection.
-Thus the adversary has to be able to predict each entry
-generated during the initialization period.
-With an unreasonably powerful adversary
-that can arbitrarily frontrun 50% of all entries,
-generating _n_ entries within the initialization period
-provides _2^n^_ security against this attack.
+With the initialization period, the adversary has to create the operators in advance long before they become eligible for work selection. Thus the adversary has to be able to predict each entry generated during the initialization period. With an unreasonably powerful adversary that can arbitrarily frontrun 50% of all entries, generating _n_ entries within the initialization period provides _2^n^_ security against this attack.
 
 ===== Undelegation period
 
