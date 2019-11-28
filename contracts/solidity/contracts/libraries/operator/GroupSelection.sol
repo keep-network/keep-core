@@ -154,7 +154,7 @@ library GroupSelection {
             groupSelectionSeed,
             stakerValue,
             virtualStakerIndex
-            )));
+        )));
         // use first 8 bytes to compare ticket values
         assembly {
             ticketValueExpected := mload(add(ticketBytes, 8))
