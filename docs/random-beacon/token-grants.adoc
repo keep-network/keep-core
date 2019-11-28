@@ -54,20 +54,6 @@ When a grant is created, all grant tokens start unvested and unstaked. Over time
 
 Grant tokens can be withdrawn once vested. Non-revocable grant tokens can also be staked, and staked tokens can be lost as punishment. The _usage status_ of a grant's token tracks these developments.
 
-===== Vesting status
-
-All grant tokens are either _vested_ or _unvested_. The vested amount at some time represents the maximum number of tokens that may be withdrawn at that time. Grant tokens vest linearly over the grant duration; when half of the grant duration has elapsed 50% of the grant tokens will have vested, and so on. However, until the vesting cliff is reached, the number of vested tokens is fixed at zero.
-
-==== Vesting schedule
-
-Tokens in a grant are locked until _vested_ according to a linear schedule defined by the _starting time_, _grant duration_ and the _vesting cliff_. Tokens in the grant start vesting at the starting time, becoming available for withdrawal gradually over the grant duration. The vesting cliff denotes the earliest time tokens can be withdrawn from the grant. Vested tokens that aren't otherwise in use can be withdrawn at the grantee's discretion.
-
-Starting time:The time the grant begins vesting. The starting time of a grant may differ from the exact time the grant creation transaction is processed.
-
-Grant duration: Time after starting until the grant is fully vested and all tokens may be withdrawn.
-
-Vesting cliff: The earliest time after starting tokens can be withdrawn from the grant.
-
 ==== Grant records
 
 Each token grant is stored in the _grant contract_ as a _grant record_.
@@ -86,6 +72,21 @@ The grant record consists of the following:
   * _withdrawn tokens_
   * _slashed tokens_
   * _grant stakes_
+
+===== Vesting status
+
+All grant tokens are either _vested_ or _unvested_. The vested amount at some time represents the maximum number of tokens that may be withdrawn at that time. Grant tokens vest linearly over the grant duration; when half of the grant duration has elapsed 50% of the grant tokens will have vested, and so on. However, until the vesting cliff is reached, the number of vested tokens is fixed at zero.
+
+==== Vesting schedule
+
+Tokens in a grant are locked until _vested_ according to a linear schedule defined by the _starting time_, _grant duration_ and the _vesting cliff_. Tokens in the grant start vesting at the starting time, becoming available for withdrawal gradually over the grant duration. The vesting cliff denotes the earliest time tokens can be withdrawn from the grant. Vested tokens that aren't otherwise in use can be withdrawn at the grantee's discretion.
+
+Starting time:The time the grant begins vesting. The starting time of a grant may differ from the exact time the grant creation transaction is processed.
+
+Grant duration: Time after starting until the grant is fully vested and all tokens may be withdrawn.
+
+Vesting cliff: The earliest time after starting tokens can be withdrawn from the grant.
+
 
 ===== Revocability
 
