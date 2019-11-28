@@ -103,7 +103,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 
 	ticketBytes := ec.packTicket(ticket)
 
-	_, err = ec.keepRandomBeaconOperatorContract.SubmitTicket(
+	_, err := ec.keepRandomBeaconOperatorContract.SubmitTicket(
 		ticketBytes,
 		options.TransactionOptions{
 			GasLimit: 250000,
