@@ -202,25 +202,25 @@ func TestPackTicket(t *testing.T) {
 
 	ticketValue := toBigInt("77475267169740498967948014258679832639111923451618263020575217281118610489031")
 	stakerValue := toBigInt("471938313681866282067432403796053736964016932944")
-	virtualStakerIndex := toBigInt("89")
+	virtualStakerIndex := toBigInt("1")
 
 	var tests = map[string]struct {
 		ticketValue        *big.Int
 		stakerValue        *big.Int
 		virtualStakerIndex *big.Int
-		expectedTicketHex  string
+		expectedPacked     string
 	}{
-		"common case": {
+		"virtual staker index minimum value": {
 			ticketValue:        ticketValue,
 			stakerValue:        stakerValue,
 			virtualStakerIndex: virtualStakerIndex,
-			expectedTicketHex:  "ab49727f1f1c661a52aa72262c904281c49765499f85a774c459885000000059",
+			expectedPacked:     "ab49727f1f1c661a52aa72262c904281c49765499f85a774c459885000000001",
 		},
 		"virtual staker index maximum value": {
 			ticketValue:        ticketValue,
 			stakerValue:        stakerValue,
 			virtualStakerIndex: toBigInt("4294967295"),
-			expectedTicketHex:  "ab49727f1f1c661a52aa72262c904281c49765499f85a774c4598850ffffffff",
+			expectedPacked:     "ab49727f1f1c661a52aa72262c904281c49765499f85a774c4598850ffffffff",
 		},
 	}
 
@@ -236,12 +236,12 @@ func TestPackTicket(t *testing.T) {
 
 			actualTicketBytes := chain.packTicket(ticket)
 
-			expectedTicketBytes, _ := hex.DecodeString(test.expectedTicketHex)
+			expectedTicketBytes, _ := hex.DecodeString(test.expectedPacked)
 
 			if !bytes.Equal(expectedTicketBytes, actualTicketBytes) {
 				t.Errorf(
 					"\nexpected: %v\nactual:   %x\n",
-					test.expectedTicketHex,
+					test.expectedPacked,
 					actualTicketBytes,
 				)
 			}
