@@ -255,29 +255,17 @@ The _grant stake_, consisting of the triplet `(staking_contract, operator, staki
 
 ===== Unstaking a grant stake
 
-At any time, the grantee can request any _grant stake_ to be unstaked.
-To unstake, the grantee specifies the _staking contract_ and _operator_
-of the _grant stake_ they wish to initiate unstaking on.
+At any time, the grantee can request any _grant stake_ to be unstaked. To unstake, the grantee specifies the _staking contract_ and _operator_ of the _grant stake_ they wish to initiate unstaking on.
 
-If the combination of _staking contract_ and _operator_
-matches an active _grant stake_ of the grantee,
-the grant contract will request the _staking contract_ to initiate unstaking.
-Otherwise, the grant contract will ignore the request.
+If the combination of _staking contract_ and _operator_ matches an active _grant stake_ of the grantee, the grant contract will request the _staking contract_ to initiate unstaking. Otherwise, the grant contract will ignore the request.
+
+TODO: Isn't there also a lock in period for certain grants?
 
 ===== Reclaiming tokens from an unstaked grant stake
 
-At any time, the grantee can request any _grant stake_ to be reclaimed.
-The grantee specifies the _staking contract_ and _operator_
-of the relevant _grant stake_.
+At any time, the grantee can request any _grant stake_ to be reclaimed. The grantee specifies the _staking contract_ and _operator_ of the relevant _grant stake_. If the grantee has a matching _grant stake_, the grant contract will request the _staking contract_ to return unstaked tokens. Otherwise, the grant contract will ignore the request.
 
-If the grantee has a matching _grant stake_,
-the grant contract will request the _staking contract_
-to return unstaked tokens.
-Otherwise, the grant contract will ignore the request.
-
-If reclaiming the tokens fails,
-the grant contract will assume the stake had not finished unstaking
-and will not modify the _grant stake_ information.
+If reclaiming the tokens fails, the grant contract will assume the stake had not finished unstaking and will not modify the _grant stake_ information.
 
 If reclaiming the tokens succeeds,
 the grant contract will note the _returned amount_.
