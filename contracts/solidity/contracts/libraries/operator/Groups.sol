@@ -368,6 +368,17 @@ library Groups {
     }
 
     /**
+     * @dev Returns addresses of all the members in the provided group.
+     */
+    function membersOf(
+        Storage storage self,
+        uint256 groupIndex
+    ) public view returns (address[] memory members) {
+        bytes memory groupPubKey = self.groups[groupIndex].groupPubKey;
+        return self.groupMembers[groupPubKey];
+    }
+
+    /**
      * @dev Reports unauthorized signing for the provided group. Must provide
      * a valid signature of the group address as a message. Successful signature
      * verification means the private key has been leaked and all group members
