@@ -43,9 +43,7 @@ With the initialization period, the adversary has to create the operators in adv
 
 E.g. 800,000 (roughly 3 months)
 
-The staking contract guarantees that an undelegated operator's stakes
-will stay locked for a number of blocks after undelegation,
-and thus available as collateral for any work the operator is engaged in.
+The staking contract guarantees that an undelegated operator's stakes will stay locked for a number of blocks after undelegation, and thus available as collateral for any work the operator is engaged in.
 
 ==== Stored information
 
@@ -62,24 +60,11 @@ struct Operator {
 }
 ----
 
-Each operator stores the addresses of its owner, beneficiary and authorizer,
-the amount of tokens delegated to the operator,
-the block it was created at,
-and the block it was undelegated at if applicable.
+Each operator stores the addresses of its owner, beneficiary and authorizer, the amount of tokens delegated to the operator, the block it was created at, and the block it was undelegated at if applicable.
 
-Ethereum produces a block roughly every 10 seconds,
-or around 3 million blocks a year (~2^22^).
-Thus, `uint64` should be more than sufficient for blockheights.
-With 18 decimals (2^60^) and 1 billion tokens in circulation (2^30^),
-any applicable amount of KEEP tokens can be stored safely in a `uint128`.
-The staked amount and creation/undelegation blocks
-can thus be packed in a single storage field.
-This makes it slightly cheaper for operator contracts
-to determine the operator's eligibility for work selection.
+Ethereum produces a block roughly every 10 seconds, or around 3 million blocks a year (~2^22^). Thus, `uint64` should be more than sufficient for blockheights. With 18 decimals (2^60^) and 1 billion tokens in circulation (2^30^), any applicable amount of KEEP tokens can be stored safely in a `uint128`. The staked amount and creation/undelegation blocks can thus be packed in a single storage field. This makes it slightly cheaper for operator contracts to determine the operator's eligibility for work selection.
 
-The exact types are a recommendation,
-and the implementation is free to use larger unsigned integers
-if it yields favorable performance outcomes.
+The exact types are a recommendation, and the implementation is free to use larger unsigned integers if it yields favorable performance outcomes.
 
 ==== Operator status
 
@@ -89,8 +74,7 @@ enum Status { NonExistent, NotReady, Active, WindingDown, Finished }
 operatorStatus(address operator) -> Status
 ----
 
-An operator's status determines what actions are available
-for the operator and the owner the delegated tokens.
+An operator's status determines what actions are available for the operator and the owner the delegated tokens.
 
 ===== Non-existent
 
@@ -100,46 +84,31 @@ The operator doesn't exist.
 
 ===== Not ready
 
-The operator has been created in the same block the query was performed in.
-The operator is ineligible for work selection.
+The operator has been created in the same block the query was performed in. The operator is ineligible for work selection.
 
-An operator is `NotReady`
-if the current block is equal or less than
-the creation block plus the initialization period.
+An operator is `NotReady` if the current block is equal or less than the creation block plus the initialization period.
 
 `block.number =< operator.createdAt + initializationPeriod`
 
 ===== Active
 
-The owner has delegated staked tokens to the operator,
-and the operator is eligible for work selection.
+The owner has delegated staked tokens to the operator, and the operator is eligible for work selection.
 
-An operator is `Active`
-if the current block is greater than
-the creation block plus initialization period,
-and the undelegation block is either 0 or equal or greater than the current block.
+An operator is `Active` if the current block is greater than the creation block plus initialization period, and the undelegation block is either 0 or equal or greater than the current block.
 
 `block.number > operator.createdAt + initializationPeriod && (block.number =< operator.undelegatedAt || operator.undelegatedAt == 0)`
 
 ===== Winding down
 
-The operator has been undelegated and is not eligible for work selection,
-and the operator is finishing any work they were selected for earlier.
-The operator's backing tokens continue to be locked as collateral.
+The operator has been undelegated and is not eligible for work selection, and the operator is finishing any work they were selected for earlier. The operator's backing tokens continue to be locked as collateral.
 
-An operator is `WindingDown`
-if the current block is greater than the undelegation block,
-but at most the undelegation block plus the undelegation period.
+An operator is `WindingDown` if the current block is greater than the undelegation block, but at most the undelegation block plus the undelegation period.
 
 `operator.undelegatedAt < block.number =< (operator.undelegatedAt + undelegationPeriod)` 
 
 ===== Finished
 
-Undelegating the operator has finished.
-The backing tokens are unlocked and can be returned to the owner.
-
-An operator is `Finished` if the current block is greater than
-the undelegation block plus the undelegation period.
+Undelegating the operator has finished. The backing tokens are unlocked and can be returned to the owner. An operator is `Finished` if the current block is greater than the undelegation block plus the undelegation period.
 
 `block.number > operator.undelegatedAt + undelegationPeriod`
 
@@ -147,50 +116,15 @@ the undelegation block plus the undelegation period.
 
 `eligibleStake(address operator, uint block) -> uint`
 
-Operators are eligible for work selection
-based on their status in the block the work selection started in.
-In some situations an operator's status may have changed
-after work selection started,
-but before the operator contract queries it.
-For these cases the staking contract must provide a way to determine
-the operator's eligibility for work selection that started in an earlier block.
+Operators are eligible for work selection based on their status in the block the work selection started in. In some situations an operator's status may have changed
+after work selection started, but before the operator contract queries it. For these cases the staking contract must provide a way to determine the operator's eligibility for work selection that started in an earlier block.
 
-It is the responsibility of each operator contract
-to query operator eligibility with the correct block number.
-Failure to use the correct block leads to minor manipulation opportunities.
-For example, querying an operator's eligibility
-on the current block when they submit a ticket
-means that an ineligible operator whose initialization period is almost over
-could wait to submit their ticket
-until they become eligible for work selection.
+It is the responsibility of each operator contract to query operator eligibility with the correct block number. Failure to use the correct block leads to minor manipulation opportunities. For example, querying an operator's eligibility
+on the current block when they submit a ticket means that an ineligible operator whose initialization period is almost over could wait to submit their ticket until they become eligible for work selection.
 
-To make determining an operator's eligibility for work selection
-simpler and cheaper,
-the staking contract must provide the `eligibleStake()` function
-which returns the number of KEEP tokens available for use as collateral.
+To make determining an operator's eligibility for work selection simpler and cheaper, the staking contract must provide the `eligibleStake()` function which returns the number of KEEP tokens available for use as collateral.
 
-When calling `eligibleStake()`,
-the staking contract assumes `msg.sender` is an operator contract.
-`eligibleStake()` does not return meaningful results
-when called by an address that doesn't correspond to an operator contract.
-If the `operator` is ineligible for work selection on `msg.sender`,
-`eligibleStake()` returns `0`.
-Otherwise `eligibleStake()` returns `operator.stakedAmount`.
-
-----
-operatorExists = operators[operator] != nil
-
-senderAuthorized = authorized[operator.authorizer][msg.sender] == True
-
-operatorReady = block > operator.createdAt + initializationPeriod
-
-notUndelegated = block =< operator.undelegatedAt || operator.undelegatedAt == 0
-
-if operatorExists && senderAuthorized && operatorReady && notUndelegated:
-  return operator.stakedAmount
-else:
-  return 0
-----
+When calling `eligibleStake()`, the staking contract assumes `msg.sender` is an operator contract. `eligibleStake()` does not return meaningful results when called by an address that doesn't correspond to an operator contract. If the `operator` is ineligible for work selection on `msg.sender`, `eligibleStake()` returns `0`. Otherwise `eligibleStake()` returns `operator.stakedAmount`.
 
 ==== Actions
 
@@ -198,12 +132,7 @@ else:
 
 `stake(uint amount, address operator, address beneficiary, address authorizer)`
 
-Staking tokens delegates them to the operator,
-who can then use them as collateral for performing work.
-Staking is performed by the owner of the tokens,
-who must have authorized the staking contract
-to transfer `amount` KEEP to itself
-(e.g. via `approveAndCall()`).
+Staking tokens delegates them to the operator, who can then use them as collateral for performing work. Staking is performed by the owner of the tokens, who must have authorized the staking contract to transfer `amount` KEEP to itself (e.g. via `approveAndCall()`).
 
 `token.allowance(msg.sender, stakingContract) >= amount`
 
@@ -211,36 +140,19 @@ The nominated operator must not already exist.
 
 `operators[operator] == nil`
 
-The staking contract transfers `amount` KEEP from `msg.sender` to itself,
-and creates a stake delegation relationship,
-with the operator becoming `Active` in the next block.
-
-----
-operators[operator] = Operator {
-  stakedAmount = amount;
-  createdAt = block.number;
-  undelegatedAt = 0;
-  owner = msg.sender;
-  beneficiary = beneficiary;
-  authorizer = authorizer;
-}
-----
+The staking contract transfers `amount` KEEP from `msg.sender` to itself, and creates a stake delegation relationship, with the operator becoming `Active` in the next block.
 
 ===== Cancelling staking
 
 `cancelStake(address operator)`
 
-The owner can cancel staking within the operator initialization period
-without being subjected to the token lockup for the undelegation period.
-This can be used to undo mistaken delegation to the wrong operator address.
+The owner can cancel staking within the operator initialization period without being subjected to the token lockup for the undelegation period. This can be used to undo mistaken delegation to the wrong operator address.
 
 `msg.sender == operator.owner`
 
 `block.number =< operator.createdAt + initializationPeriod`
 
-If staking is cancelled,
-the staked tokens are immediately returned to the owner,
-and the undelegation time is set to the present.
+If staking is cancelled, the staked tokens are immediately returned to the owner, and the undelegation time is set to the present.
 
 `operator.stakedAmount = 0`
 
@@ -250,9 +162,7 @@ and the undelegation time is set to the present.
 
 `undelegate(address operator)`
 
-Undelegating sets the operator to `WindingDown` status
-so that the backing tokens can later be recovered by the owner.
-Undelegating can be performed by either the owner or the operator.
+Undelegating sets the operator to `WindingDown` status so that the backing tokens can later be recovered by the owner. Undelegating can be performed by either the owner or the operator.
 
 `msg.sender == (operator || operator.owner)`
 
@@ -260,10 +170,7 @@ Undelegating can only be performed on a currently active operator.
 
 `operatorStatus(operator) == Active`
 
-The staking contract sets the undelegation block of the operator
-to equal the current block,
-making the operator ineligible for any work selection in the future.
-Work selection performed earlier in the same block shall proceed as normal.
+The staking contract sets the undelegation block of the operator to equal the current block, making the operator ineligible for any work selection in the future. Work selection performed earlier in the same block shall proceed as normal.
 
 `operator.undelegatedAt = block.number`
 
@@ -271,32 +178,27 @@ Work selection performed earlier in the same block shall proceed as normal.
 
 `recoverStake(address operator) -> uint`
 
-Recovering staked tokens transfers them back to the owner.
-Recovering tokens can only be performed by the owner,
-when the operator is finished undelegating.
+Recovering staked tokens transfers them back to the owner. Recovering tokens can only be performed by the owner, when the operator is finished undelegating.
 
 `msg.sender == operator.owner`
 
 `operatorStatus(operator) == Finished`
 
-The staking contract sets the staked amount of the operator to zero,
-and transfers the previously delegated tokens (or however much was remaining)
-back to the owner.
+The staking contract sets the staked amount of the operator to zero, and transfers the previously delegated tokens (or however much was remaining) back to the owner.
 
 `operator.stakedAmount = 0`
 
-The staking contract may additionally clean up
-the owner, beneficiary and authorizer addresses for the gas refund.
-However, the staking contract must not delete
-the creation and undelegation times,
-as this would enable reuse of the same operator address.
+The staking contract may additionally clean up the owner, beneficiary and authorizer addresses for the gas refund. However, the staking contract must not delete the creation and undelegation times, as this would enable reuse of the same operator address.
 
 === Limitations
+
+TODO: Is this still a limitation?
 
 The amount of tokens delegated to an operator cannot be changed afterwards.
 
 == Future Work
 
+TODO: were these features added?
 The definition of `Active` operators
 permits setting `undelegatedAt` to an arbitrary date in the future.
 This can be used to e.g. delegate stake to an operator in a time-limited way.
@@ -307,19 +209,8 @@ The authorization queries by `eligibleStake()` can be cached to save some gas.
 
 == Open Questions
 
+TODO: Are these still open questions?
 The operator initialization period provides an appreciable level of security
 against work selection manipulation.
 Whether other mitigations are worth implementing
 has not been thoroughly examined.
-
-////
-[bibliography]
-== Related Links
-
-- Flowdock Links
-- Other links
-- If you have publications, you can include them in bibliography style. If you
-  start your bullet with an id in _triple_ square brackets (e.g. `+[[[AAKE]]]+`),
-  you can reference it in the content body using regular cross-reference syntax
-  (e.g. `+<<AAKE>>+`).
-////
