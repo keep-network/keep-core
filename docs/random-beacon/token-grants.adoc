@@ -103,29 +103,17 @@ The _usage status_ of a grant's tokens consists of :
 _Available_: Tokens in the grant that aren't _withdrawn_, _staked_, or _slashed_
 are _available_ by default. Available grant tokens can be withdrawn if the vesting schedule permits, or staked if the grant is non-revocable. The number of available grant tokens is calculated by subtracting _withdrawn_, _staked_ and _slashed_ tokens from the grant amount.
 
-_Withdrawn_ means tokens that have vested
-and been withdrawn from the grant as liquid tokens.
-The number of withdrawn tokens is tracked in its own entry,
-which is updated whenever a successful withdrawal is performed.
+_Withdrawn_ means tokens that have vested and been withdrawn from the grant as liquid tokens. The number of withdrawn tokens is tracked in its own entry, which is updated whenever a successful withdrawal is performed.
 
-_Staked_ grant tokens are actively being used
-as collateral for staking.
-The number of staked tokens is calculated
-by summing the _staked amount_ in each individual _grant stake_ of the grant.
+_Staked_ grant tokens are actively being used as collateral for staking. The number of staked tokens is calculated by summing the _staked amount_ in each individual _grant stake_ of the grant.
 
-_Slashed_ grant tokens were staked and have been lost in a penalty.
-The grant tracks the number of slashed tokens explicitly.
-When a grant stake has finished unstaking and its tokens are returned,
-the difference between the returned amount and the original stake
-is added into the slashed tokens.
-With revocable tokens, the _slashed_ status is used for revocation.
+_Slashed_ grant tokens were staked and have been lost in a penalty. The grant tracks the number of slashed tokens explicitly. When a grant stake has finished unstaking and its tokens are returned, the difference between the returned amount and the original stake is added into the slashed tokens. With revocable tokens, the _slashed_ status is used for revocation.
 
 All grant tokens fall within one of these categories.
 
 ==== Tattletale transfer
 
-In the Keep network, staked tokens are used as collateral to enforce correct behavior. When staker _Alice's_ misbehavior is proven on-chain,
-some of her staked tokens will be _slashed_ as a punishment. 
+In the Keep network, staked tokens are used as collateral to enforce correct behavior. When staker _Alice's_ misbehavior is proven on-chain, some of her staked tokens will be _slashed_ as a punishment. 
 
 TODO: Which one of these is implemented, or how is this choice made?
 Slashing can mean either _burning_ the tokens, effectively returning their value to all other token-holders; or _seizing_ the tokens to the contract imposing the punishment so they can be redistributed according to the contract's rules.
