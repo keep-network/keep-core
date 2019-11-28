@@ -20,6 +20,63 @@ The basic parameters of a token grant include:
 - the _revocability_ of the grant: Whether the grant is revocable (_True_) or non-revocable (_False_)
 
 
+==== Creating a token grant
+
+A token grant is created by submitting a transaction defining the _basic parameters_ and the _vesting schedule_, and transferring the _grant amount_ of tokens to the grant contract.
+
+===== Example
+
+Alice wants to transfer 1,000 KEEP to Bob and Carol each. Bob should receive his tokens over 12 months, and be able to start withdrawing tokens after 1 month. Carol's grant should be revocable, lasting 24 months with a 6 month vesting cliff.
+
+----
+Grant 1
+Manager: Alice
+Recipient: Bob
+Amount: 1,000 KEEP
+Starting time: T_0
+Duration: 12 months
+Vesting cliff: 1 month
+Revocable: False
+
+Grant 2
+Manager: Alice
+Recipient: Carol
+Amount: 1,000 KEEP
+Starting time: T_0
+Duration: 24 months
+Vesting cliff: 6 months
+Revocable: True
+----
+
+==== Grant status
+
+When a grant is created, all grant tokens start unvested and unstaked. Over time, grant tokens will vest and become available for withdrawal as liquid tokens. _Vesting status_ is calculated implicitly from the vesting schedule and the current time.
+
+Grant tokens can be withdrawn once vested. Non-revocable grant tokens can also be staked, and staked tokens can be lost as punishment. The _usage status_ of a grant's token tracks these developments.
+
+===== Vesting status
+
+All grant tokens are either _vested_ or _unvested_. The vested amount at some time represents the maximum number of tokens that may be withdrawn at that time. Grant tokens vest linearly over the grant duration; when half of the grant duration has elapsed 50% of the grant tokens will have vested, and so on. However, until the vesting cliff is reached, the number of vested tokens is fixed at zero.
+
+==== Grant records
+
+Each token grant is stored in the _grant contract_ as a _grant record_.
+The grant record consists of the following:
+
+* Basic parameters:
+  * _grant manager_
+  * _grant recipient_
+  * _grant amount_
+  * _revocability_
+* Vesting schedule:
+  * _creation time_
+  * _grant duration_
+  * _vesting cliff_
+* Grant status records:
+  * _withdrawn tokens_
+  * _slashed tokens_
+  * _grant stakes_
+
 ===== Revocability
 
 Token grants may be _revocable_ or _non-revocable_. A non-revocable grant represents an irreversible transfer of tokens that, once initiated, cannot be stopped or altered. A revocable grant represents a conditional transfer, subject to continuing consent of the grant manager. The grant manager can revoke a revocable grant at any time. If a grant is revoked, all unvested tokens are returned to an address specified by the grant manager. Vested tokens remain in the grant and are available for the grantee to withdraw.
@@ -126,62 +183,6 @@ Grant duration: Time after starting until the grant is fully vested and all toke
 
 Vesting cliff: The earliest time after starting tokens can be withdrawn from the grant.
 
-==== Creating a token grant
-
-A token grant is created by submitting a transaction defining the _basic parameters_ and the _vesting schedule_, and transferring the _grant amount_ of tokens to the grant contract.
-
-===== Example
-
-Alice wants to transfer 1,000 KEEP to Bob and Carol each. Bob should receive his tokens over 12 months, and be able to start withdrawing tokens after 1 month. Carol's grant should be revocable, lasting 24 months with a 6 month vesting cliff.
-
-----
-Grant 1
-Manager: Alice
-Recipient: Bob
-Amount: 1,000 KEEP
-Starting time: T_0
-Duration: 12 months
-Vesting cliff: 1 month
-Revocable: False
-
-Grant 2
-Manager: Alice
-Recipient: Carol
-Amount: 1,000 KEEP
-Starting time: T_0
-Duration: 24 months
-Vesting cliff: 6 months
-Revocable: True
-----
-
-==== Grant status
-
-When a grant is created, all grant tokens start unvested and unstaked. Over time, grant tokens will vest and become available for withdrawal as liquid tokens. _Vesting status_ is calculated implicitly from the vesting schedule and the current time.
-
-Grant tokens can be withdrawn once vested. Non-revocable grant tokens can also be staked, and staked tokens can be lost as punishment. The _usage status_ of a grant's token tracks these developments.
-
-===== Vesting status
-
-All grant tokens are either _vested_ or _unvested_. The vested amount at some time represents the maximum number of tokens that may be withdrawn at that time. Grant tokens vest linearly over the grant duration; when half of the grant duration has elapsed 50% of the grant tokens will have vested, and so on. However, until the vesting cliff is reached, the number of vested tokens is fixed at zero.
-
-==== Grant records
-
-Each token grant is stored in the _grant contract_ as a _grant record_.
-The grant record consists of the following:
-
-* Basic parameters:
-  * _grant manager_
-  * _grant recipient_
-  * _grant amount_
-  * _revocability_
-* Vesting schedule:
-  * _creation time_
-  * _grant duration_
-  * _vesting cliff_
-* Grant status records:
-  * _withdrawn tokens_
-  * _slashed tokens_
-  * _grant stakes_
 
 ==== Staking token grants
 
