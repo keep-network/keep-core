@@ -87,7 +87,6 @@ Grant duration: Time after starting until the grant is fully vested and all toke
 
 Vesting cliff: The earliest time after starting tokens can be withdrawn from the grant.
 
-
 ===== Revocability
 
 Token grants may be _revocable_ or _non-revocable_. A non-revocable grant represents an irreversible transfer of tokens that, once initiated, cannot be stopped or altered. A revocable grant represents a conditional transfer, subject to continuing consent of the grant manager. The grant manager can revoke a revocable grant at any time. If a grant is revoked, all unvested tokens are returned to an address specified by the grant manager. Vested tokens remain in the grant and are available for the grantee to withdraw.
@@ -173,51 +172,23 @@ The token grant scheme must not prevent staking upgrades while grants are active
 
 ==== Staking token grants
 
-Non-revocable token grants are staked
-by instructing the grant contract to stake them
-with an _operator_, _beneficiary_ and _authorizer_ appointed by the _grantee_.
-The grant contract acts as the _owner_ of the stake.
-
-Both vested and unvested tokens can be staked
-and the rewards collected by the grantee.
+Non-revocable token grants are staked by instructing the grant contract to stake them with an _operator_, _beneficiary_ and _authorizer_ appointed by the _grantee_. The grant contract acts as the _owner_ of the stake. Both vested and unvested tokens can be staked and the rewards collected by the grantee.
 
 ==== Authorized staking contracts
 
-In the _authorized staking contracts_ model,
-grants can be staked in any staking contract
-that has been approved by the _grant authorizer_.
-The _grant authorizer_ is expected to audit new staking contracts
-and verify that they enforce the desired invariants adequately,
-before approving them for staking grants.
+TODO: What is the "authorized staking contracts model" is this a separate model referenced elsewhere or known generally?
+In the _authorized staking contracts_ model, grants can be staked in any staking contract that has been approved by the _grant authorizer_. The _grant authorizer_ is expected to audit new staking contracts and verify that they enforce the desired invariants adequately, before approving them for staking grants.
 
-When a staking contract has been approved,
-the grant contract will trust it to enforce the staking invariants
-and any grantee can direct the grant contract
-to stake some or all of their _available tokens_
-(not already staked or withdrawn) in the grant.
-The grant contract will then transfer the specified amount of tokens
-to the staking contract,
-along with all other necessary information.
-The stake is recorded in the grant contract,
-and the staked amount subtracted from the _available tokens_ in the grant.
+TODO: Define grant authorizer. One of the options below?
 
-The grant contract takes the role of the _owner_ in the staking contract,
-while the _operator_, _beneficiary_ and _authorizer_
-are defined by the _grantee_.
-Any rewards or punishments to the staker are applied in the staking contract,
-without involving the grant contract in any way.
+When a staking contract has been approved, the grant contract will trust it to enforce the staking invariants and any grantee can direct the grant contract to stake some or all of their _available tokens_ (not already staked or withdrawn) in the grant. The grant contract will then transfer the specified amount of tokens to the staking contract, along with all other necessary information. The stake is recorded in the grant contract, and the staked amount subtracted from the _available tokens_ in the grant.
 
-When the grantee wishes to unstake,
-they direct the grant contract
-to unstake and reclaim the remaining tokens.
-Unstaking and reclaiming tokens
-terminates the staker relationship between the _owner_ and _operator_,
-and all remaining stake is returned to the _owner_.
-Therefore, if the _returned amount_ is less than the original _staked amount_,
-the difference has been slashed in punishment
-and is recorded in the grant contract as such.
-Redelegating grant stakes is not supported.
+The grant contract takes the role of the _owner_ in the staking contract, while the _operator_, _beneficiary_ and _authorizer_ are defined by the _grantee_. Any rewards or punishments to the staker are applied in the staking contract, without involving the grant contract in any way.
 
+When the grantee wishes to unstake, they direct the grant contract to unstake and reclaim the remaining tokens. Unstaking and reclaiming tokens terminates the staker relationship between the _owner_ and _operator_, and all remaining stake is returned to the _owner_. Therefore, if the _returned amount_ is less than the original _staked amount_, the difference has been slashed in punishment and is recorded in the grant contract as such. Redelegating grant stakes is not supported.
+
+
+TODO: Which option was selected for the current implementation?
 ===== Option A: registry master as grant authorizer
 
 In option A,
@@ -262,46 +233,25 @@ staking contracts must be _sanctioned_ to be authorized.
 
 ===== Withdrawing tokens
 
-_Vested_ tokens that haven't already been _withdrawn_
-can be withdrawn at the discretion of the grantee, if tokens are available.
-The amount of tokens that can be withdrawn at a point in time
-equals `min(available, (vested - withdrawn))`.
+_Vested_ tokens that haven't already been _withdrawn_ can be withdrawn at the discretion of the grantee, if tokens are available. (TODO: What would make these tokens unavailable?)
+The amount of tokens that can be withdrawn at a point in time equals `min(available, (vested - withdrawn))`.
 
-To withdraw, the _grantee_ requests a withdrawal
-and specifies a _withdrawal amount_.
+To withdraw, the _grantee_ requests a withdrawal and specifies a _withdrawal amount_.
 
-If the _withdrawal amount_ is equal or less than
-the _maximum withdrawal_ at the time,
-the grant contract will add _withdrawal amount_ to the _withdrawn_ tokens
-and send the grantee _withdrawal amount_ tokens.
+If the _withdrawal amount_ is equal or less than the _maximum withdrawal_ at the time, the grant contract will add _withdrawal amount_ to the _withdrawn_ tokens and send the grantee _withdrawal amount_ tokens.
 
-If the _withdrawal amount_ exceeds the _maximum withdrawal_,
-the withdrawal will fail.
+If the _withdrawal amount_ exceeds the _maximum withdrawal_, the withdrawal will fail.
 
 ===== Staking tokens
 
-_Available_ tokens can be staked regardless of vesting status.
+_Available_ tokens can be staked regardless of vesting status. (TODO: Once again, what does available/unavailable mean?)
 
-To stake, the _grantee_ specifies a _staking amount_,
-the _staking contract_ to stake in,
-and the _operator_, _beneficiary_ and _authorizer_.
-The grantee must also provide a signature from the _operator_
-to operate for the _grant contract_ as the _owner_.
+To stake, the _grantee_ specifies a _staking amount_, the _staking contract_ to stake in, and the _operator_, _beneficiary_ and _authorizer_. The grantee must also provide a signature from the _operator_ to operate for the _grant contract_ as the _owner_.
 
-The _staking amount_ must be
-equal or less than the number of _available_ tokens.
-The _staking contract_ must be approved by the applicable _grant authorizer_.
-If either condition is not satisfied, the staking request will be rejected.
-If both conditions are satisfied,
-the grant contract will attempt to stake _staking amount_ tokens
-at the _staking contract_,
-using the supplied _operator_, _beneficiary_ and _authorizer_ addresses.
+The _staking amount_ must be equal or less than the number of _available_ tokens. The _staking contract_ must be approved by the applicable _grant authorizer_. If either condition is not satisfied, the staking request will be rejected. If both conditions are satisfied, the grant contract will attempt to stake _staking amount_ tokens
+at the _staking contract_, using the supplied _operator_, _beneficiary_ and _authorizer_ addresses.
 
-The _grant stake_,
-consisting of the triplet `(staking_contract, operator, staking_amount)`,
-is recorded in the grantee's _grant stakes_.
-The _staking amount_ is added to _staked_ tokens of the grant,
-reducing the _available_ tokens by the same amount.
+The _grant stake_, consisting of the triplet `(staking_contract, operator, staking_amount)`, is recorded in the grantee's _grant stakes_. The _staking amount_ is added to _staked_ tokens of the grant, reducing the _available_ tokens by the same amount.
 
 ===== Unstaking a grant stake
 
