@@ -267,15 +267,12 @@ At any time, the grantee can request any _grant stake_ to be reclaimed. The gran
 
 If reclaiming the tokens fails, the grant contract will assume the stake had not finished unstaking and will not modify the _grant stake_ information.
 
-If reclaiming the tokens succeeds,
-the grant contract will note the _returned amount_.
-If the _returned amount_ matches the original _staking amount_,
-the _returned amount_ is subtracted from _staked_ grant tokens
-and added to _available_ grant tokens.
-If the _returned amount_ is less than the original _staking amount_,
-the _difference_ is added to _slashed_ grant tokens,
-the _staking amount_ is subtracted from _staked_ grant tokens,
-and the _returned amount_ is added to _available_ grant tokens.
+If reclaiming the tokens succeeds, the grant contract will note the _returned amount_.
+
+- If the _returned amount_ matches the original _staking amount_, the _returned amount_ is subtracted from _staked_ grant tokens and added to _available_ grant tokens. 
+
+- If the _returned amount_ is less than the original _staking amount_, the _difference_ is added to _slashed_ grant tokens, the _staking amount_ is subtracted from _staked_ grant tokens, and the _returned amount_ is added to _available_ grant tokens. 
+
 In either case, the _grant stake_ is removed.
 
 ===== Revoking the grant
