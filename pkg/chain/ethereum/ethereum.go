@@ -119,12 +119,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 }
 
 func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) []uint8 {
-	virtualStakerIndexBytes := ticket.Proof.VirtualStakerIndex.Bytes()
-	paddingBytes := 4 - len(virtualStakerIndexBytes)
-	virtualStakerIndexBytes = common.LeftPadBytes(
-		virtualStakerIndexBytes,
-		paddingBytes,
-	)
+	virtualStakerIndexBytes := common.LeftPadBytes(ticket.Proof.VirtualStakerIndex.Bytes(), 4)
 
 	var ticketBytes []uint8
 	ticketBytes = append(ticketBytes, ticket.Value.Bytes()[:8]...)
