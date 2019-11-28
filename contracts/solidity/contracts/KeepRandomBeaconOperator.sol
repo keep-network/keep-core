@@ -256,26 +256,27 @@ contract KeepRandomBeaconOperator {
     /**
      * @dev Submits ticket to request to participate in a new candidate group.
      * @param ticket Bytes representation of a ticket that holds the following:
-     * - ticketValue Result of a pseudorandom function with input values of
-     *   random beacon output, staker-specific 'stakerValue' and virtualStakerIndex.
-     * - stakerValue Staker-specific value. Currently uint representation of staker address.
-     * - virtualStakerIndex Number within a range of 1 to staker's weight.
+     * - ticketValue: first 8 bytes of a result of keccak256 cryptography hash
+     *   function on the combination of the group selection seed (previous
+     *   beacon output), staker-specific value (address) and virtual staker index.
+     * - stakerValue: a staker-specific value which is the address of the staker.
+     * - virtualStakerIndex: 4-bytes number within a range of 1 to staker's weight;
+     *   has to be unique for all tickets submitted by the given staker for the
+     *   current candidate group selection.
      */
-    function submitTicket(
-        bytes memory ticket
-    ) public {
-
+    function submitTicket(bytes32 ticket) public {
         uint64 ticketValue;
         uint160 stakerValue;
         uint32 virtualStakerIndex;
 
+        bytes memory ticketBytes = abi.encodePacked(ticket);
         assembly {
             // ticket value is 8 bytes long
-            ticketValue := mload(add(ticket, 8))
+            ticketValue := mload(add(ticketBytes, 8))
             // staker value is 20 bytes long
-            stakerValue := mload(add(ticket, 28))
+            stakerValue := mload(add(ticketBytes, 28))
             // virtual staker index is 4 bytes long
-            virtualStakerIndex := mload(add(ticket, 32))
+            virtualStakerIndex := mload(add(ticketBytes, 32))
         }
 
         uint256 stakingWeight = stakingContract.balanceOf(msg.sender).div(minimumStake);

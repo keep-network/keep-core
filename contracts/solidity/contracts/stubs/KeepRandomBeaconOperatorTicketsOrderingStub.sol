@@ -44,8 +44,4 @@ contract KeepRandomBeaconOperatorTicketsOrderingStub is KeepRandomBeaconOperator
         groupSize = size;
         groupSelection.groupSize = size;
     }
-
-    function getGroupSelectionRelayEntry() public view returns (uint256) {
-        return groupSelection.seed;
-    }
 }

@@ -100,11 +100,15 @@ library GroupSelection {
 
     /**
      * @dev Submits ticket to request to participate in a new candidate group.
-     * @param ticketValue Keccak-256 hash with input values of group selection
-     * seed, staker address and virtualStakerIndex.
-     * @param stakerValue Staker's address as an integer.
-     * @param virtualStakerIndex Index of a virtual staker - number within
-     * a range of 1 to staker's weight.
+     * @param ticketValue First 8 bytes of a result of keccak256 cryptography hash
+     * function on the combination of the group selection seed (previous
+     * beacon output), staker-specific value (address) and virtual staker index.
+     * @param stakerValue Staker-specific value which is the address of the staker.
+     * @param virtualStakerIndex 4-bytes number within a range of 1 to staker's weight;
+     * has to be unique for all tickets submitted by the given staker for the
+     * current candidate group selection.
+     * @param stakingWeight Relation of the minimum stake to the candidate's
+     * stake.
      */
     function submitTicket(
         Storage storage self,
@@ -146,8 +150,11 @@ library GroupSelection {
         uint256 groupSelectionSeed
     ) internal view returns(bool) {
         uint64 ticketValueExpected;
-        bytes32 ticketHashed = keccak256(abi.encodePacked(groupSelectionSeed, stakerValue, virtualStakerIndex));
-        bytes memory ticketBytes = abi.encodePacked(ticketHashed);
+        bytes memory ticketBytes = abi.encodePacked(keccak256(abi.encodePacked(
+            groupSelectionSeed,
+            stakerValue,
+            virtualStakerIndex
+            )));
         // use first 8 bytes to compare ticket values
         assembly {
             ticketValueExpected := mload(add(ticketBytes, 8))
