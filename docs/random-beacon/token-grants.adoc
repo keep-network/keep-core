@@ -121,6 +121,67 @@ _Slashed_ grant tokens were staked and have been lost in a penalty. The grant tr
 
 All grant tokens fall within one of these categories.
 
+==== Operations on grants
+
+===== Withdrawing tokens
+
+_Vested_ tokens that haven't already been _withdrawn_ can be withdrawn at the discretion of the grantee, if tokens are available. (TODO: What would make these tokens unavailable?)
+The amount of tokens that can be withdrawn at a point in time equals `min(available, (vested - withdrawn))`.
+
+To withdraw, the _grantee_ requests a withdrawal and specifies a _withdrawal amount_.
+
+If the _withdrawal amount_ is equal or less than the _maximum withdrawal_ at the time, the grant contract will add _withdrawal amount_ to the _withdrawn_ tokens and send the grantee _withdrawal amount_ tokens.
+
+If the _withdrawal amount_ exceeds the _maximum withdrawal_, the withdrawal will fail.
+
+===== Staking tokens
+
+_Available_ tokens can be staked regardless of vesting status. (TODO: Once again, what does available/unavailable mean?)
+
+To stake, the _grantee_ specifies a _staking amount_, the _staking contract_ to stake in, and the _operator_, _beneficiary_ and _authorizer_. The grantee must also provide a signature from the _operator_ to operate for the _grant contract_ as the _owner_.
+
+The _staking amount_ must be equal or less than the number of _available_ tokens. The _staking contract_ must be approved by the applicable _grant authorizer_. If either condition is not satisfied, the staking request will be rejected. If both conditions are satisfied, the grant contract will attempt to stake _staking amount_ tokens
+at the _staking contract_, using the supplied _operator_, _beneficiary_ and _authorizer_ addresses.
+
+The _grant stake_, consisting of the triplet `(staking_contract, operator, staking_amount)`, is recorded in the grantee's _grant stakes_. The _staking amount_ is added to _staked_ tokens of the grant, reducing the _available_ tokens by the same amount.
+
+===== Unstaking a grant stake
+
+At any time, the grantee can request any _grant stake_ to be unstaked. To unstake, the grantee specifies the _staking contract_ and _operator_ of the _grant stake_ they wish to initiate unstaking on.
+
+If the combination of _staking contract_ and _operator_ matches an active _grant stake_ of the grantee, the grant contract will request the _staking contract_ to initiate unstaking. Otherwise, the grant contract will ignore the request.
+
+TODO: Isn't there also a lock in period for certain grants?
+
+===== Reclaiming tokens from an unstaked grant stake
+
+At any time, the grantee can request any _grant stake_ to be reclaimed. The grantee specifies the _staking contract_ and _operator_ of the relevant _grant stake_. If the grantee has a matching _grant stake_, the grant contract will request the _staking contract_ to return unstaked tokens. Otherwise, the grant contract will ignore the request.
+
+If reclaiming the tokens fails, the grant contract will assume the stake had not finished unstaking and will not modify the _grant stake_ information.
+
+If reclaiming the tokens succeeds, the grant contract will note the _returned amount_.
+
+- If the _returned amount_ matches the original _staking amount_, the _returned amount_ is subtracted from _staked_ grant tokens and added to _available_ grant tokens. 
+
+- If the _returned amount_ is less than the original _staking amount_, the _difference_ is added to _slashed_ grant tokens, the _staking amount_ is subtracted from _staked_ grant tokens, and the _returned amount_ is added to _available_ grant tokens. 
+
+In either case, the _grant stake_ is removed.
+
+===== Revoking the grant
+
+A revocable grant can be revoked at any time by the grant manager. Revoking a grant slashes its unvested tokens, transferring them to an address specified by the manager.
+
+Grants are revoked by submitting a transaction specifying the grant to be revoked and the recipient address.
+
+The grant contract checks that the grant exists, is revocable, and the transaction was sent by the grant manager.
+
+A revocable grant cannot be staked, so the slashed amount on a revocable grant shows whether it has been revoked. 
+TODO: This does not seem to make sense? Is this saying that a slashed amount is an indicator of revocablility? If so how can I find a revocable grant with no slashed tokens?
+
+If the grant already has slashed tokens, it has been revoked earlier and the repeat revocation is ignored.
+
+If the checks pass, the amount of unvested tokens in the grant is calculated. The _unvested amount_ is added to the _slashed_ grant tokens and transferred to the recipient address.
+
 ==== Tattletale transfer
 
 In the Keep network, staked tokens are used as collateral to enforce correct behavior. When staker _Alice's_ misbehavior is proven on-chain, some of her staked tokens will be _slashed_ as a punishment. 
@@ -228,67 +289,6 @@ share the same authorized staking contracts.
 
 Like in option B,
 staking contracts must be _sanctioned_ to be authorized.
-
-==== Operations on grants
-
-===== Withdrawing tokens
-
-_Vested_ tokens that haven't already been _withdrawn_ can be withdrawn at the discretion of the grantee, if tokens are available. (TODO: What would make these tokens unavailable?)
-The amount of tokens that can be withdrawn at a point in time equals `min(available, (vested - withdrawn))`.
-
-To withdraw, the _grantee_ requests a withdrawal and specifies a _withdrawal amount_.
-
-If the _withdrawal amount_ is equal or less than the _maximum withdrawal_ at the time, the grant contract will add _withdrawal amount_ to the _withdrawn_ tokens and send the grantee _withdrawal amount_ tokens.
-
-If the _withdrawal amount_ exceeds the _maximum withdrawal_, the withdrawal will fail.
-
-===== Staking tokens
-
-_Available_ tokens can be staked regardless of vesting status. (TODO: Once again, what does available/unavailable mean?)
-
-To stake, the _grantee_ specifies a _staking amount_, the _staking contract_ to stake in, and the _operator_, _beneficiary_ and _authorizer_. The grantee must also provide a signature from the _operator_ to operate for the _grant contract_ as the _owner_.
-
-The _staking amount_ must be equal or less than the number of _available_ tokens. The _staking contract_ must be approved by the applicable _grant authorizer_. If either condition is not satisfied, the staking request will be rejected. If both conditions are satisfied, the grant contract will attempt to stake _staking amount_ tokens
-at the _staking contract_, using the supplied _operator_, _beneficiary_ and _authorizer_ addresses.
-
-The _grant stake_, consisting of the triplet `(staking_contract, operator, staking_amount)`, is recorded in the grantee's _grant stakes_. The _staking amount_ is added to _staked_ tokens of the grant, reducing the _available_ tokens by the same amount.
-
-===== Unstaking a grant stake
-
-At any time, the grantee can request any _grant stake_ to be unstaked. To unstake, the grantee specifies the _staking contract_ and _operator_ of the _grant stake_ they wish to initiate unstaking on.
-
-If the combination of _staking contract_ and _operator_ matches an active _grant stake_ of the grantee, the grant contract will request the _staking contract_ to initiate unstaking. Otherwise, the grant contract will ignore the request.
-
-TODO: Isn't there also a lock in period for certain grants?
-
-===== Reclaiming tokens from an unstaked grant stake
-
-At any time, the grantee can request any _grant stake_ to be reclaimed. The grantee specifies the _staking contract_ and _operator_ of the relevant _grant stake_. If the grantee has a matching _grant stake_, the grant contract will request the _staking contract_ to return unstaked tokens. Otherwise, the grant contract will ignore the request.
-
-If reclaiming the tokens fails, the grant contract will assume the stake had not finished unstaking and will not modify the _grant stake_ information.
-
-If reclaiming the tokens succeeds, the grant contract will note the _returned amount_.
-
-- If the _returned amount_ matches the original _staking amount_, the _returned amount_ is subtracted from _staked_ grant tokens and added to _available_ grant tokens. 
-
-- If the _returned amount_ is less than the original _staking amount_, the _difference_ is added to _slashed_ grant tokens, the _staking amount_ is subtracted from _staked_ grant tokens, and the _returned amount_ is added to _available_ grant tokens. 
-
-In either case, the _grant stake_ is removed.
-
-===== Revoking the grant
-
-A revocable grant can be revoked at any time by the grant manager. Revoking a grant slashes its unvested tokens, transferring them to an address specified by the manager.
-
-Grants are revoked by submitting a transaction specifying the grant to be revoked and the recipient address.
-
-The grant contract checks that the grant exists, is revocable, and the transaction was sent by the grant manager.
-
-A revocable grant cannot be staked, so the slashed amount on a revocable grant shows whether it has been revoked. 
-TODO: This does not seem to make sense? Is this saying that a slashed amount is an indicator of revocablility? If so how can I find a revocable grant with no slashed tokens?
-
-If the grant already has slashed tokens, it has been revoked earlier and the repeat revocation is ignored.
-
-If the checks pass, the amount of unvested tokens in the grant is calculated. The _unvested amount_ is added to the _slashed_ grant tokens and transferred to the recipient address.
 
 === Limitations
 
