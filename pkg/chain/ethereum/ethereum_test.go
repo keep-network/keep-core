@@ -202,7 +202,6 @@ func TestPackTicket(t *testing.T) {
 
 	ticketValue := toBigInt("77475267169740498967948014258679832639111923451618263020575217281118610489031")
 	stakerValue := toBigInt("471938313681866282067432403796053736964016932944")
-	virtualStakerIndex := toBigInt("1")
 
 	var tests = map[string]struct {
 		ticketValue        *big.Int
@@ -213,7 +212,7 @@ func TestPackTicket(t *testing.T) {
 		"virtual staker index minimum value": {
 			ticketValue:        ticketValue,
 			stakerValue:        stakerValue,
-			virtualStakerIndex: virtualStakerIndex,
+			virtualStakerIndex: toBigInt("1"),
 			expectedPacked:     "ab49727f1f1c661a52aa72262c904281c49765499f85a774c459885000000001",
 		},
 		"virtual staker index maximum value": {
