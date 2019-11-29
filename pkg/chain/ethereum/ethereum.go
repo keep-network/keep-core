@@ -100,10 +100,10 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 		}
 	}
 
+	ticketBytes := ec.packTicket(ticket)
+
 	_, err := ec.keepRandomBeaconOperatorContract.SubmitTicket(
-		ticket.Value,
-		ticket.Proof.StakerValue,
-		ticket.Proof.VirtualStakerIndex,
+		ticketBytes,
 		options.TransactionOptions{
 			GasLimit: 250000,
 		},
@@ -115,6 +115,18 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 	// TODO: fulfill when submitted
 
 	return submittedTicketPromise
+}
+
+func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) [32]uint8 {
+	ticketBytes := []uint8{}
+	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Value.Bytes(), 32)[:8]...)
+	ticketBytes = append(ticketBytes, ticket.Proof.StakerValue.Bytes()[0:20]...)
+	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.VirtualStakerIndex.Bytes(), 4)[0:4]...)
+
+	ticketFixedArray := [32]uint8{}
+	copy(ticketFixedArray[:], ticketBytes[:32])
+
+	return ticketFixedArray
 }
 
 func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
