@@ -621,13 +621,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Returns index of the provided group.
-     */
-    function getGroupIndex(bytes memory groupPubKey) public view returns (uint256) {
-        return groups.getGroupIndex(groupPubKey);
-    }
-
-    /**
      * @dev Gets all indices in the provided group for a member.
      */
     function getGroupMemberIndices(bytes memory groupPubKey, address member) public view returns (uint256[] memory indices) {
