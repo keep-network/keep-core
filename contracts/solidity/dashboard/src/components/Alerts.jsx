@@ -3,10 +3,8 @@ import { Web3Context } from './WithWeb3Context'
 import { ContractsDataContext } from './ContractsDataContextProvider'
 
 const Alerts = (props) => {
-    
-    const data = useContext(ContractsDataContext)
+    const { isOperator, isOperatorOfStakedTokenGrant, stakedGrant, stakeOwner } = useContext(ContractsDataContext)
     const { error } = useContext(Web3Context)
-    const { isOperator, isOperatorOfStakedTokenGrant, stakedGrant, stakeOwner } = data
 
     return (
         <>
