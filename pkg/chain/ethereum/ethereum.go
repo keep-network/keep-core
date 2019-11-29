@@ -14,11 +14,11 @@ import (
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
-	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 )
 
 var logger = log.Logger("keep-chain-ethereum")
@@ -101,11 +101,11 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 		}
 	}
 
+	ticketBytes := ec.packTicket(ticket)
+
 	_, err := ec.keepRandomBeaconOperatorContract.SubmitTicket(
-		ticket.Value,
-		ticket.Proof.StakerValue,
-		ticket.Proof.VirtualStakerIndex,
-		options.TransactionOptions {
+		ticketBytes,
+		options.TransactionOptions{
 			GasLimit: 250000,
 		},
 	)
@@ -116,6 +116,18 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 	// TODO: fulfill when submitted
 
 	return submittedTicketPromise
+}
+
+func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) [32]uint8 {
+	ticketBytes := []uint8{}
+	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Value.Bytes(), 32)[:8]...)
+	ticketBytes = append(ticketBytes, ticket.Proof.StakerValue.Bytes()[0:20]...)
+	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.VirtualStakerIndex.Bytes(), 4)[0:4]...)
+
+	ticketFixedArray := [32]uint8{}
+	copy(ticketFixedArray[:], ticketBytes[:32])
+
+	return ticketFixedArray
 }
 
 func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
