@@ -19,14 +19,14 @@ type StakerAddress []byte
 // entries.
 type RelayEntryInterface interface {
 	// SubmitRelayEntry submits an entry in the threshold relay and returns a
-	// promise to track the submission result. The promise is fulfilled with
-	// the entry as seen on-chain, or failed if there is an error submitting
-	// the entry.
-	SubmitRelayEntry(entryValue *big.Int) *async.EventEntryPromise
-	// OnSignatureSubmitted is a callback that is invoked when an on-chain
+	// promise to track the submission progress. The promise is fulfilled when
+	// the entry has been successfully submitted to the on-chain, or failed if
+	// the entry submission failed.
+	SubmitRelayEntry(entryValue *big.Int) *async.EventEntrySubmittedPromise
+	// OnEntrySubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnSignatureSubmitted(
-		func(entry *event.Entry),
+	OnEntrySubmitted(
+		func(entry *event.EntrySubmitted),
 	) (subscription.EventSubscription, error)
 	// OnSignatureRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.

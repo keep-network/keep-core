@@ -140,8 +140,8 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 
 func (ec *ethereumChain) SubmitRelayEntry(
 	entryValue *big.Int,
-) *async.EventEntryPromise {
-	relayEntryPromise := &async.EventEntryPromise{}
+) *async.EventEntrySubmittedPromise {
+	relayEntryPromise := &async.EventEntrySubmittedPromise{}
 
 	failPromise := func(err error) {
 		failErr := relayEntryPromise.Fail(err)
@@ -154,10 +154,10 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}
 
-	generatedEntry := make(chan *event.Entry)
+	generatedEntry := make(chan *event.EntrySubmitted)
 
-	subscription, err := ec.OnSignatureSubmitted(
-		func(onChainEvent *event.Entry) {
+	subscription, err := ec.OnEntrySubmitted(
+		func(onChainEvent *event.EntrySubmitted) {
 			generatedEntry <- onChainEvent
 		},
 	)
@@ -203,13 +203,12 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	return relayEntryPromise
 }
 
-func (ec *ethereumChain) OnSignatureSubmitted(
-	handle func(entry *event.Entry),
+func (ec *ethereumChain) OnEntrySubmitted(
+	handle func(entry *event.EntrySubmitted),
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchSignatureSubmitted(
-		func(value *big.Int, blockNumber uint64) {
-			handle(&event.Entry{
-				Value:       value,
+		func(blockNumber uint64) {
+			handle(&event.EntrySubmitted{
 				BlockNumber: blockNumber,
 			})
 		},

@@ -74,22 +74,21 @@ func relayRequest(c *cli.Context) error {
 
 	wait := make(chan struct{})
 
-	utility.ThresholdRelay().OnSignatureSubmitted(func(entry *event.Entry) {
-		requestMutex.Lock()
-		defer requestMutex.Unlock()
-
-		fmt.Fprintf(
-			os.Stderr,
-			"Relay entry received with value: [%v].\n",
-			entry.Value,
-		)
-
-		wait <- struct{}{}
-	})
-
 	fmt.Printf("Requesting for a new relay entry at [%s]\n", time.Now())
 
 	utility.RequestRelayEntry(seed).
+		OnSuccess(func(event *event.EntryGenerated) {
+			requestMutex.Lock()
+			defer requestMutex.Unlock()
+
+			fmt.Fprintf(
+				os.Stderr,
+				"Relay entry generated with value: [%v].\n",
+				event.Value,
+			)
+
+			wait <- struct{}{}
+		}).
 		OnFailure(func(err error) {
 			if err != nil {
 				fmt.Fprintf(

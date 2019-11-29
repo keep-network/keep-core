@@ -112,15 +112,10 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 
-	newEntryValue := big.NewInt(19)
-	expectedEntry := &event.Entry{
-		Value: newEntryValue,
-	}
+	relayEntryPromise := chainHandle.SubmitRelayEntry(big.NewInt(19))
 
-	relayEntryPromise := chainHandle.SubmitRelayEntry(newEntryValue)
-
-	done := make(chan *event.Entry)
-	relayEntryPromise.OnSuccess(func(entry *event.Entry) {
+	done := make(chan *event.EntrySubmitted)
+	relayEntryPromise.OnSuccess(func(entry *event.EntrySubmitted) {
 		done <- entry
 	}).OnFailure(func(err error) {
 		if err != nil {
@@ -129,30 +124,24 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	})
 
 	select {
-	case entry := <-done:
-		if !reflect.DeepEqual(entry, expectedEntry) {
-			t.Fatalf(
-				"Unexpected relay entry\nExpected: [%+v]\nActual:  [%+v]",
-				expectedEntry,
-				entry,
-			)
-		}
+	case <-done:
+		// expected
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())
 	}
 
 }
 
-func TestLocalOnSignatureSubmitted(t *testing.T) {
+func TestLocalOnEntrySubmitted(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 
-	eventFired := make(chan *event.Entry)
+	eventFired := make(chan *event.EntrySubmitted)
 
-	subscription, err := chainHandle.OnSignatureSubmitted(
-		func(entry *event.Entry) {
+	subscription, err := chainHandle.OnEntrySubmitted(
+		func(entry *event.EntrySubmitted) {
 			eventFired <- entry
 		},
 	)
@@ -162,37 +151,26 @@ func TestLocalOnSignatureSubmitted(t *testing.T) {
 
 	defer subscription.Unsubscribe()
 
-	newEntryValue := big.NewInt(20)
-	expectedEntry := &event.Entry{
-		Value: newEntryValue,
-	}
-
-	chainHandle.SubmitRelayEntry(newEntryValue)
+	chainHandle.SubmitRelayEntry(big.NewInt(20))
 
 	select {
-	case event := <-eventFired:
-		if !reflect.DeepEqual(event, expectedEntry) {
-			t.Fatalf(
-				"Unexpected relay entry\nExpected: [%v]\nActual:   [%v]",
-				expectedEntry,
-				event,
-			)
-		}
+	case <-eventFired:
+		// expected
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())
 	}
 }
 
-func TestLocalOnSignatureSubmittedUnsubscribed(t *testing.T) {
+func TestLocalOnEntrySubmittedUnsubscribed(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 
-	eventFired := make(chan *event.Entry)
+	eventFired := make(chan *event.EntrySubmitted)
 
-	subscription, err := chainHandle.OnSignatureSubmitted(
-		func(entry *event.Entry) {
+	subscription, err := chainHandle.OnEntrySubmitted(
+		func(entry *event.EntrySubmitted) {
 			eventFired <- entry
 		},
 	)

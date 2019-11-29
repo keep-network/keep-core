@@ -51,10 +51,10 @@ func (n *Node) MonitorRelayEntry(
 		logger.Errorf("waiter for a relay entry timeout block failed: [%v]", err)
 	}
 
-	onEntrySubmittedChannel := make(chan *event.Entry)
+	onEntrySubmittedChannel := make(chan *event.EntrySubmitted)
 
-	subscription, err := relayChain.OnSignatureSubmitted(
-		func(event *event.Entry) {
+	subscription, err := relayChain.OnEntrySubmitted(
+		func(event *event.EntrySubmitted) {
 			onEntrySubmittedChannel <- event
 		},
 	)

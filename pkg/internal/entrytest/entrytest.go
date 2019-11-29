@@ -27,18 +27,14 @@ var minimumStake = big.NewInt(20)
 
 // Result of the relay entry signing protocol execution.
 type Result struct {
-	entry          *event.Entry
+	entry          *big.Int
 	signerFailures []error
 }
 
 // EntryValue returns the value of relay entry in the result or nil if no entry
 // was produced because of signers failures.
 func (r *Result) EntryValue() *big.Int {
-	if r.entry == nil {
-		return nil
-	}
-
-	return r.entry.Value
+	return r.entry
 }
 
 // RunTest executes the full relay entry signing roundtrip test for the provided
@@ -99,9 +95,9 @@ func executeSigning(
 		return nil, err
 	}
 
-	entrySubmissionChan := make(chan *event.Entry)
-	chain.ThresholdRelay().OnSignatureSubmitted(
-		func(event *event.Entry) {
+	entrySubmissionChan := make(chan *event.EntrySubmitted)
+	chain.ThresholdRelay().OnEntrySubmitted(
+		func(event *event.EntrySubmitted) {
 			entrySubmissionChan <- event
 		},
 	)
@@ -144,14 +140,15 @@ func executeSigning(
 	}
 	wg.Wait()
 
-	// We give 5 seconds so that OnSignatureSubmitted async handler
+	// We give 5 seconds so that OnEntrySubmitted async handler
 	// is fired. If it's not, it means no entry was published to
 	// the chain.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	select {
-	case entry := <-entrySubmissionChan:
+	case <-entrySubmissionChan:
+		entry := chain.GetLastRelayEntry()
 		return &Result{
 			entry,
 			signerFailures,
