@@ -96,7 +96,7 @@ func executeSigning(
 	}
 
 	entrySubmissionChan := make(chan *event.EntrySubmitted)
-	chain.ThresholdRelay().OnEntrySubmitted(
+	chain.ThresholdRelay().OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			entrySubmissionChan <- event
 		},
@@ -140,7 +140,7 @@ func executeSigning(
 	}
 	wg.Wait()
 
-	// We give 5 seconds so that OnEntrySubmitted async handler
+	// We give 5 seconds so that OnRelayEntrySubmitted async handler
 	// is fired. If it's not, it means no entry was published to
 	// the chain.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

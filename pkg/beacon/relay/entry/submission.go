@@ -40,7 +40,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 
 	onSubmittedResultChan := make(chan uint64)
 
-	subscription, err := res.chain.OnEntrySubmitted(
+	subscription, err := res.chain.OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			onSubmittedResultChan <- event.BlockNumber
 		},

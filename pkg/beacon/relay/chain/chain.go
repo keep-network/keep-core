@@ -23,14 +23,14 @@ type RelayEntryInterface interface {
 	// the entry has been successfully submitted to the on-chain, or failed if
 	// the entry submission failed.
 	SubmitRelayEntry(entryValue *big.Int) *async.EventEntrySubmittedPromise
-	// OnEntrySubmitted is a callback that is invoked when an on-chain
+	// OnRelayEntrySubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnEntrySubmitted(
+	OnRelayEntrySubmitted(
 		func(entry *event.EntrySubmitted),
 	) (subscription.EventSubscription, error)
-	// OnSignatureRequested is a callback that is invoked when an on-chain
+	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
-	OnSignatureRequested(
+	OnRelayEntryRequested(
 		func(request *event.Request),
 	) (subscription.EventSubscription, error)
 	// ReportRelayEntryTimeout notifies the chain when a selected group which was

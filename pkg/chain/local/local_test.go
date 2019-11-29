@@ -140,7 +140,7 @@ func TestLocalOnEntrySubmitted(t *testing.T) {
 
 	eventFired := make(chan *event.EntrySubmitted)
 
-	subscription, err := chainHandle.OnEntrySubmitted(
+	subscription, err := chainHandle.OnRelayEntrySubmitted(
 		func(entry *event.EntrySubmitted) {
 			eventFired <- entry
 		},
@@ -169,7 +169,7 @@ func TestLocalOnEntrySubmittedUnsubscribed(t *testing.T) {
 
 	eventFired := make(chan *event.EntrySubmitted)
 
-	subscription, err := chainHandle.OnEntrySubmitted(
+	subscription, err := chainHandle.OnRelayEntrySubmitted(
 		func(entry *event.EntrySubmitted) {
 			eventFired <- entry
 		},

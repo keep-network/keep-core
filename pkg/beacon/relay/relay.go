@@ -53,7 +53,7 @@ func (n *Node) MonitorRelayEntry(
 
 	onEntrySubmittedChannel := make(chan *event.EntrySubmitted)
 
-	subscription, err := relayChain.OnEntrySubmitted(
+	subscription, err := relayChain.OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			onEntrySubmittedChannel <- event
 		},

@@ -34,9 +34,8 @@ contract KeepRandomBeaconOperator {
     // TODO: Add memberIndex
     event DkgResultPublishedEvent(bytes groupPubKey);
 
-    // These are the public events that are used by clients
-    event SignatureRequested(uint256 previousEntry, uint256 seed, bytes groupPublicKey);
-    event SignatureSubmitted();
+    event RelayEntryRequested(uint256 previousEntry, uint256 seed, bytes groupPublicKey);
+    event RelayEntrySubmitted();
 
     event GroupSelectionStarted(uint256 newEntry);
 
@@ -427,7 +426,7 @@ contract KeepRandomBeaconOperator {
         );
 
         bytes memory groupPubKey = groups.getGroupPublicKeyCompressed(groupIndex);
-        emit SignatureRequested(previousEntry, seed, groupPubKey);
+        emit RelayEntryRequested(previousEntry, seed, groupPubKey);
     }
 
     /**
@@ -449,7 +448,7 @@ contract KeepRandomBeaconOperator {
             "Invalid signature"
         );
 
-        emit SignatureSubmitted();
+        emit RelayEntrySubmitted();
 
         ServiceContract(signingRequest.serviceContract).entryCreated(
             signingRequest.relayRequestId,

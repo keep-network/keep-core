@@ -32,7 +32,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
 
-    // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestId);
     event RelayEntryGenerated(uint256 requestId, uint256 entry);
 
