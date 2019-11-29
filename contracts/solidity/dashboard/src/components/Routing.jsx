@@ -15,27 +15,26 @@ class Routing extends React.Component {
 
     renderRoutes = () => {
         const { isOperator, isTokenHolder } = this.props;
+        const shouldSignIn = !isOperator && !isTokenHolder
 
-        if(isOperator)
-            return <Route exact path='/overview' component={OverviewTab} />
-        else if(!isOperator && !isTokenHolder)
-            return <Redirect to='/sign-in' />
-        return (
+        return (shouldSignIn ? <Redirect to='/sign-in' /> :
             <>
                 <Route exact path='/overview' component={OverviewTab} />
-                <Route exact path='/stake' component={StakeTab} />
-                <Route exact path='/token-grants' component={TokenGrantsTab} />
-                <Route exact path='/create-token-grants' component={CreateTokenGrantsTab} />
+                {isTokenHolder &&
+                    <>
+                        <Route exact path='/stake' component={StakeTab} />
+                        <Route exact path='/token-grants' component={TokenGrantsTab} />
+                        <Route exact path='/create-token-grants' component={CreateTokenGrantsTab} />
+                    </>
+                }
             </>
         )
     }
 
     renderContent() {
         const { isOperator, contractsDataIsFetching } = this.props
-        if(contractsDataIsFetching)
-            return <Loadable />
-        
-        return (
+
+        return contractsDataIsFetching ? <Loadable /> : (
             <Switch>
                 <Route exact path='/sign-in' component={Siginig} />
                 <Route path="*">
@@ -46,8 +45,7 @@ class Routing extends React.Component {
                         </Switch>
                     </RoutingTabs>
                 </Route>
-            </Switch>
-            
+            </Switch> 
         )
     }
 
