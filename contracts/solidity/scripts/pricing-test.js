@@ -1,7 +1,6 @@
 const KeepRandomBeaconServiceImplV1 = artifacts.require("KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconService = artifacts.require('KeepRandomBeaconService.sol');
 const KeepRandomBeaconOperator = artifacts.require('KeepRandomBeaconOperator.sol');
-const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 const fs = require('fs');
 
 // seed value for a relay entry
@@ -11,7 +10,6 @@ module.exports = async function() {
     const keepRandomBeaconService = await KeepRandomBeaconService.deployed();
     const contractService = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address);
     const contractOperator = await KeepRandomBeaconOperator.deployed();
-    const callbackContract = await CallbackContract.deployed();
     const delay = 600000; //10 min in milliseconds
     const accountsCount = 4;
     const accounts = await web3.eth.getAccounts();
@@ -25,7 +23,7 @@ module.exports = async function() {
         try {
             console.log("---------- count: " + count + " ----------\n");
 
-            let callbackGas = await callbackContract.callback.estimateGas(seed);
+            let callbackGas = 0;
             let entryFeeEstimate = await contractService.entryFeeEstimate(callbackGas);
             requestorPrevAccountBalance = requestorAccountBalance;
 
@@ -37,11 +35,8 @@ module.exports = async function() {
                 prevRewards[i] = (await availableRewards(accounts[i+1], contractOperator)).toString();
             }
 
-            await contractService.methods['requestRelayEntry(uint256,address,string,uint256)'](
+            await contractService.methods['requestRelayEntry(uint256)'](
                 seed,
-                callbackContract.address,
-                "callback(uint256)",
-                callbackGas,
                 {value: entryFeeEstimate, from: requestor}
             );
 
