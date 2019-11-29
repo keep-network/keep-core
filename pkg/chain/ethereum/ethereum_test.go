@@ -221,6 +221,18 @@ func TestPackTicket(t *testing.T) {
 			virtualStakerIndex: toBigInt("4294967295"),
 			expectedPacked:     "ab49727f1f1c661a52aa72262c904281c49765499f85a774c4598850ffffffff",
 		},
+		"zero ticket value": {
+			ticketValue:        toBigInt("0"),
+			stakerValue:        toBigInt("640134992772870476466797915370027482254406660188"),
+			virtualStakerIndex: toBigInt("12"),
+			expectedPacked:     "00000000000000007020a5556ba1ce5f92c81063a13d33512cf1305c0000000c",
+		},
+		"low ticket value (below natural threshold)": {
+			ticketValue:        toBigInt("442342886742415014920381897080165736613327114059325198266614648165032201400"),
+			stakerValue:        toBigInt("640134992772870476466797915370027482254406660188"),
+			virtualStakerIndex: toBigInt("12"),
+			expectedPacked:     "00fa5b718feae4ee7020a5556ba1ce5f92c81063a13d33512cf1305c0000000c",
+		},
 	}
 
 	for testName, test := range tests {
