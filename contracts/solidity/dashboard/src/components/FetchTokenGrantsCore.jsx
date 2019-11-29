@@ -1,6 +1,7 @@
 import React from 'react'
 import moment from 'moment'
 import WithWeb3Context from './WithWeb3Context'
+import Loadable from './Loadable'
 import { displayAmount } from '../utils'
 
 class FetchTokenGrantsCore extends React.Component {
@@ -87,7 +88,7 @@ class FetchTokenGrantsCore extends React.Component {
         const { isFetching } = this.state
 
         return isFetching
-            ? <div>Loading...</div>
+            ? <Loadable />
             : React.cloneElement(this.props.children, { data: this.state.grantedToYou })
     }
 }

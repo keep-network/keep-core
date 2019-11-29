@@ -9,6 +9,7 @@ import CreateTokenGrantsTab from './CreateTokenGrantsTab'
 import { withContractsDataContext } from './ContractsDataContextProvider'
 import Siginig from './Signing'
 import Alerts from './Alerts'
+import Loadable from './Loadable'
 
 class Routing extends React.Component { 
 
@@ -32,7 +33,7 @@ class Routing extends React.Component {
     renderContent() {
         const { isOperator, contractsDataIsFetching } = this.props
         if(contractsDataIsFetching)
-            return <><div>Loading...</div></>
+            return <Loadable />
         
         return (
             <Switch>

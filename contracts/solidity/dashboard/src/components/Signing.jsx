@@ -2,11 +2,12 @@ import React from 'react'
 import SigningForm from './SigningForm'
 import { withContractsDataContext } from './ContractsDataContextProvider'
 import { Redirect } from 'react-router-dom'
+import Loadable from './Loadable'
 
 const Siginig = (props) => {
 
     if(props.contractsDataIsFetching)
-        return (<div>Loading...</div>)
+        return <Loadable />
 
     return (props.isOperator || props.isTokenHolder) ? <Redirect to='/overview' /> :
         <div className="signing">
