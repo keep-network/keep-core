@@ -87,9 +87,7 @@ class FetchTokenGrantsCore extends React.Component {
     render() {
         const { isFetching } = this.state
 
-        return isFetching
-            ? <Loadable />
-            : React.cloneElement(this.props.children, { data: this.state.grantedToYou })
+        return isFetching ? <Loadable /> : React.cloneElement(this.props.children, { data: this.state.grantedToYou })
     }
 }
 
