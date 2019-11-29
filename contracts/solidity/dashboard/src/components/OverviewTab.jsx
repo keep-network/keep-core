@@ -20,6 +20,7 @@ class OverviewTab extends React.Component {
           stakeBalance: '',
           withdrawals: [],
           withdrawalsTotal: [],
+          beneficiaryAddress: '',
           chartOptions: {
             legend: {
                 position: 'right'
@@ -94,6 +95,7 @@ class OverviewTab extends React.Component {
           stakeBalance,
           withdrawals,
           withdrawalsTotal: displayAmount(withdrawalsTotal, 18, 3),
+          beneficiaryAddress: await this.getBeneficiaryAddress()
         })
     }
 
@@ -133,8 +135,13 @@ class OverviewTab extends React.Component {
           }
     }
 
+    getBeneficiaryAddress = async () => {
+      const { web3: { utils, stakingContract, yourAddress }, isOperator } = this.props;
+      return isOperator ? utils.toChecksumAddress(await stakingContract.methods.magpieOf(yourAddress).call()) : ''
+    }
+
     render() {
-        const { operators, chartOptions, withdrawals, withdrawalsTotal, stakeBalance } = this.state
+        const { operators, chartOptions, withdrawals, withdrawalsTotal, stakeBalance, beneficiaryAddress } = this.state
         const { web3, isOperator, isOperatorOfStakedTokenGrant, tokenBalance, grantBalance, grantStakeBalance } = this.props;
         return (
             <>
@@ -148,6 +155,9 @@ class OverviewTab extends React.Component {
                       <tbody>
                         <TableRow title="Your wallet address">
                           { web3.yourAddress }
+                        </TableRow>
+                        <TableRow title="Beneficiary address">
+                          { beneficiaryAddress }
                         </TableRow>
                         <TableRow title="Tokens">
                           { displayAmount(tokenBalance, 18, 3) }
