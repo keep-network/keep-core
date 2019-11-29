@@ -36,7 +36,7 @@ contract KeepRandomBeaconOperator {
 
     // These are the public events that are used by clients
     event SignatureRequested(uint256 previousEntry, uint256 seed, bytes groupPublicKey);
-    event SignatureSubmitted(uint256 requestResponse, bytes requestGroupPubKey, uint256 previousEntry, uint256 seed);
+    event SignatureSubmitted(uint256 value);
 
     event GroupSelectionStarted(uint256 newEntry);
 
@@ -449,12 +449,7 @@ contract KeepRandomBeaconOperator {
             "Invalid signature"
         );
 
-        emit SignatureSubmitted(
-            _groupSignature,
-            groupPubKey,
-            signingRequest.previousEntry,
-            signingRequest.seed
-        );
+        emit SignatureSubmitted(_groupSignature);
 
         ServiceContract(signingRequest.serviceContract).entryCreated(
             signingRequest.relayRequestId,

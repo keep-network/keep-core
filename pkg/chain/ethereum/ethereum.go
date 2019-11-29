@@ -3,7 +3,6 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/ipfs/go-log"
 
@@ -14,11 +13,11 @@ import (
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
-	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 )
 
 var logger = log.Logger("keep-chain-ethereum")
@@ -105,7 +104,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 		ticket.Value,
 		ticket.Proof.StakerValue,
 		ticket.Proof.VirtualStakerIndex,
-		options.TransactionOptions {
+		options.TransactionOptions{
 			GasLimit: 250000,
 		},
 	)
@@ -208,20 +207,10 @@ func (ec *ethereumChain) OnSignatureSubmitted(
 	handle func(entry *event.Entry),
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchSignatureSubmitted(
-		func(
-			requestResponse *big.Int,
-			requestGroupPubKey []byte,
-			previousEntry *big.Int,
-			seed *big.Int,
-			blockNumber uint64,
-		) {
+		func(value *big.Int, blockNumber uint64) {
 			handle(&event.Entry{
-				Value:         requestResponse,
-				GroupPubKey:   requestGroupPubKey,
-				PreviousEntry: previousEntry,
-				Timestamp:     time.Now().UTC(),
-				Seed:          seed,
-				BlockNumber:   blockNumber,
+				Value:       value,
+				BlockNumber: blockNumber,
 			})
 		},
 		func(err error) error {
