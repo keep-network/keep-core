@@ -2,7 +2,7 @@ import React from 'react'
 import WithWeb3Context from './WithWeb3Context'
 import { displayAmount } from '../utils'
 
-const ContractsDataContext = React.createContext({})
+export const ContractsDataContext = React.createContext({})
 
 class ContractsDataContextProvider extends React.Component {
     
@@ -33,8 +33,9 @@ class ContractsDataContextProvider extends React.Component {
     getContractsInfo = async () => {
         const { web3: { token, stakingContract, grantContract, yourAddress, changeDefaultContract, utils } } = this.props;
         if(!token.options.address || !stakingContract.options.address || !grantContract.options.address)
-          return
+            return;
         try {
+            this.setState({ contractsDataIsFetching: true })
             const tokenBalance = new utils.BN(await token.methods.balanceOf(yourAddress).call());
             const stakeOwner = await stakingContract.methods.ownerOf(yourAddress).call();
             const grantBalance = await grantContract.methods.balanceOf(yourAddress).call()
@@ -62,10 +63,10 @@ class ContractsDataContextProvider extends React.Component {
                 grantBalance,
                 grantStakeBalance,
                 stakedGrant,
+                stakeOwner,
                 contractsDataIsFetching: false
             })
         } catch(error) {
-            console.log('eeror', error);
             this.setState({ contractsDataIsFetching: false })
         }
     }
