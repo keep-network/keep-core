@@ -642,11 +642,10 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-    * @dev Gets the total number of groups. Expired and terminated groups are
-    * counted as well.
+    * @dev Gets the expired group offset.
     */
-    function totalNumberOfGroups() public view returns (uint256) {
-        return groups.groups.length;
+    function expiredGroupOffset() public view returns (uint256) {
+        return groups.expiredGroupOffset;
     }
 
     /**
