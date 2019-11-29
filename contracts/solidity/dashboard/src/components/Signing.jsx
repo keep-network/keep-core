@@ -5,7 +5,6 @@ import { Redirect } from 'react-router-dom'
 import Loadable from './Loadable'
 
 const Siginig = (props) => {
-
     if(props.contractsDataIsFetching)
         return <Loadable />
 
