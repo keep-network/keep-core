@@ -55,7 +55,7 @@ class ContractsDataContextProvider extends React.Component {
                 changeDefaultContract(grantContract);
             }
             
-            this.setState( {
+            this.setState({
                 isOperator,
                 isTokenHolder,
                 isOperatorOfStakedTokenGrant,
