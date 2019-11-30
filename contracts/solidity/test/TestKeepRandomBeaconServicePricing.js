@@ -54,12 +54,11 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     // Set higher gas price
     await serviceContract.setPriceFeedEstimate(defaultPriceFeedEstimate.mul(web3.utils.toBN(10)));
-    let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
+    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     let excessCallbackFee = await serviceContract.callbackFee(callbackGas)
 
-    await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
-      bls.seed,
+    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address,
       "callback(uint256)",
       callbackGas,
@@ -68,7 +67,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     let requestorBalance = await web3.eth.getBalance(requestor);
 
-    await operatorContract.relayEntry(bls.nextGroupSignature);
+    await operatorContract.relayEntry(bls.groupSignature);
 
     // Put back the default gas price
     await serviceContract.setPriceFeedEstimate(defaultPriceFeedEstimate);
@@ -84,15 +83,14 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
   it("should successfully refund callback gas surplus to the requestor if gas estimation was high", async function() {
 
-    let callbackGas = await callbackContract.callback.estimateGas(bls.nextGroupSignature);
+    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
     let expectedCallbackFee = await serviceContract.callbackFee((callbackGas/1.5).toFixed()); // Remove 1.5 fluctuation safety margin
 
     let excessCallbackGas = web3.utils.toBN(callbackGas).mul(web3.utils.toBN(2)); // Set higher callback gas estimate.
     let excessCallbackFee = await serviceContract.callbackFee(excessCallbackGas);
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(excessCallbackGas)
-    await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
-      bls.seed,
+    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address,
       "callback(uint256)",
       excessCallbackGas,
@@ -100,7 +98,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     );
 
     let requestorBalance = await web3.eth.getBalance(requestor);
-    await operatorContract.relayEntry(bls.nextGroupSignature);
+    await operatorContract.relayEntry(bls.groupSignature);
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
     // Ethereum transaction min cost varies i.e. 20864-21000 Gas resulting slightly different
@@ -117,8 +115,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    let tx = await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
-      bls.seed,
+    let tx = await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address,
       "callback(uint256)",
       0,
@@ -137,7 +134,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
     let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
 
-    await operatorContract.relayEntry(bls.nextGroupSignature);
+    await operatorContract.relayEntry(bls.groupSignature);
 
     assert.isTrue(delayFactor.eq(web3.utils.toBN(1e16).pow(web3.utils.toBN(2))), "Delay factor expected to be 1 * 1e16 ^ 2.");
 
@@ -174,8 +171,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    let tx = await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](
-      bls.seed,
+    let tx = await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address,
       "callback(uint256)",
       0,
@@ -204,7 +200,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
 
-    await operatorContract.relayEntry(bls.nextGroupSignature);
+    await operatorContract.relayEntry(bls.groupSignature);
 
     let groupMemberRewards = await operatorContract.getGroupMemberRewards(group);
     assert.isTrue(groupMemberRewards.eq(expectedGroupMemberReward), "Unexpected group member reward.");

@@ -40,13 +40,13 @@ contract("KeepRandomBeaconOperator", function(accounts) {
   it("should not throw an error when entry is in progress and " +
      "block number > relay entry timeout", async () => {
     await operatorContract.sign(
-      requestCounter, bls.seed, bls.previousEntry, {value: fee}
+      requestCounter, bls.previousEntry, {value: fee}
     );
 
     mineBlocks(blocksForward)
 
     await operatorContract.sign(
-      requestCounter, bls.seed, bls.previousEntry, {value: fee}
+      requestCounter, bls.previousEntry, {value: fee}
     );
 
     assert.equal(
@@ -59,11 +59,11 @@ contract("KeepRandomBeaconOperator", function(accounts) {
   it("should throw an error when entry is in progress and " + 
      "block number <= relay entry timeout", async () => {
     await operatorContract.sign(
-      requestCounter, bls.seed, bls.previousEntry, {value: fee}
+      requestCounter, bls.previousEntry, {value: fee}
     );
 
     await expectThrowWithMessage(
-      operatorContract.sign(requestCounter, bls.seed, bls.previousEntry, {value: fee}), 
+      operatorContract.sign(requestCounter, bls.previousEntry, {value: fee}), 
       "Beacon is busy"
     );
   });
@@ -71,7 +71,7 @@ contract("KeepRandomBeaconOperator", function(accounts) {
   it("should not throw an error when entry is not in progress and " + 
      "block number > relay entry timeout", async () => {
     await operatorContract.sign(
-      requestCounter, bls.seed, bls.previousEntry, {value: fee}
+      requestCounter, bls.previousEntry, {value: fee}
       );
 
     assert.equal(
@@ -83,7 +83,7 @@ contract("KeepRandomBeaconOperator", function(accounts) {
 
   it("should not allow to submit relay entry after timeout", async () => {
     await operatorContract.sign(
-      requestCounter, bls.seed, bls.previousEntry, {value: fee}
+      requestCounter, bls.previousEntry, {value: fee}
     );
 
     mineBlocks(await operatorContract.getRelayEntryTimeout());
