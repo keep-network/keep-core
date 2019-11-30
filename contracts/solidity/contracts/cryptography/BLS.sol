@@ -14,16 +14,22 @@ library BLS {
     /**
      * @dev Verify performs the pairing operation to check if the signature
      * is correct for the provided message and the corresponding public key.
+     * Public key must be a valid point on G2 curve in an uncompressed format.
+     * Message must be a valid point on G1 curve in an uncompressed format.
+     * Signature must be a valid point on G1 curve in an uncompressed format.
      */
-    function verify(bytes memory publicKey, bytes memory message, bytes32 signature) public view returns (bool) {
+    function verify(
+        bytes memory publicKey,
+        bytes memory message,
+        bytes memory signature
+    ) public view returns (bool) {
 
-        AltBn128.G1Point memory _signature;
-        _signature = AltBn128.g1Decompress(signature);
+        AltBn128.G1Point memory _signature = AltBn128.g1Unmarshal(signature);
 
         return AltBn128.pairing(
             AltBn128.G1Point(_signature.x, AltBn128.getP() - _signature.y),
             AltBn128.g2(),
-            AltBn128.g1HashToPoint(message),
+            AltBn128.g1Unmarshal(message),
             AltBn128.g2Unmarshal(publicKey)
         );
     }
