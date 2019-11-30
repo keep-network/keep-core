@@ -112,7 +112,7 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 
 	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
 
-	relayEntryPromise := chainHandle.SubmitRelayEntry(big.NewInt(19))
+	relayEntryPromise := chainHandle.SubmitRelayEntry(big.NewInt(19).Bytes())
 
 	done := make(chan *event.EntrySubmitted)
 	relayEntryPromise.OnSuccess(func(entry *event.EntrySubmitted) {
@@ -151,7 +151,7 @@ func TestLocalOnEntrySubmitted(t *testing.T) {
 
 	defer subscription.Unsubscribe()
 
-	chainHandle.SubmitRelayEntry(big.NewInt(20))
+	chainHandle.SubmitRelayEntry(big.NewInt(20).Bytes())
 
 	select {
 	case <-eventFired:
@@ -180,7 +180,7 @@ func TestLocalOnEntrySubmittedUnsubscribed(t *testing.T) {
 
 	subscription.Unsubscribe()
 
-	chainHandle.SubmitRelayEntry(big.NewInt(1))
+	chainHandle.SubmitRelayEntry(big.NewInt(1).Bytes())
 
 	select {
 	case event := <-eventFired:

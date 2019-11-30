@@ -50,11 +50,12 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 		)
 	}
 
-	chain.ThresholdRelay().SubmitRelayEntry(big.NewInt(1)).OnFailure(func(err error) {
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
+	chain.ThresholdRelay().SubmitRelayEntry(big.NewInt(1).Bytes()).
+		OnFailure(func(err error) {
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
 
 	blockCounter.WaitForBlockHeight(startBlockHeight + relayEntryTimeout)
 
