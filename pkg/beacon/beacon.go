@@ -65,17 +65,15 @@ func Initialize(
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
 		logger.Infof(
 			"new relay entry requested at block [%v] from group [0x%x] using "+
-				"previous entry [0x%x] and seed [0x%x]",
+				"previous entry [0x%x]",
 			request.BlockNumber,
 			request.GroupPublicKey,
 			request.PreviousEntry,
-			request.Seed,
 		)
 
 		if node.IsInGroup(request.GroupPublicKey) {
 			go node.GenerateRelayEntry(
 				request.PreviousEntry,
-				request.Seed,
 				relayChain,
 				request.GroupPublicKey,
 				request.BlockNumber,

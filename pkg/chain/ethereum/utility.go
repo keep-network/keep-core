@@ -21,7 +21,7 @@ func (euc *ethereumUtilityChain) Genesis() error {
 	return err
 }
 
-func (euc *ethereumUtilityChain) RequestRelayEntry(seed *big.Int) *async.EventEntryGeneratedPromise {
+func (euc *ethereumUtilityChain) RequestRelayEntry() *async.EventEntryGeneratedPromise {
 	promise := &async.EventEntryGeneratedPromise{}
 
 	callbackGas := big.NewInt(0) // no callback
@@ -31,8 +31,7 @@ func (euc *ethereumUtilityChain) RequestRelayEntry(seed *big.Int) *async.EventEn
 		return promise
 	}
 
-	_, err = euc.keepRandomBeaconServiceContract.RequestRelayEntry0(
-		seed,
+	_, err = euc.keepRandomBeaconServiceContract.RequestRelayEntry(
 		common.BytesToAddress([]byte{}),
 		"",
 		callbackGas,

@@ -24,7 +24,6 @@ const groupSize = 10
 const honestThreshold = 6
 
 var previousEntry, _ = new(big.Int).SetString("132847218974128941824981812", 10)
-var seed, _ = new(big.Int).SetString("123789127389127398172398123", 10)
 
 // Success: all members of the signing group participate in signing.
 func TestAllMembersSigning(t *testing.T) {
@@ -53,10 +52,7 @@ func TestAllMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign, err := local.CombineToSign(previousEntry, seed)
-	if err != nil {
-		t.Fatal(err)
-	}
+	entryToSign := local.SerializeToSign(previousEntry)
 
 	if !bls.Verify(groupPublicKey, entryToSign, signature) {
 		t.Errorf("threshold signature failed BLS verification")
@@ -91,10 +87,7 @@ func TestHonestThresholdMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign, err := local.CombineToSign(previousEntry, seed)
-	if err != nil {
-		t.Fatal(err)
-	}
+	entryToSign := local.SerializeToSign(previousEntry)
 
 	if !bls.Verify(groupPublicKey, entryToSign, signature) {
 		t.Errorf("threshold signature failed BLS verification")
@@ -168,10 +161,7 @@ func TestInactiveMemberPublicKeySharesReconstructionAndSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entryToSign, err := local.CombineToSign(previousEntry, seed)
-	if err != nil {
-		t.Fatal(err)
-	}
+	entryToSign := local.SerializeToSign(previousEntry)
 
 	if !bls.Verify(groupPublicKey, entryToSign, signature) {
 		t.Errorf("threshold signature failed BLS verification")
@@ -216,7 +206,6 @@ func runTestWithInterceptor(
 		honestThreshold,
 		interceptor,
 		previousEntry,
-		seed,
 	)
 	if err != nil {
 		t.Fatal(err)
