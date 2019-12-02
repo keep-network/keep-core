@@ -656,10 +656,12 @@ contract KeepRandomBeaconOperator {
      * rewarded with 5% of the total seized amount and the rest 95% is burned.
      */
     function reportUnauthorizedSigning(
-        bytes memory groupPubKey,
+        uint256 groupIndex,
         uint256 signedGroupPubKey
     ) public {
+        bytes memory groupPubKey = groups.getGroupPublicKey(groupIndex);
         if (groups.verifySignature(groupPubKey, groupPubKey, signedGroupPubKey)) {
+            groups.terminateGroup(groupIndex);
             stakingContract.seize(minimumStake, 100, msg.sender, groups.membersOf(groupPubKey));
         }
     }

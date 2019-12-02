@@ -2,9 +2,10 @@ import {initContracts} from './helpers/initContracts'
 import stakeDelegate from './helpers/stakeDelegate'
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 import {bls} from './helpers/data'
+import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 
 contract('KeepRandomBeaconOperator', function(accounts) {
-  let token, stakingContract, serviceContract, operatorContract, minimumStake,
+  let token, stakingContract, serviceContract, operatorContract, minimumStake, entryFeeEstimate,
     owner = accounts[0],
     operator1 = accounts[1],
     operator2 = accounts[2],
@@ -35,7 +36,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await stakeDelegate(stakingContract, token, owner, operator2, owner, minimumStake)
     await stakeDelegate(stakingContract, token, owner, operator3, owner, minimumStake)
 
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
+    entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate})
   })
 
@@ -48,8 +49,9 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   })
 
   it("should be able to report unauthorized signing", async () => {
+    let groupIndex = await operatorContract.getGroupIndex(bls.groupPubKey)
     await operatorContract.reportUnauthorizedSigning(
-      bls.groupPubKey,
+      groupIndex,
       bls.signedGroupPubKey,
       {from: tattletale}
     )
@@ -61,5 +63,11 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     // Expecting 5% of all the seized tokens
     let expectedTattletaleReward = minimumStake.muln(3).muln(5).divn(100)
     assert.isTrue((await token.balanceOf(tattletale)).eq(expectedTattletaleReward), "Unexpected tattletale balance")
+
+    // Group should be terminated, expecting total number of groups to become 0
+    await expectThrowWithMessage(
+      serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate}),
+      "Total number of groups must be greater than zero."
+    );
   })
 })
