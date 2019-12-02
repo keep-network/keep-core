@@ -21,7 +21,8 @@ This implementation will automate `Ethereum Contract Deployment` and `keep-clien
 
 ==== Part 1: Contract Migration
 
-TODO: WHich of these is used in the current implementation, or is this up to the user? Either a new workflow or new jobs to existing workflow will be added to the `keep-core` circle config. Before image publish on master merge Circle will run this workflow/job to trigger a script that will:
+TODO: Which of these is used in the current implementation, or is this up to the user? 
+Either a new workflow or new jobs to existing workflow will be added to the `keep-core` circle config. Before image publish on master merge Circle will run this workflow/job to trigger a script that will:
 
 - migrate all contracts
 
@@ -33,7 +34,7 @@ TODO: WHich of these is used in the current implementation, or is this up to the
 
 ==== Part 2: keep-client Preparation
 
-On each keep-client Kubernetes deployment we'll run an `InitContainer` that does
+On each keep-client Kubernetes deployment we run an `InitContainer` that does
 the following:
 
 - create ETH account
@@ -44,23 +45,16 @@ the following:
 - write configuration file and ETH account keyfile to a persistent volume
 - mount configuration file / keyfile persistent volume to keep-client deployment
 
-The `InitContainer` will operate exclusively on the ETH account and assigned to the
-`keep-client` being deployed.  If there are 100 `keep-client` Kubernetes
-deployments, there would be 100 `InitContainer` instances unlocking and staking
-for each of the assigned ETH accounts.  This is infinitely scalable (system
+The `InitContainer` operates exclusively on the ETH account and is assigned to the `keep-client` being deployed.  If there are 100 `keep-client` Kubernetes
+deployments, there are 100 `InitContainer` instances unlocking and staking
+for each of the assigned ETH accounts.  This is an infinitely scalable (system
 resources aside) and reduces `unlock + stake` time to a ceiling of the time it
 takes to operate on a single account.
 
 The `InitContainer` will have a copy of each Keep contracts compiled JSON.  The
-files will be used to fetch contract ABI's for account staking and contract
-addresses for configuration file setup.  The updated configuration values will be
-fed into a complete `keep-client` configuration template and stored in a Kubernetes
-persistent volume.  This volume will be mounted to the `keep-client` deployment
-where the config can be passed via command line argument on service start.
+files will be used to fetch contract ABI's for account staking and contract addresses for configuration file setup.  The updated configuration values will be fed into a complete `keep-client` configuration template and stored in a Kubernetes persistent volume.  This volume will be mounted to the `keep-client` deployment where the config can be passed via command line argument on service start.
 
-For now we're going to bake a custom image for the `InitContainer` with the script
-for doing ETH account creation, unlock and stake, and keep-client configuration.
-This will be checked into the `keep-core/infrastructure/kube` directory.
+For now we're going to bake a custom image for the `InitContainer` with the script for doing ETH account creation, unlock and stake, and keep-client configuration. This will be checked into the `keep-core/infrastructure/kube` directory.
 
 ==== A Note On Configuration Value Scope
 We provide configuration values via environment variables at two points in this process: Circle contexts and Kube deployment configuration files.
