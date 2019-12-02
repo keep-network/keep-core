@@ -2,7 +2,7 @@ import {initContracts} from './helpers/initContracts'
 import stakeDelegate from './helpers/stakeDelegate'
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 import {bls} from './helpers/data'
-import expectThrowWithMessage from './helpers/expectThrowWithMessage';
+import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 
 contract('KeepRandomBeaconOperator', function(accounts) {
   let token, stakingContract, serviceContract, operatorContract, minimumStake, largeStake, entryFeeEstimate,
@@ -69,7 +69,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await expectThrowWithMessage(
       serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate}),
       "Total number of groups must be greater than zero."
-    );
+    )
   })
 
   it("should ignore invalid report of unauthorized signing", async () => {

@@ -653,7 +653,8 @@ contract KeepRandomBeaconOperator {
      * a valid signature of the group address as a message. Successful signature
      * verification means the private key has been leaked and all group members
      * should be punished by seizing their tokens. The submitter of this proof is
-     * rewarded with 5% of the total seized amount and the rest 95% is burned.
+     * rewarded with 5% of the total seized amount scaled by the reward adjustment
+     * parameter and the rest 95% is burned.
      */
     function reportUnauthorizedSigning(
         uint256 groupIndex,
