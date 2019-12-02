@@ -35,12 +35,12 @@ contract('KeepRandomBeaconOperator', (accounts) => {
 
     // Make sure no change will make the verification more expensive than it is 
     // now or that even if it happens, it will be a conscious decision.
-    assert.isBelow(gasEstimate, 432598, "Relay entry submission is too expensive")
+    assert.isBelow(gasEstimate, 369544, "Relay entry submission is too expensive")
   });
 
   it("should not allow to submit invalid relay entry", async () => {
       // Invalid signature
-      let groupSignature = web3.utils.toBN('0x0fb34abfa2a9844a58776650e399bca3e08ab134e42595e03e3efc5a0472bcd8');
+      let groupSignature = "0x0fb34abfa2a9844a58776650e399bca3e08ab134e42595e03e3efc5a0472bcd8";
 
       await expectThrow(operatorContract.relayEntry(groupSignature));
     });
@@ -49,7 +49,7 @@ contract('KeepRandomBeaconOperator', (accounts) => {
     await operatorContract.relayEntry(bls.groupSignature);
 
     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
-      bls.groupSignature.toString(), "Should emit event with successfully submitted groupSignature."
+      bls.groupSignatureNumber.toString(), "Should emit event with generated entry"
     );
   });
 });

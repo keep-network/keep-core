@@ -15,7 +15,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 	"github.com/keep-network/keep-core/pkg/gen/async"
-	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
@@ -151,7 +150,7 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
-	entryValue *big.Int,
+	entry []byte,
 ) *async.EventEntrySubmittedPromise {
 	relayEntryPromise := &async.EventEntrySubmittedPromise{}
 
@@ -205,7 +204,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(entryValue)
+	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(entry)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(generatedEntry)
@@ -238,7 +237,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 ) (subscription.EventSubscription, error) {
 	return ec.keepRandomBeaconOperatorContract.WatchRelayEntryRequested(
 		func(
-			previousEntry *big.Int,
+			previousEntry []byte,
 			groupPublicKey []byte,
 			blockNumber uint64,
 		) {
@@ -455,20 +454,4 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Disqualified, dkgResult.Inactive)
 
 	return relaychain.DKGResultHashFromBytes(hash)
-}
-
-// CombineToSign takes the previous relay entry value and pads it with zeros if
-// its byte length is less than 32 bytes. Previous relay entry is represented
-// on-chain as `uint256` value and is always packed into 256-bits by
-// `abi.encodePacked` with leading zeros if needed.
-//
-// Function returns an error if previous entry takes more than 32 bytes.
-func (ec *ethereumChain) SerializeToSign(previousEntry *big.Int) ([]byte, error) {
-	previousEntryBytes := previousEntry.Bytes()
-
-	if len(previousEntryBytes) > 32 {
-		return nil, fmt.Errorf("entry can not be longer than 32 bytes")
-	}
-
-	return byteutils.LeftPadTo32Bytes(previousEntryBytes)
 }

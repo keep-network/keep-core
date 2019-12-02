@@ -2,7 +2,6 @@ package entry
 
 import (
 	"fmt"
-	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -24,8 +23,7 @@ type relayEntrySubmitter struct {
 // Relay entry submit process starts at block height defined by startBlockheight
 // parameter.
 func (res *relayEntrySubmitter) submitRelayEntry(
-	newEntry *big.Int,
-	previousEntry *big.Int,
+	newEntry []byte,
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) error {

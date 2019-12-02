@@ -22,7 +22,7 @@ type RelayEntryInterface interface {
 	// promise to track the submission progress. The promise is fulfilled when
 	// the entry has been successfully submitted to the on-chain, or failed if
 	// the entry submission failed.
-	SubmitRelayEntry(entryValue *big.Int) *async.EventEntrySubmittedPromise
+	SubmitRelayEntry(entry []byte) *async.EventEntrySubmittedPromise
 	// OnRelayEntrySubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
 	OnRelayEntrySubmitted(
@@ -37,10 +37,6 @@ type RelayEntryInterface interface {
 	// supposed to submit a relay entry, did not deliver it within a specified
 	// time frame (relayEntryTimeout) counted in blocks.
 	ReportRelayEntryTimeout() error
-	// SerializeToSign takes the previous relay entry value and transforms it
-	// into a slice of bytes that is going to be signed by the selected group
-	// and as a result, will form a new relay entry value.
-	SerializeToSign(previousEntry *big.Int) ([]byte, error)
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that

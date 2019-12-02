@@ -1,8 +1,6 @@
 package relay
 
 import (
-	"math/big"
-
 	"github.com/ipfs/go-log"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -96,7 +94,7 @@ func (n *Node) MonitorRelayEntry(
 // node is or is not a member of the requested group, and signature creation
 // and submission is performed in a background goroutine.
 func (n *Node) GenerateRelayEntry(
-	previousEntry *big.Int,
+	previousEntry []byte,
 	relayChain relayChain.Interface,
 	groupPublicKey []byte,
 	startBlockHeight uint64,

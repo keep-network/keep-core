@@ -42,7 +42,7 @@ type Chain interface {
 	GetLastDKGResult() (*relaychain.DKGResult, map[group.MemberIndex][]byte)
 
 	// GetLastRelayEntry returns the last relay entry submitted to the chain.
-	GetLastRelayEntry() *big.Int
+	GetLastRelayEntry() []byte
 
 	// GetRelayEntryTimeoutReports returns an array of blocks which denote at what
 	// block a relay entry timeout occured.
@@ -61,7 +61,7 @@ type localChain struct {
 
 	lastSubmittedDKGResult           *relaychain.DKGResult
 	lastSubmittedDKGResultSignatures map[group.MemberIndex][]byte
-	lastSubmittedRelayEntry          *big.Int
+	lastSubmittedRelayEntry          []byte
 
 	handlerMutex                  sync.Mutex
 	relayEntryHandlers            map[int]func(entry *event.EntrySubmitted)
@@ -69,8 +69,6 @@ type localChain struct {
 	groupSelectionStartedHandlers map[int]func(groupSelectionStart *event.GroupSelectionStart)
 	groupRegisteredHandlers       map[int]func(groupRegistration *event.GroupRegistration)
 	resultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
-
-	latestValue *big.Int
 
 	simulatedHeight uint64
 	stakeMonitor    chain.StakeMonitor
@@ -152,7 +150,7 @@ func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, erro
 	return selectedParticipants, nil
 }
 
-func (c *localChain) SubmitRelayEntry(newEntry *big.Int) *async.EventEntrySubmittedPromise {
+func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmittedPromise {
 	c.ticketsMutex.Lock()
 	c.tickets = make([]*relaychain.Ticket, 0)
 	c.ticketsMutex.Unlock()
@@ -177,7 +175,6 @@ func (c *localChain) SubmitRelayEntry(newEntry *big.Int) *async.EventEntrySubmit
 	}
 	c.handlerMutex.Unlock()
 
-	c.latestValue = newEntry
 	relayEntryPromise.Fulfill(entry)
 
 	c.lastSubmittedRelayEntry = newEntry
@@ -202,7 +199,7 @@ func (c *localChain) OnRelayEntrySubmitted(
 	}), nil
 }
 
-func (c *localChain) GetLastRelayEntry() *big.Int {
+func (c *localChain) GetLastRelayEntry() []byte {
 	return c.lastSubmittedRelayEntry
 }
 
@@ -308,7 +305,6 @@ func ConnectWithKey(
 		blockCounter:             bc,
 		stakeMonitor:             NewStakeMonitor(minimumStake),
 		tickets:                  make([]*relaychain.Ticket, 0),
-		latestValue:              seedRelayEntry,
 		groups:                   []localGroup{group},
 		operatorKey:              operatorKey,
 	}
@@ -467,14 +463,4 @@ func (c *localChain) CalculateDKGResultHash(
 	)
 
 	return dkgResultHash, nil
-}
-
-func (c *localChain) SerializeToSign(previousEntry *big.Int) ([]byte, error) {
-	return SerializeToSign(previousEntry), nil
-}
-
-// SerializeToSign takes the previous relay entry value and transforms it into
-// the format ready for signing.
-func SerializeToSign(previousEntry *big.Int) []byte {
-	return previousEntry.Bytes()
 }

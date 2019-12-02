@@ -9,7 +9,7 @@ import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
 
 interface ServiceContract {
-    function entryCreated(uint256 requestId, uint256 entry, address payable submitter) external;
+    function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
 }
@@ -34,7 +34,7 @@ contract KeepRandomBeaconOperator {
     // TODO: Add memberIndex
     event DkgResultPublishedEvent(bytes groupPubKey);
 
-    event RelayEntryRequested(uint256 previousEntry, bytes groupPublicKey);
+    event RelayEntryRequested(bytes previousEntry, bytes groupPublicKey);
     event RelayEntrySubmitted();
 
     event GroupSelectionStarted(uint256 newEntry);
@@ -114,7 +114,7 @@ contract KeepRandomBeaconOperator {
         uint256 relayRequestId;
         uint256 entryVerificationAndProfitFee;
         uint256 groupIndex;
-        uint256 previousEntry;
+        bytes previousEntry;
         address serviceContract;
     }
 
@@ -400,12 +400,12 @@ contract KeepRandomBeaconOperator {
     /**
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
-     * @param requestId Request Id trackable by service contract.
-     * @param previousEntry Previous relay entry that is used to select a signing group for this request.
+     * @param requestId Request Id trackable by service contract
+     * @param previousEntry Previous relay entry
      */
     function sign(
         uint256 requestId,
-        uint256 previousEntry
+        bytes memory previousEntry
     ) public payable onlyServiceContract {
         require(
             msg.value >= groupProfitFee().add(entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate))),
@@ -416,7 +416,7 @@ contract KeepRandomBeaconOperator {
 
     function signRelayEntry(
         uint256 requestId,
-        uint256 previousEntry,
+        bytes memory previousEntry,
         address serviceContract,
         uint256 entryVerificationAndProfitFee
     ) internal {
@@ -425,7 +425,7 @@ contract KeepRandomBeaconOperator {
         currentEntryStartBlock = block.number;
         entryInProgress = true;
 
-        uint256 groupIndex = groups.selectGroup(previousEntry);
+        uint256 groupIndex = groups.selectGroup(uint256(keccak256(previousEntry)));
         signingRequest = SigningRequest(
             requestId,
             entryVerificationAndProfitFee,
@@ -443,7 +443,7 @@ contract KeepRandomBeaconOperator {
      * @param _groupSignature Group BLS signature over the concatenation of the
      * previous entry and seed.
      */
-    function relayEntry(uint256 _groupSignature) public {
+    function relayEntry(bytes memory _groupSignature) public {
         require(!hasEntryTimedOut(), "Entry timed out");
 
         bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
@@ -451,8 +451,8 @@ contract KeepRandomBeaconOperator {
         require(
             BLS.verify(
                 groupPubKey,
-                abi.encodePacked(signingRequest.previousEntry),
-                bytes32(_groupSignature)
+                signingRequest.previousEntry,
+                _groupSignature
             ),
             "Invalid signature"
         );

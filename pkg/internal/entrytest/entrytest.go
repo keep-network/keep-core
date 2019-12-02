@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/internal/interception"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -27,14 +28,26 @@ var minimumStake = big.NewInt(20)
 
 // Result of the relay entry signing protocol execution.
 type Result struct {
-	entry          *big.Int
+	entry          []byte
 	signerFailures []error
 }
 
-// EntryValue returns the value of relay entry in the result or nil if no entry
-// was produced because of signers failures.
-func (r *Result) EntryValue() *big.Int {
-	return r.entry
+// EntryValue returns the value of relay entry from the result as G1 or
+// nil if no entry was produced because of signers failures.
+// Error is returned if the entry produced by signers can not be unmarshalled
+// to G1 because it is corrupted.
+func (r *Result) EntryValue() (*bn256.G1, error) {
+	if r.entry == nil {
+		return nil, nil
+	}
+
+	g1 := new(bn256.G1)
+	_, err := g1.Unmarshal(r.entry)
+	if err != nil {
+		return nil, fmt.Errorf("corrupted entry: [%v]", err)
+	}
+
+	return g1, nil
 }
 
 // RunTest executes the full relay entry signing roundtrip test for the provided
@@ -48,7 +61,7 @@ func RunTest(
 	signers []*dkg.ThresholdSigner,
 	threshold int,
 	rules interception.Rules,
-	previousEntry *big.Int,
+	previousEntry []byte,
 ) (*Result, error) {
 	privateKey, publicKey, err := operator.GenerateKeyPair()
 	if err != nil {
@@ -72,7 +85,7 @@ func executeSigning(
 	threshold int,
 	chain chainLocal.Chain,
 	network interception.Network,
-	previousEntry *big.Int,
+	previousEntry []byte,
 ) (*Result, error) {
 	blockCounter, err := chain.BlockCounter()
 	if err != nil {

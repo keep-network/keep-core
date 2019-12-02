@@ -1,8 +1,6 @@
 package entry
 
 import (
-	"math/big"
-
 	"github.com/ipfs/go-log"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
@@ -30,7 +28,7 @@ func SignAndSubmit(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
-	previousEntry *big.Int,
+	previousEntry []byte,
 	honestThreshold int,
 	signer *dkg.ThresholdSigner,
 	startBlockHeight uint64,

@@ -11,9 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/bls"
-	"github.com/keep-network/keep-core/pkg/chain/local"
-
-	"github.com/keep-network/keep-core/pkg/altbn128"
 
 	"github.com/keep-network/keep-core/pkg/internal/dkgtest"
 	"github.com/keep-network/keep-core/pkg/internal/entrytest"
@@ -23,7 +20,13 @@ import (
 const groupSize = 10
 const honestThreshold = 6
 
-var previousEntry, _ = new(big.Int).SetString("132847218974128941824981812", 10)
+func previousEntry() []byte {
+	return previousEntryG1().Marshal()
+}
+
+func previousEntryG1() *bn256.G1 {
+	return new(bn256.G1).ScalarBaseMult(big.NewInt(1328472189))
+}
 
 // Success: all members of the signing group participate in signing.
 func TestAllMembersSigning(t *testing.T) {
@@ -47,14 +50,12 @@ func TestAllMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signature, err := getSignature(signingResult)
+	newEntry, err := signingResult.EntryValue()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	entryToSign := local.SerializeToSign(previousEntry)
-
-	if !bls.Verify(groupPublicKey, entryToSign, signature) {
+	if !bls.VerifyG1(groupPublicKey, previousEntryG1(), newEntry) {
 		t.Errorf("threshold signature failed BLS verification")
 	}
 }
@@ -82,14 +83,12 @@ func TestHonestThresholdMembersSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signature, err := getSignature(signingResult)
+	newEntry, err := signingResult.EntryValue()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	entryToSign := local.SerializeToSign(previousEntry)
-
-	if !bls.Verify(groupPublicKey, entryToSign, signature) {
+	if !bls.VerifyG1(groupPublicKey, previousEntryG1(), newEntry) {
 		t.Errorf("threshold signature failed BLS verification")
 	}
 }
@@ -156,14 +155,12 @@ func TestInactiveMemberPublicKeySharesReconstructionAndSigning(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	signature, err := getSignature(signingResult)
+	newEntry, err := signingResult.EntryValue()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	entryToSign := local.SerializeToSign(previousEntry)
-
-	if !bls.Verify(groupPublicKey, entryToSign, signature) {
+	if !bls.VerifyG1(groupPublicKey, previousEntryG1(), newEntry) {
 		t.Errorf("threshold signature failed BLS verification")
 	}
 }
@@ -205,22 +202,13 @@ func runTestWithInterceptor(
 		signers,
 		honestThreshold,
 		interceptor,
-		previousEntry,
+		previousEntry(),
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	return dkgResult, signingResult
-}
-
-func getSignature(result *entrytest.Result) (*bn256.G1, error) {
-	entry := result.EntryValue()
-	if entry == nil {
-		return nil, fmt.Errorf("no new entry")
-	}
-
-	return altbn128.DecompressToG1(entry.Bytes())
 }
 
 func getFirstGroupPublicKey(result *dkgtest.Result) (*bn256.G2, error) {
