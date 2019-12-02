@@ -165,6 +165,21 @@ library Groups {
     }
 
     /**
+     * @dev Checks if group with the given index is terminated.
+     */
+    function isGroupTerminated(
+        Storage storage self,
+        uint256 groupIndex
+    ) internal view returns(bool) {
+        for (uint i = 0; i < self.terminatedGroups.length; i++) {
+            if (self.terminatedGroups[i] == groupIndex) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * @dev Checks if group with the given public key is registered.
      */
     function isGroupRegistered(
