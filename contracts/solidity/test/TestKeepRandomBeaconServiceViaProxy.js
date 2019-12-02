@@ -78,8 +78,8 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
     assert.equal(
       (await operatorContract.getPastEvents())[0].event, 
-      'SignatureRequested', 
-      "SignatureRequested event should occur on operator contract."
+      'RelayEntryRequested', 
+      "RelayEntryRequested event should occur on operator contract."
     );
 
     assert.isTrue(
@@ -150,8 +150,8 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
     assert.equal(
       (await operatorContract.getPastEvents())[0].event, 
-      'SignatureRequested', 
-      "SignatureRequested event should occur on the operator contract."
+      'RelayEntryRequested', 
+      "RelayEntryRequested event should occur on the operator contract."
     );
     
     assert.isTrue(

@@ -3,7 +3,6 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/ipfs/go-log"
 
@@ -153,8 +152,8 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 
 func (ec *ethereumChain) SubmitRelayEntry(
 	entryValue *big.Int,
-) *async.EventEntryPromise {
-	relayEntryPromise := &async.EventEntryPromise{}
+) *async.EventEntrySubmittedPromise {
+	relayEntryPromise := &async.EventEntrySubmittedPromise{}
 
 	failPromise := func(err error) {
 		failErr := relayEntryPromise.Fail(err)
@@ -167,10 +166,10 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}
 
-	generatedEntry := make(chan *event.Entry)
+	generatedEntry := make(chan *event.EntrySubmitted)
 
-	subscription, err := ec.OnSignatureSubmitted(
-		func(onChainEvent *event.Entry) {
+	subscription, err := ec.OnRelayEntrySubmitted(
+		func(onChainEvent *event.EntrySubmitted) {
 			generatedEntry <- onChainEvent
 		},
 	)
@@ -216,24 +215,13 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	return relayEntryPromise
 }
 
-func (ec *ethereumChain) OnSignatureSubmitted(
-	handle func(entry *event.Entry),
+func (ec *ethereumChain) OnRelayEntrySubmitted(
+	handle func(entry *event.EntrySubmitted),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchSignatureSubmitted(
-		func(
-			requestResponse *big.Int,
-			requestGroupPubKey []byte,
-			previousEntry *big.Int,
-			seed *big.Int,
-			blockNumber uint64,
-		) {
-			handle(&event.Entry{
-				Value:         requestResponse,
-				GroupPubKey:   requestGroupPubKey,
-				PreviousEntry: previousEntry,
-				Timestamp:     time.Now().UTC(),
-				Seed:          seed,
-				BlockNumber:   blockNumber,
+	return ec.keepRandomBeaconOperatorContract.WatchRelayEntrySubmitted(
+		func(blockNumber uint64) {
+			handle(&event.EntrySubmitted{
+				BlockNumber: blockNumber,
 			})
 		},
 		func(err error) error {
@@ -245,10 +233,10 @@ func (ec *ethereumChain) OnSignatureSubmitted(
 	)
 }
 
-func (ec *ethereumChain) OnSignatureRequested(
+func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchSignatureRequested(
+	return ec.keepRandomBeaconOperatorContract.WatchRelayEntryRequested(
 		func(
 			previousEntry *big.Int,
 			seed *big.Int,

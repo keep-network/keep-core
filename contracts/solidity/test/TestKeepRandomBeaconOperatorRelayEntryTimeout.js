@@ -51,8 +51,8 @@ contract("KeepRandomBeaconOperator", function(accounts) {
 
     assert.equal(
       (await operatorContract.getPastEvents())[0].event, 
-      "SignatureRequested", 
-      "SignatureRequested event should occur on operator contract"
+      "RelayEntryRequested", 
+      "RelayEntryRequested event should occur on operator contract"
     );
   });
 
@@ -76,8 +76,8 @@ contract("KeepRandomBeaconOperator", function(accounts) {
 
     assert.equal(
       (await operatorContract.getPastEvents())[0].event, 
-      "SignatureRequested", 
-      "SignatureRequested event should occur on operator contract."
+      "RelayEntryRequested", 
+      "RelayEntryRequested event should occur on operator contract."
     );
   });
 
