@@ -42,17 +42,7 @@ We currently have a single cloud environment (`keep-dev`) that is in a mixed sta
 
 ==== keep-client Service Deployment
 
-keep-client service deployment is done automatically whenever code is merged to master.  This is facilitated by a lightweight tool called https://keel.sh/[Keel that runs
-in the Kubernetes cluster.  This is a pull based deployment mechanism where Keel
-is subscribed to our container registry and listens for publish events.  On image
-publish Keel checks Kubernetes deployments for annotations and matches labels set
-there for what should be deployed. On match Keel pulls the image and does a
-deployment.
-
-- Keel Infrastructure: https://github.com/thesis/infrastructure/tree/master/terraform/modules/gcp_pull_deploy[Keel Terraform Module]
-`keep-dev`
-- Keel Implementation: https://github.com/keep-network/keep-core/blob/master/infrastructure/terraform/keep-dev/main.tf#L186-L201[keep-dev Terraform main.tf]
-
+keep-client service deployment is done automatically whenever code is merged to master.  This is facilitated by a lightweight tool called https://keel.sh/[Keel that runs in the Kubernetes cluster.  This is a pull based deployment mechanism where Keel is subscribed to our container registry and listens for publish events.  On image publish Keel checks Kubernetes deployments for annotations and matches labels set there for what should be deployed. On match Keel pulls the image and does a deployment.
 
 ==== keep-client Configuration
 
