@@ -43,7 +43,6 @@ func (r *Result) EntryValue() (*bn256.G1, error) {
 
 	g1 := new(bn256.G1)
 	_, err := g1.Unmarshal(r.entry)
-
 	if err != nil {
 		return nil, fmt.Errorf("corrupted entry: [%v]", err)
 	}
