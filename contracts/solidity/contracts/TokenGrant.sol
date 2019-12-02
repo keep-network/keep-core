@@ -6,6 +6,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./utils/AddressArrayUtils.sol";
+import "./TokenStaking.sol";
 
 
 /**
@@ -13,14 +14,6 @@ import "./utils/AddressArrayUtils.sol";
 */
 interface tokenSender {
     function approveAndCall(address _spender, uint256 _value, bytes calldata _extraData) external;
-}
-
-/**
- @dev Staking contract interface.
-*/
-interface tokenStakingInterface {
-    function initiateUnstake(uint256 _value, address _operator) external;
-    function finishUnstake(address _operator) external;
 }
 
 /**
@@ -325,7 +318,7 @@ contract TokenGrant {
             "Only operator or grantee can initiate unstake."
         );
 
-        tokenStakingInterface(grantStakes[_operator].stakingContract).initiateUnstake(grantStakes[_operator].amount, _operator);
+        TokenStaking(grantStakes[_operator].stakingContract).initiateUnstake(grantStakes[_operator].amount, _operator);
     }
 
     /**
@@ -336,7 +329,7 @@ contract TokenGrant {
         uint256 grantId = grantStakes[_operator].grantId;
         grants[grantId].staked = grants[grantId].staked.sub(grantStakes[_operator].amount);
 
-        tokenStakingInterface(grantStakes[_operator].stakingContract).finishUnstake(_operator);
+        TokenStaking(grantStakes[_operator].stakingContract).finishUnstake(_operator);
         delete grantStakes[_operator];
     }
 }

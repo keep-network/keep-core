@@ -37,9 +37,8 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
 
     // Modify state so we can test later that eternal storage works as expected after upgrade
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
-    await operatorContract.relayEntry(bls.nextGroupSignature);
-
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await operatorContract.relayEntry(bls.groupSignature);
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {

@@ -51,10 +51,10 @@ func (n *Node) MonitorRelayEntry(
 		logger.Errorf("waiter for a relay entry timeout block failed: [%v]", err)
 	}
 
-	onEntrySubmittedChannel := make(chan *event.Entry)
+	onEntrySubmittedChannel := make(chan *event.EntrySubmitted)
 
-	subscription, err := relayChain.OnSignatureSubmitted(
-		func(event *event.Entry) {
+	subscription, err := relayChain.OnRelayEntrySubmitted(
+		func(event *event.EntrySubmitted) {
 			onEntrySubmittedChannel <- event
 		},
 	)
@@ -88,16 +88,15 @@ func (n *Node) MonitorRelayEntry(
 	}
 }
 
-// GenerateRelayEntry takes a relay request and checks if this client
-// is one of the nodes elected by that request to create a new relay entry.
+// GenerateRelayEntry is triggered for a new relay request and checks if this
+// client is one of the group members selected to create a new relay entry.
 // If it is, this client enters the threshold signature creation process and,
-// upon successfully completing it, submits the signature as a new relay entry
-// to the passed in relayChain. Note that this function returns immediately after
-// determining whether the node is or is not is a member of the requested group, and
-// signature creation and submission is performed in a background goroutine.
+// upon successfully completing it, submits the signature as a new relay entry.
+// Note that this function returns immediately after determining whether the
+// node is or is not a member of the requested group, and signature creation
+// and submission is performed in a background goroutine.
 func (n *Node) GenerateRelayEntry(
 	previousEntry *big.Int,
-	seed *big.Int,
 	relayChain relayChain.Interface,
 	groupPublicKey []byte,
 	startBlockHeight uint64,
@@ -125,7 +124,6 @@ func (n *Node) GenerateRelayEntry(
 				channel,
 				relayChain,
 				previousEntry,
-				seed,
 				n.chainConfig.HonestThreshold,
 				signer.Signer,
 				startBlockHeight,

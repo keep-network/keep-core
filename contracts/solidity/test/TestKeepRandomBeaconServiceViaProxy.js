@@ -2,7 +2,6 @@ import { duration, increaseTimeTo } from './helpers/increaseTime';
 import {bls} from './helpers/data';
 import latestTime from './helpers/latestTime';
 import expectThrow from './helpers/expectThrow';
-import encodeCall from './helpers/encodeCall';
 import {initContracts} from './helpers/initContracts';
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
@@ -55,7 +54,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
   it("should fail to request relay entry with not enough ether", async function() {
     await expectThrow(
-      serviceContract.requestRelayEntry(0, {from: account_two, value: 0})
+      serviceContract.methods['requestRelayEntry()']({from: account_two, value: 0})
     );
   });
 
@@ -69,8 +68,8 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     );
     let dkgSubmitterReimbursementFee = await operatorContract.dkgSubmitterReimbursementFee()
 
-    let tx = await serviceContract.requestRelayEntry(
-      0, {from: account_two, value: entryFeeEstimate}
+    let tx = await serviceContract.methods['requestRelayEntry()'](
+      {from: account_two, value: entryFeeEstimate}
     )
     let transactionCost = web3.utils
       .toBN(tx.receipt.gasUsed)
@@ -78,8 +77,8 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
 
     assert.equal(
       (await operatorContract.getPastEvents())[0].event, 
-      'SignatureRequested', 
-      "SignatureRequested event should occur on operator contract."
+      'RelayEntryRequested', 
+      "RelayEntryRequested event should occur on operator contract."
     );
 
     assert.isTrue(
@@ -143,15 +142,15 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
       gas: 400000, 
       gasPrice: gasPrice,
       to: serviceContractProxy.address,
-      data: encodeCall('requestRelayEntry', ['uint256'], [0])
+      data: web3.eth.abi.encodeFunctionSignature('requestRelayEntry()')
     }).then(function(receipt){
       transactionCost = web3.utils.toBN(receipt.gasUsed).mul(gasPrice);
     });
 
     assert.equal(
       (await operatorContract.getPastEvents())[0].event, 
-      'SignatureRequested', 
-      "SignatureRequested event should occur on the operator contract."
+      'RelayEntryRequested', 
+      "RelayEntryRequested event should occur on the operator contract."
     );
     
     assert.isTrue(
@@ -199,8 +198,8 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
 
     // Send higher fee than entryFeeEstimate
-    await serviceContract.requestRelayEntry(
-      0, {from: account_one, value: entryFeeEstimate.mul(web3.utils.toBN(2))}
+    await serviceContract.methods['requestRelayEntry()'](
+      {from: account_one, value: entryFeeEstimate.mul(web3.utils.toBN(2))}
     )
 
     // should fail to withdraw if not owner

@@ -1,6 +1,7 @@
 import mineBlocks from './helpers/mineBlocks';
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 const GroupsExpirationStub = artifacts.require('./stubs/GroupsExpirationStub.sol')
+const Groups = artifacts.require("./libraries/operator/Groups.sol");
 
 contract('GroupsExpirationStub', function(accounts) {
 
@@ -11,6 +12,8 @@ contract('GroupsExpirationStub', function(accounts) {
   const relayEntryTimeout = 10;
 
   before(async () => {
+    const groupsLibrary = await Groups.new();
+    await GroupsExpirationStub.link("Groups", groupsLibrary.address);
     groups = await GroupsExpirationStub.new();
   });
 

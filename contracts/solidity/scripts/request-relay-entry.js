@@ -9,7 +9,7 @@ module.exports = async function() {
 
   try {
     let entryFeeEstimate = await contractInstance.entryFeeEstimate(0);
-    let tx = await contractInstance.requestRelayEntry(crypto.randomBytes(32), {value: entryFeeEstimate})
+    let tx = await contractInstance.methods['requestRelayEntry()']({value: entryFeeEstimate});
     console.log('Successfully requested relay entry with RequestId =', tx.logs[0].args.requestId.toString())
     console.log(
       '\n---Transaction Summary---' + '\n' +
