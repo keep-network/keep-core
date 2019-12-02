@@ -56,31 +56,13 @@ Configuration of the data that populates the ConfigMaps and ConfigMaps themselve
 
 ==== Ethereum Contract Deployment
 
-Ethereum contracts and subsequent steps are managed against `keep-dev` *manually*.
-This is done from a local machine on the `keep-dev` VPN using Truffle.
-
-It's worth noting that when contracts are deployed we need to do the following:
+Ethereum contracts and subsequent steps are managed against `keep-dev` *manually*. This is done from a local machine on the `keep-dev` VPN using Truffle. It's worth noting that when contracts are deployed we need to do the following:
 
 1. Ensure Ethereum accounts are unlocked.
 2. Stake Ethereum accounts with KEEP tokens.
 3. Update the keep-client configuration files and ConfigMaps with new contract
-   address. (see previous section)
+   addresses. (see previous section)
 4. re-deploy keep-clients.
-
-Sample Commands:
-
-```shell
-# migrate contracts
-truffle migrate --reset --network keep_dev
-
-# unlock ETH accounts
-truffle exec ./get-and-unlock-eth-accounts.js http://eth-tx-node.default.svc.cluster.local:8545 eth-account-passphrase --network keep_dev
-
-# stake ETH accounts
-truffle exec ./demo.js --network keep_dev
-```
-
-
 
 === Implementation
 
