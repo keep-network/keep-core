@@ -138,8 +138,7 @@ class OverviewTab extends React.Component {
     getBeneficiaryAddress = async () => {
       const { web3: { utils, stakingContract, yourAddress }, isOperator } = this.props;
       const beneficiaryAddress = isOperator ? await stakingContract.methods.magpieOf(yourAddress).call() : ''
-      const beneficiaryAddressToChecksum = beneficiaryAddress && utils.toChecksumAddress(beneficiaryAddress)
-      return beneficiaryAddressToChecksum
+      return beneficiaryAddress && utils.toChecksumAddress(beneficiaryAddress)
     }
 
     render() {
