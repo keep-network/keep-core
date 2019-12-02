@@ -17,15 +17,11 @@ keep-client.  This RFC requires a basic understanding of Kubernetes objects.
 
 === Implementation
 
-The implementation will automate
-`Ethereum Contract Deployment` and `keep-client Configuration`.
-`keep-client service deployment` is already automated via Keel.
+This implementation will automate `Ethereum Contract Deployment` and `keep-client Configuration`. `keep-client service deployment` is already automated via Keel.
 
 ==== Part 1: Contract Migration
 
-Either a new workflow or new jobs to existing workflow will be added to the
-`keep-core` circle config.  Before image publish on master merge Circle
-will run this workflow/job to trigger a script that will:
+TODO: WHich of these is used in the current implementation, or is this up to the user? Either a new workflow or new jobs to existing workflow will be added to the `keep-core` circle config. Before image publish on master merge Circle will run this workflow/job to trigger a script that will:
 
 - migrate all contracts
 
