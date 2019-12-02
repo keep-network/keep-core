@@ -360,16 +360,15 @@ library Groups {
     /**
      * @dev Verifies if the provided signature was created by a registered group.
      */
-    function verifySignature(
+    function verifyUnauthorizedSignature(
         Storage storage self,
         bytes memory groupPubKey,
-        bytes memory message,
         uint256 signature
     ) public view returns(bool) {
         require(isGroupRegistered(self, groupPubKey), "Group not found");
         return BLS.verify(
             groupPubKey,
-            message,
+            groupPubKey,
             bytes32(signature)
         );
     }

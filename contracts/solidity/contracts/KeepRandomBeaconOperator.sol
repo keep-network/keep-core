@@ -661,7 +661,7 @@ contract KeepRandomBeaconOperator {
         uint256 signedGroupPubKey
     ) public {
         bytes memory groupPubKey = groups.getGroupPublicKey(groupIndex);
-        if (groups.verifySignature(groupPubKey, groupPubKey, signedGroupPubKey)) {
+        if (groups.verifyUnauthorizedSignature(groupPubKey, signedGroupPubKey)) {
             groups.terminateGroup(groupIndex);
             stakingContract.seize(minimumStake, 100, msg.sender, groups.membersOf(groupPubKey));
         }
