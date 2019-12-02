@@ -53,61 +53,6 @@ removes/changes functionality an old keep-client can't deal with.  Therefore
 we must ensure both keep-clients and Keep contracts get deployed together,
 contracts before clients due to client startup behavior.
 
-=== Sample keep-client Service Configuration File
-
-==== Bootstrap Peer
-```
-# This is a TOML configuration file for DKG, P2P networking and connection to Ethereum
-
-# Provider Initialization Example
-
-[ethereum]
-  URL                = "ws://eth-host:ws-port"
-  URLRPC             = "http://eth-host:rpc-port"
-
-[ethereum.account]
-  Address            = "0x6299496199d99941193fdd2d717ef585f431ea05"
-  KeyFile            = "path/to/in-use/keyfile"
-
-[ethereum.ContractAddresses]
-  # Hex-encoded address of KeepRandomBeaconOperator contract
-  KeepRandomBeaconOperator = "0x6299496449d11141193fdd2d717ef585f431er02"
-  # TokenStaking
-  Staking = "0x6297776199d99942293fdd2d717ef585f431er03"
-
-# Bootstrap node creating a new network.
-  [LibP2P]
-  Seed = seed-number-for-id-generation
-  Port = keep-client-port
-
-```
-
-Standard Peer*
-```
-# This is a TOML configuration file for DKG, P2P networking and connection to Ethereum
-
-# Provider Initialization Example
-
-[ethereum]
-  URL                = "ws://eth-host:ws-port"
-  URLRPC             = "http://eth-host:rpc-port"
-
-[ethereum.account]
-  Address            = "0x6299496199d99941193fdd2d717ef585f431ea05"
-  KeyFile            = "path/to/in-use/keyfile"
-
-[ethereum.ContractAddresses]
-  # Hex-encoded address of KeepRandomBeaconOperator contract
-  KeepRandomBeaconOperator = "0x6299496449d11141193fdd2d717ef585f431er02"
-  # Hex-encoded address of TokenStaking contract
-  Staking = "0x6297776199d99942293fdd2d717ef585f431er03"
-
-[LibP2P]
-  Peers = ["comma separated list of bootstrap peers"]
-  Port = keep-client-port
-
-```
-
 
 === Current Functionality
 
@@ -227,9 +172,7 @@ for doing ETH account creation, unlock and stake, and keep-client configuration.
 This will be checked into the `keep-core/infrastructure/kube` directory.
 
 ==== A Note On Configuration Value Scope
-
-We provide configuration values via environment variables at two points in this
-process: Circle contexts and Kube deployment configuration files.
+We provide configuration values via environment variables at two points in this process: Circle contexts and Kube deployment configuration files.
 
 We have *environment* and *client* properties. Where some N configuration values
 are of context/properties environment and some are of context/properties client.
