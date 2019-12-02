@@ -16,3 +16,4 @@ yarn-debug.log*
 yarn-error.log*
 
 /src/app.css
+/src/contracts

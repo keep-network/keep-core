@@ -93,7 +93,13 @@ func buildContractInfo(
 	payableMethods := make(map[string]struct{})
 	for _, methodPayableInfo := range payableInfo {
 		if methodPayableInfo.Payable {
-			payableMethods[methodPayableInfo.Name] = struct{}{}
+			name := methodPayableInfo.Name
+			_, ok := payableMethods[name]
+			for idx := 0; ok; idx++ {
+				name = fmt.Sprintf("%s%d", methodPayableInfo.Name, idx)
+				_, ok = payableMethods[name]
+			}
+			payableMethods[name] = struct{}{}
 		}
 	}
 

@@ -10,22 +10,17 @@ contract KeepRandomBeaconOperatorTicketsOrderingStub is KeepRandomBeaconOperator
 
     constructor(
         address _serviceContract,
-        address _stakingContract,
-        address payable _groupContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract, _groupContract) public {}
+        address _stakingContract
+    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {}
 
-    function addTicket(
-        uint256 newTicketValue,
-        uint256 stakerValue,
-        uint256 virtualStakerIndex
-    ) public {
-        groupSelection.addTicket(newTicketValue, stakerValue, virtualStakerIndex);
+    function addTicket(uint64 newTicketValue) public {
+        groupSelection.addTicket(newTicketValue);
     }
 
     /**
     * @dev Gets submitted group candidate tickets so far.
     */
-    function getTickets() public view returns (uint256[] memory) {
+    function getTickets() public view returns (uint64[] memory) {
         return groupSelection.tickets;
     }
 

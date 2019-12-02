@@ -6,9 +6,10 @@
  * clean.
 */
 locals {
-  public_subnet_name  = "${var.environment}-${module.vpc.vpc_subnet_prefix}-pub-${var.region_data["region"]}"
-  private_subnet_name = "${var.environment}-${module.vpc.vpc_subnet_prefix}-pri-${var.region_data["region"]}"
-  gke_subnet_name     = "${var.environment}-${module.vpc.vpc_subnet_prefix}-gke-${var.region_data["region"]}"
+  public_subnet_name     = "${var.environment}-${module.vpc.vpc_subnet_prefix}-pub-${var.region_data["region"]}"
+  private_subnet_name    = "${var.environment}-${module.vpc.vpc_subnet_prefix}-pri-${var.region_data["region"]}"
+  gke_subnet_name        = "${var.environment}-${module.vpc.vpc_subnet_prefix}-gke-${var.region_data["region"]}"
+  service_account_prefix = "serviceAccount"
 
   labels {
     contact     = "${var.contacts}"
@@ -245,4 +246,20 @@ resource "google_storage_bucket" "keep_dev_contract_data" {
   versioning {
     enabled = true
   }
+}
+
+resource "random_id" "ci_get_bucket_object_service_account_random_account_id" {
+  byte_length = 2
+}
+
+resource "google_service_account" "ci_get_bucket_object_service_account" {
+  project      = "${module.project.project_id}"
+  account_id   = "ci-get-bucket-object-${random_id.ci_get_bucket_object_service_account_random_account_id.hex}"
+  display_name = "ci-get-bucket-object"
+}
+
+resource "google_project_iam_member" "ci_get_bucket_object_service_account" {
+  project = "${module.project.project_id}"
+  role    = "roles/storage.objectViewer"
+  member  = "${local.service_account_prefix}:${google_service_account.ci_get_bucket_object_service_account.email}"
 }

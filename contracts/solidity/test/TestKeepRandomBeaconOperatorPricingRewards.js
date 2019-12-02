@@ -13,8 +13,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorPricingStub.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorPricingStub.sol')
     );
     
     serviceContract = contracts.serviceContract;
@@ -33,7 +32,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
   it("should correctly evaluate delay factor right after the request", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
 
     let delayFactor = await operatorContract.delayFactor();        
 
@@ -43,7 +42,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
   it("should correctly evaluate delay factor at the first submission block", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
 
     mineBlocks(await operatorContract.relayEntryGenerationTime());
 
@@ -55,7 +54,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
   it("should correctly evaluate delay factor at the second submission block", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
 
     mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1));
 
@@ -67,7 +66,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
   it("should correctly evaluate delay factor in the last block before timeout", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
 
     mineBlocks((await operatorContract.relayEntryTimeout()).subn(1));
 
@@ -85,7 +84,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await operatorContract.setPriceFeedEstimate(140000);
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
 
     // No delay so entire group member base reward is paid and nothing
     // goes to the subsidy pool.
@@ -121,7 +120,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await operatorContract.setPriceFeedEstimate(150000);  
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});  
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});  
 
     mineBlocks(await operatorContract.relayEntryGenerationTime()); 
 
@@ -159,7 +158,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await operatorContract.setPriceFeedEstimate(1400000);  
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});  
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});  
 
     mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1));  
 
@@ -216,7 +215,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await operatorContract.setPriceFeedEstimate(2000000);  
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate}); 
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate}); 
 
     mineBlocks((await operatorContract.relayEntryTimeout()).subn(1));
 

@@ -1,3 +1,7 @@
+locals {
+  service_account_prefix = "serviceAccount"
+}
+
 module "pull_deployment_infrastructure" {
   source                                   = "git@github.com:thesis/infrastructure.git//terraform/modules/gcp_pull_deploy"
   project                                  = "${module.project.project_id}"
@@ -39,4 +43,20 @@ module "push_deployment_infrastructure" {
   }
 
   labels = "${local.labels}"
+}
+
+resource "random_id" "ci_get_bucket_object_service_account_random_account_id" {
+  byte_length = 2
+}
+
+resource "google_service_account" "ci_get_bucket_object_service_account" {
+  project      = "${module.project.project_id}"
+  account_id   = "ci-get-bucket-object-${random_id.ci_get_bucket_object_service_account_random_account_id.hex}"
+  display_name = "ci-get-bucket-object"
+}
+
+resource "google_project_iam_member" "ci_get_bucket_object_service_account" {
+  project = "${module.project.project_id}"
+  role    = "roles/storage.objectViewer"
+  member  = "${local.service_account_prefix}:${google_service_account.ci_get_bucket_object_service_account.email}"
 }

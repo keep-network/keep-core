@@ -13,8 +13,7 @@ module.exports = async function() {
 
   try {
     let entryFeeEstimate = await contractInstance.entryFeeEstimate(process.argv[6]);
-    let tx = await contractInstance.methods['requestRelayEntry(uint256,address,string,uint256)'](
-      crypto.randomBytes(32),
+    let tx = await contractInstance.methods['requestRelayEntry(address,string,uint256)'](
       process.argv[4],
       process.argv[5],
       process.argv[6],

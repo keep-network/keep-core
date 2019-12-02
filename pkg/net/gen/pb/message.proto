@@ -24,6 +24,9 @@ message NetworkMessage {
   // Channel names are Keccak(StakingPubKey1 || ... || StakingPubKeyN) of
   // all valid group members.
   bytes channel = 5;
+
+  // Retransmission round. 0 if the message is not a retransmission.
+  uint32 retransmission = 6;
 }
 
 message Identity {

@@ -27,9 +27,6 @@ the formula will explain when you install it.
 Then you will need to build and install `bn`. Change directory to `bn` and
 run `make install`.
 
-Also you'll also need https://github.com/golang/dep=installation[`dep`], the Go
-dependency manager we use.
-
 Lastly, you'll need the https://developers.google.com/protocol-buffers/docs/downloads[protobuf compiler].
 You'll also need to install the `protoc-gen-gogoslick` toolchain, which you can
 install using `go get`:
@@ -37,9 +34,6 @@ install using `go get`:
 ```
 go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
 ```
-
-Finally, you can run `dep ensure` in the root directory of this repository and
-you'll be ready to build!
 
 Run `+go generate ./.../+` from `keep-core` and if everything is fine, start the
 Keep client with `go run main.go`.

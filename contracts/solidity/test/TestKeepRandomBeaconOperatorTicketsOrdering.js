@@ -12,8 +12,7 @@ contract('KeepRandomBeaconOperator', function() {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorTicketsOrderingStub.sol'),
-      artifacts.require('./KeepRandomBeaconOperatorGroups.sol')
+      artifacts.require('./stubs/KeepRandomBeaconOperatorTicketsOrderingStub.sol')
     );
 
     operatorContract = contracts.operatorContract;
@@ -158,17 +157,8 @@ contract('KeepRandomBeaconOperator', function() {
     });
 
     async function addTickets(ticketsToAdd) {
-      // addTicket does not perform validation so we can hardcode these
-      // values for the simplicity of tests
-      const stakerValue = "0xfa3da235947aab49d439f3bcb46effd1a7237e32"
-      const virtualStakerIndex = 1;
-
       for (let i = 0; i < ticketsToAdd.length; i++) {
-        await operatorContract.addTicket(
-          ticketsToAdd[i],
-          stakerValue,
-          virtualStakerIndex
-        );
+        await operatorContract.addTicket(ticketsToAdd[i]);
       }
     };
 

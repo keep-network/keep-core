@@ -100,14 +100,19 @@ addresses. The account under alloc is the address of the account prepended with
 {
     "config": {
         "chainId": 1101,
-        "homesteadBlock": 0,
-        "byzantiumBlock": 0,
         "eip150Block": 0,
         "eip155Block": 0,
-        "eip158Block": 0
+        "eip158Block": 0,
+        "byzantiumBlock": 0,
+        "homesteadBlock": 0,
+        "constantinopleBlock": 0,
+        "petersburgBlock": 0,
+        "daoForkBlock": 0,
+        "istanbulBlock": 0,
+        "daoForkSupport": true
     },
-    "difficulty" : "0x20",
-    "gasLimit"   : "0x493E0000",
+    "difficulty": "0x20",
+    "gasLimit": "0x7A1200",
     "alloc": {
         "0x3e208f39da1bc335464f40d85546ad6a1b66a9a4": { "balance": "1000000000000000000000000000000000000000000000000000000" },
         "0xa232599810ecc03816adf607272705b71ff271ac": { "balance": "1000000000000000000000000000000000000000000000000000000" },
@@ -357,7 +362,6 @@ This directory must be created before peer start.
 
 Build the `keep-core` executable:
 ```
-dep ensure
 go generate ./...
 go build
 ```

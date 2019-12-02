@@ -19,29 +19,24 @@ type StakerAddress []byte
 // entries.
 type RelayEntryInterface interface {
 	// SubmitRelayEntry submits an entry in the threshold relay and returns a
-	// promise to track the submission result. The promise is fulfilled with
-	// the entry as seen on-chain, or failed if there is an error submitting
-	// the entry.
-	SubmitRelayEntry(entryValue *big.Int) *async.EventEntryPromise
-	// OnSignatureSubmitted is a callback that is invoked when an on-chain
+	// promise to track the submission progress. The promise is fulfilled when
+	// the entry has been successfully submitted to the on-chain, or failed if
+	// the entry submission failed.
+	SubmitRelayEntry(entry []byte) *async.EventEntrySubmittedPromise
+	// OnRelayEntrySubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
-	OnSignatureSubmitted(
-		func(entry *event.Entry),
+	OnRelayEntrySubmitted(
+		func(entry *event.EntrySubmitted),
 	) (subscription.EventSubscription, error)
-	// OnSignatureRequested is a callback that is invoked when an on-chain
+	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
-	OnSignatureRequested(
+	OnRelayEntryRequested(
 		func(request *event.Request),
 	) (subscription.EventSubscription, error)
 	// ReportRelayEntryTimeout notifies the chain when a selected group which was
 	// supposed to submit a relay entry, did not deliver it within a specified
 	// time frame (relayEntryTimeout) counted in blocks.
 	ReportRelayEntryTimeout() error
-	// CombineToSign takes the previous relay entry value and the current
-	// requests's seed and combines it into a slice of bytes that is going to be
-	// signed by the selected group and as a result, will form a new relay entry
-	// value.
-	CombineToSign(previousEntry *big.Int, seed *big.Int) ([]byte, error)
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that

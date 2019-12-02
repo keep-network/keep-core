@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 /**
  * The group selection protocol is an interactive method of selecting candidate
@@ -26,22 +27,16 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 library GroupSelection {
 
     using SafeMath for uint256;
-
-    struct Proof {
-        address sender;
-        uint256 stakerValue;
-        uint256 virtualStakerIndex;
-    }
+    using BytesLib for bytes;
 
     struct Storage {
         // Tickets submitted by member candidates during the current group
         // selection execution and accepted by the protocol for the
         // consideration.
-        uint256[] tickets;
+        uint64[] tickets;
 
-        // Information about each accepted ticket allowing to prove its
-        // validity.
-        mapping(uint256 => Proof) proofs;
+        // Information about ticket submitters (group member candidates).
+        mapping(uint256 => address) candidate;
 
         // Pseudorandom seed value used as an input for the group selection.
         uint256 seed;
@@ -105,15 +100,19 @@ library GroupSelection {
 
     /**
      * @dev Submits ticket to request to participate in a new candidate group.
-     * @param ticketValue Keccak-256 hash with input values of group selection
-     * seed, staker address and virtualStakerIndex.
-     * @param stakerValue Staker's address as an integer.
-     * @param virtualStakerIndex Index of a virtual staker - number within
-     * a range of 1 to staker's weight.
+     * @param ticketValue First 8 bytes of a result of keccak256 cryptography hash
+     * function on the combination of the group selection seed (previous
+     * beacon output), staker-specific value (address) and virtual staker index.
+     * @param stakerValue Staker-specific value which is the address of the staker.
+     * @param virtualStakerIndex 4-bytes number within a range of 1 to staker's weight;
+     * has to be unique for all tickets submitted by the given staker for the
+     * current candidate group selection.
+     * @param stakingWeight Relation of the minimum stake to the candidate's
+     * stake.
      */
     function submitTicket(
         Storage storage self,
-        uint256 ticketValue,
+        uint64 ticketValue,
         uint256 stakerValue,
         uint256 virtualStakerIndex,
         uint256 stakingWeight
@@ -122,7 +121,7 @@ library GroupSelection {
             revert("Ticket submission is over");
         }
 
-        if (self.proofs[ticketValue].sender != address(0)) {
+        if (self.candidate[ticketValue] != address(0)) {
             revert("Duplicate ticket");
         }
 
@@ -133,7 +132,7 @@ library GroupSelection {
             stakingWeight,
             self.seed
         )) {
-            addTicket(self, ticketValue, stakerValue, virtualStakerIndex);
+            addTicket(self, ticketValue);
         } else {
             // TODO: should we slash instead of reverting?
             revert("Invalid ticket");
@@ -144,15 +143,26 @@ library GroupSelection {
      * @dev Performs full verification of the ticket.
      */
     function isTicketValid(
-        uint256 ticketValue,
+        uint64 ticketValue,
         uint256 stakerValue,
         uint256 virtualStakerIndex,
         uint256 stakingWeight,
         uint256 groupSelectionSeed
     ) internal view returns(bool) {
+        uint64 ticketValueExpected;
+        bytes memory ticketBytes = abi.encodePacked(keccak256(abi.encodePacked(
+            groupSelectionSeed,
+            stakerValue,
+            virtualStakerIndex
+        )));
+        // use first 8 bytes to compare ticket values
+        assembly {
+            ticketValueExpected := mload(add(ticketBytes, 8))
+        }
+
         bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight;
         bool isStakerValueValid = stakerValue == uint256(msg.sender);
-        bool isTicketValueValid = ticketValue == uint256(keccak256(abi.encodePacked(groupSelectionSeed, stakerValue, virtualStakerIndex)));
+        bool isTicketValueValid = ticketValue == ticketValueExpected;
 
         return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
     }
@@ -162,12 +172,7 @@ library GroupSelection {
      * than the currently highest ticket or when the number of tickets is still
      * below the group size.
      */
-    function addTicket(
-        Storage storage self,
-        uint256 newTicketValue,
-        uint256 stakerValue,
-        uint256 virtualStakerIndex
-    ) internal {
+    function addTicket(Storage storage self, uint64 newTicketValue) internal {
         uint256[] memory ordered = getTicketValueOrderedIndices(self);
 
         // any ticket goes when the tickets array size is lower than the group size
@@ -195,7 +200,7 @@ library GroupSelection {
                 self.previousTicketIndex[self.tickets.length - 1] = self.previousTicketIndex[j];
                 self.previousTicketIndex[j] = self.tickets.length - 1;
             }
-            self.proofs[newTicketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+            self.candidate[newTicketValue] = msg.sender;
         } else if (newTicketValue < self.tickets[self.tail]) {
             uint256 ticketToRemove = self.tickets[self.tail];
             // new ticket is lower than currently lowest
@@ -217,9 +222,10 @@ library GroupSelection {
                     self.tail = newTail;
                 }
             }
-            // deleting the proof for the old ticket that is being replaced by the new ticket
-            delete self.proofs[ticketToRemove];
-            self.proofs[newTicketValue] = Proof(msg.sender, stakerValue, virtualStakerIndex);
+            // we are replacing tickets so we also need to replace information
+            // about the submitter
+            delete self.candidate[ticketToRemove];
+            self.candidate[newTicketValue] = msg.sender;
         }
     }
 
@@ -228,7 +234,7 @@ library GroupSelection {
      */
     function findReplacementIndex(
         Storage storage self,
-        uint256 newTicketValue,
+        uint64 newTicketValue,
         uint256[] memory ordered
     ) internal view returns (uint256) {
         uint256 lo = 0;
@@ -282,10 +288,10 @@ library GroupSelection {
 
         address[] memory selected = new address[](self.groupSize);
         uint256 ticketIndex = self.tail;
-        selected[self.tickets.length - 1] = self.proofs[self.tickets[ticketIndex]].sender;
+        selected[self.tickets.length - 1] = self.candidate[self.tickets[ticketIndex]];
         for (uint256 i = self.tickets.length - 1; i > 0; i--) {
             ticketIndex = self.previousTicketIndex[ticketIndex];
-            selected[i-1] = self.proofs[self.tickets[ticketIndex]].sender;
+            selected[i-1] = self.candidate[self.tickets[ticketIndex]];
         }
 
         return selected;
@@ -296,7 +302,7 @@ library GroupSelection {
      */
     function cleanup(Storage storage self) internal {
         for (uint i = 0; i < self.tickets.length; i++) {
-            delete self.proofs[self.tickets[i]];
+            delete self.candidate[self.tickets[i]];
             delete self.previousTicketIndex[i];
         }
         delete self.tickets;
