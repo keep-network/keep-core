@@ -61,10 +61,7 @@ A vendor is a smart contract with which the application interacts to obtain the 
 
 ==== Keep registry
 
-The keep registry serves the role of the master list (see RFC 11 for more details) 
-and tracks sanctioned staking contracts, operator contracts (including keep 
-factories) and vendors. It ensures that only approved contracts are used. 
-A new type of keep can be added without upgradeable registry. 
+The keep registry serves the role of the master list (see RFC 11 for more details) and tracks sanctioned staking contracts, operator contracts (including keep factories) and vendors. It ensures that only approved contracts are used. A new type of keep can be added without upgradeable registry. 
 
 === Pseudocode
 
