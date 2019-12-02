@@ -22,48 +22,27 @@ There are *three* parts to deployments with keep-clients:
 
 === Service Code and Service Configuration
 
-Deploying manually is a pain in the ass, even at a few client deployments (5) the
-manual process is untenable.  It's possible to manage this manually at such a low
-number of clients though you run a non-trivial risk of human error and deployment
-step repetition as as result.  This has an adverse effect on both the engineering
-experience and time efficiency.
+Deploying manually is a pain in the ass, even at a few client deployments (5) the manual process is untenable.  It's possible to manage this manually at such a low number of clients though you run a non-trivial risk of human error and deployment step repetition as as result.  This has an adverse effect on both the engineering experience and time efficiency.
 
-When scaling the solution beyond 5 clients manual configuration becomes untenable
-regardless of due-diligence.
+When scaling the solution beyond 5 clients manual configuration becomes untenable regardless of due-diligence.
 
 === Contract Code: 
 
-The keep-client service leans on a collection of Ethereum contracts that are in
-development alongside the service.  When contracts are changed they have to be
-deployed to the Ethereum network that the keep-clients are connecting to.
+The keep-client service leans on a collection of Ethereum contracts that are in development alongside the service. When contracts are changed they have to be deployed to the Ethereum network that the keep-clients are connecting to.
 
-This arrangement creates a dependency between the service configuration and
-contract code on a couple of levels:
+This arrangement creates a dependency between the service configuration and contract code on a couple of levels:
 
-1. keep-client configuration files require contract addresses.  These addresses
-change when contracts are updated.  This means we need to be aware of contract
-changes on the keep-client configuration side and make sure keep-client
-configuration files get updated contract addresses.
+1. keep-client configuration files require contract addresses. These addresses change when contracts are updated.  This means we need to be aware of contract changes on the keep-client configuration side and make sure keep-client configuration files get updated contract addresses.
 
-2. We can assume keep-client code will be updated to utilize the latest contract
-functionality.  We can assume that this may or may not break keep-client
-behavior if the service is deployed against old contracts. This can potentially
-happen the other way around as well, where an updated contract is deployed and
-removes/changes functionality an old keep-client can't deal with.  Therefore
-we must ensure both keep-clients and Keep contracts get deployed together,
-contracts before clients due to client startup behavior.
-
+2. We can assume keep-client code will be updated to utilize the latest contract functionality.  We can assume that this may or may not break keep-client behavior if the service is deployed against old contracts. This can potentially happen the other way around as well, where an updated contract is deployed and removes/changes functionality an old keep-client can't deal with. Therefore we must ensure both keep-clients and Keep contracts get deployed together, deploying contracts before clients due to client startup behavior.
 
 === Current Functionality
 
-We currently have a single cloud environment (`keep-dev`) that is in a mixed state of
-continuous delivery and manual configuration.  Current functionality will be
-outlined as the "three parts" described in Background.
+We currently have a single cloud environment (`keep-dev`) that is in a mixed state of continuous delivery and manual configuration.  Current functionality will be outlined as the "three parts" described in Background.
 
 ==== keep-client Service Deployment
 
-keep-client service deployment is done automatically whenever code is merged to
-master.  This is facilitated by a lightweight tool called https://keel.sh/[Keel] that runs
+keep-client service deployment is done automatically whenever code is merged to master.  This is facilitated by a lightweight tool called https://keel.sh/[Keel that runs
 in the Kubernetes cluster.  This is a pull based deployment mechanism where Keel
 is subscribed to our container registry and listens for publish events.  On image
 publish Keel checks Kubernetes deployments for annotations and matches labels set
