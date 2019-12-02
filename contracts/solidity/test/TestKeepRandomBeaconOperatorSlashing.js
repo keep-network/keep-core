@@ -70,4 +70,19 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       "Total number of groups must be greater than zero."
     );
   })
+
+  it("should ignore invalid report of unauthorized signing", async () => {
+    let groupIndex = await operatorContract.getGroupIndex(bls.groupPubKey)
+    await operatorContract.reportUnauthorizedSigning(
+      groupIndex,
+      bls.nextGroupSignature, // Wrong signature
+      {from: tattletale}
+    )
+
+    assert.isTrue((await stakingContract.balanceOf(operator1)).eq(minimumStake), "Unexpected operator 1 balance")
+    assert.isTrue((await stakingContract.balanceOf(operator2)).eq(minimumStake), "Unexpected operator 2 balance")
+    assert.isTrue((await stakingContract.balanceOf(operator3)).eq(minimumStake), "Unexpected operator 3 balance")
+
+    assert.isTrue((await token.balanceOf(tattletale)).isZero(), "Unexpected tattletale balance")
+  })
 })
