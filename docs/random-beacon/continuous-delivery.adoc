@@ -51,7 +51,7 @@ for each of the assigned ETH accounts.  This is an infinitely scalable (system
 resources aside) and reduces `unlock + stake` time to a ceiling of the time it
 takes to operate on a single account.
 
-The `InitContainer` will have a copy of each Keep contracts compiled JSON.  The
+The `InitContainer` has a copy of each Keep contracts compiled JSON.  The
 files will be used to fetch contract ABI's for account staking and contract addresses for configuration file setup.  The updated configuration values will be fed into a complete `keep-client` configuration template and stored in a Kubernetes persistent volume.  This volume will be mounted to the `keep-client` deployment where the config can be passed via command line argument on service start.
 
 For now we're going to bake a custom image for the `InitContainer` with the script for doing ETH account creation, unlock and stake, and keep-client configuration. This will be checked into the `keep-core/infrastructure/kube` directory.
@@ -65,60 +65,12 @@ Environment properties
 
 An example:
 
-Using the *environment*/*client* context to organize configurations we can draw a
-line at where config values get populated.
+Using the *environment*/*client* context to organize configurations we can draw a line at where config values get populated.
 
 `ETH_HOSTNAME` is a property of the environment, where `KEEP_CLIENT_ETH_ACCOUNT`
 is a property of a client (because we’ve assigned it so).
 
-Environment context property `ETH_HOSTNAME` gets configured at the Circle context
-level and baked into the `InitCointainer` and `KEEP_CLIENT_ETH_ACCOUNT`
+Environment context property `ETH_HOSTNAME` gets configured at the Circle context level and baked into the `InitCointainer` and `KEEP_CLIENT_ETH_ACCOUNT`
 gets configured on the Kube deployment.
 
-== Background
-
-There are *three* parts to deployments with keep-clients:
-
-=== Service Code and Service Configuration
-
-Deploying manually is a pain in the ass, even at a few client deployments (5) the manual process is untenable.  It's possible to manage this manually at such a low number of clients though you run a non-trivial risk of human error and deployment step repetition as as result.  This has an adverse effect on both the engineering experience and time efficiency.
-
-When scaling the solution beyond 5 clients manual configuration becomes untenable regardless of due-diligence.
-
-=== Contract Code: 
-
-The keep-client service leans on a collection of Ethereum contracts that are in development alongside the service. When contracts are changed they have to be deployed to the Ethereum network that the keep-clients are connecting to.
-
-This arrangement creates a dependency between the service configuration and contract code on a couple of levels:
-
-1. keep-client configuration files require contract addresses. These addresses change when contracts are updated.  This means we need to be aware of contract changes on the keep-client configuration side and make sure keep-client configuration files get updated contract addresses.
-
-2. We can assume keep-client code will be updated to utilize the latest contract functionality.  We can assume that this may or may not break keep-client behavior if the service is deployed against old contracts. This can potentially happen the other way around as well, where an updated contract is deployed and removes/changes functionality an old keep-client can't deal with. Therefore we must ensure both keep-clients and Keep contracts get deployed together, deploying contracts before clients due to client startup behavior.
-
-=== Current Functionality
-
-We currently have a single cloud environment (`keep-dev`) that is in a mixed state of continuous delivery and manual configuration.  Current functionality will be outlined as the "three parts" described in Background.
-
-==== keep-client Service Deployment
-
-keep-client service deployment is done automatically whenever code is merged to master.  This is facilitated by a lightweight tool called https://keel.sh/[Keel that runs in the Kubernetes cluster.  This is a pull based deployment mechanism where Keel is subscribed to our container registry and listens for publish events.  On image publish Keel checks Kubernetes deployments for annotations and matches labels set there for what should be deployed. On match Keel pulls the image and does a deployment.
-
-==== keep-client Configuration
-
-Our first goal was to separate service configuration from the service image. This exists in the form of each deployed keep-client having its own Kubernetes
-ConfigMap. This allows for the use of a "standard" keep-client service image across all deployed keep-clients. There are two pieces of data that make up a keep-client ConfigMap:
-
-1. keep-client-config.toml
-2. Ethereum keyfile
-
-Configuration of the data that populates the ConfigMaps and ConfigMaps themselves are updated *manually*.
-
-==== Ethereum Contract Deployment
-
-Ethereum contracts and subsequent steps are managed against `keep-dev` *manually*. This is done from a local machine on the `keep-dev` VPN using Truffle. It's worth noting that when contracts are deployed we need to do the following:
-
-1. Ensure Ethereum accounts are unlocked.
-2. Stake Ethereum accounts with KEEP tokens.
-3. Update the keep-client configuration files and ConfigMaps with new contract
-   addresses. (see previous section)
-4. re-deploy keep-clients.
+TODO: I removed the background section since it might not be as relevant to the YP?
