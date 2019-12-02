@@ -30,22 +30,22 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
 
   it("should produce entry if callback contract was not provided", async function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
-    await operatorContract.relayEntry(bls.nextGroupSignature);
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await operatorContract.relayEntry(bls.groupSignature);
 
     let result = await serviceContract.previousEntry();
-    assert.isTrue(result.eq(bls.nextGroupSignature), "Value should be updated on beacon contract.");
+    assert.isTrue(result.eq(bls.groupSignature), "Value should be updated on beacon contract.");
   });
 
   it("should successfully call method on a callback contract", async function() {
     let callbackGas = await callbackContract.callback.estimateGas(bls.nextNextGroupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    await serviceContract.methods['requestRelayEntry(uint256,address,string,uint256)'](bls.seed, callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
 
-    await operatorContract.relayEntry(bls.nextNextGroupSignature);
+    await operatorContract.relayEntry(bls.nextGroupSignature);
 
     let result = await callbackContract.lastEntry();
-    assert.isTrue(result.eq(bls.nextNextGroupSignature), "Value updated by the callback should be the same as relay entry.");
+    assert.isTrue(result.eq(bls.nextGroupSignature), "Value updated by the callback should be the same as relay entry.");
   });
 
 });

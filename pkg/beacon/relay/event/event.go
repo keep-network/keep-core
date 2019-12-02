@@ -24,7 +24,6 @@ type EntryGenerated struct {
 // Request represents a request for an entry in the threshold relay.
 type Request struct {
 	PreviousEntry  *big.Int
-	Seed           *big.Int
 	GroupPublicKey []byte
 	BlockNumber    uint64
 }

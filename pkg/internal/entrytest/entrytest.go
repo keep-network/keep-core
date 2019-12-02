@@ -49,7 +49,6 @@ func RunTest(
 	threshold int,
 	rules interception.Rules,
 	previousEntry *big.Int,
-	seed *big.Int,
 ) (*Result, error) {
 	privateKey, publicKey, err := operator.GenerateKeyPair()
 	if err != nil {
@@ -65,7 +64,7 @@ func RunTest(
 
 	chain := chainLocal.ConnectWithKey(len(signers), threshold, minimumStake, privateKey)
 
-	return executeSigning(signers, threshold, chain, network, previousEntry, seed)
+	return executeSigning(signers, threshold, chain, network, previousEntry)
 }
 
 func executeSigning(
@@ -74,7 +73,6 @@ func executeSigning(
 	chain chainLocal.Chain,
 	network interception.Network,
 	previousEntry *big.Int,
-	seed *big.Int,
 ) (*Result, error) {
 	blockCounter, err := chain.BlockCounter()
 	if err != nil {
@@ -124,7 +122,6 @@ func executeSigning(
 				broadcastChannel,
 				chain.ThresholdRelay(),
 				previousEntry,
-				seed,
 				threshold,
 				signer,
 				startBlockHeight,

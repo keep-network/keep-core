@@ -24,7 +24,6 @@ type signingStateBase struct {
 	signer *dkg.ThresholdSigner
 
 	previousEntry *big.Int
-	seed          *big.Int
 
 	honestThreshold int
 }
@@ -47,7 +46,7 @@ func (sss *signatureShareState) ActiveBlocks() uint64 {
 }
 
 func (sss *signatureShareState) Initiate() error {
-	entryToSign, err := sss.relayChain.CombineToSign(sss.previousEntry, sss.seed)
+	entryToSign, err := sss.relayChain.SerializeToSign(sss.previousEntry)
 	if err != nil {
 		return err
 	}
@@ -215,7 +214,6 @@ func (ess *entrySubmissionState) Initiate() error {
 	return submitter.submitRelayEntry(
 		new(big.Int).SetBytes(ess.signature),
 		ess.previousEntry,
-		ess.seed,
 		ess.signer.GroupPublicKeyBytesCompressed(),
 		ess.entrySubmissionStartBlockHeight,
 	)

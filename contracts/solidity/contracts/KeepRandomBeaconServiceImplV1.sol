@@ -12,7 +12,6 @@ interface OperatorContract {
     function groupProfitFee() external view returns(uint256);
     function sign(
         uint256 requestId,
-        uint256 seed,
         uint256 previousEntry
     ) external payable;
     function numberOfGroups() external view returns(uint256);
@@ -81,9 +80,10 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     mapping (string => bool) internal _initialized;
 
     // Seed used as the first random beacon value.
-    // It is a signature over 78 digits of PI and 78 digits of Euler's number
-    // using BLS private key 123.
-    uint256 constant internal _beaconSeed = 10920102476789591414949377782104707130412218726336356788412941355500907533021;
+    // It's a compressed G1 point G * PI =
+    // G * 31415926535897932384626433832795028841971693993751058209749445923078164062862
+    // Where G is the generator of G1 abstract cyclic group.
+    uint256 constant internal _beaconSeed = 67739255176204957841308900500337009958963301977368411094653342041505945563546;
 
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
@@ -189,19 +189,17 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
-     * @dev Creates a request to generate a new relay entry, which will include a
-     * random number (by signing the previous entry's random number).
-     * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
+     * @dev Creates a request to generate a new relay entry, which will include
+     * a random number (by signing the previous entry's random number).
      * @return An uint256 representing uniquely generated entry Id.
      */
-    function requestRelayEntry(uint256 seed) public payable returns (uint256) {
-        return requestRelayEntry(seed, address(0), "", 0);
+    function requestRelayEntry() public payable returns (uint256) {
+        return requestRelayEntry(address(0), "", 0);
     }
 
     /**
-     * @dev Creates a request to generate a new relay entry, which will include a
-     * random number (by signing the previous entry's random number).
-     * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
+     * @dev Creates a request to generate a new relay entry, which will include
+     * a random number (by signing the previous entry's random number).
      * @param callbackContract Callback contract address. Callback is called once a new relay entry has been generated.
      * @param callbackMethod Callback contract method signature. String representation of your method with a single
      * uint256 input parameter i.e. "relayEntryCallback(uint256)".
@@ -213,7 +211,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
      */
     function requestRelayEntry(
-        uint256 seed,
         address callbackContract,
         string memory callbackMethod,
         uint256 callbackGas
@@ -237,7 +234,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         operatorContract.sign.value(
             selectedOperatorContractFee
-        )(requestId, seed, _previousEntry);
+        )(requestId, _previousEntry);
 
         // If selected operator contract is cheaper than expected return the
         // surplus to the subsidy fee pool.

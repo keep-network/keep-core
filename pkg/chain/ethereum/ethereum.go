@@ -239,13 +239,11 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 	return ec.keepRandomBeaconOperatorContract.WatchRelayEntryRequested(
 		func(
 			previousEntry *big.Int,
-			seed *big.Int,
 			groupPublicKey []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.Request{
 				PreviousEntry:  previousEntry,
-				Seed:           seed,
 				GroupPublicKey: groupPublicKey,
 				BlockNumber:    blockNumber,
 			})
@@ -459,41 +457,18 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 	return relaychain.DKGResultHashFromBytes(hash)
 }
 
-// CombineToSign takes the previous relay entry value and the current
-// requests's seed and:
-//  - pads them with zeros if their byte length is less than 32 bytes. These
-//   values are used later on-chain as `uint256` values and combined with
-//   `abi.encodePacked` during signature verification. `uint256` is always
-//   packed to 256-bits with leading zeros if needed,
-// - combines them into a single slice of bytes.
+// CombineToSign takes the previous relay entry value and pads it with zeros if
+// its byte length is less than 32 bytes. Previous relay entry is represented
+// on-chain as `uint256` value and is always packed into 256-bits by
+// `abi.encodePacked` with leading zeros if needed.
 //
-// Function returns an error if previous entry or seed takes more than 32 bytes.
-func (ec *ethereumChain) CombineToSign(
-	previousEntry *big.Int,
-	seed *big.Int,
-) ([]byte, error) {
+// Function returns an error if previous entry takes more than 32 bytes.
+func (ec *ethereumChain) SerializeToSign(previousEntry *big.Int) ([]byte, error) {
 	previousEntryBytes := previousEntry.Bytes()
-	seedBytes := seed.Bytes()
 
 	if len(previousEntryBytes) > 32 {
 		return nil, fmt.Errorf("entry can not be longer than 32 bytes")
 	}
-	if len(seedBytes) > 32 {
-		return nil, fmt.Errorf("seed can not be longer than 32 bytes")
-	}
 
-	previousEntryPadded, err := byteutils.LeftPadTo32Bytes(previousEntryBytes)
-	if err != nil {
-		return nil, err
-	}
-	seedPadded, err := byteutils.LeftPadTo32Bytes(seedBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	combinedEntryToSign := make([]byte, 0)
-	combinedEntryToSign = append(combinedEntryToSign, previousEntryPadded...)
-	combinedEntryToSign = append(combinedEntryToSign, seedPadded...)
-
-	return combinedEntryToSign, nil
+	return byteutils.LeftPadTo32Bytes(previousEntryBytes)
 }

@@ -26,7 +26,6 @@ type relayEntrySubmitter struct {
 func (res *relayEntrySubmitter) submitRelayEntry(
 	newEntry *big.Int,
 	previousEntry *big.Int,
-	seed *big.Int,
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) error {
