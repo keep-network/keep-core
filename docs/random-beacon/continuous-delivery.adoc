@@ -46,20 +46,13 @@ keep-client service deployment is done automatically whenever code is merged to 
 
 ==== keep-client Configuration
 
-Our first goal was to separate service configuration from the service image.
-This exists in the form of each deployed keep-client having its own Kubernetes
-ConfigMap.  This allows for the use of a "standard" keep-client service image
-across all deployed keep-clients.  There are two pieces of data that make up a
-keep-client ConfigMap:
+Our first goal was to separate service configuration from the service image. This exists in the form of each deployed keep-client having its own Kubernetes
+ConfigMap. This allows for the use of a "standard" keep-client service image across all deployed keep-clients. There are two pieces of data that make up a keep-client ConfigMap:
 
 1. keep-client-config.toml
 2. Ethereum keyfile
 
-Configuration of the data that populates the ConfigMaps and ConfigMaps themselves
-are updated *manually*.
-
-- Maintenance log and Kubernetes CRUD commands: https://github.com/keep-network/keep-core/blob/master/infrastructure/kube/keep-dev/kube-setup.org[kube-setup]
-- keep-client config files: https://github.com/keep-network/keep-core/tree/master/infrastructure/kube/keep-dev/keep-client/config[keep-client.toml]
+Configuration of the data that populates the ConfigMaps and ConfigMaps themselves are updated *manually*.
 
 ==== Ethereum Contract Deployment
 
