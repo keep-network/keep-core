@@ -1,0 +1,17 @@
+=== Terminology
+
+Application: Application is an external smart contract or a set of smart contracts utilizing functionalities offered by Keep Network. 
+
+A keep: A keep is a smart contract used by an application to perform some work. It is a privacy primitive enabling secure storage and usage of secrets. 
+
+sMPC cluster: A keep can have off-chain clients executing work for a keep. Off-chain clients serving a keep together form an sMPC cluster. An sMPC cluster observes state of a keep and reacts appropriately. 
+
+Keep Network: The Keep network consists of all stakers, all keeps and associated sMPC clusters, and the random beacon.
+
+KEEP: KEEP is an ERC-20 work token used to stake in the Keep network. A minimum staked value is required for an operator to join a sMPC cluster.
+
+Keep Core: Keep Core consist of a set of on-chain contracts and off-chain sMPC cluster providing the functionality of random beacon and KEEP token along with all stake management interfaces.
+
+tECDSA: Threshold Elliptic Curve Digital Signature Algorithm. 
+
+Bond: A bond is collateral provided by a keep operator that disincentivizes collusion and misbehavior. Bond may get slashed or seized in case of malicious behaviour of the operator.
