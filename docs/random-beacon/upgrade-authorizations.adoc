@@ -85,17 +85,27 @@ An operator contract can either provide services to any contract that makes a va
 Recognized staking contracts::
 Each operator contract specifies one or more _staking contracts_ it recognizes. Every operator contract that handles stakes will recognize at least one staking contract. Recognized staking contracts are hard-coded and unchangeable.
 
-==== Service Contracts
+==== Service contracts: used operator contracts
 
-Service contracts provide services without directly interacting with operators, but using a set of operator contracts in some way. Service Contracts don't need to be aware of tokens or staking in any way; these functions are entirely intermediated by the operator contracts. A service contract only needs a list of which operator contracts it uses. To permit system upgrades, the list of used operator contracts can be updated with proper authorization.
+Service contracts use the basic functionality performed by operator contracts,
+to provide useful services to the public.
+Service contracts can use multiple different versions of operator contracts
+to perform the operator contract functions.
+To permit system upgrades,
+the list of used operator contracts can be updated with proper authorization.
 
-Used operator contracts: A mutable list of operator contracts used by the service contract.
+A service contract is deployed with zero operator contracts,
+rendering the service contract inactive
+until at least one operator contract is activated.
 
-Each service contract has a list of zero or more operator contracts it may use. A service contract is deployed with zero operator contracts, rendering the service contract inactive until at least one operator contract is activated.
+Each service contract has its own _Operator Contract Upgrader_
+who can add used operator contracts.
+To add a used operator contract,
+the operator contract must have been `APPROVED` on the _registry_.
 
-Each service contract has a _Operator Contract Upgrader_ who can add used operator contracts. To add a used operator contract, the operator contract must have been `APPROVED` on the _registry_.
-
-If a operator contract has been `DISABLED` by the _Panic Button_, it is ineligible for work selection. This must be checked when the service contract selects an operator contract.
+If an operator contract has been `DISABLED` by the _Panic Button_,
+the service contract must not use its functionality.
+This must be checked when the service contract selects an operator contract.
 
 ==== Staking contracts: authorized operator contracts
 
