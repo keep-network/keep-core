@@ -56,5 +56,3 @@ When `P_j` creates a signature share `Share_j` as a member of `Group_k` producin
 When `P_i` receives a signature share `Share_j` broadcast by `P_j`, the share can be verified by `blsVerify(Share_j, y_j, Input_e)`. If `Share_j` is valid, `P_i` can use it for reconstructing the threshold signature. If `Share_j` is invalid, `P_i` must not use it for reconstructing the entry.
 
 [bibliography]
-== Related Links
-- https://github.com/keep-network/keep-core/pull/628
