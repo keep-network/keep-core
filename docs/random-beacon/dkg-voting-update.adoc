@@ -2,14 +2,6 @@
 :numbered:
 toc::[]
 
-== Proposal
-The document specifies an update to the voting procedure of the Keep Distributed
-Key Generation protocol.
-
-=== Goal
-The goal of this proposal is to specify the first version of the DKG result
-publication mechanism implementation based on result hash signatures.
-
 == Specification
 
 === DKG Phase 13
