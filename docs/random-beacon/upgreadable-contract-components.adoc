@@ -112,88 +112,19 @@ Behind this interface,the operator contract tracks its own groups, their members
 
 ==== Service contract
 
-The service contract for the random beacon
-handles customer-facing features and ties the operator contracts together.
-The interface of the service contract towards the operator contract is:
+The service contract for the random beacon handles customer-facing features and ties the operator contracts together. The interface of the service contract towards the operator contract is:
 
-`group_created(n_groups)`::
-The call to `create_group()` has finished
-(successfully or unsuccessfully)
-and expired groups have been removed.
-The operator contract now has `n_groups` active.
+`group_created(n_groups)`: The call to `create_group()` has finished (successfully or unsuccessfully) and expired groups have been removed. The operator contract now has `n_groups` active.
 
-`entry_created(entry_id, entry)`::
-The previous call for the operator contract to `sign(entry_id, ...)`
-completed successfully,
-resulting in the new `entry`.
+`entry_created(entry_id, entry)`: The previous call for the operator contract to `sign(entry_id, ...)` completed successfully, resulting in the new `entry`. The service contract keeps a list of operator contracts along with the number of active groups in each.
 
-The service contract keeps a list of operator contracts
-along with the number of active groups in each.
+When receiving a request, the service contract determines what values should be the group selection input and the signing input. The group selection input is used to select an operator contract, weighted by the number of active groups on each, to serve the request.
 
-When receiving a request,
-the service contract determines what values should be
-the group selection input
-and the signing input.
-The group selection input is used to select an operator contract,
-weighted by the number of active groups on each,
-to serve the request.
+When the operator contract is determined, the group selection input and signing input are passed to it along with an appropriate payment. When the operator contract returns a valid entry with `entry_created(...)`, the service contract stores it and calls the customer-specified callback.
 
-When the operator contract is determined,
-the group selection input and signing input are passed to it
-along with an appropriate payment.
-When the operator contract returns a valid entry with `entry_created(...)`,
-the service contract stores it and calls the customer-specified callback.
+If a new group should be created, the service contract determines which operator contract should create one (the most recent one, or a random one weighted by recent-ness), and calls `create_group()` on the selected operator contract with an appropriate payment. Once the operator contract has finished DKG and expired old groups,it returns the new number of active groups using `group_created(n_groups)`.
 
-If a new group should be created,
-the service contract determines which operator contract should create one
-(the most recent one, or a random one weighted by recent-ness),
-and calls `create_group()` on the selected operator contract
-with an appropriate payment.
-Once the operator contract has finished DKG and expired old groups,
-it returns the new number of active groups using `group_created(n_groups)`.
+Unlike the operator contract which needs to maintain integrity for arbitrary, malicious inputs, the service contract relies heavily on trusting the operator contracts. This is acceptable because the operator contracts are known, unchangeable code, and the service contract only has access to what customers have paid for entries; boycotting a compromised or malfunctioning service contract and deploying a new one is sufficient to mitigate attacks or errors.
 
-Unlike the operator contract which needs to maintain integrity
-for arbitrary, malicious inputs,
-the service contract relies heavily on trusting the operator contracts.
-This is acceptable because the operator contracts are known, unchangeable code,
-and the service contract only has access to what customers have paid for entries;
-boycotting a compromised or malfunctioning service contract
-and deploying a new one
-is sufficient to mitigate attacks or errors.
-
-== Future Work
-
-An exact architecture for service contract upgrades
-is not specified.
-The service contract upgrade process should be resilient to minor compromise
-and relying on a global master key may be undesirable
-as a single point of failure.
-
-For greater assurance towards customers,
-the service contracts could be made immutable
-in a manner similar to the operator contracts.
-When a customer uses a specific service contract to request an entry,
-they could trust that only that service contract
-and its associated operator contracts
-will be involved in the generation of their entry.
-However, this would reduce the ability to maintain
-a global "canonical" chain of entries,
-each linked to the previous ones.
-
-Most currently envisioned services on the Keep network
-consist of providing _keeps_ to customer applications.
-The operator contract/service contract split
-is less than ideal for this use-case,
-and the random beacon could be rearchitected to follow the same pattern.
-Each keep is a separate contract which inherits its logic from its factory,
-but applications communicate directly with the keeps.
-The role of the service contract would be limited
-to managing different versions of keep factories,
-with the rest of its functionality being subsumed by the application.
 
 [bibliography]
-== Related Links
-
-- [System upgrade handling](https://github.com/keep-network/keep-core/issues/133)
-- [Specify contract upgrade scheme](https://github.com/keep-network/keep-core/issues/725)
-- [RFC 4: Secure upgrades for contracts operating staked balances](https://github.com/keep-network/keep-core/pull/446)
