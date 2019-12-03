@@ -31,50 +31,16 @@ TODO: Move this to the separate terminology section or is it better here?
 
 === Invalid shares as DoS attack vector
 
-When beacon operators generate the threshold signature
-to produce a new entry,
-they use their individual private keys to sign the entry input
-to create signature shares
-which are then broadcast to other members in the group.
-These signature shares are combined
-to reconstruct the threshold signature,
-which is then submitted as the next entry for the beacon.
+When beacon operators generate the threshold signature to produce a new entry, they use their individual private keys to sign the entry input to create signature shares which are then broadcast to other members in the group. These signature shares are combined to reconstruct the threshold signature, which is then submitted as the next entry for the beacon.
 
-If one or more participants broadcast invalid signature shares,
-they may significantly hinder or altogether prevent
-the entry generation within the allotted time.
-If an invalid share is included in the `H` signature shares
-the threshold signature is reconstructed from,
-the reconstruction will fail to produce a valid threshold signature.
-If the received shares are not verified,
-the only recourse is to try new combinations of signature shares
-until a valid signature is produced.
-With `m` invalid shares being broadcast,
-trying all possible combinations takes _O(N^m)_ time:
-first `choose(H+1, 1)` attempts
-excluding each share on its own,
-then `choose(H+2, 2)` attempts
-to see if rejecting two shares leads to a valid signature,
-then `choose(H+3, 3)` attempts excluding all combinations of 3 shares,
-and so on for a total of `sum(i in [1 .. m], choose(H+i, i))` attempts.
+If one or more participants broadcast invalid signature shares, they may significantly hinder or altogether prevent the entry generation within the allotted time. If an invalid share is included in the `H` signature shares the threshold signature is reconstructed from, the reconstruction will fail to produce a valid threshold signature. If the received shares are not verified the only recourse is to try new combinations of signature shares until a valid signature is produced. With `m` invalid shares being broadcast, trying all possible combinations takes _O(N^m)_ time:
 
-== Proposal
+- first `choose(H+1, 1)` attempts excluding each share on its own
 
-The document specifies an update
-to verify threshold signature shares for the random beacon
-before reconstructing the threshold signature.
+- then `choose(H+2, 2)` attempts to see if rejecting two shares leads to a valid signature
 
-As an optional feature for later,
-operators who broadcast invalid shares can be punished
-by publishing irrefutable proofs of misbehavior on-chain.
-
-=== Goal
-
-To eliminate an attack
-where a beacon operator broadcasts invalid shares
-to other members in the same signing group,
-hindering or preventing the group
-from reconstructing a valid threshold signature.
+- then `choose(H+3, 3)` attempts excluding all combinations of 3 shares,
+and so on for a total of `sum(i in [1 .. m], choose(H+i, i))` attempts
 
 === Implementation
 
