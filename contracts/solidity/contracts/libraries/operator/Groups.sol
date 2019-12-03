@@ -378,13 +378,23 @@ library Groups {
     function verifyUnauthorizedSignature(
         Storage storage self,
         bytes memory groupPubKey,
-        uint256 signature
+        bytes memory signedGroupPubKey
     ) public view returns(bool) {
         require(isGroupRegistered(self, groupPubKey), "Group not found");
+
+        AltBn128.G1Point memory point = AltBn128.g1HashToPoint(groupPubKey);
+        bytes memory message = new bytes(64);
+        bytes32 x = bytes32(point.x);
+        bytes32 y = bytes32(point.y);
+        assembly {
+            mstore(add(message, 32), x)
+            mstore(add(message, 64), y)
+        }
+
         return BLS.verify(
             groupPubKey,
-            groupPubKey,
-            bytes32(signature)
+            message,
+            signedGroupPubKey
         );
     }
 }

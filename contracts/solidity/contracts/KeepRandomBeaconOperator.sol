@@ -660,7 +660,7 @@ contract KeepRandomBeaconOperator {
      */
     function reportUnauthorizedSigning(
         uint256 groupIndex,
-        uint256 signedGroupPubKey
+        bytes memory signedGroupPubKey
     ) public {
         bytes memory groupPubKey = groups.getGroupPublicKey(groupIndex);
         if (!groups.isGroupTerminated(groupIndex) && groups.verifyUnauthorizedSignature(groupPubKey, signedGroupPubKey)) {

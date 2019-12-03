@@ -38,7 +38,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await stakeDelegate(stakingContract, token, owner, operator3, owner, minimumStake)
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate})
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate})
   })
 
   beforeEach(async () => {
@@ -67,7 +67,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     // Group should be terminated, expecting total number of groups to become 0
     await expectThrowWithMessage(
-      serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate}),
+      serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate}),
       "Total number of groups must be greater than zero."
     )
   })
