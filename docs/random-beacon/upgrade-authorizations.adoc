@@ -9,6 +9,7 @@ Securely upgradeable work contracts are important for protecting stakers' tokens
 === Roles
 
 ==== Governance
+TODO: How is governance set/created/assigned?
 Governance is the final arbiter of authority in the Keep Network. The role of Governance in the upgrade process is to enable recovery from key compromise by rekeying other roles.
 
 Governance has the authority to change the addresses of the _Registry Keeper_, _Panic Button_, and the service contracts' _Operator Contract Upgraders_.
@@ -29,10 +30,7 @@ Each service contract has a Operator Contract Upgrader whose purpose it is to ma
 
 ==== Authorizer
 
-Each staker has an Authorizer
-whose purpose is to authorize operator contracts the staker wishes to operate on.
-Authorized operator contracts are permitted to impact the staker's staked tokens
-via punishments or rewards.
+Each staker has an Authorizer whose purpose is to authorize operator contracts the staker wishes to operate on. Authorized operator contracts are permitted to impact the staker's staked tokens via punishments or rewards.
 
 The Authorizer cannot be rekeyed except by undelegating and redelegating.
 
