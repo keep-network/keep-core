@@ -84,26 +84,16 @@ Staking contracts are also aware of the token contract by necessity.
 
 ===== Authorized operator contracts
 
-The _authorized operator contracts_ are a mapping
-of `(address authorizer, address operator_contract) -> status`.
+The _authorized operator contracts_ are a mapping of `(address authorizer, address operator_contract) -> status`.
 
-The status of a contract may be either `NULL` or `AUTHORIZED`.
-A status of `NULL` is the default
-and means the operator contract is not authorized.
-A status of `AUTHORIZED` means that the operator contract
-may affect the stakes of those stakers
-who have assigned that `authorizer` as their _Authorizer_.
+The status of a contract may be either `NULL` or `AUTHORIZED`. A status of `NULL` is the default and means the operator contract is not authorized. A status of `AUTHORIZED` means that the operator contract may affect the stakes of those stakers who have assigned that `authorizer` as their _Authorizer_.
 
-To authorize a operator contract on a staking contract,
-the following conditions must apply:
+To authorize a operator contract on a staking contract, the following conditions must apply:
 
 - the operator contract has been `APPROVED` on the _registry_
 - the operator contract recognizes the staking contract
 
-Once a operator contract has been authorized,
-authorization cannot be withdrawn by the staker.
-However, a operator contract that has been `DISABLED` by the _Panic Button_
-may not punish stakers.
+Once a operator contract has been authorized, authorization cannot be withdrawn by the staker. However, a operator contract that has been `DISABLED` by the _Panic Button_ may not punish stakers.
 
 === Upgrade processes
 
