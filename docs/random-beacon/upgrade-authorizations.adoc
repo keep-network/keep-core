@@ -4,13 +4,11 @@ toc::[]
 
 == Background
 
-Securely upgradeable work contracts are important for protecting stakers' tokens. The current design for dividing work contracts into operator contract and service contract components permits secure upgrades of operator contracts without interfering with service functionality. To gain the theoretical benefits from this scheme, it is necessary to specify how contract upgrades should be authorized, and by whom.
+Securely upgradeable work contracts are important for protecting stakers' tokens. The current design for dividing work contracts into operator contract and service contract components permits secure upgrades of operator contracts without interfering with service functionality. To gain the benefits from this scheme, we specify here how contract upgrades are authorized, and by whom.
 
 == Proposal
 
-To achieve secure upgrades, this RFC proposes a scheme
-where the upgrade process is centered on operator contracts,
-which tie all components of the network together.
+To achieve secure upgrades, this RFC proposes a scheme where the upgrade process is centered on operator contracts, which tie all components of the network together.
 
 Operator contracts are subject to approval
 globally on a _registry_,
