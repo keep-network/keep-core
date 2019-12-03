@@ -2,10 +2,6 @@
 :numbered:
 toc::[]
 
-== Background
-
-Securely upgradeable work contracts are important for protecting stakers' tokens. The current design for dividing work contracts into operator contract and service contract components permits secure upgrades of operator contracts without interfering with service functionality. To gain the benefits from this scheme, we specify here how contract upgrades are authorized, and by whom.
-
 ==== Roles
 
 Governance::
