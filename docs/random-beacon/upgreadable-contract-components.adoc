@@ -31,58 +31,25 @@ Customer applications use a _service contract_ to perform work. The _service con
 
 ==== Operator contract
 
-The operator contracts handle all operations that may have an impact on staked tokens.
+The operator contracts handle all operations that may have an impact on staked tokens. Each operator contract is an independent "microservice", keeping its own state on security-critical data. The operator contracts provide simplified functionality that is stripped to the minimum necessary for security and correct incentives.
 
-Each operator contract is an independent "microservice",
-keeping its own state on security-critical data.
-The operator contracts provide simplified functionality
-that is stripped to the minimum necessary
-for security and correct incentives.
+Each operator contract is associated with one or more service contracts the operator contract provides functionality for. Only these specified service contracts may use the operator contract's interface; operator contracts do not communicate directly with other operator contracts, customer applications, or unassociated service contracts.
 
-Each operator contract is associated with one or more service contracts
-the operator contract provides functionality for.
-Only these specified service contracts
-may use the operator contract's interface;
-operator contracts do not communicate directly
-with other operator contracts,
-customer applications,
-or unassociated service contracts.
+When the interface is designed, the service contract must be treated as untrusted and the operator contract must maintain correctness and the safety of the operators' stakes
+regardless of the service contract input. Where this cannot be guaranteed, it must be clearly signaled off-chain to operators so they can choose whether to opt in to providing those services.
 
-When the interface is designed,
-the service contract must be treated as untrusted
-and the operator contract must maintain correctness
-and the safety of the operators' stakes
-regardless of the service contract input.
-Where this cannot be guaranteed,
-it must be clearly signaled off-chain to operators
-so they can choose whether to opt in to providing those services.
+When an operator contract performs a service, it is paid for the service provided.
+The payment is distributed to contributing operators according to the operator contract's own rules.
 
-When an operator contract performs a service,
-it is paid for the service provided.
-The payment is distributed to contributing operators
-according to the operator contract's own rules.
-
-If one or more participant operators misbehave
-or fail to perform promised work,
-the operator contract tells the staking contract to punish the guilty parties
-and optionally reward a tattletale that proved the misbehavior.
+If one or more participant operators misbehave or fail to perform promised work, the operator contract tells the staking contract to punish the guilty parties and optionally reward a tattletale that proved the misbehavior.
 
 ==== Service contract
 
-Service contracts use the basic functionality
-performed by operator contracts,
-to provide useful services to customers.
+Service contracts use the basic functionality performed by operator contracts, to provide useful services to customers.
 
-Service contracts receive requests for services from customers,
-and divide the provided service to operator contract and service contract components.
-Elements that are critical for security and incentives
-are delegated to an operator contract,
-while other parts of the work are performed in the service contract.
+Service contracts receive requests for services from customers, and divide the provided service to operator contract and service contract components. Elements that are critical for security and incentives are delegated to an operator contract, while other parts of the work are performed in the service contract.
 
-Service contracts can use
-multiple different versions of operator contracts
-to perform the operator contract functions.
-The service contract keeps shared state which is not security-critical.
+Service contracts can usevmultiple different versions of operator contractsvto perform the operator contract functions. The service contract keeps shared state which is not security-critical.
 
 ==== Operator contract upgrades
 
