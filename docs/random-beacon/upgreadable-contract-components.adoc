@@ -53,169 +53,62 @@ Service contracts can usevmultiple different versions of operator contractsvto p
 
 ==== Operator contract upgrades
 
-An operator contract is upgraded by deploying a new version,
-and adding it to the available operator contracts of a service contract.
-As stakers authorize the new operator contract,
-the service contract can gradually migrate
-to use the new operator contract over older versions.
-Support for obsolete operator contracts can be withdrawn
-when a sufficiently overwhelming supermajority of stakers
-has authorized and begun to operate using the new version.
+An operator contract is upgraded by deploying a new version, and adding it to the available operator contracts of a service contract. As stakers authorize the new operator contract, the service contract can gradually migrate to use the new operator contract over older versions. Support for obsolete operator contracts can be withdrawn when a sufficiently overwhelming supermajority of stakers has authorized and begun to operate using the new version.
 
-Operator contracts can be upgraded
-without losing service contract state,
-but critical state is held within the operator contract
-and cannot be migrated.
+Operator contracts can be upgraded without losing service contract state, but critical state is held within the operator contract and cannot be migrated.
 
-If the operator contract's interface is changed,
-the service contract should be updated as well.
-If customer continuity is required,
-the operator contract can support both versions of the interface.
+If the operator contract's interface is changed, the service contract should be updated as well. If customer continuity is required, the operator contract can support both versions of the interface.
 
 ==== Service contract upgrades
 
-Because operator contracts are designed
-to be independent of service contract security and correctness,
-there is much more leeway to upgrade service contracts.
-
-Service contracts can be directly upgradeable,
-e.g. with the eternal storage pattern;
-they may be immutable,
-only accepting new operator contract versions;
-or they may implement a similar pattern
-in the direction of customers,
-unifying core functionality
+Because operator contracts are designed to be independent of service contract security and correctness, there is much more leeway to upgrade service contracts. Service contracts can be directly upgradeable, e.g. with the eternal storage pattern;
+they may be immutable, only accepting new operator contract versions; or they may implement a similar pattern in the direction of customers, unifying core functionality
 between immutable public interface contracts.
 
-Because operator contracts can serve multiple service contracts,
-immutable service contracts can be upgraded
-by deploying the new service contract version,
-along with a new operator contract version
-which can serve both the new and the old service contract.
-The old service contract can migrate work onto the new operator contract,
-remaining perfectly functional while the new service contract is spun up.
+Because operator contracts can serve multiple service contracts, immutable service contracts can be upgraded by deploying the new service contract version, along with a new operator contract version which can serve both the new and the old service contract. The old service contract can migrate work onto the new operator contract remaining perfectly functional while the new service contract is spun up.
 
 ==== Staking contract upgrades
 
-Staking contracts can be upgraded
-by deploying a new version and waiting for stakers to migrate
-by withdrawing their stakes on the old contract
-and staking them again on the new one.
-Migrating between staking contracts requires
-waiting the unstaking period
-and suffering the associated opportunity cost,
-but staking partial amounts can mitigate the impact
-as overall network revenue is not expected to change.
+Staking contracts can be upgraded by deploying a new version and waiting for stakers to migrate by withdrawing their stakes on the old contract and staking them again on the new one. Migrating between staking contracts requires waiting the unstaking period and suffering the associated opportunity cost, but staking partial amounts can mitigate the impact as overall network revenue is not expected to change.
 
-Each operator contract needs to identify
-which staking contracts it accepts.
-When a new staking contract is deployed,
-all operator contracts need to be upgraded
-to a version recognizing the new staking contract,
-either exclusively or in addition to the old one.
-When a sufficient amount of time has elapsed
-and stakers have had the opportunity to migrate,
-support for the old staking contract can be dropped.
+Each operator contract needs to identify which staking contracts it accepts. When a new staking contract is deployed, all operator contracts need to be upgraded to a version recognizing the new staking contract, either exclusively or in addition to the old one. When a sufficient amount of time has elapsed and stakers have had the opportunity to migrate, support for the old staking contract can be dropped.
 
 ==== Security-critical service contracts
 
-In some situations it may not be possible to contain critical code
-entirely within the operator contract.
-If the service contract has to provide trusted input
-that may impact operators' stakes,
-the opt-in stake security can be maintained
-if the service contract is immutable
-and upgrades are performed by deploying new operator contracts.
+In some situations it may not be possible to contain critical code entirely within the operator contract. If the service contract has to provide trusted input that may impact operators' stakes, the opt-in stake security can be maintained if the service contract is immutable and upgrades are performed by deploying new operator contracts.
 
-In these situations care should be taken to ensure
-that operator contracts cannot interfere with each other.
-As a general rule,
-state shared between different operator contracts
-should not be used to impact stakes.
+In these situations care should be taken to ensure that operator contracts cannot interfere with each other. As a general rule, state shared between different operator contracts should not be used to impact stakes.
 
-If a customer application provides the trusted input,
-operators should have a method to opt in
-to only serving those applications they have audited and found acceptable.
+If a customer application provides the trusted input, operators should have a method to opt in to only serving those applications they have audited and found acceptable.
 
 === Limitations
 
-Untrusted service contracts mean
-that security-critical state must be kept in the operator contract.
-If the network service has complex security needs,
-the operator contract may have to implement most of the work logic.
-If the service contract performs critical logic,
-its upgrade flexibility is significantly limited.
+Untrusted service contracts mean that security-critical state must be kept in the operator contract. If the network service has complex security needs, the operator contract may have to implement most of the work logic. If the service contract performs critical logic, its upgrade flexibility is significantly limited.
 
-Security-critical state cannot be migrated between operator contracts;
-a new operator contract has to start from a blank slate.
-Inherently long-running operations
-present a limit to how rapidly the system can be upgraded.
+Security-critical state cannot be migrated between operator contracts; a new operator contract has to start from a blank slate. Inherently long-running operations present a limit to how rapidly the system can be upgraded.
 
-The division of service contracts and operator contracts
-doesn't map cleanly to situations
-where the service to applications consists of providing _keeps_,
-individual smart contracts deployed for individual groups of operators.
+The division of service contracts and operator contracts doesn't map cleanly to situations where the service to applications consists of providing _keeps_, individual smart contracts deployed for individual groups of operators.
 
 === Example: Random Beacon
 
-The random beacon generates random numbers in response to requests,
-using BLS threshold signatures on some specific input.
-The signatures are generated by signing groups
-that have been created using random sortition
-from all eligible and active stakers.
-Rewards and punishments are used to incentivize correct behavior.
+The random beacon generates random numbers in response to requests, using BLS threshold signatures on some specific input. The signatures are generated by signing groups that have been created using random sortition from all eligible and active stakers. Rewards and punishments are used to incentivize correct behavior.
 
-To split the random beacon into a service contract-operator contract design,
-the security-critical elements need to be identified.
+To split the random beacon into a service contract-operator contract design, the security-critical elements need to be identified.
 
-In this case the operator contract needs to handle
-group creation and expiration,
-BLS signature verification,
-and incentives.
+In this case the operator contract needs to handle group creation and expiration, BLS signature verification, and incentives.
 
-Handling entry requests and pricing;
-determining the signing input for generating new entries;
-calling callbacks;
-and requesting the creation of new groups
-are responsibilities that are not critical for beacon integrity
-from the perspective of the stakers.
-These can be performed by the service contract
-without individual staker authorization of upgrades.
+Handling entry requests and pricing; determining the signing input for generating new entries; calling callbacks; and requesting the creation of new groups are responsibilities that are not critical for beacon integrity from the perspective of the stakers. These can be performed by the service contract without individual staker authorization of upgrades.
 
 ==== Operator contract
 
-The operator contract for the random beacon
-provides the following interface to the service contract:
+The operator contract for the random beacon provides the following interface to the service contract:
 
-`create_group(payment)`::
-Create a new group when requested by the service contract,
-selecting members using pseudorandom sortition,
-and performing DKG.
-The operator contract does not accept input from the service contract,
-but instead uses its own pseudorandom seed,
-to ensure that group composition cannot be manipulated.
-`payment` must exceed a minimum amount
-and is used to cover gas fees and to reward stakers.
+`create_group(payment)`:Create a new group when requested by the service contract,
+selecting members using pseudorandom sortition, and performing DKG. The operator contract does not accept input from the service contract, but instead uses its own pseudorandom seed, to ensure that group composition cannot be manipulated. `payment` must exceed a minimum amount and is used to cover gas fees and to reward stakers.
 
-`sign(entry_id, group_input, signing_input, payment)`::
-Use `group_input` to select a signing group,
-and generate a valid BLS threshold signature for `signing_input`.
-Once generated, use `payment` to reward stakers.
-`payment` must exceed a set minimum value
-that covers necessary gas fees.
-When the entry is created,
-the operator contract calls the service contract with the new entry,
-using `entry_id` to identify the entry.
+`sign(entry_id, group_input, signing_input, payment)`:Use `group_input` to select a signing group, and generate a valid BLS threshold signature for `signing_input`. Once generated, use `payment` to reward stakers. `payment` must exceed a set minimum value that covers necessary gas fees. When the entry is created, the operator contract calls the service contract with the new entry, using `entry_id` to identify the entry.
 
-Behind this interface,
-the operator contract tracks its own groups, their members
-and their threshold public keys.
-The service contract trusts the operator contract
-to only provide valid entries when given specific inputs.
-Alternatively the operator contract could provide
-the associated public key so the entry can be validated,
-but even then the operator contract needs to be trusted
-to provide a public key corresponding to a random valid group.
+Behind this interface,the operator contract tracks its own groups, their members and their threshold public keys. The service contract trusts the operator contract to only provide valid entries when given specific inputs. Alternatively the operator contract could provide the associated public key so the entry can be validated, but even then the operator contract needs to be trusted to provide a public key corresponding to a random valid group.
 
 ==== Service contract
 
