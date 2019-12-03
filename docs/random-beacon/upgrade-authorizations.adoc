@@ -60,54 +60,26 @@ Each operator contract specifies one or more _staking contracts_ it recognizes. 
 
 ==== Service Contracts
 
-Service contracts provide services without directly interacting with operators,
-but using a set of operator contracts in some way.
-Service Contracts don't need to be aware of tokens or staking in any way;
-these functions are entirely intermediated by the operator contracts.
-A service contract only needs a list of which operator contracts it uses.
-To permit system upgrades,
-the list of used operator contracts can be updated with proper authorization.
+Service contracts provide services without directly interacting with operators, but using a set of operator contracts in some way. Service Contracts don't need to be aware of tokens or staking in any way; these functions are entirely intermediated by the operator contracts. A service contract only needs a list of which operator contracts it uses. To permit system upgrades, the list of used operator contracts can be updated with proper authorization.
 
-Used operator contracts::
-A mutable list of operator contracts used by the service contract.
+Used operator contracts: A mutable list of operator contracts used by the service contract.
 
-Each service contract has a list
-of zero or more operator contracts it may use.
+Each service contract has a list of zero or more operator contracts it may use. A service contract is deployed with zero operator contracts, rendering the service contract inactive until at least one operator contract is activated.
 
-A service contract is deployed with zero operator contracts,
-rendering the service contract inactive
-until at least one operator contract is activated.
+Each service contract has a _Operator Contract Upgrader_ who can add used operator contracts. To add a used operator contract, the operator contract must have been `APPROVED` on the _registry_.
 
-Each service contract has a _Operator Contract Upgrader_
-who can add used operator contracts.
-To add a used operator contract,
-the operator contract must have been `APPROVED` on the _registry_.
-
-If a operator contract has been `DISABLED` by the _Panic Button_,
-it is ineligible for work selection.
-This must be checked when the service contract selects an operator contract.
+If a operator contract has been `DISABLED` by the _Panic Button_, it is ineligible for work selection. This must be checked when the service contract selects an operator contract.
 
 ==== Staking contracts
 
-Staking contracts hold staked tokens and enforce staking rules.
-They must permit authorized operator contracts
-to slash the stakes of misbehaving operators,
-but stakers must be protected from code they haven't authorized individually.
+Staking contracts hold staked tokens and enforce staking rules. They permit authorized operator contracts to slash the stakes of misbehaving operators, but stakers are protected from code they haven't authorized individually.
 
-For this purpose, each staking contract maintains a list
-of operator contracts that have been authorized by each staker's _Authorizer_.
-The list of operator contracts could also be maintained globally,
-removing the need for entry duplication
-when stakers on different staking contracts
-have the same Authorizer and operate on the same operator contract.
-However, maintaining the authorizations locally
-may be cheaper than cross-contract calls,
-and the scenario where gas would be saved is likely to be rare.
+For this purpose, each staking contract maintains a list of operator contracts that have been authorized by each staker's _Authorizer_. The list of operator contracts could also be maintained globally, removing the need for entry duplication when stakers on different staking contracts have the same Authorizer and operate on the same operator contract. However, maintaining the authorizations locally may be cheaper than cross-contract calls, and the scenario where gas would be saved is likely to be rare.
 
-(If _fully backed operation_ is used,
-it may not be necessary to have separate authorizations
-as stakes are explicitly allocated for each operator contract.)
+TODO: Define fully backed operation? I don't see it anywhere else?
+(If _fully backed operation_ is used, it may not be necessary to have separate authorizations as stakes are explicitly allocated for each operator contract.)
 
+TODO: What is the token contract? I don't see this defined anywhere?
 Staking contracts are also aware of the token contract by necessity.
 
 ===== Authorized operator contracts
