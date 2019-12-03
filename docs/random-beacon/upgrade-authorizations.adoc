@@ -7,7 +7,6 @@ toc::[]
 Securely upgradeable work contracts are important for protecting stakers' tokens. The current design for dividing work contracts into operator contract and service contract components permits secure upgrades of operator contracts without interfering with service functionality. To gain the benefits from this scheme, we specify here how contract upgrades are authorized, and by whom.
 
 === Roles
-
 ==== Governance
 TODO: How is governance set/created/assigned?
 Governance is the final arbiter of authority in the Keep Network. The role of Governance in the upgrade process is to enable recovery from key compromise by rekeying other roles.
@@ -38,54 +37,26 @@ The Authorizer cannot be rekeyed except by undelegating and redelegating.
 
 ==== Registry
 
-A global registry is used to keep track of all operator contracts,
-ensuring that only Keep Org-approved operator contracts are used,
-and enabling the panic button to disable operator contracts in an emergency.
+A global registry is used to keep track of all operator contracts, ensuring that only Keep Org-approved operator contracts are used, and enabling the panic button to disable operator contracts in an emergency.
 
-The registry contains all operator contracts of the Keep network.
-Each contract's status may be `NULL`, `APPROVED` or `DISABLED`.
+The registry contains all operator contracts of the Keep network. Each contract's status may be `NULL`, `APPROVED` or `DISABLED`.
 
-A status of `NULL` is the default
-and means that the operator contract has not been approved by the _Registry Keeper_.
+A status of `NULL` is the default and means that the operator contract has not been approved by the _Registry Keeper_.
 
-When the _Registry Keeper_ approves a operator contract,
-its status switches to `APPROVED` in the registry.
-Approved operator contracts can be authorized by stakers to impact their stakes,
-and service contracts may utilize them.
+When the _Registry Keeper_ approves a operator contract, its status switches to `APPROVED` in the registry. Approved operator contracts can be authorized by stakers to impact their stakes, and service contracts may utilize them.
 
-The _Panic Button_ can be used
-to set the status of an `APPROVED` contract to `DISABLED`.
-Operator Contracts disabled with the _Panic Button_ cannot be re-enabled.
+The _Panic Button_ can be used to set the status of an `APPROVED` contract to `DISABLED`. Operator Contracts disabled with the _Panic Button_ cannot be re-enabled.
 
 ==== Operator Contracts
 
-Operator contracts serve other contracts,
-and are responsible for all operations involving staked tokens.
+Operator contracts serve other contracts,and are responsible for all operations involving staked tokens. The requirement for stakers' funds to never be subject to code they haven't approved individually implies that the contracts must be immutable; and any external sources of truth, e.g. token contract and staking contract/s, must be hard-coded.
 
-The requirement for stakers' funds to never be subject to
-code they haven't approved individually
-has certain implications on operator contracts:
-the contracts must be immutable;
-and any external sources of truth,
-e.g. token contract and staking contract/s,
-must be hard-coded.
+In the current design, operator contracts authorized to punish the staker can never be deauthorized. Even if authorization was revokable, the stakers should not be expected to react promptly to malicious changes to operator contracts.
 
-In the current design,
-operator contracts authorized to punish the staker
-can never be deauthorized.
-Even if authorization was revokable,
-the stakers should not be expected to react promptly
-to malicious changes to operator contracts.
-
-An operator contract can either provide services
-to any contract that makes a valid request and pays the correct fee,
-or it can be owned is owned by a specific contract and only serve its owner.
+An operator contract can either provide services to any contract that makes a valid request and pays the correct fee, or it is owned by a specific contract and only serve its owner.
 
 Recognized staking contracts::
-Each operator contract specifies one or more _staking contracts_ it recognizes.
-Every operator contract that handles stakes
-must recognize at least one staking contract.
-Recognized staking contracts are hard-coded and unchangeable.
+Each operator contract specifies one or more _staking contracts_ it recognizes. Every operator contract that handles stakes will recognize at least one staking contract. Recognized staking contracts are hard-coded and unchangeable.
 
 ==== Service Contracts
 
