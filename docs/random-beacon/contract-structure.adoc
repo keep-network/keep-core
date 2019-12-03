@@ -142,28 +142,6 @@ to perform the operator contract functions.
 To permit system upgrades,
 the list of used operator contracts can be updated with proper authorization.
 
-==== Operator contract upgrades
-
-An operator contract is upgraded by deploying a new version, and adding it to the available operator contracts of a service contract. As stakers authorize the new operator contract, the service contract can gradually migrate to use the new operator contract over older versions. Support for obsolete operator contracts can be withdrawn when a sufficiently overwhelming supermajority of stakers has authorized and begun to operate using the new version.
-
-Operator contracts can be upgraded without losing service contract state, but critical state is held within the operator contract and cannot be migrated.
-
-If the operator contract's interface is changed, the service contract should be updated as well. If customer continuity is required, the operator contract can support both versions of the interface.
-
-==== Service contract upgrades
-
-Because operator contracts are designed to be independent of service contract security and correctness, there is much more leeway to upgrade service contracts. Service contracts can be directly upgradeable, e.g. with the eternal storage pattern;
-they may be immutable, only accepting new operator contract versions; or they may implement a similar pattern in the direction of customers, unifying core functionality
-between immutable public interface contracts.
-
-Because operator contracts can serve multiple service contracts, immutable service contracts can be upgraded by deploying the new service contract version, along with a new operator contract version which can serve both the new and the old service contract. The old service contract can migrate work onto the new operator contract remaining perfectly functional while the new service contract is spun up.
-
-==== Staking contract upgrades
-
-Staking contracts can be upgraded by deploying a new version and waiting for stakers to migrate by withdrawing their stakes on the old contract and staking them again on the new one. Migrating between staking contracts requires waiting the unstaking period and suffering the associated opportunity cost, but staking partial amounts can mitigate the impact as overall network revenue is not expected to change.
-
-Each operator contract needs to identify which staking contracts it accepts. When a new staking contract is deployed, all operator contracts need to be upgraded to a version recognizing the new staking contract, either exclusively or in addition to the old one. When a sufficient amount of time has elapsed and stakers have had the opportunity to migrate, support for the old staking contract can be dropped.
-
 ==== Security-critical service contracts
 
 In some situations it may not be possible to contain critical code entirely within the operator contract. If the service contract has to provide trusted input that may impact operators' stakes, the opt-in stake security can be maintained if the service contract is immutable and upgrades are performed by deploying new operator contracts.
