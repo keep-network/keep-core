@@ -74,17 +74,6 @@ Operator Contracts disabled with the _Panic Button_ cannot be re-enabled,
 and disabled contracts may not punish operators
 nor be selected by service contracts to perform work.
 
-==== Operator Contracts
-
-Operator contracts serve other contracts,and are responsible for all operations involving staked tokens. The requirement for stakers' funds to never be subject to code they haven't approved individually implies that the contracts must be immutable; and any external sources of truth, e.g. token contract and staking contract/s, must be hard-coded.
-
-In the current design, operator contracts authorized to punish the staker can never be deauthorized. Even if authorization was revokable, the stakers should not be expected to react promptly to malicious changes to operator contracts.
-
-An operator contract can either provide services to any contract that makes a valid request and pays the correct fee, or it is owned by a specific contract and only serve its owner.
-
-Recognized staking contracts::
-Each operator contract specifies one or more _staking contracts_ it recognizes. Every operator contract that handles stakes will recognize at least one staking contract. Recognized staking contracts are hard-coded and unchangeable.
-
 ==== Service contracts: used operator contracts
 
 Service contracts use the basic functionality performed by operator contracts,
