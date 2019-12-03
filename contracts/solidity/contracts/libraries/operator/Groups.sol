@@ -227,7 +227,7 @@ library Groups {
             }
         }
 
-        return true; // no group found, consider it as a stale group
+        revert("Group does not exist");
     }
 
     /**
