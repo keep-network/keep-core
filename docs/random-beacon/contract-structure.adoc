@@ -83,19 +83,42 @@ minimizing or eliminating the need for stakers to trust other contracts.
 
 Customer applications use a _service contract_ to perform work. The _service contract_ provides a unified interface to customers, handling the version management of _operator contracts_ and any shared non-critical state between them.
 
-==== Operator contract
+==== Operator contracts
 
-The operator contracts handle all operations that may have an impact on staked tokens. Each operator contract is an independent "microservice", keeping its own state on security-critical data. The operator contracts provide simplified functionality that is stripped to the minimum necessary for security and correct incentives.
+Operator contracts coordinate the work performed by network operators,
+and provide services to other "customer" contracts.
+Operator contracts handle all operations
+that may have an impact on staked tokens.
+Conversely, operators performing work for the network
+only need to interact with operator contracts.
 
-Each operator contract is associated with one or more service contracts the operator contract provides functionality for. Only these specified service contracts may use the operator contract's interface; operator contracts do not communicate directly with other operator contracts, customer applications, or unassociated service contracts.
+The customer contract is treated as untrusted
+and the operator contract must maintain correctness
+and the safety of the operators' stakes
+regardless of the customer contract's input.
+Each operator contract is an independent "microservice",
+keeping its own state on security-critical data.
 
-When the interface is designed, the service contract must be treated as untrusted and the operator contract must maintain correctness and the safety of the operators' stakes
-regardless of the service contract input. Where this cannot be guaranteed, it must be clearly signaled off-chain to operators so they can choose whether to opt in to providing those services.
+When a customer contract requests an operator contract to perform a service,
+it must pay the operator contract for the service provided.
+The payment is distributed to contributing operators
+according to the operator contract's own rules.
+An operator contract can either provide services
+to any contract that makes a valid request and pays the correct fee,
+or it can be owned is owned by a specific contract and only serve its owner.
+In the random beacon
+the service contract is the only "customer" of the operator contracts,
+and operator contracts only provide services to the random beacon.
+Future operator contracts may provide services directly to the public.
 
-When an operator contract performs a service, it is paid for the service provided.
-The payment is distributed to contributing operators according to the operator contract's own rules.
-
-If one or more participant operators misbehave or fail to perform promised work, the operator contract tells the staking contract to punish the guilty parties and optionally reward a tattletale that proved the misbehavior.
+If one or more participant operators misbehave
+or fail to perform promised work,
+the operator contract tells the staking contract to punish the guilty parties
+and optionally reward a tattletale that proved the misbehavior.
+To punish misbehaving operators,
+an operator contract must be authorized by the operator's authorizer.
+Once an operator contract has been authorized by some address,
+it can never be deauthorized by that address.
 
 ==== Service contract
 
