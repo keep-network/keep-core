@@ -120,13 +120,27 @@ an operator contract must be authorized by the operator's authorizer.
 Once an operator contract has been authorized by some address,
 it can never be deauthorized by that address.
 
-==== Service contract
+==== Service contracts
 
-Service contracts use the basic functionality performed by operator contracts, to provide useful services to customers.
+Service contracts use the basic functionality
+performed by operator contracts,
+to provide useful services to the public.
+In contrast to operator contracts,
+service contracts don't interact directly with operators
+and a failure in a service contract cannot risk operators' stakes.
 
-Service contracts receive requests for services from customers, and divide the provided service to operator contract and service contract components. Elements that are critical for security and incentives are delegated to an operator contract, while other parts of the work are performed in the service contract.
+Service contracts receive requests for their services from customers,
+and provide the requested services.
+Elements that are critical for operators' security and incentives
+are delegated to an operator contract,
+while other parts of the work are performed in the service contract.
+The service contract keeps shared state which is not security-critical.
 
-Service contracts can usevmultiple different versions of operator contractsvto perform the operator contract functions. The service contract keeps shared state which is not security-critical.
+Service contracts can use
+multiple different versions of operator contracts
+to perform the operator contract functions.
+To permit system upgrades,
+the list of used operator contracts can be updated with proper authorization.
 
 ==== Operator contract upgrades
 
