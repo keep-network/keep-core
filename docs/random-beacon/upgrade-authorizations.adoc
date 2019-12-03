@@ -6,31 +6,51 @@ toc::[]
 
 Securely upgradeable work contracts are important for protecting stakers' tokens. The current design for dividing work contracts into operator contract and service contract components permits secure upgrades of operator contracts without interfering with service functionality. To gain the benefits from this scheme, we specify here how contract upgrades are authorized, and by whom.
 
-=== Roles
-==== Governance
-TODO: How is governance set/created/assigned?
-Governance is the final arbiter of authority in the Keep Network. The role of Governance in the upgrade process is to enable recovery from key compromise by rekeying other roles.
+==== Roles
 
-Governance has the authority to change the addresses of the _Registry Keeper_, _Panic Button_, and the service contracts' _Operator Contract Upgraders_.
+Governance::
 
-The rekeying process prioritize security over convenience to the greatest feasible extent, being unsuitable for ordinary upgrades but permitting recovery from partial system compromise under extraordinary circumstances.
+Governance is the final arbiter of authority in the Keep Network.
+The role of Governance is to enable recovery from key compromise
+by rekeying other roles.
+Governance has the authority to change the addresses of
+the _Registry Keeper_, _Panic Button_,
+and the service contracts' _Operator Contract Upgraders_
+The rekeying process is currently unspecified.
 
-===== Registry Keeper
+Registry Keeper::
 
-The Registry Keeper maintains the global _registry_ of approved operator contracts. Each operator contract must be approved by the Registry Keeper before it can be authorized by a staker or used by a service contract.
+The Registry Keeper maintains the global _registry_ of approved contracts.
+Each operator contract must be approved by the Registry Keeper
+before it can be authorized to punish operators
+or used by a service contract.
+The Registry Keeper can be rekeyed by _Governance_.
 
-===== Panic Button
+Panic Button::
 
-The Panic Button can disable malicious or malfunctioning contracts that have been previously approved by the Registry Keeper. When a contract is disabled by the Panic Button, its status on the _registry_ changes to reflect this, and it becomes ineligible to penalize stakers. Contracts disabled by the Panic Button can not be reactivated.
+The Panic Button can disable malicious or malfunctioning contracts
+that have been previously approved by the Registry Keeper.
+When a contract is disabled by the Panic Button,
+its status on the _registry_ changes to reflect this,
+and it becomes ineligible to penalize operators.
+Contracts disabled by the Panic Button can not be reactivated.
+The Panic Button can be rekeyed by _Governance_.
 
-===== Operator Contract Upgrader
+Operator Contract Upgrader::
 
-Each service contract has a Operator Contract Upgrader whose purpose it is to manage operator contracts for that specific service contract. The Operator Contract Upgrader can add new operator contracts to the service contract's operator contract list, and deprecate old ones.
+Each service contract has an Operator Contract Upgrader
+whose purpose is to manage operator contracts for that service contract.
+The Operator Contract Upgrader
+can add new operator contracts to the service contract,
+and deprecate old ones.
+The Operator Contract Upgraders can be rekeyed by _Governance_.
 
-==== Authorizer
+Authorizer::
 
-Each staker has an Authorizer whose purpose is to authorize operator contracts the staker wishes to operate on. Authorized operator contracts are permitted to impact the staker's staked tokens via punishments or rewards.
-
+Each operator has an Authorizer
+whose purpose is to determine which operator contracts
+may punish the operator for misbehavior.
+The operator can only perform work for authorized operator contracts.
 The Authorizer cannot be rekeyed except by undelegating and redelegating.
 
 === Types of contracts
