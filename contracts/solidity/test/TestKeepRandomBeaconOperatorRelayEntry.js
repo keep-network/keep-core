@@ -24,32 +24,32 @@ contract('KeepRandomBeaconOperator', (accounts) => {
     let group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, accounts[0]);
     await operatorContract.addGroupMember(group, accounts[1]);
-    await operatorContract.addGroupMember(group, accounts[2]);
+    await operatorContract.addGroupMember(group, accounts[2]); 
 
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
   });
 
   it("should keep relay entry submission at reasonable price", async () => {
-    let gasEstimate = await operatorContract.relayEntry.estimateGas(bls.nextGroupSignature);
+    let gasEstimate = await operatorContract.relayEntry.estimateGas(bls.groupSignature);
 
     // Make sure no change will make the verification more expensive than it is 
     // now or that even if it happens, it will be a conscious decision.
-    assert.isBelow(gasEstimate, 451799, "Relay entry submission is too expensive")
+    assert.isBelow(gasEstimate, 369544, "Relay entry submission is too expensive")
   });
 
   it("should not allow to submit invalid relay entry", async () => {
-    // Invalid signature
-    let groupSignature = web3.utils.toBN('0x0fb34abfa2a9844a58776650e399bca3e08ab134e42595e03e3efc5a0472bcd8');
+      // Invalid signature
+      let groupSignature = "0x0fb34abfa2a9844a58776650e399bca3e08ab134e42595e03e3efc5a0472bcd8";
 
-    await expectThrow(operatorContract.relayEntry(groupSignature));
-  });
+      await expectThrow(operatorContract.relayEntry(groupSignature));
+    });
 
   it("should allow to submit valid relay entry", async () => {
-    await operatorContract.relayEntry(bls.nextGroupSignature);
+    await operatorContract.relayEntry(bls.groupSignature);
 
     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
-      bls.nextGroupSignature.toString(), "Should emit event with successfully submitted groupSignature."
+      bls.groupSignatureNumber.toString(), "Should emit event with generated entry"
     );
   });
 });

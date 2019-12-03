@@ -2,12 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"os"
 	"sync"
 	"time"
-
-	crand "crypto/rand"
 
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -60,36 +57,25 @@ func relayRequest(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	// seed is a cryptographically secure pseudo-random number in [0, 2^256)
-	// 2^256 - 1 (uint256) is the maximum seed value supported by smart contract
-	seed, err := crand.Int(
-		crand.Reader,
-		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
-	)
-	if err != nil {
-		return fmt.Errorf("could not generate seed: [%v]", err)
-	}
-
 	requestMutex := sync.Mutex{}
 
 	wait := make(chan struct{})
 
-	utility.ThresholdRelay().OnSignatureSubmitted(func(entry *event.Entry) {
-		requestMutex.Lock()
-		defer requestMutex.Unlock()
-
-		fmt.Fprintf(
-			os.Stderr,
-			"Relay entry received with value: [%v].\n",
-			entry.Value,
-		)
-
-		wait <- struct{}{}
-	})
-
 	fmt.Printf("Requesting for a new relay entry at [%s]\n", time.Now())
 
-	utility.RequestRelayEntry(seed).
+	utility.RequestRelayEntry().
+		OnSuccess(func(event *event.EntryGenerated) {
+			requestMutex.Lock()
+			defer requestMutex.Unlock()
+
+			fmt.Fprintf(
+				os.Stderr,
+				"Relay entry generated with value: [%v].\n",
+				event.Value,
+			)
+
+			wait <- struct{}{}
+		}).
 		OnFailure(func(err error) {
 			if err != nil {
 				fmt.Fprintf(

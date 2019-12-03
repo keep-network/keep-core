@@ -37,9 +37,8 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
 
     // Modify state so we can test later that eternal storage works as expected after upgrade
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.requestRelayEntry(bls.seed, {value: entryFeeEstimate});
-    await operatorContract.relayEntry(bls.nextGroupSignature);
-
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await operatorContract.relayEntry(bls.groupSignature);
   });
 
   it("should be able to check if the implementation contract was initialized", async function() {
@@ -51,7 +50,7 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
   });
 
   it("should be able to upgrade implementation and initialize it with new data", async function() {
-    let previousEntry = await serviceContractV2.previousEntry();
+    let previousEntryBefore = await serviceContractV2.previousEntry();
     await serviceContractProxy.upgradeTo(serviceContractImplV2.address);
     await serviceContractV2.initialize(100, 100, 100, duration.days(0), operatorContract.address);
 
@@ -60,7 +59,7 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
     let newVar = await serviceContractV2.getNewVar();
     assert.equal(newVar, 1234, "Should be able to get new data from upgraded contract.");
 
-    assert.isTrue(previousEntry.eq(await serviceContractV2.previousEntry()), "Should keep previous storage after upgrade.");
+    let previousEntryAfter = await serviceContractV2.previousEntry()
+    assert.equal(previousEntryBefore, previousEntryAfter, "Should keep previous storage after upgrade.");
   });
-
 });

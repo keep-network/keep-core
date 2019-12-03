@@ -2,7 +2,6 @@ package entry
 
 import (
 	"fmt"
-	"math/big"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -24,9 +23,7 @@ type relayEntrySubmitter struct {
 // Relay entry submit process starts at block height defined by startBlockheight
 // parameter.
 func (res *relayEntrySubmitter) submitRelayEntry(
-	newEntry *big.Int,
-	previousEntry *big.Int,
-	seed *big.Int,
+	newEntry []byte,
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) error {
@@ -40,8 +37,8 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 
 	onSubmittedResultChan := make(chan uint64)
 
-	subscription, err := res.chain.OnSignatureSubmitted(
-		func(event *event.Entry) {
+	subscription, err := res.chain.OnRelayEntrySubmitted(
+		func(event *event.EntrySubmitted) {
 			onSubmittedResultChan <- event.BlockNumber
 		},
 	)
@@ -90,7 +87,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			)
 
 			res.chain.SubmitRelayEntry(newEntry).OnComplete(
-				func(entry *event.Entry, err error) {
+				func(entry *event.EntrySubmitted, err error) {
 					if err == nil {
 						logger.Infof(
 							"[member:%v] successfully submitted relay entry at block: [%v]",

@@ -12,8 +12,7 @@ interface OperatorContract {
     function groupProfitFee() external view returns(uint256);
     function sign(
         uint256 requestId,
-        uint256 seed,
-        uint256 previousEntry
+        bytes calldata previousEntry
     ) external payable;
     function numberOfGroups() external view returns(uint256);
     function createGroup(uint256 newEntry) external payable;
@@ -32,7 +31,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
 
-    // These are the public events that are used by clients
     event RelayEntryRequested(uint256 requestId);
     event RelayEntryGenerated(uint256 requestId, uint256 entry);
 
@@ -60,11 +58,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     // surplus address. Expressed in wei.
     uint256 internal _requestSubsidyFeePool;
 
-    uint256 internal _previousEntry;
-
     // Each service contract tracks its own requests and these are independent
     // from operator contracts which track signing requests instead.
     uint256 internal _requestCounter;
+
+    bytes internal _previousEntry;
 
     struct Callback {
         address callbackContract;
@@ -82,9 +80,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     mapping (string => bool) internal _initialized;
 
     // Seed used as the first random beacon value.
-    // It is a signature over 78 digits of PI and 78 digits of Euler's number
-    // using BLS private key 123.
-    uint256 constant internal _beaconSeed = 10920102476789591414949377782104707130412218726336356788412941355500907533021;
+    // It's a G1 point G * PI =
+    // G * 31415926535897932384626433832795028841971693993751058209749445923078164062862
+    // Where G is the generator of G1 abstract cyclic group.
+    bytes constant internal _beaconSeed =
+    hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
 
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
@@ -190,19 +190,17 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
-     * @dev Creates a request to generate a new relay entry, which will include a
-     * random number (by signing the previous entry's random number).
-     * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
+     * @dev Creates a request to generate a new relay entry, which will include
+     * a random number (by signing the previous entry's random number).
      * @return An uint256 representing uniquely generated entry Id.
      */
-    function requestRelayEntry(uint256 seed) public payable returns (uint256) {
-        return requestRelayEntry(seed, address(0), "", 0);
+    function requestRelayEntry() public payable returns (uint256) {
+        return requestRelayEntry(address(0), "", 0);
     }
 
     /**
-     * @dev Creates a request to generate a new relay entry, which will include a
-     * random number (by signing the previous entry's random number).
-     * @param seed Initial seed random value from the client. It should be a cryptographically generated random value.
+     * @dev Creates a request to generate a new relay entry, which will include
+     * a random number (by signing the previous entry's random number).
      * @param callbackContract Callback contract address. Callback is called once a new relay entry has been generated.
      * @param callbackMethod Callback contract method signature. String representation of your method with a single
      * uint256 input parameter i.e. "relayEntryCallback(uint256)".
@@ -214,7 +212,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
      */
     function requestRelayEntry(
-        uint256 seed,
         address callbackContract,
         string memory callbackMethod,
         uint256 callbackGas
@@ -229,7 +226,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         _dkgFeePool += dkgContributionFee;
 
-        OperatorContract operatorContract = OperatorContract(selectOperatorContract(_previousEntry));
+        OperatorContract operatorContract = OperatorContract(
+            selectOperatorContract(uint256(keccak256(_previousEntry)))
+        );
         uint256 selectedOperatorContractFee = operatorContract.groupProfitFee().add(
             operatorContract.entryVerificationGasEstimate().mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)));
 
@@ -238,7 +237,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
         operatorContract.sign.value(
             selectedOperatorContractFee
-        )(requestId, seed, _previousEntry);
+        )(requestId, _previousEntry);
 
         // If selected operator contract is cheaper than expected return the
         // surplus to the subsidy fee pool.
@@ -269,21 +268,22 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param entry The generated random number.
      * @param submitter Relay entry submitter.
      */
-    function entryCreated(uint256 requestId, uint256 entry, address payable submitter) public {
+    function entryCreated(uint256 requestId, bytes memory entry, address payable submitter) public {
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."
         );
 
         _previousEntry = entry;
-        emit RelayEntryGenerated(requestId, entry);
+        uint256 entryAsNumber = uint256(keccak256(entry));
+        emit RelayEntryGenerated(requestId, entryAsNumber);
 
         if (_callbacks[requestId].callbackContract != address(0)) {
-            executeEntryCreatedCallback(requestId, entry, submitter);
+            executeEntryCreatedCallback(requestId, entryAsNumber, submitter);
             delete _callbacks[requestId];
         }
 
-        triggerDkgIfApplicable(entry);
+        triggerDkgIfApplicable(entryAsNumber);
     }
 
     /**
@@ -437,7 +437,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     /**
      * @dev Gets the previous relay entry value.
      */
-    function previousEntry() public view returns(uint256) {
+    function previousEntry() public view returns(bytes memory) {
         return _previousEntry;
     }
 
