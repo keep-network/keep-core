@@ -2,6 +2,60 @@
 :numbered:
 toc::[]
 
+== Contract structure
+
+Contracts in the Keep Network are divided into categories
+based on their roles, functionality and security implications.
+The contract structure is designed to permit upgrading any components
+while protecting stakers and customers.
+
+==== Contract types
+
+Token contract::
+
+KEEP is an ERC20 token defined by the _token contract_.
+The token contract is hard-coded in the operator and staking contracts,
+but the design of the overall system makes it possible
+to later migrate to a new version of the token contract
+without disrupting customer experience.
+
+Staking contract::
+
+Owners of KEEP tokens can use a _staking contract_
+to _stake_ them and use them as collateral for _operators_
+who perform useful work in the Keep Network.
+Staked tokens are transferred to the staking contract
+and _delegated_ to an operator address.
+The staking contract makes the tokens available to _operator contracts_
+that have been _authorized_ to punish the operator in case of misbehavior,
+while protecting them from unauthorized operator contracts.
+
+Operator contracts::
+
+Operators interact with _operator contracts_
+to perform useful work for customers.
+Operator contracts handle operations
+that are critical for the proper incentives of individual operators.
+They reward operators for correct behavior,
+and are authorized to punish misbehavior.
+
+Service contracts::
+
+_Service contracts_ provide higher-level services to the public
+using work performed by one or more operator contracts.
+Service contracts do not interact directly with operators
+nor do they need to be aware of the KEEP tokens or the staking contract.
+Operator contracts can be upgraded without disrupting customer experience
+by deploying a new version and adding it to the service contract.
+
+Registry::
+
+The addresses of contracts approved by Keep Org are kept in the _registry_.
+Token contracts, staking contracts, operator contracts and service contracts
+are all tracked separately in the registry.
+The addresses and statuses of various contracts
+can be queried from the registry.
+
 == Background
 
 Stakers in the Keep network use _work contracts_ to perform work for customers. Work contracts make the off-chain work of stakers available to on-chain applications using a system of rewards and punishments to enforce correct behavior.
