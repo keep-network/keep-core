@@ -162,6 +162,7 @@ contract KeepRandomBeaconOperator {
 
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
+        groups.stakingContract = TokenStaking(_stakingContract);
 
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
@@ -662,10 +663,6 @@ contract KeepRandomBeaconOperator {
         uint256 groupIndex,
         bytes memory signedGroupPubKey
     ) public {
-        bytes memory groupPubKey = groups.getGroupPublicKey(groupIndex);
-        if (!groups.isGroupTerminated(groupIndex) && groups.verifyUnauthorizedSignature(groupPubKey, signedGroupPubKey)) {
-            groups.terminateGroup(groupIndex);
-            stakingContract.seize(minimumStake, 100, msg.sender, groups.membersOf(groupPubKey));
-        }
+        groups.reportUnauthorizedSigning(groupIndex, signedGroupPubKey, minimumStake);
     }
 }
