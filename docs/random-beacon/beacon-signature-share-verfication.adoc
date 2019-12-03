@@ -4,15 +4,10 @@ toc::[]
 
 == Background
 
-Currently, broadcasting invalid shares
-when generating a threshold signature
-can serve as a DOS attack vector.
-Without verification of signature shares,
-a small number of colluding members
-can greatly delay or prevent the entry from being generated.
+Currently, broadcasting invalid shares when generating a threshold signature can serve as a DOS attack vector. Without verification of signature shares, a small number of colluding members can greatly delay or prevent the entry from being generated.
 
 === Terminology
-
+TODO: Move this to the separate terminology section or is it better here?
 `P1`:: The generator point for the BLS elliptic curve
 
 `X_k`:: The group private key of `Group_k`
