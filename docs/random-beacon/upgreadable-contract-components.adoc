@@ -1,103 +1,37 @@
-:toc: macro
-
-= RFC 9: Upgrading contracts by separate components
-
 :icons: font
 :numbered:
 toc::[]
 
 == Background
 
-Stakers in the Keep network use _work contracts_ to perform work for customers.
-Work contracts make the off-chain work of stakers
-available to on-chain applications
-using a system of rewards and punishments to enforce correct behavior.
+Stakers in the Keep network use _work contracts_ to perform work for customers. Work contracts make the off-chain work of stakers available to on-chain applications using a system of rewards and punishments to enforce correct behavior.
 
-Because work contracts must be able to penalize misbehaving stakers
-by slashing their staked tokens,
-it is important that they can be upgraded securely.
-For an upgrade to be considered secure,
-two things must be achieved:
+Because work contracts must be able to penalize misbehaving stakers by slashing their staked tokens, it is important that they can be upgraded securely. For an upgrade to be considered secure, two things must be achieved:
 
 1. stakers must authorize any contracts that could slash their stakes
 2. once authorized, contract code must be immutable
 
-Condition 1 is important to protect stakers
-against errors and adversaries.
-Upon staking their tokens,
-each staker appoints an authorizer
-who must approve of all contracts that could punish the staker.
-This ensures that stakes cannot be stolen
-even if the work contract upgrade scheme is thoroughly compromised,
-as long as the individual authorizers reject bad work contracts.
+Condition 1 is important to protect stakers against errors and adversaries. Upon staking their tokens, each staker appoints an authorizer who must approve of all contracts that could punish the staker. This ensures that stakes cannot be stolen even if the work contract upgrade scheme is thoroughly compromised, as long as the individual authorizers reject bad work contracts.
 
-Condition 2 is a practical requirement to make condition 1 meaningful.
-If an authorized contract's code can be changed later,
-the authorizations provide no protection.
-This means that contracts can only be upgraded by deploying a new version,
+Condition 2 is a practical requirement to make condition 1 meaningful. If an authorized contract's code can be changed later, the authorizations provide no protection. This means that contracts can only be upgraded by deploying a new version,
 which the stakers then authorize individually.
 
-However, deploying a new contract on every upgrade
-makes migrating between implementations difficult.
-Common ways of upgrading contracts,
-such as the "eternal storage" pattern
-where the contract holds data in its nominal address
-while delegating logic to a different, upgradeable contract address,
-are incompatible with individual upgrade authorization.
+However, deploying a new contract on every upgrade makes migrating between implementations difficult. Common ways of upgrading contracts, such as the "eternal storage" pattern where the contract holds data in its nominal address while delegating logic to a different, upgradeable contract address, are incompatible with individual upgrade authorization.
 
 === Current Functionality
 
-The current design for upgrading work contracts
-is to deploy a new version on every upgrade,
-and wait for stakers to start operating on it.
-Older versions would by necessity keep existing
-in parallel with newer ones,
-and migrating state between versions
-is difficult if not impossible.
-For example, different versions of threshold BLS contracts,
-even if the changes are as minor as adjusting hardcoded constants,
-would create entirely separate random beacons.
-It is possible that the difficulty of migration
-would lead customers to prefer the old version with established state.
-
-== Proposal
-
-Customer continuity can be reconciled with staker sovereignty
-by dividing work contracts into
-_operator contracts_ which handle incentive-critical operations with stakers;
-and _service contracts_ which use _operator contracts_
-to provide services to customers.
-A single _service contract_
-can abstract over multiple different _operator contracts_,
-permitting secure upgrades with reduced or minimal disruption to customers.
-
-=== Goal
-
-This RFC seeks to provide a method for upgrading contracts securely,
-maintaining individual staker authorization for all contracts
-so any contract touching staked tokens
-must be pre-approved by the respective staker or their appointed agent.
-The upgrade process should permit gradual improvements
-without disrupting users or stakers,
-and it should deal gracefully with major changes.
+The current design for upgrading work contracts is to deploy a new version on every upgrade, and wait for stakers to start operating on it. Older versions would by necessity keep existing in parallel with newer ones, and migrating state between versions is difficult if not impossible. For example, different versions of threshold BLS contracts, even if the changes are as minor as adjusting hardcoded constants, would create entirely separate random beacons. It is possible that the difficulty of migration would lead customers to prefer the old version with established state.
 
 === Implementation
 
-For each service provided on the Keep network,
-the components critical for correct incentives are identified
-and separated from the rest of the service contract as a _operator contract_.
-Operator contracts aim to be self-contained incentive-wise,
+For each service provided on the Keep network, the components critical for correct incentives are identified and separated from the rest of the service contract as a _operator contract_. Operator contracts aim to be self-contained incentive-wise,
 minimizing or eliminating the need for stakers to trust other contracts.
 
-Customer applications use a _service contract_ to perform work.
-The _service contract_ provides a unified interface to customers,
-handling the version management of _operator contracts_
-and any shared non-critical state between them.
+Customer applications use a _service contract_ to perform work. The _service contract_ provides a unified interface to customers, handling the version management of _operator contracts_ and any shared non-critical state between them.
 
 ==== Operator contract
 
-The operator contracts handle all operations
-that may have an impact on staked tokens.
+The operator contracts handle all operations that may have an impact on staked tokens.
 
 Each operator contract is an independent "microservice",
 keeping its own state on security-critical data.
