@@ -33,27 +33,16 @@ whichever gets mined first wins and subsequent submissions are disregarded
 immediately to avoid burdening the loser with excess gas fees.
 
 ===== On-chain
-When the result is submitted on-chain along with the signatures, the contract
-checks that there are at least `H` signatures or more, and that each signature
-is valid for the submitted result and the corresponding member ID. Submissions
-containing multiple signatures on the same result from the same member are
-rejected.
+When the result is submitted on-chain along with the signatures, the contract checks that there are at least `H` signatures or more, and that each signature is valid for the submitted result and the corresponding member ID. Submissions containing multiple signatures on the same result from the same member are rejected.
 
-If the above checks pass, the result is considered canonical for the group. All
-other group members should abort publishing their results and no new result
-submissions will be accepted by the chain.
+If the above checks pass, the result is considered canonical for the group. All other group members should abort publishing their results and no new result submissions will be accepted by the chain.
 
 If the above checks do not pass, the result is rejected.
 
 ===== Off-chain
-If the result has been rejected and _second player_ became eligible, 
-_second player_ can submit its result. Same checks are applied as for 
-_first player_. 
+If the result has been rejected and _second player_ became eligible, _second player_ can submit its result. Same checks are applied as for _first player_. 
 
-If no canonical result has been published until `T_dkg + N * T_step`, where `N`
-is the group size, DKG operation is marked as failed.
+If no canonical result has been published until `T_dkg + N * T_step`, where `N` is the group size, DKG operation is marked as failed.
 
 [bibliography]
-== Related Links
-- https://github.com/keep-network/keep-core/issues/625
-- https://github.com/keep-network/keep-core/issues/628
+
