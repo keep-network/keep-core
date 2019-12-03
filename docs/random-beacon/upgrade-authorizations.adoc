@@ -51,17 +51,28 @@ The Authorizer cannot be rekeyed except by undelegating and redelegating.
 
 === Types of contracts
 
-==== Registry
+==== The Registry and Panic Button
 
-A global registry is used to keep track of all operator contracts, ensuring that only Keep Org-approved operator contracts are used, and enabling the panic button to disable operator contracts in an emergency.
+The registry tracks all Keep Org -approved contracts.
+Operator contracts have a special status on the registry,
+reflecting the ability of the Panic Button to disable them.
 
-The registry contains all operator contracts of the Keep network. Each contract's status may be `NULL`, `APPROVED` or `DISABLED`.
+Each operator contract's status may be `NULL`, `APPROVED` or `DISABLED`.
 
-A status of `NULL` is the default and means that the operator contract has not been approved by the _Registry Keeper_.
+A status of `NULL` is the default
+and means that the operator contract has not been approved
+by the _Registry Keeper_.
 
-When the _Registry Keeper_ approves a operator contract, its status switches to `APPROVED` in the registry. Approved operator contracts can be authorized by stakers to impact their stakes, and service contracts may utilize them.
+When the _Registry Keeper_ approves a operator contract,
+its status switches to `APPROVED` in the registry.
+Approved operator contracts can be authorized to punish operators,
+and service contracts may utilize them.
 
-The _Panic Button_ can be used to set the status of an `APPROVED` contract to `DISABLED`. Operator Contracts disabled with the _Panic Button_ cannot be re-enabled.
+The _Panic Button_ can be used
+to set the status of an `APPROVED` contract to `DISABLED`.
+Operator Contracts disabled with the _Panic Button_ cannot be re-enabled,
+and disabled contracts may not punish operators
+nor be selected by service contracts to perform work.
 
 ==== Operator Contracts
 
