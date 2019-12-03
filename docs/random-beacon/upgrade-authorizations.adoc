@@ -193,77 +193,34 @@ These components could be upgraded with a process similar to that of operator co
 
 ===== Keep factories
 
-Keep factories are operator contracts that create keeps for customer applications.
-
-Like all operator contracts, each Keep factory recognizes one or more staking contracts for the purpose of determining operators' eligibility to join keeps.
-
-Each keep factory implements one or more keep interfaces. The factory records its interfaces and the addresses of the corresponding keep vendors.
+Keep factories are operator contracts that create keeps for customer applications. Like all operator contracts, each Keep factory recognizes one or more staking contracts for the purpose of determining operators' eligibility to join keeps. Each keep factory implements one or more keep interfaces. The factory records its interfaces and the addresses of the corresponding keep vendors.
 
 ===== Keeps
 
-Keeps are operator contracts created by keep factories.
-When a contract requests a keep from a factory,
-the factory creates a new contract owned by the customer contract, the keep,
-and hands it off to the customer contract.
+Keeps are operator contracts created by keep factories. When a contract requests a keep from a factory, the factory creates a new contract owned by the customer contract, the keep, and hands it off to the customer contract.
 
-Keeps aren't individually authorized to slash stakers.
-Instead, they have to use the authorization of their creator factory.
+Keeps aren't individually authorized to slash stakers. Instead, they have to use the authorization of their creator factory.
 
-Once created, a keep cannot be upgraded in any way,
-except by closing the keep and opening another one.
+Once created, a keep cannot be upgraded in any way, except by closing the keep and opening another one.
 
 ==== Service contracts
 
 ===== Keep vendors
 
-Keep vendors are service contracts
-which perform version management of keep factories.
-Keep vendors provide customers
-a single unified interface to request up-to-date keeps.
+Keep vendors are service contracts which perform version management of keep factories. Keep vendors provide customers a single unified interface to request up-to-date keeps.
 
-The upgrade process of the Keep Network
-is designed to eliminate the security threat
-posed by unilateral smart contract upgrades.
-However, the consent-centered upgrade process
-is inherently more complex to accommodate
-than a simple switchover to a new version.
-Stakers will authorize a new contract
-and operators will upgrade their client software
-on their own schedule,
-so the initial capacity of a new keep version will be seriously limited.
+The upgrade process of the Keep Network is designed to eliminate the security threat
+posed by unilateral smart contract upgrades. However, the consent-centered upgrade process is inherently more complex to accommodate than a simple switchover to a new version. Stakers will authorize a new contract and operators will upgrade their client software on their own schedule, so the initial capacity of a new keep version will be seriously limited.
 
-Instead of updating the factory address when a type of keep is upgraded,
-and explicitly accommodating for the friction in the migration,
-a customer application can go through the vendor of the corresponding keep type
-to receive a recent version of the keep.
-For most applications,
-the convenience of having the version migration
-managed automatically by the keep vendor
-is likely to be more significant than the slight security impact.
+Instead of updating the factory address when a type of keep is upgraded, and explicitly accommodating for the friction in the migration, a customer application can go through the vendor of the corresponding keep type to receive a recent version of the keep. For most applications, the convenience of having the version migration managed automatically by the keep vendor is likely to be more significant than the slight security impact.
 
 == Open Questions
 
-Some threats may be mitigated by allowing or requiring
-routine rekeying of the upgrade roles
-using the upgrade roles' own keys instead of relying on governance.
-This has not been investigated yet.
-Alternatively, each role could have a backup key in cold storage,
+Some threats may be mitigated by allowing or requiring routine rekeying of the upgrade roles using the upgrade roles' own keys instead of relying on governance. This has not been investigated yet. Alternatively, each role could have a backup key in cold storage,
 usable as the first-line rekeying option.
 
-The governance process for recovery from key compromise is left open.
-Involving a significant fraction of stakers (e.g. 33-50%) 
-has the attractive property that
-an adversary capable of subverting the governance process
-would necessarily be powerful enough
-to subvert the honest majority assumption in individual Keeps.
-This means that rekeying is robust against attacks
-unless the network as a whole is compromised.
+The governance process for recovery from key compromise is left open. Involving a significant fraction of stakers (e.g. 33-50%) has the attractive property that an adversary capable of subverting the governance process would necessarily be powerful enough to subvert the honest majority assumption in individual Keeps. This means that rekeying is robust against attacks unless the network as a whole is compromised.
 
-It is not immediately clear whether service contracts should
-completely block operator contracts disabled with the panic button,
-or only deprecate them without regard for the normal limitations.
+It is not immediately clear whether service contracts should completely block operator contracts disabled with the panic button, or only deprecate them without regard for the normal limitations.
 
-Rate-limiting the Panic Button can help prevent total DoS
-if the panic button is ever compromised,
-but also permits flooding the system with malicious operator contracts
-unless the Registry Keeper is similarly rate-limited.
+Rate-limiting the Panic Button can help prevent total DoS if the panic button is ever compromised, but also permits flooding the system with malicious operator contracts unless the Registry Keeper is similarly rate-limited.
