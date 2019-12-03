@@ -100,7 +100,7 @@ In this case the operator contract needs to handle group creation and expiration
 Handling entry requests and pricing; determining the signing input for generating new entries; calling callbacks; and requesting the creation of new groups are responsibilities that are not critical for beacon integrity from the perspective of the stakers. These can be performed by the service contract without individual staker authorization of upgrades.
 
 ==== Operator contract
-
+TODO: Any reason this section is separate from the section named the same above? Can they be combined?
 The operator contract for the random beacon provides the following interface to the service contract:
 
 `create_group(payment)`:Create a new group when requested by the service contract,
