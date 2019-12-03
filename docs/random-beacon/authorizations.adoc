@@ -2,7 +2,7 @@
 :numbered:
 toc::[]
 
-== Authorizations and contract upgrades
+== Roles and authorizations
 
 === Roles
 
@@ -125,51 +125,6 @@ If an operator contract has been `DISABLED` by the _Panic Button_,
 the service contract must not use its functionality.
 This must be checked when the service contract selects an operator contract.
 
-=== Upgrade processes
-
-==== Operator Contract upgrade
-
-TODO: Who does this?
-. Deploy the new operator contract
-. Approve the operator contract on the registry
-. Wait for stakers to authorize the operator contract
-. Activate the operator contract on the relevant service contract/s
-
-==== New service contract
-
-TODO: Who does this?
-. Deploy the new service contract
-. Deploy a new operator contract serving the new service contract
-  . Approve the operator contract on the registry
-  . Wait for stakers to authorize the operator contract
- . Activate the operator contract on the service contract
-
-==== Staking contract upgrade
-
-TODO: Who does this?
-. Deploy the new staking contract
-. Deploy new operator contracts recognizing the new staking contract
- . Approve the operator contracts on the registry
- . Wait for stakers to migrate to the new staking contract
- . Wait for stakers to authorize the new operator contracts
-. Activate the operator contracts on the service contracts
-
-==== Token upgrade
-
-The upgrade process makes it possible to even hard-fork the token
-without disrupting service contract user experience:
-
-TODO: Who does this?
-. Deploy the new token contract
-. Deploy a migration contract
-that lets holders convert old tokens to new tokens
-. Deploy a new staking contract for the new tokens
-  . Deploy new operator contracts recognizing the new token and staking contract
-    . Approve the operator contracts on the registry
-. Wait for stakers to convert their tokens,
-stake on the new contract
-and authorize the new operator contracts
-. Activate the operator contracts on the service contracts
 
 === Impact of compromise
 
