@@ -99,6 +99,7 @@ Once a operator contract has been authorized, authorization cannot be withdrawn 
 
 ==== Operator Contract upgrade
 
+TODO: Who does this?
 . Deploy the new operator contract
 . Approve the operator contract on the registry
 . Wait for stakers to authorize the operator contract
@@ -106,6 +107,7 @@ Once a operator contract has been authorized, authorization cannot be withdrawn 
 
 ==== New service contract
 
+TODO: Who does this?
 . Deploy the new service contract
 . Deploy a new operator contract serving the new service contract
   . Approve the operator contract on the registry
@@ -114,6 +116,7 @@ Once a operator contract has been authorized, authorization cannot be withdrawn 
 
 ==== Staking contract upgrade
 
+TODO: Who does this?
 . Deploy the new staking contract
 . Deploy new operator contracts recognizing the new staking contract
  . Approve the operator contracts on the registry
@@ -126,6 +129,7 @@ Once a operator contract has been authorized, authorization cannot be withdrawn 
 The upgrade process makes it possible to even hard-fork the token
 without disrupting service contract user experience:
 
+TODO: Who does this?
 . Deploy the new token contract
 . Deploy a migration contract
 that lets holders convert old tokens to new tokens
@@ -143,13 +147,8 @@ and authorize the new operator contracts
 
 ===== Registry Keeper
 
-A compromised Registry Keeper can approve arbitrary operator contracts.
-Because using those operator contracts for a service contract
-requires the service contract's Operator Contract Upgrader as well,
-the impact is limited to stakers being able to instantly unstake
-by authorizing a malicious operator contract
-which slashes their stakes
-and sends the tokens to an address controlled by the staker.
+TODO: Need to explain this better? Not sure I follow
+A compromised Registry Keeper can approve arbitrary operator contracts. Because using those operator contracts for a service contract requires the service contract's Operator Contract Upgrader as well, the impact is limited to stakers being able to instantly unstake by authorizing a malicious operator contract which slashes their stakes and sends the tokens to an address controlled by the staker.
 
 ===== Panic Button
 
