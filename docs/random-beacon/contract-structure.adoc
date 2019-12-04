@@ -78,7 +78,7 @@ The payment is distributed to contributing operators
 according to the operator contract's own rules.
 An operator contract can either provide services
 to any contract that makes a valid request and pays the correct fee,
-or it can be owned is owned by a specific contract and only serve its owner.
+or it can be owned by a specific contract and only serve its owner.
 In the random beacon
 the service contract is the only "customer" of the operator contracts,
 and operator contracts only provide services to the random beacon.
