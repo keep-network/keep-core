@@ -119,7 +119,9 @@ until at least one operator contract is activated.
 Each service contract has its own _Operator Contract Upgrader_
 who can add used operator contracts.
 To add a used operator contract,
-the operator contract must have been `APPROVED` on the _registry_.
+the operator contract must have been `APPROVED` on the _registry_,
+and the interface it claims to implement
+must match what the service contract expects.
 
 If an operator contract has been `DISABLED` by the _Panic Button_,
 the service contract must not use its functionality.
