@@ -26,16 +26,50 @@ class OverviewTab extends React.Component {
                 position: 'right'
               }
           },
+          shouldSubscribeToEvent: true,
         }
     }
 
     componentDidMount() {
         this.getData();
+        this.subscribeToEvent()
     }
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps, prevState) {
         if(prevProps.web3.yourAddress !== this.props.web3.yourAddress)
           this.getData();
+        if(!prevState.shouldSubscribeToEvent && this.state.shouldSubscribeToEvent)
+          this.subscribeToEvent();
+    }
+
+    subscribeToEvent = () => {
+      const { web3: { stakingContract } } = this.props
+      this.setState({ shouldSubscribeToEvent: false })
+      stakingContract.once('InitiatedUnstake', (this.subscribeEvent))
+    }
+
+    subscribeEvent = async (error, event) => {
+      const { returnValues: { value, operator, createdAt } } = event
+      const { web3: { utils, stakingContract } } = this.props;
+      const withdrawalDelay = await stakingContract.methods.stakeWithdrawalDelay().call();
+      const availableAt = moment(createdAt * 1000).add(withdrawalDelay, 'seconds')
+      const withdrawal = {
+        'id': operator,
+        'amount': displayAmount(value, 18, 3),
+        'available': availableAt.isSameOrBefore(moment()),
+        'availableAt': availableAt.format("MMMM Do YYYY, h:mm:ss a")
+      }
+      const withdrawals = [...this.state.withdrawals, withdrawal]
+      const withdrawalsTotal = new utils.BN(this.state.withdrawalsTotal).add(utils.toBN(value));
+      const stakeBalance = this.state.stakeBalance.sub(utils.toBN(value))
+      const operators = this.state.operators.filter(({ address }) => address !== operator)
+      this.setState({
+        stakeBalance,
+        operators,
+        withdrawals,
+        withdrawalsTotal,
+        shouldSubscribeToEvent: true
+      })
     }
 
     async getData() {
