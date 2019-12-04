@@ -2,6 +2,21 @@
 
 Summary of Keep private testnet releases in reverse chronological order.
 
+== 2019-12-04
+
+=== BUGFIXES
+
+- Implemented retransmitted to increase network message delivery rate
+- Group archival reworked to make it more fault-tolerant
+
+=== OTHERS
+
+- Reduced bytecode size of the operator contract
+- Increased group size to 64 members
+- Significantly reduced gas cost of all beacon operations (ticket submission, DKG, entry verification)
+- Upgraded libp2p and go-ethereum dependencies
+- Support for shipping custom Ethereum transaction options
+
 == 2019-10-31
 
 === OTHERS
