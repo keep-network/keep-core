@@ -41,21 +41,35 @@ export class Messages extends React.Component {
     }
 }
 
-const Message = (props) => {
+const messageIconMap = {
+    error: 'glyphicon-remove',
+    success: 'glyphicon-ok'
+}
+
+const Message = ({ message, ...props }) => {
     useEffect(() => {
         const timeout = setTimeout(onClose, 3250);
         return () => clearTimeout(timeout)
-    }, [props.message.id])
-
+    }, [message.id])
 
     const onClose = () => {
-       props.onClose(props.message)
+       props.onClose(message)
     }
 
     return (
-        <div className={`message message-${props.message.type || 'success'}`}>
-            <button onClick={onClose}>Close</button>
-            {props.message.content}
+        <div className={`message message-${message.type || 'success'}`}>
+            <div className='message-content-wrapper'>
+                <div className="message-icon">
+                    <span className={`glyphicon ${messageIconMap[message.type]}`} aria-hidden='true' />
+                </div>
+                <div className='message-content'>
+                    <span className="message-title">{message.title}</span>
+                    <div>{message.content}</div>
+                </div>
+                <div className='message-icon-close' onClick={onClose}>
+                    <span className="glyphicon glyphicon-remove" aria-hidden='true' />
+                </div>
+            </div>
         </div>
     )
 }
