@@ -146,15 +146,7 @@ The contract should also have the following discrete pieces of functionality:
 1. The _owner_ chooses the number of tokens to delegate, _operator_, and
 _magpie_ and creates a _delegation order_ containing this information.
 
-2. The _owner_ provides to the contract a signature of his address, signed by
-the _operator_. This proofs that the _operator_ is willing to operate on behalf
-of the _owner. It is enough to let the _owner_ to delegate the tokens to the
-_operator_. Operator does not have to agree on the number of tokens delegated
-and operator's agreement on delegation is given in perpetuity _owner_ may
-transfer more tokens to the contract or not delegate all tokens in the first
-order.
-
-3. The contract receives the _delegation order_ and verifies the following (if
+2. The contract receives the _delegation order_ and verifies the following (if
 any condition is unfulfilled, processing aborts):
   * _delegation order_ is signed by the owner declared in the delegation order,
   * _owner_ address is signed by the _operator_,
@@ -162,14 +154,14 @@ any condition is unfulfilled, processing aborts):
   * _operator_ is not involved in another active delegating contract,
   * amount of delegated tokens is lower or equal to the owner staked tokens.
 
-4. If all conditions are satisfied the contract processes the _delegation order_
+3. If all conditions are satisfied the contract processes the _delegation order_
 and sets the variables accordingly to the _delegation order_, and binds the
 owner with the operator. The state of agreement between the owner and the
 operator is set to `active`, and the agreement state change time is set to
 current time.footnote:[Ability to increase the delegated stake can be
 implemented via undelegating and delegating stake again with the new amount.]
 
-5. The _operator_ can now use this delegated stake for operating.
+4. The _operator_ can now use this delegated stake for operating.
 
 [#undelegating]
 ==== Undelegating a stake
