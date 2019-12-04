@@ -45,7 +45,7 @@ class OverviewTab extends React.Component {
           return
     
         // Calculate delegated stake balances
-        let stakeBalance = new utils.BN(await stakingContract.methods.balanceOf(yourAddress).call());
+        let stakeBalance = new utils.BN(0);
         const operatorsAddresses = await stakingContract.methods.operatorsOf(yourAddress).call()
         let operators = [];
     
