@@ -194,10 +194,6 @@ func TestProviderSetAnnouncedAddresses(t *testing.T) {
 	}
 }
 
-type protocolIdentifier struct {
-	id string
-}
-
 type testMessage struct {
 	Sender    *identity
 	Recipient *identity
@@ -228,42 +224,6 @@ func newTestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 3*time.Second)
 }
 
-func newTestIdentity() (*identity, error) {
-	privKey, _, err := key.GenerateStaticNetworkKey()
-	if err != nil {
-		return nil, err
-	}
-
-	return createIdentity(privKey)
-}
-
 func generateDeterministicNetworkConfig() Config {
 	return Config{Port: 8080}
-}
-
-func testProvider(ctx context.Context, t *testing.T) (*provider, error) {
-	identity, err := newTestIdentity()
-	if err != nil {
-		return nil, err
-	}
-
-	config := generateDeterministicNetworkConfig()
-
-	host, err := discoverAndListen(
-		ctx,
-		identity,
-		config.Port,
-		config.AnnouncedAddresses,
-		local.NewStakeMonitor(big.NewInt(200)),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	cm, err := newChannelManager(ctx, identity, host)
-	if err != nil {
-		return nil, err
-	}
-
-	return &provider{channelManagr: cm, host: host}, nil
 }

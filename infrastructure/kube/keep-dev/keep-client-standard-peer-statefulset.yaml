@@ -8,7 +8,7 @@ metadata:
     app: keep-client
     type: standard-peer
 spec:
-  replicas: 4
+  replicas: 5
   selector:
     matchLabels:
       app: keep-client
@@ -57,9 +57,12 @@ spec:
       initContainers:
       - name: initcontainer-provision-keep-client
         image: gcr.io/keep-dev-fe24/keep-client-initcontainer
+        imagePullPolicy: Always
         env:
           - name: KEEP_CLIENT_TYPE
             value: standard
+          - name: KEEP_CLIENT_ETH_KEYFILE
+            value: /mnt/keep-client/config/eth_account_keyfile
           - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
             valueFrom:
               secretKeyRef:

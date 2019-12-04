@@ -5,9 +5,37 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 )
+
+func TestSignAndVerify(t *testing.T) {
+	pi, _ := new(big.Int).SetString("31415926535897932384626433832795028841971693993751058209749445923078164062862", 10)
+	message := pi.Bytes()
+
+	secretKey := big.NewInt(123)
+	publicKey := new(bn256.G2).ScalarBaseMult(secretKey)
+
+	signature := Sign(secretKey, message)
+
+	if !Verify(publicKey, message, signature) {
+		t.Fatalf("Expected signature to be valid")
+	}
+}
+
+func TestSignAndVerifyG1(t *testing.T) {
+	pi, _ := new(big.Int).SetString("31415926535897932384626433832795028841971693993751058209749445923078164062862", 10)
+	message := new(bn256.G1).ScalarBaseMult(pi)
+
+	secretKey := big.NewInt(123)
+	publicKey := new(bn256.G2).ScalarBaseMult(secretKey)
+
+	signature := SignG1(secretKey, message)
+
+	if !VerifyG1(publicKey, message, signature) {
+		t.Fatalf("Expected signature to be valid")
+	}
+}
 
 // Test verifying BLS aggregated signature.
 func TestAggregateBLS(t *testing.T) {
@@ -16,7 +44,8 @@ func TestAggregateBLS(t *testing.T) {
 	var publicKeys []*bn256.G2
 
 	// Message to sign.
-	msg := []byte("Hello!")
+	pi, _ := new(big.Int).SetString("31415926535897932384626433832795028841971693993751058209749445923078164062862", 10)
+	message := new(bn256.G1).ScalarBaseMult(pi)
 
 	for i := 0; i < 100; i++ {
 		// Get secret key.
@@ -31,14 +60,14 @@ func TestAggregateBLS(t *testing.T) {
 		publicKeys = append(publicKeys, pub)
 
 		// Sign the message.
-		sig := Sign(k, msg)
+		sig := SignG1(k, message)
 		signatures = append(signatures, sig)
 	}
 
 	aggSig := AggregateG1Points(signatures)
 	aggPub := AggregateG2Points(publicKeys)
 
-	result := Verify(aggPub, msg, aggSig)
+	result := VerifyG1(aggPub, message, aggSig)
 
 	if !result {
 		t.Errorf("Error verifying BLS multi signature.")
@@ -47,7 +76,8 @@ func TestAggregateBLS(t *testing.T) {
 
 // Test verifying BLS threshold signature.
 func TestThresholdBLS(t *testing.T) {
-	message := []byte("Hello!")
+	pi, _ := new(big.Int).SetString("31415926535897932384626433832795028841971693993751058209749445923078164062862", 10)
+	message := new(bn256.G1).ScalarBaseMult(pi)
 
 	numOfPlayers := 5
 	threshold := 3
@@ -79,7 +109,7 @@ func TestThresholdBLS(t *testing.T) {
 	for i := 1; i <= numOfPlayers; i++ {
 		secretKeyShare := GetSecretKeyShare(masterSecretKey, int(i))
 		publicKeyShares = append(publicKeyShares, secretKeyShare.PublicKeyShare())
-		signatureShare := Sign(secretKeyShare.V, message)
+		signatureShare := SignG1(secretKeyShare.V, message)
 		signatureShares = append(signatureShares, &SignatureShare{
 			I: i,
 			V: signatureShare,
@@ -147,7 +177,7 @@ func TestThresholdBLS(t *testing.T) {
 			publicKey, _ := RecoverPublicKey(publicKeyShares, threshold)
 			testutils.AssertBytesEqual(t, publicKey.Marshal(), masterPublicKey[0].Marshal())
 
-			if !Verify(publicKey, message, signature) {
+			if !VerifyG1(publicKey, message, signature) {
 				t.Errorf("Error verifying BLS threshold signature.")
 			}
 		})

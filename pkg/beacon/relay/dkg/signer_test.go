@@ -10,7 +10,7 @@ import (
 )
 
 func TestSignAndComplete(t *testing.T) {
-	var message = []byte("hello world")
+	var message = new(bn256.G1).ScalarBaseMult(big.NewInt(1337))
 
 	// Obtained by running `TestFullStateTransitions` and outputting shares
 	// and group public key. MemberIDs are 1-indexed.
@@ -87,10 +87,15 @@ func TestSignAndComplete(t *testing.T) {
 		// Ensure we get a valid signature share from every signer.
 		shares := make([]*bls.SignatureShare, 0)
 		for _, signer := range signers {
+			share, err := signer.CalculateSignatureShare(message.Marshal())
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			shares = append(shares,
 				&bls.SignatureShare{
 					I: int(signer.MemberID()),
-					V: signer.CalculateSignatureShare(message),
+					V: share,
 				},
 			)
 		}
@@ -110,7 +115,7 @@ func TestSignAndComplete(t *testing.T) {
 		}
 
 		// Does the signature match the public key that we have for the group?
-		if !bls.Verify(groupPublicKey, message, signature) {
+		if !bls.VerifyG1(groupPublicKey, message, signature) {
 			t.Fatal("Failed to verify recovered signature")
 		}
 	}

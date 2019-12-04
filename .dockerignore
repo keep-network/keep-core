@@ -13,3 +13,4 @@ testnet*
 vendor
 **/gen/*/**/*.go
 !pkg/chain/gen/cmd/cmd*.go
+!pkg/chain/gen/options/options*.go

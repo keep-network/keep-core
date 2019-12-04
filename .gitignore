@@ -17,6 +17,7 @@ config.*.toml
 *.account
 pkg/**/gen/*/*.go
 !pkg/chain/gen/cmd/cmd*.go
+!pkg/chain/gen/options/options*.go
 
 # Executables
 debug
@@ -31,6 +32,7 @@ main.test
 
 # Infrastructure
 .terraform
+infrastructure/gcp/service-accounts*
 
 # keys
 keystore

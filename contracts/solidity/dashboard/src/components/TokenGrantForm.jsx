@@ -51,8 +51,10 @@ class TokenGrantForm extends Component {
 
   async submit() {
     const { amount, grantee, duration, start, cliff, revocable} = this.state
-    const { web3, tokenGrantContractAddress } = this.props
+    const { web3 } = this.props
 
+    const tokenGrantContractAddress = web3.grantContract.options.address;
+    
     await web3.token.methods.approveAndCall(
       tokenGrantContractAddress,
       web3.utils.toBN(formatAmount(amount, 18)).toString(),

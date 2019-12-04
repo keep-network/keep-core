@@ -119,7 +119,7 @@ variable "gke_cluster" {
     daily_maintenance_window_start_time = "00:00"
     network_policy_enabled              = false
     network_policy_provider             = "PROVIDER_UNSPECIFIED"
-    logging_service                     = "logging.googleapis.com/kubernetes"
+    logging_service                     = "logging.googleapis.com"
   }
 }
 
@@ -205,7 +205,7 @@ variable "keel" {
   default {
     name      = "helm-keel"
     namespace = "tiller"
-    version   = "0.8.13"
+    version   = "0.8.16"
   }
 }
 

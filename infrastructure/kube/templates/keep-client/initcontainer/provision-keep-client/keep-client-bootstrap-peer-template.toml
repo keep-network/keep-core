@@ -19,9 +19,7 @@
     KeepRandomBeaconService = "Set by Kube"
 
 [LibP2P]
-  Seed = "Set by Kube"
   Port = "Set by Kube"
-  NAT = true
 
 [Storage]
   DataDir = "Set by Kube"

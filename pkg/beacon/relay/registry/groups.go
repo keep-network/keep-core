@@ -51,7 +51,7 @@ func (g *Groups) RegisterGroup(
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
-	groupPublicKey := groupKeyToString(signer.GroupPublicKeyBytesCompressed())
+	groupPublicKey := groupKeyToString(signer.GroupPublicKeyBytes())
 
 	membership := &Membership{
 		Signer:      signer,
@@ -130,7 +130,7 @@ func (g *Groups) LoadExistingGroups() {
 	go func() {
 		for membership := range membershipsChannel {
 			groupPublicKey := groupKeyToString(
-				membership.Signer.GroupPublicKeyBytesCompressed(),
+				membership.Signer.GroupPublicKeyBytes(),
 			)
 			g.myGroups[groupPublicKey] = append(
 				g.myGroups[groupPublicKey],
@@ -159,7 +159,7 @@ func (g *Groups) LoadExistingGroups() {
 
 func (g *Groups) printMemberships() {
 	for group, memberships := range g.myGroups {
-		memberLog := fmt.Sprintf("group [%v] was loaded with member IDs: [", group)
+		memberLog := fmt.Sprintf("group [0x%v] loaded with members: [", group)
 		for idx, membership := range memberships {
 			if (len(memberships) - 1) != idx {
 				memberLog += fmt.Sprintf("%v, ", membership.Signer.MemberID())

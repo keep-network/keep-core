@@ -3,7 +3,6 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/ipfs/go-log"
 
@@ -14,8 +13,8 @@ import (
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 	"github.com/keep-network/keep-core/pkg/gen/async"
-	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
@@ -100,10 +99,13 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 		}
 	}
 
+	ticketBytes := ec.packTicket(ticket)
+
 	_, err := ec.keepRandomBeaconOperatorContract.SubmitTicket(
-		ticket.Value,
-		ticket.Proof.StakerValue,
-		ticket.Proof.VirtualStakerIndex,
+		ticketBytes,
+		options.TransactionOptions{
+			GasLimit: 250000,
+		},
 	)
 	if err != nil {
 		failPromise(err)
@@ -112,6 +114,18 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 	// TODO: fulfill when submitted
 
 	return submittedTicketPromise
+}
+
+func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) [32]uint8 {
+	ticketBytes := []uint8{}
+	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Value.Bytes(), 32)[:8]...)
+	ticketBytes = append(ticketBytes, ticket.Proof.StakerValue.Bytes()[0:20]...)
+	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.VirtualStakerIndex.Bytes(), 4)[0:4]...)
+
+	ticketFixedArray := [32]uint8{}
+	copy(ticketFixedArray[:], ticketBytes[:32])
+
+	return ticketFixedArray
 }
 
 func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
@@ -136,9 +150,9 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
-	entryValue *big.Int,
-) *async.EventEntryPromise {
-	relayEntryPromise := &async.EventEntryPromise{}
+	entry []byte,
+) *async.EventEntrySubmittedPromise {
+	relayEntryPromise := &async.EventEntrySubmittedPromise{}
 
 	failPromise := func(err error) {
 		failErr := relayEntryPromise.Fail(err)
@@ -151,10 +165,10 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}
 
-	generatedEntry := make(chan *event.Entry)
+	generatedEntry := make(chan *event.EntrySubmitted)
 
-	subscription, err := ec.OnSignatureSubmitted(
-		func(onChainEvent *event.Entry) {
+	subscription, err := ec.OnRelayEntrySubmitted(
+		func(onChainEvent *event.EntrySubmitted) {
 			generatedEntry <- onChainEvent
 		},
 	)
@@ -190,7 +204,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(entryValue)
+	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(entry)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(generatedEntry)
@@ -200,24 +214,13 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	return relayEntryPromise
 }
 
-func (ec *ethereumChain) OnSignatureSubmitted(
-	handle func(entry *event.Entry),
+func (ec *ethereumChain) OnRelayEntrySubmitted(
+	handle func(entry *event.EntrySubmitted),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchSignatureSubmitted(
-		func(
-			requestResponse *big.Int,
-			requestGroupPubKey []byte,
-			previousEntry *big.Int,
-			seed *big.Int,
-			blockNumber uint64,
-		) {
-			handle(&event.Entry{
-				Value:         requestResponse,
-				GroupPubKey:   requestGroupPubKey,
-				PreviousEntry: previousEntry,
-				Timestamp:     time.Now().UTC(),
-				Seed:          seed,
-				BlockNumber:   blockNumber,
+	return ec.keepRandomBeaconOperatorContract.WatchRelayEntrySubmitted(
+		func(blockNumber uint64) {
+			handle(&event.EntrySubmitted{
+				BlockNumber: blockNumber,
 			})
 		},
 		func(err error) error {
@@ -229,19 +232,17 @@ func (ec *ethereumChain) OnSignatureSubmitted(
 	)
 }
 
-func (ec *ethereumChain) OnSignatureRequested(
+func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchSignatureRequested(
+	return ec.keepRandomBeaconOperatorContract.WatchRelayEntryRequested(
 		func(
-			previousEntry *big.Int,
-			seed *big.Int,
+			previousEntry []byte,
 			groupPublicKey []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.Request{
 				PreviousEntry:  previousEntry,
-				Seed:           seed,
 				GroupPublicKey: groupPublicKey,
 				BlockNumber:    blockNumber,
 			})
@@ -453,43 +454,4 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Disqualified, dkgResult.Inactive)
 
 	return relaychain.DKGResultHashFromBytes(hash)
-}
-
-// CombineToSign takes the previous relay entry value and the current
-// requests's seed and:
-//  - pads them with zeros if their byte length is less than 32 bytes. These
-//   values are used later on-chain as `uint256` values and combined with
-//   `abi.encodePacked` during signature verification. `uint256` is always
-//   packed to 256-bits with leading zeros if needed,
-// - combines them into a single slice of bytes.
-//
-// Function returns an error if previous entry or seed takes more than 32 bytes.
-func (ec *ethereumChain) CombineToSign(
-	previousEntry *big.Int,
-	seed *big.Int,
-) ([]byte, error) {
-	previousEntryBytes := previousEntry.Bytes()
-	seedBytes := seed.Bytes()
-
-	if len(previousEntryBytes) > 32 {
-		return nil, fmt.Errorf("entry can not be longer than 32 bytes")
-	}
-	if len(seedBytes) > 32 {
-		return nil, fmt.Errorf("seed can not be longer than 32 bytes")
-	}
-
-	previousEntryPadded, err := byteutils.LeftPadTo32Bytes(previousEntryBytes)
-	if err != nil {
-		return nil, err
-	}
-	seedPadded, err := byteutils.LeftPadTo32Bytes(seedBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	combinedEntryToSign := make([]byte, 0)
-	combinedEntryToSign = append(combinedEntryToSign, previousEntryPadded...)
-	combinedEntryToSign = append(combinedEntryToSign, seedPadded...)
-
-	return combinedEntryToSign, nil
 }
