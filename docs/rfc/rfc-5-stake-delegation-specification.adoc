@@ -167,21 +167,14 @@ implemented via undelegating and delegating stake again with the new amount.]
 1. The _owner_ or _operator_ chooses to undelegate the stake, and creates an
 _undelegation order_.
 
-2. Either the _owner_ or _operator_ signs the _undelegation order_ and publishes
-it on-chain.footnote:[On Ethereum, by publishing on-chain the owner or operator
-has already signed; that is, no additional signature is needed, the call to the
-contract is itself sufficient.]
+2. The contract receives the _undelegation order_ and verifies that the agreement exists.
 
-3. The contract receives the _undelegation order_ and verifies the following:
-  * the agreement exists,
-  * the _undelegation order_ is properly signed.
-
-4. If the conditions are satisfied, the contract processes the
+3. If the conditions are satisfied, the contract processes the
 _undelegation order_ and sets the following:
   * contract state is set to `undelegating`,
   * contract state change time is set to current time.
 
-5. The _operator_ cannot enter new operations until the undelegated stake is
+4. The _operator_ cannot enter new operations until the undelegated stake is
 restored and the _owner_ cannot delegate the delegated stake to a new
 _operator_.
 
