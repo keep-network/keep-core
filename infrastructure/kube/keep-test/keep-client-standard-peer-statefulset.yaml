@@ -7,7 +7,7 @@ metadata:
     app: keep-client
     type: standard-peer
 spec:
-  replicas: 4
+  replicas: 3
   selector:
     matchLabels:
       app: keep-client
@@ -64,6 +64,8 @@ spec:
               secretKeyRef:
                 name: eth-account-passphrase
                 key: eth-account-passphrase
+          - name: KEEP_CLIENT_ETH_KEYFILE
+            value: /mnt/keep-client/config/eth_account_keyfile
           - name: KEEP_DATA_DIR
             value: /mnt/keep-client/data
         volumeMounts:
