@@ -94,7 +94,7 @@ class OverviewTab extends React.Component {
           operators,
           stakeBalance,
           withdrawals,
-          withdrawalsTotal: displayAmount(withdrawalsTotal, 18, 3),
+          withdrawalsTotal,
           beneficiaryAddress: await this.getBeneficiaryAddress()
         })
     }
@@ -109,7 +109,7 @@ class OverviewTab extends React.Component {
               'Pending unstake'
             ],
             datasets: [{
-              data: [displayAmount(stakeBalance, 18, 3), withdrawalsTotal],
+              data: [displayAmount(stakeBalance, 18, 3), displayAmount(withdrawalsTotal, 18, 3)],
               backgroundColor: [
                 colors.nandor,
                 colors.turquoise
@@ -124,7 +124,7 @@ class OverviewTab extends React.Component {
               'Token grants'
             ],
             datasets: [{
-              data: [displayAmount(tokenBalance, 18, 3), displayAmount(stakeBalance, 18, 3), withdrawalsTotal, displayAmount(grantBalance, 18, 3)],
+              data: [displayAmount(tokenBalance, 18, 3), displayAmount(stakeBalance, 18, 3), displayAmount(withdrawalsTotal, 18, 3), displayAmount(grantBalance, 18, 3)],
               backgroundColor: [
                 colors.nandor,
                 colors.turquoise,
@@ -167,7 +167,7 @@ class OverviewTab extends React.Component {
                             { displayAmount(stakeBalance, 18, 3) }
                         </TableRow>
                         <TableRow title="Pending unstake">
-                            { withdrawalsTotal }
+                            { displayAmount(withdrawalsTotal, 18, 3) }
                         </TableRow>
                       </tbody>
                     </Table>
@@ -198,7 +198,7 @@ class OverviewTab extends React.Component {
                           { displayAmount(stakeBalance, 18, 3) }
                         </TableRow>
                         <TableRow title="Pending unstake">
-                          { withdrawalsTotal }
+                          { displayAmount(withdrawalsTotal, 18, 3) }
                         </TableRow>
                         <TableRow title="Token Grants">
                           { displayAmount(grantBalance, 18, 3) }
