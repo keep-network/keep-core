@@ -79,8 +79,10 @@ tokens, it should be noted that a malicious operator can exploit stake slashing
 to destroy tokens and thus the entire staked amount is indeed at stake.
 
 The operator address is used to provide network functionality by
-<<operating, participating in various operations>>and can unilaterally 
-<<undelegating, finish delegation>> and <<restoring, restore the tokens to the owner>>.
+<<operating, participating in various operations>>.
+
+The operator can unilaterally <<undelegating, finish delegation>> 
+and <<restoring, restore the tokens to the owner>>.
 
 === Magpie
 
