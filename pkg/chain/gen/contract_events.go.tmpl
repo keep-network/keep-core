@@ -10,6 +10,61 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) Watch{{$event.CapsName}}(
 	fail func(err error) error,
 	{{$event.IndexedFilterDeclarations -}}
 ) (subscription.EventSubscription, error) {
+    errorChan := make(chan error)
+    unsubscribeChan := make(chan struct{})
+
+    watch := func() {
+    	failCallback := func(err error) error {
+    		fail(err)
+    		errorChan <- err // trigger resubscription signal
+    		return err
+    	}
+
+    	subscription, err := {{$contract.ShortVar}}.subscribe{{$event.CapsName}}(
+    	    success,
+    	    failCallback,
+    	    {{$event.IndexedFilters}}
+    	)
+    	if err != nil {
+    		errorChan <- err // trigger resubscription signal
+    		return
+    	}
+
+    	// wait for unsubscription signal
+    	<-unsubscribeChan
+    	subscription.Unsubscribe()
+    }
+
+    // trigger the resubscriber goroutine
+    go func() {
+    	go watch() // trigger first subscription
+
+    	for {
+    		select {
+    		case <-errorChan:
+    			time.Sleep(5 * time.Second)
+    			go watch()
+    		case <-unsubscribeChan:
+    			// shutdown the resubscriber goroutine on unsubscribe signal
+    			return
+    		}
+    	}
+    }()
+
+    // closing the unsubscribeChan will trigger a unsubscribe signal and
+    // run unsubscription for all subscription instances
+    unsubscribeCallback := func() {
+    	close(unsubscribeChan)
+    }
+
+    return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func ({{$contract.ShortVar}} *{{$contract.Class}}) subscribe{{$event.CapsName}}(
+	success {{$contract.FullVar}}{{$event.CapsName}}Func,
+	fail func(err error) error,
+	{{$event.IndexedFilterDeclarations -}}
+) (subscription.EventSubscription, error) {
 	eventChan := make(chan *abi.{{$contract.AbiClass}}{{$event.CapsName}})
 	eventSubscription, err := {{$contract.ShortVar}}.contract.Watch{{$event.CapsName}}(
 		nil,
