@@ -8,9 +8,9 @@
 
   # Contracts are already deployed to the private testnet.  They are subject to change on deployment
   [ethereum.ContractAddresses]
-    KeepRandomBeaconOperator = "0x6880840075a97304c1c5D5d73C4EBb319aDc317b"
-    TokenStaking = "0x20B30191ADA3bb836E376FAf971c888bcCCa1B28"
-    KeepRandomBeaconService = "0xEADBa41FCb73e296146D2C9D26fe02F6BAadf46b"
+    KeepRandomBeaconOperator = "0x5eF5B07164646DB2a362e13a0A1184E3E4D43A81"
+    TokenStaking = "0xfBf349D0f0358E95F644Ef05783FA9d02950a998"
+    KeepRandomBeaconService = "0xca57CBbC929392A851169E4F0920D50d57C94728"
 
 # We can configure multiple bootstrap peers.  For the purpose of initial testing we're keeping it at one.
 [LibP2P]
