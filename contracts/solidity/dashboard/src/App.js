@@ -10,7 +10,6 @@ const App = () => (
   <Messages>
     <Web3ContextProvider>
       <div className='main'>
-      
         <Header />
         <ContractsDataContextProvider>
           <Routing />
