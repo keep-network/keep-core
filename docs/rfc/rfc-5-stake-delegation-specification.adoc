@@ -187,7 +187,6 @@ processed, the _owner_ or _operator_ creates a _stake restoration order_.
 2. The contract receives the _stake restoration order_ and verifies the
 following:
   * the agreement exists,
-  * the _stake restoration order_ is signed by either owner or operator,
   * the contract state is set to undelegating,
   * undelegation timeout has passed.
 
