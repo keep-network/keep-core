@@ -148,8 +148,6 @@ _magpie_ and creates a _delegation order_ containing this information.
 
 2. The contract receives the _delegation order_ and verifies the following (if
 any condition is unfulfilled, processing aborts):
-  * _delegation order_ is signed by the owner declared in the delegation order,
-  * _owner_ address is signed by the _operator_,
   * _magpie_ address is set,
   * _operator_ is not involved in another active delegating contract,
   * amount of delegated tokens is lower or equal to the owner staked tokens.
