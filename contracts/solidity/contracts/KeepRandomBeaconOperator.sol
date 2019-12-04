@@ -371,6 +371,11 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             }
         }
 
+        address[] memory disqualifiedMembers = Groups.getDisqualifiedMembers(disqualified, members);
+        if (disqualifiedMembers.length > 0) {
+            stakingContract.seize(minimumStake, 100, msg.sender, disqualifiedMembers);
+        }
+
         groups.addGroup(groupPubKey);
         reimburseDkgSubmitter();
         emit DkgResultPublishedEvent(groupPubKey);

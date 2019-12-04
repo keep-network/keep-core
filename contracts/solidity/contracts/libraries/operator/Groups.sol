@@ -409,4 +409,29 @@ library Groups {
     function getGroupMembers(Storage storage self, bytes memory groupPubKey) public view returns (address[] memory ) {
         return self.groupMembers[groupPubKey];
     }
+
+    /**
+     * @dev Returns addresses of disqualified members in the group based
+     * on the provided disqualified bytes array.
+     */
+    function getDisqualifiedMembers(
+        bytes memory disqualified,
+        address[] memory members
+    ) public pure returns (address[] memory disqualifiedMembers) {
+        uint256 counter;
+        for (uint i = 0; i < disqualified.length; i++) {
+            if (disqualified[i] != 0x00) {
+                counter++;
+            }
+        }
+
+        disqualifiedMembers = new address[](counter);
+        counter = 0;
+        for (uint i = 0; i < disqualified.length; i++) {
+            if (disqualified[i] != 0x00) {
+                disqualifiedMembers[counter] = members[i];
+                counter++;
+            }
+        }
+    }
 }
