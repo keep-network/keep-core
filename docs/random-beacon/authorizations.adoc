@@ -125,45 +125,70 @@ If an operator contract has been `DISABLED` by the _Panic Button_,
 the service contract must not use its functionality.
 This must be checked when the service contract selects an operator contract.
 
-
 === Impact of compromise
 
 ==== Individual keys
 
 ===== Registry Keeper
 
-TODO: Need to explain this better? Not sure I follow
-A compromised Registry Keeper can approve arbitrary operator contracts. Because using those operator contracts for a service contract requires the service contract's Operator Contract Upgrader as well, the impact is limited to stakers being able to instantly unstake by authorizing a malicious operator contract which slashes their stakes and sends the tokens to an address controlled by the staker.
+A compromised Registry Keeper can approve arbitrary operator contracts.
+However, using those operator contracts for a service contract
+requires the service contract's Operator Contract Upgrader as well.
+Thus, a compromised Registry Keeper cannot endanger customers alone.
+Similarly, stakers' funds are safe from being slashed by malicious contracts
+unless their Authorizers are also compromised.
 
 ===== Panic Button
 
-A compromised Panic Button can disable all operator contracts and halt all network services. Recovery is impossible until Governance has rekeyed the Panic Button.
+A compromised Panic Button can disable arbitrary operator contracts
+and halt all network services.
+Recovery is impossible until Governance has rekeyed the Panic Button.
 
-This is inevitable due to the functionality of the Panic Button, but the impact could be mitigated by setting a cap on how many times the Panic Button can be invoked within a particular timeframe. However, such a cap would be overwhelmed by a mass approval of malicious contracts by the other roles.
+This is inevitable due to the functionality of the Panic Button,
+but the impact could be mitigated
+by setting a cap on how many times the Panic Button can be invoked
+within a particular timeframe.
+However, if a compromised Registry Keeper
+approves a large number of malicious contracts,
+a rate-limited Panic Button would be overwhelmed
+and unable to disable them all.
+This could be further mitigated by rate-limiting the Registry Keeper similarly.
 
 ===== Operator Contract Upgrader
 
-A compromised Operator Contract Upgrader can activate arbitrary operator contracts within the strict constraints of the upgrade process. Without compromise of the Registry Keeper to approve new malicious operator contracts, it is unlikely that a compromised Operator Contract Upgrader alone would have significant impact on the network.
+A compromised Operator Contract Upgrader
+can activate operator contracts on the affected service contract
+within the strict constraints of the upgrade process.
+It is unlikely that an uncompromised Registry Keeper
+would have approved an operator contract that would satisfy the constraints
+yet cause a significant impact on the service contract.
 
 ===== Authorizer
 
-If only the Authorizer of some staker is compromised, the attacker can authorize operator contracts that have been approved by the Registry Keeper, and that recognize the contract that staker stakes on.
+If only the Authorizer of some staker is compromised,
+the attacker can authorize operator contracts
+that have been approved by the Registry Keeper,
+and that use the same staking contract as the staker.
 
-This has a very limited negative impact unless the Registry Keeper has approved
+This has a very limited negative impact
+unless the Registry Keeper has approved
 a faulty or malicious operator contract.
 
 ==== Key combinations
 
 ===== Registry Keeper + Operator Contract Upgrader
 
-If a malicious operator contract can get globally approved, the impacted service contract can be completely subverted by deprecating all other operator contracts and returning malicious values. While already existing operations should finish normally, the service contract can be rendered effectively useless for new requests.
+If a malicious operator contract can get globally approved,
+the impacted service contract can be completely subverted
+by switching all work to the malicious operator contract.
+
+While already existing operations should finish normally,
+the service contract can be rendered effectively useless for new requests.
 
 ===== Registry Keeper + Authorizer
 
-TODO: Is there anything to prevent this from happening? Can this be mitigated?
-Approving and authorizing a malicious operator contract permits theft of staked funds.
-
-=== Limitations
-
-Each operator contract upgrade requires participation from both the _Registry Keeper_ and the _Operator Contract Upgrader_. This increases the exposure of these keys, leading to a higher risk of simultaneous compromise.
-
+If the Registry Keeper approves a malicious operator contract,
+and a staker's Authorizer authorizes it,
+the malicious contract can be used to steal staked funds
+within the constraints of tattletale rewards:
+seizing up to 5% to the attacker and burning the rest.
