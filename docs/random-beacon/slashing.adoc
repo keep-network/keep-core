@@ -92,35 +92,51 @@ to match the severity of the misbehavior.
 However, initially the penalty for misbehaving in the random beacon
 will equal the minimum stake required to join a signing group.
 
-==== Interface requirements
+==== Interfaces
 
 ===== Staking contract: slashing
 
-TODO: Describe in prose?
+`slash(tokens amount, address[] misbehavers)`::
 
-`slash(tokens sum, address[] misbehavers)`::
-
-Check that `msg.sender` is authorized
-to slash each `misbehaver` in `misbehavers`:
-`isAuthorized(msg.sender, misbehaver.authorizer) == true`.
+Slash each operator in the list `misbehavers`
+by the specified amount
+(or their remaining stake, whichever is lower).
 +
-Subtract `sum` tokens from the stake of each `misbehaver`
-and burn `sum * length(misbehavers)` tokens.
-
-`seize(tokens sum, float pay, address tattletale, address[] misbehavers)`::
-
-Check that `msg.sender` is authorized
-to slash each `misbehaver` in `misbehavers`:
+For each `misbehaver` in `misbehavers`,
+perform the following:
++
+. Check that the caller is authorized to slash the operator:
 `isAuthorized(msg.sender, misbehaver.authorizer) == true`.
+. Determine the applicable punishment for the operator:
+`thisPenalty = min(amount, misbehaver.stake)`.
+. Subtract the punishment from the operator's stake
+and add it to the total to be burned:
+`misbehaver.stake -= thisPenalty; totalPenalty += thisPenalty`.
++
+Finally, burn an amount of tokens equal to the slashed total:
+`tokenContract.burn(totalPenalty)`.
 
-Check that `0 < pay {lt}= 1`.
+`seize(tokens amount, float rewardMultiplier, address tattletale, address[] misbehavers)`::
 
-Subtract `sum` tokens from the stake of each `misbehaver`;
-set `total = sum * length(misbehavers)` and `reward = total * 0.05 * pay`;
-burn `total - reward`; transfer `reward` to beneficiary of staker `tattletale`.
+Punish each operator in the list `misbehavers`
+by the specified amount or their remaining stake.
+Reward the `tattletale` by an amount between 0 and the maximum reward,
+determined by the `rewardMultiplier` argument:
+if `rewardMultiplier` is greater than `0` and at most `1`,
+multiply the highest allowed tattletale reward by `rewardMultiplier`.
+Otherwise reject the call for an invalid reward multiplier.
++
+For each `misbehaver` in `misbehavers`,
+calculate and apply the appropriate penalty
+and track the total as in `slash()`.
++
+Finally, determine the tattletale reward:
+`reward = totalPenalty * 0.05 * rewardMultiplier`.
+Transfer the reward to the tattletale's _Beneficiary_
+and burn the rest of the penalty:
+`tokenContract.burn(totalPenalty - reward)`.
 
 ===== Staking contract: authorizations
-TODO: Describe in prose?
 
 `authorize(address op_contract)`::
 
@@ -129,9 +145,16 @@ Operators using `msg.sender` as their authorizer
 may now join operations on `op_contract`
 and `op_contract` may slash their stakes.
 
-`isAuthorized(address op_contract, address by) -> bool`::
+`isAuthorized(address op_contract, address authorizer) -> bool`::
 
-Check if the authorizer `by` has authorized `op_contract`.
+Check if the authorizer `authorizer` has authorized `op_contract`
+to apply punishments on operators using `authorizer` as their authorizer.
+
+`eligibleStake(address operator) -> uint`::
+
+Return the number of staked tokens available for the calling contract.
+Includes an authorization check `isAuthorized(msg.sender, operator.authorizer)`
+and other checks on the operator's eligibility for work selection.
 
 ===== Token contract
 
