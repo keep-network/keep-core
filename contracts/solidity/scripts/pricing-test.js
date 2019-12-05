@@ -3,9 +3,6 @@ const KeepRandomBeaconService = artifacts.require('KeepRandomBeaconService.sol')
 const KeepRandomBeaconOperator = artifacts.require('KeepRandomBeaconOperator.sol');
 const fs = require('fs');
 
-// seed value for a relay entry
-const seed = web3.utils.toBN('31415926535897932384626433832795028841971693993751058209749445923078164062862');
-
 module.exports = async function() {
     const keepRandomBeaconService = await KeepRandomBeaconService.deployed();
     const contractService = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address);
@@ -35,8 +32,7 @@ module.exports = async function() {
                 prevRewards[i] = (await availableRewards(accounts[i+1], contractOperator)).toString();
             }
 
-            await contractService.methods['requestRelayEntry(uint256)'](
-                seed,
+            await contractService.methods['requestRelayEntry()'](
                 {value: entryFeeEstimate, from: requestor}
             );
 
