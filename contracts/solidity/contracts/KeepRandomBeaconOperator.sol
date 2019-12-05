@@ -644,9 +644,9 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-    * @dev Gets the expired group offset.
+    * @dev Gets the index of the first active group.
     */
-    function expiredGroupOffset() public view returns (uint256) {
+    function getFirstActiveGroupIndex() public view returns (uint256) {
         return groups.expiredGroupOffset;
     }
 

@@ -97,10 +97,10 @@ module.exports = async function() {
 };
 
 async function availableRewards(account, contractOperator) {
-    const expiredGroupOffset = (await contractOperator.expiredGroupOffset()).toNumber();
-    const groupsPublicKeys = new Array(expiredGroupOffset);
+    const expiredGroupCount = (await contractOperator.firstActiveGroupIndex()).toNumber();
+    const groupsPublicKeys = new Array(expiredGroupCount);
 
-    for (let groupIndex = 0; groupIndex < expiredGroupOffset; groupIndex++) {
+    for (let groupIndex = 0; groupIndex < expiredGroupCount; groupIndex++) {
         groupsPublicKeys[groupIndex] = await contractOperator.getGroupPublicKey(groupIndex);
     }
 
