@@ -1,19 +1,19 @@
-import React, { Component } from 'react'
-import { Button } from 'react-bootstrap'
+import React from 'react'
+import { SubmitButton } from './Button'
 import WithWeb3Context from './WithWeb3Context'
 
-class UndelegateStakeButton extends Component {
+const UndelegateStakeButton = (props) => {
 
-  undelegate = async () => {
-    const { web3, amount, operator} = this.props
-    await web3.stakingContract.methods.initiateUnstake(amount, operator).send({from: web3.yourAddress})
+  const undelegate = async () => {
+    const { web3, amount, operator} = props
+    await web3.stakingContract.methods.initiateUnstake(amount, operator).send({from: web3.yourAddress})  
   }
 
-  render() {
-    return (
-      <Button bsSize="small" bsStyle="primary" onClick={this.undelegate}>Undelegate</Button>
-    )
-  }
+  return (
+    <SubmitButton className="btn btn-primary btn-sm" onSubmitAction={undelegate}>
+      Undelegate
+    </SubmitButton>
+  )
 }
 
 export default WithWeb3Context(UndelegateStakeButton)
