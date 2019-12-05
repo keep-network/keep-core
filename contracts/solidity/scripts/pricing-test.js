@@ -3,7 +3,8 @@ const KeepRandomBeaconService = artifacts.require('KeepRandomBeaconService.sol')
 const KeepRandomBeaconOperator = artifacts.require('KeepRandomBeaconOperator.sol');
 const fs = require('fs');
 
-const requestor = '0xFa3DA235947AaB49D439f3BcB46effD1a7237E32';
+// MAKE SURE NONE OF THOSE ACCOUNTS IS A MINER ACCOUNT
+const requestor = '0x146748a2b46b99ee1470b587bc9812ea59b79597';
 
 const operators = [
     '0x65ea55c1f10491038425725dc00dffeab2a1e28a',
@@ -56,14 +57,14 @@ module.exports = async function() {
 
             requestorAccountBalance = await web3.eth.getBalance(requestor);
 
-            const total = web3.utils.toBN(requestorPrevAccountBalance).sub(web3.utils.toBN(requestorAccountBalance)).toString();
+            const requestorAccountBalanceChange = web3.utils.toBN(requestorAccountBalance).sub(web3.utils.toBN(requestorPrevAccountBalance)).toString();
 
             const pricingSummary = new PricingSummary(
                 callbackGas,
                 entryFeeEstimate.toString(),
                 txCost.toString(),
                 requestorAccountBalance,
-                total
+                requestorAccountBalanceChange
             );
 
             console.log("Summary");
@@ -119,12 +120,12 @@ async function availableRewards(account, contractOperator) {
 
     let accountRewards = web3.utils.toBN(0);
     for (let i = 0; i < groupsPublicKeys.length; i++) {
-        if (await contractOperator.isStaleGroup(groupsPublicKeys[i])) {
-            const groupMembersCount = (await contractOperator.getGroupMemberIndices(groupsPublicKeys[i], account)).length;
-            const groupMemberReward = await contractOperator.getGroupMemberRewards(groupsPublicKeys[i]);
-            accountRewards = accountRewards.add(web3.utils.toBN(groupMembersCount).mul(groupMemberReward));
-        }
+      if (await contractOperator.isStaleGroup(groupsPublicKeys[i])) {
+        const groupMembersCount = (await contractOperator.getGroupMemberIndices(groupsPublicKeys[i], account)).length;
+        const groupMemberReward = await contractOperator.getGroupMemberRewards(groupsPublicKeys[i]);
+        accountRewards = accountRewards.add(web3.utils.toBN(groupMembersCount).mul(groupMemberReward));
     }
+}
 
     return accountRewards;
 }
@@ -134,13 +135,13 @@ function PricingSummary(
     entryFeeEstimate,
     relayRequestTransactionCost,
     requestorAccountBalance,
-    totalForRelayEntry
+    requestorAccountBalanceChange
 ) {
     this.callbackGas = callbackGas,
     this.entryFeeEstimate = entryFeeEstimate,
     this.relayRequestTransactionCost = relayRequestTransactionCost,
     this.requestorAccountBalance = requestorAccountBalance,
-    this.totalForRelayEntry = totalForRelayEntry
+    this.requestorAccountBalanceChange = requestorAccountBalanceChange
 }
 
 function PricingClient(address, balance, balanceChange, reward, rewardChange) {
@@ -156,7 +157,7 @@ PricingSummary.prototype.toString = function pricingSummaryToString() {
         this.entryFeeEstimate + ', ' +
         this.relayRequestTransactionCost + ', ' +
         this.requestorAccountBalance + ', ' +
-        this.totalForRelayEntry + ', ';
+        this.requestorAccountBalanceChange + ', ';
 };
 
 PricingClient.prototype.toString = function pricingClientToString() {
