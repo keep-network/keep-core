@@ -81,7 +81,7 @@ func (n *Node) JoinGroupIfEligible(
 			return
 		}
 
-		err = broadcastChannel.AddFilter(
+		err = broadcastChannel.SetFilter(
 			candidateGroupMembersFilter(
 				groupSelectionResult.SelectedStakers,
 				signing,

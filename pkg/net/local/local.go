@@ -250,7 +250,7 @@ func (lc *localChannel) RegisterUnmarshaler(
 	return
 }
 
-func (lc *localChannel) AddFilter(filter net.BroadcastChannelFilter) error {
+func (lc *localChannel) SetFilter(filter net.BroadcastChannelFilter) error {
 	return nil // no-op
 }
 

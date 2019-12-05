@@ -258,9 +258,11 @@ func (c *channel) deliver(message net.Message) error {
 	return nil
 }
 
-func (c *channel) AddFilter(filter net.BroadcastChannelFilter) error {
+func (c *channel) SetFilter(filter net.BroadcastChannelFilter) error {
 	c.pubsubMutex.Lock()
 	defer c.pubsubMutex.Unlock()
+
+	c.pubsub.UnregisterTopicValidator(c.name)
 
 	return c.pubsub.RegisterTopicValidator(c.name, createTopicValidator(filter))
 }
