@@ -112,20 +112,20 @@ module.exports = async function() {
 
 async function availableRewards(account, contractOperator) {
     const expiredGroupCount = (await contractOperator.getFirstActiveGroupIndex()).toNumber();
-    const groupsPublicKeys = new Array(expiredGroupCount);
+    const activeGroupCount = (await contractOperator.numberOfGroups()).toNumber();
+    const totalGroupCount = expiredGroupCount + activeGroupCount;
+    const groupsPublicKeys = new Array(totalGroupCount);
 
-    for (let groupIndex = 0; groupIndex < expiredGroupCount; groupIndex++) {
+    for (let groupIndex = 0; groupIndex < totalGroupCount; groupIndex++) {
         groupsPublicKeys[groupIndex] = await contractOperator.getGroupPublicKey(groupIndex);
     }
 
     let accountRewards = web3.utils.toBN(0);
     for (let i = 0; i < groupsPublicKeys.length; i++) {
-      if (await contractOperator.isStaleGroup(groupsPublicKeys[i])) {
         const groupMembersCount = (await contractOperator.getGroupMemberIndices(groupsPublicKeys[i], account)).length;
         const groupMemberReward = await contractOperator.getGroupMemberRewards(groupsPublicKeys[i]);
         accountRewards = accountRewards.add(web3.utils.toBN(groupMembersCount).mul(groupMemberReward));
     }
-}
 
     return accountRewards;
 }
