@@ -1,6 +1,7 @@
 import mineBlocks from './helpers/mineBlocks';
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 const GroupsExpirationStub = artifacts.require('./stubs/GroupsExpirationStub.sol')
+import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 const Groups = artifacts.require("./libraries/operator/Groups.sol");
 
 contract('GroupsExpirationStub', function(accounts) {
@@ -283,15 +284,15 @@ contract('GroupsExpirationStub', function(accounts) {
 
    // - we start with [AAAAAA]
    // - we check whether group with a non-existing public key is stale and
-   //   we assert it is, since we assume all non-existing groups are stale
-   it("should say group is stale if it could not be found", async function() {
+   //   we assert the check should fail
+   it("should fail stale check if group could not be found", async function() {
     let groupsCount = activeGroupsThreshold + 1
     await addGroups(groupsCount);
 
     let pubKey = "0x1337"; // group with such pub key does not exist
-
-    let isStale  = await groups.isStaleGroup(pubKey);
-
-    assert.equal(isStale, true, "Group should be marked as stale");
+    await expectThrowWithMessage(
+      groups.isStaleGroup(pubKey),
+      "Group does not exist"
+    );
   });
 });

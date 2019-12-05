@@ -434,7 +434,7 @@ contract KeepRandomBeaconOperator {
             serviceContract
         );
 
-        bytes memory groupPubKey = groups.getGroupPublicKeyCompressed(groupIndex);
+        bytes memory groupPubKey = groups.getGroupPublicKey(groupIndex);
         emit RelayEntryRequested(previousEntry, groupPubKey);
     }
 
