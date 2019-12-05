@@ -51,3 +51,22 @@
 fieldset[disabled] .btn {
   opacity: 0.5;
 }
+
+.button-content {
+  &-enter {
+    opacity: 0;
+
+    &-active {
+      opacity: 1;
+      transition: opacity .5s ease-in;
+    }
+  }
+  &-exit {
+    opacity: 0;
+
+    &-active {
+      opacity: 1;
+      transition: opacity .5s ease-in,
+    }
+  }
+}
