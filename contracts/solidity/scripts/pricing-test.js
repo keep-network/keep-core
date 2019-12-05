@@ -41,13 +41,18 @@ module.exports = async function() {
                 prevRewards[i] = (await availableRewards(accounts[i], contractOperator)).toString();
             }
 
+            let gasPrice = await web3.eth.getGasPrice();
+
             let callbackGas = 0;
             let entryFeeEstimate = await contractService.entryFeeEstimate(callbackGas);
-            await contractService.methods['requestRelayEntry()'](
+            let tx = await contractService.methods['requestRelayEntry()'](
                 {value: entryFeeEstimate, from: requestor}
             );
 
             await wait(delay);
+
+            let txGasCost = tx.receipt.gasUsed;
+            let txCost = web3.utils.toBN(gasPrice).mul(web3.utils.toBN(txGasCost));
 
             requestorAccountBalance = await web3.eth.getBalance(requestor);
 
@@ -56,6 +61,7 @@ module.exports = async function() {
             const pricingSummary = new PricingSummary(
                 callbackGas,
                 entryFeeEstimate.toString(),
+                txCost.toString(),
                 requestorAccountBalance,
                 total
             );
@@ -126,11 +132,13 @@ async function availableRewards(account, contractOperator) {
 function PricingSummary(
     callbackGas,
     entryFeeEstimate,
+    relayRequestTransactionCost,
     requestorAccountBalance,
     totalForRelayEntry
 ) {
     this.callbackGas = callbackGas,
     this.entryFeeEstimate = entryFeeEstimate,
+    this.relayRequestTransactionCost = relayRequestTransactionCost,
     this.requestorAccountBalance = requestorAccountBalance,
     this.totalForRelayEntry = totalForRelayEntry
 }
@@ -146,6 +154,7 @@ function PricingClient(address, balance, balanceChange, reward, rewardChange) {
 PricingSummary.prototype.toString = function pricingSummaryToString() {
     return '' + this.callbackGas + ', ' +
         this.entryFeeEstimate + ', ' +
+        this.relayRequestTransactionCost + ', ' +
         this.requestorAccountBalance + ', ' +
         this.totalForRelayEntry + ', ';
 };
