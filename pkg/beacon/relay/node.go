@@ -82,10 +82,7 @@ func (n *Node) JoinGroupIfEligible(
 		}
 
 		err = broadcastChannel.SetFilter(
-			candidateGroupMembersFilter(
-				groupSelectionResult.SelectedStakers,
-				signing,
-			),
+			createStakersFilter(groupSelectionResult.SelectedStakers, signing),
 		)
 		if err != nil {
 			logger.Errorf(
@@ -146,12 +143,12 @@ func channelNameForGroup(group *groupselection.Result) string {
 	return hexChannelName
 }
 
-func candidateGroupMembersFilter(
-	selectedStakers []relaychain.StakerAddress,
+func createStakersFilter(
+	stakers []relaychain.StakerAddress,
 	signing chain.Signing,
 ) net.BroadcastChannelFilter {
-	authorizations := make(map[string]bool, len(selectedStakers))
-	for _, address := range selectedStakers {
+	authorizations := make(map[string]bool, len(stakers))
+	for _, address := range stakers {
 		authorizations[hex.EncodeToString(address)] = true
 	}
 
