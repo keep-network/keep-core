@@ -35,11 +35,10 @@ module.exports = async function() {
     let operator = accounts[i]
     let magpie = accounts[i] // The address where the rewards for participation are sent.
 
-    // The owner provides to the contract a signature of their address, signed by the operator. 
-    let signature = web3.utils.toBN(await web3.eth.sign(web3.utils.soliditySha3(owner), operator));
+    // The owner provides to the contract a magpie address and the operator address. 
     let delegation = Buffer.concat([
       Buffer.from(magpie.substr(2), 'hex'),
-      Buffer.from(signature.toBuffer(), 'hex')
+      Buffer.from(operator.substr(2), 'hex')
     ]);
 
     staked = await token.approveAndCall(
