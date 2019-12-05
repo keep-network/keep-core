@@ -1,6 +1,5 @@
 const crypto = require("crypto")
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
-import {bls} from './helpers/data'
 import stakeDelegate from './helpers/stakeDelegate'
 import {initContracts} from './helpers/initContracts'
 import expectThrowWithMessage from './helpers/expectThrowWithMessage';
@@ -51,7 +50,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await operatorContract.addGroupMember(group1, operator2)
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.methods['requestRelayEntry(uint256)'](bls.seed, {value: entryFeeEstimate, from: requestor})
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
 
     // Stub relay entry for the current signing request and accumulate rewards
     await operatorContract.relayEntry()
@@ -63,7 +62,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await operatorContract.addGroupMember(group2, operator1)
 
     // New request will expire the first group
-    await serviceContract.methods['requestRelayEntry(uint256)'](bls.seed, {value: entryFeeEstimate, from: requestor})
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
     await operatorContract.relayEntry()
 
     let entryFee = await serviceContract.entryFeeBreakdown()
@@ -94,7 +93,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   it("should be able to withdraw group rewards from multiple staled groups", async () => {
     // Register new group and request new entry so we can expire the previous two groups
     await operatorContract.registerNewGroup(group3)
-    await serviceContract.methods['requestRelayEntry(uint256)'](bls.seed, {value: entryFeeEstimate, from: requestor})
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
     let beneficiary1balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary1))
 
     mineBlocks(10)
@@ -114,7 +113,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   it("should be able to withdraw group rewards from a staled group", async () => {
     // Register new group and request new entry so we can expire the previous two groups
     await operatorContract.registerNewGroup(group3)
-    await serviceContract.methods['requestRelayEntry(uint256)'](bls.seed, {value: entryFeeEstimate, from: requestor})
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
     mineBlocks(10)
@@ -130,7 +129,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   it("should not be able to withdraw group rewards without correct data", async () => {
     // Register new group and request new entry so we can expire the previous two groups
     await operatorContract.registerNewGroup(group3)
-    await serviceContract.methods['requestRelayEntry(uint256)'](bls.seed, {value: entryFeeEstimate, from: requestor})
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
 
     mineBlocks(10)
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")

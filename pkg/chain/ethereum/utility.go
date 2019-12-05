@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
@@ -20,8 +21,8 @@ func (euc *ethereumUtilityChain) Genesis() error {
 	return err
 }
 
-func (euc *ethereumUtilityChain) RequestRelayEntry(seed *big.Int) *async.EventRequestPromise {
-	promise := &async.EventRequestPromise{}
+func (euc *ethereumUtilityChain) RequestRelayEntry() *async.EventEntryGeneratedPromise {
+	promise := &async.EventEntryGeneratedPromise{}
 
 	callbackGas := big.NewInt(0) // no callback
 	payment, err := euc.keepRandomBeaconServiceContract.EntryFeeEstimate(callbackGas)
@@ -30,8 +31,7 @@ func (euc *ethereumUtilityChain) RequestRelayEntry(seed *big.Int) *async.EventRe
 		return promise
 	}
 
-	_, err = euc.keepRandomBeaconServiceContract.RequestRelayEntry0(
-		seed,
+	_, err = euc.keepRandomBeaconServiceContract.RequestRelayEntry(
 		common.BytesToAddress([]byte{}),
 		"",
 		callbackGas,
@@ -40,6 +40,19 @@ func (euc *ethereumUtilityChain) RequestRelayEntry(seed *big.Int) *async.EventRe
 	if err != nil {
 		promise.Fail(err)
 	}
+
+	euc.keepRandomBeaconServiceContract.WatchRelayEntryGenerated(
+		func(RequestId *big.Int, Entry *big.Int, blockNumber uint64) {
+			promise.Fulfill(&event.EntryGenerated{
+				Value:       Entry,
+				BlockNumber: blockNumber,
+			})
+		},
+		func(err error) error {
+			promise.Fail(err)
+			return err
+		},
+	)
 
 	return promise
 }

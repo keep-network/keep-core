@@ -92,16 +92,6 @@ library Groups {
     }
 
     /**
-     * @dev Gets group public key in a compressed form.
-     */
-    function getGroupPublicKeyCompressed(
-        Storage storage self,
-        uint256 groupIndex
-    ) public view returns (bytes memory) {
-        return AltBn128.g2Compress(AltBn128.g2Unmarshal(self.groups[groupIndex].groupPubKey));
-    }
-
-    /**
      * @dev Gets group member.
      */
     function getGroupMember(
@@ -211,7 +201,7 @@ library Groups {
             }
         }
 
-        return true; // no group found, consider it as a stale group
+        revert("Group does not exist");
     }
 
     /**

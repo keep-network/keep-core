@@ -2,7 +2,6 @@ package chain
 
 import (
 	"crypto/ecdsa"
-	"math/big"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -88,5 +87,5 @@ type Utility interface {
 	Handle
 
 	Genesis() error
-	RequestRelayEntry(seed *big.Int) *async.EventRequestPromise
+	RequestRelayEntry() *async.EventEntryGeneratedPromise
 }
