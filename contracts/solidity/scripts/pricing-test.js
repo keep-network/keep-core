@@ -3,14 +3,25 @@ const KeepRandomBeaconService = artifacts.require('KeepRandomBeaconService.sol')
 const KeepRandomBeaconOperator = artifacts.require('KeepRandomBeaconOperator.sol');
 const fs = require('fs');
 
+const requestor = '0xFa3DA235947AaB49D439f3BcB46effD1a7237E32';
+
+const operators = [
+    '0x65ea55c1f10491038425725dc00dffeab2a1e28a',
+    '0x524f2e0176350d950fa630d9a5a59a0a190daf48',
+    '0x3365d0ed0e526d3b1d8b417fc0fde5b1cef2f416',
+    '0x7020a5556ba1ce5f92c81063a13d33512cf1305c'
+];
+
+const delay = 60000; //1 min in milliseconds
+
+
 module.exports = async function() {
     const keepRandomBeaconService = await KeepRandomBeaconService.deployed();
     const contractService = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address);
     const contractOperator = await KeepRandomBeaconOperator.deployed();
-    const delay = 60000; //1 min in milliseconds
-    const accountsCount = 4;
-    const accounts = await web3.eth.getAccounts();
-    const requestor = accounts[0];
+
+    let accounts = operators.slice();
+    accounts.push(requestor);
 
     let count = 0;
     let requestorAccountBalance = await web3.eth.getBalance(requestor);
@@ -20,18 +31,18 @@ module.exports = async function() {
         try {
             console.log("---------- count: " + count + " ----------\n");
 
-            let callbackGas = 0;
-            let entryFeeEstimate = await contractService.entryFeeEstimate(callbackGas);
             requestorPrevAccountBalance = requestorAccountBalance;
 
-            const prevBalances = new Array(accountsCount);
-            const prevRewards = new Array(accountsCount);
+            const prevBalances = new Array(accounts.length);
+            const prevRewards = new Array(accounts.length);
 
-            for (let i = 0; i < accountsCount; i++) {
-                prevBalances[i] = await web3.eth.getBalance(accounts[i+1]);
-                prevRewards[i] = (await availableRewards(accounts[i+1], contractOperator)).toString();
+            for (let i = 0; i < accounts.length; i++) {
+                prevBalances[i] = await web3.eth.getBalance(accounts[i]);
+                prevRewards[i] = (await availableRewards(accounts[i], contractOperator)).toString();
             }
 
+            let callbackGas = 0;
+            let entryFeeEstimate = await contractService.entryFeeEstimate(callbackGas);
             await contractService.methods['requestRelayEntry()'](
                 {value: entryFeeEstimate, from: requestor}
             );
@@ -54,10 +65,10 @@ module.exports = async function() {
             console.log("\n");
             let file = pricingSummary.toString();
 
-            const clientsTable = new Array(accountsCount);
+            const clientsTable = new Array(accounts.length);
 
-            for (let i = 0; i < accountsCount; i++) {
-                const address = accounts[i+1];
+            for (let i = 0; i < accounts.length; i++) {
+                const address = accounts[i];
                 const balance = await web3.eth.getBalance(address);
                 const balanceChange = web3.utils.toBN(balance).sub(web3.utils.toBN(prevBalances[i])).toString();
 
@@ -93,7 +104,7 @@ module.exports = async function() {
 };
 
 async function availableRewards(account, contractOperator) {
-    const expiredGroupCount = (await contractOperator.firstActiveGroupIndex()).toNumber();
+    const expiredGroupCount = (await contractOperator.getFirstActiveGroupIndex()).toNumber();
     const groupsPublicKeys = new Array(expiredGroupCount);
 
     for (let groupIndex = 0; groupIndex < expiredGroupCount; groupIndex++) {
