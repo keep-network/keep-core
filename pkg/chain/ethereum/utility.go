@@ -49,6 +49,35 @@ func (euc *ethereumUtilityChain) RequestRelayEntry() *async.EventEntryGeneratedP
 		return promise
 	}
 
+	onWatchError := func(err error) error {
+		promise.Fail(err)
+		return err
+	}
+
+	// In the rare case relay entry submission happens before relay request in
+	// the same block, we need to make sure we install relay entry generated
+	// callback after relay entry request tx has been confirmed to do not
+	// react on the previous relay entry.
+	_, err = euc.keepRandomBeaconServiceContract.WatchRelayEntryRequested(
+		func(requestId *big.Int, blockNumber uint64) {
+			logger.Infof(
+				"Relay request with id [%v] created at block [%v]",
+				requestId,
+				blockNumber,
+			)
+			euc.keepRandomBeaconServiceContract.WatchRelayEntryGenerated(
+				func(_, entry *big.Int, blockNumber uint64) {
+					promise.Fulfill(&event.EntryGenerated{
+						Value:       entry,
+						BlockNumber: blockNumber,
+					})
+				},
+				onWatchError,
+			)
+		},
+		onWatchError,
+	)
+
 	_, err = euc.keepRandomBeaconServiceContract.RequestRelayEntry(
 		common.BytesToAddress([]byte{}),
 		"",
@@ -57,20 +86,8 @@ func (euc *ethereumUtilityChain) RequestRelayEntry() *async.EventEntryGeneratedP
 	)
 	if err != nil {
 		promise.Fail(err)
+		return promise
 	}
-
-	euc.keepRandomBeaconServiceContract.WatchRelayEntryGenerated(
-		func(RequestId *big.Int, Entry *big.Int, blockNumber uint64) {
-			promise.Fulfill(&event.EntryGenerated{
-				Value:       Entry,
-				BlockNumber: blockNumber,
-			})
-		},
-		func(err error) error {
-			promise.Fail(err)
-			return err
-		},
-	)
 
 	return promise
 }
