@@ -13,7 +13,7 @@ import "./TokenStaking.sol";
  @dev Interface of sender contract for approveAndCall pattern.
 */
 interface tokenSender {
-    function approveAndCall(address _spender, uint256 _value, address _magpie, address _operator) external;
+    function approveAndCall(address _spender, uint256 _value, bytes calldata _extraData) external;
 }
 
 /**
@@ -273,10 +273,10 @@ contract TokenGrant {
      * @param _id Grant Id.
      * @param _stakingContract Address of the staking contract.
      * @param _amount Amount to stake.
-     * @param _magpie Magpie address where the rewards for participation are sent.
-     * @param _operator The address of a party authorized to operate a stake on behalf of a given owner.
+     * @param _extraData Data for stake delegation. This byte array must have the following values concatenated:
+     * Magpie address (20 bytes) where the rewards for participation are sent and operator's (20 bytes) address.
      */
-    function stake(uint256 _id, address _stakingContract, uint256 _amount, address _magpie, address _operator) public {
+    function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
         require(!grants[_id].revocable, "Revocable grants can not be staked.");
         require(grants[_id].grantee == msg.sender, "Only grantee of the grant can stake it.");
         require(
@@ -284,15 +284,21 @@ contract TokenGrant {
             "Provided staking contract is not authorized."
         );
 
+        // Expecting 40 bytes _extraData for stake delegation.
+        require(_extraData.length == 40, "Stake delegation data must be provided.");
+        address operator = _extraData.toAddress(20);
+
         // Calculate available amount. Amount of vested tokens minus what user already withdrawn and staked.
         uint256 available = grants[_id].amount.sub(grants[_id].withdrawn).sub(grants[_id].staked);
         require(_amount <= available, "Must have available granted amount to stake.");
 
         // Keep staking record.
-        grantStakes[_operator] = GrantStake(_id, _stakingContract, _amount);
+        grantStakes[operator] = GrantStake(_id, _stakingContract, _amount);
         grants[_id].staked += _amount;
 
-        tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _magpie, _operator);
+        // Staking contract expects 40 bytes _extraData for stake delegation.
+        // 20 bytes magpie's address + 20 bytes operator's address.
+        tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData);
     }
 
     /**
