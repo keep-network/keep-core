@@ -42,29 +42,24 @@ contract TokenStaking is StakeDelegatable {
      * @param _from The owner of the tokens who approved them to transfer.
      * @param _value Approved amount for the transfer and stake.
      * @param _token Token contract address.
-     * @param _extraData Data for stake delegation. This byte array must have the
-     * following values concatenated: Magpie address (20 bytes) where the rewards for participation
-     * are sent and the operator's (20 bytes) address.
+     * @param _magpie Magpie address where the rewards for participation are sent.
+     * @param _operator The address of a party authorized to operate a stake on behalf of a given owner.
      */
-    function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
+    function receiveApproval(address _from, uint256 _value, address _token, address payable _magpie, address _operator) public {
         require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
-        require(_extraData.length == 40, "Stake delegation data must be provided.");
+        require(operatorToOwner[_operator] == address(0), "Operator address is already in use.");
 
-        address payable magpie = address(uint160(_extraData.toAddress(0)));
-        address operator = _extraData.toAddress(20);
-        require(operatorToOwner[operator] == address(0), "Operator address is already in use.");
-
-        operatorToOwner[operator] = _from;
-        operatorToMagpie[operator] = magpie;
-        ownerOperators[_from].push(operator);
+        operatorToOwner[_operator] = _from;
+        operatorToMagpie[_operator] = _magpie;
+        ownerOperators[_from].push(_operator);
 
         // Transfer tokens to this contract.
         token.transferFrom(_from, address(this), _value);
 
         // Maintain a record of the stake amount by the sender.
-        stakeBalances[operator] = stakeBalances[operator].add(_value);
-        emit Staked(operator, _value);
+        stakeBalances[_operator] = stakeBalances[_operator].add(_value);
+        emit Staked(_operator, _value);
     }
 
     /**
