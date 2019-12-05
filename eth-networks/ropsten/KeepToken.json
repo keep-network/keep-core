@@ -2500,12 +2500,12 @@
         }
       },
       "links": {},
-      "address": "0x7775554d6F09dA6E288C2e6Cb5dA434AC630A7E3",
-      "transactionHash": "0x15363f03e6bc402f70186918bf1535e224f003262cc0a243d6875f2fa100cfc1"
+      "address": "0x6981c075fb04923778D50CCf33bc78EC80177Dc0",
+      "transactionHash": "0xabc83694b4c08827d9f69f200aab453061293abde77e82cf0e8dfc535417e769"
     }
   },
   "schemaVersion": "3.0.19",
-  "updatedAt": "2019-11-14T18:06:31.376Z",
+  "updatedAt": "2019-12-05T13:50:45.218Z",
   "networkType": "ethereum",
   "devdoc": {
     "details": "Standard ERC20 token",
