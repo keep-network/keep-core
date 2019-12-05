@@ -9,6 +9,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -166,6 +167,12 @@ func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) 
 		}
 	}
 	return false, nil
+}
+
+func (mgri *mockGroupRegistrationInterface) GetGroupMembers(
+	groupPublicKey []byte,
+) ([]chain.StakerAddress, error) {
+	return nil, nil // no-op
 }
 
 type persistenceHandleMock struct {
