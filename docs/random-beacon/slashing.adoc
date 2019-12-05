@@ -5,19 +5,13 @@ toc::[]
 == Misbehavior and punishments
 
 To incentivize correct behavior in the Keep network,
-misbehaving participants will be punished. In some situations,
+misbehaving participants will be punished.
+In some situations,
 proving misbehavior requires cooperation from another participant,
-a _tattletale_. This coordination is incentivized by rewarding the _tattletale_
-by granting them a fraction of the tokens taken from the misbehaving participant.
-
-Tokens are staked by transferring them to the staking contract.
-The staking contract tracks the stake allocated to each _staker_.
-Stakes can be _slashed_ to punish misbehavior.
-Tokens backing slashed stakes are burned;
-if a tattletale proves another operator's misbehavior
-they will receive 5% of the slashed tokens,
-the remainder being burned.
-The misbehaving operator will then be removed from its group.
+a _tattletale_.
+This coordination is incentivized by rewarding the _tattletale_
+by granting them a fraction of the tokens
+taken from the misbehaving participant.
 
 ==== Authorization
 
