@@ -649,4 +649,13 @@ contract KeepRandomBeaconOperator {
         uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
         stakingContract.magpieOf(msg.sender).transfer(accumulatedRewards);
     }
+
+    /**
+     * @dev Gets group members.
+     */
+    function getGroupMembers(
+        bytes memory groupPubKey
+    ) public view returns (address[] memory) {
+        return groups.getGroupMembers(groupPubKey);
+    }
 }
