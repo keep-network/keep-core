@@ -32,6 +32,7 @@ main.test
 
 # Infrastructure
 .terraform
+infrastructure/gcp/service-accounts*
 
 # keys
 keystore

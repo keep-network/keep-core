@@ -2,9 +2,7 @@
 set -e
 
 echo "Installing golang requirements..."
-for pkg in golang dep; do
-  brew list $pkg &> /dev/null || brew install $pkg
-done
+brew list golang &> /dev/null || brew install golang
 
 echo "Installing ethereum requirements..."
 brew tap ethereum/ethereum

@@ -12,9 +12,8 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         address _serviceContract,
         address _stakingContract
     ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
-        groupThreshold = 15;
         relayEntryTimeout = 10;
-        groupSelection.ticketSubmissionTimeout = 65;
+        groupSelection.ticketSubmissionTimeout = 66;
         resultPublicationBlockStep = 3;
     }
 
@@ -29,6 +28,12 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
     function setGroupSize(uint256 size) public {
         groupSize = size;
         groupSelection.groupSize = size;
+        dkgResultVerification.groupSize = size;
+    }
+
+    function setGroupThreshold(uint256 threshold) public {
+        groupThreshold = threshold;
+        dkgResultVerification.signatureThreshold = threshold;
     }
 
     function getGroupSelectionRelayEntry() public view returns (uint256) {
@@ -49,5 +54,9 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups.groups[groupIndex].groupPubKey;
+    }
+
+    function timeDKG() public view returns (uint256) {
+        return dkgResultVerification.timeDKG;
     }
 }

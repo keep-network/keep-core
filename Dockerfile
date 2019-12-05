@@ -1,4 +1,4 @@
-FROM golang:1.11.4-alpine3.7 AS runtime
+FROM golang:1.12-alpine3.10 AS runtime
 
 ENV APP_NAME=keep-client \
 	BIN_PATH=/usr/local/bin
@@ -11,14 +11,18 @@ ENV GOPATH=/go \
 	APP_DIR=/go/src/github.com/keep-network/keep-core \
 	TEST_RESULTS_DIR=/mnt/test-results \
 	BIN_PATH=/usr/local/bin \
-	LD_LIBRARY_PATH=/usr/local/lib/
+	LD_LIBRARY_PATH=/usr/local/lib/ \
+	# GO111MODULE required to support go modules
+	GO111MODULE=on
 
 RUN apk add --update --no-cache \
 	g++ \
+	linux-headers \
 	protobuf \
 	git \
 	make \
 	nodejs \
+	npm \
 	python && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
@@ -35,12 +39,20 @@ WORKDIR $APP_DIR
 ARG GITHUB_TOKEN
 RUN git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
 
-RUN go get -u github.com/golang/dep/cmd/dep
+# Get dependencies.
+COPY go.mod $APP_DIR/
+COPY go.sum $APP_DIR/
 
-COPY ./Gopkg.toml ./Gopkg.lock ./
-RUN dep ensure -v --vendor-only
-RUN cd vendor/github.com/gogo/protobuf/protoc-gen-gogoslick && go install .
-RUN cd vendor/github.com/ethereum/go-ethereum/cmd/abigen && go install .
+RUN go mod download
+
+# Install code generators.
+RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.1/protoc-gen-gogoslick && go install .
+# go-ethereum in version 1.9.7 is still on govendor and some vendor.json
+# dependencies are not properly resolved by go modules. We use 'go get' as
+# a temporary workaround and hope to switch back to 'go install' once 
+# go-ethereum migrates to go modules in 1.9.8.
+# RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.7/cmd/abigen && go install .
+RUN go get github.com/ethereum/go-ethereum/cmd/abigen@v1.9.7
 
 COPY ./contracts/solidity $APP_DIR/contracts/solidity
 RUN cd $APP_DIR/contracts/solidity && npm install

@@ -1,5 +1,5 @@
 pragma solidity ^0.5.4;
-import "../libraries/Groups.sol";
+import "../libraries/operator/Groups.sol";
 
 contract GroupsExpirationStub {
     using Groups for Groups.Storage;

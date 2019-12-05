@@ -54,3 +54,37 @@ truffle exec ./scripts/demo.js
 * Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
 
 * Use metamask with `localhost:8545` to use Ganache test network. Import your first Ganache test account into metamask and you should be able to see the demo data.
+
+
+## Internal testnet
+
+A new version of staking dApp is automatically deployed to `keep-dev` internal testnet after each `master` merge. dApp can be accessed by VPN at `http://keep-dapp-staking.default.svc.cluster.local/` and requires an initial setup in MetaMask before the first use. All the setup described below has to be done only one time. 
+
+### MetaMask extension setup
+
+MetaMask is a web browser extension allowing to interact with Ethereum-enabled distributed applications (dApps). MetaMask is available for Chrome, Firefox, and Opera desktop browsers. To install MetaMask, please go through the extension installation process individual for your web browser used.
+
+Before the MetaMask can be used for the first time, it requires an initial setup when the user creates a new Wallet. It includes setting up a wallet password, accepting terms of use, creating and confirming backup phrase.
+
+### MetaMask network configuration
+
+Before MetaMask can be used with `keep-dev` testnet for the first time, it needs to know what `keep-dev` is. This process includes setting up a new network:
+
+1. Make sure you are connected to `keep-dev` testnet via VPN
+2. Expand the list of networks and click on `Custom RPC`
+3. Set `Network Name` to `keep-dev`
+4. Set `New RPC URL` to `http://eth-tx-node.default.svc.cluster.local:8545`
+5. Set `ChainID` to `1101`
+6. Click `Save`
+
+### MetaMask KEEP token owner account import
+On `keep-dev`, account `0x0f0977c4161a371b5e5ee6a8f43eb798cd1ae1db` is the owner of contracts including KEEP ERC20 token contract. This account can be used to create token grants and delegate stake to operators. Grantees of tokens can also stake-delegate their grants.
+
+To use this account in the dApp, it needs to be imported from [the JSON file](https://github.com/keep-network/keep-core/blob/master/private-testnet/keyfiles/UTC--2019-03-27T19-05-16.429364100Z--0f0977c4161a371b5e5ee6a8f43eb798cd1ae1db) secured by a [password](https://github.com/keep-network/keep-core/blob/master/private-testnet/eth-account-password.txt).
+
+1. Download the account JSON file
+2. Expand the list of accounts and click on `Import Account`
+3. Select `JSON file` type
+4. Click `Browse` and point MetaMask to the previously downloaded account JSON file
+5. Copy-paste the password from the referenced password file
+6. Click `Import`

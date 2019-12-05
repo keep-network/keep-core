@@ -1,5 +1,6 @@
 import { sign } from './helpers/signature';
 import mineBlocks from './helpers/mineBlocks';
+import packTicket from './helpers/packTicket';
 import generateTickets from './helpers/generateTickets';
 import stakeDelegate from './helpers/stakeDelegate';
 import expectThrow from './helpers/expectThrow';
@@ -11,7 +12,7 @@ import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
 
   let resultPublicationTime, token, stakingContract, operatorContract,
-  owner = accounts[0], magpie = accounts[4],
+  owner = accounts[0], magpie = accounts[4], ticket,
   operator1 = accounts[0],
   operator2 = accounts[1],
   operator3 = accounts[2],
@@ -23,7 +24,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
   resultHash = web3.utils.soliditySha3(groupPubKey, disqualified, inactive);
 
   const groupSize = 20;
-  const groupThreshold = 15;  
+  const groupThreshold = 15;
   const minimumStake = web3.utils.toBN(200000);
   const resultPublicationBlockStep = 3;
 
@@ -42,6 +43,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     operatorContract = contracts.operatorContract;
 
     operatorContract.setGroupSize(groupSize);
+    operatorContract.setGroupThreshold(groupThreshold);
     operatorContract.setMinimumStake(minimumStake);
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(2000)))
@@ -53,15 +55,18 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, 3000);
 
     for(let i = 0; i < groupSize; i++) {
-      await operatorContract.submitTicket(tickets1[i].value, operator1, tickets1[i].virtualStakerIndex, {from: operator1});
+      ticket = packTicket(tickets1[i].valueHex, tickets1[i].virtualStakerIndex, operator1);
+      await operatorContract.submitTicket(ticket, {from: operator1});
     }
 
     for(let i = 0; i < groupSize; i++) {
-      await operatorContract.submitTicket(tickets2[i].value, operator2, tickets2[i].virtualStakerIndex, {from: operator2});
+      ticket = packTicket(tickets2[i].valueHex, tickets2[i].virtualStakerIndex, operator2);
+      await operatorContract.submitTicket(ticket, {from: operator2});
     }
 
     for(let i = 0; i < groupSize; i++) {
-      await operatorContract.submitTicket(tickets3[i].value, operator3, tickets3[i].virtualStakerIndex, {from: operator3});
+      ticket = packTicket(tickets3[i].valueHex, tickets3[i].virtualStakerIndex, operator3);
+      await operatorContract.submitTicket(ticket, {from: operator3});
     }
 
     let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();

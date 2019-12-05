@@ -1,8 +1,6 @@
 package entry
 
 import (
-	"math/big"
-
 	"github.com/ipfs/go-log"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
@@ -23,15 +21,14 @@ func initializeChannel(channel net.BroadcastChannel) {
 		func() net.TaggedUnmarshaler { return &SignatureShareMessage{} })
 }
 
-// SignAndSubmit triggers the threshold signature process for the combination of
-// the previous relay entry and seed and publishes the signature to the chain as
+// SignAndSubmit triggers the threshold signature process for the
+// previous relay entry and publishes the signature to the chain as
 // a new relay entry.
 func SignAndSubmit(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
-	previousEntry *big.Int,
-	seed *big.Int,
+	previousEntry []byte,
 	honestThreshold int,
 	signer *dkg.ThresholdSigner,
 	startBlockHeight uint64,
@@ -45,7 +42,6 @@ func SignAndSubmit(
 			blockCounter:    blockCounter,
 			signer:          signer,
 			previousEntry:   previousEntry,
-			seed:            seed,
 			honestThreshold: honestThreshold,
 		},
 		signingStartBlockHeight: startBlockHeight,

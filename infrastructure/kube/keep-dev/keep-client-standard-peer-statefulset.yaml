@@ -8,7 +8,7 @@ metadata:
     app: keep-client
     type: standard-peer
 spec:
-  replicas: 4
+  replicas: 3
   selector:
     matchLabels:
       app: keep-client
@@ -61,6 +61,8 @@ spec:
         env:
           - name: KEEP_CLIENT_TYPE
             value: standard
+          - name: KEEP_CLIENT_ETH_KEYFILE
+            value: /mnt/keep-client/config/eth_account_keyfile
           - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
             valueFrom:
               secretKeyRef:
@@ -68,8 +70,6 @@ spec:
                 key: account-passphrase
           - name: KEEP_DATA_DIR
             value: /mnt/keep-client/data
-          - name: KEEP_NETWORK_BOOTSTRAP_PEERS
-            value: '[/dns4/keep-client-bootstrap-peer-0.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r]'
         volumeMounts:
           - name: keep-client-standard-peer-config
             mountPath: /mnt/keep-client/config

@@ -1,8 +1,9 @@
 import React from 'react'
 import { Navbar, NavbarBrand } from 'react-bootstrap'
 import * as Icons from './Icons'
+import WithWeb3Context from './WithWeb3Context'
 
-const Header = ({networkType}) => {
+const Header = ({ web3: { networkType, token } }) => {
   return (
     <Navbar>
       <Navbar.Header>
@@ -14,7 +15,7 @@ const Header = ({networkType}) => {
       <div className="pull-right">
         <div>
           <strong>KEEP Token: </strong>
-          <span className="txt-primary">{ process.env.REACT_APP_TOKEN_ADDRESS }</span>
+          <span className="txt-primary">{ token ? token.options.address : '' }</span>
         </div>
         <div>
           <strong>Network: </strong>
@@ -25,4 +26,4 @@ const Header = ({networkType}) => {
   )
 }
 
-export default Header
+export default WithWeb3Context(Header);

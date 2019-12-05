@@ -1,10 +1,9 @@
 package entry
 
 import (
-	"math/big"
+	"fmt"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/keep-network/keep-core/pkg/altbn128"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -23,8 +22,7 @@ type signingStateBase struct {
 
 	signer *dkg.ThresholdSigner
 
-	previousEntry *big.Int
-	seed          *big.Int
+	previousEntry []byte
 
 	honestThreshold int
 }
@@ -47,12 +45,12 @@ func (sss *signatureShareState) ActiveBlocks() uint64 {
 }
 
 func (sss *signatureShareState) Initiate() error {
-	entryToSign, err := sss.relayChain.CombineToSign(sss.previousEntry, sss.seed)
+	share, err := sss.signer.CalculateSignatureShare(sss.previousEntry)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not evaluate signature share: [%v]", err)
 	}
 
-	sss.selfSignatureShare = sss.signer.CalculateSignatureShare(entryToSign)
+	sss.selfSignatureShare = share
 
 	message := &SignatureShareMessage{
 		sss.MemberIndex(),
@@ -162,7 +160,7 @@ func (scs *signatureCompleteState) Initiate() error {
 		return err
 	}
 
-	scs.fullSignature = altbn128.G1Point{G1: signature}.Compress()
+	scs.fullSignature = signature.Marshal()
 
 	return nil
 }
@@ -213,10 +211,8 @@ func (ess *entrySubmissionState) Initiate() error {
 	}
 
 	return submitter.submitRelayEntry(
-		new(big.Int).SetBytes(ess.signature),
-		ess.previousEntry,
-		ess.seed,
-		ess.signer.GroupPublicKeyBytesCompressed(),
+		ess.signature,
+		ess.signer.GroupPublicKeyBytes(),
 		ess.entrySubmissionStartBlockHeight,
 	)
 }

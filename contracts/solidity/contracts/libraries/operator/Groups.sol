@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
-import "../cryptography/AltBn128.sol";
+import "../../cryptography/AltBn128.sol";
 
 library Groups {
     using SafeMath for uint256;
@@ -92,16 +92,6 @@ library Groups {
     }
 
     /**
-     * @dev Gets group public key in a compressed form.
-     */
-    function getGroupPublicKeyCompressed(
-        Storage storage self,
-        uint256 groupIndex
-    ) internal view returns (bytes memory) {
-        return AltBn128.g2Compress(AltBn128.g2Unmarshal(self.groups[groupIndex].groupPubKey));
-    }
-
-    /**
      * @dev Gets group member.
      */
     function getGroupMember(
@@ -110,6 +100,31 @@ library Groups {
         uint256 memberIndex
     ) internal view returns (address) {
         return self.groupMembers[groupPubKey][memberIndex];
+    }
+
+    /**
+     * @dev Gets all indices in the provided group for a member.
+     */
+    function getGroupMemberIndices(
+        Storage storage self,
+        bytes memory groupPubKey,
+        address member
+    ) public view returns (uint256[] memory indices) {
+        uint256 counter;
+        for (uint i = 0; i < self.groupMembers[groupPubKey].length; i++) {
+            if (self.groupMembers[groupPubKey][i] == member) {
+                counter++;
+            }
+        }
+
+        indices = new uint256[](counter);
+        counter = 0;
+        for (uint i = 0; i < self.groupMembers[groupPubKey].length; i++) {
+            if (self.groupMembers[groupPubKey][i] == member) {
+                indices[counter] = i;
+                counter++;
+            }
+        }
     }
 
     /**
@@ -177,7 +192,7 @@ library Groups {
     function isStaleGroup(
         Storage storage self,
         bytes memory groupPubKey
-    ) internal view returns(bool) {
+    ) public view returns(bool) {
         for (uint i = 0; i < self.groups.length; i++) {
             if (self.groups[i].groupPubKey.equalStorage(groupPubKey)) {
                 bool isExpired = self.expiredGroupOffset > i;
@@ -186,7 +201,7 @@ library Groups {
             }
         }
 
-        return true; // no group found, consider it as a stale group
+        revert("Group does not exist");
     }
 
     /**
@@ -242,7 +257,7 @@ library Groups {
     function selectGroup(
         Storage storage self,
         uint256 seed
-    ) internal returns(uint256) {
+    ) public returns(uint256) {
         require(numberOfGroups(self) > 0, "At least one active group required");
 
         expireOldGroups(self);
@@ -279,4 +294,29 @@ library Groups {
         return shiftedIndex;
     }
 
+    /**
+     * @dev Withdraws accumulated group member rewards for msg.sender
+     * using the provided group index and member indices. Once the
+     * accumulated reward is withdrawn from the selected group, member is
+     * removed from it. Rewards can be withdrawn only from stale group.
+     *
+     * @param groupIndex Group index.
+     * @param groupMemberIndices Array of member indices for the group member.
+     */
+    function withdrawFromGroup(
+        Storage storage self,
+        uint256 groupIndex,
+        uint256[] memory groupMemberIndices
+    ) public returns (uint256 rewards) {
+        for (uint i = 0; i < groupMemberIndices.length; i++) {
+            bool isExpired = self.expiredGroupOffset > groupIndex;
+            bool isStale = groupStaleTime(self, self.groups[groupIndex]) < block.number;
+
+            bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
+            if (isExpired && isStale && msg.sender == self.groupMembers[groupPublicKey][groupMemberIndices[i]]) {
+                delete self.groupMembers[groupPublicKey][groupMemberIndices[i]];
+                rewards = rewards.add(self.groupMemberRewards[groupPublicKey]);
+            }
+        }
+    }
 }

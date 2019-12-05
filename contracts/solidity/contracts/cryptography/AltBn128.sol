@@ -212,6 +212,22 @@ library AltBn128 {
     }
 
     /**
+     * @dev Unmarshals a point on G1 from bytes in an uncompressed form.
+     */
+    function g1Unmarshal(bytes memory m) internal pure returns(G1Point memory) {
+        bytes32 x;
+        bytes32 y;
+
+        /* solium-disable-next-line */
+        assembly {
+            x := mload(add(m, 0x20))
+            y := mload(add(m, 0x40))
+        }
+
+        return G1Point(uint256(x), uint256(y));
+    }
+
+    /**
      * @dev Unmarshals a point on G2 from bytes in an uncompressed form.
      */
     function g2Unmarshal(bytes memory m) internal pure returns(G2Point memory) {

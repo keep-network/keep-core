@@ -96,7 +96,8 @@ class StakingDelegateForm extends Component {
 
   async submit() {
     const { amount, magpie, operatorSignature } = this.state
-    const { web3, stakingContractAddress } = this.props
+    const { web3 } = this.props;
+    const stakingContractAddress = web3.stakingContract.options.address;
     let delegationData = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), Buffer.from(operatorSignature.substr(2), 'hex')]).toString('hex');
     await web3.token.methods.approveAndCall(stakingContractAddress, web3.utils.toBN(formatAmount(amount, 18)).toString(), delegationData).send({from: web3.yourAddress})
   }

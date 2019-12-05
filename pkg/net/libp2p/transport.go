@@ -5,9 +5,9 @@ import (
 	"net"
 
 	"github.com/keep-network/keep-core/pkg/chain"
-	secure "github.com/libp2p/go-conn-security"
-	libp2pcrypto "github.com/libp2p/go-libp2p-crypto"
-	peer "github.com/libp2p/go-libp2p-peer"
+	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
+	peer "github.com/libp2p/go-libp2p-core/peer"
+	sec "github.com/libp2p/go-libp2p-core/sec"
 )
 
 // ID is the multistream-select protocol ID that should be used when identifying
@@ -15,8 +15,8 @@ import (
 const handshakeID = "/keep/handshake/1.0.0"
 
 // Compile time assertions of custom types
-var _ secure.Transport = (*transport)(nil)
-var _ secure.Conn = (*authenticatedConnection)(nil)
+var _ sec.SecureTransport = (*transport)(nil)
+var _ sec.SecureConn = (*authenticatedConnection)(nil)
 
 // transport constructs an authenticated communication connection for a peer.
 type transport struct {
@@ -44,7 +44,7 @@ func newAuthenticatedTransport(
 func (t *transport) SecureInbound(
 	ctx context.Context,
 	unauthenticatedConn net.Conn,
-) (secure.Conn, error) {
+) (sec.SecureConn, error) {
 	return newAuthenticatedInboundConnection(
 		unauthenticatedConn,
 		t.localPeerID,
@@ -58,7 +58,7 @@ func (t *transport) SecureOutbound(
 	ctx context.Context,
 	unauthenticatedConn net.Conn,
 	remotePeerID peer.ID,
-) (secure.Conn, error) {
+) (sec.SecureConn, error) {
 	return newAuthenticatedOutboundConnection(
 		unauthenticatedConn,
 		t.localPeerID,
