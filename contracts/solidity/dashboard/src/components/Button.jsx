@@ -64,9 +64,10 @@ export default function Button({ isFetching, children, ...props }) {
 export const SubmitButton = ({ onSubmitAction, ...props }) => {
   const [isFetching, setIsFetching] = useState(false)
 
-  const onClick = async (event) => {
+  const onButtonClick = async (event) => {
     event.preventDefault()
     setIsFetching(true)
+
     try {
       await onSubmitAction()
       setIsFetching(false)
@@ -75,5 +76,5 @@ export const SubmitButton = ({ onSubmitAction, ...props }) => {
     }
   }
 
-  return <Button {...props} onClick={onClick} isFetching={isFetching} />
+  return <Button {...props} onClick={onButtonClick} isFetching={isFetching} />
 }
