@@ -1,8 +1,8 @@
 .messages-container {
     position: fixed;
     z-index: 1000;
-    top: 20px;
-    left: 20px;
+    top: .5rem;
+    left: .5rem;
     display: flex;
     flex-direction: column;
     line-height: 1.3;
@@ -11,12 +11,15 @@
 }
 
 .message {
-	position: relative;
+    position: relative;
     padding: .5em 1em;
     margin: 1em;
     opacity: .8;
 
     &-content-wrapper {
+        @media @xs {
+            width: 15em;
+        }
         width: 20em;
         flex: 1;
         display: flex;
