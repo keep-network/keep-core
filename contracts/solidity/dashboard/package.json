@@ -27,7 +27,8 @@
     "start-js": "react-scripts start",
     "setup": "./scripts/copy-contracts.sh ../build/contracts",
     "start": "npm run setup && npm-run-all -p watch-css start-js",
-    "build": "npm run build-css && react-scripts build",
+    "build": "npm run build-css && sh -ac '. .env.${REACT_APP_ENV}; react-scripts build'",
+    "build:keep-dev": "REACT_APP_ENV=keep-dev npm run build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
