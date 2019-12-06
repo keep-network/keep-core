@@ -43,9 +43,9 @@ class OverviewTab extends React.Component {
     }
 
     subscribeToEvent = () => {
-      const { web3: { stakingContract } } = this.props
+      const { web3EventProvider: { eventStakingContract } } = this.props
       this.setState({ shouldSubscribeToEvent: false })
-      stakingContract.once('InitiatedUnstake', (this.subscribeEvent))
+      eventStakingContract.once('InitiatedUnstake', this.subscribeEvent)
     }
 
     subscribeEvent = async (error, event) => {
