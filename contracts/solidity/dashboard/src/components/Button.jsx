@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { CSSTransition } from 'react-transition-group'
 import Loadable from "./Loadable"
 
@@ -33,8 +33,8 @@ const useConstantsButtonDimensions = (buttonRef, children) => {
 
 export default function Button({ isFetching, children, ...props }) {
   const [showLoader, setShowLoader] = React.useState(false)
-  const buttonRef = React.useRef(null)
-  const [width, height] = useConstantsButtonDimensions(buttonRef, children)
+  const buttonRef = useRef(null)
+  const [width, height] = useCurrentButtonDimensions(buttonRef, children)
 
   useLongerLoader(showLoader, setShowLoader, isFetching)
   
