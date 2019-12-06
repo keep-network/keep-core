@@ -36,10 +36,10 @@ module.exports = async function() {
     let magpie = accounts[i] // The address where the rewards for participation are sent.
 
     // The owner provides to the contract a magpie address and the operator address. 
-    let delegation = Buffer.concat([
+    let delegation = '0x' + Buffer.concat([
       Buffer.from(magpie.substr(2), 'hex'),
       Buffer.from(operator.substr(2), 'hex')
-    ]);
+    ]).toString('hex');
 
     staked = await token.approveAndCall(
       tokenStaking.address, 
