@@ -278,21 +278,7 @@ by not assigning a third party as the authorizer address.
 The data and methods below illustrate the design and its requirements
 but may not be exhaustive
 
-==== Token contract
-
-tokens[address] -> amount::
-The tokens held by each address
-
-transfer(recipient, amount)::
-Transfer a number of the caller's tokens to the recipient
-+
-May be called by an address holding any number of tokens
-
 ==== Staking contract
-
-staking_nonce::
-An integer incremented with each staker created,
-to ensure uniqueness of staker identifiers
 
 staker[staker_id] -> staker_info::
 The stakers, containing all the necessary information:
@@ -337,30 +323,4 @@ The seized tokens may be used in whathever way is specified by the contract
 +
 May be called by a functionality contract authorized by the staker's authorizer
 and not blocked by the panic button
-
-==== Authorization contract
-
-authorized[authorizer] -> [contract_address]::
-The contracts authorized by each authorizer
-
-blocked[contract] -> bool::
-The contracts blocked by the `panic()` method
-
-authorize(contract)::
-Method for adding a contract to the authorized list
-for all stakers using the caller as their authorizer
-+
-May be called by any address
-
-panic(contract)::
-Method for immediately and permanently revoking
-the authorizations of the named contract to penalize stakers
-+
-Intended for use in situations where a severe vulnerability is discovered
-or the upgrade keys have been compromised,
-and the affected contract needs to be disabled to protect user funds
-+
-May only be called by an address authorized by the governance structure
-
-==== Functionality contracts
 
