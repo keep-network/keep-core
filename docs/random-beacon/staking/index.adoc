@@ -25,7 +25,7 @@ Provides the tokens for the staker
 operator::
 Handles the day-to-day participation in the network operations
 
-magpie::
+beneficiary::
 Collects any rewards earned by the staker
 
 authorizer::
@@ -39,13 +39,13 @@ As far as the network is concerned,
 any of these arrangements simply forms a _staker_.
 
 staker::
-An abstraction representing the _owner_, _operator_, _magpie_ and _authorizer_
+An abstraction representing the _owner_, _operator_, _beneficiary_ and _authorizer_
 each performing their respective roles.
 
 === Initiating staking
 
 Staking is initiated by the _owner_ choosing the amount of tokens to stake,
-and the _operator_, _magpie_ and _authorizer_ addresses.
+and the _operator_, _beneficiary_ and _authorizer_ addresses.
 The owner then creates a _staking agreement_ containing this information
 and transfers the tokens to the _staking contract_.
 The _staking contract_ processes the tokens and the information,
@@ -106,7 +106,7 @@ regardless of the _staked amount_ or _staker weight_.
 Stakers that provide services in the network
 will be rewarded at certain points.
 Rewards may be either tokens or the currency used to pay for network services.
-Rewards earned by a staker will be sent to the staker's _magpie_ address.
+Rewards earned by a staker will be sent to the staker's _beneficiary_ address.
 
 === Slashing
 
@@ -135,12 +135,12 @@ and requires the cooperation of a third party _tattletale_.
 If a _tattletale_ presents proof of misbehavior by a staker,
 a part of the penalty will be awarded to the tattletale as a _tattletale reward_.
 ////
-TODO: are tattletales required to be stakers (pay to magpie address)
+TODO: are tattletales required to be stakers (pay to beneficiary address)
 or can anyone act as a tattletale
 
 In the latter case,
 should there be different systems in place for staker/non-staker tattletales
-so staker tattletales receive the reward at the magpie
+so staker tattletales receive the reward at the beneficiary
 while non-stakers receive it at their normal address
 ////
 
@@ -171,7 +171,7 @@ or _reclaim_ the stakes for the owner.
 
 The staker is an abstraction comprising of four different roles,
 each with a clear scope of responsibility.
-The initial design included only the roles of the owner, operator and magpie;
+The initial design included only the roles of the owner, operator and beneficiary;
 the authorizer was added to take full advantage of the upgrade security plan.
 
 ==== Owner
@@ -205,13 +205,13 @@ via the authorized functionality contracts,
 the operator can also initiate unstaking
 and return previously staked tokens for the owner.
 
-==== Magpie
+==== Beneficiary
 
-The magpie is an entirely passive role.
-Rewards of tokens or currency are simply sent to the magpie address
+The beneficiary is an entirely passive role.
+Rewards of tokens or currency are simply sent to the beneficiary address
 by the staking contract.
 
-The magpie role is separate from the owner and operator
+The beneficiary role is separate from the owner and operator
 to provide flexibility in how to receive and use rewards
 without interfering with the owner's cold storage
 or the possible contractual relationship between the owner and operator.
@@ -301,10 +301,10 @@ The stakers, containing all the necessary information:
 * `since` time of last change (staking or unstaking)
 * `owner` of the tokens
 * `operator` address performing operations
-* `magpie` address to send rewards to
+* `beneficiary` address to send rewards to
 * `authorizer` address to determine authorized contracts
 
-stake(amount, operator, magpie, authorizer)::
+stake(amount, operator, beneficiary, authorizer)::
 Initiate staking by specifying the addresses of the other roles
 and transferring at least _minimum stake_ tokens to the contract
 +
@@ -326,7 +326,7 @@ May be called by either the owner or the operator of the staker
 
 reward(staker_id, amount)::
 Reward a staker for correct operation
-and transfer currency or tokens to its magpie address
+and transfer currency or tokens to its beneficiary address
 +
 May be called by a functionality contract
 
