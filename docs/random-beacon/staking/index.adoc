@@ -78,10 +78,10 @@ and are likely to earn more rewards.
 === Contract authorization
 
 Before the staker can participate in the network,
-the _authorizer_ must _authorize_ each _functionality contract_
+the _authorizer_ must _authorize_ each _operator contract_
 the staker wishes to use.
 It is necessary to introduce new functionality and to upgrade old contracts,
-but buggy or malicious _functionality contracts_ could be used
+but buggy or malicious _operator contracts_ could be used
 to steal or destroy tokens by _slashing_ well-behaved stakers.
 The requirement for _authorization_ ensures that the owner's tokens are safe
 even if a contract upgrade is compromised,
@@ -93,7 +93,7 @@ the authorization cannot be revoked.
 === Operation
 
 The _operator_ provides _services_ in the network
-by following the protocols of authorized _functionality contracts_.
+by following the protocols of authorized _operator contracts_.
 When a staker performs an operation that requires on-chain transactions,
 the transaction must have a valid staker ID
 and to be signed by the _operator_ of that staker.
@@ -201,7 +201,7 @@ If the operator is a different party from the owner,
 a high level of trust is necessary.
 
 In addition to participating in the network
-via the authorized functionality contracts,
+via the authorized operator contracts,
 the operator can also initiate unstaking
 and return previously staked tokens for the owner.
 
