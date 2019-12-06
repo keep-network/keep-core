@@ -2,10 +2,6 @@
 
 The Keep network uses staking of tokens to enforce correct behavior.
 
-////
-TODO: Insert more proper introduction here?
-////
-
 == Basic description
 
 Anyone with at least a threshold amount of tokens (_Stake~min~_)
@@ -32,7 +28,7 @@ Handles the day-to-day participation in the network operations
 magpie::
 Collects any rewards earned by the staker
 
-overseer::
+authorizer::
 Authorizes contracts to protect against buggy or compromised upgrades
 
 The different roles can all be performed by the same address;
@@ -43,13 +39,13 @@ As far as the network is concerned,
 any of these arrangements simply forms a _staker_.
 
 staker::
-An abstraction representing the _owner_, _operator_, _magpie_ and _overseer_
+An abstraction representing the _owner_, _operator_, _magpie_ and _authorizer_
 each performing their respective roles.
 
 === Initiating staking
 
 Staking is initiated by the _owner_ choosing the amount of tokens to stake,
-and the _operator_, _magpie_ and _overseer_ addresses.
+and the _operator_, _magpie_ and _authorizer_ addresses.
 The owner then creates a _staking agreement_ containing this information
 and transfers the tokens to the _staking contract_.
 The _staking contract_ processes the tokens and the information,
@@ -82,14 +78,14 @@ and are likely to earn more rewards.
 === Contract authorization
 
 Before the staker can participate in the network,
-the _overseer_ must _authorize_ each _functionality contract_
+the _authorizer_ must _authorize_ each _functionality contract_
 the staker wishes to use.
 It is necessary to introduce new functionality and to upgrade old contracts,
 but buggy or malicious _functionality contracts_ could be used
 to steal or destroy tokens by _slashing_ well-behaved stakers.
 The requirement for _authorization_ ensures that the owner's tokens are safe
 even if a contract upgrade is compromised,
-as long as the _overseer_ denies authorization to such contracts.
+as long as the _authorizer_ denies authorization to such contracts.
 
 Once a contract has been authorized,
 the authorization cannot be revoked.
@@ -176,7 +172,7 @@ or _reclaim_ the stakes for the owner.
 The staker is an abstraction comprising of four different roles,
 each with a clear scope of responsibility.
 The initial design included only the roles of the owner, operator and magpie;
-the overseer was added to take full advantage of the upgrade security plan.
+the authorizer was added to take full advantage of the upgrade security plan.
 
 ==== Owner
 
@@ -220,7 +216,7 @@ to provide flexibility in how to receive and use rewards
 without interfering with the owner's cold storage
 or the possible contractual relationship between the owner and operator.
 
-==== Overseer
+==== Authorizer
 
 Because slashing stakes requires arbitrary access to stakers' accounts,
 explicit authorization is required
@@ -234,25 +230,25 @@ and to provide a graceful recovery route
 while minimizing the impact to the rest of the network.
 The explicit authorization requirement prevents a compromised contract
 from stealing stakers' funds by exploiting the punishment interface.
-Instead, compromise of both the overseer and the contract is required.
+Instead, compromise of both the authorizer and the contract is required.
 
 As a further security measure,
-the overseer can only authorize pre-approved contracts
+the authorizer can only authorize pre-approved contracts
 from a list maintained by the governance structure of the network.
-This ensures that the overseer cannot do damage
+This ensures that the authorizer cannot do damage
 in the absence of further compromise,
 except by withholding desired authorizations.
 
-The overseer role is separated from the owner and operator
+The authorizer role is separated from the owner and operator
 to facilitate cold storage for the former
 and to reduce the necessary privileges of the latter.
 
 If the owner were required to authorize each new contract and upgrade,
 it would present an unnecessary hindrance to effective cold storage schemes.
-Due to the two-factor nature of the overseer keys,
+Due to the two-factor nature of the authorizer keys,
 the same level of protection is not necessarily required.
 
-On the other hand, separating the overseer from the operator
+On the other hand, separating the authorizer from the operator
 reduces the latter's ability to profit from damaging the owner's interests.
 While even the operator has the ability
 to lose or steal the owner's tokens,
@@ -263,7 +259,7 @@ and could be used to transfer all of the staker's tokens to the attacker.
 
 ===== Third party delegation
 
-The role of the overseer can be delegated to a third party,
+The role of the authorizer can be delegated to a third party,
 and it is expected that many would do so.
 
 Most owners and operators are unlikely to scrutinize each contract,
@@ -275,7 +271,7 @@ A downside of convenient delegation is that requiring individual authorizations
 provides another source of friction and human judgment
 between compromise of single points of failure and actual loss of staker funds.
 An owner can avoid this fate
-by not assigning a third party as the overseer address.
+by not assigning a third party as the authorizer address.
 
 === Contracts
 
@@ -306,9 +302,9 @@ The stakers, containing all the necessary information:
 * `owner` of the tokens
 * `operator` address performing operations
 * `magpie` address to send rewards to
-* `overseer` address to determine authorized contracts
+* `authorizer` address to determine authorized contracts
 
-stake(amount, operator, magpie, overseer)::
+stake(amount, operator, magpie, authorizer)::
 Initiate staking by specifying the addresses of the other roles
 and transferring at least _minimum stake_ tokens to the contract
 +
@@ -339,20 +335,20 @@ Punish a staker for misbehavior and seize some of its tokens
 +
 The seized tokens may be used in whathever way is specified by the contract
 +
-May be called by a functionality contract authorized by the staker's overseer
+May be called by a functionality contract authorized by the staker's authorizer
 and not blocked by the panic button
 
 ==== Authorization contract
 
-authorized[overseer] -> [contract_address]::
-The contracts authorized by each overseer
+authorized[authorizer] -> [contract_address]::
+The contracts authorized by each authorizer
 
 blocked[contract] -> bool::
 The contracts blocked by the `panic()` method
 
 authorize(contract)::
 Method for adding a contract to the authorized list
-for all stakers using the caller as their overseer
+for all stakers using the caller as their authorizer
 +
 May be called by any address
 
