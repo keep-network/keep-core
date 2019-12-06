@@ -11,7 +11,8 @@ contract KeepRandomBeaconOperatorTicketsOrderingStub is KeepRandomBeaconOperator
     constructor(
         address _serviceContract,
         address _stakingContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {}
+    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
+    }
 
     function addTicket(uint64 newTicketValue) public {
         groupSelection.addTicket(newTicketValue);
