@@ -106,35 +106,39 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
+	// taking channel name from first membership because the channel name
+	// is same for all group members
+	channelName := memberships[0].ChannelName
+
+	channel, err := n.netProvider.ChannelFor(channelName)
+	if err != nil {
+		logger.Errorf(
+			"could not create broadcast channel with name [%v]: [%v]",
+			channelName,
+			err,
+		)
+		return
+	}
+
 	groupMembers, err := relayChain.GetGroupMembers(groupPublicKey)
 	if err != nil {
 		logger.Errorf("could not get group members: [%v]", err)
 		return
 	}
 
+	err = channel.SetFilter(
+		createStakersFilter(groupMembers, signing),
+	)
+	if err != nil {
+		logger.Errorf(
+			"could not add filter for channel [%v]: [%v]",
+			channel.Name(),
+			err,
+		)
+	}
+
 	for _, signer := range memberships {
 		go func(signer *registry.Membership) {
-			channel, err := n.netProvider.ChannelFor(signer.ChannelName)
-			if err != nil {
-				logger.Errorf(
-					"could not create broadcast channel with name [%v]: [%v]",
-					signer.ChannelName,
-					err,
-				)
-				return
-			}
-
-			err = channel.SetFilter(
-				createStakersFilter(groupMembers, signing),
-			)
-			if err != nil {
-				logger.Errorf(
-					"could not add filter for channel [%v]: [%v]",
-					channel.Name(),
-					err,
-				)
-			}
-
 			err = entry.SignAndSubmit(
 				n.blockCounter,
 				channel,
