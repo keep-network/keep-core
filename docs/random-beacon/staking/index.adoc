@@ -4,10 +4,11 @@ The Keep network uses staking of tokens to enforce correct behavior.
 
 == Basic description
 
-Anyone with at least a threshold amount of tokens (_Stake~min~_)
-can set them aside as collateral
-and earn the right to participate in network operations.
-_Stakers_ can earn rewards from contributing to the network,
+Anyone with tokens can stake them,
+setting them aside as collateral for network operations.
+Staked tokens are delegated to an _operator_ address
+who performs work for _operator contracts_.
+_Operators_ can earn rewards from contributing to the network,
 but if they misbehave their collateral can be taken away
 (_stake slashing_) as punishment.
 
@@ -42,38 +43,18 @@ staker::
 An abstraction representing the _owner_, _operator_, _beneficiary_ and _authorizer_
 each performing their respective roles.
 
+Stakers are identified by their operator address.
+
 === Initiating staking
 
 Staking is initiated by the _owner_ choosing the amount of tokens to stake,
 and the _operator_, _beneficiary_ and _authorizer_ addresses.
-The owner then creates a _staking agreement_ containing this information
-and transfers the tokens to the _staking contract_.
-The _staking contract_ processes the tokens and the information,
-and stores them in a _staker_ identity.
-Once created, the addresses of the roles cannot be changed.
-
-==== Staker ID
-
-Each _staker_ identity is associated with a unique _staker identifier_
-which is used to participate in the network.
-Because _staker identifiers_ are unique,
-the same address can perform any number of _roles_ in any number of _stakers_.
-When someone sends a message claiming to be a staker,
-two things are checked:
-the message must include a valid _staker ID_,
-and it must be signed by the key corresponding to the right _role_.
-
-==== Staker weight
-
-Each staker has a _staker weight_ of 1 or more,
-determined by the amount of tokens acting as their collateral.
-The _staker weight_ is calculated by
-dividing the _staked amount_ with the _minimum stake_, rounded down.
-Alternatively, the _staker weight_ is the number of separate stakers
-that could have been created with the staked tokens.
-Stakers with a higher weight get more opportunities
-to participate in the network,
-and are likely to earn more rewards.
+The owner then authorizes the _staking contract_ to claim a number of tokens,
+and calls the staking contract to stake the tokens.
+The _staking contract_ processes the call,
+claims the tokens to itself,
+and records the information.
+The addresses of the roles cannot be changed after delegation.
 
 === Contract authorization
 
@@ -94,12 +75,9 @@ the authorization cannot be revoked.
 
 The _operator_ provides _services_ in the network
 by following the protocols of authorized _operator contracts_.
-When a staker performs an operation that requires on-chain transactions,
-the transaction must have a valid staker ID
-and to be signed by the _operator_ of that staker.
 
 Any number of operations may be active at once
-regardless of the _staked amount_ or _staker weight_.
+regardless of the _staked amount_.
 
 ==== Rewards
 
@@ -113,18 +91,10 @@ Rewards earned by a staker will be sent to the staker's _beneficiary_ address.
 If a staker violates the protocol of an operation
 in a way which can be proven on-chain,
 they will be penalized by having their stakes _slashed_.
-The maximum punishment that can be imposed from a single operation
-is equal to the _minimum stake_.
-
-When a staker gets slashed their _staker weight_ is updated accordingly
-and the new _staker weight_ takes effect from the moment the penalty is imposed.
-A staker who falls below the _minimum stake_ as a result of slashing
-is blocked from joining new operations
-but is still required to continue any unfinished operations.
 
 If a staker has joined multiple operations at once,
 they may accrue more punishments than their stake can cover.
-If a staker's remaining stake falls to or below zero,
+If a staker's remaining stake falls to zero,
 the staker is terminated and may not continue any operations.
 Any remaining penalties are nullified.
 
@@ -133,37 +103,19 @@ Any remaining penalties are nullified.
 Some misbehavior cannot be caught by a contract alone
 and requires the cooperation of a third party _tattletale_.
 If a _tattletale_ presents proof of misbehavior by a staker,
-a part of the penalty will be awarded to the tattletale as a _tattletale reward_.
-////
-TODO: are tattletales required to be stakers (pay to beneficiary address)
-or can anyone act as a tattletale
-
-In the latter case,
-should there be different systems in place for staker/non-staker tattletales
-so staker tattletales receive the reward at the beneficiary
-while non-stakers receive it at their normal address
-////
+a part of the penalty will be awarded to the tattletale
+as a _tattletale reward_.
 
 === Unstaking
 
 When staking, the tokens used as collateral are locked
 until the staker announces their intention to stop staking,
-and for a period of time afterwards (_T~unstake~_).
+and for a period of time afterwards.
 The purpose of this _unstaking period_ is to give operations time to finish
 before the collateral can be moved away.
 No new operations can be started or joined within the _unstaking period_
 but the staker is required to continue participating
 in any unfinished operations.
-
-==== Reclaiming tokens
-
-After the _unstaking period_ is over,
-the tokens can be _reclaimed_ and the _owner_ regains full control over them.
-// TODO: no penalty for reclaiming?
-When tokens are _reclaimed_ unfinished operations are aborted without penalty.
-// ODOT
-Either the _owner_ or the _operator_ can initiate the _unstaking period_
-or _reclaim_ the stakes for the owner.
 
 == Details
 
@@ -194,16 +146,14 @@ and represents the staker in most circumstances.
 
 Rewards and punishments are based solely on the operator's actions,
 and the operator can not only cause opportunity costs
-but can also lose the entire stake
-and possibly steal a significant fraction of it
+but can also lose the entire stake and possibly steal a fraction of it
 using only contracts functioning as intended.
 If the operator is a different party from the owner,
 a high level of trust is necessary.
 
 In addition to participating in the network
 via the authorized operator contracts,
-the operator can also initiate unstaking
-and return previously staked tokens for the owner.
+the operator can also initiate undelegation.
 
 ==== Beneficiary
 
@@ -220,9 +170,7 @@ or the possible contractual relationship between the owner and operator.
 
 Because slashing stakes requires arbitrary access to stakers' accounts,
 explicit authorization is required
-for each contract before it may penalize stakers.
-This applies to contracts providing entirely new functionality,
-and to upgraded versions of previous contracts.
+for each operator contract before it may penalize stakers.
 
 The upgrade security plan is designed
 to limit the impact of upgrade key compromise
