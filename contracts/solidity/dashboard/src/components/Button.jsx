@@ -51,7 +51,7 @@ export default function Button({ isFetching, children, ...props }) {
         classNames="button-content"
       >
         <div className="button-content">
-            { showLoader ? <Loadable /> : children }
+            { showLoader ? <Loadable text="In progress" /> : children }
         </div>
       </CSSTransition>
     </button>
