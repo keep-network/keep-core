@@ -1,7 +1,10 @@
 import React, { useContext, useEffect } from 'react'
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 
-var messageId = 0
+const MessagesContext = React.createContext({})
+
+let messageId = 0
+const messageTransitionTimeoutInMs = 500
 
 export class Messages extends React.Component { 
     constructor(props) {
@@ -9,28 +12,28 @@ export class Messages extends React.Component {
         this.state = { messages: [] }
     }
 
-    show = (value) => {
+    showMessage = (value) => {
         value.id = messageId++
         this.setState({ messages: this.state.messages ? [...this.state.messages, value] : [value]})
     }
 
-    onClose = (message) => {
+    onMessageClose = (message) => {
         const updatedMessages = this.state.messages.filter(m => m.id !== message.id)
         this.setState({ messages: updatedMessages })
     }
 
     render() {
         return (
-            <MessagesContext.Provider value={{ show: this.show }} >
+            <MessagesContext.Provider value={{ showMessage: this.showMessage }} >
                 <div className="messages-container">
                     <TransitionGroup >
                         {this.state.messages.map(message => (
                             <CSSTransition
+                                timeout={messageTransitionTimeoutInMs}
                                 key={message.id}
-                                timeout={500}
                                 classNames="message"
                             >
-                                <Message key={message.id} message={message} onClose={this.onClose} />
+                                <Message key={message.id} message={message} onMessageClose={this.onMessageClose} />
                             </CSSTransition>
                         ))}
                     </TransitionGroup>
@@ -46,14 +49,16 @@ const messageIconMap = {
     success: 'glyphicon-ok'
 }
 
+const closeMessageTimeoutInMs = 3250
+
 const Message = ({ message, ...props }) => {
     useEffect(() => {
-        const timeout = setTimeout(onClose, 3250);
+        const timeout = setTimeout(onMessageClose, closeMessageTimeoutInMs);
         return () => clearTimeout(timeout)
     }, [message.id])
 
-    const onClose = () => {
-       props.onClose(message)
+    const onMessageClose = () => {
+       props.onMessageClose(message)
     }
 
     return (
@@ -66,7 +71,7 @@ const Message = ({ message, ...props }) => {
                     <span className="message-title">{message.title}</span>
                     <div>{message.content}</div>
                 </div>
-                <div className='message-icon-close' onClick={onClose}>
+                <div className='message-icon-close' onClick={onMessageClose}>
                     <span className="glyphicon glyphicon-remove" aria-hidden='true' />
                 </div>
             </div>
@@ -75,9 +80,7 @@ const Message = ({ message, ...props }) => {
 }
 
 export const useShowMessage = () => {
-    const { show } = useContext(MessagesContext)
+    const { showMessage } = useContext(MessagesContext)
 
-    return show
+    return showMessage
 }
-
-const MessagesContext = React.createContext({})
