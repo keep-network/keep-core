@@ -2,20 +2,23 @@ import React, { useEffect, useState, useRef } from "react"
 import { CSSTransition } from 'react-transition-group'
 import Loadable from "./Loadable"
 
-const useLongerLoader = (showLoader, setShowLoader, isFetching) => {
+const buttonContentTransitionTimeoutInMs = 500
+const minimumLoaderDurationInMs = 400
+
+const useMinimumLoaderDuration = (showLoader, setShowLoader, isFetching) => {
     useEffect(() => {
         if (isFetching)
             setShowLoader(true);
 
         if (!isFetching && showLoader) {
-            const timeout = setTimeout(() => setShowLoader(false), 400);
+            const timeout = setTimeout(() => setShowLoader(false), minimumLoaderDurationInMs);
 
         return () => clearTimeout(timeout);
         }
     }, [isFetching, showLoader])
 }
 
-const useConstantsButtonDimensions = (buttonRef, children) => {
+const useCurrentButtonDimensions = (buttonRef, children) => {
     const [width, setWidth] = useState(0)
     const [height, setHeight] = useState(0)
   
@@ -36,7 +39,7 @@ export default function Button({ isFetching, children, ...props }) {
   const buttonRef = useRef(null)
   const [width, height] = useCurrentButtonDimensions(buttonRef, children)
 
-  useLongerLoader(showLoader, setShowLoader, isFetching)
+  useMinimumLoaderDuration(showLoader, setShowLoader, isFetching)
   
   return (
     <button
@@ -47,7 +50,7 @@ export default function Button({ isFetching, children, ...props }) {
     >
       <CSSTransition
         in={showLoader}
-        timeout={500}
+        timeout={buttonContentTransitionTimeoutInMs}
         classNames="button-content"
       >
         <div className="button-content">
