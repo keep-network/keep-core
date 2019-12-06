@@ -152,11 +152,11 @@ resource "google_compute_address" "eth_tx_ropsten_loadbalancer_ip" {
   labels       = "${local.labels}"
 }
 
-resource "google_compute_address" "eth_tx_ropsten_light_loadbalancer_ip" {
-  name         = "${var.eth_tx_ropsten_light_loadbalancer_name}"
+resource "google_compute_address" "eth_miner_ropsten_loadbalancer_ip" {
+  name         = "${var.eth_miner_ropsten_loadbalancer_name}"
   project      = "${module.project.project_id}"
   region       = "${var.region_data["region"]}"
-  address_type = "${upper(var.eth_tx_ropsten_light_loadbalancer_address_type)}"
+  address_type = "${upper(var.eth_miner_ropsten_loadbalancer_address_type)}"
   labels       = "${local.labels}"
 }
 
