@@ -9,6 +9,7 @@ const UndelegateStakeButton = (props) => {
 
   const undelegate = async () => {
     const { amount, operator} = props
+    
     try {
       await web3.stakingContract.methods.initiateUnstake(amount, operator).send({from: web3.yourAddress})
       showMessage({ type: 'success', title: 'Success', content: 'Undelegate transaction successfully completed' })
