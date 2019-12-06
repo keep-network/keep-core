@@ -3,7 +3,6 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./TokenStaking.sol";
@@ -28,7 +27,6 @@ contract TokenGrant {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
     using BytesLib for bytes;
-    using ECDSA for bytes32;
     using AddressArrayUtils for address[];
 
     event CreatedTokenGrant(uint256 id);
@@ -169,14 +167,14 @@ contract TokenGrant {
         uint256 _duration = _extraData.toUint(20);
         uint256 _start = _extraData.toUint(52);
         uint256 _cliff = _extraData.toUint(84);
-        
+
         require(_grantee != address(0), "Grantee address can't be zero.");
         require(_cliff <= _duration, "Vesting cliff duration must be less or equal total vesting duration.");
 
         bool _revocable;
         if (_extraData.slice(116, 1)[0] == 0x01) {
             _revocable = true;
-        } 
+        }
 
         uint256 id = numGrants++;
         grants[id] = Grant(_from, _grantee, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0, 0);
