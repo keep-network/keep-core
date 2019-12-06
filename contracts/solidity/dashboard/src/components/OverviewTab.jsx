@@ -51,6 +51,7 @@ class OverviewTab extends React.Component {
     subscribeEvent = async (error, event) => {
       const { returnValues: { value, operator, createdAt } } = event
       const { web3: { utils, stakingContract } } = this.props;
+      
       const withdrawalDelay = await stakingContract.methods.stakeWithdrawalDelay().call();
       const availableAt = moment(createdAt * 1000).add(withdrawalDelay, 'seconds')
       const withdrawal = {
@@ -63,6 +64,7 @@ class OverviewTab extends React.Component {
       const withdrawalsTotal = new utils.BN(this.state.withdrawalsTotal).add(utils.toBN(value));
       const stakeBalance = this.state.stakeBalance.sub(utils.toBN(value))
       const operators = this.state.operators.filter(({ address }) => address !== operator)
+
       this.setState({
         stakeBalance,
         operators,
