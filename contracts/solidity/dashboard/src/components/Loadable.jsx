@@ -5,7 +5,7 @@ const Loadable = ({ text }) => (
 )
 
 Loadable.defaultProps = {
-    text: 'Loadging...'
+    text: 'Loading...'
 }
 
 export default Loadable
