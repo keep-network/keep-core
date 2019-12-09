@@ -79,10 +79,6 @@ func (r *retransmitter) receive(
 		return fmt.Errorf("could not calculate message fingerprint: [%v]", err)
 	}
 
-	if r.cache.has(fingerprint) {
-		return nil
-	}
-
 	if r.cache.has(fingerprint) && message.Retransmission != 0 {
 		return nil
 	}
