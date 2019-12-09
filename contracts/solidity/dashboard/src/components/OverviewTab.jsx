@@ -17,9 +17,9 @@ class OverviewTab extends React.Component {
         super(props);
         this.state = {
           operators: [],
-          stakeBalance: '',
+          stakeBalance: null,
           withdrawals: [],
-          withdrawalsTotal: 0,
+          withdrawalsTotal: null,
           beneficiaryAddress: '',
           chartOptions: {
             legend: {
@@ -138,7 +138,7 @@ class OverviewTab extends React.Component {
     renderChart = () => {
       const { web3: { utils } } = this.props
       const chartData = this.getChartData()
-      const shouldRenderChart = chartData.datasets[0].data.every(value => !utils.toBN(0).gt(utils.toBN(formatAmount(value || 0, 18))))
+      const shouldRenderChart = chartData.datasets[0].data.some(value => !utils.toBN(formatAmount(value || 0, 18)).isZero())
       return (
         <Col xs={12} md={6}>
           {shouldRenderChart ? <Pie dataKey="name" data={chartData} options={this.state.chartOptions} />
