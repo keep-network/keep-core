@@ -200,6 +200,44 @@ func TestPassReceivedUniqueMessages(t *testing.T) {
 	}
 }
 
+func TestPassIdenticalMessages(t *testing.T) {
+	retransmitter := newRetransmitter(1, 1)
+
+	var received []*pb.NetworkMessage
+
+	message1 := &pb.NetworkMessage{
+		Sender:         []byte("masha"),
+		Payload:        []byte("bear"),
+		Retransmission: 0,
+	}
+	message2 := &pb.NetworkMessage{
+		Sender:         []byte("masha"),
+		Payload:        []byte("bear"),
+		Retransmission: 0,
+	}
+	retransmitter.receive(message1, func() error {
+		received = append(received, message1)
+		return nil
+	})
+
+	retransmitter.receive(message2, func() error {
+		received = append(received, message2)
+		return nil
+	})
+
+	if len(received) != 2 {
+		t.Fatalf("both identical messages should be accepted")
+	}
+
+	if received[0].Retransmission != 0 {
+		t.Errorf("message is not a retransmission")
+	}
+
+	if received[1].Retransmission != 0 {
+		t.Errorf("message is not a retransmission")
+	}
+}
+
 func TestCalculateFingerprint(t *testing.T) {
 	tests := map[string]struct {
 		message1                *pb.NetworkMessage
