@@ -75,13 +75,6 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	for {
 		select {
 		case msg := <-recvChan:
-			logger.Debugf(
-				"[member:%v,channel:%s,state:%T] processing message",
-				currentState.MemberIndex(),
-				m.channel.Name()[:5],
-				currentState,
-			)
-
 			err := currentState.Receive(msg)
 			if err != nil {
 				logger.Errorf(
