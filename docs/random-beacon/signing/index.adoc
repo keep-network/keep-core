@@ -34,26 +34,7 @@ use _rseed~i~_ to select _Group~i~_ from _GG_
 This value is locked in at _Block~k+1~_ but in actuality only calculated at the
 seed reveal stage, because the blockchain cannot perform spontaneous operations.
 
-=== Seed reveal
-
-in _Block~k+1+T_open~_ +
-where _1 <= T~open~ <= T~open_seed~(request~i~)_
-
-_T~siginit~ = k + 1 + T~open~_
-
-Includes opening of commitment, _seed~i~_ signed by _pk~j~_
-
-If the seed is not revealed before _T~open_seed~_:
-
-- with a solo request: abort signing (TODO: refund y/n?)
-- with a crowdfunded request where other bidders are present: try again with the
-next bidder
-- with a crowdfunded request with no more bidders available: abort signing
-
-This transaction triggers the signing. Calculate _rseed~i~_ based on the hash of
-_Block~k+1~_, then select _Group~i~_ from _GG_ with _rseed~i~_.
-
-The value to be signed is _input~i~ = H(seed~i~, rseed~i~, v~i-1~)_.
+=== Signature generation
 
 _Group~i~_ now has _T~signing_failure~(request~i~)_ blocks to submit the
 signature to _input~i~_.
@@ -95,6 +76,7 @@ if invalid:
 If _T~output~ > T~signing_deadline~(request~i~)_, the other members of
 _Group~i~_ apart from _P~submitter~_ will be penalized for a late output.
 
+////
 ==== Output share submission
 
 If reward anchoring is used, members of _Group~i~_ can also submit signature
@@ -115,25 +97,4 @@ If the share is valid, _P~n~_ should be rewarded by _R~group~(T~share~)_.
 
 If the share is invalid, _P~n~_ should be punished as if they had submitted an
 invalid output.
-
-=== Tattletale phase
-
-in _Block~T_siginit+T_complain~_
-where _1 <= T~complain~ <= SIGNING_COMPLAINT_TIMEOUT_
-
-members of _Group~i~_ may submit proof of misbehavior by other members
-
-member _P~tattletale~_ submits _complaint(P~accused~, P~tattletale~, proof)_
-
-if valid:
-
-- reward _P~tattletale~_ by _TATTLETALE_REWARD * RequestMultiplier~i~_
-- punish _P~accused~_ by _INVALID_SHARE_PENALTY * RequestMultiplier~i~_
-
-if invalid:
-
-- punish _P~tattletale~_ by _INVALID_COMPLAINT_PENALTY * RequestMultiplier~i~_
-
-The tattletale phase goes on separately of the output, and can continue even
-after the valid output has been submitted, or the group has failed entirely to
-submit a valid output.
+////
