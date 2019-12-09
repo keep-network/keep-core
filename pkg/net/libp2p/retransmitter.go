@@ -83,6 +83,10 @@ func (r *retransmitter) receive(
 		return nil
 	}
 
+	if r.cache.has(fingerprint) && message.Retransmission != 0 {
+		return nil
+	}
+
 	if r.cache.add(fingerprint) {
 		return onFirstTimeReceived()
 	}
