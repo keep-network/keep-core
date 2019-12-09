@@ -169,14 +169,13 @@ contract TokenGrant {
         uint256 _duration = _extraData.toUint(20);
         uint256 _start = _extraData.toUint(52);
         uint256 _cliff = _extraData.toUint(84);
-        
         require(_grantee != address(0), "Grantee address can't be zero.");
         require(_cliff <= _duration, "Vesting cliff duration must be less or equal total vesting duration.");
 
         bool _revocable;
         if (_extraData.slice(116, 1)[0] == 0x01) {
             _revocable = true;
-        } 
+        }
 
         uint256 id = numGrants++;
         grants[id] = Grant(_from, _grantee, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0, 0);
@@ -214,11 +213,11 @@ contract TokenGrant {
 
         emit WithdrawnTokenGrant(amount);
     }
-    
+
     /**
      * @notice Calculates and returns vested grant amount.
-     * @dev Calculates token grant amount that has already vested, 
-     * including any tokens that have already been withdrawn by the grantee as well 
+     * @dev Calculates token grant amount that has already vested,
+     * including any tokens that have already been withdrawn by the grantee as well
      * as any tokens that are available to withdraw but have not yet been withdrawn.
      * @param _id Grant ID.
      */
@@ -244,7 +243,7 @@ contract TokenGrant {
     }
 
     /**
-     * @notice Allows the grant manager to revoke the grant. 
+     * @notice Allows the grant manager to revoke the grant.
      * @dev Granted tokens that are already vested (releasable amount) remain so grantee can still withdraw them
      * the rest are returned to the token grant manager.
      * @param _id Grant ID.

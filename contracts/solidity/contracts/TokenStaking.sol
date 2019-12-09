@@ -82,7 +82,7 @@ contract TokenStaking is StakeDelegatable {
         require(_value <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
 
         stakeBalances[_operator] = stakeBalances[_operator].sub(_value);
- 
+
         withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), now);
 
         emit InitiatedUnstake(_operator, _value);

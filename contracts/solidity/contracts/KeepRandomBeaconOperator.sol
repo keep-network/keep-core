@@ -268,6 +268,7 @@ contract KeepRandomBeaconOperator {
         uint32 virtualStakerIndex;
 
         bytes memory ticketBytes = abi.encodePacked(ticket);
+        /* solium-disable-next-line */
         assembly {
             // ticket value is 8 bytes long
             ticketValue := mload(add(ticketBytes, 8))

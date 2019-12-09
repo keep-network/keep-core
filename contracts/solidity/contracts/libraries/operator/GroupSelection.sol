@@ -150,12 +150,17 @@ library GroupSelection {
         uint256 groupSelectionSeed
     ) internal view returns(bool) {
         uint64 ticketValueExpected;
-        bytes memory ticketBytes = abi.encodePacked(keccak256(abi.encodePacked(
-            groupSelectionSeed,
-            stakerValue,
-            virtualStakerIndex
-        )));
+        bytes memory ticketBytes = abi.encodePacked(
+            keccak256(
+                abi.encodePacked(
+                    groupSelectionSeed,
+                    stakerValue,
+                    virtualStakerIndex
+                )
+            )
+        );
         // use first 8 bytes to compare ticket values
+        /* solium-disable-next-line */
         assembly {
             ticketValueExpected := mload(add(ticketBytes, 8))
         }

@@ -7,7 +7,8 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
     constructor(
         address _serviceContract,
         address _stakingContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {}
+    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
+    }
 
     function registerNewGroup(bytes memory groupPublicKey) public {
         groups.addGroup(groupPublicKey);
