@@ -1,9 +1,9 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { Button, Form, FormGroup,
-  FormControl } from 'react-bootstrap'
+import { Form, FormGroup, FormControl } from 'react-bootstrap'
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount, displayAmount } from '../utils'
+import { SubmitButton } from './Button'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount',
@@ -41,10 +41,6 @@ class StakingDelegateForm extends Component {
     window.setTimeout(() => {
       this.setState(this.state)
     }, RESET_DELAY)
-  }
-
-  onClick = (e) => {
-    this.submit()
   }
 
   onSubmit = (e) => {
@@ -94,7 +90,7 @@ class StakingDelegateForm extends Component {
     else return 'error'
   }
 
-  async submit() {
+  submit = async () => {
     const { amount, magpie, operatorSignature } = this.state
     const { web3 } = this.props;
     const stakingContractAddress = web3.stakingContract.options.address;
@@ -156,12 +152,12 @@ class StakingDelegateForm extends Component {
           <FormControl.Feedback />
         </FormGroup>
 
-        <Button
-          bsStyle="primary"
-          bsSize="large"
-          onClick={this.onClick}>
+        <SubmitButton
+          type='submit'
+          className="btn btn-primary btn-lg"
+          onSubmitAction={this.submit}>
           Delegate stake
-        </Button>
+        </SubmitButton>
         { hasError &&
           <small className="error-message">{errorMsg}</small> }
       </Form>
