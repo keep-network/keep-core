@@ -64,8 +64,9 @@ async function stakeOperatorAccount(operator, contractOwner) {
   the bootstrap peer account already exists and is hosted on an ETH node.
   */
 
-  let signature = Buffer.from(contractOwnerSigned.substr(2), 'hex');
-  let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
+  let delegation = '0x' + Buffer.concat([
+    Buffer.from(magpie.substr(2), 'hex'), 
+    Buffer.from(contractOwnerSigned.substr(2), 'hex')]).toString('hex');
 
   console.log('Staking 1000000 KEEP tokens on operator account ' + operator);
 
