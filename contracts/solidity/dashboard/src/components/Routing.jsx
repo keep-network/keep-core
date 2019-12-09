@@ -20,13 +20,9 @@ class Routing extends React.Component {
             <RoutingTabs isOperator={isOperator} isTokenHolder={isTokenHolder}>
                 <Switch>
                     <Route exact path='/overview' component={OverviewTab} />
-                    {isTokenHolder &&
-                        <>
-                            <Route exact path='/stake' component={StakeTab} />
-                            <Route exact path='/token-grants' component={TokenGrantsTab} />
-                            <Route exact path='/create-token-grants' component={CreateTokenGrantsTab} />
-                        </>
-                    }
+                    {isTokenHolder && <Route exact path='/stake' component={StakeTab} /> }
+                    {isTokenHolder && <Route exact path='/token-grants' component={TokenGrantsTab} /> }
+                    {isTokenHolder && <Route exact path='/create-token-grants' component={CreateTokenGrantsTab} /> }
                     <Route exact path='/' >
                         <Redirect to='/overview' />
                     </Route>
