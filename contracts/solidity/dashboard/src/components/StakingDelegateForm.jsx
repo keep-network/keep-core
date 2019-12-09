@@ -16,7 +16,6 @@ class StakingDelegateForm extends Component {
 
   state = {
     amount: 100,
-    operatorSignature: "",
     operatorAddress: "",
     magpie: "",
     hasError: false,
@@ -57,37 +56,13 @@ class StakingDelegateForm extends Component {
     }
   }
 
-  async recoverOperatorAddress(signature) {
-    const { web3 } = this.props
-    let recoveredOperator
-    try {
-      recoveredOperator = await web3.eth.personal.ecRecover(web3.utils.soliditySha3(web3.yourAddress), signature)
-    } catch {
-      recoveredOperator = "0x0"
-    }
-
-    if (this.state.operatorAddress !== recoveredOperator) {
-      this.setState({
-        operatorAddress: recoveredOperator
-      });
-    }
-  }
-
-  validateOperatorSignature() {
-    const { web3 } = this.props
-    if (web3.utils && this.state.operatorSignature.length === 132) {
-      this.recoverOperatorAddress(this.state.operatorSignature)
-      return 'success'
-    } else return 'error'
-  }
-
-  validateMagpie() {
+  validateAddress = () => {
     const { web3 } = this.props
     if (web3.utils && web3.utils.isAddress(this.state.magpie)) return 'success'
     else return 'error'
   }
 
-  validateAmount() {
+  validateAmount = () => {
     const { amount } = this.state
     const { web3, tokenBalance } = this.props
     if (web3.utils && tokenBalance && formatAmount(amount, 18).lte(tokenBalance)) return 'success'
@@ -95,45 +70,39 @@ class StakingDelegateForm extends Component {
   }
 
   async submit() {
-    const { amount, magpie, operatorSignature } = this.state
+    const { amount, magpie, operatorAddress } = this.state
     const { web3 } = this.props;
     const stakingContractAddress = web3.stakingContract.options.address;
-    let delegationData = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), Buffer.from(operatorSignature.substr(2), 'hex')]).toString('hex');
+    let delegationData = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), Buffer.from(operatorAddress.substr(2), 'hex')]).toString('hex');
     await web3.token.methods.approveAndCall(stakingContractAddress, web3.utils.toBN(formatAmount(amount, 18)).toString(), delegationData).send({from: web3.yourAddress})
   }
 
   render() {
     const { tokenBalance } = this.props
-    const { amount, operatorSignature, operatorAddress, magpie,
-        hasError,
-        errorMsg} = this.state
+    const { amount, operatorAddress, magpie, hasError, errorMsg } = this.state
     
-    let operatorRecovered = {
+    let operatorAddressInfoStyle = {
       display: operatorAddress ? "block" : "none"
     }
     
     return (
       <Form onSubmit={this.onSubmit}>
-        <h4>Operator signature</h4>
-        <p className="small">ECDSA signature of your address obtained from the operator. Please be aware that operator can
-            unstake but can not transfer or withdraw your tokens, any misbehavior of the operator will
-            result stake slashing of your token balance.</p>
-
-        <FormGroup validationState={this.validateOperatorSignature()}>
+        <h4>Operator address</h4>
+        <FormGroup validationState={this.validateAddress()}>
           <FormControl
             type="textarea"
-            name="operatorSignature"
-            value={operatorSignature}
+            name="operatorAddress"
+            value={operatorAddress}
             onChange={this.onChange}
           />
           <FormControl.Feedback />
         </FormGroup>
-        <div style={operatorRecovered} className="alert alert-info small">
+        <div style={operatorAddressInfoStyle} className="alert alert-info small">
           Operator: <strong>{operatorAddress}</strong>. Please check that the address is correct.
         </div>
         <h4>Magpie</h4>
         <p className="small">Address that receives earned rewards.</p>
-        <FormGroup validationState={this.validateMagpie()}>
+        <FormGroup validationState={this.validateAddress()}>
           <FormControl
             type="text"
             name="magpie"
