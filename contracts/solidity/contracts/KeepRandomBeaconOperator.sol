@@ -268,6 +268,7 @@ contract KeepRandomBeaconOperator {
         uint32 virtualStakerIndex;
 
         bytes memory ticketBytes = abi.encodePacked(ticket);
+        /* solium-disable-next-line */
         assembly {
             // ticket value is 8 bytes long
             ticketValue := mload(add(ticketBytes, 8))
@@ -434,7 +435,7 @@ contract KeepRandomBeaconOperator {
             serviceContract
         );
 
-        bytes memory groupPubKey = groups.getGroupPublicKeyCompressed(groupIndex);
+        bytes memory groupPubKey = groups.getGroupPublicKey(groupIndex);
         emit RelayEntryRequested(previousEntry, groupPubKey);
     }
 
@@ -623,13 +624,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Returns index of the provided group.
-     */
-    function getGroupIndex(bytes memory groupPubKey) public view returns (uint256) {
-        return groups.getGroupIndex(groupPubKey);
-    }
-
-    /**
      * @dev Gets all indices in the provided group for a member.
      */
     function getGroupMemberIndices(bytes memory groupPubKey, address member) public view returns (uint256[] memory indices) {
@@ -648,5 +642,19 @@ contract KeepRandomBeaconOperator {
     function withdrawGroupMemberRewards(uint256 groupIndex, uint256[] memory groupMemberIndices) public {
         uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
         stakingContract.magpieOf(msg.sender).transfer(accumulatedRewards);
+    }
+
+    /**
+    * @dev Gets the index of the first active group.
+    */
+    function getFirstActiveGroupIndex() public view returns (uint256) {
+        return groups.expiredGroupOffset;
+    }
+
+    /**
+    * @dev Gets group public key.
+    */
+    function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
+        return groups.getGroupPublicKey(groupIndex);
     }
 }

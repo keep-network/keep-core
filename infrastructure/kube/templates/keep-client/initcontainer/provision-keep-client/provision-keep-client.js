@@ -230,7 +230,7 @@ async function createKeepClientConfig(operator) {
     Here we format the default rendering to write the config file with Seed/Port values as needed.
     */
     let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
-      replace: (key, value) => { return (key == 'Seed' || key == 'Port') ? value.toFixed(0) : false }
+      replace: (key, value) => { return (key == 'RetransmissionCycles' || key == 'RetransmissionInterval' || key == 'Port') ? value.toFixed(0) : false }
     });
 
     fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', formattedConfigFile, (error) => {

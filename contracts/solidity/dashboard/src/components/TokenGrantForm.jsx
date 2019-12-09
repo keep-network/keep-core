@@ -1,9 +1,9 @@
 import moment from 'moment'
 import React, { Component } from 'react'
-import { Button, Form, FormGroup,
-  FormControl, ControlLabel, Col, HelpBlock, Checkbox } from 'react-bootstrap'
+import { Form, FormGroup, FormControl, ControlLabel, Col, HelpBlock, Checkbox } from 'react-bootstrap'
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount } from '../utils'
+import { SubmitButton } from './Button'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount.',
@@ -45,11 +45,7 @@ class TokenGrantForm extends Component {
     else return 'error'
   }
 
-  onClick = (e) => {
-    this.submit()
-  }
-
-  async submit() {
+  submit = async () => {
     const { amount, grantee, duration, start, cliff, revocable} = this.state
     const { web3 } = this.props
 
@@ -169,12 +165,13 @@ class TokenGrantForm extends Component {
             </Col>
           </FormGroup>
 
-          <Button
-            bsStyle="primary"
-            bsSize="large"
-            onClick={this.onClick}>
+          <SubmitButton
+            className="btn btn-primary btn-lg"
+            type="submit"
+            onSubmitAction={this.submit}
+          >
             Grant tokens
-          </Button>
+          </SubmitButton>
         </Form>
         { hasError &&
           <small className="error-message">{errorMsg}</small> }

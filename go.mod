@@ -12,7 +12,7 @@ require (
 	github.com/ipfs/go-datastore v0.1.1
 	github.com/ipfs/go-log v0.0.1
 	github.com/keep-network/go-libp2p-bootstrap v0.0.0-20190611114437-e92bd71e8199
-	github.com/keep-network/keep-common v0.0.0-20191119165557-64b17f00daab
+	github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e
 	github.com/libp2p/go-addr-util v0.0.1
 	github.com/libp2p/go-libp2p v0.4.1
 	github.com/libp2p/go-libp2p-connmgr v0.1.0

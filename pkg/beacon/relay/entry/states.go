@@ -212,7 +212,7 @@ func (ess *entrySubmissionState) Initiate() error {
 
 	return submitter.submitRelayEntry(
 		ess.signature,
-		ess.signer.GroupPublicKeyBytesCompressed(),
+		ess.signer.GroupPublicKeyBytes(),
 		ess.entrySubmissionStartBlockHeight,
 	)
 }

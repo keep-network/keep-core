@@ -1,5 +1,4 @@
 import React, { useContext } from 'react'
-import { Button } from 'react-bootstrap'
 import { Web3Context } from './WithWeb3Context'
 import { useShowMessage } from './Message'
 
@@ -19,7 +18,9 @@ const UndelegateStakeButton = (props) => {
   }
 
   return (
-    <Button bsSize="small" bsStyle="primary" onClick={undelegate}>Undelegate</Button>
+    <SubmitButton className="btn btn-primary btn-sm" onSubmitAction={undelegate}>
+      Undelegate
+    </SubmitButton>
   )
 }
 
