@@ -56,9 +56,9 @@ class StakingDelegateForm extends Component {
     }
   }
 
-  validateAddress = () => {
+  validateAddress = (address) => {
     const { web3 } = this.props
-    if (web3.utils && web3.utils.isAddress(this.state.magpie)) return 'success'
+    if (web3.utils && web3.utils.isAddress(address)) return 'success'
     else return 'error'
   }
 
@@ -88,7 +88,7 @@ class StakingDelegateForm extends Component {
     return (
       <Form onSubmit={this.onSubmit}>
         <h4>Operator address</h4>
-        <FormGroup validationState={this.validateAddress()}>
+        <FormGroup validationState={this.validateAddress(operatorAddress)}>
           <FormControl
             type="textarea"
             name="operatorAddress"
@@ -102,7 +102,7 @@ class StakingDelegateForm extends Component {
         </div>
         <h4>Magpie</h4>
         <p className="small">Address that receives earned rewards.</p>
-        <FormGroup validationState={this.validateAddress()}>
+        <FormGroup validationState={this.validateAddress(magpie)}>
           <FormControl
             type="text"
             name="magpie"
