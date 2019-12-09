@@ -50,6 +50,26 @@ the failure deadline should be treated as signing failure transactions instead.
 The signing failure transaction needs no specific content; it triggers the stake
 slashing for the group members and refunds the output bid to the requester.
 
+==== Generating signature shares
+
+==== Verifying signature shares
+
+When `P_j` creates a signature share `Share_j`
+as a member of `Group_k`
+producing a threshold signature for `Entry_e`
+the share must be broadcast to the other members in a message containing:
+
+* the signature share `Share_j`
+* the member index `j` of the sender `P_j`;
+
+When `P_i` receives a signature share `Share_j` broadcast by `P_j`,
+the share can be verified by `blsVerify(Share_j, y_j, Input_e)`.
+If `Share_j` is valid,
+`P_i` can use it for reconstructing the threshold signature.
+If `Share_j` is invalid, `P_i` must not use it for reconstructing the entry.
+
+==== Reconstructing the signature
+
 === Output submission
 
 in _Block~T_siginit+T_output~_ +
