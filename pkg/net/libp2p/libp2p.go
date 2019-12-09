@@ -72,8 +72,9 @@ type retransmissionOptions struct {
 }
 
 type provider struct {
-	channelManagerMutex sync.Mutex
-	channelManagr       *channelManager
+	channelManagerMutex   sync.Mutex
+	channelManagr         *channelManager
+	unicastChannelManager *unicastChannelManager
 
 	identity *identity
 	host     host.Host
@@ -81,6 +82,12 @@ type provider struct {
 	addrs    []ma.Multiaddr
 
 	connectionManager *connectionManager
+}
+
+func (p *provider) ChannelWith(
+	peerID string,
+) (net.UnicastChannel, error) {
+	return p.unicastChannelManager.getUnicastChannel(peerID)
 }
 
 func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
@@ -214,14 +221,17 @@ func Connect(
 		return nil, err
 	}
 
+	unicastChannelManager := newUnicastChannelManager(ctx, identity, host)
+
 	router := dht.NewDHT(ctx, host, dssync.MutexWrap(dstore.NewMapDatastore()))
 
 	provider := &provider{
-		channelManagr: cm,
-		identity:      identity,
-		host:          rhost.Wrap(host, router),
-		routing:       router,
-		addrs:         host.Addrs(),
+		channelManagr:         cm,
+		unicastChannelManager: unicastChannelManager,
+		identity:              identity,
+		host:                  rhost.Wrap(host, router),
+		routing:               router,
+		addrs:                 host.Addrs(),
 	}
 
 	if len(config.Peers) == 0 {

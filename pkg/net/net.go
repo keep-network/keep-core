@@ -48,6 +48,7 @@ type TaggedMarshaler interface {
 type Provider interface {
 	ID() TransportIdentifier
 
+	ChannelWith(peerID string) (UnicastChannel, error)
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
 	AddrStrings() []string
@@ -77,22 +78,11 @@ type TaggedUnmarshaler interface {
 	Type() string
 }
 
-// BroadcastChannelFilter represents a filter which determine if the incoming
-// message should be processed by the receivers. It takes the message author's
-// public key as its argument and returns true if the message should be
-// processed or false otherwise.
-type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
-
-// BroadcastChannel represents a named pubsub channel. It allows Group Members
-// to send messages on the channel (via Send), and to access a low-level receive chan
-// that furnishes messages sent onto the BroadcastChannel. Messages are not
-// guaranteed to be ordered at the pubsub level, though they will be at the
-// underlying network protocol (ie. tcp, quic).
-type BroadcastChannel interface {
-	// Name returns the name of this broadcast channel.
-	Name() string
-	// Given a message m that can marshal itself to protobuf, broadcast m to
-	// members of the Group through the BroadcastChannel.
+// Channel is a communication medium between two or more network peers allowing
+// to send and receive messages.
+type Channel interface {
+	// Send function publishes a message m to the channel. Message m needs to
+	// conform to the marshalling interface.
 	Send(m TaggedMarshaler) error
 	// Recv takes a HandleMessageFunc and returns an error. This function should
 	// be retried.
@@ -109,8 +99,34 @@ type BroadcastChannel interface {
 	// The string type associated with the unmarshaler is the result of calling
 	// Type() on a raw unmarshaler.
 	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
+}
+
+// UnicastChannel represents a bidirectional communication channel between two
+// network peers. UnicastChannel guarantess two peers communicating with each
+// other have a direct connection.
+type UnicastChannel interface {
+	Channel
+}
+
+// BroadcastChannel represents a named pubsub channel. It allows Group Members
+// to send messages on the channel (via Send), and to access a low-level receive chan
+// that furnishes messages sent onto the BroadcastChannel. Messages are not
+// guaranteed to be ordered at the pubsub level, though they will be at the
+// underlying network protocol (ie. tcp, quic).
+type BroadcastChannel interface {
+	Channel
+
+	// Name returns the name of this broadcast channel.
+	Name() string
+
 	// AddFilter registers a broadcast channel filter which will be used
 	// to determine if given broadcast channel message should be processed
 	// by the receivers.
 	AddFilter(filter BroadcastChannelFilter) error
 }
+
+// BroadcastChannelFilter represents a filter which determine if the incoming
+// message should be processed by the receivers. It takes the message author's
+// public key as its argument and returns true if the message should be
+// processed or false otherwise.
+type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
