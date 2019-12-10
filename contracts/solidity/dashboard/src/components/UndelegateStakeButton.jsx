@@ -1,6 +1,7 @@
 import React, { useContext } from 'react'
 import { Web3Context } from './WithWeb3Context'
 import { useShowMessage } from './Message'
+import { SubmitButton } from './Button'
 
 const UndelegateStakeButton = (props) => {
   const web3 = useContext(Web3Context)
