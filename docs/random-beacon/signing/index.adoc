@@ -95,26 +95,21 @@ newEntry = lagrangeInterpolate(0, indices, shares)
 in _Block~T_siginit+T_output~_ +
 where _1 <= T~output~ < T~signing_failure~(request~i~)_
 
-_input~i~ = H(seed~i~, rseed~i~, v~i-1~)_
+Member _P~submitter~_ of _Group~i~_ submits
+`newEntry = blsSign(previousEntry, X_i)`
 
-member _P~submitter~_ of _Group~i~_ submits _v'~i~ = blsSign(input~i~, pk~G~)_
+The beacon verifies that the submitted entry
+is a valid signature of the previous entry
+for the selected group's public key:
 
-verify signature
+`blsVerify(newEntry, previousEntry, Y_i)`
 
-if valid, _blsVerify(v'~i~, input~i~, Y~G_i~) == True_:
+If the submitted entry is valid,
+it is accepted as the current beacon entry _Entry~i~ = newEntry_.
+Reward _P~submitter~_ and other members of _Group~i~_
+according to the reward formula.
 
-- reward _P~submitter~_ by
-_R~submitter~(T~output~) * RequestMultiplier~i~_
-- reward _P~o~!= P~submitter~_ of _Group~i~_ by
-_R~group~(T~output~) * RequestMultiplier~i~_
-- set the beacon output as _v~i~ = v'~i~_
-
-if invalid:
-
-- punish _P~n~_ by _D~INVALID_SIGNATURE~ * RequestMultiplier~i~_
-
-If _T~output~ > T~signing_deadline~(request~i~)_, the other members of
-_Group~i~_ apart from _P~submitter~_ will be penalized for a late output.
+If the submitted entry is invalid, it is rejected.
 
 === Entry timeout
 
