@@ -39,14 +39,18 @@ the selected group's failure to produce the output in time
 
 === Signing group selection
 
-in _Block~k+1~_
+When a valid request has been received,
+the beacon selects the signing group to produce the new entry.
 
-take hash of _Block~k+1~_, _rseed~i~ = blockHash(k+1)_
+The previous entry is hashed to produce the signing group selection seed.
 
-use _rseed~i~_ to select _Group~i~_ from _GG_
+`seed = keccak256(previousEntry)`
 
-This value is locked in at _Block~k+1~_ but in actuality only calculated at the
-seed reveal stage, because the blockchain cannot perform spontaneous operations.
+The signing group is selected by taking the value of the seed
+modulo the number of currently active groups,
+and selecting the corresponding active group:
+
+`selectedGroup = seed % numberOfGroups()`
 
 === Signature generation
 
