@@ -15,7 +15,7 @@ contract TokenStaking is StakeDelegatable {
     using UintArrayUtils for uint256[];
 
     event Staked(address indexed from, uint256 value);
-    event InitiatedUnstake(address indexed operator, uint256 value);
+    event InitiatedUnstake(address indexed operator, uint256 value, uint256 createdAt);
     event FinishedUnstake(address operator);
 
     struct Withdrawal {
@@ -82,10 +82,10 @@ contract TokenStaking is StakeDelegatable {
         require(_value <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
 
         stakeBalances[_operator] = stakeBalances[_operator].sub(_value);
+        uint256 createdAt = now;
+        withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), createdAt);
 
-        withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), now);
-
-        emit InitiatedUnstake(_operator, _value);
+        emit InitiatedUnstake(_operator, _value, createdAt);
     }
 
     /**

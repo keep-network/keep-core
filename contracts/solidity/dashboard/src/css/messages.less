@@ -1,0 +1,80 @@
+.messages-container {
+    position: fixed;
+    z-index: 1000;
+    top: .5rem;
+    left: .5rem;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+    background: transparent;
+    color: @black;
+}
+
+.message {
+    position: relative;
+    padding: .5em 1em;
+    margin: 1em;
+    opacity: .8;
+
+    &-content-wrapper {
+        @media @xs {
+            width: 15em;
+        }
+        width: 20em;
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    &-icon {
+        font-size: 1.5em;
+        &-close {
+            font-size: .75em;
+            &:hover {
+                cursor: pointer;
+            }
+        }
+    }
+
+    &-content {
+        margin-left: 10px;
+        margin-right: auto;
+    }
+
+    &-content > span {
+        font-weight: bold;
+        padding: 0 0 .5em 0;
+    }
+
+    &.message {
+        &-success {
+            background-color: @aqua-marine;
+        }
+        &-error {
+            background-color: #e0b8c1;
+        }
+    }
+
+    //enter animation
+    &-enter {
+        opacity: .01;
+        &-active {
+            opacity: .8;
+            transition: opacity 250ms ease-in;
+        }
+    }
+    
+    //exit animation
+    &-exit {
+        max-height: 500px;
+        &-active {
+            max-height: 0;
+            overflow: hidden;
+            margin: 0 1em;
+            padding: 0 1em;
+            transition: max-height 0.5s cubic-bezier(0, 1, 0, 1), margin 0.5s cubic-bezier(0, 1, 0, 1) ;
+        }
+    }
+
+}
