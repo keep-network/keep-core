@@ -58,15 +58,19 @@ class StakingDelegateForm extends Component {
 
   validateAddress = (address) => {
     const { web3 } = this.props
-    if (web3.utils && web3.utils.isAddress(address)) return 'success'
-    else return 'error'
+    if (web3.utils && web3.utils.isAddress(address))
+      return 'success'
+    else
+      return 'error'
   }
 
   validateAmount = () => {
     const { amount } = this.state
     const { web3, tokenBalance } = this.props
-    if (web3.utils && tokenBalance && formatAmount(amount, 18).lte(tokenBalance)) return 'success'
-    else return 'error'
+    if (web3.utils && tokenBalance && formatAmount(amount, 18).lte(tokenBalance))
+      return 'success'
+    else
+      return 'error'
   }
 
   async submit() {
