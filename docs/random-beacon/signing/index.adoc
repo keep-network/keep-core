@@ -119,35 +119,13 @@ _Group~i~_ apart from _P~submitter~_ will be penalized for a late output.
 === Entry timeout
 
 If a valid output _v~i~_ is not submitted before block
-`currentEntryStartBlock + relayEntryTimeout + 1`,
-the signing fails and the group is terminated,
+`timeoutBlock = currentEntryStartBlock + relayEntryTimeout + 1`,
+the entry generation for the selected group times out.
+From `timeoutBlock` onwards,
+no submissions by _Group~i~_ are accepted,
+and anyone can report the timeout by calling `reportRelayEntryTimeout()`.
+
+When the beacon receives a valid timeout report
+the previously selected group is terminated,
 with each member penalized for their (lack of) contribution to the failure.
-
-Because the blockchain cannot perform autonomous actions, this is done by having
-anyone submit a signing failure transaction. Attempts to submit the output after
-the failure deadline should be treated as signing failure transactions instead.
-The signing failure transaction needs no specific content; it triggers the stake
-slashing for the group members and refunds the output bid to the requester.
-
-////
-==== Output share submission
-
-If reward anchoring is used, members of _Group~i~_ can also submit signature
-shares to anchor their reward to _T~share~_, an earlier moment than the final
-submission of the output.
-
-An output share can be submitted by any member _P~n~_ of _Group~i~_, if a valid
-output _v~i~_ has not been submitted yet. The submission should contain:
-
-- the individual public key of _P~n~_: _gx~n~ = P1 * x~n~_
-- the signature share: _blsSign(input~i~, x~n~)_
-- the merkle path from _gx~n~_ to the merkle root of _Group~i~_
-
-The signature share is verified like the output submission would be, but using
-_gx~n~_ instead of _Y~i~_. Additionally, the merkle path of _gx~n~_ is verified.
-
-If the share is valid, _P~n~_ should be rewarded by _R~group~(T~share~)_.
-
-If the share is invalid, _P~n~_ should be punished as if they had submitted an
-invalid output.
-////
+A new signing group is then selected to produce the entry.
