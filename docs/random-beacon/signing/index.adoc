@@ -1,13 +1,27 @@
 = Random Beacon Signing
 
-Input:
+=== Terminology
 
-- _request~i~_
-  - _commit(seed~i~)_
-  - sender pubkey _pk~j~_
-  - request value multiplier _RequestMultiplier~i~_
-- groups _GG_
-- previous output _v~i-1~_
+`P1`:: The generator point for the BLS elliptic curve
+
+`X_k`:: The group private key of `Group_k`
+
+`Y_k`:: The group public key: `Y_k = P1 * X_k`
+
+`Entry_e`:: The entry matching the entry identifier `e`
+
+`Input_e`:: The input for generating the new entry:
+`Entry_e = Input_e * X`
+
+`x_i`:: The individual private key of `P_i`
+
+`y_i`:: The individual public key of `P_i`: `y_i = P1 * x_i`
+
+`Share_i`:: The signature share by `P_i`: `Share_i = Input_e * x_i`
+
+`N`:: The number of members in a group
+
+`H`:: The number of members required for a honest majority
 
 === Request submission
 
