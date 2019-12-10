@@ -139,12 +139,10 @@ class OverviewTab extends React.Component {
       const { web3: { utils } } = this.props
       const chartData = this.getChartData()
       const shouldRenderChart = chartData.datasets[0].data.some(value => !utils.toBN(formatAmount(value || 0, 18)).isZero())
-      return (
-        <Col xs={12} md={6}>
-          {shouldRenderChart ? <Pie dataKey="name" data={chartData} options={this.state.chartOptions} />
-            : <div className="alert alert-info m-5" role="alert">It looks like You don't have any tokens or delegated stake.</div>
-          }
-        </Col>
+
+      return ( shouldRenderChart ?
+        <Pie dataKey="name" data={chartData} options={this.state.chartOptions} /> :
+        <div className="alert alert-info m-5" role="alert">It looks like You don't have any tokens or delegated stake.</div>
       )
     }
 
@@ -161,7 +159,9 @@ class OverviewTab extends React.Component {
             <>
               {isOperator ?
                 <Row className="overview">
-                  {this.renderChart()}
+                  <Col xs={12} md={6}>
+                    {this.renderChart()}
+                  </Col>
                   <Col xs={12} md={6}>
                     <Table className="small table-sm" striped bordered condensed>
                       <tbody>
@@ -193,7 +193,9 @@ class OverviewTab extends React.Component {
                   </Col>
                 </Row>:
                 <Row className="overview">
-                  {this.renderChart()}
+                  <Col xs={12} md={6}>
+                    {this.renderChart()}
+                  </Col>
                   <Col xs={12} md={6}>
                     <Table className="small table-sm" striped bordered condensed>
                       <tbody>
