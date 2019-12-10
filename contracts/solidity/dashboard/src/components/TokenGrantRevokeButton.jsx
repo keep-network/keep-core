@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
-import { Button } from 'react-bootstrap'
 import WithWeb3Context from './WithWeb3Context'
+import { SubmitButton } from './Button'
 
 class TokenGrantRevokeButton extends Component {
 
@@ -18,7 +18,7 @@ class TokenGrantRevokeButton extends Component {
     }
 
     if (item.revocable && !item.revoked) {
-      button = <Button bsSize="small" bsStyle="primary" onClick={this.revoke}>Revoke</Button>
+      button = <SubmitButton className="btn btn-primary btn-sm" onSubmitAction={this.revoke}>Revoke</SubmitButton>
     }
 
     return button

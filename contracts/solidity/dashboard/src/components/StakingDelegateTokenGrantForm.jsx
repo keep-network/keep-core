@@ -1,9 +1,9 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { Button, Form, FormGroup,
-  FormControl } from 'react-bootstrap'
+import { Form, FormGroup, FormControl } from 'react-bootstrap'
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount, displayAmount } from '../utils'
+import { SubmitButton } from './Button'
 
 
 class StakingDelegateTokenGrantForm extends Component {
@@ -20,10 +20,6 @@ class StakingDelegateTokenGrantForm extends Component {
     this.setState(
       { [name]: e.target.value }
     )
-  }
-
-  onClick = (e) => {
-    this.submit()
   }
 
   onSubmit = (e) => {
@@ -53,7 +49,7 @@ class StakingDelegateTokenGrantForm extends Component {
       return 'error'
   }
 
-  async submit() {
+  submit = async () => {
     const { grantId, amount, magpie, operatorAddress } = this.state
     const { web3 } = this.props
     const stakingContractAddress = web3.stakingContract.options.address;
@@ -127,12 +123,13 @@ class StakingDelegateTokenGrantForm extends Component {
           <FormControl.Feedback />
         </FormGroup>
 
-        <Button
-          bsStyle="primary"
-          bsSize="large"
-          onClick={this.onClick}>
+        <SubmitButton
+          type="submit"
+          className="btn btn-primary btn-lg"
+          onSubmitAction={this.submit}
+        >
           Delegate stake
-        </Button>
+        </SubmitButton>
       </Form>
     )
   }

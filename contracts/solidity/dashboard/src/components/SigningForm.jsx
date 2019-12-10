@@ -1,8 +1,8 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { Button, Row, Form, FormGroup,
-  FormControl, Col } from 'react-bootstrap'
+import { Row, Form, FormGroup, FormControl, Col } from 'react-bootstrap'
 import WithWeb3Context from './WithWeb3Context'
+import { SubmitButton } from './Button'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount',
@@ -46,10 +46,6 @@ class SigningForm extends Component {
     }, RESET_DELAY)
   }
 
-  onClick = (e) => {
-    this.submit()
-  }
-
   onSubmit = (e) => {
     e.preventDefault()
   }
@@ -60,7 +56,7 @@ class SigningForm extends Component {
     }
   }
 
-  async submit() {
+  submit = async () => {
     const { messageToSign } = this.state
     const { web3 } = this.props
 
@@ -94,13 +90,13 @@ class SigningForm extends Component {
               onChange={this.onChange}
               />
           </FormGroup>
-          <Button
-            bsStyle="primary"
-            bsSize="large"
-            onClick={this.onClick}
-            type="submit">
+          <SubmitButton
+            className="btn btn-primary btn-lg"
+            onSubmitAction={this.submit}
+            type="submit"
+          >
             Sign
-          </Button>
+          </SubmitButton>
         </Form>
         { hasError &&
           <small className="error-message">{errorMsg}</small> }

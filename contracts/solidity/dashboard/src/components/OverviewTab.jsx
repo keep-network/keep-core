@@ -26,16 +26,52 @@ class OverviewTab extends React.Component {
                 position: 'right'
               }
           },
+          shouldSubscribeToEvent: true,
         }
     }
 
     componentDidMount() {
         this.getData();
+        this.subscribeToEvent()
     }
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps, prevState) {
         if(prevProps.web3.yourAddress !== this.props.web3.yourAddress)
           this.getData();
+        if(!prevState.shouldSubscribeToEvent && this.state.shouldSubscribeToEvent)
+          this.subscribeToEvent();
+    }
+
+    subscribeToEvent = () => {
+      const { web3EventProvider: { eventStakingContract } } = this.props
+      this.setState({ shouldSubscribeToEvent: false })
+      eventStakingContract.once('InitiatedUnstake', this.subscribeEvent)
+    }
+
+    subscribeEvent = async (error, event) => {
+      const { returnValues: { value, operator, createdAt } } = event
+      const { web3: { utils, stakingContract } } = this.props;
+      
+      const withdrawalDelay = await stakingContract.methods.stakeWithdrawalDelay().call();
+      const availableAt = moment(createdAt * 1000).add(withdrawalDelay, 'seconds')
+      const withdrawal = {
+        'id': operator,
+        'amount': displayAmount(value, 18, 3),
+        'available': availableAt.isSameOrBefore(moment()),
+        'availableAt': availableAt.format("MMMM Do YYYY, h:mm:ss a")
+      }
+      const withdrawals = [...this.state.withdrawals, withdrawal]
+      const withdrawalsTotal = new utils.BN(this.state.withdrawalsTotal).add(utils.toBN(value));
+      const stakeBalance = this.state.stakeBalance.sub(utils.toBN(value))
+      const operators = this.state.operators.filter(({ address }) => address !== operator)
+
+      this.setState({
+        stakeBalance,
+        operators,
+        withdrawals,
+        withdrawalsTotal,
+        shouldSubscribeToEvent: true
+      })
     }
 
     async getData() {
@@ -45,7 +81,7 @@ class OverviewTab extends React.Component {
           return
     
         // Calculate delegated stake balances
-        let stakeBalance = new utils.BN(await stakingContract.methods.balanceOf(yourAddress).call());
+        let stakeBalance = new utils.BN(isOperator ? await stakingContract.methods.balanceOf(yourAddress).call(): 0);
         const operatorsAddresses = await stakingContract.methods.operatorsOf(yourAddress).call()
         let operators = [];
     
@@ -94,7 +130,7 @@ class OverviewTab extends React.Component {
           operators,
           stakeBalance,
           withdrawals,
-          withdrawalsTotal: displayAmount(withdrawalsTotal, 18, 3),
+          withdrawalsTotal,
           beneficiaryAddress: await this.getBeneficiaryAddress()
         })
     }
@@ -109,7 +145,7 @@ class OverviewTab extends React.Component {
               'Pending unstake'
             ],
             datasets: [{
-              data: [displayAmount(stakeBalance, 18, 3), withdrawalsTotal],
+              data: [displayAmount(stakeBalance, 18, 3), displayAmount(withdrawalsTotal, 18, 3)],
               backgroundColor: [
                 colors.nandor,
                 colors.turquoise
@@ -124,7 +160,7 @@ class OverviewTab extends React.Component {
               'Token grants'
             ],
             datasets: [{
-              data: [displayAmount(tokenBalance, 18, 3), displayAmount(stakeBalance, 18, 3), withdrawalsTotal, displayAmount(grantBalance, 18, 3)],
+              data: [displayAmount(tokenBalance, 18, 3), displayAmount(stakeBalance, 18, 3), displayAmount(withdrawalsTotal, 18, 3), displayAmount(grantBalance, 18, 3)],
               backgroundColor: [
                 colors.nandor,
                 colors.turquoise,
@@ -178,7 +214,7 @@ class OverviewTab extends React.Component {
                             { displayAmount(stakeBalance, 18, 3) }
                         </TableRow>
                         <TableRow title="Pending unstake">
-                            { withdrawalsTotal }
+                            { displayAmount(withdrawalsTotal, 18, 3) }
                         </TableRow>
                       </tbody>
                     </Table>
@@ -209,7 +245,7 @@ class OverviewTab extends React.Component {
                           { displayAmount(stakeBalance, 18, 3) }
                         </TableRow>
                         <TableRow title="Pending unstake">
-                          { withdrawalsTotal }
+                          { displayAmount(withdrawalsTotal, 18, 3) }
                         </TableRow>
                         <TableRow title="Token Grants">
                           { displayAmount(grantBalance, 18, 3) }
