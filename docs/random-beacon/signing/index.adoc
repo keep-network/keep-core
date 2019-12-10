@@ -54,39 +54,41 @@ and selecting the corresponding active group:
 
 === Signature generation
 
-_Group~i~_ now has _T~signing_failure~(request~i~)_ blocks to submit the
-signature to _input~i~_.
-
-If a valid output _v~i~_ is not submitted before
-_Block~T_siginit+T_signing_failure(request_i)~_, the signing fails and the group
-is terminated, with each member penalized for their (lack of) contribution to
-the failure.
-
-Because the blockchain cannot perform autonomous actions, this is done by having
-anyone submit a signing failure transaction. Attempts to submit the output after
-the failure deadline should be treated as signing failure transactions instead.
-The signing failure transaction needs no specific content; it triggers the stake
-slashing for the group members and refunds the output bid to the requester.
+The selected group now has `relayEntryTimeout` blocks to submit the
+signature to `previousEntry`.
 
 ==== Generating signature shares
 
+Each member `P_i` in `selectedGroup` calculates
+their signature share:
+`Share_i = previousEntry * x_i`.
+
+The generated shares are broadcast to the other members.
+The broadcast message contains
+the `Share_i` and the member index `i` of the sender `P_i`.
+
+`Message = (Share_i, i)`
+
 ==== Verifying signature shares
 
-When `P_j` creates a signature share `Share_j`
-as a member of `Group_k`
-producing a threshold signature for `Entry_e`
-the share must be broadcast to the other members in a message containing:
-
-* the signature share `Share_j`
-* the member index `j` of the sender `P_j`;
-
 When `P_i` receives a signature share `Share_j` broadcast by `P_j`,
-the share can be verified by `blsVerify(Share_j, y_j, Input_e)`.
+the share can be verified by `blsVerify(Share_j, y_j, previousEntry)`.
 If `Share_j` is valid,
 `P_i` can use it for reconstructing the threshold signature.
 If `Share_j` is invalid, `P_i` must not use it for reconstructing the entry.
 
 ==== Reconstructing the signature
+
+Once `P_i` has received at least `blsThreshold` valid shares,
+the entry can be reconstructed using Lagrange interpolation.
+
+----
+shares = validMessages.map(share)
+
+indices = validMessages.map(index)
+
+newEntry = lagrangeInterpolate(0, indices, shares)
+----
 
 === Output submission
 
@@ -113,6 +115,19 @@ if invalid:
 
 If _T~output~ > T~signing_deadline~(request~i~)_, the other members of
 _Group~i~_ apart from _P~submitter~_ will be penalized for a late output.
+
+=== Entry timeout
+
+If a valid output _v~i~_ is not submitted before block
+`currentEntryStartBlock + relayEntryTimeout + 1`,
+the signing fails and the group is terminated,
+with each member penalized for their (lack of) contribution to the failure.
+
+Because the blockchain cannot perform autonomous actions, this is done by having
+anyone submit a signing failure transaction. Attempts to submit the output after
+the failure deadline should be treated as signing failure transactions instead.
+The signing failure transaction needs no specific content; it triggers the stake
+slashing for the group members and refunds the output bid to the requester.
 
 ////
 ==== Output share submission
