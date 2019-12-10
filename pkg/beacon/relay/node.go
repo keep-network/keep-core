@@ -3,8 +3,8 @@ package relay
 import (
 	"bytes"
 	"crypto/ecdsa"
-	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"sync"
 
@@ -64,20 +64,13 @@ func (n *Node) JoinGroupIfEligible(
 	}
 
 	if len(indexes) > 0 {
-		// build the channel name and get the broadcast channel
-		broadcastChannelName := channelNameForGroup(groupSelectionResult)
-
-		// We should only join the broadcast channel if we're
-		// elligible for the group
+		// create temporary broadcast channel for DKG using the group selection
+		// seed
 		broadcastChannel, err := n.netProvider.ChannelFor(
-			broadcastChannelName,
+			fmt.Sprintf("dkg-%v", newEntry),
 		)
 		if err != nil {
-			logger.Errorf(
-				"failed to get broadcastChannel for name [%s] with err: [%v]",
-				broadcastChannelName,
-				err,
-			)
+			logger.Errorf("failed to get broadcast channel: [%v]", err)
 			return
 		}
 
@@ -116,10 +109,13 @@ func (n *Node) JoinGroupIfEligible(
 					return
 				}
 
-				err = n.groupRegistry.RegisterGroup(
-					signer,
-					broadcastChannelName,
+				// final broadcast channel name for group is the compressed
+				// public key of the group
+				channelName := hex.EncodeToString(
+					signer.GroupPublicKeyBytesCompressed(),
 				)
+
+				err = n.groupRegistry.RegisterGroup(signer, channelName)
 				if err != nil {
 					logger.Errorf("failed to register a group: [%v]", err)
 				}
@@ -128,22 +124,6 @@ func (n *Node) JoinGroupIfEligible(
 	}
 
 	return
-}
-
-// channelNameForGroup takes the selected stakers, and does the
-// following to construct the broadcastChannel name:
-// * concatenates all of the staker values
-// * returns the hashed concatenated values in hexadecimal representation
-func channelNameForGroup(group *groupselection.Result) string {
-	var channelNameBytes []byte
-	for _, staker := range group.SelectedStakers {
-		channelNameBytes = append(channelNameBytes, staker...)
-	}
-
-	hash := sha256.Sum256(channelNameBytes)
-	hexChannelName := hex.EncodeToString(hash[:])
-
-	return hexChannelName
 }
 
 func candidateGroupMembersFilter(
