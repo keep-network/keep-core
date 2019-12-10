@@ -105,13 +105,13 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	for _, signer := range memberships {
-		go func(signer *registry.Membership) {
-			channel, err := n.netProvider.ChannelFor(signer.ChannelName)
+	for _, member := range memberships {
+		go func(member *registry.Membership) {
+			channel, err := n.netProvider.ChannelFor(member.ChannelName)
 			if err != nil {
 				logger.Errorf(
 					"could not create broadcast channel with name [%v]: [%v]",
-					signer.ChannelName,
+					member.ChannelName,
 					err,
 				)
 				return
@@ -123,7 +123,7 @@ func (n *Node) GenerateRelayEntry(
 				relayChain,
 				previousEntry,
 				n.chainConfig.HonestThreshold,
-				signer.Signer,
+				member.Signer,
 				startBlockHeight,
 			)
 			if err != nil {
@@ -133,6 +133,6 @@ func (n *Node) GenerateRelayEntry(
 				)
 				return
 			}
-		}(signer)
+		}(member)
 	}
 }
