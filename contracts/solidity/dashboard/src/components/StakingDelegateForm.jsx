@@ -84,11 +84,7 @@ class StakingDelegateForm extends Component {
   render() {
     const { tokenBalance } = this.props
     const { amount, operatorAddress, magpie, hasError, errorMsg } = this.state
-    
-    let operatorAddressInfoStyle = {
-      display: operatorAddress ? "block" : "none"
-    }
-    
+
     return (
       <Form onSubmit={this.onSubmit}>
         <h4>Operator address</h4>
@@ -101,9 +97,6 @@ class StakingDelegateForm extends Component {
           />
           <FormControl.Feedback />
         </FormGroup>
-        <div style={operatorAddressInfoStyle} className="alert alert-info small">
-          Operator: <strong>{operatorAddress}</strong>. Please check that the address is correct.
-        </div>
         <h4>Magpie</h4>
         <p className="small">Address that receives earned rewards.</p>
         <FormGroup validationState={this.validateAddress(magpie)}>
