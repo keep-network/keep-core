@@ -23,24 +23,14 @@
 
 `H`:: The number of members required for a honest majority
 
-=== Request submission
-
-in _Block~k~_
-
-includes _request~i~_
-
-The requester has placed their bid in escrow, and the funds are locked up until
-either:
-
-- the next valid output is submitted, and the payment is distributed to the
-members of the group that signed output
-- the signing failure deadline is reached, and the payment is refunded due to
-the selected group's failure to produce the output in time
-
 === Signing group selection
 
 When a valid request has been received,
-the beacon selects the signing group to produce the new entry.
+the beacon begins the relay entry generation.
+
+The current block is recorded as the start block of the entry generation:
+
+`currentEntryStartBlock = block.number`
 
 The previous entry is hashed to produce the signing group selection seed.
 
@@ -92,9 +82,6 @@ newEntry = lagrangeInterpolate(0, indices, shares)
 
 === Output submission
 
-in _Block~T_siginit+T_output~_ +
-where _1 <= T~output~ < T~signing_failure~(request~i~)_
-
 Member _P~submitter~_ of _Group~i~_ submits
 `newEntry = blsSign(previousEntry, X_i)`
 
@@ -113,7 +100,7 @@ If the submitted entry is invalid, it is rejected.
 
 === Entry timeout
 
-If a valid output _v~i~_ is not submitted before block
+If a valid output is not submitted before block
 `timeoutBlock = currentEntryStartBlock + relayEntryTimeout + 1`,
 the entry generation for the selected group times out.
 From `timeoutBlock` onwards,
@@ -123,4 +110,5 @@ and anyone can report the timeout by calling `reportRelayEntryTimeout()`.
 When the beacon receives a valid timeout report
 the previously selected group is terminated,
 with each member penalized for their (lack of) contribution to the failure.
-A new signing group is then selected to produce the entry.
+The beacon returns to the signing group selection
+with the failed group being removed from the group pool.
