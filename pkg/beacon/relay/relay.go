@@ -105,18 +105,16 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
+	channel, err := n.netProvider.ChannelFor(memberships[0].ChannelName)
+	if err != nil {
+		logger.Errorf("could not create broadcast channel: [%v]", err)
+		return
+	}
+
+	entry.InitializeChannel(channel)
+
 	for _, member := range memberships {
 		go func(member *registry.Membership) {
-			channel, err := n.netProvider.ChannelFor(member.ChannelName)
-			if err != nil {
-				logger.Errorf(
-					"could not create broadcast channel with name [%v]: [%v]",
-					member.ChannelName,
-					err,
-				)
-				return
-			}
-
 			err = entry.SignAndSubmit(
 				n.blockCounter,
 				channel,

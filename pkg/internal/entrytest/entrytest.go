@@ -128,6 +128,8 @@ func executeSigning(
 	// make sure all signers are ready
 	startBlockHeight := currentBlockHeight + 3
 
+	entry.InitializeChannel(broadcastChannel)
+
 	for _, signer := range signers {
 		go func(signer *dkg.ThresholdSigner) {
 			err := entry.SignAndSubmit(

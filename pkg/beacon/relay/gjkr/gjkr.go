@@ -14,6 +14,33 @@ import (
 
 var logger = log.Logger("keep-gjkr")
 
+// InitializeChannel initializes the given broadcast channel to be able to
+// perform DKG protocol interactions.
+// The channel needs to be fully initialized before Execute is called.
+func InitializeChannel(channel net.BroadcastChannel) {
+	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &EphemeralPublicKeyMessage{}
+	})
+	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &MemberCommitmentsMessage{}
+	})
+	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &PeerSharesMessage{}
+	})
+	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &SecretSharesAccusationsMessage{}
+	})
+	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &MemberPublicKeySharePointsMessage{}
+	})
+	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &PointsAccusationsMessage{}
+	})
+	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &MisbehavedEphemeralKeysMessage{}
+	})
+}
+
 // Execute runs the GJKR distributed key generation  protocol, given a
 // broadcast channel to mediate with, a block counter used for time tracking,
 // a player index to use in the group, dishonest threshold, and block height
@@ -42,8 +69,6 @@ func Execute(
 		return nil, 0, fmt.Errorf("cannot create a new member: [%v]", err)
 	}
 
-	initializeChannel(channel)
-
 	initialState := &joinState{
 		channel: channel,
 		member:  member,
@@ -62,30 +87,4 @@ func Execute(
 	}
 
 	return finalizationState.result(), endBlockHeight, nil
-}
-
-// initializeChannel initializes a given broadcast channel to be able to
-// perform distributed key generation interactions.
-func initializeChannel(channel net.BroadcastChannel) {
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &EphemeralPublicKeyMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &MemberCommitmentsMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &PeerSharesMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &SecretSharesAccusationsMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &MemberPublicKeySharePointsMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &PointsAccusationsMessage{}
-	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &MisbehavedEphemeralKeysMessage{}
-	})
 }

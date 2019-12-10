@@ -16,7 +16,10 @@ const (
 	signatureBlocks = state.MessagingStateActiveBlocks
 )
 
-func initializeChannel(channel net.BroadcastChannel) {
+// InitializeChannel initializes the given broadcast channel to be able to
+// perform relay entry signing protocol interactions.
+// The channel has to be initialized before the SignAndSubmit is called.
+func InitializeChannel(channel net.BroadcastChannel) {
 	channel.RegisterUnmarshaler(
 		func() net.TaggedUnmarshaler { return &SignatureShareMessage{} })
 }
@@ -33,8 +36,6 @@ func SignAndSubmit(
 	signer *dkg.ThresholdSigner,
 	startBlockHeight uint64,
 ) error {
-	initializeChannel(channel)
-
 	initialState := &signatureShareState{
 		signingStateBase: signingStateBase{
 			channel:         channel,

@@ -27,6 +27,9 @@ func ExecuteDKG(
 	// The staker index should begin with 1
 	playerIndex := group.MemberIndex(index + 1)
 
+	gjkr.InitializeChannel(channel)
+	dkgResult.InitializeChannel(channel)
+
 	gjkrResult, gjkrEndBlockHeight, err := gjkr.Execute(
 		playerIndex,
 		groupSize,
