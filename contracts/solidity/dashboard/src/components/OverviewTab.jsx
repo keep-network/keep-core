@@ -17,9 +17,9 @@ class OverviewTab extends React.Component {
         super(props);
         this.state = {
           operators: [],
-          stakeBalance: null,
+          stakeBalance: 0,
           withdrawals: [],
-          withdrawalsTotal: null,
+          withdrawalsTotal: 0,
           beneficiaryAddress: '',
           chartOptions: {
             legend: {
