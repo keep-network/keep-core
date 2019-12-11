@@ -316,34 +316,94 @@ include::dkg_util.py[tags=phase-12]
 ----
 
 [#phase-13,reftext="Phase 13"]
-==== Phase 13: Result publication
+==== Phase 13: Result establishment
 
 Let _IA = IA~1~ + IA~2~ + ... + IA~10~_
 
 Let _DQ = DQ~1~ + DQ~2~ + ... + DQ~10~_
 
-Player _P~1~_ is the participant designated to submit the result on-chain.
-However, if _P~1~_ does not submit a transaction
-within _T~dkg~_ blocks of starting the key generation protocol,
-_P~2~_ becomes eligible to submit the public key.
-After _T~dkg~ + T~step~_ blocks, _P~3~_ becomes eligible,
-after _T~dkg~ + 2 * T~step~_ blocks _P~4~_, and so on.
-Note that _P~n~_ remains eligible in subsequent steps;
-that is, the list of eligibile players grows by one every _T~step~_,
-rather than the eligible player changing every step.
-
-When _P~j~_ submits the result, players _P~k~ | k < j_ will face a small
-penalty for being late, while _P~j~_ will receive the submission reward.
-
 [source, python]
 ----
-if nPlayers(IA + DQ) > M_nofail:
-  correctResult = Result.failure(disqualified = DQ)
-else:
+if nPlayers(IA + DQ) {lt}= M_nofail:
   correctResult = Result.success(pubkey = Y, inactive = IA, disqualified = DQ)
 
 resultHash = hash(correctResult)
+----
 
+Once the result has been determined,
+all participants evaluate the hash of their preferred result,
+sign the hash and broadcast the hash and a signature over it
+in the group broadcast channel.
+Each participant collects the signatures matching their preferred result,
+stores them along with the signers' member indices.
+
+- If the signature of hash broadcasted off-chain is invalid,
+it will be rejected and not published to the chain in the next phase.
+
+- If multiple signatures from the same member on the same result are found,
+they will all be filtered-out
+so that none of them is published to the chain in the next phase.
+
+If multiple signatures from the same member on different results are found,
+they should all be filtered-out
+so that none of them is published to the chain in the next phase.
+
+If the result for the DKG is a failure
+due to too many members being inactive or disqualified,
+no result is submitted on-chain;
+instead, the DKG is allowed to simply time out.
+
+[#phase-14,reftext="Phase 14"]
+==== Phase 14: Result submission
+
+===== Off-chain
+When a participant becomes eligible to submit the result
+(with supporting signatures) on-chain
+they submit if they have at least the honest majority
+(marked as `H` - constant for the given group size)
+of signatures for that result (including their own).
+
+_First player_ is always eligible to submit the result. 
+
+_Second player_ becomes eligible after initial timeout
+(time necessary to perform DKG protocol plus step time `T_dkg + T_step`)
+and remains eligible until the result is accepted by the chain.
+
+In other words, _Nth player_ becomes eligible to submit the result
+after `T_dkg + (N-1) * T_step`
+and remains eligible until the result is accepted by the chain. 
+
+If _first player_ is late and _second player_ tries to submit,
+whichever gets mined first wins
+and subsequent submissions are disregarded immediately
+to avoid burdening the loser with excess gas fees.
+
+===== On-chain
+When the result is submitted on-chain along with the signatures,
+the contract checks that there are at least `H` signatures or more,
+and that each signature is valid for the submitted result
+and the corresponding member ID.
+Submissions containing multiple signatures
+on the same result from the same member are rejected.
+
+If the above checks pass,
+the result is considered canonical for the group.
+All other group members should abort publishing their results
+and no new result submissions will be accepted by the chain.
+
+If the above checks do not pass, the result is rejected.
+
+===== Off-chain
+If the result has been rejected and _second player_ became eligible,
+_second player_ can submit its result.
+Same checks are applied as for _first player_.
+
+If no canonical result has been published until `T_dkg + N * T_step`,
+where `N` is the group size,
+DKG operation is marked as failed.
+
+[source, python]
+----
 alreadySubmitted = False
 resultPublished = False
 finished = False
@@ -368,164 +428,6 @@ while not resultPublished:
   else:
     resultPublished = checkChainForResult()
 ----
-
-[#phase-14,reftext="Phase 14"]
-==== Phase 14: Result conflict resolution
-
-Because of the honest majority assumption, we can expect
-a result supported by at least _H_ participants to be correct.
-
-If any participant disputes a result submitted on-chain, they can submit a
-different one.
-
-If any participant disputes the submitted result that currently has the greatest
-number of signatures on-chain, believing a different result submitted on-chain
-to be the correct one, they can publish a support message by publishing a
-hash of their preferred result
-(implicitly authenticated with the signature inherent in publishing on-chain).
-
-Any participant can only vote for one submitted result, by submitting it or
-publishing a support message for it.
-
-Because of the available honest majority assumption, we can expect that any
-result that is not at the lead after _T~conflict~_ time has elapsed has
-acquired its maximum number of signatures it would be able to receive, and
-thus the result receiving the plurality of support is the correct one.
-
-An exception to this is if the total number of signatures supporting all other
-submitted results is higher than _M_, in which case the result is declared a
-failure without disqualifications; every outcome is voted against by at least
-one honest participant, so a correct outcome cannot be determined.
-
-[source, python]
-----
-while resultPublished and not finished:
-  allResults = getSubmissions()
-  leadResult = allResults.mostVotes
-
-  T_now = getCurrentBlockHeight()
-  T_first = allResults.earliest.submitTime
-  T_latestVote = allResults.latest.submitTime
-
-  strictlyLeading = allResults.resultsWith(leadResult.votes) == [leadResult]
-  majorityVoted = leadResult.votes > M
-  timeoutReached = T_now > (T_first + T_conflict)
-  noRecentVotes = T_now - T_latestVote > T_voteResponse
-
-  if majorityVoted or (timeoutReached and noRecentVotes):
-    finished = True
-
-  elif (correctResult == leadResult and strictlyLeading) or alreadySubmitted:
-    wait()
-
-  elif correctResult in allResults:
-    submit(sign(resultHash))
-    alreadySubmitted = True
-
-  else:
-    submit(correctResult)
-    alreadySubmitted = True
-----
-
-From the perspective of the chain:
-
-
-[source, python]
-----
-# memberVotes :: Set PlayerID
-memberVotes = Set.empty()
-
-# receivedSubmissions :: Map (HashOf Result) Result
-receivedSubmissions = Map.empty()
-
-# submissionVotes :: Map (HashOf Result) Int
-submissionVotes = Map.empty()
-
-
-def eligibleSubmitter(P_i):
-    T_now = getCurrentBlockHeight()
-    T_elapsed = T_now - T_init
-
-    i = P_i.index
-
-    if i == 1:
-        True
-    elif T_elapsed >= T_dkg + (i-2) * T_step:
-        True
-    else:
-        False
-
-
-def addVote(player, resultHash):
-    memberVotes.add(player)
-    submissionVotes[resultHash] += 1
-
-
-def alreadyVoted(player):
-    memberVotes.contains(player)
-
-
-def addSubmission(submitter, result):
-    resultHash = hash(result)
-    receivedSubmissions[resultHash] = result
-    memberVotes.add(submitter)
-    submissionVotes[resultHash] = 1
-
-
-def alreadySubmitted(resultHash):
-    receivedSubmissions.hasKey(resultHash)
-
-# data Submission = Submission Result PlayerID
-# data Vote = Vote (HashOf Result) PlayerID
-
-def receiveSubmission(s):
-    P_s = s.submitter
-    result = s.result
-    resultHash = hash(result)
-
-    if receivedSubmissions == {}:
-        if eligibleSubmitter(P_s): # <1>
-            addSubmission(P_s, s)
-        else:
-            reject(s)
-    else:
-        if alreadyVoted(P_s):
-            reject(s)
-        elif alreadySubmitted(resultHash): # <2>
-            addVote(P_s, resultHash)
-        else:
-            addSubmission(P_s, result)
-
-def receiveVote(v):
-    P_v = v.submitter
-    resultHash = hash(v.result)
-
-    if alreadyVoted(P_v) or not alreadySubmitted(resultHash):
-        reject(v)
-    else:
-        addVote(P_v, resultHash)
-
-
-def getFinalResult():
-    (leadingResult, highestVoteN) = submissionVotes.maxByValue()
-    totalVotes = sum(submissionVotes.values())
-
-    if totalVotes - highestVoteN >= M: # <3>
-        return Result.failure(disqualified = [])
-    else:
-        return leadingResult
-----
-
-<<1>> Eligibility gets tested on the first submission only;
-after one valid submission it's a free for all.
-
-<<2>> When the same result gets "initially" submitted,
-such as when a different result was previously submitted and two
-participants submit theirs in the same block
-
-<<3>> If more than _M_ participants vote for a non-leading result,
-our honest majority assumption has failed
-and we cannot determine the correct outcome.
 
 [bibliography]
 == References
