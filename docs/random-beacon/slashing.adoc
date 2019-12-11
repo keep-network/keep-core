@@ -188,6 +188,7 @@ and the group is terminated.
 The submitter of the trigger transaction
 receives the maximum tattletale reward.
 
+////
 ===== Disqualification in DKG
 
 If an operator misbehaves during DKG,
@@ -201,3 +202,4 @@ receives the maximum tattletale reward.
 It should be noted that a dishonest majority could punish honest operators.
 However, such behavior can be proven off-chain
 by presenting a DKG transcript conflicting with the accepted result.
+////
