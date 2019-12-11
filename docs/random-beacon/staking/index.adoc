@@ -292,7 +292,7 @@ provides _2^n^_ security against this attack.
 
 ===== Undelegation period
 
-E.g. 800,000 (roughly 3 months)
+E.g. 200,000 ~ 800,000 (roughly 1 to 3 months)
 
 The staking contract guarantees that an undelegated operator's stakes
 will stay locked for a number of blocks after undelegation,
