@@ -3,7 +3,14 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group';
 
 export const MessagesContext = React.createContext({})
 
-let messageId = 0
+export const messagesType = {
+    'SUCCESS': 'success',
+    'ERROR': 'error',
+    'PENDING_ACTION': 'pending-action',
+    'INFO': 'info',
+}
+
+let messageId = 1
 const messageTransitionTimeoutInMs = 500
 
 export class Messages extends React.Component { 
@@ -24,7 +31,7 @@ export class Messages extends React.Component {
 
     render() {
         return (
-            <MessagesContext.Provider value={{ showMessage: this.showMessage }} >
+            <MessagesContext.Provider value={{ showMessage: this.showMessage, closeMessage: this.onMessageClose }} >
                 <div className="messages-container">
                     <TransitionGroup >
                         {this.state.messages.map(message => (
@@ -83,4 +90,10 @@ export const useShowMessage = () => {
     const { showMessage } = useContext(MessagesContext)
 
     return showMessage
+}
+
+export const useCloseMessage = () => {
+    const { closeMessage } = useContext(MessagesContext)
+
+    return closeMessage
 }
