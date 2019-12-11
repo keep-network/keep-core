@@ -298,7 +298,7 @@ The staking contract guarantees that an undelegated operator's stakes
 will stay locked for a number of blocks after undelegation,
 and thus available as collateral for any work the operator is engaged in.
 
-==== Stored information
+==== Operator data
 
 ----
 mapping(address => Operator) operators;
@@ -317,20 +317,6 @@ Each operator stores the addresses of its owner, beneficiary and authorizer,
 the amount of tokens delegated to the operator,
 the block it was created at,
 and the block it was undelegated at if applicable.
-
-Ethereum produces a block roughly every 10 seconds,
-or around 3 million blocks a year (~2^22^).
-Thus, `uint64` should be more than sufficient for blockheights.
-With 18 decimals (2^60^) and 1 billion tokens in circulation (2^30^),
-any applicable amount of KEEP tokens can be stored safely in a `uint128`.
-The staked amount and creation/undelegation blocks
-can thus be packed in a single storage field.
-This makes it slightly cheaper for operator contracts
-to determine the operator's eligibility for work selection.
-
-The exact types are a recommendation,
-and the implementation is free to use larger unsigned integers
-if it yields favorable performance outcomes.
 
 ==== Operator status
 
