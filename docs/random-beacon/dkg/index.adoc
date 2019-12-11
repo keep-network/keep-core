@@ -324,9 +324,7 @@ Let _DQ = DQ~1~ + DQ~2~ + ... + DQ~10~_
 
 [source, python]
 ----
-if nPlayers(IA + DQ) > M_nofail:
-  correctResult = Result.failure()
-else:
+if nPlayers(IA + DQ) {lt}= M_nofail:
   correctResult = Result.success(pubkey = Y, inactive = IA, disqualified = DQ)
 
 resultHash = hash(correctResult)
@@ -349,6 +347,11 @@ so that none of them is published to the chain in the next phase.
 If multiple signatures from the same member on different results are found,
 they should all be filtered-out
 so that none of them is published to the chain in the next phase.
+
+If the result for the DKG is a failure
+due to too many members being inactive or disqualified,
+no result is submitted on-chain;
+instead, the DKG is allowed to simply time out.
 
 [#phase-14,reftext="Phase 14"]
 ==== Phase 14: Result submission
