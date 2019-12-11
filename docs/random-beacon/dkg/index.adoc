@@ -325,7 +325,7 @@ Let _DQ = DQ~1~ + DQ~2~ + ... + DQ~10~_
 [source, python]
 ----
 if nPlayers(IA + DQ) > M_nofail:
-  correctResult = Result.failure(disqualified = DQ)
+  correctResult = Result.failure()
 else:
   correctResult = Result.success(pubkey = Y, inactive = IA, disqualified = DQ)
 
