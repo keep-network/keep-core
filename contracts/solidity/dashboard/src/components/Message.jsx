@@ -22,6 +22,7 @@ export class Messages extends React.Component {
     showMessage = (value) => {
         value.id = messageId++
         this.setState({ messages: this.state.messages ? [...this.state.messages, value] : [value]})
+        return value
     }
 
     onMessageClose = (message) => {
