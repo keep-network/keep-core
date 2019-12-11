@@ -1,5 +1,6 @@
 import React, { useContext, useEffect } from 'react'
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import { ClockIndicator } from './Loadable';
 
 export const MessagesContext = React.createContext({})
 
@@ -54,7 +55,8 @@ export class Messages extends React.Component {
 
 const messageIconMap = {
     error: 'glyphicon-remove',
-    success: 'glyphicon-ok'
+    success: 'glyphicon-ok',
+    info: 'glyphicon glyphicon-info-sign'
 }
 
 const closeMessageTimeoutInMs = 3250
@@ -72,10 +74,13 @@ const Message = ({ message, ...props }) => {
     }
 
     return (
-        <div className={`message message-${message.type || 'success'}`}>
+        <div className={`message message-${message.type || messagesType.SUCCESS}`}>
             <div className='message-content-wrapper'>
                 <div className="message-icon">
-                    <span className={`glyphicon ${messageIconMap[message.type]}`} aria-hidden='true' />
+                    {message.type === messagesType.PENDING_ACTION ?
+                        <ClockIndicator /> :
+                        <span className={`glyphicon ${messageIconMap[message.type]}`} aria-hidden='true' />
+                    }
                 </div>
                 <div className='message-content'>
                     <span className="message-title">{message.title}</span>
