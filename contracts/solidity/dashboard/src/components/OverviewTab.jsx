@@ -2,7 +2,7 @@ import React from 'react'
 import { Pie } from 'react-chartjs-2'
 import { Table, Col, Row } from 'react-bootstrap'
 import moment from 'moment'
-import { displayAmount } from '../utils'
+import { displayAmount, formatAmount } from '../utils'
 import StakingForm from './StakingForm'
 import StakingTable from './StakingTable'
 import WithdrawalsTable from './WithdrawalsTable'
@@ -17,9 +17,9 @@ class OverviewTab extends React.Component {
         super(props);
         this.state = {
           operators: [],
-          stakeBalance: '',
+          stakeBalance: 0,
           withdrawals: [],
-          withdrawalsTotal: [],
+          withdrawalsTotal: 0,
           beneficiaryAddress: '',
           chartOptions: {
             legend: {
@@ -171,6 +171,17 @@ class OverviewTab extends React.Component {
           }
     }
 
+    renderChart = () => {
+      const { web3: { utils } } = this.props
+      const chartData = this.getChartData()
+      const shouldRenderChart = chartData.datasets[0].data.some(value => !utils.toBN(formatAmount(value || 0, 18)).isZero())
+
+      return ( shouldRenderChart ?
+        <Pie dataKey="name" data={chartData} options={this.state.chartOptions} /> :
+        <div className="alert alert-info m-5" role="alert">It looks like You don't have any tokens or delegated stake.</div>
+      )
+    }
+
     getBeneficiaryAddress = async () => {
       const { web3: { utils, stakingContract, yourAddress }, isOperator } = this.props;
       const beneficiaryAddress = isOperator ? await stakingContract.methods.magpieOf(yourAddress).call() : ''
@@ -178,14 +189,14 @@ class OverviewTab extends React.Component {
     }
 
     render() {
-        const { operators, chartOptions, withdrawals, withdrawalsTotal, stakeBalance, beneficiaryAddress } = this.state
-        const { web3, isOperator, isOperatorOfStakedTokenGrant, tokenBalance, grantBalance, grantStakeBalance } = this.props;
+        const { operators, withdrawals, withdrawalsTotal, stakeBalance, beneficiaryAddress } = this.state
+        const { web3, isOperator, isOperatorOfStakedTokenGrant, tokenBalance, grantBalance, grantStakeBalance } = this.props
         return (
             <>
               {isOperator ?
                 <Row className="overview">
                   <Col xs={12} md={6}>
-                    <Pie dataKey="name" data={this.getChartData()} options={ chartOptions } />
+                    {this.renderChart()}
                   </Col>
                   <Col xs={12} md={6}>
                     <Table className="small table-sm" striped bordered condensed>
@@ -219,7 +230,7 @@ class OverviewTab extends React.Component {
                 </Row>:
                 <Row className="overview">
                   <Col xs={12} md={6}>
-                    <Pie dataKey="name" data={this.getChartData()} options={ chartOptions } />
+                    {this.renderChart()}
                   </Col>
                   <Col xs={12} md={6}>
                     <Table className="small table-sm" striped bordered condensed>

@@ -18,13 +18,16 @@ export const RoutingTabs = (props) => {
         setActiveKey(k);
     }
 
+    const isOwner = !props.isOperator && props.isTokenHolder
+
     return (
+        
         <>
             <Tabs activeKey={activeKey} onSelect={onSelect} id='dashboard-tabs' >
                 <Tab eventKey='overview' title='Overview' />
-                { !props.isOperator && <Tab eventKey='stake' title='Stake' /> }
-                { !props.isOperator && <Tab eventKey='token-grants' title='Token Grants' /> }
-                { !props.isOperator && <Tab eventKey='create-token-grants' title='Create Token Grant' /> }
+                { isOwner && <Tab eventKey='stake' title='Stake' /> }
+                { isOwner && <Tab eventKey='token-grants' title='Token Grants' /> }
+                { isOwner && <Tab eventKey='create-token-grants' title='Create Token Grant' /> }
             </Tabs>
             {props.children}
         </>
