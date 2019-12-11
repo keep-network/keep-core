@@ -37,4 +37,6 @@ spec:
           - name: eth-miner
             mountPath: /root/.ethereum
         args: ["--testnet", "--networkid=3", "--datadir=/root/.ethereum", "--syncmode=fast", "--whitelist=6485846=0x43f0cd1e5b1f9c4d5cda26c240b59ee4f1b510d0a185aa8fd476d091b0097a80", "--rpc", "--rpcapi=eth,web3,personal,admin,net,miner", "--rpcport=8545", "--rpcaddr=0.0.0.0", "--rpccorsdomain=\"\"", "--rpcvhosts=*", "--ws", "--wsport=8546", "--wsaddr=0.0.0.0", "--wsorigins=*", --mine, --minerthreads=1, --miner.etherbase=0xF7886F29Ffc82D349E3a9131a463Ba0eD35b7C58]
+      nodeSelector:
+        pool-type: eth-ropsten
 
