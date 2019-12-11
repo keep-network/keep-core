@@ -179,7 +179,7 @@ from profitably stealing other stakers' funds.
 
 If the group signing key of a signing group has been leaked,
 it can be proven by using the key to sign the address of the group
-and calling `reportUnauthorizedSigning(groupIndex, signedAddress)`.
+and calling `reportUnauthorizedSigning()`.
 
 If the signature is valid for the public key of the signing group,
 it proves that the key has been used without authorization.
