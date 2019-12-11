@@ -61,8 +61,10 @@ const closeMessageTimeoutInMs = 3250
 
 const Message = ({ message, ...props }) => {
     useEffect(() => {
-        const timeout = setTimeout(onMessageClose, closeMessageTimeoutInMs);
-        return () => clearTimeout(timeout)
+        if(!message.sticky) {
+            const timeout = setTimeout(onMessageClose, closeMessageTimeoutInMs);
+            return () => clearTimeout(timeout)
+        }
     }, [message.id])
 
     const onMessageClose = () => {
