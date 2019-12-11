@@ -48,6 +48,8 @@ spec:
                   secretKeyRef:
                     name: eth-account-passphrase
                     key: eth-account-passphrase
+              - name: KEEP_CLIENT_ETH_KEYFILE
+                value: /mnt/keep-client/config/eth_account_keyfile
               - name: KEEP_DATA_DIR
                 value: /tmp
             volumeMounts:
