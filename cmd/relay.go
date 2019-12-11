@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/keep-network/keep-core/config"
@@ -57,34 +56,26 @@ func relayRequest(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	requestMutex := sync.Mutex{}
-
 	wait := make(chan struct{})
 
 	fmt.Printf("Requesting for a new relay entry at [%s]\n", time.Now())
 
 	utility.RequestRelayEntry().
 		OnSuccess(func(event *event.EntryGenerated) {
-			requestMutex.Lock()
-			defer requestMutex.Unlock()
-
 			fmt.Fprintf(
 				os.Stderr,
 				"Relay entry generated with value: [%v].\n",
 				event.Value,
 			)
-
 			wait <- struct{}{}
 		}).
 		OnFailure(func(err error) {
-			if err != nil {
-				fmt.Fprintf(
-					os.Stderr,
-					"Error in requesting relay entry: [%v].\n",
-					err,
-				)
-				return
-			}
+			fmt.Fprintf(
+				os.Stderr,
+				"Error in requesting relay entry: [%v].\n",
+				err,
+			)
+			wait <- struct{}{}
 		})
 
 	select {

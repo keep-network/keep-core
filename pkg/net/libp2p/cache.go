@@ -24,17 +24,11 @@ func newTimeCache(timespan time.Duration) *timeCache {
 	}
 }
 
-// Add adds an entry to the cache. Returns `true` if entry was not present in
-// the cache and was successfully added into it. Returns `false` if
-// entry is already in the cache. This method is synchronized.
-func (tc *timeCache) add(item string) bool {
+// Add adds an entry to the cache. If entry already exists,
+// it resets its timestamp. This method is synchronized.
+func (tc *timeCache) add(item string) {
 	tc.mutex.Lock()
 	defer tc.mutex.Unlock()
-
-	_, ok := tc.cache[item]
-	if ok {
-		return false
-	}
 
 	// sweep old entries
 	for {
@@ -61,9 +55,19 @@ func (tc *timeCache) add(item string) bool {
 		}
 	}
 
+	if _, isPresent := tc.cache[item]; isPresent {
+		// if item is already present, move its index to the front
+		for index := tc.indexer.Front(); index != nil; index = index.Next() {
+			if index.Value.(string) == item {
+				tc.indexer.MoveToFront(index)
+				break
+			}
+		}
+	} else {
+		tc.indexer.PushFront(item)
+	}
+
 	tc.cache[item] = time.Now()
-	tc.indexer.PushFront(item)
-	return true
 }
 
 // Has checks presence of an entry in the cache. Returns `true` if entry is

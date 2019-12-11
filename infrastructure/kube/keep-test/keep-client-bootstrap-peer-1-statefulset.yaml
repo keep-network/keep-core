@@ -2,27 +2,28 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: keep-client-bootstrap-peer-0
+  name: keep-client-bootstrap-peer-1
   labels:
+    keel.sh/policy: all
     app: keep-client
-    type: bootstrap-peer-0
+    type: bootstrap-peer-1
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: keep-client
-      type: bootstrap-peer-0
-  serviceName: keep-client-bootstrap-peer-0
+      type: bootstrap-peer-1
+  serviceName: keep-client-bootstrap-peer-1
   volumeClaimTemplates:
   - metadata:
-      name: keep-client-bootstrap-peer-0-data
+      name: keep-client-bootstrap-peer-1-data
     spec:
       accessModes: [ReadWriteOnce]
       resources:
         requests:
           storage: 512Mi
   - metadata:
-      name: keep-client-bootstrap-peer-0-config
+      name: keep-client-bootstrap-peer-1-config
     spec:
       accessModes: [ReadWriteOnce]
       resources:
@@ -32,10 +33,10 @@ spec:
     metadata:
       labels:
         app: keep-client
-        type: bootstrap-peer-0
+        type: bootstrap-peer-1
     spec:
       containers:
-      - name: keep-client-bootstrap-peer-0
+      - name: keep-client-bootstrap-peer-1
         image: gcr.io/keep-test-f3e0/keep-client
         ports:
           - containerPort: 3919
@@ -48,9 +49,9 @@ spec:
           - name: LOG_LEVEL
             value: debug
         volumeMounts:
-          - name: keep-client-bootstrap-peer-0-config
+          - name: keep-client-bootstrap-peer-1-config
             mountPath: /mnt/keep-client/config
-          - name: keep-client-bootstrap-peer-0-data
+          - name: keep-client-bootstrap-peer-1-data
             mountPath: /mnt/keep-client/data
           - name: eth-account-keyfile
             mountPath: /mnt/keep-client/eth
@@ -58,7 +59,7 @@ spec:
       volumes:
       - name: eth-account-keyfile
         configMap:
-          name: keep-client-bootstrap-peer-0
+          name: keep-client-bootstrap-peer-1
           items:
             - key: eth_account_keyfile
               path: eth_account_keyfile
@@ -69,7 +70,7 @@ spec:
           - name: KEEP_CLIENT_TYPE
             value: bootstrap
           - name: KEEP_CLIENT_ETH_ACCOUNT
-            value: '0xA86c468475EF9C2ce851Ea4125424672C3F7e0C8'
+            value: '0xc82c480e82ee76ae607a3446cac22314fabdd19e'
           - name: KEEP_CLIENT_ETH_KEYFILE
             value: '/mnt/keep-client/eth/eth_account_keyfile'
           - name: KEEP_CLIENT_ETH_ACCOUNT_PASSWORD
@@ -80,6 +81,6 @@ spec:
           - name: KEEP_DATA_DIR
             value: /mnt/keep-client/data
         volumeMounts:
-          - name: keep-client-bootstrap-peer-0-config
+          - name: keep-client-bootstrap-peer-1-config
             mountPath: /mnt/keep-client/config
         command: ["node", "/tmp/provision-keep-client.js"]
