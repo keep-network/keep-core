@@ -1,6 +1,5 @@
-:icons: font
-:numbered:
-toc::[]
+:toc: macro
+:toclevels: 4
 
 == Contract structure
 
@@ -8,6 +7,8 @@ Contracts in the Keep Network are divided into categories
 based on their roles, functionality and security implications.
 The contract structure is designed to permit upgrading any components
 while protecting stakers and customers.
+
+ifndef::yellowpaper[toc::[]]
 
 ==== Contract types
 

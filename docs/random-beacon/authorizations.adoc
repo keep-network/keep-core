@@ -1,8 +1,9 @@
-:icons: font
-:numbered:
-toc::[]
+:toc: macro
+:toclevels: 4
 
 == Roles and authorizations
+
+ifndef::yellowpaper[toc::[]]
 
 === Roles
 
