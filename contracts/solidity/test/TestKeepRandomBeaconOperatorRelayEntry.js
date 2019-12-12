@@ -1,6 +1,8 @@
 import expectThrow from './helpers/expectThrow';
+import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 import {bls} from './helpers/data';
 import {initContracts} from './helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
 
 contract('KeepRandomBeaconOperator', (accounts) => {
   let serviceContract, operatorContract;
@@ -30,6 +32,14 @@ contract('KeepRandomBeaconOperator', (accounts) => {
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
   });
 
+  beforeEach(async () => {
+    await createSnapshot()
+  });
+
+  afterEach(async () => {
+    await restoreSnapshot()
+  });
+
   it("should keep relay entry submission at reasonable price", async () => {
     let gasEstimate = await operatorContract.relayEntry.estimateGas(bls.groupSignature);
 
@@ -38,12 +48,21 @@ contract('KeepRandomBeaconOperator', (accounts) => {
     assert.isBelow(gasEstimate, 369544, "Relay entry submission is too expensive")
   });
 
-  it("should not allow to submit invalid relay entry", async () => {
-      // Invalid signature
-      let groupSignature = "0x0fb34abfa2a9844a58776650e399bca3e08ab134e42595e03e3efc5a0472bcd8";
+  it("should not allow to submit corrupted relay entry", async () => {
+      // This is not a valid G1 point
+      let groupSignature = "0x11134abfa2a9844a58776650e399bca3e08ab134e42595e03e3efc5a0472bcd8";
 
       await expectThrow(operatorContract.relayEntry(groupSignature));
-    });
+  })
+
+  it("should not allow to submit invalid relay entry", async () => {
+      // Signature is a valid G1 point but it is not a signature over the
+      // expected input.
+      await expectThrowWithMessage(
+        operatorContract.relayEntry(bls.nextGroupSignature),
+        "Invalid signature"
+      );
+  });
 
   it("should allow to submit valid relay entry", async () => {
     await operatorContract.relayEntry(bls.groupSignature);
