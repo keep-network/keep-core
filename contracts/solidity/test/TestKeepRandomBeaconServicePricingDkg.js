@@ -101,7 +101,13 @@ contract('KeepRandomBeaconService', (accounts) => {
         let startBlock = await operatorContract.getTicketSubmissionStartBlock();
 
         await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+        let contractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
         await operatorContract.relayEntry(bls.nextGroupSignature);
+
+        assert.isTrue(
+            web3.utils.toBN(await web3.eth.getBalance(serviceContract.address)).eq(contractBalance),
+            "service contract balance should not change"
+        )
 
         assert.isTrue(
             await operatorContract.isGroupSelectionInProgress(),
