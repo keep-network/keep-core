@@ -419,7 +419,7 @@ contract KeepRandomBeaconOperator {
         address serviceContract,
         uint256 entryVerificationAndProfitFee
     ) internal {
-        require(currentEntryStartBlock == 0 || hasEntryTimedOut(), "Beacon is busy");
+        require(!isEntryInProgress() || hasEntryTimedOut(), "Beacon is busy");
 
         currentEntryStartBlock = block.number;
 
@@ -442,7 +442,7 @@ contract KeepRandomBeaconOperator {
      * previous entry and seed.
      */
     function relayEntry(bytes memory _groupSignature) public {
-        require(currentEntryStartBlock != 0, "Entry already submitted");
+        require(isEntryInProgress(), "Entry already submitted");
         require(!hasEntryTimedOut(), "Entry timed out");
 
         bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
@@ -535,6 +535,13 @@ contract KeepRandomBeaconOperator {
         // delay factor = [ T_temaining * decimals / (T_deadline - T_begin)]^2 / decimals =
         //    = [T_remaining / (T_deadline - T_begin) ]^2 * decimals
         delayFactor = ((remainingBlocks.mul(decimals).div(submissionWindow))**2).div(decimals);
+    }
+
+    /**
+     * @dev Returns true if generation of a new relay entry is currently ongoing.
+     */
+    function isEntryInProgress() internal view returns (bool) {
+        return currentEntryStartBlock != 0;
     }
 
     /**
