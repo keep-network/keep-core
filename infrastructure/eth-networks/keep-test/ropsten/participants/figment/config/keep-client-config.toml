@@ -1,0 +1,28 @@
+[ethereum]
+  URL = "wss://ropsten.infura.io/ws/v3/59fb36a36fa4474b890c13dd30038be5"
+  URLRPC = "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
+
+  [ethereum.account]
+    Address = "0x6ea036cb7a72c89d46cee43214a7c5fd969e8f59"
+    KeyFile = "/mnt/keep-client/config/eth-account-keyfile"
+
+  # Contracts are already deployed to the private testnet.  They are subject to change on deployment
+  [ethereum.ContractAddresses]
+    KeepRandomBeaconOperator = ""
+    TokenStaking = ""
+    KeepRandomBeaconService = ""
+
+# We can configure multiple bootstrap peers.  For the purpose of initial testing we're keeping it at one.
+[LibP2P]
+  Peers = ["/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAmDKyX7xmLMEAuWtDw5oBLN3L9xtKXSFn8hUEVtukZkuHp", "/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm359ykqT4QAehewxGLCqY7vTNHLP1ao9EjieZS8jdeKp5", "/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmS29jNiEX2vAtcjZVhPjU5HWKZNjpWj1gp4SKMGwnSfrg", "/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8SrKDSKZnj3syGjQ1B8F6bDokP93wikjUgpdx4sWCN5L"]
+  Port = 3919
+  # AnnouncedAddresses:
+  # Leaving AnnouncedAddresses empty will set a default address to be
+  # announced to the network.  The default address will vary by deploy
+  # conditions.  Set AnnouncedAddresses if you have known external IPs
+  # or DNS entries you want to route traffic through.
+  AnnouncedAddresses = []
+
+# In the real world this directory should be on persistent storage.
+[Storage]
+  DataDir = "/mnt/keep-client/persistence"
