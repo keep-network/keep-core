@@ -71,4 +71,13 @@ contract('KeepRandomBeaconOperator', (accounts) => {
       bls.groupSignatureNumber.toString(), "Should emit event with generated entry"
     );
   });
+
+  it("should allow to submit only one entry", async () => {
+    await operatorContract.relayEntry(bls.groupSignature);
+    
+    await expectThrowWithMessage(
+      operatorContract.relayEntry(bls.groupSignature),
+      "Entry already submitted"
+    );
+  });
 });

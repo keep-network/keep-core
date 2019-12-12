@@ -442,6 +442,7 @@ contract KeepRandomBeaconOperator {
      * previous entry and seed.
      */
     function relayEntry(bytes memory _groupSignature) public {
+        require(currentEntryStartBlock != 0, "Entry already submitted");
         require(!hasEntryTimedOut(), "Entry timed out");
 
         bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
