@@ -56,7 +56,7 @@ contract KeepRandomBeaconOperator {
     uint256 public minimumStake = 200000 * 1e18;
 
     // Each signing group member reward expressed in wei.
-    uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
+    uint256 public groupMemberBaseReward = 145*1e11; // 14500 Gwei, 10% of operational cost
 
     // The price feed estimate is used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use both values to
