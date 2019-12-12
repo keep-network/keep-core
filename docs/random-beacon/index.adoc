@@ -106,10 +106,10 @@ include::signing/index.adoc[leveloffset=+2]
 
 include::pricing.adoc[leveloffset=+1]
 
-include::contract-structure.adoc[leveloffset=+1]
+include::contract-structure.adoc[leveloffset=+0]
 
-include::authorizations.adoc[leveloffset=+1]
+include::authorizations.adoc[leveloffset=+0]
 
-include::upgrades.adoc[leveloffset=+1]
+include::upgrades.adoc[leveloffset=+0]
 
 include::glossary.adoc[]
