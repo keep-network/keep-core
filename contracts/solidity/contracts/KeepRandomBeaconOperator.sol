@@ -121,8 +121,6 @@ contract KeepRandomBeaconOperator {
     uint256 internal currentEntryStartBlock;
     SigningRequest internal signingRequest;
 
-    bool internal entryInProgress;
-
     // Seed value used for the genesis group selection.
     // https://www.wolframalpha.com/input/?i=pi+to+78+digits
     uint256 internal _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
@@ -421,10 +419,9 @@ contract KeepRandomBeaconOperator {
         address serviceContract,
         uint256 entryVerificationAndProfitFee
     ) internal {
-        require(!entryInProgress || hasEntryTimedOut(), "Beacon is busy");
+        require(currentEntryStartBlock == 0 || hasEntryTimedOut(), "Beacon is busy");
 
         currentEntryStartBlock = block.number;
-        entryInProgress = true;
 
         uint256 groupIndex = groups.selectGroup(uint256(keccak256(previousEntry)));
         signingRequest = SigningRequest(
@@ -466,8 +463,6 @@ contract KeepRandomBeaconOperator {
             msg.sender
         );
 
-        entryInProgress = false;
-
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
@@ -476,6 +471,8 @@ contract KeepRandomBeaconOperator {
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
         }
+
+        currentEntryStartBlock = 0;
     }
 
     /**
@@ -545,7 +542,7 @@ contract KeepRandomBeaconOperator {
      * to be produced, see `relayEntryTimeout` value.
      */
     function hasEntryTimedOut() internal view returns (bool) {
-        return entryInProgress && block.number > currentEntryStartBlock + relayEntryTimeout;
+        return currentEntryStartBlock != 0 && block.number > currentEntryStartBlock + relayEntryTimeout;
     }
 
     /**
