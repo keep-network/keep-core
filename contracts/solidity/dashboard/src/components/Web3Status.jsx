@@ -1,0 +1,47 @@
+import React, { useContext } from 'react'
+import { Web3Context } from "./WithWeb3Context"
+
+export const Web3Status = (props) => {
+    const { web3, isFetching, yourAddress, connectAppWithAccount } = useContext(Web3Context)
+
+    const renderStatus = () => {
+        if (isFetching) {
+            return (
+                <div className="web3-status loading">
+                loading...
+                </div>
+            )
+        }
+        
+        if (!web3) {
+            return (
+                <div className="web3-status alert">
+                    Web3 not detected.  We suggest&nbsp;<a href="http://metamask.io" target="_blank" rel="noopener noreferrer">MetaMask</a>.
+                </div>
+            )
+        }
+        
+        if (!yourAddress) {
+            return (
+                <div className="web3-status notify">
+                    Web3 detected, but you need to connect with an account.&nbsp;
+                    <span onClick={connectAppWithAccount}>
+                        Connect dApp with an account
+                    </span>
+                </div>
+            )
+        }
+        
+        return (
+            <div className="web3-status success">
+                Account logged in
+            </div>
+        )
+    }
+
+    return (
+        <div className="web3">
+            {renderStatus()}
+        </div>
+    )
+}
