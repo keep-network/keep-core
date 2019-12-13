@@ -32,7 +32,7 @@ export default class Web3ContextProvider extends React.Component {
         if(!web3) {
             return
         }
-        this.setState({ isFetching: true, web3 }, this.setData)
+        this.setState({ web3 }, this.setData)
     }
 
     setData = async () => {
@@ -43,18 +43,22 @@ export default class Web3ContextProvider extends React.Component {
 
     connectAppWithAccount = async (withInfoMessag = true) => {
         const { web3 } = this.state
-        await web3.currentProvider.enable().catch(error => {
+        this.setState({ isFetching: true })
+        try{
+            const [account] = await web3.currentProvider.enable()
+            this.setState({
+                yourAddress: account,
+                networkType: await web3.eth.net.getNetworkType(),
+                isFetching: false
+            })
+        } catch(error) {
             this.context.showMessage({ type: 'error', title: error.message })
-        })
-
-        this.setState({
-            yourAddress: (await web3.eth.getAccounts())[0],
-            networkType: await web3.eth.net.getNetworkType(),
-            isFetching: false
-        })
+            this.setState({ isFetching: false })
+        }      
     }
 
     initializeContracts = async () => {
+        console.log('initilaize contracts')
         const { web3 } = this.state
         try {
             const web3EventProvider = getWeb3SocketProvider()
@@ -85,6 +89,16 @@ export default class Web3ContextProvider extends React.Component {
     ])
 
     accountHasBeenChanged = ([yourAddress]) => {
+        if(!yourAddress) {
+            this.setState({
+                isFetching: false,
+                yourAddress: '',
+                token: { options: { address: '' } },
+                stakingContract: { options: { address: '' } },
+                grantContract: { options: { address: '' } },
+            })
+            return
+        }
         this.setState({ yourAddress })
     }
 
