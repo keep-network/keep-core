@@ -3,7 +3,6 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./TokenStaking.sol";
@@ -28,7 +27,6 @@ contract TokenGrant {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
     using BytesLib for bytes;
-    using ECDSA for bytes32;
     using AddressArrayUtils for address[];
 
     event CreatedTokenGrant(uint256 id);
@@ -169,6 +167,7 @@ contract TokenGrant {
         uint256 _duration = _extraData.toUint(20);
         uint256 _start = _extraData.toUint(52);
         uint256 _cliff = _extraData.toUint(84);
+        
         require(_grantee != address(0), "Grantee address can't be zero.");
         require(_cliff <= _duration, "Vesting cliff duration must be less or equal total vesting duration.");
 
@@ -273,8 +272,7 @@ contract TokenGrant {
      * @param _stakingContract Address of the staking contract.
      * @param _amount Amount to stake.
      * @param _extraData Data for stake delegation. This byte array must have the following values concatenated:
-     * Magpie address (20 bytes) where the rewards for participation are sent, operator's ECDSA (65 bytes) signature of
-     * the grantee address and ECDSA (65 bytes) signature of this contract address.
+     * Magpie address (20 bytes) where the rewards for participation are sent and operator's (20 bytes) address.
      */
     function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
         require(!grants[_id].revocable, "Revocable grants can not be staked.");
@@ -284,14 +282,9 @@ contract TokenGrant {
             "Provided staking contract is not authorized."
         );
 
-        // Expecting 150 bytes _extraData for stake delegation
-        // 20 bytes address + two 65 bytes ECDSA signatures
-        require(_extraData.length == 150, "Stake delegation data must be provided.");
-        address operator = keccak256(abi.encodePacked(address(this))).toEthSignedMessageHash().recover(_extraData.slice(20, 65));
-        require(
-            operator == keccak256(abi.encodePacked(msg.sender)).toEthSignedMessageHash().recover(_extraData.slice(85, 65)),
-            "Signer of the grantee doesn't match signer of the grant contract."
-        );
+        // Expecting 40 bytes _extraData for stake delegation.
+        require(_extraData.length == 40, "Stake delegation data must be provided.");
+        address operator = _extraData.toAddress(20);
 
         // Calculate available amount. Amount of vested tokens minus what user already withdrawn and staked.
         uint256 available = grants[_id].amount.sub(grants[_id].withdrawn).sub(grants[_id].staked);
@@ -301,9 +294,9 @@ contract TokenGrant {
         grantStakes[operator] = GrantStake(_id, _stakingContract, _amount);
         grants[_id].staked += _amount;
 
-        // Staking contract expects 85 bytes _extraData for stake delegation
-        // 20 bytes address + 65 bytes ECDSA signature
-        tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData.slice(0, 85));
+        // Staking contract expects 40 bytes _extraData for stake delegation.
+        // 20 bytes magpie's address + 20 bytes operator's address.
+        tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData);
     }
 
     /**

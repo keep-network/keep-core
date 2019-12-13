@@ -66,8 +66,9 @@ module.exports = async function() {
 
         console.log(`Staking ${amountToStake} tokens from ${owner} to operator ${operator} using beneficiary ${magpie}`); 
        
-        const signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator)).substr(2), 'hex');
-        const delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
+        const delegation = '0x' + Buffer.concat([
+            Buffer.from(magpie.substr(2), 'hex'),
+            Buffer.from(operator.substr(2), 'hex')]).toString('hex');
     
         try {
             staked = await keepToken.approveAndCall(
