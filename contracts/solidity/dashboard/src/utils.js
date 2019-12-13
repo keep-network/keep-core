@@ -45,3 +45,7 @@ export const getWeb3 = async () => {
   
   return null;
 }
+
+export const getWeb3SocketProvider = () => {
+  return new Web3(process.env.REACT_APP_ETH_NETWORK_WEB_SOCKET_ADDRESS)
+}

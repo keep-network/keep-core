@@ -7,45 +7,30 @@ import { RoutingTabs } from './RoutingTabs'
 import TokenGrantsTab from './TokenGrantsTab'
 import CreateTokenGrantsTab from './CreateTokenGrantsTab'
 import { withContractsDataContext } from './ContractsDataContextProvider'
-import Siginig from './Signing'
 import Alerts from './Alerts'
 import Loadable from './Loadable'
+import { NotFound404 } from './NotFound404'
 
 class Routing extends React.Component { 
 
-    renderRoutes = () => {
-        const { isOperator, isTokenHolder } = this.props;
-        const shouldSignIn = !isOperator && !isTokenHolder
-
-        return (shouldSignIn ? <Redirect to='/sign-in' /> :
-            <>
-                <Route exact path='/overview' component={OverviewTab} />
-                {isTokenHolder &&
-                    <>
-                        <Route exact path='/stake' component={StakeTab} />
-                        <Route exact path='/token-grants' component={TokenGrantsTab} />
-                        <Route exact path='/create-token-grants' component={CreateTokenGrantsTab} />
-                    </>
-                }
-            </>
-        )
-    }
-
     renderContent() {
-        const { isOperator, contractsDataIsFetching } = this.props
+        const { isOperator, isTokenHolder, contractsDataIsFetching } = this.props
 
         return contractsDataIsFetching ? <Loadable /> : (
-            <Switch>
-                <Route exact path='/sign-in' component={Siginig} />
-                <Route path="*">
-                    <RoutingTabs isOperator={isOperator}>
-                        <Switch>
-                            <Redirect exact from='/' to='/overview' />
-                            {this.renderRoutes()}
-                        </Switch>
-                    </RoutingTabs>
-                </Route>
-            </Switch> 
+            <RoutingTabs isOperator={isOperator} isTokenHolder={isTokenHolder}>
+                <Switch>
+                    <Route exact path='/overview' component={OverviewTab} />
+                    {isTokenHolder && <Route exact path='/stake' component={StakeTab} /> }
+                    {isTokenHolder && <Route exact path='/token-grants' component={TokenGrantsTab} /> }
+                    {isTokenHolder && <Route exact path='/create-token-grants' component={CreateTokenGrantsTab} /> }
+                    <Route exact path='/' >
+                        <Redirect to='/overview' />
+                    </Route>
+                    <Route path="*">
+                        <NotFound404 />
+                    </Route>
+                </Switch>
+            </RoutingTabs>
         )
     }
 

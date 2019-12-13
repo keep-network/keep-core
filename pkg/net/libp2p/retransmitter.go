@@ -79,15 +79,12 @@ func (r *retransmitter) receive(
 		return fmt.Errorf("could not calculate message fingerprint: [%v]", err)
 	}
 
-	if r.cache.has(fingerprint) {
+	if r.cache.has(fingerprint) && message.Retransmission != 0 {
 		return nil
 	}
 
-	if r.cache.add(fingerprint) {
-		return onFirstTimeReceived()
-	}
-
-	return nil
+	r.cache.add(fingerprint)
+	return onFirstTimeReceived()
 }
 
 func calculateFingerprint(message *pb.NetworkMessage) (string, error) {
