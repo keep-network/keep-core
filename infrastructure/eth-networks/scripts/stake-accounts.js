@@ -53,6 +53,9 @@ function setOperatorProfiles() {
     const operator2 = [['account', '0x95aeea994a0dec98228f99479c3e532234ab1406'], ['provider', new HDWalletProvider('1DE53F2C7944828193F8B1673D0E437EE208817FDE865C7A87F4AED87A3FDC9C', `${ethHost}`)]];
     const operator3 = [['account', '0xfd326104974e2fb01c02becd634fac5bff23d33f'], ['provider', new HDWalletProvider('19470B41C7727B8C4C15774D560B1F992AFF436CF06D66B73C91CA2D25BE6F77', `${ethHost}`)]];
     const operator4 = [['account', '0x35173638d6fe801de9b08916583ac16bdc987bc5'], ['provider', new HDWalletProvider('EBA729AA59827417665A3BF74B4DB7FC914505E96A967DA8C55289C7F10AD331', `${ethHost}`)]];
+    const operator5 = [['account', '0xaa886f33bfe5cf672effcfdf9c630bdb785802f8'], ['provider', new HDWalletProvider('E9E8D7D7F0648364080FF87F2AC0052ADE225BFC7B5426B7E5E2E25EEF16E69A', `${ethHost}`)]];
+    const operator6 = [['account', '0x6ea036cb7a72c89d46cee43214a7c5fd969e8f59'], ['provider', new HDWalletProvider('0D96CCE79BCFB16FEA09C7A8717D6CA800C36F9AC997720D0697D02AD453B617', `${ethHost}`)]];
+    const operator7 = [['account', '0xdbcd9a619b4d48ba67059a78734bb3b7ee6ece57'], ['provider', new HDWalletProvider('C4B5A394AF861CB28016E61BFEAFCFDF20F51D4E6799DC7B59FBD2C29ED6EC6F', `${ethHost}`)]];
 
     const operatorProfiles = new Map();
       operatorProfiles.set('operator0', operator0);
@@ -60,6 +63,9 @@ function setOperatorProfiles() {
       operatorProfiles.set('operator2', operator2);
       operatorProfiles.set('operator3', operator3);
       operatorProfiles.set('operator4', operator4);
+      operatorProfiles.set('operator5', operator5);
+      operatorProfiles.set('operator6', operator6);
+      operatorProfiles.set('operator7', operator7);
 
     return operatorProfiles;
 
