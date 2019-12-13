@@ -17,12 +17,7 @@ export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-let web3;
-
 export const getWeb3 = () => {
-
-  if (web3) return web3
-
   if (window.ethereum || window.web3)
     return new Web3(window.ethereum || window.web3.currentProvider)
   
