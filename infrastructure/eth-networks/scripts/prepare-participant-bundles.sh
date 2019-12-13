@@ -83,7 +83,6 @@ function save_keep_client_image() {
   echo "==============================\n"
 }
 
-
 clean_deployment_bundles
 fetch_keep_client_image
 save_keep_client_image
