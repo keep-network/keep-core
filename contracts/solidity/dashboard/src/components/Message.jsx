@@ -46,7 +46,8 @@ export class Messages extends React.Component {
 
 const messageIconMap = {
     error: 'glyphicon-remove',
-    success: 'glyphicon-ok'
+    success: 'glyphicon-ok',
+    info: 'glyphicon-info-sign'
 }
 
 const closeMessageTimeoutInMs = 3250
