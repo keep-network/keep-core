@@ -83,5 +83,6 @@ operatorProfiles.forEach(profile => {
   console.error(error);
   process.exit(1);
   })
-  process.exit();
 });
+
+process.exit();
