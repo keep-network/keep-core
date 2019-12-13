@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/hex"
-	"fmt"
 	"math/big"
 	"sync"
 
@@ -66,9 +65,7 @@ func (n *Node) JoinGroupIfEligible(
 	if len(indexes) > 0 {
 		// create temporary broadcast channel for DKG using the group selection
 		// seed
-		broadcastChannel, err := n.netProvider.ChannelFor(
-			fmt.Sprintf("dkg-%v", newEntry),
-		)
+		broadcastChannel, err := n.netProvider.ChannelFor(newEntry.Text(16))
 		if err != nil {
 			logger.Errorf("failed to get broadcast channel: [%v]", err)
 			return
