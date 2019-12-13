@@ -62,9 +62,9 @@ kubectl create configmap keep-client-4 \
   --save-config \
   -o yaml | kubectl apply -f -
 
-  kubectl create configmap keep-client-5 \
+kubectl create configmap keep-client-5 \
   --from-file=eth_account_keyfile=../${ENVIRONMENT}/files/keep-client-5-eth-keyfile.json \
-  --from-file=eth_account_password=../../../eth-networks/ropsten/eth-account-password.txt \
+  --from-file=eth_account_password=../../eth-networks/${ENVIRONMENT}/ropsten/eth-account-password.txt \
   --from-file=keep-client-config.toml=../${ENVIRONMENT}/files/keep-client-5-config.toml \
   --namespace ropsten \
   --dry-run \
