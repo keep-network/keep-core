@@ -260,27 +260,6 @@ _S~j~_ can refrain from broadcasting _W~k~_ and only monitor the situation,
 reacting if it seems that few stakers' ticket values are falling under
 the estimated threshold.
 
-=== Zero-knowledge proofs
-
-The protocol has been designed to be easily compatible with zero-knowledge
-proofs later (<<req-5,requirement 5>>). The weights and virtual staker indices
-can use range proofs, and _Q~j~_ is required to be simply a value unique to any
-given staker.
-
-Initially _Q~j~_ can be something public and easy to verify, such as the address
-of _S~j~_, but the design of the protocol should be flexible later.
-
-Similarly, the protocol specifies a pseudorandom function `prf`; `sha3` can be used
-before staker indistinguishability is required, but any function with the right
-qualities can be easily substituted.
-
-Tickets are checked on-chain in two stages: `cheapCheck` does surface-level
-validation of factors that are easy to check, while `costlyCheck` performs a
-full verification of the supplied proof only if the ticket is challenged. This
-means that the on-chain protocol should not be too constrained by the cost of
-ZKP verification later on, as verification can only be performed when necessary.
-Rational adversaries will not present invalid tickets due to the penalties.
-
 == Alternative off-chain protocol
 
 This protocol was not chosen but is included in the yellowpaper to illustrate
