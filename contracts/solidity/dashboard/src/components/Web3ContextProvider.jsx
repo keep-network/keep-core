@@ -44,6 +44,7 @@ export default class Web3ContextProvider extends React.Component {
     connectAppWithAccount = async (withInfoMessag = true) => {
         const { web3 } = this.state
         this.setState({ isFetching: true })
+        this.context.showMessage({ type: 'info', title: 'Please check web3 provider' })
         try{
             const [account] = await web3.currentProvider.enable()
             this.setState({
@@ -58,7 +59,6 @@ export default class Web3ContextProvider extends React.Component {
     }
 
     initializeContracts = async () => {
-        console.log('initilaize contracts')
         const { web3 } = this.state
         try {
             const web3EventProvider = getWeb3SocketProvider()
