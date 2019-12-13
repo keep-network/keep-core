@@ -15,7 +15,7 @@ spec:
       storageClassName: eth-miner
       resources:
         requests:
-          storage: 100Gi
+          storage: 500Gi
   selector:
     matchLabels:
       app: geth
