@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from 'react'
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 
-const MessagesContext = React.createContext({})
+export const MessagesContext = React.createContext({})
 
 let messageId = 0
 const messageTransitionTimeoutInMs = 500
