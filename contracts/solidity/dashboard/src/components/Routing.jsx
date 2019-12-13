@@ -10,6 +10,7 @@ import { withContractsDataContext } from './ContractsDataContextProvider'
 import Alerts from './Alerts'
 import Loadable from './Loadable'
 import { NotFound404 } from './NotFound404'
+import { WithOnlyLoggedUser } from './WithOnlyLoggedUserHoc'
 
 class Routing extends React.Component { 
 
@@ -50,4 +51,4 @@ class Routing extends React.Component {
     }
 }
 
-export default withContractsDataContext(Routing)
+export default withContractsDataContext(WithOnlyLoggedUser(Routing))
