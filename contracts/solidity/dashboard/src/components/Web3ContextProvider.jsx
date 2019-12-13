@@ -2,8 +2,10 @@ import React from 'react'
 import { getWeb3, getWeb3SocketProvider } from '../utils'
 import { Web3Context } from './WithWeb3Context'
 import { getKeepToken, getTokenStaking, getTokenGrant } from '../contracts'
+import { MessagesContext } from './Message'
 
 export default class Web3ContextProvider extends React.Component {
+    static contextType = MessagesContext
 
     constructor(props) {
         super(props)
