@@ -11,10 +11,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// InitializeChannel initializes the given broadcast channel to be able to
-// perform DKG result publication protocol interactions.
+// RegisterUnmarshallers initializes the given broadcast channel to be able to
+// perform DKG result publication protocol interactions by registering all the
+// required protocol message unmarshallers.
 // The channel needs to be fully initialized before Publish is called.
-func InitializeChannel(channel net.BroadcastChannel) {
+func RegisterUnmarshallers(channel net.BroadcastChannel) {
 	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &DKGResultHashSignatureMessage{}
 	})

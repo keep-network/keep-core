@@ -124,8 +124,8 @@ func executeDKG(
 	// make sure all members are up.
 	startBlockHeight := currentBlockHeight + 3
 
-	gjkr.InitializeChannel(broadcastChannel)
-	dkgResult.InitializeChannel(broadcastChannel)
+	gjkr.RegisterUnmarshallers(broadcastChannel)
+	dkgResult.RegisterUnmarshallers(broadcastChannel)
 
 	for i := 0; i < relayConfig.GroupSize; i++ {
 		i := i // capture for goroutine

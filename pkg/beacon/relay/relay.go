@@ -111,7 +111,7 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	entry.InitializeChannel(channel)
+	entry.RegisterUnmarshallers(channel)
 
 	for _, member := range memberships {
 		go func(member *registry.Membership) {
