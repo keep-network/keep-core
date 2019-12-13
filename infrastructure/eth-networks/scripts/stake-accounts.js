@@ -93,14 +93,17 @@ const keepTokenContractAddress = keepTokenContractParsed.networks[ethNetworkId].
 const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenContractAddress);
 
 async function stakeOperatorAccount(operatorAddress, operatorProvider, contractOwnerAddress) {
-  let web3Operator = new Web3(operatorProvider, null, web3_options)
-  let contractOwnerSigned = await web3Operator.eth.sign(web3.utils.soliditySha3(contractOwnerAddress), operatorAddress);
+  //let web3Operator = new Web3(operatorProvider, null, web3_options)
+  //let contractOwnerSigned = await web3Operator.eth.sign(web3.utils.soliditySha3(contractOwnerAddress), operatorAddress);
 
   // This is really a bit stupid.  The return from web3.eth.sign is different depending on whether or not
   // the signer is a local or remote ETH account.  We use web3.eth.sign to set contractOwnerSigned. Here
   // the bootstrap peer account already exists and is hosted on an ETH node.
-  let signature = Buffer.from(contractOwnerSigned.substr(2), 'hex');
-  let delegation = '0x' + Buffer.concat([Buffer.from(contractOwnerAddress.substr(2), 'hex'), signature]).toString('hex');
+  //let signature = Buffer.from(contractOwnerSigned.substr(2), 'hex');
+  let delegation = '0x' + Buffer.concat([
+    Buffer.from(contractOwnerAddress.substr(2), 'hex'),
+    Buffer.from(operatorAddress.substr(2), 'hex')
+  ]).toString('hex');;
 
   console.log('Staking 2000000 KEEP tokens on operator account ' + operatorAddress);
 
@@ -119,10 +122,8 @@ function formatAmount(amount, decimals) {
 const operatorProfiles = setOperatorProfiles()
 
 operatorProfiles.forEach(profile => {
-  console.log(`staking ${profile[0][1]}`)
   stakeOperatorAccount(profile[0][1], profile[1][1], contractOwnerAddress).catch(error => {
     console.error(error);
     process.exit(1);
   })
 });
-process.exit();
