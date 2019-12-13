@@ -11,6 +11,16 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
+// RegisterUnmarshallers initializes the given broadcast channel to be able to
+// perform DKG result publication protocol interactions by registering all the
+// required protocol message unmarshallers.
+// The channel needs to be fully initialized before Publish is called.
+func RegisterUnmarshallers(channel net.BroadcastChannel) {
+	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &DKGResultHashSignatureMessage{}
+	})
+}
+
 // Publish executes Phase 13 and 14 of DKG as a state machine. First, the
 // chosen result is hashed, signed, and sent over a broadcast channel. Then, all
 // other signatures and results are received and accounted for. Those that match
@@ -37,8 +47,6 @@ func Publish(
 		signingStartBlockHeight: startBlockHeight,
 	}
 
-	initializeChannel(channel)
-
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)
 
 	lastState, _, err := stateMachine.Execute(startBlockHeight)
@@ -52,12 +60,4 @@ func Publish(
 	}
 
 	return nil
-}
-
-// initializeChannel initializes a given broadcast channel to be able to
-// perform distributed key generation interactions.
-func initializeChannel(channel net.BroadcastChannel) {
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &DKGResultHashSignatureMessage{}
-	})
 }

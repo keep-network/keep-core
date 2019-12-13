@@ -43,7 +43,7 @@ func TestFullStateTransitions(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		initializeChannel(channel)
+		RegisterUnmarshallers(channel)
 
 		channels[i] = channel
 		states[i] = &joinState{channel, member}
