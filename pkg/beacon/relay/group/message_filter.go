@@ -1,5 +1,9 @@
 package group
 
+import "github.com/ipfs/go-log"
+
+var logger = log.Logger("keep-message-filter")
+
 // MessageFiltering interface defines method allowing to filter out messages
 // from members that are not part of the group or were marked as IA or DQ.
 type MessageFiltering interface {
@@ -66,6 +70,11 @@ func (mf *InactiveMemberFilter) FlushInactiveMembers() {
 
 	for _, operatingMemberID := range mf.group.OperatingMemberIDs() {
 		if !isActive(operatingMemberID) {
+			logger.Warningf(
+				"[member:%v] marking member [%v] as inactive",
+				mf.selfMemberID,
+				operatingMemberID,
+			)
 			mf.group.MarkMemberAsInactive(operatingMemberID)
 		}
 	}

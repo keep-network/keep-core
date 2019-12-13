@@ -12,18 +12,22 @@ RUN apk add --update --no-cache \
 
 COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
+COPY .env* /app/
 
 RUN npm install
 
 COPY src /app/src
 COPY public /app/public
 
-RUN npm run build
+RUN npm run build:keep-dev
 
 # Production environment
 FROM nginx:1.17-alpine
 
 COPY --from=build /app/build /usr/share/nginx/html
+
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d
 
 EXPOSE 80
 

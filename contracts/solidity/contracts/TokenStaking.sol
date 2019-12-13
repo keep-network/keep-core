@@ -15,7 +15,7 @@ contract TokenStaking is StakeDelegatable {
     using UintArrayUtils for uint256[];
 
     event Staked(address indexed from, uint256 value);
-    event InitiatedUnstake(address indexed operator, uint256 value);
+    event InitiatedUnstake(address indexed operator, uint256 value, uint256 createdAt);
     event FinishedUnstake(address operator);
 
     struct Withdrawal {
@@ -44,15 +44,15 @@ contract TokenStaking is StakeDelegatable {
      * @param _token Token contract address.
      * @param _extraData Data for stake delegation. This byte array must have the
      * following values concatenated: Magpie address (20 bytes) where the rewards for participation
-     * are sent and the operator's ECDSA (65 bytes) signature of the address of the stake owner.
+     * are sent and the operator's (20 bytes) address.
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
         require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
-        require(_extraData.length == 85, "Stake delegation data must be provided.");
+        require(_extraData.length == 40, "Stake delegation data must be provided.");
 
         address payable magpie = address(uint160(_extraData.toAddress(0)));
-        address operator = keccak256(abi.encodePacked(_from)).toEthSignedMessageHash().recover(_extraData.slice(20, 65));
+        address operator = _extraData.toAddress(20);
         require(operatorToOwner[operator] == address(0), "Operator address is already in use.");
 
         operatorToOwner[operator] = _from;
@@ -82,10 +82,10 @@ contract TokenStaking is StakeDelegatable {
         require(_value <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
 
         stakeBalances[_operator] = stakeBalances[_operator].sub(_value);
- 
-        withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), now);
+        uint256 createdAt = now;
+        withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), createdAt);
 
-        emit InitiatedUnstake(_operator, _value);
+        emit InitiatedUnstake(_operator, _value, createdAt);
     }
 
     /**

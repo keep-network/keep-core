@@ -92,22 +92,6 @@ library Groups {
     }
 
     /**
-     * @dev Gets group index.
-     */
-    function getGroupIndex(
-        Storage storage self,
-        bytes memory groupPubKey
-    ) public view returns (uint256 groupIndex) {
-        for (uint i = 0; i < self.groups.length; i++) {
-            if (self.groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                return i;
-            }
-        }
-
-        revert("Group does not exist");
-    }
-
-    /**
      * @dev Gets group member.
      */
     function getGroupMember(
