@@ -538,7 +538,8 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Returns true if generation of a new relay entry is currently ongoing.
+     * @dev Returns true if generation of a new relay entry is currently in
+     * progress.
      */
     function isEntryInProgress() internal view returns (bool) {
         return currentEntryStartBlock != 0;
