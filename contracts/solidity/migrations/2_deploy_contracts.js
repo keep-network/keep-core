@@ -14,7 +14,7 @@ const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultV
 const withdrawalDelay = 86400; // 1 day
 const priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei = 20 * 10^9 wei)
 const fluctuationMargin = 50; // 50%
-const dkgContributionMargin = 10; // 10%
+const dkgContributionMargin = 1; // 1%
 
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
