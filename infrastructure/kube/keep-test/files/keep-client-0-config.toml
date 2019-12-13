@@ -8,13 +8,13 @@
 
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeaconOperator contract
-    KeepRandomBeaconOperator = "0x1b38309Fba12E802609D5a730E0F60871e1e8d9A"
+    KeepRandomBeaconOperator = "0xD195A24321dABE94d4bdB5aa0a8b3fFEBf6cbd11"
     # TokenStaking
-    TokenStaking = "0x899799d7e02Dbd5f021c17f7E22a4E17F686B7A2"
+    TokenStaking = "0xF4F4cc4da3e0c1f0f6303Bdd547d6d911cC454dE"
     # Hex-encoded address of KeepRandomBeaconService contract. Only needed
     # in cases where the client's utility functions will be used (e.g., the
     # relay subcommand).
-    KeepRandomBeaconService = "0x42b0a50706815e38D6b884500bDDEAbF79C2e84a"
+    KeepRandomBeaconService = "0x34Fb12A4c57489171E7568f0733729A1f8E49b88"
 
 [LibP2P]
   Peers = ["/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAmDKyX7xmLMEAuWtDw5oBLN3L9xtKXSFn8hUEVtukZkuHp", "/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm359ykqT4QAehewxGLCqY7vTNHLP1ao9EjieZS8jdeKp5", "/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmS29jNiEX2vAtcjZVhPjU5HWKZNjpWj1gp4SKMGwnSfrg", "/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8SrKDSKZnj3syGjQ1B8F6bDokP93wikjUgpdx4sWCN5L"]
