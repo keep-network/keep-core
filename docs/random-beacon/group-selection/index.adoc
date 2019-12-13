@@ -17,12 +17,12 @@ output: _P_
 
 The protocol should:
 
-. [[req-1]]produce a representative result, where each staker's profit is proportional
+. [[req-1]]produce a representative result,
+where each staker's profit is proportional
 to the number of tokens they have staked
 . [[req-2]]produce a group _P_ of constant size _N_
 . [[req-3]]not require an excessive amount of on-chain operations to perform
 . [[req-4]]not be feasible for an adversary to manipulate
-. [[req-5]]be compatible with future measures to make stakers indistinguishable
 
 .Some terms
 |===
@@ -86,9 +86,10 @@ and _N_ properly denotes the number of virtual stakers in _P_.
 
 |_Space~tickets~_
 |Is a space consisting of all possible tickets. It is strongly related
-with a pseudo random function that is used for ticket generation.
-Currently the _Space~tickets~_ is equal to _2^256^- 1_, which is due
-to selection of keccak256 as our pseudo random function.
+with a pseudorandom function that is used for ticket generation.
+Currently the _Space~tickets~_ is equal to _2^64^- 1_, which is due
+to selection of the first 8 bytes of keccak256
+as our pseudorandom function.
 
 |_Supply~tokens~_
 |Is the total number of tokens which are going to be supplied during the project
@@ -104,10 +105,6 @@ function.
 
 Usually _Threshold~P~ > Threshold~nat~_ as not all tokens will be staked and the
 distribution of stakes will not be optimal.
-
-_Supply~tokens~_ is used instead of _Stake~total~_ to make it possible to later
-hide the stakes of individual stakers; otherwise the staking or unstaking of
-tokens would reveal the amount through the update to _Stake~total~_.
 |===
 
 == Setup
@@ -118,15 +115,7 @@ When a staker _S~j~_ is created, the following values are determined:
   staker is destroyed 
 - _Weight~j~= floor(Stake~j~ / MINIMUM_STAKE)_: the staking weight of _S~j~_;
   how many virtual stakers can represent _S~j~_ 
-- _Q~j~_: a staker-specific value used as an input to the pseudorandom function
-
-The staker creation operation needs to include a proof of the correctness of the
-above values.
-
-Currently the _Stake~j~_ and _Weight~j~_ can be public and _Q~j~_ can be the 
-address of _S~j~_. Future work towards indistinguishable staking would make
-_Stake~j~_ and _Weight~j~_ values private and enable their verification via
-zero-knowledge proofs.
+- _Address~j~_: the operator address of _S~j~_
 
 == Protocol
 
@@ -137,7 +126,7 @@ selection of a new candidate group.
 
 _S~j~_ calculates _Ticket~k~ = (value~k~, vs, Address~j~)_ where:
 
-- the ticket value is calculated as _value~k~ = prf(Entry~i~, Address~j~, vs)_
+- the ticket value is calculated as _value~k~ = prf(V~i~, Address~j~, vs)_
 - the virtual staker number _vs_ is within the range _1 <= vs <= Weight~j~_
 - the staker weight _Weight~j~_ is correct for the operator address _Address~j~_
 
@@ -201,10 +190,6 @@ amounts below _MINIMUM_STAKE_ and sharing the risk and profits would enable the
 utilization of smaller holders' tokens or surplus tokens from regular stakers.
 This form of trenchcoating is arguably either neutral or beneficial, and in any
 case it does not violate proportionality of rewards.
-
-Additionally, using virtual stakers and tickets instead of eg. a threshold that
-adjusts itself based on the staked amount lets us hide any particular staker's
-identity and the size of their stake later (<<req-5,requirement 5>>).
 
 === Interactive protocol
 
@@ -321,11 +306,6 @@ formation and DKG conclusion message:
 
 
 === Notes
-
-The BLS signatures should probably be verified with the protocol in
-https://crypto.stanford.edu/~dabo/pubs/papers/BLSmultisig.html and Bulletproofs
-would likely be used for the ZKP element after the introduction of staker
-indistinguishability
 
 The off-chain protocol is much more complex to secure effectively, and a variety
 of attacks on the group composition need to be addressed.
