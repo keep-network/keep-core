@@ -77,7 +77,7 @@ contract('KeepRandomBeaconOperator', (accounts) => {
     
     await expectThrowWithMessage(
       operatorContract.relayEntry(bls.groupSignature),
-      "Entry already submitted"
+      "Entry was submitted"
     );
   });
 });
