@@ -14,7 +14,9 @@ import (
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
+	dkgResult "github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/internal/interception"
@@ -121,6 +123,9 @@ func executeDKG(
 	// Wait for 3 blocks before starting DKG to
 	// make sure all members are up.
 	startBlockHeight := currentBlockHeight + 3
+
+	gjkr.RegisterUnmarshallers(broadcastChannel)
+	dkgResult.RegisterUnmarshallers(broadcastChannel)
 
 	for i := 0; i < relayConfig.GroupSize; i++ {
 		i := i // capture for goroutine
