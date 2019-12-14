@@ -159,7 +159,7 @@ wherever feasible.
 
 include::contract-structure.adoc[leveloffset=+0]
 
-include::authorizations.adoc[leveloffset=+0]
+include::authorizations.adoc[leveloffset=+2]
 
 include::upgrades.adoc[leveloffset=+0]
 

@@ -1,11 +1,11 @@
 :toc: macro
 :toclevels: 4
 
-== Roles and authorizations
+= Roles and authorizations
 
 ifndef::yellowpaper[toc::[]]
 
-=== Roles
+== Roles
 
 Governance::
 
@@ -52,9 +52,9 @@ may punish the operator for misbehavior.
 The operator can only perform work for authorized operator contracts.
 The Authorizer cannot be rekeyed except by undelegating and redelegating.
 
-=== Authorizations
+== Authorizations
 
-==== The Registry and Panic Button
+=== The Registry and Panic Button
 
 The registry tracks all Keep Org -approved contracts.
 Operator contracts have a special status on the registry,
@@ -77,7 +77,7 @@ Operator Contracts disabled with the _Panic Button_ cannot be re-enabled,
 and disabled contracts may not punish operators
 nor be selected by service contracts to perform work.
 
-==== Staking contracts: authorized operator contracts
+=== Staking contracts: authorized operator contracts
 
 Staking contracts hold staked tokens,
 enforce staking rules,
@@ -104,7 +104,7 @@ authorization cannot be withdrawn by the authorizer.
 However, a operator contract that has been `DISABLED` by the _Panic Button_
 may not punish stakers.
 
-==== Service contracts: used operator contracts
+=== Service contracts: used operator contracts
 
 Service contracts use the basic functionality performed by operator contracts,
 to provide useful services to the public.
@@ -128,11 +128,9 @@ If an operator contract has been `DISABLED` by the _Panic Button_,
 the service contract must not use its functionality.
 This must be checked when the service contract selects an operator contract.
 
-=== Impact of compromise
+== Impact of compromised keys
 
-==== Individual keys
-
-===== Registry Keeper
+=== Registry Keeper
 
 A compromised Registry Keeper can approve arbitrary operator contracts.
 However, using those operator contracts for a service contract
@@ -141,7 +139,7 @@ Thus, a compromised Registry Keeper cannot endanger customers alone.
 Similarly, stakers' funds are safe from being slashed by malicious contracts
 unless their Authorizers are also compromised.
 
-===== Panic Button
+=== Panic Button
 
 A compromised Panic Button can disable arbitrary operator contracts
 and halt all network services.
@@ -157,7 +155,7 @@ a rate-limited Panic Button would be overwhelmed
 and unable to disable them all.
 This could be further mitigated by rate-limiting the Registry Keeper similarly.
 
-===== Operator Contract Upgrader
+=== Operator Contract Upgrader
 
 A compromised Operator Contract Upgrader
 can activate operator contracts on the affected service contract
@@ -166,7 +164,7 @@ It is unlikely that an uncompromised Registry Keeper
 would have approved an operator contract that would satisfy the constraints
 yet cause a significant impact on the service contract.
 
-===== Authorizer
+=== Authorizer
 
 If only the Authorizer of some staker is compromised,
 the attacker can authorize operator contracts
@@ -177,9 +175,7 @@ This has a very limited negative impact
 unless the Registry Keeper has approved
 a faulty or malicious operator contract.
 
-==== Key combinations
-
-===== Registry Keeper + Operator Contract Upgrader
+=== Registry Keeper + Operator Contract Upgrader
 
 If a malicious operator contract can get globally approved,
 the impacted service contract can be completely subverted
@@ -188,7 +184,7 @@ by switching all work to the malicious operator contract.
 While already existing operations should finish normally,
 the service contract can be rendered effectively useless for new requests.
 
-===== Registry Keeper + Authorizer
+=== Registry Keeper + Authorizer
 
 If the Registry Keeper approves a malicious operator contract,
 and a staker's Authorizer authorizes it,
