@@ -157,7 +157,7 @@ Severely harmful actions such as stealing participants' stakes
 should require the compromise of multiple independent actors
 wherever feasible.
 
-include::contract-structure.adoc[leveloffset=+0]
+include::contract-structure.adoc[leveloffset=+2]
 
 include::authorizations.adoc[leveloffset=+2]
 
