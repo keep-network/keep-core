@@ -106,8 +106,15 @@ Participants staking a greater number of tokens
 have a correspondingly greater opportunity to earn rewards.
 In the event that a group fails to produce a signature when requested
 or its private key is provably abused,
-each member of the group is punished
-by taking away some or all of their staked tokens.
+each member of the group is punished by _slashing_ their stake;
+taking away some or all of their staked tokens.
+
+In some cases,
+misbehavior is proven with the help of a third party _"tattletale"_
+who notifies the beacon of the misbehavior,
+and if necessary, provides the required proof.
+If the misbehavior occurred as claimed,
+the tattletale is rewarded with a fraction of the slashed tokens.
 
 == System Details
 
