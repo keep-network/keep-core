@@ -161,6 +161,6 @@ include::contract-structure.adoc[leveloffset=+2]
 
 include::authorizations.adoc[leveloffset=+2]
 
-include::upgrades.adoc[leveloffset=+0]
+include::upgrades.adoc[leveloffset=+2]
 
 include::glossary.adoc[]
