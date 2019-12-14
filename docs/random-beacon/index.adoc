@@ -136,7 +136,7 @@ include::dkg/index.adoc[leveloffset=+2]
 
 include::signing/index.adoc[leveloffset=+2]
 
-include::pricing.adoc[leveloffset=+1]
+include::pricing.adoc[leveloffset=+2]
 
 == Upgrade management
 

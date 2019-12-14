@@ -11,13 +11,15 @@ The pricing method avoids
 the known downfalls of previously considered, more complex, schemes,
 such as price discrimination being defeated by callback pooling.
 
-==== UML diagram
+== Implementation
+
+=== UML diagram
 [ditaa]
 +-----------------+            
 |  estimate_fee   |            
 +-----------------+       
 
-==== Making requests
+=== Making requests
 
 A request begins with the query 
 `entry_fee_estimate = estimate_fee(callback_gas_amount)`
@@ -42,7 +44,7 @@ while the beacon is already processing another request.
 Requests made while the beacon is busy will be rejected
 and the transaction reverted.
 
-==== Receiving a request
+=== Receiving a request
 How are customer requests handled by the protocol?
 
 A request sent to a non-busy beacon is checked for
@@ -83,9 +85,9 @@ until a valid entry is received, this is not necessary.
 
 - the _request fee_ paid
 
-==== Serving a request
+=== Serving a request
 
-===== Receiving submissions
+==== Receiving submissions
 
 A valid entry created by a signing group is submitted by a 
 member of the group called the _submitter_,
@@ -113,7 +115,7 @@ When a valid entry submission is received on-chain:
 
 - and fees, rewards and refunds are paid out
 
-===== Callback processing
+==== Callback processing
 How are callbacks processed?
 
 A callback is called using the callback gas amount as the maximum gas. 
@@ -149,7 +151,7 @@ only when the gas cost of the transaction exceeds the quoted estimate
 The submitter is intended to take the hit
 for submitting with a gas price that exceeds the estimate.
 
-===== Requester refund
+=== Requester refund
 
 _requester refund = actual entry price - requester fee + 1% of request subsidy pool_
 
@@ -169,8 +171,7 @@ and the state of the pool is checked.
 If the amount in the DKG fee pool equals or exceeds the _DKG cost estimate_,
 group creation and a new DKG may be triggered.
 
-
-==== Rewards
+=== Rewards
 
 A _base reward_ for each member of a signing group that produces an entry
 is specified in the system constants in the service contract and:
@@ -184,14 +185,14 @@ To incentivize customers to request entries,
 any amount in excess of the _profit margin_
 is added to the beacons _request subsidy pool_
 
-===== Submitter reward
+==== Submitter reward
 _Submitter reward = F (submission delay, submission delay base time)_
 
 If the sum of rewards paid out
 is < _profit margin + entry verification fee_,
 the difference is added to the _request subsidy pool_.
 
-===== Group reward
+==== Group reward
 How are group members compensated?
 
 The group reward is paid to every member of the signing group,
@@ -228,7 +229,7 @@ with the difference being the _delay penalty = base reward * (1 - 0.64)_.
 If the submission deadline is reached and the delay factor reaches 0,
 the entry submission fails and all group members are penalized.
 
-===== Submitter reward
+==== Submitter reward
 How are submitters compensated?
 
 In addition to the _group reward_,
@@ -297,10 +298,10 @@ If the miner-submitter pays the gas price estimated by the price feed, but
 tricks the contract into consuming twice the gas as normal, they will be able 
 to get twice the reimbursement as well. 
 
-==== Cost estimates
+=== Cost estimates
 todo: How do we estimate the various costs?
 
-===== Gas price feed
+==== Gas price feed
 
 A short-term gas price feed is required
 to estimate the gas cost components.
@@ -332,7 +333,7 @@ costs as much as the KEEP tokens at stake.
 The exact implementation of this gas price feed
 is out for scope for this RFC.
 
-===== DKG cost estimate
+==== DKG cost estimate
 How do we calculate the cost of running the DKG?
 
 The gas required for DKG should be calculated.
@@ -359,7 +360,7 @@ to cover the immediate rise in gas fees during DKG execution
 the beacon is capable of generating new groups.
 Similarly, when gas costs fall DKG gets triggered faster.
 
-===== Entry verification fee
+==== Entry verification fee
 
 Calculate gas required for verifying entry and associated support operations.
 The maximum entry verification gas cost
