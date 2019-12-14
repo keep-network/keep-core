@@ -130,7 +130,9 @@ This must be checked when the service contract selects an operator contract.
 
 == Impact of compromised keys
 
-=== Registry Keeper
+=== Individual keys
+
+==== Registry Keeper
 
 A compromised Registry Keeper can approve arbitrary operator contracts.
 However, using those operator contracts for a service contract
@@ -139,7 +141,7 @@ Thus, a compromised Registry Keeper cannot endanger customers alone.
 Similarly, stakers' funds are safe from being slashed by malicious contracts
 unless their Authorizers are also compromised.
 
-=== Panic Button
+==== Panic Button
 
 A compromised Panic Button can disable arbitrary operator contracts
 and halt all network services.
@@ -155,7 +157,7 @@ a rate-limited Panic Button would be overwhelmed
 and unable to disable them all.
 This could be further mitigated by rate-limiting the Registry Keeper similarly.
 
-=== Operator Contract Upgrader
+==== Operator Contract Upgrader
 
 A compromised Operator Contract Upgrader
 can activate operator contracts on the affected service contract
@@ -164,7 +166,7 @@ It is unlikely that an uncompromised Registry Keeper
 would have approved an operator contract that would satisfy the constraints
 yet cause a significant impact on the service contract.
 
-=== Authorizer
+==== Authorizer
 
 If only the Authorizer of some staker is compromised,
 the attacker can authorize operator contracts
@@ -175,7 +177,9 @@ This has a very limited negative impact
 unless the Registry Keeper has approved
 a faulty or malicious operator contract.
 
-=== Registry Keeper + Operator Contract Upgrader
+=== Key combinations
+
+==== Registry Keeper + Operator Contract Upgrader
 
 If a malicious operator contract can get globally approved,
 the impacted service contract can be completely subverted
@@ -184,7 +188,7 @@ by switching all work to the malicious operator contract.
 While already existing operations should finish normally,
 the service contract can be rendered effectively useless for new requests.
 
-=== Registry Keeper + Authorizer
+==== Registry Keeper + Authorizer
 
 If the Registry Keeper approves a malicious operator contract,
 and a staker's Authorizer authorizes it,
