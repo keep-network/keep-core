@@ -29,13 +29,12 @@ relay (further details are in the section on <<System Details>>) is:
   importance, from a security perspective, of the seed value goes away almost
   immediately in a functioning network.]
 * A request _r~i~_ is dispatched to the chain for a new entry.
-* Information about the request is combined with the previous entry to produce
-  a new relay entry seed value _v~r~_.
-* _v~r~_ is used to choose a group to produce the response to the request.
-* _v~r~_ is signed by at least a subset of the chosen group members, and the
+* The previous entry _v~s~_ is used
+to choose a group to produce the response to the request.
+* _v~s~_ is signed by at least a subset of the chosen group members, and the
   resulting signature is the entry generated in response to the request. It is
   published to the anchoring blockchain as the entry _v~i~_.
-* The new entry _v~i~_ triggers the formation of a new group from the set of
+* The new entry _v~i~_ may trigger the formation of a new group from the set of
   all members in the relay.
 * A group expires after a certain amount of time.
 
