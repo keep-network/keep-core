@@ -140,6 +140,8 @@ include::signing/index.adoc[leveloffset=+2]
 
 include::pricing.adoc[leveloffset=+2]
 
+include::slashing.adoc[leveloffset=+3]
+
 == Upgrade management
 
 The system has been designed to facilitate upgrades
