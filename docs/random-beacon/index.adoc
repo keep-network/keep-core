@@ -83,6 +83,32 @@ Dfinity paper above. The Keep Random Beacon publishes group public keys to the
 anchoring blockchain and does member selection on-chain, but key generation
 occurs between nodes with only the final result vote occurring on-chain.
 
+== Incentive Structure
+
+The system generates verifiable random numbers using threshold signatures.
+BLS threshold signatures are deterministic,
+so a given signing group can only produce one valid signature
+for any given input.
+A party that knows the private key of a signing group
+can calculate signatures in advance,
+and generated entries can be influenced
+by preventing the selected group from producing a signature
+and thus forcing the beacon to select a different group.
+
+To incentivize participants,
+every member of a group that produces a valid entry is rewarded.
+Participants that perform costly but necessary actions
+are reimbursed for the costs and further rewarded.
+
+Each participant is required to _stake_ a number of tokens
+that are held as collateral against misbehavior.
+Participants staking a greater number of tokens
+have a correspondingly greater opportunity to earn rewards.
+In the event that a group fails to produce a signature when requested
+or its private key is provably abused,
+each member of the group is punished
+by taking away some or all of their staked tokens.
+
 == System Details
 
 The system has two high-level modes of operation, discussed in detail in their
