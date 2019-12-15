@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity ^0.5.14;
 
 import "../KeepRandomBeaconOperator.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";

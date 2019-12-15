@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity ^0.5.14;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./TokenStaking.sol";
