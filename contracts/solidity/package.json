@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/keep-network/contracts",
   "dependencies": {
-    "openzeppelin-solidity": "2.3.0",
+    "openzeppelin-solidity": "2.4.0",
     "solidity-bytes-utils": "0.0.7"
   },
   "devDependencies": {
