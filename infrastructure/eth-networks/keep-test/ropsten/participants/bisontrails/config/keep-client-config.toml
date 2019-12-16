@@ -27,6 +27,10 @@
   # conditions.  Set AnnouncedAddresses if you have known external IPs
   # or DNS entries you want to route traffic through.
   AnnouncedAddresses = []
+  # Number of retransmissions for each message
+  RetransmissionCycles = 5
+  # Milliseconds interval between each retransmission of a message
+  RetransmissionInterval = 1000
 
 # In the real world this directory should be on persistent storage.
 [Storage]
