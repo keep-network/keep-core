@@ -4,6 +4,7 @@ import { Form, FormGroup, FormControl, ControlLabel, Col, HelpBlock, Checkbox } 
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount } from '../utils'
 import { SubmitButton } from './Button'
+import { MessagesContext, messagesType } from './Message'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount.',
@@ -11,6 +12,7 @@ const ERRORS = {
 }
 
 class TokenGrantForm extends Component {
+  static contextType = MessagesContext
 
   state = {
     amount: 0,
@@ -45,23 +47,30 @@ class TokenGrantForm extends Component {
     else return 'error'
   }
 
-  submit = async () => {
+  submit = async (onTransationHashCallback) => {
     const { amount, grantee, duration, start, cliff, revocable} = this.state
     const { web3 } = this.props
 
     const tokenGrantContractAddress = web3.grantContract.options.address;
+    const extraData = Buffer.concat([
+      Buffer.from(grantee.substr(2), 'hex'),
+      web3.utils.toBN(duration).toBuffer('be', 32),
+      web3.utils.toBN(start).toBuffer('be', 32),
+      web3.utils.toBN(cliff).toBuffer('be', 32),
+      Buffer.from(revocable ? "01" : "00", 'hex'),
+    ])
     
-    await web3.token.methods.approveAndCall(
-      tokenGrantContractAddress,
-      web3.utils.toBN(formatAmount(amount, 18)).toString(),
-      Buffer.concat([
-        Buffer.from(grantee.substr(2), 'hex'),
-        web3.utils.toBN(duration).toBuffer('be', 32),
-        web3.utils.toBN(start).toBuffer('be', 32),
-        web3.utils.toBN(cliff).toBuffer('be', 32),
-        Buffer.from(revocable ? "01" : "00", 'hex'),
-      ]),
-    ).send({from: web3.yourAddress})
+    try {
+      await web3.token.methods.approveAndCall(
+        tokenGrantContractAddress,
+        web3.utils.toBN(formatAmount(amount, 18)).toString(),
+        extraData)
+        .send({from: web3.yourAddress})
+        .on('transactionHash', onTransationHashCallback)
+      this.context.showMessage({ title: 'Success', content: 'Grant tokens transaction successfully completed' })
+    } catch(error) {
+      this.context.showMessage({ type: messagesType.ERROR, title: 'Grant tokens action has been failed ', content: error.message })
+    }
   }
 
   render() {
@@ -169,6 +178,7 @@ class TokenGrantForm extends Component {
             className="btn btn-primary btn-lg"
             type="submit"
             onSubmitAction={this.submit}
+            pendingMessageTitle="Grant tokens transaction is pending..."
           >
             Grant tokens
           </SubmitButton>

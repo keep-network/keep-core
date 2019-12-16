@@ -4,9 +4,11 @@ import { Form, FormGroup, FormControl } from 'react-bootstrap'
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount, displayAmount } from '../utils'
 import { SubmitButton } from './Button'
+import { MessagesContext, messagesType } from './Message'
 
 
 class StakingDelegateTokenGrantForm extends Component {
+  static contextType = MessagesContext
 
   state = {
     grantId: 0,
@@ -49,7 +51,7 @@ class StakingDelegateTokenGrantForm extends Component {
       return 'error'
   }
 
-  submit = async () => {
+  submit = async (onTransactionHashCallback) => {
     const { grantId, amount, magpie, operatorAddress } = this.state
     const { web3 } = this.props
     const stakingContractAddress = web3.stakingContract.options.address;
@@ -59,13 +61,14 @@ class StakingDelegateTokenGrantForm extends Component {
       Buffer.from(operatorAddress.substr(2), 'hex'),
     ]);
 
-    await web3.grantContract.methods.stake(
-      grantId,
-      stakingContractAddress,
-      web3.utils.toBN(formatAmount(amount, 18)).toString(),
-      delegation
-    ).send({from: web3.yourAddress})
-
+    try{
+      await web3.grantContract.methods.stake(grantId, stakingContractAddress,web3.utils.toBN(formatAmount(amount, 18)).toString(), delegation)
+        .send({from: web3.yourAddress})
+        .on('transactionHash', onTransactionHashCallback)
+      this.context.showMessage({ type: messagesType.SUCCESS, title: 'Success', content: 'Staking delegate transaction successfully completed' })
+    } catch(error) {
+      this.context.showMessage({ type: messagesType.ERROR, title: 'Staking delegate action has been failed ', content: error.message })
+    }
   }
 
   render() {
@@ -127,6 +130,7 @@ class StakingDelegateTokenGrantForm extends Component {
           type="submit"
           className="btn btn-primary btn-lg"
           onSubmitAction={this.submit}
+          pendingMessageTitle="Delegate stake token grants transaction is pending..."
         >
           Delegate stake
         </SubmitButton>

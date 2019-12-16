@@ -4,6 +4,7 @@ import { Form, FormGroup, FormControl } from 'react-bootstrap'
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount } from '../utils'
 import { SubmitButton } from './Button'
+import { MessagesContext, messagesType } from './Message'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount',
@@ -13,6 +14,7 @@ const ERRORS = {
 const RESET_DELAY = 3000 // 3 seconds
 
 class StakingForm extends Component {
+  static contextType = MessagesContext
 
   state = {
     amount: 0,
@@ -49,14 +51,29 @@ class StakingForm extends Component {
     }
   }
 
-  submit = async () => {
+  capitalizeActionName = () => this.props.action.charAt(0).toUpperCase() + this.props.action.slice(1)
+
+  submit = async (onTransactionHashCallback) => {
     const { amount } = this.state
     const { action, web3 } = this.props
     const stakingContractAddress = web3.stakingContract.options.address;
-    if (action === 'stake') {
-      await web3.token.methods.approveAndCall(stakingContractAddress, formatAmount(amount, 18), "", {from: web3.yourAddress, gas: 150000})
-    } else if (action === 'unstake') {
-      await web3.stakingContract.methods.initiateUnstake(web3.utils.toBN(formatAmount(amount, 18)).toString(), web3.yourAddress).send({from: web3.yourAddress})
+    const actionName = this.capitalizeActionName()
+    
+    try {
+      if (action === 'stake') {
+        let delegationData = '0x' + Buffer.concat([Buffer.from(web3.yourAddress.substr(2), 'hex'), Buffer.from(web3.yourAddress.substr(2), 'hex')]).toString('hex');
+        await web3.token.methods
+          .approveAndCall(stakingContractAddress, web3.utils.toBN(formatAmount(amount, 18)).toString(), delegationData)
+          .send({from: web3.yourAddress, gas: 150000})
+          .on('transactionHash', onTransactionHashCallback)
+      } else if (action === 'unstake') {
+        await web3.stakingContract.methods.initiateUnstake(web3.utils.toBN(formatAmount(amount, 18)).toString(), web3.yourAddress)
+          .send({from: web3.yourAddress})
+          .on('transactionHash', onTransactionHashCallback)
+      }
+      this.context.showMessage({ type: messagesType.SUCCESS, title: 'Success', content: `${actionName} transaction successfully completed` })
+    } catch (error) {
+      this.context.showMessage({ type: messagesType.ERROR, title: `${actionName} action has been failed` , content: error.message })
     }
   }
 
@@ -82,6 +99,7 @@ class StakingForm extends Component {
             type="submit"
             className="btn btn-primary btn-lg"
             onSubmitAction={this.submit}
+            pendingMessageTitle={`${this.capitalizeActionName()} transaction is pending...`}
           >
             {btnText}
           </SubmitButton>
