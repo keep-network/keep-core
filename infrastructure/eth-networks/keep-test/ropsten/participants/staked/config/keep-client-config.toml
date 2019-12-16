@@ -9,13 +9,13 @@
   # Contracts are already deployed to the private testnet.  They are subject to change on deployment
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeaconOperator contract
-    KeepRandomBeaconOperator = "0x0C352C6414f1DfFEd5760358eDc24FFe4d043653"
+    KeepRandomBeaconOperator = "0x23C62f3AC74Ab575427EEFf37eCddc68fDeD5901"
     # TokenStaking
-    TokenStaking = "0xDe7a3dB50dF9D1102CD1Ff6434Ec62B92F8776c1"
+    TokenStaking = "0x5366837a0a40CD92e5C42c3b8d919046377CC525"
     # Hex-encoded address of KeepRandomBeaconService contract. Only needed
     # in cases where the client's utility functions will be used (e.g., the
     # relay subcommand).
-    KeepRandomBeaconService = "0xdA31C4188dE76d232fBfa736bC3D14d600e073E9"
+    KeepRandomBeaconService = "0x6eaC1E4eEFFEb463eBbe4f65efcE64D5d5bD8076"
 
 # We can configure multiple bootstrap peers.  For the purpose of initial testing we're keeping it at one.
 [LibP2P]
