@@ -2,6 +2,20 @@
 
 Summary of Keep private testnet releases in reverse chronological order.
 
+== 2019-12-13
+
+=== BUGFIXES
+
+- Relay submission: Ensure a valid relay request can only be submitted once.
+- Timings: Corrected message unmarshallers being registered too late.
+- Cost smoothing: Reduced relay entry verification gas cost peaks.
+- DKG: Corrected failing DKG because of invalid detection of identical messages in network time cache.
+
+=== OTHERS
+
+- Simplified stake delegation: Operator's signature is no longer required.
+- Migrated to Ropsten!
+
 == 2019-10-31
 
 === OTHERS
