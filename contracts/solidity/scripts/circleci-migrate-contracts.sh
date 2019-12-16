@@ -55,6 +55,7 @@ ssh utilitybox << EOF
   cd /tmp/$BUILD_TAG/solidity
 
   npm install truffle@5.0.41
+  npm install truffle/hdwallet-provider@1.0.25
   npm install openzeppelin-solidity@2.3.0
   npm install solidity-bytes-utils@0.0.7
   npm install babel-register@6.26.0
