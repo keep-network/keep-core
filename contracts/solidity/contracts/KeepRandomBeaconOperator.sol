@@ -56,7 +56,7 @@ contract KeepRandomBeaconOperator {
     uint256 public minimumStake = 200000 * 1e18;
 
     // Each signing group member reward expressed in wei.
-    uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
+    uint256 public groupMemberBaseReward = 145*1e11; // 14500 Gwei, 10% of operational cost
 
     // The price feed estimate is used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use both values to
@@ -93,11 +93,10 @@ contract KeepRandomBeaconOperator {
 
     // Gas required to verify BLS signature and produce successful relay
     // entry. Excludes callback and DKG gas.
-    // TODO: Update once alt_bn128 gas costs reduction is implemented.
-    uint256 public entryVerificationGasEstimate = 523000;
+    uint256 public entryVerificationGasEstimate = 300000;
 
     // Gas required to submit DKG result.
-    uint256 public dkgGasEstimate = 8100000;
+    uint256 public dkgGasEstimate = 1740000;
 
     // Reimbursement for the submitter of the DKG result.
     // This value is set when a new DKG request comes to the operator contract.
@@ -120,8 +119,6 @@ contract KeepRandomBeaconOperator {
 
     uint256 internal currentEntryStartBlock;
     SigningRequest internal signingRequest;
-
-    bool internal entryInProgress;
 
     // Seed value used for the genesis group selection.
     // https://www.wolframalpha.com/input/?i=pi+to+78+digits
@@ -268,6 +265,7 @@ contract KeepRandomBeaconOperator {
         uint32 virtualStakerIndex;
 
         bytes memory ticketBytes = abi.encodePacked(ticket);
+        /* solium-disable-next-line */
         assembly {
             // ticket value is 8 bytes long
             ticketValue := mload(add(ticketBytes, 8))
@@ -420,10 +418,9 @@ contract KeepRandomBeaconOperator {
         address serviceContract,
         uint256 entryVerificationAndProfitFee
     ) internal {
-        require(!entryInProgress || hasEntryTimedOut(), "Beacon is busy");
+        require(!isEntryInProgress() || hasEntryTimedOut(), "Beacon is busy");
 
         currentEntryStartBlock = block.number;
-        entryInProgress = true;
 
         uint256 groupIndex = groups.selectGroup(uint256(keccak256(previousEntry)));
         signingRequest = SigningRequest(
@@ -444,6 +441,7 @@ contract KeepRandomBeaconOperator {
      * previous entry and seed.
      */
     function relayEntry(bytes memory _groupSignature) public {
+        require(isEntryInProgress(), "Entry was submitted");
         require(!hasEntryTimedOut(), "Entry timed out");
 
         bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
@@ -465,8 +463,6 @@ contract KeepRandomBeaconOperator {
             msg.sender
         );
 
-        entryInProgress = false;
-
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
@@ -475,6 +471,8 @@ contract KeepRandomBeaconOperator {
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
         }
+
+        currentEntryStartBlock = 0;
     }
 
     /**
@@ -539,12 +537,20 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
+     * @dev Returns true if generation of a new relay entry is currently in
+     * progress.
+     */
+    function isEntryInProgress() internal view returns (bool) {
+        return currentEntryStartBlock != 0;
+    }
+
+    /**
      * @dev Returns true if the currently ongoing new relay entry generation
      * operation timed out. There is a certain timeout for a new relay entry
      * to be produced, see `relayEntryTimeout` value.
      */
     function hasEntryTimedOut() internal view returns (bool) {
-        return entryInProgress && block.number > currentEntryStartBlock + relayEntryTimeout;
+        return currentEntryStartBlock != 0 && block.number > currentEntryStartBlock + relayEntryTimeout;
     }
 
     /**
@@ -623,13 +629,6 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Returns index of the provided group.
-     */
-    function getGroupIndex(bytes memory groupPubKey) public view returns (uint256) {
-        return groups.getGroupIndex(groupPubKey);
-    }
-
-    /**
      * @dev Gets all indices in the provided group for a member.
      */
     function getGroupMemberIndices(bytes memory groupPubKey, address member) public view returns (uint256[] memory indices) {
@@ -648,6 +647,20 @@ contract KeepRandomBeaconOperator {
     function withdrawGroupMemberRewards(uint256 groupIndex, uint256[] memory groupMemberIndices) public {
         uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
         stakingContract.magpieOf(msg.sender).transfer(accumulatedRewards);
+    }
+
+    /**
+    * @dev Gets the index of the first active group.
+    */
+    function getFirstActiveGroupIndex() public view returns (uint256) {
+        return groups.expiredGroupOffset;
+    }
+
+    /**
+    * @dev Gets group public key.
+    */
+    function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
+        return groups.getGroupPublicKey(groupIndex);
     }
 
     /**

@@ -1,5 +1,5 @@
 import React from 'react'
-import { getWeb3 } from '../utils'
+import { getWeb3, getWeb3SocketProvider } from '../utils'
 import { Web3Context } from './WithWeb3Context'
 import { getKeepToken, getTokenStaking, getTokenGrant } from '../contracts'
 
@@ -31,9 +31,11 @@ export default class Web3ContextProvider extends React.Component {
         }
        
         window.ethereum.on('accountsChanged', this.accountHasBeenChanged)
-
+        
         try {
+            const web3EventProvider = getWeb3SocketProvider()
             const [token, grantContract, stakingContract] = await this.getContracts(web3)
+            const [eventToken, eventGrantContract, eventStakingContract] = await this.getContracts(web3EventProvider)
             this.setState({
                 token,
                 grantContract,
@@ -43,6 +45,9 @@ export default class Web3ContextProvider extends React.Component {
                 networkType: await web3.eth.net.getNetworkType(),
                 utils: web3.utils,
                 eth: web3.eth,
+                eventToken,
+                eventGrantContract,
+                eventStakingContract
             })
         } catch(error) {
             this.setState({

@@ -1,9 +1,9 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { Button, Form, FormGroup,
-  FormControl } from 'react-bootstrap'
+import { Form, FormGroup, FormControl } from 'react-bootstrap'
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount } from '../utils'
+import { SubmitButton } from './Button'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount',
@@ -39,10 +39,6 @@ class StakingForm extends Component {
     }, RESET_DELAY)
   }
 
-  onClick = (e) => {
-    this.submit()
-  }
-
   onSubmit = (e) => {
     e.preventDefault()
   }
@@ -53,7 +49,7 @@ class StakingForm extends Component {
     }
   }
 
-  async submit() {
+  submit = async () => {
     const { amount } = this.state
     const { action, web3 } = this.props
     const stakingContractAddress = web3.stakingContract.options.address;
@@ -82,12 +78,13 @@ class StakingForm extends Component {
               onKeyUp={this.onKeyUp}
               />
           </FormGroup>
-          <Button
-            bsStyle="primary"
-            bsSize="large"
-            onClick={this.onClick}>
+          <SubmitButton
+            type="submit"
+            className="btn btn-primary btn-lg"
+            onSubmitAction={this.submit}
+          >
             {btnText}
-          </Button>
+          </SubmitButton>
         </Form>
         { hasError &&
           <small className="error-message">{errorMsg}</small> }

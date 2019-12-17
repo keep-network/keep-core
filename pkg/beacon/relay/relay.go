@@ -106,19 +106,13 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	// taking channel name from first membership because the channel name
-	// is same for all group members
-	channelName := memberships[0].ChannelName
-
-	channel, err := n.netProvider.ChannelFor(channelName)
+	channel, err := n.netProvider.ChannelFor(memberships[0].ChannelName)
 	if err != nil {
-		logger.Errorf(
-			"could not create broadcast channel with name [%v]: [%v]",
-			channelName,
-			err,
-		)
+		logger.Errorf("could not create broadcast channel: [%v]", err)
 		return
 	}
+
+	entry.RegisterUnmarshallers(channel)
 
 	groupMembers, err := relayChain.GetGroupMembers(groupPublicKey)
 	if err != nil {
@@ -137,15 +131,15 @@ func (n *Node) GenerateRelayEntry(
 		)
 	}
 
-	for _, signer := range memberships {
-		go func(signer *registry.Membership) {
+	for _, member := range memberships {
+		go func(member *registry.Membership) {
 			err = entry.SignAndSubmit(
 				n.blockCounter,
 				channel,
 				relayChain,
 				previousEntry,
 				n.chainConfig.HonestThreshold,
-				signer.Signer,
+				member.Signer,
 				startBlockHeight,
 			)
 			if err != nil {
@@ -155,6 +149,6 @@ func (n *Node) GenerateRelayEntry(
 				)
 				return
 			}
-		}(signer)
+		}(member)
 	}
 }

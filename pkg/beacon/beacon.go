@@ -79,13 +79,13 @@ func Initialize(
 				request.GroupPublicKey,
 				request.BlockNumber,
 			)
-		} else {
-			go node.MonitorRelayEntry(
-				relayChain,
-				request.BlockNumber,
-				chainConfig,
-			)
 		}
+
+		go node.MonitorRelayEntry(
+			relayChain,
+			request.BlockNumber,
+			chainConfig,
+		)
 	})
 
 	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
