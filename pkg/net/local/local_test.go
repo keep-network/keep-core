@@ -1,7 +1,6 @@
 package local
 
 import (
-	"bytes"
 	"context"
 	"reflect"
 	"sort"
@@ -9,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
@@ -228,13 +228,8 @@ loop:
 				msg.Type(),
 			)
 		}
-		if !bytes.Equal(key.Marshal(staticKey1), msg.SenderPublicKey()) {
-			t.Errorf(
-				"invalid sender public key\nexpected: [%+v]\nactual:   [%+v]\n",
-				key.Marshal(staticKey1),
-				msg.SenderPublicKey(),
-			)
-		}
+
+		testutils.AssertBytesEqual(t, key.Marshal(staticKey1), msg.SenderPublicKey())
 	}
 }
 
