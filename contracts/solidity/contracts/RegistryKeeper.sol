@@ -25,6 +25,10 @@ contract RegistryKeeper is Ownable {
         _;
     }
 
+    constructor(address _panicButton) Ownable() public {
+        panicButton = _panicButton;
+    }
+
     function approveOperatorContract(address operatorContract) public onlyOwner {
         operatorContracts[operatorContract] = 1;
     }
