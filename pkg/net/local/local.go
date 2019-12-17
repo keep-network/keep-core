@@ -203,7 +203,10 @@ func (lc *localChannel) deliver(
 	}
 }
 
-func (lc *localChannel) Send(message net.TaggedMarshaler) error {
+func (lc *localChannel) Send(
+	message net.TaggedMarshaler,
+	retransmission ...net.RetransmissionOptions,
+) error {
 	return doSend(lc, message)
 }
 

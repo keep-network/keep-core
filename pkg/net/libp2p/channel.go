@@ -43,7 +43,10 @@ func (c *channel) Name() string {
 	return c.name
 }
 
-func (c *channel) Send(message net.TaggedMarshaler) error {
+func (c *channel) Send(
+	message net.TaggedMarshaler,
+	retransmission ...net.RetransmissionOptions,
+) error {
 	// Transform net.TaggedMarshaler to a protobuf message
 	messageProto, err := c.messageProto(message)
 	if err != nil {

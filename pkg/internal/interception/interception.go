@@ -54,14 +54,17 @@ func (c *channel) Name() string {
 	return c.delegate.Name()
 }
 
-func (c *channel) Send(m net.TaggedMarshaler) error {
+func (c *channel) Send(
+	m net.TaggedMarshaler,
+	retransmission ...net.RetransmissionOptions,
+) error {
 	altered := c.rules(m)
 	if altered == nil {
 		// drop the message
 		return nil
 	}
 
-	return c.delegate.Send(c.rules(m))
+	return c.delegate.Send(c.rules(m), retransmission...)
 }
 
 func (c *channel) Recv(h net.HandleMessageFunc) error {
