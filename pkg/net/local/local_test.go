@@ -198,16 +198,16 @@ func TestSendAndDeliver(t *testing.T) {
 	}
 
 	deliveredMessages := []net.Message{}
-	go func() {
-		for {
-			select {
-			case msg := <-inMsgChan:
-				deliveredMessages = append(deliveredMessages, msg)
-			}
-		}
-	}()
 
-	<-ctx.Done()
+loop:
+	for {
+		select {
+		case msg := <-inMsgChan:
+			deliveredMessages = append(deliveredMessages, msg)
+		case <-ctx.Done():
+			break loop
+		}
+	}
 
 	if len(deliveredMessages) != 3 {
 		t.Errorf("unexpected number of delivered messages: [%d]", len(deliveredMessages))
