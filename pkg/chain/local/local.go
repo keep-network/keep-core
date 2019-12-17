@@ -220,6 +220,10 @@ func (c *localChain) OnRelayEntryRequested(
 	}), nil
 }
 
+func (c *localChain) TestBlock(block *big.Int) (*big.Int, error) {
+	panic("not implemented")
+}
+
 func (c *localChain) OnGroupSelectionStarted(
 	handler func(entry *event.GroupSelectionStart),
 ) (subscription.EventSubscription, error) {

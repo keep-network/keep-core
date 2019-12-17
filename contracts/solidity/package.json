@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/keep-network/contracts",
   "dependencies": {
+    "@truffle/hdwallet-provider": "^1.0.25",
     "openzeppelin-solidity": "2.3.0",
     "solidity-bytes-utils": "0.0.7"
   },

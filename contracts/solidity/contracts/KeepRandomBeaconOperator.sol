@@ -301,6 +301,15 @@ contract KeepRandomBeaconOperator {
         return groupSelection.selectedParticipants();
     }
 
+    function testBlock(uint256 blockHeight) public view returns (uint256) {
+        require(
+            block.number >= blockHeight,
+            "Ticket submission in progress"
+        );
+
+        return block.number;
+    }
+
     /**
      * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of
      * the protocol.

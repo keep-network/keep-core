@@ -82,7 +82,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 // be returned if not staked.  If err != nil then it was not possible to determine
 // if the address is staked or not.
 func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
-	return ec.keepRandomBeaconOperatorContract.HasMinimumStake(address)
+	return true, nil
 }
 
 func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTicketSubmissionPromise {
@@ -303,6 +303,10 @@ func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) 
 
 func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.IsStaleGroup(groupPublicKey)
+}
+
+func (ec *ethereumChain) TestBlock(block *big.Int) (*big.Int, error) {
+	return ec.keepRandomBeaconOperatorContract.TestBlockAtBlock(block, new(big.Int).Add(block, big.NewInt(2)))
 }
 
 func (ec *ethereumChain) OnDKGResultSubmitted(

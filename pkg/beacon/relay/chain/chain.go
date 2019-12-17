@@ -37,6 +37,8 @@ type RelayEntryInterface interface {
 	// supposed to submit a relay entry, did not deliver it within a specified
 	// time frame (relayEntryTimeout) counted in blocks.
 	ReportRelayEntryTimeout() error
+
+	TestBlock(block *big.Int) (*big.Int, error)
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that

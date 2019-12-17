@@ -3,6 +3,7 @@ package beacon
 import (
 	"context"
 	"encoding/hex"
+	"math/big"
 
 	"github.com/ipfs/go-log"
 
@@ -61,6 +62,41 @@ func Initialize(
 		chainConfig,
 		groupRegistry,
 	)
+
+	go func() {
+		currentBlock, err := blockCounter.CurrentBlock()
+		if err != nil {
+			logger.Errorf("could not get current block [%v]", err)
+		}
+
+		logger.Infof("current block is [%v]", currentBlock)
+
+		waiter, err := blockCounter.BlockHeightWaiter(currentBlock + 1)
+		if err != nil {
+			logger.Errorf("could not create block height waiter [%v]", err)
+		}
+
+		for {
+			select {
+			case b := <-waiter:
+				logger.Infof("got block [%v]", b)
+				currentBlock = b
+				waiter, err = blockCounter.BlockHeightWaiter(currentBlock + 1)
+				if err != nil {
+					logger.Errorf("could not create block height waiter [%v]", err)
+					break
+				}
+
+				chainBlock, err := chainHandle.ThresholdRelay().TestBlock(big.NewInt(int64(currentBlock)))
+				if err != nil {
+					logger.Errorf("failed executing on-chain block check [%v]", err)
+					break
+				}
+
+				logger.Infof("confirmed of-chain block [%v] against current chain block [%v]", currentBlock, chainBlock)
+			}
+		}
+	}()
 
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
 		logger.Infof(
