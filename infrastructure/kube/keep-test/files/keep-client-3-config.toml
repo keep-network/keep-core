@@ -1,6 +1,6 @@
 [ethereum]
-  URL = "wss://ropsten.infura.io/ws/v3/59fb36a36fa4474b890c13dd30038be5"
-  URLRPC = "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
+  URL = "ws://eth-tx-ropsten.test.keep.network:8546"
+  URLRPC = "http://eth-tx-ropsten.test.keep.network:8545"
 
   [ethereum.account]
     Address = "0xfd326104974e2fb01c02becd634fac5bff23d33f"
