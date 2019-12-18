@@ -2,7 +2,7 @@ import React from 'react'
 import { getWeb3, getWeb3SocketProvider } from '../utils'
 import { Web3Context } from './WithWeb3Context'
 import { getKeepToken, getTokenStaking, getTokenGrant } from '../contracts'
-import { MessagesContext } from './Message'
+import { MessagesContext, messageType } from './Message'
 
 export default class Web3ContextProvider extends React.Component {
     static contextType = MessagesContext
@@ -44,7 +44,7 @@ export default class Web3ContextProvider extends React.Component {
     connectAppWithAccount = async () => {
         const { web3 } = this.state
         this.setState({ isFetching: true })
-        this.context.showMessage({ type: 'info', title: 'Please check web3 provider' })
+        this.context.showMessage({ type: messageType.INFO, title: 'Please check web3 provider' })
         
         try{
             const [account] = await web3.currentProvider.enable()
