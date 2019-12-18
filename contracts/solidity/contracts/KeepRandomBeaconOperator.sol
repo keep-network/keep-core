@@ -56,7 +56,7 @@ contract KeepRandomBeaconOperator {
     uint256 public minimumStake = 200000 * 1e18;
 
     // Each signing group member reward expressed in wei.
-    uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
+    uint256 public groupMemberBaseReward = 145*1e11; // 14500 Gwei, 10% of operational cost
 
     // The price feed estimate is used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use both values to
@@ -93,11 +93,10 @@ contract KeepRandomBeaconOperator {
 
     // Gas required to verify BLS signature and produce successful relay
     // entry. Excludes callback and DKG gas.
-    // TODO: Update once alt_bn128 gas costs reduction is implemented.
-    uint256 public entryVerificationGasEstimate = 523000;
+    uint256 public entryVerificationGasEstimate = 300000;
 
     // Gas required to submit DKG result.
-    uint256 public dkgGasEstimate = 8100000;
+    uint256 public dkgGasEstimate = 1740000;
 
     // Reimbursement for the submitter of the DKG result.
     // This value is set when a new DKG request comes to the operator contract.
@@ -419,7 +418,7 @@ contract KeepRandomBeaconOperator {
         address serviceContract,
         uint256 entryVerificationAndProfitFee
     ) internal {
-        require(currentEntryStartBlock == 0 || hasEntryTimedOut(), "Beacon is busy");
+        require(!isEntryInProgress() || hasEntryTimedOut(), "Beacon is busy");
 
         currentEntryStartBlock = block.number;
 
@@ -442,6 +441,7 @@ contract KeepRandomBeaconOperator {
      * previous entry and seed.
      */
     function relayEntry(bytes memory _groupSignature) public {
+        require(isEntryInProgress(), "Entry was submitted");
         require(!hasEntryTimedOut(), "Entry timed out");
 
         bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
@@ -534,6 +534,14 @@ contract KeepRandomBeaconOperator {
         // delay factor = [ T_temaining * decimals / (T_deadline - T_begin)]^2 / decimals =
         //    = [T_remaining / (T_deadline - T_begin) ]^2 * decimals
         delayFactor = ((remainingBlocks.mul(decimals).div(submissionWindow))**2).div(decimals);
+    }
+
+    /**
+     * @dev Returns true if generation of a new relay entry is currently in
+     * progress.
+     */
+    function isEntryInProgress() internal view returns (bool) {
+        return currentEntryStartBlock != 0;
     }
 
     /**

@@ -171,13 +171,17 @@ func doSend(channel *localChannel, payload net.TaggedMarshaler) error {
 	}
 
 	for _, targetChannel := range targetChannels {
-		targetChannel.deliver(channel.identifier, unmarshaled) // TODO error handling?
+		targetChannel.deliver(channel.identifier, channel.staticKey, unmarshaled) // TODO error handling?
 	}
 
 	return nil
 }
 
-func (lc *localChannel) deliver(transportIdentifier net.TransportIdentifier, payload interface{}) {
+func (lc *localChannel) deliver(
+	senderTransportIdentifier net.TransportIdentifier,
+	senderPublicKey *key.NetworkPublic,
+	payload interface{},
+) {
 	lc.messageHandlersMutex.Lock()
 	snapshot := make([]net.HandleMessageFunc, len(lc.messageHandlers))
 	copy(snapshot, lc.messageHandlers)
@@ -185,10 +189,10 @@ func (lc *localChannel) deliver(transportIdentifier net.TransportIdentifier, pay
 
 	message :=
 		internal.BasicMessage(
-			transportIdentifier,
+			senderTransportIdentifier,
 			payload,
 			"local",
-			key.Marshal(lc.staticKey),
+			key.Marshal(senderPublicKey),
 		)
 
 	for _, handler := range snapshot {

@@ -4,6 +4,7 @@ import { Form, FormGroup, FormControl } from 'react-bootstrap'
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount, displayAmount } from '../utils'
 import { SubmitButton } from './Button'
+import { MessagesContext, messageType } from './Message'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount',
@@ -13,6 +14,7 @@ const ERRORS = {
 const RESET_DELAY = 3000 // 3 seconds
 
 class StakingDelegateForm extends Component {
+  static contextType = MessagesContext
 
   state = {
     amount: 100,
@@ -69,12 +71,22 @@ class StakingDelegateForm extends Component {
       return 'error'
   }
 
-  submit = async () => {
+  submit = async (onTransactionHashCallback) => {
     const { amount, magpie, operatorAddress } = this.state
     const { web3 } = this.props;
     const stakingContractAddress = web3.stakingContract.options.address;
     let delegationData = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), Buffer.from(operatorAddress.substr(2), 'hex')]).toString('hex');
-    await web3.token.methods.approveAndCall(stakingContractAddress, web3.utils.toBN(formatAmount(amount, 18)).toString(), delegationData).send({from: web3.yourAddress})
+    
+    try {
+      await web3.token.methods
+        .approveAndCall(stakingContractAddress, web3.utils.toBN(formatAmount(amount, 18)).toString(), delegationData)
+        .send({from: web3.yourAddress})
+        .on('transactionHash', onTransactionHashCallback)
+      this.context.showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Staking delegate transaction has been successfully completed' })
+    } catch(error) {
+      this.context.showMessage({ type: messageType.ERROR, title: 'Staking delegate action has been failed ', content: error.message })
+    }
+    
   }
 
   render() {
@@ -121,7 +133,9 @@ class StakingDelegateForm extends Component {
         <SubmitButton
           type='submit'
           className="btn btn-primary btn-lg"
-          onSubmitAction={this.submit}>
+          onSubmitAction={this.submit}
+          pendingMessageTitle="Delegate stake transaction is pending..."
+        >
           Delegate stake
         </SubmitButton>
         { hasError &&

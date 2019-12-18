@@ -8,21 +8,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 func TestRegisterAndFireHandler(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	provider := Connect()
-	localChannel, err := provider.ChannelFor("channel name")
+	_, localChannel, err := initTestChannel("channel name")
 	if err != nil {
 		t.Fatal(err)
 	}
-	localChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-		return &mockNetMessage{}
-	})
 
 	handlerFiredChan := make(chan struct{})
 	handler := net.HandleMessageFunc{
@@ -104,14 +102,10 @@ func TestUnregisterHandler(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			defer cancel()
 
-			provider := Connect()
-			localChannel, err := provider.ChannelFor("channel name")
+			_, localChannel, err := initTestChannel("channel name")
 			if err != nil {
 				t.Fatal(err)
 			}
-			localChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
-				return &mockNetMessage{}
-			})
 
 			handlersFiredMutex := &sync.Mutex{}
 			handlersFired := []string{}
@@ -154,6 +148,107 @@ func TestUnregisterHandler(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSendAndDeliver(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	msgToSend := &mockNetMessage{}
+
+	channelName := "channel name"
+
+	staticKey1, localChannel1, err := initTestChannel(channelName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, localChannel2, err := initTestChannel(channelName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, localChannel3, err := initTestChannel(channelName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Register handlers.
+	inMsgChan := make(chan net.Message, 3)
+
+	msgHandler := net.HandleMessageFunc{
+		Type: msgToSend.Type(),
+		Handler: func(msg net.Message) error {
+			inMsgChan <- msg
+			return nil
+		},
+	}
+
+	if err := localChannel1.Recv(msgHandler); err != nil {
+		t.Fatalf("failed to register receive handler: [%v]", err)
+	}
+	if err := localChannel2.Recv(msgHandler); err != nil {
+		t.Fatalf("failed to register receive handler: [%v]", err)
+	}
+	if err := localChannel3.Recv(msgHandler); err != nil {
+		t.Fatalf("failed to register receive handler: [%v]", err)
+	}
+
+	// Broadcast message by the first peer.
+	if err := localChannel1.Send(msgToSend); err != nil {
+		t.Fatalf("failed to send message: [%v]", err)
+	}
+
+	deliveredMessages := []net.Message{}
+
+loop:
+	for {
+		select {
+		case msg := <-inMsgChan:
+			deliveredMessages = append(deliveredMessages, msg)
+		case <-ctx.Done():
+			break loop
+		}
+	}
+
+	if len(deliveredMessages) != 3 {
+		t.Errorf("unexpected number of delivered messages: [%d]", len(deliveredMessages))
+	}
+
+	for _, msg := range deliveredMessages {
+		if !reflect.DeepEqual(msgToSend, msg.Payload()) {
+			t.Errorf(
+				"invalid payload\nexpected: [%+v]\nactual:   [%+v]\n",
+				msgToSend,
+				msg.Payload(),
+			)
+		}
+		if "local" != msg.Type() {
+			t.Errorf(
+				"invalid type\nexpected: [%+v]\nactual:   [%+v]\n",
+				"local",
+				msg.Type(),
+			)
+		}
+
+		testutils.AssertBytesEqual(t, key.Marshal(staticKey1), msg.SenderPublicKey())
+	}
+}
+
+func initTestChannel(channelName string) (*key.NetworkPublic, net.BroadcastChannel, error) {
+	_, staticKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	provider := ConnectWithKey(staticKey)
+	localChannel, err := provider.ChannelFor(channelName)
+	if err != nil {
+		return nil, nil, err
+	}
+	localChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &mockNetMessage{}
+	})
+
+	return staticKey, localChannel, nil
 }
 
 type mockNetMessage struct{}

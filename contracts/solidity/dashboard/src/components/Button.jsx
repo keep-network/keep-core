@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useRef } from "react"
+import React, { useEffect, useState, useRef , useContext} from "react"
 import { CSSTransition } from 'react-transition-group'
 import Loadable from "./Loadable"
+import { messageType, MessagesContext } from "./Message"
 
 const buttonContentTransitionTimeoutInMs = 500
 const minimumLoaderDurationInMs = 400
@@ -61,20 +62,41 @@ export default function Button({ isFetching, children, ...props }) {
   )
 }
 
-export const SubmitButton = ({ onSubmitAction, ...props }) => {
+export const SubmitButton = ({ onSubmitAction, withMessageActionIsPending, pendingMessageTitle, pendingMessageContent, ...props }) => {
   const [isFetching, setIsFetching] = useState(false)
+  const { showMessage, closeMessage } = useContext(MessagesContext)
+
+  let pendingMessage = { type: messageType.PENDING_ACTION, sticky: true, title: pendingMessageTitle, content: pendingMessageContent }
+  let infoMessage = { type: messageType.INFO, sticky: true, title: 'Please check web3 provider', content: 'Waiting for transaction signature...' }
+
+  const onTransactionHashCallback = (hash) => {
+    pendingMessage = showMessage({ ...pendingMessage, content: `Transaction hash: ${hash}`})
+    closeMessage(infoMessage)
+  }
 
   const onButtonClick = async (event) => {
     event.preventDefault()
     setIsFetching(true)
+    if(withMessageActionIsPending){
+      infoMessage = showMessage(infoMessage)
+    } 
 
     try {
-      await onSubmitAction()
+      await onSubmitAction(onTransactionHashCallback)
       setIsFetching(false)
     } catch(error) {
       setIsFetching(false)
     }
+
+    closeMessage(pendingMessage)
+    closeMessage(infoMessage)
   }
 
   return <Button {...props} onClick={onButtonClick} isFetching={isFetching} />
+}
+
+SubmitButton.defaultProps = {
+  withMessageActionIsPending: true,
+  pendingMessageTitle: 'Action is pending',
+  pendingMessageContent: ''
 }
