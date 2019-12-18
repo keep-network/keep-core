@@ -52,6 +52,14 @@ class TokenGrantForm extends Component {
     const { web3 } = this.props
 
     const tokenGrantContractAddress = web3.grantContract.options.address;
+    
+    /**
+     * Extra data contains the following values:
+     * grantee (20 bytes) Address of the grantee.
+     * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to vest.
+     * start (32 bytes) Timestamp at which vesting will start.
+     * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
+     */
     const extraData = Buffer.concat([
       Buffer.from(grantee.substr(2), 'hex'),
       web3.utils.toBN(duration).toBuffer('be', 32),
