@@ -11,7 +11,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract;
 
-  let priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei = 20 * 10^9 wei)
+  let priceFeedEstimate = web3.utils.toBN(1).mul(web3.utils.toBN(10**9)), // (1 Gwei = 1 * 10^9 wei)
     fluctuationMargin = 50, // 50%
     dkgContributionMargin = 1, // 1%
     withdrawalDelay = 1;
