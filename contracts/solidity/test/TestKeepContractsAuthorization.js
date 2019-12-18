@@ -2,10 +2,11 @@ import {createSnapshot, restoreSnapshot} from './helpers/snapshot'
 import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import {initContracts} from './helpers/initContracts'
 const RegistryKeeper = artifacts.require('./RegistryKeeper.sol')
+const KeepRandomBeaconOperator = artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
 
 contract('RegistryKeeper', function(accounts) {
 
-  let registryKeeper, operatorContract,
+  let registryKeeper, stakingContract, operatorContract, anotherOperatorContract, serviceContract,
     governance = accounts[0],
     panicButton = accounts[1],
     operatorContractUpgrader = accounts[2]
@@ -17,12 +18,15 @@ contract('RegistryKeeper', function(accounts) {
       artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./KeepRandomBeaconOperator.sol')
+      KeepRandomBeaconOperator
     );
 
     stakingContract = contracts.stakingContract
     serviceContract = contracts.serviceContract
     operatorContract = contracts.operatorContract
+    await operatorContract.registerNewGroup("0x01")
+    anotherOperatorContract = await KeepRandomBeaconOperator.new(serviceContract.address, stakingContract.address)
+    await anotherOperatorContract.registerNewGroup("0x02")
 
     registryKeeper = await RegistryKeeper.new(panicButton)
   })
@@ -53,5 +57,27 @@ contract('RegistryKeeper', function(accounts) {
 
     await registryKeeper.disableOperatorContract(operatorContract.address, {from: panicButton})
     assert.isTrue((await registryKeeper.operatorContracts(operatorContract.address)).eqn(2), "Unexpected status of operator contract")
+  })
+
+  it("should be able to add or remove operator contracts from service contract", async() => {
+    // Transfer ownership from governance to operatorContractUpgrader
+    serviceContract.transferOwnership(operatorContractUpgrader, {from: governance})
+
+    await expectThrowWithMessage(
+      serviceContract.addOperatorContract(anotherOperatorContract.address, {from: governance}),
+      "Ownable: caller is not the owner"
+    )
+
+    await serviceContract.addOperatorContract(anotherOperatorContract.address, {from: operatorContractUpgrader})
+    assert.isTrue((await serviceContract.selectOperatorContract(0)) == operatorContract.address, "Unexpected operator contract address")
+    assert.isTrue((await serviceContract.selectOperatorContract(1)) == anotherOperatorContract.address, "Unexpected operator contract address")
+
+    await expectThrowWithMessage(
+      serviceContract.removeOperatorContract(anotherOperatorContract.address, {from: governance}),
+      "Ownable: caller is not the owner"
+    )
+
+    await serviceContract.removeOperatorContract(anotherOperatorContract.address, {from: operatorContractUpgrader})
+    assert.isTrue((await serviceContract.selectOperatorContract(1)) == operatorContract.address, "Unexpected operator contract address")
   })
 })
