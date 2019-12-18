@@ -46,7 +46,7 @@ export default class Web3ContextProvider extends React.Component {
         this.setState({ isFetching: true })
         this.context.showMessage({ type: messageType.INFO, title: 'Please check web3 provider' })
         
-        try{
+        try {
             const [account] = await web3.currentProvider.enable()
             this.setState({
                 yourAddress: account,
