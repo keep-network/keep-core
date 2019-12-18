@@ -4,7 +4,7 @@ import { Form, FormGroup, FormControl } from 'react-bootstrap'
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount } from '../utils'
 import { SubmitButton } from './Button'
-import { MessagesContext, messagesType } from './Message'
+import { MessagesContext, messageType } from './Message'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount',
@@ -71,9 +71,9 @@ class StakingForm extends Component {
           .send({from: web3.yourAddress})
           .on('transactionHash', onTransactionHashCallback)
       }
-      this.context.showMessage({ type: messagesType.SUCCESS, title: 'Success', content: `${actionName} transaction successfully completed` })
+      this.context.showMessage({ type: messageType.SUCCESS, title: 'Success', content: `${actionName} transaction successfully completed` })
     } catch (error) {
-      this.context.showMessage({ type: messagesType.ERROR, title: `${actionName} action has been failed` , content: error.message })
+      this.context.showMessage({ type: messageType.ERROR, title: `${actionName} action has been failed` , content: error.message })
     }
   }
 

@@ -4,7 +4,7 @@ import { Form, FormGroup, FormControl, ControlLabel, Col, HelpBlock, Checkbox } 
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount } from '../utils'
 import { SubmitButton } from './Button'
-import { MessagesContext, messagesType } from './Message'
+import { MessagesContext, messageType } from './Message'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount.',
@@ -69,7 +69,7 @@ class TokenGrantForm extends Component {
         .on('transactionHash', onTransationHashCallback)
       this.context.showMessage({ title: 'Success', content: 'Grant tokens transaction successfully completed' })
     } catch(error) {
-      this.context.showMessage({ type: messagesType.ERROR, title: 'Grant tokens action has been failed ', content: error.message })
+      this.context.showMessage({ type: messageType.ERROR, title: 'Grant tokens action has been failed ', content: error.message })
     }
   }
 

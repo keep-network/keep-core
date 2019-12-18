@@ -1,7 +1,7 @@
 import React, { useContext } from 'react'
 import { Web3Context } from './WithWeb3Context'
 import { SubmitButton } from './Button'
-import { useShowMessage, messagesType } from './Message'
+import { useShowMessage, messageType } from './Message'
 
 const TokenGrantRevokeButton = ({ item }) => {
   const { grantContract, yourAddress } = useContext(Web3Context)
@@ -12,7 +12,7 @@ const TokenGrantRevokeButton = ({ item }) => {
       await grantContract.methods.revoke(item.id).send({ from: yourAddress }).on('transactionHash', onTransactionHashCallback)
       showMessage({ title: 'Success', content: 'Revoke transaction successfully completed' })
     } catch(error) {
-      showMessage({ type: messagesType.ERROR, title: 'Revoke action has been failed', content: error.message })
+      showMessage({ type: messageType.ERROR, title: 'Revoke action has been failed', content: error.message })
     }
   }
 

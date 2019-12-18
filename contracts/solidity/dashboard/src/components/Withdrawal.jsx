@@ -1,7 +1,7 @@
 import React, { useContext } from 'react'
 import { Web3Context } from './WithWeb3Context'
 import { SubmitButton } from './Button'
-import { useShowMessage, messagesType } from './Message'
+import { useShowMessage, messageType } from './Message'
 
 const Withdrawal = ({ withdrawal }) => {
   const { defaultContract, yourAddress } = useContext(Web3Context)
@@ -14,7 +14,7 @@ const Withdrawal = ({ withdrawal }) => {
         .on('transactionHash', onTransactionHashCallback)
       showMessage({ title: 'Success', content: 'Finish unstake transaction successfully completed' })
     } catch(error) {
-      showMessage({ type: messagesType.ERROR, title: 'Error', content: 'Finish unstake action has been failed' })
+      showMessage({ type: messageType.ERROR, title: 'Error', content: 'Finish unstake action has been failed' })
     }
    
   }

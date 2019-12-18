@@ -4,7 +4,7 @@ import { Form, FormGroup, FormControl } from 'react-bootstrap'
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount, displayAmount } from '../utils'
 import { SubmitButton } from './Button'
-import { MessagesContext, messagesType } from './Message'
+import { MessagesContext, messageType } from './Message'
 
 
 class StakingDelegateTokenGrantForm extends Component {
@@ -65,9 +65,9 @@ class StakingDelegateTokenGrantForm extends Component {
       await web3.grantContract.methods.stake(grantId, stakingContractAddress,web3.utils.toBN(formatAmount(amount, 18)).toString(), delegation)
         .send({from: web3.yourAddress})
         .on('transactionHash', onTransactionHashCallback)
-      this.context.showMessage({ type: messagesType.SUCCESS, title: 'Success', content: 'Staking delegate transaction successfully completed' })
+      this.context.showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Staking delegate transaction successfully completed' })
     } catch(error) {
-      this.context.showMessage({ type: messagesType.ERROR, title: 'Staking delegate action has been failed ', content: error.message })
+      this.context.showMessage({ type: messageType.ERROR, title: 'Staking delegate action has been failed ', content: error.message })
     }
   }
 

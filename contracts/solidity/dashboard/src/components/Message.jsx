@@ -4,7 +4,7 @@ import { ClockIndicator } from './Loadable';
 
 export const MessagesContext = React.createContext({})
 
-export const messagesType = {
+export const messageType = {
     'SUCCESS': 'success',
     'ERROR': 'error',
     'PENDING_ACTION': 'pending-action',
@@ -74,10 +74,10 @@ const Message = ({ message, ...props }) => {
     }
 
     return (
-        <div className={`message message-${message.type || messagesType.SUCCESS}`}>
+        <div className={`message message-${message.type || messageType.SUCCESS}`}>
             <div className='message-content-wrapper'>
                 <div className="message-icon">
-                    {message.type === messagesType.PENDING_ACTION ?
+                    {message.type === messageType.PENDING_ACTION ?
                         <ClockIndicator /> :
                         <span className={`glyphicon ${messageIconMap[message.type]}`} aria-hidden='true' />
                     }

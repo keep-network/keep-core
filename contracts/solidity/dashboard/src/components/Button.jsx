@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef , useContext} from "react"
 import { CSSTransition } from 'react-transition-group'
 import Loadable from "./Loadable"
-import { messagesType, MessagesContext } from "./Message"
+import { messageType, MessagesContext } from "./Message"
 
 const buttonContentTransitionTimeoutInMs = 500
 const minimumLoaderDurationInMs = 400
@@ -66,8 +66,8 @@ export const SubmitButton = ({ onSubmitAction, withMessageActionIsPending, pendi
   const [isFetching, setIsFetching] = useState(false)
   const { showMessage, closeMessage } = useContext(MessagesContext)
 
-  let pendingMessage = { type: messagesType.PENDING_ACTION, sticky: true, title: pendingMessageTitle, content: pendingMessageContent }
-  let infoMessage = { type: messagesType.INFO, sticky: true, title: 'Please check web3 provider', content: 'Waiting for transaction signature...' }
+  let pendingMessage = { type: messageType.PENDING_ACTION, sticky: true, title: pendingMessageTitle, content: pendingMessageContent }
+  let infoMessage = { type: messageType.INFO, sticky: true, title: 'Please check web3 provider', content: 'Waiting for transaction signature...' }
 
   const onTransactionHashCallback = (hash) => {
     pendingMessage = showMessage({ ...pendingMessage, content: `Transaction hash: ${hash}`})
