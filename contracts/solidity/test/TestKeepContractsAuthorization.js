@@ -1,28 +1,30 @@
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
-import expectThrowWithMessage from './helpers/expectThrowWithMessage';
+import {createSnapshot, restoreSnapshot} from './helpers/snapshot'
+import expectThrowWithMessage from './helpers/expectThrowWithMessage'
+import {initContracts} from './helpers/initContracts'
 const RegistryKeeper = artifacts.require('./RegistryKeeper.sol')
-const KeepToken = artifacts.require('./KeepToken.sol')
-const TokenStaking = artifacts.require('./TokenStaking.sol')
-const KeepRandomBeaconOperator = artifacts.require('./KeepRandomBeaconOperator.sol')
-const KeepRandomBeaconService = artifacts.require('./KeepRandomBeaconService.sol')
-const KeepRandomBeaconServiceImplV1 = artifacts.require('./KeepRandomBeaconServiceImplV1.sol')
 
 contract('RegistryKeeper', function(accounts) {
 
-  let registryKeeper, token, stakingContract, operatorContract,
-    serviceContractImplV1, serviceContractProxy, serviceContract,
+  let registryKeeper, operatorContract,
     governance = accounts[0],
     panicButton = accounts[1],
     operatorContractUpgrader = accounts[2]
 
   before(async () => {
+
+    let contracts = await initContracts(
+      artifacts.require('./KeepToken.sol'),
+      artifacts.require('./TokenStaking.sol'),
+      artifacts.require('./KeepRandomBeaconService.sol'),
+      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
+      artifacts.require('./KeepRandomBeaconOperator.sol')
+    );
+
+    stakingContract = contracts.stakingContract
+    serviceContract = contracts.serviceContract
+    operatorContract = contracts.operatorContract
+
     registryKeeper = await RegistryKeeper.new(panicButton)
-    token = await KeepToken.new();
-    stakingContract = await TokenStaking.new(token.address, 0)
-    serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new({from: operatorContractUpgrader})
-    serviceContractProxy = await KeepRandomBeaconService.new(serviceContractImplV1.address, {from: operatorContractUpgrader})
-    serviceContract = await KeepRandomBeaconServiceImplV1.at(serviceContractProxy.address)
-    operatorContract = await KeepRandomBeaconOperator.new(serviceContract.address, stakingContract.address)
   })
 
   beforeEach(async () => {
