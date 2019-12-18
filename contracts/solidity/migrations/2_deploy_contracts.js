@@ -45,7 +45,10 @@ module.exports = async function(deployer) {
     priceFeedEstimate,
     fluctuationMargin,
     dkgContributionMargin,
-    withdrawalDelay,
+    withdrawalDelay
+  );
+
+  keepRandomBeaconService.addOperatorContract(
     keepRandomBeaconOperator.address
   );
 };

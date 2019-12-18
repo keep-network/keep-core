@@ -52,7 +52,7 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
   it("should be able to upgrade implementation and initialize it with new data", async function() {
     let previousEntryBefore = await serviceContractV2.previousEntry();
     await serviceContractProxy.upgradeTo(serviceContractImplV2.address);
-    await serviceContractV2.initialize(100, 100, 100, duration.days(0), operatorContract.address);
+    await serviceContractV2.initialize(100, 100, 100, duration.days(0));
 
     assert.isTrue(await serviceContractV2.initialized(), "Implementation contract should be initialized.");
 

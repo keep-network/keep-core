@@ -96,14 +96,12 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
-     * @param operatorContract Operator contract linked to this contract.
      */
     function initialize(
         uint256 priceFeedEstimate,
         uint256 fluctuationMargin,
         uint256 dkgContributionMargin,
-        uint256 withdrawalDelay,
-        address operatorContract
+        uint256 withdrawalDelay
     )
         public
         onlyOwner
@@ -115,8 +113,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         _dkgContributionMargin = dkgContributionMargin;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
-        _operatorContracts.push(operatorContract);
-
         _previousEntry = _beaconSeed;
     }
 
