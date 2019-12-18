@@ -5,6 +5,11 @@
 @import 'nav';
 @import 'messages';
 @import 'indicator';
+@import 'menu-button';
+
+html {
+  font-size: 16px;
+}
 
 .App {
   text-align: center;
@@ -14,18 +19,164 @@
   margin: 0 auto;
 }
 
-.overview {
-  margin: 40px 0 40px 0;
-}
-
-.staking {
-  margin: 40px 0 40px 0;
-}
-
-.footer {
-  padding: 40px;
-}
-
 .tab-pane {
   padding: 15px;
 }
+
+.main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  >.content {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-self: center;
+    padding: calc(100px + 1.5rem) 1.5rem 0
+
+  }
+}
+
+.header {
+  height: 100px;
+  width: 100%;
+  z-index: 10;
+  position: fixed;
+  background: white;
+  top: 0;
+  left: 0;
+  display: flex;  
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  border-bottom: 1px solid black;
+  > .web3, > .account-address {
+    display: none;
+  }
+  > .menu-button {
+    display: block;
+  }
+ 
+}
+
+.side-menu {
+  visibility: hidden;
+  background: white;
+  height: 100%;
+  width: 0px;
+  position: fixed;
+  z-index: 10;
+  top: 100px;
+  left: 0;
+  border-right: 1px solid black;
+  overflow-x: hidden;
+  transition: 0.5s ease;
+  
+  .active& {
+    visibility: visible;
+    width: 350px;
+  }
+
+  & ul {
+    width: 350px;
+    overflow-x: hidden;
+    text-align: center;
+    padding: 0;
+    list-style: none;
+
+    & li {
+      border-bottom: 1px solid black;
+      padding: 1rem 0;
+      width: 100%;
+      font-size: 1.5rem;
+      border-right: 0 solid #48DBB4;
+      transition: border-right-width 0.3s ease;
+
+      &.active-page-link {
+        border-right: 5px solid #48DBB4;
+        color: black;
+        font-weight: bold;
+      }
+
+      & > a {
+        color: black;
+        &:hover, &:focus{
+          text-decoration: none;
+        }
+      }
+
+      &:hover {
+        cursor: pointer;
+        border-right-width: 5px;
+      }
+    }
+
+    > .account-address {
+      font-size: 0.8rem;
+    }
+    > .web3 > .web3-status {
+      margin: 1rem;
+    }
+  }
+}
+
+@media screen and (min-width: 600px) {
+ .header {
+    > .web3 {
+      display: flex;
+    }
+  }
+  .side-menu {
+    ul > .web3 {
+      visibility: hidden;
+    }
+  }
+}
+
+@media screen and (min-width: 1000px) {
+  .header {
+     > .web3 {
+       visibility: visible;
+     }
+     > .account-address {
+       display: block;
+     }
+   }
+   .main {
+     > .content {
+      max-width: 2200px;
+     }
+   }
+}
+
+@media screen and (min-width: 1250px) {
+  .header {
+    >.menu-button {
+      display: none;
+    }
+    > .logo {
+      width: 350px;
+    }
+    > .web3 {
+      min-width: 30%;
+      justify-content: flex-start;
+      margin-right: auto;
+    }
+  }
+  .side-menu {
+    width: 350px;
+    visibility: visible;
+    ul > .account-address, .web3 {
+      visibility: hidden;
+    }
+   }
+   .main {
+     >.content {
+       padding: calc(100px + 5rem) 5rem 0 calc(350px + 5rem);
+     }
+   }
+}
+
+
