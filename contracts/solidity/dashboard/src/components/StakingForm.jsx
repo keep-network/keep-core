@@ -51,13 +51,13 @@ class StakingForm extends Component {
     }
   }
 
-  capitalizeActionName = () => this.props.action.charAt(0).toUpperCase() + this.props.action.slice(1)
+  getCaptializedActionName = () => this.props.action.charAt(0).toUpperCase() + this.props.action.slice(1)
 
   submit = async (onTransactionHashCallback) => {
     const { amount } = this.state
     const { action, web3 } = this.props
     const stakingContractAddress = web3.stakingContract.options.address;
-    const actionName = this.capitalizeActionName()
+    const actionName = this.getCaptializedActionName()
     
     try {
       if (action === 'stake') {
@@ -99,7 +99,7 @@ class StakingForm extends Component {
             type="submit"
             className="btn btn-primary btn-lg"
             onSubmitAction={this.submit}
-            pendingMessageTitle={`${this.capitalizeActionName()} transaction is pending...`}
+            pendingMessageTitle={`${this.getCaptializedActionName()} transaction is pending...`}
           >
             {btnText}
           </SubmitButton>
