@@ -8,4 +8,6 @@ Loadable.defaultProps = {
     text: 'Loading...'
 }
 
+export const ClockIndicator = (props) => (<div className='indicator-clock'/>)
+
 export default Loadable

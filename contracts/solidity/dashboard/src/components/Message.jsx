@@ -1,9 +1,17 @@
 import React, { useContext, useEffect } from 'react'
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
+import { ClockIndicator } from './Loadable';
 
-const MessagesContext = React.createContext({})
+export const MessagesContext = React.createContext({})
 
-let messageId = 0
+export const messageType = {
+    'SUCCESS': 'success',
+    'ERROR': 'error',
+    'PENDING_ACTION': 'pending-action',
+    'INFO': 'info',
+}
+
+let messageId = 1
 const messageTransitionTimeoutInMs = 500
 
 export class Messages extends React.Component { 
@@ -15,6 +23,7 @@ export class Messages extends React.Component {
     showMessage = (value) => {
         value.id = messageId++
         this.setState({ messages: this.state.messages ? [...this.state.messages, value] : [value]})
+        return value
     }
 
     onMessageClose = (message) => {
@@ -24,7 +33,7 @@ export class Messages extends React.Component {
 
     render() {
         return (
-            <MessagesContext.Provider value={{ showMessage: this.showMessage }} >
+            <MessagesContext.Provider value={{ showMessage: this.showMessage, closeMessage: this.onMessageClose }} >
                 <div className="messages-container">
                     <TransitionGroup >
                         {this.state.messages.map(message => (
@@ -46,15 +55,18 @@ export class Messages extends React.Component {
 
 const messageIconMap = {
     error: 'glyphicon-remove',
-    success: 'glyphicon-ok'
+    success: 'glyphicon-ok',
+    info: 'glyphicon glyphicon-info-sign'
 }
 
 const closeMessageTimeoutInMs = 3250
 
 const Message = ({ message, ...props }) => {
     useEffect(() => {
-        const timeout = setTimeout(onMessageClose, closeMessageTimeoutInMs);
-        return () => clearTimeout(timeout)
+        if(!message.sticky) {
+            const timeout = setTimeout(onMessageClose, closeMessageTimeoutInMs);
+            return () => clearTimeout(timeout)
+        }
     }, [message.id])
 
     const onMessageClose = () => {
@@ -62,10 +74,13 @@ const Message = ({ message, ...props }) => {
     }
 
     return (
-        <div className={`message message-${message.type || 'success'}`}>
+        <div className={`message message-${message.type || messageType.SUCCESS}`}>
             <div className='message-content-wrapper'>
                 <div className="message-icon">
-                    <span className={`glyphicon ${messageIconMap[message.type]}`} aria-hidden='true' />
+                    {message.type === messageType.PENDING_ACTION ?
+                        <ClockIndicator /> :
+                        <span className={`glyphicon ${messageIconMap[message.type]}`} aria-hidden='true' />
+                    }
                 </div>
                 <div className='message-content'>
                     <span className="message-title">{message.title}</span>
@@ -83,4 +98,10 @@ export const useShowMessage = () => {
     const { showMessage } = useContext(MessagesContext)
 
     return showMessage
+}
+
+export const useCloseMessage = () => {
+    const { closeMessage } = useContext(MessagesContext)
+
+    return closeMessage
 }
