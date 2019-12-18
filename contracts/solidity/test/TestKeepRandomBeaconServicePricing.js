@@ -67,7 +67,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     let requestorBalance = await web3.eth.getBalance(requestor);
 
-    await operatorContract.relayEntry(bls.groupSignature);
+    await operatorContract.relayEntry(bls.groupSignature, {gasPrice: defaultPriceFeedEstimate});
 
     // Put back the default gas price
     await serviceContract.setPriceFeedEstimate(defaultPriceFeedEstimate);
