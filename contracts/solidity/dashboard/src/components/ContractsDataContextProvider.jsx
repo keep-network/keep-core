@@ -31,13 +31,10 @@ class ContractsDataContextProvider extends React.Component {
     }
 
     areContractsChanged = (prevProps) => {
-        const { web3:
-            {
-                token: { options: { address:tokenAddress }},
-                stakingContract: { options: { address:stakingAddress } },
-                grantContract: { options: { address:grantAddress } }
-            }
-        } = this.props
+        const { web3 } = this.props
+        const tokenAddress = web3.token.options.address
+        const stakingAddress = web3.stakingContract.options.address
+        const grantAddress = web3.grantContract.options.address
 
         return tokenAddress !== prevProps.web3.token.options.address ||
             stakingAddress !== prevProps.web3.stakingContract.options.address ||
