@@ -16,7 +16,7 @@ export const Web3Status = (props) => {
         if (!web3) {
             return (
                 <div className="web3-status alert">
-                    Web3 not detected.  We suggest&nbsp;<a href="http://metamask.io" target="_blank" rel="noopener noreferrer">MetaMask</a>.
+                    Web3 not detected. We suggest&nbsp;<a href="http://metamask.io" target="_blank" rel="noopener noreferrer">MetaMask</a>.
                 </div>
             )
         }
@@ -24,7 +24,7 @@ export const Web3Status = (props) => {
         if (!yourAddress) {
             return (
                 <div className="web3-status notify">
-                    Web3 detected, but you need to connect with an account.&nbsp;
+                    Web3 detected. Please connect with an account.&nbsp;
                     <span onClick={connectAppWithAccount}>
                         Connect dApp with an account
                     </span>
