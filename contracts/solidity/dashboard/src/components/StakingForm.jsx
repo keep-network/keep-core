@@ -71,7 +71,7 @@ class StakingForm extends Component {
           .send({from: web3.yourAddress})
           .on('transactionHash', onTransactionHashCallback)
       }
-      this.context.showMessage({ type: messageType.SUCCESS, title: 'Success', content: `${actionName} transaction successfully completed` })
+      this.context.showMessage({ type: messageType.SUCCESS, title: 'Success', content: `${actionName} transaction has been successfully completed` })
     } catch (error) {
       this.context.showMessage({ type: messageType.ERROR, title: `${actionName} action has been failed` , content: error.message })
     }

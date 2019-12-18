@@ -67,7 +67,7 @@ class TokenGrantForm extends Component {
         extraData)
         .send({from: web3.yourAddress})
         .on('transactionHash', onTransationHashCallback)
-      this.context.showMessage({ title: 'Success', content: 'Grant tokens transaction successfully completed' })
+      this.context.showMessage({ title: 'Success', content: 'Grant tokens transaction has been successfully completed' })
     } catch(error) {
       this.context.showMessage({ type: messageType.ERROR, title: 'Grant tokens action has been failed ', content: error.message })
     }

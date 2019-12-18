@@ -12,7 +12,7 @@ const Withdrawal = ({ withdrawal }) => {
       await defaultContract.methods.finishUnstake(withdrawal.id)
         .send({ from: yourAddress })
         .on('transactionHash', onTransactionHashCallback)
-      showMessage({ title: 'Success', content: 'Finish unstake transaction successfully completed' })
+      showMessage({ title: 'Success', content: 'Finish unstake transaction has been successfully completed' })
     } catch(error) {
       showMessage({ type: messageType.ERROR, title: 'Error', content: 'Finish unstake action has been failed' })
     }

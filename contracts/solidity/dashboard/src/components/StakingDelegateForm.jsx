@@ -82,7 +82,7 @@ class StakingDelegateForm extends Component {
         .approveAndCall(stakingContractAddress, web3.utils.toBN(formatAmount(amount, 18)).toString(), delegationData)
         .send({from: web3.yourAddress})
         .on('transactionHash', onTransactionHashCallback)
-      this.context.showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Staking delegate transaction successfully completed' })
+      this.context.showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Staking delegate transaction has been successfully completed' })
     } catch(error) {
       this.context.showMessage({ type: messageType.ERROR, title: 'Staking delegate action has been failed ', content: error.message })
     }
