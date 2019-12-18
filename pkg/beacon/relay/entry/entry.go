@@ -11,11 +11,6 @@ import (
 
 var logger = log.Logger("keep-entry")
 
-const (
-	setupBlocks     = state.MessagingStateDelayBlocks
-	signatureBlocks = state.MessagingStateActiveBlocks
-)
-
 // RegisterUnmarshallers initializes the given broadcast channel to be able to
 // perform relay entry signing protocol interactions by registering all the
 // required protocol message unmarshallers.

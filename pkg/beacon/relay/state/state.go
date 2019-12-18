@@ -66,4 +66,4 @@ const MessagingStateDelayBlocks = 1
 
 // MessagingStateActiveBlocks is a number of blocks for which a state
 // exchanging network messages as a part of its execution should be active.
-const MessagingStateActiveBlocks = 3
+const MessagingStateActiveBlocks = 5

@@ -41,7 +41,7 @@ func (sss *signatureShareState) DelayBlocks() uint64 {
 }
 
 func (sss *signatureShareState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return 3 // TODO Temporary different than state.MessagingStateActiveBlocks
 }
 
 func (sss *signatureShareState) Initiate() error {
