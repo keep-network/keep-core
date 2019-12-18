@@ -4,6 +4,7 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -205,7 +206,7 @@ func (lc *localChannel) deliver(
 
 func (lc *localChannel) Send(
 	message net.TaggedMarshaler,
-	retransmission ...net.RetransmissionOptions,
+	ctx ...context.Context,
 ) error {
 	return doSend(lc, message)
 }

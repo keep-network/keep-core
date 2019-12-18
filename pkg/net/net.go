@@ -1,6 +1,7 @@
 package net
 
 import (
+	"context"
 	"crypto/ecdsa"
 
 	"github.com/gogo/protobuf/proto"
@@ -83,23 +84,21 @@ type TaggedUnmarshaler interface {
 // processed or false otherwise.
 type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
 
-// RetransmissionOptions define how the message sent by the BroadcastChannel
-// should be retransmitted.
+// Ticker holds a channel that delivers ticks of a clock at intervals.
+// Those intervals can vary depending on ticker implementation - e.g. fixed time
+// period or variable new block mining times.
+//
+// Ticks are used to emit retransmissions in the BroadcastChannel.
 //
 // For protocols consisting of multiple states with possible delays between
 // participants entering and leaving the given state, retransmission helps to
 // increase message delivery rate in case some participant was not yet
 // ready to receive the message or in the case when the message broadcasted
 // in the channel was lost because of a network-related problem.
-//
-// All the BroadcastChannel implementations must filter out retransmissions of
-// previously received message and ensure the message is received by handlers
-// registered in the channel only one time.
-type RetransmissionOptions interface {
-	// Ticker returns a channel triggering message retransmission. For every
-	// tick emitted, the message is going to be retransmitted.
-	// The channel should be closed when no more retransmissions are expected.
-	Ticker() chan uint64
+type Ticker interface {
+	// Ticker returns a channel emitting new ticks. New tick is a number
+	// representing the current time.
+	Tick() chan uint64
 }
 
 // BroadcastChannel represents a named pubsub channel. It allows Group Members
@@ -111,9 +110,13 @@ type BroadcastChannel interface {
 	// Name returns the name of this broadcast channel.
 	Name() string
 	// Given a message m that can marshal itself to protobuf, broadcast m to
-	// members of the Group through the BroadcastChannel with an optional
-	// retransmissions as specified by retransmission options.
-	Send(m TaggedMarshaler, retransmission ...RetransmissionOptions) error
+	// members of the group through the BroadcastChannel with an optional
+	// retransmissions for the lifetime of the provided context.
+	//
+	// All the BroadcastChannel implementations must filter out retransmissions
+	// of previously received message and ensure the message is received by
+	// handlers registered in the channel only one time.
+	Send(m TaggedMarshaler, ctx ...context.Context) error
 	// Recv takes a HandleMessageFunc and returns an error. This function should
 	// be retried.
 	Recv(h HandleMessageFunc) error

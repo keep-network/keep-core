@@ -1,6 +1,8 @@
 package interception
 
 import (
+	"context"
+
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -54,17 +56,14 @@ func (c *channel) Name() string {
 	return c.delegate.Name()
 }
 
-func (c *channel) Send(
-	m net.TaggedMarshaler,
-	retransmission ...net.RetransmissionOptions,
-) error {
+func (c *channel) Send(m net.TaggedMarshaler, ctx ...context.Context) error {
 	altered := c.rules(m)
 	if altered == nil {
 		// drop the message
 		return nil
 	}
 
-	return c.delegate.Send(c.rules(m), retransmission...)
+	return c.delegate.Send(c.rules(m), ctx...)
 }
 
 func (c *channel) Recv(h net.HandleMessageFunc) error {
