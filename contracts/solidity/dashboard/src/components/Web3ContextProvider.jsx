@@ -41,10 +41,11 @@ export default class Web3ContextProvider extends React.Component {
         this.state.web3.eth.currentProvider.on('accountsChanged', this.accountHasBeenChanged)
     }
 
-    connectAppWithAccount = async (withInfoMessag = true) => {
+    connectAppWithAccount = async () => {
         const { web3 } = this.state
         this.setState({ isFetching: true })
         this.context.showMessage({ type: 'info', title: 'Please check web3 provider' })
+        
         try{
             const [account] = await web3.currentProvider.enable()
             this.setState({
