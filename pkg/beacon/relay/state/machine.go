@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -48,6 +49,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	defer m.channel.UnregisterRecv(handler.Type)
 
 	currentState := m.initialState
+	currentStateContext, cancelContext := context.WithCancel(context.Background())
 
 	logger.Infof(
 		"[member:%v,channel:%s] waiting for block %v to start execution",
@@ -63,12 +65,14 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	lastStateEndBlockHeight := startBlockHeight
 
 	blockWaiter, err := stateTransition(
+		currentStateContext,
 		currentState,
 		lastStateEndBlockHeight,
 		m.blockCounter,
 		m.channel.Name()[:5],
 	)
 	if err != nil {
+		cancelContext()
 		return nil, 0, err
 	}
 
@@ -88,6 +92,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 
 		case lastStateEndBlockHeight := <-blockWaiter:
 			nextState := currentState.Next()
+			cancelContext()
 			if nextState == nil {
 				logger.Infof(
 					"[member:%v,channel:%s,state:%T] reached final state at block: [%v]",
@@ -100,14 +105,17 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 			}
 
 			currentState = nextState
+			currentStateContext, cancelContext = context.WithCancel(context.Background())
 
 			blockWaiter, err = stateTransition(
+				currentStateContext,
 				currentState,
 				lastStateEndBlockHeight,
 				m.blockCounter,
 				m.channel.Name()[:5],
 			)
 			if err != nil {
+				cancelContext()
 				return nil, 0, err
 			}
 
@@ -117,6 +125,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 }
 
 func stateTransition(
+	currentStateContext context.Context,
 	currentState State,
 	lastStateEndBlockHeight uint64,
 	blockCounter chain.BlockCounter,
@@ -145,7 +154,7 @@ func stateTransition(
 		)
 	}
 
-	err = currentState.Initiate()
+	err = currentState.Initiate(currentStateContext)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initiate new state [%v]", err)
 	}

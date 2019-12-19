@@ -1,6 +1,7 @@
 package entry
 
 import (
+	"context"
 	"fmt"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -44,7 +45,7 @@ func (sss *signatureShareState) ActiveBlocks() uint64 {
 	return state.MessagingStateActiveBlocks
 }
 
-func (sss *signatureShareState) Initiate() error {
+func (sss *signatureShareState) Initiate(ctx context.Context) error {
 	share, err := sss.signer.CalculateSignatureShare(sss.previousEntry)
 	if err != nil {
 		return fmt.Errorf("could not evaluate signature share: [%v]", err)
@@ -112,7 +113,7 @@ func (scs *signatureCompleteState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (scs *signatureCompleteState) Initiate() error {
+func (scs *signatureCompleteState) Initiate(ctx context.Context) error {
 	seenShares := make(map[group.MemberIndex]*bn256.G1)
 	seenShares[scs.MemberIndex()] = scs.selfSignatureShare
 	logger.Debugf(
@@ -203,7 +204,7 @@ func (ess *entrySubmissionState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (ess *entrySubmissionState) Initiate() error {
+func (ess *entrySubmissionState) Initiate(ctx context.Context) error {
 	submitter := &relayEntrySubmitter{
 		chain:        ess.relayChain,
 		blockCounter: ess.blockCounter,

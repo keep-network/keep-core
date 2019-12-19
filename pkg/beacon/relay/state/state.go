@@ -1,6 +1,8 @@
 package state
 
 import (
+	"context"
+
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -28,7 +30,7 @@ type State interface {
 
 	// Initiate performs all the required calculations and sends out all the
 	// messages associated with the current state.
-	Initiate() error
+	Initiate(ctx context.Context) error
 
 	// Receive is called each time a new message arrived. Receive is expected to
 	// be called for all broadcast channel messages, including the member's own
