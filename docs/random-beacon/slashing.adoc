@@ -1,8 +1,9 @@
-:icons: font
-:numbered:
-toc::[]
+:toc: macro
+:toclevels: 4
 
-== Misbehavior and punishments
+= Misbehavior and punishments
+
+ifndef::yellowpaper[toc::[]]
 
 To incentivize correct behavior in the Keep network,
 misbehaving participants will be punished.
@@ -13,7 +14,7 @@ This coordination is incentivized by rewarding the _tattletale_
 by granting them a fraction of the tokens
 taken from the misbehaving participant.
 
-==== Authorization
+== Authorization
 
 _Operator contracts_ are authorized to impose penalties
 by stakers' _authorizers_.
@@ -32,7 +33,7 @@ or the operator is otherwise ineligible for work selection,
 the staking contract will return that the operator has no available stake,
 leading to any submitted tickets being rejected.
 
-==== Penalties
+== Penalties
 
 When an operator's misbehavior is proven on-chain
 the operator contract calls the staking contract to punish the operator,
@@ -47,7 +48,7 @@ If the same address is listed multiple times
 among the operators to be punished,
 the punishment will be applied multiple times.
 
-===== Pure slashing
+=== Pure slashing
 
 When misbehavior is detected without third-party input,
 a _pure slashing_ penalty is applied.
@@ -58,7 +59,7 @@ If the operator doesn't have enough stake for the punishment
 (e.g. because it has been punished earlier),
 the punishment is equal to the remaining stake.
 
-===== Seizing
+=== Seizing
 
 When a tattletale proves another operator's misbehavior,
 a fraction of the penalty amount is _seized_ and transferred to the tattletale,
@@ -78,7 +79,7 @@ The staking contract subtracts the applicable penalty from the operator's stake
 and transfers the reward to the tattletale's _beneficiary_ address.
 The remainder is burned.
 
-===== Penalty amounts
+=== Penalty amounts
 
 In later versions,
 penalties for misbehavior can be adjusted
@@ -86,9 +87,9 @@ to match the severity of the misbehavior.
 However, initially the penalty for misbehaving in the random beacon
 will equal the minimum stake required to join a signing group.
 
-==== Interfaces
+== Interfaces
 
-===== Staking contract: slashing
+=== Staking contract: slashing
 
 `slash(tokens amount, address[] misbehavers)`::
 
@@ -130,7 +131,7 @@ Transfer the reward to the tattletale's _Beneficiary_
 and burn the rest of the penalty:
 `tokenContract.burn(totalPenalty - reward)`.
 
-===== Staking contract: authorizations
+=== Staking contract: authorizations
 
 `authorize(address op_contract)`::
 
@@ -150,16 +151,16 @@ Return the number of staked tokens available for the calling contract.
 Includes an authorization check `isAuthorized(msg.sender, operator.authorizer)`
 and other checks on the operator's eligibility for work selection.
 
-===== Token contract
+=== Token contract
 
 `burn(amount sum)`::
 
 Any address that holds tokens can call `burn(amount sum)`
 to burn `sum` tokens, limited by tokens held by the address.
 
-=== Punishable misbehavior
+== Punishable misbehavior
 
-===== Failure to sign an entry
+=== Failure to sign an entry
 
 If a signing group is tasked with producing a beacon entry,
 but fails to submit a valid entry within the allotted deadline,
@@ -175,7 +176,7 @@ or effectively the minimum stake of a single member.
 This is to prevent actors in a lynchpin position
 from profitably stealing other stakers' funds.
 
-===== Unauthorized use of group signing key
+=== Unauthorized use of group signing key
 
 If the group signing key of a signing group has been leaked,
 it can be proven by using the key to sign the address of the group
@@ -189,7 +190,7 @@ The submitter of the trigger transaction
 receives the maximum tattletale reward.
 
 ////
-===== Disqualification in DKG
+=== Disqualification in DKG
 
 If an operator misbehaves during DKG,
 and is included among the disqualified operators

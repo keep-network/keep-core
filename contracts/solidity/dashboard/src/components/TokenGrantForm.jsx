@@ -4,6 +4,7 @@ import { Form, FormGroup, FormControl, ControlLabel, Col, HelpBlock, Checkbox } 
 import WithWeb3Context from './WithWeb3Context'
 import { formatAmount } from '../utils'
 import { SubmitButton } from './Button'
+import { MessagesContext, messageType } from './Message'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount.',
@@ -11,6 +12,7 @@ const ERRORS = {
 }
 
 class TokenGrantForm extends Component {
+  static contextType = MessagesContext
 
   state = {
     amount: 0,
@@ -45,23 +47,38 @@ class TokenGrantForm extends Component {
     else return 'error'
   }
 
-  submit = async () => {
+  submit = async (onTransationHashCallback) => {
     const { amount, grantee, duration, start, cliff, revocable} = this.state
     const { web3 } = this.props
 
     const tokenGrantContractAddress = web3.grantContract.options.address;
     
-    await web3.token.methods.approveAndCall(
-      tokenGrantContractAddress,
-      web3.utils.toBN(formatAmount(amount, 18)).toString(),
-      Buffer.concat([
-        Buffer.from(grantee.substr(2), 'hex'),
-        web3.utils.toBN(duration).toBuffer('be', 32),
-        web3.utils.toBN(start).toBuffer('be', 32),
-        web3.utils.toBN(cliff).toBuffer('be', 32),
-        Buffer.from(revocable ? "01" : "00", 'hex'),
-      ]),
-    ).send({from: web3.yourAddress})
+    /**
+     * Extra data contains the following values:
+     * grantee (20 bytes) Address of the grantee.
+     * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to vest.
+     * start (32 bytes) Timestamp at which vesting will start.
+     * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
+     */
+    const extraData = Buffer.concat([
+      Buffer.from(grantee.substr(2), 'hex'),
+      web3.utils.toBN(duration).toBuffer('be', 32),
+      web3.utils.toBN(start).toBuffer('be', 32),
+      web3.utils.toBN(cliff).toBuffer('be', 32),
+      Buffer.from(revocable ? "01" : "00", 'hex'),
+    ])
+    
+    try {
+      await web3.token.methods.approveAndCall(
+        tokenGrantContractAddress,
+        web3.utils.toBN(formatAmount(amount, 18)).toString(),
+        extraData)
+        .send({from: web3.yourAddress})
+        .on('transactionHash', onTransationHashCallback)
+      this.context.showMessage({ title: 'Success', content: 'Grant tokens transaction has been successfully completed' })
+    } catch(error) {
+      this.context.showMessage({ type: messageType.ERROR, title: 'Grant tokens action has been failed ', content: error.message })
+    }
   }
 
   render() {
@@ -169,6 +186,7 @@ class TokenGrantForm extends Component {
             className="btn btn-primary btn-lg"
             type="submit"
             onSubmitAction={this.submit}
+            pendingMessageTitle="Grant tokens transaction is pending..."
           >
             Grant tokens
           </SubmitButton>

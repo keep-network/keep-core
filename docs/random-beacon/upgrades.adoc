@@ -1,7 +1,6 @@
+= Upgrade processes
 
-=== Upgrade processes
-
-==== Operator contract upgrade
+== Operator contract upgrade
 
 Operator contracts are immutable,
 and are upgraded by deploying a new version in a separate contract.
@@ -19,12 +18,12 @@ but critical state is held within the operator contract and cannot be migrated.
 . Wait for stakers to authorize the operator contract
 . Activate the operator contract on the relevant service contract/s
 
-==== Service contract upgrade
+== Service contract upgrade
 
 Because service contracts don't impact the security of staked tokens,
 they can be upgraded in-place without migrating to a new address.
 
-==== New service contract
+== New service contract
 
 A new service contract is deployed on-chain and listed on the _registry_.
 
@@ -47,7 +46,7 @@ making it ready to provide services.
 . Wait for stakers to authorize the operator contract
 . Activate the operator contract on the service contract
 
-==== Staking contract upgrades
+== Staking contract upgrades
 
 Staking contracts can be upgraded by deploying a new version,
 and waiting for stakers to migrate
@@ -65,7 +64,7 @@ the contracts can be activated on service contracts.
 . Wait for stakers to authorize the new operator contracts
 . Activate the operator contracts on the service contracts
 
-==== Token upgrade
+== Token upgrade
 
 The upgrade process makes it possible to even hard-fork the token
 without disrupting service contract user experience:
