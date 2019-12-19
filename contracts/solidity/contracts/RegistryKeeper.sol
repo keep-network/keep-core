@@ -25,6 +25,11 @@ contract RegistryKeeper is Ownable {
         _;
     }
 
+    constructor() Ownable() public {
+        panicButton = msg.sender;
+        operatorContractUpgrader = msg.sender;
+    }
+
     function setPanicButton(address _panicButton) public onlyOwner {
         panicButton = _panicButton;
     }
