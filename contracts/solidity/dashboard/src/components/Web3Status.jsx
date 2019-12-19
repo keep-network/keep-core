@@ -2,13 +2,21 @@ import React, { useContext } from 'react'
 import { Web3Context } from "./WithWeb3Context"
 
 export const Web3Status = (props) => {
-    const { web3, isFetching, yourAddress, connectAppWithAccount } = useContext(Web3Context)
+    const { web3, isFetching, yourAddress, connectAppWithAccount, error } = useContext(Web3Context)
 
     const renderStatus = () => {
         if (isFetching) {
             return (
                 <div className="web3-status loading">
                 loading...
+                </div>
+            )
+        }
+        
+        if(error) {
+            return (
+                <div className="web3-status alert">
+                    {error}
                 </div>
             )
         }
@@ -20,17 +28,18 @@ export const Web3Status = (props) => {
                 </div>
             )
         }
+
         
         if (!yourAddress) {
             return (
                 <div className="web3-status notify">
-                    Web3 detected. Please connect with an account.&nbsp;
                     <span onClick={connectAppWithAccount}>
-                        Connect dApp with an account
+                        Please log & connect into an account
                     </span>
                 </div>
             )
         }
+
         
         return (
             <div className="web3-status success">
