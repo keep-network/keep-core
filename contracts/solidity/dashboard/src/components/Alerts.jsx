@@ -4,12 +4,9 @@ import { ContractsDataContext } from './ContractsDataContextProvider'
 
 const Alerts = (props) => {
     const { isOperator, isOperatorOfStakedTokenGrant, stakedGrant, stakeOwner } = useContext(ContractsDataContext)
-    const { error } = useContext(Web3Context)
 
     return (
         <>
-        { error && <div className="alert alert-danger m-5" role="alert">{error}</div> }
-
           {isOperator && !isOperatorOfStakedTokenGrant &&
             <div className="alert alert-info m-5" role="alert">You are registered as an operator for {stakeOwner}</div>
           }
