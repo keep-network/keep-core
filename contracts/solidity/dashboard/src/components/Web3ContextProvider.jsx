@@ -39,7 +39,6 @@ export default class Web3ContextProvider extends React.Component {
         const { web3 } = this.state
         this.setState({ isFetching: true })
         const accounts = await web3.eth.getAccounts();
-        console.log('accounts', accounts)
         this.connectAppWithAccount(!accounts || accounts.length === 0)
         this.initializeContracts()
         this.state.web3.eth.currentProvider.on('accountsChanged', this.accountHasBeenChanged)
@@ -58,7 +57,6 @@ export default class Web3ContextProvider extends React.Component {
                 isFetching: false
             })
         } catch(error) {
-            console.log('error connection', error)
             this.context.showMessage({ type: 'error', title: error.message })
             this.setState({ isFetching: false })
         }      
@@ -82,7 +80,6 @@ export default class Web3ContextProvider extends React.Component {
                 eventStakingContract
             })
         } catch(error) {
-            console.log('error', error);
             this.setState({
                 error: "Please select correct network",
             })
