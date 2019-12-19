@@ -194,7 +194,7 @@ class OverviewTab extends React.Component {
         return (
             <>
               {isOperator ?
-                <Row className="overview">
+                <Row>
                   <Col xs={12} md={6}>
                     {this.renderChart()}
                   </Col>
@@ -228,7 +228,7 @@ class OverviewTab extends React.Component {
                     }
                   </Col>
                 </Row>:
-                <Row className="overview">
+                <Row>
                   <Col xs={12} md={6}>
                     {this.renderChart()}
                   </Col>
