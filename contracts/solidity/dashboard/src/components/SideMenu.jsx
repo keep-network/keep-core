@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react'
 import { Link, useRouteMatch } from 'react-router-dom'
-import { Web3Status } from './Web3Status'
+// import { Web3Status } from './Web3Status'
 
 export const SideMenuContext = React.createContext({})
 
@@ -27,7 +27,7 @@ export const SideMenu = (props) => {
                 <NavLink exact to="/stake" label='Stake'/>
                 <NavLink exact to="/token-grants" label='Token Grants'/>
                 <NavLink exact to="/create-token-grants" label='Create Token Grant'/>
-                <Web3Status />
+                {/* <Web3Status /> */}
                 <div className='account-address'>
                     <strong>Account address: </strong>
                     <p className="txt-primary">0xcCFe2E36B3F10152D19dD7d14d651F213c9af4b0</p>
