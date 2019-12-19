@@ -1,5 +1,4 @@
 import React, { useContext } from 'react'
-import { Web3Context } from './WithWeb3Context'
 import { ContractsDataContext } from './ContractsDataContextProvider'
 
 const Alerts = (props) => {
