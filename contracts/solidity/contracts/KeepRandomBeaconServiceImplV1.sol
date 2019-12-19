@@ -74,6 +74,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
 
     mapping(uint256 => Callback) internal _callbacks;
 
+    // Registry contract with a list of approved operator contracts and upgraders.
+    address internal _registryKeeper;
+
     address[] internal _operatorContracts;
 
     // Mapping to store new implementation versions that inherit from this contract.
@@ -96,12 +99,14 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
+     * @param registryKeeper Registry Keeper contract linked to this contract.
      */
     function initialize(
         uint256 priceFeedEstimate,
         uint256 fluctuationMargin,
         uint256 dkgContributionMargin,
-        uint256 withdrawalDelay
+        uint256 withdrawalDelay,
+        address registryKeeper
     )
         public
         onlyOwner
@@ -114,6 +119,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _previousEntry = _beaconSeed;
+        _registryKeeper = registryKeeper;
     }
 
     /**

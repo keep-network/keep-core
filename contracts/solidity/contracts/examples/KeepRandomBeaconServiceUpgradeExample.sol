@@ -22,7 +22,8 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
         uint256 priceFeedEstimate,
         uint256 fluctuationMargin,
         uint256 dkgContributionMargin,
-        uint256 withdrawalDelay
+        uint256 withdrawalDelay,
+        address registryKeeper
     )
         public
         onlyOwner
@@ -37,6 +38,7 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
         fluctuationMargin;
         dkgContributionMargin;
         withdrawalDelay;
+        registryKeeper;
     }
 
     /**
