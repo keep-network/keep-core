@@ -25,7 +25,7 @@ contract RegistryKeeper is Ownable {
         _;
     }
 
-    constructor(address _panicButton) Ownable() public {
+    function setPanicButton(address _panicButton) public onlyOwner {
         panicButton = _panicButton;
     }
 

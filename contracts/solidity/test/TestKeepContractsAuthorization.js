@@ -28,7 +28,8 @@ contract('RegistryKeeper', function(accounts) {
     anotherOperatorContract = await KeepRandomBeaconOperator.new(serviceContract.address, stakingContract.address)
     await anotherOperatorContract.registerNewGroup("0x02")
 
-    registryKeeper = await RegistryKeeper.new(panicButton)
+    registryKeeper = await RegistryKeeper.new()
+    await registryKeeper.setPanicButton(panicButton)
   })
 
   beforeEach(async () => {
