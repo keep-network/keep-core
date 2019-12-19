@@ -36,16 +36,20 @@ export default class Web3ContextProvider extends React.Component {
     }
 
     setData = async () => {
-        this.connectAppWithAccount()
+        const { web3 } = this.state
+        this.setState({ isFetching: true })
+        const accounts = await web3.eth.getAccounts();
+        console.log('accounts', accounts)
+        this.connectAppWithAccount(!accounts || accounts.length === 0)
         this.initializeContracts()
         this.state.web3.eth.currentProvider.on('accountsChanged', this.accountHasBeenChanged)
     }
 
-    connectAppWithAccount = async () => {
+    connectAppWithAccount = async (withInfoMessage = true) => {
         const { web3 } = this.state
         this.setState({ isFetching: true })
-        this.context.showMessage({ type: messageType.INFO, title: 'Please check web3 provider' })
-        
+        withInfoMessage && this.context.showMessage({ type: messageType.INFO, title: 'Please check web3 provider' })
+
         try {
             const [account] = await web3.currentProvider.enable()
             this.setState({
@@ -54,6 +58,7 @@ export default class Web3ContextProvider extends React.Component {
                 isFetching: false
             })
         } catch(error) {
+            console.log('error connection', error)
             this.context.showMessage({ type: 'error', title: error.message })
             this.setState({ isFetching: false })
         }      
@@ -77,8 +82,9 @@ export default class Web3ContextProvider extends React.Component {
                 eventStakingContract
             })
         } catch(error) {
+            console.log('error', error);
             this.setState({
-                error: "Failed to load contracts. Please check if Metamask is enabled and connected to the correct network.",
+                error: "Please select correct network",
             })
         }
     }
