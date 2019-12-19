@@ -34,6 +34,10 @@ contract RegistryKeeper is Ownable {
         panicButton = _panicButton;
     }
 
+    function setOperatorContractUpgrader(address _operatorContractUpgrader) public onlyOwner {
+        operatorContractUpgrader = _operatorContractUpgrader;
+    }
+
     function approveOperatorContract(address operatorContract) public onlyOwner {
         operatorContracts[operatorContract] = 1;
     }
