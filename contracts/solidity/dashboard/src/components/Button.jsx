@@ -67,7 +67,7 @@ export const SubmitButton = ({ onSubmitAction, withMessageActionIsPending, pendi
   const { showMessage, closeMessage } = useContext(MessagesContext)
 
   let pendingMessage = { type: messageType.PENDING_ACTION, sticky: true, title: pendingMessageTitle, content: pendingMessageContent }
-  let infoMessage = { type: messageType.INFO, sticky: true, title: 'Please check web3 provider', content: 'Waiting for transaction signature...' }
+  let infoMessage = { type: messageType.INFO, sticky: true, title: 'Waiting for the transaction confirmation...' }
 
   const onTransactionHashCallback = (hash) => {
     pendingMessage = showMessage({ ...pendingMessage, content: `Transaction hash: ${hash}`})
