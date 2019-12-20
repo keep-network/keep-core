@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { Form, FormGroup, FormControl } from 'react-bootstrap'
-import WithWeb3Context from './WithWeb3Context'
+import withWeb3Context from './WithWeb3Context'
 import { formatAmount, displayAmount } from '../utils'
 import { SubmitButton } from './Button'
 import { MessagesContext, messageType } from './Message'
@@ -13,14 +13,14 @@ class StakingDelegateTokenGrantForm extends Component {
   state = {
     grantId: 0,
     amount: 0,
-    operatorAddress: "",
-    magpie: "",
+    operatorAddress: '',
+    magpie: '',
   }
 
   onChange = (e) => {
     const name = e.target.name
     this.setState(
-      { [name]: e.target.value }
+      { [name]: e.target.value },
     )
   }
 
@@ -36,37 +36,39 @@ class StakingDelegateTokenGrantForm extends Component {
 
   validateAddress = (address) => {
     const { web3 } = this.props
-    if (web3.utils && web3.utils.isAddress(address))
+    if (web3.utils && web3.utils.isAddress(address)) {
       return 'success'
-    else
+    } else {
       return 'error'
+    }
   }
 
   validateAmount = () => {
     const { amount } = this.state
     const { web3, tokenBalance } = this.props
-    if (web3.utils && tokenBalance && formatAmount(amount, 18).lte(tokenBalance))
+    if (web3.utils && tokenBalance && formatAmount(amount, 18).lte(tokenBalance)) {
       return 'success'
-    else
+    } else {
       return 'error'
+    }
   }
 
   submit = async (onTransactionHashCallback) => {
     const { grantId, amount, magpie, operatorAddress } = this.state
     const { web3 } = this.props
-    const stakingContractAddress = web3.stakingContract.options.address;
+    const stakingContractAddress = web3.stakingContract.options.address
     // Operator must sign grantee and token grant contract address since grant contract becomes the owner during grant staking.
-    let delegation = Buffer.concat([
+    const delegation = Buffer.concat([
       Buffer.from(magpie.substr(2), 'hex'),
       Buffer.from(operatorAddress.substr(2), 'hex'),
-    ]);
+    ])
 
-    try{
-      await web3.grantContract.methods.stake(grantId, stakingContractAddress,web3.utils.toBN(formatAmount(amount, 18)).toString(), delegation)
-        .send({from: web3.yourAddress})
+    try {
+      await web3.grantContract.methods.stake(grantId, stakingContractAddress, web3.utils.toBN(formatAmount(amount, 18)).toString(), delegation)
+        .send({ from: web3.yourAddress })
         .on('transactionHash', onTransactionHashCallback)
       this.context.showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Staking delegate transaction has been successfully completed' })
-    } catch(error) {
+    } catch (error) {
       this.context.showMessage({ type: messageType.ERROR, title: 'Staking delegate action has been failed ', content: error.message })
     }
   }
@@ -141,7 +143,7 @@ class StakingDelegateTokenGrantForm extends Component {
 
 StakingDelegateTokenGrantForm.propTypes = {
   btnText: PropTypes.string,
-  action: PropTypes.string
+  action: PropTypes.string,
 }
 
-export default WithWeb3Context(StakingDelegateTokenGrantForm);
+export default withWeb3Context(StakingDelegateTokenGrantForm)
