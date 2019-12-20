@@ -28,19 +28,17 @@ export const Web3Status = (props) => {
                 </div>
             )
         }
-
         
         if (!yourAddress) {
             return (
                 <div className="web3-status notify">
                     <span onClick={connectAppWithAccount}>
-                        Please log & connect into an account
+                        Please log in and connect with dApp
                     </span>
                 </div>
             )
         }
 
-        
         return (
             <div className="web3-status success">
                 Account logged in
