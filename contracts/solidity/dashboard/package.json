@@ -30,7 +30,12 @@
     "build": "npm run build-css && sh -ac '. .env.${REACT_APP_ENV}; react-scripts build'",
     "build:keep-dev": "REACT_APP_ENV=keep-dev npm run build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "js:lint": "eslint src/**/*.js src/**/*.jsx",
+    "js:lint:fix": "eslint --fix src/**/*.js src/**/*.jsx"
+  },
+  "devDependencies": {
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git#0.2.0"
   },
   "browserslist": [
     ">0.2%",
