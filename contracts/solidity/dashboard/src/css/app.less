@@ -12,18 +12,6 @@ html {
   font-size: 16px;
 }
 
-.App {
-  text-align: center;
-  overflow: hidden;
-  background-color: @white;
-  max-width: @max-page-width;
-  margin: 0 auto;
-}
-
-.tab-pane {
-  padding: 15px;
-}
-
 .main {
   width: 100%;
   display: flex;
@@ -40,52 +28,53 @@ html {
 }
 
 .header {
-  height: 80px;
-  width: 100%;
-  z-index: 10;
   position: fixed;
-  background: white;
   top: 0;
   left: 0;
+  height: @header-height;
+  width: 100%;
+  z-index: 10;
   display: flex;  
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  background: white;
   padding: 0.5rem;
   border-bottom: 1px solid black;
+
   > .web3, > .account-address {
     display: none;
   }
+
   > .menu-button {
     display: block;
   }
- 
 }
 
 .side-menu {
-  visibility: hidden;
-  background: white;
+  position: fixed;
+  top: @header-height;
+  left: 0;
+  z-index: 10;
   height: 100%;
   width: 0px;
-  position: fixed;
-  z-index: 10;
-  top: 80px;
-  left: 0;
+  visibility: hidden;
+  background: white;
   border-right: 1px solid black;
   overflow-x: hidden;
   transition: 0.5s ease;
   
   .active& {
     visibility: visible;
-    width: 350px;
+    width: @side-menu-width;
   }
 
   & ul {
-    width: 350px;
+    list-style: none;
     overflow-x: hidden;
     text-align: center;
+    width: @side-menu-width;
     padding: 0;
-    list-style: none;
 
     & li {
       border-bottom: 1px solid black;
@@ -95,31 +84,36 @@ html {
       border-right: 0 solid #48DBB4;
       transition: border-right-width 0.3s ease;
 
-      &.active-page-link {
-        border-right: 5px solid #48DBB4;
-        color: black;
-        font-weight: bold;
-      }
-
-      & > a {
-        color: black;
-        &:hover, &:focus{
-          text-decoration: none;
-        }
-      }
-
       &:hover {
         cursor: pointer;
         border-right-width: 5px;
+      }
+
+      &.active-page-link {
+        border-right-width: 5px;
+        color: black;
+        font-weight: bold;
+      }
+    }
+
+    a {
+      color: black;
+
+      &:hover, &:focus{
+        text-decoration: none;
       }
     }
 
     > .account-address {
       font-size: 0.8rem;
     }
+
     > .web3 > .web3-status {
+      text-align: center;
       margin: 1rem;
     }
+
+
   }
 }
 
@@ -129,6 +123,7 @@ html {
       display: flex;
     }
   }
+
   .side-menu {
     ul > .web3 {
       visibility: hidden;
@@ -142,6 +137,7 @@ html {
        visibility: visible;
      }
    }
+
    .main {
      > .content {
       max-width: 2200px;
@@ -154,30 +150,34 @@ html {
     > .logo {
       width: 350px;
     }
+
     > .web3 {
       min-width: 30%;
       justify-content: flex-start;
       margin-right: auto;
     }
+
     > .account-address {
       display: block;
     }
-    >.menu-button {
+
+    > .menu-button {
       display: none;
     }
   }
 
   .side-menu {
-    width: 350px;
+    width: @side-menu-width;
     visibility: visible;
+    
     ul > .account-address, .web3 {
       visibility: hidden;
     }
   }
 
   .main {
-    >.content {
-      padding: calc(100px + 5rem) 5rem 0 calc(350px + 5rem);
+    > .content {
+      padding: calc(@header-height + 5rem) 5rem 0 calc(@side-menu-width + 5rem)
     }
   }
 }
