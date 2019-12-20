@@ -1,6 +1,8 @@
 import React, { useState, useContext } from 'react'
 import { Link, useRouteMatch } from 'react-router-dom'
-// import { Web3Status } from './Web3Status'
+import { Web3Status } from './Web3Status'
+import { Web3Context } from './WithWeb3Context'
+import { ContractsDataContext } from './ContractsDataContextProvider'
 
 export const SideMenuContext = React.createContext({})
 
@@ -20,17 +22,24 @@ export const SiedMenuProvider = (props) => {
 
 export const SideMenu = (props) => {
     const { isOpen } = useContext(SideMenuContext)
+    const { yourAddress } = useContext(Web3Context)
+    const { isTokenHolder } = useContext(ContractsDataContext)
+
     return (
         <nav className={`${isOpen ? 'active ' : '' }side-menu`}>
             <ul>
                 <NavLink exact to="/overview" label='Overview'/>
-                <NavLink exact to="/stake" label='Stake'/>
-                <NavLink exact to="/token-grants" label='Token Grants'/>
-                <NavLink exact to="/create-token-grants" label='Create Token Grant'/>
-                {/* <Web3Status /> */}
+                { isTokenHolder &&
+                <>
+                    <NavLink exact to="/stake" label='Stake'/>
+                    <NavLink exact to="/token-grants" label='Token Grants'/>
+                    <NavLink exact to="/create-token-grants" label='Create Token Grant'/>
+                </>
+                }
+                <Web3Status />
                 <div className='account-address'>
                     <strong>Account address: </strong>
-                    <p className="txt-primary">0xcCFe2E36B3F10152D19dD7d14d651F213c9af4b0</p>
+                    <p className="txt-primary">{yourAddress}</p>
                 </div>
             </ul>
         </nav>
@@ -42,9 +51,12 @@ const NavLink = ({ label, to, exact }) => {
         path: to,
         exact
     })
+
     return (
-        <li className={ match ? 'active-page-link' : ''}>
-            <Link to={to}>{label}</Link>
-        </li>
+        <Link to={to}>
+            <li className={ match ? 'active-page-link' : ''}>
+               {label}
+            </li>
+        </Link>
     )
 }
