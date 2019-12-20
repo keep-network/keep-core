@@ -3,6 +3,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ipfs/go-log"
 
@@ -136,9 +137,20 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 	[]chain.StakerAddress,
 	error,
 ) {
-	selectedParticipants, err := ec.keepRandomBeaconOperatorContract.SelectedParticipants()
-	if err != nil {
-		return nil, err
+	var selectedParticipants []common.Address
+	var err error
+	retries := 4
+	for i := 0; i < retries; i++ {
+		selectedParticipants, err = ec.keepRandomBeaconOperatorContract.SelectedParticipants()
+		if err != nil {
+			logger.Errorf("Error occurred while selecting participants [%v]; retry [%v]", err, i)
+			if i == retries-1 {
+				return nil, err
+			}
+			time.Sleep(250 * time.Millisecond) // 250ms
+		} else {
+			break
+		}
 	}
 
 	stakerAddresses := make([]chain.StakerAddress, len(selectedParticipants))
