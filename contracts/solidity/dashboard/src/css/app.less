@@ -140,9 +140,6 @@ html {
      > .web3 {
        visibility: visible;
      }
-     > .account-address {
-       display: block;
-     }
    }
    .main {
      > .content {
@@ -153,9 +150,6 @@ html {
 
 @media screen and (min-width: 1250px) {
   .header {
-    >.menu-button {
-      display: none;
-    }
     > .logo {
       width: 350px;
     }
@@ -164,19 +158,25 @@ html {
       justify-content: flex-start;
       margin-right: auto;
     }
+    > .account-address {
+      display: block;
+    }
+    >.menu-button {
+      display: none;
+    }
   }
+
   .side-menu {
     width: 350px;
     visibility: visible;
     ul > .account-address, .web3 {
       visibility: hidden;
     }
-   }
-   .main {
-     >.content {
-       padding: calc(100px + 5rem) 5rem 0 calc(350px + 5rem);
-     }
-   }
+  }
+
+  .main {
+    >.content {
+      padding: calc(100px + 5rem) 5rem 0 calc(350px + 5rem);
+    }
+  }
 }
-
-
