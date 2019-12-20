@@ -235,12 +235,17 @@ contract KeepRandomBeaconOperator {
 
         require(!groupSelection.inProgress || block.number > dkgTimeout, "Group selection in progress");
 
+        bool success; // Store status of external contract call.
+        bytes memory data; // Store result data of external contract call.
+
         // If previous group selection failed and there is reimbursement left
         // return it to the DKG fee pool.
         if (dkgSubmitterReimbursementFee > 0) {
-            uint256 surplus = dkgSubmitterReimbursementFee;
-            dkgSubmitterReimbursementFee = 0;
-            ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
+            // solium-disable-next-line
+            (success, data) = msg.sender.call.value(dkgSubmitterReimbursementFee)(abi.encodeWithSignature("fundDkgFeePool()"));
+            if (success) {
+                dkgSubmitterReimbursementFee = 0;
+            }
         }
 
         groupSelection.start(_newEntry);
