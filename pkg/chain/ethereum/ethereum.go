@@ -137,20 +137,10 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 	[]chain.StakerAddress,
 	error,
 ) {
-	var selectedParticipants []common.Address
-	var err error
-	retries := 4
-	for i := 0; i < retries; i++ {
-		selectedParticipants, err = ec.keepRandomBeaconOperatorContract.SelectedParticipants()
-		if err != nil {
-			logger.Errorf("Error occurred while selecting participants [%v]; retry [%v]", err, i)
-			if i == retries-1 {
-				return nil, err
-			}
-			time.Sleep(250 * time.Millisecond) // 250ms
-		} else {
-			break
-		}
+
+	selectedParticipants, err := withRetry(ec.keepRandomBeaconOperatorContract.SelectedParticipants, 4, 250)
+	if err != nil {
+		return nil, err
 	}
 
 	stakerAddresses := make([]chain.StakerAddress, len(selectedParticipants))
@@ -159,6 +149,26 @@ func (ec *ethereumChain) GetSelectedParticipants() (
 	}
 
 	return stakerAddresses, nil
+}
+
+func withRetry(fn func() ([]common.Address, error), numberOfRetries int, interval time.Duration) ([]common.Address, error) {
+	var result []common.Address
+	var err error
+
+	for i := 0; i < numberOfRetries; i++ {
+		result, err = fn()
+		if err != nil {
+			logger.Errorf("Error occurred while selecting participants [%v]; on [%v] retry", err, i)
+			if i == numberOfRetries-1 {
+				return nil, err
+			}
+			time.Sleep(interval * time.Millisecond)
+		} else {
+			break
+		}
+	}
+
+	return result, nil
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
