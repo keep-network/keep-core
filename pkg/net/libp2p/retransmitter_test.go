@@ -1,6 +1,7 @@
 package libp2p
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -9,51 +10,57 @@ import (
 )
 
 func TestRetransmitExpectedNumberOfTimes(t *testing.T) {
-	cycles := 5
-	interval := 10
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
+	interval := 100
+	expectedRetransmissions := 5 // 500 / 100 = 5
 
 	message := &pb.NetworkMessage{}
-	retransmitter := newRetransmitter(cycles, interval)
+	retransmitter := newRetransmitter(interval)
 
-	retransmissions := make(chan *pb.NetworkMessage, cycles)
+	retransmissions := make(chan *pb.NetworkMessage, expectedRetransmissions)
 
-	retransmitter.scheduleRetransmission(
-		message, func(msg *pb.NetworkMessage) error {
+	retransmitter.scheduleRetransmissions(
+		ctx, message, func(msg *pb.NetworkMessage) error {
 			retransmissions <- msg
 			return nil
 		},
 	)
 
-	time.Sleep(60 * time.Millisecond)
+	time.Sleep(600 * time.Millisecond)
 
-	if len(retransmissions) != cycles {
+	if len(retransmissions) != expectedRetransmissions {
 		t.Errorf(
 			"unexpected number of retransmissions\nactual: [%v]\nexpected:   [%v]",
-			cycles,
 			len(retransmissions),
+			expectedRetransmissions,
 		)
 	}
 }
 
 func TestUpdateRetransmissionCounter(t *testing.T) {
-	cycles := 3
-	interval := 10
+	ctx, cancel := context.WithTimeout(context.Background(), 600*time.Millisecond)
+	defer cancel()
+
+	interval := 100
+	retransmissionsCount := 6 // 600 / 100 = 6
 
 	message := &pb.NetworkMessage{}
-	retransmitter := newRetransmitter(cycles, interval)
+	retransmitter := newRetransmitter(interval)
 
-	retransmissions := make(chan *pb.NetworkMessage, cycles)
+	retransmissions := make(chan *pb.NetworkMessage, retransmissionsCount)
 
-	retransmitter.scheduleRetransmission(
-		message, func(msg *pb.NetworkMessage) error {
+	retransmitter.scheduleRetransmissions(
+		ctx, message, func(msg *pb.NetworkMessage) error {
 			retransmissions <- msg
 			return nil
 		},
 	)
 
-	time.Sleep(40 * time.Millisecond)
+	time.Sleep(700 * time.Millisecond)
 
-	for i := 1; i <= cycles; i++ {
+	for i := 1; i <= retransmissionsCount; i++ {
 		message := <-retransmissions
 		if uint32(i) != message.Retransmission {
 			t.Errorf(
@@ -66,8 +73,11 @@ func TestUpdateRetransmissionCounter(t *testing.T) {
 }
 
 func TestRetransmitOriginalContent(t *testing.T) {
-	cycles := 3
-	interval := 10
+	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
+	defer cancel()
+
+	interval := 50
+	retransmissionsCount := 3 // 150 / 50 = 3
 
 	sender := []byte("this is sender")
 	encrypted := true
@@ -83,20 +93,20 @@ func TestRetransmitOriginalContent(t *testing.T) {
 		Channel:   channel,
 	}
 
-	retransmitter := newRetransmitter(cycles, interval)
+	retransmitter := newRetransmitter(interval)
 
-	retransmissions := make(chan *pb.NetworkMessage, cycles)
+	retransmissions := make(chan *pb.NetworkMessage, retransmissionsCount)
 
-	retransmitter.scheduleRetransmission(
-		message, func(msg *pb.NetworkMessage) error {
+	retransmitter.scheduleRetransmissions(
+		ctx, message, func(msg *pb.NetworkMessage) error {
 			retransmissions <- msg
 			return nil
 		},
 	)
 
-	time.Sleep(40 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
-	for i := 1; i <= cycles; i++ {
+	for i := 1; i <= retransmissionsCount; i++ {
 		message := <-retransmissions
 
 		testutils.AssertBytesEqual(t, sender, message.Sender)
@@ -110,22 +120,25 @@ func TestRetransmitOriginalContent(t *testing.T) {
 }
 
 func TestDoNotModifyOriginalMessage(t *testing.T) {
-	cycles := 1
-	interval := 10
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	interval := 50
+	retransmissionsCount := 4 // 200 / 50 = 4
 
 	message := &pb.NetworkMessage{}
-	retransmitter := newRetransmitter(cycles, interval)
+	retransmitter := newRetransmitter(interval)
 
-	retransmissions := make(chan *pb.NetworkMessage, cycles)
+	retransmissions := make(chan *pb.NetworkMessage, retransmissionsCount)
 
-	retransmitter.scheduleRetransmission(
-		message, func(msg *pb.NetworkMessage) error {
+	retransmitter.scheduleRetransmissions(
+		ctx, message, func(msg *pb.NetworkMessage) error {
 			retransmissions <- msg
 			return nil
 		},
 	)
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 
 	if message.Retransmission != 0 {
 		t.Errorf("modified retransmission field of the original message")
@@ -133,7 +146,7 @@ func TestDoNotModifyOriginalMessage(t *testing.T) {
 }
 
 func TestReceiveRetransmissions(t *testing.T) {
-	retransmitter := newRetransmitter(1, 1)
+	retransmitter := newRetransmitter(1)
 
 	var received []pb.NetworkMessage
 
@@ -163,7 +176,7 @@ func TestReceiveRetransmissions(t *testing.T) {
 }
 
 func TestPassReceivedUniqueMessages(t *testing.T) {
-	retransmitter := newRetransmitter(1, 1)
+	retransmitter := newRetransmitter(1)
 
 	var received []*pb.NetworkMessage
 
@@ -201,7 +214,7 @@ func TestPassReceivedUniqueMessages(t *testing.T) {
 }
 
 func TestPassIdenticalMessages(t *testing.T) {
-	retransmitter := newRetransmitter(1, 1)
+	retransmitter := newRetransmitter(1)
 
 	var received []*pb.NetworkMessage
 

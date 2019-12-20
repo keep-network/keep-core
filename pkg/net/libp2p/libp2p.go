@@ -62,12 +62,10 @@ type Config struct {
 	Peers                  []string
 	Port                   int
 	AnnouncedAddresses     []string
-	RetransmissionCycles   int
 	RetransmissionInterval int
 }
 
 type retransmissionOptions struct {
-	cycles               int
 	intervalMilliseconds int
 }
 
@@ -206,7 +204,6 @@ func Connect(
 	host.Network().Notify(buildNotifiee())
 
 	retransmissionOptions := &retransmissionOptions{
-		cycles:               config.RetransmissionCycles,
 		intervalMilliseconds: config.RetransmissionInterval,
 	}
 	cm, err := newChannelManager(ctx, identity, host, retransmissionOptions)

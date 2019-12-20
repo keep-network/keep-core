@@ -91,7 +91,6 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		messageHandlers:    make([]net.HandleMessageFunc, 0),
 		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
 		retransmitter: newRetransmitter(
-			cm.retransmissionOptions.cycles,
 			cm.retransmissionOptions.intervalMilliseconds,
 		),
 	}

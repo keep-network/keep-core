@@ -1,6 +1,7 @@
 package libp2p
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -10,58 +11,59 @@ import (
 )
 
 // retransmitter is a message retransmission strategy for libp2p broadcast
-// channel retransmitting message for the certain number of cycles and with the
-// given interval.
+// channel retransmitting message for the lifetime of the context with the
+// given interval between retransmissions.
 //
 // libp2p pubsub used internally by the broadcast channel does not guarantee
 // message delivery. To improve the delivery rate, each message can be
-// retransmitted a certain number of times.
+// retransmitted several times.
 type retransmitter struct {
-	cycles   uint32
 	interval time.Duration
 	cache    *timeCache
 }
 
-func newRetransmitter(cycles int, intervalMilliseconds int) *retransmitter {
+func newRetransmitter(intervalMilliseconds int) *retransmitter {
 	interval := time.Duration(intervalMilliseconds) * time.Millisecond
-	retransmissionDuration := time.Duration(cycles) * interval
-	cacheLifetime := 2 * time.Minute
+	cacheLifetime := 2 * time.Minute // TODO: can be invalidated with context
 
-	cache := newTimeCache(retransmissionDuration + cacheLifetime)
+	cache := newTimeCache(cacheLifetime)
 
 	return &retransmitter{
-		cycles:   uint32(cycles),
 		interval: interval,
 		cache:    cache,
 	}
 }
 
 // scheduleRetransmission takes the provided message and retransmits it
-// according to the configured number of cycles and interval using the
-// provided send function. For each retransmission, send function is
-// called with a copy of the original message and message retransmission
-// counter set to the appropriate value.
-func (r *retransmitter) scheduleRetransmission(
+// with the given interval for the entire lifetime of the provided context.
+// For each retransmission, send function is called with a copy of the original
+// message and message retransmission counter set to the appropriate value.
+func (r *retransmitter) scheduleRetransmissions(
+	ctx context.Context,
 	message *pb.NetworkMessage,
 	send func(*pb.NetworkMessage) error,
 ) {
 	go func() {
-		for i := uint32(1); i <= r.cycles; i++ {
-			time.Sleep(r.interval)
+		retransmission := uint32(0)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				time.Sleep(r.interval)
+				retransmission++
+				messageCopy := *message
+				messageCopy.Retransmission = retransmission
 
-			messageCopy := *message
-			messageCopy.Retransmission = i
-
-			go func() {
 				if err := send(&messageCopy); err != nil {
 					logger.Errorf(
 						"could not retransmit message: [%v]",
 						err,
 					)
 				}
-			}()
+
+			}
 		}
-		return
 	}()
 }
 

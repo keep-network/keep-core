@@ -50,7 +50,9 @@ func (c *channel) Send(message net.TaggedMarshaler, ctx ...context.Context) erro
 		return err
 	}
 
-	c.retransmitter.scheduleRetransmission(messageProto, c.publishToPubSub)
+	if len(ctx) > 0 {
+		c.retransmitter.scheduleRetransmissions(ctx[0], messageProto, c.publishToPubSub)
+	}
 	return c.publishToPubSub(messageProto)
 }
 
