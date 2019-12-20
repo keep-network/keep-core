@@ -65,7 +65,7 @@ variable "storage_objectviewer_iam_role" {
 }
 
 variable "storage_objectviewer_iam_members" {
-  default = ["user:taggart.bowen.gaddy@thesis.co", "user:liam.zebedee@thesis.co"]
+  default = ["user:liam.zebedee@thesis.co"]
 }
 
 # bucket vars
