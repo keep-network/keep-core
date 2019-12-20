@@ -40,6 +40,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address);
 
   const registryKeeper = await RegistryKeeper.new();
+  await registryKeeper.approveOperatorContract(operatorContract.address);
   await serviceContract.initialize(priceFeedEstimate, fluctuationMargin, dkgContributionMargin, withdrawalDelay, registryKeeper.address);
   await serviceContract.addOperatorContract(operatorContract.address);
 

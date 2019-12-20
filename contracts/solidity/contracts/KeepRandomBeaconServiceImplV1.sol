@@ -145,6 +145,10 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal {
      * @param operatorContract Address of the operator contract.
      */
     function addOperatorContract(address operatorContract) public onlyOperatorContractUpgrader {
+        require(
+            RegistryKeeper(_registryKeeper).isApprovedOperatorContract(operatorContract),
+            "Operator contract is not approved"
+        );
         _operatorContracts.push(operatorContract);
     }
 

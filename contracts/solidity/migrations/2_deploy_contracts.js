@@ -53,6 +53,7 @@ module.exports = async function(deployer) {
     registryKeeper.address
   );
 
+  registryKeeper.approveOperatorContract(keepRandomBeaconOperator.address);
   keepRandomBeaconService.addOperatorContract(
     keepRandomBeaconOperator.address
   );

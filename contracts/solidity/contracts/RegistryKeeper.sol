@@ -45,4 +45,12 @@ contract RegistryKeeper is Ownable {
     function disableOperatorContract(address operatorContract) public onlyPanicButton {
         operatorContracts[operatorContract] = 2;
     }
+
+    function isApprovedOperatorContract(address operatorContract) public view returns (bool) {
+        if (operatorContracts[operatorContract] == 1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

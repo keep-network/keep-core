@@ -41,18 +41,18 @@ contract('RegistryKeeper', function(accounts) {
   })
 
   it("should be able to approve or disable operator contract", async() => {
-    assert.isTrue((await registryKeeper.operatorContracts(operatorContract.address)).eqn(0), "Unexpected status of operator contract")
+    assert.isTrue((await registryKeeper.operatorContracts(anotherOperatorContract.address)).eqn(0), "Unexpected status of operator contract")
 
     await expectThrowWithMessage(
-      registryKeeper.approveOperatorContract(operatorContract.address, {from: operatorContractUpgrader}),
+      registryKeeper.approveOperatorContract(anotherOperatorContract.address, {from: operatorContractUpgrader}),
       "Ownable: caller is not the owner"
     );
 
-    await registryKeeper.approveOperatorContract(operatorContract.address, {from: governance})
-    assert.isTrue((await registryKeeper.operatorContracts(operatorContract.address)).eqn(1), "Unexpected status of operator contract")
+    await registryKeeper.approveOperatorContract(anotherOperatorContract.address, {from: governance})
+    assert.isTrue((await registryKeeper.operatorContracts(anotherOperatorContract.address)).eqn(1), "Unexpected status of operator contract")
 
     await expectThrowWithMessage(
-      registryKeeper.disableOperatorContract(operatorContract.address, {from: governance}),
+      registryKeeper.disableOperatorContract(anotherOperatorContract.address, {from: governance}),
       "Not authorized"
     );
 
@@ -61,6 +61,8 @@ contract('RegistryKeeper', function(accounts) {
   })
 
   it("should be able to add or remove operator contracts from service contract", async() => {
+    await registryKeeper.approveOperatorContract(anotherOperatorContract.address)
+
     await expectThrowWithMessage(
       serviceContract.addOperatorContract(anotherOperatorContract.address, {from: governance}),
       "Caller is not operator contract upgrader"
