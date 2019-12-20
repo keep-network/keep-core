@@ -10,12 +10,18 @@ import { withContractsDataContext } from './ContractsDataContextProvider'
 import Alerts from './Alerts'
 import Loadable from './Loadable'
 import { NotFound404 } from './NotFound404'
+import { WithOnlyLoggedUser } from './WithOnlyLoggedUserHoc'
+import WithWeb3Context from './WithWeb3Context'
 
 class Routing extends React.Component { 
 
     renderContent() {
-        const { isOperator, isTokenHolder, contractsDataIsFetching } = this.props
+        const { isOperator, isTokenHolder, contractsDataIsFetching, web3: { error }} = this.props
 
+
+        if(error) {
+            return null;
+        }
         return contractsDataIsFetching ? <Loadable /> : (
             <RoutingTabs isOperator={isOperator} isTokenHolder={isTokenHolder}>
                 <Switch>
@@ -50,4 +56,4 @@ class Routing extends React.Component {
     }
 }
 
-export default withContractsDataContext(Routing)
+export default WithWeb3Context(withContractsDataContext(WithOnlyLoggedUser(Routing)))
