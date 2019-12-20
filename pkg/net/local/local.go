@@ -205,8 +205,8 @@ func (lc *localChannel) deliver(
 }
 
 func (lc *localChannel) Send(
+	ctx context.Context,
 	message net.TaggedMarshaler,
-	ctx ...context.Context,
 ) error {
 	return doSend(lc, message)
 }

@@ -194,7 +194,7 @@ func pingRequest(c *cli.Context) error {
 
 		go func(msg *PingMessage) {
 			<-start
-			err := broadcastChannel.Send(message)
+			err := broadcastChannel.Send(ctx, message)
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
@@ -229,7 +229,7 @@ func pingRequest(c *cli.Context) error {
 				Sender:  netProvider.ID().String(),
 				Payload: pong + " corresponding to " + pingPayload.Payload,
 			}
-			err := broadcastChannel.Send(message)
+			err := broadcastChannel.Send(ctx, message)
 			if err != nil {
 				return err
 			}

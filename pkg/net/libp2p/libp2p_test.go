@@ -112,6 +112,7 @@ func TestSendReceive(t *testing.T) {
 	}
 
 	if err := broadcastChannel.Send(
+		ctx,
 		&testMessage{Sender: identity, Payload: expectedPayload},
 	); err != nil {
 		t.Fatal(err)

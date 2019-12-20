@@ -56,14 +56,14 @@ func (c *channel) Name() string {
 	return c.delegate.Name()
 }
 
-func (c *channel) Send(m net.TaggedMarshaler, ctx ...context.Context) error {
+func (c *channel) Send(ctx context.Context, m net.TaggedMarshaler) error {
 	altered := c.rules(m)
 	if altered == nil {
 		// drop the message
 		return nil
 	}
 
-	return c.delegate.Send(c.rules(m), ctx...)
+	return c.delegate.Send(ctx, c.rules(m))
 }
 
 func (c *channel) Recv(h net.HandleMessageFunc) error {

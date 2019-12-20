@@ -33,7 +33,7 @@ func TestRegisterAndFireHandler(t *testing.T) {
 
 	localChannel.Recv(handler)
 
-	localChannel.Send(&mockNetMessage{})
+	localChannel.Send(context.TODO(), &mockNetMessage{})
 
 	select {
 	case <-handlerFiredChan:
@@ -133,7 +133,7 @@ func TestUnregisterHandler(t *testing.T) {
 			}
 
 			// Send a message, all handlers should be called.
-			localChannel.Send(&mockNetMessage{})
+			localChannel.Send(context.TODO(), &mockNetMessage{})
 
 			// Handlers are fired asynchronously; wait for them.
 			<-ctx.Done()
@@ -193,7 +193,7 @@ func TestSendAndDeliver(t *testing.T) {
 	}
 
 	// Broadcast message by the first peer.
-	if err := localChannel1.Send(msgToSend); err != nil {
+	if err := localChannel1.Send(context.TODO(), msgToSend); err != nil {
 		t.Fatalf("failed to send message: [%v]", err)
 	}
 

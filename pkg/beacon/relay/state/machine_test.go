@@ -30,13 +30,13 @@ func TestExecute(t *testing.T) {
 
 	go func(blockCounter chain.BlockCounter) {
 		blockCounter.WaitForBlockHeight(1)
-		channel.Send(&TestMessage{"message_1"})
+		channel.Send(context.TODO(), &TestMessage{"message_1"})
 
 		blockCounter.WaitForBlockHeight(4)
-		channel.Send(&TestMessage{"message_2"})
+		channel.Send(context.TODO(), &TestMessage{"message_2"})
 
 		blockCounter.WaitForBlockHeight(7)
-		channel.Send(&TestMessage{"message_3"})
+		channel.Send(context.TODO(), &TestMessage{"message_3"})
 	}(blockCounter)
 
 	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {

@@ -43,16 +43,14 @@ func (c *channel) Name() string {
 	return c.name
 }
 
-func (c *channel) Send(message net.TaggedMarshaler, ctx ...context.Context) error {
+func (c *channel) Send(ctx context.Context, message net.TaggedMarshaler) error {
 	// Transform net.TaggedMarshaler to a protobuf message
 	messageProto, err := c.messageProto(message)
 	if err != nil {
 		return err
 	}
 
-	if len(ctx) > 0 {
-		c.retransmitter.scheduleRetransmissions(ctx[0], messageProto, c.publishToPubSub)
-	}
+	c.retransmitter.scheduleRetransmissions(ctx, messageProto, c.publishToPubSub)
 	return c.publishToPubSub(messageProto)
 }
 
