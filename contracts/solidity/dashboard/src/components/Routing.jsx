@@ -14,9 +14,8 @@ import WithWeb3Context from './WithWeb3Context'
 class Routing extends React.Component { 
 
     renderContent() {
-        const { isOperator, isTokenHolder, contractsDataIsFetching, web3: { error }} = this.props
-
-
+        const { isTokenHolder, contractsDataIsFetching, web3: { error } } = this.props
+        
         if(error) {
             return null;
         }
