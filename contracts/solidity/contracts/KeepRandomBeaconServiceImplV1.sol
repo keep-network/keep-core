@@ -4,6 +4,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./DelayedWithdrawal.sol";
+import "./RegistryKeeper.sol";
 
 
 interface OperatorContract {
@@ -27,7 +28,7 @@ interface OperatorContract {
  * Warning: you can't set constants directly in the contract and must use initialize()
  * please see openzeppelin upgradeable contracts approach for more info.
  */
-contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
+contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
 
@@ -90,6 +91,15 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
 
     /**
+     * @dev Throws if called by any account other than the operator contract upgrader.
+     */
+    modifier onlyOperatorContractUpgrader() {
+        address operatorContractUpgrader = RegistryKeeper(_registryKeeper).operatorContractUpgrader();
+        require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
+        _;
+    }
+
+    /**
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param priceFeedEstimate The price feed estimate is used to calculate the gas price for
      * reimbursement next to the actual gas price from the transaction. We use both values to defend
@@ -109,9 +119,10 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         address registryKeeper
     )
         public
-        onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
+        address operatorContractUpgrader = RegistryKeeper(registryKeeper).operatorContractUpgrader();
+        require(operatorContractUpgrader == msg.sender, "Caller is not the operator contract upgrader");
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _priceFeedEstimate = priceFeedEstimate;
         _fluctuationMargin = fluctuationMargin;
@@ -133,7 +144,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Adds operator contract
      * @param operatorContract Address of the operator contract.
      */
-    function addOperatorContract(address operatorContract) public onlyOwner {
+    function addOperatorContract(address operatorContract) public onlyOperatorContractUpgrader {
         _operatorContracts.push(operatorContract);
     }
 
@@ -141,7 +152,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Removes operator contract
      * @param operatorContract Address of the operator contract.
      */
-    function removeOperatorContract(address operatorContract) public onlyOwner {
+    function removeOperatorContract(address operatorContract) public onlyOperatorContractUpgrader {
         _operatorContracts.removeAddress(operatorContract);
     }
 
@@ -357,7 +368,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @dev Set the gas price in wei for estimating relay entry request payment.
      * @param priceFeedEstimate is the gas price required for estimating relay entry request payment.
      */
-    function setPriceFeedEstimate(uint256 priceFeedEstimate) public onlyOwner {
+    function setPriceFeedEstimate(uint256 priceFeedEstimate) public onlyOperatorContractUpgrader {
         _priceFeedEstimate = priceFeedEstimate;
     }
 

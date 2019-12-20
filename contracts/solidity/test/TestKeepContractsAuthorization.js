@@ -1,7 +1,6 @@
 import {createSnapshot, restoreSnapshot} from './helpers/snapshot'
 import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import {initContracts} from './helpers/initContracts'
-const RegistryKeeper = artifacts.require('./RegistryKeeper.sol')
 const KeepRandomBeaconOperator = artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
 
 contract('RegistryKeeper', function(accounts) {
@@ -21,6 +20,7 @@ contract('RegistryKeeper', function(accounts) {
       KeepRandomBeaconOperator
     );
 
+    registryKeeper = contracts.registryKeeper
     stakingContract = contracts.stakingContract
     serviceContract = contracts.serviceContract
     operatorContract = contracts.operatorContract
@@ -28,8 +28,8 @@ contract('RegistryKeeper', function(accounts) {
     anotherOperatorContract = await KeepRandomBeaconOperator.new(serviceContract.address, stakingContract.address)
     await anotherOperatorContract.registerNewGroup("0x02")
 
-    registryKeeper = await RegistryKeeper.new()
     await registryKeeper.setPanicButton(panicButton)
+    await registryKeeper.setOperatorContractUpgrader(operatorContractUpgrader)
   })
 
   beforeEach(async () => {
@@ -61,12 +61,9 @@ contract('RegistryKeeper', function(accounts) {
   })
 
   it("should be able to add or remove operator contracts from service contract", async() => {
-    // Transfer ownership from governance to operatorContractUpgrader
-    serviceContract.transferOwnership(operatorContractUpgrader, {from: governance})
-
     await expectThrowWithMessage(
       serviceContract.addOperatorContract(anotherOperatorContract.address, {from: governance}),
-      "Ownable: caller is not the owner"
+      "Caller is not operator contract upgrader"
     )
 
     await serviceContract.addOperatorContract(anotherOperatorContract.address, {from: operatorContractUpgrader})
@@ -75,7 +72,7 @@ contract('RegistryKeeper', function(accounts) {
 
     await expectThrowWithMessage(
       serviceContract.removeOperatorContract(anotherOperatorContract.address, {from: governance}),
-      "Ownable: caller is not the owner"
+      "Caller is not operator contract upgrader"
     )
 
     await serviceContract.removeOperatorContract(anotherOperatorContract.address, {from: operatorContractUpgrader})

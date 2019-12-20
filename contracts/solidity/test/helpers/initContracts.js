@@ -50,6 +50,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await operatorContract.genesis({value: dkgGasEstimate.mul(gasPriceWithFluctuationMargin)});
 
   return {
+    registryKeeper: registryKeeper,
     token: token,
     stakingContract: stakingContract,
     serviceContract: serviceContract,
