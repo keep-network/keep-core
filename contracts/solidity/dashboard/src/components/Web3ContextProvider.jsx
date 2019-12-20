@@ -2,12 +2,16 @@ import React from 'react'
 import { getWeb3, getWeb3SocketProvider } from '../utils'
 import { Web3Context } from './WithWeb3Context'
 import { getKeepToken, getTokenStaking, getTokenGrant } from '../contracts'
+import { MessagesContext, messageType } from './Message'
 
 export default class Web3ContextProvider extends React.Component {
+    static contextType = MessagesContext
 
     constructor(props) {
         super(props)
         this.state = {
+            web3: null,
+            isFetching: false,
             yourAddress: '',
             networkType: '',
             token: { options: { address: '' } },
@@ -24,14 +28,42 @@ export default class Web3ContextProvider extends React.Component {
     }
 
     initialize = async () => {
-        const web3 = await getWeb3()
+        const web3 = getWeb3()
         if(!web3) {
-            this.setState({ error: 'No network detected. Do you have Metamask installed?' })
             return
         }
-       
-        window.ethereum.on('accountsChanged', this.accountHasBeenChanged)
-        
+        this.setState({ web3 }, this.setData)
+    }
+
+    setData = async () => {
+        const { web3 } = this.state
+        this.setState({ isFetching: true })
+        const accounts = await web3.eth.getAccounts();
+        this.connectAppWithAccount(!accounts || accounts.length === 0)
+        this.initializeContracts()
+        this.state.web3.eth.currentProvider.on('accountsChanged', this.accountHasBeenChanged)
+    }
+
+    connectAppWithAccount = async (withInfoMessage = true) => {
+        const { web3 } = this.state
+        this.setState({ isFetching: true })
+        withInfoMessage && this.context.showMessage({ type: messageType.INFO, title: 'Please check web3 provider' })
+
+        try {
+            const [account] = await web3.currentProvider.enable()
+            this.setState({
+                yourAddress: account,
+                networkType: await web3.eth.net.getNetworkType(),
+                isFetching: false
+            })
+        } catch(error) {
+            this.context.showMessage({ type: 'error', title: error.message })
+            this.setState({ isFetching: false })
+        }      
+    }
+
+    initializeContracts = async () => {
+        const { web3 } = this.state
         try {
             const web3EventProvider = getWeb3SocketProvider()
             const [token, grantContract, stakingContract] = await this.getContracts(web3)
@@ -41,8 +73,6 @@ export default class Web3ContextProvider extends React.Component {
                 grantContract,
                 stakingContract,
                 defaultContract: stakingContract,
-                yourAddress: (await web3.eth.getAccounts())[0],
-                networkType: await web3.eth.net.getNetworkType(),
                 utils: web3.utils,
                 eth: web3.eth,
                 eventToken,
@@ -51,7 +81,7 @@ export default class Web3ContextProvider extends React.Component {
             })
         } catch(error) {
             this.setState({
-                error: "Failed to load contracts. Please check if Metamask is enabled and connected to the correct network.",
+                error: "Please select correct network",
             })
         }
     }
@@ -63,6 +93,16 @@ export default class Web3ContextProvider extends React.Component {
     ])
 
     accountHasBeenChanged = ([yourAddress]) => {
+        if(!yourAddress) {
+            this.setState({
+                isFetching: false,
+                yourAddress: '',
+                token: { options: { address: '' } },
+                stakingContract: { options: { address: '' } },
+                grantContract: { options: { address: '' } },
+            })
+            return
+        }
         this.setState({ yourAddress })
     }
 
@@ -72,7 +112,7 @@ export default class Web3ContextProvider extends React.Component {
 
     render() {
         return (
-            <Web3Context.Provider value={{ ...this.state, changeDefaultContract: this.changeDefaultContract }}>
+            <Web3Context.Provider value={{ ...this.state, changeDefaultContract: this.changeDefaultContract, connectAppWithAccount: this.connectAppWithAccount }}>
                 {this.props.children}
             </Web3Context.Provider>    
         )

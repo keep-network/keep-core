@@ -17,31 +17,9 @@ export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-let web3;
-
-export const getWeb3 = async () => {
-
-  if (web3) return web3
-
-  // Modern dapp browsers...
-  if (window.ethereum) {
-    web3 = new Web3(window.ethereum)
-    try {
-      // Request account access if needed
-      await window.ethereum.enable()
-      // Acccounts now exposed
-      return web3;
-    } catch (error) {
-      return error;
-    }
-  }
-  // Legacy dapp browsers...
-  else if (window.web3) {
-    // Use Mist/MetaMask's provider.
-    web3 = new Web3(window.web3.currentProvider)
-    console.log("Injected web3 detected.")
-    return web3;
-  }
+export const getWeb3 = () => {
+  if (window.ethereum || window.web3)
+    return new Web3(window.ethereum || window.web3.currentProvider)
   
   return null;
 }

@@ -1,0 +1,46 @@
+.web3 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    &-status {
+      font-size: 1.5rem;
+      background-color: @pale-grey;
+      min-width: 15rem;
+      padding: .5rem 1rem;
+      margin: 1rem;
+      border: 2px solid black ;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
+
+      &.success {
+        color: @aqua-marine;
+        border-color: @aqua-marine;
+      }
+      &.loading {
+        color: #67598a;
+        border-color: #67598a;
+      }
+      &.alert {
+        color: @rose-pink;
+        border-color: @rose-pink;
+        & > a {
+          color: @rose-pink;
+          text-decoration: underline;
+        }
+      }
+      &.notify {
+        color: #cda48d;
+        border-color: #cda48d;
+        & > span {
+          text-decoration: underline;
+          transition: color .2s ease-in;
+          &:hover {
+              cursor: pointer;
+              color: darken(#cda48d, 2%);
+          }
+        }
+      }
+    }
+  }

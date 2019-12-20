@@ -26,8 +26,19 @@ class ContractsDataContextProvider extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if(prevProps.web3.yourAddress !== this.props.web3.yourAddress)
-            this.getContractsInfo();
+        if(prevProps.web3.yourAddress !== this.props.web3.yourAddress || this.areContractsChanged(prevProps))
+            this.getContractsInfo()
+    }
+
+    areContractsChanged = (prevProps) => {
+        const { web3 } = this.props
+        const tokenAddress = web3.token.options.address
+        const stakingAddress = web3.stakingContract.options.address
+        const grantAddress = web3.grantContract.options.address
+
+        return tokenAddress !== prevProps.web3.token.options.address ||
+            stakingAddress !== prevProps.web3.stakingContract.options.address ||
+            grantAddress !== prevProps.web3.grantContract.options.address   
     }
 
     getContractsInfo = async () => {
