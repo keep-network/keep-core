@@ -1,5 +1,4 @@
 import React from 'react'
-import { Row, Col } from 'react-bootstrap'
 import StakingForm from './StakingForm'
 import StakingDelegateForm from './StakingDelegateForm'
 import { withContractsDataContext } from './ContractsDataContextProvider';
