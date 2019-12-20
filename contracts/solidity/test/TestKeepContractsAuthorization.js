@@ -80,4 +80,13 @@ contract('RegistryKeeper', function(accounts) {
     await serviceContract.removeOperatorContract(anotherOperatorContract.address, {from: operatorContractUpgrader})
     assert.isTrue((await serviceContract.selectOperatorContract(1)) == operatorContract.address, "Unexpected operator contract address")
   })
+
+  it("should be able to disable operator contract via panic button", async() => {
+    await registryKeeper.approveOperatorContract(anotherOperatorContract.address)
+    await serviceContract.addOperatorContract(anotherOperatorContract.address, {from: operatorContractUpgrader})
+
+    assert.isTrue((await serviceContract.selectOperatorContract(1)) == anotherOperatorContract.address, "Unexpected operator contract address")
+    await registryKeeper.disableOperatorContract(anotherOperatorContract.address, {from: panicButton})
+    assert.isTrue((await serviceContract.selectOperatorContract(1)) == operatorContract.address, "Unexpected operator contract address")
+  })
 })

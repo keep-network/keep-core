@@ -185,7 +185,9 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal {
         uint256 totalNumberOfGroups;
 
         for (uint i = 0; i < _operatorContracts.length; i++) {
-            totalNumberOfGroups += OperatorContract(_operatorContracts[i]).numberOfGroups();
+            if (RegistryKeeper(_registryKeeper).isApprovedOperatorContract(_operatorContracts[i])) {
+                totalNumberOfGroups += OperatorContract(_operatorContracts[i]).numberOfGroups();
+            }
         }
 
         require(totalNumberOfGroups > 0, "Total number of groups must be greater than zero.");
@@ -196,11 +198,13 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal {
         uint256 indexByGroupCount;
 
         for (uint256 i = 0; i < _operatorContracts.length; i++) {
-            indexByGroupCount += OperatorContract(_operatorContracts[i]).numberOfGroups();
-            if (selectedIndex < indexByGroupCount) {
-                return _operatorContracts[selectedContract];
+            if (RegistryKeeper(_registryKeeper).isApprovedOperatorContract(_operatorContracts[i])) {
+                indexByGroupCount += OperatorContract(_operatorContracts[i]).numberOfGroups();
+                if (selectedIndex < indexByGroupCount) {
+                    return _operatorContracts[selectedContract];
+                }
+                selectedContract++;
             }
-            selectedContract++;
         }
 
         return _operatorContracts[selectedContract];
