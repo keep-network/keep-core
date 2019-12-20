@@ -8,24 +8,23 @@ import { Messages } from './components/Message';
 import { SideMenu, SiedMenuProvider } from './components/SideMenu';
 import { BrowserRouter as Router } from 'react-router-dom'
 
-
 const App = () => (
   <Messages>
     <Web3ContextProvider>
-      <SiedMenuProvider>
-        <Router>
-          <div className='main'>
-            <Header />
-            <SideMenu />
-            <div className='content'>
-              <ContractsDataContextProvider>
+      <ContractsDataContextProvider>
+        <SiedMenuProvider>
+          <Router>
+            <div className='main'>
+              <Header />
+              <SideMenu />
+              <div className='content'>
                 <Routing />
-              </ContractsDataContextProvider>
+                <Footer />
+              </div>
             </div>
-            <Footer />
-          </div>
-        </Router>
-      </SiedMenuProvider>
+          </Router>
+        </SiedMenuProvider>
+      </ContractsDataContextProvider>
     </Web3ContextProvider>
   </Messages>
 )
