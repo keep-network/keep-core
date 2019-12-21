@@ -44,19 +44,21 @@ contract TokenStaking is StakeDelegatable {
      * @param _token Token contract address.
      * @param _extraData Data for stake delegation. This byte array must have the
      * following values concatenated: Magpie address (20 bytes) where the rewards for participation
-     * are sent and the operator's (20 bytes) address.
+     * are sent, operator's (20 bytes) address, authorizer (20 bytes) address.
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
         require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
-        require(_extraData.length == 40, "Stake delegation data must be provided.");
+        require(_extraData.length == 60, "Stake delegation data must be provided.");
 
         address payable magpie = address(uint160(_extraData.toAddress(0)));
         address operator = _extraData.toAddress(20);
         require(operatorToOwner[operator] == address(0), "Operator address is already in use.");
+        address authorizer = _extraData.toAddress(40);
 
         operatorToOwner[operator] = _from;
         operatorToMagpie[operator] = magpie;
+        operatorToAuthorizer[operator] = authorizer;
         ownerOperators[_from].push(operator);
 
         // Transfer tokens to this contract.

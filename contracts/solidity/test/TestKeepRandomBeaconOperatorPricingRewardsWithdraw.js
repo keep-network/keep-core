@@ -36,9 +36,9 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     groupSize = web3.utils.toBN(3)
     await operatorContract.setGroupSize(groupSize)
 
-    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, 0)
-    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, 0)
-    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, 0)
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, operator1, 0)
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, operator2, 0)
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, operator3, 0)
 
     group1 = crypto.randomBytes(128)
     group2 = crypto.randomBytes(128)

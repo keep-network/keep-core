@@ -14,7 +14,8 @@ contract('TestTokenGrantStake', function(accounts) {
     account_one = accounts[0],
     account_two = accounts[3],
     account_two_operator = accounts[4],
-    account_two_magpie = accounts[5];
+    account_two_magpie = accounts[5],
+    account_two_authorizer = accounts[6];
 
   beforeEach(async () => {
     token = await KeepToken.new();
@@ -36,7 +37,9 @@ contract('TestTokenGrantStake', function(accounts) {
 
     let delegation = Buffer.concat([
       Buffer.from(account_two_magpie.substr(2), 'hex'),
-      Buffer.from(account_two_operator.substr(2), 'hex')]);
+      Buffer.from(account_two_operator.substr(2), 'hex'),
+      Buffer.from(account_two_authorizer.substr(2), 'hex')
+    ]);
 
     // should throw if stake granted tokens called by anyone except grant grantee
     await expectThrow(grantContract.stake(id, stakingContract.address, amount, delegation));
