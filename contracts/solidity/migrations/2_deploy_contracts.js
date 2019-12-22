@@ -24,7 +24,8 @@ module.exports = async function(deployer) {
   await deployer.link(AltBn128, BLS);
   await deployer.deploy(BLS);
   await deployer.deploy(KeepToken);
-  await deployer.deploy(TokenStaking, KeepToken.address, withdrawalDelay);
+  await deployer.deploy(RegistryKeeper);
+  await deployer.deploy(TokenStaking, KeepToken.address, RegistryKeeper.address, withdrawalDelay);
   await deployer.deploy(TokenGrant, KeepToken.address, TokenStaking.address);
   await deployer.deploy(GroupSelection);
   await deployer.link(GroupSelection, KeepRandomBeaconOperator);
@@ -35,7 +36,6 @@ module.exports = async function(deployer) {
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
-  await deployer.deploy(RegistryKeeper);
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 11).
   await deployer.deploy(KeepRandomBeaconOperator, KeepRandomBeaconService.address, TokenStaking.address);

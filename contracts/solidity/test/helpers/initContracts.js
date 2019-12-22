@@ -8,7 +8,7 @@ const RegistryKeeper = artifacts.require("./RegistryKeeper.sol");
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
 
-  let token, stakingContract,
+  let token, registryKeeper, stakingContract,
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract;
 
@@ -20,8 +20,11 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   // Initialize Keep token contract
   token = await KeepToken.new();
 
+  // Initialize registry keeper contract
+  registryKeeper = await RegistryKeeper.new();
+
   // Initialize staking contract
-  stakingContract = await TokenStaking.new(token.address, duration.days(30));
+  stakingContract = await TokenStaking.new(token.address, registryKeeper.address, duration.days(30));
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new();
@@ -39,7 +42,6 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await KeepRandomBeaconOperator.link("DKGResultVerification", dkgResultVerification.address);
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address);
 
-  const registryKeeper = await RegistryKeeper.new();
   await registryKeeper.approveOperatorContract(operatorContract.address);
   await serviceContract.initialize(priceFeedEstimate, fluctuationMargin, dkgContributionMargin, withdrawalDelay, registryKeeper.address);
   await serviceContract.addOperatorContract(operatorContract.address);

@@ -5,10 +5,11 @@ import grantTokens from './helpers/grantTokens';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
+const RegistryKeeper = artifacts.require("./RegistryKeeper.sol");
 
 contract('TestTokenGrant', function(accounts) {
 
-  let token, grantContract, stakingContract,
+  let token, registryKeeper, grantContract, stakingContract,
     amount, vestingDuration, start, cliff,
     grant_manager = accounts[0],
     account_two = accounts[1],
@@ -16,7 +17,8 @@ contract('TestTokenGrant', function(accounts) {
 
   before(async () => {
     token = await KeepToken.new();
-    stakingContract = await TokenStaking.new(token.address, duration.days(30));
+    registryKeeper = await RegistryKeeper.new();
+    stakingContract = await TokenStaking.new(token.address, registryKeeper.address, duration.days(30));
     grantContract = await TokenGrant.new(token.address, stakingContract.address);
     amount = web3.utils.toBN(100);
     vestingDuration = duration.days(30);
