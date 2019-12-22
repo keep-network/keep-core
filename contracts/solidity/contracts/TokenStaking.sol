@@ -27,6 +27,9 @@ contract TokenStaking is StakeDelegatable {
     // Registry contract with a list of approved operator contracts and upgraders.
     RegistryKeeper public registryKeeper;
 
+    // Authorized operator contracts.
+    mapping(address => mapping (address => bool)) internal authorizations;
+
     mapping(address => Withdrawal) public withdrawals;
 
     /**
@@ -130,10 +133,27 @@ contract TokenStaking is StakeDelegatable {
         return (withdrawals[_operator].amount, withdrawals[_operator].createdAt);
     }
 
-    // TODO: replace with a secure authorization protocol (addressed in RFC 4).
     function authorizedTransferFrom(address from, address to, uint256 amount) public {
+        require(
+            registryKeeper.isApprovedOperatorContract(msg.sender),
+            "Operator contract is not approved"
+        );
+        require(authorizations[msg.sender][from], "Not authorized");
         stakeBalances[from] = stakeBalances[from].sub(amount);
         stakeBalances[to] = stakeBalances[to].add(amount);
     }
 
+    /**
+     * @dev Authorizes operator contract to access staked token balance of
+     * the provided operator. Can only be executed by stake operator authorizer.
+     * @param _operator address of stake operator.
+     * @param _operatorContract address of operator contract.
+     */
+    function authorizeOperatorContract(address _operator, address _operatorContract) public {
+        require(
+            operatorToAuthorizer[_operator] == msg.sender,
+            "Not operator authorizer"
+        );
+        authorizations[_operatorContract][_operator] = true;
+    }
 }
