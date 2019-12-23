@@ -37,11 +37,11 @@ type signatureShareState struct {
 }
 
 func (sss *signatureShareState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return state.EntryMessagingStateDelayBlocks
 }
 
 func (sss *signatureShareState) ActiveBlocks() uint64 {
-	return 3 // TODO Temporary different than state.MessagingStateActiveBlocks
+	return state.EntryMessagingStateActiveBlocks
 }
 
 func (sss *signatureShareState) Initiate() error {
