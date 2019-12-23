@@ -8,7 +8,7 @@ export const Web3Status = (props) => {
         if (isFetching) {
             return (
                 <div className="web3-status loading">
-                loading...
+                    loading...
                 </div>
             )
         }
