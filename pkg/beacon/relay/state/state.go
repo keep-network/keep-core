@@ -67,11 +67,3 @@ const DefaultMessagingStateDelayBlocks = 1
 // DefaultMessagingStateActiveBlocks is a number of blocks for which a state
 // exchanging network messages as a part of its execution should be active.
 const DefaultMessagingStateActiveBlocks = 5
-
-// EntryMessagingStateDelayBlocks serves the same purpose as DefaultMessagingStateDelayBlocks
-// but the value is customized for relay entry state machine.
-const EntryMessagingStateDelayBlocks = 1
-
-// EntryMessagingStateActiveBlocks serves the same purpose as DefaultMessagingStateActiveBlocks
-// but the value is customized for relay entry state machine.
-const EntryMessagingStateActiveBlocks = 3
