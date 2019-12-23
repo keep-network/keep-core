@@ -42,6 +42,10 @@ html {
   padding: 0.5rem;
   border-bottom: 1px solid black;
 
+  .logo {
+    height: @header-height;
+  }
+  
   > .web3, > .account-address {
     display: none;
   }
@@ -148,7 +152,7 @@ html {
 @media screen and (min-width: 1250px) {
   .header {
     > .logo {
-      width: 350px;
+      width: @side-menu-width;
     }
 
     > .web3 {

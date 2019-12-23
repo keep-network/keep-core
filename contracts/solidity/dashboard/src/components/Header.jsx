@@ -9,7 +9,7 @@ const Header = (props) => {
 
   return (
     <header className='header'>
-      <a href="/" className='logo'><Icons.Keep width='250px' height='100px'/></a>
+      <a href="/" className='logo'><Icons.Keep width='250px' height='80px'/></a>
       <Web3Status />
       <div className='account-address'>
         <strong>Account address: </strong>
