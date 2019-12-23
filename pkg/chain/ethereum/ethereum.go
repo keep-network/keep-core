@@ -133,22 +133,45 @@ func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
 	return ec.keepRandomBeaconOperatorContract.SubmittedTicketsCount()
 }
 
-func (ec *ethereumChain) GetSelectedParticipants() (
-	[]chain.StakerAddress,
-	error,
-) {
+func (ec *ethereumChain) GetSelectedParticipants() ([]chain.StakerAddress, error) {
 
-	selectedParticipants, err := withRetry(ec.keepRandomBeaconOperatorContract.SelectedParticipants, 4, 250)
-	if err != nil {
-		return nil, err
+	// The reason behind a retry functionality is Infura's load balancer synchronization
+	// problem. Whenever a Keep client is connected to Infura, it might experience
+	// a slight delay with a block number update. It might stay behind and report
+	// a block number 'n-1', whereas the actual block number is already 'n'. This
+	// delay results in error triggering a new group selection. To mitigate Infura's
+	// sync issue, a Keep client will retry calling for selected participants up to 4 times.
+	withRetry := func(fn func() ([]chain.StakerAddress, error)) ([]chain.StakerAddress, error) {
+		const numberOfRetries = 4
+		const delay = 250 * time.Millisecond
+
+		for i := 1; ; i++ {
+			stakerAddresses, err := fn()
+			if err != nil {
+				logger.Errorf("Error occurred while selecting participants [%v]; on [%v] retry", err, i)
+				if i == numberOfRetries {
+					return nil, err
+				}
+				time.Sleep(delay * time.Millisecond)
+			} else {
+				return stakerAddresses, nil
+			}
+		}
 	}
 
-	stakerAddresses := make([]chain.StakerAddress, len(selectedParticipants))
-	for i, selectedParticipant := range selectedParticipants {
-		stakerAddresses[i] = selectedParticipant.Bytes()
-	}
+	return withRetry(func() ([]chain.StakerAddress, error) {
+		participants, err := ec.keepRandomBeaconOperatorContract.SelectedParticipants()
+		stakerAddresses := make([]chain.StakerAddress, len(participants))
+		if err != nil {
+			return nil, err
+		}
 
-	return stakerAddresses, nil
+		for _, participant := range participants {
+			stakerAddresses = append(stakerAddresses, participant.Bytes())
+		}
+
+		return stakerAddresses, nil
+	})
 }
 
 func withRetry(fn func() ([]common.Address, error), numberOfRetries int, interval time.Duration) ([]common.Address, error) {
