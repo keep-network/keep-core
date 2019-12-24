@@ -62,7 +62,7 @@ class OverviewTab extends React.Component {
       }
       const withdrawals = [...this.state.withdrawals, withdrawal]
       const withdrawalsTotal = new utils.BN(this.state.withdrawalsTotal).add(utils.toBN(value));
-      const stakeBalance = this.state.stakeBalance.sub(utils.toBN(value))
+      const stakeBalance = utils.toBN(this.state.stakeBalance).sub(utils.toBN(value))
       const operators = this.state.operators.filter(({ address }) => address !== operator)
 
       this.setState({
