@@ -93,7 +93,9 @@ contract KeepRandomBeaconOperator {
 
     // Gas required to verify BLS signature and produce successful relay
     // entry. Excludes callback and DKG gas.
-    uint256 public entryVerificationGasEstimate = 300000;
+    uint256 public entryVerificationGasEstimate = 230000;
+
+    uint256 public dkgFeePoolContribution = 70000;
 
     // Gas required to submit DKG result.
     uint256 public dkgGasEstimate = 1740000;

@@ -426,8 +426,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         }
 
         // Use DKG gas estimate from the latest operator contract since it will be used for the next group creation.
-        address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 dkgGas = OperatorContract(latestOperatorContract).dkgGasEstimate();
+        address latestOperatorContractAddress = _operatorContracts[_operatorContracts.length.sub(1)];
+        OperatorContract latestOperatorContract = OperatorContract(latestOperatorContractAddress);
+        uint256 dkgGas = latestOperatorContract.dkgGasEstimate().add(latestOperatorContract.dkgFeePoolContribution());
 
         return (
             entryVerificationGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)),
