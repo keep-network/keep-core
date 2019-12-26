@@ -152,7 +152,7 @@ func (ec *ethereumChain) GetSelectedParticipants() ([]chain.StakerAddress, error
 				if i == numberOfRetries {
 					return nil, err
 				}
-				time.Sleep(delay * time.Millisecond)
+				time.Sleep(delay)
 			} else {
 				return stakerAddresses, nil
 			}
