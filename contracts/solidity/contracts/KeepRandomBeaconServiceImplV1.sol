@@ -9,6 +9,7 @@ import "./DelayedWithdrawal.sol";
 interface OperatorContract {
     function entryVerificationGasEstimate() external view returns(uint256);
     function dkgGasEstimate() external view returns(uint256);
+    function dkgFeePoolContribution() external view returns(uint256);
     function groupProfitFee() external view returns(uint256);
     function sign(
         uint256 requestId,
