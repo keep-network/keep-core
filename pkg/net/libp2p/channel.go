@@ -31,12 +31,17 @@ type channel struct {
 	subscription *pubsub.Subscription
 
 	messageHandlersMutex sync.Mutex
-	messageHandlers      []net.HandleMessageFunc
+	messageHandlers      []*messageHandler
 
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
 
 	retransmitter *retransmitter
+}
+
+type messageHandler struct {
+	ctx     context.Context
+	channel chan net.Message
 }
 
 func (c *channel) Name() string {
@@ -54,35 +59,39 @@ func (c *channel) Send(message net.TaggedMarshaler) error {
 	return c.publishToPubSub(messageProto)
 }
 
-func (c *channel) Recv(handler net.HandleMessageFunc) error {
+func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
+	messageHandler := &messageHandler{
+		ctx:     ctx,
+		channel: make(chan net.Message),
+	}
+
 	c.messageHandlersMutex.Lock()
-	c.messageHandlers = append(c.messageHandlers, handler)
+	c.messageHandlers = append(c.messageHandlers, messageHandler)
 	c.messageHandlersMutex.Unlock()
 
-	return nil
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				c.removeHandler(messageHandler)
+				return
+			case msg := <-messageHandler.channel:
+				handler(msg)
+			}
+		}
+	}()
 }
 
-func (c *channel) UnregisterRecv(handlerType string) error {
+func (c *channel) removeHandler(handler *messageHandler) {
 	c.messageHandlersMutex.Lock()
 	defer c.messageHandlersMutex.Unlock()
 
-	removedCount := 0
-
-	// updated slice shares the same backing array and capacity as the original,
-	// so the storage is reused for the filtered slice.
-	updated := c.messageHandlers[:0]
-
-	for _, mh := range c.messageHandlers {
-		if mh.Type != handlerType {
-			updated = append(updated, mh)
-		} else {
-			removedCount++
+	for i, h := range c.messageHandlers {
+		if h.channel == handler.channel {
+			c.messageHandlers[i] = c.messageHandlers[len(c.messageHandlers)-1]
+			c.messageHandlers = c.messageHandlers[:len(c.messageHandlers)-1]
 		}
 	}
-
-	c.messageHandlers = updated[:len(c.messageHandlers)-removedCount]
-
-	return nil
 }
 
 func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) error {
@@ -222,7 +231,9 @@ func (c *channel) processContainerMessage(
 		key.Marshal(networkKey),
 	)
 
-	return c.deliver(protocolMessage)
+	c.deliver(protocolMessage)
+
+	return nil
 }
 
 func (c *channel) getUnmarshalingContainerByType(messageType string) (net.TaggedUnmarshaler, error) {
@@ -239,23 +250,26 @@ func (c *channel) getUnmarshalingContainerByType(messageType string) (net.Tagged
 	return unmarshaler(), nil
 }
 
-func (c *channel) deliver(message net.Message) error {
+func (c *channel) deliver(message net.Message) {
 	c.messageHandlersMutex.Lock()
-	snapshot := make([]net.HandleMessageFunc, len(c.messageHandlers))
+	snapshot := make([]*messageHandler, len(c.messageHandlers))
 	copy(snapshot, c.messageHandlers)
 	c.messageHandlersMutex.Unlock()
 
 	for _, handler := range snapshot {
-		go func(msg net.Message, handler net.HandleMessageFunc) {
-			if err := handler.Handler(msg); err != nil {
-				// TODO: handle error
-				logger.Error(err)
+		go func(message net.Message, handler *messageHandler) {
+			select {
+			case handler.channel <- message:
+				// Nothing to do here; we block until the message is handled
+				// or until the context gets closed.
+				// This way we don't lose any message but also don't stay
+				// with any dangling goroutines if there is no longer anyone
+				// to receive messages.
+			case <-handler.ctx.Done():
 				return
 			}
 		}(message, handler)
 	}
-
-	return nil
 }
 
 func (c *channel) AddFilter(filter net.BroadcastChannelFilter) error {

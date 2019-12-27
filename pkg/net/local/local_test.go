@@ -23,15 +23,9 @@ func TestRegisterAndFireHandler(t *testing.T) {
 	}
 
 	handlerFiredChan := make(chan struct{})
-	handler := net.HandleMessageFunc{
-		Type: "rambo",
-		Handler: func(msg net.Message) error {
-			handlerFiredChan <- struct{}{}
-			return nil
-		},
-	}
-
-	localChannel.Recv(handler)
+	localChannel.Recv(ctx, func(msg net.Message) {
+		handlerFiredChan <- struct{}{}
+	})
 
 	localChannel.Send(&mockNetMessage{})
 
@@ -74,34 +68,11 @@ func TestUnregisterHandler(t *testing.T) {
 			handlersUnregistered: []string{"a", "b", "c"},
 			handlersFired:        []string{},
 		},
-		"unregister two first registered handlers with the same type": {
-			handlersRegistered:   []string{"a", "a", "b", "c", "d"},
-			handlersUnregistered: []string{"a"},
-			handlersFired:        []string{"b", "c", "d"},
-		},
-		"unregister two last registered handlers with the same type": {
-			handlersRegistered:   []string{"a", "b", "c", "d", "d"},
-			handlersUnregistered: []string{"d"},
-			handlersFired:        []string{"a", "b", "c"},
-		},
-		"unregister various handlers with the same type": {
-			handlersRegistered:   []string{"a", "f", "b", "e", "c", "f", "e"},
-			handlersUnregistered: []string{"e", "f"},
-			handlersFired:        []string{"a", "b", "c"},
-		},
-		"unregister handler not previously registered": {
-			handlersRegistered:   []string{"a", "b", "c"},
-			handlersUnregistered: []string{"z"},
-			handlersFired:        []string{"a", "b", "c"},
-		},
 	}
 
 	for testName, test := range tests {
 		test := test
 		t.Run(testName, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-			defer cancel()
-
 			_, localChannel, err := initTestChannel("channel name")
 			if err != nil {
 				t.Fatal(err)
@@ -110,33 +81,38 @@ func TestUnregisterHandler(t *testing.T) {
 			handlersFiredMutex := &sync.Mutex{}
 			handlersFired := []string{}
 
+			handlerCancellations := map[string]context.CancelFunc{}
+
 			// Register all handlers. If the handler is called, append its
-			// type to `handlersFired` slice.
-			for _, handlerType := range test.handlersRegistered {
-				handlerType := handlerType
-				handler := net.HandleMessageFunc{
-					Type: handlerType,
-					Handler: func(msg net.Message) error {
-						handlersFiredMutex.Lock()
-						handlersFired = append(handlersFired, handlerType)
-						handlersFiredMutex.Unlock()
-						return nil
-					},
-				}
+			// name to `handlersFired` slice.
+			for _, handlerName := range test.handlersRegistered {
+				handlerName := handlerName
 
-				localChannel.Recv(handler)
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+
+				handlerCancellations[handlerName] = cancel
+
+				localChannel.Recv(ctx, func(msg net.Message) {
+					handlersFiredMutex.Lock()
+					handlersFired = append(handlersFired, handlerName)
+					handlersFiredMutex.Unlock()
+				})
 			}
 
-			// Unregister specified handlers.
-			for _, handlerType := range test.handlersUnregistered {
-				localChannel.UnregisterRecv(handlerType)
+			// Cancel the specified handlers
+			for _, handlerName := range test.handlersUnregistered {
+				handlerCancellations[handlerName]()
 			}
 
-			// Send a message, all handlers should be called.
+			// Give a chance for all cancelled handlers to end
+			time.Sleep(500 * time.Millisecond)
+
+			// Send a message, all handlers should be called
 			localChannel.Send(&mockNetMessage{})
 
-			// Handlers are fired asynchronously; wait for them.
-			<-ctx.Done()
+			// Handlers are fired asynchronously; wait for them
+			time.Sleep(500 * time.Millisecond)
 
 			sort.Strings(handlersFired)
 			if !reflect.DeepEqual(test.handlersFired, handlersFired) {
@@ -174,23 +150,13 @@ func TestSendAndDeliver(t *testing.T) {
 	// Register handlers.
 	inMsgChan := make(chan net.Message, 3)
 
-	msgHandler := net.HandleMessageFunc{
-		Type: msgToSend.Type(),
-		Handler: func(msg net.Message) error {
-			inMsgChan <- msg
-			return nil
-		},
+	msgHandler := func(msg net.Message) {
+		inMsgChan <- msg
 	}
 
-	if err := localChannel1.Recv(msgHandler); err != nil {
-		t.Fatalf("failed to register receive handler: [%v]", err)
-	}
-	if err := localChannel2.Recv(msgHandler); err != nil {
-		t.Fatalf("failed to register receive handler: [%v]", err)
-	}
-	if err := localChannel3.Recv(msgHandler); err != nil {
-		t.Fatalf("failed to register receive handler: [%v]", err)
-	}
+	localChannel1.Recv(ctx, msgHandler)
+	localChannel2.Recv(ctx, msgHandler)
+	localChannel3.Recv(ctx, msgHandler)
 
 	// Broadcast message by the first peer.
 	if err := localChannel1.Send(msgToSend); err != nil {

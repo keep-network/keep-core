@@ -118,15 +118,9 @@ func TestSendReceive(t *testing.T) {
 	}
 
 	recvChan := make(chan net.Message)
-	if err := broadcastChannel.Recv(net.HandleMessageFunc{
-		Type: "test",
-		Handler: func(msg net.Message) error {
-			recvChan <- msg
-			return nil
-		},
-	}); err != nil {
-		t.Fatal(err)
-	}
+	broadcastChannel.Recv(ctx, func(msg net.Message) {
+		recvChan <- msg
+	})
 
 	for {
 		select {

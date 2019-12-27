@@ -27,14 +27,9 @@ func TestRegisterAndFireHandler(t *testing.T) {
 	channel := &channel{}
 
 	handlerFiredChan := make(chan struct{})
-	handler := net.HandleMessageFunc{
-		Type: "theboar",
-		Handler: func(msg net.Message) error {
-			handlerFiredChan <- struct{}{}
-			return nil
-		},
-	}
-	channel.Recv(handler)
+	channel.Recv(ctx, func(msg net.Message) {
+		handlerFiredChan <- struct{}{}
+	})
 
 	channel.deliver(&mockNetMessage{})
 
@@ -77,66 +72,48 @@ func TestUnregisterHandler(t *testing.T) {
 			handlersUnregistered: []string{"a", "b", "c"},
 			handlersFired:        []string{},
 		},
-		"unregister two first registered handlers with the same type": {
-			handlersRegistered:   []string{"a", "a", "b", "c", "d"},
-			handlersUnregistered: []string{"a"},
-			handlersFired:        []string{"b", "c", "d"},
-		},
-		"unregister two last registered handlers with the same type": {
-			handlersRegistered:   []string{"a", "b", "c", "d", "d"},
-			handlersUnregistered: []string{"d"},
-			handlersFired:        []string{"a", "b", "c"},
-		},
-		"unregister various handlers with the same type": {
-			handlersRegistered:   []string{"a", "f", "b", "e", "c", "f", "e"},
-			handlersUnregistered: []string{"e", "f"},
-			handlersFired:        []string{"a", "b", "c"},
-		},
-		"unregister handler not previously registered": {
-			handlersRegistered:   []string{"a", "b", "c"},
-			handlersUnregistered: []string{"z"},
-			handlersFired:        []string{"a", "b", "c"},
-		},
 	}
 
 	for testName, test := range tests {
 		test := test
 		t.Run(testName, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-			defer cancel()
-
 			channel := &channel{}
 
 			handlersFiredMutex := &sync.Mutex{}
 			handlersFired := []string{}
 
+			handlerCancellations := map[string]context.CancelFunc{}
+
 			// Register all handlers. If the handler is called, append its
 			// type to `handlersFired` slice.
-			for _, handlerType := range test.handlersRegistered {
-				handlerType := handlerType
-				handler := net.HandleMessageFunc{
-					Type: handlerType,
-					Handler: func(msg net.Message) error {
-						handlersFiredMutex.Lock()
-						handlersFired = append(handlersFired, handlerType)
-						handlersFiredMutex.Unlock()
-						return nil
-					},
-				}
+			for _, handlerName := range test.handlersRegistered {
+				handlerType := handlerName
 
-				channel.Recv(handler)
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+
+				handlerCancellations[handlerName] = cancel
+
+				channel.Recv(ctx, func(msg net.Message) {
+					handlersFiredMutex.Lock()
+					handlersFired = append(handlersFired, handlerType)
+					handlersFiredMutex.Unlock()
+				})
 			}
 
-			// Unregister specified handlers.
-			for _, handlerType := range test.handlersUnregistered {
-				channel.UnregisterRecv(handlerType)
+			// Cancel the specified handlers
+			for _, handlerName := range test.handlersUnregistered {
+				handlerCancellations[handlerName]()
 			}
 
-			// Deliver message, all handlers should be called.
+			// Give a chance for all cancelled handlers to end
+			time.Sleep(500 * time.Millisecond)
+
+			// Deliver message, all handlers should be called
 			channel.deliver(&mockNetMessage{})
 
-			// Handlers are fired asynchronously; wait for them.
-			<-ctx.Done()
+			// Handlers are fired asynchronously; wait for them
+			time.Sleep(500 * time.Millisecond)
 
 			sort.Strings(handlersFired)
 			if !reflect.DeepEqual(test.handlersFired, handlersFired) {

@@ -1,9 +1,8 @@
 package state
 
 import (
+	"context"
 	"fmt"
-	"strconv"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -36,16 +35,13 @@ func NewMachine(
 func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	// Use an unbuffered channel to serialize message processing.
 	recvChan := make(chan net.Message)
-	handler := net.HandleMessageFunc{
-		Type: fmt.Sprintf("dkg/%s", strconv.FormatInt(time.Now().UTC().UnixNano(), 16)),
-		Handler: func(msg net.Message) error {
-			recvChan <- msg
-			return nil
-		},
+	ctx, cancel := context.WithCancel(context.Background())
+	handler := func(msg net.Message) {
+		recvChan <- msg
 	}
 
-	m.channel.Recv(handler)
-	defer m.channel.UnregisterRecv(handler.Type)
+	m.channel.Recv(ctx, handler)
+	defer cancel()
 
 	currentState := m.initialState
 

@@ -88,7 +88,7 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		peerStore:          cm.peerStore,
 		pubsub:             cm.pubsub,
 		subscription:       sub,
-		messageHandlers:    make([]net.HandleMessageFunc, 0),
+		messageHandlers:    make([]*messageHandler, 0),
 		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
 		retransmitter: newRetransmitter(
 			cm.retransmissionOptions.cycles,

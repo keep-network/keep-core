@@ -138,39 +138,19 @@ func pingRequest(c *cli.Context) error {
 		pongChan = make(chan net.Message)
 	)
 
-	err = broadcastChannel.Recv(
-		net.HandleMessageFunc{
-			Type: pong,
-			Handler: func(msg net.Message) error {
-				// Do some message routing
-				if msg.Type() == pong {
-					pongChan <- msg
-				}
-				return nil
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-	defer broadcastChannel.UnregisterRecv(pong)
+	broadcastChannel.Recv(ctx, func(msg net.Message) {
+		// Do some message routing
+		if msg.Type() == pong {
+			pongChan <- msg
+		}
+	})
 
-	err = broadcastChannel.Recv(
-		net.HandleMessageFunc{
-			Type: ping,
-			Handler: func(msg net.Message) error {
-				// Do some message routing
-				if msg.Type() == ping {
-					pingChan <- msg
-				}
-				return nil
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-	defer broadcastChannel.UnregisterRecv(ping)
+	broadcastChannel.Recv(ctx, func(msg net.Message) {
+		// Do some message routing
+		if msg.Type() == ping {
+			pingChan <- msg
+		}
+	})
 
 	// Give ourselves a moment to form a mesh with the other peer
 	for {
