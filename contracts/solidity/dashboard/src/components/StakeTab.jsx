@@ -9,7 +9,7 @@ const StakeTab = (props) => {
     <>
       <h3>Stake Delegation</h3>
       <p>
-          Keep network does not require token owners to perform the day-to-day operations of staking 
+          Keep network does not require token owners to perform the day-to-day operations of staking
           with the private keys holding the tokens. This is achieved by stake delegation, where different
           addresses hold different responsibilities and cold storage is supported to the highest extent practicable.
       </p>
