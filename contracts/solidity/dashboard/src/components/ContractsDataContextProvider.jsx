@@ -43,7 +43,7 @@ class ContractsDataContextProvider extends React.Component {
 
     getContractsInfo = async () => {
       const { web3: { token, stakingContract, grantContract, yourAddress, changeDefaultContract, utils } } = this.props
-      if (!token.options.address || !stakingContract.options.address || !grantContract.options.address) {
+      if (!token.options.address || !stakingContract.options.address || !grantContract.options.address || !yourAddress) {
         return
       }
       try {

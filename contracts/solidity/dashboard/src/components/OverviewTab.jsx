@@ -12,6 +12,8 @@ import withWeb3Context from './WithWeb3Context'
 import { withContractsDataContext } from './ContractsDataContextProvider'
 
 class OverviewTab extends React.Component {
+  initiatedUnstakeEvent = null
+
   constructor(props) {
     super(props)
     this.state = {
@@ -25,7 +27,12 @@ class OverviewTab extends React.Component {
           position: 'right',
         },
       },
-      shouldSubscribeToEvent: true,
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.initiatedUnstakeEvent && typeof this.initiatedUnstakeEvent.unsubscribe === 'function') {
+      this.initiatedUnstakeEvent.unsubscribe()
     }
   }
 
@@ -34,19 +41,16 @@ class OverviewTab extends React.Component {
     this.subscribeToEvent()
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps) {
     if (prevProps.web3.yourAddress !== this.props.web3.yourAddress) {
       this.getData()
-    }
-    if (!prevState.shouldSubscribeToEvent && this.state.shouldSubscribeToEvent) {
-      this.subscribeToEvent()
     }
   }
 
     subscribeToEvent = () => {
       const { web3EventProvider: { eventStakingContract } } = this.props
       this.setState({ shouldSubscribeToEvent: false })
-      eventStakingContract.once('InitiatedUnstake', this.subscribeEvent)
+      this.initiatedUnstakeEvent = eventStakingContract.events.InitiatedUnstake(this.subscribeEvent)
     }
 
     subscribeEvent = async (error, event) => {
