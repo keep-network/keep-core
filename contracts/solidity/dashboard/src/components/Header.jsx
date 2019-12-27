@@ -1,7 +1,7 @@
 import React from 'react'
 import { Navbar, NavbarBrand } from 'react-bootstrap'
 import * as Icons from './Icons'
-import WithWeb3Context from './WithWeb3Context'
+import withWeb3Context from './WithWeb3Context'
 import { Web3Status } from './Web3Status'
 
 const Header = ({ web3: { networkType, token } }) => {
@@ -30,4 +30,4 @@ const Header = ({ web3: { networkType, token } }) => {
   )
 }
 
-export default WithWeb3Context(Header);
+export default withWeb3Context(Header)
