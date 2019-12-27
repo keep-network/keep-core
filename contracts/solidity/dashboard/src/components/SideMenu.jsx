@@ -6,7 +6,7 @@ import { ContractsDataContext } from './ContractsDataContextProvider'
 
 export const SideMenuContext = React.createContext({})
 
-export const SiedMenuProvider = (props) => {
+export const SideMenuProvider = (props) => {
     const [isOpen, setIsOpen] = useState(false)
 
     const toggle = () => {

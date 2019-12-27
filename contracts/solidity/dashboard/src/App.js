@@ -5,14 +5,14 @@ import Header from './components/Header';
 import Routing from './components/Routing'
 import ContractsDataContextProvider from './components/ContractsDataContextProvider';
 import { Messages } from './components/Message';
-import { SideMenu, SiedMenuProvider } from './components/SideMenu';
+import { SideMenu, SideMenuProvider } from './components/SideMenu';
 import { BrowserRouter as Router } from 'react-router-dom'
 
 const App = () => (
   <Messages>
     <Web3ContextProvider>
       <ContractsDataContextProvider>
-        <SiedMenuProvider>
+        <SideMenuProvider>
           <Router>
             <div className='main'>
               <Header />
@@ -23,7 +23,7 @@ const App = () => (
               </div>
             </div>
           </Router>
-        </SiedMenuProvider>
+        </SideMenuProvider>
       </ContractsDataContextProvider>
     </Web3ContextProvider>
   </Messages>
