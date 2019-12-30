@@ -70,14 +70,13 @@ func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
 	c.messageHandlersMutex.Unlock()
 
 	go func() {
-		for {
-			select {
-			case <-ctx.Done():
+		for msg := range messageHandler.channel {
+			if messageHandler.ctx.Err() != nil {
 				c.removeHandler(messageHandler)
 				return
-			case msg := <-messageHandler.channel:
-				handler(msg)
 			}
+
+			handler(msg)
 		}
 	}()
 }
@@ -260,11 +259,11 @@ func (c *channel) deliver(message net.Message) {
 		go func(message net.Message, handler *messageHandler) {
 			select {
 			case handler.channel <- message:
-				// Nothing to do here; we block until the message is handled
-				// or until the context gets closed.
-				// This way we don't lose any message but also don't stay
-				// with any dangling goroutines if there is no longer anyone
-				// to receive messages.
+			// Nothing to do here; we block until the message is handled
+			// or until the context gets closed.
+			// This way we don't lose any message but also don't stay
+			// with any dangling goroutines if there is no longer anyone
+			// to receive messages.
 			case <-handler.ctx.Done():
 				return
 			}

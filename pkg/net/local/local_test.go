@@ -105,9 +105,6 @@ func TestUnregisterHandler(t *testing.T) {
 				handlerCancellations[handlerName]()
 			}
 
-			// Give a chance for all cancelled handlers to end
-			time.Sleep(500 * time.Millisecond)
-
 			// Send a message, all handlers should be called
 			localChannel.Send(&mockNetMessage{})
 
@@ -126,6 +123,37 @@ func TestUnregisterHandler(t *testing.T) {
 	}
 }
 
+func TestUnregisterWhenHandling(t *testing.T) {
+	_, channel, err := initTestChannel("channel name")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	receivedCount := 0
+	stopAt := 90
+
+	channel.Recv(ctx, func(msg net.Message) {
+		receivedCount++
+
+		if receivedCount == stopAt {
+			cancel()
+		}
+	})
+
+	go func() {
+		for i := 0; i < 300; i++ {
+			channel.Send(&mockNetMessage{})
+		}
+	}()
+
+	time.Sleep(500 * time.Millisecond)
+
+	if receivedCount != stopAt {
+		t.Fatalf("received more than expected: [%v]", receivedCount)
+	}
+}
 func TestSendAndDeliver(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
