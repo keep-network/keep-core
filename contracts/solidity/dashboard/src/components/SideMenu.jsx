@@ -29,6 +29,7 @@ export const SideMenu = (props) => {
     <nav className={`${ isOpen ? 'active ' : '' }side-menu`}>
       <ul>
         <NavLink exact to="/overview" label='Overview'/>
+        <NavLink exact to="/rewards" label='Rewards'/>
         { isTokenHolder &&
             <>
                 <NavLink exact to="/stake" label='Stake'/>
