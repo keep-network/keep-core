@@ -8,7 +8,7 @@ export const Web3Status = (props) => {
     if (isFetching) {
       return (
         <div className="web3-status loading">
-                loading...
+          loading...
         </div>
       )
     }
@@ -24,7 +24,7 @@ export const Web3Status = (props) => {
     if (!web3) {
       return (
         <div className="web3-status alert">
-                    Web3 not detected. We suggest&nbsp;<a href="http://metamask.io" target="_blank" rel="noopener noreferrer">MetaMask</a>.
+          Web3 not detected. We suggest&nbsp;<a href="http://metamask.io" target="_blank" rel="noopener noreferrer">MetaMask</a>.
         </div>
       )
     }
@@ -33,7 +33,7 @@ export const Web3Status = (props) => {
       return (
         <div className="web3-status notify">
           <span onClick={connectAppWithAccount}>
-                        Please log in and connect with dApp
+            Please log in and connect with dApp
           </span>
         </div>
       )
@@ -41,7 +41,7 @@ export const Web3Status = (props) => {
 
     return (
       <div className="web3-status success">
-                Account logged in
+        Account logged in
       </div>
     )
   }
