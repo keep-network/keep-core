@@ -25,7 +25,7 @@ export const getWeb3SocketProvider = () => {
   return new Web3(process.env.REACT_APP_ETH_NETWORK_WEB_SOCKET_ADDRESS)
 }
 
-export const addressToShortcut = (address) => {
+export const shortenAddress = (address) => {
   const firstFourCharacters = address.substr(2, 4)
   const lastFourCharacters = address.substr(address.length - 4, address.length - 1)
 

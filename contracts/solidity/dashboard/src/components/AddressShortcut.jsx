@@ -1,10 +1,10 @@
 import React from 'react'
-import { addressToShortcut } from '../utils'
+import { shortenAddress } from '../utils'
 
 const AddressShortcut = ({ address }) => {
   return (
     <span className='address-shortcut'>
-      { addressToShortcut(address) }
+      { shortenAddress(address) }
     </span>
   )
 }
