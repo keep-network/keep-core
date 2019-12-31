@@ -36,7 +36,6 @@ module.exports = async function(deployer, network) {
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
-  await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
   if(network === 'development') {
     await deployer.deploy(KeepRandomBeaconOperatorRewardsStub, KeepRandomBeaconService.address, TokenStaking.address)
   }
