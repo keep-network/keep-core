@@ -7,6 +7,8 @@ const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol");
 const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
+const KeepRandomBeaconOperatorRewardsStub = artifacts.require("./stubs/KeepRandomBeaconOperatorRewardsStub.sol");
+
 const GroupSelection = artifacts.require("./libraries/operator/GroupSelection.sol");
 const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
@@ -16,7 +18,7 @@ const priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (2
 const fluctuationMargin = 50; // 50%
 const dkgContributionMargin = 1; // 1%
 
-module.exports = async function(deployer) {
+module.exports = async function(deployer, network) {
   await deployer.deploy(ModUtils);
   await deployer.link(ModUtils, AltBn128);
   await deployer.deploy(AltBn128);
@@ -34,6 +36,10 @@ module.exports = async function(deployer) {
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
+  await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
+  if(network === 'development') {
+    await deployer.deploy(KeepRandomBeaconOperatorRewardsStub, KeepRandomBeaconService.address, TokenStaking.address)
+  }
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 11).
   await deployer.deploy(KeepRandomBeaconOperator, KeepRandomBeaconService.address, TokenStaking.address);
