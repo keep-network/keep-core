@@ -47,9 +47,25 @@ variable "project_owner_members" {
   default = [
     "user:sloan.thompson@thesis.co",
     "user:antonio.salazarcardozo@thesis.co",
-    "user:markus.fix@thesis.co",
-    "serviceAccount:terraform-admin@thesis-terraform-admin.iam.gserviceaccount.com",
   ]
+}
+
+# module IAM members: editor
+variable "editor_iam_role" {
+  default = "roles/editor"
+}
+
+variable "editor_iam_members" {
+  default = ["user:jakub.nowakowski@thesis.co", "user:nicholas.evans@thesis.co", "user:nik.grinkevich@thesis.co", "user:piotr.dyraga@thesis.co", "user:rafal.czajkowski@thesis.co"]
+}
+
+# module IAM members: storage.objectViewer
+variable "storage_objectviewer_iam_role" {
+  default = "roles/storage.objectViewer"
+}
+
+variable "storage_objectviewer_iam_members" {
+  default = ["user:liam.zebedee@thesis.co"]
 }
 
 # bucket vars
