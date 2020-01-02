@@ -1,11 +1,11 @@
 import React from 'react'
 
 const Loadable = ({ text }) => (
-    <div>{text}</div>
+  <div>{text}</div>
 )
 
 Loadable.defaultProps = {
-    text: 'Loading...'
+  text: 'Loading...',
 }
 
 export const ClockIndicator = (props) => (<div className='indicator-clock'/>)

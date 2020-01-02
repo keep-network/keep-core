@@ -1,14 +1,14 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { Form, FormGroup, FormControl } from 'react-bootstrap'
-import WithWeb3Context from './WithWeb3Context'
+import withWeb3Context from './WithWeb3Context'
 import { formatAmount, displayAmount } from '../utils'
 import { SubmitButton } from './Button'
 import { MessagesContext, messageType } from './Message'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount',
-  SERVER: 'Sorry, your request cannot be completed at this time.'
+  SERVER: 'Sorry, your request cannot be completed at this time.',
 }
 
 const RESET_DELAY = 3000 // 3 seconds
@@ -18,18 +18,18 @@ class StakingDelegateForm extends Component {
 
   state = {
     amount: 100,
-    operatorAddress: "",
-    magpie: "",
+    operatorAddress: '',
+    magpie: '',
     hasError: false,
     requestSent: false,
     requestSuccess: false,
-    errorMsg: ERRORS.INVALID_AMOUNT
+    errorMsg: ERRORS.INVALID_AMOUNT,
   }
 
   onChange = (e) => {
     const name = e.target.name
     this.setState(
-      { [name]: e.target.value }
+      { [name]: e.target.value },
     )
   }
 
@@ -37,7 +37,7 @@ class StakingDelegateForm extends Component {
     this.setState({
       hasError: false,
       requestSent: true,
-      requestSuccess: true
+      requestSuccess: true,
     })
     window.setTimeout(() => {
       this.setState(this.state)
@@ -56,37 +56,38 @@ class StakingDelegateForm extends Component {
 
   validateAddress = (address) => {
     const { web3 } = this.props
-    if (web3.utils && web3.utils.isAddress(address))
+    if (web3.utils && web3.utils.isAddress(address)) {
       return 'success'
-    else
+    } else {
       return 'error'
+    }
   }
 
   validateAmount = () => {
     const { amount } = this.state
     const { web3, tokenBalance } = this.props
-    if (web3.utils && tokenBalance && formatAmount(amount, 18).lte(tokenBalance))
+    if (web3.utils && tokenBalance && formatAmount(amount, 18).lte(tokenBalance)) {
       return 'success'
-    else
+    } else {
       return 'error'
+    }
   }
 
   submit = async (onTransactionHashCallback) => {
     const { amount, magpie, operatorAddress } = this.state
-    const { web3 } = this.props;
-    const stakingContractAddress = web3.stakingContract.options.address;
-    let delegationData = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), Buffer.from(operatorAddress.substr(2), 'hex')]).toString('hex');
-    
+    const { web3 } = this.props
+    const stakingContractAddress = web3.stakingContract.options.address
+    const delegationData = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), Buffer.from(operatorAddress.substr(2), 'hex')]).toString('hex')
+
     try {
       await web3.token.methods
         .approveAndCall(stakingContractAddress, web3.utils.toBN(formatAmount(amount, 18)).toString(), delegationData)
-        .send({from: web3.yourAddress})
+        .send({ from: web3.yourAddress })
         .on('transactionHash', onTransactionHashCallback)
       this.context.showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Staking delegate transaction has been successfully completed' })
-    } catch(error) {
+    } catch (error) {
       this.context.showMessage({ type: messageType.ERROR, title: 'Staking delegate action has been failed ', content: error.message })
     }
-    
   }
 
   render() {
@@ -147,7 +148,7 @@ class StakingDelegateForm extends Component {
 
 StakingDelegateForm.propTypes = {
   btnText: PropTypes.string,
-  action: PropTypes.string
+  action: PropTypes.string,
 }
 
-export default WithWeb3Context(StakingDelegateForm);
+export default withWeb3Context(StakingDelegateForm)

@@ -11,7 +11,7 @@ const TokenGrantRevokeButton = ({ item }) => {
     try {
       await grantContract.methods.revoke(item.id).send({ from: yourAddress }).on('transactionHash', onTransactionHashCallback)
       showMessage({ title: 'Success', content: 'Revoke transaction has been successfully completed' })
-    } catch(error) {
+    } catch (error) {
       showMessage({ type: messageType.ERROR, title: 'Revoke action has been failed', content: error.message })
     }
   }
