@@ -13,10 +13,9 @@ const Withdrawal = ({ withdrawal }) => {
         .send({ from: yourAddress })
         .on('transactionHash', onTransactionHashCallback)
       showMessage({ title: 'Success', content: 'Finish unstake transaction has been successfully completed' })
-    } catch(error) {
+    } catch (error) {
       showMessage({ type: messageType.ERROR, title: 'Error', content: 'Finish unstake action has been failed' })
     }
-   
   }
 
   return (
@@ -24,15 +23,15 @@ const Withdrawal = ({ withdrawal }) => {
       <td>{withdrawal.amount}</td>
       <td className="text-mute">{withdrawal.availableAt}</td>
       <td>
-      {withdrawal.available ? 
-        <SubmitButton
-          className="btn btn-priamry btn-sm"
-          onSubmitAction={submit}
-          pendingMessageTitle='Finish unstake transaction is pending...'
-        >
+        {withdrawal.available ?
+          <SubmitButton
+            className="btn btn-priamry btn-sm"
+            onSubmitAction={submit}
+            pendingMessageTitle='Finish unstake transaction is pending...'
+          >
           Finish Unstake
-        </SubmitButton> : 'N/A'
-      }
+          </SubmitButton> : 'N/A'
+        }
       </td>
     </tr>
   )
