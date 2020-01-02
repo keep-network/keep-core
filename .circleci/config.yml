@@ -23,7 +23,7 @@ jobs:
     executor: docker-node
     steps:
       - checkout
-      - run: sudo npm install -g ganache-cli@6.4.2
+      - run: sudo npm install -g ganache-cli@6.7.0
       - run:
           name: Set up test and test result environment
           command: |
