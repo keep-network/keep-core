@@ -2,18 +2,21 @@ import React from 'react'
 import Button from './Button'
 import AddressShortcut from './AddressShortcut'
 
-export const RewardsGroupItem = (props) => {
+export const RewardsGroupItem = ({ groupIndex, groupPubKey, reward, isStale }) => {
   return (
     <div className='group-item'>
       <span>
-        Group index: 1
+        Group index: {groupIndex}
       </span>
       <h4>
         Group public key:&nbsp;
-        <AddressShortcut address={'0xcCFe2E36B3F10152D19dD7d14d651F213c9af4b0'} />
+        <AddressShortcut address={groupPubKey} />
       </h4>
-      <p>300 ETH</p>
-      <Button className="btn btn-primary btn-large">
+      <p>{reward.toString()} ETH</p>
+      <Button
+        className="btn btn-primary btn-large"
+        disabled={!isStale}
+      >
         Withdraw
       </Button>
     </div>

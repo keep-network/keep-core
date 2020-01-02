@@ -1,18 +1,12 @@
 import React from 'react'
 import { RewardsGroupItem } from './RewardsGroupItem'
 
-export const RewardsGroups = (props) => {
+export const RewardsGroups = ({ groups }) => {
   return (
     <div className='group-items'>
-      <RewardsGroupItem/>
-      <RewardsGroupItem/>
-      <RewardsGroupItem/>
-      <RewardsGroupItem/>
-      <RewardsGroupItem/>
-      <RewardsGroupItem/>
-      <RewardsGroupItem/>
-      <RewardsGroupItem/>
-      <RewardsGroupItem/>
+      {groups.map(renderGroupItem)}
     </div>
   )
 }
+
+const renderGroupItem = (group, index) => <RewardsGroupItem key={group.groupIndex} {...group} />
