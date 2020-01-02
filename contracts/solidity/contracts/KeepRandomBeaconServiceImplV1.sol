@@ -16,6 +16,7 @@ interface OperatorContract {
     ) external payable;
     function numberOfGroups() external view returns(uint256);
     function createGroup(uint256 newEntry) external payable;
+    function isGroupSelectionPossible() external view returns (bool);
 }
 
 /**
@@ -339,7 +340,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             gasPriceWithFluctuationMargin(_priceFeedEstimate)
         );
 
-        if (_dkgFeePool >= dkgFeeEstimate) {
+        if (_dkgFeePool >= dkgFeeEstimate && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
             OperatorContract(latestOperatorContract).createGroup.value(dkgFeeEstimate)(entry);
             _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
         }
