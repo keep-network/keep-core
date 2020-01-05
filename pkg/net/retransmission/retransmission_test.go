@@ -149,3 +149,63 @@ func (mnm *mockNetworkMessage) Type() string {
 func (mnm *mockNetworkMessage) SenderPublicKey() []byte {
 	panic("not implemented")
 }
+
+func TestCalculateFingerprint(t *testing.T) {
+	tests := map[string]struct {
+		sender1                 string
+		sender2                 string
+		payload1                string
+		payload2                string
+		sameFingerprintExpected bool
+	}{
+		"different sender, same payload": {
+			sender1:                 "bob",
+			sender2:                 "alice",
+			payload1:                "blockchain",
+			payload2:                "blockchain",
+			sameFingerprintExpected: false,
+		},
+		"same sender, different payload": {
+			sender1:                 "bob",
+			sender2:                 "bob",
+			payload1:                "btc",
+			payload2:                "eth",
+			sameFingerprintExpected: false,
+		},
+		"same sender, same payload": {
+			sender1:                 "alice",
+			sender2:                 "alice",
+			payload1:                "blockchain",
+			payload2:                "blockchain",
+			sameFingerprintExpected: true,
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			fingerprint1 := CalculateFingerprint(
+				localIdentifier(test.sender1),
+				[]byte(test.payload1),
+			)
+
+			fingerprint2 := CalculateFingerprint(
+				localIdentifier(test.sender2),
+				[]byte(test.payload2),
+			)
+
+			if fingerprint1 == fingerprint2 && !test.sameFingerprintExpected {
+				t.Errorf("same fingerprints")
+			}
+
+			if fingerprint1 != fingerprint2 && test.sameFingerprintExpected {
+				t.Errorf("different fingerprints")
+			}
+		})
+	}
+}
+
+type localIdentifier string
+
+func (li localIdentifier) String() string {
+	return string(li)
+}

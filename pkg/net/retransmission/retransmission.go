@@ -1,6 +1,8 @@
 package retransmission
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -45,6 +47,20 @@ func WithRetransmissionSupport(delegate func(m net.Message)) func(m NetworkMessa
 
 		delegate(message)
 	}
+}
+
+// CalculateFingerprint takes the serialized network message and its sender
+// and produces a unique fingerprint for that message. Fingerprint is a part
+// of NetworkMessage and is used by message handler to filter out
+// already known retransmissions.
+func CalculateFingerprint(
+	sender net.TransportIdentifier,
+	payload []byte,
+) string {
+	sha := sha256.New()
+	sha.Write([]byte(sender.String()))
+	sha.Write(payload)
+	return hex.EncodeToString(sha.Sum(nil)[:])
 }
 
 // NewNetworkMessage accepts an ordinary net.Message as well as retransmission
