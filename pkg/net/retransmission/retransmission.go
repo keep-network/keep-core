@@ -46,3 +46,48 @@ func WithRetransmissionSupport(delegate func(m net.Message)) func(m NetworkMessa
 		delegate(message)
 	}
 }
+
+// NewNetworkMessage accepts an ordinary net.Message as well as retransmission
+// information and produces NetworkMessage instance that can be accepted
+// by retransmission handler.
+func NewNetworkMessage(
+	original net.Message,
+	fingerprint string,
+	retransmission uint32,
+) NetworkMessage {
+	return &networkMessage{
+		original:       original,
+		fingerprint:    fingerprint,
+		retransmission: retransmission,
+	}
+}
+
+type networkMessage struct {
+	original       net.Message
+	fingerprint    string
+	retransmission uint32
+}
+
+func (nm *networkMessage) TransportSenderID() net.TransportIdentifier {
+	return nm.original.TransportSenderID()
+}
+
+func (nm *networkMessage) Payload() interface{} {
+	return nm.original.Payload()
+}
+
+func (nm *networkMessage) Type() string {
+	return nm.original.Type()
+}
+
+func (nm *networkMessage) SenderPublicKey() []byte {
+	return nm.original.SenderPublicKey()
+}
+
+func (nm *networkMessage) Fingerprint() string {
+	return nm.fingerprint
+}
+
+func (nm *networkMessage) Retransmission() uint32 {
+	return nm.retransmission
+}
