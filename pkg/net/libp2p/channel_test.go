@@ -221,3 +221,11 @@ func (mnm *mockNetMessage) Type() string {
 func (mnm *mockNetMessage) SenderPublicKey() []byte {
 	panic("not implemented in mock")
 }
+
+func (mnm *mockNetMessage) Fingerprint() string {
+	return "fingerprint"
+}
+
+func (mnm *mockNetMessage) Retransmission() uint32 {
+	return 0
+}
