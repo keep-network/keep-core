@@ -12,6 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 )
 
 type localIdentifier string
@@ -138,7 +139,7 @@ func randomIdentifier() string {
 
 type messageHandler struct {
 	ctx     context.Context
-	channel chan net.Message
+	channel chan retransmission.NetworkMessage
 }
 
 type localChannel struct {
@@ -176,32 +177,37 @@ func doSend(channel *localChannel, payload net.TaggedMarshaler) error {
 		return err
 	}
 
+	fingerprint := retransmission.CalculateFingerprint(
+		channel.identifier,
+		bytes,
+	)
+
+	protocolMessage := retransmission.NewNetworkMessage(
+		internal.BasicMessage(
+			channel.identifier,
+			unmarshaled,
+			"local",
+			key.Marshal(channel.staticKey),
+		),
+		fingerprint,
+		0, //TODO: update when integrating with send retransmissions
+	)
+
 	for _, targetChannel := range targetChannels {
-		targetChannel.deliver(channel.identifier, channel.staticKey, unmarshaled) // TODO error handling?
+		targetChannel.deliver(protocolMessage)
 	}
 
 	return nil
 }
 
-func (lc *localChannel) deliver(
-	senderTransportIdentifier net.TransportIdentifier,
-	senderPublicKey *key.NetworkPublic,
-	payload interface{},
-) {
+func (lc *localChannel) deliver(message retransmission.NetworkMessage) {
 	lc.messageHandlersMutex.Lock()
 	snapshot := make([]*messageHandler, len(lc.messageHandlers))
 	copy(snapshot, lc.messageHandlers)
 	lc.messageHandlersMutex.Unlock()
 
-	message := internal.BasicMessage(
-		senderTransportIdentifier,
-		payload,
-		"local",
-		key.Marshal(senderPublicKey),
-	)
-
 	for _, handler := range snapshot {
-		go func(message net.Message, handler *messageHandler) {
+		go func(message retransmission.NetworkMessage, handler *messageHandler) {
 			select {
 			case handler.channel <- message:
 			// Nothing to do here; we block until the message is handled
@@ -223,12 +229,14 @@ func (lc *localChannel) Send(message net.TaggedMarshaler) error {
 func (lc *localChannel) Recv(ctx context.Context, handler func(m net.Message)) {
 	messageHandler := &messageHandler{
 		ctx:     ctx,
-		channel: make(chan net.Message),
+		channel: make(chan retransmission.NetworkMessage),
 	}
 
 	lc.messageHandlersMutex.Lock()
 	lc.messageHandlers = append(lc.messageHandlers, messageHandler)
 	lc.messageHandlersMutex.Unlock()
+
+	handleWithRetransmissions := retransmission.WithRetransmissionSupport(handler)
 
 	go func() {
 		for msg := range messageHandler.channel {
@@ -237,7 +245,7 @@ func (lc *localChannel) Recv(ctx context.Context, handler func(m net.Message)) {
 				return
 			}
 
-			handler(msg)
+			handleWithRetransmissions(msg)
 		}
 	}()
 }
