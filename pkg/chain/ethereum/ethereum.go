@@ -134,64 +134,53 @@ func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
 }
 
 func (ec *ethereumChain) GetSelectedParticipants() ([]chain.StakerAddress, error) {
-
-	// The reason behind a retry functionality is Infura's load balancer synchronization
-	// problem. Whenever a Keep client is connected to Infura, it might experience
-	// a slight delay with a block number update. It might stay behind and report
-	// a block number 'n-1', whereas the actual block number is already 'n'. This
-	// delay results in error triggering a new group selection. To mitigate Infura's
-	// sync issue, a Keep client will retry calling for selected participants up to 4 times.
-	withRetry := func(fn func() ([]chain.StakerAddress, error)) ([]chain.StakerAddress, error) {
-		const numberOfRetries = 4
-		const delay = 250 * time.Millisecond
-
-		for i := 1; ; i++ {
-			stakerAddresses, err := fn()
-			if err != nil {
-				logger.Errorf("Error occurred while selecting participants [%v]; on [%v] retry", err, i)
-				if i == numberOfRetries {
-					return nil, err
-				}
-				time.Sleep(delay)
-			} else {
-				return stakerAddresses, nil
-			}
-		}
-	}
-
-	return withRetry(func() ([]chain.StakerAddress, error) {
+	var stakerAddresses []chain.StakerAddress
+	fetchParticipants := func() error {
 		participants, err := ec.keepRandomBeaconOperatorContract.SelectedParticipants()
-		stakerAddresses := make([]chain.StakerAddress, len(participants))
 		if err != nil {
-			return nil, err
+			return err
 		}
 
+		stakerAddresses = make([]chain.StakerAddress, len(participants))
 		for _, participant := range participants {
 			stakerAddresses = append(stakerAddresses, participant.Bytes())
 		}
 
-		return stakerAddresses, nil
-	})
-}
-
-func withRetry(fn func() ([]common.Address, error), numberOfRetries int, interval time.Duration) ([]common.Address, error) {
-	var result []common.Address
-	var err error
-
-	for i := 0; i < numberOfRetries; i++ {
-		result, err = fn()
-		if err != nil {
-			logger.Errorf("Error occurred while selecting participants [%v]; on [%v] retry", err, i)
-			if i == numberOfRetries-1 {
-				return nil, err
-			}
-			time.Sleep(interval * time.Millisecond)
-		} else {
-			break
-		}
+		return nil
 	}
 
-	return result, nil
+	// The reason behind a retry functionality is Infura's load balancer synchronization
+	// problem. Whenever a Keep client is connected to Infura, it might experience
+	// a slight delay with block updates between ethereum clients. One or more
+	// clients might stay behind and report a block number 'n-1', whereas the
+	// actual block number is already 'n'. This delay results in error triggering
+	// a new group selection. To mitigate Infura's sync issue, a Keep client will
+	// retry calling for selected participants up to 4 times.
+	// Synchronization issue can occur on any setup where we have more than one
+	// Ethereum clients behind a load balancer.
+	if err := ec.withRetry(fetchParticipants); err != nil {
+		return nil, err
+	}
+
+	return stakerAddresses, nil
+}
+
+func (ec *ethereumChain) withRetry(fn func() error) error {
+	const numberOfRetries = 4
+	const delay = 250 * time.Millisecond
+
+	for i := 1; ; i++ {
+		err := fn()
+		if err != nil {
+			logger.Errorf("Error occurred [%v]; on [%v] retry", err, i)
+			if i == numberOfRetries {
+				return err
+			}
+			time.Sleep(delay)
+		} else {
+			return nil
+		}
+	}
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
