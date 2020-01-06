@@ -73,13 +73,28 @@ func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
 	handleWithRetransmissions := retransmission.WithRetransmissionSupport(handler)
 
 	go func() {
-		for msg := range messageHandler.channel {
-			if messageHandler.ctx.Err() != nil {
+		for {
+			select {
+			case <-ctx.Done():
 				c.removeHandler(messageHandler)
 				return
-			}
 
-			handleWithRetransmissions(msg)
+			case msg := <-messageHandler.channel:
+				// Go language specification says that if one or more of the
+				// communications in the select statement can proceed, a single
+				// one that will proceed is chosen via a uniform pseudo-random
+				// selection.
+				// Thus, it can happen this communication is called when ctx is
+				// already done. Since we guarantee in the network channel API
+				// that handler is not called after ctx is done (client code
+				// could e.g. perform come cleanup), we need to double-check
+				// the context state here.
+				if messageHandler.ctx.Err() != nil {
+					continue
+				}
+
+				handleWithRetransmissions(msg)
+			}
 		}
 	}()
 }
