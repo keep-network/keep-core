@@ -308,11 +308,12 @@ library Groups {
         uint256 groupIndex,
         uint256[] memory groupMemberIndices
     ) public returns (uint256 rewards) {
-        for (uint i = 0; i < groupMemberIndices.length; i++) {
-            bool isExpired = self.expiredGroupOffset > groupIndex;
-            bool isStale = groupStaleTime(self, self.groups[groupIndex]) < block.number;
+        bool isExpired = self.expiredGroupOffset > groupIndex;
+        bool isStale = groupStaleTime(self, self.groups[groupIndex]) < block.number;
 
-            bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
+        bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
+
+        for (uint i = 0; i < groupMemberIndices.length; i++) {
             if (isExpired && isStale && msg.sender == self.groupMembers[groupPublicKey][groupMemberIndices[i]]) {
                 delete self.groupMembers[groupPublicKey][groupMemberIndices[i]];
                 rewards = rewards.add(self.groupMemberRewards[groupPublicKey]);
