@@ -24,18 +24,18 @@ jobs:
     steps:
       - checkout
       - run: sudo npm install -g ganache-cli@6.4.2
-      - run:
-          name: Set up test and test result environment
-          command: |
-            mkdir -p /tmp/test-results/keep-core-contracts
-            cd contracts/solidity
-            npm install
-            # Adjust truffle-config.js to reference the JUnit reporter.
-            echo $(cat truffle-config.js) "console.log(JSON.stringify(module.exports))" | node | \
-              jq '.mocha.reporter|="mocha-junit-reporter" | .mocha.reporterOptions|={mochaFile:"/tmp/test-results/keep-core-contracts/unit-tests.xml"}' > \
-              junit-config.json
-            echo module.exports = >> truffle-config.js
-            cat junit-config.json >> truffle-config.js
+   #   - run:
+   #       name: Set up test and test result environment
+   #       command: |
+   #         mkdir -p /tmp/test-results/keep-core-contracts
+   #         cd contracts/solidity
+   #         npm install
+   #         # Adjust truffle-config.js to reference the JUnit reporter.
+   #         echo $(cat truffle-config.js) "console.log(JSON.stringify(module.exports))" | node | \
+   #           jq '.mocha.reporter|="mocha-junit-reporter" | .mocha.reporterOptions|={mochaFile:"/tmp/test-results/keep-core-contracts/unit-tests.xml"}' > \
+   #           junit-config.json
+   #         echo module.exports = >> truffle-config.js
+   #         cat junit-config.json >> truffle-config.js
       - run:
           name: Running testrpc
           command: ganache-cli
