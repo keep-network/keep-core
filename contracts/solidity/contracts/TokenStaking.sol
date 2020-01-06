@@ -109,6 +109,7 @@ contract TokenStaking is StakeDelegatable {
         if (stakeBalances[_operator] <= 0) {
             operatorToOwner[_operator] = address(0);
             ownerOperators[owner].removeAddress(_operator);
+            operatorToMagpie[_operator] = address(0);
         }
 
         emit FinishedUnstake(_operator);
