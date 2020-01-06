@@ -25,7 +25,7 @@ jobs:
       - checkout
       - run: sudo npm install -g ganache-cli@6.4.2
       - run:
-   #       name: Set up test and test result environment
+          name: Set up test and test result environment
           command: |
    #         mkdir -p /tmp/test-results/keep-core-contracts
             cd contracts/solidity
