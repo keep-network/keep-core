@@ -8,10 +8,10 @@ const UndelegateStakeButton = (props) => {
   const showMessage = useShowMessage()
 
   const undelegate = async (onTransactionHashCallback) => {
-    const { amount, operator} = props
-    
+    const { amount, operator } = props
+
     try {
-      await web3.stakingContract.methods.initiateUnstake(amount, operator).send({from: web3.yourAddress}).on('transactionHash', onTransactionHashCallback)
+      await web3.stakingContract.methods.initiateUnstake(amount, operator).send({ from: web3.yourAddress }).on('transactionHash', onTransactionHashCallback)
       showMessage({ type: 'success', title: 'Success', content: 'Undelegate transaction successfully completed' })
     } catch (error) {
       showMessage({ type: 'error', title: 'Undelegate action has been failed ', content: error.message })
