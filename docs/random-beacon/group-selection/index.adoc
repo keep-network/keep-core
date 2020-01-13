@@ -17,12 +17,12 @@ output: _P_
 
 The protocol should:
 
-. [[req-1]]produce a representative result, where each staker's profit is proportional
+. [[req-1]]produce a representative result,
+where each staker's profit is proportional
 to the number of tokens they have staked
 . [[req-2]]produce a group _P_ of constant size _N_
 . [[req-3]]not require an excessive amount of on-chain operations to perform
 . [[req-4]]not be feasible for an adversary to manipulate
-. [[req-5]]be compatible with future measures to make stakers indistinguishable
 
 .Some terms
 |===
@@ -86,9 +86,10 @@ and _N_ properly denotes the number of virtual stakers in _P_.
 
 |_Space~tickets~_
 |Is a space consisting of all possible tickets. It is strongly related
-with a pseudo random function that is used for ticket generation.
-Currently the _Space~tickets~_ is equal to _2^256^- 1_, which is due
-to selection of SHA3-256 as our pseudo random function.
+with a pseudorandom function that is used for ticket generation.
+Currently the _Space~tickets~_ is equal to _2^64^- 1_, which is due
+to selection of the first 8 bytes of keccak256
+as our pseudorandom function.
 
 |_Supply~tokens~_
 |Is the total number of tokens which are going to be supplied during the project
@@ -104,10 +105,6 @@ function.
 
 Usually _Threshold~P~ > Threshold~nat~_ as not all tokens will be staked and the
 distribution of stakes will not be optimal.
-
-_Supply~tokens~_ is used instead of _Stake~total~_ to make it possible to later
-hide the stakes of individual stakers; otherwise the staking or unstaking of
-tokens would reveal the amount through the update to _Stake~total~_.
 |===
 
 == Setup
@@ -118,15 +115,7 @@ When a staker _S~j~_ is created, the following values are determined:
   staker is destroyed 
 - _Weight~j~= floor(Stake~j~ / MINIMUM_STAKE)_: the staking weight of _S~j~_;
   how many virtual stakers can represent _S~j~_ 
-- _Q~j~_: a staker-specific value used as an input to the pseudorandom function
-
-The staker creation operation needs to include a proof of the correctness of the
-above values.
-
-Currently the _Stake~j~_ and _Weight~j~_ can be public and _Q~j~_ can be the 
-address of _S~j~_. Future work towards indistinguishable staking would make
-_Stake~j~_ and _Weight~j~_ values private and enable their verification via
-zero-knowledge proofs.
+- _Address~j~_: the operator address of _S~j~_
 
 == Protocol
 
@@ -135,23 +124,26 @@ selection of a new candidate group.
 
 === Phase 1: ticket calculation
 
-_S~j~_ calculates _Ticket~k~ = (W~k~, proof~k~)_  containing the value
-_W~k~ = prf(V~i~, Q~j~, vs)_ and proof that:
+_S~j~_ calculates _Ticket~k~ = (value~k~, vs, Address~j~)_ where:
 
-- the ticket value _W~k~_ is created correctly
-- the staker-specific values _Q~j~, Weight~j~_ correspond to _S~j~_ in _S_
+- the ticket value is calculated as _value~k~ = prf(V~i~, Address~j~, vs)_
 - the virtual staker number _vs_ is within the range _1 <= vs <= Weight~j~_
+- the staker weight _Weight~j~_ is correct for the operator address _Address~j~_
 
 === Phase 2: ticket submission
 
 ==== Phase 2a: initial ticket submission
 
-Each staker whose _W~k~ < Threshold~nat~_ on one or more _Ticket~k~_ publishes
+Each staker whose _value~k~ < Threshold~nat~_ on one or more _Ticket~k~_ publishes
 the ticket/s.
 
-The smart contract function `cheapCheck` is used to do basic inexpensive
-on-chain validation of the tickets as they are received. Invalid tickets are
-rejected and their senders penalized.
+The operator contract checks the validity of each submitted ticket
+by querying the staking contract
+for the stake available to the operator in the ticket,
+calculating the corresponding staker weight,
+checking that the virtual staker index _vs_ is within the allowed bounds,
+and verifying that _value~k~_ is correct.
+Invalid tickets are rejected.
 
 Phase 2a ends when _TICKET_INITIAL_TIMEOUT_ is reached.
 
@@ -172,27 +164,15 @@ and tickets submitted at different times should not be rejected.
 
 Phase 2b ends when _TICKET_SUBMISSION_TIMEOUT_ is reached.
 
-=== Phase 3: ticket verification
+=== Phase 3: threshold determination
 
-Each staker should verify the proofs supplied with each ticket. If a ticket
-doesn't pass `costlyCheck`, the staker should raise a challenge to that ticket.
-
-When a ticket is challenged, on-chain will perform `costlyCheck` on the
-challenged ticket, performing whatever verification is necessary on the proof.
-If the ticket fails `costlyCheck`, the staker who originally submitted the
-ticket will be penalized. If the ticket passes `costlyCheck` the staker who
-presented the invalid challenge will be penalized.
-
-Phase 3 ends when _TICKET_CHALLENGE_TIMEOUT_ is reached. Challenges may also be
-presented during phase 2. 
-
-=== Phase 4: threshold determination
-
-After all potentially eligible tickets have been submitted and challenges
-resolved, the _N_ tickets with the lowest values for _W~k~_ will be selected
-into the group _P_. The corresponding virtual stakers will be automatically
-assigned to form the group and no further interaction is necessary. DKG will be
-performed.
+After all potentially eligible tickets have been submitted,
+the _N_ tickets with the lowest values for _value~k~_
+will be selected into the group _P_.
+The corresponding virtual stakers
+will be automatically assigned to form the group
+and no further interaction is necessary.
+DKG will be performed.
 
 == Notes and rationale:
 
@@ -210,10 +190,6 @@ amounts below _MINIMUM_STAKE_ and sharing the risk and profits would enable the
 utilization of smaller holders' tokens or surplus tokens from regular stakers.
 This form of trenchcoating is arguably either neutral or beneficial, and in any
 case it does not violate proportionality of rewards.
-
-Additionally, using virtual stakers and tickets instead of eg. a threshold that
-adjusts itself based on the staked amount lets us hide any particular staker's
-identity and the size of their stake later (<<req-5,requirement 5>>).
 
 === Interactive protocol
 
@@ -259,27 +235,6 @@ If it seems likely that _Threshold~P~ < W~k~_,
 _S~j~_ can refrain from broadcasting _W~k~_ and only monitor the situation,
 reacting if it seems that few stakers' ticket values are falling under
 the estimated threshold.
-
-=== Zero-knowledge proofs
-
-The protocol has been designed to be easily compatible with zero-knowledge
-proofs later (<<req-5,requirement 5>>). The weights and virtual staker indices
-can use range proofs, and _Q~j~_ is required to be simply a value unique to any
-given staker.
-
-Initially _Q~j~_ can be something public and easy to verify, such as the address
-of _S~j~_, but the design of the protocol should be flexible later.
-
-Similarly, the protocol specifies a pseudorandom function `prf`; `sha3` can be used
-before staker indistinguishability is required, but any function with the right
-qualities can be easily substituted.
-
-Tickets are checked on-chain in two stages: `cheapCheck` does surface-level
-validation of factors that are easy to check, while `costlyCheck` performs a
-full verification of the supplied proof only if the ticket is challenged. This
-means that the on-chain protocol should not be too constrained by the cost of
-ZKP verification later on, as verification can only be performed when necessary.
-Rational adversaries will not present invalid tickets due to the penalties.
 
 == Alternative off-chain protocol
 
@@ -351,11 +306,6 @@ formation and DKG conclusion message:
 
 
 === Notes
-
-The BLS signatures should probably be verified with the protocol in
-https://crypto.stanford.edu/~dabo/pubs/papers/BLSmultisig.html and Bulletproofs
-would likely be used for the ZKP element after the introduction of staker
-indistinguishability
 
 The off-chain protocol is much more complex to secure effectively, and a variety
 of attacks on the group composition need to be addressed.
