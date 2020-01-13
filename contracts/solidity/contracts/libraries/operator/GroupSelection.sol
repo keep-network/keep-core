@@ -83,7 +83,7 @@ library GroupSelection {
      * value.
      */
     function start(Storage storage self, uint256 _seed) public {
-        cleanup(self);
+        cleanupTickets(self);
         self.inProgress = true;
         self.seed = _seed;
         self.ticketSubmissionStartBlock = block.number;
@@ -94,7 +94,8 @@ library GroupSelection {
      * tickets.
      */
     function stop(Storage storage self) public {
-        cleanup(self);
+        cleanupCandidates(self);
+        cleanupTickets(self);
         self.inProgress = false;
     }
 
@@ -303,10 +304,19 @@ library GroupSelection {
     }
 
     /**
-     * @dev Clears up data of the group selection.
+     * @dev Clears up data of the group selection tickets.
      */
-    function cleanup(Storage storage self) internal {
+    function cleanupTickets(Storage storage self) internal {
         delete self.tickets;
         self.tail = 0;
+    }
+
+    /**
+     * @dev Clears up data of the group selection candidates.
+     */
+    function cleanupCandidates(Storage storage self) internal {
+        for (uint i = 0; i < self.tickets.length; i++) {
+            delete self.candidate[self.tickets[i]];
+        }
     }
 }
