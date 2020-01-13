@@ -168,12 +168,22 @@ variable "gke_subnet" {
   }
 }
 
-variable "atlantis_ip_name" {
+variable "eth_tx_ropsten_loadbalancer_name" {
   description = "The name for your Atlantis IP."
-  default     = "keep-dev-atlantis-external-ip"
+  default     = "keep-dev-eth-tx-ropsten-loadbalancer-external-ip"
 }
 
-variable "atlantis_ip_address_type" {
+variable "eth_tx_ropsten_loadbalancer_address_type" {
+  description = "Internet facing or not. internal or external"
+  default     = "external"
+}
+
+variable "eth_tx_ropsten_light_loadbalancer_name" {
+  description = "The name for your Atlantis IP."
+  default     = "keep-dev-eth-tx-ropsten-light-loadbalancer-external-ip"
+}
+
+variable "eth_tx_ropsten_light_loadbalancer_address_type" {
   description = "Internet facing or not. internal or external"
   default     = "external"
 }
