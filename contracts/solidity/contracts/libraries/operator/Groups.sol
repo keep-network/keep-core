@@ -295,16 +295,17 @@ library Groups {
     }
 
     /**
-     * @dev Withdraws accumulated group member rewards for msg.sender
+     * @dev Withdraws accumulated group member rewards for operator
      * using the provided group index and member indices. Once the
      * accumulated reward is withdrawn from the selected group, member is
      * removed from it. Rewards can be withdrawn only from stale group.
-     *
+     * @param operator Operator address.
      * @param groupIndex Group index.
      * @param groupMemberIndices Array of member indices for the group member.
      */
     function withdrawFromGroup(
         Storage storage self,
+        address operator,
         uint256 groupIndex,
         uint256[] memory groupMemberIndices
     ) public returns (uint256 rewards) {
@@ -313,7 +314,7 @@ library Groups {
             bool isStale = groupStaleTime(self, self.groups[groupIndex]) < block.number;
 
             bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
-            if (isExpired && isStale && msg.sender == self.groupMembers[groupPublicKey][groupMemberIndices[i]]) {
+            if (isExpired && isStale && operator == self.groupMembers[groupPublicKey][groupMemberIndices[i]]) {
                 delete self.groupMembers[groupPublicKey][groupMemberIndices[i]];
                 rewards = rewards.add(self.groupMemberRewards[groupPublicKey]);
             }
