@@ -26,7 +26,7 @@ contract('TestBLS', function() {
     )
     assert.isTrue(result, "Should be able to verify valid BLS signature.");
   });
-  
+
   it("should use reasonable amount of gas", async () => {
     // Corresponding test in Go library: bls_test.go TestThresholdBLS
     let gasEstimate = await bls.verify.estimateGas(

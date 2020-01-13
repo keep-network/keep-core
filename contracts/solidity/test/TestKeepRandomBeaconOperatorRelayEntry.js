@@ -26,7 +26,7 @@ contract('KeepRandomBeaconOperator', (accounts) => {
     let group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, accounts[0]);
     await operatorContract.addGroupMember(group, accounts[1]);
-    await operatorContract.addGroupMember(group, accounts[2]); 
+    await operatorContract.addGroupMember(group, accounts[2]);
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
@@ -43,7 +43,7 @@ contract('KeepRandomBeaconOperator', (accounts) => {
   it("should keep relay entry submission at reasonable price", async () => {
     let gasEstimate = await operatorContract.relayEntry.estimateGas(bls.groupSignature);
 
-    // Make sure no change will make the verification more expensive than it is 
+    // Make sure no change will make the verification more expensive than it is
     // now or that even if it happens, it will be a conscious decision.
     assert.isBelow(gasEstimate, 371968, "Relay entry submission is too expensive")
   });
@@ -74,7 +74,7 @@ contract('KeepRandomBeaconOperator', (accounts) => {
 
   it("should allow to submit only one entry", async () => {
     await operatorContract.relayEntry(bls.groupSignature);
-    
+
     await expectThrowWithMessage(
       operatorContract.relayEntry(bls.groupSignature),
       "Entry was submitted"
