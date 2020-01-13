@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { RewardsGroups } from './RewardsGroups'
 import { Web3Context } from './WithWeb3Context'
+import Button from './Button'
 
 export const Rewards = () => {
   const { keepRandomBeaconOperatorContract, stakingContract, yourAddress, utils } = useContext(Web3Context)
@@ -25,6 +26,13 @@ export const Rewards = () => {
       })
   }, [])
   return (
-    <RewardsGroups groups={data} />
+    <>
+      <RewardsGroups groups={data} />
+      <Button
+        className="btn btn-primary brn-sm"
+      >
+        SEE ALL (10)
+      </Button>
+    </>
   )
 }
