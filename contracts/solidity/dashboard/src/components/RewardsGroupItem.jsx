@@ -5,16 +5,18 @@ import AddressShortcut from './AddressShortcut'
 export const RewardsGroupItem = ({ groupIndex, groupPubKey, reward, isStale }) => {
   return (
     <div className='group-item'>
-      <span>
-        Group index: {groupIndex}
-      </span>
-      <h4>
-        Group public key:&nbsp;
+      <div className='group-key'>
         <AddressShortcut address={groupPubKey} />
-      </h4>
-      <p>{reward.toString()} ETH</p>
+        <span>GROUP PUBLIC KEY</span>
+      </div>
+      <div className='group-reward'>
+        <span className='reward-value'>
+          {reward.toString()}
+        </span>
+        <span className='reward-currency'>ETH</span>
+      </div>
       <Button
-        className="btn btn-primary btn-large"
+        className='btn btn-primary btn-sm'
         disabled={!isStale}
       >
         Withdraw
