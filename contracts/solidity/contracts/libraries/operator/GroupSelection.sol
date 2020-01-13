@@ -306,10 +306,6 @@ library GroupSelection {
      * @dev Clears up data of the group selection.
      */
     function cleanup(Storage storage self) internal {
-        for (uint i = 0; i < self.tickets.length; i++) {
-            delete self.candidate[self.tickets[i]];
-            delete self.previousTicketIndex[i];
-        }
         delete self.tickets;
         self.tail = 0;
     }
