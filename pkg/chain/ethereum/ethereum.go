@@ -142,8 +142,8 @@ func (ec *ethereumChain) GetSelectedParticipants() ([]chain.StakerAddress, error
 		}
 
 		stakerAddresses = make([]chain.StakerAddress, len(participants))
-		for _, participant := range participants {
-			stakerAddresses = append(stakerAddresses, participant.Bytes())
+		for i, participant := range participants {
+			stakerAddresses[i] = participant.Bytes()
 		}
 
 		return nil
