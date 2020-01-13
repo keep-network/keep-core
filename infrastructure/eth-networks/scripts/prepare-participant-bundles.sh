@@ -1,7 +1,7 @@
 set -e
 
 HELP="Usage: ./$(basename $0) -n <ETH_NETWORK> -e <ENVIRONMENT>
-      \n\nAvailable ETH_NETWORK: ropsten, internal
+      \n\nAvailable ETH_NETWORK: ropsten
       \nAvailable ENVIRONMENT: keep-test"
 
 while getopts ":n:e:" opt; do
