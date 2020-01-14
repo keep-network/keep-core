@@ -1,3 +1,5 @@
+const Config = require("./../truffle-config.js");
+
 const KeepToken = artifacts.require("./KeepToken.sol");
 const ModUtils = artifacts.require("./utils/ModUtils.sol");
 const AltBn128 = artifacts.require("./cryptography/AltBn128.sol");
@@ -12,11 +14,10 @@ const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
 
 const withdrawalDelay = 86400; // 1 day
-const priceFeedEstimate = web3.utils.toBN(1).mul(web3.utils.toBN(10**9)); // (1 Gwei = 1 * 10^9 wei)
 const fluctuationMargin = 50; // 50%
 const dkgContributionMargin = 1; // 1%
 
-module.exports = async function(deployer) {
+module.exports = async function(deployer, network) {
   await deployer.deploy(ModUtils);
   await deployer.link(ModUtils, AltBn128);
   await deployer.deploy(AltBn128);
@@ -41,6 +42,15 @@ module.exports = async function(deployer) {
   const keepRandomBeaconService = await KeepRandomBeaconServiceImplV1.at(KeepRandomBeaconService.address);
   const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
 
+  let priceFeedEstimate;
+  // Get gas price from network config...
+  if (Config.networks[network].gasPrice) {
+    priceFeedEstimate = web3.utils.toBN(Config.networks[network].gasPrice)
+  // ...or a default value equal to 1 Gwei = 1 * 10^9 wei
+  } else {
+    priceFeedEstimate = web3.utils.toBN(1).mul(web3.utils.toBN(10**9));
+  }
+
   keepRandomBeaconService.initialize(
     priceFeedEstimate,
     fluctuationMargin,
@@ -48,4 +58,6 @@ module.exports = async function(deployer) {
     withdrawalDelay,
     keepRandomBeaconOperator.address
   );
+
+  await keepRandomBeaconOperator.setPriceFeedEstimate(priceFeedEstimate);
 };
