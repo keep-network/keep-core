@@ -1,5 +1,5 @@
 import Web3 from 'web3'
-import BigNumber from "bignumber.js"
+import BigNumber from 'bignumber.js'
 
 export function displayAmount(amount, decimals, precision) {
   if (amount) {
@@ -13,15 +13,12 @@ export function formatAmount(amount, decimals) {
   return amount.times(new BigNumber(10).pow(new BigNumber(decimals)))
 }
 
-export function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
 export const getWeb3 = () => {
-  if (window.ethereum || window.web3)
+  if (window.ethereum || window.web3) {
     return new Web3(window.ethereum || window.web3.currentProvider)
-  
-  return null;
+  }
+
+  return null
 }
 
 export const getWeb3SocketProvider = () => {

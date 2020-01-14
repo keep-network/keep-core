@@ -165,7 +165,7 @@ contract KeepRandomBeaconOperator {
         groups.activeGroupsThreshold = 5;
         groups.groupActiveTime = 3000;
 
-        dkgResultVerification.timeDKG = 7*(1+3);
+        dkgResultVerification.timeDKG = 7*(1+5);
         dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;
         dkgResultVerification.groupSize = groupSize;
         // TODO: For now, the required number of signatures is equal to group
@@ -226,14 +226,7 @@ contract KeepRandomBeaconOperator {
             "Insufficient DKG fee"
         );
 
-        // dkgTimeout is the time after key generation protocol is expected to
-        // be complete plus the expected time to submit the result.
-        uint256 dkgTimeout = groupSelection.ticketSubmissionStartBlock +
-            groupSelection.ticketSubmissionTimeout +
-            dkgResultVerification.timeDKG +
-            groupSize * resultPublicationBlockStep;
-
-        require(!groupSelection.inProgress || block.number > dkgTimeout, "Group selection in progress");
+        require(isGroupSelectionPossible(), "Group selection in progress");
 
         // If previous group selection failed and there is reimbursement left
         // return it to the DKG fee pool.
@@ -246,6 +239,21 @@ contract KeepRandomBeaconOperator {
         groupSelection.start(_newEntry);
         emit GroupSelectionStarted(_newEntry);
         dkgSubmitterReimbursementFee = _payment;
+    }
+
+    function isGroupSelectionPossible() public view returns (bool) {
+        if (!groupSelection.inProgress) {
+            return true;
+        }
+
+        // dkgTimeout is the time after key generation protocol is expected to
+        // be complete plus the expected time to submit the result.
+        uint256 dkgTimeout = groupSelection.ticketSubmissionStartBlock +
+        groupSelection.ticketSubmissionTimeout +
+        dkgResultVerification.timeDKG +
+        groupSize * resultPublicationBlockStep;
+
+        return block.number > dkgTimeout;
     }
 
     /**

@@ -16,6 +16,7 @@ interface OperatorContract {
     ) external payable;
     function numberOfGroups() external view returns(uint256);
     function createGroup(uint256 newEntry) external payable;
+    function isGroupSelectionPossible() external view returns (bool);
 }
 
 /**
@@ -334,20 +335,14 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * @param entry The generated random number.
      */
     function triggerDkgIfApplicable(uint256 entry) internal {
-        bool success; // Store status of external contract call.
-        bytes memory data; // Store result data of external contract call.
-
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
         uint256 dkgFeeEstimate = OperatorContract(latestOperatorContract).dkgGasEstimate().mul(
             gasPriceWithFluctuationMargin(_priceFeedEstimate)
         );
-        if (_dkgFeePool >= dkgFeeEstimate) {
-            // Disabling ethlint error message. No security implications, we're calling audited and trusted contract here.
-            // solium-disable-next-line
-            (success, data) = latestOperatorContract.call.value(dkgFeeEstimate)(abi.encodeWithSignature("createGroup(uint256)", entry));
-            if (success) {
-                _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
-            }
+
+        if (_dkgFeePool >= dkgFeeEstimate && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
+            OperatorContract(latestOperatorContract).createGroup.value(dkgFeeEstimate)(entry);
+            _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
         }
     }
 

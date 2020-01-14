@@ -1,33 +1,23 @@
-import React from 'react'
-import { Navbar, NavbarBrand } from 'react-bootstrap'
+import React, { useContext } from 'react'
 import * as Icons from './Icons'
-import WithWeb3Context from './WithWeb3Context'
+import { Web3Context } from './WithWeb3Context'
 import { Web3Status } from './Web3Status'
+import { MenuButton } from './MenuButton'
 
-const Header = ({ web3: { networkType, token } }) => {
+const Header = (props) => {
+  const { yourAddress } = useContext(Web3Context)
+
   return (
-    <>
-      <Navbar>
-        <Navbar.Header>
-          <NavbarBrand>
-            <a href="/"><Icons.Keep height="61px" width="235px"/></a>
-            <p>Token Dashboard</p>
-          </NavbarBrand>
-        </Navbar.Header>
-        <div className="pull-right">
-          <div>
-            <strong>KEEP Token: </strong>
-            <span className="txt-primary">{ token ? token.options.address : '' }</span>
-          </div>
-          <div>
-            <strong>Network: </strong>
-            <span className="txt-primary">{ networkType }</span>
-          </div>
-        </div>
-      </Navbar>
-      <Web3Status/>
-    </>
+    <header className='header'>
+      <a href="/" className='logo'><Icons.Keep width='250px' height='80px'/></a>
+      <Web3Status />
+      <div className='account-address'>
+        <strong>Account address: </strong>
+        <span className="txt-primary">{ yourAddress || '' }</span>
+      </div>
+      <MenuButton />
+    </header>
   )
 }
 
-export default WithWeb3Context(Header);
+export default Header
