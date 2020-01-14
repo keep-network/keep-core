@@ -14,9 +14,12 @@ func TestRetransmitExpectedNumberOfTimes(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 510*time.Millisecond)
 	defer cancel()
 
+	timeTicker := time.NewTicker(50 * time.Millisecond)
+	defer timeTicker.Stop()
+
 	ticks := make(chan uint64)
 	go func() {
-		for tick := range time.NewTicker(50 * time.Millisecond).C {
+		for tick := range timeTicker.C {
 			ticks <- uint64(tick.Unix())
 		}
 	}()
@@ -43,9 +46,12 @@ func TestUpdateRetransmissionCounter(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 160*time.Millisecond)
 	defer cancel()
 
+	timeTicker := time.NewTicker(50 * time.Millisecond)
+	defer timeTicker.Stop()
+
 	ticks := make(chan uint64)
 	go func() {
-		for tick := range time.NewTicker(50 * time.Millisecond).C {
+		for tick := range timeTicker.C {
 			ticks <- uint64(tick.Unix())
 		}
 	}()
@@ -93,9 +99,12 @@ func TestRetransmitOriginalContent(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 110*time.Millisecond)
 	defer cancel()
 
+	timeTicker := time.NewTicker(50 * time.Millisecond)
+	defer timeTicker.Stop()
+
 	ticks := make(chan uint64)
 	go func() {
-		for tick := range time.NewTicker(50 * time.Millisecond).C {
+		for tick := range timeTicker.C {
 			ticks <- uint64(tick.Unix())
 		}
 	}()
