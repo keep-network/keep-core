@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./DelayedWithdrawal.sol";
 
@@ -28,7 +29,7 @@ interface OperatorContract {
  * Warning: you can't set constants directly in the contract and must use initialize()
  * please see openzeppelin upgradeable contracts approach for more info.
  */
-contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
+contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, ReentrancyGuard {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
 
@@ -216,7 +217,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         address callbackContract,
         string memory callbackMethod,
         uint256 callbackGas
-    ) public payable returns (uint256) {
+    ) public nonReentrant payable returns (uint256) {
         require(
             msg.value >= entryFeeEstimate(callbackGas),
             "Payment is less than required minimum."

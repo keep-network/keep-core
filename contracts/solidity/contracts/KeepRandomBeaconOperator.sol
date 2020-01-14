@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./TokenStaking.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
@@ -21,7 +22,7 @@ interface ServiceContract {
  * The contract is not upgradeable. New functionality can be implemented by deploying
  * new versions following Keep client update and re-authorization by the stakers.
  */
-contract KeepRandomBeaconOperator {
+contract KeepRandomBeaconOperator is ReentrancyGuard {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
     using GroupSelection for GroupSelection.Storage;
@@ -451,7 +452,7 @@ contract KeepRandomBeaconOperator {
      * @param _groupSignature Group BLS signature over the concatenation of the
      * previous entry and seed.
      */
-    function relayEntry(bytes memory _groupSignature) public {
+    function relayEntry(bytes memory _groupSignature) public nonReentrant {
         require(isEntryInProgress(), "Entry was submitted");
         require(!hasEntryTimedOut(), "Entry timed out");
 
@@ -656,7 +657,7 @@ contract KeepRandomBeaconOperator {
      * @param groupIndex Group index.
      * @param groupMemberIndices Array of member indices for the group member.
      */
-    function withdrawGroupMemberRewards(uint256 groupIndex, uint256[] memory groupMemberIndices) public {
+    function withdrawGroupMemberRewards(uint256 groupIndex, uint256[] memory groupMemberIndices) public nonReentrant {
         uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
         (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(accumulatedRewards)("");
         require(success, "Failed withdraw rewards");
