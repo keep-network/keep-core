@@ -314,7 +314,7 @@ library Groups {
         require(isExpired && isStale, "Group must be expired and stale");
         bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
         for (uint i = 0; i < groupMemberIndices.length; i++) {
-            if (isExpired && isStale && operator == self.groupMembers[groupPublicKey][groupMemberIndices[i]]) {
+            if (operator == self.groupMembers[groupPublicKey][groupMemberIndices[i]]) {
                 delete self.groupMembers[groupPublicKey][groupMemberIndices[i]];
                 rewards = rewards.add(self.groupMemberRewards[groupPublicKey]);
             }
