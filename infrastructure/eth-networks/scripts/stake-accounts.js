@@ -98,14 +98,14 @@ async function stakeOperatorAccount(operatorAddress, contractOwnerAddress) {
     Buffer.from(operatorAddress.substr(2), 'hex')
   ]).toString('hex');;
 
-  console.log('Staking 2000000 KEEP tokens on operator account ' + operatorAddress);
+  console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
     formatAmount(20000000, 18),
     delegation).send({from: contractOwnerAddress});
 
-  console.log('Account ' + operatorAddress + ' staked!');
+  console.log(`Account ${operatorAddress} staked!`);
 };
 
 function formatAmount(amount, decimals) {
