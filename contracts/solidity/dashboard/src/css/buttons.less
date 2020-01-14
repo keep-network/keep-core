@@ -1,30 +1,30 @@
-
 .btn {
+  font-weight: bold;
   padding: 10px 33px;
-  border-radius: @border-radius;
+  border-radius: 0;
 }
 
 .btn-sm {
-  padding: 5px 10px;
-  border-radius: @border-radius;
+  padding: 10px 15px;
+  border-radius: 0;
 }
 
 .btn-default {
   background-color: @white;
-  color: @link-color;
-  border-color: @white;
+  color: @black;
+  border-color: @black;
 }
 
 .btn-primary {
-  background-color: @link-color;
-  border-color: @link-color;
+  color: @aqua-marine;
+  background-color: @black;
+  border-color: @black;
 }
 
 .txt-primary {
   color: @link-color;
 }
 
-.btn-default,
 .btn-primary,
 .btn-primary[disabled],
 .btn-primary.disabled {
@@ -36,9 +36,30 @@
   &.active.focus,
   &.active,
   &.focus {
-    background-color: @link-active-color;
-    border-color: @link-active-color;
-    color: @white;
+    background-color: @black;
+    border-color: @black;
+    color: lighten(@aqua-marine, 25%);
+  }
+
+  &:focus {
+    outline: 0;
+  }
+}
+
+.btn-default,
+.btn-default[disabled],
+.btn-default.disabled {
+  transition: 0.25s all ease-in;
+
+  &:hover,
+  &:focus,
+  &:active,
+  &.active.focus,
+  &.active,
+  &.focus {
+    border-color: darken(@white, 10%);
+    background-color: darken(@white, 10%);
+    color: darken(@black, 10%);
   }
 
   &:focus {
