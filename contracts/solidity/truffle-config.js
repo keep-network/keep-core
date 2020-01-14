@@ -7,8 +7,7 @@ module.exports = {
     local: {
       host: "localhost",
       port: 8545,
-      network_id: "*",
-      gasPrice: 999
+      network_id: "*"
     },
     keep_dev: {
       host: "localhost",
