@@ -309,11 +309,11 @@ library Groups {
         uint256 groupIndex,
         uint256[] memory groupMemberIndices
     ) public returns (uint256 rewards) {
+        bool isExpired = self.expiredGroupOffset > groupIndex;
+        bool isStale = groupStaleTime(self, self.groups[groupIndex]) < block.number;
+        require(isExpired && isStale, "Group must be expired and stale");
+        bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
         for (uint i = 0; i < groupMemberIndices.length; i++) {
-            bool isExpired = self.expiredGroupOffset > groupIndex;
-            bool isStale = groupStaleTime(self, self.groups[groupIndex]) < block.number;
-
-            bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
             if (isExpired && isStale && operator == self.groupMembers[groupPublicKey][groupMemberIndices[i]]) {
                 delete self.groupMembers[groupPublicKey][groupMemberIndices[i]];
                 rewards = rewards.add(self.groupMemberRewards[groupPublicKey]);

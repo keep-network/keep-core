@@ -152,7 +152,10 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let beneficiary1balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary1))
 
     // Nothing can be withdrawn
-    await operatorContract.withdrawGroupMemberRewards(operator1, 1, memberIndices)
+    await expectThrowWithMessage(
+      operatorContract.withdrawGroupMemberRewards(operator1, 1, memberIndices),
+      "Group must be expired and stale"
+    )
     assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary1))).eq(beneficiary1balance), "Unexpected beneficiary balance")
   })
 
@@ -165,7 +168,10 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
     // Nothing can be withdrawn
-    await operatorContract.withdrawGroupMemberRewards(operator2, 0, memberIndices)
+    await expectThrowWithMessage(
+      operatorContract.withdrawGroupMemberRewards(operator2, 0, memberIndices),
+      "Group must be expired and stale"
+    )
     assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary2balance), "Unexpected beneficiary balance")
   })
 })
