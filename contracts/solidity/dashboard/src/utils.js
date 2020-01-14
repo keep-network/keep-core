@@ -1,5 +1,5 @@
 import Web3 from 'web3'
-import BigNumber from "bignumber.js"
+import BigNumber from 'bignumber.js'
 
 export function displayAmount(amount, decimals, precision) {
   if (amount) {
@@ -13,37 +13,12 @@ export function formatAmount(amount, decimals) {
   return amount.times(new BigNumber(10).pow(new BigNumber(decimals)))
 }
 
-export function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-let web3;
-
-export const getWeb3 = async () => {
-
-  if (web3) return web3
-
-  // Modern dapp browsers...
-  if (window.ethereum) {
-    web3 = new Web3(window.ethereum)
-    try {
-      // Request account access if needed
-      await window.ethereum.enable()
-      // Acccounts now exposed
-      return web3;
-    } catch (error) {
-      return error;
-    }
+export const getWeb3 = () => {
+  if (window.ethereum || window.web3) {
+    return new Web3(window.ethereum || window.web3.currentProvider)
   }
-  // Legacy dapp browsers...
-  else if (window.web3) {
-    // Use Mist/MetaMask's provider.
-    web3 = new Web3(window.web3.currentProvider)
-    console.log("Injected web3 detected.")
-    return web3;
-  }
-  
-  return null;
+
+  return null
 }
 
 export const getWeb3SocketProvider = () => {

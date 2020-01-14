@@ -2,17 +2,14 @@ import React, { Component } from 'react'
 import { Table } from 'react-bootstrap'
 
 class TokenGrantsTable extends Component {
+  renderRow = (item, i) => (
+    <tr key={'token-grant-'+i+'-from-'+item.grantManager}>
+      <td>{item.formatted.amount}</td>
+      <td><a href="/">{item.grantManager}</a></td>
+    </tr>
+  )
+
   render() {
-    if (this.props.data) {
-      var rows = this.props.data.map(function(item, i){
-        return (
-          <tr key={"token-grant-"+i+"-from-"+item.grantManager}>
-            <td>{item.formatted.amount}</td>
-            <td><a href="/">{item.grantManager}</a></td>
-          </tr>
-        )
-      })
-    }
     return (
       <Table className="small table-sm" condensed>
         <thead>
@@ -22,7 +19,7 @@ class TokenGrantsTable extends Component {
           </tr>
         </thead>
         <tbody>
-          { rows }
+          { this.pros.data && this.props.data.map(this.renderRow) }
         </tbody>
       </Table>
     )
