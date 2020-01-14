@@ -30,9 +30,7 @@ contract StakeDelegatable {
 
     // List of operators for the stake owner.
     mapping(address => address[]) public ownerOperators;
-
-    mapping(address => address[]) public magpieOperators;
-
+    
     /**
      * @dev Gets the stake balance of the specified address.
      * @param _address The address to query the balance of.
@@ -65,13 +63,4 @@ contract StakeDelegatable {
     function magpieOf(address _operator) public view returns (address payable) {
         return operatorToMagpie[_operator];
     }
-
-    /**
-     * @dev Gets the operators for the specified magpie address.
-     * @return An array of addresses.
-     */
-    function operatorsOfMagpie(address _magpie) public view returns (address[] memory) {
-        return magpieOperators[_magpie];
-    }
-
 }
