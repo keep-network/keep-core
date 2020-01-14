@@ -367,6 +367,75 @@ func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
 	}
 }
 
+func TestWatchBlocks(t *testing.T) {
+	c := Connect(10, 4, big.NewInt(100))
+	blockCounter, err := c.BlockCounter()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx1, cancel1 := context.WithCancel(context.Background())
+	defer cancel1()
+
+	ctx2, cancel2 := context.WithCancel(context.Background())
+	defer cancel2()
+
+	watcher1 := blockCounter.WatchBlocks(ctx1)
+	watcher2 := blockCounter.WatchBlocks(ctx2)
+
+	watcher1ReceivedCount := 0
+	watcher2ReceivedCount := 0
+	go func() {
+		for range watcher1 {
+			watcher1ReceivedCount++
+		}
+	}()
+	go func() {
+		for range watcher2 {
+			watcher2ReceivedCount++
+		}
+	}()
+
+	time.Sleep(600 * time.Millisecond)
+	cancel1()
+	time.Sleep(600 * time.Millisecond)
+	cancel2()
+
+	if watcher1ReceivedCount != 1 {
+		t.Errorf("watcher 1 should receive [1] block, has [%v]", watcher1ReceivedCount)
+	}
+	if watcher2ReceivedCount != 2 {
+		t.Errorf("watcher 2 should receive [2] block, has [%v]", watcher2ReceivedCount)
+	}
+}
+
+func TestWatchBlocksNonBlocking(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1100*time.Millisecond)
+	defer cancel()
+
+	c := Connect(10, 4, big.NewInt(100))
+	blockCounter, err := c.BlockCounter()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_ = blockCounter.WatchBlocks(ctx)        // does not read blocks
+	watcher := blockCounter.WatchBlocks(ctx) // does read blocks
+
+	var receivedCount uint64
+	go func() {
+		for range watcher {
+			receivedCount++
+		}
+	}()
+
+	<-ctx.Done()
+
+	if receivedCount != 2 {
+		t.Errorf("watcher should receive [2] blocks, has [%v]", receivedCount)
+	}
+}
+
 func TestLocalBlockHeightWaiter(t *testing.T) {
 	var tests = map[string]struct {
 		blockHeight      uint64
