@@ -95,8 +95,11 @@ contract KeepRandomBeaconOperator {
     // entry. Excludes callback and DKG gas.
     uint256 public entryVerificationGasEstimate = 230000;
 
-    // Gas required to submit DKG result.
-    uint256 public dkgGasEstimate = 1810000;
+    // Gas required to submit DKG result. Exludes initiation of DKG.
+    uint256 public dkgGasEstimate = 1740000;
+
+    // Gas required to initiate DKG after dkgFeePool has enough ether.
+    uint256 public dkgInitiationGasEstimate = 70000;
 
     // Reimbursement for the submitter of the DKG result.
     // This value is set when a new DKG request comes to the operator contract.

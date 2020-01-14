@@ -283,8 +283,13 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             executeEntryCreatedCallback(requestId, entryAsNumber, submitter);
             delete _callbacks[requestId];
         }
+        uint256 dkgInitationGasEstimate = OperatorContract(latestOperatorContract).dkgInitiationGasEstimate().mul(
+            gasPriceWithFluctuationMargin(_priceFeedEstimate)
+        );
 
-        triggerDkgIfApplicable(entryAsNumber);
+        if (isDkgInitiated(entryAsNumber, dkgInitationGasEstimate)) {
+            submitter.transfer(dkgInitationGasEstimate);
+        }
     }
 
     /**
@@ -330,20 +335,25 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
-     * @dev Triggers the selection process of a new candidate group if the DKG
-     * fee pool equals or exceeds DKG cost estimate.
+     * @dev Initiates the selection process of a new candidate group if the DKG
+     * fee pool equals or exceeds DKG cost estimate and DKG initiation cost.
      * @param entry The generated random number.
      */
-    function triggerDkgIfApplicable(uint256 entry) internal {
+    function isDkgInitiated(uint256 entry, uint256 dkgInitationGasEstimate) internal returns(bool) {
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
         uint256 dkgFeeEstimate = OperatorContract(latestOperatorContract).dkgGasEstimate().mul(
             gasPriceWithFluctuationMargin(_priceFeedEstimate)
         );
 
-        if (_dkgFeePool >= dkgFeeEstimate && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
+        if (_dkgFeePool >= (dkgFeeEstimate + dkgInitationGasEstimate) &&
+        OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
             OperatorContract(latestOperatorContract).createGroup.value(dkgFeeEstimate)(entry);
-            _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
+            _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate).sub(dkgInitationGasEstimate);
+
+            return true;
         }
+
+        return false;
     }
 
     /**
