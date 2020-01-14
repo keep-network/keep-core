@@ -197,6 +197,8 @@ type CombiningMember struct {
 	// Group public key calculated from individual public keys of all group members.
 	// Denoted as `Y` across the protocol specification.
 	groupPublicKey *bn256.G2
+	// Group public key shares calculated for each individual member of the group.
+	groupPublicKeyShares map[group.MemberIndex]*bn256.G2
 }
 
 // InitializeFinalization returns a member to perform next protocol operations.
@@ -308,7 +310,10 @@ func (rm *RevealingMember) InitializeReconstruction() *ReconstructingMember {
 
 // InitializeCombining returns a member to perform next protocol operations.
 func (rm *ReconstructingMember) InitializeCombining() *CombiningMember {
-	return &CombiningMember{ReconstructingMember: rm}
+	return &CombiningMember{
+		ReconstructingMember: rm,
+		groupPublicKeyShares: make(map[group.MemberIndex]*bn256.G2),
+	}
 }
 
 // individualPrivateKey returns current member's individual private key.
@@ -349,5 +354,6 @@ func (fm *FinalizingMember) Result() *Result {
 		Group:                fm.group,
 		GroupPublicKey:       fm.groupPublicKey, // nil if threshold not satisfied
 		GroupPrivateKeyShare: fm.groupPrivateKeyShare,
+		GroupPublicKeyShares: fm.groupPublicKeyShares,
 	}
 }

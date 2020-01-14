@@ -133,6 +133,12 @@ func (scs *signatureCompleteState) Initiate() error {
 		scs.MemberIndex(),
 	)
 
+	previousEntryG1 := new(bn256.G1)
+	_, err := previousEntryG1.Unmarshal(scs.previousEntry)
+	if err != nil {
+		return err
+	}
+
 	for _, message := range scs.previousPhaseMessages {
 		share := new(bn256.G1)
 		_, err := share.Unmarshal(message.shareBytes)
@@ -144,12 +150,30 @@ func (scs *signatureCompleteState) Initiate() error {
 				err,
 			)
 		} else {
-			logger.Debugf(
-				"[member:%v] accepting signature share from member [%v]",
-				scs.MemberIndex(),
-				message.senderID,
-			)
-			seenShares[message.senderID] = share
+			publicKey, ok := scs.signer.GroupPublicKeyShares()[message.senderID]
+			if !ok {
+				logger.Warningf(
+					"[member:%v] could not validate signature share from "+
+						"member [%v] because their public key was not found",
+					scs.MemberIndex(),
+					message.senderID,
+				)
+			}
+
+			if bls.VerifyG1(publicKey, previousEntryG1, share) {
+				logger.Debugf(
+					"[member:%v] accepting signature share from member [%v]",
+					scs.MemberIndex(),
+					message.senderID,
+				)
+				seenShares[message.senderID] = share
+			} else {
+				logger.Warningf(
+					"[member:%v] rejecting invalid signature share from member [%v]",
+					scs.MemberIndex(),
+					message.senderID,
+				)
+			}
 		}
 	}
 

@@ -906,7 +906,7 @@ func (sm *SharingMember) isValidMemberPublicKeySharePointsMessage(
 // What, using elliptic curve, is the same as:
 // G * s_ji == Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
-	senderID group.MemberIndex,
+	receiverID group.MemberIndex,
 	shareS *big.Int,
 	publicKeySharePoints []*bn256.G2,
 ) bool {
@@ -914,19 +914,29 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 		return false
 	}
 
-	var sum *bn256.G2 // Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
+	sum := sm.publicKeyShare(receiverID, publicKeySharePoints)
+	gs := new(bn256.G2).ScalarBaseMult(shareS) // G * s_ji
+
+	return gs.String() == sum.String()
+}
+
+// publicKeyShare returns public key share for given receiver based on given
+// public key share points.
+func (sm *SharingMember) publicKeyShare(
+	receiverID group.MemberIndex,
+	publicKeySharePoints []*bn256.G2,
+) *bn256.G2 {
+	var sum *bn256.G2
+	// Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 	for k, a := range publicKeySharePoints {
-		aj := new(bn256.G2).ScalarMult(a, pow(senderID, k)) // A_j[k] * (i^k)
+		aj := new(bn256.G2).ScalarMult(a, pow(receiverID, k)) // A_j[k] * (i^k)
 		if sum == nil {
 			sum = aj
 		} else {
 			sum = new(bn256.G2).Add(sum, aj)
 		}
 	}
-
-	gs := new(bn256.G2).ScalarBaseMult(shareS) // G * s_ji
-
-	return gs.String() == sum.String()
+	return sum
 }
 
 // ResolvePublicKeySharePointsAccusationsMessages resolves complaints received
@@ -1655,8 +1665,27 @@ func (rm *CombiningMember) CombineGroupPublicKey() {
 	// Add reconstructed misbehaved members' individual public keys `G * z_m`.
 	for _, peerPublicKey := range rm.reconstructedIndividualPublicKeys {
 		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
-
 	}
 
 	rm.groupPublicKey = groupPublicKey
+
+	// Calculate group public key shares for all other members.
+	for memberID := range rm.receivedValidPeerPublicKeySharePoints {
+		// Calculate first component based on current member public key share points.
+		groupPublicKeyShare := rm.publicKeyShare(memberID, rm.publicKeySharePoints)
+
+		// Calculate subsequent components based on all received and
+		// valid other members public key share points.
+		for _, publicKeySharePoints := range rm.receivedValidPeerPublicKeySharePoints {
+			groupPublicKeyShare = new(bn256.G2).Add(
+				groupPublicKeyShare,
+				rm.publicKeyShare(memberID, publicKeySharePoints),
+			)
+		}
+
+		// TODO What if one of the member didn't send valid
+		//  public key share points but belongs to the QUAL set?
+
+		rm.groupPublicKeyShares[memberID] = groupPublicKeyShare
+	}
 }

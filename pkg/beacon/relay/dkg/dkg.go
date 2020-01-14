@@ -69,5 +69,6 @@ func ExecuteDKG(
 		memberIndex:          playerIndex,
 		groupPublicKey:       gjkrResult.GroupPublicKey,
 		groupPrivateKeyShare: gjkrResult.GroupPrivateKeyShare,
+		groupPublicKeyShares: gjkrResult.GroupPublicKeyShares,
 	}, nil
 }

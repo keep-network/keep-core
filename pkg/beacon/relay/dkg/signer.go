@@ -19,6 +19,7 @@ type ThresholdSigner struct {
 	memberIndex          group.MemberIndex
 	groupPublicKey       *bn256.G2
 	groupPrivateKeyShare *big.Int
+	groupPublicKeyShares map[group.MemberIndex]*bn256.G2
 }
 
 // NewThresholdSigner returns a new ThresholdSigner
@@ -73,4 +74,10 @@ func (ts *ThresholdSigner) CompleteSignature(
 	honestThreshold int,
 ) (*bn256.G1, error) {
 	return bls.RecoverSignature(signatureShares, honestThreshold)
+}
+
+// GroupPublicKeyShares returns group public key shares for each
+// individual member of the group.
+func (ts *ThresholdSigner) GroupPublicKeyShares() map[group.MemberIndex]*bn256.G2 {
+	return ts.groupPublicKeyShares
 }

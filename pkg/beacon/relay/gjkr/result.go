@@ -17,4 +17,8 @@ type Result struct {
 	// Share of the group private key. It is used for signing and should never
 	// be revealed publicly.
 	GroupPrivateKeyShare *big.Int
+	// Shares of the group public key for each individual member of the group.
+	// They are used for verification of signatures received from other
+	// members created using their respective group private key share.
+	GroupPublicKeyShares map[group.MemberIndex]*bn256.G2
 }
