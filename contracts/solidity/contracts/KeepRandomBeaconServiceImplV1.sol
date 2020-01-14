@@ -9,7 +9,6 @@ import "./DelayedWithdrawal.sol";
 interface OperatorContract {
     function entryVerificationGasEstimate() external view returns(uint256);
     function dkgGasEstimate() external view returns(uint256);
-    function dkgFeePoolContribution() external view returns(uint256);
     function groupProfitFee() external view returns(uint256);
     function sign(
         uint256 requestId,
@@ -427,9 +426,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         }
 
         // Use DKG gas estimate from the latest operator contract since it will be used for the next group creation.
-        address latestOperatorContractAddress = _operatorContracts[_operatorContracts.length.sub(1)];
-        OperatorContract latestOperatorContract = OperatorContract(latestOperatorContractAddress);
-        uint256 dkgGas = latestOperatorContract.dkgGasEstimate().add(latestOperatorContract.dkgFeePoolContribution());
+        address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
+        uint256 dkgGas = OperatorContract(latestOperatorContract).dkgGasEstimate();
 
         return (
             entryVerificationGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)),

@@ -95,10 +95,8 @@ contract KeepRandomBeaconOperator {
     // entry. Excludes callback and DKG gas.
     uint256 public entryVerificationGasEstimate = 230000;
 
-    uint256 public dkgFeePoolContribution = 70000;
-
     // Gas required to submit DKG result.
-    uint256 public dkgGasEstimate = 1740000;
+    uint256 public dkgGasEstimate = 1810000;
 
     // Reimbursement for the submitter of the DKG result.
     // This value is set when a new DKG request comes to the operator contract.
