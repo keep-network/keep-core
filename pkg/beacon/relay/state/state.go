@@ -56,14 +56,14 @@ const SilentStateDelayBlocks = 0
 // and not any longer.
 const SilentStateActiveBlocks = 0
 
-// MessagingStateDelayBlocks is a delay in blocks for a state exchanging
+// DefaultMessagingStateDelayBlocks is a delay in blocks for a state exchanging
 // network messages as a part of its execution.
 //
 // One block is given for all state machines cooperating over the network
 // so that they can enter the given state before any message for this
 // state is sent. This way we make sure that no messages are dropped.
-const MessagingStateDelayBlocks = 1
+const DefaultMessagingStateDelayBlocks = 1
 
-// MessagingStateActiveBlocks is a number of blocks for which a state
+// DefaultMessagingStateActiveBlocks is a number of blocks for which a state
 // exchanging network messages as a part of its execution should be active.
-const MessagingStateActiveBlocks = 3
+const DefaultMessagingStateActiveBlocks = 5
