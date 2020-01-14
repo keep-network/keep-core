@@ -256,7 +256,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         if (_requestSubsidyFeePool >= 100) {
             uint256 amount = _requestSubsidyFeePool.div(100);
             _requestSubsidyFeePool -= amount;
-            msg.sender.transfer(amount);
+            (bool success, ) = msg.sender.call.value(amount)("");
+            require(success, "Failed send subsidy fee");
         }
 
         emit RelayEntryRequested(requestId);
@@ -320,12 +321,17 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         if (callbackFee < _callbacks[requestId].callbackFee) {
             callbackSurplus = _callbacks[requestId].callbackFee.sub(callbackFee);
             // Reimburse submitter with his actual callback cost.
-            submitter.transfer(callbackFee);
+            (success, ) = submitter.call.value(callbackFee)("");
+            require(success, "Failed reimburse actual callback cost");
+
             // Return callback surplus to the requestor.
-            _callbacks[requestId].surplusRecipient.transfer(callbackSurplus);
+            (success, ) = _callbacks[requestId].surplusRecipient.call.value(callbackSurplus)("");
+            require(success, "Failed send callback surplus");
+
         } else {
             // Reimburse submitter with the callback payment sent by the requestor.
-            submitter.transfer(_callbacks[requestId].callbackFee);
+            (success, ) = submitter.call.value(_callbacks[requestId].callbackFee)("");
+            require(success, "Failed reimburse callback payment");
         }
     }
 

@@ -31,6 +31,7 @@ contract DelayedWithdrawal is Ownable {
         // Reset pending withdrawal before sending to prevent re-entrancy attacks
         _pendingWithdrawal = 0;
         address self = address(this);
-        payee.transfer(self.balance);
+        (bool success, ) = payee.call.value(self.balance)("");
+        require(success, "Withdrawal failed");
     }
 }

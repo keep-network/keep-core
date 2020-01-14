@@ -384,14 +384,17 @@ contract KeepRandomBeaconOperator {
             uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
             dkgSubmitterReimbursementFee = 0;
             // Reimburse submitter with actual DKG cost.
-            magpie.transfer(reimbursementFee);
+            (bool success, ) = magpie.call.value(reimbursementFee)("");
+            require(success, "Failed reimburse actual DKG cost");
+
             // Return surplus to the contract that started DKG.
             groupSelectionStarterContract.fundDkgFeePool.value(surplus)();
         } else {
             // If submitter used higher gas price reimburse only dkgSubmitterReimbursementFee max.
             reimbursementFee = dkgSubmitterReimbursementFee;
             dkgSubmitterReimbursementFee = 0;
-            magpie.transfer(reimbursementFee);
+            (bool success, ) = magpie.call.value(reimbursementFee)("");
+            require(success, "Failed reimburse DKG fee");
         }
     }
 
@@ -474,7 +477,8 @@ contract KeepRandomBeaconOperator {
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        stakingContract.magpieOf(msg.sender).transfer(submitterReward);
+        (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(submitterReward)("");
+        require(success, "Failed send relay submitter reward");
 
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
@@ -654,7 +658,8 @@ contract KeepRandomBeaconOperator {
      */
     function withdrawGroupMemberRewards(uint256 groupIndex, uint256[] memory groupMemberIndices) public {
         uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
-        stakingContract.magpieOf(msg.sender).transfer(accumulatedRewards);
+        (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(accumulatedRewards)("");
+        require(success, "Failed withdraw rewards");
     }
 
     /**
