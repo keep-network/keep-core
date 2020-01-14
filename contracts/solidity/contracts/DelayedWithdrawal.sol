@@ -30,6 +30,7 @@ contract DelayedWithdrawal is Ownable {
 
         // Reset pending withdrawal before sending to prevent re-entrancy attacks
         _pendingWithdrawal = 0;
-        payee.transfer(address(this).balance);
+        address self = address(this);
+        payee.transfer(self.balance);
     }
 }
