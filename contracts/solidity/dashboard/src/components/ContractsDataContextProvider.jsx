@@ -8,7 +8,6 @@ class ContractsDataContextProvider extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      isBeneficiary: false,
       isTokenHolder: false,
       isOperator: false,
       isOperatorOfStakedTokenGrant: false,
@@ -68,9 +67,6 @@ class ContractsDataContextProvider extends React.Component {
           changeDefaultContract(grantContract)
         }
 
-        const operatorsOfMagpie = await stakingContract.methods.operatorsOfMagpie(yourAddress).call()
-        const isBeneficiary = operatorsOfMagpie && operatorsOfMagpie.length > 0
-
         this.setState({
           isOperator,
           isTokenHolder,
@@ -81,7 +77,6 @@ class ContractsDataContextProvider extends React.Component {
           stakedGrant,
           stakeOwner,
           contractsDataIsFetching: false,
-          isBeneficiary,
         })
       } catch (error) {
         this.setState({ contractsDataIsFetching: false })
