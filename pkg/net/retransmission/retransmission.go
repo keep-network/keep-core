@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"sync"
+	"time"
 
 	"github.com/ipfs/go-log"
 
@@ -26,8 +27,23 @@ type NetworkMessage interface {
 }
 
 // Ticker emits ticks when message retransmission should happen again.
+// Ticker should never stop emitting ticks. The time for which the individual
+// message is retransmitted is controlled by context in ScheduleRetransmissions.
 type Ticker struct {
 	Ticks <-chan uint64
+}
+
+// TimeTicker is a convenience function allowing to convert time.Ticker to
+// retransmission.Ticker
+func TimeTicker(ticker *time.Ticker) *Ticker {
+	ticks := make(chan uint64)
+	go func() {
+		for tick := range ticker.C {
+			ticks <- uint64(tick.Unix())
+		}
+	}()
+
+	return &Ticker{ticks}
 }
 
 // ScheduleRetransmissions takes the provided message and retransmits it
