@@ -4,21 +4,26 @@
     justify-content: space-between;
 }
 
+.see-all-btn {
+    width: auto;
+    align-self: center;
+}
+
 .group-item {
     display: flex;
     flex-direction: row;
+    flex-basis: 100%;
+    flex-wrap: wrap;
     align-items: center;
     margin-bottom: 1.5rem;
     border-bottom: 1px solid @black;
     padding: 1rem;
     transition: transform 420ms cubic-bezier( .165, .84, .44, 1);
-    flex-basis: 100%;
-    flex-wrap: wrap;
 
     .group-key, .group-reward {
-        flex-basis: 50%;
         display: flex;
         flex-direction: column;
+        flex-basis: 50%;
         align-items: flex-start;
         
         .address-shortcut, .reward-value {
@@ -60,6 +65,7 @@
     
         button {
             flex-basis: 50%;
+            margin-top: 0;
         }
     
         .group-key {
@@ -77,6 +83,10 @@
         &:hover {
             transform: scale(1.02);
         }
+    }
+
+    .see-all-btn {
+        width: 400px;
     }
 }
 

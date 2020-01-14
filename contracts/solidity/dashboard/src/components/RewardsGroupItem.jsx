@@ -19,7 +19,7 @@ export const RewardsGroupItem = ({ groupIndex, groupPubKey, reward, isStale }) =
         className='btn btn-primary btn-sm'
         disabled={!isStale}
       >
-        Withdraw
+        WITHDRAW
       </Button>
     </div>
   )
