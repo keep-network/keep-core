@@ -28,53 +28,52 @@ const web3 = new Web3(contractOwnerProvider, null, web3_options);
 
 const environment = commandLineArgs.e
 
-function setOperatorProfiles() {
+function setOperatorAddresses() {
   if (environment == 'keep-dev') {
 
-    const operator0 = [['account', '0x7fb43a257bf74904a41506fe38c87d32d91a77ae'], ['provider', new HDWalletProvider('0E893CECFCC4550F0DC55C8B50CAB4B074673F2DF5B24ADE715469F209BBEF08', `${ethHost}`)]];
-    const operator1 = [['account', '0xb6eb060a8d82a0bec265298aaccbf3577c2a5825'], ['provider', new HDWalletProvider('BF147D10C30A441C0600CD232F299224BC9A59CB26E97031E2C7D077EA283EB4', `${ethHost}`)]];
-    const operator2 = [['account', '0x4050aa55ae9bd11b7ea42d44dab3a6a1874dd751'], ['provider', new HDWalletProvider('1C10F2150DBC9FAB06A5FEC2A056BF6FA3CDC782E81D186513FFCC8F8A9D90EE', `${ethHost}`)]];
-    const operator3 = [['account', '0x186ab1ed890e341c9c882ba20459fd4f6ef18a30'], ['provider', new HDWalletProvider('074A1D8574ACBDFC6B36A323E22A1427CF21BDD56AC487D119C7E13BAACDD372', `${ethHost}`)]];
-    const operator4 = [['account', '0x75353501e93ca9c9f48cb8ae82a7a218f1483267'], ['provider', new HDWalletProvider('61942DCCEFD8D279555B998F2D45C931E51E7EB39424116A4B335049C4947EC8', `${ethHost}`)]];
+    const operator0 = '0x7fb43a257bf74904a41506fe38c87d32d91a77ae'
+    const operator1 = '0xb6eb060a8d82a0bec265298aaccbf3577c2a5825'
+    const operator2 = '0x4050aa55ae9bd11b7ea42d44dab3a6a1874dd751'
+    const operator3 = '0x186ab1ed890e341c9c882ba20459fd4f6ef18a30'
+    const operator4 = '0x75353501e93ca9c9f48cb8ae82a7a218f1483267'
 
-    const operatorProfiles = new Map();
-      operatorProfiles.set('operator0', operator0);
-      operatorProfiles.set('operator1', operator1);
-      operatorProfiles.set('operator2', operator2);
-      operatorProfiles.set('operator3', operator3);
-      operatorProfiles.set('operator4', operator4);
+    const operatorAddresses = new Map();
+      operatorAddresses.set('operator0', operator0);
+      operatorAddresses.set('operator1', operator1);
+      operatorAddresses.set('operator2', operator2);
+      operatorAddresses.set('operator3', operator3);
+      operatorAddresses.set('operator4', operator4);
 
-    return operatorProfiles;
+    return operatorAddresses;
 
   } else if (environment == 'keep-test') {
 
-    const operator0 = [['account', '0x58dd09096d27026a1a574cfc1dde10c07f7a9636'], ['provider', new HDWalletProvider('163623E4FC9F74D3389CB430262BF57560801041E6B1C5444BB2F0665A53BE89', `${ethHost}`)]];
-    const operator1 = [['account', '0xeea0a80cb35ed34093e90559f50188d18e41b574'], ['provider', new HDWalletProvider('17EB5E4F42EB352C0E7091AF8AB2C0EB95F60FCB9651BE79F45BCE8B096F2356', `${ethHost}`)]];
-    const operator2 = [['account', '0x95aeea994a0dec98228f99479c3e532234ab1406'], ['provider', new HDWalletProvider('1DE53F2C7944828193F8B1673D0E437EE208817FDE865C7A87F4AED87A3FDC9C', `${ethHost}`)]];
-    const operator3 = [['account', '0xfd326104974e2fb01c02becd634fac5bff23d33f'], ['provider', new HDWalletProvider('19470B41C7727B8C4C15774D560B1F992AFF436CF06D66B73C91CA2D25BE6F77', `${ethHost}`)]];
-    const operator4 = [['account', '0x35173638d6fe801de9b08916583ac16bdc987bc5'], ['provider', new HDWalletProvider('EBA729AA59827417665A3BF74B4DB7FC914505E96A967DA8C55289C7F10AD331', `${ethHost}`)]];
-    const operator5 = [['account', '0xaa886f33bfe5cf672effcfdf9c630bdb785802f8'], ['provider', new HDWalletProvider('E9E8D7D7F0648364080FF87F2AC0052ADE225BFC7B5426B7E5E2E25EEF16E69A', `${ethHost}`)]];
-    const operator6 = [['account', '0x6ea036cb7a72c89d46cee43214a7c5fd969e8f59'], ['provider', new HDWalletProvider('0D96CCE79BCFB16FEA09C7A8717D6CA800C36F9AC997720D0697D02AD453B617', `${ethHost}`)]];
-    const operator7 = [['account', '0xdbcd9a619b4d48ba67059a78734bb3b7ee6ece57'], ['provider', new HDWalletProvider('C4B5A394AF861CB28016E61BFEAFCFDF20F51D4E6799DC7B59FBD2C29ED6EC6F', `${ethHost}`)]];
+    const operator0 = '0x58dd09096d27026a1a574cfc1dde10c07f7a9636'
+    const operator1 = '0xeea0a80cb35ed34093e90559f50188d18e41b574'
+    const operator2 = '0x95aeea994a0dec98228f99479c3e532234ab1406'
+    const operator3 = '0xfd326104974e2fb01c02becd634fac5bff23d33f'
+    const operator4 = '0x35173638d6fe801de9b08916583ac16bdc987bc5'
+    const operator5 = '0xaa886f33bfe5cf672effcfdf9c630bdb785802f8'
+    const operator6 = '0x6ea036cb7a72c89d46cee43214a7c5fd969e8f59'
+    const operator7 = '0xdbcd9a619b4d48ba67059a78734bb3b7ee6ece57'
 
-    const operatorProfiles = new Map();
-      operatorProfiles.set('operator0', operator0);
-      operatorProfiles.set('operator1', operator1);
-      operatorProfiles.set('operator2', operator2);
-      operatorProfiles.set('operator3', operator3);
-      operatorProfiles.set('operator4', operator4);
-      operatorProfiles.set('operator5', operator5);
-      operatorProfiles.set('operator6', operator6);
-      operatorProfiles.set('operator7', operator7);
+    const operatorAddresses = new Map();
+      operatorAddresses.set('operator0', operator0);
+      operatorAddresses.set('operator1', operator1);
+      operatorAddresses.set('operator2', operator2);
+      operatorAddresses.set('operator3', operator3);
+      operatorAddresses.set('operator4', operator4);
+      operatorAddresses.set('operator5', operator5);
+      operatorAddresses.set('operator6', operator6);
+      operatorAddresses.set('operator7', operator7);
 
-    return operatorProfiles;
+    return operatorAddresses;
 
   } else {
       console.log('Invalid options passed.  Please use -e keep-dev or -e keep-test');
       process.exit(1);
   }
 }
-
 
 // Each <contract.json> file is sourced directly from the InitContainer.  Files are generated by
 // Truffle during contract and copied to the InitContainer image via Circle.
@@ -92,14 +91,8 @@ const keepTokenContractAbi = keepTokenContractParsed.abi;
 const keepTokenContractAddress = keepTokenContractParsed.networks[ethNetworkId].address;
 const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenContractAddress);
 
-async function stakeOperatorAccount(operatorAddress, operatorProvider, contractOwnerAddress) {
-  //let web3Operator = new Web3(operatorProvider, null, web3_options)
-  //let contractOwnerSigned = await web3Operator.eth.sign(web3.utils.soliditySha3(contractOwnerAddress), operatorAddress);
+async function stakeOperatorAccount(operatorAddress, contractOwnerAddress) {
 
-  // This is really a bit stupid.  The return from web3.eth.sign is different depending on whether or not
-  // the signer is a local or remote ETH account.  We use web3.eth.sign to set contractOwnerSigned. Here
-  // the bootstrap peer account already exists and is hosted on an ETH node.
-  //let signature = Buffer.from(contractOwnerSigned.substr(2), 'hex');
   let delegation = '0x' + Buffer.concat([
     Buffer.from(contractOwnerAddress.substr(2), 'hex'),
     Buffer.from(operatorAddress.substr(2), 'hex')
@@ -119,10 +112,10 @@ function formatAmount(amount, decimals) {
   return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
 };
 
-const operatorProfiles = setOperatorProfiles()
+const operatorAddresses = setOperatorAddresses()
 
-operatorProfiles.forEach(profile => {
-  stakeOperatorAccount(profile[0][1], profile[1][1], contractOwnerAddress).catch(error => {
+operatorAddresses.forEach(operatorAddress => {
+  stakeOperatorAccount(operatorAddress, contractOwnerAddress).catch(error => {
     console.error(error);
     process.exit(1);
   })
