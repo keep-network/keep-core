@@ -319,4 +319,8 @@ library Groups {
             }
         }
     }
+
+    function getGroupMembers(Storage storage self, bytes memory groupPubKey) public view returns (address[] memory ) {
+        return self.groupMembers[groupPubKey];
+    }
 }

@@ -662,4 +662,8 @@ contract KeepRandomBeaconOperator {
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups.getGroupPublicKey(groupIndex);
     }
+
+    function getGroupMembers(bytes memory groupPubKey) public view returns (address[] memory members) {
+        return groups.getGroupMembers(groupPubKey);
+    }
 }
