@@ -1,14 +1,14 @@
 import moment from 'moment'
 import React, { Component } from 'react'
 import { Form, FormGroup, FormControl, ControlLabel, Col, HelpBlock, Checkbox } from 'react-bootstrap'
-import WithWeb3Context from './WithWeb3Context'
+import withWeb3Context from './WithWeb3Context'
 import { formatAmount } from '../utils'
 import { SubmitButton } from './Button'
 import { MessagesContext, messageType } from './Message'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount.',
-  SERVER: 'Sorry, your request cannot be completed at this time.'
+  SERVER: 'Sorry, your request cannot be completed at this time.',
 }
 
 class TokenGrantForm extends Component {
@@ -16,25 +16,25 @@ class TokenGrantForm extends Component {
 
   state = {
     amount: 0,
-    grantee: "0x0",
+    grantee: '0x0',
     duration: 1,
     start: moment().unix(),
     cliff: 1,
     revocable: false,
     formErrors: {
       grantee: '',
-      amount: ''
+      amount: '',
     },
     hasError: false,
     requestSent: false,
     requestSuccess: false,
-    errorMsg: ERRORS.INVALID_AMOUNT
+    errorMsg: ERRORS.INVALID_AMOUNT,
   }
 
   onChange = (e) => {
     const name = e.target.name
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
-    this.setState({[name]: value})
+    this.setState({ [name]: value })
   }
 
   onSubmit = (e) => {
@@ -48,11 +48,11 @@ class TokenGrantForm extends Component {
   }
 
   submit = async (onTransationHashCallback) => {
-    const { amount, grantee, duration, start, cliff, revocable} = this.state
+    const { amount, grantee, duration, start, cliff, revocable } = this.state
     const { web3 } = this.props
 
-    const tokenGrantContractAddress = web3.grantContract.options.address;
-    
+    const tokenGrantContractAddress = web3.grantContract.options.address
+
     /**
      * Extra data contains the following values:
      * grantee (20 bytes) Address of the grantee.
@@ -65,26 +65,26 @@ class TokenGrantForm extends Component {
       web3.utils.toBN(duration).toBuffer('be', 32),
       web3.utils.toBN(start).toBuffer('be', 32),
       web3.utils.toBN(cliff).toBuffer('be', 32),
-      Buffer.from(revocable ? "01" : "00", 'hex'),
+      Buffer.from(revocable ? '01' : '00', 'hex'),
     ])
-    
+
     try {
       await web3.token.methods.approveAndCall(
         tokenGrantContractAddress,
         web3.utils.toBN(formatAmount(amount, 18)).toString(),
         extraData)
-        .send({from: web3.yourAddress})
+        .send({ from: web3.yourAddress })
         .on('transactionHash', onTransationHashCallback)
       this.context.showMessage({ title: 'Success', content: 'Grant tokens transaction has been successfully completed' })
-    } catch(error) {
+    } catch (error) {
       this.context.showMessage({ type: messageType.ERROR, title: 'Grant tokens action has been failed ', content: error.message })
     }
   }
 
   render() {
     const { amount, grantee, duration, start, cliff, revocable,
-        hasError,
-        errorMsg} = this.state
+      hasError,
+      errorMsg } = this.state
 
     return (
       <div className="token-grant-form">
@@ -198,4 +198,4 @@ class TokenGrantForm extends Component {
   }
 }
 
-export default WithWeb3Context(TokenGrantForm)
+export default withWeb3Context(TokenGrantForm)

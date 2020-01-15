@@ -4,15 +4,13 @@
     justify-content: center;
   
     &-status {
-      font-size: 1.5rem;
+      font-size: 0.8rem;
       background-color: @pale-grey;
-      min-width: 15rem;
-      padding: .5rem 1rem;
-      margin: 1rem;
+      padding: 0 .5rem;
+      text-align: left;
       border: 2px solid black ;
       border-radius: 5px;
       font-weight: bold;
-      text-align: center;
 
       &.success {
         color: @aqua-marine;
@@ -25,6 +23,7 @@
       &.alert {
         color: @rose-pink;
         border-color: @rose-pink;
+        margin-bottom: 0;
         & > a {
           color: @rose-pink;
           text-decoration: underline;

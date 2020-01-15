@@ -35,11 +35,11 @@ type resultSigningState struct {
 }
 
 func (rss *resultSigningState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return state.DefaultMessagingStateDelayBlocks
 }
 
 func (rss *resultSigningState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return state.DefaultMessagingStateActiveBlocks
 }
 
 func (rss *resultSigningState) Initiate(ctx context.Context) error {

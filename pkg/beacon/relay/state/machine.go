@@ -64,6 +64,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 		m.channel.Name()[:5],
 	)
 	if err != nil {
+		cancelCtx()
 		return nil, 0, err
 	}
 

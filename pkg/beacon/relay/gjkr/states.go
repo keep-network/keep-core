@@ -19,11 +19,11 @@ type joinState struct {
 }
 
 func (js *joinState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return state.DefaultMessagingStateDelayBlocks
 }
 
 func (js *joinState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return state.DefaultMessagingStateActiveBlocks
 }
 
 func (js *joinState) Initiate(ctx context.Context) error {
@@ -58,11 +58,11 @@ type ephemeralKeyPairGenerationState struct {
 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return state.DefaultMessagingStateDelayBlocks
 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return state.DefaultMessagingStateActiveBlocks
 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) Initiate(ctx context.Context) error {
@@ -156,11 +156,11 @@ type commitmentState struct {
 }
 
 func (cs *commitmentState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return state.DefaultMessagingStateDelayBlocks
 }
 
 func (cs *commitmentState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return state.DefaultMessagingStateActiveBlocks
 }
 
 func (cs *commitmentState) Initiate(ctx context.Context) error {
@@ -231,11 +231,11 @@ type commitmentsVerificationState struct {
 }
 
 func (cvs *commitmentsVerificationState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return state.DefaultMessagingStateDelayBlocks
 }
 
 func (cvs *commitmentsVerificationState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return state.DefaultMessagingStateActiveBlocks
 }
 
 func (cvs *commitmentsVerificationState) Initiate(ctx context.Context) error {
@@ -385,11 +385,11 @@ type pointsShareState struct {
 }
 
 func (pss *pointsShareState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return state.DefaultMessagingStateDelayBlocks
 }
 
 func (pss *pointsShareState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return state.DefaultMessagingStateActiveBlocks
 }
 
 func (pss *pointsShareState) Initiate(ctx context.Context) error {
@@ -441,11 +441,11 @@ type pointsValidationState struct {
 }
 
 func (pvs *pointsValidationState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return state.DefaultMessagingStateDelayBlocks
 }
 
 func (pvs *pointsValidationState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return state.DefaultMessagingStateActiveBlocks
 }
 
 func (pvs *pointsValidationState) Initiate(ctx context.Context) error {
@@ -550,11 +550,11 @@ type keyRevealState struct {
 }
 
 func (rs *keyRevealState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return state.DefaultMessagingStateDelayBlocks
 }
 
 func (rs *keyRevealState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return state.DefaultMessagingStateActiveBlocks
 }
 
 func (rs *keyRevealState) Initiate(ctx context.Context) error {
