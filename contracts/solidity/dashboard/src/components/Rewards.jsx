@@ -8,22 +8,24 @@ import * as Icons from './Icons'
 import rewardsService from '../services/rewards.service'
 
 export const Rewards = () => {
-  const { keepRandomBeaconOperatorContract, stakingContract, yourAddress, utils } = useContext(Web3Context)
+  const web3Context = useContext(Web3Context)
   const [isFetching, setIsFetching] = useState(true)
   const [showAll, setShowAll] = useState(false)
   const [data, setData] = useState([])
 
   useEffect(() => {
     let shouldSetState = true
-    fetchGroups(keepRandomBeaconOperatorContract, stakingContract, yourAddress, utils).then((groups) => {
-      console.lolg('groups', groups)
-      if (shouldSetState) {
-        setIsFetching(false)
-        setData(groups)
-      }
-    }).catch((error) => {
-      shouldSetState && setIsFetching(false)
-    })
+    rewardsService.fetchAvailableRewards(web3Context)
+      .then((groups) => {
+        if (shouldSetState) {
+          setIsFetching(false)
+          setData(groups)
+        }
+      })
+      .catch((error) => {
+        shouldSetState && setIsFetching(false)
+      })
+
     return () => {
       shouldSetState = false
     }
@@ -51,41 +53,4 @@ export const Rewards = () => {
       }
     </Loadable>
   )
-}
-const fetchGroups = async (keepRandomBeaconOperatorContract, stakingContract, yourAddress, utils) => {
-  try {
-    const expiredGroupsCount = await keepRandomBeaconOperatorContract.methods.getFirstActiveGroupIndex().call()
-    const groups = []
-    const groupMemberIndices = {}
-    // TODO iterate trough expired groups
-    for (let groupIndex = 0; groupIndex < 10; groupIndex++) {
-      const groupPubKey = await keepRandomBeaconOperatorContract.methods.getGroupPublicKey(groupIndex).call()
-      const isStale = await keepRandomBeaconOperatorContract.methods.isStaleGroup(groupPubKey).call()
-      if (isStale) {
-        continue
-      }
-
-      const groupMembers = new Set(await keepRandomBeaconOperatorContract.methods.getGroupMembers(groupPubKey).call())
-      groupMemberIndices[groupPubKey] = {}
-      for (const memberAddress of groupMembers) {
-        const beneficiaryAddressForMember = await stakingContract.methods.magpieOf(memberAddress).call()
-        if (utils.toChecksumAddress(yourAddress) !== utils.toChecksumAddress(beneficiaryAddressForMember)) {
-          continue
-        }
-        console.log('groupMemberIndices', groupMemberIndices)
-        groupMemberIndices[groupPubKey][memberAddress] = await keepRandomBeaconOperatorContract.methods.getGroupMemberIndices(groupPubKey, memberAddress).call()
-      }
-      if (Object.keys(groupMemberIndices[groupPubKey]).length === 0) {
-        continue
-      }
-      const memberAddressesInGroup = Object.keys(groupMemberIndices[groupPubKey])
-      const multipleReward = memberAddressesInGroup.length === 1 ? groupMemberIndices[groupPubKey][memberAddressesInGroup[0]].length : memberAddressesInGroup
-        .reduce((prev, current) => (groupMemberIndices[groupPubKey][prev].length + groupMemberIndices[groupPubKey][current].length))
-      const reward = utils.toBN((await keepRandomBeaconOperatorContract.methods.getGroupMemberRewards(groupPubKey).call())).mul(utils.toBN(multipleReward))
-      groups.push({ groupIndex, groupPubKey, membersIndeces: groupMemberIndices[groupPubKey], reward })
-    }
-    return Promise.resolve(groups)
-  } catch (error) {
-    return Promise.reject(error)
-  }
 }
