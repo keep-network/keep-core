@@ -49,9 +49,9 @@ func WithRetransmissionSupport(delegate func(m net.Message)) func(m NetworkMessa
 	}
 }
 
-// CalculateFingerprint takes the serialized network message and its sender
-// and produces a unique fingerprint for that message. Fingerprint is a part
-// of NetworkMessage and is used by message handler to filter out
+// CalculateFingerprint takes the serialized network message payload and its
+// sender and produces a unique fingerprint for that message. Fingerprint is
+// a part of NetworkMessage and is used by message handler to filter out
 // already known retransmissions.
 func CalculateFingerprint(
 	sender net.TransportIdentifier,
