@@ -1,6 +1,8 @@
 const KeepToken = artifacts.require("./KeepToken.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const Operator = artifacts.require("../stubs/KeepRandomBeaconOperatorRewardsStub.sol")
+const KeepRandomBeaconServiceImpl = artifacts.require("./KeepRandomBeaconServiceImplV1.sol")
+const crypto = require("crypto")
 
 function formatAmount(amount, decimals) {
     return web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals)))
@@ -15,25 +17,24 @@ function formatAmount(amount, decimals) {
   };
   
   module.exports = async function() {
-  
     const accounts = await getAccounts();
     const token = await KeepToken.deployed();
     const tokenStaking = await TokenStaking.deployed();
-    let magpie = accounts[6];
-  
-    let owner = accounts[0];
+    const keepRandomBeaconService = await KeepRandomBeaconServiceImpl.deployed()
+    const keepRandomBeaconOerator = await Operator.deployed()
+
+    const magpie = accounts[5];
+    const requestor = accounts[5]
+    const owner = accounts[0];
     
     for(let i = 0; i < 5; i++) {
-      let operator = accounts[i]
-       // The address where the rewards for participation are sent.
-  
-      // The owner provides to the contract a magpie address and the operator address. 
-      let delegation = '0x' + Buffer.concat([
+      const operator = accounts[i]
+      const delegation = '0x' + Buffer.concat([
         Buffer.from(magpie.substr(2), 'hex'),
         Buffer.from(operator.substr(2), 'hex')
       ]).toString('hex');
   
-      staked = await token.approveAndCall(
+      const staked = await token.approveAndCall(
         tokenStaking.address, 
         formatAmount(20000000, 18),
         delegation,
@@ -47,29 +48,37 @@ function formatAmount(amount, decimals) {
       }
     }
 
-    console.log('check magpie operators')
-    const operators = await tokenStaking.operatorsOfMagpie(magpie)
-    console.log('magpie operators', operators)
+    const groupReward = web3.utils.toWei('14500', 'Gwei')
+    for (let i = 0; i < 100; i++) {
+      console.log('register group', i+1)
+      const groupPubKey = crypto.randomBytes(32)
+      await keepRandomBeaconOerator.registerNewGroup(groupPubKey).catch(err => console.log('register new group error', err))
+      await keepRandomBeaconOerator.addGroupMemberReward(groupPubKey, groupReward)
+      await keepRandomBeaconOerator.addGroupMember(groupPubKey, accounts[1])
+      await keepRandomBeaconOerator.addGroupMember(groupPubKey, accounts[1])
+      await keepRandomBeaconOerator.addGroupMember(groupPubKey, accounts[1])
+      console.log('created group', await keepRandomBeaconOerator.getGroupPublicKey(i))
+    }
 
-    const keepRandomBeaconOerator = await Operator.deployed().catch(err => console.log('keepRandomBeaconOerator deploy', err))
+    mineBlocks(3196)
+    const entryFeeEstimate = await keepRandomBeaconService.entryFeeEstimate(0).catch(error => console.log('error service entry fee', error))
+    await keepRandomBeaconService.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor}).catch(error => console.log('request relay entry entry service error', error))
 
-    let groupPubKey = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex')]).toString('hex');
-    console.log('register new group', groupPubKey)
-    await keepRandomBeaconOerator.registerNewGroup(groupPubKey).catch(err => console.log('register new group error', err))
-    console.log('registered group public key', await keepRandomBeaconOerator.getGroupPublicKey(0))
+    const numberOfGroups = await keepRandomBeaconOerator.numberOfGroups().catch(error => console.log('error num of groups', error))
+    const firstActiveIndex = await keepRandomBeaconOerator.getFirstActiveGroupIndex().catch(error => console.log('error first active', error))
 
-    const numberOfGroups = await keepRandomBeaconOerator.numberOfGroups()
-    console.log('number of groups', numberOfGroups.toString())
-    await keepRandomBeaconOerator.addGroupMemberReward(groupPubKey, '2000')
-    await keepRandomBeaconOerator.addGroupMember(groupPubKey, accounts[1])
-    await keepRandomBeaconOerator.addGroupMember(groupPubKey, accounts[1])
+    console.log('number of groups:', numberOfGroups.toString())
+    console.log('last active index:', firstActiveIndex.toString())
+}
 
-    console.log('group member rewards', (await keepRandomBeaconOerator.getGroupMemberRewards(groupPubKey)).toString())
-    console.log('is stable', await keepRandomBeaconOerator.isStaleGroup(groupPubKey))
-
-    const indices = await keepRandomBeaconOerator.getGroupMemberIndices(groupPubKey, accounts[1], { from: accounts[1] })
-
-    indices.forEach(i => {
-        console.log('group member indices', i.toString())
-    })
+function mineBlocks(blocks) {
+  for (let i = 0; i < blocks; i++) {
+    web3.currentProvider.send({
+      jsonrpc: "2.0",
+      method: "evm_mine",
+      id: 12345
+    }, function(err, _) {
+      if (err) console.log("Error mining a block. " + i, err)
+    });
+  }
 }
