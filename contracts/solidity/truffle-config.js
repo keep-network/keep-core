@@ -7,8 +7,7 @@ module.exports = {
     local: {
       host: "localhost",
       port: 8545,
-      network_id: "*",
-      gasPrice: 20000000000
+      network_id: "*"
     },
     keep_dev: {
       host: "localhost",
@@ -27,8 +26,7 @@ module.exports = {
         return new HDWalletProvider("EBAE221D3C6A4707B1B00927CE9DD6F866DC426658842CE3CFF5EBDAC2BF6000", "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5")
       },
       gas: 6721975,
-      network_id: 3,
-      gasPrice: 1000000000
+      network_id: 3
     }
   },
 

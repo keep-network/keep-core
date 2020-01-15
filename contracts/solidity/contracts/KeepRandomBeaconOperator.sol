@@ -62,7 +62,7 @@ contract KeepRandomBeaconOperator {
     // next to the actual gas price from the transaction. We use both values to
     // defend against malicious miner-submitters who can manipulate transaction
     // gas price. Expressed in wei.
-    uint256 public priceFeedEstimate = 1*1e9; // (1 Gwei = 1 * 10^9 wei)
+    uint256 public priceFeedEstimate = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
 
     // Fluctuation margin to cover the immediate rise in gas price.
     // Expressed in percentage.
