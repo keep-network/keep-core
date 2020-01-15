@@ -4,7 +4,7 @@ import { RewardsGroupItem } from './RewardsGroupItem'
 export const RewardsGroups = ({ groups }) => {
   return (
     <div className='group-items'>
-      <h4>Rewards Summary</h4>
+      <p>Rewards Summary</p>
       {groups.map(renderGroupItem)}
     </div>
   )

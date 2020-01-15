@@ -58,12 +58,11 @@ export const Rewards = () => {
   )
 }
 
-const RewardsBalance = ({ balance }) => {
-  console.log('balance', balance)
-  return (<div>
+const RewardsBalance = ({ balance }) => (
+  <div className='rewards-balance'>
     <h3>{balance} ETH</h3>
     <h6>YOUR REWARDS BALANCE</h6>
-  </div>)
-}
+  </div>
+)
 
 
