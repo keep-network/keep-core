@@ -2,6 +2,7 @@ package result
 
 import (
 	"bytes"
+	"context"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -41,7 +42,7 @@ func (rss *resultSigningState) ActiveBlocks() uint64 {
 	return state.DefaultMessagingStateActiveBlocks
 }
 
-func (rss *resultSigningState) Initiate() error {
+func (rss *resultSigningState) Initiate(ctx context.Context) error {
 	message, err := rss.member.SignDKGResult(rss.result, rss.relayChain, rss.signing)
 	if err != nil {
 		return err
@@ -135,7 +136,7 @@ func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (svs *signaturesVerificationState) Initiate() error {
+func (svs *signaturesVerificationState) Initiate(ctx context.Context) error {
 	signatures, err := svs.member.VerifyDKGResultSignatures(
 		svs.signatureMessages,
 		svs.signing,
@@ -200,7 +201,7 @@ func (rss *resultSubmissionState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (rss *resultSubmissionState) Initiate() error {
+func (rss *resultSubmissionState) Initiate(ctx context.Context) error {
 	return rss.member.SubmitDKGResult(
 		rss.result,
 		rss.signatures,

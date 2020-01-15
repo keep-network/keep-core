@@ -132,7 +132,7 @@ func doStateTransition(
 	for _, state := range states {
 		fmt.Printf("[member:%v, state:%T] Executing\n", state.MemberIndex(), state)
 
-		if err := state.Initiate(); err != nil {
+		if err := state.Initiate(ctx); err != nil {
 			return nil, fmt.Errorf("initiate failed [%v]", err)
 		}
 	}
