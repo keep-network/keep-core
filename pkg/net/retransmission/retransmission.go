@@ -36,22 +36,24 @@ func ScheduleRetransmissions(
 	message *pb.NetworkMessage,
 	send func(*pb.NetworkMessage) error,
 ) {
-	retransmission := uint32(0)
-	ticker.onTick(ctx, func() {
-		retransmission++
+	go func() {
+		retransmission := uint32(0)
+		ticker.onTick(ctx, func() {
+			retransmission++
 
-		messageCopy := *message
-		messageCopy.Retransmission = retransmission
+			messageCopy := *message
+			messageCopy.Retransmission = retransmission
 
-		go func() {
-			if err := send(&messageCopy); err != nil {
-				logger.Errorf(
-					"could not retransmit message: [%v]",
-					err,
-				)
-			}
-		}()
-	})
+			go func() {
+				if err := send(&messageCopy); err != nil {
+					logger.Errorf(
+						"could not retransmit message: [%v]",
+						err,
+					)
+				}
+			}()
+		})
+	}()
 }
 
 // WithRetransmissionSupport takes the standard network message handler and
