@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -117,6 +119,9 @@ func channel(name string, staticKey *key.NetworkPublic) net.BroadcastChannel {
 		messageHandlers:      make([]*messageHandler, 0),
 		unmarshalersMutex:    sync.Mutex{},
 		unmarshalersByType:   make(map[string]func() net.TaggedUnmarshaler, 0),
+		retransmissionTicker: retransmission.NewTimeTicker(
+			time.NewTicker(50 * time.Millisecond),
+		),
 	}
 	channels[name] = append(channels[name], channel)
 
@@ -150,36 +155,32 @@ type localChannel struct {
 	messageHandlers      []*messageHandler
 	unmarshalersMutex    sync.Mutex
 	unmarshalersByType   map[string]func() net.TaggedUnmarshaler
+	retransmissionTicker *retransmission.Ticker
 }
 
 func (lc *localChannel) Name() string {
 	return lc.name
 }
 
-func doSend(channel *localChannel, payload net.TaggedMarshaler) error {
+func doSend(channel *localChannel, message *pb.NetworkMessage) error {
 	channelsMutex.Lock()
 	targetChannels := channels[channel.name]
 	channelsMutex.Unlock()
 
-	bytes, err := payload.Marshal()
-	if err != nil {
-		return err
-	}
-
-	unmarshaler, found := channel.unmarshalersByType[payload.Type()]
+	unmarshaler, found := channel.unmarshalersByType[string(message.Type)]
 	if !found {
-		return fmt.Errorf("Couldn't find unmarshaler for type %s", payload.Type())
+		return fmt.Errorf("Couldn't find unmarshaler for type %s", string(message.Type))
 	}
 
 	unmarshaled := unmarshaler()
-	err = unmarshaled.Unmarshal(bytes)
+	err := unmarshaled.Unmarshal(message.Payload)
 	if err != nil {
 		return err
 	}
 
 	fingerprint := retransmission.CalculateFingerprint(
 		channel.identifier,
-		bytes,
+		message.Payload,
 	)
 
 	protocolMessage := retransmission.NewNetworkMessage(
@@ -190,7 +191,7 @@ func doSend(channel *localChannel, payload net.TaggedMarshaler) error {
 			key.Marshal(channel.staticKey),
 		),
 		fingerprint,
-		0, //TODO: update when integrating with send retransmissions
+		message.Retransmission,
 	)
 
 	for _, targetChannel := range targetChannels {
@@ -222,8 +223,37 @@ func (lc *localChannel) deliver(message retransmission.NetworkMessage) {
 	}
 }
 
-func (lc *localChannel) Send(message net.TaggedMarshaler) error {
-	return doSend(lc, message)
+func (lc *localChannel) Send(ctx context.Context, message net.TaggedMarshaler) error {
+	messageProto, err := lc.messageProto(message)
+	if err != nil {
+		return err
+	}
+
+	retransmission.ScheduleRetransmissions(
+		ctx,
+		lc.retransmissionTicker,
+		messageProto,
+		func(msg *pb.NetworkMessage) error {
+			return doSend(lc, msg)
+		},
+	)
+
+	return doSend(lc, messageProto)
+}
+
+func (lc *localChannel) messageProto(
+	message net.TaggedMarshaler,
+) (*pb.NetworkMessage, error) {
+	payloadBytes, err := message.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.NetworkMessage{
+		Payload: payloadBytes,
+		Sender:  []byte(lc.identifier.String()),
+		Type:    []byte(message.Type()),
+	}, nil
 }
 
 func (lc *localChannel) Recv(ctx context.Context, handler func(m net.Message)) {

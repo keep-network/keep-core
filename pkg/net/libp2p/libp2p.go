@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/net/watchtower"
 
 	dstore "github.com/ipfs/go-datastore"
@@ -64,11 +65,6 @@ type Config struct {
 	AnnouncedAddresses     []string
 	RetransmissionCycles   int
 	RetransmissionInterval int
-}
-
-type retransmissionOptions struct {
-	cycles               int
-	intervalMilliseconds int
 }
 
 type provider struct {
@@ -186,6 +182,7 @@ func Connect(
 	config Config,
 	staticKey *key.NetworkPrivate,
 	stakeMonitor chain.StakeMonitor,
+	ticker *retransmission.Ticker,
 ) (net.Provider, error) {
 	identity, err := createIdentity(staticKey)
 	if err != nil {
@@ -205,11 +202,7 @@ func Connect(
 
 	host.Network().Notify(buildNotifiee())
 
-	retransmissionOptions := &retransmissionOptions{
-		cycles:               config.RetransmissionCycles,
-		intervalMilliseconds: config.RetransmissionInterval,
-	}
-	cm, err := newChannelManager(ctx, identity, host, retransmissionOptions)
+	cm, err := newChannelManager(ctx, identity, host, ticker)
 	if err != nil {
 		return nil, err
 	}

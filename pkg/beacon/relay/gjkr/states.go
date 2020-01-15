@@ -71,7 +71,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) Initiate(ctx context.Context) erro
 		return err
 	}
 
-	if err := ekpgs.channel.Send(message); err != nil {
+	if err := ekpgs.channel.Send(ctx, message); err != nil {
 		return err
 	}
 	return nil
@@ -169,11 +169,11 @@ func (cs *commitmentState) Initiate(ctx context.Context) error {
 		return err
 	}
 
-	if err := cs.channel.Send(sharesMsg); err != nil {
+	if err := cs.channel.Send(ctx, sharesMsg); err != nil {
 		return err
 	}
 
-	if err := cs.channel.Send(commitmentsMsg); err != nil {
+	if err := cs.channel.Send(ctx, commitmentsMsg); err != nil {
 		return err
 	}
 
@@ -251,7 +251,7 @@ func (cvs *commitmentsVerificationState) Initiate(ctx context.Context) error {
 		return err
 	}
 
-	if err := cvs.channel.Send(accusationsMsg); err != nil {
+	if err := cvs.channel.Send(ctx, accusationsMsg); err != nil {
 		return err
 	}
 
@@ -394,7 +394,7 @@ func (pss *pointsShareState) ActiveBlocks() uint64 {
 
 func (pss *pointsShareState) Initiate(ctx context.Context) error {
 	message := pss.member.CalculatePublicKeySharePoints()
-	if err := pss.channel.Send(message); err != nil {
+	if err := pss.channel.Send(ctx, message); err != nil {
 		return err
 	}
 
@@ -457,7 +457,7 @@ func (pvs *pointsValidationState) Initiate(ctx context.Context) error {
 		return err
 	}
 
-	if err := pvs.channel.Send(accusationMsg); err != nil {
+	if err := pvs.channel.Send(ctx, accusationMsg); err != nil {
 		return err
 	}
 
@@ -563,7 +563,7 @@ func (rs *keyRevealState) Initiate(ctx context.Context) error {
 		return err
 	}
 
-	if err := rs.channel.Send(revealMsg); err != nil {
+	if err := rs.channel.Send(ctx, revealMsg); err != nil {
 		return err
 	}
 

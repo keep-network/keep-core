@@ -75,21 +75,23 @@ type TaggedUnmarshaler interface {
 // processed or false otherwise.
 type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
 
-// BroadcastChannel represents a named pubsub channel. It allows Group Members
-// to send messages on the channel (via Send), and to access a low-level receive chan
-// that furnishes messages sent onto the BroadcastChannel. Messages are not
-// guaranteed to be ordered at the pubsub level, though they will be at the
-// underlying network protocol (ie. tcp, quic).
+// BroadcastChannel represents a named pubsub channel. It allows group members
+// to broadcast and receive messages. BroadcastChannel implements strategy
+// for the retransmission of broadcast messages and handle duplicates before
+// passing the received message to the client.
 type BroadcastChannel interface {
 	// Name returns the name of this broadcast channel.
 	Name() string
 	// Given a message m that can marshal itself to protobuf, broadcast m to
-	// members of the Group through the BroadcastChannel.
-	Send(m TaggedMarshaler) error
+	// members of the Group through the BroadcastChannel. Message will be
+	// periodically retransmitted by the channel for the lifetime of the
+	// provided context.
+	Send(ctx context.Context, m TaggedMarshaler) error
 	// Recv installs a message handler that will receive messages from the
 	// broadcast channel for the entire lifetime of the provided context.
 	// When the context is done, handler is automatically unregistered and
-	// receives no more messages.
+	// receives no more messages. Already received message retransmissions
+	// are filtered out before calling the handler.
 	Recv(ctx context.Context, handler func(m Message))
 	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
 	// type to a concrete object that can be passed to and understood by any

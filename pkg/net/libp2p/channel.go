@@ -37,7 +37,7 @@ type channel struct {
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
 
-	retransmitter *retransmitter
+	retransmissionTicker *retransmission.Ticker
 }
 
 type messageHandler struct {
@@ -49,14 +49,19 @@ func (c *channel) Name() string {
 	return c.name
 }
 
-func (c *channel) Send(message net.TaggedMarshaler) error {
-	// Transform net.TaggedMarshaler to a protobuf message
+func (c *channel) Send(ctx context.Context, message net.TaggedMarshaler) error {
 	messageProto, err := c.messageProto(message)
 	if err != nil {
 		return err
 	}
 
-	c.retransmitter.scheduleRetransmission(messageProto, c.publishToPubSub)
+	retransmission.ScheduleRetransmissions(
+		ctx,
+		c.retransmissionTicker,
+		messageProto,
+		c.publishToPubSub,
+	)
+
 	return c.publishToPubSub(messageProto)
 }
 

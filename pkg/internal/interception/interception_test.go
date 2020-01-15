@@ -115,7 +115,7 @@ func testMessageRoundtrip(
 	channel.Recv(ctx, func(msg net.Message) {
 		handlerFiredChan <- msg.Payload().(*testMessage)
 	})
-	channel.Send(message)
+	channel.Send(ctx, message)
 
 	select {
 	case msg := <-handlerFiredChan:
