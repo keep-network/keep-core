@@ -1693,24 +1693,20 @@ func (rm *CombiningMember) combineGroupPublicKeyShares() {
 		// Iterate through the `QUAL` set and calculate subsequent
 		// public key share for given receiver based on...
 		for senderID := range rm.receivedQualifiedSharesS {
-			var publicKeyShare *bn256.G2
-
 			// ...received and valid other members public key share points...
 			if publicKeySharePoints, ok := rm.receivedValidPeerPublicKeySharePoints[senderID]; ok {
-				publicKeyShare = rm.publicKeyShare(receiverID, publicKeySharePoints)
+				publicKeyShare := rm.publicKeyShare(receiverID, publicKeySharePoints)
+				sum = new(bn256.G2).Add(sum, publicKeyShare)
 				// ...OR in case given sender didn't send their public key share points,
 				// take their reconstructed share and recover the public key share.
 			} else {
 				for _, shares := range rm.revealedMisbehavedMembersShares {
 					if shares.misbehavedMemberID == senderID {
-						publicKeyShare = new(bn256.G2).ScalarBaseMult(
-							shares.peerSharesS[receiverID],
-						)
+						publicKeyShare := new(bn256.G2).ScalarBaseMult(shares.peerSharesS[receiverID])
+						sum = new(bn256.G2).Add(sum, publicKeyShare)
 					}
 				}
 			}
-
-			sum = new(bn256.G2).Add(sum, publicKeyShare)
 		}
 
 		rm.groupPublicKeyShares[receiverID] = sum
