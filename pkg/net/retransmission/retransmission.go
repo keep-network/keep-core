@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"sync"
-	"time"
 
 	"github.com/ipfs/go-log"
 
@@ -26,26 +25,6 @@ type NetworkMessage interface {
 	Retransmission() uint32
 }
 
-// Ticker emits ticks when message retransmission should happen again.
-// Ticker should never stop emitting ticks. The time for which the individual
-// message is retransmitted is controlled by context in ScheduleRetransmissions.
-type Ticker struct {
-	Ticks <-chan uint64
-}
-
-// TimeTicker is a convenience function allowing to convert time.Ticker to
-// retransmission.Ticker
-func TimeTicker(ticker *time.Ticker) *Ticker {
-	ticks := make(chan uint64)
-	go func() {
-		for tick := range ticker.C {
-			ticks <- uint64(tick.Unix())
-		}
-	}()
-
-	return &Ticker{ticks}
-}
-
 // ScheduleRetransmissions takes the provided message and retransmits it
 // for every new tick received from the provided Ticker for the entire lifetime
 // of the provided Context. For each retransmission, send function is
@@ -58,26 +37,21 @@ func ScheduleRetransmissions(
 	send func(*pb.NetworkMessage) error,
 ) {
 	retransmission := uint32(0)
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.Ticks:
-			retransmission++
+	ticker.onTick(ctx, func() {
+		retransmission++
 
-			messageCopy := *message
-			messageCopy.Retransmission = retransmission
+		messageCopy := *message
+		messageCopy.Retransmission = retransmission
 
-			go func() {
-				if err := send(&messageCopy); err != nil {
-					logger.Errorf(
-						"could not retransmit message: [%v]",
-						err,
-					)
-				}
-			}()
-		}
-	}
+		go func() {
+			if err := send(&messageCopy); err != nil {
+				logger.Errorf(
+					"could not retransmit message: [%v]",
+					err,
+				)
+			}
+		}()
+	})
 }
 
 // WithRetransmissionSupport takes the standard network message handler and

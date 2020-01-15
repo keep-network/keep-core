@@ -20,7 +20,7 @@ func TestRetransmitExpectedNumberOfTimes(t *testing.T) {
 	retransmissionsCount := 0
 	ScheduleRetransmissions(
 		ctx,
-		TimeTicker(timeTicker),
+		NewTimeTicker(timeTicker),
 		&pb.NetworkMessage{},
 		func(msg *pb.NetworkMessage) error {
 			retransmissionsCount++
@@ -36,7 +36,7 @@ func TestRetransmitExpectedNumberOfTimes(t *testing.T) {
 }
 
 func TestUpdateRetransmissionCounter(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 160*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 260*time.Millisecond)
 	defer cancel()
 
 	timeTicker := time.NewTicker(50 * time.Millisecond)
@@ -45,7 +45,7 @@ func TestUpdateRetransmissionCounter(t *testing.T) {
 	var retransmissions []*pb.NetworkMessage
 	ScheduleRetransmissions(
 		ctx,
-		TimeTicker(timeTicker),
+		NewTimeTicker(timeTicker),
 		&pb.NetworkMessage{},
 		func(msg *pb.NetworkMessage) error {
 			retransmissions = append(retransmissions, msg)
@@ -55,7 +55,7 @@ func TestUpdateRetransmissionCounter(t *testing.T) {
 
 	<-ctx.Done()
 
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 5; i++ {
 		message := retransmissions[i-1]
 		if uint32(i) != message.Retransmission {
 			t.Errorf(
@@ -91,7 +91,7 @@ func TestRetransmitOriginalContent(t *testing.T) {
 	var retransmissions []*pb.NetworkMessage
 	ScheduleRetransmissions(
 		ctx,
-		TimeTicker(timeTicker),
+		NewTimeTicker(timeTicker),
 		message,
 		func(msg *pb.NetworkMessage) error {
 			retransmissions = append(retransmissions, msg)
