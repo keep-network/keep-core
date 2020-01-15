@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
@@ -24,7 +25,6 @@ type ethereumBlockCounter struct {
 	structMutex         sync.Mutex
 	latestBlockHeight   uint64
 	subscriptionChannel chan block
-	config              *ethereumChain
 	waiters             map[uint64][]chan uint64
 	watchers            []*watcher
 }
@@ -161,14 +161,17 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 }
 
 // subscribeBlocks creates a subscription to Geth to get each block.
-func (ebc *ethereumBlockCounter) subscribeBlocks() error {
+func (ebc *ethereumBlockCounter) subscribeBlocks(
+	clientWS *rpc.Client,
+	clientRPC *rpc.Client,
+) error {
 	subscribeContext, cancel := context.WithTimeout(
 		context.Background(),
 		10*time.Second,
 	)
 	defer cancel()
 
-	_, err := ebc.config.clientWS.EthSubscribe(
+	_, err := clientWS.EthSubscribe(
 		subscribeContext,
 		ebc.subscriptionChannel,
 		newHeadsSubscription,
@@ -178,7 +181,7 @@ func (ebc *ethereumBlockCounter) subscribeBlocks() error {
 	}
 
 	var lastBlock block
-	err = ebc.config.clientRPC.Call(
+	err = clientRPC.Call(
 		&lastBlock,
 		getBlockByNumber,
 		latestBlock,
@@ -195,8 +198,12 @@ func (ebc *ethereumBlockCounter) subscribeBlocks() error {
 
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
 func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
+	return ec.blockCounter, nil
+}
+
+func createBlockCounter(clientWS *rpc.Client, clientRPC *rpc.Client) (*ethereumBlockCounter, error) {
 	var startupBlock block
-	err := ec.clientRPC.Call(
+	err := clientRPC.Call(
 		&startupBlock,
 		getBlockByNumber,
 		latestBlock,
@@ -222,12 +229,11 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	blockCounter := &ethereumBlockCounter{
 		latestBlockHeight:   uint64(startupBlockHeight),
 		waiters:             make(map[uint64][]chan uint64),
-		config:              ec,
 		subscriptionChannel: make(chan block),
 	}
 
 	go blockCounter.receiveBlocks()
-	err = blockCounter.subscribeBlocks()
+	err = blockCounter.subscribeBlocks(clientWS, clientRPC)
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe to new blocks: [%v]", err)
 	}
