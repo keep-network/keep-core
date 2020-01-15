@@ -1,6 +1,7 @@
 const fetchAvailableRewards = async (web3Context) => {
   const { keepRandomBeaconOperatorContract, stakingContract, yourAddress, utils } = web3Context
   try {
+    let totalRewardsBalance = utils.toBN(0)
     const expiredGroupsCount = await keepRandomBeaconOperatorContract.methods.getFirstActiveGroupIndex().call()
     const groups = []
     const groupMemberIndices = {}
@@ -25,9 +26,10 @@ const fetchAvailableRewards = async (web3Context) => {
         continue
       }
       const reward = await getAvailableRewardFromGroupInEther(Object.keys(groupMemberIndices[groupPubKey]), groupPubKey, groupMemberIndices, web3Context)
+      totalRewardsBalance = totalRewardsBalance.add(utils.toBN(utils.toWei(reward, 'ether')))
       groups.push({ groupIndex, groupPubKey, membersIndeces: groupMemberIndices[groupPubKey], reward })
     }
-    return Promise.resolve(groups)
+    return Promise.all([groups, utils.fromWei(totalRewardsBalance.toString(), 'ether')])
   } catch (error) {
     return Promise.reject(error)
   }

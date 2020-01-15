@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState, useRef } from 'react'
 import { RewardsGroups } from './RewardsGroups'
 import { Web3Context } from './WithWeb3Context'
 import Button from './Button'
@@ -11,12 +11,14 @@ export const Rewards = () => {
   const web3Context = useContext(Web3Context)
   const [isFetching, setIsFetching] = useState(true)
   const [showAll, setShowAll] = useState(false)
+  const [totalRewardsBalance, setTotalBalance]= useState(0)
   const [data, setData] = useState([])
 
   useEffect(() => {
     let shouldSetState = true
     rewardsService.fetchAvailableRewards(web3Context)
-      .then((groups) => {
+      .then(([groups, totalRewardsBalance]) => {
+        setTotalBalance(totalRewardsBalance)
         if (shouldSetState) {
           setIsFetching(false)
           setData(groups)
@@ -40,6 +42,7 @@ export const Rewards = () => {
           content='You can withdraw any future earned rewards from your delegated stake on this page.'
         /> :
         <>
+          <RewardsBalance balance={totalRewardsBalance} />
           <RewardsGroups groups={showAll ? data : data.slice(0, 3)} />
           { data.length > 3 &&
             <Button
@@ -54,3 +57,13 @@ export const Rewards = () => {
     </Loadable>
   )
 }
+
+const RewardsBalance = ({ balance }) => {
+  console.log('balance', balance)
+  return (<div>
+    <h3>{balance} ETH</h3>
+    <h6>YOUR REWARDS BALANCE</h6>
+  </div>)
+}
+
+
