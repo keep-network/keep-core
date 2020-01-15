@@ -12,6 +12,9 @@ interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
+    function dkgTriggerGasEstimate() external returns (uint256);
+    function callbackGas(uint256 requestId) external returns (uint256);
+    function withdrawFromDkgPool(uint256 amount) external;
 }
 
 /**
@@ -97,9 +100,6 @@ contract KeepRandomBeaconOperator {
 
     // Gas required to submit DKG result. Exludes initiation of DKG.
     uint256 public dkgGasEstimate = 1740000;
-
-    // Gas required to initiate DKG after dkgFeePool has enough ether.
-    uint256 public dkgInitiationGasEstimate = 70000;
 
     // Reimbursement for the submitter of the DKG result.
     // This value is set when a new DKG request comes to the operator contract.
@@ -468,16 +468,27 @@ contract KeepRandomBeaconOperator {
 
         emit RelayEntrySubmitted();
 
-        ServiceContract(signingRequest.serviceContract).entryCreated(
+        uint256 dkgInitiationGasEstimate = ServiceContract(signingRequest.serviceContract).dkgTriggerGasEstimate();
+        uint256 callbackGas = ServiceContract(signingRequest.serviceContract).callbackGas(signingRequest.relayRequestId);
+
+        uint256 gasBeforeEntryCreation = gasleft();
+        ServiceContract(signingRequest.serviceContract).entryCreated.gas(dkgInitiationGasEstimate.add(callbackGas))(
             signingRequest.relayRequestId,
             _groupSignature,
             msg.sender
         );
+        uint256 entryCreationActualGasSpent = gasBeforeEntryCreation.sub(gasleft());
+
+        uint256 reimbursementForEntryCreation = entryCreationActualGasSpent.mul(tx.gasprice) > priceFeedEstimate ?
+            priceFeedEstimate : entryCreationActualGasSpent.mul(tx.gasprice);
+        ServiceContract(signingRequest.serviceContract).withdrawFromDkgPool(reimbursementForEntryCreation);
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        stakingContract.magpieOf(msg.sender).transfer(submitterReward);
+        // Transferring funds (reward and reimbursing for potential dkg trigger) to a submitter
+        stakingContract.magpieOf(msg.sender)
+            .transfer(submitterReward.add(reimbursementForEntryCreation).mul(gasPriceWithFluctuationMargin(priceFeedEstimate)));
 
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
