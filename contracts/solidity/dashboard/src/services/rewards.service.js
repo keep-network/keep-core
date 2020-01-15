@@ -9,7 +9,7 @@ const fetchAvailableRewards = async (web3Context) => {
     for (let groupIndex = 0; groupIndex < 2; groupIndex++) {
       const groupPubKey = await keepRandomBeaconOperatorContract.methods.getGroupPublicKey(groupIndex).call()
       const isStale = await keepRandomBeaconOperatorContract.methods.isStaleGroup(groupPubKey).call()
-      if (isStale) {
+      if (!isStale) {
         continue
       }
 
@@ -25,7 +25,7 @@ const fetchAvailableRewards = async (web3Context) => {
       if (Object.keys(groupMemberIndices[groupPubKey]).length === 0) {
         continue
       }
-      const reward = await getAvailableRewardFromGroupInEther(Object.keys(groupMemberIndices[groupPubKey]), groupPubKey, groupMemberIndices, web3Context)
+      const reward = await getAvailableRewardFromGroupInEther(groupPubKey, groupMemberIndices, web3Context)
       totalRewardsBalance = totalRewardsBalance.add(utils.toBN(utils.toWei(reward, 'ether')))
       groups.push({ groupIndex, groupPubKey, membersIndeces: groupMemberIndices[groupPubKey], reward })
     }
@@ -35,8 +35,9 @@ const fetchAvailableRewards = async (web3Context) => {
   }
 }
 
-const getAvailableRewardFromGroupInEther = async (membersInGroup, groupPubKey, groupMemberIndices, web3Context) => {
+const getAvailableRewardFromGroupInEther = async (groupPubKey, groupMemberIndices, web3Context) => {
   const { utils, keepRandomBeaconOperatorContract } = web3Context
+  const membersInGroup = Object.keys(groupMemberIndices[groupPubKey])
   const rewardsMultiplier = membersInGroup.length === 1 ?
     groupMemberIndices[groupPubKey][membersInGroup[0]].length :
     membersInGroup.reduce((prev, current) => groupMemberIndices[groupPubKey][prev].length + groupMemberIndices[groupPubKey][current].length)
