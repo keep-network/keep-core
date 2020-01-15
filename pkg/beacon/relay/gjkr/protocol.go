@@ -1231,6 +1231,9 @@ func (rm *ReconstructingMember) ReconstructMisbehavedIndividualKeys(
 	if err != nil {
 		return fmt.Errorf("revealing misbehaved shares failed [%v]", err)
 	}
+	// Store for the purpose of combining group public key shares in phase 12.
+	rm.revealedMisbehavedMembersShares = revealedMisbehavedMembersShares
+
 	rm.reconstructIndividualPrivateKeys(revealedMisbehavedMembersShares) // z_m
 	rm.reconstructIndividualPublicKeys()                                 // y_m
 	return nil
@@ -1669,23 +1672,47 @@ func (rm *CombiningMember) CombineGroupPublicKey() {
 
 	rm.groupPublicKey = groupPublicKey
 
-	// Calculate group public key shares for all other members.
-	for memberID := range rm.receivedValidPeerPublicKeySharePoints {
-		// Calculate first component based on current member public key share points.
-		groupPublicKeyShare := rm.publicKeyShare(memberID, rm.publicKeySharePoints)
+	rm.combineGroupPublicKeyShares()
+}
 
-		// Calculate subsequent components based on all received and
-		// valid other members public key share points.
-		for _, publicKeySharePoints := range rm.receivedValidPeerPublicKeySharePoints {
-			groupPublicKeyShare = new(bn256.G2).Add(
-				groupPublicKeyShare,
-				rm.publicKeyShare(memberID, publicKeySharePoints),
-			)
+// combineGroupPublicKeyShares combines group public key shares for each
+// individual member in the group. Those group public key shares are
+// needed to perform the verification of relay entry signature shares coming
+// from given group member.
+func (rm *CombiningMember) combineGroupPublicKeyShares() {
+	// Calculate group public key shares for all other operating members.
+	for _, receiverID := range rm.group.OperatingMemberIDs() {
+		if receiverID == rm.ID {
+			continue
 		}
 
-		// TODO What if one of the member didn't send valid
-		//  public key share points but belongs to the QUAL set?
+		// Calculate first public key share for given receiver based on
+		// current member public key share points.
+		sum := rm.publicKeyShare(receiverID, rm.publicKeySharePoints)
 
-		rm.groupPublicKeyShares[memberID] = groupPublicKeyShare
+		// Iterate through the `QUAL` set and calculate subsequent
+		// public key share for given receiver based on...
+		for senderID := range rm.receivedQualifiedSharesS {
+			var publicKeyShare *bn256.G2
+
+			// ...received and valid other members public key share points...
+			if publicKeySharePoints, ok := rm.receivedValidPeerPublicKeySharePoints[senderID]; ok {
+				publicKeyShare = rm.publicKeyShare(receiverID, publicKeySharePoints)
+				// ...OR in case given sender didn't send their public key share points,
+				// take their reconstructed share and recover the public key share.
+			} else {
+				for _, shares := range rm.revealedMisbehavedMembersShares {
+					if shares.misbehavedMemberID == senderID {
+						publicKeyShare = new(bn256.G2).ScalarBaseMult(
+							shares.peerSharesS[receiverID],
+						)
+					}
+				}
+			}
+
+			sum = new(bn256.G2).Add(sum, publicKeyShare)
+		}
+
+		rm.groupPublicKeyShares[receiverID] = sum
 	}
 }

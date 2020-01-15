@@ -174,6 +174,9 @@ type RevealingMember struct {
 type ReconstructingMember struct {
 	*RevealingMember
 
+	// Revealed shares of members from the QUAL set disqualified or marked as
+	// inactive in later phases, after QUAL set has been established.
+	revealedMisbehavedMembersShares []*misbehavedShares
 	// Disqualified members' individual private keys reconstructed from shares
 	// revealed by other group members.
 	// Stored as `<m, z_m>`, where:
