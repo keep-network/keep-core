@@ -11,7 +11,7 @@ const GroupSelection = artifacts.require("./libraries/operator/GroupSelection.so
 const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
 
-export const withdrawalDelay = 86400; // 1 day
+const withdrawalDelay = 86400; // 1 day
 
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
