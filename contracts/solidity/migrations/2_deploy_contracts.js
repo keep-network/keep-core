@@ -7,7 +7,6 @@ const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol");
 const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
-const KeepRandomBeaconOperatorRewardsStub = artifacts.require("./stubs/KeepRandomBeaconOperatorRewardsStub.sol");
 
 const GroupSelection = artifacts.require("./libraries/operator/GroupSelection.sol");
 const Groups = artifacts.require("./libraries/operator/Groups.sol");
@@ -36,9 +35,6 @@ module.exports = async function(deployer, network) {
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
-  if(network === 'development') {
-    await deployer.deploy(KeepRandomBeaconOperatorRewardsStub, KeepRandomBeaconService.address, TokenStaking.address)
-  }
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 11).
   await deployer.deploy(KeepRandomBeaconOperator, KeepRandomBeaconService.address, TokenStaking.address);
