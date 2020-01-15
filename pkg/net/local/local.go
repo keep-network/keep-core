@@ -4,6 +4,7 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -112,7 +113,7 @@ func channel(name string, staticKey *key.NetworkPublic) net.BroadcastChannel {
 		identifier:           &identifier,
 		staticKey:            staticKey,
 		messageHandlersMutex: sync.Mutex{},
-		messageHandlers:      make([]net.HandleMessageFunc, 0),
+		messageHandlers:      make([]*messageHandler, 0),
 		unmarshalersMutex:    sync.Mutex{},
 		unmarshalersByType:   make(map[string]func() net.TaggedUnmarshaler, 0),
 	}
@@ -135,12 +136,17 @@ func randomIdentifier() string {
 	return string(runes)
 }
 
+type messageHandler struct {
+	ctx     context.Context
+	channel chan net.Message
+}
+
 type localChannel struct {
 	name                 string
 	identifier           net.TransportIdentifier
 	staticKey            *key.NetworkPublic
 	messageHandlersMutex sync.Mutex
-	messageHandlers      []net.HandleMessageFunc
+	messageHandlers      []*messageHandler
 	unmarshalersMutex    sync.Mutex
 	unmarshalersByType   map[string]func() net.TaggedUnmarshaler
 }
@@ -183,23 +189,30 @@ func (lc *localChannel) deliver(
 	payload interface{},
 ) {
 	lc.messageHandlersMutex.Lock()
-	snapshot := make([]net.HandleMessageFunc, len(lc.messageHandlers))
+	snapshot := make([]*messageHandler, len(lc.messageHandlers))
 	copy(snapshot, lc.messageHandlers)
 	lc.messageHandlersMutex.Unlock()
 
-	message :=
-		internal.BasicMessage(
-			senderTransportIdentifier,
-			payload,
-			"local",
-			key.Marshal(senderPublicKey),
-		)
+	message := internal.BasicMessage(
+		senderTransportIdentifier,
+		payload,
+		"local",
+		key.Marshal(senderPublicKey),
+	)
 
 	for _, handler := range snapshot {
-		// Invoking each handler in a separate goroutine in order
-		// to avoid situation when one of the handlers blocks the
-		// whole loop execution.
-		go handler.Handler(message)
+		go func(message net.Message, handler *messageHandler) {
+			select {
+			case handler.channel <- message:
+			// Nothing to do here; we block until the message is handled
+			// or until the context gets closed.
+			// This way we don't lose any message but also don't stay
+			// with any dangling goroutines if there is no longer anyone
+			// to receive messages.
+			case <-handler.ctx.Done():
+				return
+			}
+		}(message, handler)
 	}
 }
 
@@ -207,35 +220,38 @@ func (lc *localChannel) Send(message net.TaggedMarshaler) error {
 	return doSend(lc, message)
 }
 
-func (lc *localChannel) Recv(handler net.HandleMessageFunc) error {
+func (lc *localChannel) Recv(ctx context.Context, handler func(m net.Message)) {
+	messageHandler := &messageHandler{
+		ctx:     ctx,
+		channel: make(chan net.Message),
+	}
+
 	lc.messageHandlersMutex.Lock()
-	lc.messageHandlers = append(lc.messageHandlers, handler)
+	lc.messageHandlers = append(lc.messageHandlers, messageHandler)
 	lc.messageHandlersMutex.Unlock()
 
-	return nil
+	go func() {
+		for msg := range messageHandler.channel {
+			if messageHandler.ctx.Err() != nil {
+				lc.removeHandler(messageHandler)
+				return
+			}
+
+			handler(msg)
+		}
+	}()
 }
 
-func (lc *localChannel) UnregisterRecv(handlerType string) error {
+func (lc *localChannel) removeHandler(handler *messageHandler) {
 	lc.messageHandlersMutex.Lock()
 	defer lc.messageHandlersMutex.Unlock()
 
-	removedCount := 0
-
-	// updated slice shares the same backing array and capacity as the original,
-	// so the storage is reused for the filtered slice.
-	updated := lc.messageHandlers[:0]
-
-	for _, mh := range lc.messageHandlers {
-		if mh.Type != handlerType {
-			updated = append(updated, mh)
-		} else {
-			removedCount++
+	for i, h := range lc.messageHandlers {
+		if h.channel == handler.channel {
+			lc.messageHandlers[i] = lc.messageHandlers[len(lc.messageHandlers)-1]
+			lc.messageHandlers = lc.messageHandlers[:len(lc.messageHandlers)-1]
 		}
 	}
-
-	lc.messageHandlers = updated[:len(lc.messageHandlers)-removedCount]
-
-	return nil
 }
 
 func (lc *localChannel) RegisterUnmarshaler(

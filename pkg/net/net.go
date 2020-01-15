@@ -1,6 +1,7 @@
 package net
 
 import (
+	"context"
 	"crypto/ecdsa"
 
 	"github.com/gogo/protobuf/proto"
@@ -21,15 +22,6 @@ type Message interface {
 	Payload() interface{}
 	Type() string
 	SenderPublicKey() []byte
-}
-
-// HandleMessageFunc is the type of function called for each Message m furnished
-// by the BroadcastChannel. If there is a problem handling the Message, the
-// incoming error will describe the problem and the function can decide how to
-// handle that error. If an error is returned, processing stops.
-type HandleMessageFunc struct {
-	Type    string
-	Handler func(m Message) error
 }
 
 // TaggedMarshaler is an interface that includes the proto.Marshaler interface,
@@ -94,12 +86,11 @@ type BroadcastChannel interface {
 	// Given a message m that can marshal itself to protobuf, broadcast m to
 	// members of the Group through the BroadcastChannel.
 	Send(m TaggedMarshaler) error
-	// Recv takes a HandleMessageFunc and returns an error. This function should
-	// be retried.
-	Recv(h HandleMessageFunc) error
-	// UnregisterRecv takes the type of HandleMessageFunc and returns an
-	// error. This function should be defered.
-	UnregisterRecv(handlerType string) error
+	// Recv installs a message handler that will receive messages from the
+	// broadcast channel for the entire lifetime of the provided context.
+	// When the context is done, handler is automatically unregistered and
+	// receives no more messages.
+	Recv(ctx context.Context, handler func(m Message))
 	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
 	// type to a concrete object that can be passed to and understood by any
 	// registered message handling functions. The unmarshaler should be a
