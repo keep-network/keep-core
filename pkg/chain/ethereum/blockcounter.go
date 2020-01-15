@@ -76,7 +76,7 @@ func (ebc *ethereumBlockCounter) CurrentBlock() (uint64, error) {
 func (ebc *ethereumBlockCounter) WatchBlocks(ctx context.Context) <-chan uint64 {
 	watcher := &watcher{
 		ctx:     ctx,
-		channel: make(chan uint64, 1),
+		channel: make(chan uint64),
 	}
 
 	ebc.structMutex.Lock()
