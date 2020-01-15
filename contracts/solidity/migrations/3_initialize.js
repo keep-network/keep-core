@@ -25,7 +25,4 @@ module.exports = async function(deployer, network) {
     );
 
     await keepRandomBeaconOperator.setPriceFeedEstimate(priceFeedEstimate);
-
-    console.log(`Operator ${keepRandomBeaconOperator.priceFeedEstimate()}`)
-    console.log(`Service ${keepRandomBeaconService.priceFeedEstimate()}`)
 };
