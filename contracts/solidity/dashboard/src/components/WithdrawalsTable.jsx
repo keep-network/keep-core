@@ -3,16 +3,11 @@ import { Table } from 'react-bootstrap'
 import Withdrawal from './Withdrawal'
 
 class WithdrawalsTable extends Component {
+  renderRow = (item, index) => {
+    return <Withdrawal key={index} withdrawal={item}/>
+  }
 
   render() {
-    if (this.props.data) {
-      var rows = this.props.data.map(function(item, i){
-        return (
-          <Withdrawal key={i} withdrawal={item}/>
-        )
-      })
-    }
-
     return (
       <Table className="small table-sm" condensed>
         <thead>
@@ -23,7 +18,7 @@ class WithdrawalsTable extends Component {
           </tr>
         </thead>
         <tbody>
-          { rows }
+          { this.props.data && this.props.data.map(this.renderRow) }
         </tbody>
       </Table>
     )

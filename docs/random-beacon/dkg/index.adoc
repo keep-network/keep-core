@@ -31,7 +31,7 @@ include::concepts.adoc[]
 :leveloffset: -1
 
 
-== Protocol
+== Overview
 
 Input: _V~i~, S_
 
@@ -64,21 +64,7 @@ Disqualified nodes will be removed from _P_
 and their stake will be slashed in punishment
 for provably and attributably acting in breach of the DKG protocol.
 
-=== Group Selection
-
-_TBD_
-
-Input: _V~i~_, _N_
-
-Output: _[Y~1~, Y~2~, ... Y~N~]_
-
-For the purposes of the DKG algorithm,
-group selection can be left undefined for now.
-The protocol requires an ordered list of node identifiers,
-represented here as public keys of participants _P~1~_ to _P~N~_.
-This list is produced from _P_ using _V~i~_ as input.
-
-=== Distributed Key Generation
+== Protocol
 
 Phases are seen from the perspective of _P~i~_
 
@@ -87,7 +73,7 @@ will be added to _IA~p~_.
 Nodes that broadcast a malformed message may be added to _IA~p~_ or _DQ~p~_.
 
 [#phase-1,reftext="Phase 1"]
-==== Phase 1. Ephemeral key generation
+=== Phase 1. Ephemeral key generation
 
 To ensure integrity in later parts of the DKG protocol,
 we will require every _P~i~_ to generate
@@ -106,7 +92,7 @@ include::dkg.py[tags=phase-1]
 ----
 
 [#phase-2,reftext="Phase 2"]
-==== Phase 2. Ephemeral ECDH
+=== Phase 2. Ephemeral ECDH
 
 Every node in _P_ has now published a valid list of ephemeral ECDH pubkeys.
 _P~i~_ will perform ECDH with every _P~j~_ in _P_ to create _k~ij~_.
@@ -124,7 +110,7 @@ include::dkg_util.py[tags=phase-2]
 ----
 
 [#phase-3,reftext="Phase 3"]
-==== Phase 3. Polynomial generation
+=== Phase 3. Polynomial generation
 
 Every node in _G~3~_ has, for every other node in _G~3~_, a symmetric key that
 can be used for encrypted and attributable communications over the broadcast
@@ -152,7 +138,7 @@ include::dkg_util.py[tags=phase-3]
 ----
 
 [#phase-4,reftext="Phase 4"]
-==== Phase 4: Share verification
+=== Phase 4: Share verification
 
 
 Receive, decrypt and validate shares from other participants. If any share
@@ -173,7 +159,7 @@ include::dkg_util.py[tags=phase-4]
 ----
 
 [#phase-5,reftext="Phase 5"]
-==== Phase 5: Share complaint resolution
+=== Phase 5: Share complaint resolution
 
 If anyone has complaints about another player, use the published private keys
 to decrypt transmitted messages and determine fault.
@@ -196,7 +182,7 @@ include::dkg_util.py[tags=phase-5]
 ----
 
 [#phase-6,reftext="Phase 6"]
-==== Phase 6: Share calculation
+=== Phase 6: Share calculation
 
 Each player sets their share _x~i~_ of the secret _X_ to equal the sum of all
 shares _s~ji~_ as per GJKR. _X_ equals the sum of shares _s~j0~_.
@@ -208,7 +194,7 @@ include::dkg.py[tags=phase-6]
 ----
 
 [#phase-7,reftext="Phase 7"]
-==== Phase 7: Public key share points
+=== Phase 7: Public key share points
 
 Each player broadcasts their _A~ik~_ values.
 
@@ -219,7 +205,7 @@ include::dkg.py[tags=phase-7]
 ----
 
 [#phase-8,reftext="Phase 8"]
-==== Phase 8: Public key share validation
+=== Phase 8: Public key share validation
 
 Each player validates the values received in <<phase-7>>.
 
@@ -236,7 +222,7 @@ include::dkg_util.py[tags=phase-8]
 ----
 
 [#phase-9,reftext="Phase 9"]
-==== Phase 9: Second complaint resolution
+=== Phase 9: Second complaint resolution
 
 As in <<phase-5>>, but with the validation formula from <<phase-8>>.
 
@@ -263,7 +249,7 @@ include::dkg_util.py[tags=phase-9]
 ----
 
 [#phase-10,reftext="Phase 10"]
-==== Phase 10: Disqualified share opening
+=== Phase 10: Disqualified share opening
 
 All active players in _G~10~_ broadcast the keys they share with
 players in _DQ~9~_, so the reconstruction of Pedersen-VSS can be done
@@ -276,7 +262,7 @@ include::dkg.py[tags=phase-10]
 ----
 
 [#phase-11,reftext="Phase 11"]
-==== Phase 11: Disqualified share reconstruction
+=== Phase 11: Disqualified share reconstruction
 
 Decrypt and reconstruct _z~m~_ for every participant _P~m~_ that presented
 valid shares in <<phase-3>> but whose public key shares in <<phase-7>> were invalid.
@@ -295,7 +281,7 @@ include::dkg_util.py[tags=phase-11]
 ----
 
 [#phase-12,reftext="Phase 12"]
-==== Phase 12: Public key reconstruction
+=== Phase 12: Public key reconstruction
 
 Let _G~12~ = G~11~_
 
@@ -316,7 +302,7 @@ include::dkg_util.py[tags=phase-12]
 ----
 
 [#phase-13,reftext="Phase 13"]
-==== Phase 13: Result establishment
+=== Phase 13: Result establishment
 
 Let _IA = IA~1~ + IA~2~ + ... + IA~10~_
 
@@ -354,9 +340,9 @@ no result is submitted on-chain;
 instead, the DKG is allowed to simply time out.
 
 [#phase-14,reftext="Phase 14"]
-==== Phase 14: Result submission
+=== Phase 14: Result submission
 
-===== Off-chain
+==== Off-chain
 When a participant becomes eligible to submit the result
 (with supporting signatures) on-chain
 they submit if they have at least the honest majority
@@ -377,30 +363,6 @@ If _first player_ is late and _second player_ tries to submit,
 whichever gets mined first wins
 and subsequent submissions are disregarded immediately
 to avoid burdening the loser with excess gas fees.
-
-===== On-chain
-When the result is submitted on-chain along with the signatures,
-the contract checks that there are at least `H` signatures or more,
-and that each signature is valid for the submitted result
-and the corresponding member ID.
-Submissions containing multiple signatures
-on the same result from the same member are rejected.
-
-If the above checks pass,
-the result is considered canonical for the group.
-All other group members should abort publishing their results
-and no new result submissions will be accepted by the chain.
-
-If the above checks do not pass, the result is rejected.
-
-===== Off-chain
-If the result has been rejected and _second player_ became eligible,
-_second player_ can submit its result.
-Same checks are applied as for _first player_.
-
-If no canonical result has been published until `T_dkg + N * T_step`,
-where `N` is the group size,
-DKG operation is marked as failed.
 
 [source, python]
 ----
@@ -428,6 +390,25 @@ while not resultPublished:
   else:
     resultPublished = checkChainForResult()
 ----
+
+==== On-chain
+When the result is submitted on-chain along with the signatures,
+the contract checks that there are at least `H` signatures or more,
+and that each signature is valid for the submitted result
+and the corresponding member ID.
+Submissions containing multiple signatures
+on the same result from the same member are rejected.
+
+If the above checks pass,
+the result is considered canonical for the group.
+All other group members should abort publishing their results
+and no new result submissions will be accepted by the chain.
+
+If the above checks do not pass, the result is rejected.
+
+If no canonical result has been published until `T_dkg + N * T_step`,
+where `N` is the group size,
+DKG operation is marked as failed.
 
 [bibliography]
 == References

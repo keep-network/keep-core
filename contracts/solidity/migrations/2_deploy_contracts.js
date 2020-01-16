@@ -12,9 +12,6 @@ const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
 
 const withdrawalDelay = 86400; // 1 day
-const priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (20 Gwei = 20 * 10^9 wei)
-const fluctuationMargin = 50; // 50%
-const dkgContributionMargin = 1; // 1%
 
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
@@ -37,15 +34,4 @@ module.exports = async function(deployer) {
 
   // TODO: replace with a secure authorization protocol (addressed in RFC 11).
   await deployer.deploy(KeepRandomBeaconOperator, KeepRandomBeaconService.address, TokenStaking.address);
-
-  const keepRandomBeaconService = await KeepRandomBeaconServiceImplV1.at(KeepRandomBeaconService.address);
-  const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
-
-  keepRandomBeaconService.initialize(
-    priceFeedEstimate,
-    fluctuationMargin,
-    dkgContributionMargin,
-    withdrawalDelay,
-    keepRandomBeaconOperator.address
-  );
 };

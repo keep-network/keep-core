@@ -43,6 +43,8 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   let dkgGasEstimate = await operatorContract.dkgGasEstimate();
   let gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(web3.utils.toBN(fluctuationMargin)).div(web3.utils.toBN(100)));
 
+  await operatorContract.setPriceFeedEstimate(priceFeedEstimate);
+
   // Genesis should include payment to cover DKG cost to create first group
   await operatorContract.genesis({value: dkgGasEstimate.mul(gasPriceWithFluctuationMargin)});
 

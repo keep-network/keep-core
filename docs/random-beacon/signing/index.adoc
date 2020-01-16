@@ -1,6 +1,6 @@
 = Random Beacon Signing
 
-=== Terminology
+== Terminology
 
 `P1`:: The generator point for the BLS elliptic curve
 
@@ -23,7 +23,7 @@
 
 `H`:: The number of members required for a honest majority
 
-=== Signing group selection
+== Signing group selection
 
 When a valid request has been received,
 the beacon begins the relay entry generation.
@@ -42,12 +42,12 @@ and selecting the corresponding active group:
 
 `selectedGroup = seed % numberOfGroups()`
 
-=== Signature generation
+== Signature generation
 
 The selected group now has `relayEntryTimeout` blocks to submit the
 signature to `previousEntry`.
 
-==== Generating signature shares
+=== Generating signature shares
 
 Each member `P_i` in `selectedGroup` calculates
 their signature share:
@@ -59,7 +59,7 @@ the `Share_i` and the member index `i` of the sender `P_i`.
 
 `Message = (Share_i, i)`
 
-==== Verifying signature shares
+=== Verifying signature shares
 
 When `P_i` receives a signature share `Share_j` broadcast by `P_j`,
 the share can be verified by `blsVerify(Share_j, y_j, previousEntry)`.
@@ -67,7 +67,7 @@ If `Share_j` is valid,
 `P_i` can use it for reconstructing the threshold signature.
 If `Share_j` is invalid, `P_i` must not use it for reconstructing the entry.
 
-==== Reconstructing the signature
+=== Reconstructing the signature
 
 Once `P_i` has received at least `blsThreshold` valid shares,
 the entry can be reconstructed using Lagrange interpolation.
@@ -80,7 +80,7 @@ indices = validMessages.map(index)
 newEntry = lagrangeInterpolate(0, indices, shares)
 ----
 
-=== Output submission
+== Output submission
 
 Member _P~submitter~_ of _Group~i~_ submits
 `newEntry = blsSign(previousEntry, X_i)`
@@ -98,7 +98,7 @@ according to the reward formula.
 
 If the submitted entry is invalid, it is rejected.
 
-=== Entry timeout
+== Entry timeout
 
 If a valid output is not submitted before block
 `timeoutBlock = currentEntryStartBlock + relayEntryTimeout + 1`,
