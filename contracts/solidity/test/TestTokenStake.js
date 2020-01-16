@@ -44,8 +44,7 @@ contract('TestTokenStake', function(accounts) {
     // Starting balances
     let account_one_starting_balance = await token.balanceOf.call(account_one);
 
-    let signature = Buffer.from((await sign(web3.utils.soliditySha3(account_one), account_one_operator)).substr(2), 'hex');
-    let data = Buffer.concat([Buffer.from(account_one_magpie.substr(2), 'hex'), signature]);
+    let data = Buffer.concat([Buffer.from(account_one_magpie.substr(2), 'hex'), Buffer.from(account_one_operator.substr(2), 'hex')]);
 
     // Stake tokens using approveAndCall pattern
     await token.approveAndCall(stakingContract.address, stakingAmount, '0x' + data.toString('hex'), {from: account_one});
@@ -85,8 +84,7 @@ contract('TestTokenStake', function(accounts) {
     // Starting balances
     account_one_starting_balance = await token.balanceOf.call(account_one);
 
-    signature = Buffer.from((await sign(web3.utils.soliditySha3(account_one), account_one_operator)).substr(2), 'hex');
-    data = Buffer.concat([Buffer.from(account_one_magpie.substr(2), 'hex'), signature]);
+    data = Buffer.concat([Buffer.from(account_one_magpie.substr(2), 'hex'), Buffer.from(account_one_operator.substr(2), 'hex')]);
 
     // Stake tokens using approveAndCall pattern
     await token.approveAndCall(stakingContract.address, stakingAmount, '0x' + data.toString('hex'), {from: account_one});

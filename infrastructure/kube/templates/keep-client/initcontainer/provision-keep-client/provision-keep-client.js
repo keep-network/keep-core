@@ -125,7 +125,6 @@ async function isStaked(operator) {
 async function stakeOperatorAccount(operator, contractOwner) {
 
   let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-  let contractOwnerSigned = await web3.eth.sign(web3.utils.soliditySha3(contractOwner), operator);
   let staked = await isStaked(operator);
 
   /*
@@ -145,19 +144,10 @@ async function stakeOperatorAccount(operator, contractOwner) {
     console.log('Unstaked operator account set, staking account!');
   }
 
-  /*
-  This is really a bit stupid.  The return from web3.eth.sign is different depending on whether or not
-  the signer is a local or remote ETH account.  We use web3.eth.sign to set contractOwnerSigned. Here
-  the bootstrap peer account already exists and is hosted on an ETH node.
-  */
-  if (process.env.KEEP_CLIENT_TYPE === 'bootstrap') {
-    var contractOwnerSignature = contractOwnerSigned;
-  } else {
-    var contractOwnerSignature = contractOwnerSigned.signature;
-  }
-
-  let signature = Buffer.from(contractOwnerSignature.substr(2), 'hex');
-  let delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
+  let delegation = '0x' + Buffer.concat([
+    Buffer.from(magpie.substr(2), 'hex'), 
+    Buffer.from(operator.substr(2), 'hex')
+  ]).toString('hex');
 
   console.log('Staking 1000000 KEEP tokens on operator account ' + operator);
 
@@ -230,7 +220,7 @@ async function createKeepClientConfig(operator) {
     Here we format the default rendering to write the config file with Seed/Port values as needed.
     */
     let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
-      replace: (key, value) => { return (key == 'RetransmissionCycles' || key == 'RetransmissionInterval' || key == 'Port') ? value.toFixed(0) : false }
+      replace: (key, value) => { return (key == 'Port') ? value.toFixed(0) : false }
     });
 
     fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', formattedConfigFile, (error) => {

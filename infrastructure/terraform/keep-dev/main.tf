@@ -144,10 +144,19 @@ module "gke_cluster" {
   labels = "${local.labels}"
 }
 
-resource "google_compute_global_address" "atlantis_external_ip" {
-  name         = "${var.atlantis_ip_name}-${count.index}"
+resource "google_compute_address" "eth_tx_ropsten_loadbalancer_ip" {
+  name         = "${var.eth_tx_ropsten_loadbalancer_name}"
   project      = "${module.project.project_id}"
-  address_type = "${upper(var.atlantis_ip_address_type)}"
+  region       = "${var.region_data["region"]}"
+  address_type = "${upper(var.eth_tx_ropsten_loadbalancer_address_type)}"
+  labels       = "${local.labels}"
+}
+
+resource "google_compute_address" "eth_tx_ropsten_light_loadbalancer_ip" {
+  name         = "${var.eth_tx_ropsten_light_loadbalancer_name}"
+  project      = "${module.project.project_id}"
+  region       = "${var.region_data["region"]}"
+  address_type = "${upper(var.eth_tx_ropsten_light_loadbalancer_address_type)}"
   labels       = "${local.labels}"
 }
 

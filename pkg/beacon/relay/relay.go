@@ -105,25 +105,23 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	for _, signer := range memberships {
-		go func(signer *registry.Membership) {
-			channel, err := n.netProvider.ChannelFor(signer.ChannelName)
-			if err != nil {
-				logger.Errorf(
-					"could not create broadcast channel with name [%v]: [%v]",
-					signer.ChannelName,
-					err,
-				)
-				return
-			}
+	channel, err := n.netProvider.ChannelFor(memberships[0].ChannelName)
+	if err != nil {
+		logger.Errorf("could not create broadcast channel: [%v]", err)
+		return
+	}
 
+	entry.RegisterUnmarshallers(channel)
+
+	for _, member := range memberships {
+		go func(member *registry.Membership) {
 			err = entry.SignAndSubmit(
 				n.blockCounter,
 				channel,
 				relayChain,
 				previousEntry,
 				n.chainConfig.HonestThreshold,
-				signer.Signer,
+				member.Signer,
 				startBlockHeight,
 			)
 			if err != nil {
@@ -133,6 +131,6 @@ func (n *Node) GenerateRelayEntry(
 				)
 				return
 			}
-		}(signer)
+		}(member)
 	}
 }
