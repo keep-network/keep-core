@@ -18,4 +18,8 @@ contract KeepRandomBeaconOperatorGroupSelectionStub is KeepRandomBeaconOperator 
         groupSize = size;
         groupSelection.groupSize = size;
     }
+
+    function startGroupSelection(uint256 seed) public {
+        groupSelection.start(seed);
+    }
 }
