@@ -60,11 +60,9 @@ const (
 
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
-	Peers                  []string
-	Port                   int
-	AnnouncedAddresses     []string
-	RetransmissionCycles   int
-	RetransmissionInterval int
+	Peers              []string
+	Port               int
+	AnnouncedAddresses []string
 }
 
 type provider struct {
