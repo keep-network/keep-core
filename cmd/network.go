@@ -88,15 +88,12 @@ func pingRequest(c *cli.Context) error {
 		privKey = standardPeerPrivKey
 	}
 
-	timeTicker := time.NewTicker(50 * time.Millisecond)
-	defer timeTicker.Stop()
-
 	netProvider, err := libp2p.Connect(
 		ctx,
 		libp2pConfig,
 		privKey,
 		stakeMonitor,
-		retransmission.NewTimeTicker(timeTicker),
+		retransmission.NewTimeTicker(ctx, 50*time.Millisecond),
 	)
 	if err != nil {
 		return err

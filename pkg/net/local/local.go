@@ -124,7 +124,7 @@ func channel(name string, staticKey *key.NetworkPublic) net.BroadcastChannel {
 		unmarshalersMutex:    sync.Mutex{},
 		unmarshalersByType:   make(map[string]func() net.TaggedUnmarshaler, 0),
 		retransmissionTicker: retransmission.NewTimeTicker(
-			time.NewTicker(50 * time.Millisecond),
+			context.Background(), 50*time.Millisecond,
 		),
 	}
 	channels[name] = append(channels[name], channel)

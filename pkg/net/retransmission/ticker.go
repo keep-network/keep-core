@@ -27,14 +27,25 @@ func NewTicker(ticks <-chan uint64) *Ticker {
 	return ticker
 }
 
-// NewTimeTicker is a convenience function allowing to convert time.Ticker to
-// retransmission.Ticker. When the provided time.Ticker is stopped, all handlers
-// are unregistered and retransmission.Ticker is stopped.
-func NewTimeTicker(ticker *time.Ticker) *Ticker {
+// NewTimeTicker is a convenience function allowing to create time-based
+// retransmission.Ticker for the provided duration. When the provided context is
+// done, all handlers are unregistered and retransmission.Ticker is stopped.
+func NewTimeTicker(ctx context.Context, duration time.Duration) *Ticker {
 	ticks := make(chan uint64)
+	timeTicker := time.NewTicker(duration)
+
+	// pipe ticks from time ticker
 	go func() {
-		for tick := range ticker.C {
-			ticks <- uint64(tick.Unix())
+		for {
+			select {
+			case tick := <-timeTicker.C:
+				ticks <- uint64(tick.Unix())
+
+			case <-ctx.Done():
+				timeTicker.Stop()
+				close(ticks)
+				return
+			}
 		}
 	}()
 

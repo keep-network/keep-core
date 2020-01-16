@@ -21,7 +21,23 @@ func TestOnTick(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	if tickCount != 2 {
-		t.Errorf("expected [2] executions of handlers, had [%v]", tickCount)
+		t.Errorf("expected [2] executions of handler, had [%v]", tickCount)
+	}
+}
+
+func TestOnTickTimeTicker(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 105*time.Millisecond)
+	defer cancel()
+
+	ticker := NewTimeTicker(ctx, 10*time.Millisecond)
+
+	tickCount := 0
+	ticker.onTick(ctx, func() { tickCount++ })
+
+	<-ctx.Done()
+
+	if tickCount != 10 {
+		t.Errorf("expected [10] executions of handler, had [%v]", tickCount)
 	}
 }
 
@@ -66,6 +82,26 @@ func TestCloseTicker(t *testing.T) {
 	ticker.onTick(ctx, func() {})
 
 	close(ticks)
+	time.Sleep(10 * time.Millisecond)
+
+	if len(ticker.handlers) != 0 {
+		t.Errorf(
+			"all handlers should be unregistered, still has [%v]",
+			len(ticker.handlers),
+		)
+	}
+}
+
+func TestCloseTimeTicker(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 105*time.Millisecond)
+	defer cancel()
+
+	ticker := NewTimeTicker(ctx, 10*time.Millisecond)
+
+	ticker.onTick(ctx, func() {})
+
+	<-ctx.Done()
+
 	time.Sleep(10 * time.Millisecond)
 
 	if len(ticker.handlers) != 0 {
