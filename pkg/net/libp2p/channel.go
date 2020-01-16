@@ -13,6 +13,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
@@ -41,7 +42,7 @@ type channel struct {
 
 type messageHandler struct {
 	ctx     context.Context
-	channel chan net.Message
+	channel chan retransmission.NetworkMessage
 }
 
 func (c *channel) Name() string {
@@ -62,21 +63,38 @@ func (c *channel) Send(message net.TaggedMarshaler) error {
 func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
 	messageHandler := &messageHandler{
 		ctx:     ctx,
-		channel: make(chan net.Message),
+		channel: make(chan retransmission.NetworkMessage),
 	}
 
 	c.messageHandlersMutex.Lock()
 	c.messageHandlers = append(c.messageHandlers, messageHandler)
 	c.messageHandlersMutex.Unlock()
 
+	handleWithRetransmissions := retransmission.WithRetransmissionSupport(handler)
+
 	go func() {
-		for msg := range messageHandler.channel {
-			if messageHandler.ctx.Err() != nil {
+		for {
+			select {
+			case <-ctx.Done():
 				c.removeHandler(messageHandler)
 				return
-			}
 
-			handler(msg)
+			case msg := <-messageHandler.channel:
+				// Go language specification says that if one or more of the
+				// communications in the select statement can proceed, a single
+				// one that will proceed is chosen via a uniform pseudo-random
+				// selection.
+				// Thus, it can happen this communication is called when ctx is
+				// already done. Since we guarantee in the network channel API
+				// that handler is not called after ctx is done (client code
+				// could e.g. perform come cleanup), we need to double-check
+				// the context state here.
+				if messageHandler.ctx.Err() != nil {
+					continue
+				}
+
+				handleWithRetransmissions(msg)
+			}
 		}
 	}()
 }
@@ -174,11 +192,7 @@ func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
 		return err
 	}
 
-	onFirstTimeReceived := func() error {
-		return c.processContainerMessage(pubsubMessage.GetFrom(), messageProto)
-	}
-
-	return c.retransmitter.receive(&messageProto, onFirstTimeReceived)
+	return c.processContainerMessage(pubsubMessage.GetFrom(), messageProto)
 }
 
 func (c *channel) processContainerMessage(
@@ -222,15 +236,21 @@ func (c *channel) processContainerMessage(
 		)
 	}
 
-	// Fire a message back to the protocol.
-	protocolMessage := internal.BasicMessage(
+	fingerprint := retransmission.CalculateFingerprint(
 		senderIdentifier.id,
-		unmarshaled,
-		string(message.Type),
-		key.Marshal(networkKey),
+		message.GetPayload(),
 	)
 
-	c.deliver(protocolMessage)
+	c.deliver(retransmission.NewNetworkMessage(
+		internal.BasicMessage(
+			senderIdentifier.id,
+			unmarshaled,
+			string(message.Type),
+			key.Marshal(networkKey),
+		),
+		fingerprint,
+		message.Retransmission,
+	))
 
 	return nil
 }
@@ -249,14 +269,14 @@ func (c *channel) getUnmarshalingContainerByType(messageType string) (net.Tagged
 	return unmarshaler(), nil
 }
 
-func (c *channel) deliver(message net.Message) {
+func (c *channel) deliver(message retransmission.NetworkMessage) {
 	c.messageHandlersMutex.Lock()
 	snapshot := make([]*messageHandler, len(c.messageHandlers))
 	copy(snapshot, c.messageHandlers)
 	c.messageHandlersMutex.Unlock()
 
 	for _, handler := range snapshot {
-		go func(message net.Message, handler *messageHandler) {
+		go func(message retransmission.NetworkMessage, handler *messageHandler) {
 			select {
 			case handler.channel <- message:
 			// Nothing to do here; we block until the message is handled
