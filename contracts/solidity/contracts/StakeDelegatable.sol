@@ -30,7 +30,7 @@ contract StakeDelegatable {
 
     // List of operators for the stake owner.
     mapping(address => address[]) public ownerOperators;
-    
+
     /**
      * @dev Gets the stake balance of the specified address.
      * @param _address The address to query the balance of.
