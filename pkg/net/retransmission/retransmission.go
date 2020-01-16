@@ -29,7 +29,7 @@ type NetworkMessage interface {
 // for every new tick received from the provided Ticker for the entire lifetime
 // of the provided Context. For each retransmission, send function is
 // called with a copy of the original message and message retransmission
-// counter set to the appropriate value.
+// counter incremented.
 func ScheduleRetransmissions(
 	ctx context.Context,
 	ticker *Ticker,
