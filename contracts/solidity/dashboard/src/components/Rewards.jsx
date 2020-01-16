@@ -49,7 +49,7 @@ export const Rewards = () => {
               className="btn btn-default btn-sm see-all-btn"
               onClick={() => setShowAll(!showAll)}
             >
-              {showAll ? 'SEE LESS' : `SEE ALL ${data.length - 2}`}
+              {showAll ? 'SEE LESS' : `SEE ALL (${data.length - 3})`}
             </Button>
           }
         </>
@@ -64,5 +64,3 @@ const RewardsBalance = ({ balance }) => (
     <h6>YOUR REWARDS BALANCE</h6>
   </div>
 )
-
-
