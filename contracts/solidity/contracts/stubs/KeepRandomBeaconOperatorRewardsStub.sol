@@ -8,6 +8,9 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         address _serviceContract,
         address _stakingContract
     ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
+        groups.groupActiveTime = 5;
+        groups.activeGroupsThreshold = 1;
+        groups.relayEntryTimeout = 10;
     }
 
     function registerNewGroup(bytes memory groupPublicKey) public {
