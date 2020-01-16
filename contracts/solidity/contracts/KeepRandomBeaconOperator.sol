@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./TokenStaking.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
@@ -21,7 +22,7 @@ interface ServiceContract {
  * The contract is not upgradeable. New functionality can be implemented by deploying
  * new versions following Keep client update and re-authorization by the stakers.
  */
-contract KeepRandomBeaconOperator {
+contract KeepRandomBeaconOperator is ReentrancyGuard {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
     using GroupSelection for GroupSelection.Storage;
@@ -384,14 +385,17 @@ contract KeepRandomBeaconOperator {
             uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
             dkgSubmitterReimbursementFee = 0;
             // Reimburse submitter with actual DKG cost.
-            magpie.transfer(reimbursementFee);
+            (bool success, ) = magpie.call.value(reimbursementFee)("");
+            require(success, "Failed reimburse actual DKG cost");
+
             // Return surplus to the contract that started DKG.
             groupSelectionStarterContract.fundDkgFeePool.value(surplus)();
         } else {
             // If submitter used higher gas price reimburse only dkgSubmitterReimbursementFee max.
             reimbursementFee = dkgSubmitterReimbursementFee;
             dkgSubmitterReimbursementFee = 0;
-            magpie.transfer(reimbursementFee);
+            (bool success, ) = magpie.call.value(reimbursementFee)("");
+            require(success, "Failed reimburse DKG fee");
         }
     }
 
@@ -448,7 +452,7 @@ contract KeepRandomBeaconOperator {
      * @param _groupSignature Group BLS signature over the concatenation of the
      * previous entry and seed.
      */
-    function relayEntry(bytes memory _groupSignature) public {
+    function relayEntry(bytes memory _groupSignature) public nonReentrant {
         require(isEntryInProgress(), "Entry was submitted");
         require(!hasEntryTimedOut(), "Entry timed out");
 
@@ -474,7 +478,8 @@ contract KeepRandomBeaconOperator {
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        stakingContract.magpieOf(msg.sender).transfer(submitterReward);
+        (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(submitterReward)("");
+        require(success, "Failed send relay submitter reward");
 
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
@@ -652,9 +657,10 @@ contract KeepRandomBeaconOperator {
      * @param groupIndex Group index.
      * @param groupMemberIndices Array of member indices for the group member.
      */
-    function withdrawGroupMemberRewards(uint256 groupIndex, uint256[] memory groupMemberIndices) public {
+    function withdrawGroupMemberRewards(uint256 groupIndex, uint256[] memory groupMemberIndices) public nonReentrant {
         uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
-        stakingContract.magpieOf(msg.sender).transfer(accumulatedRewards);
+        (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(accumulatedRewards)("");
+        require(success, "Failed withdraw rewards");
     }
 
     /**
