@@ -6,9 +6,7 @@ const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol");
 const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
-
-// for testing purposes
-const KeepRandomBeaconOperator = artifacts.require("../stubs/KeepRandomBeaconOperatorRewardsStub.sol");
+const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
 
 const GroupSelection = artifacts.require("./libraries/operator/GroupSelection.sol");
 const Groups = artifacts.require("./libraries/operator/Groups.sol");
@@ -19,7 +17,7 @@ const priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)); // (2
 const fluctuationMargin = 50; // 50%
 const dkgContributionMargin = 1; // 1%
 
-module.exports = async function(deployer, network) {
+module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
   await deployer.link(ModUtils, AltBn128);
   await deployer.deploy(AltBn128);
