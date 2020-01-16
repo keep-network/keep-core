@@ -5,8 +5,7 @@ const fetchAvailableRewards = async (web3Context) => {
     const expiredGroupsCount = await keepRandomBeaconOperatorContract.methods.getFirstActiveGroupIndex().call()
     const groups = []
     const groupMemberIndices = {}
-    // TODO iterate trough expired groups
-    for (let groupIndex = 0; groupIndex < 2; groupIndex++) {
+    for (let groupIndex = 0; groupIndex < expiredGroupsCount; groupIndex++) {
       const groupPubKey = await keepRandomBeaconOperatorContract.methods.getGroupPublicKey(groupIndex).call()
       const isStale = await keepRandomBeaconOperatorContract.methods.isStaleGroup(groupPubKey).call()
       if (!isStale) {
