@@ -28,13 +28,13 @@ export const SideMenu = (props) => {
   return (
     <nav className={`${ isOpen ? 'active ' : '' }side-menu`}>
       <ul>
-        <NavLink exact to="/overview" label='Overview'/>
-        <NavLink exact to="/rewards" label='Rewards'/>
+        <NavLink exact to="/overview" label='TOKENS'/>
+        <NavLink exact to="/rewards" label='REWARDS'/>
         { isTokenHolder &&
             <>
-                <NavLink exact to="/stake" label='Stake'/>
-                <NavLink exact to="/token-grants" label='Token Grants'/>
-                <NavLink exact to="/create-token-grants" label='Create Token Grant'/>
+                <NavLink exact to="/stake" label='STAKE'/>
+                <NavLink exact to="/token-grants" label='TOKE GRANTS'/>
+                <NavLink exact to="/create-token-grants" label='CREATE TOKEN GRANTS'/>
             </>
         }
         <Web3Status />
