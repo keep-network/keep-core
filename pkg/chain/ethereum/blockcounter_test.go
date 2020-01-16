@@ -132,6 +132,8 @@ func TestWatchBlocks(t *testing.T) {
 			watcher2ReceivedCount++
 		}
 	}()
+	// give some time for watcher goroutine to initialize
+	time.Sleep(50 * time.Millisecond)
 
 	blockCounter.subscriptionChannel <- block{Number: "2"}
 	time.Sleep(50 * time.Millisecond)
@@ -170,6 +172,8 @@ func TestWatchBlocksIsNonBlocking(t *testing.T) {
 			receivedCount++
 		}
 	}()
+	// give some time for watcher goroutine to initialize
+	time.Sleep(50 * time.Millisecond)
 
 	blockCounter.subscriptionChannel <- block{Number: "2"}
 	time.Sleep(10 * time.Millisecond)

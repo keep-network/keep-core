@@ -69,7 +69,7 @@ func (sss *signatureShareState) Initiate(ctx context.Context) error {
 		sss.MemberIndex(),
 		sss.selfSignatureShare.Marshal(),
 	}
-	if err := sss.channel.Send(message); err != nil {
+	if err := sss.channel.Send(ctx, message); err != nil {
 		return err
 	}
 	return nil

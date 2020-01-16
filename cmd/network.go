@@ -18,6 +18,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/pborman/uuid"
 	"github.com/urfave/cli"
@@ -92,6 +93,7 @@ func pingRequest(c *cli.Context) error {
 		libp2pConfig,
 		privKey,
 		stakeMonitor,
+		retransmission.NewTimeTicker(ctx, 50*time.Millisecond),
 	)
 	if err != nil {
 		return err
@@ -174,7 +176,7 @@ func pingRequest(c *cli.Context) error {
 
 		go func(msg *PingMessage) {
 			<-start
-			err := broadcastChannel.Send(message)
+			err := broadcastChannel.Send(ctx, message)
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
@@ -209,7 +211,7 @@ func pingRequest(c *cli.Context) error {
 				Sender:  netProvider.ID().String(),
 				Payload: pong + " corresponding to " + pingPayload.Payload,
 			}
-			err := broadcastChannel.Send(message)
+			err := broadcastChannel.Send(ctx, message)
 			if err != nil {
 				return err
 			}

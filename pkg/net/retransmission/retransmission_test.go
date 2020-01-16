@@ -1,10 +1,109 @@
 package retransmission
 
 import (
+	"context"
 	"testing"
+	"time"
 
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 )
+
+func TestRetransmitExpectedNumberOfTimes(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 510*time.Millisecond)
+	defer cancel()
+
+	retransmissionsCount := 0
+	ScheduleRetransmissions(
+		ctx,
+		NewTimeTicker(ctx, 50*time.Millisecond),
+		&pb.NetworkMessage{},
+		func(msg *pb.NetworkMessage) error {
+			retransmissionsCount++
+			return nil
+		},
+	)
+
+	<-ctx.Done()
+
+	if retransmissionsCount != 10 {
+		t.Errorf("expected [10] retransmissions, has [%v]", retransmissionsCount)
+	}
+}
+
+func TestUpdateRetransmissionCounter(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 260*time.Millisecond)
+	defer cancel()
+
+	var retransmissions []*pb.NetworkMessage
+	ScheduleRetransmissions(
+		ctx,
+		NewTimeTicker(ctx, 50*time.Millisecond),
+		&pb.NetworkMessage{},
+		func(msg *pb.NetworkMessage) error {
+			retransmissions = append(retransmissions, msg)
+			return nil
+		},
+	)
+
+	<-ctx.Done()
+
+	for i := 1; i <= 5; i++ {
+		message := retransmissions[i-1]
+		if uint32(i) != message.Retransmission {
+			t.Errorf(
+				"unexpected retransmission counter\nactual: [%v]\nexpected:   [%v]",
+				i,
+				message.Retransmission,
+			)
+		}
+	}
+}
+
+func TestRetransmitOriginalContent(t *testing.T) {
+	sender := []byte("this is sender")
+	encrypted := true
+	payload := []byte("this is payload")
+	messageType := []byte("this is type")
+	channel := []byte("this is channel")
+
+	message := &pb.NetworkMessage{
+		Sender:    sender,
+		Encrypted: encrypted,
+		Payload:   payload,
+		Type:      messageType,
+		Channel:   channel,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 110*time.Millisecond)
+	defer cancel()
+
+	var retransmissions []*pb.NetworkMessage
+	ScheduleRetransmissions(
+		ctx,
+		NewTimeTicker(ctx, 50*time.Millisecond),
+		message,
+		func(msg *pb.NetworkMessage) error {
+			retransmissions = append(retransmissions, msg)
+			return nil
+		},
+	)
+
+	<-ctx.Done()
+
+	for i := 0; i < 2; i++ {
+		message := retransmissions[i]
+
+		testutils.AssertBytesEqual(t, sender, message.Sender)
+		testutils.AssertBytesEqual(t, payload, message.Payload)
+		testutils.AssertBytesEqual(t, messageType, message.Type)
+		testutils.AssertBytesEqual(t, channel, message.Channel)
+		if encrypted != message.Encrypted {
+			t.Errorf("unexpected 'Encrypted' field value")
+		}
+	}
+}
 
 func TestHandlerReceiveMessage(t *testing.T) {
 	var received []net.Message

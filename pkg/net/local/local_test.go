@@ -27,7 +27,7 @@ func TestRegisterAndFireHandler(t *testing.T) {
 		handlerFiredChan <- struct{}{}
 	})
 
-	localChannel.Send(&mockNetMessage{})
+	localChannel.Send(ctx, &mockNetMessage{})
 
 	select {
 	case <-handlerFiredChan:
@@ -73,6 +73,9 @@ func TestUnregisterHandler(t *testing.T) {
 	for testName, test := range tests {
 		test := test
 		t.Run(testName, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
 			_, localChannel, err := initTestChannel("channel name")
 			if err != nil {
 				t.Fatal(err)
@@ -88,12 +91,12 @@ func TestUnregisterHandler(t *testing.T) {
 			for _, handlerName := range test.handlersRegistered {
 				handlerName := handlerName
 
-				ctx, cancel := context.WithCancel(context.Background())
+				handlerCtx, cancel := context.WithCancel(ctx)
 				defer cancel()
 
 				handlerCancellations[handlerName] = cancel
 
-				localChannel.Recv(ctx, func(msg net.Message) {
+				localChannel.Recv(handlerCtx, func(msg net.Message) {
 					handlersFiredMutex.Lock()
 					handlersFired = append(handlersFired, handlerName)
 					handlersFiredMutex.Unlock()
@@ -106,7 +109,7 @@ func TestUnregisterHandler(t *testing.T) {
 			}
 
 			// Send a message, all handlers should be called
-			localChannel.Send(&mockNetMessage{})
+			localChannel.Send(ctx, &mockNetMessage{})
 
 			// Handlers are fired asynchronously; wait for them
 			time.Sleep(500 * time.Millisecond)
@@ -144,7 +147,7 @@ func TestUnregisterWhenHandling(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 300; i++ {
-			channel.Send(&mockNetMessage{})
+			channel.Send(ctx, &mockNetMessage{})
 		}
 	}()
 
@@ -187,7 +190,7 @@ func TestSendAndDeliver(t *testing.T) {
 	localChannel3.Recv(ctx, msgHandler)
 
 	// Broadcast message by the first peer.
-	if err := localChannel1.Send(msgToSend); err != nil {
+	if err := localChannel1.Send(ctx, msgToSend); err != nil {
 		t.Fatalf("failed to send message: [%v]", err)
 	}
 

@@ -1,12 +1,18 @@
 package retransmission
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"sync"
 
+	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 )
+
+var logger = log.Logger("keep-net-retransmission")
 
 // NetworkMessage enhances net.Message with functions needed to perform message
 // retransmission. Specifically, we need to know if the given message is
@@ -17,6 +23,37 @@ type NetworkMessage interface {
 
 	Fingerprint() string
 	Retransmission() uint32
+}
+
+// ScheduleRetransmissions takes the provided message and retransmits it
+// for every new tick received from the provided Ticker for the entire lifetime
+// of the provided Context. For each retransmission, send function is
+// called with a copy of the original message and message retransmission
+// counter incremented.
+func ScheduleRetransmissions(
+	ctx context.Context,
+	ticker *Ticker,
+	message *pb.NetworkMessage,
+	send func(*pb.NetworkMessage) error,
+) {
+	go func() {
+		retransmission := uint32(0)
+		ticker.onTick(ctx, func() {
+			retransmission++
+
+			messageCopy := *message
+			messageCopy.Retransmission = retransmission
+
+			go func() {
+				if err := send(&messageCopy); err != nil {
+					logger.Errorf(
+						"could not retransmit message: [%v]",
+						err,
+					)
+				}
+			}()
+		})
+	}()
 }
 
 // WithRetransmissionSupport takes the standard network message handler and

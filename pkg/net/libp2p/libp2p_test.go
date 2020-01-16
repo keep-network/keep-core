@@ -12,6 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 )
 
 func TestProviderReturnsType(t *testing.T) {
@@ -29,6 +30,7 @@ func TestProviderReturnsType(t *testing.T) {
 		generateDeterministicNetworkConfig(),
 		privKey,
 		local.NewStakeMonitor(big.NewInt(200)),
+		idleTicker(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -58,6 +60,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 		generateDeterministicNetworkConfig(),
 		privKey,
 		local.NewStakeMonitor(big.NewInt(200)),
+		idleTicker(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -96,6 +99,7 @@ func TestSendReceive(t *testing.T) {
 		config,
 		privKey,
 		local.NewStakeMonitor(big.NewInt(200)),
+		idleTicker(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -112,6 +116,7 @@ func TestSendReceive(t *testing.T) {
 	}
 
 	if err := broadcastChannel.Send(
+		ctx,
 		&testMessage{Sender: identity, Payload: expectedPayload},
 	); err != nil {
 		t.Fatal(err)
@@ -169,6 +174,7 @@ func TestProviderSetAnnouncedAddresses(t *testing.T) {
 		config,
 		privateKey,
 		local.NewStakeMonitor(big.NewInt(200)),
+		idleTicker(),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -216,6 +222,12 @@ func (m *testMessage) Unmarshal(bytes []byte) error {
 
 func newTestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 3*time.Second)
+}
+
+func idleTicker() *retransmission.Ticker {
+	ticks := make(chan uint64)
+	close(ticks)
+	return retransmission.NewTicker(ticks)
 }
 
 func generateDeterministicNetworkConfig() Config {

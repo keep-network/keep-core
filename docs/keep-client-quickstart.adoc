@@ -45,18 +45,6 @@ default address then leave `AnnouncedAddresses` set to `[]` or remove the entry 
 
 `AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]`
 
-=== Message retransmission
-
-There is no guarantee that all messages sent by the node will reach all of the
-expected receivers. Unexpected network issues may cause messages to be dropped.
-In order to increase delivery rate, message retransmission can be enabled
-by setting `RetransmissionCycles` and `RetransmissionInterval`
-in `[libp2p]` section. The first option determines the number of retransmission
-cycles which should be performed. The second option sets the milliseconds interval
-which should be preserved between cycles. Specific values should be chosen
-reasonably because high number of cycles and short interval value, may lead to
-increased resource usage and network congestion.
-
 == Starting The Client
 
 *Depending on how you orchestrate containers, these steps will vary.  Here we illustrate
