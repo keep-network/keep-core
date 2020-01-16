@@ -2,11 +2,11 @@ import React from 'react'
 import Button from './Button'
 import AddressShortcut from './AddressShortcut'
 
-export const RewardsGroupItem = ({ groupIndex, groupPubKey, reward, isStale }) => {
+export const RewardsGroupItem = ({ groupIndex, groupPublicKey, reward, isStale }) => {
   return (
     <div className='group-item'>
       <div className='group-key'>
-        <AddressShortcut address={groupPubKey} />
+        <AddressShortcut address={groupPublicKey} />
         <span>GROUP PUBLIC KEY</span>
       </div>
       <div className='group-reward'>
