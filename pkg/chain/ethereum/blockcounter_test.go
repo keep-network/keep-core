@@ -133,6 +133,7 @@ func TestWatchBlocks(t *testing.T) {
 		}
 	}()
 
+	time.Sleep(50 * time.Millisecond)
 	blockCounter.subscriptionChannel <- block{Number: "2"}
 	time.Sleep(50 * time.Millisecond)
 	cancel1()
