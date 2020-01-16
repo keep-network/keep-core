@@ -173,7 +173,7 @@ func doSend(channel *localChannel, message *pb.NetworkMessage) error {
 
 	unmarshaler, found := channel.unmarshalersByType[string(message.Type)]
 	if !found {
-		return fmt.Errorf("Couldn't find unmarshaler for type %s", string(message.Type))
+		return fmt.Errorf("couldn't find unmarshaler for type %s", string(message.Type))
 	}
 
 	unmarshaled := unmarshaler()
