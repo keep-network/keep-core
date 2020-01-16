@@ -26,10 +26,16 @@ type ethereumBlockCounter struct {
 	subscriptionChannel chan block
 	config              *ethereumChain
 	waiters             map[uint64][]chan uint64
+	watchers            []*watcher
 }
 
 type block struct {
 	Number string
+}
+
+type watcher struct {
+	ctx     context.Context
+	channel chan uint64
 }
 
 func (ebc *ethereumBlockCounter) WaitForBlockHeight(blockNumber uint64) error {
@@ -65,6 +71,33 @@ func (ebc *ethereumBlockCounter) BlockHeightWaiter(
 
 func (ebc *ethereumBlockCounter) CurrentBlock() (uint64, error) {
 	return ebc.latestBlockHeight, nil
+}
+
+func (ebc *ethereumBlockCounter) WatchBlocks(ctx context.Context) <-chan uint64 {
+	watcher := &watcher{
+		ctx:     ctx,
+		channel: make(chan uint64, 1),
+	}
+
+	ebc.structMutex.Lock()
+	ebc.watchers = append(ebc.watchers, watcher)
+	ebc.structMutex.Unlock()
+
+	go func() {
+		<-ctx.Done()
+
+		ebc.structMutex.Lock()
+		for i, w := range ebc.watchers {
+			if w == watcher {
+				ebc.watchers[i] = ebc.watchers[len(ebc.watchers)-1]
+				ebc.watchers = ebc.watchers[:len(ebc.watchers)-1]
+				break
+			}
+		}
+		ebc.structMutex.Unlock()
+	}()
+
+	return watcher.channel
 }
 
 // receiveBlocks gets each new block back from Geth and extracts the
@@ -106,9 +139,25 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 			for _, waiter := range waiters {
 				go func(w chan uint64) { w <- height }(waiter)
 			}
+
+			ebc.structMutex.Lock()
+			watchers := make([]*watcher, len(ebc.watchers))
+			copy(watchers, ebc.watchers)
+			ebc.structMutex.Unlock()
+
+			for _, watcher := range watchers {
+				if watcher.ctx.Err() != nil {
+					close(watcher.channel)
+					continue
+				}
+
+				select {
+				case watcher.channel <- height: // perfect
+				default: // we don't care, let's drop it
+				}
+			}
 		}
 	}
-
 }
 
 // subscribeBlocks creates a subscription to Geth to get each block.
