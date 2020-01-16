@@ -28,7 +28,7 @@ const fetchAvailableRewards = async (web3Context) => {
       totalRewardsBalance = totalRewardsBalance.add(utils.toBN(utils.toWei(reward, 'ether')))
       groups.push({ groupIndex, groupPublicKey, membersIndeces: groupMemberIndices[groupPublicKey], reward })
     }
-    return Promise.all([groups, utils.fromWei(totalRewardsBalance.toString(), 'ether')])
+    return [groups, utils.fromWei(totalRewardsBalance.toString(), 'ether')]
   } catch (error) {
     throw error
   }
