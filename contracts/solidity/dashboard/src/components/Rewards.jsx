@@ -7,6 +7,8 @@ import NoData from './NoData'
 import * as Icons from './Icons'
 import rewardsService from '../services/rewards.service'
 
+const previewDataCount = 3
+
 export const Rewards = () => {
   const web3Context = useContext(Web3Context)
   const [isFetching, setIsFetching] = useState(true)
@@ -43,13 +45,13 @@ export const Rewards = () => {
         /> :
         <>
           <RewardsBalance balance={totalRewardsBalance} />
-          <RewardsGroups groups={showAll ? data : data.slice(0, 3)} />
-          { data.length > 3 &&
+          <RewardsGroups groups={showAll ? data : data.slice(0, previewDataCount)} />
+          { data.length > previewDataCount &&
             <Button
               className="btn btn-default btn-sm see-all-btn"
               onClick={() => setShowAll(!showAll)}
             >
-              {showAll ? 'SEE LESS' : `SEE ALL (${data.length - 3})`}
+              {showAll ? 'SEE LESS' : `SEE ALL (${data.length - previewDataCount})`}
             </Button>
           }
         </>
