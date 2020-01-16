@@ -88,8 +88,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
 
 
-    // Gas required for triggering DKG.
-    uint256 constant _dkgTriggerGasEstimate = 100000;
+    // Gas required for entry creation that includes triggering DKG.
+    uint256 constant _entryCreationEstimationGas = 100000;
 
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
@@ -164,6 +164,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can withdraw fund from DKG fee pool."
         );
+
+        require(_dkgFeePool >= amount, "Not enough funds to withdraw.");
 
         _dkgFeePool -= amount;
         (msg.sender).transfer(amount);
@@ -282,12 +284,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
-     * @dev Store valid entry returned by operator contract and call customer specified callback if required.
+     * @dev Store valid entry returned by operator contract.
      * @param requestId Request id tracked internally by this contract.
      * @param entry The generated random number.
-     * @param submitter Relay entry submitter.
      */
-    function entryCreated(uint256 requestId, bytes memory entry, address payable submitter) public {
+    function entryCreated(uint256 requestId, bytes memory entry) public {
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."
@@ -296,11 +297,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         _previousEntry = entry;
         uint256 entryAsNumber = uint256(keccak256(entry));
         emit RelayEntryGenerated(requestId, entryAsNumber);
-
-        if (_callbacks[requestId].callbackContract != address(0)) {
-            executeEntryCreatedCallback(requestId, entryAsNumber, submitter);
-            delete _callbacks[requestId];
-        }
 
         triggerDkgIfApplicable(entryAsNumber);
     }
@@ -318,45 +314,46 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     }
 
     /**
+     * @dev Gets a customer transferred amount for cover callback.
+     * @param requestId Request id tracked internally by this contract.
+     */
+    function callbackTransferredFee(uint256 requestId) public view returns (uint256) {
+        require(_callbacks[requestId].callbackContract != address(0), "Callback contract must be present.");
+
+        return _callbacks[requestId].callbackFee;
+    }
+
+    /**
+     * @dev Gets a customer surplus recipient.
+     * @param requestId Request id tracked internally by this contract.
+     */
+    function callbackSurplusRecipient(uint256 requestId) public view returns (address payable) {
+        require(_callbacks[requestId].callbackContract != address(0), "Callback contract must be present.");
+
+        return _callbacks[requestId].surplusRecipient;
+    }
+
+    /**
      * @dev Executes customer specified callback for the relay entry request.
      * @param requestId Request id tracked internally by this contract.
      * @param entry The generated random number.
-     * @param submitter Relay entry submitter.
      */
-    function executeEntryCreatedCallback(uint256 requestId, uint256 entry, address payable submitter) internal {
+    function executeEntryCreatedCallback(uint256 requestId, bytes memory entry) public {
+        require(
+            _operatorContracts.contains(msg.sender),
+            "Only authorized operator contract can call relay entry."
+        );
+
+        require(_callbacks[requestId].callbackContract != address(0), "Callback contract must be present.");
+
         bool success; // Store status of external contract call.
         bytes memory data; // Store result data of external contract call.
 
-        uint256 gasBeforeCallback = gasleft();
         (success, data) = _callbacks[requestId].callbackContract.call.gas(
             _callbacks[requestId].callbackGas
         )(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
-        uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 gas (ethereum transaction minimum gas)
 
-        uint256 gasPrice = _priceFeedEstimate;
-        // We need to check if tx.gasprice is non-zero as a workaround to a bug
-        // in go-ethereum:
-        // https://github.com/ethereum/go-ethereum/pull/20189
-        if (tx.gasprice > 0 && tx.gasprice < _priceFeedEstimate) {
-            gasPrice = tx.gasprice;
-        }
-
-        // Obtain the actual callback gas expenditure and refund the surplus.
-        uint256 callbackSurplus = 0;
-        uint256 callbackFee = gasSpent.mul(gasPrice);
-
-        // If we spent less on the callback than the customer transferred for the
-        // callback execution, we need to reimburse the difference.
-        if (callbackFee < _callbacks[requestId].callbackFee) {
-            callbackSurplus = _callbacks[requestId].callbackFee.sub(callbackFee);
-            // Reimburse submitter with his actual callback cost.
-            submitter.transfer(callbackFee);
-            // Return callback surplus to the requestor.
-            _callbacks[requestId].surplusRecipient.transfer(callbackSurplus);
-        } else {
-            // Reimburse submitter with the callback payment sent by the requestor.
-            submitter.transfer(_callbacks[requestId].callbackFee);
-        }
+        delete _callbacks[requestId];
     }
 
     /**
@@ -471,8 +468,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     /**
      * @dev Gets the gas estimate for triggering dkg.
      */
-    function dkgTriggerGasEstimate() public pure returns (uint256) {
-        return _dkgTriggerGasEstimate;
+    function entryCreationEstimationGas() public pure returns (uint256) {
+        return _entryCreationEstimationGas;
     }
 
     /**
