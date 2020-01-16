@@ -10,12 +10,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ipfs/go-log"
+
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 )
+
+var logger = log.Logger("keep-net-local")
 
 type localIdentifier string
 
@@ -272,6 +276,7 @@ func (lc *localChannel) Recv(ctx context.Context, handler func(m net.Message)) {
 		for {
 			select {
 			case <-ctx.Done():
+				logger.Debug("context is done, removing handler")
 				lc.removeHandler(messageHandler)
 				return
 

@@ -81,6 +81,7 @@ func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
 		for {
 			select {
 			case <-ctx.Done():
+				logger.Debug("context is done, removing handler")
 				c.removeHandler(messageHandler)
 				return
 
