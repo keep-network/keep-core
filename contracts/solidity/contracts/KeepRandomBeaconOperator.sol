@@ -663,6 +663,9 @@ contract KeepRandomBeaconOperator {
         return groups.getGroupPublicKey(groupIndex);
     }
 
+    /**
+     * @dev Returns members of the given group by group public key.
+     */
     function getGroupMembers(bytes memory groupPubKey) public view returns (address[] memory members) {
         return groups.getGroupMembers(groupPubKey);
     }
