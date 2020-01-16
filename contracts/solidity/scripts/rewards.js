@@ -1,6 +1,6 @@
 const KeepToken = artifacts.require("./KeepToken.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
-// The KeepRandomBeaconOperatorRewardsStub contract should be migrated to the network
+// The KeepRandomBeaconOperatorRewardsStub contract should be deployed to the network
 const Operator = artifacts.require("../stubs/KeepRandomBeaconOperatorRewardsStub.sol");
 const KeepRandomBeaconServiceImpl = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol");
