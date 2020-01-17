@@ -8,7 +8,7 @@ class VestingChart extends Component {
     if (this.props.details) {
       return <Line data={ this.chartData() } options={ this.chartOptions() } />
     } else {
-      return "Loading ..."
+      return 'Loading ...'
     }
   }
 
@@ -16,7 +16,7 @@ class VestingChart extends Component {
     return {
       datasets: [
         this.fromBaseDataset({
-          data: this.getPoints()
+          data: this.getPoints(),
         }),
       ],
     }
@@ -27,7 +27,7 @@ class VestingChart extends Component {
 
     const now = moment().valueOf() / 1000 // normalize to seconds
 
-    const points = [ this.getDataPointAt(start) ]
+    const points = [this.getDataPointAt(start)]
 
     if (cliff < now) {
       points.push(this.getDataPointAt(cliff))
@@ -49,7 +49,7 @@ class VestingChart extends Component {
   getDataPointAt(date) {
     return {
       x: this.formatDate(date),
-      y: this.getAmountAt(date)
+      y: this.getAmountAt(date),
     }
   }
 
@@ -72,23 +72,23 @@ class VestingChart extends Component {
     return {
       legend: { display: false },
       scales: {
-        xAxes: [ {
-          type: "time",
+        xAxes: [{
+          type: 'time',
           time: {
             format: 'MM/DD/YYYY HH:mm',
-            tooltipFormat: 'll HH:mm'
+            tooltipFormat: 'll HH:mm',
           },
           scaleLabel: {
             display: true,
-            labelString: 'Date'
-          }
-        }, ],
+            labelString: 'Date',
+          },
+        }],
         yAxes: [{
           scaleLabel: {
             display: true,
-            labelString: this.props.details.symbol || ''
-          }
-        }]
+            labelString: this.props.details.symbol || '',
+          },
+        }],
       },
     }
   }
@@ -108,7 +108,7 @@ class VestingChart extends Component {
       pointHoverBorderWidth: 2,
       pointRadius: 5,
       pointHitRadius: 10,
-      ...opts
+      ...opts,
     }
   }
 }

@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -105,6 +106,9 @@ func doStateTransition(
 	states []keyGenerationState,
 	channels []net.BroadcastChannel,
 ) ([]keyGenerationState, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	var waitGroup sync.WaitGroup
 	waitGroup.Add(expectedMessagesCount(states))
 
@@ -115,20 +119,12 @@ func doStateTransition(
 	var phaseMessages []net.Message
 
 	for _, channel := range channels {
-		if err := channel.Recv(net.HandleMessageFunc{
-			Type: "test",
-			Handler: func(msg net.Message) error {
-				phaseMessagesMutex.Lock()
-				phaseMessages = append(phaseMessages, msg)
-				phaseMessagesMutex.Unlock()
-				waitGroup.Done()
-				return nil
-			},
-		}); err != nil {
-			return nil, fmt.Errorf("message handler failed [%v]", err)
-		}
-
-		defer channel.UnregisterRecv("test")
+		channel.Recv(ctx, func(msg net.Message) {
+			phaseMessagesMutex.Lock()
+			phaseMessages = append(phaseMessages, msg)
+			phaseMessagesMutex.Unlock()
+			waitGroup.Done()
+		})
 	}
 
 	// Once we have the message handler installed, we let all members to init
@@ -136,7 +132,7 @@ func doStateTransition(
 	for _, state := range states {
 		fmt.Printf("[member:%v, state:%T] Executing\n", state.MemberIndex(), state)
 
-		if err := state.Initiate(); err != nil {
+		if err := state.Initiate(ctx); err != nil {
 			return nil, fmt.Errorf("initiate failed [%v]", err)
 		}
 	}

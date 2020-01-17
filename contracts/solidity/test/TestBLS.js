@@ -26,7 +26,7 @@ contract('TestBLS', function() {
     )
     assert.isTrue(result, "Should be able to verify valid BLS signature.");
   });
-  
+
   it("should use reasonable amount of gas", async () => {
     // Corresponding test in Go library: bls_test.go TestThresholdBLS
     let gasEstimate = await bls.verify.estimateGas(
@@ -35,7 +35,7 @@ contract('TestBLS', function() {
       "0x23cbfa4b2fcbf43a44d8a4b2a9aa1a9123f183794fa7b53c633c2de7ada5b5ca174f81900dc4ca5672768d51c12dfcb0eac2aafba0a66ac54b76f689dc1fe321"
     )
     // make sure no change will make the verification more expensive than it is now
-    assert.isBelow(gasEstimate, 304584, "BLS verification is too expensive")
+    assert.isBelow(gasEstimate, 306682, "BLS verification is too expensive")
   })
 
   it("should be able to verify BLS aggregated signature", async function() {

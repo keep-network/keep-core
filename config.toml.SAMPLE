@@ -25,11 +25,6 @@
 # 	Port = 3920
 #   # Uncomment to override the node's default addresses announced in the network
 #   # AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
-#
-#   # Number of retransmissions for each message
-#   RetransmissionCycles = 5
-#   # Milliseconds interval between each retransmission of a message
-#   RetransmissionInterval = 1000
 
 [Storage]
   DataDir = "/my/secure/location"

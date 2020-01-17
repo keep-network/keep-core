@@ -1,29 +1,40 @@
-import React, { Component } from 'react'
-import WithWeb3Context from './WithWeb3Context'
+import React, { useContext } from 'react'
+import { Web3Context } from './WithWeb3Context'
 import { SubmitButton } from './Button'
+import { useShowMessage, messageType } from './Message'
 
-class Withdrawal extends Component {
+const Withdrawal = ({ withdrawal }) => {
+  const { defaultContract, yourAddress } = useContext(Web3Context)
+  const showMessage = useShowMessage()
 
-  finishUnstake = async () => {
-    const { web3, withdrawal } = this.props
-    await web3.defaultContract.methods.finishUnstake(withdrawal.id).send({from: web3.yourAddress})
-  }
-
-  render() {
-    const { withdrawal } = this.props
-    let action = 'N/A'
-    if (withdrawal.available) {
-      action = <SubmitButton className="btn btn-priamry btn-sm" onSubmitAction={this.finishUnstake}>Finish Unstake</SubmitButton>
+  const submit = async (onTransactionHashCallback) => {
+    try {
+      await defaultContract.methods.finishUnstake(withdrawal.id)
+        .send({ from: yourAddress })
+        .on('transactionHash', onTransactionHashCallback)
+      showMessage({ title: 'Success', content: 'Finish unstake transaction has been successfully completed' })
+    } catch (error) {
+      showMessage({ type: messageType.ERROR, title: 'Error', content: 'Finish unstake action has been failed' })
     }
-
-    return (
-      <tr>
-        <td>{withdrawal.amount}</td>
-        <td className="text-mute">{withdrawal.availableAt}</td>
-        <td>{action}</td>
-      </tr>
-    )
   }
+
+  return (
+    <tr>
+      <td>{withdrawal.amount}</td>
+      <td className="text-mute">{withdrawal.availableAt}</td>
+      <td>
+        {withdrawal.available ?
+          <SubmitButton
+            className="btn btn-priamry btn-sm"
+            onSubmitAction={submit}
+            pendingMessageTitle='Finish unstake transaction is pending...'
+          >
+          Finish Unstake
+          </SubmitButton> : 'N/A'
+        }
+      </td>
+    </tr>
+  )
 }
 
-export default WithWeb3Context(Withdrawal)
+export default Withdrawal

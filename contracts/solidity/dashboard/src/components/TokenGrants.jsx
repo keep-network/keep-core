@@ -2,23 +2,19 @@ import React, { Component } from 'react'
 import { Table } from 'react-bootstrap'
 
 class TokenGrants extends Component {
+  renderRow = (item, i) => (
+    <tr key={'token-grant-'+i+'-from-'+item.grantManager} onClick={() => this.props.selectTokenGrant(i)}>
+      <td>{item.id}</td>
+      <td>{item.formatted.amount}</td>
+      <td><a href="/">{item.grantManager}</a></td>
+      <td>{item.formatted.start}</td>
+      <td>{item.formatted.end}</td>
+      <td>{item.formatted.cliff}</td>
+      <td>{item.formatted.withdrawn}</td>
+    </tr>
+  )
 
   render() {
-    if (this.props.data) {
-      var rows = this.props.data.map((item, i) => {
-        return (
-          <tr key={"token-grant-"+i+"-from-"+item.grantManager} onClick={() => this.props.selectTokenGrant(i)}>
-            <td>{item.id}</td>
-            <td>{item.formatted.amount}</td>
-            <td><a href="/">{item.grantManager}</a></td>
-            <td>{item.formatted.start}</td>
-            <td>{item.formatted.end}</td>
-            <td>{item.formatted.cliff}</td>
-            <td>{item.formatted.withdrawn}</td>
-          </tr>
-        )
-      })
-    }
     return (
       <Table className="small table-sm" condensed hover>
         <thead>
@@ -33,7 +29,7 @@ class TokenGrants extends Component {
           </tr>
         </thead>
         <tbody>
-          { rows }
+          { this.props.data && this.props.data.map(this.renderRow) }
         </tbody>
       </Table>
     )

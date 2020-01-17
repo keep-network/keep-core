@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/keep-network/contracts",
   "dependencies": {
-    "openzeppelin-solidity": "2.3.0",
+    "openzeppelin-solidity": "2.4.0",
     "solidity-bytes-utils": "0.0.7"
   },
   "devDependencies": {
@@ -28,11 +28,12 @@
     "babel-preset-stage-2": "^6.18.0",
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
-    "eth-gas-reporter": "^0.2.9",
-    "mocha-junit-reporter": "^1.23.1",
+    "eth-gas-reporter": "^0.2.12",
     "ethereumjs-abi": "^0.6.5",
+    "mocha-junit-reporter": "^1.23.1",
     "solc": "^0.5.7",
-    "truffle": "^5.0.13",
+    "truffle": "^5.1.0",
+    "@truffle/hdwallet-provider": "^1.0.25",
     "websocket": "^1.0.28"
   }
 }

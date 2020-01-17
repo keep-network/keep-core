@@ -195,4 +195,68 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       "Unexpected operator selected at position 2"
     );
   });
+
+  it("should properly override previous group selection data", async function() {
+    // Simulate previous data existence: operator 2 has submitted two tickets and operator 3 has submitted one ticket
+    await operatorContract.submitTicket(
+        packTicket(tickets2[10].valueHex, tickets2[10].virtualStakerIndex, operator2),
+        {from: operator2}
+    );
+    await operatorContract.submitTicket(
+        packTicket(tickets3[10].valueHex, tickets3[10].virtualStakerIndex, operator3),
+        {from: operator3}
+    );
+    await operatorContract.submitTicket(
+        packTicket(tickets2[11].valueHex, tickets2[11].virtualStakerIndex, operator2),
+        {from: operator2}
+    );
+
+    mineBlocks(await operatorContract.ticketSubmissionTimeout());
+
+    // Start new group selection
+    const seed = await operatorContract.getGroupSelectionRelayEntry();
+    await operatorContract.startGroupSelection(seed);
+
+    let tickets = [
+      {value: tickets1[0].value, operator: operator1},
+      {value: tickets2[0].value, operator: operator2},
+      {value: tickets3[0].value, operator: operator3}
+    ];
+
+    // Sort tickets in ascending order
+    tickets = tickets.sort(function(a, b){return a.value-b.value});
+
+    let ticket1 = packTicket(tickets1[0].valueHex, tickets1[0].virtualStakerIndex, operator1);
+    await operatorContract.submitTicket(ticket1, {from: operator1});
+
+    let ticket2 = packTicket(tickets2[0].valueHex, tickets2[0].virtualStakerIndex, operator2);
+    await operatorContract.submitTicket(ticket2, {from: operator2});
+
+    let ticket3 = packTicket(tickets3[0].valueHex, tickets3[0].virtualStakerIndex, operator3);
+    await operatorContract.submitTicket(ticket3, {from: operator3});
+
+    mineBlocks(await operatorContract.ticketSubmissionTimeout());
+
+    let selectedParticipants = await operatorContract.selectedParticipants();
+    assert.equal(
+        selectedParticipants.length,
+        3,
+        "Unexpected number of selected participants"
+    );
+    assert.equal(
+        selectedParticipants[0],
+        tickets[0].operator,
+        "Unexpected operator selected at position 0"
+    );
+    assert.equal(
+        selectedParticipants[1],
+        tickets[1].operator,
+        "Unexpected operator selected at position 1"
+    );
+    assert.equal(
+        selectedParticipants[2],
+        tickets[2].operator,
+        "Unexpected operator selected at position 2"
+    );
+  });
 });
