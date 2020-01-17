@@ -12,12 +12,9 @@ interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
-    function entryCreationEstimationGas() external returns (uint256);
+    function dkgTriggerGasEstimate() external returns (uint256);
     function callbackGas(uint256 requestId) external returns (uint256);
-    function callbackTransferredFee(uint256 requestId) external returns (uint256);
-    function callbackSurplusRecipient(uint256 requestId) external returns (address payable);
     function withdrawFromDkgPool(uint256 amount) external;
-    function executeEntryCreatedCallback(uint256 requestId, uint256 entry) external;
 }
 
 /**
@@ -471,83 +468,33 @@ contract KeepRandomBeaconOperator {
 
         emit RelayEntrySubmitted();
 
-        uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
-
-        executeEntryCreation(gasPrice, _groupSignature, groupPubKey);
-
-        executeEntryCreationCallback(gasPrice, _groupSignature);
-
-        currentEntryStartBlock = 0;
-    }
-
-    function executeEntryCreation(uint256 gasPrice, bytes memory _groupSignature, bytes memory groupPubKey) internal {
-        uint256 entryCreationEstimationGas = ServiceContract(signingRequest.serviceContract).entryCreationEstimationGas();
-        uint256 entryCreationEstimationFee = entryCreationEstimationGas.mul(gasPriceWithFluctuationMargin(priceFeedEstimate));
-        ServiceContract(signingRequest.serviceContract).withdrawFromDkgPool(entryCreationEstimationFee);
+        uint256 dkgInitiationGasEstimate = ServiceContract(signingRequest.serviceContract).dkgTriggerGasEstimate();
+        uint256 callbackGas = ServiceContract(signingRequest.serviceContract).callbackGas(signingRequest.relayRequestId);
 
         uint256 gasBeforeEntryCreation = gasleft();
-        ServiceContract(signingRequest.serviceContract).entryCreated.gas(entryCreationEstimationGas)(
+        ServiceContract(signingRequest.serviceContract).entryCreated.gas(dkgInitiationGasEstimate.add(callbackGas))(
             signingRequest.relayRequestId,
             _groupSignature,
             msg.sender
         );
-        uint256 entryCreationUsedGas = gasBeforeEntryCreation.sub(gasleft());
+        uint256 entryCreationActualGasSpent = gasBeforeEntryCreation.sub(gasleft());
 
-        uint256 entryCreationFee = entryCreationUsedGas.mul(gasPrice);
-
-        // If estimation fee is greater than the actual fee for entry creation,
-        // then we return the difference back to the _dkgFeePool.
-        if (entryCreationFee < entryCreationEstimationFee) {
-            ServiceContract(signingRequest.serviceContract).fundDkgFeePool
-                .value(entryCreationEstimationFee.sub(entryCreationFee))();
-        }
+        uint256 reimbursementForEntryCreation = entryCreationActualGasSpent.mul(tx.gasprice) > priceFeedEstimate ?
+            priceFeedEstimate : entryCreationActualGasSpent.mul(tx.gasprice);
+        ServiceContract(signingRequest.serviceContract).withdrawFromDkgPool(reimbursementForEntryCreation);
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        // Transferring funds to submitter: reward and entry creation (might include dkg trigger).
+        // Transferring funds (reward and reimbursing for potential dkg trigger) to a submitter
         stakingContract.magpieOf(msg.sender)
-            .transfer(submitterReward.add(entryCreationFee).mul(gasPriceWithFluctuationMargin(priceFeedEstimate)));
+            .transfer(submitterReward.add(reimbursementForEntryCreation).mul(gasPriceWithFluctuationMargin(priceFeedEstimate)));
 
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
         }
-    }
 
-    function executeEntryCreationCallback(uint256 gasPrice, bytes memory _groupSignature) internal {
-        uint256 transferredCallbackFee = ServiceContract(signingRequest.serviceContract).callbackTransferredFee(signingRequest.relayRequestId);
-        address payable callbackSurplusRecipient = ServiceContract(signingRequest.serviceContract)
-            .callbackSurplusRecipient(signingRequest.relayRequestId);
-
-        uint256 callbackGas = ServiceContract(signingRequest.serviceContract).callbackGas(signingRequest.relayRequestId);
-        uint256 callbackFee = callbackGas.mul(gasPriceWithFluctuationMargin(priceFeedEstimate));
-        ServiceContract(signingRequest.serviceContract).withdrawFromDkgPool(callbackFee);
-
-        uint256 entryAsNumber = uint256(keccak256(_groupSignature));
-        uint256 gasBeforeCallback = gasleft();
-        ServiceContract(signingRequest.serviceContract).executeEntryCreatedCallback.gas(callbackGas)(
-            signingRequest.relayRequestId,
-            entryAsNumber
-        );
-        // Also reimburse 21000 gas (ethereum transaction minimum gas)
-        uint256 callbackUsedGas = gasBeforeCallback.sub(gasleft()).add(21000);
-
-        // Obtain the actual callback gas expenditure and refund the surplus.
-        uint256 callbackSurplus = 0;
-        uint256 callbackActualFee = callbackUsedGas.mul(gasPrice);
-
-        // If we spent less on the callback than the customer transferred for the
-        // callback execution, we need to reimburse the difference.
-        if (callbackActualFee < transferredCallbackFee) {
-            callbackSurplus = transferredCallbackFee.sub(callbackActualFee);
-            // Reimburse submitter with his actual callback cost.
-            msg.sender.transfer(callbackActualFee);
-            // Return callback surplus to the requestor.
-            callbackSurplusRecipient.transfer(callbackSurplus);
-        } else {
-            // Reimburse submitter with the callback payment sent by the requestor.
-            msg.sender.transfer(transferredCallbackFee);
-        }
+        currentEntryStartBlock = 0;
     }
 
     /**
