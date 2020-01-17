@@ -110,6 +110,61 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary1))).eq(beneficiary1balance.add(expectedReward)), "Unexpected beneficiary balance")
   })
 
+  it("should be able to withdraw group rewards from multiple staled groups from multiple operators", async () => {
+    // Register new group and request new entry so we can expire the previous two groups
+    await operatorContract.registerNewGroup(group3)
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
+    let beneficiary1balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary1))
+
+    mineBlocks(10)
+    assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
+    assert.isTrue(await operatorContract.isStaleGroup('0x' + group2.toString('hex')), "Group should be stale")
+
+    // Operator1
+    // group1: 1 member
+    // group2: 3 members
+    // members count: 4
+    // beneficiary1 expected reward = memberBaseReward * 4
+
+    // Operator2
+    // group1: 2 members
+    // members count: 2
+    // beneficiary2 expected reward = memberBaseReward * 2
+    let operators = [operator1, operator2]
+    let operatorsMembersCount = [4, 2]
+    let groupIndices = [
+      web3.utils.toBN(0), // group1 Operator1
+      web3.utils.toBN(1), // group2 Operator1
+      web3.utils.toBN(1), // group2 Operator1
+      web3.utils.toBN(1), // group2 Operator1
+      web3.utils.toBN(0), // group1 Operator2
+      web3.utils.toBN(0)  // group1 Operator2
+    ]
+
+    let memberIndices = (await operatorContract.getGroupMemberIndices(group1, operator1))
+    .concat(await operatorContract.getGroupMemberIndices(group2, operator1))
+    .concat(await operatorContract.getGroupMemberIndices(group1, operator2))
+
+    // Convert groupIndices data to buffer
+    let groupIndicesBuffer = []
+    for (let i = 0; i < groupIndices.length; i++) {
+      groupIndicesBuffer.push(groupIndices[i].toBuffer('be', 32))
+    }
+
+    // Convert memberIndices data to buffer
+    let memberIndicesBuffer = []
+    for (let i = 0; i < memberIndices.length; i++) {
+      memberIndicesBuffer.push(memberIndices[i].toBuffer('be', 32))
+    }
+
+    await operatorContract.batchWithdraw(operators, operatorsMembersCount, Buffer.concat(groupIndicesBuffer), Buffer.concat(memberIndicesBuffer))
+
+    let beneficiary1expectedReward = memberBaseReward.muln(4)
+    let beneficiary2expectedReward = memberBaseReward.muln(2)
+    assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary1))).eq(beneficiary1balance.add(beneficiary1expectedReward)), "Unexpected beneficiary balance")
+    assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary1balance.add(beneficiary2expectedReward)), "Unexpected beneficiary balance")
+  })
+
   it("should be able to withdraw group rewards from a staled group", async () => {
     // Register new group and request new entry so we can expire the previous two groups
     await operatorContract.registerNewGroup(group3)

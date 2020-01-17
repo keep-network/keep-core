@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./TokenStaking.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
@@ -24,6 +25,7 @@ interface ServiceContract {
  */
 contract KeepRandomBeaconOperator is ReentrancyGuard {
     using SafeMath for uint256;
+    using BytesLib for bytes;
     using AddressArrayUtils for address[];
     using GroupSelection for GroupSelection.Storage;
     using Groups for Groups.Storage;
@@ -663,6 +665,35 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         require(success, "Failed withdraw rewards");
     }
 
+    /**
+     * @dev Withdraws accumulated group member rewards for array of operators
+     * using the provided group indices and member indices for each operator.
+     * Once the accumulated reward is withdrawn from the selected group, member
+     * is removed from it. Rewards can be withdrawn only from stale group.
+     * @param operators Array of operator addresses.
+     * @param indicesLength Array of lengths of member and group indices corresponding to each operator.
+     * @param groupIndices Concatenated bytes array of group indices of all operators.
+     * @param groupMemberIndices Concatenated bytes array of member indices of all operators.
+     */
+    function batchWithdraw(
+        address[] memory operators,
+        uint256[] memory indicesLength,
+        bytes memory groupIndices,
+        bytes memory groupMemberIndices
+    ) public {
+        address payable[] memory magpies = stakingContract.magpiesOf(operators);
+        uint256 start = 0;
+        for (uint i = 0; i < operators.length; i++) {
+            uint256 rewardsAvailable = groups.withdrawFromGroups(
+                operators[i],
+                groupIndices.slice(start, indicesLength[i]*32),
+                groupMemberIndices.slice(start, indicesLength[i]*32)
+            );
+            start = indicesLength[i]*32;
+            magpies[i].transfer(rewardsAvailable);
+        }
+    }
+    
     /**
     * @dev Gets the index of the first active group.
     */
