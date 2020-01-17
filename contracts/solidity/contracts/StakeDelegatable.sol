@@ -63,4 +63,15 @@ contract StakeDelegatable {
     function magpieOf(address _operator) public view returns (address payable) {
         return operatorToMagpie[_operator];
     }
+
+    /**
+     * @dev Gets the array of magpie addresses for the specified array of operator addresses.
+     * @return Array of magpie addresses.
+     */
+    function magpiesOf(address[] memory _operators) public view returns (address payable[] memory magpies) {
+        magpies = new address payable[](_operators.length);
+        for (uint i = 0; i < _operators.length; i++) {
+            magpies[i] = operatorToMagpie[_operators[i]];
+        }
+    }
 }
