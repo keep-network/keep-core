@@ -1,0 +1,58 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: keep-client-2
+  namespace: ropsten
+  labels:
+    app: keep-client
+    type: client-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keep-client
+      type: client-2
+  serviceName: keep-client-2
+  volumeClaimTemplates:
+  - metadata:
+      name: keep-client-data
+    spec:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 512Mi
+  template:
+    metadata:
+      labels:
+        app: keep-client
+        type: client-2
+    spec:
+      containers:
+      - name: keep-client
+        image: gcr.io/keep-test-f3e0/keep-client
+        ports:
+          - containerPort: 3919
+        env:
+          - name: KEEP_ETHEREUM_PASSWORD
+            valueFrom:
+              configMapKeyRef:
+                name: keep-client-2
+                key: eth_account_password
+          - name: LOG_LEVEL
+            value: debug
+        volumeMounts:
+          - name: keep-client-2
+            mountPath: /mnt/keep-client/config
+          - name: keep-client-data
+            mountPath: /mnt/keep-client/data
+        command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "start"]
+      volumes:
+      - name: keep-client-2
+        configMap:
+          name: keep-client-2
+          items:
+            - key: eth_account_keyfile
+              path: eth_account_keyfile
+            - key: keep-client-config.toml
+              path: keep-client-config.toml

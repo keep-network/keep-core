@@ -1,15 +1,11 @@
-:icons: font
-:numbered:
-toc::[]
+:toc: macro
+:toclevels: 4
 
-== Contract structure
+= Contract structure
 
-Contracts in the Keep Network are divided into categories
-based on their roles, functionality and security implications.
-The contract structure is designed to permit upgrading any components
-while protecting stakers and customers.
+ifndef::yellowpaper[toc::[]]
 
-==== Contract types
+== Overview
 
 Token contract::
 
@@ -56,7 +52,7 @@ are all tracked separately in the registry.
 The addresses and statuses of various contracts
 can be queried from the registry.
 
-==== Operator contracts
+== Operator contracts
 
 Operator contracts coordinate the work performed by network operators,
 and provide services to other "customer" contracts.
@@ -93,7 +89,7 @@ an operator contract must be authorized by the operator's authorizer.
 Once an operator contract has been authorized by some address,
 it can never be deauthorized by that address.
 
-==== Service contracts
+== Service contracts
 
 Service contracts use the basic functionality
 performed by operator contracts,

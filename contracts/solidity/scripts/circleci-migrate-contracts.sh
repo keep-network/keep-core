@@ -54,12 +54,8 @@ ssh utilitybox << EOF
   echo "<<<<<<START Contract Migration START<<<<<<"
   cd /tmp/$BUILD_TAG/solidity
 
-  npm install truffle@5.1.0
-  # npm install truffle-hdwallet-provider@1.0.17
-  npm install openzeppelin-solidity@2.3.0
-  npm install solidity-bytes-utils@0.0.7
-  npm install babel-register@6.26.0
-  npm install babel-polyfill@6.26.0
+  # This command uses the content of package.json in the CWD to install dependencies
+  npm i
 
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
@@ -74,4 +70,3 @@ echo "<<<<<<START Migration Dir Cleanup START<<<<<<"
 echo "ssh utilitybox rm -rf /tmp/$BUILD_TAG"
 ssh utilitybox rm -rf /tmp/$BUILD_TAG
 echo ">>>>>>FINISH Migration Dir Cleanup FINISH>>>>>>"
-
