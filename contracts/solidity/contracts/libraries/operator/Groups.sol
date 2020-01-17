@@ -321,6 +321,37 @@ library Groups {
     }
 
     /**
+     * @dev Withdraws accumulated group member rewards for operator
+     * using the provided group indices and member indices. Once the
+     * accumulated reward is withdrawn from the selected group, member is
+     * removed from it. Rewards can be withdrawn only from stale group.
+     * @param operator Operator address.
+     * @param groupIndices Bytes array of group indices for the group member.
+     * @param groupMemberIndices Bytes array of member indices for the group member.
+     */
+    function withdrawFromGroups(
+        Storage storage self,
+        address operator,
+        bytes memory groupIndices,
+        bytes memory groupMemberIndices
+    ) public returns (uint256 rewards) {
+        uint256 counter = groupMemberIndices.length / 32;
+        for (uint i = 0; i < counter; i++) {
+            uint256 groupIndex = groupIndices.toUint(i*32);
+            bool isExpired = self.expiredGroupOffset > groupIndex;
+            bool isStale = groupStaleTime(self, self.groups[groupIndex]) < block.number;
+            require(isExpired && isStale, "Group must be stale");
+
+            bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
+            if (operator == self.groupMembers[groupPublicKey][groupMemberIndices.toUint(i*32)]) {
+                delete self.groupMembers[groupPublicKey][groupMemberIndices.toUint(i*32)];
+                rewards = rewards.add(self.groupMemberRewards[groupPublicKey]);
+            }
+        }
+        return rewards;
+    }
+
+    /**
      * @dev Returns members of the given group by group public key.
      *
      * @param groupPubKey Group public key.
