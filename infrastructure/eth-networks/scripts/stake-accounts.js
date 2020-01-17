@@ -56,6 +56,8 @@ function setOperatorAddresses() {
     const operator5 = '0xaa886f33bfe5cf672effcfdf9c630bdb785802f8'
     const operator6 = '0x6ea036cb7a72c89d46cee43214a7c5fd969e8f59'
     const operator7 = '0xdbcd9a619b4d48ba67059a78734bb3b7ee6ece57'
+    const operator8 = '0xc66c2e2100279b444e7ff596e5ca900c3a9b65e4'
+    const operator9 = '0xcc90f3910b325f6a984ee953d62252993dbb0b8b'
 
     const operatorAddresses = new Map();
       operatorAddresses.set('operator0', operator0);
