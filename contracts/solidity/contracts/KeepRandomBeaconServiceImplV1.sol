@@ -291,18 +291,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
     }
 
     /**
-     * @dev Gets a callback gas usage by request id.
-     * @param requestId Request id tracked internally by this contract.
-     */
-    function callbackGas(uint256 requestId) public view returns (uint256) {
-        if (_callbacks[requestId].callbackContract != address(0)) {
-            return _callbacks[requestId].callbackGas;
-        }
-
-        return 0;
-    }
-
-    /**
      * @dev Executes customer specified callback for the relay entry request.
      * @param requestId Request id tracked internally by this contract.
      * @param entry The generated random number.
