@@ -17,7 +17,8 @@
     KeepRandomBeaconService = "0xE113C1c12a6e82A86635cBA9000D3f9e06B616C1"
 
 [LibP2P]
-  Peers = ["/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm359ykqT4QAehewxGLCqY7vTNHLP1ao9EjieZS8jdeKp5", "/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmS29jNiEX2vAtcjZVhPjU5HWKZNjpWj1gp4SKMGwnSfrg", "/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8SrKDSKZnj3syGjQ1B8F6bDokP93wikjUgpdx4sWCN5L", "/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8B2HEde1pAUJH31rZehN3isd1ZFiHCdsxjFnGZehuDJZ"]
+  Peers = ["/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAmDKyX7xmLMEAuWtDw5oBLN3L9xtKXSFn8hUEVtukZkuHp",
+  "/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm359ykqT4QAehewxGLCqY7vTNHLP1ao9EjieZS8jdeKp5", "/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmS29jNiEX2vAtcjZVhPjU5HWKZNjpWj1gp4SKMGwnSfrg", "/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8SrKDSKZnj3syGjQ1B8F6bDokP93wikjUgpdx4sWCN5L", "/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8B2HEde1pAUJH31rZehN3isd1ZFiHCdsxjFnGZehuDJZ"]
   Port = 3919
   # AnnouncedAddresses:
   # Leaving AnnouncedAddresses empty will set a default address to be
