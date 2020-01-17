@@ -9,13 +9,14 @@ import "./DelayedWithdrawal.sol";
 interface OperatorContract {
     function entryVerificationGasEstimate() external view returns(uint256);
     function dkgGasEstimate() external view returns(uint256);
+    function groupCreationGasEstimate() external view returns(uint256);
     function groupProfitFee() external view returns(uint256);
     function sign(
         uint256 requestId,
         bytes calldata previousEntry
     ) external payable;
     function numberOfGroups() external view returns(uint256);
-    function createGroup(uint256 newEntry) external payable;
+    function createGroup(uint256 newEntry, address payable submitter) external payable;
     function isGroupSelectionPossible() external view returns (bool);
 }
 
@@ -87,10 +88,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
     bytes constant internal _beaconSeed =
     hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
 
-
-    // Gas required for triggering DKG.
-    uint256 constant _dkgTriggerGasEstimate = 100000;
-
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param priceFeedEstimate The price feed estimate is used to calculate the gas price for
@@ -153,20 +150,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function fundDkgFeePool() public payable {
         _dkgFeePool += msg.value;
-    }
-
-    /**
-     * @dev Withdraw funds from DKG fee pool.
-     * @param amount Amount of funds to withraw.
-     */
-    function withdrawFromDkgFeePool(uint256 amount) public {
-        require(
-            _operatorContracts.contains(msg.sender),
-            "Only authorized operator contract can withdraw fund from DKG fee pool."
-        );
-
-        _dkgFeePool -= amount;
-        (msg.sender).transfer(amount);
     }
 
     /**
@@ -302,7 +285,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
             delete _callbacks[requestId];
         }
 
-        triggerDkgIfApplicable(entryAsNumber);
+        triggerDkgIfApplicable(entryAsNumber, submitter);
     }
 
     /**
@@ -364,14 +347,14 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      * fee pool equals or exceeds DKG cost estimate.
      * @param entry The generated random number.
      */
-    function triggerDkgIfApplicable(uint256 entry) internal {
+    function triggerDkgIfApplicable(uint256 entry, address payable submitter) internal {
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 dkgFeeEstimate = OperatorContract(latestOperatorContract).dkgGasEstimate().mul(
+        uint256 dkgFeeEstimate = OperatorContract(latestOperatorContract).groupCreationGasEstimate().mul(
             gasPriceWithFluctuationMargin(_priceFeedEstimate)
         );
 
         if (_dkgFeePool >= dkgFeeEstimate && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
-            OperatorContract(latestOperatorContract).createGroup.value(dkgFeeEstimate)(entry);
+            OperatorContract(latestOperatorContract).createGroup.value(dkgFeeEstimate)(entry, submitter);
             _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
         }
     }
@@ -466,13 +449,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
      */
     function previousEntry() public view returns(bytes memory) {
         return _previousEntry;
-    }
-
-    /**
-     * @dev Gets the gas estimate for triggering dkg.
-     */
-    function dkgTriggerGasEstimate() public pure returns (uint256) {
-        return _dkgTriggerGasEstimate;
     }
 
     /**

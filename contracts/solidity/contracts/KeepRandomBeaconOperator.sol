@@ -12,9 +12,6 @@ interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
-    function dkgTriggerGasEstimate() external returns (uint256);
-    function callbackGas(uint256 requestId) external returns (uint256);
-    function withdrawFromDkgPool(uint256 amount) external;
 }
 
 /**
@@ -100,6 +97,9 @@ contract KeepRandomBeaconOperator {
 
     // Gas required to submit DKG result. Exludes initiation of DKG.
     uint256 public dkgGasEstimate = 1740000;
+
+    // Gas required to trigger DKG (starting group selection).
+    uint256 public groupSelectionStartGasEstimate = 70000;
 
     // Reimbursement for the submitter of the DKG result.
     // This value is set when a new DKG request comes to the operator contract.
@@ -218,9 +218,15 @@ contract KeepRandomBeaconOperator {
      * @param _newEntry New random beacon value that stakers will use to
      * generate their tickets.
      */
-    function createGroup(uint256 _newEntry) public payable onlyServiceContract {
+    function createGroup(uint256 _newEntry, address payable submitter) public payable onlyServiceContract {
+        uint256 groupSelectionStartFee = groupSelectionStartGasEstimate
+            .mul(gasPriceWithFluctuationMargin(priceFeedEstimate));
+
         groupSelectionStarterContract = ServiceContract(msg.sender);
-        startGroupSelection(_newEntry, msg.value);
+        startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
+
+        // reimbursing a submitter that triggered DKG
+        submitter.transfer(groupSelectionStartFee);
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
@@ -468,27 +474,16 @@ contract KeepRandomBeaconOperator {
 
         emit RelayEntrySubmitted();
 
-        uint256 dkgInitiationGasEstimate = ServiceContract(signingRequest.serviceContract).dkgTriggerGasEstimate();
-        uint256 callbackGas = ServiceContract(signingRequest.serviceContract).callbackGas(signingRequest.relayRequestId);
-
-        uint256 gasBeforeEntryCreation = gasleft();
-        ServiceContract(signingRequest.serviceContract).entryCreated.gas(dkgInitiationGasEstimate.add(callbackGas))(
+        ServiceContract(signingRequest.serviceContract).entryCreated(
             signingRequest.relayRequestId,
             _groupSignature,
             msg.sender
         );
-        uint256 entryCreationActualGasSpent = gasBeforeEntryCreation.sub(gasleft());
-
-        uint256 reimbursementForEntryCreation = entryCreationActualGasSpent.mul(tx.gasprice) > priceFeedEstimate ?
-            priceFeedEstimate : entryCreationActualGasSpent.mul(tx.gasprice);
-        ServiceContract(signingRequest.serviceContract).withdrawFromDkgPool(reimbursementForEntryCreation);
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        // Transferring funds (reward and reimbursing for potential dkg trigger) to a submitter
-        stakingContract.magpieOf(msg.sender)
-            .transfer(submitterReward.add(reimbursementForEntryCreation).mul(gasPriceWithFluctuationMargin(priceFeedEstimate)));
+        stakingContract.magpieOf(msg.sender).transfer(submitterReward);
 
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
@@ -683,5 +678,12 @@ contract KeepRandomBeaconOperator {
     */
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups.getGroupPublicKey(groupIndex);
+    }
+
+    /**
+     * @dev Estimates gas for group creation. Includes dkg and triggering dkg.
+     */
+    function groupCreationGasEstimate() public returns (uint256) {
+        return dkgGasEstimate.add(groupSelectionStartGasEstimate);
     }
 }
