@@ -676,4 +676,11 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups.getGroupPublicKey(groupIndex);
     }
+
+    /**
+     * @dev Returns members of the given group by group public key.
+     */
+    function getGroupMembers(bytes memory groupPubKey) public view returns (address[] memory members) {
+        return groups.getGroupMembers(groupPubKey);
+    }
 }

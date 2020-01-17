@@ -7,6 +7,7 @@ const TokenGrant = artifacts.require("./TokenGrant.sol");
 const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol");
 const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
+
 const GroupSelection = artifacts.require("./libraries/operator/GroupSelection.sol");
 const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
