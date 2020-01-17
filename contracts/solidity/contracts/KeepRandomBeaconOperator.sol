@@ -227,7 +227,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
 
         // reimbursing a submitter that triggered DKG
-        submitter.transfer(groupSelectionStartFee);
+        (bool success, ) = submitter.call.value(groupSelectionStartFee)("");
+        require(success, "Failed reimbursing submitter for starting a group selection");
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
@@ -689,7 +690,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     /**
      * @dev Estimates gas for group creation. Includes dkg and triggering dkg.
      */
-    function groupCreationGasEstimate() public returns (uint256) {
+    function groupCreationGasEstimate() public view returns (uint256) {
         return dkgGasEstimate.add(groupSelectionStartGasEstimate);
     }
 
