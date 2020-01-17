@@ -72,7 +72,7 @@ func (n *Node) JoinGroupIfEligible(
 		}
 
 		err = broadcastChannel.SetFilter(
-			createStakersFilter(groupSelectionResult.SelectedStakers, signing),
+			createGroupMemberFilter(groupSelectionResult.SelectedStakers, signing),
 		)
 		if err != nil {
 			logger.Errorf(
@@ -120,12 +120,12 @@ func (n *Node) JoinGroupIfEligible(
 	return
 }
 
-func createStakersFilter(
-	stakers []relaychain.StakerAddress,
+func createGroupMemberFilter(
+	members []relaychain.StakerAddress,
 	signing chain.Signing,
 ) net.BroadcastChannelFilter {
-	authorizations := make(map[string]bool, len(stakers))
-	for _, address := range stakers {
+	authorizations := make(map[string]bool, len(members))
+	for _, address := range members {
 		authorizations[hex.EncodeToString(address)] = true
 	}
 
@@ -137,7 +137,7 @@ func createStakersFilter(
 
 		if !isAuthorized {
 			logger.Debugf(
-				"rejecting message from [%v] not qualified to DKG group",
+				"rejecting message from [%v]; author is not a member of the group",
 				authorAddress,
 			)
 		}

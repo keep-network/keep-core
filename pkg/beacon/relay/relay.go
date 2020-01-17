@@ -121,7 +121,7 @@ func (n *Node) GenerateRelayEntry(
 	}
 
 	err = channel.SetFilter(
-		createStakersFilter(groupMembers, signing),
+		createGroupMemberFilter(groupMembers, signing),
 	)
 	if err != nil {
 		logger.Errorf(
