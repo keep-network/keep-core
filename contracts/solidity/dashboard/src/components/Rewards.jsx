@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { RewardsGroups } from './RewardsGroups'
 import { Web3Context } from './WithWeb3Context'
 import Button from './Button'
@@ -48,7 +48,7 @@ export const Rewards = () => {
           <RewardsGroups groups={showAll ? data : data.slice(0, previewDataCount)} />
           { data.length > previewDataCount &&
             <Button
-              className="btn btn-default btn-sm see-all-btn"
+              className="btn btn-default see-all-btn"
               onClick={() => setShowAll(!showAll)}
             >
               {showAll ? 'SEE LESS' : `SEE ALL (${data.length - previewDataCount})`}

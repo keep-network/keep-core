@@ -16,7 +16,7 @@ export const RewardsGroupItem = ({ groupIndex, groupPublicKey, reward, isStale }
         <span className='reward-currency'>ETH</span>
       </div>
       <Button
-        className='btn btn-primary btn-sm'
+        className='btn btn-primary'
         disabled={!isStale}
       >
         WITHDRAW
