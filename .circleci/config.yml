@@ -252,6 +252,8 @@ jobs:
       - image: asciidoctor/docker-asciidoctor
     steps:
       - checkout
+      - attach_workspace:
+          at: ./docs
       - run:
           name: Generate Asciidoctor PDF/HTML Files
           command: |
@@ -337,10 +339,11 @@ workflows:
   docs:
     jobs:
       - generate_docs_tex
-      - generate_docs_asciidoctor
       - generate_docs_solidity
+      - generate_docs_asciidoctor:
+          requires:
+            - generate_docs_solidity
       - upload_docs:
           requires:
             - generate_docs_tex
-            - generate_docs_solidity
             - generate_docs_asciidoctor
