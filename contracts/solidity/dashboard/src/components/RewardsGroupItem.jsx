@@ -4,7 +4,7 @@ import AddressShortcut from './AddressShortcut'
 
 export const RewardsGroupItem = ({ groupIndex, groupPublicKey, reward, isStale }) => {
   return (
-    <div className='group-item'>
+    <li className='group-item'>
       <div className='group-key'>
         <AddressShortcut address={groupPublicKey} />
         <span>GROUP PUBLIC KEY</span>
@@ -21,6 +21,6 @@ export const RewardsGroupItem = ({ groupIndex, groupPublicKey, reward, isStale }
       >
         WITHDRAW
       </Button>
-    </div>
+    </li>
   )
 }
