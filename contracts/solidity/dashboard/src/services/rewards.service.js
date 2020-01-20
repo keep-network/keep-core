@@ -46,8 +46,29 @@ const getAvailableRewardFromGroupInEther = async (groupPublicKey, groupMemberInd
   return utils.fromWei(wholeReward, 'ether')
 }
 
+const fetchWithdrawalHistory = async () => {
+  // TODO iterate through past events
+  return [{
+    date: '21.01.2019',
+    amount: '30',
+    groupPublicKey: '0x2A489EacBf4de172B4018D2b4a405F05C400f530',
+  },
+  {
+    date: '21.01.2019',
+    amount: '40',
+    groupPublicKey: '0x2A489EacBf4de172B4018D2b4a405F05C400f531',
+  },
+  {
+    date: '21.01.2019',
+    amount: '50',
+    groupPublicKey: '0x2A489EacBf4de172B4018D2b4a405F05C400f532',
+  },
+  ]
+}
+
 const rewardsService = {
   fetchAvailableRewards,
+  fetchWithdrawalHistory,
 }
 
 export default rewardsService
