@@ -71,10 +71,7 @@ contract('KeepRandomBeaconService', (accounts) => {
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
         await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
 
-        let contractBalance = await web3.eth.getBalance(serviceContract.address);
-
-        let sufficientPoolFunds = web3.utils.toBN(dkgPayment)
-          .sub(web3.utils.toBN(contractBalance));
+        let sufficientPoolFunds = web3.utils.toBN(dkgPayment);
         
         await serviceContract.fundDkgFeePool({value: sufficientPoolFunds});
 

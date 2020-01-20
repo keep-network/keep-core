@@ -82,7 +82,6 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
   });
 
   it("should successfully refund callback gas surplus to the requestor if gas estimation was high", async function() {
-
     let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
     let expectedCallbackFee = await serviceContract.callbackFee((callbackGas/1.5).toFixed()); // Remove 1.5 fluctuation safety margin
 
@@ -109,11 +108,6 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
   });
 
   it("should send group reward to each operator.", async function() {
-
-    let magpie1balance = web3.utils.toBN(await web3.eth.getBalance(magpie1));
-    let magpie2balance = web3.utils.toBN(await web3.eth.getBalance(magpie2));
-    let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
-
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     let tx = await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address,
@@ -139,7 +133,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     assert.isTrue(delayFactor.eq(web3.utils.toBN(1e16).pow(web3.utils.toBN(2))), "Delay factor expected to be 1 * 1e16 ^ 2.");
 
     let groupMemberRewards = await operatorContract.getGroupMemberRewards(group);
-    assert.isTrue(groupMemberRewards.eq(expectedGroupMemberReward), "Unexpected group member reward.");
+    assert.isTrue(web3.utils.toBN(groupMemberRewards).eq(web3.utils.toBN(expectedGroupMemberReward)), "Unexpected group member reward.");
   });
 
   it("should send part of the group reward to request subsidy pool based on the submission block.", async function() {
@@ -166,10 +160,6 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     // submitterReward: 37200000000000000 + 210648148148148 = 37410648148148148 wei
     // subsidy = 5250000000000000 - 207407407407407 * 5 - 210648148148148 = 4002314814814817 wei
   
-    let magpie1balance = web3.utils.toBN(await web3.eth.getBalance(magpie1));
-    let magpie2balance = web3.utils.toBN(await web3.eth.getBalance(magpie2));
-    let magpie3balance = web3.utils.toBN(await web3.eth.getBalance(magpie3));
-
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     let tx = await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address,

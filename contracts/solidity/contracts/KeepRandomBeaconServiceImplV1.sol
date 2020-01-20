@@ -11,6 +11,7 @@ interface OperatorContract {
     function entryVerificationGasEstimate() external view returns(uint256);
     function dkgGasEstimate() external view returns(uint256);
     function groupCreationGasEstimate() external view returns(uint256);
+    function groupSelectionStartGasEstimate() external view returns(uint256);
     function groupProfitFee() external view returns(uint256);
     function sign(
         uint256 requestId,
@@ -224,14 +225,19 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
             "Payment is less than required minimum."
         );
 
-        (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
-        uint256 callbackFee = msg.value.sub(entryVerificationFee).sub(dkgContributionFee).sub(groupProfitFee);
-
-        _dkgFeePool += dkgContributionFee;
-
         OperatorContract operatorContract = OperatorContract(
             selectOperatorContract(uint256(keccak256(_previousEntry)))
         );
+
+        uint256 groupSelectionStartFee = operatorContract.groupSelectionStartGasEstimate()
+            .mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
+
+        (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
+        uint256 callbackFee = msg.value.sub(entryVerificationFee)
+            .sub(dkgContributionFee).sub(groupProfitFee).sub(groupSelectionStartFee);
+
+        _dkgFeePool += dkgContributionFee;
+
         uint256 selectedOperatorContractFee = operatorContract.groupProfitFee().add(
             operatorContract.entryVerificationGasEstimate().mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)));
 
@@ -399,7 +405,13 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
      */
     function entryFeeEstimate(uint256 callbackGas) public view returns(uint256) {
         (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
-        return entryVerificationFee.add(dkgContributionFee).add(groupProfitFee).add(callbackFee(callbackGas));
+
+        address operator = _operatorContracts[_operatorContracts.length.sub(1)];
+        uint256 groupSelectionStartFee = OperatorContract(operator).groupSelectionStartGasEstimate()
+            .mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
+
+        return entryVerificationFee.add(dkgContributionFee).add(groupProfitFee)
+            .add(callbackFee(callbackGas)).add(groupSelectionStartFee);
     }
 
     /**

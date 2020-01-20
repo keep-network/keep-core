@@ -68,6 +68,7 @@ contract('KeepRandomBeaconService', function(accounts) {
         await operatorContract.setDkgGasEstimate(14); 
         await operatorContract.setGroupSize(13);
         await operatorContract.setGroupMemberBaseReward(3);
+        await operatorContract.setGroupSelectionStartGasEstimate(2);
 
         let callbackGas = 7;
 
@@ -79,8 +80,9 @@ contract('KeepRandomBeaconService', function(accounts) {
         // dkg contribution fee = 14 * 200 * 1% = 28
         // group profit fee = 13 * 3 = 39
         // callback fee = 7 * 200 * 150% = 2100
-        // entry fee = 3600 + 28 + 39 + 2100 = 5767
-        let expectedEntryFeeEstimate = 5767;
+        // group selection start gas estimate = 2 * 200 * 150% = 600
+        // entry fee = 3600 + 28 + 39 + 2100 + 600 = 6367
+        let expectedEntryFeeEstimate = 6367;
         assert.equal(expectedEntryFeeEstimate, entryFeeEstimate)
     });
 });
