@@ -1,10 +1,12 @@
-import { useEffect, useReducer } from 'react'
+import { useEffect, useReducer, useContext } from 'react'
+import { Web3Context } from '../components/WithWeb3Context'
 
 const FETCH_REQUEST_START = 'FETCH_REQUEST_START'
 const FETCH_REQUEST_SUCCESS = 'FETCH_REQUEST_SUCCESS'
 const FETCH_REQUEST_FAILURE = 'FETCH_REQUEST_FAILURE'
 
 export const useFetchData = (serviceMethod, initialData) => {
+  const web3Context = useContext(Web3Context)
   const [state, dispatch] = useReducer(dataFetchrReducer, {
     isFetching: false,
     isError: false,
@@ -12,10 +14,10 @@ export const useFetchData = (serviceMethod, initialData) => {
   })
 
   useEffect(() => {
-    const shouldSetState = true
+    let shouldSetState = true
 
     dispatch({ type: FETCH_REQUEST_START })
-    serviceMethod()
+    serviceMethod(web3Context)
       .then((data) => {
         shouldSetState && dispatch({ type: FETCH_REQUEST_SUCCESS, payload: data })
       })
