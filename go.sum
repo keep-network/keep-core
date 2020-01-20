@@ -181,8 +181,6 @@ github.com/keep-network/cli v1.20.0 h1:mEufpPsovOVdduTTkk+a2CxS3crIrGFqUsvs58gSi
 github.com/keep-network/cli v1.20.0/go.mod h1:nzsst4JjU+rGE8Q5J839fYxectxWHpLhxKNohQWtQhA=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20190611114437-e92bd71e8199 h1:4EmAF2XUHK1kwXBhg75OO9hgTkJGK7snwJZlpbu+Yy8=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20190611114437-e92bd71e8199/go.mod h1:MtZSKNavpxpPY0VLt2sl118IxptrGQDUb/MBu+j2Yow=
-github.com/keep-network/keep-common v0.0.0-20191119165557-64b17f00daab h1:UgKXwsWM4vkz2WCEV3vbWdfR7XF6nuYaYMetDVocFsk=
-github.com/keep-network/keep-common v0.0.0-20191119165557-64b17f00daab/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
 github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e h1:iGKWRCKuuqw8JhByY0d4ahnKem8bh6P/jwzCmlOOxBk=
 github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
@@ -270,8 +268,8 @@ github.com/libp2p/go-libp2p-peerstore v0.1.0/go.mod h1:2CeHkQsr8svp4fZ+Oi9ykN1HB
 github.com/libp2p/go-libp2p-peerstore v0.1.3/go.mod h1:BJ9sHlm59/80oSkpWgr1MyY1ciXAXV397W6h1GH/uKI=
 github.com/libp2p/go-libp2p-peerstore v0.1.4 h1:d23fvq5oYMJ/lkkbO4oTwBp/JP+I/1m5gZJobNXCE/k=
 github.com/libp2p/go-libp2p-peerstore v0.1.4/go.mod h1:+4BDbDiiKf4PzpANZDAT+knVdLxvqh7hXOujessqdzs=
-github.com/libp2p/go-libp2p-pubsub v0.2.1 h1:t0Mb7xSIYw3eR7WEMnhC7BXoHF4I/cHRpFrw7K3JeJ8=
-github.com/libp2p/go-libp2p-pubsub v0.2.1/go.mod h1:Jscj3fk23R5mCrOwb625xjVs5ZEyTZcx/OlTwMDqU+g=
+github.com/libp2p/go-libp2p-pubsub v0.2.2 h1:izqwK39/GCamt8BiyZiSmow8eiF8cDti/Y/PPOv8AWs=
+github.com/libp2p/go-libp2p-pubsub v0.2.2/go.mod h1:Jscj3fk23R5mCrOwb625xjVs5ZEyTZcx/OlTwMDqU+g=
 github.com/libp2p/go-libp2p-record v0.1.1 h1:ZJK2bHXYUBqObHX+rHLSNrM3M8fmJUlUHrodDPPATmY=
 github.com/libp2p/go-libp2p-record v0.1.1/go.mod h1:VRgKajOyMVgP/F0L5g3kH7SVskp17vFi2xheb5uMJtg=
 github.com/libp2p/go-libp2p-routing v0.0.1/go.mod h1:N51q3yTr4Zdr7V8Jt2JIktVU+3xBBylx1MZeVA6t1Ys=
