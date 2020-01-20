@@ -27,11 +27,13 @@ func NewThresholdSigner(
 	memberIndex group.MemberIndex,
 	groupPublicKey *bn256.G2,
 	groupPrivateKeyShare *big.Int,
+	groupPublicKeyShares map[group.MemberIndex]*bn256.G2,
 ) *ThresholdSigner {
 	return &ThresholdSigner{
 		memberIndex:          memberIndex,
 		groupPublicKey:       groupPublicKey,
 		groupPrivateKeyShare: groupPrivateKeyShare,
+		groupPublicKeyShares: groupPublicKeyShares,
 	}
 }
 
