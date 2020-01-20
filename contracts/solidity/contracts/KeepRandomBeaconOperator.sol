@@ -657,9 +657,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @param groupIndex Group index.
      * @param groupMemberIndices Array of member indices for the group member.
      */
-    function withdrawGroupMemberRewards(uint256 groupIndex, uint256[] memory groupMemberIndices) public nonReentrant {
-        uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
-        (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(accumulatedRewards)("");
+    function withdrawGroupMemberRewards(address operator, uint256 groupIndex, uint256[] memory groupMemberIndices) public nonReentrant {
+        uint256 accumulatedRewards = groups.withdrawFromGroup(operator, groupIndex, groupMemberIndices);
+        (bool success, ) = stakingContract.magpieOf(operator).call.value(accumulatedRewards)("");
         require(success, "Failed withdraw rewards");
     }
 
