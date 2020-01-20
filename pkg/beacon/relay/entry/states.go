@@ -158,6 +158,7 @@ func (scs *signatureCompleteState) Initiate() error {
 					scs.MemberIndex(),
 					message.senderID,
 				)
+				continue
 			}
 
 			if bls.VerifyG1(publicKey, previousEntryG1, share) {
