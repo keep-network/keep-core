@@ -34,6 +34,16 @@ Keep.defaultProps = {
   width: '917.41333',
 }
 
+const Badge = ({ height, width }) => (
+  <svg width={width} height={height} viewBox="0 0 55 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M11.6155 29.7993L2.65625 40.7482L10.9375 42.4045L14.25 52.342L22.9597 38.5222" stroke="black" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M43.3846 29.7993L52.3438 40.7482L44.0626 42.4045L40.7501 52.342L32.0404 38.5222" stroke="black" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+    <path fillRule="evenodd" clipRule="evenodd" d="M27.5 39.0918C37.5619 39.0918 45.7187 30.935 45.7187 20.873C45.7187 10.8111 37.5619 2.6543 27.5 2.6543C17.4381 2.6543 9.28125 10.8111 9.28125 20.873C9.28125 30.935 17.4381 39.0918 27.5 39.0918Z" stroke="black" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+    <path fillRule="evenodd" clipRule="evenodd" d="M30.825 22.5293C30.825 24.3587 29.3419 25.8418 27.5125 25.8418C25.683 25.8418 24.2 24.3587 24.2 22.5293V19.2168C24.2 17.3874 25.683 15.9043 27.5125 15.9043C29.3419 15.9043 30.825 17.3874 30.825 19.2168V22.5293Z" stroke="black" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
 export {
   Keep,
+  Badge,
 }

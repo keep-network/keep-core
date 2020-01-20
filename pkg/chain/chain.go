@@ -1,6 +1,7 @@
 package chain
 
 import (
+	"context"
 	"crypto/ecdsa"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -8,10 +9,9 @@ import (
 )
 
 // BlockCounter is an interface that provides the ability to wait for a certain
-// number of abstract blocks. It provides for two ways to wait, one blocking and
-// one chan-based. Block height is expected to increase monotonically, though
-// the time between blocks will depend on the underlying implementation. See
-// LocalBlockCounter() for a local implementation.
+// number of abstract blocks or watch as they are mined.
+// Block height is expected to increase monotonically, though
+// the time between blocks depends on the underlying implementation.
 type BlockCounter interface {
 	// WaitForBlockHeight blocks at the caller until the given block height is
 	// reached. If the number of blocks is zero or negative or if the given
@@ -26,6 +26,13 @@ type BlockCounter interface {
 
 	// CurrentBlock returns the current block height.
 	CurrentBlock() (uint64, error)
+
+	// WatchBlocks returns a channel that will emit new block numbers as they
+	// are mined. When the context provided as the parameter ends, new blocks
+	// are no longer pushed to the channel and the channel is closed. If there
+	// is no reader for the channel or reader is too slow, block updates can be
+	// dropped.
+	WatchBlocks(ctx context.Context) <-chan uint64
 }
 
 // StakeMonitor is an interface that provides ability to check and monitor

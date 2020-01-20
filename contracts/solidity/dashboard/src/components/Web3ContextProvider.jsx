@@ -1,7 +1,7 @@
 import React from 'react'
 import { getWeb3, getWeb3SocketProvider } from '../utils'
 import { Web3Context } from './WithWeb3Context'
-import { getKeepToken, getTokenStaking, getTokenGrant } from '../contracts'
+import { getKeepToken, getTokenStaking, getTokenGrant, getKeepRandomBeaconOperator } from '../contracts'
 import { MessagesContext, messageType } from './Message'
 
 export default class Web3ContextProvider extends React.Component {
@@ -66,13 +66,14 @@ export default class Web3ContextProvider extends React.Component {
       const { web3 } = this.state
       try {
         const web3EventProvider = getWeb3SocketProvider()
-        const [token, grantContract, stakingContract] = await this.getContracts(web3)
+        const [token, grantContract, stakingContract, keepRandomBeaconOperatorContract] = await this.getContracts(web3)
         const [eventToken, eventGrantContract, eventStakingContract] = await this.getContracts(web3EventProvider)
         this.setState({
           token,
           grantContract,
           stakingContract,
           defaultContract: stakingContract,
+          keepRandomBeaconOperatorContract,
           utils: web3.utils,
           eth: web3.eth,
           eventToken,
@@ -90,6 +91,7 @@ export default class Web3ContextProvider extends React.Component {
       getKeepToken(web3),
       getTokenGrant(web3),
       getTokenStaking(web3),
+      getKeepRandomBeaconOperator(web3),
     ])
 
     accountHasBeenChanged = ([yourAddress]) => {

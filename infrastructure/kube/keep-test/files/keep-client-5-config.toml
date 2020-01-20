@@ -1,0 +1,30 @@
+[ethereum]
+  URL = "ws://eth-tx-ropsten.test.keep.network:8546"
+  URLRPC = "http://eth-tx-ropsten.test.keep.network:8545"
+
+  [ethereum.account]
+    Address = "0xf7886f29ffc82d349e3a9131a463ba0ed35b7c58"
+    KeyFile = "/mnt/keep-client/config/eth_account_keyfile"
+
+  [ethereum.ContractAddresses]
+    # Hex-encoded address of KeepRandomBeaconOperator contract
+    KeepRandomBeaconOperator = "0x23C62f3AC74Ab575427EEFf37eCddc68fDeD5901"
+    # TokenStaking
+    TokenStaking = "0x5366837a0a40CD92e5C42c3b8d919046377CC525"
+    # Hex-encoded address of KeepRandomBeaconService contract. Only needed
+    # in cases where the client's utility functions will be used (e.g., the
+    # relay subcommand).
+    KeepRandomBeaconService = "0x6eaC1E4eEFFEb463eBbe4f65efcE64D5d5bD8076"
+
+[LibP2P]
+  Peers = ["/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm359ykqT4QAehewxGLCqY7vTNHLP1ao9EjieZS8jdeKp5", "/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmS29jNiEX2vAtcjZVhPjU5HWKZNjpWj1gp4SKMGwnSfrg", "/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8SrKDSKZnj3syGjQ1B8F6bDokP93wikjUgpdx4sWCN5L", "/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8B2HEde1pAUJH31rZehN3isd1ZFiHCdsxjFnGZehuDJZ"]
+  Port = 3919
+  # AnnouncedAddresses:
+  # Leaving AnnouncedAddresses empty will set a default address to be
+  # announced to the network.  The default address will vary by deploy
+  # conditions.  Set AnnouncedAddresses if you have known external IPs
+  # or DNS entries you want to route traffic through.
+  AnnouncedAddresses = []
+
+[Storage]
+  DataDir = "/mnt/keep-client/data"

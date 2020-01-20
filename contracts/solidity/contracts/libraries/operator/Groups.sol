@@ -320,4 +320,13 @@ library Groups {
             }
         }
     }
+
+    /**
+     * @dev Returns members of the given group by group public key.
+     *
+     * @param groupPubKey Group public key.
+     */
+    function getGroupMembers(Storage storage self, bytes memory groupPubKey) public view returns (address[] memory ) {
+        return self.groupMembers[groupPubKey];
+    }
 }
