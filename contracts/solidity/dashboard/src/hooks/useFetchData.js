@@ -7,7 +7,7 @@ const FETCH_REQUEST_FAILURE = 'FETCH_REQUEST_FAILURE'
 
 export const useFetchData = (serviceMethod, initialData) => {
   const web3Context = useContext(Web3Context)
-  const [state, dispatch] = useReducer(dataFetchrReducer, {
+  const [state, dispatch] = useReducer(dataFetchReducer, {
     isFetching: false,
     isError: false,
     data: initialData,
@@ -33,7 +33,7 @@ export const useFetchData = (serviceMethod, initialData) => {
   return state
 }
 
-const dataFetchrReducer = (state, action) => {
+const dataFetchReducer = (state, action) => {
   switch (action.type) {
   case FETCH_REQUEST_START:
     return {
