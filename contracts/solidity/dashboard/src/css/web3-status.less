@@ -1,0 +1,45 @@
+.web3 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    &-status {
+      font-size: 0.8rem;
+      background-color: @pale-grey;
+      padding: 0 .5rem;
+      text-align: left;
+      border: 2px solid black ;
+      border-radius: 5px;
+      font-weight: bold;
+
+      &.success {
+        color: @aqua-marine;
+        border-color: @aqua-marine;
+      }
+      &.loading {
+        color: #67598a;
+        border-color: #67598a;
+      }
+      &.alert {
+        color: @rose-pink;
+        border-color: @rose-pink;
+        margin-bottom: 0;
+        & > a {
+          color: @rose-pink;
+          text-decoration: underline;
+        }
+      }
+      &.notify {
+        color: #cda48d;
+        border-color: #cda48d;
+        & > span {
+          text-decoration: underline;
+          transition: color .2s ease-in;
+          &:hover {
+              cursor: pointer;
+              color: darken(#cda48d, 2%);
+          }
+        }
+      }
+    }
+  }

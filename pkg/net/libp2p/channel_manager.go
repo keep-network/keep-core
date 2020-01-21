@@ -5,9 +5,17 @@ import (
 	"sync"
 
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/libp2p/go-libp2p-core/host"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+)
+
+const (
+	libp2pMessageSigning              = true
+	libp2pStrictSignatureVerification = true
+	libp2pPeerOutboundQueueSize       = 128
+	libp2pValidationQueueSize         = 128
 )
 
 type channelManager struct {
@@ -21,32 +29,34 @@ type channelManager struct {
 
 	pubsub *pubsub.PubSub
 
-	retransmissionOptions *retransmissionOptions
+	retransmissionTicker *retransmission.Ticker
 }
 
 func newChannelManager(
 	ctx context.Context,
 	identity *identity,
 	p2phost host.Host,
-	retransmissionOptions *retransmissionOptions,
+	retransmissionTicker *retransmission.Ticker,
 ) (*channelManager, error) {
 	floodsub, err := pubsub.NewFloodSub(
 		ctx,
 		p2phost,
 		pubsub.WithMessageAuthor(identity.id),
-		pubsub.WithMessageSigning(true),
-		pubsub.WithStrictSignatureVerification(true),
+		pubsub.WithMessageSigning(libp2pMessageSigning),
+		pubsub.WithStrictSignatureVerification(libp2pStrictSignatureVerification),
+		pubsub.WithPeerOutboundQueueSize(libp2pPeerOutboundQueueSize),
+		pubsub.WithValidateQueueSize(libp2pValidationQueueSize),
 	)
 	if err != nil {
 		return nil, err
 	}
 	return &channelManager{
-		channels:              make(map[string]*channel),
-		pubsub:                floodsub,
-		peerStore:             p2phost.Peerstore(),
-		identity:              identity,
-		ctx:                   ctx,
-		retransmissionOptions: retransmissionOptions,
+		channels:             make(map[string]*channel),
+		pubsub:               floodsub,
+		peerStore:            p2phost.Peerstore(),
+		identity:             identity,
+		ctx:                  ctx,
+		retransmissionTicker: retransmissionTicker,
 	}, nil
 }
 
@@ -83,17 +93,14 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 	}
 
 	channel := &channel{
-		name:               name,
-		clientIdentity:     cm.identity,
-		peerStore:          cm.peerStore,
-		pubsub:             cm.pubsub,
-		subscription:       sub,
-		messageHandlers:    make([]net.HandleMessageFunc, 0),
-		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
-		retransmitter: newRetransmitter(
-			cm.retransmissionOptions.cycles,
-			cm.retransmissionOptions.intervalMilliseconds,
-		),
+		name:                 name,
+		clientIdentity:       cm.identity,
+		peerStore:            cm.peerStore,
+		pubsub:               cm.pubsub,
+		subscription:         sub,
+		messageHandlers:      make([]*messageHandler, 0),
+		unmarshalersByType:   make(map[string]func() net.TaggedUnmarshaler),
+		retransmissionTicker: cm.retransmissionTicker,
 	}
 
 	go channel.handleMessages(cm.ctx)

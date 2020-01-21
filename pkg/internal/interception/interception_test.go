@@ -112,16 +112,10 @@ func testMessageRoundtrip(
 	})
 
 	handlerFiredChan := make(chan *testMessage)
-	handler := net.HandleMessageFunc{
-		Type: "test_message",
-		Handler: func(msg net.Message) error {
-			handlerFiredChan <- msg.Payload().(*testMessage)
-			return nil
-		},
-	}
-
-	channel.Recv(handler)
-	channel.Send(message)
+	channel.Recv(ctx, func(msg net.Message) {
+		handlerFiredChan <- msg.Payload().(*testMessage)
+	})
+	channel.Send(ctx, message)
 
 	select {
 	case msg := <-handlerFiredChan:

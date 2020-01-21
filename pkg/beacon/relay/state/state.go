@@ -1,6 +1,8 @@
 package state
 
 import (
+	"context"
+
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -27,8 +29,9 @@ type State interface {
 	ActiveBlocks() uint64
 
 	// Initiate performs all the required calculations and sends out all the
-	// messages associated with the current state.
-	Initiate() error
+	// messages associated with the current state. The context passed to this
+	// function is scoped to the lifetime of the current state.
+	Initiate(ctx context.Context) error
 
 	// Receive is called each time a new message arrived. Receive is expected to
 	// be called for all broadcast channel messages, including the member's own
@@ -56,14 +59,14 @@ const SilentStateDelayBlocks = 0
 // and not any longer.
 const SilentStateActiveBlocks = 0
 
-// MessagingStateDelayBlocks is a delay in blocks for a state exchanging
+// DefaultMessagingStateDelayBlocks is a delay in blocks for a state exchanging
 // network messages as a part of its execution.
 //
 // One block is given for all state machines cooperating over the network
 // so that they can enter the given state before any message for this
 // state is sent. This way we make sure that no messages are dropped.
-const MessagingStateDelayBlocks = 1
+const DefaultMessagingStateDelayBlocks = 1
 
-// MessagingStateActiveBlocks is a number of blocks for which a state
+// DefaultMessagingStateActiveBlocks is a number of blocks for which a state
 // exchanging network messages as a part of its execution should be active.
-const MessagingStateActiveBlocks = 3
+const DefaultMessagingStateActiveBlocks = 5
