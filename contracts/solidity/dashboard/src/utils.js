@@ -31,3 +31,9 @@ export const shortenAddress = (address) => {
 
   return '0x'.concat(firstFourCharacters).concat('...').concat(lastFourCharacters)
 }
+
+export const wait = (ms) => {
+  return new Promise((resolve) => {
+    return setTimeout(resolve, ms)
+  })
+}
