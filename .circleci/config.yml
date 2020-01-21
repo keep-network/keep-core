@@ -37,26 +37,18 @@ jobs:
       - store_test_results:
           path: /tmp/test-results
   generate_docs_solidity:
-    docker:
-      - image: keepnetwork/nodejs-python-solc:5
+    executor: docker-node
     steps:
       - checkout
       - run:
           name: Generate solidity docs
           command: |
-            BRANCH=$(echo $CIRCLE_BRANCH | sed -e 's/\//\\\//g')
-            echo "Add baseUrl http://docs.keep.network/$BRANCH/solidity/ to .doxityrc"
-            sed -i '2i "baseUrl": "http://docs.keep.network/'$BRANCH'/solidity/",' contracts/solidity/docs/.doxityrc
-            echo "Add link prefix /$BRANCH/solidity to .doxityrc"
-            find='"linkPrefix": ""'
-            replace='"linkPrefix": "\/'$BRANCH'\/solidity"'
-            sed -e "s/${find}/${replace}/g" contracts/solidity/docs/.doxityrc > contracts/solidity/docs/.doxityrc.new
-            mv contracts/solidity/docs/.doxityrc.new contracts/solidity/docs/.doxityrc
             cd contracts/solidity && npm install
-            cd docs/doxity && npm install
-            cd ../../ && make clean
-            mkdir -p /tmp/docs && make docs
-            cp -r docs/output /tmp/docs/solidity
+            node_modules/.bin/truffle compile
+            mkdir -p output
+            node scripts/generate-api-docs.js > output/index.adoc
+            mkdir -p /tmp/docs
+            cp -r output /tmp/docs/solidity
       - persist_to_workspace:
           root: /tmp/docs
           paths:
@@ -260,6 +252,8 @@ jobs:
       - image: asciidoctor/docker-asciidoctor
     steps:
       - checkout
+      - attach_workspace:
+          at: ./docs
       - run:
           name: Generate Asciidoctor PDF/HTML Files
           command: |
@@ -345,10 +339,11 @@ workflows:
   docs:
     jobs:
       - generate_docs_tex
-      - generate_docs_asciidoctor
       - generate_docs_solidity
+      - generate_docs_asciidoctor:
+          requires:
+            - generate_docs_solidity
       - upload_docs:
           requires:
             - generate_docs_tex
-            - generate_docs_solidity
             - generate_docs_asciidoctor
