@@ -9,8 +9,7 @@
   "scripts": {
     "truffle": "truffle",
     "test": "rm -rf build && truffle compile && truffle test",
-    "demo": "truffle migrate --reset && truffle exec ./scripts/demo.js",
-    "multinode": "truffle compile && truffle exec ./scripts/get-and-unlock-eth-accounts.js http://localhost:8545 password && go build ./../.. && go generate ./../../... && truffle migrate --reset && truffle exec ./scripts/conf.js && truffle exec ./scripts/demo.js && cd ../../ && LOG_LEVEL=\"INFO\" KEEP_ETHEREUM_PASSWORD=\"password\" ./keep-core --config config.bootstrap.toml start"
+    "demo": "truffle migrate --reset && truffle exec ./scripts/demo.js"
   },
   "author": "Matt Luongo <mhluongo@gmail.com>",
   "license": "MIT",
