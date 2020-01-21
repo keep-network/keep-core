@@ -1,12 +1,13 @@
 .rewards-wrapper {
-    flex-direction: column !important;
+    flex-direction: column-reverse !important;
     .rewards-history {
         width: 100%;
     }
 
     .group-items {
+        margin-bottom: 1.5rem;
+        width: 100%;
         align-self: unset;
-        order: 2;
     }
 }
 
@@ -75,14 +76,16 @@
     }
 }
 
-@media screen and (min-width: 750px) {
+@media screen and (min-width: 1100px) {
     .rewards-wrapper {
         flex-direction: row !important;
         .rewards-history {
             flex-basis: 35%;
+            align-self: flex-start;
             margin-right: 1.5rem;
         }
         .group-items {
+            margin-bottom: 0;
             align-self: flex-start;
             flex-basis: 65%;
         }
