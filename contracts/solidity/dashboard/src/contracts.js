@@ -19,6 +19,13 @@ export async function getKeepRandomBeaconOperator(web3) {
   return getContract(web3, KeepRandomBeaconOperator)
 }
 
+export async function getKeepTokenContractDeployerAddress(web3) {
+  const deployTransactionHash = getTransactionHashOfContractDeploy(KeepToken)
+  const transaction = await web3.eth.getTransaction(deployTransactionHash)
+
+  return transaction.from
+}
+
 async function getContract(web3, contract) {
   const address = getContractAddress(contract)
   const code = await web3.eth.getCode(address)
@@ -29,6 +36,10 @@ async function getContract(web3, contract) {
 
 function checkCodeIsValid(code) {
   if (!code || code === '0x0' || code === '0x') throw Error('No contract at address')
+}
+
+function getTransactionHashOfContractDeploy({ networks }) {
+  return networks[Object.keys(networks)[0]].transactionHash
 }
 
 function getContractAddress({ networks }) {
