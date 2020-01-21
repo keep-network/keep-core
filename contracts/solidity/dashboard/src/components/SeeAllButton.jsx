@@ -2,7 +2,7 @@ import React from 'react'
 import Button from './Button'
 
 export const SeeAllButton = ({ showAll, onClickCallback, previewDataCount, dataLength }) => {
-  if (dataLength >= previewDataCount || dataLength === 0) {
+  if (dataLength <= previewDataCount || dataLength === 0) {
     return null
   }
 
