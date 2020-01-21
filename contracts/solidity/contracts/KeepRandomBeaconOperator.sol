@@ -40,6 +40,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     event GroupSelectionStarted(uint256 newEntry);
 
+    event GroupMemberRewardsWithdrawn(address indexed beneficiary, uint256 amount, bytes groupPublicKey, uint256 withdrawnAt);
+
     GroupSelection.Storage groupSelection;
     Groups.Storage groups;
     DKGResultVerification.Storage dkgResultVerification;
@@ -661,6 +663,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
         (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(accumulatedRewards)("");
         require(success, "Failed withdraw rewards");
+        emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(msg.sender), accumulatedRewards, getGroupPublicKey(groupIndex), now);
     }
 
     /**
