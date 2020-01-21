@@ -25,4 +25,8 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
     }
 
+    function emitEvent(uint256 groupIndex) public {
+        emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(msg.sender), 1000 wei, getGroupPublicKey(groupIndex), now);
+    }
+
 }

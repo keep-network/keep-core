@@ -84,6 +84,14 @@ module.exports = async function() {
   console.log('number of groups:', numberOfGroups.toString());
   console.log('first active index:', firstActiveIndex.toString());
 
+  await keepRandomBeaconOerator.emitEvent(1, { from: accounts[1] })
+  await keepRandomBeaconOerator.emitEvent(3, { from: accounts[1] })
+  await keepRandomBeaconOerator.emitEvent(1, { from: accounts[1] })
+  await keepRandomBeaconOerator.emitEvent(5, { from: accounts[1] })
+  await keepRandomBeaconOerator.emitEvent(6, { from: accounts[1] })
+
+  console.log('num of events', events)
+
   async function registerNewGroups (numberOfGroups) {
     const groupReward = web3.utils.toWei('14500', 'Gwei');
     for (let i = 0; i < numberOfGroups; i++) {
