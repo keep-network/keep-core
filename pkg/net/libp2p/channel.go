@@ -20,6 +20,8 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
+const subscriptionWorkersCount = 32
+
 type channel struct {
 	name string
 
@@ -164,8 +166,15 @@ func (c *channel) publishToPubSub(message *pb.NetworkMessage) error {
 }
 
 func (c *channel) handleMessages(ctx context.Context) {
-	defer c.subscription.Cancel()
+	for i := 0; i < subscriptionWorkersCount; i++ {
+		go c.subscriptionWorker(ctx)
+	}
 
+	<-ctx.Done()
+	c.subscription.Cancel()
+}
+
+func (c *channel) subscriptionWorker(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
