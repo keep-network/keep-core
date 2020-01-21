@@ -1,17 +1,12 @@
 pragma solidity ^0.5.4;
+import "../libraries/operator/GroupSelection.sol";
 
-import "../KeepRandomBeaconOperator.sol";
+contract GroupSelectionStub {
+    using GroupSelection for GroupSelection.Storage;
+    GroupSelection.Storage groupSelection;
 
-/**
- * @title KeepRandomBeaconOperatorTicketsOrderingStub
- * @dev A simplified Random Beacon operator contract to help local development.
- */
-contract KeepRandomBeaconOperatorTicketsOrderingStub is KeepRandomBeaconOperator {
-
-    constructor(
-        address _serviceContract,
-        address _stakingContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
+    constructor() public {
+        groupSelection.groupSize = 10;
     }
 
     function addTicket(uint64 newTicketValue) public {
@@ -39,10 +34,5 @@ contract KeepRandomBeaconOperatorTicketsOrderingStub is KeepRandomBeaconOperator
     */
     function getPreviousTicketIndex(uint256 higherTicketValueIndex) public view returns (uint256) {
         return groupSelection.previousTicketIndex[higherTicketValueIndex];
-    }
-
-    function setGroupSize(uint256 size) public {
-        groupSize = size;
-        groupSelection.groupSize = size;
     }
 }
