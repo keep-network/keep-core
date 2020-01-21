@@ -20,7 +20,7 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
-const defaultSubscriptionWorkersCount = 32
+const subscriptionWorkersCount = 32
 
 type channel struct {
 	name string
@@ -166,42 +166,39 @@ func (c *channel) publishToPubSub(message *pb.NetworkMessage) error {
 }
 
 func (c *channel) handleMessages(ctx context.Context) {
-	defer c.subscription.Cancel()
-
-	var wg sync.WaitGroup
-	wg.Add(defaultSubscriptionWorkersCount)
-
-	for i := 0; i < defaultSubscriptionWorkersCount; i++ {
-		go func() {
-			for {
-				select {
-				case <-ctx.Done():
-					wg.Done()
-					return
-				default:
-					message, err := c.subscription.Next(ctx)
-					if err != nil {
-						// TODO: handle error - different error types
-						// result in different outcomes. Print err is very noisy.
-						logger.Error(err)
-						continue
-					}
-
-					// Every message should be independent from any other message.
-					go func(msg *pubsub.Message) {
-						if err := c.processPubsubMessage(msg); err != nil {
-							// TODO: handle error - different error types
-							// result in different outcomes. Print err is very noisy.
-							logger.Error(err)
-							return
-						}
-					}(message)
-				}
-			}
-		}()
+	for i := 0; i < subscriptionWorkersCount; i++ {
+		go c.subscriptionWorker(ctx)
 	}
 
-	wg.Wait()
+	<-ctx.Done()
+	c.subscription.Cancel()
+}
+
+func (c *channel) subscriptionWorker(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			message, err := c.subscription.Next(ctx)
+			if err != nil {
+				// TODO: handle error - different error types
+				// result in different outcomes. Print err is very noisy.
+				logger.Error(err)
+				continue
+			}
+
+			// Every message should be independent from any other message.
+			go func(msg *pubsub.Message) {
+				if err := c.processPubsubMessage(msg); err != nil {
+					// TODO: handle error - different error types
+					// result in different outcomes. Print err is very noisy.
+					logger.Error(err)
+					return
+				}
+			}(message)
+		}
+	}
 }
 
 func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
