@@ -45,12 +45,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     DKGResultVerification.Storage dkgResultVerification;
 
     // Contract owner.
-    address public owner;
+    address internal owner;
 
-    address[] public serviceContracts;
+    address[] internal serviceContracts;
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
-    TokenStaking public stakingContract;
+    TokenStaking internal stakingContract;
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
     // the Keep network. Expressed as number with 18-decimal places.
