@@ -9,7 +9,7 @@ const previewDataCount = 3
 
 export const RewardsGroups = ({ groups, isFetching }) => {
   const [showAll, setShowAll] = useState(false)
-  console.log('is fetching', isFetching)
+
   return (
     <LoadingOverlay isFetching={isFetching} classNames="self-start">
       <ul className='group-items self-start tile'>
