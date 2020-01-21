@@ -1,5 +1,6 @@
 import Web3 from 'web3'
 import BigNumber from 'bignumber.js'
+import moment from 'moment'
 
 export function displayAmount(amount, decimals, precision) {
   if (amount) {
@@ -36,4 +37,14 @@ export const wait = (ms) => {
   return new Promise((resolve) => {
     return setTimeout(resolve, ms)
   })
+}
+
+export const formatDate = (dateInMiliSec) => {
+  const now = moment()
+  const date = moment(dateInMiliSec)
+
+  if (now.isSame(date, 'year')) {
+    return date.format('MMM DD')
+  }
+  return date.format('MMM DD YYYY')
 }

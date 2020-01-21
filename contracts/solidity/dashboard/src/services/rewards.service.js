@@ -1,3 +1,5 @@
+import { formatDate } from '../utils'
+
 const fetchAvailableRewards = async (web3Context) => {
   const { keepRandomBeaconOperatorContract, stakingContract, yourAddress, utils } = web3Context
   try {
@@ -46,24 +48,19 @@ const getAvailableRewardFromGroupInEther = async (groupPublicKey, groupMemberInd
   return utils.fromWei(wholeReward, 'ether')
 }
 
-const fetchWithdrawalHistory = async () => {
-  // TODO iterate through past events
-  return [{
-    date: '21.01.2019',
-    amount: '30',
-    groupPublicKey: '0x2A489EacBf4de172B4018D2b4a405F05C400f530',
-  },
-  {
-    date: '21.01.2019',
-    amount: '40',
-    groupPublicKey: '0x2A489EacBf4de172B4018D2b4a405F05C400f531',
-  },
-  {
-    date: '21.01.2019',
-    amount: '50',
-    groupPublicKey: '0x2A489EacBf4de172B4018D2b4a405F05C400f532',
-  },
-  ]
+const fetchWithdrawalHistory = async (web3Context) => {
+  const { keepRandomBeaconOperatorContract, yourAddress, utils } = web3Context
+  const searchFilters = { fromBlock: 0, filter: { beneficiary: yourAddress } }
+
+  try {
+    const events = await keepRandomBeaconOperatorContract.getPastEvents('GroupMemberRewardsWithdrawn', searchFilters)
+    return events.map((e) => {
+      const { returnValues: { groupPublicKey, withdrawnAt, amount } } = e
+      return { groupPublicKey, date: formatDate(withdrawnAt * 1000), amount: utils.fromWei(amount, 'ether') }
+    })
+  } catch (error) {
+    throw error
+  }
 }
 
 const rewardsService = {
