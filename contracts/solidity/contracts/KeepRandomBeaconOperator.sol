@@ -45,12 +45,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     DKGResultVerification.Storage dkgResultVerification;
 
     // Contract owner.
-    address public owner;
+    address internal owner;
 
-    address[] public serviceContracts;
+    address[] internal serviceContracts;
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
-    TokenStaking public stakingContract;
+    TokenStaking internal stakingContract;
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
     // the Keep network. Expressed as number with 18-decimal places.
@@ -649,17 +649,17 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Withdraws accumulated group member rewards for msg.sender
+     * @dev Withdraws accumulated group member rewards for operator
      * using the provided group index and member indices. Once the
      * accumulated reward is withdrawn from the selected group, member is
      * removed from it. Rewards can be withdrawn only from stale group.
-     *
+     * @param operator Operator address.
      * @param groupIndex Group index.
      * @param groupMemberIndices Array of member indices for the group member.
      */
-    function withdrawGroupMemberRewards(uint256 groupIndex, uint256[] memory groupMemberIndices) public nonReentrant {
-        uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
-        (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(accumulatedRewards)("");
+    function withdrawGroupMemberRewards(address operator, uint256 groupIndex, uint256[] memory groupMemberIndices) public nonReentrant {
+        uint256 accumulatedRewards = groups.withdrawFromGroup(operator, groupIndex, groupMemberIndices);
+        (bool success, ) = stakingContract.magpieOf(operator).call.value(accumulatedRewards)("");
         require(success, "Failed withdraw rewards");
     }
 
@@ -678,11 +678,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Gets group members.
+     * @dev Returns members of the given group by group public key.
      */
-    function getGroupMembers(
-        bytes memory groupPubKey
-    ) public view returns (address[] memory) {
+    function getGroupMembers(bytes memory groupPubKey) public view returns (address[] memory members) {
         return groups.getGroupMembers(groupPubKey);
     }
 }

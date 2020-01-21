@@ -11,6 +11,13 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
+const (
+	libp2pMessageSigning              = true
+	libp2pStrictSignatureVerification = true
+	libp2pPeerOutboundQueueSize       = 128
+	libp2pValidationQueueSize         = 128
+)
+
 type channelManager struct {
 	ctx context.Context
 
@@ -35,8 +42,10 @@ func newChannelManager(
 		ctx,
 		p2phost,
 		pubsub.WithMessageAuthor(identity.id),
-		pubsub.WithMessageSigning(true),
-		pubsub.WithStrictSignatureVerification(true),
+		pubsub.WithMessageSigning(libp2pMessageSigning),
+		pubsub.WithStrictSignatureVerification(libp2pStrictSignatureVerification),
+		pubsub.WithPeerOutboundQueueSize(libp2pPeerOutboundQueueSize),
+		pubsub.WithValidateQueueSize(libp2pValidationQueueSize),
 	)
 	if err != nil {
 		return nil, err

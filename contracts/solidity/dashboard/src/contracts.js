@@ -1,6 +1,7 @@
 import KeepToken from './contracts/KeepToken.json'
 import TokenStaking from './contracts/TokenStaking.json'
 import TokenGrant from './contracts/TokenGrant.json'
+import KeepRandomBeaconOperator from './contracts/KeepRandomBeaconOperator.json'
 
 export async function getKeepToken(web3) {
   return getContract(web3, KeepToken)
@@ -14,6 +15,16 @@ export async function getTokenGrant(web3) {
   return getContract(web3, TokenGrant)
 }
 
+export async function getKeepRandomBeaconOperator(web3) {
+  return getContract(web3, KeepRandomBeaconOperator)
+}
+
+export async function getKeepTokenContractDeployerAddress(web3) {
+  const deployTransactionHash = getTransactionHashOfContractDeploy(KeepToken)
+  const transaction = await web3.eth.getTransaction(deployTransactionHash)
+
+  return transaction.from
+}
 
 async function getContract(web3, contract) {
   const address = getContractAddress(contract)
@@ -25,6 +36,10 @@ async function getContract(web3, contract) {
 
 function checkCodeIsValid(code) {
   if (!code || code === '0x0' || code === '0x') throw Error('No contract at address')
+}
+
+function getTransactionHashOfContractDeploy({ networks }) {
+  return networks[Object.keys(networks)[0]].transactionHash
 }
 
 function getContractAddress({ networks }) {

@@ -1,6 +1,7 @@
 import React from 'react'
 import withWeb3Context from './WithWeb3Context'
 import { displayAmount } from '../utils'
+import { getKeepTokenContractDeployerAddress } from '../contracts'
 
 export const ContractsDataContext = React.createContext({})
 
@@ -42,8 +43,8 @@ class ContractsDataContextProvider extends React.Component {
     }
 
     getContractsInfo = async () => {
-      const { web3: { token, stakingContract, grantContract, yourAddress, changeDefaultContract, utils } } = this.props
-      if (!token.options.address || !stakingContract.options.address || !grantContract.options.address || !yourAddress) {
+      const { web3: { web3, token, stakingContract, grantContract, yourAddress, changeDefaultContract, utils } } = this.props
+      if (!web3) {
         return
       }
       try {
@@ -67,7 +68,11 @@ class ContractsDataContextProvider extends React.Component {
           changeDefaultContract(grantContract)
         }
 
+        const keepTokenContractDeployerAddress = await getKeepTokenContractDeployerAddress(web3)
+        const isKeepTokenContractDeployer = utils.toChecksumAddress(yourAddress) === utils.toChecksumAddress(keepTokenContractDeployerAddress)
+
         this.setState({
+          isKeepTokenContractDeployer,
           isOperator,
           isTokenHolder,
           isOperatorOfStakedTokenGrant,
