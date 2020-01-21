@@ -14,7 +14,7 @@ import { Rewards } from './Rewards'
 
 class Routing extends React.Component {
   renderContent() {
-    const { isTokenHolder, contractsDataIsFetching, web3: { error } } = this.props
+    const { isTokenHolder, isKeepTokenContractDeployer, contractsDataIsFetching, web3: { error } } = this.props
 
     if (error) {
       return null
@@ -26,7 +26,7 @@ class Routing extends React.Component {
         <Route exact path='/rewards' component={Rewards} />
         {isTokenHolder && <Route exact path='/stake' component={StakeTab} /> }
         {isTokenHolder && <Route exact path='/token-grants' component={TokenGrantsTab} /> }
-        {isTokenHolder && <Route exact path='/create-token-grants' component={CreateTokenGrantsTab} /> }
+        {isKeepTokenContractDeployer && <Route exact path='/create-token-grants' component={CreateTokenGrantsTab} /> }
         <Route exact path='/' >
           <Redirect to='/overview' />
         </Route>
