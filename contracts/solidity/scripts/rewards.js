@@ -90,7 +90,9 @@ module.exports = async function() {
   await keepRandomBeaconOerator.emitEvent(5, { from: accounts[1] })
   await keepRandomBeaconOerator.emitEvent(6, { from: accounts[1] })
 
-  console.log('num of events', events)
+  const events = await keepRandomBeaconOerator.getPastEvents('GroupMemberRewardsWithdrawn', { fromBlock: 0 })
+  console.log('number of events', events.length)
+  console.log('withdrawal history events', events)
 
   async function registerNewGroups (numberOfGroups) {
     const groupReward = web3.utils.toWei('14500', 'Gwei');
