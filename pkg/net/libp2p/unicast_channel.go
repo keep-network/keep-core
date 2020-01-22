@@ -61,7 +61,7 @@ func (uc *unicastChannel) Send(ctx context.Context, message net.TaggedMarshaler)
 
 func (uc *unicastChannel) send(message []byte) error {
 	n, err := uc.stream.Write(message)
-	logger.Debugf("[peer:%v] wrote [%v] message bytes", uc.clientIdentity, n)
+	logger.Debugf("[peer:%v] wrote [%v] message bytes", uc.clientIdentity.id, n)
 	return err
 }
 
