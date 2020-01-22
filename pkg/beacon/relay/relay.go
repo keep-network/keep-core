@@ -125,7 +125,7 @@ func (n *Node) GenerateRelayEntry(
 	)
 	if err != nil {
 		logger.Errorf(
-			"could not add filter for channel [%v]: [%v]",
+			"could not set filter for channel [%v]: [%v]",
 			channel.Name(),
 			err,
 		)

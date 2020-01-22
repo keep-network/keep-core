@@ -76,7 +76,7 @@ func (n *Node) JoinGroupIfEligible(
 		)
 		if err != nil {
 			logger.Errorf(
-				"could not add filter for channel [%v]: [%v]",
+				"could not set filter for channel [%v]: [%v]",
 				broadcastChannel.Name(),
 				err,
 			)
@@ -136,7 +136,7 @@ func createGroupMemberFilter(
 		_, isAuthorized := authorizations[authorAddress]
 
 		if !isAuthorized {
-			logger.Debugf(
+			logger.Warningf(
 				"rejecting message from [%v]; author is not a member of the group",
 				authorAddress,
 			)
