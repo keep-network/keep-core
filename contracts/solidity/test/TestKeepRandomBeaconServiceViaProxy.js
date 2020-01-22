@@ -147,7 +147,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
       // if you see a plain 'revert' error, it's probably because of not enough gas
       from: account_two, 
       value: entryFeeEstimate, 
-      gas: 400000, 
+      gas: 500000, 
       gasPrice: gasPrice,
       to: serviceContractProxy.address,
       data: web3.eth.abi.encodeFunctionSignature('requestRelayEntry()')
