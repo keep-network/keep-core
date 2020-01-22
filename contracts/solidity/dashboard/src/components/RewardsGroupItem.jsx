@@ -1,8 +1,19 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import Button from './Button'
 import AddressShortcut from './AddressShortcut'
+import rewardsService from '../services/rewards.service'
+import { Web3Context } from './WithWeb3Context'
 
-export const RewardsGroupItem = ({ groupIndex, groupPublicKey, reward, isStale }) => {
+export const RewardsGroupItem = ({ groupIndex, groupPublicKey, membersIndeces, reward }) => {
+  const web3Context = useContext(Web3Context)
+
+  const withdraw = async () => {
+    try {
+      await rewardsService.withdrawRewardFromGroup(groupIndex, membersIndeces, web3Context)
+    } catch (error) {
+      console.log('errro', error)
+    }
+  }
   return (
     <div className='group-item'>
       <div className='group-key'>
@@ -17,7 +28,7 @@ export const RewardsGroupItem = ({ groupIndex, groupPublicKey, reward, isStale }
       </div>
       <Button
         className='btn btn-primary'
-        disabled={!isStale}
+        onClick={withdraw}
       >
         WITHDRAW
       </Button>
