@@ -100,6 +100,9 @@ type Channel interface {
 // other have a direct connection.
 type UnicastChannel interface {
 	Channel
+
+	// RemotePeerID returns id of the remote peer connected to this channel.
+	RemotePeerID() string
 }
 
 // BroadcastChannel represents a named pubsub channel. It allows group members
