@@ -11,7 +11,7 @@ interface OperatorContract {
     function entryVerificationGasEstimate() external view returns(uint256);
     function dkgGasEstimate() external view returns(uint256);
     function groupCreationGasEstimate() external view returns(uint256);
-    function groupSelectionStartGasEstimate() external view returns(uint256);
+    function groupSelectionGasEstimate() external view returns(uint256);
     function groupProfitFee() external view returns(uint256);
     function sign(
         uint256 requestId,
@@ -229,7 +229,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
             selectOperatorContract(uint256(keccak256(_previousEntry)))
         );
 
-        uint256 groupSelectionStartFee = operatorContract.groupSelectionStartGasEstimate()
+        uint256 groupSelectionStartFee = operatorContract.groupSelectionGasEstimate()
             .mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
 
         (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
@@ -407,7 +407,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
         (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
 
         address operator = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 groupSelectionStartFee = OperatorContract(operator).groupSelectionStartGasEstimate()
+        uint256 groupSelectionStartFee = OperatorContract(operator).groupSelectionGasEstimate()
             .mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
 
         return entryVerificationFee.add(dkgContributionFee).add(groupProfitFee)

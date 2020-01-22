@@ -13,7 +13,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     account_two = accounts[1],
     account_three = accounts[2],
     entryFeeEstimate, callbackFee, entryFeeBreakdown,
-    groupSelectionStartGasEstimate, gasPriceWithFluctuationMargin,
+    groupSelectionGasEstimate, gasPriceWithFluctuationMargin,
     groupSelectionStartFee;
 
   before(async () => {
@@ -37,10 +37,10 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     callbackFee = await serviceContract.callbackFee(20000)
     entryFeeBreakdown = await serviceContract.entryFeeBreakdown()
-    groupSelectionStartGasEstimate = await operatorContract.groupSelectionStartGasEstimate()
+    groupSelectionGasEstimate = await operatorContract.groupSelectionGasEstimate()
 
     gasPriceWithFluctuationMargin = web3.utils.toWei(web3.utils.toBN(30), 'gwei');
-    groupSelectionStartFee = web3.utils.toBN(groupSelectionStartGasEstimate).mul(gasPriceWithFluctuationMargin)
+    groupSelectionStartFee = web3.utils.toBN(groupSelectionGasEstimate).mul(gasPriceWithFluctuationMargin)
   });
 
   beforeEach(async () => {

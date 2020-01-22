@@ -100,7 +100,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     uint256 public dkgGasEstimate = 1740000;
 
     // Gas required to trigger DKG (starting group selection).
-    uint256 public groupSelectionStartGasEstimate = 70000;
+    uint256 public groupSelectionGasEstimate = 70000;
 
     // Reimbursement for the submitter of the DKG result.
     // This value is set when a new DKG request comes to the operator contract.
@@ -220,7 +220,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * generate their tickets.
      */
     function createGroup(uint256 _newEntry, address payable submitter) public payable onlyServiceContract {
-        uint256 groupSelectionStartFee = groupSelectionStartGasEstimate
+        uint256 groupSelectionStartFee = groupSelectionGasEstimate
             .mul(gasPriceWithFluctuationMargin(priceFeedEstimate));
 
         groupSelectionStarterContract = ServiceContract(msg.sender);
@@ -692,7 +692,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * cost of triggering group selection.
      */
     function groupCreationGasEstimate() public view returns (uint256) {
-        return dkgGasEstimate.add(groupSelectionStartGasEstimate);
+        return dkgGasEstimate.add(groupSelectionGasEstimate);
     }
 
      /**
