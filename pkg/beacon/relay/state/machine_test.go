@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -29,13 +30,19 @@ func TestExecute(t *testing.T) {
 
 	go func(blockCounter chain.BlockCounter) {
 		blockCounter.WaitForBlockHeight(1)
-		channel.Send(&TestMessage{"message_1"})
+		ctx, cancel := context.WithCancel(context.Background())
+		channel.Send(ctx, &TestMessage{"message_1"})
+		cancel()
 
 		blockCounter.WaitForBlockHeight(4)
-		channel.Send(&TestMessage{"message_2"})
+		ctx, cancel = context.WithCancel(context.Background())
+		channel.Send(ctx, &TestMessage{"message_2"})
+		cancel()
 
 		blockCounter.WaitForBlockHeight(7)
-		channel.Send(&TestMessage{"message_3"})
+		ctx, cancel = context.WithCancel(context.Background())
+		channel.Send(ctx, &TestMessage{"message_3"})
+		cancel()
 	}(blockCounter)
 
 	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
@@ -106,7 +113,7 @@ type testState1 struct {
 
 func (ts testState1) DelayBlocks() uint64  { return 0 }
 func (ts testState1) ActiveBlocks() uint64 { return 2 }
-func (ts testState1) Initiate() error {
+func (ts testState1) Initiate(ctx context.Context) error {
 	addToTestLog(ts, "initiate")
 	return nil
 }
@@ -126,7 +133,7 @@ type testState2 struct {
 
 func (ts testState2) DelayBlocks() uint64  { return 0 }
 func (ts testState2) ActiveBlocks() uint64 { return 2 }
-func (ts testState2) Initiate() error {
+func (ts testState2) Initiate(ctx context.Context) error {
 	addToTestLog(ts, "initiate")
 	return nil
 }
@@ -147,7 +154,7 @@ type testState3 struct {
 func (ts testState3) DelayBlocks() uint64  { return 1 }
 func (ts testState3) ActiveBlocks() uint64 { return 0 }
 
-func (ts testState3) Initiate() error {
+func (ts testState3) Initiate(ctx context.Context) error {
 	addToTestLog(ts, "initiate")
 	return nil
 }
@@ -169,7 +176,7 @@ type testState4 struct {
 
 func (ts testState4) DelayBlocks() uint64  { return 0 }
 func (ts testState4) ActiveBlocks() uint64 { return 2 }
-func (ts testState4) Initiate() error {
+func (ts testState4) Initiate(ctx context.Context) error {
 	addToTestLog(ts, "initiate")
 	return nil
 }
@@ -189,7 +196,7 @@ type testState5 struct {
 
 func (ts testState5) DelayBlocks() uint64  { return 0 }
 func (ts testState5) ActiveBlocks() uint64 { return 0 }
-func (ts testState5) Initiate() error {
+func (ts testState5) Initiate(ctx context.Context) error {
 	addToTestLog(ts, "initiate")
 	return nil
 }

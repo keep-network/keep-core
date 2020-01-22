@@ -1,6 +1,8 @@
 package interception
 
 import (
+	"context"
+
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -54,22 +56,18 @@ func (c *channel) Name() string {
 	return c.delegate.Name()
 }
 
-func (c *channel) Send(m net.TaggedMarshaler) error {
+func (c *channel) Send(ctx context.Context, m net.TaggedMarshaler) error {
 	altered := c.rules(m)
 	if altered == nil {
 		// drop the message
 		return nil
 	}
 
-	return c.delegate.Send(c.rules(m))
+	return c.delegate.Send(ctx, c.rules(m))
 }
 
-func (c *channel) Recv(h net.HandleMessageFunc) error {
-	return c.delegate.Recv(h)
-}
-
-func (c *channel) UnregisterRecv(handlerType string) error {
-	return c.delegate.UnregisterRecv(handlerType)
+func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
+	c.delegate.Recv(ctx, handler)
 }
 
 func (c *channel) RegisterUnmarshaler(
@@ -78,6 +76,6 @@ func (c *channel) RegisterUnmarshaler(
 	return c.delegate.RegisterUnmarshaler(unmarshaler)
 }
 
-func (c *channel) AddFilter(filter net.BroadcastChannelFilter) error {
+func (c *channel) SetFilter(filter net.BroadcastChannelFilter) error {
 	return nil // no-op
 }

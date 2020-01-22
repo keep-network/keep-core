@@ -7,6 +7,9 @@
 @import 'web3-status';
 @import 'indicator';
 @import 'menu-button';
+@import 'rewards';
+@import 'address-shortcut';
+@import 'no-data.less';
 
 html {
   font-size: 16px;
@@ -21,9 +24,7 @@ html {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-self: center;
-    padding: calc(100px + 1.5rem) 1.5rem 0
-
+    margin: calc(100px + 1.5rem) 1.5rem 0;
   }
 }
 
@@ -84,7 +85,10 @@ html {
       border-bottom: 1px solid black;
       padding: 1rem 0;
       width: 100%;
-      font-size: 1.5rem;
+      font-size: 1rem;
+      font-weight: normal;
+      letter-spacing: .05rem;
+      font-variant: small-caps;
       border-right: 0 solid #48DBB4;
       transition: border-right-width 0.3s ease;
 
@@ -181,7 +185,7 @@ html {
 
   .main {
     > .content {
-      padding: calc(@header-height + 5rem) 5rem 0 calc(@side-menu-width + 5rem)
+      margin: calc(@header-height + 5rem) 5rem 0 calc(@side-menu-width + 5rem)
     }
   }
 }

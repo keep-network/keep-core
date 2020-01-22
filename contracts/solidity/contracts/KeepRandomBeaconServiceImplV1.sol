@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./DelayedWithdrawal.sol";
 
@@ -28,7 +29,7 @@ interface OperatorContract {
  * Warning: you can't set constants directly in the contract and must use initialize()
  * please see openzeppelin upgradeable contracts approach for more info.
  */
-contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
+contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, ReentrancyGuard {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
 
@@ -216,7 +217,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         address callbackContract,
         string memory callbackMethod,
         uint256 callbackGas
-    ) public payable returns (uint256) {
+    ) public nonReentrant payable returns (uint256) {
         require(
             msg.value >= entryFeeEstimate(callbackGas),
             "Payment is less than required minimum."
@@ -256,7 +257,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         if (_requestSubsidyFeePool >= 100) {
             uint256 amount = _requestSubsidyFeePool.div(100);
             _requestSubsidyFeePool -= amount;
-            msg.sender.transfer(amount);
+            (bool success, ) = msg.sender.call.value(amount)("");
+            require(success, "Failed send subsidy fee");
         }
 
         emit RelayEntryRequested(requestId);
@@ -320,12 +322,17 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal {
         if (callbackFee < _callbacks[requestId].callbackFee) {
             callbackSurplus = _callbacks[requestId].callbackFee.sub(callbackFee);
             // Reimburse submitter with his actual callback cost.
-            submitter.transfer(callbackFee);
+            (success, ) = submitter.call.value(callbackFee)("");
+            require(success, "Failed reimburse actual callback cost");
+
             // Return callback surplus to the requestor.
-            _callbacks[requestId].surplusRecipient.transfer(callbackSurplus);
+            (success, ) = _callbacks[requestId].surplusRecipient.call.value(callbackSurplus)("");
+            require(success, "Failed send callback surplus");
+
         } else {
             // Reimburse submitter with the callback payment sent by the requestor.
-            submitter.transfer(_callbacks[requestId].callbackFee);
+            (success, ) = submitter.call.value(_callbacks[requestId].callbackFee)("");
+            require(success, "Failed reimburse callback payment");
         }
     }
 

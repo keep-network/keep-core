@@ -75,6 +75,7 @@ func Initialize(
 			go node.GenerateRelayEntry(
 				request.PreviousEntry,
 				relayChain,
+				signing,
 				request.GroupPublicKey,
 				request.BlockNumber,
 			)

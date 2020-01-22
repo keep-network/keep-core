@@ -96,6 +96,7 @@ func (n *Node) MonitorRelayEntry(
 func (n *Node) GenerateRelayEntry(
 	previousEntry []byte,
 	relayChain relayChain.Interface,
+	signing chain.Signing,
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) {
@@ -112,6 +113,23 @@ func (n *Node) GenerateRelayEntry(
 	}
 
 	entry.RegisterUnmarshallers(channel)
+
+	groupMembers, err := relayChain.GetGroupMembers(groupPublicKey)
+	if err != nil {
+		logger.Errorf("could not get group members: [%v]", err)
+		return
+	}
+
+	err = channel.SetFilter(
+		createGroupMemberFilter(groupMembers, signing),
+	)
+	if err != nil {
+		logger.Errorf(
+			"could not set filter for channel [%v]: [%v]",
+			channel.Name(),
+			err,
+		)
+	}
 
 	for _, member := range memberships {
 		go func(member *registry.Membership) {
