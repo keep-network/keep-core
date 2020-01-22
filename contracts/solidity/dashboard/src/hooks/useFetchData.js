@@ -6,7 +6,7 @@ const FETCH_REQUEST_START = 'FETCH_REQUEST_START'
 const FETCH_REQUEST_SUCCESS = 'FETCH_REQUEST_SUCCESS'
 const FETCH_REQUEST_FAILURE = 'FETCH_REQUEST_FAILURE'
 
-const extendsRequestTime = 500 // 0.5s
+const requestTimeDelay = 500 // 0.5s
 
 export const useFetchData = (serviceMethod, initialData) => {
   const web3Context = useContext(Web3Context)
@@ -20,7 +20,7 @@ export const useFetchData = (serviceMethod, initialData) => {
     let shouldSetState = true
 
     dispatch({ type: FETCH_REQUEST_START })
-    Promise.all([serviceMethod(web3Context), wait(extendsRequestTime)])
+    Promise.all([serviceMethod(web3Context), wait(requestTimeDelay)])
       .then(([data]) => {
         shouldSetState && dispatch({ type: FETCH_REQUEST_SUCCESS, payload: data })
       })
