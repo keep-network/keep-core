@@ -688,7 +688,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Estimates gas for group creation. Includes dkg and triggering dkg.
+     * @dev Estimates gas for group creation. Includes the cost of DKG and the
+     * cost of triggering group selection.
      */
     function groupCreationGasEstimate() public view returns (uint256) {
         return dkgGasEstimate.add(groupSelectionStartGasEstimate);
