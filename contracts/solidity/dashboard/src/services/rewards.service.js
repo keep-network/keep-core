@@ -49,8 +49,30 @@ const getAvailableRewardFromGroupInEther = async (groupPublicKey, groupMemberInd
   return utils.fromWei(wholeReward, 'ether')
 }
 
+const withdrawRewardFromGroup = async (groupIndex, groupMembersIndices, web3Context) => {
+  const { web3, keepRandomBeaconOperatorContract, yourAddress } = web3Context
+
+  try {
+    const batchRequest = new web3.BatchRequest()
+    const groupMembers = Object.keys(groupMembersIndices)
+    for (let i = 0; i < groupMembers.length; i++) {
+      const memberAddress = groupMembers[i]
+      batchRequest.add(keepRandomBeaconOperatorContract
+        .methods
+        .withdrawGroupMemberRewards(memberAddress, groupIndex, groupMembersIndices[memberAddress])
+        .send.request({ from: yourAddress }, (result) => console.log('callback', result) )
+      )
+    }
+
+    await batchRequest.execute()
+  } catch (error) {
+    throw error
+  }
+}
+
 const rewardsService = {
   fetchAvailableRewards,
+  withdrawRewardFromGroup,
 }
 
 export default rewardsService
