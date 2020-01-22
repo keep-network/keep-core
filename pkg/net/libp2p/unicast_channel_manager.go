@@ -20,8 +20,8 @@ type unicastChannelManager struct {
 	identity *identity
 	p2phost  host.Host
 
-	streamsMutex sync.Mutex
-	streams      map[peer.ID]network.Stream
+	channelsMutex sync.Mutex
+	channels      map[string]*unicastChannel
 }
 
 func newUnicastChannelManager(
@@ -33,7 +33,7 @@ func newUnicastChannelManager(
 		ctx:      ctx,
 		identity: identity,
 		p2phost:  p2phost,
-		streams:  make(map[peer.ID]network.Stream),
+		channels: make(map[string]*unicastChannel),
 	}
 
 	p2phost.SetStreamHandlerMatch(
@@ -41,14 +41,6 @@ func newUnicastChannelManager(
 		func(protocol string) bool { return protocol == protocolID },
 		manager.handleIncomingStream,
 	)
-
-	notifyBundle := &network.NotifyBundle{}
-	notifyBundle.ClosedStreamF = func(_ network.Network, stream network.Stream) {
-		if stream.Protocol() == protocolID {
-			manager.handleClosedStream(stream)
-		}
-	}
-	p2phost.Network().Notify(notifyBundle)
 
 	return manager
 }
@@ -61,86 +53,69 @@ func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 		stream.Conn().RemotePeer(),
 	)
 
-	ucm.streamsMutex.Lock()
-	defer ucm.streamsMutex.Unlock()
+	channel, err := ucm.getUnicastChannel(stream.Conn().RemotePeer().String())
+	if err != nil {
+		logger.Errorf(
+			"[%v] incoming stream [%v] from peer [%v] dropped: [%v]",
+			ucm.identity.id,
+			stream.Protocol(),
+			stream.Conn().RemotePeer(),
+			err,
+		)
+		return
+	}
 
-	ucm.streams[stream.Conn().RemotePeer()] = stream
-
-	logger.Debugf(
-		"[%v] stream [%v] with peer [%v] registered successfully",
-		ucm.identity.id,
-		stream.Protocol(),
-		stream.Conn().RemotePeer(),
-	)
+	channel.handleStream(stream)
 }
 
-func (ucm *unicastChannelManager) handleClosedStream(stream network.Stream) {
-	logger.Debugf(
-		"[%v] detected closed stream [%v] with peer [%v]",
-		ucm.identity.id,
-		stream.Protocol(),
-		stream.Conn().RemotePeer(),
+func (ucm *unicastChannelManager) getUnicastChannel(peerID string) (
+	*unicastChannel,
+	error,
+) {
+	var (
+		channel *unicastChannel
+		exists  bool
+		err     error
 	)
 
-	ucm.streamsMutex.Lock()
-	defer ucm.streamsMutex.Unlock()
+	ucm.channelsMutex.Lock()
+	channel, exists = ucm.channels[peerID]
+	ucm.channelsMutex.Unlock()
 
-	delete(ucm.streams, stream.Conn().RemotePeer())
+	if !exists {
+		channel, err = ucm.newUnicastChannel(peerID)
+		if err != nil {
+			return nil, err
+		}
 
-	logger.Debugf(
-		"[%v] stream [%v] with peer [%v] unregistered successfully",
-		ucm.identity.id,
-		stream.Protocol(),
-		stream.Conn().RemotePeer(),
-	)
+		// Ensure we update our cache of known channels
+		ucm.channelsMutex.Lock()
+		ucm.channels[peerID] = channel
+		ucm.channelsMutex.Unlock()
+	}
+
+	return channel, nil
 }
 
-func (ucm *unicastChannelManager) getUnicastChannel(
+func (ucm *unicastChannelManager) newUnicastChannel(
 	peerID string,
 ) (*unicastChannel, error) {
-	ucm.streamsMutex.Lock()
-	defer ucm.streamsMutex.Unlock()
-
 	remotePeer, err := peer.IDB58Decode(peerID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid peer ID: [%v]", err)
 	}
 
-	stream, exists := ucm.streams[remotePeer]
-	if !exists {
-		logger.Debugf(
-			"[%v] creating stream [%v] with peer [%v]",
-			ucm.identity.id,
-			protocolID,
-			peerID,
-		)
-
-		stream, err = ucm.p2phost.NewStream(ucm.ctx, remotePeer, protocolID)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"could not create stream [%v] with peer [%v]: [%v]",
-				protocolID,
-				peerID,
-				err,
-			)
-		}
-	} else {
-		logger.Debugf(
-			"[%v] using existing stream [%v] with peer [%v]",
-			ucm.identity.id,
-			stream.Protocol(),
-			peerID,
-		)
+	streamFactory := func(ctx context.Context, peerID peer.ID) (network.Stream, error) {
+		return ucm.p2phost.NewStream(ctx, peerID, protocolID)
 	}
 
 	channel := &unicastChannel{
 		clientIdentity:     ucm.identity,
-		stream:             stream,
+		remotePeerID:       remotePeer,
+		streamFactory:      streamFactory,
 		messageHandlers:    make([]*messageHandler, 0),
 		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
 	}
-
-	go channel.handleMessages(ucm.ctx)
 
 	return channel, nil
 }

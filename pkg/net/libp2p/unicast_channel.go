@@ -1,22 +1,33 @@
 package libp2p
 
 import (
+	"bufio"
 	"context"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"sync"
+
+	"github.com/libp2p/go-libp2p-core/helpers"
+	"github.com/libp2p/go-libp2p-core/peer"
 
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 
+	protoio "github.com/gogo/protobuf/io"
+	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/libp2p/go-libp2p-core/network"
 )
 
+type streamFactory func(ctx context.Context, peerID peer.ID) (network.Stream, error)
+
 type unicastChannel struct {
 	clientIdentity *identity
 
-	streamMutex sync.Mutex
-	stream      network.Stream
+	remotePeerID peer.ID
+
+	streamFactory streamFactory
 
 	messageHandlersMutex sync.Mutex
 	messageHandlers      []*messageHandler
@@ -26,36 +37,53 @@ type unicastChannel struct {
 }
 
 func (uc *unicastChannel) RemotePeerID() string {
-	return uc.stream.Conn().RemotePeer().String()
+	return uc.remotePeerID.String()
 }
 
 func (uc *unicastChannel) Send(ctx context.Context, message net.TaggedMarshaler) error {
-	uc.streamMutex.Lock()
-	defer uc.streamMutex.Unlock()
-
 	messageProto, err := uc.messageProto(message)
 	if err != nil {
 		return err
 	}
 
-	messageBytes, err := messageProto.Marshal()
-	if err != nil {
-		return err
-	}
-
 	logger.Debugf(
-		"[%v] sending [%v] message bytes to peer [%v]",
+		"[%v] sending message [%v] to peer [%v]",
 		uc.clientIdentity.id,
-		len(messageBytes),
+		hex.EncodeToString(messageProto.Payload),
 		uc.RemotePeerID(),
 	)
 
-	return uc.send(messageBytes)
+	stream, err := uc.streamFactory(ctx, uc.remotePeerID)
+	if err != nil {
+		//TODO: consider retrying on error
+		logger.Errorf("[%v] could not create stream: [%v]", uc.clientIdentity.id, err)
+		return err
+	}
+
+	return uc.send(stream, messageProto)
 }
 
-func (uc *unicastChannel) send(message []byte) error {
-	n, err := uc.stream.Write(message)
-	logger.Debugf("[%v] wrote [%v] message bytes", uc.clientIdentity.id, n)
+func (uc *unicastChannel) send(stream network.Stream, message proto.Message) error {
+	writer := bufio.NewWriter(stream)
+	protoWriter := protoio.NewDelimitedWriter(writer)
+
+	writeMsg := func(msg proto.Message) error {
+		err := protoWriter.WriteMsg(msg)
+		if err != nil {
+			return err
+		}
+
+		return writer.Flush()
+	}
+
+	defer helpers.FullClose(stream)
+
+	err := writeMsg(message)
+	if err != nil {
+		_ = stream.Reset()
+		return err
+	}
+
 	return err
 }
 
@@ -98,37 +126,42 @@ func (uc *unicastChannel) Recv(ctx context.Context, handler func(m net.Message))
 	}()
 }
 
-func (uc *unicastChannel) handleMessages(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			logger.Debugf(
-				"[%v] processing message from peer [%v]",
-				uc.clientIdentity.id,
-				uc.RemotePeerID(),
-			)
+func (uc *unicastChannel) handleStream(stream network.Stream) {
+	if stream.Conn().RemotePeer() != uc.remotePeerID {
+		logger.Warningf(
+			"[%v] stream [%v] from peer [%v] is not supported "+
+				"by the unicast channel of peer [%v]",
+			uc.clientIdentity.id,
+			stream.Protocol(),
+			stream.Conn().RemotePeer(),
+			uc.remotePeerID,
+		)
+		return
+	}
 
-			// TODO: dumb implementation, we need something smarter.
-			// See streaming multiple messages:
-			// https://developers.google.com/protocol-buffers/docs/techniques
-			buf := make([]byte, 108)
-			n, err := uc.stream.Read(buf)
+	go func() {
+		reader := protoio.NewDelimitedReader(stream, 1<<20)
+
+		for {
+			messageProto := new(pb.NetworkMessage)
+			err := reader.ReadMsg(messageProto)
 			if err != nil {
-				logger.Error(err)
+				if err != io.EOF {
+					_ = stream.Reset()
+				} else {
+					_ = stream.Close()
+				}
+				return
 			}
 
-			// TODO: pass message to handlers
-
 			logger.Debugf(
-				"[%v] read message of [%v] bytes from peer [%v]",
+				"[%v] read message [%v] from peer [%v]",
 				uc.clientIdentity.id,
-				n,
-				uc.RemotePeerID(),
+				hex.EncodeToString(messageProto.Payload),
+				uc.remotePeerID,
 			)
 		}
-	}
+	}()
 }
 
 func (uc *unicastChannel) removeHandler(handler *messageHandler) {
