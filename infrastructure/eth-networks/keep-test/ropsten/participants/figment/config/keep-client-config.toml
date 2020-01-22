@@ -6,18 +6,18 @@
     Address = "0x6ea036cb7a72c89d46cee43214a7c5fd969e8f59"
     KeyFile = "/mnt/keep-client/config/eth-account-keyfile"
 
-  # Contracts are already deployed to the private testnet.  They are subject to change on deployment
+  # Contracts are already deployed to Ropsten.  They are subject to change on deployment.
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeaconOperator contract
-    KeepRandomBeaconOperator = "0x5277a8E3EBB66A6d3B7755A4aBef1454D89eC19F"
+    KeepRandomBeaconOperator = "0xBf136B8Afd6A8F6B571c23B04aBFCa7AFb0D404E"
     # TokenStaking
-    TokenStaking = "0xA92628BE7f0e5f101c4aD99Dfc2Da1e7aF945B90"
+    TokenStaking = "0x4a7ecCb36784931FfB75BCdcBd95aCA9F63Cb90E"
     # Hex-encoded address of KeepRandomBeaconService contract. Only needed
     # in cases where the client's utility functions will be used (e.g., the
     # relay subcommand).
-    KeepRandomBeaconService = "0xE113C1c12a6e82A86635cBA9000D3f9e06B616C1"
+    KeepRandomBeaconService = "0x1200952A8EB287006f4f61Effa67d85447a67Ab0"
 
-# We can configure multiple bootstrap peers.  For the purpose of initial testing we're keeping it at one.
+# Testnet bootstrap peers hosted by the folks at Keep.
 [LibP2P]
   Peers = ["/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAmDKyX7xmLMEAuWtDw5oBLN3L9xtKXSFn8hUEVtukZkuHp", "/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm359ykqT4QAehewxGLCqY7vTNHLP1ao9EjieZS8jdeKp5", "/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmS29jNiEX2vAtcjZVhPjU5HWKZNjpWj1gp4SKMGwnSfrg", "/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8SrKDSKZnj3syGjQ1B8F6bDokP93wikjUgpdx4sWCN5L"]
   Port = 3919

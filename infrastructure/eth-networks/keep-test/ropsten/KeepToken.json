@@ -2542,12 +2542,12 @@
         }
       },
       "links": {},
-      "address": "0x734A90286e96d31c3e4e583f72A10cc128F0Fa32",
-      "transactionHash": "0x511a42c0b44e935792f51c25be48a506ad5b257322378eecc5de77f420ffa1a0"
+      "address": "0x8f9F2e1cCAd70E292CCC6D1D20A42cD70bC76488",
+      "transactionHash": "0x6bbcb55d48569f303db23c6b7b02d9363e66fcaaec87a9c15b718bbdcb75ae7c"
     }
   },
   "schemaVersion": "3.0.19",
-  "updatedAt": "2020-01-17T15:49:46.299Z",
+  "updatedAt": "2020-01-22T16:02:37.834Z",
   "networkType": "ethereum",
   "devdoc": {
     "details": "Standard ERC20 token",

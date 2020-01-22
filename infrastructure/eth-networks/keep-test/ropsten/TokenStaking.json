@@ -10597,12 +10597,12 @@
         }
       },
       "links": {},
-      "address": "0xA92628BE7f0e5f101c4aD99Dfc2Da1e7aF945B90",
-      "transactionHash": "0x50078177ce3cd4170e36491a2753ff034d3482226be76ace98ea92e00d5636ee"
+      "address": "0x4a7ecCb36784931FfB75BCdcBd95aCA9F63Cb90E",
+      "transactionHash": "0xa5a9e7c719fe50f3cbf0facd377ed8dce1bbf64a3c9d2df47b9438ef5c931539"
     }
   },
   "schemaVersion": "3.0.19",
-  "updatedAt": "2020-01-17T15:49:46.346Z",
+  "updatedAt": "2020-01-22T16:02:37.879Z",
   "networkType": "ethereum",
   "devdoc": {
     "details": "A token staking contract for a specified standard ERC20 token. A holder of the specified token can stake its tokens to this contract and unstake after withdrawal delay is over.",
