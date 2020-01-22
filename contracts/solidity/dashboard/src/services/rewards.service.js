@@ -39,7 +39,10 @@ const getAvailableRewardFromGroupInEther = async (groupPublicKey, groupMemberInd
   const membersInGroup = Object.keys(groupMemberIndices[groupPublicKey])
   const rewardsMultiplier = membersInGroup.length === 1 ?
     groupMemberIndices[groupPublicKey][membersInGroup[0]].length :
-    membersInGroup.reduce((prev, current) => groupMemberIndices[groupPublicKey][prev].length + groupMemberIndices[groupPublicKey][current].length)
+    membersInGroup.reduce((prev, current, index) => {
+      const prevValue = index === 1 ? groupMemberIndices[groupPublicKey][prev].length : prev
+      return prevValue + groupMemberIndices[groupPublicKey][current].length
+    })
   const groupMemberReward = await keepRandomBeaconOperatorContract.methods.getGroupMemberRewards(groupPublicKey).call()
   const wholeReward = utils.toBN(groupMemberReward).mul(utils.toBN(rewardsMultiplier))
 
