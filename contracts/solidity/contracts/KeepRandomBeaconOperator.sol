@@ -226,8 +226,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groupSelectionStarterContract = ServiceContract(msg.sender);
         startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
 
-        // reimbursing a submitter that triggered DKG
-        (bool success, ) = submitter.call.value(groupSelectionStartFee)("");
+        // reimbursing a submitter that triggered group selection
+        (bool success, ) = stakingContract.magpieOf(submitter).call.value(groupSelectionStartFee)("");
         require(success, "Failed reimbursing submitter for starting a group selection");
     }
 
