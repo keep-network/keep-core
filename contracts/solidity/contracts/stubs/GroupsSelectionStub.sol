@@ -5,8 +5,8 @@ contract GroupSelectionStub {
     using GroupSelection for GroupSelection.Storage;
     GroupSelection.Storage groupSelection;
 
-    constructor() public {
-        groupSelection.groupSize = 10;
+    constructor(uint256 groupSize) public {
+        groupSelection.groupSize = groupSize;
     }
 
     function addTicket(uint64 newTicketValue) public {

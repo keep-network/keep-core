@@ -7,7 +7,7 @@ contract('KeepRandomBeaconOperator', function() {
   let groupSelectionStub;
 
   before(async () => {
-    groupSelectionStub = await GroupSelectionStub.new();
+    groupSelectionStub = await GroupSelectionStub.new(groupSize);
   });
 
   beforeEach(async () => {
