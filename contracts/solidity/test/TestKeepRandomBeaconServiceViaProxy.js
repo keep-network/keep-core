@@ -12,9 +12,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2],
-    entryFeeEstimate, callbackFee, entryFeeBreakdown,
-    groupSelectionGasEstimate, gasPriceWithFluctuationMargin,
-    groupSelectionStartFee;
+    entryFeeEstimate, entryFeeBreakdown;
 
   before(async () => {
     let contracts = await initContracts(
@@ -34,13 +32,8 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     let group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, accounts[0]);
 
-    entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    callbackFee = await serviceContract.callbackFee(20000)
-    entryFeeBreakdown = await serviceContract.entryFeeBreakdown()
-    groupSelectionGasEstimate = await operatorContract.groupSelectionGasEstimate()
-
-    gasPriceWithFluctuationMargin = web3.utils.toWei(web3.utils.toBN(30), 'gwei');
-    groupSelectionStartFee = web3.utils.toBN(groupSelectionGasEstimate).mul(gasPriceWithFluctuationMargin)
+    entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
+    entryFeeBreakdown = await serviceContract.entryFeeBreakdown();
   });
 
   beforeEach(async () => {
@@ -101,7 +94,6 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
       web3.utils.toBN(serviceContractBalance)
       .eq(initialServiceContractBalance
         .add(entryFeeBreakdown.dkgContributionFee)
-        .add(groupSelectionStartFee)
         .sub(requestorSubsidy)
       ), 
       "Keep Random Beacon service contract should receive DKG fee fraction."
@@ -112,7 +104,6 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
       web3.utils.toBN(serviceContractBalanceViaProxy)
       .eq(initialServiceContractBalance
         .add(entryFeeBreakdown.dkgContributionFee)
-        .add(groupSelectionStartFee)
         .sub(requestorSubsidy)
       ), 
       "Keep Random Beacon service contract new balance should be visible via serviceContractProxy."
@@ -175,7 +166,6 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
       web3.utils.toBN(contractBalance)
       .eq(initialServiceContractBalance
         .add(entryFeeBreakdown.dkgContributionFee)
-        .add(groupSelectionStartFee)
         .sub(requestorSubsidy)
       ), 
       "Keep Random Beacon service contract should receive DKG fee fraction."
@@ -186,7 +176,6 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
       web3.utils.toBN(contractBalanceServiceContract)
       .eq(initialServiceContractBalance
         .add(entryFeeBreakdown.dkgContributionFee)
-        .add(groupSelectionStartFee)
         .sub(requestorSubsidy)
       ), 
       "Keep Random Beacon service contract new balance should be visible via serviceContractProxy."
