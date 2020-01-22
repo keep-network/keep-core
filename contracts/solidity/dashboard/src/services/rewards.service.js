@@ -55,16 +55,27 @@ const withdrawRewardFromGroup = async (groupIndex, groupMembersIndices, web3Cont
   try {
     const batchRequest = new web3.BatchRequest()
     const groupMembers = Object.keys(groupMembersIndices)
-    for (let i = 0; i < groupMembers.length; i++) {
-      const memberAddress = groupMembers[i]
-      batchRequest.add(keepRandomBeaconOperatorContract
-        .methods
-        .withdrawGroupMemberRewards(memberAddress, groupIndex, groupMembersIndices[memberAddress])
-        .send.request({ from: yourAddress }, (result) => console.log('callback', result) )
-      )
-    }
 
-    await batchRequest.execute()
+    const promises = groupMembers.map((memberAddress) => {
+      return new Promise((resolve, reject) => {
+        const request = keepRandomBeaconOperatorContract
+          .methods
+          .withdrawGroupMemberRewards(memberAddress, groupIndex, groupMembersIndices[memberAddress])
+          .send.request({ from: yourAddress }, (error, data) => {
+            if (error) {
+              console.log('error', error)
+              resolve(error)
+            } else {
+              console.log('data', data)
+              resolve(data)
+            }
+          })
+        batchRequest.add(request)
+      })
+    })
+
+    batchRequest.execute()
+    return Promise.all(promises)
   } catch (error) {
     throw error
   }
