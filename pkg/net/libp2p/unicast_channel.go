@@ -29,12 +29,6 @@ func (uc *unicastChannel) RemotePeerID() string {
 	return uc.stream.Conn().RemotePeer().String()
 }
 
-// TODO: GC of unicast channel instances. Is Close() handled by the channel manager?
-func (uc *unicastChannel) Close() error {
-	logger.Debugf("closing unicast channel with peer [%v]", uc.RemotePeerID())
-	return uc.stream.Close()
-}
-
 func (uc *unicastChannel) Send(ctx context.Context, message net.TaggedMarshaler) error {
 	uc.streamMutex.Lock()
 	defer uc.streamMutex.Unlock()
@@ -50,7 +44,7 @@ func (uc *unicastChannel) Send(ctx context.Context, message net.TaggedMarshaler)
 	}
 
 	logger.Debugf(
-		"[peer:%v] sending [%v] message bytes to peer [%v]",
+		"[%v] sending [%v] message bytes to peer [%v]",
 		uc.clientIdentity.id,
 		len(messageBytes),
 		uc.RemotePeerID(),
@@ -61,7 +55,7 @@ func (uc *unicastChannel) Send(ctx context.Context, message net.TaggedMarshaler)
 
 func (uc *unicastChannel) send(message []byte) error {
 	n, err := uc.stream.Write(message)
-	logger.Debugf("[peer:%v] wrote [%v] message bytes", uc.clientIdentity.id, n)
+	logger.Debugf("[%v] wrote [%v] message bytes", uc.clientIdentity.id, n)
 	return err
 }
 
@@ -111,7 +105,7 @@ func (uc *unicastChannel) handleMessages(ctx context.Context) {
 			return
 		default:
 			logger.Debugf(
-				"[peer:%v] processing message from peer [%v]",
+				"[%v] processing message from peer [%v]",
 				uc.clientIdentity.id,
 				uc.RemotePeerID(),
 			)
@@ -128,7 +122,7 @@ func (uc *unicastChannel) handleMessages(ctx context.Context) {
 			// TODO: pass message to handlers
 
 			logger.Debugf(
-				"[peer:%v] read message of [%v] bytes from peer [%v]",
+				"[%v] read message of [%v] bytes from peer [%v]",
 				uc.clientIdentity.id,
 				n,
 				uc.RemotePeerID(),

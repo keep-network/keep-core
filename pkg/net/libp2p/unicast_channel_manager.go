@@ -36,11 +36,17 @@ func newUnicastChannelManager(
 		streams:  make(map[peer.ID]network.Stream),
 	}
 
-	p2phost.SetStreamHandler(protocolID, manager.handleIncomingStream)
+	p2phost.SetStreamHandlerMatch(
+		protocolID,
+		func(protocol string) bool { return protocol == protocolID },
+		manager.handleIncomingStream,
+	)
 
 	notifyBundle := &network.NotifyBundle{}
 	notifyBundle.ClosedStreamF = func(_ network.Network, stream network.Stream) {
-		manager.handleClosedStream(stream)
+		if stream.Protocol() == protocolID {
+			manager.handleClosedStream(stream)
+		}
 	}
 	p2phost.Network().Notify(notifyBundle)
 
@@ -49,8 +55,9 @@ func newUnicastChannelManager(
 
 func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 	logger.Debugf(
-		"[peer:%v] new incoming stream from peer [%v]",
+		"[%v] new incoming stream [%v] from peer [%v]",
 		ucm.identity.id,
+		stream.Protocol(),
 		stream.Conn().RemotePeer(),
 	)
 
@@ -60,16 +67,18 @@ func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 	ucm.streams[stream.Conn().RemotePeer()] = stream
 
 	logger.Debugf(
-		"[peer:%v] stream with peer [%v] registered successfully",
+		"[%v] stream [%v] with peer [%v] registered successfully",
 		ucm.identity.id,
+		stream.Protocol(),
 		stream.Conn().RemotePeer(),
 	)
 }
 
 func (ucm *unicastChannelManager) handleClosedStream(stream network.Stream) {
 	logger.Debugf(
-		"[peer:%v] detected closed stream with peer [%v]",
+		"[%v] detected closed stream [%v] with peer [%v]",
 		ucm.identity.id,
+		stream.Protocol(),
 		stream.Conn().RemotePeer(),
 	)
 
@@ -79,8 +88,9 @@ func (ucm *unicastChannelManager) handleClosedStream(stream network.Stream) {
 	delete(ucm.streams, stream.Conn().RemotePeer())
 
 	logger.Debugf(
-		"[peer:%v] stream with peer [%v] unregistered successfully",
+		"[%v] stream [%v] with peer [%v] unregistered successfully",
 		ucm.identity.id,
+		stream.Protocol(),
 		stream.Conn().RemotePeer(),
 	)
 }
@@ -99,23 +109,26 @@ func (ucm *unicastChannelManager) getUnicastChannel(
 	stream, exists := ucm.streams[remotePeer]
 	if !exists {
 		logger.Debugf(
-			"[peer:%v] creating stream with peer [%v]",
+			"[%v] creating stream [%v] with peer [%v]",
 			ucm.identity.id,
+			protocolID,
 			peerID,
 		)
 
 		stream, err = ucm.p2phost.NewStream(ucm.ctx, remotePeer, protocolID)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"could not create stream with peer [%v]: [%v]",
+				"could not create stream [%v] with peer [%v]: [%v]",
+				protocolID,
 				peerID,
 				err,
 			)
 		}
 	} else {
 		logger.Debugf(
-			"[peer:%v] using existing stream with peer [%v]",
+			"[%v] using existing stream [%v] with peer [%v]",
 			ucm.identity.id,
+			stream.Protocol(),
 			peerID,
 		)
 	}
