@@ -78,13 +78,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     // eth amounts: Surplus 0.00219018 vs Refund 0.00218752 so rounding up those for the tests
     let surplus = web3.utils.fromWei(web3.utils.toBN(excessCallbackFee).sub(web3.utils.toBN(expectedCallbackFee)), 'ether')
     let refund = web3.utils.fromWei(web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance)), 'ether')
-    console.log("surplus ", surplus)
-    console.log("refund  ", refund)
-    let surplusRounded = Math.round(surplus*10000)/10000
-    let refundRounded = Math.round(refund*10000)/10000
-    console.log("surplus rounded " , surplusRounded)
-    console.log("refund rounded " , refundRounded)
-    assert.isTrue(Math.round(surplus*10000)/10000 === Math.round(refund*10000)/10000, "Callback gas surplus should be refunded to the requestor.");
+    assert.isTrue(Math.round(surplus*1000)/1000 === Math.round(refund*1000)/1000, "Callback gas surplus should be refunded to the requestor.");
   });
 
   it("should successfully refund callback gas surplus to the requestor if gas estimation was high", async function() {
@@ -110,13 +104,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     // eth amounts: Surplus 0.00219018 vs Refund 0.00218752 so rounding up those for the tests
     let surplus = web3.utils.fromWei(web3.utils.toBN(excessCallbackFee).sub(web3.utils.toBN(expectedCallbackFee)), 'ether')
     let refund = web3.utils.fromWei(web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance)), 'ether')
-    console.log("surplus2 ", surplus)
-    console.log("refund2  ", refund)
-    let surplusRounded = Math.round(surplus*10000)/10000
-    let refundRounded = Math.round(refund*10000)/10000
-    console.log("surplus rounded2 " , surplusRounded)
-    console.log("refund rounded2 " , refundRounded)
-    assert.isTrue(Math.round(surplus*10000)/10000 === Math.round(refund*10000)/10000, "Callback gas surplus should be refunded to the requestor.");
+    assert.isTrue(Math.round(surplus*1000)/1000 === Math.round(refund*1000)/1000, "Callback gas surplus should be refunded to the requestor.");
   });
 
   it("should send group reward to each operator.", async function() {
@@ -145,8 +133,6 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     assert.isTrue(delayFactor.eq(web3.utils.toBN(1e16).pow(web3.utils.toBN(2))), "Delay factor expected to be 1 * 1e16 ^ 2.");
 
     let groupMemberRewards = await operatorContract.getGroupMemberRewards(group);
-    console.log("groupMemberRewards " + groupMemberRewards);
-    console.log("expectedGroupMemberReward " + expectedGroupMemberReward);
     assert.isTrue(web3.utils.toBN(groupMemberRewards).eq(web3.utils.toBN(expectedGroupMemberReward)), "Unexpected group member reward.");
   });
 
