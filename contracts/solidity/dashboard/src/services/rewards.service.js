@@ -54,8 +54,8 @@ const fetchWithdrawalHistory = async (web3Context) => {
 
   try {
     const events = await keepRandomBeaconOperatorContract.getPastEvents('GroupMemberRewardsWithdrawn', searchFilters)
-    return events.map((e) => {
-      const { returnValues: { groupPublicKey, withdrawnAt, amount } } = e
+    return events.map((event) => {
+      const { returnValues: { groupPublicKey, withdrawnAt, amount } } = event
       return { groupPublicKey, date: formatDate(withdrawnAt * 1000), amount: utils.fromWei(amount, 'ether') }
     })
   } catch (error) {

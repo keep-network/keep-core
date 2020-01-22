@@ -39,9 +39,9 @@ export const wait = (ms) => {
   })
 }
 
-export const formatDate = (dateInMiliSec) => {
+export const formatDate = (dateMillis) => {
   const now = moment()
-  const date = moment(dateInMiliSec)
+  const date = moment(dateMillis)
 
   if (now.isSame(date, 'year')) {
     return date.format('MMM DD')

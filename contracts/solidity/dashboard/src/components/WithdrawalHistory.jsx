@@ -7,7 +7,6 @@ import { LoadingOverlay } from './Loadable'
 
 const previewDataCount = 3
 
-
 export const WithdrawalHistory = (props) => {
   const { isFetching, data } = useFetchData(rewardsService.fetchWithdrawalHistory, [])
   const [showAll, setShowAll] = useState(false)
