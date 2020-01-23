@@ -10,7 +10,6 @@ import "./DelayedWithdrawal.sol";
 interface OperatorContract {
     function entryVerificationGasEstimate() external view returns(uint256);
     function groupCreationGasEstimate() external view returns(uint256);
-    function groupSelectionGasEstimate() external view returns(uint256);
     function groupProfitFee() external view returns(uint256);
     function sign(
         uint256 requestId,
@@ -224,15 +223,15 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
             "Payment is less than required minimum."
         );
 
-        OperatorContract operatorContract = OperatorContract(
-            selectOperatorContract(uint256(keccak256(_previousEntry)))
-        );
-
         (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
         uint256 callbackFee = msg.value.sub(entryVerificationFee)
             .sub(dkgContributionFee).sub(groupProfitFee);
 
         _dkgFeePool += dkgContributionFee;
+
+        OperatorContract operatorContract = OperatorContract(
+            selectOperatorContract(uint256(keccak256(_previousEntry)))
+        );
 
         uint256 selectedOperatorContractFee = operatorContract.groupProfitFee().add(
             operatorContract.entryVerificationGasEstimate().mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)));
