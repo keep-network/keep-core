@@ -32,14 +32,14 @@ const web3 = new Web3(keepContractOwnerProvider, null, web3_options);
 const tokenStakingContractJsonFile = `./TokenStaking.json`;
 const tokenStakingContractParsed = JSON.parse(fs.readFileSync(tokenStakingContractJsonFile));
 const tokenStakingContractAbi = tokenStakingContractParsed.abi;
-const tokenStakingContractAddress = tokenStakingContractParsed.networks[ethNetworkId].address;
+const tokenStakingContractAddress = tokenStakingContractParsed.networks[ethereumNetworkId].address;
 const tokenStakingContract = new web3.eth.Contract(tokenStakingContractAbi, tokenStakingContractAddress);
 
 // KeepToken
 const keepTokenContractJsonFile = `./KeepToken.json`;
 const keepTokenContractParsed = JSON.parse(fs.readFileSync(keepTokenContractJsonFile));
 const keepTokenContractAbi = keepTokenContractParsed.abi;
-const keepTokenContractAddress = keepTokenContractParsed.networks[ethNetworkId].address;
+const keepTokenContractAddress = keepTokenContractParsed.networks[ethereumNetworkId].address;
 const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenContractAddress);
 
 exports.dripAndStake = async (request, response) => {
