@@ -13,6 +13,11 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) Watch{{$event.CapsName}}(
     errorChan := make(chan error)
     unsubscribeChan := make(chan struct{})
 
+    // Delay which must be preserved before a new resubscription attempt.
+    // There is no sense to resubscribe immediately after the fail of current
+    // subscription because the publisher must have some time to recover.
+    retryDelay := 5 * time.Second
+
     watch := func() {
     	failCallback := func(err error) error {
     		fail(err)
@@ -42,7 +47,7 @@ func ({{$contract.ShortVar}} *{{$contract.Class}}) Watch{{$event.CapsName}}(
     	for {
     		select {
     		case <-errorChan:
-    			time.Sleep(5 * time.Second)
+    			time.Sleep(retryDelay)
     			go watch()
     		case <-unsubscribeChan:
     			// shutdown the resubscriber goroutine on unsubscribe signal
