@@ -40,7 +40,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     event GroupSelectionStarted(uint256 newEntry);
 
-    event GroupMemberRewardsWithdrawn(address indexed beneficiary, address operator, uint256 withdrawnAt, uint256 groupIndex);
+    event GroupMemberRewardsWithdrawn(address indexed beneficiary, address operator, uint256 amount, uint256 groupIndex);
 
     GroupSelection.Storage groupSelection;
     Groups.Storage groups;
