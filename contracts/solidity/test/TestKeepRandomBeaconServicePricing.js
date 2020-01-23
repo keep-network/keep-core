@@ -139,7 +139,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
   it("should send part of the group reward to request subsidy pool based on the submission block.", async function() {
     // Example rewards breakdown:
     // entryVerificationGasEstimate: 1240000
-    // dkgGasEstimate: 2260000
+    // groupCreationGasEstimate: 2260000
     // dkgContributionMargin: 10%
     // groupMemberBaseReward: 1050000000000000
     // groupSize: 5
