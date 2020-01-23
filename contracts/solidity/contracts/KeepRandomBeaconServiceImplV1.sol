@@ -343,6 +343,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
      * @dev Triggers the selection process of a new candidate group if the DKG
      * fee pool equals or exceeds DKG cost estimate.
      * @param entry The generated random number.
+     * @param submitter Relay entry submitter - operator.
      */
     function triggerDkgIfApplicable(uint256 entry, address payable submitter) internal {
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
@@ -401,8 +402,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
      */
     function entryFeeEstimate(uint256 callbackGas) public view returns(uint256) {
         (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
-
-        address operator = _operatorContracts[_operatorContracts.length.sub(1)];
 
         return entryVerificationFee.add(dkgContributionFee).add(groupProfitFee).add(callbackFee(callbackGas));
     }

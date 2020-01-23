@@ -218,6 +218,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @dev Triggers the selection process of a new candidate group.
      * @param _newEntry New random beacon value that stakers will use to
      * generate their tickets.
+     * @param submitter Operator of this contract.
      */
     function createGroup(uint256 _newEntry, address payable submitter) public payable onlyServiceContract {
         uint256 groupSelectionStartFee = groupSelectionGasEstimate
