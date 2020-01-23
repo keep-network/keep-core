@@ -11,7 +11,7 @@ export const RewardsGroups = ({ groups, isFetching }) => {
   const [showAll, setShowAll] = useState(false)
 
   return (
-    <LoadingOverlay isFetching={isFetching} classNames="self-start">
+    <LoadingOverlay isFetching={isFetching} classNames='group-items self-start tile'>
       <ul className='group-items self-start tile'>
         { groups.length === 0 ?
           <NoData
@@ -20,15 +20,15 @@ export const RewardsGroups = ({ groups, isFetching }) => {
             content='You can withdraw any future earned rewards from your delegated stake on this page.'
           /> :
           <>
-              <h6>Withdrawal Overview</h6>
-              {showAll ? groups.map(renderGroupItem) : groups.slice(0, previewDataCount).map(renderGroupItem)}
-              <SeeAllButton
-                dataLength={groups.length}
-                previewDataCount={previewDataCount}
-                onClickCallback={() => setShowAll(!showAll)}
-                showAll={showAll}
-              />
-            </>
+            <h6>Withdrawal Overview</h6>
+            {showAll ? groups.map(renderGroupItem) : groups.slice(0, previewDataCount).map(renderGroupItem)}
+            <SeeAllButton
+              dataLength={groups.length}
+              previewDataCount={previewDataCount}
+              onClickCallback={() => setShowAll(!showAll)}
+              showAll={showAll}
+            />
+          </>
         }
       </ul>
 
