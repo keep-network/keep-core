@@ -88,6 +88,27 @@ func (uc *unicastChannel) send(stream network.Stream, message proto.Message) err
 }
 
 //FIXME: duplication with channel.go
+func (uc *unicastChannel) messageProto(
+	message net.TaggedMarshaler,
+) (*pb.NetworkMessage, error) {
+	payloadBytes, err := message.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	senderIdentityBytes, err := uc.clientIdentity.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.NetworkMessage{
+		Payload: payloadBytes,
+		Sender:  senderIdentityBytes,
+		Type:    []byte(message.Type()),
+	}, nil
+}
+
+//FIXME: duplication with channel.go
 func (uc *unicastChannel) Recv(ctx context.Context, handler func(m net.Message)) {
 	messageHandler := &messageHandler{
 		ctx:     ctx,
@@ -126,6 +147,33 @@ func (uc *unicastChannel) Recv(ctx context.Context, handler func(m net.Message))
 	}()
 }
 
+func (uc *unicastChannel) removeHandler(handler *messageHandler) {
+	uc.messageHandlersMutex.Lock()
+	defer uc.messageHandlersMutex.Unlock()
+
+	for i, h := range uc.messageHandlers {
+		if h.channel == handler.channel {
+			uc.messageHandlers[i] = uc.messageHandlers[len(uc.messageHandlers)-1]
+			uc.messageHandlers = uc.messageHandlers[:len(uc.messageHandlers)-1]
+		}
+	}
+}
+
+//FIXME: duplication with channel.go
+func (uc *unicastChannel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) error {
+	tpe := unmarshaler().Type()
+
+	uc.unmarshalersMutex.Lock()
+	defer uc.unmarshalersMutex.Unlock()
+
+	if _, exists := uc.unmarshalersByType[tpe]; exists {
+		return fmt.Errorf("type %s already has an associated unmarshaler", tpe)
+	}
+
+	uc.unmarshalersByType[tpe] = unmarshaler
+	return nil
+}
+
 func (uc *unicastChannel) handleStream(stream network.Stream) {
 	if stream.Conn().RemotePeer() != uc.remotePeerID {
 		logger.Warningf(
@@ -162,52 +210,4 @@ func (uc *unicastChannel) handleStream(stream network.Stream) {
 			)
 		}
 	}()
-}
-
-func (uc *unicastChannel) removeHandler(handler *messageHandler) {
-	uc.messageHandlersMutex.Lock()
-	defer uc.messageHandlersMutex.Unlock()
-
-	for i, h := range uc.messageHandlers {
-		if h.channel == handler.channel {
-			uc.messageHandlers[i] = uc.messageHandlers[len(uc.messageHandlers)-1]
-			uc.messageHandlers = uc.messageHandlers[:len(uc.messageHandlers)-1]
-		}
-	}
-}
-
-//FIXME: duplication with channel.go
-func (uc *unicastChannel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) error {
-	tpe := unmarshaler().Type()
-
-	uc.unmarshalersMutex.Lock()
-	defer uc.unmarshalersMutex.Unlock()
-
-	if _, exists := uc.unmarshalersByType[tpe]; exists {
-		return fmt.Errorf("type %s already has an associated unmarshaler", tpe)
-	}
-
-	uc.unmarshalersByType[tpe] = unmarshaler
-	return nil
-}
-
-//FIXME: duplication with channel.go
-func (uc *unicastChannel) messageProto(
-	message net.TaggedMarshaler,
-) (*pb.NetworkMessage, error) {
-	payloadBytes, err := message.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	senderIdentityBytes, err := uc.clientIdentity.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.NetworkMessage{
-		Payload: payloadBytes,
-		Sender:  senderIdentityBytes,
-		Type:    []byte(message.Type()),
-	}, nil
 }
