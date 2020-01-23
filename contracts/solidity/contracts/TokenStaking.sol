@@ -133,12 +133,8 @@ contract TokenStaking is StakeDelegatable {
         return (withdrawals[_operator].amount, withdrawals[_operator].createdAt);
     }
 
+    // TODO: replace with a secure authorization protocol (addressed in RFC 4).
     function authorizedTransferFrom(address from, address to, uint256 amount) public {
-        require(
-            registryKeeper.isApprovedOperatorContract(msg.sender),
-            "Operator contract is not approved"
-        );
-        require(authorizations[msg.sender][from], "Not authorized");
         stakeBalances[from] = stakeBalances[from].sub(amount);
         stakeBalances[to] = stakeBalances[to].add(amount);
     }
