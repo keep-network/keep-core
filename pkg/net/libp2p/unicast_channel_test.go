@@ -18,7 +18,7 @@ func TestProviderCreatesUnicastChannel(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	withNetwork(t, ctx, func(
+	withNetwork(ctx, t, func(
 		identity1 *identity,
 		identity2 *identity,
 		provider1 net.Provider,
@@ -37,10 +37,10 @@ func TestProviderCreatesUnicastChannel(t *testing.T) {
 }
 
 func TestSendUnicastMessage(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	withNetwork(t, ctx, func(
+	withNetwork(ctx, t, func(
 		identity1 *identity,
 		identity2 *identity,
 		provider1 net.Provider,
@@ -68,22 +68,90 @@ func TestSendUnicastMessage(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		// Register first handler for channel 1.
+		channel1Receiver1 := newMessageReceiver("channel1Receiver1")
+		channel1.Recv(ctx, channel1Receiver1.receive)
+
+		// Register second handler for channel 1.
+		channel1Receiver2 := newMessageReceiver("channel1Receiver2")
+		channel1.Recv(ctx, channel1Receiver2.receive)
+
+		// Register first handler for channel 2.
+		channel2Receiver1 := newMessageReceiver("channel2Receiver1")
+		channel2.Recv(ctx, channel2Receiver1.receive)
+
+		// Prepare and send messages to channel 1.
+		messagesToChannel1 := []testMessage{
+			{Sender: identity1, Recipient: identity2, Payload: "one"},
+			{Sender: identity1, Recipient: identity2, Payload: "two"},
+			{Sender: identity1, Recipient: identity2, Payload: "three"},
+		}
 		go func() {
-			if err := channel1.Send(
-				ctx,
-				&testMessage{Sender: identity1, Payload: "yolo"},
-			); err != nil {
-				t.Fatal(err)
+			for _, message := range messagesToChannel1 {
+				if err := channel1.Send(ctx, &message); err != nil {
+					t.Fatal(err)
+				}
 			}
 		}()
 
+		// Prepare and send messages to channel 2.
+		messagesToChannel2 := []testMessage{
+			{Sender: identity2, Recipient: identity1, Payload: "four"},
+			{Sender: identity2, Recipient: identity1, Payload: "five"},
+		}
+		go func() {
+			for _, message := range messagesToChannel2 {
+				if err := channel2.Send(ctx, &message); err != nil {
+					t.Fatal(err)
+				}
+			}
+		}()
+
+		// Wait a bit, messages must be sent and received.
 		time.Sleep(10 * time.Second)
+
+		assertReceivedMessages(t, channel1Receiver1, messagesToChannel2)
+		assertReceivedMessages(t, channel1Receiver2, messagesToChannel2)
+		assertReceivedMessages(t, channel2Receiver1, messagesToChannel1)
 	})
 }
 
-func withNetwork(
+func assertReceivedMessages(
 	t *testing.T,
+	receiver *messageReceiver,
+	expectedMessages []testMessage,
+) {
+	if len(receiver.messages) != len(expectedMessages) {
+		t.Errorf(
+			"[%v] unexpected number of messages\nactual:   %v\nexpected: %v\n",
+			receiver.name,
+			len(receiver.messages),
+			len(expectedMessages),
+		)
+	}
+
+	for _, expectedMessage := range expectedMessages {
+		isReceived := false
+		for _, message := range receiver.messages {
+			if message.Payload == expectedMessage.Payload {
+				isReceived = true
+				break
+			}
+		}
+
+		if !isReceived {
+			t.Errorf(
+				"[%v] expected message [%v] not received",
+				receiver.name,
+				expectedMessage.Payload,
+			)
+		}
+	}
+}
+
+func withNetwork(
 	ctx context.Context,
+	t *testing.T,
 	testFn func(
 		identity1 *identity,
 		identity2 *identity,
@@ -160,4 +228,20 @@ func withNetwork(
 	}
 
 	testFn(identity1, identity2, provider1, provider2)
+}
+
+type messageReceiver struct {
+	name     string
+	messages []testMessage
+}
+
+func newMessageReceiver(name string) *messageReceiver {
+	return &messageReceiver{
+		name:     name,
+		messages: make([]testMessage, 0),
+	}
+}
+
+func (mr *messageReceiver) receive(message net.Message) {
+	mr.messages = append(mr.messages, *message.Payload().(*testMessage))
 }

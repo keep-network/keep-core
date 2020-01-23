@@ -113,7 +113,7 @@ func (ucm *unicastChannelManager) newUnicastChannel(
 		clientIdentity:     ucm.identity,
 		remotePeerID:       remotePeer,
 		streamFactory:      streamFactory,
-		messageHandlers:    make([]*messageHandler, 0),
+		messageHandlers:    make([]*unicastMessageHandler, 0),
 		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
 	}
 
