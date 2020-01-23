@@ -94,7 +94,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     // Gas required to verify BLS signature and produce successful relay
     // entry. Excludes callback and DKG gas.
-    uint256 public entryVerificationGasEstimate = 230000;
+    uint256 public entryVerificationGasEstimate = 240000;
 
     // Gas required to submit DKG result. Excludes initiation of group selection.
     uint256 public dkgGasEstimate = 1740000;
