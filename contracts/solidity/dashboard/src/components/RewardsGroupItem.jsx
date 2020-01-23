@@ -1,19 +1,45 @@
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import Button from './Button'
 import AddressShortcut from './AddressShortcut'
 import rewardsService from '../services/rewards.service'
 import { Web3Context } from './WithWeb3Context'
+import { useShowMessage, MessagesContext, messageType, useCloseMessage } from './Message'
 
-export const RewardsGroupItem = ({ groupIndex, groupPublicKey, membersIndeces, reward }) => {
+const useWithdrawAction = (groupIndex, membersIndeces) => {
   const web3Context = useContext(Web3Context)
+  const showMessage = useShowMessage(MessagesContext)
+  const closeMessage = useCloseMessage(MessagesContext)
+  const [isFetching, setIsFetching] = useState(false)
 
   const withdraw = async () => {
     try {
-      await rewardsService.withdrawRewardFromGroup(groupIndex, membersIndeces, web3Context)
+      setIsFetching(true)
+      const message = showMessage({ type: messageType.PENDING_ACTION, sticky: true, title: 'Withdraw acion is pending' })
+      const result = await rewardsService.withdrawRewardFromGroup(groupIndex, membersIndeces, web3Context)
+      setIsFetching(false)
+      closeMessage(message)
+      const errorTransactionCount = result.filter((transaction) => transaction.isError).length
+
+      if (errorTransactionCount === 0) {
+        showMessage({ type: messageType.SUCCESS, title: 'Withdraw action has been successfully completed' })
+      } else if (errorTransactionCount === result.length) {
+        showMessage({ type: messageType.ERROR, title: 'Withdraw action has been failed' })
+      } else {
+        showMessage({ type: messageType.ERROR, title: `${errorTransactionCount} of ${result.length} transactionshave been failed` })
+      }
     } catch (error) {
-      console.log('errro', error)
+      showMessage({ type: messageType.ERROR, title: 'Something goes wrong...' })
+      setIsFetching(false)
     }
   }
+
+  return [isFetching, withdraw]
+}
+
+
+export const RewardsGroupItem = ({ groupIndex, groupPublicKey, membersIndeces, reward }) => {
+  const [isFetching, withdraw] = useWithdrawAction(groupIndex, membersIndeces)
+
   return (
     <div className='group-item'>
       <div className='group-key'>
@@ -29,6 +55,7 @@ export const RewardsGroupItem = ({ groupIndex, groupPublicKey, membersIndeces, r
       <Button
         className='btn btn-primary'
         onClick={withdraw}
+        isFetching={isFetching}
       >
         WITHDRAW
       </Button>
