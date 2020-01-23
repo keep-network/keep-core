@@ -172,7 +172,7 @@ func (ebc *ethereumBlockCounter) subscribeBlocks(
 
 		subscribeContext, cancel := context.WithTimeout(
 			context.Background(),
-			10*time.Second,
+			10*time.Second, // timeout for subscription request
 		)
 		defer cancel()
 
