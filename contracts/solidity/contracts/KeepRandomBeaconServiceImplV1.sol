@@ -346,13 +346,13 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
      */
     function createGroupIfApplicable(uint256 entry, address payable submitter) internal {
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 groupCreationGasEstimate = OperatorContract(latestOperatorContract).groupCreationGasEstimate().mul(
+        uint256 groupCreationFee = OperatorContract(latestOperatorContract).groupCreationGasEstimate().mul(
             gasPriceWithFluctuationMargin(_priceFeedEstimate)
         );
 
-        if (_dkgFeePool >= groupCreationGasEstimate && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
-            OperatorContract(latestOperatorContract).createGroup.value(groupCreationGasEstimate)(entry, submitter);
-            _dkgFeePool = _dkgFeePool.sub(groupCreationGasEstimate);
+        if (_dkgFeePool >= groupCreationFee && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
+            OperatorContract(latestOperatorContract).createGroup.value(groupCreationFee)(entry, submitter);
+            _dkgFeePool = _dkgFeePool.sub(groupCreationFee);
         }
     }
 
