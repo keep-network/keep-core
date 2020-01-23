@@ -10,7 +10,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 contract RegistryKeeper is Ownable {
     // The Panic Button can disable malicious or malfunctioning contracts
     // that have been previously approved by the Registry Keeper.
-    address public panicButton;
+    address internal panicButton;
 
     // Operator Contract Upgrader can add approved operator contracts to
     // the service contract and deprecate old ones.
