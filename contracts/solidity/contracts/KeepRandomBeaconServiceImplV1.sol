@@ -288,7 +288,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
             delete _callbacks[requestId];
         }
 
-        triggerDkgIfApplicable(entryAsNumber, submitter);
+        createGroupIfApplicable(entryAsNumber, submitter);
     }
 
     /**
@@ -344,15 +344,15 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
      * @param entry The generated random number.
      * @param submitter Relay entry submitter - operator.
      */
-    function triggerDkgIfApplicable(uint256 entry, address payable submitter) internal {
+    function createGroupIfApplicable(uint256 entry, address payable submitter) internal {
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 dkgFeeEstimate = OperatorContract(latestOperatorContract).groupCreationGasEstimate().mul(
+        uint256 groupCreationGasEstimate = OperatorContract(latestOperatorContract).groupCreationGasEstimate().mul(
             gasPriceWithFluctuationMargin(_priceFeedEstimate)
         );
 
-        if (_dkgFeePool >= dkgFeeEstimate && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
-            OperatorContract(latestOperatorContract).createGroup.value(dkgFeeEstimate)(entry, submitter);
-            _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
+        if (_dkgFeePool >= groupCreationGasEstimate && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
+            OperatorContract(latestOperatorContract).createGroup.value(groupCreationGasEstimate)(entry, submitter);
+            _dkgFeePool = _dkgFeePool.sub(groupCreationGasEstimate);
         }
     }
 
