@@ -11,7 +11,7 @@ const requestTimeDelay = 500 // 0.5s
 export const useFetchData = (serviceMethod, initialData) => {
   const web3Context = useContext(Web3Context)
   const [state, dispatch] = useReducer(dataFetchReducer, {
-    isFetching: false,
+    isFetching: true,
     isError: false,
     data: initialData,
   })
