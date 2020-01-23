@@ -123,8 +123,6 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
         public
     {
         require(!initialized(), "Contract is already initialized.");
-        address operatorContractUpgrader = RegistryKeeper(registryKeeper).operatorContractUpgrader();
-        require(operatorContractUpgrader == msg.sender, "Caller is not the operator contract upgrader");
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _priceFeedEstimate = priceFeedEstimate;
         _fluctuationMargin = fluctuationMargin;
