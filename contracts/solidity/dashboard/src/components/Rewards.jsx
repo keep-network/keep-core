@@ -9,6 +9,14 @@ import rewardsService from '../services/rewards.service'
 
 const previewDataCount = 3
 
+// TODO implement update date hook when group reward are withdrawn
+const useUpdateGroups = (data) => {
+  const updateData = (groupPublicKey) => {
+
+  }
+}
+
+
 export const Rewards = () => {
   const web3Context = useContext(Web3Context)
   const [isFetching, setIsFetching] = useState(true)
