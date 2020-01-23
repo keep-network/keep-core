@@ -66,8 +66,8 @@ module.exports = async function() {
   await registerNewGroups(10);
 
   mineBlocks(10);
-  const entryFeeEstimate = await keepRandomBeaconService.entryFeeEstimate(0)
-  await keepRandomBeaconService.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
+  const entryFeeEstimate = await keepRandomBeaconService.entryFeeEstimate(0).catch((error) => console.log('e1', error))
+  await keepRandomBeaconService.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor}).catch((error) => console.log('e2', error))
 
   await registerNewGroups(10);
 
@@ -84,15 +84,11 @@ module.exports = async function() {
   console.log('number of groups:', numberOfGroups.toString());
   console.log('first active index:', firstActiveIndex.toString());
 
-  await keepRandomBeaconOerator.emitEvent(1, { from: accounts[1] })
-  await keepRandomBeaconOerator.emitEvent(3, { from: accounts[1] })
-  await keepRandomBeaconOerator.emitEvent(1, { from: accounts[1] })
-  await keepRandomBeaconOerator.emitEvent(5, { from: accounts[1] })
-  await keepRandomBeaconOerator.emitEvent(6, { from: accounts[1] })
-
-  const events = await keepRandomBeaconOerator.getPastEvents('GroupMemberRewardsWithdrawn', { fromBlock: 0 })
-  console.log('number of events', events.length)
-  console.log('withdrawal history events', events)
+  await keepRandomBeaconOerator.emitEvent(account[1], 1)
+  await keepRandomBeaconOerator.emitEvent(account[1], 3)
+  await keepRandomBeaconOerator.emitEvent(account[1], 1)
+  await keepRandomBeaconOerator.emitEvent(account[1], 5)
+  await keepRandomBeaconOerator.emitEvent(account[1], 6)
 
   async function registerNewGroups (numberOfGroups) {
     const groupReward = web3.utils.toWei('14500', 'Gwei');
