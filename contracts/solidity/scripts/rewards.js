@@ -93,11 +93,11 @@ module.exports = async function() {
   console.log('number of groups:', numberOfGroups.toString());
   console.log('first active index:', firstActiveIndex.toString());
 
-  await keepRandomBeaconOerator.emitEvent(accounts[1], 1)
-  await keepRandomBeaconOerator.emitEvent(accounts[1], 3)
-  await keepRandomBeaconOerator.emitEvent(accounts[1], 1)
-  await keepRandomBeaconOerator.emitEvent(accounts[1], 5)
-  await keepRandomBeaconOerator.emitEvent(accounts[1], 6)
+  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 1)
+  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 3)
+  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 1)
+  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 5)
+  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 6)
 
   const events = await keepRandomBeaconOerator.getPastEvents('GroupMemberRewardsWithdrawn', { fromBlock: 0 })
   console.log('number of events', events.length)
