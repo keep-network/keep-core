@@ -66,8 +66,8 @@ module.exports = async function() {
   await registerNewGroups(10);
 
   mineBlocks(10);
-  const entryFeeEstimate = await keepRandomBeaconService.entryFeeEstimate(0).catch((error) => console.log('e1', error))
-  await keepRandomBeaconService.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor}).catch((error) => console.log('e2', error))
+  const entryFeeEstimate = await keepRandomBeaconService.entryFeeEstimate(0)
+  await keepRandomBeaconService.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
 
   await registerNewGroups(10);
 
