@@ -8,10 +8,11 @@ import (
 	"io"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/net/internal"
+	"github.com/keep-network/keep-core/pkg/net/key"
+
 	"github.com/libp2p/go-libp2p-core/helpers"
 	"github.com/libp2p/go-libp2p-core/peer"
-
-	"github.com/keep-network/keep-core/pkg/net/retransmission"
 
 	protoio "github.com/gogo/protobuf/io"
 	"github.com/gogo/protobuf/proto"
@@ -30,10 +31,15 @@ type unicastChannel struct {
 	streamFactory streamFactory
 
 	messageHandlersMutex sync.Mutex
-	messageHandlers      []*messageHandler
+	messageHandlers      []*unicastMessageHandler
 
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
+}
+
+type unicastMessageHandler struct {
+	ctx     context.Context
+	channel chan net.Message
 }
 
 func (uc *unicastChannel) RemotePeerID() string {
@@ -87,7 +93,6 @@ func (uc *unicastChannel) send(stream network.Stream, message proto.Message) err
 	return err
 }
 
-//FIXME: duplication with channel.go
 func (uc *unicastChannel) messageProto(
 	message net.TaggedMarshaler,
 ) (*pb.NetworkMessage, error) {
@@ -108,11 +113,10 @@ func (uc *unicastChannel) messageProto(
 	}, nil
 }
 
-//FIXME: duplication with channel.go
 func (uc *unicastChannel) Recv(ctx context.Context, handler func(m net.Message)) {
-	messageHandler := &messageHandler{
+	messageHandler := &unicastMessageHandler{
 		ctx:     ctx,
-		channel: make(chan retransmission.NetworkMessage),
+		channel: make(chan net.Message),
 	}
 
 	uc.messageHandlersMutex.Lock()
@@ -147,7 +151,7 @@ func (uc *unicastChannel) Recv(ctx context.Context, handler func(m net.Message))
 	}()
 }
 
-func (uc *unicastChannel) removeHandler(handler *messageHandler) {
+func (uc *unicastChannel) removeHandler(handler *unicastMessageHandler) {
 	uc.messageHandlersMutex.Lock()
 	defer uc.messageHandlersMutex.Unlock()
 
@@ -159,7 +163,6 @@ func (uc *unicastChannel) removeHandler(handler *messageHandler) {
 	}
 }
 
-//FIXME: duplication with channel.go
 func (uc *unicastChannel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) error {
 	tpe := unmarshaler().Type()
 
@@ -208,6 +211,99 @@ func (uc *unicastChannel) handleStream(stream network.Stream) {
 				hex.EncodeToString(messageProto.Payload),
 				uc.remotePeerID,
 			)
+
+			// Every message should be independent from any other message.
+			go func(message *pb.NetworkMessage) {
+				if err := uc.processMessage(message); err != nil {
+					logger.Error(err)
+					return
+				}
+			}(messageProto)
 		}
 	}()
+}
+
+func (uc *unicastChannel) processMessage(message *pb.NetworkMessage) error {
+	// The protocol type is on the envelope; let's pull that type
+	// from our map of unmarshallers.
+	unmarshaled, err := uc.getUnmarshalingContainerByType(string(message.Type))
+	if err != nil {
+		return err
+	}
+
+	if err := unmarshaled.Unmarshal(message.GetPayload()); err != nil {
+		return err
+	}
+
+	// Construct an identifier from the sender.
+	senderIdentifier := &identity{}
+	if err := senderIdentifier.Unmarshal(message.Sender); err != nil {
+		return err
+	}
+
+	if senderIdentifier.id != uc.remotePeerID {
+		return fmt.Errorf(
+			"messages from peer [%v] is not supported by the "+
+				"unicast channel of peer [%v]",
+			senderIdentifier.id,
+			uc.remotePeerID,
+		)
+	}
+
+	networkKey := key.Libp2pKeyToNetworkKey(senderIdentifier.pubKey)
+	if networkKey == nil {
+		return fmt.Errorf(
+			"sender [%v] with key [%v] is not of correct type",
+			senderIdentifier.id,
+			senderIdentifier.pubKey,
+		)
+	}
+
+	uc.deliver(internal.BasicMessage(
+		senderIdentifier.id,
+		unmarshaled,
+		string(message.Type),
+		key.Marshal(networkKey),
+	))
+
+	return err
+}
+
+func (uc *unicastChannel) getUnmarshalingContainerByType(messageType string) (
+	net.TaggedUnmarshaler,
+	error,
+) {
+	uc.unmarshalersMutex.Lock()
+	defer uc.unmarshalersMutex.Unlock()
+
+	unmarshaler, found := uc.unmarshalersByType[messageType]
+	if !found {
+		return nil, fmt.Errorf(
+			"couldn't find unmarshaler for type %s", messageType,
+		)
+	}
+
+	return unmarshaler(), nil
+}
+
+func (uc *unicastChannel) deliver(message net.Message) {
+	uc.messageHandlersMutex.Lock()
+	snapshot := make([]*unicastMessageHandler, len(uc.messageHandlers))
+	copy(snapshot, uc.messageHandlers)
+	uc.messageHandlersMutex.Unlock()
+
+	for _, handler := range snapshot {
+		go func(message net.Message, handler *unicastMessageHandler) {
+			select {
+			case handler.channel <- message:
+			// Nothing to do here; we block until the message is handled
+			// or until the context gets closed.
+			// This way we don't lose any message but also don't stay
+			// with any dangling goroutines if there is no longer anyone
+			// to receive messages.
+			case <-handler.ctx.Done():
+				return
+			}
+		}(message, handler)
+	}
 }
