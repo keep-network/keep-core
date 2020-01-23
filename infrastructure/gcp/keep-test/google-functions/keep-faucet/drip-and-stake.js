@@ -21,7 +21,7 @@ const { parseAccountAddress } = require('./parse-account-address.js')
 // We override transactionConfirmationBlocks and transactionBlockTimeout because they're
 // 25 and 50 blocks respectively at default.  The result of this on small private testnets
 // is long wait times for scripts to execute.
-const web3_options = {
+const web3Options = {
   defaultBlock: 'latest',
   defaultGas: 4712388,
   transactionBlockTimeout: 25,
@@ -30,7 +30,7 @@ const web3_options = {
 }
 
 // Setup web3 provider.  We use the keepContractOwner since it needs to sign the approveAndCall transaction.
-const web3 = new Web3(keepContractOwnerProvider, null, web3_options)
+const web3 = new Web3(keepContractOwnerProvider, null, web3Options)
 
 // TokenStaking
 const tokenStakingContractJsonFile = `./TokenStaking.json`
