@@ -61,13 +61,11 @@ const withdrawRewardFromGroup = async (groupIndex, groupMembersIndices, web3Cont
         const request = keepRandomBeaconOperatorContract
           .methods
           .withdrawGroupMemberRewards(memberAddress, groupIndex, groupMembersIndices[memberAddress])
-          .send.request({ from: yourAddress }, (error, data) => {
+          .send.request({ from: yourAddress }, (error, transactionHash) => {
             if (error) {
-              console.log('error', error)
-              resolve(error)
+              resolve({ memberAddress, memberInices: groupMembersIndices[memberAddress], isError: true, error })
             } else {
-              console.log('data', data)
-              resolve(data)
+              resolve({ transactionHash })
             }
           })
         batchRequest.add(request)
