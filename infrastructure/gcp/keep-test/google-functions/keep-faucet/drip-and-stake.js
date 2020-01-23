@@ -1,7 +1,7 @@
 // Function deps
-const fs = require("fs")
-const Web3 = require("web3")
-const HDWalletProvider = require("@truffle/hdwallet-provider")
+const fs = require('fs')
+const Web3 = require('web3')
+const HDWalletProvider = require('@truffle/hdwallet-provider')
 
 // Ethereum host info
 const ethereumHost = process.env.ETHEREUM_HOST
@@ -16,13 +16,13 @@ const keepContractOwnerProvider = new HDWalletProvider(
 )
 
 // Operator info
-const { parseAccountAddress } = require("./parse-account-address.js")
+const { parseAccountAddress } = require('./parse-account-address.js')
 
 // We override transactionConfirmationBlocks and transactionBlockTimeout because they're
 // 25 and 50 blocks respectively at default.  The result of this on small private testnets
 // is long wait times for scripts to execute.
 const web3_options = {
-  defaultBlock: "latest",
+  defaultBlock: 'latest',
   defaultGas: 4712388,
   transactionBlockTimeout: 25,
   transactionConfirmationBlocks: 3,
@@ -60,14 +60,14 @@ const keepTokenContract = new web3.eth.Contract(
 
 exports.dripAndStake = async (request, response) => {
   try {
-    let operatorAddress = parseAccountAddress(request, response)
+    const operatorAddress = parseAccountAddress(request, response)
     console.log(operatorAddress)
-    let delegation =
-      "0x" +
+    const delegation =
+      '0x' +
       Buffer.concat([
-        Buffer.from(keepContractOwnerAddress.substr(2), "hex"),
-        Buffer.from(operatorAddress.substr(2), "hex"),
-      ]).toString("hex")
+        Buffer.from(keepContractOwnerAddress.substr(2), 'hex'),
+        Buffer.from(operatorAddress.substr(2), 'hex'),
+      ]).toString('hex')
 
     await keepTokenContract.methods
       .approveAndCall(
@@ -81,16 +81,16 @@ exports.dripAndStake = async (request, response) => {
     response.send(`${operatorAddress} staked with 20000000 KEEP!`)
   } catch (error) {
     console.log(error)
-    return response.send("Staking failed, find an adult at Keep.")
+    return response.send('Staking failed, find an adult at Keep.')
   }
 }
 
 function formatAmount(amount, decimals) {
   return (
-    "0x" +
+    '0x' +
     web3.utils
       .toBN(amount)
       .mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals)))
-      .toString("hex")
+      .toString('hex')
   )
 }
