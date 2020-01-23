@@ -26,7 +26,6 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
         address registryKeeper
     )
         public
-        onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
         _initialized["KeepRandomBeaconImplV2"] = true;

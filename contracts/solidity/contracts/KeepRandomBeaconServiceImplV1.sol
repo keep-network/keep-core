@@ -1,6 +1,5 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./utils/AddressArrayUtils.sol";
@@ -30,7 +29,7 @@ interface OperatorContract {
  * Warning: you can't set constants directly in the contract and must use initialize()
  * please see openzeppelin upgradeable contracts approach for more info.
  */
-contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, ReentrancyGuard {
+contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
 
