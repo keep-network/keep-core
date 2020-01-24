@@ -73,10 +73,6 @@ contract Registry {
     }
 
     function isApprovedOperatorContract(address operatorContract) public view returns (bool) {
-        if (operatorContracts[operatorContract] == 1) {
-            return true;
-        } else {
-            return false;
-        }
+        return operatorContracts[operatorContract] == 1;
     }
 }

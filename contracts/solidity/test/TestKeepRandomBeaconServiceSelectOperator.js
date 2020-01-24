@@ -1,4 +1,5 @@
 import expectThrow from './helpers/expectThrow';
+import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 import {initContracts} from './helpers/initContracts';
 const OperatorContract = artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
 
@@ -78,6 +79,14 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function() {
       (await operatorContract3.numberOfGroups()).toNumber(), "Contract selection counter should be equal to the number of groups."
     );
 
+    await registry.disableOperatorContract(operatorContract.address);
+    await registry.disableOperatorContract(operatorContract2.address);
+    await registry.disableOperatorContract(operatorContract3.address);
+
+    await expectThrowWithMessage(
+      serviceContract.selectOperatorContract(0),
+      "Total number of groups must be greater than zero."
+    );
   });
 
 });
