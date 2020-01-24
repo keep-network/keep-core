@@ -145,11 +145,7 @@ contract TokenStaking is StakeDelegatable {
      * @param _operator address of stake operator.
      * @param _operatorContract address of operator contract.
      */
-    function authorizeOperatorContract(address _operator, address _operatorContract) public {
-        require(
-            operatorToAuthorizer[_operator] == msg.sender,
-            "Not operator authorizer"
-        );
+    function authorizeOperatorContract(address _operator, address _operatorContract) public onlyOperatorAuthorizer(_operator) {
         authorizations[_operatorContract][_operator] = true;
     }
 }

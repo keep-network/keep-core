@@ -32,6 +32,14 @@ contract StakeDelegatable {
     // List of operators for the stake owner.
     mapping(address => address[]) public ownerOperators;
 
+    modifier onlyOperatorAuthorizer(address _operator) {
+        require(
+            operatorToAuthorizer[_operator] == msg.sender,
+            "Not operator authorizer"
+        );
+        _;
+    }
+
     /**
      * @dev Gets the stake balance of the specified address.
      * @param _address The address to query the balance of.
