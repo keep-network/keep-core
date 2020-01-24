@@ -183,9 +183,14 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
 
         uint256 totalNumberOfGroups;
 
+        uint256 approvedContractsCounter;
+        address[] memory approvedContracts = new address[](_operatorContracts.length);
+
         for (uint i = 0; i < _operatorContracts.length; i++) {
             if (Registry(_registry).isApprovedOperatorContract(_operatorContracts[i])) {
                 totalNumberOfGroups += OperatorContract(_operatorContracts[i]).numberOfGroups();
+                approvedContracts[approvedContractsCounter] = _operatorContracts[i];
+                approvedContractsCounter++;
             }
         }
 
@@ -196,17 +201,15 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         uint256 selectedContract;
         uint256 indexByGroupCount;
 
-        for (uint256 i = 0; i < _operatorContracts.length; i++) {
-            if (Registry(_registry).isApprovedOperatorContract(_operatorContracts[i])) {
-                indexByGroupCount += OperatorContract(_operatorContracts[i]).numberOfGroups();
-                if (selectedIndex < indexByGroupCount) {
-                    return _operatorContracts[selectedContract];
-                }
-                selectedContract++;
+        for (uint256 i = 0; i < approvedContractsCounter; i++) {
+            indexByGroupCount += OperatorContract(approvedContracts[i]).numberOfGroups();
+            if (selectedIndex < indexByGroupCount) {
+                return approvedContracts[selectedContract];
             }
+            selectedContract++;
         }
 
-        return _operatorContracts[selectedContract];
+        return approvedContracts[selectedContract];
     }
 
     /**
