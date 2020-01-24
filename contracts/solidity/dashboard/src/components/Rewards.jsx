@@ -1,19 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { RewardsGroups } from './RewardsGroups'
-import rewardsService from '../services/rewards.service'
 import { WithdrawalHistory } from './WithdrawalHistory'
-import { useFetchData } from '../hooks/useFetchData'
-
-// TODO implement update date hook when group reward are withdrawn
-const useUpdateGroups = (data) => {
-  const updateData = (groupPublicKey) => {
-
-  }
-}
-
 
 export const Rewards = () => {
-  const { isFetching, data: [groups, totalRewardsBalance] } = useFetchData(rewardsService.fetchAvailableRewards, [[], '0'])
+  const [totalRewardsBalance, setTotalRewardsBalance] = useState('0')
 
   return (
     <div className="rewards-wrapper flex flex-row flex-row-center">
@@ -21,7 +11,7 @@ export const Rewards = () => {
         <RewardsBalance balance={totalRewardsBalance} />
         <WithdrawalHistory />
       </div>
-      <RewardsGroups isFetching={isFetching} groups={groups} />
+      <RewardsGroups setTotalRewardsBalance={setTotalRewardsBalance} />
     </div>
   )
 }
