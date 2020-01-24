@@ -4,11 +4,11 @@ import latestTime from './helpers/latestTime';
 import expectThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
-const RegistryKeeper = artifacts.require("./RegistryKeeper.sol");
+const Registry = artifacts.require("./Registry.sol");
 
 contract('TestTokenStake', function(accounts) {
 
-  let token, registryKeeper, stakingContract,
+  let token, registry, stakingContract,
     account_one = accounts[0],
     account_one_operator = accounts[1],
     account_one_magpie = accounts[2],
@@ -17,8 +17,8 @@ contract('TestTokenStake', function(accounts) {
 
   before(async () => {
     token = await KeepToken.new();
-    registryKeeper = await RegistryKeeper.new();
-    stakingContract = await TokenStaking.new(token.address, registryKeeper.address, duration.days(30));
+    registry = await Registry.new();
+    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(30));
   });
 
   it("should send tokens correctly", async function() {

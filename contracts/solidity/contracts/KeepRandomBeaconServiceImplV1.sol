@@ -4,7 +4,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./DelayedWithdrawal.sol";
-import "./RegistryKeeper.sol";
+import "./Registry.sol";
 
 
 interface OperatorContract {
@@ -77,7 +77,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
     mapping(uint256 => Callback) internal _callbacks;
 
     // Registry contract with a list of approved operator contracts and upgraders.
-    address internal _registryKeeper;
+    address internal _registry;
 
     address[] internal _operatorContracts;
 
@@ -95,7 +95,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
      * @dev Throws if called by any account other than the operator contract upgrader.
      */
     modifier onlyOperatorContractUpgrader() {
-        address operatorContractUpgrader = RegistryKeeper(_registryKeeper).operatorContractUpgrader();
+        address operatorContractUpgrader = Registry(_registry).operatorContractUpgrader();
         require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
         _;
     }
@@ -110,14 +110,14 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
-     * @param registryKeeper Registry Keeper contract linked to this contract.
+     * @param registry Registry contract linked to this contract.
      */
     function initialize(
         uint256 priceFeedEstimate,
         uint256 fluctuationMargin,
         uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
-        address registryKeeper
+        address registry
     )
         public
     {
@@ -129,7 +129,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _previousEntry = _beaconSeed;
-        _registryKeeper = registryKeeper;
+        _registry = registry;
     }
 
     /**
@@ -145,7 +145,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
      */
     function addOperatorContract(address operatorContract) public onlyOperatorContractUpgrader {
         require(
-            RegistryKeeper(_registryKeeper).isApprovedOperatorContract(operatorContract),
+            Registry(_registry).isApprovedOperatorContract(operatorContract),
             "Operator contract is not approved"
         );
         _operatorContracts.push(operatorContract);
@@ -184,7 +184,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         uint256 totalNumberOfGroups;
 
         for (uint i = 0; i < _operatorContracts.length; i++) {
-            if (RegistryKeeper(_registryKeeper).isApprovedOperatorContract(_operatorContracts[i])) {
+            if (Registry(_registry).isApprovedOperatorContract(_operatorContracts[i])) {
                 totalNumberOfGroups += OperatorContract(_operatorContracts[i]).numberOfGroups();
             }
         }
@@ -197,7 +197,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         uint256 indexByGroupCount;
 
         for (uint256 i = 0; i < _operatorContracts.length; i++) {
-            if (RegistryKeeper(_registryKeeper).isApprovedOperatorContract(_operatorContracts[i])) {
+            if (Registry(_registry).isApprovedOperatorContract(_operatorContracts[i])) {
                 indexByGroupCount += OperatorContract(_operatorContracts[i]).numberOfGroups();
                 if (selectedIndex < indexByGroupCount) {
                     return _operatorContracts[selectedContract];

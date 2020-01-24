@@ -4,10 +4,10 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
 /**
- * @title Registry Keeper
+ * @title Registry
  * @dev An ownable contract to keep registry of approved contracts and roles.
  */
-contract RegistryKeeper is Ownable {
+contract Registry is Ownable {
     // The Panic Button can disable malicious or malfunctioning contracts
     // that have been previously approved by the Registry Keeper.
     address internal panicButton;

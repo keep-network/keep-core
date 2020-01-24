@@ -4,7 +4,7 @@ const OperatorContract = artifacts.require('./stubs/KeepRandomBeaconOperatorStub
 
 contract('TestKeepRandomBeaconServiceSelectOperator', function() {
 
-  let registryKeeper, stakingContract, serviceContract, operatorContract, operatorContract2, operatorContract3;
+  let registry, stakingContract, serviceContract, operatorContract, operatorContract2, operatorContract3;
 
   before(async () => {
     let contracts = await initContracts(
@@ -15,7 +15,7 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function() {
       OperatorContract
     );
 
-    registryKeeper = contracts.registryKeeper;
+    registry = contracts.registry;
     stakingContract = contracts.stakingContract;
     serviceContract = contracts.serviceContract;
     operatorContract = contracts.operatorContract;
@@ -39,7 +39,7 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function() {
     await serviceContract.removeOperatorContract(operatorContract.address);
     await expectThrow(serviceContract.selectOperatorContract(0)); // Should revert since no operator contract present.
 
-    await registryKeeper.approveOperatorContract(operatorContract.address);
+    await registry.approveOperatorContract(operatorContract.address);
     await serviceContract.addOperatorContract(operatorContract.address);
     result = await serviceContract.selectOperatorContract(0);
     assert.equal(result, operatorContract.address, "Operator contract should be added");
@@ -47,8 +47,8 @@ contract('TestKeepRandomBeaconServiceSelectOperator', function() {
   });
 
   it("should select contract from operators list according to the amount of groups.", async function() {
-    await registryKeeper.approveOperatorContract(operatorContract2.address);
-    await registryKeeper.approveOperatorContract(operatorContract3.address);
+    await registry.approveOperatorContract(operatorContract2.address);
+    await registry.approveOperatorContract(operatorContract3.address);
     serviceContract.addOperatorContract(operatorContract2.address);
     serviceContract.addOperatorContract(operatorContract3.address);
 

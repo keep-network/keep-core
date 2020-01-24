@@ -3,9 +3,9 @@ import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import {initContracts} from './helpers/initContracts'
 const KeepRandomBeaconOperator = artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
 
-contract('RegistryKeeper', function(accounts) {
+contract('Registry', function(accounts) {
 
-  let registryKeeper, stakingContract, operatorContract, anotherOperatorContract, serviceContract,
+  let registry, stakingContract, operatorContract, anotherOperatorContract, serviceContract,
     governance = accounts[0],
     panicButton = accounts[1],
     operatorContractUpgrader = accounts[2]
@@ -20,7 +20,7 @@ contract('RegistryKeeper', function(accounts) {
       KeepRandomBeaconOperator
     );
 
-    registryKeeper = contracts.registryKeeper
+    registry = contracts.registry
     stakingContract = contracts.stakingContract
     serviceContract = contracts.serviceContract
     operatorContract = contracts.operatorContract
@@ -28,8 +28,8 @@ contract('RegistryKeeper', function(accounts) {
     anotherOperatorContract = await KeepRandomBeaconOperator.new(serviceContract.address, stakingContract.address)
     await anotherOperatorContract.registerNewGroup("0x02")
 
-    await registryKeeper.setPanicButton(panicButton)
-    await registryKeeper.setOperatorContractUpgrader(operatorContractUpgrader)
+    await registry.setPanicButton(panicButton)
+    await registry.setOperatorContractUpgrader(operatorContractUpgrader)
   })
 
   beforeEach(async () => {
@@ -41,27 +41,27 @@ contract('RegistryKeeper', function(accounts) {
   })
 
   it("should be able to approve or disable operator contract", async() => {
-    assert.isTrue((await registryKeeper.operatorContracts(anotherOperatorContract.address)).eqn(0), "Unexpected status of operator contract")
+    assert.isTrue((await registry.operatorContracts(anotherOperatorContract.address)).eqn(0), "Unexpected status of operator contract")
 
     await expectThrowWithMessage(
-      registryKeeper.approveOperatorContract(anotherOperatorContract.address, {from: operatorContractUpgrader}),
+      registry.approveOperatorContract(anotherOperatorContract.address, {from: operatorContractUpgrader}),
       "Ownable: caller is not the owner"
     );
 
-    await registryKeeper.approveOperatorContract(anotherOperatorContract.address, {from: governance})
-    assert.isTrue((await registryKeeper.operatorContracts(anotherOperatorContract.address)).eqn(1), "Unexpected status of operator contract")
+    await registry.approveOperatorContract(anotherOperatorContract.address, {from: governance})
+    assert.isTrue((await registry.operatorContracts(anotherOperatorContract.address)).eqn(1), "Unexpected status of operator contract")
 
     await expectThrowWithMessage(
-      registryKeeper.disableOperatorContract(anotherOperatorContract.address, {from: governance}),
+      registry.disableOperatorContract(anotherOperatorContract.address, {from: governance}),
       "Not authorized"
     );
 
-    await registryKeeper.disableOperatorContract(operatorContract.address, {from: panicButton})
-    assert.isTrue((await registryKeeper.operatorContracts(operatorContract.address)).eqn(2), "Unexpected status of operator contract")
+    await registry.disableOperatorContract(operatorContract.address, {from: panicButton})
+    assert.isTrue((await registry.operatorContracts(operatorContract.address)).eqn(2), "Unexpected status of operator contract")
   })
 
   it("should be able to add or remove operator contracts from service contract", async() => {
-    await registryKeeper.approveOperatorContract(anotherOperatorContract.address)
+    await registry.approveOperatorContract(anotherOperatorContract.address)
 
     await expectThrowWithMessage(
       serviceContract.addOperatorContract(anotherOperatorContract.address, {from: governance}),
@@ -82,11 +82,11 @@ contract('RegistryKeeper', function(accounts) {
   })
 
   it("should be able to disable operator contract via panic button", async() => {
-    await registryKeeper.approveOperatorContract(anotherOperatorContract.address)
+    await registry.approveOperatorContract(anotherOperatorContract.address)
     await serviceContract.addOperatorContract(anotherOperatorContract.address, {from: operatorContractUpgrader})
 
     assert.isTrue((await serviceContract.selectOperatorContract(1)) == anotherOperatorContract.address, "Unexpected operator contract address")
-    await registryKeeper.disableOperatorContract(anotherOperatorContract.address, {from: panicButton})
+    await registry.disableOperatorContract(anotherOperatorContract.address, {from: panicButton})
     assert.isTrue((await serviceContract.selectOperatorContract(1)) == operatorContract.address, "Unexpected operator contract address")
   })
 })

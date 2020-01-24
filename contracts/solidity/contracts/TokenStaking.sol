@@ -2,7 +2,7 @@ pragma solidity ^0.5.4;
 
 import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
-import "./RegistryKeeper.sol";
+import "./Registry.sol";
 
 
 /**
@@ -25,7 +25,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     // Registry contract with a list of approved operator contracts and upgraders.
-    RegistryKeeper public registryKeeper;
+    Registry public registry;
 
     // Authorized operator contracts.
     mapping(address => mapping (address => bool)) internal authorizations;
@@ -35,13 +35,13 @@ contract TokenStaking is StakeDelegatable {
     /**
      * @dev Creates a token staking contract for a provided Standard ERC20 token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
-     * @param _registryKeeper Address of a keep registry that will be linked to this contract.
+     * @param _registry Address of a keep registry that will be linked to this contract.
      * @param _delay Withdrawal delay for unstake.
      */
-    constructor(address _tokenAddress, address _registryKeeper, uint256 _delay) public {
+    constructor(address _tokenAddress, address _registry, uint256 _delay) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20(_tokenAddress);
-        registryKeeper = RegistryKeeper(_registryKeeper);
+        registry = Registry(_registry);
         stakeWithdrawalDelay = _delay;
     }
 
