@@ -118,7 +118,7 @@ contract TokenStaking is StakeDelegatable {
      * @param _operator address of withdrawal request.
      * @return amount, createdAt.
      */
-    function getWithdrawal(address _operator) public view returns (uint256 amount, uint256 createdAt) {
+    function getWithdrawal(address _operator) public view returns (uint256, uint256) {
         return (withdrawals[_operator].amount, withdrawals[_operator].createdAt);
     }
 
