@@ -8,7 +8,8 @@ contract('Registry', function(accounts) {
   let registry, stakingContract, operatorContract, anotherOperatorContract, serviceContract,
     governance = accounts[0],
     panicButton = accounts[1],
-    operatorContractUpgrader = accounts[2]
+    operatorContractUpgrader = accounts[2],
+    registryKeeper = accounts[3]
 
   before(async () => {
 
@@ -28,6 +29,7 @@ contract('Registry', function(accounts) {
     anotherOperatorContract = await KeepRandomBeaconOperator.new(serviceContract.address, stakingContract.address)
     await anotherOperatorContract.registerNewGroup("0x02")
 
+    await registry.setRegistryKeeper(registryKeeper)
     await registry.setPanicButton(panicButton)
     await registry.setOperatorContractUpgrader(operatorContractUpgrader)
   })
@@ -45,10 +47,10 @@ contract('Registry', function(accounts) {
 
     await expectThrowWithMessage(
       registry.approveOperatorContract(anotherOperatorContract.address, {from: operatorContractUpgrader}),
-      "Ownable: caller is not the owner"
+      "Not authorized"
     );
 
-    await registry.approveOperatorContract(anotherOperatorContract.address, {from: governance})
+    await registry.approveOperatorContract(anotherOperatorContract.address, {from: registryKeeper})
     assert.isTrue((await registry.operatorContracts(anotherOperatorContract.address)).eqn(1), "Unexpected status of operator contract")
 
     await expectThrowWithMessage(
@@ -61,7 +63,7 @@ contract('Registry', function(accounts) {
   })
 
   it("should be able to add or remove operator contracts from service contract", async() => {
-    await registry.approveOperatorContract(anotherOperatorContract.address)
+    await registry.approveOperatorContract(anotherOperatorContract.address, {from: registryKeeper})
 
     await expectThrowWithMessage(
       serviceContract.addOperatorContract(anotherOperatorContract.address, {from: governance}),
@@ -82,7 +84,7 @@ contract('Registry', function(accounts) {
   })
 
   it("should be able to disable operator contract via panic button", async() => {
-    await registry.approveOperatorContract(anotherOperatorContract.address)
+    await registry.approveOperatorContract(anotherOperatorContract.address, {from: registryKeeper})
     await serviceContract.addOperatorContract(anotherOperatorContract.address, {from: operatorContractUpgrader})
 
     assert.isTrue((await serviceContract.selectOperatorContract(1)) == anotherOperatorContract.address, "Unexpected operator contract address")
