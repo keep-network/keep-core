@@ -112,7 +112,12 @@ contract TokenGrant {
      * This is to avoid Ethereum `Stack too deep` issue described here:
      * https://forum.ethereum.org/discussion/2400/error-stack-too-deep-try-removing-local-variables
      * @param _id ID of the token grant.
-     * @return amount, withdrawn, staked, revoked.
+     * @return amount The amount of tokens the grant provides.
+     * @return withdrawn The amount of tokens that have already been withdrawn
+     *                   from the grant.
+     * @return staked The amount of tokens that have been staked from the grant.
+     * @return revoked A boolean indicating whether the grant has been revoked,
+     *                 which is to say that it is no longer vesting.
      */
     function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, bool revoked) {
         return (
@@ -126,7 +131,14 @@ contract TokenGrant {
     /**
      * @dev Gets grant vesting schedule by grant ID.
      * @param _id ID of the token grant.
-     * @return grantManager, duration, start, cliff
+     * @return grantManager The address designated as the manager of the grant,
+     *                      which is the only address that can revoke this grant.
+     * @return duration The duration, in seconds, during which the tokens will
+     *                  vesting linearly.
+     * @return start The start time, as a timestamp comparing to `now`.
+     * @return cliff The duration, in seconds, before which none of the tokens
+     *                in the token will be vested, and after which a linear
+     *                amount based on the age of the grant will be vested.
      */
     function getGrantVestingSchedule(uint256 _id) public view returns (address grantManager, uint256 duration, uint256 start, uint256 cliff) {
         return (

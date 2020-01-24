@@ -116,7 +116,11 @@ contract TokenStaking is StakeDelegatable {
     /**
      * @dev Gets withdrawal request by Operator.
      * @param _operator address of withdrawal request.
-     * @return amount, createdAt.
+     * @return amount The amount the given operator will be able to withdraw
+     *                once the withdrawal delay has passed.
+     * @return createdAt The initiation time of the withdrawal request for the
+     *                   given operator, used to determine when the withdrawal
+     *                   delay has passed.
      */
     function getWithdrawal(address _operator) public view returns (uint256 amount, uint256 createdAt) {
         return (withdrawals[_operator].amount, withdrawals[_operator].createdAt);
