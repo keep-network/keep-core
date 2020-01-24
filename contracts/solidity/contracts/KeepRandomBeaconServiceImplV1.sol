@@ -40,7 +40,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
     // next to the actual gas price from the transaction. We use both values to
     // defend against malicious miner-submitters who can manipulate transaction
     // gas price. Expressed in wei.
-    uint256 internal _priceFeedEstimate;
+    uint256 public priceFeedEstimate;
 
     // Fluctuation margin to cover the immediate rise in gas price.
     // Expressed in percentage.
@@ -101,7 +101,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
      * @param operatorContract Operator contract linked to this contract.
      */
     function initialize(
-        uint256 priceFeedEstimate,
+        uint256 _priceFeedEstimate,
         uint256 fluctuationMargin,
         uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
@@ -112,7 +112,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
     {
         require(!initialized(), "Contract is already initialized.");
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
-        _priceFeedEstimate = priceFeedEstimate;
+        priceFeedEstimate = _priceFeedEstimate;
         _fluctuationMargin = fluctuationMargin;
         _dkgContributionMargin = dkgContributionMargin;
         _withdrawalDelay = withdrawalDelay;
@@ -232,7 +232,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
             selectOperatorContract(uint256(keccak256(_previousEntry)))
         );
         uint256 selectedOperatorContractFee = operatorContract.groupProfitFee().add(
-            operatorContract.entryVerificationGasEstimate().mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)));
+            operatorContract.entryVerificationGasEstimate().mul(gasPriceWithFluctuationMargin(priceFeedEstimate)));
 
         _requestCounter++;
         uint256 requestId = _requestCounter;
@@ -305,11 +305,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
         )(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
         uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 gas (ethereum transaction minimum gas)
 
-        uint256 gasPrice = _priceFeedEstimate;
+        uint256 gasPrice = priceFeedEstimate;
         // We need to check if tx.gasprice is non-zero as a workaround to a bug
         // in go-ethereum:
         // https://github.com/ethereum/go-ethereum/pull/20189
-        if (tx.gasprice > 0 && tx.gasprice < _priceFeedEstimate) {
+        if (tx.gasprice > 0 && tx.gasprice < priceFeedEstimate) {
             gasPrice = tx.gasprice;
         }
 
@@ -344,7 +344,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
     function triggerDkgIfApplicable(uint256 entry) internal {
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
         uint256 dkgFeeEstimate = OperatorContract(latestOperatorContract).dkgGasEstimate().mul(
-            gasPriceWithFluctuationMargin(_priceFeedEstimate)
+            gasPriceWithFluctuationMargin(priceFeedEstimate)
         );
 
         if (_dkgFeePool >= dkgFeeEstimate && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
@@ -355,17 +355,10 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
 
     /**
      * @dev Set the gas price in wei for estimating relay entry request payment.
-     * @param priceFeedEstimate is the gas price required for estimating relay entry request payment.
+     * @param _priceFeedEstimate is the gas price required for estimating relay entry request payment.
      */
-    function setPriceFeedEstimate(uint256 priceFeedEstimate) public onlyOwner {
-        _priceFeedEstimate = priceFeedEstimate;
-    }
-
-    /**
-     * @dev Get the gas price in wei that is used to estimate relay entry request payment.
-     */
-    function priceFeedEstimate() public view returns(uint256) {
-        return _priceFeedEstimate;
+    function setPriceFeedEstimate(uint256 _priceFeedEstimate) public onlyOwner {
+        priceFeedEstimate = _priceFeedEstimate;
     }
 
     /**
@@ -389,7 +382,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
         // We take the gas price from the price feed to not let malicious
         // miner-requestors manipulate the gas price when requesting relay entry
         // and underpricing expensive callbacks.
-        return callbackGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
+        return callbackGas.mul(gasPriceWithFluctuationMargin(priceFeedEstimate));
     }
 
     /**
@@ -432,8 +425,8 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
         uint256 dkgGas = OperatorContract(latestOperatorContract).dkgGasEstimate();
 
         return (
-            entryVerificationGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)),
-            dkgGas.mul(_priceFeedEstimate).mul(_dkgContributionMargin).div(100),
+            entryVerificationGas.mul(gasPriceWithFluctuationMargin(priceFeedEstimate)),
+            dkgGas.mul(priceFeedEstimate).mul(_dkgContributionMargin).div(100),
             groupProfitFee
         );
     }
