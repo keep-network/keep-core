@@ -14,14 +14,14 @@ const Registry = artifacts.require("./Registry.sol");
 
 const withdrawalDelay = 86400; // 1 day
 
-module.exports = async function(deployer, network, accounts) {
+module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
   await deployer.link(ModUtils, AltBn128);
   await deployer.deploy(AltBn128);
   await deployer.link(AltBn128, BLS);
   await deployer.deploy(BLS);
   await deployer.deploy(KeepToken);
-  await deployer.deploy(Registry, accounts[0], accounts[0], accounts[0]);
+  await deployer.deploy(Registry);
   await deployer.deploy(TokenStaking, KeepToken.address, Registry.address, withdrawalDelay);
   await deployer.deploy(TokenGrant, KeepToken.address, TokenStaking.address);
   await deployer.deploy(GroupSelection);
