@@ -35,10 +35,14 @@ contract Registry is Ownable {
         _;
     }
 
-    constructor() Ownable() public {
-        registryKeeper = msg.sender;
-        panicButton = msg.sender;
-        operatorContractUpgrader = msg.sender;
+    constructor(
+        address _registryKeeper,
+        address _panicButton,
+        address _operatorContractUpgrader
+    ) Ownable() public {
+        registryKeeper = _registryKeeper == address(0) ? msg.sender : _registryKeeper;
+        panicButton = _panicButton == address(0) ? msg.sender : _panicButton;
+        operatorContractUpgrader = _operatorContractUpgrader == address(0) ? msg.sender : _operatorContractUpgrader;
     }
 
     function setRegistryKeeper(address _registryKeeper) public onlyOwner {

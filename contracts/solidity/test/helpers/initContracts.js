@@ -21,7 +21,12 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   token = await KeepToken.new();
 
   // Initialize registry contract
-  registry = await Registry.new();
+  // Zero addresses are changed to msg.sender by default (will be accounts[0] in tests)
+  registry = await Registry.new(
+    '0x0000000000000000000000000000000000000000',
+    '0x0000000000000000000000000000000000000000',
+    '0x0000000000000000000000000000000000000000'
+  );
 
   // Initialize staking contract
   stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(30));
