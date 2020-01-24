@@ -65,7 +65,7 @@ const withdrawRewardFromGroup = async (groupIndex, groupMembersIndices, web3Cont
           .withdrawGroupMemberRewards(memberAddress, groupIndex, groupMembersIndices[memberAddress])
           .send.request({ from: yourAddress }, (error, transactionHash) => {
             if (error) {
-              resolve({ memberAddress, memberInices: groupMembersIndices[memberAddress], isError: true, error })
+              resolve({ memberAddress, memberIndices: groupMembersIndices[memberAddress], isError: true, error })
             } else {
               resolve({ transactionHash })
             }
