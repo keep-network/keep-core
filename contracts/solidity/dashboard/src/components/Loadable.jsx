@@ -11,4 +11,19 @@ Loadable.defaultProps = {
 
 export const ClockIndicator = (props) => (<div className='indicator-clock'/>)
 
+export const LoadingOverlay = ({ isFetching, classNames, children }) => {
+  if (!isFetching) {
+    return children
+  }
+
+  return (
+    <div className={`loading-overlay-container ${classNames}`}>
+      <div className='loading-overlay'>
+        Loading...
+      </div>
+      {children}
+    </div>
+  )
+}
+
 export default Loadable

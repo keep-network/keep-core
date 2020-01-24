@@ -1,5 +1,6 @@
 import Web3 from 'web3'
 import BigNumber from 'bignumber.js'
+import moment from 'moment'
 
 export function displayAmount(amount, decimals, precision) {
   if (amount) {
@@ -30,4 +31,20 @@ export const shortenAddress = (address) => {
   const lastFourCharacters = address.substr(address.length - 4, address.length - 1)
 
   return '0x'.concat(firstFourCharacters).concat('...').concat(lastFourCharacters)
+}
+
+export const wait = (ms) => {
+  return new Promise((resolve) => {
+    return setTimeout(resolve, ms)
+  })
+}
+
+export const formatDate = (dateMillis) => {
+  const now = moment()
+  const date = moment(dateMillis)
+
+  if (now.isSame(date, 'year')) {
+    return date.format('MMM DD')
+  }
+  return date.format('MMM DD YYYY')
 }
