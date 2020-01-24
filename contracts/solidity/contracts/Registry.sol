@@ -1,13 +1,14 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-
 
 /**
  * @title Registry
- * @dev An ownable contract to keep registry of approved contracts and roles.
+ * @dev Governance owned registry of approved contracts and roles.
  */
-contract Registry is Ownable {
+contract Registry {
+    // Governance role is to enable recovery from key compromise by rekeying other roles.
+    address internal governance;
+
     // Registry Keeper maintains approved operator contracts. Each operator
     // contract must be approved before it can be authorized by a staker or
     // used by a service contract.
@@ -25,6 +26,11 @@ contract Registry is Ownable {
     // 0 - NULL (default), 1 - APPROVED, 2 - DISABLED
     mapping(address => uint256) public operatorContracts;
 
+    modifier onlyGovernance() {
+        require(governance == msg.sender, "Not authorized");
+        _;
+    }
+
     modifier onlyRegistryKeeper() {
         require(registryKeeper == msg.sender, "Not authorized");
         _;
@@ -35,21 +41,26 @@ contract Registry is Ownable {
         _;
     }
 
-    constructor() Ownable() public {
+    constructor() public {
+        governance = msg.sender;
         registryKeeper = msg.sender;
         panicButton = msg.sender;
         operatorContractUpgrader = msg.sender;
     }
 
-    function setRegistryKeeper(address _registryKeeper) public onlyOwner {
+    function setGovernance(address _governance) public onlyGovernance {
+        governance = _governance;
+    }
+
+    function setRegistryKeeper(address _registryKeeper) public onlyGovernance {
         registryKeeper = _registryKeeper;
     }
 
-    function setPanicButton(address _panicButton) public onlyOwner {
+    function setPanicButton(address _panicButton) public onlyGovernance {
         panicButton = _panicButton;
     }
 
-    function setOperatorContractUpgrader(address _operatorContractUpgrader) public onlyOwner {
+    function setOperatorContractUpgrader(address _operatorContractUpgrader) public onlyGovernance {
         operatorContractUpgrader = _operatorContractUpgrader;
     }
 
