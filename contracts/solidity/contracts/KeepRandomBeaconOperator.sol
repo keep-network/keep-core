@@ -96,10 +96,13 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     // Gas required to verify BLS signature and produce successful relay
     // entry. Excludes callback and DKG gas.
-    uint256 public entryVerificationGasEstimate = 300000;
+    uint256 public entryVerificationGasEstimate = 240000;
 
-    // Gas required to submit DKG result.
+    // Gas required to submit DKG result. Excludes initiation of group selection.
     uint256 public dkgGasEstimate = 1740000;
+
+    // Gas required to trigger DKG (starting group selection).
+    uint256 public groupSelectionGasEstimate = 100000;
 
     // Reimbursement for the submitter of the DKG result.
     // This value is set when a new DKG request comes to the operator contract.
@@ -217,10 +220,18 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @dev Triggers the selection process of a new candidate group.
      * @param _newEntry New random beacon value that stakers will use to
      * generate their tickets.
+     * @param submitter Operator of this contract.
      */
-    function createGroup(uint256 _newEntry) public payable onlyServiceContract {
+    function createGroup(uint256 _newEntry, address payable submitter) public payable onlyServiceContract {
+        uint256 groupSelectionStartFee = groupSelectionGasEstimate
+            .mul(gasPriceWithFluctuationMargin(priceFeedEstimate));
+
         groupSelectionStarterContract = ServiceContract(msg.sender);
-        startGroupSelection(_newEntry, msg.value);
+        startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
+
+        // reimbursing a submitter that triggered group selection
+        (bool success, ) = stakingContract.magpieOf(submitter).call.value(groupSelectionStartFee)("");
+        require(success, "Failed reimbursing submitter for starting a group selection");
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
@@ -681,6 +692,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
+     * @dev Estimates gas for group creation. Includes the cost of DKG and the
+     * cost of triggering group selection.
+     */
+    function groupCreationGasEstimate() public view returns (uint256) {
+        return dkgGasEstimate.add(groupSelectionGasEstimate);
+    }
+
+     /**
      * @dev Returns members of the given group by group public key.
      */
     function getGroupMembers(bytes memory groupPubKey) public view returns (address[] memory members) {

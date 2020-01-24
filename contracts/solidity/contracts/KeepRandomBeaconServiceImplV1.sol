@@ -9,14 +9,14 @@ import "./DelayedWithdrawal.sol";
 
 interface OperatorContract {
     function entryVerificationGasEstimate() external view returns(uint256);
-    function dkgGasEstimate() external view returns(uint256);
+    function groupCreationGasEstimate() external view returns(uint256);
     function groupProfitFee() external view returns(uint256);
     function sign(
         uint256 requestId,
         bytes calldata previousEntry
     ) external payable;
     function numberOfGroups() external view returns(uint256);
-    function createGroup(uint256 newEntry) external payable;
+    function createGroup(uint256 newEntry, address payable submitter) external payable;
     function isGroupSelectionPossible() external view returns (bool);
 }
 
@@ -224,13 +224,15 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
         );
 
         (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
-        uint256 callbackFee = msg.value.sub(entryVerificationFee).sub(dkgContributionFee).sub(groupProfitFee);
+        uint256 callbackFee = msg.value.sub(entryVerificationFee)
+            .sub(dkgContributionFee).sub(groupProfitFee);
 
         _dkgFeePool += dkgContributionFee;
 
         OperatorContract operatorContract = OperatorContract(
             selectOperatorContract(uint256(keccak256(_previousEntry)))
         );
+
         uint256 selectedOperatorContractFee = operatorContract.groupProfitFee().add(
             operatorContract.entryVerificationGasEstimate().mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)));
 
@@ -286,7 +288,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
             delete _callbacks[requestId];
         }
 
-        triggerDkgIfApplicable(entryAsNumber);
+        createGroupIfApplicable(entryAsNumber, submitter);
     }
 
     /**
@@ -340,16 +342,17 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
      * @dev Triggers the selection process of a new candidate group if the DKG
      * fee pool equals or exceeds DKG cost estimate.
      * @param entry The generated random number.
+     * @param submitter Relay entry submitter - operator.
      */
-    function triggerDkgIfApplicable(uint256 entry) internal {
+    function createGroupIfApplicable(uint256 entry, address payable submitter) internal {
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 dkgFeeEstimate = OperatorContract(latestOperatorContract).dkgGasEstimate().mul(
+        uint256 groupCreationFee = OperatorContract(latestOperatorContract).groupCreationGasEstimate().mul(
             gasPriceWithFluctuationMargin(_priceFeedEstimate)
         );
 
-        if (_dkgFeePool >= dkgFeeEstimate && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
-            OperatorContract(latestOperatorContract).createGroup.value(dkgFeeEstimate)(entry);
-            _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
+        if (_dkgFeePool >= groupCreationFee && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
+            OperatorContract(latestOperatorContract).createGroup.value(groupCreationFee)(entry, submitter);
+            _dkgFeePool = _dkgFeePool.sub(groupCreationFee);
         }
     }
 
@@ -398,6 +401,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
      */
     function entryFeeEstimate(uint256 callbackGas) public view returns(uint256) {
         (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
+
         return entryVerificationFee.add(dkgContributionFee).add(groupProfitFee).add(callbackFee(callbackGas));
     }
 
@@ -429,11 +433,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
 
         // Use DKG gas estimate from the latest operator contract since it will be used for the next group creation.
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 dkgGas = OperatorContract(latestOperatorContract).dkgGasEstimate();
+        uint256 groupCreationGas = OperatorContract(latestOperatorContract).groupCreationGasEstimate();
 
         return (
             entryVerificationGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)),
-            dkgGas.mul(_priceFeedEstimate).mul(_dkgContributionMargin).div(100),
+            groupCreationGas.mul(_priceFeedEstimate).mul(_dkgContributionMargin).div(100),
             groupProfitFee
         );
     }

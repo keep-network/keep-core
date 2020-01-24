@@ -30,6 +30,10 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
         groupSize = size;
     }
 
+    function setGroupSelectionGasEstimate(uint256 gas) public {
+        groupSelectionGasEstimate = gas;
+    }
+
     function getNewEntryRewardsBreakdown() public view returns(
         uint256 groupMemberReward,
         uint256 submitterReward,
