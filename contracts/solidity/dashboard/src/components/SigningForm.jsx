@@ -1,31 +1,30 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { Button, Row, Form, FormGroup,
-  FormControl, Col } from 'react-bootstrap'
-import WithWeb3Context from './WithWeb3Context'
+import { Row, Form, FormGroup, FormControl, Col } from 'react-bootstrap'
+import withWeb3Context from './WithWeb3Context'
+import { SubmitButton } from './Button'
 
 const ERRORS = {
   INVALID_AMOUNT: 'Invalid amount',
-  SERVER: 'Sorry, your request cannot be completed at this time.'
+  SERVER: 'Sorry, your request cannot be completed at this time.',
 }
 
 const RESET_DELAY = 3000 // 3 seconds
 
 class SigningForm extends Component {
-
   state = {
     messageToSign: this.props.defaultMessageToSign,
-    signature: "",
+    signature: '',
     hasError: false,
     requestSent: false,
     requestSuccess: false,
-    errorMsg: ERRORS.INVALID_AMOUNT
+    errorMsg: ERRORS.INVALID_AMOUNT,
   }
 
   onChange = (e) => {
     const name = e.target.name
     this.setState(
-      { [name]: e.target.value }
+      { [name]: e.target.value },
     )
   }
 
@@ -39,15 +38,11 @@ class SigningForm extends Component {
     this.setState({
       hasError: false,
       requestSent: true,
-      requestSuccess: true
+      requestSuccess: true,
     })
     window.setTimeout(() => {
       this.setState(this.state)
     }, RESET_DELAY)
-  }
-
-  onClick = (e) => {
-    this.submit()
   }
 
   onSubmit = (e) => {
@@ -60,25 +55,24 @@ class SigningForm extends Component {
     }
   }
 
-  async submit() {
+  submit = async () => {
     const { messageToSign } = this.state
     const { web3 } = this.props
 
-    let signature = await web3.eth.personal.sign(web3.utils.soliditySha3(messageToSign), web3.yourAddress, '');
+    const signature = await web3.eth.personal.sign(web3.utils.soliditySha3(messageToSign), web3.yourAddress, '')
 
     this.setState({
-      signature: signature
+      signature: signature,
     })
-
   }
 
   render() {
     const { messageToSign, signature,
-      hasError, errorMsg} = this.state
+      hasError, errorMsg } = this.state
     const { description } = this.props
 
-    let hidden = {
-      display: signature ? "block" : "none"
+    const hidden = {
+      display: signature ? 'block' : 'none',
     }
 
     return (
@@ -92,15 +86,15 @@ class SigningForm extends Component {
               name="messageToSign"
               value={messageToSign}
               onChange={this.onChange}
-              />
+            />
           </FormGroup>
-          <Button
-            bsStyle="primary"
-            bsSize="large"
-            onClick={this.onClick}
-            type="submit">
+          <SubmitButton
+            className="btn btn-primary btn-lg"
+            onSubmitAction={this.submit}
+            type="submit"
+          >
             Sign
-          </Button>
+          </SubmitButton>
         </Form>
         { hasError &&
           <small className="error-message">{errorMsg}</small> }
@@ -117,7 +111,7 @@ class SigningForm extends Component {
 
 SigningForm.propTypes = {
   btnText: PropTypes.string,
-  action: PropTypes.string
+  action: PropTypes.string,
 }
 
-export default WithWeb3Context(SigningForm);
+export default withWeb3Context(SigningForm)

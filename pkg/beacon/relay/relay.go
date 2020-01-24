@@ -96,6 +96,7 @@ func (n *Node) MonitorRelayEntry(
 func (n *Node) GenerateRelayEntry(
 	previousEntry []byte,
 	relayChain relayChain.Interface,
+	signing chain.Signing,
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) {
@@ -105,25 +106,40 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	for _, signer := range memberships {
-		go func(signer *registry.Membership) {
-			channel, err := n.netProvider.ChannelFor(signer.ChannelName)
-			if err != nil {
-				logger.Errorf(
-					"could not create broadcast channel with name [%v]: [%v]",
-					signer.ChannelName,
-					err,
-				)
-				return
-			}
+	channel, err := n.netProvider.ChannelFor(memberships[0].ChannelName)
+	if err != nil {
+		logger.Errorf("could not create broadcast channel: [%v]", err)
+		return
+	}
 
+	entry.RegisterUnmarshallers(channel)
+
+	groupMembers, err := relayChain.GetGroupMembers(groupPublicKey)
+	if err != nil {
+		logger.Errorf("could not get group members: [%v]", err)
+		return
+	}
+
+	err = channel.SetFilter(
+		createGroupMemberFilter(groupMembers, signing),
+	)
+	if err != nil {
+		logger.Errorf(
+			"could not set filter for channel [%v]: [%v]",
+			channel.Name(),
+			err,
+		)
+	}
+
+	for _, member := range memberships {
+		go func(member *registry.Membership) {
 			err = entry.SignAndSubmit(
 				n.blockCounter,
 				channel,
 				relayChain,
 				previousEntry,
 				n.chainConfig.HonestThreshold,
-				signer.Signer,
+				member.Signer,
 				startBlockHeight,
 			)
 			if err != nil {
@@ -133,6 +149,6 @@ func (n *Node) GenerateRelayEntry(
 				)
 				return
 			}
-		}(signer)
+		}(member)
 	}
 }

@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eth-tx-tcp
+spec:
+  type: LoadBalancer
+  ports:
+  - name: eth-tx-rpc-port
+    port: 8545
+    targetPort: 8545
+  - name: eth-tx-ws-port
+    port: 8546
+    targetPort: 8546
+  selector:
+    app: geth
+    type: tx

@@ -13,7 +13,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   let priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei = 20 * 10^9 wei)
     fluctuationMargin = 50, // 50%
-    dkgContributionMargin = 10, // 10%
+    dkgContributionMargin = 1, // 1%
     withdrawalDelay = 1;
 
   // Initialize Keep token contract
@@ -42,6 +42,8 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   let dkgGasEstimate = await operatorContract.dkgGasEstimate();
   let gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(web3.utils.toBN(fluctuationMargin)).div(web3.utils.toBN(100)));
+
+  await operatorContract.setPriceFeedEstimate(priceFeedEstimate);
 
   // Genesis should include payment to cover DKG cost to create first group
   await operatorContract.genesis({value: dkgGasEstimate.mul(gasPriceWithFluctuationMargin)});

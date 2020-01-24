@@ -3,27 +3,193 @@
 @import 'buttons';
 @import 'forms';
 @import 'nav';
+@import 'messages';
+@import 'web3-status';
+@import 'indicator';
+@import 'menu-button';
+@import 'rewards';
+@import 'address-shortcut';
+@import 'no-data.less';
+@import 'commons.less';
+@import 'withdrawal-rewards-history.less';
 
-.App {
-  text-align: center;
-  overflow: hidden;
-  background-color: @white;
-  max-width: @max-page-width;
-  margin: 0 auto;
+html {
+  font-size: 16px;
+  background: @backgroud;
 }
 
-.overview {
-  margin: 40px 0 40px 0;
+.main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: @backgroud;
+  >.content {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: calc(100px + 1.5rem) 1.5rem 0;
+  }
 }
 
-.staking {
-  margin: 40px 0 40px 0;
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: @header-height;
+  width: 100%;
+  z-index: 10;
+  display: flex;  
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 0.5rem;
+  border-bottom: 1px solid black;
+
+  .logo {
+    height: @header-height;
+  }
+  
+  > .web3, > .account-address {
+    display: none;
+  }
+
+  > .menu-button {
+    display: block;
+  }
 }
 
-.footer {
-  padding: 40px;
+.side-menu {
+  position: fixed;
+  top: @header-height;
+  left: 0;
+  z-index: 10;
+  height: 100%;
+  width: 0px;
+  visibility: hidden;
+  background: white;
+  border-right: 1px solid black;
+  overflow-x: hidden;
+  transition: 0.5s ease;
+  
+  .active& {
+    visibility: visible;
+    width: @side-menu-width;
+  }
+
+  & ul {
+    list-style: none;
+    overflow-x: hidden;
+    text-align: center;
+    width: @side-menu-width;
+    padding: 0;
+
+    & li {
+      border-bottom: 1px solid black;
+      padding: 1rem 0;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: normal;
+      letter-spacing: .05rem;
+      font-variant: small-caps;
+      border-right: 0 solid #48DBB4;
+      transition: border-right-width 0.3s ease;
+
+      &:hover {
+        cursor: pointer;
+        border-right-width: 5px;
+      }
+
+      &.active-page-link {
+        border-right-width: 5px;
+        color: black;
+        font-weight: bold;
+      }
+    }
+
+    a {
+      color: black;
+
+      &:hover, &:focus{
+        text-decoration: none;
+      }
+    }
+
+    > .account-address {
+      font-size: 0.8rem;
+    }
+
+    > .web3 > .web3-status {
+      text-align: center;
+      margin: 1rem;
+    }
+
+
+  }
 }
 
-.tab-pane {
-  padding: 15px;
+@media screen and (min-width: 600px) {
+ .header {
+    > .web3 {
+      display: flex;
+    }
+  }
+
+  .side-menu {
+    ul > .web3 {
+      visibility: hidden;
+    }
+  }
+}
+
+@media screen and (min-width: 1000px) {
+  .header {
+     > .web3 {
+       visibility: visible;
+     }
+   }
+
+   .main {
+     > .content {
+      max-width: 2200px;
+     }
+   }
+}
+
+@media screen and (min-width: 1250px) {
+  .header {
+    > .logo {
+      width: @side-menu-width;
+    }
+
+    > .web3 {
+      min-width: 30%;
+      justify-content: flex-start;
+      margin-right: auto;
+    }
+
+    > .account-address {
+      display: block;
+    }
+
+    > .menu-button {
+      display: none;
+    }
+  }
+
+  .side-menu {
+    width: @side-menu-width;
+    visibility: visible;
+    
+    ul > .account-address, .web3 {
+      visibility: hidden;
+    }
+  }
+
+  .main {
+    > .content {
+      margin: calc(@header-height + 5rem) 5rem 0 calc(@side-menu-width + 5rem)
+    }
+  }
 }

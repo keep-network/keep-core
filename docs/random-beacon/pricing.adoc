@@ -11,20 +11,22 @@ The pricing method avoids
 the known downfalls of previously considered, more complex, schemes,
 such as price discrimination being defeated by callback pooling.
 
-==== UML diagram
+== Implementation
+
+=== UML diagram
 [ditaa]
 +-----------------+            
 |  estimate_fee   |            
 +-----------------+       
 
-==== Making requests
-How are requests made?
+=== Making requests
 
 A request begins with the query 
 `entry_fee_estimate = estimate_fee(callback_gas_amount)`
 , which provides the customer with an estimated gas cost to use in the request. 
-The fee estimate is only valud for the transaction it is called in, so the customer must
-make the request immediately after obtaining the estimate. Insufficient payment will lead to the request being rejected
+The fee estimate is only valid for the transaction it is called in,
+so the customer must make the request immediately after obtaining the estimate.
+Insufficient payment will lead to the request being rejected
 and the transaction reverted.
 
 To make a request after determining the applicable fee
@@ -32,7 +34,9 @@ the customer must call the request method on the beacon,
 transferring enough currency to cover the fee:
 `request_entry.value(entry_fee_estimate)()`.
 
-If the customer wishes to receive the generated random number in a callback, they should also specify the _callback address_, _callback function_, and _callback gas amount_:
+If the customer wishes to receive the generated random number in a callback,
+they should also specify the _callback address_,
+_callback function_, and _callback gas amount_:
 `request_entry.value(entry_fee_estimate)(callback_address, callback_function, callback_gas)`.
 
 No new requests should be made
@@ -40,12 +44,16 @@ while the beacon is already processing another request.
 Requests made while the beacon is busy will be rejected
 and the transaction reverted.
 
-==== Receiving a request
+=== Receiving a request
 How are customer requests handled by the protocol?
 
-A request sent to a non-busy beacon is checked for _request fee_ >= _entry fee estimate_ + _callback gas amount_ from the request. If the beacon is already serving an earlier request, it rejects any new requests and refunds the fee.
+A request sent to a non-busy beacon is checked for
+_request fee_ >= _entry fee estimate_ + _callback gas amount_ from the request.
+If the beacon is already serving an earlier request,
+it rejects any new requests and refunds the fee.
 
-A sufficiently funded request triggers the beacon to select the new signing group.
+A sufficiently funded request triggers the beacon
+to select the new signing group.
 The selected group is tasked with producing the new entry.
 
 The request is then set as the _pending request_
@@ -53,7 +61,8 @@ with the following information:
 
 - the _requester address_
 
-- the _callback address_, _callback function_, and _callback gas amount_, if applicable
+- the _callback address_, _callback function_,
+and _callback gas amount_, if applicable
 
 - the _assigned signing group_{blank}footnote:[This is needed
 if changes to the active groups can be made
@@ -76,15 +85,16 @@ until a valid entry is received, this is not necessary.
 
 - the _request fee_ paid
 
-==== Serving a request
+=== Serving a request
 
-===== Receiving submissions
-How does the protocol handle a submission from the relay?
+==== Receiving submissions
 
 A valid entry created by a signing group is submitted by a 
-member of the group called the _submitter_, before the _Submission deadline_. 
+member of the group called the _submitter_,
+before the _Submission deadline_.
 Submissions that fail verification are ignored.
-Repeat submissions for a request that has already been served are dropped immediately to minimize gas expenditure.
+Repeat submissions for a request that has already been served
+are dropped immediately to minimize gas expenditure.
 
 If no valid entry has been received by the _submission deadline_
 a submission timeout can be called by anyone, as a result of which:
@@ -93,7 +103,9 @@ a submission timeout can be called by anyone, as a result of which:
 
 - a new signing group is assigned from the remaining active groups
 
-- the submission delay calculation is reset by setting the _submission delay base time_ to the previous _submission deadline_.
+- the submission delay calculation is reset
+by setting the _submission delay base time_
+to the previous _submission deadline_.
 
 When a valid entry submission is received on-chain:
 
@@ -103,32 +115,43 @@ When a valid entry submission is received on-chain:
 
 - and fees, rewards and refunds are paid out
 
-===== Callback processing
+==== Callback processing
 How are callbacks processed?
 
 A callback is called using the callback gas amount as the maximum gas. 
 If the callback gas amount is insufficient,
-callback execution is skipped and the rest of the relay entry submission code
-is processed as usual.
+callback execution is skipped
+and the rest of the relay entry submission code is processed as usual.
 
-_callback expenditure_ is calculated as, gas spent on call * minimum(_estimated gas price_, _callback expenditure_). 
+_callback expenditure_ is calculated as,
+gas spent on call * minimum(_estimated gas price_, _callback expenditure_).
 
-The minimum of the gas price is included to protect the beacon and requester against malicious miner-submitters.
+The minimum of the gas price is included
+to protect the beacon and requester against malicious miner-submitters.
 
 Malicious miner-submitter attacks: 
 
-- a miner-submitter can steal the surplus pool subsidy by placing an arbitrary gas price on the transaction that is higher than quoted. This will cause the  the requester refund to go negative. If the negative requester refund is added to the 1% surplus pool subsidy it can permit the miner-submitter to steal the subsidy.
+- a miner-submitter can steal the surplus pool subsidy
+by placing an arbitrary gas price on the transaction
+that is higher than quoted.
+This will cause the requester refund to go negative.
+If the negative requester refund is added to the 1% surplus pool subsidy
+it can permit the miner-submitter to steal the subsidy.
 
-- a miner-submitter can steal the requesters refund by setting the gas price to the provided maximum. The requester is billed for the entire gas budget even if they really only spent a small fraction of it. 
+- a miner-submitter can steal the requesters refund
+by setting the gas price to the provided maximum.
+The requester is billed for the entire gas budget
+even if they really only spent a small fraction of it.
 
-A callback execution that uses more gas than specified in the request, it will run out of gas. A callback execution can cost more than was quoted and paid for only when the gas cost of the transaction exceeds the 
-quoted estimate (which includes the safety margin mentioned in the gas price feed
-section). The submitter is intended to take the hit for submitting with a gas price that exceeds the estimate.
+A callback execution that uses more gas than specified in the request,
+it will run out of gas.
+A callback execution can cost more than was quoted and paid for
+only when the gas cost of the transaction exceeds the quoted estimate
+(which includes the safety margin mentioned in the gas price feed section).
+The submitter is intended to take the hit
+for submitting with a gas price that exceeds the estimate.
 
-===== Requester refund
-How is a refund to the requester processed?
-
-Note: when is a requester refund processed? - Ask promethea
+=== Requester refund
 
 _requester refund = actual entry price - requester fee + 1% of request subsidy pool_
 
@@ -148,8 +171,7 @@ and the state of the pool is checked.
 If the amount in the DKG fee pool equals or exceeds the _DKG cost estimate_,
 group creation and a new DKG may be triggered.
 
-
-==== Rewards
+=== Rewards
 
 A _base reward_ for each member of a signing group that produces an entry
 is specified in the system constants in the service contract and:
@@ -159,16 +181,18 @@ _profit margin = base reward * group size_
 The exact rewards paid out to operators are based on the base reward
 but vary according to _submission delay_ and submitter position.
 
-To incentivize customers to request entries, any amount in excess of the _profit margin_ is added to the beacons _request subsidy pool_
+To incentivize customers to request entries,
+any amount in excess of the _profit margin_
+is added to the beacons _request subsidy pool_
 
-===== Submitter reward
+==== Submitter reward
 _Submitter reward = F (submission delay, submission delay base time)_
 
 If the sum of rewards paid out
 is < _profit margin + entry verification fee_,
 the difference is added to the _request subsidy pool_.
 
-===== Group reward
+==== Group reward
 How are group members compensated?
 
 The group reward is paid to every member of the signing group,
@@ -205,7 +229,7 @@ with the difference being the _delay penalty = base reward * (1 - 0.64)_.
 If the submission deadline is reached and the delay factor reaches 0,
 the entry submission fails and all group members are penalized.
 
-===== Submitter reward
+==== Submitter reward
 How are submitters compensated?
 
 In addition to the _group reward_,
@@ -274,10 +298,10 @@ If the miner-submitter pays the gas price estimated by the price feed, but
 tricks the contract into consuming twice the gas as normal, they will be able 
 to get twice the reimbursement as well. 
 
-==== Cost estimates
+=== Cost estimates
 todo: How do we estimate the various costs?
 
-===== Gas price feed
+==== Gas price feed
 
 A short-term gas price feed is required
 to estimate the gas cost components.
@@ -309,20 +333,22 @@ costs as much as the KEEP tokens at stake.
 The exact implementation of this gas price feed
 is out for scope for this RFC.
 
-===== DKG cost estimate
+==== DKG cost estimate
 How do we calculate the cost of running the DKG?
 
 The gas required for DKG should be calculated.
-DKG gas cost should include only DKG result submission. Ticket submission
-costs are covered by the expected return from getting into a signing group.
+DKG gas cost should include only DKG result submission.
+Ticket submission costs are covered
+by the expected return from getting into a signing group.
 Multiply DKG gas by gas estimate to get DKG cost estimate.
 Use a DKG frequency divider _d_ to set the group creation rate;
 once every _d_ entries on average.
 Divide DKG cost estimate by _d_ to get DKG contribution for each entry.
 
 The maximum DKG gas cost should be hardcoded in the operator contract.
-The service contract takes the highest applicable gas cost from all operator
-contracts being used and multiplies it by the fluctuation margin times gas price feed's estimate.
+The service contract takes the highest applicable gas cost
+from all operator contracts being used
+and multiplies it by the fluctuation margin times gas price feed's estimate.
 
 Because DKG is performed when sufficient gas money has accumulated,
 fluctuations in gas prices don't need special consideration.
@@ -334,38 +360,12 @@ to cover the immediate rise in gas fees during DKG execution
 the beacon is capable of generating new groups.
 Similarly, when gas costs fall DKG gets triggered faster.
 
-===== Entry verification fee
-How do we calculate the gas required for entry verification?
+==== Entry verification fee
 
 Calculate gas required for verifying entry and associated support operations.
-The maximum entry verification gas cost are hardcoded in the operator
-contract. The service contract takes the highest applicable gas cost from all 
-operator contracts being used and  multiplies it by the fluctuation margin 
-(e.g. 1.5) times gas price feed's estimate to get entry verification fee.
-
-==== Cleanup gas efficiency
-How do we calculate the cost of cleanup or post processing?
-
-As the gas cost of storing data in a previously zero field
-and later zeroing it again (20,000 + 5,000 - 15,000 = 10,000)
-exceeds the cost of modifying a nonzero field (5,000),
-cleaning unnecessary fields would appear to increase operating costs
-with little upside.
-
-However, gas costs in the entry submission transaction
-contribute 1.5 times as much to the effective price of beacon entries.
-Thus the 10,000 gas net refund per field
-is effectively worth 15,000 gas,
-making both options equal to the requester.
-The difference of 5,000 actual gas is effectively paid by the submitter
-in the form of a lower _entry verification fee_.
-
-TODO: Do we need the following?
-Packing request data more densely,
-where applicable,
-could further reduce operating costs.
-
-////
-[bibliography]
-== Related Links
-////
+The maximum entry verification gas cost
+are hardcoded in the operator contract.
+The service contract takes the highest applicable gas cost
+from all operator contracts being used
+and multiplies it by the fluctuation margin (e.g. 1.5) times
+gas price feed's estimate to get entry verification fee.

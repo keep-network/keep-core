@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./TokenStaking.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
@@ -21,7 +22,7 @@ interface ServiceContract {
  * The contract is not upgradeable. New functionality can be implemented by deploying
  * new versions following Keep client update and re-authorization by the stakers.
  */
-contract KeepRandomBeaconOperator {
+contract KeepRandomBeaconOperator is ReentrancyGuard {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
     using GroupSelection for GroupSelection.Storage;
@@ -39,24 +40,26 @@ contract KeepRandomBeaconOperator {
 
     event GroupSelectionStarted(uint256 newEntry);
 
+    event GroupMemberRewardsWithdrawn(address indexed beneficiary, address operator, uint256 amount, uint256 groupIndex);
+
     GroupSelection.Storage groupSelection;
     Groups.Storage groups;
     DKGResultVerification.Storage dkgResultVerification;
 
     // Contract owner.
-    address public owner;
+    address internal owner;
 
-    address[] public serviceContracts;
+    address[] internal serviceContracts;
 
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
-    TokenStaking public stakingContract;
+    TokenStaking internal stakingContract;
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
     // the Keep network. Expressed as number with 18-decimal places.
     uint256 public minimumStake = 200000 * 1e18;
 
     // Each signing group member reward expressed in wei.
-    uint256 public groupMemberBaseReward = 1*1e15; // (0.001 Ether = 1 * 10^15 wei)
+    uint256 public groupMemberBaseReward = 145*1e11; // 14500 Gwei, 10% of operational cost
 
     // The price feed estimate is used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use both values to
@@ -93,11 +96,13 @@ contract KeepRandomBeaconOperator {
 
     // Gas required to verify BLS signature and produce successful relay
     // entry. Excludes callback and DKG gas.
-    // TODO: Update once alt_bn128 gas costs reduction is implemented.
-    uint256 public entryVerificationGasEstimate = 523000;
+    uint256 public entryVerificationGasEstimate = 240000;
 
-    // Gas required to submit DKG result.
-    uint256 public dkgGasEstimate = 8100000;
+    // Gas required to submit DKG result. Excludes initiation of group selection.
+    uint256 public dkgGasEstimate = 1740000;
+
+    // Gas required to trigger DKG (starting group selection).
+    uint256 public groupSelectionGasEstimate = 100000;
 
     // Reimbursement for the submitter of the DKG result.
     // This value is set when a new DKG request comes to the operator contract.
@@ -120,8 +125,6 @@ contract KeepRandomBeaconOperator {
 
     uint256 internal currentEntryStartBlock;
     SigningRequest internal signingRequest;
-
-    bool internal entryInProgress;
 
     // Seed value used for the genesis group selection.
     // https://www.wolframalpha.com/input/?i=pi+to+78+digits
@@ -168,7 +171,7 @@ contract KeepRandomBeaconOperator {
         groups.activeGroupsThreshold = 5;
         groups.groupActiveTime = 3000;
 
-        dkgResultVerification.timeDKG = 7*(1+3);
+        dkgResultVerification.timeDKG = 7*(1+5);
         dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;
         dkgResultVerification.groupSize = groupSize;
         // TODO: For now, the required number of signatures is equal to group
@@ -217,10 +220,18 @@ contract KeepRandomBeaconOperator {
      * @dev Triggers the selection process of a new candidate group.
      * @param _newEntry New random beacon value that stakers will use to
      * generate their tickets.
+     * @param submitter Operator of this contract.
      */
-    function createGroup(uint256 _newEntry) public payable onlyServiceContract {
+    function createGroup(uint256 _newEntry, address payable submitter) public payable onlyServiceContract {
+        uint256 groupSelectionStartFee = groupSelectionGasEstimate
+            .mul(gasPriceWithFluctuationMargin(priceFeedEstimate));
+
         groupSelectionStarterContract = ServiceContract(msg.sender);
-        startGroupSelection(_newEntry, msg.value);
+        startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
+
+        // reimbursing a submitter that triggered group selection
+        (bool success, ) = stakingContract.magpieOf(submitter).call.value(groupSelectionStartFee)("");
+        require(success, "Failed reimbursing submitter for starting a group selection");
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
@@ -229,14 +240,7 @@ contract KeepRandomBeaconOperator {
             "Insufficient DKG fee"
         );
 
-        // dkgTimeout is the time after key generation protocol is expected to
-        // be complete plus the expected time to submit the result.
-        uint256 dkgTimeout = groupSelection.ticketSubmissionStartBlock +
-            groupSelection.ticketSubmissionTimeout +
-            dkgResultVerification.timeDKG +
-            groupSize * resultPublicationBlockStep;
-
-        require(!groupSelection.inProgress || block.number > dkgTimeout, "Group selection in progress");
+        require(isGroupSelectionPossible(), "Group selection in progress");
 
         // If previous group selection failed and there is reimbursement left
         // return it to the DKG fee pool.
@@ -249,6 +253,21 @@ contract KeepRandomBeaconOperator {
         groupSelection.start(_newEntry);
         emit GroupSelectionStarted(_newEntry);
         dkgSubmitterReimbursementFee = _payment;
+    }
+
+    function isGroupSelectionPossible() public view returns (bool) {
+        if (!groupSelection.inProgress) {
+            return true;
+        }
+
+        // dkgTimeout is the time after key generation protocol is expected to
+        // be complete plus the expected time to submit the result.
+        uint256 dkgTimeout = groupSelection.ticketSubmissionStartBlock +
+        groupSelection.ticketSubmissionTimeout +
+        dkgResultVerification.timeDKG +
+        groupSize * resultPublicationBlockStep;
+
+        return block.number > dkgTimeout;
     }
 
     /**
@@ -268,6 +287,7 @@ contract KeepRandomBeaconOperator {
         uint32 virtualStakerIndex;
 
         bytes memory ticketBytes = abi.encodePacked(ticket);
+        /* solium-disable-next-line */
         assembly {
             // ticket value is 8 bytes long
             ticketValue := mload(add(ticketBytes, 8))
@@ -378,14 +398,17 @@ contract KeepRandomBeaconOperator {
             uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
             dkgSubmitterReimbursementFee = 0;
             // Reimburse submitter with actual DKG cost.
-            magpie.transfer(reimbursementFee);
+            (bool success, ) = magpie.call.value(reimbursementFee)("");
+            require(success, "Failed reimburse actual DKG cost");
+
             // Return surplus to the contract that started DKG.
             groupSelectionStarterContract.fundDkgFeePool.value(surplus)();
         } else {
             // If submitter used higher gas price reimburse only dkgSubmitterReimbursementFee max.
             reimbursementFee = dkgSubmitterReimbursementFee;
             dkgSubmitterReimbursementFee = 0;
-            magpie.transfer(reimbursementFee);
+            (bool success, ) = magpie.call.value(reimbursementFee)("");
+            require(success, "Failed reimburse DKG fee");
         }
     }
 
@@ -420,10 +443,9 @@ contract KeepRandomBeaconOperator {
         address serviceContract,
         uint256 entryVerificationAndProfitFee
     ) internal {
-        require(!entryInProgress || hasEntryTimedOut(), "Beacon is busy");
+        require(!isEntryInProgress() || hasEntryTimedOut(), "Beacon is busy");
 
         currentEntryStartBlock = block.number;
-        entryInProgress = true;
 
         uint256 groupIndex = groups.selectGroup(uint256(keccak256(previousEntry)));
         signingRequest = SigningRequest(
@@ -443,7 +465,8 @@ contract KeepRandomBeaconOperator {
      * @param _groupSignature Group BLS signature over the concatenation of the
      * previous entry and seed.
      */
-    function relayEntry(bytes memory _groupSignature) public {
+    function relayEntry(bytes memory _groupSignature) public nonReentrant {
+        require(isEntryInProgress(), "Entry was submitted");
         require(!hasEntryTimedOut(), "Entry timed out");
 
         bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
@@ -465,16 +488,17 @@ contract KeepRandomBeaconOperator {
             msg.sender
         );
 
-        entryInProgress = false;
-
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        stakingContract.magpieOf(msg.sender).transfer(submitterReward);
+        (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(submitterReward)("");
+        require(success, "Failed send relay submitter reward");
 
         if (subsidy > 0) {
             ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
         }
+
+        currentEntryStartBlock = 0;
     }
 
     /**
@@ -539,12 +563,20 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
+     * @dev Returns true if generation of a new relay entry is currently in
+     * progress.
+     */
+    function isEntryInProgress() internal view returns (bool) {
+        return currentEntryStartBlock != 0;
+    }
+
+    /**
      * @dev Returns true if the currently ongoing new relay entry generation
      * operation timed out. There is a certain timeout for a new relay entry
      * to be produced, see `relayEntryTimeout` value.
      */
     function hasEntryTimedOut() internal view returns (bool) {
-        return entryInProgress && block.number > currentEntryStartBlock + relayEntryTimeout;
+        return currentEntryStartBlock != 0 && block.number > currentEntryStartBlock + relayEntryTimeout;
     }
 
     /**
@@ -630,17 +662,19 @@ contract KeepRandomBeaconOperator {
     }
 
     /**
-     * @dev Withdraws accumulated group member rewards for msg.sender
+     * @dev Withdraws accumulated group member rewards for operator
      * using the provided group index and member indices. Once the
      * accumulated reward is withdrawn from the selected group, member is
      * removed from it. Rewards can be withdrawn only from stale group.
-     *
+     * @param operator Operator address.
      * @param groupIndex Group index.
      * @param groupMemberIndices Array of member indices for the group member.
      */
-    function withdrawGroupMemberRewards(uint256 groupIndex, uint256[] memory groupMemberIndices) public {
-        uint256 accumulatedRewards = groups.withdrawFromGroup(groupIndex, groupMemberIndices);
-        stakingContract.magpieOf(msg.sender).transfer(accumulatedRewards);
+    function withdrawGroupMemberRewards(address operator, uint256 groupIndex, uint256[] memory groupMemberIndices) public nonReentrant {
+        uint256 accumulatedRewards = groups.withdrawFromGroup(operator, groupIndex, groupMemberIndices);
+        (bool success, ) = stakingContract.magpieOf(operator).call.value(accumulatedRewards)("");
+        require(success, "Failed withdraw rewards");
+        emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, accumulatedRewards, groupIndex);
     }
 
     /**
@@ -655,5 +689,20 @@ contract KeepRandomBeaconOperator {
     */
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups.getGroupPublicKey(groupIndex);
+    }
+
+    /**
+     * @dev Estimates gas for group creation. Includes the cost of DKG and the
+     * cost of triggering group selection.
+     */
+    function groupCreationGasEstimate() public view returns (uint256) {
+        return dkgGasEstimate.add(groupSelectionGasEstimate);
+    }
+
+     /**
+     * @dev Returns members of the given group by group public key.
+     */
+    function getGroupMembers(bytes memory groupPubKey) public view returns (address[] memory members) {
+        return groups.getGroupMembers(groupPubKey);
     }
 }

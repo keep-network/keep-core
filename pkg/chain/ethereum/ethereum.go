@@ -3,6 +3,7 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ipfs/go-log"
 
@@ -132,21 +133,54 @@ func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
 	return ec.keepRandomBeaconOperatorContract.SubmittedTicketsCount()
 }
 
-func (ec *ethereumChain) GetSelectedParticipants() (
-	[]chain.StakerAddress,
-	error,
-) {
-	selectedParticipants, err := ec.keepRandomBeaconOperatorContract.SelectedParticipants()
-	if err != nil {
+func (ec *ethereumChain) GetSelectedParticipants() ([]chain.StakerAddress, error) {
+	var stakerAddresses []chain.StakerAddress
+	fetchParticipants := func() error {
+		participants, err := ec.keepRandomBeaconOperatorContract.SelectedParticipants()
+		if err != nil {
+			return err
+		}
+
+		stakerAddresses = make([]chain.StakerAddress, len(participants))
+		for i, participant := range participants {
+			stakerAddresses[i] = participant.Bytes()
+		}
+
+		return nil
+	}
+
+	// The reason behind a retry functionality is Infura's load balancer synchronization
+	// problem. Whenever a Keep client is connected to Infura, it might experience
+	// a slight delay with block updates between ethereum clients. One or more
+	// clients might stay behind and report a block number 'n-1', whereas the
+	// actual block number is already 'n'. This delay results in error triggering
+	// a new group selection. To mitigate Infura's sync issue, a Keep client will
+	// retry calling for selected participants up to 4 times.
+	// Synchronization issue can occur on any setup where we have more than one
+	// Ethereum clients behind a load balancer.
+	if err := ec.withRetry(fetchParticipants); err != nil {
 		return nil, err
 	}
 
-	stakerAddresses := make([]chain.StakerAddress, len(selectedParticipants))
-	for i, selectedParticipant := range selectedParticipants {
-		stakerAddresses[i] = selectedParticipant.Bytes()
-	}
-
 	return stakerAddresses, nil
+}
+
+func (ec *ethereumChain) withRetry(fn func() error) error {
+	const numberOfRetries = 4
+	const delay = 250 * time.Millisecond
+
+	for i := 1; ; i++ {
+		err := fn()
+		if err != nil {
+			logger.Errorf("Error occurred [%v]; on [%v] retry", err, i)
+			if i == numberOfRetries {
+				return err
+			}
+			time.Sleep(delay)
+		} else {
+			return nil
+		}
+	}
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
@@ -303,6 +337,25 @@ func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) 
 
 func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.IsStaleGroup(groupPublicKey)
+}
+
+func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
+	[]chain.StakerAddress,
+	error,
+) {
+	members, err := ec.keepRandomBeaconOperatorContract.GetGroupMembers(
+		groupPublicKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	stakerAddresses := make([]chain.StakerAddress, len(members))
+	for i, member := range members {
+		stakerAddresses[i] = member.Bytes()
+	}
+
+	return stakerAddresses, nil
 }
 
 func (ec *ethereumChain) OnDKGResultSubmitted(

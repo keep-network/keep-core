@@ -1,5 +1,6 @@
 import Web3 from 'web3'
-import BigNumber from "bignumber.js"
+import BigNumber from 'bignumber.js'
+import moment from 'moment'
 
 export function displayAmount(amount, decimals, precision) {
   if (amount) {
@@ -13,35 +14,37 @@ export function formatAmount(amount, decimals) {
   return amount.times(new BigNumber(10).pow(new BigNumber(decimals)))
 }
 
-export function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+export const getWeb3 = () => {
+  if (window.ethereum || window.web3) {
+    return new Web3(window.ethereum || window.web3.currentProvider)
+  }
+
+  return null
 }
 
-let web3;
+export const getWeb3SocketProvider = () => {
+  return new Web3(process.env.REACT_APP_ETH_NETWORK_WEB_SOCKET_ADDRESS)
+}
 
-export const getWeb3 = async () => {
+export const shortenAddress = (address) => {
+  const firstFourCharacters = address.substr(2, 4)
+  const lastFourCharacters = address.substr(address.length - 4, address.length - 1)
 
-  if (web3) return web3
+  return '0x'.concat(firstFourCharacters).concat('...').concat(lastFourCharacters)
+}
 
-  // Modern dapp browsers...
-  if (window.ethereum) {
-    web3 = new Web3(window.ethereum)
-    try {
-      // Request account access if needed
-      await window.ethereum.enable()
-      // Acccounts now exposed
-      return web3;
-    } catch (error) {
-      return error;
-    }
+export const wait = (ms) => {
+  return new Promise((resolve) => {
+    return setTimeout(resolve, ms)
+  })
+}
+
+export const formatDate = (dateMillis) => {
+  const now = moment()
+  const date = moment(dateMillis)
+
+  if (now.isSame(date, 'year')) {
+    return date.format('MMM DD')
   }
-  // Legacy dapp browsers...
-  else if (window.web3) {
-    // Use Mist/MetaMask's provider.
-    web3 = new Web3(window.web3.currentProvider)
-    console.log("Injected web3 detected.")
-    return web3;
-  }
-  
-  return null;
+  return date.format('MMM DD YYYY')
 }
