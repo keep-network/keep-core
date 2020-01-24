@@ -41,7 +41,7 @@ export const RewardsGroupItem = ({ groupIndex, groupPublicKey, membersIndeces, r
   const [isFetching, withdraw] = useWithdrawAction(groupIndex, membersIndeces)
 
   return (
-    <div className='group-item'>
+    <li className='group-item'>
       <div className='group-key'>
         <AddressShortcut address={groupPublicKey} />
         <span>GROUP PUBLIC KEY</span>
@@ -59,6 +59,6 @@ export const RewardsGroupItem = ({ groupIndex, groupPublicKey, membersIndeces, r
       >
         WITHDRAW
       </Button>
-    </div>
+    </li>
   )
 }
