@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./TokenStaking.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
@@ -22,7 +23,7 @@ interface ServiceContract {
  * The contract is not upgradeable. New functionality can be implemented by deploying
  * new versions following Keep client update and re-authorization by the stakers.
  */
-contract KeepRandomBeaconOperator is ReentrancyGuard {
+contract KeepRandomBeaconOperator is ReentrancyGuard, Ownable {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
     using GroupSelection for GroupSelection.Storage;
@@ -45,9 +46,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     GroupSelection.Storage groupSelection;
     Groups.Storage groups;
     DKGResultVerification.Storage dkgResultVerification;
-
-    // Contract owner.
-    address internal owner;
 
     address[] internal serviceContracts;
 
@@ -139,14 +137,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(owner == msg.sender, "Caller is not the owner");
-        _;
-    }
-
-    /**
      * @dev Checks if sender is authorized.
      */
     modifier onlyServiceContract() {
@@ -158,8 +148,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     constructor(address _serviceContract, address _stakingContract) public {
-        owner = msg.sender;
-
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
 
