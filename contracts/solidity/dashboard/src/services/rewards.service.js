@@ -26,9 +26,9 @@ const fetchAvailableRewards = async (web3Context) => {
       if (Object.keys(groupMemberIndices[groupPublicKey]).length === 0) {
         continue
       }
-      const reward = await getAvailableRewardFromGroupInEther(groupPublicKey, groupMemberIndices, web3Context)
+      const { reward, rewardPerMemberInWei } = await getAvailableRewardFromGroupInEther(groupPublicKey, groupMemberIndices, web3Context)
       totalRewardsBalance = totalRewardsBalance.add(utils.toBN(utils.toWei(reward, 'ether')))
-      groups.push({ groupIndex, groupPublicKey, membersIndeces: groupMemberIndices[groupPublicKey], reward })
+      groups.push({ groupIndex, groupPublicKey, membersIndeces: groupMemberIndices[groupPublicKey], reward, rewardPerMemberInWei })
     }
     return [groups, utils.fromWei(totalRewardsBalance.toString(), 'ether')]
   } catch (error) {
@@ -48,7 +48,7 @@ const getAvailableRewardFromGroupInEther = async (groupPublicKey, groupMemberInd
   const groupMemberReward = await keepRandomBeaconOperatorContract.methods.getGroupMemberRewards(groupPublicKey).call()
   const wholeReward = utils.toBN(groupMemberReward).mul(utils.toBN(rewardsMultiplier))
 
-  return utils.fromWei(wholeReward, 'ether')
+  return { reward: utils.fromWei(wholeReward, 'ether'), rewardPerMemberInWei: groupMemberReward }
 }
 
 const withdrawRewardFromGroup = async (groupIndex, groupMembersIndices, web3Context) => {
