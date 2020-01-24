@@ -92,8 +92,8 @@ const fetchWithdrawalHistory = async (web3Context) => {
         const { blockNumber, returnValues: { groupIndex, amount } } = event
         const withdrawnAt = (await eth.getBlock(blockNumber)).timestamp
         const groupPublicKey = await keepRandomBeaconOperatorContract.methods.getGroupPublicKey(groupIndex).call()
-        return { groupPublicKey, date: formatDate(withdrawnAt * 1000), amount: utils.fromWei(amount, 'ether') }
-      })
+        return { blockNumber, groupPublicKey, date: formatDate(withdrawnAt * 1000), amount: utils.fromWei(amount, 'ether') }
+      }).reverse()
     )
   } catch (error) {
     throw error
