@@ -612,12 +612,16 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Checks that the specified user has enough stake.
+     * @dev Checks that the specified user has enough stake and that this
+     * contract has been authorized by the staker for potential slashing.
      * @param staker Specifies the identity of the staker.
      * @return True if staked enough to participate in the group, false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return stakingContract.balanceOf(staker) >= minimumStake;
+        return (
+            stakingContract.isAuthorized(staker, address(this)) &&
+            stakingContract.balanceOf(staker) >= minimumStake;
+        );
     }
 
     /**

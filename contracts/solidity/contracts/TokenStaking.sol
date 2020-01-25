@@ -195,4 +195,14 @@ contract TokenStaking is StakeDelegatable {
     function authorizeOperatorContract(address _operator, address _operatorContract) public onlyOperatorAuthorizer(_operator) {
         authorizations[_operatorContract][_operator] = true;
     }
+
+    /**
+     * @dev Checks if operator contract has been authorized for the provided operator.
+     * @param _operator address of stake operator.
+     * @param _operatorContract address of operator contract.
+     * @return Returns True if operator contract has been authorized for the provided operator.
+     */
+    function isAuthorized(address _operator, address _operatorContract) public view returns (bool) {
+        return authorizations[_operatorContract][_operator];
+    }
 }
