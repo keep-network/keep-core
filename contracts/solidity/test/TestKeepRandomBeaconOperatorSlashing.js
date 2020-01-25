@@ -5,7 +5,7 @@ import {bls} from './helpers/data'
 import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 
 contract('KeepRandomBeaconOperator', function(accounts) {
-  let token, stakingContract, serviceContract, operatorContract, minimumStake, largeStake, entryFeeEstimate,
+  let token, stakingContract, serviceContract, operatorContract, minimumStake, largeStake, entryFeeEstimate, groupIndex,
     owner = accounts[0],
     operator1 = accounts[1],
     operator2 = accounts[2],
@@ -26,6 +26,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     serviceContract = contracts.serviceContract
     operatorContract = contracts.operatorContract
 
+    groupIndex = 0
     await operatorContract.registerNewGroup(bls.groupPubKey)
     await operatorContract.addGroupMember(bls.groupPubKey, operator1)
     await operatorContract.addGroupMember(bls.groupPubKey, operator2)
@@ -50,7 +51,6 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   })
 
   it("should be able to report unauthorized signing", async () => {
-    let groupIndex = await operatorContract.getGroupIndex(bls.groupPubKey)
     await operatorContract.reportUnauthorizedSigning(
       groupIndex,
       bls.signedGroupPubKey,
@@ -73,7 +73,6 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   })
 
   it("should ignore invalid report of unauthorized signing", async () => {
-    let groupIndex = await operatorContract.getGroupIndex(bls.groupPubKey)
     await operatorContract.reportUnauthorizedSigning(
       groupIndex,
       bls.nextGroupSignature, // Wrong signature
