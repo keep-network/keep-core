@@ -1,6 +1,7 @@
 package entry
 
 import (
+	"context"
 	"fmt"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -12,6 +13,18 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
+
+// EntryMessagingStateDelayBlocks is a delay in blocks for a state exchanging
+// network messages as a part of its execution.
+//
+// One block is given for all state machines cooperating over the network
+// so that they can enter the given state before any message for this
+// state is sent. This way we make sure that no messages are dropped.
+const EntryMessagingStateDelayBlocks = 1
+
+// EntryMessagingStateActiveBlocks is a number of blocks for which a state
+// exchanging network messages as a part of its execution should be active.
+const EntryMessagingStateActiveBlocks = 3
 
 type signingState = state.State
 
@@ -37,14 +50,14 @@ type signatureShareState struct {
 }
 
 func (sss *signatureShareState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return EntryMessagingStateDelayBlocks
 }
 
 func (sss *signatureShareState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return EntryMessagingStateActiveBlocks
 }
 
-func (sss *signatureShareState) Initiate() error {
+func (sss *signatureShareState) Initiate(ctx context.Context) error {
 	share, err := sss.signer.CalculateSignatureShare(sss.previousEntry)
 	if err != nil {
 		return fmt.Errorf("could not evaluate signature share: [%v]", err)
@@ -56,7 +69,7 @@ func (sss *signatureShareState) Initiate() error {
 		sss.MemberIndex(),
 		sss.selfSignatureShare.Marshal(),
 	}
-	if err := sss.channel.Send(message); err != nil {
+	if err := sss.channel.Send(ctx, message); err != nil {
 		return err
 	}
 	return nil
@@ -112,7 +125,7 @@ func (scs *signatureCompleteState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (scs *signatureCompleteState) Initiate() error {
+func (scs *signatureCompleteState) Initiate(ctx context.Context) error {
 	seenShares := make(map[group.MemberIndex]*bn256.G1)
 	seenShares[scs.MemberIndex()] = scs.selfSignatureShare
 	logger.Debugf(
@@ -203,7 +216,7 @@ func (ess *entrySubmissionState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (ess *entrySubmissionState) Initiate() error {
+func (ess *entrySubmissionState) Initiate(ctx context.Context) error {
 	submitter := &relayEntrySubmitter{
 		chain:        ess.relayChain,
 		blockCounter: ess.blockCounter,
@@ -212,7 +225,7 @@ func (ess *entrySubmissionState) Initiate() error {
 
 	return submitter.submitRelayEntry(
 		ess.signature,
-		ess.signer.GroupPublicKeyBytesCompressed(),
+		ess.signer.GroupPublicKeyBytes(),
 		ess.entrySubmissionStartBlockHeight,
 	)
 }

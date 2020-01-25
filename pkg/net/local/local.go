@@ -4,14 +4,22 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"sync"
+	"time"
+
+	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 )
+
+var logger = log.Logger("keep-net-local")
 
 type localIdentifier string
 
@@ -112,9 +120,12 @@ func channel(name string, staticKey *key.NetworkPublic) net.BroadcastChannel {
 		identifier:           &identifier,
 		staticKey:            staticKey,
 		messageHandlersMutex: sync.Mutex{},
-		messageHandlers:      make([]net.HandleMessageFunc, 0),
+		messageHandlers:      make([]*messageHandler, 0),
 		unmarshalersMutex:    sync.Mutex{},
 		unmarshalersByType:   make(map[string]func() net.TaggedUnmarshaler, 0),
+		retransmissionTicker: retransmission.NewTimeTicker(
+			context.Background(), 50*time.Millisecond,
+		),
 	}
 	channels[name] = append(channels[name], channel)
 
@@ -135,103 +146,170 @@ func randomIdentifier() string {
 	return string(runes)
 }
 
+type messageHandler struct {
+	ctx     context.Context
+	channel chan retransmission.NetworkMessage
+}
+
 type localChannel struct {
 	name                 string
 	identifier           net.TransportIdentifier
 	staticKey            *key.NetworkPublic
 	messageHandlersMutex sync.Mutex
-	messageHandlers      []net.HandleMessageFunc
+	messageHandlers      []*messageHandler
 	unmarshalersMutex    sync.Mutex
 	unmarshalersByType   map[string]func() net.TaggedUnmarshaler
+	retransmissionTicker *retransmission.Ticker
 }
 
 func (lc *localChannel) Name() string {
 	return lc.name
 }
 
-func doSend(channel *localChannel, payload net.TaggedMarshaler) error {
+func doSend(channel *localChannel, message *pb.NetworkMessage) error {
 	channelsMutex.Lock()
 	targetChannels := channels[channel.name]
 	channelsMutex.Unlock()
 
-	bytes, err := payload.Marshal()
-	if err != nil {
-		return err
-	}
-
-	unmarshaler, found := channel.unmarshalersByType[payload.Type()]
+	unmarshaler, found := channel.unmarshalersByType[string(message.Type)]
 	if !found {
-		return fmt.Errorf("Couldn't find unmarshaler for type %s", payload.Type())
+		return fmt.Errorf("couldn't find unmarshaler for type %s", string(message.Type))
 	}
 
 	unmarshaled := unmarshaler()
-	err = unmarshaled.Unmarshal(bytes)
+	err := unmarshaled.Unmarshal(message.Payload)
 	if err != nil {
 		return err
 	}
 
+	fingerprint := retransmission.CalculateFingerprint(
+		channel.identifier,
+		message.Payload,
+	)
+
+	protocolMessage := retransmission.NewNetworkMessage(
+		internal.BasicMessage(
+			channel.identifier,
+			unmarshaled,
+			"local",
+			key.Marshal(channel.staticKey),
+		),
+		fingerprint,
+		message.Retransmission,
+	)
+
 	for _, targetChannel := range targetChannels {
-		targetChannel.deliver(channel.identifier, unmarshaled) // TODO error handling?
+		targetChannel.deliver(protocolMessage)
 	}
 
 	return nil
 }
 
-func (lc *localChannel) deliver(transportIdentifier net.TransportIdentifier, payload interface{}) {
+func (lc *localChannel) deliver(message retransmission.NetworkMessage) {
 	lc.messageHandlersMutex.Lock()
-	snapshot := make([]net.HandleMessageFunc, len(lc.messageHandlers))
+	snapshot := make([]*messageHandler, len(lc.messageHandlers))
 	copy(snapshot, lc.messageHandlers)
 	lc.messageHandlersMutex.Unlock()
 
-	message :=
-		internal.BasicMessage(
-			transportIdentifier,
-			payload,
-			"local",
-			key.Marshal(lc.staticKey),
-		)
-
 	for _, handler := range snapshot {
-		// Invoking each handler in a separate goroutine in order
-		// to avoid situation when one of the handlers blocks the
-		// whole loop execution.
-		go handler.Handler(message)
+		go func(message retransmission.NetworkMessage, handler *messageHandler) {
+			select {
+			case handler.channel <- message:
+			// Nothing to do here; we block until the message is handled
+			// or until the context gets closed.
+			// This way we don't lose any message but also don't stay
+			// with any dangling goroutines if there is no longer anyone
+			// to receive messages.
+			case <-handler.ctx.Done():
+				return
+			}
+		}(message, handler)
 	}
 }
 
-func (lc *localChannel) Send(message net.TaggedMarshaler) error {
-	return doSend(lc, message)
+func (lc *localChannel) Send(ctx context.Context, message net.TaggedMarshaler) error {
+	messageProto, err := lc.messageProto(message)
+	if err != nil {
+		return err
+	}
+
+	retransmission.ScheduleRetransmissions(
+		ctx,
+		lc.retransmissionTicker,
+		messageProto,
+		func(msg *pb.NetworkMessage) error {
+			return doSend(lc, msg)
+		},
+	)
+
+	return doSend(lc, messageProto)
 }
 
-func (lc *localChannel) Recv(handler net.HandleMessageFunc) error {
+func (lc *localChannel) messageProto(
+	message net.TaggedMarshaler,
+) (*pb.NetworkMessage, error) {
+	payloadBytes, err := message.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.NetworkMessage{
+		Payload: payloadBytes,
+		Sender:  []byte(lc.identifier.String()),
+		Type:    []byte(message.Type()),
+	}, nil
+}
+
+func (lc *localChannel) Recv(ctx context.Context, handler func(m net.Message)) {
+	messageHandler := &messageHandler{
+		ctx:     ctx,
+		channel: make(chan retransmission.NetworkMessage),
+	}
+
 	lc.messageHandlersMutex.Lock()
-	lc.messageHandlers = append(lc.messageHandlers, handler)
+	lc.messageHandlers = append(lc.messageHandlers, messageHandler)
 	lc.messageHandlersMutex.Unlock()
 
-	return nil
+	handleWithRetransmissions := retransmission.WithRetransmissionSupport(handler)
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				logger.Debug("context is done, removing handler")
+				lc.removeHandler(messageHandler)
+				return
+
+			case msg := <-messageHandler.channel:
+				// Go language specification says that if one or more of the
+				// communications in the select statement can proceed, a single
+				// one that will proceed is chosen via a uniform pseudo-random
+				// selection.
+				// Thus, it can happen this communication is called when ctx is
+				// already done. Since we guarantee in the network channel API
+				// that handler is not called after ctx is done (client code
+				// could e.g. perform come cleanup), we need to double-check
+				// the context state here.
+				if messageHandler.ctx.Err() != nil {
+					continue
+				}
+
+				handleWithRetransmissions(msg)
+			}
+		}
+	}()
 }
 
-func (lc *localChannel) UnregisterRecv(handlerType string) error {
+func (lc *localChannel) removeHandler(handler *messageHandler) {
 	lc.messageHandlersMutex.Lock()
 	defer lc.messageHandlersMutex.Unlock()
 
-	removedCount := 0
-
-	// updated slice shares the same backing array and capacity as the original,
-	// so the storage is reused for the filtered slice.
-	updated := lc.messageHandlers[:0]
-
-	for _, mh := range lc.messageHandlers {
-		if mh.Type != handlerType {
-			updated = append(updated, mh)
-		} else {
-			removedCount++
+	for i, h := range lc.messageHandlers {
+		if h.channel == handler.channel {
+			lc.messageHandlers[i] = lc.messageHandlers[len(lc.messageHandlers)-1]
+			lc.messageHandlers = lc.messageHandlers[:len(lc.messageHandlers)-1]
 		}
 	}
-
-	lc.messageHandlers = updated[:len(lc.messageHandlers)-removedCount]
-
-	return nil
 }
 
 func (lc *localChannel) RegisterUnmarshaler(
@@ -250,7 +328,7 @@ func (lc *localChannel) RegisterUnmarshaler(
 	return
 }
 
-func (lc *localChannel) AddFilter(filter net.BroadcastChannelFilter) error {
+func (lc *localChannel) SetFilter(filter net.BroadcastChannelFilter) error {
 	return nil // no-op
 }
 

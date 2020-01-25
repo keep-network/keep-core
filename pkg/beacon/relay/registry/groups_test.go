@@ -9,6 +9,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-common/pkg/persistence"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -51,7 +52,7 @@ func TestRegisterGroup(t *testing.T) {
 
 	gr.RegisterGroup(signer1, channelName1)
 
-	actual := gr.GetGroup(signer1.GroupPublicKeyBytesCompressed())
+	actual := gr.GetGroup(signer1.GroupPublicKeyBytes())
 
 	if actual == nil {
 		t.Fatalf(
@@ -94,7 +95,7 @@ func TestLoadGroup(t *testing.T) {
 		Signer:      signer1,
 		ChannelName: channelName1,
 	}
-	actualMembership1 := gr.GetGroup(signer1.GroupPublicKeyBytesCompressed())[0]
+	actualMembership1 := gr.GetGroup(signer1.GroupPublicKeyBytes())[0]
 	if !reflect.DeepEqual(expectedMembership1, actualMembership1) {
 		t.Errorf("\nexpected: %v\nactual:   %v", expectedMembership1, actualMembership1)
 	}
@@ -103,7 +104,7 @@ func TestLoadGroup(t *testing.T) {
 		Signer:      signer2,
 		ChannelName: channelName2,
 	}
-	actualMembership2 := gr.GetGroup(signer2.GroupPublicKeyBytesCompressed())[0]
+	actualMembership2 := gr.GetGroup(signer2.GroupPublicKeyBytes())[0]
 	if !reflect.DeepEqual(expectedMembership2, actualMembership2) {
 		t.Errorf("\nexpected: %v\nactual:   %v", expectedMembership2, actualMembership2)
 	}
@@ -120,25 +121,25 @@ func TestUnregisterStaleGroups(t *testing.T) {
 	gr.RegisterGroup(signer2, channelName1)
 	gr.RegisterGroup(signer3, channelName1)
 
-	mockChain.markAsStale(signer2.GroupPublicKeyBytesCompressed())
+	mockChain.markAsStale(signer2.GroupPublicKeyBytes())
 
 	gr.UnregisterStaleGroups()
 
-	group1 := gr.GetGroup(signer1.GroupPublicKeyBytesCompressed())
+	group1 := gr.GetGroup(signer1.GroupPublicKeyBytes())
 	if group1 == nil {
 		t.Fatalf("Expecting a group, but nil was returned instead")
 	}
 
-	group2 := gr.GetGroup(signer2.GroupPublicKeyBytesCompressed())
+	group2 := gr.GetGroup(signer2.GroupPublicKeyBytes())
 	if group2 != nil {
 		t.Fatalf("Group2 was expected to be unregistered, but is still present")
 	}
 	if len(persistenceMock.archivedGroups) != 1 ||
-		persistenceMock.archivedGroups[0] != hex.EncodeToString(signer2.GroupPublicKeyBytesCompressed()) {
+		persistenceMock.archivedGroups[0] != hex.EncodeToString(signer2.GroupPublicKeyBytes()) {
 		t.Fatalf("Group2 was expected to be archived")
 	}
 
-	group3 := gr.GetGroup(signer3.GroupPublicKeyBytesCompressed())
+	group3 := gr.GetGroup(signer3.GroupPublicKeyBytes())
 	if group3 == nil {
 		t.Fatalf("Expecting a group, but nil was returned instead")
 	}
@@ -166,6 +167,12 @@ func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) 
 		}
 	}
 	return false, nil
+}
+
+func (mgri *mockGroupRegistrationInterface) GetGroupMembers(
+	groupPublicKey []byte,
+) ([]chain.StakerAddress, error) {
+	return nil, nil // no-op
 }
 
 type persistenceHandleMock struct {

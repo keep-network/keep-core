@@ -74,6 +74,9 @@ type GroupRegistrationInterface interface {
 	// in the past. Stale group is never selected by the chain to any new
 	// operation.
 	IsStaleGroup(groupPublicKey []byte) (bool, error)
+	// GetGroupMembers returns `GroupSize` slice of addresses of
+	// participants which have been selected to the group with given public key.
+	GetGroupMembers(groupPublicKey []byte) ([]StakerAddress, error)
 }
 
 // GroupInterface defines the subset of the relay chain interface that pertains

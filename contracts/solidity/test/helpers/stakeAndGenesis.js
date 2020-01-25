@@ -36,9 +36,9 @@ export default async function stakeAndGenesis(accounts, contracts) {
 
     await operatorContract.setMinimumStake(minimumStake);
 
-    await stakeDelegate(stakingContract, token, owner, operator1, operator1, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)));
-    await stakeDelegate(stakingContract, token, owner, operator2, operator2, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)));
-    await stakeDelegate(stakingContract, token, owner, operator3, operator3, minimumStake.mul(web3.utils.toBN(operator3StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator1, operator1, operator1, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator2, operator2, operator1, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator3, operator3, operator1, minimumStake.mul(web3.utils.toBN(operator3StakingWeight)));
 
     let groupSize = await operatorContract.groupSize();
 

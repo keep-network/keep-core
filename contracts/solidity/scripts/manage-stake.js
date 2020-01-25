@@ -4,7 +4,7 @@
   To stake KEEP tokens, use 'stake' command and provide three parameters:
   - operator address
   - amount of KEEP to stake
-  - KEEP owner address (we assume it's also magpie/beneficiary address)
+  - KEEP owner address (we assume it's also magpie/beneficiary/authorizer address)
 
     $ truffle exec scripts/manage-stake.js stake 0x524f2E0176350d950fA630D9A5a59A0a190DAf48 10000 0xFa3DA235947AaB49D439f3BcB46effD1a7237E32
 
@@ -63,11 +63,15 @@ module.exports = async function() {
         const amountToStake = process.argv[6]; 
         const owner = process.argv[7];
         const magpie = owner;
+        const authorizer = owner;
 
-        console.log(`Staking ${amountToStake} tokens from ${owner} to operator ${operator} using beneficiary ${magpie}`); 
+        console.log(`Staking ${amountToStake} tokens from ${owner} to operator ${operator} using beneficiary ${magpie} and authorizer ${authorizer}`);
        
-        const signature = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(owner), operator)).substr(2), 'hex');
-        const delegation = '0x' + Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature]).toString('hex');
+        const delegation = '0x' + Buffer.concat([
+            Buffer.from(magpie.substr(2), 'hex'),
+            Buffer.from(operator.substr(2), 'hex'),
+            Buffer.from(authorizer.substr(2), 'hex')
+        ]).toString('hex');
     
         try {
             staked = await keepToken.approveAndCall(

@@ -97,32 +97,6 @@ library Groups {
     }
 
     /**
-     * @dev Gets group public key in a compressed form.
-     */
-    function getGroupPublicKeyCompressed(
-        Storage storage self,
-        uint256 groupIndex
-    ) public view returns (bytes memory) {
-        return AltBn128.g2Compress(AltBn128.g2Unmarshal(self.groups[groupIndex].groupPubKey));
-    }
-
-    /**
-     * @dev Gets group index.
-     */
-    function getGroupIndex(
-        Storage storage self,
-        bytes memory groupPubKey
-    ) public view returns (uint256 groupIndex) {
-        for (uint i = 0; i < self.groups.length; i++) {
-            if (self.groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                return i;
-            }
-        }
-
-        revert("Group does not exist");
-    }
-
-    /**
      * @dev Gets group member.
      */
     function getGroupMember(
@@ -247,7 +221,7 @@ library Groups {
             }
         }
 
-        return true; // no group found, consider it as a stale group
+        revert("Group does not exist");
     }
 
     /**
@@ -341,25 +315,26 @@ library Groups {
     }
 
     /**
-     * @dev Withdraws accumulated group member rewards for msg.sender
+     * @dev Withdraws accumulated group member rewards for operator
      * using the provided group index and member indices. Once the
      * accumulated reward is withdrawn from the selected group, member is
      * removed from it. Rewards can be withdrawn only from stale group.
-     *
+     * @param operator Operator address.
      * @param groupIndex Group index.
      * @param groupMemberIndices Array of member indices for the group member.
      */
     function withdrawFromGroup(
         Storage storage self,
+        address operator,
         uint256 groupIndex,
         uint256[] memory groupMemberIndices
     ) public returns (uint256 rewards) {
+        bool isExpired = self.expiredGroupOffset > groupIndex;
+        bool isStale = groupStaleTime(self, self.groups[groupIndex]) < block.number;
+        require(isExpired && isStale, "Group must be expired and stale");
+        bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
         for (uint i = 0; i < groupMemberIndices.length; i++) {
-            bool isExpired = self.expiredGroupOffset > groupIndex;
-            bool isStale = groupStaleTime(self, self.groups[groupIndex]) < block.number;
-
-            bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
-            if (isExpired && isStale && msg.sender == self.groupMembers[groupPublicKey][groupMemberIndices[i]]) {
+            if (operator == self.groupMembers[groupPublicKey][groupMemberIndices[i]]) {
                 delete self.groupMembers[groupPublicKey][groupMemberIndices[i]];
                 rewards = rewards.add(self.groupMemberRewards[groupPublicKey]);
             }
@@ -408,5 +383,14 @@ library Groups {
             terminateGroup(self, groupIndex);
             self.stakingContract.seize(minimumStake, 100, msg.sender, membersOf(self, groupPubKey));
         }
+    }
+
+    /**
+     * @dev Returns members of the given group by group public key.
+     *
+     * @param groupPubKey Group public key.
+     */
+    function getGroupMembers(Storage storage self, bytes memory groupPubKey) public view returns (address[] memory ) {
+        return self.groupMembers[groupPubKey];
     }
 }

@@ -5,5 +5,5 @@ export const colors = {
   lochinvar: '#2f9278',
   goldenTainoi: '#ffce56',
   malibu: 'rgba(92,182,228,1)',
-  malibuTransparent: 'rgba(92,182,228,0.4)'
+  malibuTransparent: 'rgba(92,182,228,0.4)',
 }

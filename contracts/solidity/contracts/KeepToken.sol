@@ -15,7 +15,7 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 contract KeepToken is ERC20Burnable {
     string public constant NAME = "KEEP Token";
     string public constant SYMBOL = "KEEP";
-    uint8 public constant DECIMALS = 18; // The number of digits after the decimal place when displaying token values on-screen. 
+    uint8 public constant DECIMALS = 18; // The number of digits after the decimal place when displaying token values on-screen.
     uint256 public constant INITIAL_SUPPLY = 10**27; // 1 billion tokens, 18 decimal places.
 
     /**
@@ -27,7 +27,7 @@ contract KeepToken is ERC20Burnable {
 
     /**
      * @notice Set allowance for other address and notify.
-     * Allows `_spender` to spend no more than `_value` tokens 
+     * Allows `_spender` to spend no more than `_value` tokens
      * on your behalf and then ping the contract about it.
      * @param _spender The address authorized to spend.
      * @param _value The max amount they can spend.

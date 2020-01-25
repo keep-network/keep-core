@@ -1,6 +1,7 @@
 import React from 'react'
 
-export const Web3Context = React.createContext({ 
+export const Web3Context = React.createContext({
+  web3: null,
   yourAddress: '',
   networkType: '',
   token: { options: { address: '' } },
@@ -9,14 +10,23 @@ export const Web3Context = React.createContext({
   utils: {},
   eth: {},
   error: '',
-});
+  eventToken: { options: { address: '' } },
+  eventStakingContract: { options: { address: '' } },
+  eventGrantContract: { options: { address: '' } },
+})
 
-const WithWeb3Context = (Component) => {
+const withWeb3Context = (Component) => {
   return (props) => (
     <Web3Context.Consumer>
-      {web3 =>  <Component {...props} web3={web3} />}
+      {({ eventToken, eventStakingContract, eventGrantContract, ...web3 }) => (
+        <Component
+          {...props}
+          web3={web3}
+          web3EventProvider={{ eventGrantContract, eventStakingContract, eventToken }}
+        />
+      )}
     </Web3Context.Consumer>
   )
 }
 
-export default WithWeb3Context
+export default withWeb3Context

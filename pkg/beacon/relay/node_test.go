@@ -9,7 +9,7 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
-func TestCandidateGroupMembersFilter(t *testing.T) {
+func TestCreateGroupMemberFilter(t *testing.T) {
 	signing := &mockSigning{}
 
 	stakersPublicKeys := make([]ecdsa.PublicKey, 5)
@@ -24,7 +24,7 @@ func TestCandidateGroupMembersFilter(t *testing.T) {
 	}
 
 	// Allow only stakers with index 1 and 2
-	filter := candidateGroupMembersFilter(stakersAddresses[1:3], signing)
+	filter := createGroupMemberFilter(stakersAddresses[1:3], signing)
 
 	expectedResults := []bool{false, true, true, false, false}
 	for i, stakerPublicKey := range stakersPublicKeys {
