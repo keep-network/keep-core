@@ -33,9 +33,9 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     minimumStake = await operatorContract.minimumStake()
     largeStake = minimumStake.muln(2)
-    await stakeDelegate(stakingContract, token, owner, operator1, owner, largeStake)
-    await stakeDelegate(stakingContract, token, owner, operator2, owner, minimumStake)
-    await stakeDelegate(stakingContract, token, owner, operator3, owner, minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator1, owner, owner, largeStake)
+    await stakeDelegate(stakingContract, token, owner, operator2, owner, owner, minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator3, owner, owner, minimumStake)
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate})
