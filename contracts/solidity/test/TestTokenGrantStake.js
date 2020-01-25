@@ -6,19 +6,22 @@ import grantTokens from './helpers/grantTokens';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
+const Registry = artifacts.require("./Registry.sol");
 
 contract('TestTokenGrantStake', function(accounts) {
 
-  let token, grantContract, stakingContract,
+  let token, registry, grantContract, stakingContract,
     id, amount,
     account_one = accounts[0],
     account_two = accounts[3],
     account_two_operator = accounts[4],
-    account_two_magpie = accounts[5];
+    account_two_magpie = accounts[5],
+    account_two_authorizer = accounts[6];
 
   beforeEach(async () => {
     token = await KeepToken.new();
-    stakingContract = await TokenStaking.new(token.address, duration.days(30));
+    registry = await Registry.new();
+    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(30));
     grantContract = await TokenGrant.new(token.address, stakingContract.address);
 
     let vestingDuration = duration.days(60),
@@ -36,7 +39,9 @@ contract('TestTokenGrantStake', function(accounts) {
 
     let delegation = Buffer.concat([
       Buffer.from(account_two_magpie.substr(2), 'hex'),
-      Buffer.from(account_two_operator.substr(2), 'hex')]);
+      Buffer.from(account_two_operator.substr(2), 'hex'),
+      Buffer.from(account_two_authorizer.substr(2), 'hex')
+    ]);
 
     // should throw if stake granted tokens called by anyone except grant grantee
     await expectThrow(grantContract.stake(id, stakingContract.address, amount, delegation));

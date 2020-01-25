@@ -41,9 +41,9 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     await operatorContract.addGroupMember(group, operator2);
     await operatorContract.addGroupMember(group, operator3);
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, 0);
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, 0);
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, 0);
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, 0);
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, 0);
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, 0);
 
     entryFee = await serviceContract.entryFeeBreakdown()
   });

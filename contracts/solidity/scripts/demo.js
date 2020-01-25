@@ -34,11 +34,13 @@ module.exports = async function() {
   for(let i = 0; i < 5; i++) {
     let operator = accounts[i]
     let magpie = accounts[i] // The address where the rewards for participation are sent.
+    let authorizer = accounts[i] // Authorizer authorizes operator contracts the staker operates on.
 
     // The owner provides to the contract a magpie address and the operator address. 
     let delegation = '0x' + Buffer.concat([
       Buffer.from(magpie.substr(2), 'hex'),
-      Buffer.from(operator.substr(2), 'hex')
+      Buffer.from(operator.substr(2), 'hex'),
+      Buffer.from(authorizer.substr(2), 'hex')
     ]).toString('hex');
 
     staked = await token.approveAndCall(
