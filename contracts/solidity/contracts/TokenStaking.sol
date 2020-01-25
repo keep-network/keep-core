@@ -133,23 +133,26 @@ contract TokenStaking is StakeDelegatable {
         return (withdrawals[_operator].amount, withdrawals[_operator].createdAt);
     }
 
-    // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-    function authorizedTransferFrom(address from, address to, uint256 amount) public {
-        stakeBalances[from] = stakeBalances[from].sub(amount);
-        stakeBalances[to] = stakeBalances[to].add(amount);
-    }
-
-    // TODO: Implement token transfer authorization
+    /**
+     * @dev Slash provided token amount from every member in the misbehaved
+     * operators array and burn 100% of all the tokens.
+     * @param amount Token amount to slash from every misbehaved operator.
+     * @param misbehavedOperators Array of addresses to seize the tokens from.
+     */
     function slash(uint256 amount, address[] memory misbehavedOperators) public {
+        require(
+            registry.isApprovedOperatorContract(msg.sender),
+            "Operator contract is not approved"
+        );
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
+            require(authorizations[msg.sender][operator], "Not authorized");
             stakeBalances[operator] = stakeBalances[operator].sub(amount);
         }
 
         token.burn(misbehavedOperators.length.mul(amount));
     }
 
-    // TODO: Implement token transfer authorization
     /**
      * @dev Seize provided token amount from every member in the misbehaved
      * operators array, burn 95% of all the seized tokens and transfer the
@@ -165,8 +168,14 @@ contract TokenStaking is StakeDelegatable {
         address tattletale,
         address[] memory misbehavedOperators
     ) public {
+        require(
+            registry.isApprovedOperatorContract(msg.sender),
+            "Operator contract is not approved"
+        );
+
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
+            require(authorizations[msg.sender][operator], "Not authorized");
             stakeBalances[operator] = stakeBalances[operator].sub(amount);
         }
 

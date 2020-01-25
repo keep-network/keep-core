@@ -10,7 +10,8 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     operator1 = accounts[1],
     operator2 = accounts[2],
     operator3 = accounts[3],
-    tattletale = accounts[4]
+    tattletale = accounts[4],
+    authorizer = accounts[5]
 
   before(async () => {
     let contracts = await initContracts(
@@ -34,9 +35,12 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     minimumStake = await operatorContract.minimumStake()
     largeStake = minimumStake.muln(2)
-    await stakeDelegate(stakingContract, token, owner, operator1, owner, owner, largeStake)
-    await stakeDelegate(stakingContract, token, owner, operator2, owner, owner, minimumStake)
-    await stakeDelegate(stakingContract, token, owner, operator3, owner, owner, minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator1, owner, authorizer, largeStake)
+    await stakeDelegate(stakingContract, token, owner, operator2, owner, authorizer, minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator3, owner, authorizer, minimumStake)
+    await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
+    await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
+    await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate})
