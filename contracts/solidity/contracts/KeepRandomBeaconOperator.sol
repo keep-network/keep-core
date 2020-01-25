@@ -620,7 +620,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     function hasMinimumStake(address staker) public view returns(bool) {
         return (
             stakingContract.isAuthorized(staker, address(this)) &&
-            stakingContract.balanceOf(staker) >= minimumStake;
+            stakingContract.balanceOf(staker) >= minimumStake
         );
     }
 
