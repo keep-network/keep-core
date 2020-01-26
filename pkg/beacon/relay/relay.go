@@ -6,6 +6,7 @@ import (
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
@@ -120,9 +121,8 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	err = channel.SetFilter(
-		createGroupMemberFilter(groupMembers, signing),
-	)
+	validator := groupselection.NewMembershipValidator(groupMembers, signing)
+	err = channel.SetFilter(validator.IsInGroup)
 	if err != nil {
 		logger.Errorf(
 			"could not set filter for channel [%v]: [%v]",

@@ -20,8 +20,8 @@ func TestIsInGroup(t *testing.T) {
 	publicKey2 := generatePublicKey(t)
 	publicKey3 := generatePublicKey(t)
 
-	address1 := signing.PublicKeyToAddress(publicKey1)
-	address2 := signing.PublicKeyToAddress(publicKey2)
+	address1 := signing.PublicKeyToAddress(*publicKey1)
+	address2 := signing.PublicKeyToAddress(*publicKey2)
 
 	validator := NewMembershipValidator(
 		[]relaychain.StakerAddress{address1, address2, address2},
@@ -47,8 +47,8 @@ func TestIsSelectedAtIndex(t *testing.T) {
 	publicKey2 := generatePublicKey(t)
 	publicKey3 := generatePublicKey(t)
 
-	address1 := signing.PublicKeyToAddress(publicKey1)
-	address2 := signing.PublicKeyToAddress(publicKey2)
+	address1 := signing.PublicKeyToAddress(*publicKey1)
+	address2 := signing.PublicKeyToAddress(*publicKey2)
 
 	validator := NewMembershipValidator(
 		[]relaychain.StakerAddress{address2, address1, address2},
@@ -72,11 +72,11 @@ func TestIsSelectedAtIndex(t *testing.T) {
 	}
 }
 
-func generatePublicKey(t *testing.T) ecdsa.PublicKey {
+func generatePublicKey(t *testing.T) *ecdsa.PublicKey {
 	key, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return key.PublicKey
+	return &key.PublicKey
 }

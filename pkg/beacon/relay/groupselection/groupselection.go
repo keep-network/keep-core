@@ -16,14 +16,6 @@ import (
 
 var logger = log.Logger("keep-groupselection")
 
-// Result represents the result of group selection protocol. It contains the
-// list of all stakers selected to the candidate group as well as the number of
-// block at which the group selection protocol completed.
-type Result struct {
-	SelectedStakers        []relaychain.StakerAddress
-	GroupSelectionEndBlock uint64
-}
-
 // CandidateToNewGroup attempts to generate and submit tickets for the staker to
 // join a new group.
 //

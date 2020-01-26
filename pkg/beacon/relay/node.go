@@ -2,7 +2,6 @@ package relay
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"encoding/hex"
 	"math/big"
 	"sync"
@@ -71,9 +70,8 @@ func (n *Node) JoinGroupIfEligible(
 			return
 		}
 
-		err = broadcastChannel.SetFilter(
-			createGroupMemberFilter(groupSelectionResult.SelectedStakers, signing),
-		)
+		validator := groupSelectionResult.Validator(signing)
+		err = broadcastChannel.SetFilter(validator.IsInGroup)
 		if err != nil {
 			logger.Errorf(
 				"could not set filter for channel [%v]: [%v]",
@@ -118,30 +116,4 @@ func (n *Node) JoinGroupIfEligible(
 	}
 
 	return
-}
-
-func createGroupMemberFilter(
-	members []relaychain.StakerAddress,
-	signing chain.Signing,
-) net.BroadcastChannelFilter {
-	authorizations := make(map[string]bool, len(members))
-	for _, address := range members {
-		authorizations[hex.EncodeToString(address)] = true
-	}
-
-	return func(authorPublicKey *ecdsa.PublicKey) bool {
-		authorAddress := hex.EncodeToString(
-			signing.PublicKeyToAddress(*authorPublicKey),
-		)
-		_, isAuthorized := authorizations[authorAddress]
-
-		if !isAuthorized {
-			logger.Warningf(
-				"rejecting message from [%v]; author is not a member of the group",
-				authorAddress,
-			)
-		}
-
-		return isAuthorized
-	}
 }
