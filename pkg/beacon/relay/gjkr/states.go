@@ -81,8 +81,16 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *EphemeralPublicKeyMessage:
 		senderKey := msg.SenderPublicKey()
+		if !group.IsSenderValid(ekpgs.member, phaseMessage, &senderKey) {
+			logger.Warningf(
+				"client [%v] used incorrect member ID [%v], ignoring message",
+				msg.TransportSenderID(),
+				phaseMessage.SenderID(),
+			)
+			break
+		}
+
 		if !group.IsMessageFromSelf(ekpgs.member.ID, phaseMessage) &&
-			group.IsSenderValid(ekpgs.member, phaseMessage, &senderKey) &&
 			group.IsSenderAccepted(ekpgs.member, phaseMessage) {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, phaseMessage)
 		}
@@ -186,8 +194,16 @@ func (cs *commitmentState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *PeerSharesMessage:
 		senderKey := msg.SenderPublicKey()
+		if !group.IsSenderValid(cs.member, phaseMessage, &senderKey) {
+			logger.Warningf(
+				"client [%v] used incorrect member ID [%v], ignoring message",
+				msg.TransportSenderID(),
+				phaseMessage.SenderID(),
+			)
+			break
+		}
+
 		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) &&
-			group.IsSenderValid(cs.member, phaseMessage, &senderKey) &&
 			group.IsSenderAccepted(cs.member, phaseMessage) {
 			cs.phaseSharesMessages = append(cs.phaseSharesMessages, phaseMessage)
 		}
@@ -266,9 +282,16 @@ func (cvs *commitmentsVerificationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *SecretSharesAccusationsMessage:
 		senderKey := msg.SenderPublicKey()
+		if !group.IsSenderValid(cvs.member, phaseMessage, &senderKey) {
+			logger.Warningf(
+				"client [%v] used incorrect member ID [%v], ignoring message",
+				msg.TransportSenderID(),
+				phaseMessage.SenderID(),
+			)
+			break
+		}
 
 		if !group.IsMessageFromSelf(cvs.member.ID, phaseMessage) &&
-			group.IsSenderValid(cvs.member, phaseMessage, &senderKey) &&
 			group.IsSenderAccepted(cvs.member, phaseMessage) {
 			cvs.phaseAccusationsMessages = append(
 				cvs.phaseAccusationsMessages,
@@ -412,8 +435,16 @@ func (pss *pointsShareState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *MemberPublicKeySharePointsMessage:
 		senderKey := msg.SenderPublicKey()
+		if !group.IsSenderValid(pss.member, phaseMessage, &senderKey) {
+			logger.Warningf(
+				"client [%v] used incorrect member ID [%v], ignoring message",
+				msg.TransportSenderID(),
+				phaseMessage.SenderID(),
+			)
+			break
+		}
+
 		if !group.IsMessageFromSelf(pss.member.ID, phaseMessage) &&
-			group.IsSenderValid(pss.member, phaseMessage, &senderKey) &&
 			group.IsSenderAccepted(pss.member, phaseMessage) {
 			pss.phaseMessages = append(pss.phaseMessages, phaseMessage)
 		}
@@ -477,8 +508,16 @@ func (pvs *pointsValidationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *PointsAccusationsMessage:
 		senderKey := msg.SenderPublicKey()
+		if !group.IsSenderValid(pvs.member, phaseMessage, &senderKey) {
+			logger.Warningf(
+				"client [%v] used incorrect member ID [%v], ignoring message",
+				msg.TransportSenderID(),
+				phaseMessage.SenderID(),
+			)
+			break
+		}
+
 		if !group.IsMessageFromSelf(pvs.member.ID, phaseMessage) &&
-			group.IsSenderValid(pvs.member, phaseMessage, &senderKey) &&
 			group.IsSenderAccepted(pvs.member, phaseMessage) {
 			pvs.phaseMessages = append(pvs.phaseMessages, phaseMessage)
 		}
@@ -585,8 +624,16 @@ func (rs *keyRevealState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *MisbehavedEphemeralKeysMessage:
 		senderKey := msg.SenderPublicKey()
+		if !group.IsSenderValid(rs.member, phaseMessage, &senderKey) {
+			logger.Warningf(
+				"client [%v] used incorrect member ID [%v], ignoring message",
+				msg.TransportSenderID(),
+				phaseMessage.SenderID(),
+			)
+			break
+		}
+
 		if !group.IsMessageFromSelf(rs.member.ID, phaseMessage) &&
-			group.IsSenderValid(rs.member, phaseMessage, &senderKey) &&
 			group.IsSenderAccepted(rs.member, phaseMessage) {
 			rs.phaseMessages = append(rs.phaseMessages, phaseMessage)
 		}
