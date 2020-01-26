@@ -193,6 +193,10 @@ contract TokenStaking is StakeDelegatable {
      * @param _operatorContract address of operator contract.
      */
     function authorizeOperatorContract(address _operator, address _operatorContract) public onlyOperatorAuthorizer(_operator) {
+        require(
+            registry.isApprovedOperatorContract(_operatorContract),
+            "Operator contract is not approved"
+        );
         authorizations[_operatorContract][_operator] = true;
     }
 
