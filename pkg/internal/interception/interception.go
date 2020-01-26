@@ -76,6 +76,6 @@ func (c *channel) RegisterUnmarshaler(
 	return c.delegate.RegisterUnmarshaler(unmarshaler)
 }
 
-func (c *channel) AddFilter(filter net.BroadcastChannelFilter) error {
+func (c *channel) SetFilter(filter net.BroadcastChannelFilter) error {
 	return nil // no-op
 }

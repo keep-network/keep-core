@@ -11,7 +11,7 @@ contract('KeepRandomBeaconService', (accounts) => {
 
     let serviceContract;
     let operatorContract
-    let dkgPayment;
+    let groupCreationFee;
 
     before(async () => {
         let contracts = await initContracts(
@@ -30,11 +30,11 @@ contract('KeepRandomBeaconService', (accounts) => {
 
         await stakeAndGenesis(accounts, contracts);    
 
-        let dkgGasEstimateCost = await operatorContract.dkgGasEstimate();
+        let groupCreationGasEstimate = await operatorContract.groupCreationGasEstimate();
         let fluctuationMargin = await operatorContract.fluctuationMargin();
         let priceFeedEstimate = await serviceContract.priceFeedEstimate();
         let gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
-        dkgPayment = dkgGasEstimateCost.mul(gasPriceWithFluctuationMargin);
+        groupCreationFee = groupCreationGasEstimate.mul(gasPriceWithFluctuationMargin);
     });
     
     beforeEach(async () => {
@@ -52,7 +52,7 @@ contract('KeepRandomBeaconService', (accounts) => {
 
         let contractBalance = await web3.eth.getBalance(serviceContract.address);
 
-        let insufficientPoolFunds = web3.utils.toBN(dkgPayment)
+        let insufficientPoolFunds = web3.utils.toBN(groupCreationFee)
           .sub(web3.utils.toBN(contractBalance))
           .sub(web3.utils.toBN(1));
         
@@ -71,10 +71,7 @@ contract('KeepRandomBeaconService', (accounts) => {
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
         await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
 
-        let contractBalance = await web3.eth.getBalance(serviceContract.address);
-
-        let sufficientPoolFunds = web3.utils.toBN(dkgPayment)
-          .sub(web3.utils.toBN(contractBalance));
+        let sufficientPoolFunds = web3.utils.toBN(groupCreationFee);
         
         await serviceContract.fundDkgFeePool({value: sufficientPoolFunds});
 
@@ -87,7 +84,7 @@ contract('KeepRandomBeaconService', (accounts) => {
     });
 
     it("should not trigger group selection while one is in progress", async () => {
-        await serviceContract.fundDkgFeePool({value: 3 * dkgPayment});
+        await serviceContract.fundDkgFeePool({value: 3 * groupCreationFee});
   
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
         await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});

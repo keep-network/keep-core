@@ -12,7 +12,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     account_one = accounts[0],
     account_two = accounts[1],
     account_three = accounts[2],
-    entryFeeEstimate, callbackFee, entryFeeBreakdown;
+    entryFeeEstimate, entryFeeBreakdown;
 
   before(async () => {
     let contracts = await initContracts(
@@ -32,9 +32,8 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     let group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.addGroupMember(group, accounts[0]);
 
-    entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    callbackFee = await serviceContract.callbackFee(20000)
-    entryFeeBreakdown = await serviceContract.entryFeeBreakdown()
+    entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
+    entryFeeBreakdown = await serviceContract.entryFeeBreakdown();
   });
 
   beforeEach(async () => {
@@ -139,7 +138,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
       // if you see a plain 'revert' error, it's probably because of not enough gas
       from: account_two, 
       value: entryFeeEstimate, 
-      gas: 400000, 
+      gas: 500000, 
       gasPrice: gasPrice,
       to: serviceContractProxy.address,
       data: web3.eth.abi.encodeFunctionSignature('requestRelayEntry()')
@@ -216,7 +215,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     await serviceContract.finishWithdrawal(account_three, {from: account_one});
     let receiverEndBalance = await web3.eth.getBalance(account_three);
     assert.isTrue(
-      receiverEndBalance > receiverStartBalance, 
+      web3.utils.toBN(receiverEndBalance).gt(web3.utils.toBN(receiverStartBalance)),
       "Receiver updated balance should include received ether."
     );
 

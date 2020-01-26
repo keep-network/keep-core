@@ -339,6 +339,25 @@ func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.IsStaleGroup(groupPublicKey)
 }
 
+func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
+	[]chain.StakerAddress,
+	error,
+) {
+	members, err := ec.keepRandomBeaconOperatorContract.GetGroupMembers(
+		groupPublicKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	stakerAddresses := make([]chain.StakerAddress, len(members))
+	for i, member := range members {
+		stakerAddresses[i] = member.Bytes()
+	}
+
+	return stakerAddresses, nil
+}
+
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {

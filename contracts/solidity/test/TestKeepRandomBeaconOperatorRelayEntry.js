@@ -45,7 +45,7 @@ contract('KeepRandomBeaconOperator', (accounts) => {
 
     // Make sure no change will make the verification more expensive than it is
     // now or that even if it happens, it will be a conscious decision.
-    assert.isBelow(gasEstimate, 371968, "Relay entry submission is too expensive")
+    assert.isBelow(gasEstimate, 378902, "Relay entry submission is too expensive")
   });
 
   it("should not allow to submit corrupted relay entry", async () => {

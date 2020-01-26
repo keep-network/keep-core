@@ -27,9 +27,18 @@ contract StakeDelegatable {
     // Stake delegation mappings.
     mapping(address => address) public operatorToOwner;
     mapping(address => address payable) public operatorToMagpie;
+    mapping(address => address) public operatorToAuthorizer;
 
     // List of operators for the stake owner.
     mapping(address => address[]) public ownerOperators;
+
+    modifier onlyOperatorAuthorizer(address _operator) {
+        require(
+            operatorToAuthorizer[_operator] == msg.sender,
+            "Not operator authorizer"
+        );
+        _;
+    }
 
     /**
      * @dev Gets the stake balance of the specified address.
@@ -62,5 +71,13 @@ contract StakeDelegatable {
      */
     function magpieOf(address _operator) public view returns (address payable) {
         return operatorToMagpie[_operator];
+    }
+
+    /**
+     * @dev Gets the authorizer for the specified operator address.
+     * @return Authorizer address.
+     */
+    function authorizerOf(address _operator) public view returns (address) {
+        return operatorToAuthorizer[_operator];
     }
 }

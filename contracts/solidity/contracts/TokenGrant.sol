@@ -283,7 +283,7 @@ contract TokenGrant {
         );
 
         // Expecting 40 bytes _extraData for stake delegation.
-        require(_extraData.length == 40, "Stake delegation data must be provided.");
+        require(_extraData.length == 60, "Stake delegation data must be provided.");
         address operator = _extraData.toAddress(20);
 
         // Calculate available amount. Amount of vested tokens minus what user already withdrawn and staked.

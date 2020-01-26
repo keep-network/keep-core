@@ -8,8 +8,9 @@
 @gunmetal: #505e5b;
 @steel-grey: #6c807a;
 @white: #fff;
-@black: #333;
+@black: #0A0806;
 @rose-pink: #f57f97;
+@grey: #C4C4C4;
 
 @info-color: #8bc2ed;
 @warning-color: #f2be4b;
@@ -24,6 +25,7 @@
 @background-med-color: @aqua-marine;
 @background-med-light-color: @light-green;
 @background-med-dark-color: @gunmetal;
+@backgroud: #E6E6E6;
 
 @header-height: 80px;
 @side-menu-width: 350px;
@@ -46,3 +48,9 @@
        only screen and (         min-device-pixel-ratio: 1.3 ),
        only screen and ( min-resolution: 124.8dpi ),
        only screen and ( min-resolution: 1.3dppx )';
+
+.box-shadow(...) {
+       -webkit-box-shadow: @arguments;
+       -moz-box-shadow: @arguments;
+       box-shadow: @arguments;
+}

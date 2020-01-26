@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
+import "./Registry.sol";
 
 
 /**
@@ -23,16 +24,24 @@ contract TokenStaking is StakeDelegatable {
         uint256 createdAt;
     }
 
+    // Registry contract with a list of approved operator contracts and upgraders.
+    Registry public registry;
+
+    // Authorized operator contracts.
+    mapping(address => mapping (address => bool)) internal authorizations;
+
     mapping(address => Withdrawal) public withdrawals;
 
     /**
      * @dev Creates a token staking contract for a provided Standard ERC20 token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
+     * @param _registry Address of a keep registry that will be linked to this contract.
      * @param _delay Withdrawal delay for unstake.
      */
-    constructor(address _tokenAddress, uint256 _delay) public {
+    constructor(address _tokenAddress, address _registry, uint256 _delay) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20(_tokenAddress);
+        registry = Registry(_registry);
         stakeWithdrawalDelay = _delay;
     }
 
@@ -44,19 +53,21 @@ contract TokenStaking is StakeDelegatable {
      * @param _token Token contract address.
      * @param _extraData Data for stake delegation. This byte array must have the
      * following values concatenated: Magpie address (20 bytes) where the rewards for participation
-     * are sent and the operator's (20 bytes) address.
+     * are sent, operator's (20 bytes) address, authorizer (20 bytes) address.
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
         require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
-        require(_extraData.length == 40, "Stake delegation data must be provided.");
+        require(_extraData.length == 60, "Stake delegation data must be provided.");
 
         address payable magpie = address(uint160(_extraData.toAddress(0)));
         address operator = _extraData.toAddress(20);
         require(operatorToOwner[operator] == address(0), "Operator address is already in use.");
+        address authorizer = _extraData.toAddress(40);
 
         operatorToOwner[operator] = _from;
         operatorToMagpie[operator] = magpie;
+        operatorToAuthorizer[operator] = authorizer;
         ownerOperators[_from].push(operator);
 
         // Transfer tokens to this contract.
@@ -128,4 +139,13 @@ contract TokenStaking is StakeDelegatable {
         stakeBalances[to] = stakeBalances[to].add(amount);
     }
 
+    /**
+     * @dev Authorizes operator contract to access staked token balance of
+     * the provided operator. Can only be executed by stake operator authorizer.
+     * @param _operator address of stake operator.
+     * @param _operatorContract address of operator contract.
+     */
+    function authorizeOperatorContract(address _operator, address _operatorContract) public onlyOperatorAuthorizer(_operator) {
+        authorizations[_operatorContract][_operator] = true;
+    }
 }
