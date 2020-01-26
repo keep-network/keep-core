@@ -1,6 +1,7 @@
 package key
 
 import (
+	"crypto/ecdsa"
 	"crypto/elliptic"
 
 	"github.com/btcsuite/btcd/btcec"
@@ -53,8 +54,12 @@ func OperatorKeyToNetworkKey(
 // NetworkPubKeyToEthAddress transforms the network public key into an Ethereum
 // account address, in a string format.
 func NetworkPubKeyToEthAddress(publicKey *NetworkPublic) string {
-	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
-	return crypto.PubkeyToAddress(*ecdsaKey).String()
+	return crypto.PubkeyToAddress(ToECDSA(publicKey)).String()
+}
+
+// ToECDSA returns NetworkPubic key as ecdsa.PublicKey
+func ToECDSA(publicKey *NetworkPublic) ecdsa.PublicKey {
+	return *(*btcec.PublicKey)(publicKey).ToECDSA()
 }
 
 // Marshal takes a network public key, converts it into an ecdsa

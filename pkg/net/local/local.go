@@ -192,6 +192,7 @@ func doSend(channel *localChannel, message *pb.NetworkMessage) error {
 			channel.identifier,
 			unmarshaled,
 			"local",
+			key.ToECDSA(channel.staticKey),
 			key.Marshal(channel.staticKey),
 		),
 		fingerprint,

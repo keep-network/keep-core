@@ -21,6 +21,7 @@ type Message interface {
 	TransportSenderID() TransportIdentifier
 	Payload() interface{}
 	Type() string
+	SenderPublicKey() ecdsa.PublicKey
 	SenderPublicKeyBytes() []byte
 }
 

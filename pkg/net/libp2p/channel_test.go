@@ -218,6 +218,10 @@ func (mnm *mockNetMessage) Type() string {
 	panic("not implemented in mock")
 }
 
+func (mnm *mockNetMessage) SenderPublicKey() ecdsa.PublicKey {
+	panic("not implemented in mock")
+}
+
 func (mnm *mockNetMessage) SenderPublicKeyBytes() []byte {
 	panic("not implemented in mock")
 }

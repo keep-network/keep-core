@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"crypto/ecdsa"
+
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -10,23 +12,26 @@ func BasicMessage(
 	transportSenderID net.TransportIdentifier,
 	payload interface{},
 	messageType string,
-	senderPublicKey []byte,
+	senderPublicKey ecdsa.PublicKey,
+	senderPublicKeyBytes []byte,
 ) net.Message {
 	return &basicMessage{
 		transportSenderID,
 		payload,
 		messageType,
 		senderPublicKey,
+		senderPublicKeyBytes,
 	}
 }
 
 // basicMessage is a struct-based trivial implementation of the net.Message
 // interface for use by packages that don't need any frills.
 type basicMessage struct {
-	transportSenderID net.TransportIdentifier
-	payload           interface{}
-	messageType       string
-	senderPublicKey   []byte
+	transportSenderID    net.TransportIdentifier
+	payload              interface{}
+	messageType          string
+	senderPublicKey      ecdsa.PublicKey
+	senderPublicKeyBytes []byte
 }
 
 func (m *basicMessage) TransportSenderID() net.TransportIdentifier {
@@ -41,6 +46,10 @@ func (m *basicMessage) Type() string {
 	return m.messageType
 }
 
-func (m *basicMessage) SenderPublicKeyBytes() []byte {
+func (m *basicMessage) SenderPublicKey() ecdsa.PublicKey {
 	return m.senderPublicKey
+}
+
+func (m *basicMessage) SenderPublicKeyBytes() []byte {
+	return m.senderPublicKeyBytes
 }

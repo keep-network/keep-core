@@ -1,6 +1,7 @@
 package result
 
 import (
+	"crypto/ecdsa"
 	"reflect"
 	"testing"
 
@@ -99,6 +100,9 @@ func (msm *mockSignatureMessage) Payload() interface{} {
 	return msm.payload
 }
 func (msm *mockSignatureMessage) Type() string {
+	panic("not implemented")
+}
+func (msm *mockSignatureMessage) SenderPublicKey() ecdsa.PublicKey {
 	panic("not implemented")
 }
 func (msm *mockSignatureMessage) SenderPublicKeyBytes() []byte {

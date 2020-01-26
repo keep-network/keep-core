@@ -261,6 +261,7 @@ func (c *channel) processContainerMessage(
 			senderIdentifier.id,
 			unmarshaled,
 			string(message.Type),
+			key.ToECDSA(networkKey),
 			key.Marshal(networkKey),
 		),
 		fingerprint,

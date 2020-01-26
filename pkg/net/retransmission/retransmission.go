@@ -2,6 +2,7 @@ package retransmission
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/hex"
 	"sync"
@@ -131,6 +132,10 @@ func (nm *networkMessage) Payload() interface{} {
 
 func (nm *networkMessage) Type() string {
 	return nm.original.Type()
+}
+
+func (nm *networkMessage) SenderPublicKey() ecdsa.PublicKey {
+	return nm.original.SenderPublicKey()
 }
 
 func (nm *networkMessage) SenderPublicKeyBytes() []byte {

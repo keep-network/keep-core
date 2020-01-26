@@ -2,6 +2,7 @@ package retransmission
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"testing"
 	"time"
 
@@ -242,6 +243,10 @@ func (mnm *mockNetworkMessage) Payload() interface{} {
 }
 
 func (mnm *mockNetworkMessage) Type() string {
+	panic("not implemented")
+}
+
+func (mnm *mockNetworkMessage) SenderPublicKey() ecdsa.PublicKey {
 	panic("not implemented")
 }
 
