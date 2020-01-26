@@ -209,6 +209,16 @@ func (cs *commitmentState) Receive(msg net.Message) error {
 		}
 
 	case *MemberCommitmentsMessage:
+		senderKey := msg.SenderPublicKey()
+		if !group.IsSenderValid(cs.member, phaseMessage, &senderKey) {
+			logger.Warningf(
+				"client [%v] used incorrect member ID [%v], ignoring message",
+				msg.TransportSenderID(),
+				phaseMessage.SenderID(),
+			)
+			break
+		}
+
 		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) &&
 			group.IsSenderAccepted(cs.member, phaseMessage) {
 			cs.phaseCommitmentsMessages = append(
