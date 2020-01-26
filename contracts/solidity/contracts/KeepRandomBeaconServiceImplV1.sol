@@ -90,7 +90,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
 
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
-     * @param priceFeedEstimate The price feed estimate is used to calculate the gas price for
+     * @param _priceFeedEstimate The price feed estimate is used to calculate the gas price for
      * reimbursement next to the actual gas price from the transaction. We use both values to defend
      * against malicious miner-submitters who can manipulate transaction gas price.
      * @param fluctuationMargin Fluctuation margin to cover the immediate rise in gas price.
