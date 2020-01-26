@@ -88,6 +88,12 @@ module.exports = async function() {
         } catch (err) {
             console.log(`could not stake KEEP to ${operator}: ${err}`);
         }
+
+        try {
+            await tokenStaking.authorizeOperatorContract(operator, keepRandomBeaconOperator.address, {from: authorizer});
+        } catch (err) {
+            console.log(`could not authorize operator contract for ${operator}: ${err}`);
+        }
     }
 
     async function initiateUnstake() {
