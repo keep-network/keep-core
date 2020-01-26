@@ -225,6 +225,22 @@ library Groups {
     }
 
     /**
+     * @dev Checks if a group with the given index is a stale group.
+     * Stale group is an expired group which is no longer performing any
+     * operations. It is important to understand that an expired group may
+     * still perform some operations for which it was selected when it was still
+     * active. We consider a group to be stale when it's expired and when its
+     * expiration time and potentially executed operation timeout are both in
+     * the past.
+     */
+    function isStaleGroup(
+        Storage storage self,
+        uint256 groupIndex
+    ) public view returns(bool) {
+        return groupStaleTime(self, self.groups[groupIndex]) < block.number;
+    }
+
+    /**
      * @dev Gets the number of active groups. Expired and terminated groups are
      * not counted as active.
      */
@@ -365,6 +381,7 @@ library Groups {
         bytes memory signedGroupPubKey,
         uint256 minimumStake
     ) public {
+        require(!isStaleGroup(self, groupIndex), "Group can not be stale");
         bytes memory groupPubKey = getGroupPublicKey(self, groupIndex);
 
         AltBn128.G1Point memory point = AltBn128.g1HashToPoint(groupPubKey);
