@@ -226,7 +226,7 @@ loop:
 			)
 		}
 
-		testutils.AssertBytesEqual(t, key.Marshal(staticKey1), msg.SenderPublicKey())
+		testutils.AssertBytesEqual(t, key.Marshal(staticKey1), msg.SenderPublicKeyBytes())
 	}
 }
 

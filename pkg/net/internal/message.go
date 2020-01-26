@@ -41,6 +41,6 @@ func (m *basicMessage) Type() string {
 	return m.messageType
 }
 
-func (m *basicMessage) SenderPublicKey() []byte {
+func (m *basicMessage) SenderPublicKeyBytes() []byte {
 	return m.senderPublicKey
 }

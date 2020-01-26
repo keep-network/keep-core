@@ -70,7 +70,7 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 	// it means that an incorrect key was used to sign DKG result hash and
 	// the message should be rejected.
 	isValidKeyUsed := func(phaseMessage *DKGResultHashSignatureMessage) bool {
-		return bytes.Compare(phaseMessage.publicKey, msg.SenderPublicKey()) == 0
+		return bytes.Compare(phaseMessage.publicKey, msg.SenderPublicKeyBytes()) == 0
 	}
 
 	switch signedMessage := msg.Payload().(type) {

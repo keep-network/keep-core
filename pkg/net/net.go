@@ -21,7 +21,7 @@ type Message interface {
 	TransportSenderID() TransportIdentifier
 	Payload() interface{}
 	Type() string
-	SenderPublicKey() []byte
+	SenderPublicKeyBytes() []byte
 }
 
 // TaggedMarshaler is an interface that includes the proto.Marshaler interface,

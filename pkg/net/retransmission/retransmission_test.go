@@ -245,7 +245,7 @@ func (mnm *mockNetworkMessage) Type() string {
 	panic("not implemented")
 }
 
-func (mnm *mockNetworkMessage) SenderPublicKey() []byte {
+func (mnm *mockNetworkMessage) SenderPublicKeyBytes() []byte {
 	panic("not implemented")
 }
 

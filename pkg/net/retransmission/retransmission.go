@@ -133,8 +133,8 @@ func (nm *networkMessage) Type() string {
 	return nm.original.Type()
 }
 
-func (nm *networkMessage) SenderPublicKey() []byte {
-	return nm.original.SenderPublicKey()
+func (nm *networkMessage) SenderPublicKeyBytes() []byte {
+	return nm.original.SenderPublicKeyBytes()
 }
 
 func (nm *networkMessage) Fingerprint() string {

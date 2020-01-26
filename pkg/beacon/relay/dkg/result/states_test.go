@@ -101,6 +101,6 @@ func (msm *mockSignatureMessage) Payload() interface{} {
 func (msm *mockSignatureMessage) Type() string {
 	panic("not implemented")
 }
-func (msm *mockSignatureMessage) SenderPublicKey() []byte {
+func (msm *mockSignatureMessage) SenderPublicKeyBytes() []byte {
 	return msm.senderPublicKey
 }
