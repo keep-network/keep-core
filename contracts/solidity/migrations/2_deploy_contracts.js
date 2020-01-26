@@ -26,6 +26,7 @@ module.exports = async function(deployer) {
   await deployer.deploy(TokenGrant, KeepToken.address, TokenStaking.address);
   await deployer.deploy(GroupSelection);
   await deployer.link(GroupSelection, KeepRandomBeaconOperator);
+  await deployer.link(BLS, Groups);
   await deployer.deploy(Groups);
   await deployer.link(Groups, KeepRandomBeaconOperator);
   await deployer.deploy(DKGResultVerification);

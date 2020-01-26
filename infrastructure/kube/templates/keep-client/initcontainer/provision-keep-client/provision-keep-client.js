@@ -125,6 +125,7 @@ async function isStaked(operator) {
 async function stakeOperatorAccount(operator, contractOwner) {
 
   let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+  let authorizer = contractOwner;
   let staked = await isStaked(operator);
 
   /*
@@ -146,7 +147,8 @@ async function stakeOperatorAccount(operator, contractOwner) {
 
   let delegation = '0x' + Buffer.concat([
     Buffer.from(magpie.substr(2), 'hex'), 
-    Buffer.from(operator.substr(2), 'hex')
+    Buffer.from(operator.substr(2), 'hex'),
+    Buffer.from(authorizer.substr(2), 'hex')
   ]).toString('hex');
 
   console.log('Staking 1000000 KEEP tokens on operator account ' + operator);
@@ -155,6 +157,8 @@ async function stakeOperatorAccount(operator, contractOwner) {
     tokenStakingContract.address,
     formatAmount(10000000, 18),
     delegation).send({from: contractOwner})
+
+  await tokenStakingContract.authorizeOperatorContract(operatorAddress, keepRandomBeaconOperatorContractAddress, {from: authorizer});
 
   console.log('Account ' + operator + ' staked!');
 };

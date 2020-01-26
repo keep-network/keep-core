@@ -7,7 +7,7 @@ import "./Registry.sol";
 
 /**
  * @title TokenStaking
- * @dev A token staking contract for a specified standard ERC20 token.
+ * @dev A token staking contract for a specified standard ERC20Burnable token.
  * A holder of the specified token can stake its tokens to this contract
  * and unstake after withdrawal delay is over.
  */
@@ -32,15 +32,23 @@ contract TokenStaking is StakeDelegatable {
 
     mapping(address => Withdrawal) public withdrawals;
 
+    modifier onlyApprovedOperatorContract(address operatorContract) {
+        require(
+            registry.isApprovedOperatorContract(operatorContract),
+            "Operator contract is not approved"
+        );
+        _;
+    }
+
     /**
-     * @dev Creates a token staking contract for a provided Standard ERC20 token.
+     * @dev Creates a token staking contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
      * @param _registry Address of a keep registry that will be linked to this contract.
      * @param _delay Withdrawal delay for unstake.
      */
     constructor(address _tokenAddress, address _registry, uint256 _delay) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
-        token = ERC20(_tokenAddress);
+        token = ERC20Burnable(_tokenAddress);
         registry = Registry(_registry);
         stakeWithdrawalDelay = _delay;
     }
@@ -56,7 +64,7 @@ contract TokenStaking is StakeDelegatable {
      * are sent, operator's (20 bytes) address, authorizer (20 bytes) address.
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
-        require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
+        require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
         require(_extraData.length == 60, "Stake delegation data must be provided.");
 
@@ -133,10 +141,50 @@ contract TokenStaking is StakeDelegatable {
         return (withdrawals[_operator].amount, withdrawals[_operator].createdAt);
     }
 
-    // TODO: replace with a secure authorization protocol (addressed in RFC 4).
-    function authorizedTransferFrom(address from, address to, uint256 amount) public {
-        stakeBalances[from] = stakeBalances[from].sub(amount);
-        stakeBalances[to] = stakeBalances[to].add(amount);
+    /**
+     * @dev Slash provided token amount from every member in the misbehaved
+     * operators array and burn 100% of all the tokens.
+     * @param amount Token amount to slash from every misbehaved operator.
+     * @param misbehavedOperators Array of addresses to seize the tokens from.
+     */
+    function slash(uint256 amount, address[] memory misbehavedOperators) 
+        public
+        onlyApprovedOperatorContract(msg.sender) {
+        for (uint i = 0; i < misbehavedOperators.length; i++) {
+            address operator = misbehavedOperators[i];
+            require(authorizations[msg.sender][operator], "Not authorized");
+            stakeBalances[operator] = stakeBalances[operator].sub(amount);
+        }
+
+        token.burn(misbehavedOperators.length.mul(amount));
+    }
+
+    /**
+     * @dev Seize provided token amount from every member in the misbehaved
+     * operators array. The tattletale is rewarded with 5% of the total seized
+     * amount scaled by the reward adjustment parameter and the rest 95% is burned.
+     * @param amount Token amount to seize from every misbehaved operator.
+     * @param rewardMultiplier Reward adjustment in percentage. Min 1% and 100% max.
+     * @param tattletale Address to receive the 5% reward.
+     * @param misbehavedOperators Array of addresses to seize the tokens from.
+     */
+    function seize(
+        uint256 amount,
+        uint256 rewardMultiplier,
+        address tattletale,
+        address[] memory misbehavedOperators
+    ) public onlyApprovedOperatorContract(msg.sender) {
+        for (uint i = 0; i < misbehavedOperators.length; i++) {
+            address operator = misbehavedOperators[i];
+            require(authorizations[msg.sender][operator], "Not authorized");
+            stakeBalances[operator] = stakeBalances[operator].sub(amount);
+        }
+
+        uint256 total = misbehavedOperators.length.mul(amount);
+        uint256 tattletaleReward = (total.mul(5).div(100)).mul(rewardMultiplier).div(100);
+
+        token.transfer(tattletale, tattletaleReward);
+        token.burn(total.sub(tattletaleReward));
     }
 
     /**
@@ -145,7 +193,20 @@ contract TokenStaking is StakeDelegatable {
      * @param _operator address of stake operator.
      * @param _operatorContract address of operator contract.
      */
-    function authorizeOperatorContract(address _operator, address _operatorContract) public onlyOperatorAuthorizer(_operator) {
+    function authorizeOperatorContract(address _operator, address _operatorContract)
+        public
+        onlyOperatorAuthorizer(_operator)
+        onlyApprovedOperatorContract(_operatorContract) {
         authorizations[_operatorContract][_operator] = true;
+    }
+
+    /**
+     * @dev Checks if operator contract has been authorized for the provided operator.
+     * @param _operator address of stake operator.
+     * @param _operatorContract address of operator contract.
+     * @return Returns True if operator contract has been authorized for the provided operator.
+     */
+    function isAuthorized(address _operator, address _operatorContract) public view returns (bool) {
+        return authorizations[_operatorContract][_operator];
     }
 }

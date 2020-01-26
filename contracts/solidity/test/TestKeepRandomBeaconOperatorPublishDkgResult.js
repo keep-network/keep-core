@@ -46,9 +46,13 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     operatorContract.setGroupThreshold(groupThreshold);
     operatorContract.setMinimumStake(minimumStake);
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, operator1, minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, operator2, minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, operator3, minimumStake.mul(web3.utils.toBN(3000)))
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, minimumStake.mul(web3.utils.toBN(2000)))
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, minimumStake.mul(web3.utils.toBN(2000)))
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, minimumStake.mul(web3.utils.toBN(3000)))
+
+    await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: owner})
+    await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: owner})
+    await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: owner})
 
     let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, 2000);
     let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, 2000);
@@ -70,9 +74,12 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     }
 
     let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
-    let timeoutChallenge = (await operatorContract.ticketSubmissionTimeout()).toNumber();
+    let submissionTimeout = (await operatorContract.ticketSubmissionTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
-    resultPublicationTime = ticketSubmissionStartBlock + timeoutChallenge + timeDKG;
+    resultPublicationTime = ticketSubmissionStartBlock + submissionTimeout + timeDKG;
+
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(ticketSubmissionStartBlock + submissionTimeout - currentBlock);
 
     selectedParticipants = await operatorContract.selectedParticipants();
 

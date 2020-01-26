@@ -165,6 +165,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
+        groups.stakingContract = TokenStaking(_stakingContract);
 
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
@@ -611,12 +612,16 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Checks that the specified user has enough stake.
+     * @dev Checks that the specified user has enough stake and that this
+     * contract has been authorized by the staker for potential slashing.
      * @param staker Specifies the identity of the staker.
      * @return True if staked enough to participate in the group, false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return stakingContract.balanceOf(staker) >= minimumStake;
+        return (
+            stakingContract.isAuthorized(staker, address(this)) &&
+            stakingContract.balanceOf(staker) >= minimumStake
+        );
     }
 
     /**
@@ -704,5 +709,20 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function getGroupMembers(bytes memory groupPubKey) public view returns (address[] memory members) {
         return groups.getGroupMembers(groupPubKey);
+    }
+
+    /**
+     * @dev Reports unauthorized signing for the provided group. Must provide
+     * a valid signature of the group address as a message. Successful signature
+     * verification means the private key has been leaked and all group members
+     * should be punished by seizing their tokens. The submitter of this proof is
+     * rewarded with 5% of the total seized amount scaled by the reward adjustment
+     * parameter and the rest 95% is burned.
+     */
+    function reportUnauthorizedSigning(
+        uint256 groupIndex,
+        bytes memory signedGroupPubKey
+    ) public {
+        groups.reportUnauthorizedSigning(groupIndex, signedGroupPubKey, minimumStake);
     }
 }
