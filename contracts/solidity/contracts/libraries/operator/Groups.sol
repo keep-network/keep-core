@@ -346,7 +346,7 @@ library Groups {
         uint256[] memory groupMemberIndices
     ) public returns (uint256 rewards) {
         bool isExpired = self.expiredGroupOffset > groupIndex;
-        bool isStale = groupStaleTime(self, self.groups[groupIndex]) < block.number;
+        bool isStale = isStaleGroup(self, groupIndex);
         require(isExpired && isStale, "Group must be expired and stale");
         bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
         for (uint i = 0; i < groupMemberIndices.length; i++) {
