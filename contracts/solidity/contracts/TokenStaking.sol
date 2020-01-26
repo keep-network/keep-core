@@ -32,6 +32,14 @@ contract TokenStaking is StakeDelegatable {
 
     mapping(address => Withdrawal) public withdrawals;
 
+    modifier onlyApprovedOperatorContract(address operatorContract) {
+        require(
+            registry.isApprovedOperatorContract(operatorContract),
+            "Operator contract is not approved"
+        );
+        _;
+    }
+
     /**
      * @dev Creates a token staking contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
@@ -139,11 +147,9 @@ contract TokenStaking is StakeDelegatable {
      * @param amount Token amount to slash from every misbehaved operator.
      * @param misbehavedOperators Array of addresses to seize the tokens from.
      */
-    function slash(uint256 amount, address[] memory misbehavedOperators) public {
-        require(
-            registry.isApprovedOperatorContract(msg.sender),
-            "Operator contract is not approved"
-        );
+    function slash(uint256 amount, address[] memory misbehavedOperators) 
+        public
+        onlyApprovedOperatorContract(msg.sender) {
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
@@ -167,12 +173,7 @@ contract TokenStaking is StakeDelegatable {
         uint256 rewardMultiplier,
         address tattletale,
         address[] memory misbehavedOperators
-    ) public {
-        require(
-            registry.isApprovedOperatorContract(msg.sender),
-            "Operator contract is not approved"
-        );
-
+    ) public onlyApprovedOperatorContract(msg.sender) {
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
@@ -192,11 +193,10 @@ contract TokenStaking is StakeDelegatable {
      * @param _operator address of stake operator.
      * @param _operatorContract address of operator contract.
      */
-    function authorizeOperatorContract(address _operator, address _operatorContract) public onlyOperatorAuthorizer(_operator) {
-        require(
-            registry.isApprovedOperatorContract(_operatorContract),
-            "Operator contract is not approved"
-        );
+    function authorizeOperatorContract(address _operator, address _operatorContract)
+        public
+        onlyOperatorAuthorizer(_operator)
+        onlyApprovedOperatorContract(_operatorContract) {
         authorizations[_operatorContract][_operator] = true;
     }
 

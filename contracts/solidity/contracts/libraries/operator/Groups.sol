@@ -380,7 +380,7 @@ library Groups {
 
         if (!isGroupTerminated(self, groupIndex) && isSignatureValid) {
             terminateGroup(self, groupIndex);
-            self.stakingContract.seize(minimumStake, 100, msg.sender, membersOf(self, groupPubKey));
+            self.stakingContract.seize(minimumStake, 100, msg.sender, self.groupMembers[groupPubKey]);
         }
     }
 
