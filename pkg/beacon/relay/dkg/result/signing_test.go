@@ -23,7 +23,7 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 		GroupPublicKey: []byte{10},
 	}
 
-	members, chainHandles, err := initializeSigningMembers(groupSize)
+	members, chainHandles, _, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	dkgResultHash1 := relayChain.DKGResultHash{10}
 	dkgResultHash2 := relayChain.DKGResultHash{20}
 
-	members, chainHandles, err := initializeSigningMembers(groupSize)
+	members, chainHandles, _, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -306,7 +306,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	}
 }
 
-func initializeSigningMembers(groupSize int) ([]*SigningMember, []chain.Handle, error) {
+func initializeSigningMembers(groupSize int) ([]*SigningMember, []chain.Handle, []*ecdsa.PublicKey, error) {
 	honestThreshold := groupSize/2 + 1
 	dishonestThreshold := groupSize - honestThreshold
 	minimumStake := big.NewInt(200)
@@ -315,15 +315,16 @@ func initializeSigningMembers(groupSize int) ([]*SigningMember, []chain.Handle, 
 
 	members := make([]*SigningMember, groupSize)
 	chainHandles := make([]chain.Handle, groupSize)
+	publicKeys := make([]*ecdsa.PublicKey, groupSize)
 
 	for i := 0; i < groupSize; i++ {
 		memberIndex := group.MemberIndex(i + 1)
 
 		members[i] = NewSigningMember(memberIndex, dkgGroup, &mockMembershipValidator{})
 
-		privateKey, _, err := operator.GenerateKeyPair()
+		privateKey, publicKey, err := operator.GenerateKeyPair()
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
 		chainHandles[i] = local.ConnectWithKey(
@@ -332,9 +333,11 @@ func initializeSigningMembers(groupSize int) ([]*SigningMember, []chain.Handle, 
 			minimumStake,
 			privateKey,
 		)
+
+		publicKeys[i] = publicKey
 	}
 
-	return members, chainHandles, nil
+	return members, chainHandles, publicKeys, nil
 }
 
 type mockMembershipValidator struct{}

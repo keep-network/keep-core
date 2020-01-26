@@ -1,6 +1,10 @@
 package group
 
-import "github.com/ipfs/go-log"
+import (
+	"crypto/ecdsa"
+
+	"github.com/ipfs/go-log"
+)
 
 var logger = log.Logger("keep-message-filter")
 
@@ -13,6 +17,12 @@ type MessageFiltering interface {
 	// Message from the given sender is allowed only if that member is a properly
 	// operating group member - it was not DQ or IA so far.
 	IsSenderAccepted(senderID MemberIndex) bool
+
+	// IsSenderValid returns true if the message from the given sender should be
+	// accepted for further processing. Otherwise, function returns false.
+	// IsSenderValid checks if sender of the provided ProtocolMessage is in the
+	// group and uses appropriate group member index.
+	IsSenderValid(senderID MemberIndex, senderPublicKey *ecdsa.PublicKey) bool
 }
 
 // ProtocolMessage is a common interface for all messages of GJKR DKG protocol.
@@ -94,4 +104,14 @@ func IsMessageFromSelf(memberIndex MemberIndex, message ProtocolMessage) bool {
 // accepted by group (not marked as inactive or disqualified).
 func IsSenderAccepted(filter MessageFiltering, message ProtocolMessage) bool {
 	return filter.IsSenderAccepted(message.SenderID())
+}
+
+// IsSenderValid checks if sender of the provided ProtocolMessage is in the
+// group and uses appropriate group member index.
+func IsSenderValid(
+	filter MessageFiltering,
+	message ProtocolMessage,
+	senderPublicKey *ecdsa.PublicKey,
+) bool {
+	return filter.IsSenderValid(message.SenderID(), senderPublicKey)
 }

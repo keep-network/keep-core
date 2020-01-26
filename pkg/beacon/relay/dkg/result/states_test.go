@@ -7,6 +7,7 @@ import (
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 func TestAcceptValidSignatureHashMessage(t *testing.T) {
@@ -16,13 +17,13 @@ func TestAcceptValidSignatureHashMessage(t *testing.T) {
 		GroupPublicKey: []byte("He’s the hero Gotham deserves."),
 	}
 
-	members, chainHandles, err := initializeSigningMembers(groupSize)
+	members, chainHandles, publicKeys, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	member, _ := members[0], chainHandles[0]
-	member2, chain2 := members[1], chainHandles[1]
+	member2, chain2, publicKey2 := members[1], chainHandles[1], publicKeys[1]
 
 	message2, err := member2.SignDKGResult(
 		dkgResult,
@@ -37,6 +38,7 @@ func TestAcceptValidSignatureHashMessage(t *testing.T) {
 
 	state.Receive(&mockSignatureMessage{
 		message2,
+		*publicKey2,
 		chain2.Signing().PublicKey(),
 	})
 
@@ -59,7 +61,7 @@ func TestDoNotAcceptMessageWithSwappedKey(t *testing.T) {
 		GroupPublicKey: []byte("But not the one it needs right now."),
 	}
 
-	members, chainHandles, err := initializeSigningMembers(groupSize)
+	members, chainHandles, _, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,8 +80,14 @@ func TestDoNotAcceptMessageWithSwappedKey(t *testing.T) {
 		signatureMessages: make([]*DKGResultHashSignatureMessage, 0),
 	}
 
+	_, publicKey, err := operator.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	state.Receive(&mockSignatureMessage{
 		message2,
+		*publicKey,
 		[]byte("operator uses another key"),
 	})
 
@@ -89,8 +97,9 @@ func TestDoNotAcceptMessageWithSwappedKey(t *testing.T) {
 }
 
 type mockSignatureMessage struct {
-	payload         *DKGResultHashSignatureMessage
-	senderPublicKey []byte
+	payload              *DKGResultHashSignatureMessage
+	senderPublicKey      ecdsa.PublicKey
+	senderPublicKeyBytes []byte
 }
 
 func (msm *mockSignatureMessage) TransportSenderID() net.TransportIdentifier {
@@ -103,8 +112,8 @@ func (msm *mockSignatureMessage) Type() string {
 	panic("not implemented")
 }
 func (msm *mockSignatureMessage) SenderPublicKey() ecdsa.PublicKey {
-	panic("not implemented")
+	return msm.senderPublicKey
 }
 func (msm *mockSignatureMessage) SenderPublicKeyBytes() []byte {
-	return msm.senderPublicKey
+	return msm.senderPublicKeyBytes
 }

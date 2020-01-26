@@ -1,6 +1,10 @@
 package gjkr
 
-import "github.com/keep-network/keep-core/pkg/beacon/relay/group"
+import (
+	"crypto/ecdsa"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+)
 
 // MarkInactiveMembers takes all messages from the previous DKG protocol
 // execution phase and marks all member who did not send a message as IA.
@@ -92,4 +96,18 @@ func (mc *memberCore) messageFilter() *group.InactiveMemberFilter {
 
 func (mc *memberCore) IsSenderAccepted(senderID group.MemberIndex) bool {
 	return mc.group.IsOperating(senderID)
+}
+
+// IsSenderValid checks if sender of the provided ProtocolMessage is in the
+// group and uses appropriate group member index.
+func (mc *memberCore) IsSenderValid(
+	senderID group.MemberIndex,
+	senderPublicKey *ecdsa.PublicKey,
+) bool {
+	return mc.membershipValidator.IsSelectedAtIndex(
+		// At GJKR protocol, we index members from 1 but when they are selected
+		// the the group, they are indexed from 0.
+		int(senderID)-1,
+		senderPublicKey,
+	)
 }

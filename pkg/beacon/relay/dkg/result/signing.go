@@ -1,6 +1,7 @@
 package result
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -173,4 +174,18 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 // (not marked as inactive or disqualified).
 func (sm *SigningMember) IsSenderAccepted(senderID group.MemberIndex) bool {
 	return sm.group.IsOperating(senderID)
+}
+
+// IsSenderValid checks if sender of the provided ProtocolMessage is in the
+// group and uses appropriate group member index.
+func (sm *SigningMember) IsSenderValid(
+	senderID group.MemberIndex,
+	senderPublicKey *ecdsa.PublicKey,
+) bool {
+	return sm.membershipValidator.IsSelectedAtIndex(
+		// At GJKR protocol, we index members from 1 but when they are selected
+		// the the group, they are indexed from 0.
+		int(senderID)-1,
+		senderPublicKey,
+	)
 }
