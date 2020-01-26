@@ -366,7 +366,6 @@ library Groups {
         uint256 minimumStake
     ) public {
         bytes memory groupPubKey = getGroupPublicKey(self, groupIndex);
-        require(isGroupRegistered(self, groupPubKey), "Group not found");
 
         AltBn128.G1Point memory point = AltBn128.g1HashToPoint(groupPubKey);
         bytes memory message = new bytes(64);
