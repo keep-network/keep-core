@@ -52,9 +52,10 @@ func RegisterUnmarshallers(channel net.BroadcastChannel) {
 func Execute(
 	memberIndex group.MemberIndex,
 	groupSize int,
+	dishonestThreshold int,
+	membershipValidator group.MembershipValidator,
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	dishonestThreshold int,
 	seed *big.Int,
 	startBlockHeight uint64,
 ) (*Result, uint64, error) {
@@ -64,6 +65,7 @@ func Execute(
 		memberIndex,
 		groupSize,
 		dishonestThreshold,
+		membershipValidator,
 		seed,
 	)
 	if err != nil {

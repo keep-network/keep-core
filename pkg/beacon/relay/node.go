@@ -85,11 +85,16 @@ func (n *Node) JoinGroupIfEligible(
 			playerIndex := index
 
 			go func() {
+				groupInfo := &dkg.GroupInfo{
+					Size:                n.chainConfig.GroupSize,
+					DishonestThreshold:  n.chainConfig.DishonestThreshold(),
+					MembershipValidator: validator,
+				}
+
 				signer, err := dkg.ExecuteDKG(
 					newEntry,
 					playerIndex,
-					n.chainConfig.GroupSize,
-					n.chainConfig.DishonestThreshold(),
+					groupInfo,
 					dkgStartBlockHeight,
 					n.blockCounter,
 					relayChain,

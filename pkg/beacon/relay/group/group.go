@@ -1,5 +1,26 @@
 package group
 
+import "crypto/ecdsa"
+
+// MembershipValidator operates on a group selection result and lets to
+// validate one's membership based on the provided public key.
+//
+// Validator is used to filter out messages from parties not selected to
+// the group. It is also used to confirm the position in the group of
+// a party that was selected. This is used to validate messages sent by that
+// party to all other group members.
+type MembershipValidator interface {
+	// IsInGroup returns true if party with the given public key has been selected
+	// to the group. Otherwise, function returns false.
+	IsInGroup(publicKey *ecdsa.PublicKey) bool
+
+	// IsSelectedAtIndex returns true if party with the given public key has been
+	// selected to the group at the given position. If the position does not match
+	// function returns false. The same happens when the party was not selected
+	// to the group.
+	IsSelectedAtIndex(index int, publicKey *ecdsa.PublicKey) bool
+}
+
 // Group is protocol's members group.
 type Group struct {
 	// The maximum number of misbehaving participants for which it is still

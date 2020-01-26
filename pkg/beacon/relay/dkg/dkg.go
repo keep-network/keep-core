@@ -12,12 +12,19 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// ExecuteDKG runs the full distributed key generation lifecycle.
+// GroupInfo holds the essential information about the group which should
+// perform DKG.
+type GroupInfo struct {
+	Size                int
+	DishonestThreshold  int
+	MembershipValidator group.MembershipValidator
+}
+
+// ExecuteDKG runs the distributed key generation protocol.
 func ExecuteDKG(
 	seed *big.Int,
 	index int, // starts with 0
-	groupSize int,
-	dishonestThreshold int,
+	groupInfo *GroupInfo,
 	startBlockHeight uint64,
 	blockCounter chain.BlockCounter,
 	relayChain relayChain.Interface,
@@ -32,10 +39,11 @@ func ExecuteDKG(
 
 	gjkrResult, gjkrEndBlockHeight, err := gjkr.Execute(
 		playerIndex,
-		groupSize,
+		groupInfo.Size,
+		groupInfo.DishonestThreshold,
+		groupInfo.MembershipValidator,
 		blockCounter,
 		channel,
-		dishonestThreshold,
 		seed,
 		startBlockHeight,
 	)
@@ -50,6 +58,7 @@ func ExecuteDKG(
 	err = dkgResult.Publish(
 		playerIndex,
 		gjkrResult.Group,
+		groupInfo.MembershipValidator,
 		gjkrResult,
 		channel,
 		relayChain,

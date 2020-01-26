@@ -4,6 +4,7 @@ package dkgtest
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"crypto/rand"
 	"fmt"
 	"math"
@@ -130,11 +131,16 @@ func executeDKG(
 	for i := 0; i < relayConfig.GroupSize; i++ {
 		i := i // capture for goroutine
 		go func() {
+			groupInfo := &dkg.GroupInfo{
+				Size:                relayConfig.GroupSize,
+				DishonestThreshold:  relayConfig.DishonestThreshold(),
+				MembershipValidator: &mockMembershipValidator{},
+			}
+
 			signer, err := dkg.ExecuteDKG(
 				seed,
 				i,
-				relayConfig.GroupSize,
-				relayConfig.DishonestThreshold(),
+				groupInfo,
 				startBlockHeight,
 				blockCounter,
 				chain.ThresholdRelay(),
@@ -181,4 +187,17 @@ func executeDKG(
 			memberFailures,
 		}, nil
 	}
+}
+
+type mockMembershipValidator struct{}
+
+func (mmv *mockMembershipValidator) IsInGroup(publicKey *ecdsa.PublicKey) bool {
+	return true
+}
+
+func (mmv *mockMembershipValidator) IsSelectedAtIndex(
+	index int,
+	publicKey *ecdsa.PublicKey,
+) bool {
+	return true
 }
