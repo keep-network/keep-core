@@ -155,16 +155,16 @@ contract TokenStaking is StakeDelegatable {
 
     /**
      * @dev Seize provided token amount from every member in the misbehaved
-     * operators array, burn 95% of all the seized tokens and transfer the
-     * remaining 5% to the tattletale address.
+     * operators array. The tattletale is rewarded with 5% of the total seized
+     * amount scaled by the reward adjustment parameter and the rest 95% is burned.
      * @param amount Token amount to seize from every misbehaved operator.
-     * @param pay Reward adjustment in percentage. Min 1% and 100% max.
+     * @param rewardMultiplier Reward adjustment in percentage. Min 1% and 100% max.
      * @param tattletale Address to receive the 5% reward.
      * @param misbehavedOperators Array of addresses to seize the tokens from.
      */
     function seize(
         uint256 amount,
-        uint256 pay,
+        uint256 rewardMultiplier,
         address tattletale,
         address[] memory misbehavedOperators
     ) public {
@@ -180,7 +180,7 @@ contract TokenStaking is StakeDelegatable {
         }
 
         uint256 total = misbehavedOperators.length.mul(amount);
-        uint256 tattletaleReward = (total.mul(5).div(100)).mul(pay).div(100);
+        uint256 tattletaleReward = (total.mul(5).div(100)).mul(rewardMultiplier).div(100);
 
         token.transfer(tattletale, tattletaleReward);
         token.burn(total.sub(tattletaleReward));
