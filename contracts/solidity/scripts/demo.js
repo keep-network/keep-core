@@ -1,6 +1,7 @@
 const KeepToken = artifacts.require("./KeepToken.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
+const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
 
 function formatAmount(amount, decimals) {
   return web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals)))
@@ -20,6 +21,7 @@ module.exports = async function() {
   const token = await KeepToken.deployed();
   const tokenStaking = await TokenStaking.deployed();
   const tokenGrant = await TokenGrant.deployed();
+  const operatorContract = await KeepRandomBeaconOperator.deployed();
 
   let owner = accounts[0]; // The address of an owner of the staked tokens.
   // accounts[1]...[4] Operators for owner delegated stake and receivers of the rewards.
@@ -51,6 +53,8 @@ module.exports = async function() {
     ).catch((err) => {
       console.log(`could not stake KEEP tokens for ${operator}: ${err}`);
     });
+
+    await tokenStaking.authorizeOperatorContract(operator, operatorContract.address, {from: authorizer});
 
     if (staked) {
       console.log(`successfully staked KEEP tokens for account ${operator}`)

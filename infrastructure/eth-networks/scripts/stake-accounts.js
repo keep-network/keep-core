@@ -74,11 +74,17 @@ const keepTokenContractAbi = keepTokenContractParsed.abi;
 const keepTokenContractAddress = keepTokenContractParsed.networks[ethNetworkId].address;
 const keepTokenContract = new web3.eth.Contract(keepTokenContractAbi, keepTokenContractAddress);
 
+// KeepRandomBeaconOperator
+const keepRandomBeaconOperatorContractJsonFile = `../${environment}/ropsten/KeepRandomBeaconOperator.json`;
+const keepRandomBeaconOperatorContractParsed = JSON.parse(fs.readFileSync(keepRandomBeaconOperatorContractJsonFile));
+const keepRandomBeaconOperatorContractAddress = keepRandomBeaconOperatorContractParsed.networks[ethNetworkId].address;
+
 async function stakeOperatorAccount(operatorAddress, contractOwnerAddress) {
 
   let delegation = '0x' + Buffer.concat([
     Buffer.from(contractOwnerAddress.substr(2), 'hex'),
-    Buffer.from(operatorAddress.substr(2), 'hex')
+    Buffer.from(operatorAddress.substr(2), 'hex'),
+    Buffer.from(contractOwnerAddress.substr(2), 'hex') // authorizer
   ]).toString('hex');;
 
   console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
@@ -87,6 +93,8 @@ async function stakeOperatorAccount(operatorAddress, contractOwnerAddress) {
     tokenStakingContract.address,
     formatAmount(20000000, 18),
     delegation).send({from: contractOwnerAddress});
+
+  await tokenStakingContract.authorizeOperatorContract(operatorAddress, keepRandomBeaconOperatorContractAddress, {from: contractOwnerAddress});
 
   console.log(`Account ${operatorAddress} staked!`);
 };
