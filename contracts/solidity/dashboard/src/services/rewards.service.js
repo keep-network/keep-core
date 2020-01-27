@@ -1,4 +1,4 @@
-import { formatDate } from '../utils'
+import { formatDate, wait } from '../utils'
 
 const fetchAvailableRewards = async (web3Context) => {
   const { keepRandomBeaconOperatorContract, stakingContract, yourAddress, utils } = web3Context
@@ -75,7 +75,25 @@ const withdrawRewardFromGroup = async (groupIndex, groupMembersIndices, web3Cont
     })
 
     batchRequest.execute()
-    return Promise.all(promises)
+    const transactions = await Promise.all(promises)
+    const successTransactions = transactions.filter((t) => !t.isError)
+    let allTransactionsCompleted = false
+
+    while (!allTransactionsCompleted) {
+      for (let i = 0; i < successTransactions.length; i++) {
+        const recipt = await web3.eth.getTransactionReceipt(successTransactions[i].transactionHash)
+        if (!recipt) {
+          continue
+        }
+        const isLastIdex = i === successTransactions.length -1
+        if (isLastIdex) {
+          allTransactionsCompleted = true
+        }
+      }
+      await wait(2000)
+    }
+
+    return transactions
   } catch (error) {
     throw error
   }
