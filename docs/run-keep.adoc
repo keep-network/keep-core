@@ -178,6 +178,20 @@ Keep clients need to talk out to the Keep Network and Ethereum.  Keep clients ne
 |[""]
 |No
 |===
+
+[%header,cols=4*]
+|===
+|`Storage`
+|Description
+|Default
+|Required
+
+|`DataDir`
+|Location to store the Keep nodes group membership details.
+|""
+|Yes
+|===
+
 == Logging
 
 Our logging really isn't configurable so maybe we don't need this?
