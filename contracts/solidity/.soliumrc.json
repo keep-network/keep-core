@@ -12,6 +12,7 @@
       "error",
       4
     ],
-    "security/no-block-members": ["off", ["timestamp"]]
+    "security/no-block-members": ["off", ["timestamp"]],
+    "security/no-call-value": "off"
   }
 }
