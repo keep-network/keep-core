@@ -142,7 +142,7 @@ func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
 		provider3 net.Provider,
 	) {
 		// Wait until peers discover themselves.
-		time.Sleep(10 * time.Second)
+		time.Sleep(30 * time.Second)
 
 		// Channel instance of peer 1.
 		channel1, err := provider1.ChannelWith(identity3.id.String())
