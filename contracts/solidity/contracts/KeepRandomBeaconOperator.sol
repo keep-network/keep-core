@@ -384,13 +384,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * be returned to the DKG fee pool of the service contract which triggered the DKG.
      */
     function reimburseDkgSubmitter() internal {
-        uint256 gasPrice = priceFeedEstimate;
-        // We need to check if tx.gasprice is non-zero as a workaround to a bug
-        // in go-ethereum:
-        // https://github.com/ethereum/go-ethereum/pull/20189
-        if (tx.gasprice > 0 && tx.gasprice < priceFeedEstimate) {
-            gasPrice = tx.gasprice;
-        }
+        uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
 
         uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
         address payable magpie = stakingContract.magpieOf(msg.sender);

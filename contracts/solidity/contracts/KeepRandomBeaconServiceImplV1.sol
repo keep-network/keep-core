@@ -333,18 +333,8 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         )(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
         uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 gas (ethereum transaction minimum gas)
 
-        uint256 gasPrice = _priceFeedEstimate;
-        // We need to check if tx.gasprice is non-zero as a workaround to a bug
-        // in go-ethereum:
-        // https://github.com/ethereum/go-ethereum/pull/20189
-        if (tx.gasprice > 0 && tx.gasprice < _priceFeedEstimate) {
-            gasPrice = tx.gasprice;
-        }
+        uint256 gasPrice = tx.gasprice < _priceFeedEstimate ? tx.gasprice : _priceFeedEstimate;
 
-        // Obtain the actual callback gas expenditure and refund the surplus.
-        // uint256 callbackFee = gasSpent.mul(gasPrice);
-
-        // revert("bbbb");
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
         OperatorContract(latestOperatorContract).reimburseCallback.value(gasSpent.mul(gasPrice))(
             _callbacks[requestId].callbackFee, submitter, _callbacks[requestId].surplusRecipient);
