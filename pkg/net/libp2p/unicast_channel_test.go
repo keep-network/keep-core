@@ -15,7 +15,7 @@ import (
 )
 
 func TestCreateUnicastChannel(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	withNetwork(ctx, t, func(
@@ -42,7 +42,7 @@ func TestCreateUnicastChannel(t *testing.T) {
 // In this scenario, peer 2 has peer's 1 address in their config and open
 // a direct connection during their cyclic `core bootstrap` round.
 func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	withNetwork(ctx, t, func(
@@ -130,7 +130,7 @@ func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
 // intermediary peer 2, during their cyclic `DHT bootstrap` rounds. As a result
 // a direct connection between peers 1 and 3 should be opened.
 func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	withNetwork(ctx, t, func(
