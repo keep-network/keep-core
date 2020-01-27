@@ -1,0 +1,273 @@
+:toc: macro
+
+= Run Keep
+
+:icons: font
+:numbered:
+toc::[]
+
+== Keep Types?
+
+Here's a bippity boop about keep types.
+
+== Install
+
+Things you will need:
+
+- Keep client executable
+- Keep client configuration file
+- Ethereum account and keyfile
+- Staked KEEP tokens
+
+=== System Recommendations
+
+- It is paramount that Keep nodes remain available to the Keep network. We strongly recommend a stable and redundant internet connection.
+- A connection to a production grade self-hosted or third party Ethereum node deployment.
+- Persistent storage that will survive a VM or container rotation.
+- Machines:
+
+[%header,cols=2*]
+|===
+|Cloud Provider
+|Instance Type
+
+|Google Cloud
+|n1-standard-2
+
+|AWS
+|m5.large
+
+|Azure
+|D2s v3
+
+|Self-hosted
+|2 vCPU / 8 GiB RAM / 1 GiB Persistent Storage
+|===
+
+=== Build from Source
+
+=== Docker
+
+=== Deployment Recommendations
+
+== Configuration
+
+=== Network
+
+Keep clients need to talk out to the Keep Network and Ethereum.  Keep clients need to accept incoming connnections from the Keep network.  This typically breaks down firewall rules that allow public ingress on port `3919`, and egress on port `3919` / HTTP.  If you set a different port in your keep-client configuration, or configure peers with non-default ports configured, firewall rules will need to be adjusted accordingly.
+
+=== Application
+
+==== Sample
+
+```
+# Keep client config
+
+# Ethereum host connection info.
+[ethereum]
+  URL = "ws://127.0.0.1:8546"
+  URLRPC = "http://127.0.0.1:8545"
+
+# Keep operator Ethereum account.
+[ethereum.account]
+  Address = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
+  KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
+
+# Keep contract addresses configuration.
+[ethereum.ContractAddresses]
+  # Hex-encoded address of KeepRandomBeaconOperator contract
+  KeepRandomBeaconOperator = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+  # Hex-encoded address of TokenStaking contract
+  TokenStaking = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+  # Hex-encoded address of KeepRandomBeaconService contract. Only needed
+  # in cases where the client's utility functions will be used (e.g., the
+  # relay subcommand).
+  KeepRandomBeaconService = "0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+
+# Keep network configuration.
+[LibP2P]
+  Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1", "/dns4/some-keep-host.com/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1"]
+  Port  = 3920
+  # Override the node's default addresses announced in the network
+  AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
+
+[Storage]
+  DataDir = "/my/secure/location"
+```
+
+==== Parameters
+
+[%header,cols=4*]
+|===
+|`ethereum`
+|Description
+|Default
+|Required
+
+|`URL`
+|The Ethereum host your keep-client will connect to.  Websocket protocol/port.
+|""
+|Yes
+
+|`URLRPC`
+|The Ethereum host your keep-client will connect to.  RPC protocol/port.
+|""
+|Yes
+|===
+
+[%header,cols=4*]
+|===
+|`ethereum.account`
+|Description
+|Default
+|Required
+
+|`Address`
+|The Keep operator Ethereum account address.
+|""
+|Yes
+
+|`KeyFile`
+|The local filesystem path to your Keep operator Ethereum account keyfile.
+|""
+|Yes
+|===
+
+[%header,cols=4*]
+|===
+|`ethereum.ContractAddresses`
+|Description
+|Default
+|Required
+
+|`KeepRandomBeaconOperator`
+|Hex-encoded address of the KeepRandomBeaconOperator Contract.
+|""
+|Yes
+
+|`KeepRandomBeaconService`
+|Hex-encoded address of the KeepRandomBeaconService Contract.
+|""
+|Yes
+
+|`TokenStaking`
+|Hex-encoded address of the TokenStaking Contract.
+|""
+|Yes
+|===
+
+[%header,cols=4*]
+|===
+|`LibP2P`
+|Description
+|Default
+|Required
+
+|`Peers`
+|Comma separated list of network peers to boostrap against.
+|[""]
+|No
+
+|`Port`
+|The port to run your instance of Keep on.
+|3919
+|Yes
+
+|`AnnouncedAddresses`
+|Multiaddr formatted hostnames or addresses annouced to the Keep Network.
+|[""]
+|No
+|===
+== Logging
+
+Our logging really isn't configurable so maybe we don't need this?
+
+== Staking Your KEEP (Maybe this goes towards the top of this doc?)
+
+Stuff stuff dapp stuff stake stuff make stuff clicky clicky
+
+== Connection Info (I'm not convinced this should be in this doc but it should be somewhere :shrug:)
+
+=== Mainnet
+
+==== Boostrap Peers
+
+==== Contracts
+
+=== Testnet
+
+Keep uses the Ethereum Ropsten Testnet.
+
+==== Available (or bootstrap?) Peers
+
+[small]*`"/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8B2HEde1pAUJH31rZehN3isd1ZFiHCdsxjFnGZehuDJZ"`*
+[small]*`"/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8SrKDSKZnj3syGjQ1B8F6bDokP93wikjUgpdx4sWCN5L"`*
+[small]*`"/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmS29jNiEX2vAtcjZVhPjU5HWKZNjpWj1gp4SKMGwnSfrg"`*
+[small]*`"/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm359ykqT4QAehewxGLCqY7vTNHLP1ao9EjieZS8jdeKp5"`*
+[small]*`"/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAmDKyX7xmLMEAuWtDw5oBLN3L9xtKXSFn8hUEVtukZkuHp"`*
+
+==== Contracts (Not sure if we should list all, or only configured)
+
+[%header,cols=2*]
+|===
+|Utility
+|Address
+
+|ModUtils
+|`0x621a0dD8bfB1E29DE1B9E897CBfb602520586890`
+
+|AltBn128
+|`0xdE29680BB6cb5B1767Cc590926fad26B56F15A3F`
+
+|BLS
+|`0xa1199fa46Bf3F7905b696fBC224aEE4a1d62547b`
+|===
+
+[%header,cols=2*]
+|===
+|Token
+|
+
+|KeepToken
+|`0x8f9F2e1cCAd70E292CCC6D1D20A42cD70bC76488`
+
+|TokenStaking
+|`0x4a7ecCb36784931FfB75BCdcBd95aCA9F63Cb90E`
+
+|TokenGrant
+|`0xe26E1C21d34059c7B6b882c7cDD38Ac6E169D774`
+|===
+
+[%header,cols=2*]
+|===
+|Group
+|
+
+|Groups
+|`0x25A60dAE6eF016CB2c5391c91356F214b0620071`
+
+|GroupSelection
+|`0x723e442b7E9a59a29F4999550c1FD7db96DdD3b1`
+|===
+
+[%header,cols=2*]
+|===
+|RandomBeacon
+|
+
+|DKGResultVerification
+|`0xf3e3e41CeD437DBfcA9Ce9148A6452D249D7e2Ee`
+
+|KeepRandomBeaconServiceImplV1
+|`0xf99F40F6266cb3c6f5B92b3C5E88a0aCe1E2acA3`
+
+|KeepRandomBeaconService
+|`0x1200952A8EB287006f4f61Effa67d85447a67Ab0`
+
+|KeepRandomBeaconOperator
+|`0xBf136B8Afd6A8F6B571c23B04aBFCa7AFb0D404E`
+|===
+
+==== Faucet
+
+The KEEP faucet will issue and stake KEEP to the address requested.  Once an account is staked on the network you cannot issue tokens to, or stake via the faucet again (That's ok though, once should be enough).
