@@ -47,7 +47,7 @@ func newUnicastChannelManager(
 
 func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 	logger.Debugf(
-		"[%v] new incoming stream [%v] from peer [%v]",
+		"[%v] processing incoming stream [%v] from peer [%v]",
 		ucm.identity.id,
 		stream.Protocol(),
 		stream.Conn().RemotePeer(),
