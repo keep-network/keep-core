@@ -3,7 +3,6 @@ package libp2p
 import (
 	"bufio"
 	"context"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"sync"
@@ -53,9 +52,8 @@ func (uc *unicastChannel) Send(ctx context.Context, message net.TaggedMarshaler)
 	}
 
 	logger.Debugf(
-		"[%v] sending message [%v] to peer [%v]",
+		"[%v] sending message to peer [%v]",
 		uc.clientIdentity.id,
-		hex.EncodeToString(messageProto.Payload),
 		uc.RemotePeerID(),
 	)
 
@@ -179,14 +177,6 @@ func (uc *unicastChannel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmar
 
 func (uc *unicastChannel) handleStream(stream network.Stream) {
 	if stream.Conn().RemotePeer() != uc.remotePeerID {
-		logger.Warningf(
-			"[%v] stream [%v] from peer [%v] is not supported "+
-				"by the unicast channel of peer [%v]",
-			uc.clientIdentity.id,
-			stream.Protocol(),
-			stream.Conn().RemotePeer(),
-			uc.remotePeerID,
-		)
 		return
 	}
 
@@ -206,9 +196,8 @@ func (uc *unicastChannel) handleStream(stream network.Stream) {
 			}
 
 			logger.Debugf(
-				"[%v] read message [%v] from peer [%v]",
+				"[%v] received message from peer [%v]",
 				uc.clientIdentity.id,
-				hex.EncodeToString(messageProto.Payload),
 				uc.remotePeerID,
 			)
 
@@ -243,8 +232,8 @@ func (uc *unicastChannel) processMessage(message *pb.NetworkMessage) error {
 
 	if senderIdentifier.id != uc.remotePeerID {
 		return fmt.Errorf(
-			"messages from peer [%v] is not supported by the "+
-				"unicast channel of peer [%v]",
+			"messages from peer [%v] are not supported by the "+
+				"unicast channel for peer [%v]",
 			senderIdentifier.id,
 			uc.remotePeerID,
 		)
