@@ -335,7 +335,6 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
 
         uint256 gasPrice = tx.gasprice < _priceFeedEstimate ? tx.gasprice : _priceFeedEstimate;
 
-        revert("asdfads");
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
         OperatorContract(latestOperatorContract).reimburseCallback.value(gasSpent.mul(gasPrice))(
             _callbacks[requestId].callbackFee, submitter, _callbacks[requestId].surplusRecipient);
