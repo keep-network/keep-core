@@ -595,7 +595,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         groups.terminateGroup(signingRequest.groupIndex);
 
-        // Reward is limited to min(1, 20 / group_size) of the maximum tattletale reward, see RFC15 for more details.
+        // Reward is limited to min(1, 20 / group_size) of the maximum tattletale reward, see the Yellow Paper for more details.
         uint256 rewardAdjustment = uint256(20 * 100).div(groupSize); // Reward adjustment in percentage
         rewardAdjustment = rewardAdjustment > 100 ? 100:rewardAdjustment; // Reward adjustment can be 100% max
         stakingContract.seize(minimumStake, rewardAdjustment, msg.sender, groups.membersOf(signingRequest.groupIndex));
