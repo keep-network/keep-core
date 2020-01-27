@@ -16,7 +16,7 @@ contract('KeepRandomBeaconOperator', (_) => {
       let bytecodeSize = bytecode.length / 2; // size in bytes
       let deployedBytecodeSize = deployedBytecode.length / 2; // size in bytes
 
-      const maxSafeBytecodeSize = 22482
+      const maxSafeBytecodeSize = 22546
 
       console.log(
         "KeepRandomBeaconOperator size of bytecode in bytes = ", 
