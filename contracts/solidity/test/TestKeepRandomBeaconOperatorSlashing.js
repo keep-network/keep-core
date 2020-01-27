@@ -92,12 +92,21 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   })
 
   it("should be able to report failure to produce entry after relay entry timeout", async () => {
+    let operator1balance = await stakingContract.balanceOf(operator1)
+    let operator2balance = await stakingContract.balanceOf(operator2)
+    let operator3balance = await stakingContract.balanceOf(operator3)
+
+    await expectThrowWithMessage(
+      operatorContract.reportRelayEntryTimeout({from: tattletale}),
+      "Entry did not time out."
+    )
+
     mineBlocks(20)
     await operatorContract.reportRelayEntryTimeout({from: tattletale})
 
-    assert.equal((await stakingContract.balanceOf(operator1)).isZero(), true, "Unexpected operator 1 balance")
-    assert.equal((await stakingContract.balanceOf(operator2)).isZero(), true, "Unexpected operator 2 balance")
-    assert.equal((await stakingContract.balanceOf(operator3)).isZero(), true, "Unexpected operator 3 balance")
+    assert.isTrue((await stakingContract.balanceOf(operator1)).eq(operator1balance.sub(minimumStake)), "Unexpected operator 1 balance")
+    assert.isTrue((await stakingContract.balanceOf(operator2)).eq(operator2balance.sub(minimumStake)), "Unexpected operator 2 balance")
+    assert.isTrue((await stakingContract.balanceOf(operator3)).eq(operator3balance.sub(minimumStake)), "Unexpected operator 3 balance")
 
     // Expecting 5% of all the seized tokens with reward adjustment of (20 / 64) = 31%
     let expectedTattletaleReward = minimumStake.muln(3).muln(5).divn(100).muln(31).divn(100)
