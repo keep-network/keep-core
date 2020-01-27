@@ -60,7 +60,7 @@ const useWithdrawAction = (group) => {
       } else if (errorTransactionCount === result.length) {
         showMessage({ type: messageType.ERROR, title: 'Withdraw action has been failed' })
       } else {
-        showMessage({ type: messageType.ERROR, title: `${errorTransactionCount} of ${result.length} transactionshave been failed` })
+        showMessage({ type: messageType.INFO, title: `${errorTransactionCount} of ${result.length} transactions have been not approved` })
       }
 
       const updatedMemberIndices = {}
