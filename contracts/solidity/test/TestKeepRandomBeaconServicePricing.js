@@ -108,11 +108,14 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
   });
 
   it("should send group reward to each operator.", async function() {
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
+    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let excessCallbackGas = web3.utils.toBN(callbackGas).mul(web3.utils.toBN(2)); 
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(excessCallbackGas)
+
     let tx = await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address,
       "callback(uint256)",
-      0,
+      excessCallbackGas,
       {value: entryFeeEstimate, from: requestor}
     );
 
@@ -161,10 +164,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     // subsidy = 5250000000000000 - 207407407407407 * 5 - 210648148148148 = 4002314814814817 wei
   
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    let tx = await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
-      callbackContract.address,
-      "callback(uint256)",
-      0,
+    let tx = await serviceContract.methods['requestRelayEntry()'](
       {value: entryFeeEstimate, from: requestor}
     );
 

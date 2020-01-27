@@ -17,6 +17,11 @@ interface OperatorContract {
     ) external payable;
     function numberOfGroups() external view returns(uint256);
     function createGroup(uint256 newEntry, address payable submitter) external payable;
+    function reimburseCallback(
+        uint256 callbackFunds,
+        address payable submitter,
+        address payable surplusRecipient
+    ) external payable;
     function isGroupSelectionPossible() external view returns (bool);
 }
 
@@ -337,26 +342,12 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         }
 
         // Obtain the actual callback gas expenditure and refund the surplus.
-        uint256 callbackSurplus = 0;
-        uint256 callbackFee = gasSpent.mul(gasPrice);
+        // uint256 callbackFee = gasSpent.mul(gasPrice);
 
-        // If we spent less on the callback than the customer transferred for the
-        // callback execution, we need to reimburse the difference.
-        if (callbackFee < _callbacks[requestId].callbackFee) {
-            callbackSurplus = _callbacks[requestId].callbackFee.sub(callbackFee);
-            // Reimburse submitter with his actual callback cost.
-            (success, ) = submitter.call.value(callbackFee)("");
-            require(success, "Failed reimburse actual callback cost");
-
-            // Return callback surplus to the requestor.
-            (success, ) = _callbacks[requestId].surplusRecipient.call.value(callbackSurplus)("");
-            require(success, "Failed send callback surplus");
-
-        } else {
-            // Reimburse submitter with the callback payment sent by the requestor.
-            (success, ) = submitter.call.value(_callbacks[requestId].callbackFee)("");
-            require(success, "Failed reimburse callback payment");
-        }
+        // revert("bbbb");
+        address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
+        OperatorContract(latestOperatorContract).reimburseCallback.value(gasSpent.mul(gasPrice))(
+            _callbacks[requestId].callbackFee, submitter, _callbacks[requestId].surplusRecipient);
     }
 
     /**

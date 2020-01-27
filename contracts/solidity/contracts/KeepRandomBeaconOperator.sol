@@ -503,6 +503,36 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
+     * @dev Reimbursment for calling customer specified callback for the relay entry request.
+     * @param callbackFunds Available funds for callback reimbursment.
+     * @param submitter Relay entry submitter address.
+     * @param surplusRecipient Surplus recipient address.
+     */
+    function reimburseCallback(uint256 callbackFunds, address payable submitter, address payable surplusRecipient)
+        public payable onlyServiceContract {
+
+        bool success; // Store status of external contract call.
+
+        // If we spent less on the callback than the customer transferred for the
+        // callback execution, we need to reimburse the difference.
+        if (msg.value < callbackFunds) {
+            uint256 callbackSurplus = callbackFunds.sub(msg.value);
+            // Reimburse submitter with his actual callback cost.
+            (success, ) = submitter.call.value(msg.value)("");
+            require(success, "Failed reimburse actual callback cost");
+
+            // Return callback surplus to the requestor.
+            (success, ) = surplusRecipient.call.value(callbackSurplus)("");
+            require(success, "Failed send callback surplus");
+
+        } else {
+            // Reimburse submitter with the callback payment sent by the requestor.
+            (success, ) = submitter.call.value(callbackFunds)("");
+            require(success, "Failed reimburse callback payment");
+        }
+    }
+
+    /**
      * @dev Get rewards breakdown in wei for successful entry for the current signing request.
      */
     function newEntryRewardsBreakdown() internal view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
