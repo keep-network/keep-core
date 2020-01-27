@@ -15,8 +15,7 @@ import (
 )
 
 func TestCreateUnicastChannel(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	withNetwork(ctx, t, func(
 		identity1 *identity,
@@ -42,8 +41,7 @@ func TestCreateUnicastChannel(t *testing.T) {
 // In this scenario, peer 2 has peer's 1 address in their config and open
 // a direct connection during their cyclic `core bootstrap` round.
 func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	withNetwork(ctx, t, func(
 		identity1 *identity,
@@ -130,8 +128,7 @@ func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
 // intermediary peer 2, during their cyclic `DHT bootstrap` rounds. As a result
 // a direct connection between peers 1 and 3 should be opened.
 func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	withNetwork(ctx, t, func(
 		identity1 *identity,
@@ -141,9 +138,6 @@ func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
 		provider2 net.Provider,
 		provider3 net.Provider,
 	) {
-		// Wait until peers discover themselves.
-		time.Sleep(30 * time.Second)
-
 		// Channel instance of peer 1.
 		channel1, err := provider1.ChannelWith(identity3.id.String())
 		if err != nil {
@@ -325,6 +319,22 @@ func withNetwork(
 	)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	// Wait peer discovery end for one minute.
+	peerDiscoveryCompleted := false
+	for i := 0; i < 60; i++ {
+		if len(provider1.Peers()) == 2 &&
+			len(provider2.Peers()) == 2 &&
+			len(provider3.Peers()) == 2 {
+			peerDiscoveryCompleted = true
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	if !peerDiscoveryCompleted {
+		t.Fatal("peer discovery timeout")
 	}
 
 	testFn(
