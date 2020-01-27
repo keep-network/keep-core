@@ -412,6 +412,19 @@ library Groups {
         }
     }
 
+    function reportRelayEntryTimeout(
+        Storage storage self,
+        uint256 groupIndex,
+        uint256 groupSize,
+        uint256 minimumStake
+    ) public {
+        terminateGroup(self, groupIndex);
+        // Reward is limited to min(1, 20 / group_size) of the maximum tattletale reward, see the Yellow Paper for more details.
+        uint256 rewardAdjustment = uint256(20 * 100).div(groupSize); // Reward adjustment in percentage
+        rewardAdjustment = rewardAdjustment > 100 ? 100:rewardAdjustment; // Reward adjustment can be 100% max
+        self.stakingContract.seize(minimumStake, rewardAdjustment, msg.sender, membersOf(self, groupIndex));
+    }
+
     /**
      * @dev Returns members of the given group by group public key.
      *

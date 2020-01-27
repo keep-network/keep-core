@@ -592,13 +592,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function reportRelayEntryTimeout() public {
         require(hasEntryTimedOut(), "Entry did not time out");
-
-        groups.terminateGroup(signingRequest.groupIndex);
-
-        // Reward is limited to min(1, 20 / group_size) of the maximum tattletale reward, see the Yellow Paper for more details.
-        uint256 rewardAdjustment = uint256(20 * 100).div(groupSize); // Reward adjustment in percentage
-        rewardAdjustment = rewardAdjustment > 100 ? 100:rewardAdjustment; // Reward adjustment can be 100% max
-        stakingContract.seize(minimumStake, rewardAdjustment, msg.sender, groups.membersOf(signingRequest.groupIndex));
+        groups.reportRelayEntryTimeout(signingRequest.groupIndex, groupSize, minimumStake);
 
         // We could terminate the last active group. If that's the case,
         // do not try to execute signing again because there is no group
