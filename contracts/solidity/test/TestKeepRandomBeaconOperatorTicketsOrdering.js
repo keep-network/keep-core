@@ -1,22 +1,13 @@
-import {initContracts} from './helpers/initContracts';
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
+const GroupSelectionStub = artifacts.require("./stubs/GroupSelectionStub.sol");
 
 contract('KeepRandomBeaconOperator', function() {
   const groupSize = 10;
-
-  let operatorContract;
+  
+  let groupSelectionStub;
 
   before(async () => {
-    let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorTicketsOrderingStub.sol')
-    );
-
-    operatorContract = contracts.operatorContract;
-    operatorContract.setGroupSize(groupSize);
+    groupSelectionStub = await GroupSelectionStub.new(groupSize);
   });
 
   beforeEach(async () => {
@@ -158,13 +149,13 @@ contract('KeepRandomBeaconOperator', function() {
 
     async function addTickets(ticketsToAdd) {
       for (let i = 0; i < ticketsToAdd.length; i++) {
-        await operatorContract.addTicket(ticketsToAdd[i]);
+        await groupSelectionStub.addTicket(ticketsToAdd[i]);
       }
     };
 
     async function assertTickets(expectedTail, expectedLinkedTicketIndices, expectedTickets) {
       // Assert tickets size
-      let tickets = await operatorContract.getTickets();
+      let tickets = await groupSelectionStub.getTickets();
       assert.isAtMost(
         tickets.length,
         groupSize, 
@@ -183,13 +174,13 @@ contract('KeepRandomBeaconOperator', function() {
       )
 
       // Assert tail
-      let tail = await operatorContract.getTail()
+      let tail = await groupSelectionStub.getTail()
       assert.equal(tail.toString(), expectedTail, "unexpected tail index")
 
       // Assert the order of the tickets[] indices
       let actualLinkedTicketIndices = [];
       for (let i = 0; i < tickets.length; i++) {
-        let actualIndex = await operatorContract.getPreviousTicketIndex(i)
+        let actualIndex = await groupSelectionStub.getPreviousTicketIndex(i)
         actualLinkedTicketIndices.push(actualIndex)
       }
       assert.sameOrderedMembers(

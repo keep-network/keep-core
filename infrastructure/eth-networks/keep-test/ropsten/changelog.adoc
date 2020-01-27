@@ -2,6 +2,22 @@
 
 Summary of Keep private testnet releases in reverse chronological order.
 
+== 202-01-22
+
+Happy New Year!!
+
+=== BUGFIXES
+
+Group selection occasionally fails on Infura:  We now account for Infura's load balancing pattern.
+Group selection is not triggered again after a failure:  Resloved a condition where we would end up with zero groups on-chain.
+Undelegation failure: Resolved occasional function not found error in the staking dapp.
+
+=== OTHERS
+
+Reentrancy protection: Retransmitter refinements and libp2p buffers adjustments to improve message delivery rates.
+Adjust gas price for Ropsten: Price adjust as compared to local environments.
+Signing group member as a relay entry timeout tattletale:  Added group signers as tattletales by default.  This should help reduce penalties and allow for additional beacon self-healing.
+
 == 2019-12-13
 
 === BUGFIXES

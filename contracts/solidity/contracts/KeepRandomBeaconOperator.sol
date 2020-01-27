@@ -40,6 +40,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     event GroupSelectionStarted(uint256 newEntry);
 
+    event GroupMemberRewardsWithdrawn(address indexed beneficiary, address operator, uint256 amount, uint256 groupIndex);
+
     GroupSelection.Storage groupSelection;
     Groups.Storage groups;
     DKGResultVerification.Storage dkgResultVerification;
@@ -94,10 +96,13 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     // Gas required to verify BLS signature and produce successful relay
     // entry. Excludes callback and DKG gas.
-    uint256 public entryVerificationGasEstimate = 300000;
+    uint256 public entryVerificationGasEstimate = 240000;
 
-    // Gas required to submit DKG result.
+    // Gas required to submit DKG result. Excludes initiation of group selection.
     uint256 public dkgGasEstimate = 1740000;
+
+    // Gas required to trigger DKG (starting group selection).
+    uint256 public groupSelectionGasEstimate = 100000;
 
     // Reimbursement for the submitter of the DKG result.
     // This value is set when a new DKG request comes to the operator contract.
@@ -160,13 +165,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
+        groups.stakingContract = TokenStaking(_stakingContract);
 
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
         groups.activeGroupsThreshold = 5;
         groups.groupActiveTime = 3000;
 
-        dkgResultVerification.timeDKG = 7*(1+5);
+        dkgResultVerification.timeDKG = 6*(1+5);
         dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;
         dkgResultVerification.groupSize = groupSize;
         // TODO: For now, the required number of signatures is equal to group
@@ -215,10 +221,18 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @dev Triggers the selection process of a new candidate group.
      * @param _newEntry New random beacon value that stakers will use to
      * generate their tickets.
+     * @param submitter Operator of this contract.
      */
-    function createGroup(uint256 _newEntry) public payable onlyServiceContract {
+    function createGroup(uint256 _newEntry, address payable submitter) public payable onlyServiceContract {
+        uint256 groupSelectionStartFee = groupSelectionGasEstimate
+            .mul(gasPriceWithFluctuationMargin(priceFeedEstimate));
+
         groupSelectionStarterContract = ServiceContract(msg.sender);
-        startGroupSelection(_newEntry, msg.value);
+        startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
+
+        // reimbursing a submitter that triggered group selection
+        (bool success, ) = stakingContract.magpieOf(submitter).call.value(groupSelectionStartFee)("");
+        require(success, "Failed reimbursing submitter for starting a group selection");
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
@@ -598,12 +612,16 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Checks that the specified user has enough stake.
+     * @dev Checks that the specified user has enough stake and that this
+     * contract has been authorized by the staker for potential slashing.
      * @param staker Specifies the identity of the staker.
      * @return True if staked enough to participate in the group, false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return stakingContract.balanceOf(staker) >= minimumStake;
+        return (
+            stakingContract.isAuthorized(staker, address(this)) &&
+            stakingContract.balanceOf(staker) >= minimumStake
+        );
     }
 
     /**
@@ -661,6 +679,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 accumulatedRewards = groups.withdrawFromGroup(operator, groupIndex, groupMemberIndices);
         (bool success, ) = stakingContract.magpieOf(operator).call.value(accumulatedRewards)("");
         require(success, "Failed withdraw rewards");
+        emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, accumulatedRewards, groupIndex);
     }
 
     /**
@@ -678,9 +697,32 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
+     * @dev Estimates gas for group creation. Includes the cost of DKG and the
+     * cost of triggering group selection.
+     */
+    function groupCreationGasEstimate() public view returns (uint256) {
+        return dkgGasEstimate.add(groupSelectionGasEstimate);
+    }
+
+     /**
      * @dev Returns members of the given group by group public key.
      */
     function getGroupMembers(bytes memory groupPubKey) public view returns (address[] memory members) {
         return groups.getGroupMembers(groupPubKey);
+    }
+
+    /**
+     * @dev Reports unauthorized signing for the provided group. Must provide
+     * a valid signature of the group address as a message. Successful signature
+     * verification means the private key has been leaked and all group members
+     * should be punished by seizing their tokens. The submitter of this proof is
+     * rewarded with 5% of the total seized amount scaled by the reward adjustment
+     * parameter and the rest 95% is burned.
+     */
+    function reportUnauthorizedSigning(
+        uint256 groupIndex,
+        bytes memory signedGroupPubKey
+    ) public {
+        groups.reportUnauthorizedSigning(groupIndex, signedGroupPubKey, minimumStake);
     }
 }

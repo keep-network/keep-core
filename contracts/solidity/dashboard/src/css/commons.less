@@ -1,0 +1,29 @@
+.box-shadow {
+    .box-shadow(0px, 4px, 4px,rgba(196, 196, 196, 0.3));
+}
+
+.tile {
+    background: @white;
+    padding: 2rem;
+    .box-shadow(0px, 4px, 4px,rgba(196, 196, 196, 0.3));
+}
+
+.flex {
+    display: flex;
+    &-column {
+      flex-direction: column;
+    }
+    &-row {
+      flex-direction: row;
+      &-space-between {
+        justify-content: space-between;
+      }
+      &-center {
+        align-items: center;
+      }
+    }
+}
+
+.self-start {
+    align-self: flex-start;
+}
