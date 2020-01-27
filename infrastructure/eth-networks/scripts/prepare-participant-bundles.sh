@@ -1,42 +1,16 @@
-set -e
-
-HELP="Usage: ./$(basename $0) -n <ETH_NETWORK> -e <ENVIRONMENT>
-      \n\nAvailable ETH_NETWORK: ropsten
-      \nAvailable ENVIRONMENT: keep-test"
-
-while getopts ":n:e:" opt; do
-  case $opt in
-    n ) ETH_NETWORK=$OPTARG;;
-    e ) ENVIRONMENT=$OPTARG;;
-
-    \?)
-      echo -e $HELP
-      exit 1
-  esac
-done
-
-if [ $# -eq 0 ]
-then
-  echo -e $HELP
-  exit 1
-fi
-
-if [ $ENVIRONMENT != "keep-test" ]
-then
-  echo "Invalid environment: use keep-test for now"
-  exit 1
-fi
-
 BASEDIR=$(dirname "$0")
-EXTERNAL_PARTICIPANT_PATH="${BASEDIR}/../${ENVIRONMENT}/${ETH_NETWORK}/participants"
+
+EXTERNAL_PARTICIPANT_PATH="${BASEDIR}/../keep-test/ropsten/participants"
 EXTERNAL_PARTICIPANTS=$(ls $EXTERNAL_PARTICIPANT_PATH)
 
 function clean_deployment_bundles() {
   echo "=====REMOVING OLD BUNDLES====="
   for participant in $EXTERNAL_PARTICIPANTS
   do
-    PARTICIPANT_PATH=$EXTERNAL_PARTICIPANT_PATH/$participant
+    echo $EXTERNAL_PARTICIPANT_PATH
+    PARTICIPANT_PATH="$EXTERNAL_PARTICIPANT_PATH/$participant"
     CURRENT_BUNDLE=$(ls $PARTICIPANT_PATH | grep ".tar.gz")
+    echo $PARTICIPANT_PATH
 
     if [ -z $CURRENT_BUNDLE ]
     then
@@ -61,7 +35,7 @@ function create_deployment_bundles() {
     echo "$participant"
     tar -zcvf $PARTICIPANT_PATH/$DATE-keep-client-deployment-bundle.tar.gz \
       -C $BASEDIR/../../../docs/ keep-client-quickstart.adoc \
-      -C ../infrastructure/eth-networks/$ENVIRONMENT/$ETH_NETWORK changelog.adoc \
+      -C ../infrastructure/eth-networks/keep-test/ropsten changelog.adoc \
          ./eth-account-password.txt  \
          ./keep-client-snapshot.tar \
       -C ./participants/$participant config \
@@ -79,7 +53,7 @@ function fetch_keep_client_image() {
 function save_keep_client_image() {
   echo "=====SAVING LATEST KEEP-CLIENT IMAGE====="
   echo "This will take several seconds..."
-  docker save -o ../$ENVIRONMENT/$ETH_NETWORK/keep-client-snapshot.tar gcr.io/keep-test-f3e0/keep-client
+  docker save -o ../keep-test/ropsten/keep-client-snapshot.tar gcr.io/keep-test-f3e0/keep-client
   echo "==============================\n"
 }
 
