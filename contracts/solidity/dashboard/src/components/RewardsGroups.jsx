@@ -10,38 +10,6 @@ import { Web3Context } from './WithWeb3Context'
 
 const previewDataCount = 3
 
-const useUpdateGroupRewardAfterWithdrawal = () => {
-  const { utils } = useContext(Web3Context)
-
-  const updateGroupAfterWithdrawal = (groupToUpdate, groups, totalRewardsBalance) => {
-    const updatedGroups = [...groups]
-    let indexInArray
-    const currentGroup = groups.find((group, index) => {
-      if (group.groupIndex === groupToUpdate.groupIndex) {
-        indexInArray = index
-        return true
-      }
-
-      return false
-    })
-
-    let updateTotalRewardsBalance = utils.toBN(utils.toWei(totalRewardsBalance, 'ether'))
-
-    if (Object.keys(groupToUpdate.membersIndeces).length === 0) {
-      updateTotalRewardsBalance = updateTotalRewardsBalance.sub(utils.toBN(utils.toWei(currentGroup.reward, 'ether')))
-      updatedGroups.splice(indexInArray, 1)
-    } else {
-      const currentGroupRewardInWei = utils.toBN(utils.toWei(currentGroup.reward, 'ether'))
-      const groupToUpdateRewardInWei = utils.toBN(utils.toWei(groupToUpdate.reward, 'ether'))
-      updateTotalRewardsBalance = updateTotalRewardsBalance.sub(currentGroupRewardInWei.sub(groupToUpdateRewardInWei))
-      updatedGroups[indexInArray] = groupToUpdate
-    }
-    return [updatedGroups, utils.fromWei(updateTotalRewardsBalance, 'ether')]
-  }
-
-  return updateGroupAfterWithdrawal
-}
-
 export const RewardsGroups = ({ setTotalRewardsBalance }) => {
   const [state, updateData] = useFetchData(rewardsService.fetchAvailableRewards, [[], '0'])
   const { isFetching, data: [groups, totalRewardsBalance] } = state
@@ -88,4 +56,36 @@ export const RewardsGroups = ({ setTotalRewardsBalance }) => {
 
     </LoadingOverlay>
   )
+}
+
+const useUpdateGroupRewardAfterWithdrawal = () => {
+  const { utils } = useContext(Web3Context)
+
+  const updateGroupAfterWithdrawal = (groupToUpdate, groups, totalRewardsBalance) => {
+    const updatedGroups = [...groups]
+    let indexInArray
+    const currentGroup = groups.find((group, index) => {
+      if (group.groupIndex === groupToUpdate.groupIndex) {
+        indexInArray = index
+        return true
+      }
+
+      return false
+    })
+
+    let updateTotalRewardsBalance = utils.toBN(utils.toWei(totalRewardsBalance, 'ether'))
+
+    if (Object.keys(groupToUpdate.membersIndeces).length === 0) {
+      updateTotalRewardsBalance = updateTotalRewardsBalance.sub(utils.toBN(utils.toWei(currentGroup.reward, 'ether')))
+      updatedGroups.splice(indexInArray, 1)
+    } else {
+      const currentGroupRewardInWei = utils.toBN(utils.toWei(currentGroup.reward, 'ether'))
+      const groupToUpdateRewardInWei = utils.toBN(utils.toWei(groupToUpdate.reward, 'ether'))
+      updateTotalRewardsBalance = updateTotalRewardsBalance.sub(currentGroupRewardInWei.sub(groupToUpdateRewardInWei))
+      updatedGroups[indexInArray] = groupToUpdate
+    }
+    return [updatedGroups, utils.fromWei(updateTotalRewardsBalance, 'ether')]
+  }
+
+  return updateGroupAfterWithdrawal
 }
