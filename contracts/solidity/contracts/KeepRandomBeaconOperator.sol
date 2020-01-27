@@ -13,6 +13,7 @@ interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
+    function callbackGas(uint256 requestId) external view returns(uint256);
 }
 
 /**
@@ -226,7 +227,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     function createGroup(uint256 _newEntry, address payable submitter) public payable onlyServiceContract {
         uint256 groupSelectionStartFee = groupSelectionGasEstimate
             .mul(gasPriceWithFluctuationMargin(priceFeedEstimate));
-
         groupSelectionStarterContract = ServiceContract(msg.sender);
         startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
 
@@ -477,7 +477,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         emit RelayEntrySubmitted();
 
-        ServiceContract(signingRequest.serviceContract).entryCreated(
+        uint256 callbackGas = ServiceContract(signingRequest.serviceContract).callbackGas(signingRequest.relayRequestId);
+
+        ServiceContract(signingRequest.serviceContract).entryCreated.gas(groupSelectionGasEstimate.add(callbackGas))(
             signingRequest.relayRequestId,
             _groupSignature,
             msg.sender

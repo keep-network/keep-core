@@ -335,6 +335,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
 
         uint256 gasPrice = tx.gasprice < _priceFeedEstimate ? tx.gasprice : _priceFeedEstimate;
 
+        revert("asdfads");
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
         OperatorContract(latestOperatorContract).reimburseCallback.value(gasSpent.mul(gasPrice))(
             _callbacks[requestId].callbackFee, submitter, _callbacks[requestId].surplusRecipient);
@@ -395,6 +396,14 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         // miner-requestors manipulate the gas price when requesting relay entry
         // and underpricing expensive callbacks.
         return callbackGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
+    }
+
+    /**
+     * @dev Get the gas required to cover the callback function.
+     * @param requestId Id of the request.
+     */
+    function callbackGas(uint256 requestId) public view returns(uint256) {
+        return _callbacks[requestId].callbackGas;
     }
 
     /**
