@@ -31,8 +31,7 @@
     "eth-gas-reporter": "^0.2.12",
     "ethereumjs-abi": "^0.6.5",
     "mocha-junit-reporter": "^1.23.1",
-    "solc": "^0.5.7",
-    "truffle": "^5.1.9",
+    "truffle": "5.1.9",
     "@truffle/hdwallet-provider": "^1.0.25",
     "websocket": "^1.0.28"
   }
