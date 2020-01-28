@@ -48,7 +48,7 @@ const useWithdrawAction = (group) => {
   const withdraw = async () => {
     try {
       setIsFetching(true)
-      const message = showMessage({ type: messageType.PENDING_ACTION, sticky: true, title: 'Withdraw acion is pending' })
+      const message = showMessage({ type: messageType.PENDING_ACTION, sticky: true, title: 'Withdrawal in progress' })
       const result = await rewardsService.withdrawRewardFromGroup(groupIndex, membersIndeces, web3Context)
       setIsFetching(false)
       closeMessage(message)
@@ -56,9 +56,9 @@ const useWithdrawAction = (group) => {
       const errorTransactionCount = unacceptedTransactions.length
 
       if (errorTransactionCount === 0) {
-        showMessage({ type: messageType.SUCCESS, title: 'Withdraw action has been successfully completed' })
+        showMessage({ type: messageType.SUCCESS, title: 'Reward withdrawal completed' })
       } else if (errorTransactionCount === result.length) {
-        showMessage({ type: messageType.ERROR, title: 'Withdraw action has been failed' })
+        showMessage({ type: messageType.ERROR, title: 'Reward withdrawal failed' })
       } else {
         showMessage({ type: messageType.INFO, title: `${errorTransactionCount} of ${result.length} transactions have been not approved` })
       }
@@ -74,7 +74,7 @@ const useWithdrawAction = (group) => {
 
       return groupToUpdate
     } catch (error) {
-      showMessage({ type: messageType.ERROR, title: 'Something goes wrong...' })
+      showMessage({ type: messageType.ERROR, title: 'Reward withdrawal failed' })
       setIsFetching(false)
     }
   }
