@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.7;
 
 import "truffle/Assert.sol";
 import "../contracts/utils/ModUtils.sol";
