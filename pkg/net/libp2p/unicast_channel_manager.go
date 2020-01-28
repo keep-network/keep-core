@@ -9,7 +9,7 @@ import (
 
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
-	peer "github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 const protocolID = "/keep/unicast/1.0.0"
@@ -115,6 +115,12 @@ func (ucm *unicastChannelManager) newUnicastChannel(
 		streamFactory:      streamFactory,
 		messageHandlers:    make([]*unicastMessageHandler, 0),
 		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
+	}
+
+	// Trigger a handshake in order to check if peer is reachable.
+	err = channel.handshake()
+	if err != nil {
+		return nil, fmt.Errorf("handshake failed: [%v]", err)
 	}
 
 	return channel, nil
