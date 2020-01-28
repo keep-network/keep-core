@@ -76,16 +76,16 @@ const withdrawRewardFromGroup = async (groupIndex, groupMembersIndices, web3Cont
 
     batchRequest.execute()
     const transactions = await Promise.all(promises)
-    const successTransactions = transactions.filter((t) => !t.isError)
-    let allTransactionsCompleted = false
+    const pendingTransactions = transactions.filter((t) => !t.isError)
+    let allTransactionsCompleted = !(pendingTransactions.length > 0)
 
     while (!allTransactionsCompleted) {
-      for (let i = 0; i < successTransactions.length; i++) {
-        const recipt = await web3.eth.getTransactionReceipt(successTransactions[i].transactionHash)
+      for (let i = 0; i < pendingTransactions.length; i++) {
+        const recipt = await web3.eth.getTransactionReceipt(pendingTransactions[i].transactionHash)
         if (!recipt) {
           continue
         }
-        const isLastIdex = i === successTransactions.length -1
+        const isLastIdex = i === pendingTransactions.length -1
         if (isLastIdex) {
           allTransactionsCompleted = true
         }
