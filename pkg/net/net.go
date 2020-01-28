@@ -97,8 +97,13 @@ type Channel interface {
 }
 
 // UnicastChannel represents a bidirectional communication channel between two
-// network peers. UnicastChannel guarantees two peers communicating with each
-// other have a direct connection.
+// network peers.
+//
+// Every implementation must fulfill the following guarantees:
+// 1. If the channel was opened without errors, the communication is possible.
+// 2. Communication is performed through a direct connection.
+// 3. If a message was sent without errors, it will actually reach the
+//    receiver. It doesn't matter what the receiver will do after.
 type UnicastChannel interface {
 	Channel
 
