@@ -173,7 +173,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groups.activeGroupsThreshold = 5;
         groups.groupActiveTime = 3000;
 
-        dkgResultVerification.timeDKG = 7*(1+5);
+        dkgResultVerification.timeDKG = 6*(1+5);
         dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;
         dkgResultVerification.groupSize = groupSize;
         // TODO: For now, the required number of signatures is equal to group
@@ -609,13 +609,16 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     /**
      * @dev Function used to inform about the fact the currently ongoing
      * new relay entry generation operation timed out. As a result, the group
-     * which was supposed to produce a new relay entry is immediatelly
+     * which was supposed to produce a new relay entry is immediately
      * terminated and a new group is selected to produce a new relay entry.
+     * All members of the group are punished by seizing minimum stake of
+     * their tokens. The submitter of the transaction is rewarded with a
+     * tattletale reward which is limited to min(1, 20 / group_size) of the
+     * maximum tattletale reward.
      */
     function reportRelayEntryTimeout() public {
         require(hasEntryTimedOut(), "Entry did not time out");
-
-        groups.terminateGroup(signingRequest.groupIndex);
+        groups.reportRelayEntryTimeout(signingRequest.groupIndex, groupSize, minimumStake);
 
         // We could terminate the last active group. If that's the case,
         // do not try to execute signing again because there is no group

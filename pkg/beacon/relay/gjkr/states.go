@@ -10,41 +10,6 @@ import (
 
 type keyGenerationState = state.State
 
-// joinState is the state during which a member announces itself to the key
-// generation broadcast channel to initiate the distributed protocol.
-// `JoinMessage`s are valid in this state.
-type joinState struct {
-	channel net.BroadcastChannel
-	member  *LocalMember
-}
-
-func (js *joinState) DelayBlocks() uint64 {
-	return state.DefaultMessagingStateDelayBlocks
-}
-
-func (js *joinState) ActiveBlocks() uint64 {
-	return state.DefaultMessagingStateActiveBlocks
-}
-
-func (js *joinState) Initiate(ctx context.Context) error {
-	return nil
-}
-
-func (js *joinState) Receive(msg net.Message) error {
-	return nil
-}
-
-func (js *joinState) Next() keyGenerationState {
-	return &ephemeralKeyPairGenerationState{
-		channel: js.channel,
-		member:  js.member.InitializeEphemeralKeysGeneration(),
-	}
-}
-
-func (js *joinState) MemberIndex() group.MemberIndex {
-	return js.member.ID
-}
-
 // ephemeralKeyPairGenerationState is the state during which members broadcast
 // public ephemeral keys generated for other members of the group.
 // `EphemeralPublicKeyMessage`s are valid in this state.
