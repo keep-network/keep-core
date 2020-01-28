@@ -44,7 +44,7 @@ class ContractsDataContextProvider extends React.Component {
 
     getContractsInfo = async () => {
       const { web3: { web3, token, stakingContract, grantContract, yourAddress, changeDefaultContract, utils } } = this.props
-      if (!web3) {
+      if (!token.methods || !stakingContract.methods || !grantContract.methods || !yourAddress) {
         return
       }
       try {
@@ -84,6 +84,7 @@ class ContractsDataContextProvider extends React.Component {
           contractsDataIsFetching: false,
         })
       } catch (error) {
+        console.log('error', error)
         this.setState({ contractsDataIsFetching: false })
       }
     }

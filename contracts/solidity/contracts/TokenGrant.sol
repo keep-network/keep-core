@@ -1,6 +1,6 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
@@ -17,7 +17,7 @@ interface tokenSender {
 
 /**
  * @title TokenGrant
- * @dev A token grant contract for a specified standard ERC20 token.
+ * @dev A token grant contract for a specified standard ERC20Burnable token.
  * Has additional functionality to stake/unstake token grants.
  * Tokens are granted to the grantee via vesting scheme and can be
  * withdrawn gradually based on the vesting schedule cliff and vesting duration.
@@ -25,7 +25,7 @@ interface tokenSender {
  */
 contract TokenGrant {
     using SafeMath for uint256;
-    using SafeERC20 for ERC20;
+    using SafeERC20 for ERC20Burnable;
     using BytesLib for bytes;
     using AddressArrayUtils for address[];
 
@@ -54,7 +54,7 @@ contract TokenGrant {
 
     uint256 public numGrants;
 
-    ERC20 public token;
+    ERC20Burnable public token;
 
     address[] public stakingContracts;
 
@@ -74,13 +74,13 @@ contract TokenGrant {
     mapping(address => uint256) public balances;
 
     /**
-     * @dev Creates a token grant contract for a provided Standard ERC20 token.
+     * @dev Creates a token grant contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress address of a token that will be linked to this contract.
      * @param _stakingContract Address of a staking contract that will be linked to this contract.
      */
     constructor(address _tokenAddress, address _stakingContract) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
-        token = ERC20(_tokenAddress);
+        token = ERC20Burnable(_tokenAddress);
         stakingContracts.push(_stakingContract);
     }
 
@@ -112,7 +112,12 @@ contract TokenGrant {
      * This is to avoid Ethereum `Stack too deep` issue described here:
      * https://forum.ethereum.org/discussion/2400/error-stack-too-deep-try-removing-local-variables
      * @param _id ID of the token grant.
-     * @return amount, withdrawn, staked, revoked.
+     * @return amount The amount of tokens the grant provides.
+     * @return withdrawn The amount of tokens that have already been withdrawn
+     *                   from the grant.
+     * @return staked The amount of tokens that have been staked from the grant.
+     * @return revoked A boolean indicating whether the grant has been revoked,
+     *                 which is to say that it is no longer vesting.
      */
     function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, bool revoked) {
         return (
@@ -126,7 +131,14 @@ contract TokenGrant {
     /**
      * @dev Gets grant vesting schedule by grant ID.
      * @param _id ID of the token grant.
-     * @return grantManager, duration, start, cliff
+     * @return grantManager The address designated as the manager of the grant,
+     *                      which is the only address that can revoke this grant.
+     * @return duration The duration, in seconds, during which the tokens will
+     *                  vesting linearly.
+     * @return start The start time, as a timestamp comparing to `now`.
+     * @return cliff The duration, in seconds, before which none of the tokens
+     *                in the token will be vested, and after which a linear
+     *                amount based on the age of the grant will be vested.
      */
     function getGrantVestingSchedule(uint256 _id) public view returns (address grantManager, uint256 duration, uint256 start, uint256 cliff) {
         return (
@@ -160,7 +172,7 @@ contract TokenGrant {
      * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
      */
     function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
-        require(ERC20(_token) == token, "Token contract must be the same one linked to this contract.");
+        require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_amount <= token.balanceOf(_from), "Sender must have enough amount.");
 
         address _grantee = _extraData.toAddress(0);
@@ -283,7 +295,7 @@ contract TokenGrant {
         );
 
         // Expecting 40 bytes _extraData for stake delegation.
-        require(_extraData.length == 40, "Stake delegation data must be provided.");
+        require(_extraData.length == 60, "Stake delegation data must be provided.");
         address operator = _extraData.toAddress(20);
 
         // Calculate available amount. Amount of vested tokens minus what user already withdrawn and staked.

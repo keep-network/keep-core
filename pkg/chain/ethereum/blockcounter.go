@@ -165,23 +165,44 @@ func (ebc *ethereumBlockCounter) subscribeBlocks(
 	clientWS *rpc.Client,
 	clientRPC *rpc.Client,
 ) error {
-	subscribeContext, cancel := context.WithTimeout(
-		context.Background(),
-		10*time.Second,
-	)
-	defer cancel()
+	errorChan := make(chan error)
 
-	_, err := clientWS.EthSubscribe(
-		subscribeContext,
-		ebc.subscriptionChannel,
-		newHeadsSubscription,
-	)
-	if err != nil {
-		return err
+	subscribe := func() {
+		logger.Debugf("subscribing to new blocks")
+
+		subscribeContext, cancel := context.WithTimeout(
+			context.Background(),
+			10*time.Second, // timeout for subscription request
+		)
+		defer cancel()
+
+		subscription, err := clientWS.EthSubscribe(
+			subscribeContext,
+			ebc.subscriptionChannel,
+			newHeadsSubscription,
+		)
+		if err != nil {
+			logger.Warningf("could not create subscription to new blocks: [%v]", err)
+			errorChan <- err
+			return
+		}
+
+		err = <-subscription.Err()
+		logger.Warningf("subscription to new blocks interrupted: [%v]", err)
+		subscription.Unsubscribe()
+		errorChan <- err
 	}
 
+	go func() {
+		for {
+			go subscribe()
+			<-errorChan
+			time.Sleep(5 * time.Second)
+		}
+	}()
+
 	var lastBlock block
-	err = clientRPC.Call(
+	err := clientRPC.Call(
 		&lastBlock,
 		getBlockByNumber,
 		latestBlock,

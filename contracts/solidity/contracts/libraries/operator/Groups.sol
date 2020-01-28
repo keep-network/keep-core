@@ -2,6 +2,9 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "../../cryptography/AltBn128.sol";
+import "../../cryptography/BLS.sol";
+import "../../TokenStaking.sol";
+
 
 library Groups {
     using SafeMath for uint256;
@@ -37,6 +40,8 @@ library Groups {
         // expiredGroupOffset is pointing to the first active group, it is also the
         // expired groups counter
         uint256 expiredGroupOffset;
+
+        TokenStaking stakingContract;
     }
 
     /**
@@ -138,6 +143,21 @@ library Groups {
     }
 
     /**
+     * @dev Checks if group with the given index is terminated.
+     */
+    function isGroupTerminated(
+        Storage storage self,
+        uint256 groupIndex
+    ) internal view returns(bool) {
+        for (uint i = 0; i < self.terminatedGroups.length; i++) {
+            if (self.terminatedGroups[i] == groupIndex) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * @dev Checks if group with the given public key is registered.
      */
     function isGroupRegistered(
@@ -202,6 +222,22 @@ library Groups {
         }
 
         revert("Group does not exist");
+    }
+
+    /**
+     * @dev Checks if a group with the given index is a stale group.
+     * Stale group is an expired group which is no longer performing any
+     * operations. It is important to understand that an expired group may
+     * still perform some operations for which it was selected when it was still
+     * active. We consider a group to be stale when it's expired and when its
+     * expiration time and potentially executed operation timeout are both in
+     * the past.
+     */
+    function isStaleGroup(
+        Storage storage self,
+        uint256 groupIndex
+    ) public view returns(bool) {
+        return groupStaleTime(self, self.groups[groupIndex]) < block.number;
     }
 
     /**
@@ -310,7 +346,7 @@ library Groups {
         uint256[] memory groupMemberIndices
     ) public returns (uint256 rewards) {
         bool isExpired = self.expiredGroupOffset > groupIndex;
-        bool isStale = groupStaleTime(self, self.groups[groupIndex]) < block.number;
+        bool isStale = isStaleGroup(self, groupIndex);
         require(isExpired && isStale, "Group must be expired and stale");
         bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
         for (uint i = 0; i < groupMemberIndices.length; i++) {
@@ -319,6 +355,74 @@ library Groups {
                 rewards = rewards.add(self.groupMemberRewards[groupPublicKey]);
             }
         }
+    }
+
+    /**
+     * @dev Returns addresses of all the members in the provided group.
+     */
+    function membersOf(
+        Storage storage self,
+        bytes memory groupPubKey
+    ) public view returns (address[] memory members) {
+        return self.groupMembers[groupPubKey];
+    }
+
+    /**
+     * @dev Returns addresses of all the members in the provided group.
+     */
+    function membersOf(
+        Storage storage self,
+        uint256 groupIndex
+    ) public view returns (address[] memory members) {
+        bytes memory groupPubKey = self.groups[groupIndex].groupPubKey;
+        return self.groupMembers[groupPubKey];
+    }
+
+    /**
+     * @dev Reports unauthorized signing for the provided group. Must provide
+     * a valid signature of the group address as a message. Successful signature
+     * verification means the private key has been leaked and all group members
+     * should be punished by seizing their tokens. The submitter of this proof is
+     * rewarded with 5% of the total seized amount scaled by the reward adjustment
+     * parameter and the rest 95% is burned.
+     */
+    function reportUnauthorizedSigning(
+        Storage storage self,
+        uint256 groupIndex,
+        bytes memory signedGroupPubKey,
+        uint256 minimumStake
+    ) public {
+        require(!isStaleGroup(self, groupIndex), "Group can not be stale");
+        bytes memory groupPubKey = getGroupPublicKey(self, groupIndex);
+
+        AltBn128.G1Point memory point = AltBn128.g1HashToPoint(groupPubKey);
+        bytes memory message = new bytes(64);
+        bytes32 x = bytes32(point.x);
+        bytes32 y = bytes32(point.y);
+        assembly {
+            mstore(add(message, 32), x)
+            mstore(add(message, 64), y)
+        }
+
+        bool isSignatureValid = BLS.verify(groupPubKey, message, signedGroupPubKey);
+
+        if (!isGroupTerminated(self, groupIndex) && isSignatureValid) {
+            terminateGroup(self, groupIndex);
+            self.stakingContract.seize(minimumStake, 100, msg.sender, self.groupMembers[groupPubKey]);
+        }
+    }
+
+    function reportRelayEntryTimeout(
+        Storage storage self,
+        uint256 groupIndex,
+        uint256 groupSize,
+        uint256 minimumStake
+    ) public {
+        terminateGroup(self, groupIndex);
+        // Reward is limited to min(1, 20 / group_size) of the maximum tattletale reward, see the Yellow Paper for more details.
+        uint256 rewardAdjustment = uint256(20 * 100).div(groupSize); // Reward adjustment in percentage
+        rewardAdjustment = rewardAdjustment > 100 ? 100:rewardAdjustment; // Reward adjustment can be 100% max
+        self.stakingContract.seize(minimumStake, rewardAdjustment, msg.sender, membersOf(self, groupIndex));
     }
 
     /**
