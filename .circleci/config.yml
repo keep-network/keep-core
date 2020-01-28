@@ -71,7 +71,7 @@ jobs:
       - run:
           name: Run Go tests
           command: |
-            docker run -v /tmp/test-results:/mnt/test-results -w /go/src/github.com/keep-network/keep-core go-build-env gotestsum --junitfile /mnt/test-results/unit-tests.xml
+            docker run -e CI='on' -v /tmp/test-results:/mnt/test-results -w /go/src/github.com/keep-network/keep-core go-build-env gotestsum --junitfile /mnt/test-results/unit-tests.xml
             docker run -v /tmp/test-results:/mnt/test-results -w /go/src/github.com/keep-network/keep-core go-build-env cat /mnt/test-results/unit-tests.xml > /tmp/test-results/keep-core-go/unit-tests.xml
       - store_test_results:
           path: /tmp/test-results

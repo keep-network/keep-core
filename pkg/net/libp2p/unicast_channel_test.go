@@ -3,6 +3,7 @@ package libp2p
 import (
 	"context"
 	"math/big"
+	"os"
 	"testing"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 )
 
 func TestCreateUnicastChannel(t *testing.T) {
+	skipCI(t)
+
 	ctx := context.Background()
 
 	withNetwork(ctx, t, func(
@@ -41,6 +44,8 @@ func TestCreateUnicastChannel(t *testing.T) {
 // In this scenario, peer 2 has peer's 1 address in their config and open
 // a direct connection during their cyclic `core bootstrap` round.
 func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
+	skipCI(t)
+
 	ctx := context.Background()
 
 	withNetwork(ctx, t, func(
@@ -128,6 +133,8 @@ func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
 // intermediary peer 2, during their cyclic `DHT bootstrap` rounds. As a result
 // a direct connection between peers 1 and 3 should be opened.
 func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
+	skipCI(t)
+
 	ctx := context.Background()
 
 	withNetwork(ctx, t, func(
@@ -178,6 +185,12 @@ func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
 
 		assertReceivedMessages(t, channel3Receiver, messagesToChannel1)
 	})
+}
+
+func skipCI(t *testing.T) {
+	if os.Getenv("CI") == "on" {
+		t.Skip("skip test on CI")
+	}
 }
 
 func assertReceivedMessages(
