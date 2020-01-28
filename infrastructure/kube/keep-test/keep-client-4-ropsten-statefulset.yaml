@@ -56,3 +56,10 @@ spec:
               path: eth_account_keyfile
             - key: keep-client-config.toml
               path: keep-client-config.toml
+      nodeSelector:
+        pool-type: separate-keep-client-test
+      tolerations:
+      - key: app
+        operator: Equal
+        value: keep-client
+        effect: NoSchedule
