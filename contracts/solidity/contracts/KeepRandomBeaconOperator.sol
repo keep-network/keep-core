@@ -366,11 +366,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         for (uint i = 0; i < groupSize; i++) {
             // Check member was neither marked as inactive nor as disqualified
-            if(inactive[i] == 0x00 && disqualified[i] == 0x00) {
-                groups.addGroupMember(groupPubKey, members[i]);
+            if(inactive[i] != 0x00 || disqualified[i] != 0x00) {
+                delete members[i];
             }
         }
 
+        groups.addGroupMembers(groupPubKey, members);
         groups.addGroup(groupPubKey);
         reimburseDkgSubmitter();
         emit DkgResultPublishedEvent(groupPubKey);

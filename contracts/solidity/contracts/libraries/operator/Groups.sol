@@ -66,6 +66,17 @@ library Groups {
     }
 
     /**
+     * @dev Adds group members.
+     */
+    function addGroupMembers(
+        Storage storage self,
+        bytes memory groupPubKey,
+        address[] memory members
+    ) internal {
+        self.groupMembers[groupPubKey] = members;
+    }
+
+    /**
      * @dev Adds group member reward per group so the accumulated amount can be withdrawn later.
      */
     function addGroupMemberReward(

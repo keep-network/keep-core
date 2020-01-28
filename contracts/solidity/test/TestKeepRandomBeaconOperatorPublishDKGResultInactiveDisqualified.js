@@ -108,7 +108,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     assert.isTrue(registeredMembers.indexOf(operator1) == 0, "Member should be registered")
     assert.isTrue(registeredMembers.indexOf(operator2) == 1, "Member should be registered")
     assert.isTrue(registeredMembers.indexOf(operator3) == -1, "Member should not be registered")
-    assert.isTrue(registeredMembers.indexOf(operator4) == 2, "Member should be registered")
+    assert.isTrue(registeredMembers.indexOf(operator4) == 3, "Member should be registered")
     assert.isTrue(registeredMembers.indexOf(operator5) == -1, "Member should not be registered")
   })
 })
