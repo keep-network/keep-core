@@ -100,22 +100,35 @@ func AssertDisqualifiedMembers(
 	testResult *Result,
 	expectedDisqualifiedMembers ...group.MemberIndex,
 ) {
-	disqualifiedMemberByte := byte(0x01)
-	qualifiedMemberByte := byte(0x00)
+	actualDisqualifiedMembers := make(
+		[]group.MemberIndex,
+		len(testResult.dkgResult.Disqualified),
+	)
 
-	for i, dq := range testResult.dkgResult.Disqualified {
-		memberIndex := i + 1 // member indexes starts from 1
-		disqualifiedExpected := containsMemberIndex(
-			group.MemberIndex(memberIndex),
+	for _, dq := range testResult.dkgResult.Disqualified {
+		memberIndex := group.MemberIndex(uint8(dq))
+		actualDisqualifiedMembers = append(actualDisqualifiedMembers, memberIndex)
+
+		disqualificationExpected := containsMemberIndex(
+			memberIndex,
 			expectedDisqualifiedMembers,
 		)
 
-		if dq == disqualifiedMemberByte && !disqualifiedExpected {
+		if !disqualificationExpected {
 			t.Errorf(
 				"member [%v] should not be marked as disqualified",
 				memberIndex,
 			)
-		} else if dq == qualifiedMemberByte && disqualifiedExpected {
+		}
+	}
+
+	for _, memberIndex := range expectedDisqualifiedMembers {
+		isDisqualified := containsMemberIndex(
+			memberIndex,
+			actualDisqualifiedMembers,
+		)
+
+		if !isDisqualified {
 			t.Errorf(
 				"member [%v] should be marked as disqualified",
 				memberIndex,
@@ -150,22 +163,35 @@ func AssertInactiveMembers(
 	testResult *Result,
 	expectedInactiveMembers ...group.MemberIndex,
 ) {
-	inactiveMemberByte := byte(0x01)
-	activeMemberByte := byte(0x00)
+	actualInactiveMembers := make(
+		[]group.MemberIndex,
+		len(testResult.dkgResult.Inactive),
+	)
 
-	for i, ia := range testResult.dkgResult.Inactive {
-		memberIndex := i + 1 // member indexes starts from 1
-		inactiveExpected := containsMemberIndex(
+	for _, ia := range testResult.dkgResult.Inactive {
+		memberIndex := group.MemberIndex(uint8(ia))
+		actualInactiveMembers = append(actualInactiveMembers, memberIndex)
+
+		inactivityExpected := containsMemberIndex(
 			group.MemberIndex(memberIndex),
 			expectedInactiveMembers,
 		)
 
-		if ia == inactiveMemberByte && !inactiveExpected {
+		if !inactivityExpected {
 			t.Errorf(
 				"member [%v] should not be marked as inactive",
 				memberIndex,
 			)
-		} else if ia == activeMemberByte && inactiveExpected {
+		}
+	}
+
+	for _, memberIndex := range expectedInactiveMembers {
+		isInactive := containsMemberIndex(
+			memberIndex,
+			actualInactiveMembers,
+		)
+
+		if !isInactive {
 			t.Errorf(
 				"member [%v] should be marked as inactive",
 				memberIndex,
@@ -205,7 +231,7 @@ func AssertResultSupportingMembers(
 		[]group.MemberIndex,
 		len(testResult.dkgResultSignatures),
 	)
-	for memberIndex, _ := range testResult.dkgResultSignatures {
+	for memberIndex := range testResult.dkgResultSignatures {
 		actualSupportingMembers = append(actualSupportingMembers, memberIndex)
 
 		isSupportingExpected := containsMemberIndex(
