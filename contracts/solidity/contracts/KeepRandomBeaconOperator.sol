@@ -374,7 +374,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             delete members[disqualified.toUint8(i) - 1];
         }
 
-        groups.addGroupMembers(groupPubKey, members);
+        groups.setGroupMembers(groupPubKey, members);
         groups.addGroup(groupPubKey);
         reimburseDkgSubmitter();
         emit DkgResultPublishedEvent(groupPubKey);

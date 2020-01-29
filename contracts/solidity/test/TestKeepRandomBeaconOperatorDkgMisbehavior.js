@@ -102,7 +102,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await restoreSnapshot()
   })
 
-  it("should be able to save group members based on disqualified and inactive data.", async function() {
+  it("should be able to save group members based on disqualified and inactive data", async () => {
     await operatorContract.submitDkgResult(1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: operator1})
     let registeredMembers = await operatorContract.getGroupMembers(groupPubKey)
     assert.isTrue(registeredMembers.indexOf(operator1) == 0, "Member should be registered")

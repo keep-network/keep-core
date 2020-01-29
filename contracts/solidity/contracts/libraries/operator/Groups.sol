@@ -68,7 +68,7 @@ library Groups {
     /**
      * @dev Adds group members.
      */
-    function addGroupMembers(
+    function setGroupMembers(
         Storage storage self,
         bytes memory groupPubKey,
         address[] memory members
