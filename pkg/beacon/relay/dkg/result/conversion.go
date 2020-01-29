@@ -20,20 +20,15 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 		groupPublicKey = gjkrResult.GroupPublicKey.Marshal()
 	}
 
-	// convertToByteSlice converts slice containing members IDs to a slice of
-	// group size length where 0x01 entry indicates the member was found on
-	// passed members IDs slice. It assumes member IDs for a group starts iterating
-	// from 1. E.g. for a group size of 3 with a passed members ID slice {2} the
-	// resulting byte slice will be {0x00, 0x01, 0x00}.
+	// convertToByteSlice converts slice containing member IDs to a slice of
+	// bytes. E.g. for input = {1, 3, 20}, the output is {0x01, 0x03, 0x14}.
+	// MemberIndex cannot be larger than 255.
 	convertToByteSlice := func(memberIDsSlice []group.MemberIndex) []byte {
-		bytes := make([]byte, groupSize)
-		for index := range bytes {
-			for _, memberID := range memberIDsSlice {
-				if memberID.Equals(index + 1) {
-					bytes[index] = 0x01
-				}
-			}
+		bytes := make([]byte, len(memberIDsSlice))
+		for i, memberID := range memberIDsSlice {
+			bytes[i] = byte(memberID)
 		}
+
 		return bytes
 	}
 

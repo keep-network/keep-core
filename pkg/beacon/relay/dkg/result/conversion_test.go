@@ -31,8 +31,8 @@ func TestConvertResult(t *testing.T) {
 			},
 			expectedResult: &relayChain.DKGResult{
 				GroupPublicKey: []byte{},
-				Disqualified:   []byte{0x00, 0x00, 0x00, 0x00, 0x00},
-				Inactive:       []byte{0x00, 0x00, 0x00, 0x00, 0x00},
+				Disqualified:   []byte{},
+				Inactive:       []byte{},
 			},
 		},
 		"success: true, group public key: provided, DQ and IA: provided": {
@@ -44,8 +44,8 @@ func TestConvertResult(t *testing.T) {
 			},
 			expectedResult: &relayChain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
-				Disqualified:   []byte{0x01, 0x00, 0x01, 0x01, 0x00},
-				Inactive:       []byte{0x00, 0x00, 0x00, 0x00, 0x01},
+				Disqualified:   []byte{0x01, 0x03, 0x04},
+				Inactive:       []byte{0x05},
 			},
 		},
 	}
@@ -61,7 +61,7 @@ func TestConvertResult(t *testing.T) {
 		convertedResult := convertResult(test.gjkrResult, groupSize)
 
 		if !test.expectedResult.Equals(convertedResult) {
-			t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, convertedResult)
+			t.Errorf("\nexpected: %v\nactual:   %v\n", test.expectedResult, convertedResult)
 		}
 	}
 }
