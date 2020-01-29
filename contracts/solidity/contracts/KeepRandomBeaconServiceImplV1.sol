@@ -17,11 +17,6 @@ interface OperatorContract {
     ) external payable;
     function numberOfGroups() external view returns(uint256);
     function createGroup(uint256 newEntry, address payable submitter) external payable;
-    function reimburseCallback(
-        uint256 callbackFunds,
-        address payable submitter,
-        address payable surplusRecipient
-    ) external payable;
     function isGroupSelectionPossible() external view returns (bool);
 }
 
@@ -172,6 +167,24 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
     }
 
     /**
+     * @dev Withdraw funds from Callback fee pool.
+     * @param amount Amount of payment to withraw.
+     */
+    function withdrawFromCallback(uint256 amount, uint256 requestId) public payable {
+        require(
+            _operatorContracts.contains(msg.sender),
+            "Only authorized operator contract can withdraw funds from Callback pool."
+        );
+
+        require(_dkgFeePool >= amount, "Not enough funds to withdraw.");
+
+        _callbacks[requestId].callbackFee -= amount;
+
+        (bool success, ) = msg.sender.call.value(amount)("");
+        require(success, "Withdrawal failed.");
+    }
+
+    /**
      * @dev Add funds to request subsidy fee pool.
      */
     function fundRequestSubsidyFeePool() public payable {
@@ -299,22 +312,28 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
      * @param entry The generated random number.
      * @param submitter Relay entry submitter.
      */
-    function entryCreated(uint256 requestId, bytes memory entry, address payable submitter) public {
+    function entryCreated(uint256 requestId, bytes memory entry, address payable submitter) public returns(uint256, uint256) {
+
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."
         );
+
+        uint256 actualCallbackFee = 0;
+        uint256 groupCreationFee = 0;
 
         _previousEntry = entry;
         uint256 entryAsNumber = uint256(keccak256(entry));
         emit RelayEntryGenerated(requestId, entryAsNumber);
 
         if (_callbacks[requestId].callbackContract != address(0)) {
-            executeEntryCreatedCallback(requestId, entryAsNumber, submitter);
+            actualCallbackFee = executeEntryCreatedCallback(requestId, entryAsNumber, submitter);
             delete _callbacks[requestId];
         }
 
-        createGroupIfApplicable(entryAsNumber, submitter);
+        groupCreationFee = createGroupIfApplicable(entryAsNumber, submitter);
+
+        return (actualCallbackFee, groupCreationFee);
     }
 
     /**
@@ -323,7 +342,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
      * @param entry The generated random number.
      * @param submitter Relay entry submitter.
      */
-    function executeEntryCreatedCallback(uint256 requestId, uint256 entry, address payable submitter) internal {
+    function executeEntryCreatedCallback(uint256 requestId, uint256 entry, address payable submitter) internal returns(uint256) {
         bool success; // Store status of external contract call.
         bytes memory data; // Store result data of external contract call.
 
@@ -335,9 +354,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
 
         uint256 gasPrice = tx.gasprice < _priceFeedEstimate ? tx.gasprice : _priceFeedEstimate;
 
-        address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        OperatorContract(latestOperatorContract).reimburseCallback.value(gasSpent.mul(gasPrice))(
-            _callbacks[requestId].callbackFee, submitter, _callbacks[requestId].surplusRecipient);
+        return gasSpent.mul(gasPrice);
     }
 
     /**
@@ -346,7 +363,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
      * @param entry The generated random number.
      * @param submitter Relay entry submitter - operator.
      */
-    function createGroupIfApplicable(uint256 entry, address payable submitter) internal {
+    function createGroupIfApplicable(uint256 entry, address payable submitter) internal returns(uint256) {
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
         uint256 groupCreationFee = OperatorContract(latestOperatorContract).groupCreationGasEstimate().mul(
             gasPriceWithFluctuationMargin(_priceFeedEstimate)
@@ -356,6 +373,8 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
             OperatorContract(latestOperatorContract).createGroup.value(groupCreationFee)(entry, submitter);
             _dkgFeePool = _dkgFeePool.sub(groupCreationFee);
         }
+
+        return groupCreationFee;
     }
 
     /**
@@ -402,7 +421,23 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
      * @param requestId Id of the request.
      */
     function callbackGas(uint256 requestId) public view returns(uint256) {
-        return _callbacks[requestId].callbackGas;
+        if (_callbacks[requestId].callbackContract != address(0)) {
+            return _callbacks[requestId].callbackGas;
+        }
+
+        return 0;
+    }
+
+     /**
+     * @dev Get the callback surplus recipient.
+     * @param requestId Id of the request.
+     */
+    function callbackSurplusRecipient(uint256 requestId) public view returns (address payable) {
+        if (_callbacks[requestId].callbackContract != address(0)) {
+            return _callbacks[requestId].surplusRecipient;
+        }
+
+        return address(0);
     }
 
     /**

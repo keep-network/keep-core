@@ -10,10 +10,12 @@ import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
 
 interface ServiceContract {
-    function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
+    function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external returns(uint256, uint256);
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
     function callbackGas(uint256 requestId) external view returns(uint256);
+    function callbackSurplusRecipient(uint256 requestId) external view returns(address payable);
+    function withdrawFromCallback(uint256 amount, uint256 requestId) external;
 }
 
 /**
@@ -464,8 +466,21 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         require(isEntryInProgress(), "Entry was submitted");
         require(!hasEntryTimedOut(), "Entry timed out");
 
-        bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
+        uint256 callbackGas = ServiceContract(signingRequest.serviceContract).callbackGas(signingRequest.relayRequestId);
+        uint256 callbackFee = 0;
 
+        // Withdraw funds for a callback only when a callback contract is present.
+        if (callbackGas > 0) {
+            callbackFee = gasPriceWithFluctuationMargin(priceFeedEstimate).mul(callbackGas);
+
+            uint256 balanceBefore = address(this).balance;
+            ServiceContract(signingRequest.serviceContract).withdrawFromCallback(callbackFee, signingRequest.relayRequestId);
+            uint256 balanceChange = address(this).balance - balanceBefore;
+
+            require(balanceChange == callbackFee, "Callback funds must be transferred.");
+        }
+
+        bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
         require(
             BLS.verify(
                 groupPubKey,
@@ -477,13 +492,19 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         emit RelayEntrySubmitted();
 
-        uint256 callbackGas = ServiceContract(signingRequest.serviceContract).callbackGas(signingRequest.relayRequestId);
-
-        ServiceContract(signingRequest.serviceContract).entryCreated.gas(groupSelectionGasEstimate.add(callbackGas))(
+        (uint256 actualCallbackFee, uint256 groupCreationFee) = ServiceContract(signingRequest.serviceContract)
+            .entryCreated.gas(groupSelectionGasEstimate.add(callbackGas))(
             signingRequest.relayRequestId,
             _groupSignature,
             msg.sender
         );
+
+        // Reimburse submitter only when a callback contract is present.
+        if (callbackGas > 0) {
+            address payable callbackSurplusRecipient = ServiceContract(signingRequest.serviceContract)
+                .callbackSurplusRecipient(signingRequest.relayRequestId);
+            reimburseCallback(callbackFee, actualCallbackFee, callbackSurplusRecipient);
+        }
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
@@ -500,21 +521,20 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /**
      * @dev Reimbursment for calling customer specified callback for the relay entry request.
-     * @param callbackFunds Available funds for callback reimbursment.
-     * @param submitter Relay entry submitter address.
+     * @param callbackFee Available funds for callback reimbursment.
+     * @param actualCallbackFee Actual fee for a callback execution.
      * @param surplusRecipient Surplus recipient address.
      */
-    function reimburseCallback(uint256 callbackFunds, address payable submitter, address payable surplusRecipient)
-        public payable onlyServiceContract {
+    function reimburseCallback(uint256 callbackFee, uint256 actualCallbackFee, address payable surplusRecipient) internal {
 
         bool success; // Store status of external contract call.
 
         // If we spent less on the callback than the customer transferred for the
         // callback execution, we need to reimburse the difference.
-        if (msg.value < callbackFunds) {
-            uint256 callbackSurplus = callbackFunds.sub(msg.value);
+        if (actualCallbackFee < callbackFee) {
+            uint256 callbackSurplus = callbackFee.sub(actualCallbackFee);
             // Reimburse submitter with his actual callback cost.
-            (success, ) = submitter.call.value(msg.value)("");
+            (success, ) = msg.sender.call.value(actualCallbackFee)("");
             require(success, "Failed reimburse actual callback cost");
 
             // Return callback surplus to the requestor.
@@ -523,9 +543,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         } else {
             // Reimburse submitter with the callback payment sent by the requestor.
-            (success, ) = submitter.call.value(callbackFunds)("");
+            (success, ) = msg.sender.call.value(callbackFee)("");
             require(success, "Failed reimburse callback payment");
         }
+
     }
 
     /**
