@@ -8,6 +8,7 @@ import "./utils/AddressArrayUtils.sol";
 import "./libraries/operator/GroupSelection.sol";
 import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
@@ -24,6 +25,7 @@ interface ServiceContract {
  */
 contract KeepRandomBeaconOperator is ReentrancyGuard {
     using SafeMath for uint256;
+    using BytesLib for bytes;
     using AddressArrayUtils for address[];
     using GroupSelection for GroupSelection.Storage;
     using Groups for Groups.Storage;
@@ -330,12 +332,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *
      * @param submitterMemberIndex Claimed submitter candidate group member index
      * @param groupPubKey Generated candidate group public key
-     * @param disqualified Bytes representing disqualified group members;
-     * 1 at the specific index means that the member has been disqualified.
+     * @param disqualified Bytes array of disqualified group members indexes;
      * Indexes reflect positions of members in the group, as outputted by the
      * group selection protocol.
-     * @param inactive Bytes representing inactive group members;
-     * 1 at the specific index means that the member has been marked as inactive.
+     * @param inactive Bytes array of inactive group members indexes;
      * Indexes reflect positions of members in the group, as outputted by the
      * group selection protocol.
      * @param signatures Concatenation of signatures from members supporting the
@@ -364,11 +364,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout
         );
 
-        for (uint i = 0; i < groupSize; i++) {
-            // Check member was neither marked as inactive nor as disqualified
-            if(inactive[i] != 0x00 || disqualified[i] != 0x00) {
-                delete members[i];
-            }
+        // Remove inactive members
+        for (uint i = 0; i < inactive.length; i++) {
+            delete members[inactive.toUint8(i) - 1];
+        }
+
+        // Remove disqualified members
+        for (uint i = 0; i < disqualified.length; i++) {
+            delete members[disqualified.toUint8(i) - 1];
         }
 
         groups.addGroupMembers(groupPubKey, members);

@@ -78,8 +78,8 @@ export default async function stakeAndGenesis(accounts, contracts) {
 
     mineBlocks(resultPublicationTime);
 
-    let disqualified = '0x0000000000000000000000000000000000000000';
-    let inactive = '0x0000000000000000000000000000000000000000';
+    let disqualified = '0x';
+    let inactive = '0x';
     let resultHash = web3.utils.soliditySha3(bls.groupPubKey, disqualified, inactive);
 
     let signingMemberIndices = [];

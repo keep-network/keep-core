@@ -15,8 +15,8 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     operator4 = accounts[4],
     operator5 = accounts[5],
     selectedParticipants, signatures, signingMemberIndices = [],
-    disqualified = '0x0000010000', // disqualified operator3
-    inactive = '0x0000000001', // inactive operator5
+    disqualified = '0x03', // disqualified operator3
+    inactive = '0x05', // inactive operator5
     groupPubKey = '0x1000000000000000000000000000000000000000000000000000000000000000',
     resultHash = web3.utils.soliditySha3(groupPubKey, disqualified, inactive)
 

@@ -16,10 +16,10 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
   operator1 = accounts[0],
   operator2 = accounts[1],
   operator3 = accounts[2],
-  operator4 = accounts[3],  
+  operator4 = accounts[3],
   selectedParticipants, signatures, signingMemberIndices = [],
-  disqualified = '0x0000000000000000000000000000000000000000',
-  inactive = '0x0000000000000000000000000000000000000000',
+  disqualified = '0x',
+  inactive = '0x',
   groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000",
   resultHash = web3.utils.soliditySha3(groupPubKey, disqualified, inactive);
 

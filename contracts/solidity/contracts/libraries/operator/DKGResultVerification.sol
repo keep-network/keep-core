@@ -83,11 +83,6 @@ library DKGResultVerification {
         require(signaturesCount == signingMemberIndices.length, "Unexpected signatures count");
         require(signaturesCount >= self.signatureThreshold, "Too few signatures");
 
-        require(
-            disqualified.length == self.groupSize && inactive.length == self.groupSize,
-            "Malformed misbehaving array"
-        );
-
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
 
         bytes memory current; // Current signature to be checked.
