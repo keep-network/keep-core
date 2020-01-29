@@ -14,6 +14,7 @@
     box-shadow: none;
     border-radius: @border-radius;
     outline: 0;
+    line-height: 25px;
 
     &.form-control {
       border-color: transparent;
@@ -47,6 +48,7 @@
       }
     }
   }
+
 
   .btn {
     position: absolute;
@@ -133,5 +135,17 @@
   .form-inline input.form-control, .well {
     min-width: 500px;
     overflow-wrap: break-word;
+  }
+}
+
+.inline-form {
+  display: flex;
+  flex: 1;
+  align-self: flex-start;
+  justify-content: center;
+
+  input {
+      margin-right: 1rem;
+      line-height: 1.5rem;
   }
 }
