@@ -5,7 +5,7 @@ import (
 )
 
 // MemberIndex is an index of a member in a group.
-type MemberIndex uint32
+type MemberIndex uint8
 
 // Int converts `MemberIndex` to `big.Int`.
 func (id MemberIndex) Int() *big.Int {

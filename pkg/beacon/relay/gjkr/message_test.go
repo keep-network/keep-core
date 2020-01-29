@@ -11,8 +11,8 @@ import (
 )
 
 func TestAddAndDecryptSharesFromMessage(t *testing.T) {
-	sender := group.MemberIndex(4181)
-	receiver := group.MemberIndex(1231)
+	sender := group.MemberIndex(41)
+	receiver := group.MemberIndex(11)
 	shareS := big.NewInt(1381319)
 	shareT := big.NewInt(1010212)
 
@@ -54,8 +54,8 @@ func TestAddAndDecryptSharesFromMessage(t *testing.T) {
 }
 
 func TestNoSharesForReceiver(t *testing.T) {
-	sender := group.MemberIndex(4181)
-	receiver := group.MemberIndex(1231)
+	sender := group.MemberIndex(81)
+	receiver := group.MemberIndex(11)
 	shareS := big.NewInt(1381319)
 	shareT := big.NewInt(1010212)
 
