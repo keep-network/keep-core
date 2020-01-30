@@ -5,6 +5,7 @@ import { wait } from '../utils'
 const FETCH_REQUEST_START = 'FETCH_REQUEST_START'
 const FETCH_REQUEST_SUCCESS = 'FETCH_REQUEST_SUCCESS'
 const FETCH_REQUEST_FAILURE = 'FETCH_REQUEST_FAILURE'
+const UPDATE_DATA = 'UPDATE_DATA'
 
 const requestTimeDelay = 500 // 0.5s
 
@@ -33,7 +34,11 @@ export const useFetchData = (serviceMethod, initialData, ...serviceMethodArgs) =
     }
   }, [])
 
-  return state
+  const updateData = (updatedData) => {
+    dispatch({ type: UPDATE_DATA, payload: updatedData })
+  }
+
+  return [state, updateData]
 }
 
 const dataFetchReducer = (state, action) => {
@@ -56,6 +61,11 @@ const dataFetchReducer = (state, action) => {
       ...state,
       isFetching: false,
       isError: true,
+    }
+  case UPDATE_DATA:
+    return {
+      ...state,
+      data: action.payload,
     }
   default:
     return { ...state }
