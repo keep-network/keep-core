@@ -107,8 +107,7 @@ module.exports = async function() {
       await keepRandomBeaconOerator.registerNewGroup(groupPubKey)
       await keepRandomBeaconOerator.addGroupMemberReward(groupPubKey, groupReward);
       await keepRandomBeaconOerator.addGroupMember(groupPubKey, accounts[1]);
-      await keepRandomBeaconOerator.addGroupMember(groupPubKey, accounts[1]);
-      await keepRandomBeaconOerator.addGroupMember(groupPubKey, accounts[1]);
+      await keepRandomBeaconOerator.addGroupMember(groupPubKey, accounts[2]);
       console.log('created group', await keepRandomBeaconOerator.getGroupPublicKey(i));
     }
   }

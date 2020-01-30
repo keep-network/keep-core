@@ -1,14 +1,15 @@
 import React, { useState } from 'react'
-import rewardsService from '../services/rewards.service'
-import { useFetchData } from '../hooks/useFetchData'
 import { WithdrawalHistoryItem } from './WithdrawalHistoryItem'
 import { SeeAllButton } from './SeeAllButton'
 import { LoadingOverlay } from './Loadable'
+import { useFetchData } from '../hooks/useFetchData'
+import rewardsService from '../services/rewards.service'
 
 const previewDataCount = 3
 
 export const WithdrawalHistory = (props) => {
-  const { isFetching, data } = useFetchData(rewardsService.fetchWithdrawalHistory, [])
+  const [state] = useFetchData(rewardsService.fetchWithdrawalHistory, [])
+  const { isFetching, data } = state
   const [showAll, setShowAll] = useState(false)
 
   return (
