@@ -65,9 +65,19 @@ library Groups {
     ) internal {
         self.groupMembers[groupPubKey] = members;
 
-        // Remove misbehaved members
-        for (uint i = 0; i < misbehaved.length; i++) {
-            delete self.groupMembers[groupPubKey][misbehaved.toUint8(i) - 1];
+        // Iterate misbehaved array backwards, replace misbehaved
+        // member with the last element and reduce array length
+        uint256 i = misbehaved.length;
+        while (i > 0) {
+            uint256 memberArrayPosition = misbehaved.toUint8(i - 1) - 1;
+
+            // Replace misbehaved member with member from the last element if its not last one already
+            if (memberArrayPosition != self.groupMembers[groupPubKey].length - 1) {
+                self.groupMembers[groupPubKey][memberArrayPosition] = self.groupMembers[groupPubKey][self.groupMembers[groupPubKey].length - 1];
+            }
+
+            self.groupMembers[groupPubKey].length--;
+            i--;
         }
     }
 

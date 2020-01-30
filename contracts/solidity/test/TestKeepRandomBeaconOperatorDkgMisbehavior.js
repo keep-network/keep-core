@@ -104,10 +104,10 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   it("should be able to save group members based on misbehaved data", async () => {
     await operatorContract.submitDkgResult(1, groupPubKey, misbehaved, signatures, signingMemberIndices, {from: operator1})
     let registeredMembers = await operatorContract.getGroupMembers(groupPubKey)
-    assert.isTrue(registeredMembers.indexOf(operator1) == 0, "Member should be registered")
-    assert.isTrue(registeredMembers.indexOf(operator2) == 1, "Member should be registered")
+    assert.isTrue(registeredMembers.indexOf(operator1) != -1, "Member should be registered")
+    assert.isTrue(registeredMembers.indexOf(operator2) != -1, "Member should be registered")
     assert.isTrue(registeredMembers.indexOf(operator3) == -1, "Member should not be registered")
-    assert.isTrue(registeredMembers.indexOf(operator4) == 3, "Member should be registered")
+    assert.isTrue(registeredMembers.indexOf(operator4) != -1, "Member should be registered")
     assert.isTrue(registeredMembers.indexOf(operator5) == -1, "Member should not be registered")
   })
 })
