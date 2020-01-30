@@ -9,7 +9,7 @@ import { displayAmount } from '../../utils'
 
 const DelegatedTokens = (props) => {
   const { yourAddress } = useContext(Web3Context)
-  const state = useFetchData(operatorService.fetchDelegatedTokensData, {}, yourAddress)
+  const [state] = useFetchData(operatorService.fetchDelegatedTokensData, {}, yourAddress)
   const { isFetching, data: { stakedBalance, ownerAddress, beneficiaryAddress } } = state
 
   return (

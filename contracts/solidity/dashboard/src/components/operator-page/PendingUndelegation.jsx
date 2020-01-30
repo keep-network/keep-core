@@ -10,7 +10,7 @@ const initialData = { pendinUndelegations: [] }
 
 const PendingUndelegation = (props) => {
   const event = useRef(null)
-  const state = useFetchData(operatorService.fetchPendingUndelegation, initialData)
+  const [state] = useFetchData(operatorService.fetchPendingUndelegation, initialData)
   const { isFetching, data: { pendingUnstakeBalance, undelegatedOn, stakeWithdrawalDelay, pendinUndelegations } } = state
   const { stakingContract, yourAddress } = useContext(Web3Context)
 
