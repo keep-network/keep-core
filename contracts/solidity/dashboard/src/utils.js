@@ -23,7 +23,7 @@ export function displayAmount(amount, decimals = 18, precision = 3) {
   }
 }
 
-export function formatAmount(amount, decimals) {
+export function formatAmount(amount, decimals = 18) {
   amount = new BigNumber(amount)
   return amount.times(new BigNumber(10).pow(new BigNumber(decimals)))
 }
