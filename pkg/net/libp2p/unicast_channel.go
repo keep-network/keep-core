@@ -167,6 +167,7 @@ func (uc *unicastChannel) removeHandler(handler *unicastMessageHandler) {
 		if h.channel == handler.channel {
 			uc.messageHandlers[i] = uc.messageHandlers[len(uc.messageHandlers)-1]
 			uc.messageHandlers = uc.messageHandlers[:len(uc.messageHandlers)-1]
+			break
 		}
 	}
 }
