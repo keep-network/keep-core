@@ -106,7 +106,7 @@ module.exports = async function() {
       const groupPubKey = crypto.randomBytes(32);
       await keepRandomBeaconOerator.registerNewGroup(groupPubKey)
       await keepRandomBeaconOerator.addGroupMemberReward(groupPubKey, groupReward);
-      await keepRandomBeaconOerator.setGroupMembers(groupPubKey, [accounts[1], accounts[1], accounts[1]]);
+      await keepRandomBeaconOerator.setGroupMembers(groupPubKey, [accounts[1], accounts[2]]);
       console.log('created group', await keepRandomBeaconOerator.getGroupPublicKey(i));
     }
   }
