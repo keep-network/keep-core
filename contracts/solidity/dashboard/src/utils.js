@@ -41,6 +41,9 @@ export const getWeb3SocketProvider = () => {
 }
 
 export const shortenAddress = (address) => {
+  if (!address) {
+    return ''
+  }
   const firstFourCharacters = address.substr(2, 4)
   const lastFourCharacters = address.substr(address.length - 4, address.length - 1)
 
