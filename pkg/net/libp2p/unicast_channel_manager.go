@@ -75,7 +75,6 @@ func (ucm *unicastChannelManager) getUnicastChannel(peerID net.TransportIdentifi
 	var (
 		channel *unicastChannel
 		exists  bool
-		err     error
 	)
 
 	ucm.channelsMutex.Lock()
@@ -83,14 +82,19 @@ func (ucm *unicastChannelManager) getUnicastChannel(peerID net.TransportIdentifi
 	ucm.channelsMutex.Unlock()
 
 	if !exists {
-		channel, err = ucm.newUnicastChannel(peerID)
+		newChannel, err := ucm.newUnicastChannel(peerID)
 		if err != nil {
 			return nil, err
 		}
 
-		// Ensure we update our cache of known channels
+		// Creating a new channel can take some time. One should double-check
+		// if some other channel wasn't created and cached in the same time.
 		ucm.channelsMutex.Lock()
-		ucm.channels[peerID] = channel
+		channel, exists = ucm.channels[peerID]
+		if !exists {
+			channel = newChannel
+			ucm.channels[peerID] = newChannel
+		}
 		ucm.channelsMutex.Unlock()
 	}
 
