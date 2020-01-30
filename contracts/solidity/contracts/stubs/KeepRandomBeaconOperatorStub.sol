@@ -22,7 +22,7 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
     }
 
     function setGroupMembers(bytes memory groupPublicKey, address[] memory members) public {
-        groups.setGroupMembers(groupPublicKey, members, hex"", hex"");
+        groups.setGroupMembers(groupPublicKey, members, hex"");
     }
 
     function setGroupSize(uint256 size) public {

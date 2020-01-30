@@ -15,10 +15,9 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     operator4 = accounts[4],
     operator5 = accounts[5],
     selectedParticipants, signatures, signingMemberIndices = [],
-    disqualified = '0x03', // disqualified operator3
-    inactive = '0x05', // inactive operator5
+    misbehaved = '0x0305', // disqualified operator3, inactive operator5
     groupPubKey = '0x1000000000000000000000000000000000000000000000000000000000000000',
-    resultHash = web3.utils.soliditySha3(groupPubKey, disqualified, inactive)
+    resultHash = web3.utils.soliditySha3(groupPubKey, misbehaved)
 
   before(async () => {
     let contracts = await initContracts(
@@ -102,8 +101,8 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await restoreSnapshot()
   })
 
-  it("should be able to save group members based on disqualified and inactive data", async () => {
-    await operatorContract.submitDkgResult(1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: operator1})
+  it("should be able to save group members based on misbehaved data", async () => {
+    await operatorContract.submitDkgResult(1, groupPubKey, misbehaved, signatures, signingMemberIndices, {from: operator1})
     let registeredMembers = await operatorContract.getGroupMembers(groupPubKey)
     assert.isTrue(registeredMembers.indexOf(operator1) == 0, "Member should be registered")
     assert.isTrue(registeredMembers.indexOf(operator2) == 1, "Member should be registered")

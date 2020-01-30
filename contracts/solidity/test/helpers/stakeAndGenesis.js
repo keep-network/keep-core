@@ -78,9 +78,8 @@ export default async function stakeAndGenesis(accounts, contracts) {
 
     mineBlocks(resultPublicationTime);
 
-    let disqualified = '0x';
-    let inactive = '0x';
-    let resultHash = web3.utils.soliditySha3(bls.groupPubKey, disqualified, inactive);
+    let misbehaved = '0x';
+    let resultHash = web3.utils.soliditySha3(bls.groupPubKey, misbehaved);
 
     let signingMemberIndices = [];
     let signatures = undefined;
@@ -93,7 +92,7 @@ export default async function stakeAndGenesis(accounts, contracts) {
     }
 
     await operatorContract.submitDkgResult(
-      1, bls.groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      1, bls.groupPubKey, misbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0]}
     );
 }

@@ -330,12 +330,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *
      * @param submitterMemberIndex Claimed submitter candidate group member index
      * @param groupPubKey Generated candidate group public key
-     * @param disqualified Bytes array of disqualified group members indexes;
-     * Indexes reflect positions of members in the group, as outputted by the
-     * group selection protocol.
-     * @param inactive Bytes array of inactive group members indexes;
-     * Indexes reflect positions of members in the group, as outputted by the
-     * group selection protocol.
+     * @param misbehaved Bytes array of misbehaved (disqualified or inactive)
+     * group members indexes; Indexes reflect positions of members in the group,
+     * as outputted by the group selection protocol.
      * @param signatures Concatenation of signatures from members supporting the
      * result.
      * @param signingMembersIndexes Indices of members corresponding to each
@@ -344,8 +341,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     function submitDkgResult(
         uint256 submitterMemberIndex,
         bytes memory groupPubKey,
-        bytes memory disqualified,
-        bytes memory inactive,
+        bytes memory misbehaved,
         bytes memory signatures,
         uint[] memory signingMembersIndexes
     ) public {
@@ -354,15 +350,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         dkgResultVerification.verify(
             submitterMemberIndex,
             groupPubKey,
-            disqualified,
-            inactive,
+            misbehaved,
             signatures,
             signingMembersIndexes,
             members,
             groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout
         );
 
-        groups.setGroupMembers(groupPubKey, members, disqualified, inactive);
+        groups.setGroupMembers(groupPubKey, members, misbehaved);
         groups.addGroup(groupPubKey);
         reimburseDkgSubmitter();
         emit DkgResultPublishedEvent(groupPubKey);

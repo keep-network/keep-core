@@ -61,19 +61,13 @@ library Groups {
         Storage storage self,
         bytes memory groupPubKey,
         address[] memory members,
-        bytes memory disqualified,
-        bytes memory inactive
+        bytes memory misbehaved
     ) internal {
         self.groupMembers[groupPubKey] = members;
 
-        // Remove disqualified members
-        for (uint i = 0; i < disqualified.length; i++) {
-            delete self.groupMembers[groupPubKey][disqualified.toUint8(i) - 1];
-        }
-
-        // Remove inactive members
-        for (uint i = 0; i < inactive.length; i++) {
-            delete self.groupMembers[groupPubKey][inactive.toUint8(i) - 1];
+        // Remove misbehaved members
+        for (uint i = 0; i < misbehaved.length; i++) {
+            delete self.groupMembers[groupPubKey][misbehaved.toUint8(i) - 1];
         }
     }
 
