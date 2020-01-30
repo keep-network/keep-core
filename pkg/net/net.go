@@ -38,17 +38,24 @@ type TaggedMarshaler interface {
 // of provider this is, the list of IP addresses on which it can listen, and
 // known peers from peer discovery mechanims.
 type Provider interface {
+	// ID returns provider identifier.
 	ID() TransportIdentifier
-
-	ChannelWith(peerID TransportIdentifier) (UnicastChannel, error)
-	ChannelFor(name string) (BroadcastChannel, error)
+	// Type gives an information about provider type.
 	Type() string
+
+	// UnicastChannelWith provides a unicast channel instance with given peer.
+	UnicastChannelWith(peerID TransportIdentifier) (UnicastChannel, error)
+
+	// BroadcastChannelFor provides a broadcast channel instance for given
+	// channel name.
+	BroadcastChannelFor(name string) (BroadcastChannel, error)
+
+	// AddrStrings returns all listen addresses of the provider.
 	AddrStrings() []string
-
-	// All known peers from the underlying PeerStore. This may include
-	// peers we're not directly connected to.
+	// Peers returns all known peers from the underlying peer store.
+	// This may include peers not directly connected to the provider.
 	Peers() []string
-
+	// ConnectionManager returns the connection manager used by the provider.
 	ConnectionManager() ConnectionManager
 }
 

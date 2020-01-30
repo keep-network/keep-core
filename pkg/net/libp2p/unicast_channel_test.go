@@ -28,12 +28,12 @@ func TestCreateUnicastChannel(t *testing.T) {
 		provider2 net.Provider,
 		provider3 net.Provider,
 	) {
-		_, err := provider1.ChannelWith(identity2.id)
+		_, err := provider1.UnicastChannelWith(identity2.id)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		_, err = provider2.ChannelWith(identity1.id)
+		_, err = provider2.UnicastChannelWith(identity1.id)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -57,13 +57,13 @@ func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
 		provider3 net.Provider,
 	) {
 		// Channel instance of peer 1.
-		channel1, err := provider1.ChannelWith(identity2.id)
+		channel1, err := provider1.UnicastChannelWith(identity2.id)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		// Channel instance of peer 2.
-		channel2, err := provider2.ChannelWith(identity1.id)
+		channel2, err := provider2.UnicastChannelWith(identity1.id)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -142,13 +142,13 @@ func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
 		provider3 net.Provider,
 	) {
 		// Channel instance of peer 1.
-		channel1, err := provider1.ChannelWith(identity3.id)
+		channel1, err := provider1.UnicastChannelWith(identity3.id)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		// Channel instance of peer 3.
-		channel3, err := provider3.ChannelWith(identity1.id)
+		channel3, err := provider3.UnicastChannelWith(identity1.id)
 		if err != nil {
 			t.Fatal(err)
 		}

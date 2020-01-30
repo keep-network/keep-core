@@ -78,13 +78,13 @@ type provider struct {
 	connectionManager *connectionManager
 }
 
-func (p *provider) ChannelWith(
+func (p *provider) UnicastChannelWith(
 	peerID net.TransportIdentifier,
 ) (net.UnicastChannel, error) {
 	return p.unicastChannelManager.getUnicastChannel(peerID)
 }
 
-func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
+func (p *provider) BroadcastChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
 	return p.broadcastChannelManager.getChannel(name)
