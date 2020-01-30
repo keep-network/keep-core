@@ -1,16 +1,24 @@
-import React, { useContext } from 'react'
+import React, { useEffect, useContext } from 'react'
 import AddressShortcut from '../AddressShortcut'
 import InlineForm from '../InlineForm'
 import { operatorService } from './service'
 import { useFetchData } from '../../hooks/useFetchData'
-import { Web3Context } from '../WithWeb3Context'
 import { LoadingOverlay } from '../Loadable'
 import { displayAmount } from '../../utils'
+import { Web3Context } from '../WithWeb3Context'
 
-const DelegatedTokens = (props) => {
-  const { yourAddress } = useContext(Web3Context)
-  const [state] = useFetchData(operatorService.fetchDelegatedTokensData, {}, yourAddress)
+const DelegatedTokens = ({ latestUnstakeEvent }) => {
+  const { utils } = useContext(Web3Context)
+  const [state, setData] = useFetchData(operatorService.fetchDelegatedTokensData, {})
   const { isFetching, data: { stakedBalance, ownerAddress, beneficiaryAddress } } = state
+
+  useEffect(() => {
+    if (latestUnstakeEvent) {
+      const { returnValues: { value } } = latestUnstakeEvent
+      const updatedStakeBalance = utils.toBN(stakedBalance).sub(utils.toBN(value))
+      setData({ stakedBalance: updatedStakeBalance, ownerAddress, beneficiaryAddress })
+    }
+  }, [latestUnstakeEvent])
 
   return (
     <section id="delegated-tokens" className="tile">

@@ -1,29 +1,42 @@
-import React, { useEffect, useContext, useRef } from 'react'
+import React, { useEffect, useContext } from 'react'
 import PendingUndelegationList from './PendingUndelegationList'
 import { useFetchData } from '../../hooks/useFetchData'
 import { operatorService } from './service'
 import { formatDate, displayAmount } from '../../utils'
 import { LoadingOverlay } from '../Loadable'
 import { Web3Context } from '../WithWeb3Context'
+import moment from 'moment'
 
 const initialData = { pendinUndelegations: [] }
 
-const PendingUndelegation = (props) => {
-  const event = useRef(null)
-  const [state] = useFetchData(operatorService.fetchPendingUndelegation, initialData)
-  const { isFetching, data: { pendingUnstakeBalance, undelegatedOn, stakeWithdrawalDelay, pendinUndelegations } } = state
-  const { stakingContract, yourAddress } = useContext(Web3Context)
+const PendingUndelegation = ({ latestUnstakeEvent }) => {
+  const { utils } = useContext(Web3Context)
+  const [state, setData] = useFetchData(operatorService.fetchPendingUndelegation, initialData)
+  const { isFetching, data: {
+    stakeWithdrawalDelayInSec,
+    pendingUnstakeBalance,
+    undelegatedOn,
+    stakeWithdrawalDelay,
+    pendinUndelegations,
+  } } = state
 
   useEffect(() => {
-    event.current = stakingContract.events.InitiatedUnstake({ filter: { operator: yourAddress } }, (error, event) => {
-      console.log('subscribed to event', error, event )
-    })
+    if (latestUnstakeEvent) {
+      const { id, returnValues: { createdAt, value } } = latestUnstakeEvent
+      const newPendingUndelegation = { eventId: id, createdAt: moment.unix(createdAt), amount: value }
+      const updatedPendingUnstakeBalance = utils.toBN(pendingUnstakeBalance).add(utils.toBN(value))
+      const updatedUndelegations = [newPendingUndelegation, ...pendinUndelegations]
+      const updatedUndelegatedOn = moment.unix(createdAt).add(stakeWithdrawalDelayInSec, 'seconds')
 
-    return () => {
-      console.log('unmount')
-      event.current.unsubscribe((error, suscces) => console.log('unsub', error, suscces))
+      setData({
+        stakeWithdrawalDelayInSec,
+        pendingUnstakeBalance: updatedPendingUnstakeBalance,
+        undelegatedOn: updatedUndelegatedOn,
+        stakeWithdrawalDelay,
+        pendinUndelegations: updatedUndelegations,
+      })
     }
-  }, [])
+  }, [latestUnstakeEvent])
 
   return (
     <section id="pending-undelegation" className="tile">
