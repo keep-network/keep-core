@@ -40,7 +40,7 @@ type TaggedMarshaler interface {
 type Provider interface {
 	ID() TransportIdentifier
 
-	ChannelWith(peerID string) (UnicastChannel, error)
+	ChannelWith(peerID TransportIdentifier) (UnicastChannel, error)
 	ChannelFor(name string) (BroadcastChannel, error)
 	Type() string
 	AddrStrings() []string

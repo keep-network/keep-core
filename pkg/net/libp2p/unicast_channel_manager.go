@@ -21,7 +21,7 @@ type unicastChannelManager struct {
 	p2phost  host.Host
 
 	channelsMutex sync.Mutex
-	channels      map[string]*unicastChannel
+	channels      map[net.TransportIdentifier]*unicastChannel
 }
 
 func newUnicastChannelManager(
@@ -33,7 +33,7 @@ func newUnicastChannelManager(
 		ctx:      ctx,
 		identity: identity,
 		p2phost:  p2phost,
-		channels: make(map[string]*unicastChannel),
+		channels: make(map[net.TransportIdentifier]*unicastChannel),
 	}
 
 	p2phost.SetStreamHandlerMatch(
@@ -53,7 +53,7 @@ func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 		stream.Conn().RemotePeer(),
 	)
 
-	channel, err := ucm.getUnicastChannel(stream.Conn().RemotePeer().String())
+	channel, err := ucm.getUnicastChannel(stream.Conn().RemotePeer())
 	if err != nil {
 		logger.Errorf(
 			"[%v] incoming stream [%v] from peer [%v] dropped: [%v]",
@@ -68,7 +68,7 @@ func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 	channel.handleStream(stream)
 }
 
-func (ucm *unicastChannelManager) getUnicastChannel(peerID string) (
+func (ucm *unicastChannelManager) getUnicastChannel(peerID net.TransportIdentifier) (
 	*unicastChannel,
 	error,
 ) {
@@ -98,9 +98,9 @@ func (ucm *unicastChannelManager) getUnicastChannel(peerID string) (
 }
 
 func (ucm *unicastChannelManager) newUnicastChannel(
-	peerID string,
+	peerID net.TransportIdentifier,
 ) (*unicastChannel, error) {
-	remotePeer, err := peer.IDB58Decode(peerID)
+	remotePeer, err := peer.IDB58Decode(peerID.String())
 	if err != nil {
 		return nil, fmt.Errorf("invalid peer ID: [%v]", err)
 	}

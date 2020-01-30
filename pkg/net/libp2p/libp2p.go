@@ -79,7 +79,7 @@ type provider struct {
 }
 
 func (p *provider) ChannelWith(
-	peerID string,
+	peerID net.TransportIdentifier,
 ) (net.UnicastChannel, error) {
 	return p.unicastChannelManager.getUnicastChannel(peerID)
 }
