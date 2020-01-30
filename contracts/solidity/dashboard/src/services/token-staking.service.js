@@ -1,5 +1,5 @@
-import { contractService } from '../../services/contracts.service'
-import { TOKEN_STAKING_CONTRACT_NAME } from '../../constants/constants'
+import { contractService } from './contracts.service'
+import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
 import moment from 'moment'
 
 const fetchDelegatedTokensData = async (web3Context) => {
