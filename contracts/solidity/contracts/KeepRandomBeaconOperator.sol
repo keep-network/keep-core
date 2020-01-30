@@ -10,12 +10,14 @@ import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
 
 interface ServiceContract {
-    function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external returns(uint256, uint256);
+    function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external returns(uint256);
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
     function callbackGas(uint256 requestId) external view returns(uint256);
     function callbackSurplusRecipient(uint256 requestId) external view returns(address payable);
-    function withdrawFromCallback(uint256 amount, uint256 requestId) external;
+    function withdrawFundsForCallback(uint256 requestId) external;
+    function withdrawFundsForGroupSelection(uint256 groupSelectionGas) external;
+    function returnEntryCreatedSurplus() external payable;
 }
 
 /**
@@ -106,6 +108,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     // Gas required to trigger DKG (starting group selection).
     uint256 public groupSelectionGasEstimate = 130000;
+
+    // Gas required for entry creation execution. Excluding starting a group
+    // selection and gas required for a callback.
+    uint256 public partialEntryCreatedGas = 30000;
 
     // Reimbursement for the submitter of the DKG result.
     // This value is set when a new DKG request comes to the operator contract.
@@ -224,17 +230,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @dev Triggers the selection process of a new candidate group.
      * @param _newEntry New random beacon value that stakers will use to
      * generate their tickets.
-     * @param submitter Operator of this contract.
      */
-    function createGroup(uint256 _newEntry, address payable submitter) public payable onlyServiceContract {
+    function createGroup(uint256 _newEntry) public payable onlyServiceContract {
         uint256 groupSelectionStartFee = groupSelectionGasEstimate
             .mul(gasPriceWithFluctuationMargin(priceFeedEstimate));
         groupSelectionStarterContract = ServiceContract(msg.sender);
         startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
-
-        // reimbursing a submitter that triggered group selection
-        (bool success, ) = stakingContract.magpieOf(submitter).call.value(groupSelectionStartFee)("");
-        require(success, "Failed reimbursing submitter for starting a group selection");
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
@@ -428,7 +429,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         bytes memory previousEntry
     ) public payable onlyServiceContract {
         require(
-            msg.value >= groupProfitFee().add(entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate))),
+            msg.value >= groupProfitFee().add((entryVerificationGasEstimate.add(partialEntryCreatedGas)).
+                mul(gasPriceWithFluctuationMargin(priceFeedEstimate))),
             "Insufficient new entry fee"
         );
         signRelayEntry(requestId, previousEntry, msg.sender, msg.value);
@@ -466,19 +468,17 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         require(isEntryInProgress(), "Entry was submitted");
         require(!hasEntryTimedOut(), "Entry timed out");
 
-        uint256 callbackGas = ServiceContract(signingRequest.serviceContract).callbackGas(signingRequest.relayRequestId);
-        uint256 callbackFee = 0;
+        uint256 balanceBefore = address(this).balance;
+        ServiceContract(signingRequest.serviceContract).withdrawFundsForCallback(signingRequest.relayRequestId);
+        uint256 callbackFunds = address(this).balance.sub(balanceBefore);
+        // TODO: add check if callbackFunds are good
 
-        // Withdraw funds for a callback only when a callback contract is present.
-        if (callbackGas > 0) {
-            callbackFee = gasPriceWithFluctuationMargin(priceFeedEstimate).mul(callbackGas);
+        balanceBefore = address(this).balance;
+        ServiceContract(signingRequest.serviceContract).withdrawFundsForGroupSelection(groupSelectionGasEstimate);
+        uint256 groupSelectionFunds = address(this).balance.sub(balanceBefore);
+        //TODO: add check if groupSelectionFunds are good.
 
-            uint256 balanceBefore = address(this).balance;
-            ServiceContract(signingRequest.serviceContract).withdrawFromCallback(callbackFee, signingRequest.relayRequestId);
-            uint256 balanceChange = address(this).balance - balanceBefore;
-
-            require(balanceChange == callbackFee, "Callback funds must be transferred.");
-        }
+        uint256 groupSelectionAndCallbackGas = (groupSelectionFunds.add(callbackFunds)).div(tx.gasprice);
 
         bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
         require(
@@ -492,23 +492,41 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         emit RelayEntrySubmitted();
 
-        (uint256 actualCallbackFee, uint256 groupCreationFee) = ServiceContract(signingRequest.serviceContract)
-            .entryCreated.gas(groupSelectionGasEstimate.add(callbackGas))(
+        balanceBefore = address(this).balance;
+        uint256 actualCallbackFee = ServiceContract(signingRequest.serviceContract)
+            .entryCreated.gas(groupSelectionAndCallbackGas.add(partialEntryCreatedGas))(
+
             signingRequest.relayRequestId,
             _groupSignature,
             msg.sender
         );
+        uint256 actualEntryCreatedGas = address(this).balance.sub(balanceBefore);
 
-        // Reimburse submitter only when a callback contract is present.
-        if (callbackGas > 0) {
+        // Reimburse submitter for a callback.
+        if (callbackFunds > 0) {
             address payable callbackSurplusRecipient = ServiceContract(signingRequest.serviceContract)
                 .callbackSurplusRecipient(signingRequest.relayRequestId);
-            reimburseCallback(callbackFee, actualCallbackFee, callbackSurplusRecipient);
+
+            reimburseCallback(callbackFunds, actualCallbackFee, callbackSurplusRecipient);
+        }
+
+        // Reimburse submitter for a group selection.
+        if (groupSelectionFunds > 0) {
+            (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(groupSelectionFunds)("");
+            require(success, "Failed reimbursing submitter for starting a group selection");
+        }
+
+        uint256 entryCreatedDiffGas = groupSelectionAndCallbackGas.add(partialEntryCreatedGas).sub(actualEntryCreatedGas);
+        // Return surplus of entryCreated() back to requestor.
+        if (entryCreatedDiffGas > 0) {
+            uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
+            ServiceContract(signingRequest.serviceContract).returnEntryCreatedSurplus.value(entryCreatedDiffGas.mul(gasPrice))();
         }
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
+        // Reimburse for relay entry verification.
         (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(submitterReward)("");
         require(success, "Failed send relay submitter reward");
 
@@ -750,8 +768,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @dev Estimates gas for group creation. Includes the cost of DKG and the
      * cost of triggering group selection.
      */
-    function groupCreationGasEstimate() public view returns (uint256) {
-        return dkgGasEstimate.add(groupSelectionGasEstimate);
+    function groupCreationBreakdownGasEstimate() public view returns (uint256, uint256) {
+        return (dkgGasEstimate, groupSelectionGasEstimate);
     }
 
      /**
