@@ -17,8 +17,8 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         groups.addGroup(groupPublicKey);
     }
 
-    function addGroupMember(bytes memory groupPublicKey, address member) public {
-        groups.addGroupMember(groupPublicKey, member);
+    function setGroupMembers(bytes memory groupPublicKey, address[] memory members) public {
+        groups.setGroupMembers(groupPublicKey, members);
     }
 
     function addGroupMemberReward(bytes memory groupPubKey, uint256 groupMemberReward) public {

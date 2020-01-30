@@ -55,17 +55,6 @@ library Groups {
     }
 
     /**
-     * @dev Adds group member.
-     */
-    function addGroupMember(
-        Storage storage self,
-        bytes memory groupPubKey,
-        address member
-    ) internal {
-        self.groupMembers[groupPubKey].push(member);
-    }
-
-    /**
      * @dev Adds group members.
      */
     function setGroupMembers(

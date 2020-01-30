@@ -35,8 +35,8 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
         groups.addGroup(groupPublicKey);
     }
 
-    function addGroupMember(bytes memory groupPublicKey, address member) public {
-        groups.addGroupMember(groupPublicKey, member);
+    function setGroupMembers(bytes memory groupPublicKey, address[] memory members) public {
+        groups.setGroupMembers(groupPublicKey, members);
     }
 
     function relayEntry() public returns (uint256) {
