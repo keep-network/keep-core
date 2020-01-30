@@ -175,18 +175,13 @@ func (uc *unicastChannel) removeHandler(handler *unicastMessageHandler) {
 	}
 }
 
-func (uc *unicastChannel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) error {
+func (uc *unicastChannel) SetUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) {
 	tpe := unmarshaler().Type()
 
 	uc.unmarshalersMutex.Lock()
 	defer uc.unmarshalersMutex.Unlock()
 
-	if _, exists := uc.unmarshalersByType[tpe]; exists {
-		return fmt.Errorf("type %s already has an associated unmarshaler", tpe)
-	}
-
 	uc.unmarshalersByType[tpe] = unmarshaler
-	return nil
 }
 
 func (uc *unicastChannel) handleStream(stream network.Stream) {

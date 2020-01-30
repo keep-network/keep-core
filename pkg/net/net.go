@@ -82,7 +82,7 @@ type UnicastChannel interface {
 	// When the context is done, handler is automatically unregistered and
 	// receives no more messages.
 	Recv(ctx context.Context, handler func(m Message))
-	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
+	// SetUnmarshaler set an unmarshaler that will unmarshal a given
 	// type to a concrete object that can be passed to and understood by any
 	// registered message handling functions. The unmarshaler should be a
 	// function that returns a fresh object of type proto.TaggedUnmarshaler,
@@ -90,7 +90,7 @@ type UnicastChannel interface {
 	//
 	// The string type associated with the unmarshaler is the result of calling
 	// Type() on a raw unmarshaler.
-	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
+	SetUnmarshaler(unmarshaler func() TaggedUnmarshaler)
 }
 
 // BroadcastChannel represents a named pubsub channel. It allows group members

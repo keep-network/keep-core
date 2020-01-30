@@ -68,17 +68,13 @@ func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := channel1.RegisterUnmarshaler(
+		channel1.SetUnmarshaler(
 			func() net.TaggedUnmarshaler { return &testMessage{} },
-		); err != nil {
-			t.Fatal(err)
-		}
+		)
 
-		if err := channel2.RegisterUnmarshaler(
+		channel2.SetUnmarshaler(
 			func() net.TaggedUnmarshaler { return &testMessage{} },
-		); err != nil {
-			t.Fatal(err)
-		}
+		)
 
 		// Register first handler for channel 1.
 		channel1Receiver1 := newMessageReceiver("channel1Receiver1")
@@ -157,11 +153,9 @@ func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := channel3.RegisterUnmarshaler(
+		channel3.SetUnmarshaler(
 			func() net.TaggedUnmarshaler { return &testMessage{} },
-		); err != nil {
-			t.Fatal(err)
-		}
+		)
 
 		// Register handler for channel 3.
 		channel3Receiver := newMessageReceiver("channel3Receiver")
