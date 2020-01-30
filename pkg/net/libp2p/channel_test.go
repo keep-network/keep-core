@@ -142,14 +142,14 @@ func TestUnregisterWhenHandling(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 300; i++ {
-			channel.deliver(&mockNetMessage{})
+			channel.deliver(&mockNetMessage{seqno: uint64(i)})
 		}
 	}()
 
 	time.Sleep(500 * time.Millisecond)
 
 	if receivedCount != stopAt {
-		t.Fatalf("received more than expected: [%v]", receivedCount)
+		t.Fatalf("unexpected number of received messages: [%v]", receivedCount)
 	}
 }
 
@@ -204,10 +204,11 @@ func toEncodedBytes(publicKey *ecdsa.PublicKey) string {
 }
 
 type mockNetMessage struct {
+	seqno uint64
 }
 
 func (mnm *mockNetMessage) TransportSenderID() net.TransportIdentifier {
-	panic("not implemented in mock")
+	return &mockTransportIdentifier{"donald duck"}
 }
 
 func (mnm *mockNetMessage) Payload() interface{} {
@@ -222,14 +223,14 @@ func (mnm *mockNetMessage) SenderPublicKey() []byte {
 	panic("not implemented in mock")
 }
 
-func (mnm *mockNetMessage) Fingerprint() string {
-	return "fingerprint"
-}
-
-func (mnm *mockNetMessage) Retransmission() uint32 {
-	return 0
-}
-
 func (mnm *mockNetMessage) Seqno() uint64 {
-	return 0
+	return mnm.seqno
+}
+
+type mockTransportIdentifier struct {
+	transportID string
+}
+
+func (mti *mockTransportIdentifier) String() string {
+	return mti.transportID
 }

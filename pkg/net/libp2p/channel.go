@@ -51,7 +51,7 @@ type channel struct {
 
 type messageHandler struct {
 	ctx     context.Context
-	channel chan retransmission.NetworkMessage
+	channel chan net.Message
 }
 
 func (c *channel) nextSeqno() uint64 {
@@ -68,20 +68,21 @@ func (c *channel) Send(ctx context.Context, message net.TaggedMarshaler) error {
 		return err
 	}
 
-	retransmission.ScheduleRetransmissions(
-		ctx,
-		c.retransmissionTicker,
-		messageProto,
-		c.publishToPubSub,
-	)
+	messageProto.SequenceNumber = c.nextSeqno()
 
-	return c.publishToPubSub(messageProto)
+	doSend := func() error {
+		return c.publishToPubSub(messageProto)
+	}
+
+	retransmission.ScheduleRetransmissions(ctx, c.retransmissionTicker, doSend)
+
+	return doSend()
 }
 
 func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
 	messageHandler := &messageHandler{
 		ctx:     ctx,
-		channel: make(chan retransmission.NetworkMessage),
+		channel: make(chan net.Message),
 	}
 
 	c.messageHandlersMutex.Lock()
@@ -262,22 +263,15 @@ func (c *channel) processContainerMessage(
 		)
 	}
 
-	fingerprint := retransmission.CalculateFingerprint(
+	netMessage := internal.BasicMessage(
 		senderIdentifier.id,
-		message.GetPayload(),
+		unmarshaled,
+		string(message.Type),
+		key.Marshal(networkKey),
+		message.SequenceNumber,
 	)
 
-	c.deliver(retransmission.NewNetworkMessage(
-		internal.BasicMessage(
-			senderIdentifier.id,
-			unmarshaled,
-			string(message.Type),
-			key.Marshal(networkKey),
-			c.nextSeqno(),
-		),
-		fingerprint,
-		message.Retransmission,
-	))
+	c.deliver(netMessage)
 
 	return nil
 }
@@ -296,14 +290,14 @@ func (c *channel) getUnmarshalingContainerByType(messageType string) (net.Tagged
 	return unmarshaler(), nil
 }
 
-func (c *channel) deliver(message retransmission.NetworkMessage) {
+func (c *channel) deliver(message net.Message) {
 	c.messageHandlersMutex.Lock()
 	snapshot := make([]*messageHandler, len(c.messageHandlers))
 	copy(snapshot, c.messageHandlers)
 	c.messageHandlersMutex.Unlock()
 
 	for _, handler := range snapshot {
-		go func(message retransmission.NetworkMessage, handler *messageHandler) {
+		go func(message net.Message, handler *messageHandler) {
 			select {
 			case handler.channel <- message:
 			// Nothing to do here; we block until the message is handled
