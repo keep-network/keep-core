@@ -21,6 +21,8 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 )
 
+const readerMaxSize = 1 << 20
+
 type streamFactory func(ctx context.Context, peerID peer.ID) (network.Stream, error)
 
 type unicastChannel struct {
@@ -190,7 +192,7 @@ func (uc *unicastChannel) handleStream(stream network.Stream) {
 	}
 
 	go func() {
-		reader := protoio.NewDelimitedReader(stream, 1<<20)
+		reader := protoio.NewDelimitedReader(stream, readerMaxSize)
 
 		for {
 			messageProto := new(pb.NetworkMessage)
