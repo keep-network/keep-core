@@ -16,7 +16,8 @@ const OperatorPage = (props) => {
       <h3>My Token Operations</h3>
       <DelegatedTokens latestUnstakeEvent={latestEvent} />
       <PendingUndelegation latestUnstakeEvent={latestEvent} />
-      <SlashedTokens />
+      {/* TODO fetching slashed info form the contract */}
+      {/* <SlashedTokens /> */}
     </>
 
   )
