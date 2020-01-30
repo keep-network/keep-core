@@ -31,6 +31,7 @@ const fetchPendingUndelegation = async (web3Context, ...args) => {
     pendingUnstakeBalance: withdrawals.amount,
     undelegatedOn,
     stakeWithdrawalDelay,
+    stakeWithdrawalDelayInSec,
     pendinUndelegations,
   }
 }
