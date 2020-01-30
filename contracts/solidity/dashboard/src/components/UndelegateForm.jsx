@@ -22,11 +22,14 @@ const UndelegateForm = (props) => {
   }, [amount, yourAddress])
 
   return (
-    <InlineForm
-      inputProps={{ type: 'text', value: amount, onChange: (event) => setAmount(event.target.value), placeholder: 'Amount' }}
-      classNames="undelegation-form"
-      onSubmit={onSubmitAction}
-    />
+    <div>
+      <InlineForm
+        inputProps={{ type: 'text', value: amount, onChange: (event) => setAmount(event.target.value), placeholder: 'Amount' }}
+        classNames="undelegation-form"
+        onSubmit={onSubmitAction}
+      />
+      <p className="text-warning">Initiating an undelegation resets undelegation period.</p>
+    </div>
   )
 }
 
