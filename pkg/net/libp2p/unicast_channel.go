@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -41,29 +42,39 @@ type unicastMessageHandler struct {
 	channel chan net.Message
 }
 
-func (uc *unicastChannel) RemotePeerID() string {
-	return uc.remotePeerID.String()
-}
-
-func (uc *unicastChannel) Send(ctx context.Context, message net.TaggedMarshaler) error {
-	messageProto, err := uc.messageProto(message)
-	if err != nil {
-		return err
-	}
+func (uc *unicastChannel) Send(message net.TaggedMarshaler) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	logger.Debugf(
 		"[%v] sending message to peer [%v]",
 		uc.clientIdentity.id,
-		uc.RemotePeerID(),
+		uc.remotePeerID,
 	)
 
-	stream, err := uc.streamFactory(ctx, uc.remotePeerID)
-	if err != nil {
-		logger.Errorf("[%v] could not create stream: [%v]", uc.clientIdentity.id, err)
-		return err
-	}
+	streamSuccess := make(chan network.Stream)
+	streamError := make(chan error)
 
-	return uc.send(stream, messageProto)
+	go func() {
+		stream, err := uc.streamFactory(ctx, uc.remotePeerID)
+		if err != nil {
+			streamError <- err
+		}
+		streamSuccess <- stream
+	}()
+
+	select {
+	case stream := <-streamSuccess:
+		messageProto, err := uc.messageProto(message)
+		if err != nil {
+			return err
+		}
+		return uc.send(stream, messageProto)
+	case err := <-streamError:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (uc *unicastChannel) send(stream network.Stream, message proto.Message) error {

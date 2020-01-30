@@ -100,7 +100,7 @@ func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
 		}
 		go func() {
 			for _, message := range messagesToChannel1 {
-				if err := channel1.Send(ctx, &message); err != nil {
+				if err := channel1.Send(&message); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -113,7 +113,7 @@ func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
 		}
 		go func() {
 			for _, message := range messagesToChannel2 {
-				if err := channel2.Send(ctx, &message); err != nil {
+				if err := channel2.Send(&message); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -174,7 +174,7 @@ func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
 		}
 		go func() {
 			for _, message := range messagesToChannel1 {
-				if err := channel1.Send(ctx, &message); err != nil {
+				if err := channel1.Send(&message); err != nil {
 					t.Fatal(err)
 				}
 			}

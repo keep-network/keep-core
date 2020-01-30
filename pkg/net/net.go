@@ -70,20 +70,17 @@ type TaggedUnmarshaler interface {
 	Type() string
 }
 
-// Channel is a communication medium between two or more network peers allowing
-// to send and receive messages.
-type Channel interface {
+// UnicastChannel represents a bidirectional communication channel between two
+// network peers. UnicastChannel guarantees two peers communicating with each
+// other have a direct connection.
+type UnicastChannel interface {
 	// Send function publishes a message m to the channel. Message m needs to
-	// conform to the marshalling interface. If retransmission is supported
-	// by the implementation, message will be periodically retransmitted by
-	// the channel for the lifetime of the provided context.
-	Send(ctx context.Context, m TaggedMarshaler) error
+	// conform to the marshalling interface.
+	Send(m TaggedMarshaler) error
 	// Recv installs a message handler that will receive messages from the
 	// channel for the entire lifetime of the provided context.
 	// When the context is done, handler is automatically unregistered and
-	// receives no more messages. If retransmission is supported by the
-	// implementation, already received message retransmissions are
-	// filtered out before calling the handler.
+	// receives no more messages.
 	Recv(ctx context.Context, handler func(m Message))
 	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
 	// type to a concrete object that can be passed to and understood by any
@@ -96,25 +93,32 @@ type Channel interface {
 	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
 }
 
-// UnicastChannel represents a bidirectional communication channel between two
-// network peers. UnicastChannel guarantees two peers communicating with each
-// other have a direct connection.
-type UnicastChannel interface {
-	Channel
-
-	// RemotePeerID returns id of the remote peer connected to this channel.
-	RemotePeerID() string
-}
-
 // BroadcastChannel represents a named pubsub channel. It allows group members
 // to broadcast and receive messages. BroadcastChannel implements strategy
 // for the retransmission of broadcast messages and handle duplicates before
 // passing the received message to the client.
 type BroadcastChannel interface {
-	Channel
-
 	// Name returns the name of this broadcast channel.
 	Name() string
+	// Send function publishes a message m to the channel. Message m needs to
+	// conform to the marshalling interface. Message will be periodically
+	// retransmitted by the channel for the lifetime of the provided context.
+	Send(ctx context.Context, m TaggedMarshaler) error
+	// Recv installs a message handler that will receive messages from the
+	// channel for the entire lifetime of the provided context.
+	// When the context is done, handler is automatically unregistered and
+	// receives no more messages. Already received message retransmissions are
+	// filtered out before calling the handler.
+	Recv(ctx context.Context, handler func(m Message))
+	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
+	// type to a concrete object that can be passed to and understood by any
+	// registered message handling functions. The unmarshaler should be a
+	// function that returns a fresh object of type proto.TaggedUnmarshaler,
+	// ready to read in the bytes for an object marked as tpe.
+	//
+	// The string type associated with the unmarshaler is the result of calling
+	// Type() on a raw unmarshaler.
+	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
 	// SetFilter registers a broadcast channel filter which will be used
 	// to determine if given broadcast channel message should be processed
 	// by the receivers.
