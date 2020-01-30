@@ -94,7 +94,10 @@ func (uc *unicastChannel) send(stream network.Stream, message proto.Message) err
 
 	err := writeMsg(message)
 	if err != nil {
-		_ = stream.Reset()
+		resetErr := stream.Reset()
+		if resetErr != nil {
+			logger.Errorf("could not reset stream: [%v]", resetErr)
+		}
 		return err
 	}
 
