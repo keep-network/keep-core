@@ -212,7 +212,7 @@ module "pull_deployment_infrastructure" {
 }
 
 module "push_deployment_infrastructure" {
-  source                 = "git@github.com:thesis/infrastructure.git//terraform/modules/gcp_push_deploy"
+  source                 = "git@github.com:thesis/infrastructure.git//terraform/modules/gcp_push_deploy?ref=sthompson22/push-infra/utility-box-nodejs"
   project                = "${module.project.project_id}"
   region                 = "${var.region_data["region"]}"
   vpc_network_name       = "${module.vpc.vpc_network_name}"
