@@ -2,7 +2,21 @@ import Web3 from 'web3'
 import BigNumber from 'bignumber.js'
 import moment from 'moment'
 
-export function displayAmount(amount, decimals, precision) {
+moment.updateLocale('en', {
+  relativeTime: {
+    d: '1 day',
+    dd: (number, withoutSuffix, key, isFuture) => {
+      const weeks = Math.round(number / 7)
+      if (number < 7) {
+        return number + ' days'
+      } else {
+        return weeks + ' week' + (weeks === 1 ? '' : 's')
+      }
+    },
+  },
+})
+
+export function displayAmount(amount, decimals = 18, precision = 3) {
   if (amount) {
     amount = new BigNumber(amount)
     return amount.div(new BigNumber(10).pow(new BigNumber(decimals))).toFixed(precision)
