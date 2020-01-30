@@ -14,6 +14,13 @@ import (
 
 const protocolID = "/keep/unicast/1.0.0"
 
+type ChannelInitDirection int
+
+const (
+	Inbound ChannelInitDirection = iota
+	Outbound
+)
+
 type unicastChannelManager struct {
 	ctx context.Context
 
@@ -22,6 +29,8 @@ type unicastChannelManager struct {
 
 	channelsMutex sync.Mutex
 	channels      map[net.TransportIdentifier]*unicastChannel
+
+	channelOpenedHandler func(channel net.UnicastChannel)
 }
 
 func newUnicastChannelManager(
@@ -45,6 +54,12 @@ func newUnicastChannelManager(
 	return manager
 }
 
+func (ucm *unicastChannelManager) onChannelOpened(
+	handler func(channel net.UnicastChannel),
+) {
+	ucm.channelOpenedHandler = handler
+}
+
 func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 	logger.Debugf(
 		"[%v] processing incoming stream [%v] from peer [%v]",
@@ -53,7 +68,7 @@ func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 		stream.Conn().RemotePeer(),
 	)
 
-	channel, err := ucm.getUnicastChannel(stream.Conn().RemotePeer())
+	channel, err := ucm.getUnicastChannel(stream.Conn().RemotePeer(), Inbound)
 	if err != nil {
 		logger.Errorf(
 			"[%v] incoming stream [%v] from peer [%v] dropped: [%v]",
@@ -68,7 +83,10 @@ func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 	channel.handleStream(stream)
 }
 
-func (ucm *unicastChannelManager) getUnicastChannel(peerID net.TransportIdentifier) (
+func (ucm *unicastChannelManager) getUnicastChannel(
+	peerID net.TransportIdentifier,
+	initDirection ChannelInitDirection,
+) (
 	*unicastChannel,
 	error,
 ) {
@@ -94,6 +112,12 @@ func (ucm *unicastChannelManager) getUnicastChannel(peerID net.TransportIdentifi
 		if !exists {
 			channel = newChannel
 			ucm.channels[peerID] = newChannel
+
+			// One should invoke the channel opened handler only in case
+			// when the new channel was initiated by the remote peer.
+			if initDirection == Inbound && ucm.channelOpenedHandler != nil {
+				ucm.channelOpenedHandler(newChannel)
+			}
 		}
 		ucm.channelsMutex.Unlock()
 	}

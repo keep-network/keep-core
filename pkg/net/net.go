@@ -45,6 +45,9 @@ type Provider interface {
 
 	// UnicastChannelWith provides a unicast channel instance with given peer.
 	UnicastChannelWith(peerID TransportIdentifier) (UnicastChannel, error)
+	// OnUnicastChannelOpened allows to register a channel handler which will
+	// be invoked when a new unicast channel will be opened.
+	OnUnicastChannelOpened(handler func(channel UnicastChannel))
 
 	// BroadcastChannelFor provides a broadcast channel instance for given
 	// channel name.

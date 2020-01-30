@@ -81,7 +81,13 @@ type provider struct {
 func (p *provider) UnicastChannelWith(
 	peerID net.TransportIdentifier,
 ) (net.UnicastChannel, error) {
-	return p.unicastChannelManager.getUnicastChannel(peerID)
+	return p.unicastChannelManager.getUnicastChannel(peerID, Outbound)
+}
+
+func (p *provider) OnUnicastChannelOpened(
+	handler func(channel net.UnicastChannel),
+) {
+	p.unicastChannelManager.onChannelOpened(handler)
 }
 
 func (p *provider) BroadcastChannelFor(name string) (net.BroadcastChannel, error) {
