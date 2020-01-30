@@ -21,8 +21,8 @@ const DelegatedTokens = ({ latestUnstakeEvent }) => {
   }, [latestUnstakeEvent])
 
   return (
-    <section id="delegated-tokens" className="tile">
-      <LoadingOverlay isFetching={isFetching}>
+    <LoadingOverlay isFetching={isFetching}>
+      <section id="delegated-tokens" className="tile">
         <h5>Total Delegated Tokens</h5>
         <div className="flex flex-row">
           <div className="delegated-tokens-summary flex flex-column" style={{ flex: '1' }} >
@@ -40,8 +40,8 @@ const DelegatedTokens = ({ latestUnstakeEvent }) => {
           </div>
           <UndelegateForm />
         </div>
-      </LoadingOverlay>
-    </section>
+      </section>
+    </LoadingOverlay>
   )
 }
 
