@@ -116,7 +116,7 @@ func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
 		}()
 
 		// Wait a bit, messages must be sent and received.
-		time.Sleep(10 * time.Second)
+		time.Sleep(2 * time.Second)
 
 		assertReceivedMessages(t, channel1Receiver1, messagesToChannel2)
 		assertReceivedMessages(t, channel1Receiver2, messagesToChannel2)
@@ -175,7 +175,7 @@ func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
 		}()
 
 		// Wait a bit, messages must be sent and received.
-		time.Sleep(10 * time.Second)
+		time.Sleep(2 * time.Second)
 
 		assertReceivedMessages(t, channel3Receiver, messagesToChannel1)
 	})

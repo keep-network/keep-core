@@ -50,7 +50,7 @@ func (lp *localProvider) ID() net.TransportIdentifier {
 	return lp.id
 }
 
-func (lp *localProvider) ChannelWith(peerID string) (net.UnicastChannel, error) {
+func (lp *localProvider) ChannelWith(peerID net.TransportIdentifier) (net.UnicastChannel, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
