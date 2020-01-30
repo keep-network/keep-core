@@ -188,6 +188,8 @@ func (uc *unicastChannel) SetUnmarshaler(unmarshaler func() net.TaggedUnmarshale
 
 func (uc *unicastChannel) handleStream(stream network.Stream) {
 	if stream.Conn().RemotePeer() != uc.remotePeerID {
+		// A unicast channel is created for a specific remote peer.
+		// All streams incoming from other peers should be dropped.
 		return
 	}
 
