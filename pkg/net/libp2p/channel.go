@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"github.com/btcsuite/btcd/btcec"
 
@@ -23,6 +24,12 @@ import (
 const subscriptionWorkersCount = 32
 
 type channel struct {
+	// channel-scoped atomic counter for sequence numbers
+	//
+	// Must be declared at the top of the struct!
+	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
+	counter uint64
+
 	name string
 
 	clientIdentity *identity
@@ -45,6 +52,10 @@ type channel struct {
 type messageHandler struct {
 	ctx     context.Context
 	channel chan retransmission.NetworkMessage
+}
+
+func (c *channel) nextSeqno() uint64 {
+	return atomic.AddUint64(&c.counter, 1)
 }
 
 func (c *channel) Name() string {
@@ -262,7 +273,7 @@ func (c *channel) processContainerMessage(
 			unmarshaled,
 			string(message.Type),
 			key.Marshal(networkKey),
-			0, // TODO: assign value
+			c.nextSeqno(),
 		),
 		fingerprint,
 		message.Retransmission,

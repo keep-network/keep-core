@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -152,6 +153,7 @@ type messageHandler struct {
 }
 
 type localChannel struct {
+	counter              uint64
 	name                 string
 	identifier           net.TransportIdentifier
 	staticKey            *key.NetworkPublic
@@ -160,6 +162,10 @@ type localChannel struct {
 	unmarshalersMutex    sync.Mutex
 	unmarshalersByType   map[string]func() net.TaggedUnmarshaler
 	retransmissionTicker *retransmission.Ticker
+}
+
+func (lc *localChannel) nextSeqno() uint64 {
+	return atomic.AddUint64(&lc.counter, 1)
 }
 
 func (lc *localChannel) Name() string {
@@ -193,7 +199,7 @@ func doSend(channel *localChannel, message *pb.NetworkMessage) error {
 			unmarshaled,
 			"local",
 			key.Marshal(channel.staticKey),
-			0,
+			channel.nextSeqno(),
 		),
 		fingerprint,
 		message.Retransmission,
