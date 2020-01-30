@@ -8,7 +8,6 @@ import "./utils/AddressArrayUtils.sol";
 import "./libraries/operator/GroupSelection.sol";
 import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
@@ -25,7 +24,6 @@ interface ServiceContract {
  */
 contract KeepRandomBeaconOperator is ReentrancyGuard {
     using SafeMath for uint256;
-    using BytesLib for bytes;
     using AddressArrayUtils for address[];
     using GroupSelection for GroupSelection.Storage;
     using Groups for Groups.Storage;
@@ -364,17 +362,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout
         );
 
-        // Remove inactive members
-        for (uint i = 0; i < inactive.length; i++) {
-            delete members[inactive.toUint8(i) - 1];
-        }
-
-        // Remove disqualified members
-        for (uint i = 0; i < disqualified.length; i++) {
-            delete members[disqualified.toUint8(i) - 1];
-        }
-
-        groups.setGroupMembers(groupPubKey, members);
+        groups.setGroupMembers(groupPubKey, members, disqualified, inactive);
         groups.addGroup(groupPubKey);
         reimburseDkgSubmitter();
         emit DkgResultPublishedEvent(groupPubKey);
