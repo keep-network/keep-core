@@ -14,6 +14,13 @@ import (
 
 const protocolID = "/keep/unicast/1.0.0"
 
+type ChannelInitDirection int
+
+const (
+	Inbound ChannelInitDirection = iota
+	Outbound
+)
+
 type unicastChannelManager struct {
 	ctx context.Context
 
@@ -21,7 +28,9 @@ type unicastChannelManager struct {
 	p2phost  host.Host
 
 	channelsMutex sync.Mutex
-	channels      map[string]*unicastChannel
+	channels      map[net.TransportIdentifier]*unicastChannel
+
+	channelOpenedHandler func(channel net.UnicastChannel)
 }
 
 func newUnicastChannelManager(
@@ -33,7 +42,7 @@ func newUnicastChannelManager(
 		ctx:      ctx,
 		identity: identity,
 		p2phost:  p2phost,
-		channels: make(map[string]*unicastChannel),
+		channels: make(map[net.TransportIdentifier]*unicastChannel),
 	}
 
 	p2phost.SetStreamHandlerMatch(
@@ -45,6 +54,12 @@ func newUnicastChannelManager(
 	return manager
 }
 
+func (ucm *unicastChannelManager) onChannelOpened(
+	handler func(channel net.UnicastChannel),
+) {
+	ucm.channelOpenedHandler = handler
+}
+
 func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 	logger.Debugf(
 		"[%v] processing incoming stream [%v] from peer [%v]",
@@ -53,7 +68,7 @@ func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 		stream.Conn().RemotePeer(),
 	)
 
-	channel, err := ucm.getUnicastChannel(stream.Conn().RemotePeer().String())
+	channel, err := ucm.getUnicastChannel(stream.Conn().RemotePeer(), Inbound)
 	if err != nil {
 		logger.Errorf(
 			"[%v] incoming stream [%v] from peer [%v] dropped: [%v]",
@@ -68,14 +83,16 @@ func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 	channel.handleStream(stream)
 }
 
-func (ucm *unicastChannelManager) getUnicastChannel(peerID string) (
+func (ucm *unicastChannelManager) getUnicastChannel(
+	peerID net.TransportIdentifier,
+	initDirection ChannelInitDirection,
+) (
 	*unicastChannel,
 	error,
 ) {
 	var (
 		channel *unicastChannel
 		exists  bool
-		err     error
 	)
 
 	ucm.channelsMutex.Lock()
@@ -83,14 +100,25 @@ func (ucm *unicastChannelManager) getUnicastChannel(peerID string) (
 	ucm.channelsMutex.Unlock()
 
 	if !exists {
-		channel, err = ucm.newUnicastChannel(peerID)
+		newChannel, err := ucm.newUnicastChannel(peerID)
 		if err != nil {
 			return nil, err
 		}
 
-		// Ensure we update our cache of known channels
+		// Creating a new channel can take some time. One should double-check
+		// if some other channel wasn't created and cached in the same time.
 		ucm.channelsMutex.Lock()
-		ucm.channels[peerID] = channel
+		channel, exists = ucm.channels[peerID]
+		if !exists {
+			channel = newChannel
+			ucm.channels[peerID] = newChannel
+
+			// One should invoke the channel opened handler only in case
+			// when the new channel was initiated by the remote peer.
+			if initDirection == Inbound && ucm.channelOpenedHandler != nil {
+				ucm.channelOpenedHandler(newChannel)
+			}
+		}
 		ucm.channelsMutex.Unlock()
 	}
 
@@ -98,9 +126,9 @@ func (ucm *unicastChannelManager) getUnicastChannel(peerID string) (
 }
 
 func (ucm *unicastChannelManager) newUnicastChannel(
-	peerID string,
+	peerID net.TransportIdentifier,
 ) (*unicastChannel, error) {
-	remotePeer, err := peer.IDB58Decode(peerID)
+	remotePeer, err := peer.IDB58Decode(peerID.String())
 	if err != nil {
 		return nil, fmt.Errorf("invalid peer ID: [%v]", err)
 	}

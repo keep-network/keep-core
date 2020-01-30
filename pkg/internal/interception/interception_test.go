@@ -19,7 +19,7 @@ func TestPassThruNetworkMessage(t *testing.T) {
 		},
 	)
 
-	channel, err := network.ChannelFor("badger288")
+	channel, err := network.BroadcastChannelFor("badger288")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func TestModifyNetworkMessage(t *testing.T) {
 		},
 	)
 
-	channel, err := network.ChannelFor("badger288")
+	channel, err := network.BroadcastChannelFor("badger288")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestDropNetworkMessage(t *testing.T) {
 		},
 	)
 
-	channel, err := network.ChannelFor("badger288")
+	channel, err := network.BroadcastChannelFor("badger288")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -64,7 +64,6 @@ func (cm *channelManager) getChannel(name string) (*channel, error) {
 	var (
 		channel *channel
 		exists  bool
-		err     error
 	)
 
 	cm.channelsMutex.Lock()
@@ -72,14 +71,19 @@ func (cm *channelManager) getChannel(name string) (*channel, error) {
 	cm.channelsMutex.Unlock()
 
 	if !exists {
-		channel, err = cm.newChannel(name)
+		newChannel, err := cm.newChannel(name)
 		if err != nil {
 			return nil, err
 		}
 
-		// Ensure we update our cache of known channels
+		// Creating a new channel can take some time. One should double-check
+		// if some other channel wasn't created and cached in the same time.
 		cm.channelsMutex.Lock()
-		cm.channels[name] = channel
+		channel, exists = cm.channels[name]
+		if !exists {
+			channel = newChannel
+			cm.channels[name] = newChannel
+		}
 		cm.channelsMutex.Unlock()
 	}
 

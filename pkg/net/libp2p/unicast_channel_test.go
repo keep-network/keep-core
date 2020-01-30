@@ -28,12 +28,12 @@ func TestCreateUnicastChannel(t *testing.T) {
 		provider2 net.Provider,
 		provider3 net.Provider,
 	) {
-		_, err := provider1.ChannelWith(identity2.id.String())
+		_, err := provider1.UnicastChannelWith(identity2.id)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		_, err = provider2.ChannelWith(identity1.id.String())
+		_, err = provider2.UnicastChannelWith(identity1.id)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -57,28 +57,24 @@ func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
 		provider3 net.Provider,
 	) {
 		// Channel instance of peer 1.
-		channel1, err := provider1.ChannelWith(identity2.id.String())
+		channel1, err := provider1.UnicastChannelWith(identity2.id)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		// Channel instance of peer 2.
-		channel2, err := provider2.ChannelWith(identity1.id.String())
+		channel2, err := provider2.UnicastChannelWith(identity1.id)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if err := channel1.RegisterUnmarshaler(
+		channel1.SetUnmarshaler(
 			func() net.TaggedUnmarshaler { return &testMessage{} },
-		); err != nil {
-			t.Fatal(err)
-		}
+		)
 
-		if err := channel2.RegisterUnmarshaler(
+		channel2.SetUnmarshaler(
 			func() net.TaggedUnmarshaler { return &testMessage{} },
-		); err != nil {
-			t.Fatal(err)
-		}
+		)
 
 		// Register first handler for channel 1.
 		channel1Receiver1 := newMessageReceiver("channel1Receiver1")
@@ -100,7 +96,7 @@ func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
 		}
 		go func() {
 			for _, message := range messagesToChannel1 {
-				if err := channel1.Send(ctx, &message); err != nil {
+				if err := channel1.Send(&message); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -113,14 +109,14 @@ func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
 		}
 		go func() {
 			for _, message := range messagesToChannel2 {
-				if err := channel2.Send(ctx, &message); err != nil {
+				if err := channel2.Send(&message); err != nil {
 					t.Fatal(err)
 				}
 			}
 		}()
 
 		// Wait a bit, messages must be sent and received.
-		time.Sleep(10 * time.Second)
+		time.Sleep(2 * time.Second)
 
 		assertReceivedMessages(t, channel1Receiver1, messagesToChannel2)
 		assertReceivedMessages(t, channel1Receiver2, messagesToChannel2)
@@ -146,22 +142,20 @@ func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
 		provider3 net.Provider,
 	) {
 		// Channel instance of peer 1.
-		channel1, err := provider1.ChannelWith(identity3.id.String())
+		channel1, err := provider1.UnicastChannelWith(identity3.id)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		// Channel instance of peer 3.
-		channel3, err := provider3.ChannelWith(identity1.id.String())
+		channel3, err := provider3.UnicastChannelWith(identity1.id)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if err := channel3.RegisterUnmarshaler(
+		channel3.SetUnmarshaler(
 			func() net.TaggedUnmarshaler { return &testMessage{} },
-		); err != nil {
-			t.Fatal(err)
-		}
+		)
 
 		// Register handler for channel 3.
 		channel3Receiver := newMessageReceiver("channel3Receiver")
@@ -174,14 +168,14 @@ func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
 		}
 		go func() {
 			for _, message := range messagesToChannel1 {
-				if err := channel1.Send(ctx, &message); err != nil {
+				if err := channel1.Send(&message); err != nil {
 					t.Fatal(err)
 				}
 			}
 		}()
 
 		// Wait a bit, messages must be sent and received.
-		time.Sleep(10 * time.Second)
+		time.Sleep(2 * time.Second)
 
 		assertReceivedMessages(t, channel3Receiver, messagesToChannel1)
 	})

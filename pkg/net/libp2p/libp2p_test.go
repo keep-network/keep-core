@@ -66,7 +66,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err = provider.ChannelFor(testName); err != nil {
+	if _, err = provider.BroadcastChannelFor(testName); err != nil {
 		t.Fatalf("expected: test to fail with [%v]\nactual:   failed with [%v]",
 			nil,
 			err,
@@ -104,7 +104,7 @@ func TestSendReceive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	broadcastChannel, err := provider.ChannelFor(name)
+	broadcastChannel, err := provider.BroadcastChannelFor(name)
 	if err != nil {
 		t.Fatal(err)
 	}

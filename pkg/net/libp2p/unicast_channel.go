@@ -21,6 +21,8 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 )
 
+const readerMaxSize = 1 << 20
+
 type streamFactory func(ctx context.Context, peerID peer.ID) (network.Stream, error)
 
 type unicastChannel struct {
@@ -42,30 +44,39 @@ type unicastMessageHandler struct {
 	channel chan net.Message
 }
 
-func (uc *unicastChannel) RemotePeerID() string {
-	return uc.remotePeerID.String()
-}
-
-func (uc *unicastChannel) Send(ctx context.Context, message net.TaggedMarshaler) error {
-	messageProto, err := uc.messageProto(message)
-	if err != nil {
-		return err
-	}
+func (uc *unicastChannel) Send(message net.TaggedMarshaler) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	logger.Debugf(
 		"[%v] sending message to peer [%v]",
 		uc.clientIdentity.id,
-		uc.RemotePeerID(),
+		uc.remotePeerID,
 	)
 
-	stream, err := uc.streamFactory(ctx, uc.remotePeerID)
-	if err != nil {
-		//TODO: consider retrying on error
-		logger.Errorf("[%v] could not create stream: [%v]", uc.clientIdentity.id, err)
-		return err
-	}
+	streamSuccess := make(chan network.Stream)
+	streamError := make(chan error)
 
-	return uc.send(stream, messageProto)
+	go func() {
+		stream, err := uc.streamFactory(ctx, uc.remotePeerID)
+		if err != nil {
+			streamError <- err
+		}
+		streamSuccess <- stream
+	}()
+
+	select {
+	case stream := <-streamSuccess:
+		messageProto, err := uc.messageProto(message)
+		if err != nil {
+			return err
+		}
+		return uc.send(stream, messageProto)
+	case err := <-streamError:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (uc *unicastChannel) send(stream network.Stream, message proto.Message) error {
@@ -85,7 +96,10 @@ func (uc *unicastChannel) send(stream network.Stream, message proto.Message) err
 
 	err := writeMsg(message)
 	if err != nil {
-		_ = stream.Reset()
+		resetErr := stream.Reset()
+		if resetErr != nil {
+			logger.Errorf("could not reset stream: [%v]", resetErr)
+		}
 		return err
 	}
 
@@ -158,31 +172,29 @@ func (uc *unicastChannel) removeHandler(handler *unicastMessageHandler) {
 		if h.channel == handler.channel {
 			uc.messageHandlers[i] = uc.messageHandlers[len(uc.messageHandlers)-1]
 			uc.messageHandlers = uc.messageHandlers[:len(uc.messageHandlers)-1]
+			break
 		}
 	}
 }
 
-func (uc *unicastChannel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) error {
+func (uc *unicastChannel) SetUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) {
 	tpe := unmarshaler().Type()
 
 	uc.unmarshalersMutex.Lock()
 	defer uc.unmarshalersMutex.Unlock()
 
-	if _, exists := uc.unmarshalersByType[tpe]; exists {
-		return fmt.Errorf("type %s already has an associated unmarshaler", tpe)
-	}
-
 	uc.unmarshalersByType[tpe] = unmarshaler
-	return nil
 }
 
 func (uc *unicastChannel) handleStream(stream network.Stream) {
 	if stream.Conn().RemotePeer() != uc.remotePeerID {
+		// A unicast channel is created for a specific remote peer.
+		// All streams incoming from other peers should be dropped.
 		return
 	}
 
 	go func() {
-		reader := protoio.NewDelimitedReader(stream, 1<<20)
+		reader := protoio.NewDelimitedReader(stream, readerMaxSize)
 
 		for {
 			messageProto := new(pb.NetworkMessage)
