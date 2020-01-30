@@ -1,6 +1,7 @@
 import React from 'react'
+import { formatDate, displayAmount } from '../../utils'
 
-const PendingUndelegationList = (props) => {
+const PendingUndelegationList = ({ pendingUndelegations }) => {
   return (
     <>
         <div className="flex flex-1">
@@ -8,21 +9,19 @@ const PendingUndelegationList = (props) => {
           <span className="text-label flex flex-1">AMOUNT</span>
         </div>
         <ul className="pending-undelegation-list flex flex-column flex-1">
-          <li className="pending-undelegation-item flex flex-row flex-1" >
-            <span className="text-big flex-2">January 12, 2020</span>
-            <span className="text-big flex-1">1,000 K</span>
-          </li>
-          <li className="pending-undelegation-item flex flex-row flex-1" >
-            <span className="text-big flex-2">January 10, 2020</span>
-            <span className="text-big flex-1">1,000 K</span>
-          </li>
-          <li className="pending-undelegation-item flex flex-row flex-1" >
-            <span className="text-big flex-2">January 9, 2020</span>
-            <span className="text-big flex-1">1,000 K</span>
-          </li>
+          {pendingUndelegations.map(renderUndelegationItem)}
         </ul>
     </>
   )
 }
+
+const PendingUndelegationItem = ({ amount, createdAt }) => (
+  <li className="pending-undelegation-item flex flex-row flex-1" >
+    <span className="text-big flex-2">{formatDate(createdAt)}</span>
+    <span className="text-big flex-1">{amount && `${displayAmount(amount)} K`}</span>
+  </li>
+)
+
+const renderUndelegationItem = (item) => <PendingUndelegationItem key={item.eventId} {...item}/>
 
 export default PendingUndelegationList
