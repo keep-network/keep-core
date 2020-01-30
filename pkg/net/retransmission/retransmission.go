@@ -144,3 +144,7 @@ func (nm *networkMessage) Fingerprint() string {
 func (nm *networkMessage) Retransmission() uint32 {
 	return nm.retransmission
 }
+
+func (nm *networkMessage) Seqno() uint64 {
+	return nm.original.Seqno()
+}

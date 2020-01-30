@@ -249,6 +249,10 @@ func (mnm *mockNetworkMessage) SenderPublicKey() []byte {
 	panic("not implemented")
 }
 
+func (mnm *mockNetworkMessage) Seqno() uint64 {
+	panic("not implemented")
+}
+
 func TestCalculateFingerprint(t *testing.T) {
 	tests := map[string]struct {
 		sender1                 string

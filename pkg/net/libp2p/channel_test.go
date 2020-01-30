@@ -229,3 +229,7 @@ func (mnm *mockNetMessage) Fingerprint() string {
 func (mnm *mockNetMessage) Retransmission() uint32 {
 	return 0
 }
+
+func (mnm *mockNetMessage) Seqno() uint64 {
+	return 0
+}

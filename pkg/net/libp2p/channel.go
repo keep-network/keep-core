@@ -262,6 +262,7 @@ func (c *channel) processContainerMessage(
 			unmarshaled,
 			string(message.Type),
 			key.Marshal(networkKey),
+			0, // TODO: assign value
 		),
 		fingerprint,
 		message.Retransmission,

@@ -193,6 +193,7 @@ func doSend(channel *localChannel, message *pb.NetworkMessage) error {
 			unmarshaled,
 			"local",
 			key.Marshal(channel.staticKey),
+			0,
 		),
 		fingerprint,
 		message.Retransmission,
