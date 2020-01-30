@@ -8,7 +8,7 @@ const FETCH_REQUEST_FAILURE = 'FETCH_REQUEST_FAILURE'
 
 const requestTimeDelay = 500 // 0.5s
 
-export const useFetchData = (serviceMethod, initialData) => {
+export const useFetchData = (serviceMethod, initialData, ...serviceMethodArgs) => {
   const web3Context = useContext(Web3Context)
   const [state, dispatch] = useReducer(dataFetchReducer, {
     isFetching: true,
@@ -20,7 +20,7 @@ export const useFetchData = (serviceMethod, initialData) => {
     let shouldSetState = true
 
     dispatch({ type: FETCH_REQUEST_START })
-    Promise.all([serviceMethod(web3Context), wait(requestTimeDelay)])
+    Promise.all([serviceMethod(web3Context, ...serviceMethodArgs), wait(requestTimeDelay)])
       .then(([data]) => {
         shouldSetState && dispatch({ type: FETCH_REQUEST_SUCCESS, payload: data })
       })
