@@ -59,7 +59,6 @@ func (uc *unicastChannel) Send(ctx context.Context, message net.TaggedMarshaler)
 
 	stream, err := uc.streamFactory(ctx, uc.remotePeerID)
 	if err != nil {
-		//TODO: consider retrying on error
 		logger.Errorf("[%v] could not create stream: [%v]", uc.clientIdentity.id, err)
 		return err
 	}
