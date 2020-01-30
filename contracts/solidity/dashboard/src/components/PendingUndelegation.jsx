@@ -1,10 +1,10 @@
 import React, { useEffect, useContext } from 'react'
 import PendingUndelegationList from './PendingUndelegationList'
-import { useFetchData } from '../../hooks/useFetchData'
-import { operatorService } from './service'
-import { formatDate, displayAmount } from '../../utils'
-import { LoadingOverlay } from '../Loadable'
-import { Web3Context } from '../WithWeb3Context'
+import { useFetchData } from '../hooks/useFetchData'
+import { operatorService } from '../services/token-staking.service'
+import { formatDate, displayAmount } from '../utils'
+import { LoadingOverlay } from './Loadable'
+import { Web3Context } from './WithWeb3Context'
 import moment from 'moment'
 
 const initialData = { pendinUndelegations: [] }

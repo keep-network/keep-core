@@ -1,5 +1,5 @@
 import React from 'react'
-import { formatDate, displayAmount } from '../../utils'
+import { formatDate, displayAmount } from '../utils'
 
 const PendingUndelegationList = ({ pendingUndelegations }) => {
   return (

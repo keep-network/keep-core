@@ -10,7 +10,7 @@ const SlashedTokensList = (props) => {
         </div>
         <ul className="slashed-tokens-list flex flex-column flex-1">
           <li className="flex flex-row flex-1" >
-            <div className="text-big flex-2">
+            <div className="details text-big flex-2">
               <span className="text-big">January 12, 2020</span>
               <p className="text-small text-grey">
                 Group 12305162340123 was selected to do work and not enough members participated.

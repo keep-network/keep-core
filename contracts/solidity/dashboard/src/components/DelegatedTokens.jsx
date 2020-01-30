@@ -1,11 +1,11 @@
 import React, { useEffect, useContext } from 'react'
-import AddressShortcut from '../AddressShortcut'
-import InlineForm from '../InlineForm'
-import { operatorService } from './service'
-import { useFetchData } from '../../hooks/useFetchData'
-import { LoadingOverlay } from '../Loadable'
-import { displayAmount } from '../../utils'
-import { Web3Context } from '../WithWeb3Context'
+import AddressShortcut from './AddressShortcut'
+import { operatorService } from '../services/token-staking.service'
+import { useFetchData } from '../hooks/useFetchData'
+import { LoadingOverlay } from './Loadable'
+import { displayAmount } from '../utils'
+import { Web3Context } from './WithWeb3Context'
+import UndelegateForm from './UndelegateForm'
 
 const DelegatedTokens = ({ latestUnstakeEvent }) => {
   const { utils } = useContext(Web3Context)
@@ -38,7 +38,7 @@ const DelegatedTokens = ({ latestUnstakeEvent }) => {
               </h6>
             </div>
           </div>
-          <InlineForm inputProps={{ placeholder: 'Amount' }} classNames="undelegation-form" />
+          <UndelegateForm />
         </div>
       </LoadingOverlay>
     </section>
