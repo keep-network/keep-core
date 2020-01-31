@@ -33,8 +33,10 @@ func NewMachine(
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
 func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
-	// Use an unbuffered channel to serialize message processing.
-	recvChan := make(chan net.Message)
+	// For the entire time of state transition (delay + initiate), messages
+	// are not handled. We use a small buffer to unblock producers and let
+	// them perform optional filtering/validation during that time.
+	recvChan := make(chan net.Message, 64)
 	handler := func(msg net.Message) {
 		recvChan <- msg
 	}

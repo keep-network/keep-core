@@ -14,8 +14,8 @@ import (
 const (
 	libp2pMessageSigning              = true
 	libp2pStrictSignatureVerification = true
-	libp2pPeerOutboundQueueSize       = 128
-	libp2pValidationQueueSize         = 128
+	libp2pPeerOutboundQueueSize       = 256
+	libp2pValidationQueueSize         = 4096
 )
 
 type channelManager struct {
@@ -103,6 +103,7 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		peerStore:            cm.peerStore,
 		pubsub:               cm.pubsub,
 		subscription:         sub,
+		incomingMessageQueue: make(chan *pubsub.Message, incomingMessageThrottle),
 		messageHandlers:      make([]*messageHandler, 0),
 		unmarshalersByType:   make(map[string]func() net.TaggedUnmarshaler),
 		retransmissionTicker: cm.retransmissionTicker,
