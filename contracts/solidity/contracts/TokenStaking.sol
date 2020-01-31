@@ -70,19 +70,15 @@ contract TokenStaking is StakeDelegatable {
 
         address payable magpie = address(uint160(_extraData.toAddress(0)));
         address operator = _extraData.toAddress(20);
-        require(operatorToOwner[operator] == address(0), "Operator address is already in use.");
+        require(operators[operator].owner == address(0), "Operator address is already in use.");
         address authorizer = _extraData.toAddress(40);
-
-        operatorToOwner[operator] = _from;
-        operatorToMagpie[operator] = magpie;
-        operatorToAuthorizer[operator] = authorizer;
-        ownerOperators[_from].push(operator);
 
         // Transfer tokens to this contract.
         token.transferFrom(_from, address(this), _value);
 
-        // Maintain a record of the stake amount by the sender.
-        stakeBalances[operator] = stakeBalances[operator].add(_value);
+        operators[operator] = Operator(_value, now, _from, magpie, authorizer);
+        ownerOperators[_from].push(operator);
+
         emit Staked(operator, _value);
     }
 
@@ -94,13 +90,13 @@ contract TokenStaking is StakeDelegatable {
      * @param _operator Address of the stake operator.
      */
     function initiateUnstake(uint256 _value, address _operator) public {
-        address owner = operatorToOwner[_operator];
+        address owner = operators[_operator].owner;
         require(
             msg.sender == _operator ||
             msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
-        require(_value <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
+        require(_value <= operators[_operator].amount, "Staker must have enough tokens to unstake.");
 
-        stakeBalances[_operator] = stakeBalances[_operator].sub(_value);
+        operators[_operator].amount = operators[_operator].amount.sub(_value);
         uint256 createdAt = now;
         withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), createdAt);
 
@@ -115,7 +111,7 @@ contract TokenStaking is StakeDelegatable {
      */
     function finishUnstake(address _operator) public {
         require(now >= withdrawals[_operator].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
-        address owner = operatorToOwner[_operator];
+        address owner = operators[_operator].owner;
 
         // No need to call approve since msg.sender will be this staking contract.
         token.safeTransfer(owner, withdrawals[_operator].amount);
@@ -124,8 +120,8 @@ contract TokenStaking is StakeDelegatable {
         delete withdrawals[_operator];
 
         // Release operator only when the stake is depleted
-        if (stakeBalances[_operator] <= 0) {
-            operatorToOwner[_operator] = address(0);
+        if (operators[_operator].amount <= 0) {
+            delete operators[_operator];
             ownerOperators[owner].removeAddress(_operator);
         }
 
@@ -157,7 +153,7 @@ contract TokenStaking is StakeDelegatable {
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
-            stakeBalances[operator] = stakeBalances[operator].sub(amount);
+            operators[operator].amount = operators[operator].amount.sub(amount);
         }
 
         token.burn(misbehavedOperators.length.mul(amount));
@@ -181,7 +177,7 @@ contract TokenStaking is StakeDelegatable {
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
-            stakeBalances[operator] = stakeBalances[operator].sub(amount);
+            operators[operator].amount = operators[operator].amount.sub(amount);
         }
 
         uint256 total = misbehavedOperators.length.mul(amount);
