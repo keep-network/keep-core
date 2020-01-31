@@ -654,7 +654,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
                 signingRequest.previousEntry,
                 signingRequest.serviceContract,
                 signingRequest.entryVerificationAndProfitFee,
-                0
+                signingRequest.callbackFee
             );
         }
     }
