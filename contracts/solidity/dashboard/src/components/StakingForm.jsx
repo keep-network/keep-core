@@ -67,7 +67,7 @@ class StakingForm extends Component {
           .send({ from: web3.yourAddress, gas: 150000 })
           .on('transactionHash', onTransactionHashCallback)
       } else if (action === 'undelegate') {
-        await web3.stakingContract.methods.undelegate(web3.utils.toBN(formatAmount(amount, 18)).toString(), web3.yourAddress)
+        await web3.stakingContract.methods.undelegate(web3.yourAddress)
           .send({ from: web3.yourAddress })
           .on('transactionHash', onTransactionHashCallback)
       }

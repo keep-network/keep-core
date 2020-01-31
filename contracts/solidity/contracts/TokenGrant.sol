@@ -322,7 +322,7 @@ contract TokenGrant {
             "Only operator or grantee can undelegate."
         );
 
-        TokenStaking(grantStakes[_operator].stakingContract).undelegate(grantStakes[_operator].amount, _operator);
+        TokenStaking(grantStakes[_operator].stakingContract).undelegate(_operator);
     }
 
     /**
