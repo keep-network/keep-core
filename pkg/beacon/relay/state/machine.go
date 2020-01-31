@@ -8,6 +8,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
+// For the entire time of state transition (delay + initiate), messages
+// are not handled. We use a small buffer to unblock producers and let
+// them perform optional filtering/validation during that time.
+const receiveBuffer = 64
+
 // Machine is a state machine that executes over states implemented from State
 // interface.
 type Machine struct {
@@ -33,8 +38,7 @@ func NewMachine(
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
 func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
-	// Use an unbuffered channel to serialize message processing.
-	recvChan := make(chan net.Message)
+	recvChan := make(chan net.Message, receiveBuffer)
 	handler := func(msg net.Message) {
 		recvChan <- msg
 	}
