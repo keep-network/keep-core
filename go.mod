@@ -20,7 +20,7 @@ require (
 	github.com/libp2p/go-libp2p-kad-dht v0.3.0
 	github.com/libp2p/go-libp2p-peerstore v0.1.4
 	github.com/libp2p/go-libp2p-pubsub v0.2.6-0.20200127182502-25c434f5f772
-    github.com/libp2p/go-libp2p-secio v0.2.1
+	github.com/libp2p/go-libp2p-secio v0.2.1
 	github.com/libp2p/go-yamux v1.2.4 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
 	github.com/multiformats/go-multiaddr v0.2.0
