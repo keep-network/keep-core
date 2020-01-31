@@ -217,7 +217,7 @@ func withNetwork(
 
 	// Wait peer connect themselves.
 	peerDiscoveryCompleted := false
-	for i := 0; i < 30; i++ {
+	for i := 0; i < 60; i++ {
 		if len(provider1.ConnectionManager().ConnectedPeers()) == 1 &&
 			len(provider2.ConnectionManager().ConnectedPeers()) == 1 {
 			peerDiscoveryCompleted = true
