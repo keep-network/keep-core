@@ -225,6 +225,7 @@ func (c *channel) incomingMessageWorker(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			return
 		case msg := <-c.incomingMessageQueue:
 			if err := c.processPubsubMessage(msg); err != nil {
 				logger.Error(err)
