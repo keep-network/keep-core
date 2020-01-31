@@ -11,7 +11,7 @@ import "./libraries/operator/DKGResultVerification.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
-    function executeCallback(uint256 requestId, uint256 entry) external returns (address surplusRecipient);
+    function executeCallback(uint256 requestId, uint256 entry) external returns (address payable surplusRecipient);
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
 }

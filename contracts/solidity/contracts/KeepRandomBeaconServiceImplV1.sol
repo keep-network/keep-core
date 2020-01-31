@@ -313,7 +313,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
      * @param entry The generated random number.
      * @return Address to receive callback surplus.
      */
-    function executeCallback(uint256 requestId, uint256 entry) public returns (address surplusRecipient) {
+    function executeCallback(uint256 requestId, uint256 entry) public returns (address payable surplusRecipient) {
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call relay entry."
