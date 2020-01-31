@@ -60,8 +60,22 @@ contract('TestTokenStake', function(accounts) {
     let account_one_ending_balance = await token.balanceOf.call(account_one);
     let account_one_operator_stake_balance = await stakingContract.balanceOf.call(account_one_operator);
 
-    assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(stakingAmount)), true, "Staking amount should be transfered from sender balance");
-    assert.equal(account_one_operator_stake_balance.eq(stakingAmount), true, "Staking amount should be added to the sender staking balance");
+    assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(stakingAmount)), true, "Staking amount should be transferred from owner balance");
+    assert.equal(account_one_operator_stake_balance.eq(stakingAmount), true, "Staking amount should be added to the operator balance");
+
+    // Cancel stake
+    await stakingContract.cancelStake(account_one_operator, {from: account_one});
+    assert.equal(account_one_starting_balance.eq(await token.balanceOf.call(account_one)), true, "Staking amount should be transferred back to owner");
+    assert.equal((await stakingContract.balanceOf.call(account_one_operator)).isZero(), true, "Staking amount should be removed from operator balance");
+
+    // Stake tokens using approveAndCall pattern
+    await token.approveAndCall(stakingContract.address, stakingAmount, '0x' + data.toString('hex'), {from: account_one});
+
+    // jump in time, full initialization period
+    await increaseTimeTo(await latestTime()+duration.days(2));
+
+    // Can not cancel stake
+    await expectThrow(stakingContract.cancelStake(account_one_operator, {from: account_one}));
 
     // Initiate unstake tokens as token owner
     await stakingContract.initiateUnstake(stakingAmount/2, account_one_operator, {from: account_one});
