@@ -266,6 +266,7 @@ func (uc *unicastChannel) processMessage(message *pb.NetworkMessage) error {
 		unmarshaled,
 		string(message.Type),
 		key.Marshal(networkKey),
+		uint64(0),
 	))
 
 	return err
