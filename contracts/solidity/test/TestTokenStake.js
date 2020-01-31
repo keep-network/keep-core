@@ -40,7 +40,7 @@ contract('TestTokenStake', function(accounts) {
 
   });
 
-  it("should stake and unstake tokens correctly", async function() {
+  it("should stake delegate and undelegate tokens correctly", async function() {
 
     let stakingAmount = web3.utils.toBN(10000000);
 
@@ -83,17 +83,17 @@ contract('TestTokenStake', function(accounts) {
     // Undelegate tokens as operator
     await stakingContract.undelegate(stakingAmount/2, account_one_operator, {from: account_one_operator});
 
-    // should not be able to finish unstake
-    await expectThrow(stakingContract.finishUnstake(account_one_operator));
+    // should not be able to recover stake
+    await expectThrow(stakingContract.recoverStake(account_one_operator));
 
     // jump in time, full undelegation period
     await increaseTimeTo(await latestTime()+duration.days(30));
 
-    // should be able to finish unstake
-    await stakingContract.finishUnstake(account_one_operator);
+    // should be able to recover stake
+    await stakingContract.recoverStake(account_one_operator);
 
-    // should fail cause there is no stake to unstake
-    await expectThrow(stakingContract.finishUnstake(account_one_operator));
+    // should fail cause there is no stake to recover
+    await expectThrow(stakingContract.recoverStake(account_one_operator));
 
     // check balances
     account_one_ending_balance = await token.balanceOf.call(account_one);

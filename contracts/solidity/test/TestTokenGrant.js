@@ -90,7 +90,7 @@ contract('TestTokenGrant', function(accounts) {
     let grant = await grantContract.getGrant(id);
     assert.equal(grant[0].eq(amount), true, "Grant should maintain a record of the granted amount.");
     assert.equal(grant[1].isZero(), true, "Grant should have 0 amount withdrawn initially.");
-    assert.equal(grant[2], false, "Grant should initially be unstaked.");
+    assert.equal(grant[2], false, "Grant should initially be undelegated.");
     assert.equal(grant[3], false, "Grant should not be marked as revoked initially.");
 
     let schedule = await grantContract.getGrantVestingSchedule(id);

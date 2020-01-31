@@ -8,8 +8,8 @@ import "./Registry.sol";
 /**
  * @title TokenStaking
  * @dev A token staking contract for a specified standard ERC20Burnable token.
- * A holder of the specified token can stake its tokens to this contract
- * and unstake after undelegation period is over.
+ * A holder of the specified token can stake delegate its tokens to this contract
+ * and recover the stake after undelegation period is over.
  */
 contract TokenStaking is StakeDelegatable {
 
@@ -17,7 +17,7 @@ contract TokenStaking is StakeDelegatable {
 
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 value, uint256 createdAt);
-    event FinishedUnstake(address operator);
+    event RecoveredStake(address operator);
 
     struct Withdrawal {
         uint256 amount;
@@ -111,10 +111,9 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @notice Undelegates staked tokens and returns withdrawal request ID.
-     * You will be able to call `finishUnstake()` with this ID and finish
-     * unstake once undelegation period is over.
-     * @param _value The amount to be unstaked.
+     * @notice Undelegates staked tokens. You will be able to recover your stake by calling
+     * `recoverStake()` with operator address once undelegation period is over.
+     * @param _value The amount to be undelegate.
      * @param _operator Address of the stake operator.
      */
     function undelegate(uint256 _value, address _operator) public {
@@ -122,7 +121,7 @@ contract TokenStaking is StakeDelegatable {
         require(
             msg.sender == _operator ||
             msg.sender == owner, "Only operator or the owner of the stake can undelegate.");
-        require(_value <= operators[_operator].amount, "Staker must have enough tokens to unstake.");
+        require(_value <= operators[_operator].amount, "Staker must have enough tokens to undelegate.");
 
         operators[_operator].amount = operators[_operator].amount.sub(_value);
         uint256 createdAt = now;
@@ -132,13 +131,12 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @notice Finishes unstake of the tokens of provided withdrawal request.
-     * You can only finish unstake once undelegation period is over for the request,
-     * otherwise the function will fail and remaining gas is returned.
+     * @notice Recovers staked tokens and transfers them back to the owner. Recovering
+     * tokens can only be performed when the operator is finished undelegating.
      * @param _operator Operator address.
      */
-    function finishUnstake(address _operator) public {
-        require(now >= withdrawals[_operator].createdAt.add(undelegationPeriod), "Can not finish unstake before undelegation period is over.");
+    function recoverStake(address _operator) public {
+        require(now >= withdrawals[_operator].createdAt.add(undelegationPeriod), "Can not recover stake before undelegation period is over.");
         address owner = operators[_operator].owner;
 
         // No need to call approve since msg.sender will be this staking contract.
@@ -153,7 +151,7 @@ contract TokenStaking is StakeDelegatable {
             ownerOperators[owner].removeAddress(_operator);
         }
 
-        emit FinishedUnstake(_operator);
+        emit RecoveredStake(_operator);
     }
 
     /**
