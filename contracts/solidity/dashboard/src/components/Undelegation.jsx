@@ -3,13 +3,13 @@ import { Web3Context } from './WithWeb3Context'
 import { SubmitButton } from './Button'
 import { useShowMessage, messageType } from './Message'
 
-const Withdrawal = ({ withdrawal }) => {
+const Undelegation = ({ undelegation }) => {
   const { defaultContract, yourAddress } = useContext(Web3Context)
   const showMessage = useShowMessage()
 
   const submit = async (onTransactionHashCallback) => {
     try {
-      await defaultContract.methods.recoverStake(withdrawal.id)
+      await defaultContract.methods.recoverStake(undelegation.id)
         .send({ from: yourAddress })
         .on('transactionHash', onTransactionHashCallback)
       showMessage({ title: 'Success', content: 'Recover stake transaction has been successfully completed' })
@@ -20,10 +20,10 @@ const Withdrawal = ({ withdrawal }) => {
 
   return (
     <tr>
-      <td>{withdrawal.amount}</td>
-      <td className="text-mute">{withdrawal.availableAt}</td>
+      <td>{undelegation.amount}</td>
+      <td className="text-mute">{undelegation.availableAt}</td>
       <td>
-        {withdrawal.available ?
+        {undelegation.available ?
           <SubmitButton
             className="btn btn-priamry btn-sm"
             onSubmitAction={submit}
@@ -37,4 +37,4 @@ const Withdrawal = ({ withdrawal }) => {
   )
 }
 
-export default Withdrawal
+export default Undelegation

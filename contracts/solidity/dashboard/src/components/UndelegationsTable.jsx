@@ -1,10 +1,10 @@
 import React, { Component } from 'react'
 import { Table } from 'react-bootstrap'
-import Withdrawal from './Withdrawal'
+import Undelegation from './Undelegation'
 
-class WithdrawalsTable extends Component {
+class UndelegationsTable extends Component {
   renderRow = (item, index) => {
-    return <Withdrawal key={index} withdrawal={item}/>
+    return <Undelegation key={index} undelegation={item}/>
   }
 
   render() {
@@ -25,4 +25,4 @@ class WithdrawalsTable extends Component {
   }
 }
 
-export default WithdrawalsTable
+export default UndelegationsTable

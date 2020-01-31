@@ -5,7 +5,7 @@ import moment from 'moment'
 import { displayAmount, formatAmount } from '../utils'
 import StakingForm from './StakingForm'
 import StakingTable from './StakingTable'
-import WithdrawalsTable from './WithdrawalsTable'
+import UndelegationsTable from './UndelegationsTable'
 import TableRow from './TableRow'
 import { colors } from '../colors'
 import withWeb3Context from './WithWeb3Context'
@@ -19,8 +19,8 @@ class OverviewTab extends React.Component {
     this.state = {
       operators: [],
       stakeBalance: 0,
-      withdrawals: [],
-      withdrawalsTotal: 0,
+      undelegations: [],
+      undelegationsTotal: 0,
       beneficiaryAddress: '',
       chartOptions: {
         legend: {
@@ -57,24 +57,24 @@ class OverviewTab extends React.Component {
       const { returnValues: { value, operator, createdAt } } = event
       const { web3: { utils, stakingContract } } = this.props
 
-      const withdrawalDelay = await stakingContract.methods.undelegationPeriod().call()
-      const availableAt = moment(createdAt * 1000).add(withdrawalDelay, 'seconds')
-      const withdrawal = {
+      const undelegationPeriod = await stakingContract.methods.undelegationPeriod().call()
+      const availableAt = moment(createdAt * 1000).add(undelegationPeriod, 'seconds')
+      const undelegation = {
         'id': operator,
         'amount': displayAmount(value, 18, 3),
         'available': availableAt.isSameOrBefore(moment()),
         'availableAt': availableAt.format('MMMM Do YYYY, h:mm:ss a'),
       }
-      const withdrawals = [...this.state.withdrawals, withdrawal]
-      const withdrawalsTotal = new utils.BN(this.state.withdrawalsTotal).add(utils.toBN(value))
+      const undelegations = [...this.state.undelegations, undelegation]
+      const undelegationsTotal = new utils.BN(this.state.undelegationsTotal).add(utils.toBN(value))
       const stakeBalance = this.state.stakeBalance.sub(utils.toBN(value))
       const operators = this.state.operators.filter(({ address }) => address !== operator)
 
       this.setState({
         stakeBalance,
         operators,
-        withdrawals,
-        withdrawalsTotal,
+        undelegations,
+        undelegationsTotal,
         shouldSubscribeToEvent: true,
       })
     }
@@ -103,28 +103,28 @@ class OverviewTab extends React.Component {
         }
       }
 
-      // Recover stake withdrawals
-      const withdrawalsByOperator = isOperator ? [yourAddress] : operatorsAddresses
+      // Pending undelegation
+      const undelegationsByOperator = isOperator ? [yourAddress] : operatorsAddresses
 
-      const withdrawalDelay = await stakingContract.methods.undelegationPeriod().call()
-      const withdrawals = []
-      let withdrawalsTotal = new utils.BN(0)
+      const undelegationPeriod = await stakingContract.methods.undelegationPeriod().call()
+      const undelegations = []
+      let undelegationsTotal = new utils.BN(0)
 
-      for (let i=0; i < withdrawalsByOperator.length; i++) {
-        const withdrawal = await stakingContract.methods.getWithdrawal(withdrawalsByOperator[i]).call()
-        if (withdrawal.amount > 0) {
-          withdrawalsTotal = withdrawalsTotal.add(new utils.BN(withdrawal.amount))
+      for (let i=0; i < undelegationsByOperator.length; i++) {
+        const undelegation = await stakingContract.methods.getUndelegation(undelegationsByOperator[i]).call()
+        if (undelegation.amount > 0) {
+          undelegationsTotal = undelegationsTotal.add(new utils.BN(undelegation.amount))
 
-          const availableAt = moment(withdrawal.createdAt * 1000).add(withdrawalDelay, 'seconds')
+          const availableAt = moment(undelegation.createdAt * 1000).add(undelegationPeriod, 'seconds')
           let available = false
           const now = moment()
           if (availableAt.isSameOrBefore(now)) {
             available = true
           }
 
-          withdrawals.push({
-            'id': withdrawalsByOperator[i],
-            'amount': displayAmount(withdrawal.amount, 18, 3),
+          undelegations.push({
+            'id': undelegationsByOperator[i],
+            'amount': displayAmount(undelegation.amount, 18, 3),
             'available': available,
             'availableAt': availableAt.format('MMMM Do YYYY, h:mm:ss a'),
           },
@@ -135,14 +135,14 @@ class OverviewTab extends React.Component {
       this.setState({
         operators,
         stakeBalance,
-        withdrawals,
-        withdrawalsTotal,
+        undelegations,
+        undelegationsTotal,
         beneficiaryAddress: await this.getBeneficiaryAddress(),
       })
     }
 
     getChartData = () => {
-      const { stakeBalance, withdrawalsTotal } = this.state
+      const { stakeBalance, undelegationsTotal } = this.state
       const { isOperator, tokenBalance, grantBalance } = this.props
       return isOperator ?
         {
@@ -151,7 +151,7 @@ class OverviewTab extends React.Component {
             'Pending recover stake',
           ],
           datasets: [{
-            data: [displayAmount(stakeBalance, 18, 3), displayAmount(withdrawalsTotal, 18, 3)],
+            data: [displayAmount(stakeBalance, 18, 3), displayAmount(undelegationsTotal, 18, 3)],
             backgroundColor: [
               colors.nandor,
               colors.turquoise,
@@ -166,7 +166,7 @@ class OverviewTab extends React.Component {
             'Token grants',
           ],
           datasets: [{
-            data: [displayAmount(tokenBalance, 18, 3), displayAmount(stakeBalance, 18, 3), displayAmount(withdrawalsTotal, 18, 3), displayAmount(grantBalance, 18, 3)],
+            data: [displayAmount(tokenBalance, 18, 3), displayAmount(stakeBalance, 18, 3), displayAmount(undelegationsTotal, 18, 3), displayAmount(grantBalance, 18, 3)],
             backgroundColor: [
               colors.nandor,
               colors.turquoise,
@@ -195,7 +195,7 @@ class OverviewTab extends React.Component {
     }
 
     render() {
-      const { operators, withdrawals, withdrawalsTotal, stakeBalance, beneficiaryAddress } = this.state
+      const { operators, undelegations,undelegationsTotal, stakeBalance, beneficiaryAddress } = this.state
       const { web3, isOperator, isOperatorOfStakedTokenGrant, tokenBalance, grantBalance, grantStakeBalance } = this.props
       return (
         <>
@@ -219,8 +219,8 @@ class OverviewTab extends React.Component {
                         <TableRow title="Staked">
                           { displayAmount(stakeBalance, 18, 3) }
                         </TableRow>
-                        <TableRow title="Pending recover stake">
-                          { displayAmount(withdrawalsTotal, 18, 3) }
+                        <TableRow title="Pending udelegation">
+                          { displayAmount(undelegationsTotal, 18, 3) }
                         </TableRow>
                       </tbody>
                     </Table>
@@ -250,8 +250,8 @@ class OverviewTab extends React.Component {
                         <TableRow title="Staked">
                           { displayAmount(stakeBalance, 18, 3) }
                         </TableRow>
-                        <TableRow title="Pending recover stake">
-                          { displayAmount(withdrawalsTotal, 18, 3) }
+                        <TableRow title="Pending undelegation">
+                          { displayAmount(undelegationsTotal, 18, 3) }
                         </TableRow>
                         <TableRow title="Token Grants">
                           { displayAmount(grantBalance, 18, 3) }
@@ -272,8 +272,8 @@ class OverviewTab extends React.Component {
                   </Col>
                 }
                 <Col sm={12}>
-                  <h4>Pending recover stake</h4>
-                  <WithdrawalsTable data={withdrawals}/>
+                  <h4>Pending undelegation</h4>
+                  <UndelegationsTable data={undelegations}/>
                 </Col>
               </Row>
         </>
