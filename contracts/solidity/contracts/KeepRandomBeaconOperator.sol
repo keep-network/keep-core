@@ -11,6 +11,7 @@ import "./libraries/operator/DKGResultVerification.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
+    function executeCallback(uint256 requestId, uint256 entry) external returns (address surplusRecipient);
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
 }
@@ -118,6 +119,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     struct SigningRequest {
         uint256 relayRequestId;
         uint256 entryVerificationAndProfitFee;
+        uint256 callbackFee;
         uint256 groupIndex;
         bytes previousEntry;
         address serviceContract;
@@ -431,18 +433,21 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 requestId,
         bytes memory previousEntry
     ) public payable onlyServiceContract {
+        uint256 entryVerificationAndProfitFee = groupProfitFee().add(entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate)));
         require(
-            msg.value >= groupProfitFee().add(entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate))),
+            msg.value >= entryVerificationAndProfitFee,
             "Insufficient new entry fee"
         );
-        signRelayEntry(requestId, previousEntry, msg.sender, msg.value);
+        uint256 callbackFee = msg.value.sub(entryVerificationAndProfitFee);
+        signRelayEntry(requestId, previousEntry, msg.sender, msg.value, callbackFee);
     }
 
     function signRelayEntry(
         uint256 requestId,
         bytes memory previousEntry,
         address serviceContract,
-        uint256 entryVerificationAndProfitFee
+        uint256 entryVerificationAndProfitFee,
+        uint256 callbackFee
     ) internal {
         require(!isEntryInProgress() || hasEntryTimedOut(), "Beacon is busy");
 
@@ -452,6 +457,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         signingRequest = SigningRequest(
             requestId,
             entryVerificationAndProfitFee,
+            callbackFee,
             groupIndex,
             previousEntry,
             serviceContract
@@ -489,6 +495,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             msg.sender
         );
 
+        if (signingRequest.callbackFee > 0) {
+            executeCallback(signingRequest, uint256(keccak256(_groupSignature)));
+        }
+
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
@@ -500,6 +510,54 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         }
 
         currentEntryStartBlock = 0;
+    }
+
+    /**
+     * @dev Executes customer specified callback for the relay entry request.
+     * @param signingRequest Request data tracked internally by this contract.
+     * @param entry The generated random number.
+     */
+    function executeCallback(SigningRequest memory signingRequest, uint256 entry) internal {
+        // Make sure not to spend more than what was received from the service contract for the callback
+        uint256 gasLimit = signingRequest.callbackFee.div(priceFeedEstimate);
+
+        uint256 gasBeforeCallback = gasleft();
+        address surplusRecipient = ServiceContract(signingRequest.serviceContract).executeCallback.gas(gasLimit)(
+            signingRequest.relayRequestId,
+            entry
+        );
+
+        uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 gas (ethereum transaction minimum gas)
+
+        uint256 gasPrice = priceFeedEstimate;
+        // We need to check if tx.gasprice is non-zero as a workaround to a bug
+        // in go-ethereum:
+        // https://github.com/ethereum/go-ethereum/pull/20189
+        if (tx.gasprice > 0 && tx.gasprice < priceFeedEstimate) {
+            gasPrice = tx.gasprice;
+        }
+
+        // Obtain the actual callback gas expenditure and refund the surplus.
+        uint256 callbackSurplus = 0;
+        uint256 callbackFee = gasSpent.mul(gasPrice);
+
+        bool success; // Store status of external contract call.
+        // If we spent less on the callback than the customer transferred for the
+        // callback execution, we need to reimburse the difference.
+        if (callbackFee < signingRequest.callbackFee) {
+            callbackSurplus = signingRequest.callbackFee.sub(callbackFee);
+            // Reimburse submitter with his actual callback cost.
+            (success, ) = msg.sender.call.value(callbackFee)("");
+            require(success, "Failed reimburse actual callback cost");
+
+            // Return callback surplus to the requestor.
+            (success, ) = surplusRecipient.call.value(callbackSurplus)("");
+            require(success, "Failed send callback surplus");
+        } else {
+            // Reimburse submitter with the callback payment sent by the requestor.
+            (success, ) = msg.sender.call.value(signingRequest.callbackFee)("");
+            require(success, "Failed reimburse callback payment");
+        }
     }
 
     /**
@@ -602,7 +660,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
                 signingRequest.relayRequestId,
                 signingRequest.previousEntry,
                 signingRequest.serviceContract,
-                signingRequest.entryVerificationAndProfitFee
+                signingRequest.entryVerificationAndProfitFee,
+                0
             );
         }
     }

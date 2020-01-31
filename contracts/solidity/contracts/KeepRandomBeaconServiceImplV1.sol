@@ -261,7 +261,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         uint256 requestId = _requestCounter;
 
         operatorContract.sign.value(
-            selectedOperatorContractFee
+            selectedOperatorContractFee + callbackFee
         )(requestId, _previousEntry);
 
         // If selected operator contract is cheaper than expected return the
@@ -304,11 +304,6 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         uint256 entryAsNumber = uint256(keccak256(entry));
         emit RelayEntryGenerated(requestId, entryAsNumber);
 
-        if (_callbacks[requestId].callbackContract != address(0)) {
-            executeEntryCreatedCallback(requestId, entryAsNumber, submitter);
-            delete _callbacks[requestId];
-        }
-
         createGroupIfApplicable(entryAsNumber, submitter);
     }
 
@@ -316,47 +311,20 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
      * @dev Executes customer specified callback for the relay entry request.
      * @param requestId Request id tracked internally by this contract.
      * @param entry The generated random number.
-     * @param submitter Relay entry submitter.
+     * @return Address to receive callback surplus.
      */
-    function executeEntryCreatedCallback(uint256 requestId, uint256 entry, address payable submitter) internal {
+    function executeCallback(uint256 requestId, uint256 entry) public returns (address surplusRecipient) {
+        require(
+            _operatorContracts.contains(msg.sender),
+            "Only authorized operator contract can call relay entry."
+        );
+
         bool success; // Store status of external contract call.
-        bytes memory data; // Store result data of external contract call.
+        (success, ) = _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
+        require(success, "Failed execute callback");
 
-        uint256 gasBeforeCallback = gasleft();
-        (success, data) = _callbacks[requestId].callbackContract.call.gas(
-            _callbacks[requestId].callbackGas
-        )(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
-        uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 gas (ethereum transaction minimum gas)
-
-        uint256 gasPrice = _priceFeedEstimate;
-        // We need to check if tx.gasprice is non-zero as a workaround to a bug
-        // in go-ethereum:
-        // https://github.com/ethereum/go-ethereum/pull/20189
-        if (tx.gasprice > 0 && tx.gasprice < _priceFeedEstimate) {
-            gasPrice = tx.gasprice;
-        }
-
-        // Obtain the actual callback gas expenditure and refund the surplus.
-        uint256 callbackSurplus = 0;
-        uint256 callbackFee = gasSpent.mul(gasPrice);
-
-        // If we spent less on the callback than the customer transferred for the
-        // callback execution, we need to reimburse the difference.
-        if (callbackFee < _callbacks[requestId].callbackFee) {
-            callbackSurplus = _callbacks[requestId].callbackFee.sub(callbackFee);
-            // Reimburse submitter with his actual callback cost.
-            (success, ) = submitter.call.value(callbackFee)("");
-            require(success, "Failed reimburse actual callback cost");
-
-            // Return callback surplus to the requestor.
-            (success, ) = _callbacks[requestId].surplusRecipient.call.value(callbackSurplus)("");
-            require(success, "Failed send callback surplus");
-
-        } else {
-            // Reimburse submitter with the callback payment sent by the requestor.
-            (success, ) = submitter.call.value(_callbacks[requestId].callbackFee)("");
-            require(success, "Failed reimburse callback payment");
-        }
+        surplusRecipient = _callbacks[requestId].surplusRecipient;
+        delete _callbacks[requestId];
     }
 
     /**
