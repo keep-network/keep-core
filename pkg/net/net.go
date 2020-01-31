@@ -19,9 +19,12 @@ type TransportIdentifier interface {
 // layer. It also carries an unmarshaled payload.
 type Message interface {
 	TransportSenderID() TransportIdentifier
-	Payload() interface{}
-	Type() string
 	SenderPublicKey() []byte
+
+	Payload() interface{}
+
+	Type() string
+	Seqno() uint64
 }
 
 // TaggedMarshaler is an interface that includes the proto.Marshaler interface,
