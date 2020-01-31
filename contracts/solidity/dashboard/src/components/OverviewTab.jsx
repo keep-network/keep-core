@@ -12,7 +12,7 @@ import withWeb3Context from './WithWeb3Context'
 import { withContractsDataContext } from './ContractsDataContextProvider'
 
 class OverviewTab extends React.Component {
-  initiatedUnstakeEvent = null
+  undelegatedEvent = null
 
   constructor(props) {
     super(props)
@@ -31,8 +31,8 @@ class OverviewTab extends React.Component {
   }
 
   componentWillUnmount() {
-    if (this.initiatedUnstakeEvent && typeof this.initiatedUnstakeEvent.unsubscribe === 'function') {
-      this.initiatedUnstakeEvent.unsubscribe()
+    if (this.undelegatedEvent && typeof this.undelegatedEvent.unsubscribe === 'function') {
+      this.undelegatedEvent.unsubscribe()
     }
   }
 
@@ -50,7 +50,7 @@ class OverviewTab extends React.Component {
     subscribeToEvent = () => {
       const { web3EventProvider: { eventStakingContract } } = this.props
       this.setState({ shouldSubscribeToEvent: false })
-      this.initiatedUnstakeEvent = eventStakingContract.events.InitiatedUnstake(this.subscribeEvent)
+      this.undelegatedEvent = eventStakingContract.events.Undelegated(this.subscribeEvent)
     }
 
     subscribeEvent = async (error, event) => {
