@@ -3,9 +3,14 @@
     .pending-undelegation {
         &-summary {
             display: flex;
+            flex-direction: column;
             margin-bottom: 1rem;
             padding-bottom: 2rem;
             border-bottom: 0.25px solid @darker-grey;
+
+            div {
+                margin-bottom: 1rem;
+            }
         }
         &-list {
             padding-left: 0;
@@ -13,6 +18,44 @@
 
         &-item {
             margin-bottom: .8rem;
+        }
+    
+        @media screen and (min-width: 1000px) {
+            &-summary {
+                flex-direction: row;
+            }
+        }
+    }
+}
+
+#delegated-tokens {
+    > div:first-of-type {
+        flex-direction: column;
+    }
+
+    .inline-form {
+        &.undelegation-form {
+            margin-bottom: .8rem;
+        }
+    }
+
+    @media screen and (min-width: 1000px) {
+        > div:first-of-type {
+            flex-direction: row;
+        }
+    }
+
+    @media screen and (min-width: 1250px) and (max-width: 1350px) {
+        .inline-form {
+            &.undelegation-form {
+                flex-direction: column;
+                input {
+                    width: 100%;
+                    padding-left: 1rem;
+                    margin-bottom: 2rem;
+                    line-height: 3.5rem;
+                }
+            }
         }
     }
 }
