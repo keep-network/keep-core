@@ -103,7 +103,7 @@ class OverviewTab extends React.Component {
         }
       }
 
-      // Unstake withdrawals
+      // Recover stake withdrawals
       const withdrawalsByOperator = isOperator ? [yourAddress] : operatorsAddresses
 
       const withdrawalDelay = await stakingContract.methods.undelegationPeriod().call()
@@ -148,7 +148,7 @@ class OverviewTab extends React.Component {
         {
           labels: [
             'Delegated stake',
-            'Pending unstake',
+            'Pending recover stake',
           ],
           datasets: [{
             data: [displayAmount(stakeBalance, 18, 3), displayAmount(withdrawalsTotal, 18, 3)],
@@ -162,7 +162,7 @@ class OverviewTab extends React.Component {
           labels: [
             'Tokens',
             'Delegated stake',
-            'Pending unstake',
+            'Pending recover stake',
             'Token grants',
           ],
           datasets: [{
@@ -219,17 +219,17 @@ class OverviewTab extends React.Component {
                         <TableRow title="Staked">
                           { displayAmount(stakeBalance, 18, 3) }
                         </TableRow>
-                        <TableRow title="Pending unstake">
+                        <TableRow title="Pending recover stake">
                           { displayAmount(withdrawalsTotal, 18, 3) }
                         </TableRow>
                       </tbody>
                     </Table>
                     {!isOperatorOfStakedTokenGrant
-                      ? <StakingForm btnText="Unstake" action="unstake" />
+                      ? <StakingForm btnText="Undelegate" action="undelegate" />
                       :
                       <div>
-                        <StakingForm btnText="Unstake" action="unstake" />
-                        <small>You can only unstake full amount. Partial unstake amounts are not yet supported.</small>
+                        <StakingForm btnText="Undelegate" action="undelegate" />
+                        <small>You can only undelegate full amount. Partial undelegate amounts are not yet supported.</small>
                       </div>
                     }
                   </Col>
@@ -250,7 +250,7 @@ class OverviewTab extends React.Component {
                         <TableRow title="Staked">
                           { displayAmount(stakeBalance, 18, 3) }
                         </TableRow>
-                        <TableRow title="Pending unstake">
+                        <TableRow title="Pending recover stake">
                           { displayAmount(withdrawalsTotal, 18, 3) }
                         </TableRow>
                         <TableRow title="Token Grants">
@@ -272,7 +272,7 @@ class OverviewTab extends React.Component {
                   </Col>
                 }
                 <Col sm={12}>
-                  <h4>Pending unstake</h4>
+                  <h4>Pending recover stake</h4>
                   <WithdrawalsTable data={withdrawals}/>
                 </Col>
               </Row>

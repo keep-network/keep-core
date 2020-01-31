@@ -66,7 +66,7 @@ class StakingForm extends Component {
           .approveAndCall(stakingContractAddress, web3.utils.toBN(formatAmount(amount, 18)).toString(), delegationData)
           .send({ from: web3.yourAddress, gas: 150000 })
           .on('transactionHash', onTransactionHashCallback)
-      } else if (action === 'unstake') {
+      } else if (action === 'undelegate') {
         await web3.stakingContract.methods.undelegate(web3.utils.toBN(formatAmount(amount, 18)).toString(), web3.yourAddress)
           .send({ from: web3.yourAddress })
           .on('transactionHash', onTransactionHashCallback)

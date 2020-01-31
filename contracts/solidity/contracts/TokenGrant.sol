@@ -18,7 +18,7 @@ interface tokenSender {
 /**
  * @title TokenGrant
  * @dev A token grant contract for a specified standard ERC20Burnable token.
- * Has additional functionality to stake/unstake token grants.
+ * Has additional functionality to stake delegate/undelegate token grants.
  * Tokens are granted to the grantee via vesting scheme and can be
  * withdrawn gradually based on the vesting schedule cliff and vesting duration.
  * Optionally grant can be revoked by the token grant manager.
@@ -326,14 +326,14 @@ contract TokenGrant {
     }
 
     /**
-     * @notice Finish unstake of the token grant.
+     * @notice Recover stake of the token grant.
      * @param _operator Operator of the stake.
      */
-    function finishUnstake(address _operator) public {
+    function recoverStake(address _operator) public {
         uint256 grantId = grantStakes[_operator].grantId;
         grants[grantId].staked = grants[grantId].staked.sub(grantStakes[_operator].amount);
 
-        TokenStaking(grantStakes[_operator].stakingContract).finishUnstake(_operator);
+        TokenStaking(grantStakes[_operator].stakingContract).recoverStake(_operator);
         delete grantStakes[_operator];
     }
 }

@@ -9,12 +9,12 @@ const Withdrawal = ({ withdrawal }) => {
 
   const submit = async (onTransactionHashCallback) => {
     try {
-      await defaultContract.methods.finishUnstake(withdrawal.id)
+      await defaultContract.methods.recoverStake(withdrawal.id)
         .send({ from: yourAddress })
         .on('transactionHash', onTransactionHashCallback)
-      showMessage({ title: 'Success', content: 'Finish unstake transaction has been successfully completed' })
+      showMessage({ title: 'Success', content: 'Recover stake transaction has been successfully completed' })
     } catch (error) {
-      showMessage({ type: messageType.ERROR, title: 'Error', content: 'Finish unstake action has been failed' })
+      showMessage({ type: messageType.ERROR, title: 'Error', content: 'Recover stake action has been failed' })
     }
   }
 
@@ -27,9 +27,9 @@ const Withdrawal = ({ withdrawal }) => {
           <SubmitButton
             className="btn btn-priamry btn-sm"
             onSubmitAction={submit}
-            pendingMessageTitle='Finish unstake transaction is pending...'
+            pendingMessageTitle='Recover stake transaction is pending...'
           >
-          Finish Unstake
+          Recover Stake
           </SubmitButton> : 'N/A'
         }
       </td>
