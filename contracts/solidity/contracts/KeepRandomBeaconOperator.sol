@@ -539,15 +539,15 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         // Obtain the actual callback gas expenditure and refund the surplus.
         uint256 callbackSurplus = 0;
-        uint256 callbackFee = gasSpent.mul(gasPrice);
+        uint256 actualCallbackFee = gasSpent.mul(gasPrice);
 
         bool success; // Store status of external contract call.
         // If we spent less on the callback than the customer transferred for the
         // callback execution, we need to reimburse the difference.
-        if (callbackFee < signingRequest.callbackFee) {
-            callbackSurplus = signingRequest.callbackFee.sub(callbackFee);
+        if (actualCallbackFee < signingRequest.callbackFee) {
+            callbackSurplus = signingRequest.callbackFee.sub(actualCallbackFee);
             // Reimburse submitter with his actual callback cost.
-            (success, ) = msg.sender.call.value(callbackFee)("");
+            (success, ) = msg.sender.call.value(actualCallbackFee)("");
             require(success, "Failed reimburse actual callback cost");
 
             // Return callback surplus to the requestor.
