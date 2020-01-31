@@ -264,7 +264,7 @@ func discoverAndListen(
 		return nil, err
 	}
 
-	transport, err := newAuthenticatedTransport(
+	transport, err := newEncryptedAuthenticatedTransport(
 		identity.privKey,
 		stakeMonitor,
 	)
