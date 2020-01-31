@@ -74,6 +74,8 @@ func (cm *channelManager) getChannel(name string) (*channel, error) {
 	if !exists {
 		// Ensure we update our cache of known channels
 		cm.channelsMutex.Lock()
+		defer cm.channelsMutex.Unlock()
+
 		channel, exists = cm.channels[name]
 		if exists {
 			return channel, nil
@@ -85,7 +87,6 @@ func (cm *channelManager) getChannel(name string) (*channel, error) {
 		}
 
 		cm.channels[name] = channel
-		cm.channelsMutex.Unlock()
 	}
 
 	return channel, nil
