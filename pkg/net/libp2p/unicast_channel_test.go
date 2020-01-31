@@ -3,7 +3,6 @@ package libp2p
 import (
 	"context"
 	"math/big"
-	"os"
 	"testing"
 	"time"
 
@@ -16,17 +15,13 @@ import (
 )
 
 func TestCreateUnicastChannel(t *testing.T) {
-	skipCI(t)
-
 	ctx := context.Background()
 
 	withNetwork(ctx, t, func(
 		identity1 *identity,
 		identity2 *identity,
-		identity3 *identity,
 		provider1 net.Provider,
 		provider2 net.Provider,
-		provider3 net.Provider,
 	) {
 		_, err := provider1.UnicastChannelWith(identity2.id)
 		if err != nil {
@@ -40,21 +35,14 @@ func TestCreateUnicastChannel(t *testing.T) {
 	})
 }
 
-// Checks if two direct peers can exchange messages through an unicast channel.
-// In this scenario, peer 2 has peer's 1 address in their config and open
-// a direct connection during their cyclic `core bootstrap` round.
-func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
-	skipCI(t)
-
+func TestSendUnicastChannel(t *testing.T) {
 	ctx := context.Background()
 
 	withNetwork(ctx, t, func(
 		identity1 *identity,
 		identity2 *identity,
-		identity3 *identity,
 		provider1 net.Provider,
 		provider2 net.Provider,
-		provider3 net.Provider,
 	) {
 		// Channel instance of peer 1.
 		channel1, err := provider1.UnicastChannelWith(identity2.id)
@@ -124,69 +112,6 @@ func TestSendUnicastChannel_MessagesBetweenDirectPeers(t *testing.T) {
 	})
 }
 
-// Checks if two discovered peers can exchange messages through an unicast channel.
-// In this scenario, peers 1 and 3 discover themselves by performing a query to the
-// intermediary peer 2, during their cyclic `DHT bootstrap` rounds. As a result
-// a direct connection between peers 1 and 3 should be opened.
-func TestSendUnicastChannel_MessagesBetweenDiscoveredPeers(t *testing.T) {
-	skipCI(t)
-
-	ctx := context.Background()
-
-	withNetwork(ctx, t, func(
-		identity1 *identity,
-		identity2 *identity,
-		identity3 *identity,
-		provider1 net.Provider,
-		provider2 net.Provider,
-		provider3 net.Provider,
-	) {
-		// Channel instance of peer 1.
-		channel1, err := provider1.UnicastChannelWith(identity3.id)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		// Channel instance of peer 3.
-		channel3, err := provider3.UnicastChannelWith(identity1.id)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		channel3.SetUnmarshaler(
-			func() net.TaggedUnmarshaler { return &testMessage{} },
-		)
-
-		// Register handler for channel 3.
-		channel3Receiver := newMessageReceiver("channel3Receiver")
-		channel3.Recv(ctx, channel3Receiver.receive)
-
-		// Prepare and send messages to channel 1.
-		messagesToChannel1 := []testMessage{
-			{Sender: identity1, Recipient: identity2, Payload: "one"},
-			{Sender: identity1, Recipient: identity2, Payload: "two"},
-		}
-		go func() {
-			for _, message := range messagesToChannel1 {
-				if err := channel1.Send(&message); err != nil {
-					t.Fatal(err)
-				}
-			}
-		}()
-
-		// Wait a bit, messages must be sent and received.
-		time.Sleep(2 * time.Second)
-
-		assertReceivedMessages(t, channel3Receiver, messagesToChannel1)
-	})
-}
-
-func skipCI(t *testing.T) {
-	if os.Getenv("CI") == "on" {
-		t.Skip("skip test on CI")
-	}
-}
-
 func assertReceivedMessages(
 	t *testing.T,
 	receiver *messageReceiver,
@@ -220,21 +145,14 @@ func assertReceivedMessages(
 	}
 }
 
-// Builds a network consisting of three peers. At the beginning:
-// - Peer 1 waits for incoming connections passively
-// - Peer 2 tries to connect to peer 1
-// - Peer 3 tries to connect to peer 2
-// Eventually, all peers should be connected together due to libp2p peer discovery.
 func withNetwork(
 	ctx context.Context,
 	t *testing.T,
 	testFn func(
 		identity1 *identity,
 		identity2 *identity,
-		identity3 *identity,
 		provider1 net.Provider,
 		provider2 net.Provider,
-		provider3 net.Provider,
 	),
 ) {
 	privKey1, _, err := key.GenerateStaticNetworkKey()
@@ -258,21 +176,6 @@ func withNetwork(
 	}
 
 	identity2, err := createIdentity(privKey2)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	multiaddr2, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/8082")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	privKey3, _, err := key.GenerateStaticNetworkKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	identity3, err := createIdentity(privKey3)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -310,30 +213,11 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	provider3, err := Connect(
-		ctx,
-		Config{
-			Peers: []string{
-				multiaddressWithIdentity(
-					multiaddr2,
-					identity2.id,
-				)},
-			Port: 8083,
-		},
-		privKey3,
-		stakeMonitor,
-		retransmission.NewTicker(make(chan uint64)),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Wait peer discovery end for one minute.
+	// Wait peer connect themselves.
 	peerDiscoveryCompleted := false
-	for i := 0; i < 60; i++ {
-		if len(provider1.Peers()) == 2 &&
-			len(provider2.Peers()) == 2 &&
-			len(provider3.Peers()) == 2 {
+	for i := 0; i < 30; i++ {
+		if len(provider1.ConnectionManager().ConnectedPeers()) == 1 &&
+			len(provider2.ConnectionManager().ConnectedPeers()) == 1 {
 			peerDiscoveryCompleted = true
 			break
 		}
@@ -341,16 +225,14 @@ func withNetwork(
 	}
 
 	if !peerDiscoveryCompleted {
-		t.Fatal("peer discovery timeout")
+		t.Fatal("peer connection timeout")
 	}
 
 	testFn(
 		identity1,
 		identity2,
-		identity3,
 		provider1,
 		provider2,
-		provider3,
 	)
 }
 
