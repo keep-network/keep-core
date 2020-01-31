@@ -527,7 +527,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             entry
         );
 
-        uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 gas (ethereum transaction minimum gas)
+        uint256 gasSpent = gasBeforeCallback.sub(gasleft());
         uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
 
         // Obtain the actual callback gas expenditure and refund the surplus.
