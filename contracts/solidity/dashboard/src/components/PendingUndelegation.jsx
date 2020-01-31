@@ -43,7 +43,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
       <section id="pending-undelegation" className="tile">
         <h5>Pending Undelegation</h5>
         <div className="flex pending-undelegation-summary">
-          <h2 className="balance flex flex-1">{pendingUnstakeBalance && `${displayAmount(pendingUnstakeBalance)} K`}</h2>
+          <h2 className="balance flex flex-2">{pendingUnstakeBalance && `${displayAmount(pendingUnstakeBalance)} K`}</h2>
           <div className="flex flex-1 flex-column">
             <span className="text-label">UNDELEGATED ON</span>
             <span className="text-big">{formatDate(undelegatedOn)}</span>
