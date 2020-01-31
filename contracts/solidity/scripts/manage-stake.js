@@ -97,12 +97,10 @@ module.exports = async function() {
     }
 
     async function undelegate() {
-        const amountToUndelegate = process.argv[6];
-
-        console.log(`Undelegate stake of ${amountToUndelegate} KEEP from operator ${operator}`);  
+        console.log(`Undelegate stake from operator ${operator}`);
 
         try {          
-          await tokenStaking.undelegate(amountToUndelegate, operator);
+          await tokenStaking.undelegate(operator);
         } catch (err) {
             console.log(err);
         }

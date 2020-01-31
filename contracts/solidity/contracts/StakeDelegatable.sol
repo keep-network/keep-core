@@ -28,6 +28,7 @@ contract StakeDelegatable {
     struct Operator {
         uint256 amount;
         uint256 createdAt;
+        uint256 undelegatedAt;
         address owner;
         address payable beneficiary;
         address authorizer;

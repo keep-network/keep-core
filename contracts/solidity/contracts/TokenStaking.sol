@@ -16,21 +16,14 @@ contract TokenStaking is StakeDelegatable {
     using UintArrayUtils for uint256[];
 
     event Staked(address indexed from, uint256 value);
-    event Undelegated(address indexed operator, uint256 value, uint256 createdAt);
+    event Undelegated(address indexed operator, uint256 undelegatedAt);
     event RecoveredStake(address operator);
-
-    struct Withdrawal {
-        uint256 amount;
-        uint256 createdAt;
-    }
 
     // Registry contract with a list of approved operator contracts and upgraders.
     Registry public registry;
 
     // Authorized operator contracts.
     mapping(address => mapping (address => bool)) internal authorizations;
-
-    mapping(address => Withdrawal) public withdrawals;
 
     modifier onlyApprovedOperatorContract(address operatorContract) {
         require(
@@ -81,7 +74,7 @@ contract TokenStaking is StakeDelegatable {
         // Transfer tokens to this contract.
         token.transferFrom(_from, address(this), _value);
 
-        operators[operator] = Operator(_value, now, _from, magpie, authorizer);
+        operators[operator] = Operator(_value, now, 0, _from, magpie, authorizer);
         ownerOperators[_from].push(operator);
 
         emit Staked(operator, _value);
@@ -113,21 +106,16 @@ contract TokenStaking is StakeDelegatable {
     /**
      * @notice Undelegates staked tokens. You will be able to recover your stake by calling
      * `recoverStake()` with operator address once undelegation period is over.
-     * @param _value The amount to be undelegate.
      * @param _operator Address of the stake operator.
      */
-    function undelegate(uint256 _value, address _operator) public {
+    function undelegate(address _operator) public {
         address owner = operators[_operator].owner;
         require(
             msg.sender == _operator ||
-            msg.sender == owner, "Only operator or the owner of the stake can undelegate.");
-        require(_value <= operators[_operator].amount, "Staker must have enough tokens to undelegate.");
-
-        operators[_operator].amount = operators[_operator].amount.sub(_value);
-        uint256 createdAt = now;
-        withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), createdAt);
-
-        emit Undelegated(_operator, _value, createdAt);
+            msg.sender == owner, "Only operator or the owner of the stake can undelegate."
+        );
+        operators[_operator].undelegatedAt = now;
+        emit Undelegated(_operator, now);
     }
 
     /**
@@ -136,35 +124,25 @@ contract TokenStaking is StakeDelegatable {
      * @param _operator Operator address.
      */
     function recoverStake(address _operator) public {
-        require(now >= withdrawals[_operator].createdAt.add(undelegationPeriod), "Can not recover stake before undelegation period is over.");
+        require(now >= operators[_operator].undelegatedAt.add(undelegationPeriod), "Can not recover stake before undelegation period is over.");
         address owner = operators[_operator].owner;
+        uint256 amount = operators[_operator].amount;
+        delete operators[_operator];
 
-        // No need to call approve since msg.sender will be this staking contract.
-        token.safeTransfer(owner, withdrawals[_operator].amount);
-
-        // Cleanup withdrawal record.
-        delete withdrawals[_operator];
-
-        // Release operator only when the stake is depleted
-        if (operators[_operator].amount <= 0) {
-            delete operators[_operator];
-            ownerOperators[owner].removeAddress(_operator);
-        }
-
+        token.safeTransfer(owner, amount);
         emit RecoveredStake(_operator);
     }
 
     /**
-     * @dev Gets withdrawal request by Operator.
-     * @param _operator address of withdrawal request.
-     * @return amount The amount the given operator will be able to withdraw
+     * @dev Gets undelegate request by Operator.
+     * @param _operator Operator address.
+     * @return amount The amount the given operator will be able to recover
      * once undelegation period has passed.
-     * @return createdAt The initiation time of the withdrawal request for the
-     * given operator, used to determine when the withdrawal
-     * delay has passed.
+     * @return undelegatedAt The time of undelegate request used to determine
+     * when the undelegation period has passed.
      */
-    function getWithdrawal(address _operator) public view returns (uint256 amount, uint256 createdAt) {
-        return (withdrawals[_operator].amount, withdrawals[_operator].createdAt);
+    function getUndelegation(address _operator) public view returns (uint256 amount, uint256 undelegatedAt) {
+        return (operators[_operator].amount, operators[_operator].undelegatedAt);
     }
 
     /**
