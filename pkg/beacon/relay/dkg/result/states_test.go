@@ -104,3 +104,6 @@ func (msm *mockSignatureMessage) Type() string {
 func (msm *mockSignatureMessage) SenderPublicKey() []byte {
 	return msm.senderPublicKey
 }
+func (msm *mockSignatureMessage) Seqno() uint64 {
+	panic("not implemented")
+}
