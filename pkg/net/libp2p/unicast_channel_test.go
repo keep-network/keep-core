@@ -227,9 +227,6 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	// Give some time for peers to connect themselves.
-	time.Sleep(5 * time.Second)
-
 	testFn(
 		identity1,
 		identity2,

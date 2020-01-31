@@ -100,8 +100,7 @@ func (ucm *unicastChannelManager) getUnicastChannel(
 	ucm.channelsMutex.Unlock()
 
 	if !exists {
-		triggerHandshake := initDirection == Outbound
-		newChannel, err := ucm.newUnicastChannel(peerID, triggerHandshake)
+		newChannel, err := ucm.newUnicastChannel(peerID, initDirection)
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +127,7 @@ func (ucm *unicastChannelManager) getUnicastChannel(
 
 func (ucm *unicastChannelManager) newUnicastChannel(
 	peerID net.TransportIdentifier,
-	triggerHandshake bool,
+	initDirection ChannelInitDirection,
 ) (*unicastChannel, error) {
 	remotePeer, err := peer.IDB58Decode(peerID.String())
 	if err != nil {
@@ -147,7 +146,10 @@ func (ucm *unicastChannelManager) newUnicastChannel(
 		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
 	}
 
-	if triggerHandshake {
+	hasConnectionWithPeer := ucm.p2phost.Network().
+		Connectedness(remotePeer) == network.Connected
+
+	if initDirection == Outbound && !hasConnectionWithPeer {
 		// Trigger a handshake in order to check if peer is reachable.
 		err = channel.handshake()
 		if err != nil {
