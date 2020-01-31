@@ -261,7 +261,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         uint256 requestId = _requestCounter;
 
         operatorContract.sign.value(
-            selectedOperatorContractFee + callbackFee
+            selectedOperatorContractFee.add(callbackFee)
         )(requestId, _previousEntry);
 
         // If selected operator contract is cheaper than expected return the
