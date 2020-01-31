@@ -67,7 +67,6 @@ func WithRetransmissionSupport(delegate func(m net.Message)) func(m net.Message)
 		mutex.Unlock()
 
 		if !seen {
-			logger.Warningf("Seeing [%v] for the first time, handling", messageID)
 			delegate(message)
 		}
 	}
