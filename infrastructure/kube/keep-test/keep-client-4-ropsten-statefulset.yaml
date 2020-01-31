@@ -57,7 +57,7 @@ spec:
             - key: keep-client-config.toml
               path: keep-client-config.toml
       nodeSelector:
-        pool-type: separate-keep-client-test
+        pool-type: separate-keep-client-test-bigger
       tolerations:
       - key: app
         operator: Equal
