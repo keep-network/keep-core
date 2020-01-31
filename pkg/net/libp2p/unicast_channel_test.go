@@ -227,21 +227,6 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	// Wait peer connect themselves.
-	peerDiscoveryCompleted := false
-	for i := 0; i < 60; i++ {
-		if len(provider1.ConnectionManager().ConnectedPeers()) == 1 &&
-			len(provider2.ConnectionManager().ConnectedPeers()) == 1 {
-			peerDiscoveryCompleted = true
-			break
-		}
-		time.Sleep(1 * time.Second)
-	}
-
-	if !peerDiscoveryCompleted {
-		t.Fatal("peer connection timeout")
-	}
-
 	testFn(
 		identity1,
 		identity2,
