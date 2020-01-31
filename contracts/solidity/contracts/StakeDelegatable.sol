@@ -19,6 +19,7 @@ contract StakeDelegatable {
 
     ERC20Burnable public token;
 
+    uint256 public initializationPeriod;
     uint256 public undelegationPeriod;
 
     // List of operators for the stake owner.

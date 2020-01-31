@@ -21,7 +21,7 @@ contract('TestTokenGrantStake', function(accounts) {
   beforeEach(async () => {
     token = await KeepToken.new();
     registry = await Registry.new();
-    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(30));
+    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(1), duration.days(30));
     grantContract = await TokenGrant.new(token.address, stakingContract.address);
 
     let vestingDuration = duration.days(60),

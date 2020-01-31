@@ -18,7 +18,7 @@ contract('TestTokenGrant', function(accounts) {
   before(async () => {
     token = await KeepToken.new();
     registry = await Registry.new();
-    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(30));
+    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(1), duration.days(30));
     grantContract = await TokenGrant.new(token.address, stakingContract.address);
     amount = web3.utils.toBN(100);
     vestingDuration = duration.days(30);
