@@ -88,6 +88,29 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
+     * @notice Cancels stake of tokens within the operator initialization period
+     * without being subjected to the token lockup for the undelegation period.
+     * This can be used to undo mistaken delegation to the wrong operator address.
+     * @param _operator Address of the stake operator.
+     */
+    function cancelStake(address _operator) public {
+        address owner = operators[_operator].owner;
+        require(
+            msg.sender == _operator ||
+            msg.sender == owner, "Only operator or the owner of the stake can initiate unstake."
+        );
+
+        require(
+            now <= operators[_operator].createdAt.add(initializationPeriod),
+            "Initialization period is over"
+        );
+
+        uint256 amount = operators[_operator].amount;
+        delete operators[_operator];
+        token.safeTransfer(owner, amount);
+    }
+
+    /**
      * @notice Initiates unstake of staked tokens and returns withdrawal request ID.
      * You will be able to call `finishUnstake()` with this ID and finish
      * unstake once undelegation period is over.
