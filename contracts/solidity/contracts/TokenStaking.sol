@@ -205,12 +205,17 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Checks if operator contract has been authorized for the provided operator.
+     * @dev Gets the eligible stake balance of the specified address.
      * @param _operator address of stake operator.
      * @param _operatorContract address of operator contract.
-     * @return Returns True if operator contract has been authorized for the provided operator.
+     * @return An uint256 representing the amount staked.
      */
-    function isAuthorized(address _operator, address _operatorContract) public view returns (bool) {
-        return authorizations[_operatorContract][_operator];
+    function eligibleStake(address _operator, address _operatorContract) public view returns (uint256 balance) {
+        bool isAuthorized = authorizations[_operatorContract][_operator];
+        bool isActive = now >= operators[_operator].createdAt.add(initializationPeriod);
+        bool notUndelegated = now <= operators[_operator].undelegatedAt || operators[_operator].undelegatedAt == 0;
+        if (isAuthorized && isActive && notUndelegated) {
+            balance = operators[_operator].amount;
+        }
     }
 }
