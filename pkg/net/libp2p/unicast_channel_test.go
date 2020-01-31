@@ -182,11 +182,22 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
+	multiaddr2, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/8082")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	stakeMonitor := local.NewStakeMonitor(big.NewInt(0))
 
 	provider1, err := Connect(
 		ctx,
 		Config{
+			Peers: []string{
+				multiaddressWithIdentity(
+					multiaddr2,
+					identity2.id,
+				),
+			},
 			Port: 8081,
 		},
 		privKey1,
@@ -204,7 +215,8 @@ func withNetwork(
 				multiaddressWithIdentity(
 					multiaddr1,
 					identity1.id,
-				)},
+				),
+			},
 			Port: 8082,
 		},
 		privKey2,
