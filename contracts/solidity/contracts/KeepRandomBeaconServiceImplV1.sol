@@ -319,6 +319,11 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
             "Only authorized operator contract can call relay entry."
         );
 
+        require(
+            _callbacks[requestId].callbackContract != address(0),
+            "Callback contract not found"
+        );
+
         bool success; // Store status of external contract call.
         (success, ) = _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
         require(success, "Failed execute callback");
