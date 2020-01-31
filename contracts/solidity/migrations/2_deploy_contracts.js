@@ -12,7 +12,8 @@ const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
 const Registry = artifacts.require("./Registry.sol");
 
-const withdrawalDelay = 86400; // 1 day
+const initializationPeriod = 518400; // 6 days
+const undelegationPeriod = 7776000; // 90 days
 
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
@@ -22,7 +23,7 @@ module.exports = async function(deployer) {
   await deployer.deploy(BLS);
   await deployer.deploy(KeepToken);
   await deployer.deploy(Registry);
-  await deployer.deploy(TokenStaking, KeepToken.address, Registry.address, withdrawalDelay);
+  await deployer.deploy(TokenStaking, KeepToken.address, Registry.address, initializationPeriod, undelegationPeriod);
   await deployer.deploy(TokenGrant, KeepToken.address, TokenStaking.address);
   await deployer.deploy(GroupSelection);
   await deployer.link(GroupSelection, KeepRandomBeaconOperator);

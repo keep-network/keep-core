@@ -44,14 +44,17 @@ contract TokenStaking is StakeDelegatable {
      * @dev Creates a token staking contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
      * @param _registry Address of a keep registry that will be linked to this contract.
+     * @param _initializationPeriod To avoid certain attacks on work selection, recently created
+     * operators must wait for a specific period of time before being eligible for work selection.
      * @param _undelegationPeriod The staking contract guarantees that an undelegated operator’s
      * stakes will stay locked for a number of blocks after undelegation, and thus available as
      * collateral for any work the operator is engaged in.
      */
-    constructor(address _tokenAddress, address _registry, uint256 _undelegationPeriod) public {
+    constructor(address _tokenAddress, address _registry, uint256 _initializationPeriod, uint256 _undelegationPeriod) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20Burnable(_tokenAddress);
         registry = Registry(_registry);
+        initializationPeriod = _initializationPeriod;
         undelegationPeriod = _undelegationPeriod;
     }
 

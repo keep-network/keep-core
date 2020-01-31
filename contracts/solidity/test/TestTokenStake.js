@@ -18,7 +18,7 @@ contract('TestTokenStake', function(accounts) {
   before(async () => {
     token = await KeepToken.new();
     registry = await Registry.new();
-    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(30));
+    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(1), duration.days(30));
   });
 
   it("should send tokens correctly", async function() {
