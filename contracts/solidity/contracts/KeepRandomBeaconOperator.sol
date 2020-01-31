@@ -528,14 +528,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         );
 
         uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 gas (ethereum transaction minimum gas)
-
-        uint256 gasPrice = priceFeedEstimate;
-        // We need to check if tx.gasprice is non-zero as a workaround to a bug
-        // in go-ethereum:
-        // https://github.com/ethereum/go-ethereum/pull/20189
-        if (tx.gasprice > 0 && tx.gasprice < priceFeedEstimate) {
-            gasPrice = tx.gasprice;
-        }
+        uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
 
         // Obtain the actual callback gas expenditure and refund the surplus.
         uint256 callbackSurplus = 0;
