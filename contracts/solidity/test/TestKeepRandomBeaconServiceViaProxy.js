@@ -208,7 +208,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     await serviceContract.initiateWithdrawal({from: account_one});
     await expectThrow(serviceContract.finishWithdrawal(account_three, {from: account_one}));
 
-    // jump in time, full withdrawal delay
+    // jump in time, full undelegation period
     await increaseTimeTo(await latestTime()+duration.days(30));
 
     let receiverStartBalance = await web3.eth.getBalance(account_three);

@@ -72,7 +72,7 @@ contract('TestTokenStake', function(accounts) {
     // should not be able to finish unstake
     await expectThrow(stakingContract.finishUnstake(account_one_operator));
 
-    // jump in time, full withdrawal delay
+    // jump in time, full undelegation period
     await increaseTimeTo(await latestTime()+duration.days(30));
 
     // should be able to finish unstake

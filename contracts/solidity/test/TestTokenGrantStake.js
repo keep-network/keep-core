@@ -57,13 +57,13 @@ contract('TestTokenGrantStake', function(accounts) {
     // Initiate unstake of granted tokens by grant grantee
     await grantContract.initiateUnstake(account_two_operator, {from: account_two});
 
-    // should not be able to finish unstake before withdrawal delay is over
+    // should not be able to finish unstake before undelegation period is over
     await expectThrow(grantContract.finishUnstake(account_two_operator));
 
     // should not be able to withdraw grant as its still locked for staking
     await expectThrow(grantContract.withdraw(id));
 
-    // jump in time over withdrawal delay
+    // jump in time over undelegation period
     await increaseTimeTo(await latestTime()+duration.days(30));
     await grantContract.finishUnstake(account_two_operator);
     account_two_operator_stake_balance = await stakingContract.balanceOf.call(account_two_operator);

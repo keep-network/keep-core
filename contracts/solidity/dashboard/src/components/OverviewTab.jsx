@@ -57,7 +57,7 @@ class OverviewTab extends React.Component {
       const { returnValues: { value, operator, createdAt } } = event
       const { web3: { utils, stakingContract } } = this.props
 
-      const withdrawalDelay = await stakingContract.methods.stakeWithdrawalDelay().call()
+      const withdrawalDelay = await stakingContract.methods.undelegationPeriod().call()
       const availableAt = moment(createdAt * 1000).add(withdrawalDelay, 'seconds')
       const withdrawal = {
         'id': operator,
@@ -106,7 +106,7 @@ class OverviewTab extends React.Component {
       // Unstake withdrawals
       const withdrawalsByOperator = isOperator ? [yourAddress] : operatorsAddresses
 
-      const withdrawalDelay = await stakingContract.methods.stakeWithdrawalDelay().call()
+      const withdrawalDelay = await stakingContract.methods.undelegationPeriod().call()
       const withdrawals = []
       let withdrawalsTotal = new utils.BN(0)
 
