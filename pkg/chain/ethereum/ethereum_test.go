@@ -10,7 +10,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
 
 // TestCalculateDKGResultHash validates if calculated DKG result hash matches
@@ -63,12 +62,6 @@ func TestCalculateDKGResultHash(t *testing.T) {
 }
 
 func TestConvertSignaturesToChainFormat(t *testing.T) {
-	memberIndex1 := group.MemberIndex(1)
-	memberIndex2 := group.MemberIndex(2)
-	memberIndex3 := group.MemberIndex(3)
-	memberIndex4 := group.MemberIndex(4)
-	memberIndex5 := group.MemberIndex(5)
-
 	signature1 := common.LeftPadBytes([]byte("marry"), 65)
 	signature2 := common.LeftPadBytes([]byte("had"), 65)
 	signature3 := common.LeftPadBytes([]byte("a"), 65)
@@ -78,27 +71,27 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 	invalidSignature := common.LeftPadBytes([]byte("invalid"), 64)
 
 	var tests = map[string]struct {
-		signaturesMap map[group.MemberIndex][]byte
+		signaturesMap map[uint8][]byte
 		expectedError error
 	}{
 		"one valid signature": {
-			signaturesMap: map[group.MemberIndex][]byte{
-				memberIndex1: signature1,
+			signaturesMap: map[uint8][]byte{
+				1: signature1,
 			},
 		},
 		"five valid signatures": {
-			signaturesMap: map[group.MemberIndex][]byte{
-				memberIndex3: signature3,
-				memberIndex1: signature1,
-				memberIndex4: signature4,
-				memberIndex5: signature5,
-				memberIndex2: signature2,
+			signaturesMap: map[uint8][]byte{
+				3: signature3,
+				1: signature1,
+				4: signature4,
+				5: signature5,
+				2: signature2,
 			},
 		},
 		"invalid signature": {
-			signaturesMap: map[group.MemberIndex][]byte{
-				memberIndex1: signature1,
-				memberIndex2: invalidSignature,
+			signaturesMap: map[uint8][]byte{
+				1: signature1,
+				2: invalidSignature,
 			},
 			expectedError: fmt.Errorf("invalid signature size for member [2] got [64]-bytes but required [65]-bytes"),
 		},
@@ -135,7 +128,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 			}
 
 			for i, actualMemberIndex := range indicesSlice {
-				memberIndex := group.MemberIndex(actualMemberIndex.Uint64())
+				memberIndex := uint8(actualMemberIndex.Int64())
 
 				actualSignature := signaturesSlice[SignatureSize*i : SignatureSize*(i+1)]
 				if !bytes.Equal(

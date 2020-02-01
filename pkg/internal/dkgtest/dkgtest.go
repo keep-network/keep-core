@@ -167,7 +167,7 @@ func executeDKG(
 		dkgResult, dkgResultSignatures := chain.GetLastDKGResult()
 		return &Result{
 			dkgResult,
-			dkgResultSignatures,
+			convertSignatures(dkgResultSignatures),
 			signers,
 			memberFailures,
 		}, nil
@@ -181,4 +181,12 @@ func executeDKG(
 			memberFailures,
 		}, nil
 	}
+}
+
+func convertSignatures(signatures map[uint8][]byte) map[group.MemberIndex][]byte {
+	result := make(map[group.MemberIndex][]byte)
+	for k, v := range signatures {
+		result[group.MemberIndex(k)] = v
+	}
+	return result
 }

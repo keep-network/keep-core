@@ -13,7 +13,6 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -387,9 +386,9 @@ func (ec *ethereumChain) ReportRelayEntryTimeout() error {
 }
 
 func (ec *ethereumChain) SubmitDKGResult(
-	participantIndex group.MemberIndex,
+	participantIndex uint8,
 	result *relaychain.DKGResult,
-	signatures map[group.MemberIndex][]byte,
+	signatures map[uint8][]byte,
 ) *async.EventDKGResultSubmissionPromise {
 	resultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
@@ -452,7 +451,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 	}
 
 	if _, err = ec.keepRandomBeaconOperatorContract.SubmitDkgResult(
-		participantIndex.Int(),
+		big.NewInt(int64(participantIndex)),
 		result.GroupPublicKey,
 		result.Misbehaved,
 		signaturesOnChainFormat,
@@ -471,7 +470,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 // concatenated signatures. Signatures and member indices are returned in the
 // matching order. It requires each signature to be exactly 65-byte long.
 func convertSignaturesToChainFormat(
-	signatures map[group.MemberIndex][]byte,
+	signatures map[uint8][]byte,
 ) ([]*big.Int, []byte, error) {
 	var membersIndices []*big.Int
 	var signaturesSlice []byte
@@ -485,7 +484,7 @@ func convertSignaturesToChainFormat(
 				SignatureSize,
 			)
 		}
-		membersIndices = append(membersIndices, memberIndex.Int())
+		membersIndices = append(membersIndices, big.NewInt(int64(memberIndex)))
 		signaturesSlice = append(signaturesSlice, signature...)
 	}
 
