@@ -19,7 +19,7 @@ contract StakeDelegatable {
 
     ERC20Burnable public token;
 
-    uint256 public stakeWithdrawalDelay;
+    uint256 public undelegationPeriod;
 
     // List of operators for the stake owner.
     mapping(address => address[]) public ownerOperators;

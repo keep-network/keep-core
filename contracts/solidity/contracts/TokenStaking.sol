@@ -9,7 +9,7 @@ import "./Registry.sol";
  * @title TokenStaking
  * @dev A token staking contract for a specified standard ERC20Burnable token.
  * A holder of the specified token can stake its tokens to this contract
- * and unstake after withdrawal delay is over.
+ * and unstake after undelegation period is over.
  */
 contract TokenStaking is StakeDelegatable {
 
@@ -44,13 +44,15 @@ contract TokenStaking is StakeDelegatable {
      * @dev Creates a token staking contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
      * @param _registry Address of a keep registry that will be linked to this contract.
-     * @param _delay Withdrawal delay for unstake.
+     * @param _undelegationPeriod The staking contract guarantees that an undelegated operator’s
+     * stakes will stay locked for a number of blocks after undelegation, and thus available as
+     * collateral for any work the operator is engaged in.
      */
-    constructor(address _tokenAddress, address _registry, uint256 _delay) public {
+    constructor(address _tokenAddress, address _registry, uint256 _undelegationPeriod) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20Burnable(_tokenAddress);
         registry = Registry(_registry);
-        stakeWithdrawalDelay = _delay;
+        undelegationPeriod = _undelegationPeriod;
     }
 
     /**
@@ -85,7 +87,7 @@ contract TokenStaking is StakeDelegatable {
     /**
      * @notice Initiates unstake of staked tokens and returns withdrawal request ID.
      * You will be able to call `finishUnstake()` with this ID and finish
-     * unstake once withdrawal delay is over.
+     * unstake once undelegation period is over.
      * @param _value The amount to be unstaked.
      * @param _operator Address of the stake operator.
      */
@@ -105,12 +107,12 @@ contract TokenStaking is StakeDelegatable {
 
     /**
      * @notice Finishes unstake of the tokens of provided withdrawal request.
-     * You can only finish unstake once withdrawal delay is over for the request,
+     * You can only finish unstake once undelegation period is over for the request,
      * otherwise the function will fail and remaining gas is returned.
      * @param _operator Operator address.
      */
     function finishUnstake(address _operator) public {
-        require(now >= withdrawals[_operator].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
+        require(now >= withdrawals[_operator].createdAt.add(undelegationPeriod), "Can not finish unstake before undelegation period is over.");
         address owner = operators[_operator].owner;
 
         // No need to call approve since msg.sender will be this staking contract.
@@ -132,10 +134,10 @@ contract TokenStaking is StakeDelegatable {
      * @dev Gets withdrawal request by Operator.
      * @param _operator address of withdrawal request.
      * @return amount The amount the given operator will be able to withdraw
-     *                once the withdrawal delay has passed.
+     * once undelegation period has passed.
      * @return createdAt The initiation time of the withdrawal request for the
-     *                   given operator, used to determine when the withdrawal
-     *                   delay has passed.
+     * given operator, used to determine when the withdrawal
+     * delay has passed.
      */
     function getWithdrawal(address _operator) public view returns (uint256 amount, uint256 createdAt) {
         return (withdrawals[_operator].amount, withdrawals[_operator].createdAt);

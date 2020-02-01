@@ -16,7 +16,7 @@
 
   To finish unstaking, use 'finish-unstake' command and provide operator address
   as a parameter. Please bear in mind you may need to wait for the expected 
-  withdrawal delay time to be able to finish unstaking.
+  undelegation period time to be able to finish unstaking.
 
     $ truffle exec scripts/manage-stake.js finish-unstake 0x524f2E0176350d950fA630D9A5a59A0a190DAf48
 
