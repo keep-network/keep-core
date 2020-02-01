@@ -9,7 +9,7 @@ import (
 
 func TestDKGResultHashSignatureMessageRoundtrip(t *testing.T) {
 	msg := &DKGResultHashSignatureMessage{
-		senderIndex: 1410,
+		senderIndex: 10,
 		resultHash:  [32]byte{30},
 		signature:   []byte("signature"),
 		publicKey:   []byte("pubkey"),

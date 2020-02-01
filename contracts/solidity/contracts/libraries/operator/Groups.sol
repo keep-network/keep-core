@@ -55,14 +55,34 @@ library Groups {
     }
 
     /**
-     * @dev Adds group member.
+     * @dev Sets addresses of members for the group with the given public key
+     * eliminating members at positions pointed by the misbehaved array.
+     * @param groupPubKey Group public key.
+     * @param members Group member addresses as outputted by the group selection
+     * protocol.
+     * @param misbehaved Bytes array of misbehaved (disqualified or inactive)
+     * group members indexes in ascending order; Indexes reflect positions of
+     * members in the group as outputted by the group selection protocol -
+     * member indexes start from 1.
      */
-    function addGroupMember(
+    function setGroupMembers(
         Storage storage self,
         bytes memory groupPubKey,
-        address member
+        address[] memory members,
+        bytes memory misbehaved
     ) internal {
-        self.groupMembers[groupPubKey].push(member);
+        self.groupMembers[groupPubKey] = members;
+
+        // Iterate misbehaved array backwards, replace misbehaved
+        // member with the last element and reduce array length
+        uint256 i = misbehaved.length;
+        while (i > 0) {
+             // group member indexes start from 1, so we need to -1 on misbehaved
+            uint256 memberArrayPosition = misbehaved.toUint8(i - 1) - 1;
+            self.groupMembers[groupPubKey][memberArrayPosition] = self.groupMembers[groupPubKey][self.groupMembers[groupPubKey].length - 1];
+            self.groupMembers[groupPubKey].length--;
+            i--;
+        }
     }
 
     /**

@@ -30,7 +30,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
     let group = await operatorContract.getGroupPublicKey(0);
-    await operatorContract.addGroupMember(group, accounts[0]);
+    await operatorContract.setGroupMembers(group, [accounts[0]]);
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     entryFeeBreakdown = await serviceContract.entryFeeBreakdown();
