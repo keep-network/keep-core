@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
@@ -71,7 +72,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 	invalidSignature := common.LeftPadBytes([]byte("invalid"), 64)
 
 	var tests = map[string]struct {
-		signaturesMap map[uint8][]byte
+		signaturesMap map[chain.GroupMemberIndex][]byte
 		expectedError error
 	}{
 		"one valid signature": {
@@ -80,7 +81,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 			},
 		},
 		"five valid signatures": {
-			signaturesMap: map[uint8][]byte{
+			signaturesMap: map[chain.GroupMemberIndex][]byte{
 				3: signature3,
 				1: signature1,
 				4: signature4,
@@ -89,7 +90,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 			},
 		},
 		"invalid signature": {
-			signaturesMap: map[uint8][]byte{
+			signaturesMap: map[chain.GroupMemberIndex][]byte{
 				1: signature1,
 				2: invalidSignature,
 			},
@@ -128,7 +129,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 			}
 
 			for i, actualMemberIndex := range indicesSlice {
-				memberIndex := uint8(actualMemberIndex.Int64())
+				memberIndex := chain.GroupMemberIndex(actualMemberIndex.Uint64())
 
 				actualSignature := signaturesSlice[SignatureSize*i : SignatureSize*(i+1)]
 				if !bytes.Equal(

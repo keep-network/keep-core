@@ -136,9 +136,9 @@ func (sm *SubmittingMember) SubmitDKGResult(
 				blockNumber,
 			)
 			chainRelay.SubmitDKGResult(
-				sm.index.Uint8(),
+				sm.index,
 				result,
-				convertSignatures(signatures),
+				signatures,
 			).
 				OnComplete(func(
 					dkgResultPublishedEvent *event.DKGResultSubmission,
@@ -158,14 +158,6 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			return returnWithError(nil)
 		}
 	}
-}
-
-func convertSignatures(signatures map[group.MemberIndex][]byte) map[uint8][]byte {
-	result := make(map[uint8][]byte)
-	for k, v := range signatures {
-		result[k.Uint8()] = v
-	}
-	return result
 }
 
 // waitForSubmissionEligibility waits until the current member is eligible to

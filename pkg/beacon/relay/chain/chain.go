@@ -13,6 +13,10 @@ import (
 // StakerAddress represents chain-specific address of the staker.
 type StakerAddress []byte
 
+// GroupMemberIndex is an index of a threshold relay group member.
+// Maximum value accepted by the chain is 255.
+type GroupMemberIndex = uint8
+
 // RelayEntryInterface defines the subset of the relay chain interface that
 // pertains specifically to submission and retrieval of relay requests and
 // entries.
@@ -94,9 +98,9 @@ type DistributedKeyGenerationInterface interface {
 	// Signatures over DKG result hash are collected in a map keyed by signer's
 	// member index.
 	SubmitDKGResult(
-		participantIndex uint8,
+		participantIndex GroupMemberIndex,
 		dkgResult *DKGResult,
-		signatures map[uint8][]byte,
+		signatures map[GroupMemberIndex][]byte,
 	) *async.EventDKGResultSubmissionPromise
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.

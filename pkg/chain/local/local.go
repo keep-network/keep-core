@@ -38,7 +38,7 @@ type Chain interface {
 
 	// GetLastDKGResult returns the last DKG result submitted to the chain
 	// as well as all the signatures that supported that result.
-	GetLastDKGResult() (*relaychain.DKGResult, map[uint8][]byte)
+	GetLastDKGResult() (*relaychain.DKGResult, map[relaychain.GroupMemberIndex][]byte)
 
 	// GetLastRelayEntry returns the last relay entry submitted to the chain.
 	GetLastRelayEntry() []byte
@@ -59,7 +59,7 @@ type localChain struct {
 	groups []localGroup
 
 	lastSubmittedDKGResult           *relaychain.DKGResult
-	lastSubmittedDKGResultSignatures map[uint8][]byte
+	lastSubmittedDKGResultSignatures map[relaychain.GroupMemberIndex][]byte
 	lastSubmittedRelayEntry          []byte
 
 	handlerMutex                  sync.Mutex
@@ -356,9 +356,9 @@ func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
-	participantIndex uint8,
+	participantIndex relaychain.GroupMemberIndex,
 	resultToPublish *relaychain.DKGResult,
-	signatures map[uint8][]byte,
+	signatures map[relaychain.GroupMemberIndex][]byte,
 ) *async.EventDKGResultSubmissionPromise {
 	dkgResultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
@@ -437,7 +437,7 @@ func (c *localChain) OnDKGResultSubmitted(
 
 func (c *localChain) GetLastDKGResult() (
 	*relaychain.DKGResult,
-	map[uint8][]byte,
+	map[relaychain.GroupMemberIndex][]byte,
 ) {
 	return c.lastSubmittedDKGResult, c.lastSubmittedDKGResultSignatures
 }
