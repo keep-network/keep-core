@@ -11,12 +11,14 @@ func BasicMessage(
 	payload interface{},
 	messageType string,
 	senderPublicKey []byte,
+	seqno uint64,
 ) net.Message {
 	return &basicMessage{
 		transportSenderID,
 		payload,
 		messageType,
 		senderPublicKey,
+		seqno,
 	}
 }
 
@@ -27,6 +29,7 @@ type basicMessage struct {
 	payload           interface{}
 	messageType       string
 	senderPublicKey   []byte
+	seqno             uint64
 }
 
 func (m *basicMessage) TransportSenderID() net.TransportIdentifier {
@@ -43,4 +46,8 @@ func (m *basicMessage) Type() string {
 
 func (m *basicMessage) SenderPublicKey() []byte {
 	return m.senderPublicKey
+}
+
+func (m *basicMessage) Seqno() uint64 {
+	return m.seqno
 }
