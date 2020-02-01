@@ -90,18 +90,26 @@
 }
 
 #slashed-tokens {
-    h5 {
-        margin-bottom: 2rem;
-        span {
-            margin-left: 2rem;
-        }
-    }
 
     .slashed-tokens-list {
-        padding-left: 0;
+        margin-top: 2rem;
+        ul {
+            margin-top: 1rem;
+            padding-left: 0;
+        }
         
-        li > .details {
-            margin-right: 1rem;
+        li {
+            border-bottom: 1px solid @grey;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+
+            p {
+                margin-bottom: 2px;
+            }
+
+            &:last-of-type {
+                border-bottom: none;
+            }
         }
     }
 }
