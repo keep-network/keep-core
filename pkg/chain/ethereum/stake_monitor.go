@@ -3,7 +3,6 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -32,9 +31,8 @@ func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error)
 	}
 
 	return &ethereumStaker{
-		address:             address,
-		ethereum:            esm.config,
-		stakeChangeHandlers: make([]func(newStake *big.Int), 0),
+		address:  address,
+		ethereum: esm.config,
 	}, nil
 }
 
@@ -55,13 +53,8 @@ func (ec *ethereumChain) BalanceOf(address string) (*big.Int, error) {
 }
 
 type ethereumStaker struct {
-	mutex sync.Mutex
-
 	address  string
 	ethereum *ethereumChain
-
-	stakeChangeHandlers []func(newStake *big.Int)
-	watchingChain       bool
 }
 
 func (es *ethereumStaker) Address() relaychain.StakerAddress {
