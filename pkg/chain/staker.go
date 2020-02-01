@@ -17,7 +17,4 @@ type Staker interface {
 	// chain state as a promise. If setup of the promise fails, an error is
 	// returned.
 	Stake() (*big.Int, error)
-	// OnStakeChanged registers a callback to be invoked when the given staker's
-	// stake changes.
-	OnStakeChanged(func(newStake *big.Int))
 }
