@@ -206,16 +206,64 @@ contract TokenStaking is StakeDelegatable {
 
     /**
      * @dev Gets the eligible stake balance of the specified address.
+     * An eligible stake is a stake that passed the initialization period
+     * and is not currently undelegating. Also, the operator had to approve
+     * the specified operator contract.
+     *
+     * Operator with a minimum required amount of eligible stake can join the
+     * network and participate in new work selection.
+     *
      * @param _operator address of stake operator.
      * @param _operatorContract address of operator contract.
-     * @return An uint256 representing the amount staked.
+     * @return an uint256 representing the eligible stake balance.
      */
-    function eligibleStake(address _operator, address _operatorContract) public view returns (uint256 balance) {
+    function eligibleStake(
+        address _operator,
+        address _operatorContract
+    ) public view returns (uint256 balance) {
         bool isAuthorized = authorizations[_operatorContract][_operator];
-        bool isActive = now >= operators[_operator].createdAt.add(initializationPeriod);
-        bool notUndelegated = now <= operators[_operator].undelegatedAt || operators[_operator].undelegatedAt == 0;
+
+        Operator memory operator = operators[_operator];
+
+        // Using 'now' is fine - we are working on a time scale of days so miner
+        // block time manipulations can't hurt us.
+        bool isActive = now >= operator.createdAt.add(initializationPeriod);
+        bool notUndelegated = now <= operator.undelegatedAt || operator.undelegatedAt == 0;
+
         if (isAuthorized && isActive && notUndelegated) {
-            balance = operators[_operator].amount;
+            balance = operator.amount;
+        }
+    }
+
+    /**
+     * @dev Gets the active stake balance of the specified address.
+     * An active stake is a stake that passed the initialization period.
+     * Also, the operator had to approve the specified operator contract.
+     *
+     * The difference between eligible stake is that active stake does not make
+     * the operator eligible for work selection but it may be still finishing
+     * earlier work during undelegation period. Operator with a minimum required
+     * amount of active stake can join the network but cannot be selected to any
+     * new work.
+     *
+     * @param _operator address of stake operator.
+     * @param _operatorContract address of operator contract.
+     * @return an uint256 representing the eligible stake balance.
+     */
+    function activeStake(
+        address _operator,
+        address _operatorContract
+    ) public view returns (uint256 balance) {
+        bool isAuthorized = authorizations[_operatorContract][_operator];
+
+        Operator memory operator = operators[_operator];
+
+        // Using 'now' is fine - we are working on a time scale of days so miner
+        // block time manipulations can't hurt us
+        bool isActive = now >= operator.createdAt.add(initializationPeriod);
+
+        if (isAuthorized && isActive) {
+            balance = operator.amount;
         }
     }
 }
