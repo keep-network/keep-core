@@ -312,7 +312,7 @@ contract TokenGrant {
     }
 
     /**
-     * @notice Undelegate of the token grant.
+     * @notice Undelegate the token grant.
      * @param _operator Operator of the stake.
      */
     function undelegate(address _operator) public {

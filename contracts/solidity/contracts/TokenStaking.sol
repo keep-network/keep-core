@@ -90,7 +90,7 @@ contract TokenStaking is StakeDelegatable {
         address owner = operators[_operator].owner;
         require(
             msg.sender == _operator ||
-            msg.sender == owner, "Only operator or the owner of the stake can undelegate."
+            msg.sender == owner, "Only operator or the owner of the stake can cancel the delegation."
         );
 
         require(
