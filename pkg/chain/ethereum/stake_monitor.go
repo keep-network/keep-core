@@ -40,12 +40,6 @@ func (ec *ethereumChain) StakeMonitor() (chain.StakeMonitor, error) {
 	return stakeMonitor, nil
 }
 
-func (ec *ethereumChain) BalanceOf(address string) (*big.Int, error) {
-	ethereumAddress := common.HexToAddress(address)
-
-	return ec.stakingContract.BalanceOf(ethereumAddress)
-}
-
 type ethereumStaker struct {
 	address  string
 	ethereum *ethereumChain
@@ -56,5 +50,5 @@ func (es *ethereumStaker) Address() relaychain.StakerAddress {
 }
 
 func (es *ethereumStaker) Stake() (*big.Int, error) {
-	return es.ethereum.BalanceOf(es.address)
+	return es.ethereum.stakingContract.BalanceOf(common.HexToAddress(es.address))
 }
