@@ -15,8 +15,16 @@
 @import 'operator-page.less';
 
 html {
-  font-size: 16px;
+  font-size: 12px;
   background: @backgroud;
+
+  @media screen and (min-width: 750px) {
+    font-size: 14px;
+  }
+
+  @media screen and (min-width: 1200px) {
+    font-size: 16px;
+  }
 }
 
 .main {
