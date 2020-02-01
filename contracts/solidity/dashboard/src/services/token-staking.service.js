@@ -21,8 +21,10 @@ const fetchPendingUndelegation = async (web3Context, ...args) => {
     contractService.getPastEvents(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'InitiatedUnstake', { fromBlock: '0', filter: { operator: yourAddress } }),
   ])
 
-  const undelegatedOn = moment.unix(withdrawals.createdAt).add(stakeWithdrawalDelayInSec, 'seconds')
-  const stakeWithdrawalDelay = undelegatedOn.fromNow(stakeWithdrawalDelayInSec)
+  const undelegatedOn = withdrawals.amount === '0' ?
+    null :
+    moment.unix(withdrawals.createdAt).add(stakeWithdrawalDelayInSec, 'seconds')
+  const stakeWithdrawalDelay = moment().add(stakeWithdrawalDelayInSec, 'seconds').fromNow(stakeWithdrawalDelayInSec)
   const pendinUndelegations = events
     .map(({ id, returnValues: { value, createdAt } }) => ({ eventId: id, amount: value, createdAt: moment.unix(createdAt) }))
     .reverse()

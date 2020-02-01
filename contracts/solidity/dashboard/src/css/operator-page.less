@@ -4,19 +4,20 @@
         &-summary {
             display: flex;
             flex-direction: column;
-            margin-bottom: 1rem;
-            padding-bottom: 2rem;
-            border-bottom: 0.25px solid @darker-grey;
-
-            div {
-                margin-bottom: 1rem;
-            }
+            padding-bottom: 1.5rem;
         }
         &-list {
-            padding-left: 0;
+            background: @light-grey;
+            padding: 2rem;
+            ul {
+                padding-left: 0;
+            }
         }
 
         &-item {
+            &:last-of-type {
+                margin-bottom: 0;
+            }
             margin-bottom: .8rem;
         }
     
