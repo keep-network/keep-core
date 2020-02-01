@@ -87,56 +87,6 @@ func AssertMemberFailuresCount(
 	}
 }
 
-// AssertNoDisqualifiedMembers checks there were no disqualified members during
-// the protocol execution.
-func AssertNoDisqualifiedMembers(t *testing.T, testResult *Result) {
-	AssertDisqualifiedMembers(t, testResult)
-}
-
-// AssertDisqualifiedMembers checks which members were disqualified
-// during the protocol execution and compares them against expected ones.
-func AssertDisqualifiedMembers(
-	t *testing.T,
-	testResult *Result,
-	expectedDisqualifiedMembers ...group.MemberIndex,
-) {
-	actualDisqualifiedMembers := make(
-		[]group.MemberIndex,
-		len(testResult.dkgResult.Disqualified),
-	)
-
-	for _, dq := range testResult.dkgResult.Disqualified {
-		memberIndex := group.MemberIndex(uint8(dq))
-		actualDisqualifiedMembers = append(actualDisqualifiedMembers, memberIndex)
-
-		disqualificationExpected := containsMemberIndex(
-			memberIndex,
-			expectedDisqualifiedMembers,
-		)
-
-		if !disqualificationExpected {
-			t.Errorf(
-				"member [%v] should not be marked as disqualified",
-				memberIndex,
-			)
-		}
-	}
-
-	for _, memberIndex := range expectedDisqualifiedMembers {
-		isDisqualified := containsMemberIndex(
-			memberIndex,
-			actualDisqualifiedMembers,
-		)
-
-		if !isDisqualified {
-			t.Errorf(
-				"member [%v] should be marked as disqualified",
-				memberIndex,
-			)
-		}
-	}
-}
-
 func containsMemberIndex(
 	index group.MemberIndex,
 	indexes []group.MemberIndex,
@@ -150,50 +100,51 @@ func containsMemberIndex(
 	return false
 }
 
-// AssertNoInactiveMembers checks there were no inactive members during the
-// protocol execution.
-func AssertNoInactiveMembers(t *testing.T, testResult *Result) {
-	AssertInactiveMembers(t, testResult)
+// AssertNoMisbehavingMembers checks there were no misbehaving - inactive or
+// disqualified members - during protocol execution.
+func AssertNoMisbehavingMembers(t *testing.T, testResult *Result) {
+	AssertMisbehavingMembers(t, testResult)
 }
 
-// AssertInactiveMembers checks which members were inactive during the protocol
-// execution and compares them against expected ones.
-func AssertInactiveMembers(
+// AssertMisbehavingMembers checks which members were misbehaving - either
+// inactive or disqualified - during the protocol execution and compares them
+// against expected ones.
+func AssertMisbehavingMembers(
 	t *testing.T,
 	testResult *Result,
-	expectedInactiveMembers ...group.MemberIndex,
+	expectedMisbehavingMembers ...group.MemberIndex,
 ) {
-	actualInactiveMembers := make(
+	actualMisbehavingMembers := make(
 		[]group.MemberIndex,
-		len(testResult.dkgResult.Inactive),
+		len(testResult.dkgResult.Misbehaved),
 	)
 
-	for _, ia := range testResult.dkgResult.Inactive {
-		memberIndex := group.MemberIndex(uint8(ia))
-		actualInactiveMembers = append(actualInactiveMembers, memberIndex)
+	for _, misbehaved := range testResult.dkgResult.Misbehaved {
+		memberIndex := group.MemberIndex(uint8(misbehaved))
+		actualMisbehavingMembers = append(actualMisbehavingMembers, memberIndex)
 
-		inactivityExpected := containsMemberIndex(
-			group.MemberIndex(memberIndex),
-			expectedInactiveMembers,
+		misbehaviourExpected := containsMemberIndex(
+			memberIndex,
+			expectedMisbehavingMembers,
 		)
 
-		if !inactivityExpected {
+		if !misbehaviourExpected {
 			t.Errorf(
-				"member [%v] should not be marked as inactive",
+				"member [%v] should not be marked as misbehaving",
 				memberIndex,
 			)
 		}
 	}
 
-	for _, memberIndex := range expectedInactiveMembers {
-		isInactive := containsMemberIndex(
+	for _, memberIndex := range expectedMisbehavingMembers {
+		isMisbehaving := containsMemberIndex(
 			memberIndex,
-			actualInactiveMembers,
+			actualMisbehavingMembers,
 		)
 
-		if !isInactive {
+		if !isMisbehaving {
 			t.Errorf(
-				"member [%v] should be marked as inactive",
+				"member [%v] should be marked as misbehaving",
 				memberIndex,
 			)
 		}

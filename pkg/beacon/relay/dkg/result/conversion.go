@@ -1,6 +1,8 @@
 package result
 
 import (
+	"sort"
+
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -8,9 +10,8 @@ import (
 
 // convertResult transforms GJKR protocol execution result to a chain specific
 // DKG result form. It serializes a group public key to bytes and converts
-// disqualified and inactive members lists to a boolean list where each entry
-// corresponds to a member in the group and true/false value indicates status of
-// the member.
+// disqualified and inactive members lists to one list of misbehaving
+// participants where each byte represents misbehaving member index.
 func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult {
 	groupPublicKey := make([]byte, 0)
 
@@ -20,13 +21,32 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 		groupPublicKey = gjkrResult.GroupPublicKey.Marshal()
 	}
 
-	// convertToByteSlice converts slice containing member IDs to a slice of
-	// bytes. E.g. for input = {1, 3, 20}, the output is {0x01, 0x03, 0x14}.
-	// MemberIndex cannot be larger than 255.
-	convertToByteSlice := func(memberIDsSlice []group.MemberIndex) []byte {
-		bytes := make([]byte, len(memberIDsSlice))
-		for i, memberID := range memberIDsSlice {
-			bytes[i] = byte(memberID)
+	convertToMisbehaved := func(
+		inactive []group.MemberIndex,
+		disqualified []group.MemberIndex,
+	) []byte {
+		// merge IA and DQ into 'misbehaved' set
+		misbehaving := make(map[group.MemberIndex]bool)
+		for _, ia := range inactive {
+			misbehaving[ia] = true
+		}
+		for _, dq := range disqualified {
+			misbehaving[dq] = true
+		}
+
+		// convert 'misbehaved' set into sorted list
+		var sorted []group.MemberIndex
+		for m := range misbehaving {
+			sorted = append(sorted, m)
+		}
+		sort.Slice(sorted[:], func(i, j int) bool {
+			return sorted[i] < sorted[j]
+		})
+
+		// contert sorted list of member indexes into bytes
+		bytes := make([]byte, len(sorted))
+		for i, m := range sorted {
+			bytes[i] = byte(m)
 		}
 
 		return bytes
@@ -34,7 +54,9 @@ func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult
 
 	return &relayChain.DKGResult{
 		GroupPublicKey: groupPublicKey,
-		Inactive:       convertToByteSlice(gjkrResult.Group.InactiveMemberIDs()),
-		Disqualified:   convertToByteSlice(gjkrResult.Group.DisqualifiedMemberIDs()),
+		Misbehaved: convertToMisbehaved(
+			gjkrResult.Group.InactiveMemberIDs(),
+			gjkrResult.Group.DisqualifiedMemberIDs(),
+		),
 	}
 }

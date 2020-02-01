@@ -454,8 +454,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 	if _, err = ec.keepRandomBeaconOperatorContract.SubmitDkgResult(
 		participantIndex.Int(),
 		result.GroupPublicKey,
-		result.Disqualified,
-		result.Inactive,
+		result.Misbehaved,
 		signaturesOnChainFormat,
 		membersIndicesOnChainFormat,
 	); err != nil {
@@ -504,7 +503,7 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 ) (relaychain.DKGResultHash, error) {
 
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
-	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Disqualified, dkgResult.Inactive)
+	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
 
 	return relaychain.DKGResultHashFromBytes(hash)
 }
