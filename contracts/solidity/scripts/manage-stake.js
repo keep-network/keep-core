@@ -8,11 +8,11 @@
 
     $ truffle exec scripts/manage-stake.js stake 0x524f2E0176350d950fA630D9A5a59A0a190DAf48 10000 0xFa3DA235947AaB49D439f3BcB46effD1a7237E32
 
-  To initiate unstake, use 'initiate-unstake' command and provide two parameters:
+  To undelegate, use 'undelegate' command and provide two parameters:
   - operator address
   - amount of KEEP to unstake
 
-    $ truffle exec scripts/manage-stake.js initiate-unstake 0x524f2E0176350d950fA630D9A5a59A0a190DAf48 100
+    $ truffle exec scripts/manage-stake.js undelegate 0x524f2E0176350d950fA630D9A5a59A0a190DAf48 100
 
   To finish unstaking, use 'finish-unstake' command and provide operator address
   as a parameter. Please bear in mind you may need to wait for the expected 
@@ -45,8 +45,8 @@ module.exports = async function() {
         case "stake":         
             await stake();
             break;
-        case "initiate-unstake":               
-            await initiateUnstake(); 
+        case "undelegate":               
+            await undelegate(); 
             break;
         case "finish-unstake":            
             await finishUnstake();
@@ -96,13 +96,13 @@ module.exports = async function() {
         }
     }
 
-    async function initiateUnstake() {
+    async function undelegate() {
         const amountToUnstake = process.argv[6];
 
         console.log(`Initiating unstake of ${amountToUnstake} KEEP from operator ${operator}`);  
 
         try {          
-          await tokenStaking.initiateUnstake(amountToUnstake, operator);
+          await tokenStaking.undelegate(amountToUnstake, operator);
         } catch (err) {
             console.log(err);
         }

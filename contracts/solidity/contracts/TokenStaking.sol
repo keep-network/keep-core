@@ -16,7 +16,7 @@ contract TokenStaking is StakeDelegatable {
     using UintArrayUtils for uint256[];
 
     event Staked(address indexed from, uint256 value);
-    event InitiatedUnstake(address indexed operator, uint256 value, uint256 createdAt);
+    event Undelegated(address indexed operator, uint256 value, uint256 createdAt);
     event FinishedUnstake(address operator);
 
     struct Withdrawal {
@@ -97,7 +97,7 @@ contract TokenStaking is StakeDelegatable {
         address owner = operators[_operator].owner;
         require(
             msg.sender == _operator ||
-            msg.sender == owner, "Only operator or the owner of the stake can initiate unstake."
+            msg.sender == owner, "Only operator or the owner of the stake can undelegate."
         );
 
         require(
@@ -111,24 +111,24 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @notice Initiates unstake of staked tokens and returns withdrawal request ID.
+     * @notice Undelegates staked tokens and returns withdrawal request ID.
      * You will be able to call `finishUnstake()` with this ID and finish
      * unstake once undelegation period is over.
      * @param _value The amount to be unstaked.
      * @param _operator Address of the stake operator.
      */
-    function initiateUnstake(uint256 _value, address _operator) public {
+    function undelegate(uint256 _value, address _operator) public {
         address owner = operators[_operator].owner;
         require(
             msg.sender == _operator ||
-            msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
+            msg.sender == owner, "Only operator or the owner of the stake can undelegate.");
         require(_value <= operators[_operator].amount, "Staker must have enough tokens to unstake.");
 
         operators[_operator].amount = operators[_operator].amount.sub(_value);
         uint256 createdAt = now;
         withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), createdAt);
 
-        emit InitiatedUnstake(_operator, _value, createdAt);
+        emit Undelegated(_operator, _value, createdAt);
     }
 
     /**

@@ -51,11 +51,11 @@ contract('TestTokenGrantStake', function(accounts) {
     let account_two_operator_stake_balance = await stakingContract.balanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.eq(amount), true, "Should stake grant amount");
 
-    // should throw if initiate unstake called by anyone except grant grantee
-    await expectThrow(grantContract.initiateUnstake(account_two_operator));
+    // should throw if undelegate called by anyone except grant grantee
+    await expectThrow(grantContract.undelegate(account_two_operator));
 
-    // Initiate unstake of granted tokens by grant grantee
-    await grantContract.initiateUnstake(account_two_operator, {from: account_two});
+    // Undelegate granted tokens by grant grantee
+    await grantContract.undelegate(account_two_operator, {from: account_two});
 
     // should not be able to finish unstake before undelegation period is over
     await expectThrow(grantContract.finishUnstake(account_two_operator));

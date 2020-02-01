@@ -77,11 +77,11 @@ contract('TestTokenStake', function(accounts) {
     // Can not cancel stake
     await expectThrow(stakingContract.cancelStake(account_one_operator, {from: account_one}));
 
-    // Initiate unstake tokens as token owner
-    await stakingContract.initiateUnstake(stakingAmount/2, account_one_operator, {from: account_one});
+    // Undelegate tokens as token owner
+    await stakingContract.undelegate(stakingAmount/2, account_one_operator, {from: account_one});
 
-    // Initiate unstake tokens as operator
-    await stakingContract.initiateUnstake(stakingAmount/2, account_one_operator, {from: account_one_operator});
+    // Undelegate tokens as operator
+    await stakingContract.undelegate(stakingAmount/2, account_one_operator, {from: account_one_operator});
 
     // should not be able to finish unstake
     await expectThrow(stakingContract.finishUnstake(account_one_operator));
