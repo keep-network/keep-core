@@ -21,27 +21,29 @@ const DelegatedTokens = ({ latestUnstakeEvent }) => {
   }, [latestUnstakeEvent])
 
   return (
-    <LoadingOverlay isFetching={isFetching}>
-      <section id="delegated-tokens" className="tile">
-        <h5>Total Delegated Tokens</h5>
-        <div className="flex flex-row">
-          <div className="delegated-tokens-summary flex flex-column" style={{ flex: '1' }} >
-            <h2 className="balance">
-              {stakedBalance && `${displayAmount(stakedBalance)} K`}
-            </h2>
-            <div>
-              <h6 className="text-darker-grey">OWNER&nbsp;
-                <AddressShortcut address={ownerAddress} classNames='text-big text-darker-grey' />
-              </h6>
-              <h6 className="text-darker-grey">BENEFICIARY&nbsp;
-                <AddressShortcut address={beneficiaryAddress} classNames='text-big text-darker-grey' />
-              </h6>
-            </div>
-          </div>
-          <UndelegateForm />
-        </div>
+    <section id="delegated-tokens" className="flex flex-row-space-between">
+      <LoadingOverlay isFetching={isFetching} >
+        <section id="delegated-tokens-summary" className="tile flex flex-column">
+          <h5>My Delegated Tokens</h5>
+          <h2 className="balance">
+            {stakedBalance && `${displayAmount(stakedBalance)}`}
+          </h2>
+          <h6 className="text-darker-grey">OWNER&nbsp;
+            <AddressShortcut address={ownerAddress} classNames='text-big text-darker-grey' />
+          </h6>
+          <h6 className="text-darker-grey">BENEFICIARY&nbsp;
+            <AddressShortcut address={beneficiaryAddress} classNames='text-big text-darker-grey' />
+          </h6>
+        </section>
+      </LoadingOverlay>
+      <section id="delegated-form-section" className="tile flex flex-column ">
+        <h5 className="flex flex-1">Undelegate Tokens</h5>
+        <p className="text-warning border flex flex-1">
+          Starting an undelegation restarts the amount of time, or undelegation period, until tokens are returned to the owner
+        </p>
+        <UndelegateForm />
       </section>
-    </LoadingOverlay>
+    </section>
   )
 }
 
