@@ -10,21 +10,17 @@ import (
 )
 
 type ethereumStakeMonitor struct {
-	config *ethereumChain
+	ethereum *ethereumChain
 }
 
-// HasMinimumStake checks if the provided address staked enough to become
-// a network operator. The minimum stake is an on-chain parameter.
 func (esm *ethereumStakeMonitor) HasMinimumStake(address string) (bool, error) {
 	if !common.IsHexAddress(address) {
 		return false, fmt.Errorf("not a valid ethereum address: %v", address)
 	}
 
-	return esm.config.HasMinimumStake(common.HexToAddress(address))
+	return esm.ethereum.HasMinimumStake(common.HexToAddress(address))
 }
 
-// Staker returns an instance for the given address that allows insight into a
-// staker's stake on Ethereum.
 func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error) {
 	if !common.IsHexAddress(address) {
 		return nil, fmt.Errorf("not a valid ethereum address: %v", address)
@@ -32,15 +28,13 @@ func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error)
 
 	return &ethereumStaker{
 		address:  address,
-		ethereum: esm.config,
+		ethereum: esm.ethereum,
 	}, nil
 }
 
-// StakeMonitor creates and returns a StakeMonitor instance operating on
-// Ethereum chain.
 func (ec *ethereumChain) StakeMonitor() (chain.StakeMonitor, error) {
 	stakeMonitor := &ethereumStakeMonitor{
-		config: ec,
+		ethereum: ec,
 	}
 
 	return stakeMonitor, nil
