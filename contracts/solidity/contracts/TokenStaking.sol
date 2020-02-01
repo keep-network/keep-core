@@ -17,7 +17,7 @@ contract TokenStaking is StakeDelegatable {
 
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
-    event RecoveredStake(address operator);
+    event RecoveredStake(address operator, uint256 recoveredAt);
 
     // Registry contract with a list of approved operator contracts and upgraders.
     Registry public registry;
@@ -130,7 +130,7 @@ contract TokenStaking is StakeDelegatable {
         delete operators[_operator];
 
         token.safeTransfer(owner, amount);
-        emit RecoveredStake(_operator);
+        emit RecoveredStake(_operator, now);
     }
 
     /**
