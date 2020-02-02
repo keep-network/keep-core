@@ -1,4 +1,5 @@
 import {bls} from './helpers/data';
+import mineBlocks from './helpers/mineBlocks';
 import {initContracts} from './helpers/initContracts';
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
@@ -56,4 +57,38 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
     );
   });
 
+  it("should successfully call method on a callback contract and trigger new group creation", async function() {
+    mineBlocks(110); // Make sure dkgTimeout passed so relay entry can start group selection
+    assert.isTrue(await operatorContract.isGroupSelectionPossible(), "GroupSelectionPossible");
+    let callbackGas = await callbackContract.callback.estimateGas(bls.nextNextGroupSignature);
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
+    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
+
+    // Fund DKG pool
+    const groupCreationGasEstimate = await operatorContract.groupCreationGasEstimate();
+    const fluctuationMargin = await operatorContract.fluctuationMargin();
+    const priceFeedEstimate = await serviceContract.priceFeedEstimate();
+    const gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
+    await serviceContract.fundDkgFeePool({value: groupCreationGasEstimate.mul(gasPriceWithFluctuationMargin)});
+
+    await operatorContract.relayEntry(bls.nextGroupSignature);
+
+    assert.equal((await operatorContract.getPastEvents())[1].event,
+      'GroupSelectionStarted', "Should start group selection"
+    );
+
+    assert.equal((await operatorContract.getPastEvents())[1].args['newEntry'].toString(),
+      bls.nextGroupSignatureNumber.toString(), "Should start group selection with new entry"
+    );
+    
+    assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
+      bls.nextGroupSignatureNumber.toString(), "Should emit event with the generated entry"
+    );
+
+    let result = web3.utils.toBN(await callbackContract.lastEntry());
+    assert.isTrue(
+      result.eq(bls.nextGroupSignatureNumber),
+      "Unexpected entry value passed to the callback"
+    );
+  });
 });
