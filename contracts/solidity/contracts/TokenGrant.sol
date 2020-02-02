@@ -312,6 +312,22 @@ contract TokenGrant {
     }
 
     /**
+     * @notice Cancels delegation within the operator initialization period
+     * without being subjected to the stake lockup for the undelegation period.
+     * This can be used to undo mistaken delegation to the wrong operator address.
+     * @param _operator Address of the stake operator.
+     */
+    function cancelStake(address _operator) public {
+        uint256 grantId = grantStakes[_operator].grantId;
+        require(
+            msg.sender == _operator || msg.sender == grants[grantId].grantee,
+            "Only operator or grantee can cancel the delegation."
+        );
+
+        TokenStaking(grantStakes[_operator].stakingContract).cancelStake(_operator);
+    }
+
+    /**
      * @notice Undelegate the token grant.
      * @param _operator Operator of the stake.
      */
