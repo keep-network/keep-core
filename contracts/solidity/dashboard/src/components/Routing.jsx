@@ -11,6 +11,7 @@ import { NotFound404 } from './NotFound404'
 import { withOnlyLoggedUser } from './WithOnlyLoggedUserHoc'
 import withWeb3Context from './WithWeb3Context'
 import { Rewards } from './Rewards'
+import TokensPage from '../pages/TokensPage'
 
 class Routing extends React.Component {
   renderContent() {
@@ -22,7 +23,7 @@ class Routing extends React.Component {
 
     return contractsDataIsFetching ? <Loadable /> : (
       <Switch>
-        <Route exact path='/overview' component={OverviewTab} />
+        <Route exact path='/tokens' component={TokensPage} />
         <Route exact path='/rewards' component={Rewards} />
         {isTokenHolder && <Route exact path='/stake' component={StakeTab} /> }
         {isTokenHolder && <Route exact path='/token-grants' component={TokenGrantsTab} /> }
