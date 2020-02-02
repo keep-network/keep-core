@@ -301,7 +301,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             virtualStakerIndex := mload(add(ticketBytes, 32))
         }
 
-        uint256 stakingWeight = stakingContract.balanceOf(msg.sender).div(minimumStake);
+        uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(minimumStake);
         groupSelection.submitTicket(ticketValue, uint256(stakerValue), uint256(virtualStakerIndex), stakingWeight);
     }
 
