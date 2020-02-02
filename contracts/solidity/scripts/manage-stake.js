@@ -8,11 +8,9 @@
 
     $ truffle exec scripts/manage-stake.js stake 0x524f2E0176350d950fA630D9A5a59A0a190DAf48 10000 0xFa3DA235947AaB49D439f3BcB46effD1a7237E32
 
-  To undelegate, use 'undelegate' command and provide two parameters:
-  - operator address
-  - amount of KEEP to undelegate
+  To undelegate, use 'undelegate' command and provide operator address as a parameter
 
-    $ truffle exec scripts/manage-stake.js undelegate 0x524f2E0176350d950fA630D9A5a59A0a190DAf48 100
+    $ truffle exec scripts/manage-stake.js undelegate 0x524f2E0176350d950fA630D9A5a59A0a190DAf48
 
   To recover stake, use 'recover-stake' command and provide operator address
   as a parameter. Please bear in mind you may need to wait for the expected 
@@ -124,10 +122,11 @@ module.exports = async function() {
                 return;
             }
 
-            console.log(`KEEP owner:     ${owner.toString()}`);
+            console.log(`KEEP owner:             ${owner.toString()}`);
             console.log(`KEEP tokens available:  ${(await getOwnerBalance()).toString()}`);            
-            console.log(`KEEP staked:    ${(await getStakeBalance()).toString()}`);
-            console.log(`Minimum stake:  ${(await getMinimumStake()).toString()}`);
+            console.log(`KEEP eligible stake:    ${(await getEligibleStake()).toString()}`);
+            console.log(`KEEP active stake:      ${(await getActiveStake()).toString()}`);
+            console.log(`Minimum stake:          ${(await getMinimumStake()).toString()}`);
         } catch (err) {
             console.log(err);
         }  
@@ -137,8 +136,12 @@ module.exports = async function() {
         return tokenStaking.ownerOf(operator);
     }
 
-    async function getStakeBalance() {
-      return tokenStaking.balanceOf(operator)
+    async function getEligibleStake() {
+      return tokenStaking.eligibleStake(operator, keepRandomBeaconOperator.address);
+    }
+
+    async function getActiveStake() {
+        return tokenStaking.activeStake(operator, keepRandomBeaconOperator.address);
     }
 
     async function getMinimumStake() {
