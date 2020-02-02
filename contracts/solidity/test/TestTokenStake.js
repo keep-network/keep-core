@@ -1,6 +1,4 @@
-import { sign } from './helpers/signature';
-import { duration, increaseTimeTo } from './helpers/increaseTime';
-import latestTime from './helpers/latestTime';
+import mineBlocks from './helpers/mineBlocks';
 import expectThrow from './helpers/expectThrow';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
@@ -15,10 +13,15 @@ contract('TestTokenStake', function(accounts) {
     account_one_authorizer = accounts[3],
     account_two = accounts[4];
 
+  const initializationPeriod = 10;
+  const undelegationPeriod = 30;
+
   before(async () => {
     token = await KeepToken.new();
     registry = await Registry.new();
-    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(1), duration.days(30));
+    stakingContract = await TokenStaking.new(
+      token.address, registry.address, initializationPeriod, undelegationPeriod
+    );
   });
 
   it("should send tokens correctly", async function() {
@@ -72,7 +75,7 @@ contract('TestTokenStake', function(accounts) {
     await token.approveAndCall(stakingContract.address, stakingAmount, '0x' + data.toString('hex'), {from: account_one});
 
     // jump in time, full initialization period
-    await increaseTimeTo(await latestTime()+duration.days(2));
+    await mineBlocks(initializationPeriod);
 
     // Can not cancel stake
     await expectThrow(stakingContract.cancelStake(account_one_operator, {from: account_one}));
@@ -84,7 +87,7 @@ contract('TestTokenStake', function(accounts) {
     await expectThrow(stakingContract.recoverStake(account_one_operator));
 
     // jump in time, full undelegation period
-    await increaseTimeTo(await latestTime()+duration.days(30));
+    await mineBlocks(undelegationPeriod);
 
     // should be able to recover stake
     await stakingContract.recoverStake(account_one_operator);
@@ -118,5 +121,4 @@ contract('TestTokenStake', function(accounts) {
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(stakingAmount)), true, "Staking amount should be transfered from sender balance for the second time");
     assert.equal(account_one_operator_stake_balance.eq(stakingAmount), true, "Staking amount should be added to the sender staking balance for the second time");
   });
-
 });

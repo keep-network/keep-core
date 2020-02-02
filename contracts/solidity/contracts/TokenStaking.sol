@@ -74,7 +74,7 @@ contract TokenStaking is StakeDelegatable {
         // Transfer tokens to this contract.
         token.transferFrom(_from, address(this), _value);
 
-        operators[operator] = Operator(_value, now, 0, _from, magpie, authorizer);
+        operators[operator] = Operator(_value, block.number, 0, _from, magpie, authorizer);
         ownerOperators[_from].push(operator);
 
         emit Staked(operator, _value);
@@ -94,7 +94,7 @@ contract TokenStaking is StakeDelegatable {
         );
 
         require(
-            now <= operators[_operator].createdAt.add(initializationPeriod),
+            block.number <= operators[_operator].createdAt.add(initializationPeriod),
             "Initialization period is over"
         );
 
@@ -114,8 +114,8 @@ contract TokenStaking is StakeDelegatable {
             msg.sender == _operator ||
             msg.sender == owner, "Only operator or the owner of the stake can undelegate."
         );
-        operators[_operator].undelegatedAt = now;
-        emit Undelegated(_operator, now);
+        operators[_operator].undelegatedAt = block.number;
+        emit Undelegated(_operator, block.number);
     }
 
     /**
@@ -124,13 +124,16 @@ contract TokenStaking is StakeDelegatable {
      * @param _operator Operator address.
      */
     function recoverStake(address _operator) public {
-        require(now >= operators[_operator].undelegatedAt.add(undelegationPeriod), "Can not recover stake before undelegation period is over.");
+        require(
+            block.number >= operators[_operator].undelegatedAt.add(undelegationPeriod),
+            "Can not recover stake before undelegation period is over."
+        );
         address owner = operators[_operator].owner;
         uint256 amount = operators[_operator].amount;
         delete operators[_operator];
 
         token.safeTransfer(owner, amount);
-        emit RecoveredStake(_operator, now);
+        emit RecoveredStake(_operator, block.number);
     }
 
     /**
@@ -225,10 +228,8 @@ contract TokenStaking is StakeDelegatable {
 
         Operator memory operator = operators[_operator];
 
-        // Using 'now' is fine - we are working on a time scale of days so miner
-        // block time manipulations can't hurt us.
-        bool isActive = now >= operator.createdAt.add(initializationPeriod);
-        bool notUndelegated = now <= operator.undelegatedAt || operator.undelegatedAt == 0;
+        bool isActive = block.number >= operator.createdAt.add(initializationPeriod);
+        bool notUndelegated = block.number <= operator.undelegatedAt || operator.undelegatedAt == 0;
 
         if (isAuthorized && isActive && notUndelegated) {
             balance = operator.amount;
@@ -258,9 +259,7 @@ contract TokenStaking is StakeDelegatable {
 
         Operator memory operator = operators[_operator];
 
-        // Using 'now' is fine - we are working on a time scale of days so miner
-        // block time manipulations can't hurt us
-        bool isActive = now >= operator.createdAt.add(initializationPeriod);
+        bool isActive = block.number >= operator.createdAt.add(initializationPeriod);
 
         if (isAuthorized && isActive) {
             balance = operator.amount;
