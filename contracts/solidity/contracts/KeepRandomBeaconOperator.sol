@@ -602,14 +602,13 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Checks that the specified user has enough active stake to become
-     * network operator and that this contract has been authorized by the
-     * staker for potential slashing.
+     * @dev Checks if the specified account has enough active stake to become
+     * network operator and that this contract has been authorized for potential
+     * slashing.
      *
      * Having the required minimum of active stake makes the operator eligible
-     * to join the network.
-     * If the active stake is not currently undelegating, operator is also
-     * eligible for work selection.
+     * to join the network. If the active stake is not currently undelegating,
+     * operator is also eligible for work selection.
      *
      * @param staker Staker's address
      * @return True if has enough active stake to participate in the network,
