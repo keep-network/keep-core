@@ -14,7 +14,9 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   let priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei = 20 * 10^9 wei)
     fluctuationMargin = 50, // 50%
     dkgContributionMargin = 1, // 1%
-    withdrawalDelay = 1;
+    withdrawalDelay = 1,
+    stakeInitializationPeriod = 1,
+    stakeUndelegationPeriod = 30;
 
   // Initialize Keep token contract
   token = await KeepToken.new();
@@ -23,7 +25,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   registry = await Registry.new();
 
   // Initialize staking contract
-  stakingContract = await TokenStaking.new(token.address, registry.address, 1, 30);
+  stakingContract = await TokenStaking.new(token.address, registry.address, stakeInitializationPeriod, stakeUndelegationPeriod);
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new();
