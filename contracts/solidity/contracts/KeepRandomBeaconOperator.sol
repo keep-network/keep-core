@@ -169,7 +169,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
-        groups.activeGroupsThreshold = 5;
+
         groups.groupActiveTime = 3000;
 
         dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10);
