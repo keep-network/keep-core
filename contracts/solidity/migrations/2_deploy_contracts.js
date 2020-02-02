@@ -12,7 +12,7 @@ const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
 const Registry = artifacts.require("./Registry.sol");
 
-const initializationPeriod = 50000; // ~6 days
+let initializationPeriod = 50000; // ~6 days
 const undelegationPeriod = 800000; // ~3 months
 
 module.exports = async function(deployer, network) {
