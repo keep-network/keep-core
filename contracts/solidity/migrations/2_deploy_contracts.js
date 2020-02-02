@@ -15,7 +15,13 @@ const Registry = artifacts.require("./Registry.sol");
 const initializationPeriod = 50000; // ~6 days
 const undelegationPeriod = 800000; // ~3 months
 
-module.exports = async function(deployer) {
+module.exports = async function(deployer, network) {
+
+  // Set the stake initialization period to 1 block for local development and testnet.
+  if (network == 'local' || network == 'ropsten') {
+    initializationPeriod = 1;
+  }
+
   await deployer.deploy(ModUtils);
   await deployer.link(ModUtils, AltBn128);
   await deployer.deploy(AltBn128);
