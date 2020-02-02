@@ -3,13 +3,20 @@ import SlashedTokensList from './SlashedTokensList'
 
 const SlashedTokens = (props) => {
   return (
-    <section id="slashed-tokens" className="tile">
-      <h5>
-          Slashed Tokens
-        <span className="text-warning">Group misbehavior results in a slash of KEEP tokens.</span>
-      </h5>
-      <SlashedTokensList />
-    </section>
+    <LoadingOverlay isFetching={false}>
+      <section id="slashed-tokens" className="tile">
+        <h5>
+            Slashed Tokens
+        </h5>
+        <span className="text-small text-darker-grey">
+          A slash is a penalty for signing group misbehavior.
+          A slash results in a removal of a portion of your delegated KEEP tokens.
+          You can see a record below of all slashes.
+        </span>
+        <SlashedTokensList />
+      </section>
+    </LoadingOverlay>
+
   )
 }
 
