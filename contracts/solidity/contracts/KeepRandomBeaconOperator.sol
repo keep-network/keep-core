@@ -165,12 +165,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
+
         groups.stakingContract = TokenStaking(_stakingContract);
+        groups.groupActiveTime = TokenStaking(_stakingContract).undelegationPeriod();
 
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
-        groups.activeGroupsThreshold = 5;
-        groups.groupActiveTime = TokenStaking(_stakingContract).undelegationPeriod();
 
         dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10);
         dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;
