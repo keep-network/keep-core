@@ -7,7 +7,7 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
 
   let operatorContract, serviceContract, callbackContract;
 
-  before(async () => {
+  beforeEach(async () => {
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStaking.sol'),
@@ -40,19 +40,19 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should successfully call method on a callback contract", async function() {
-    let callbackGas = await callbackContract.callback.estimateGas(bls.nextNextGroupSignature);
+    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
 
-    await operatorContract.relayEntry(bls.nextGroupSignature);
+    await operatorContract.relayEntry(bls.groupSignature);
 
     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
-      bls.nextGroupSignatureNumber.toString(), "Should emit event with the generated entry"
+      bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
     );
 
     let result = web3.utils.toBN(await callbackContract.lastEntry());
     assert.isTrue(
-      result.eq(bls.nextGroupSignatureNumber), 
+      result.eq(bls.groupSignatureNumber), 
       "Unexpected entry value passed to the callback"
     );
   });
@@ -60,7 +60,7 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   it("should successfully call method on a callback contract and trigger new group creation", async function() {
     mineBlocks(110); // Make sure dkgTimeout passed so relay entry can start group selection
     assert.isTrue(await operatorContract.isGroupSelectionPossible(), "GroupSelectionPossible");
-    let callbackGas = await callbackContract.callback.estimateGas(bls.nextNextGroupSignature);
+    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
 
@@ -71,23 +71,23 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
     const gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
     await serviceContract.fundDkgFeePool({value: groupCreationGasEstimate.mul(gasPriceWithFluctuationMargin)});
 
-    await operatorContract.relayEntry(bls.nextGroupSignature);
+    await operatorContract.relayEntry(bls.groupSignature);
 
     assert.equal((await operatorContract.getPastEvents())[1].event,
       'GroupSelectionStarted', "Should start group selection"
     );
 
     assert.equal((await operatorContract.getPastEvents())[1].args['newEntry'].toString(),
-      bls.nextGroupSignatureNumber.toString(), "Should start group selection with new entry"
+      bls.groupSignatureNumber.toString(), "Should start group selection with new entry"
     );
     
     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
-      bls.nextGroupSignatureNumber.toString(), "Should emit event with the generated entry"
+      bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
     );
 
     let result = web3.utils.toBN(await callbackContract.lastEntry());
     assert.isTrue(
-      result.eq(bls.nextGroupSignatureNumber),
+      result.eq(bls.groupSignatureNumber),
       "Unexpected entry value passed to the callback"
     );
   });
