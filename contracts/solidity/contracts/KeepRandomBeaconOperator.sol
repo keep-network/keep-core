@@ -170,7 +170,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
         groups.activeGroupsThreshold = 5;
-        groups.groupActiveTime = 3000;
+
+        // 800k blocks = ~3 months,
+        // group active time can not be shorter than stake undelegation time!
+        groups.groupActiveTime = 800000;
 
         dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10);
         dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;

@@ -12,8 +12,8 @@ const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
 const Registry = artifacts.require("./Registry.sol");
 
-const initializationPeriod = 518400; // 6 days
-const undelegationPeriod = 7776000; // 90 days
+const initializationPeriod = 50000; // ~6 days
+const undelegationPeriod = 800000; // ~3 months
 
 module.exports = async function(deployer) {
   await deployer.deploy(ModUtils);
