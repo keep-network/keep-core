@@ -14,6 +14,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     operator3 = accounts[3],
     operator4 = accounts[4],
     operator5 = accounts[5],
+    authorizer = owner,
     selectedParticipants, signatures, signingMemberIndices = [],
     misbehaved = '0x0305', // disqualified operator3, inactive operator5
     groupPubKey = '0x1000000000000000000000000000000000000000000000000000000000000000',
@@ -35,11 +36,17 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     operatorContract.setGroupThreshold(3)
     minimumStake = await operatorContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, owner, owner, minimumStake)
-    await stakeDelegate(stakingContract, token, owner, operator2, owner, owner, minimumStake)
-    await stakeDelegate(stakingContract, token, owner, operator3, owner, owner, minimumStake)
-    await stakeDelegate(stakingContract, token, owner, operator4, owner, owner, minimumStake)
-    await stakeDelegate(stakingContract, token, owner, operator5, owner, owner, minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator1, owner, authorizer, minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator2, owner, authorizer, minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator3, owner, authorizer, minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator4, owner, authorizer, minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator5, owner, authorizer, minimumStake)
+
+    await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
+    await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
+    await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
+    await stakingContract.authorizeOperatorContract(operator4, operatorContract.address, {from: authorizer})
+    await stakingContract.authorizeOperatorContract(operator5, operatorContract.address, {from: authorizer})
 
     let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, 1)
     let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, 1)
