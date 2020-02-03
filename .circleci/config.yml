@@ -286,7 +286,7 @@ workflows:
   solidity:
     jobs:
       - test_solidity
-  build_test_migrate_publish:
+  build-test-migrate-publish-keep-dev:
     jobs:
       - build_client_and_test_go:
           context: keep-dev
@@ -305,7 +305,7 @@ workflows:
           context: keep-dev
           requires:
             - build_client_and_test_go
-      - publish_keep_client:
+      - publish_docker_images:
           filters:
             branches:
               only: master
@@ -330,6 +330,81 @@ workflows:
             branches:
               only: master
           context: keep-dev
+          requires:
+            - build_staking_dapp
+build-test-migrate-publish-keep-test:
+    jobs:
+      - keep_test_approval:
+          type: approval
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - build_client_and_test_go:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - keep_test_approval
+      - build_initcontainer:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - migrate_contracts
+            - build_client_and_test_go
+      - migrate_contracts:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - build_client_and_test_go
+      - publish_docker_images:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - build_client_and_test_go
+            - build_initcontainer
+            - migrate_contracts
+      - publish_contract_data:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - build_client_and_test_go
+            - migrate_contracts
+      - build_staking_dapp:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - migrate_contracts
+      - publish_staking_dapp:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
           requires:
             - build_staking_dapp
   docs:
