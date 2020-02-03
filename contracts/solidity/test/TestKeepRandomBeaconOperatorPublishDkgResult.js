@@ -16,12 +16,11 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
   operator1 = accounts[0],
   operator2 = accounts[1],
   operator3 = accounts[2],
-  operator4 = accounts[3],  
+  operator4 = accounts[3],
   selectedParticipants, signatures, signingMemberIndices = [],
-  disqualified = '0x0000000000000000000000000000000000000000',
-  inactive = '0x0000000000000000000000000000000000000000',
+  misbehaved = '0x',
   groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000",
-  resultHash = web3.utils.soliditySha3(groupPubKey, disqualified, inactive);
+  resultHash = web3.utils.soliditySha3(groupPubKey, misbehaved);
 
   const groupSize = 20;
   const groupThreshold = 15;
@@ -46,9 +45,13 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     operatorContract.setGroupThreshold(groupThreshold);
     operatorContract.setMinimumStake(minimumStake);
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, minimumStake.mul(web3.utils.toBN(3000)))
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, minimumStake.mul(web3.utils.toBN(2000)))
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, minimumStake.mul(web3.utils.toBN(2000)))
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, minimumStake.mul(web3.utils.toBN(3000)))
+
+    await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: owner})
+    await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: owner})
+    await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: owner})
 
     let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, 2000);
     let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, 2000);
@@ -70,9 +73,12 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     }
 
     let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
-    let timeoutChallenge = (await operatorContract.ticketSubmissionTimeout()).toNumber();
+    let submissionTimeout = (await operatorContract.ticketSubmissionTimeout()).toNumber();
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
-    resultPublicationTime = ticketSubmissionStartBlock + timeoutChallenge + timeDKG;
+    resultPublicationTime = ticketSubmissionStartBlock + submissionTimeout + timeDKG;
+
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(ticketSubmissionStartBlock + submissionTimeout - currentBlock);
 
     selectedParticipants = await operatorContract.selectedParticipants();
 
@@ -100,7 +106,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await operatorContract.submitDkgResult(1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: selectedParticipants[0]})
+    await operatorContract.submitDkgResult(1, groupPubKey, misbehaved, signatures, signingMemberIndices, {from: selectedParticipants[0]})
     assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
@@ -116,7 +122,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     let expectedSubmitterReward = dkgGasEstimate.mul(await operatorContract.priceFeedEstimate());
 
     await operatorContract.submitDkgResult(
-      1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      1, groupPubKey, misbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0], gasPrice: submitterCustomGasPrice}
     )
 
@@ -135,7 +141,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     await operatorContract.setPriceFeedEstimate(web3.utils.toWei(web3.utils.toBN(100), 'gwei'));
 
     await operatorContract.submitDkgResult(
-      1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      1, groupPubKey, misbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0], gasPrice: web3.utils.toWei(web3.utils.toBN(100), 'gwei')}
     )
     let updatedMagpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
@@ -161,7 +167,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await operatorContract.submitDkgResult(1, groupPubKey, disqualified, inactive, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
+    await operatorContract.submitDkgResult(1, groupPubKey, misbehaved, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
     assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
@@ -179,7 +185,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
 
     // Should throw if non eligible submitter 2 tries to submit
     await expectThrow(operatorContract.submitDkgResult(
-      submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      submitter2MemberIndex, groupPubKey, misbehaved, signatures, signingMemberIndices,
       {from: submitter2})
     );
 
@@ -187,14 +193,14 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(eligibleBlockForSubmitter2 - currentBlock);
 
-    await operatorContract.submitDkgResult(submitter2MemberIndex, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, {from: submitter2})
+    await operatorContract.submitDkgResult(submitter2MemberIndex, groupPubKey, misbehaved, signatures, signingMemberIndices, {from: submitter2})
     assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
   it("should not be able to submit if submitter was not selected to be part of the group.", async function() {
     await expectThrow(operatorContract.submitDkgResult(
-      1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices, 
+      1, groupPubKey, misbehaved, signatures, signingMemberIndices, 
       {from: operator4})
     );
 
@@ -225,7 +231,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     mineBlocks(resultPublicationTime - currentBlock);
 
     await expectThrow(operatorContract.submitDkgResult(
-      1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      1, groupPubKey, misbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );
 
@@ -249,7 +255,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     mineBlocks(resultPublicationTime - currentBlock);
 
     await operatorContract.submitDkgResult(
-      1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      1, groupPubKey, misbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
 
       assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
@@ -273,7 +279,7 @@ contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
     mineBlocks(resultPublicationTime - currentBlock);
 
     await expectThrow(operatorContract.submitDkgResult(
-      1, groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      1, groupPubKey, misbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );
 

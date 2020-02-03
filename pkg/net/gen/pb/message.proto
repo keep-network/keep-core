@@ -25,8 +25,9 @@ message NetworkMessage {
   // all valid group members.
   bytes channel = 5;
 
-  // Retransmission round. 0 if the message is not a retransmission.
-  uint32 retransmission = 6;
+  // Sequence number of the message. Retransmissions have the same sequence 
+  // number as the original message.
+  uint64 sequenceNumber = 6;
 }
 
 message Identity {

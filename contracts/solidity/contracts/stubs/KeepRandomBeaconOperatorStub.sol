@@ -13,7 +13,7 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         address _stakingContract
     ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
         relayEntryTimeout = 10;
-        groupSelection.ticketSubmissionTimeout = 66;
+        groupSelection.ticketSubmissionTimeout = 69;
         resultPublicationBlockStep = 3;
     }
 
@@ -21,8 +21,8 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         groups.addGroup(groupPublicKey);
     }
 
-    function addGroupMember(bytes memory groupPublicKey, address member) public {
-        groups.addGroupMember(groupPublicKey, member);
+    function setGroupMembers(bytes memory groupPublicKey, address[] memory members) public {
+        groups.setGroupMembers(groupPublicKey, members, hex"");
     }
 
     function setGroupSize(uint256 size) public {

@@ -19,9 +19,12 @@ type TransportIdentifier interface {
 // layer. It also carries an unmarshaled payload.
 type Message interface {
 	TransportSenderID() TransportIdentifier
-	Payload() interface{}
-	Type() string
 	SenderPublicKey() []byte
+
+	Payload() interface{}
+
+	Type() string
+	Seqno() uint64
 }
 
 // TaggedMarshaler is an interface that includes the proto.Marshaler interface,
@@ -102,8 +105,8 @@ type BroadcastChannel interface {
 	// The string type associated with the unmarshaler is the result of calling
 	// Type() on a raw unmarshaler.
 	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
-	// AddFilter registers a broadcast channel filter which will be used
+	// SetFilter registers a broadcast channel filter which will be used
 	// to determine if given broadcast channel message should be processed
 	// by the receivers.
-	AddFilter(filter BroadcastChannelFilter) error
+	SetFilter(filter BroadcastChannelFilter) error
 }

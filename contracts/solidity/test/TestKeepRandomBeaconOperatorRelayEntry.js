@@ -24,9 +24,7 @@ contract('KeepRandomBeaconOperator', (accounts) => {
     await operatorContract.registerNewGroup(bls.groupPubKey);
     operatorContract.setGroupSize(3);
     let group = await operatorContract.getGroupPublicKey(0);
-    await operatorContract.addGroupMember(group, accounts[0]);
-    await operatorContract.addGroupMember(group, accounts[1]);
-    await operatorContract.addGroupMember(group, accounts[2]);
+    await operatorContract.setGroupMembers(group, [accounts[0], accounts[1], accounts[2]]);
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
@@ -45,7 +43,7 @@ contract('KeepRandomBeaconOperator', (accounts) => {
 
     // Make sure no change will make the verification more expensive than it is
     // now or that even if it happens, it will be a conscious decision.
-    assert.isBelow(gasEstimate, 378598, "Relay entry submission is too expensive")
+    assert.isBelow(gasEstimate, 378902, "Relay entry submission is too expensive")
   });
 
   it("should not allow to submit corrupted relay entry", async () => {

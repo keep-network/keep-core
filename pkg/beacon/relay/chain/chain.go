@@ -5,7 +5,6 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -13,6 +12,10 @@ import (
 
 // StakerAddress represents chain-specific address of the staker.
 type StakerAddress []byte
+
+// GroupMemberIndex is an index of a threshold relay group member.
+// Maximum value accepted by the chain is 255.
+type GroupMemberIndex = uint8
 
 // RelayEntryInterface defines the subset of the relay chain interface that
 // pertains specifically to submission and retrieval of relay requests and
@@ -74,6 +77,9 @@ type GroupRegistrationInterface interface {
 	// in the past. Stale group is never selected by the chain to any new
 	// operation.
 	IsStaleGroup(groupPublicKey []byte) (bool, error)
+	// GetGroupMembers returns `GroupSize` slice of addresses of
+	// participants which have been selected to the group with given public key.
+	GetGroupMembers(groupPublicKey []byte) ([]StakerAddress, error)
 }
 
 // GroupInterface defines the subset of the relay chain interface that pertains
@@ -92,9 +98,9 @@ type DistributedKeyGenerationInterface interface {
 	// Signatures over DKG result hash are collected in a map keyed by signer's
 	// member index.
 	SubmitDKGResult(
-		participantIndex group.MemberIndex,
+		participantIndex GroupMemberIndex,
 		dkgResult *DKGResult,
-		signatures map[group.MemberIndex][]byte,
+		signatures map[GroupMemberIndex][]byte,
 	) *async.EventDKGResultSubmissionPromise
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.

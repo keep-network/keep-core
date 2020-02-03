@@ -1,12 +1,34 @@
+.rewards-wrapper {
+    flex-direction: column-reverse !important;
+    .rewards-history {
+        width: 100%;
+    }
+
+    .group-items {
+        margin-bottom: 1.5rem;
+        width: 100%;
+        align-self: unset;
+    }
+}
+
+.rewards-balance {
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    h2 {
+        color: @aqua-marine;
+        letter-spacing: -1px;
+    }
+    h6 {
+        letter-spacing: .05rem;
+        font-variant: small-caps;
+    }
+}
+
 .group-items {
+    margin: 0;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-
-    p {
-        font-size: 1.5rem;
-        margin-top: 2rem;
-    }
 }
 
 .see-all-btn {
@@ -20,6 +42,7 @@
     flex-basis: 100%;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     margin-bottom: 1.5rem;
     border-bottom: 1px solid @black;
     padding: 1rem 0;
@@ -43,10 +66,6 @@
         
     }
 
-    .group-reward {
-        align-items: flex-end;
-    }
-
     button {
         flex-basis: 100%;
         margin-top: 1rem;
@@ -57,7 +76,21 @@
     }
 }
 
-@media screen and (min-width: 750px) {
+@media screen and (min-width: 1100px) {
+    .rewards-wrapper {
+        flex-direction: row !important;
+        .rewards-history {
+            flex-basis: 35%;
+            align-self: flex-start;
+            margin-right: 1.5rem;
+        }
+        .group-items {
+            margin-bottom: 0;
+            align-self: flex-start;
+            flex-basis: 65%;
+        }
+    }
+
     .group-item {
         flex-wrap: nowrap;
         flex-direction: row;
@@ -84,9 +117,9 @@
                 align-self: flex-end;
             }
         }
-    
-        &:hover {
-            transform: scale(1.02);
+
+        .group-reward {
+            align-items: flex-end;
         }
     }
 

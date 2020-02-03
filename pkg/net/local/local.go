@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -148,10 +148,11 @@ func randomIdentifier() string {
 
 type messageHandler struct {
 	ctx     context.Context
-	channel chan retransmission.NetworkMessage
+	channel chan net.Message
 }
 
 type localChannel struct {
+	counter              uint64
 	name                 string
 	identifier           net.TransportIdentifier
 	staticKey            *key.NetworkPublic
@@ -162,57 +163,70 @@ type localChannel struct {
 	retransmissionTicker *retransmission.Ticker
 }
 
+func (lc *localChannel) nextSeqno() uint64 {
+	return atomic.AddUint64(&lc.counter, 1)
+}
+
 func (lc *localChannel) Name() string {
 	return lc.name
 }
 
-func doSend(channel *localChannel, message *pb.NetworkMessage) error {
-	channelsMutex.Lock()
-	targetChannels := channels[channel.name]
-	channelsMutex.Unlock()
-
-	unmarshaler, found := channel.unmarshalersByType[string(message.Type)]
-	if !found {
-		return fmt.Errorf("couldn't find unmarshaler for type %s", string(message.Type))
-	}
-
-	unmarshaled := unmarshaler()
-	err := unmarshaled.Unmarshal(message.Payload)
+func (lc *localChannel) Send(ctx context.Context, message net.TaggedMarshaler) error {
+	bytes, err := message.Marshal()
 	if err != nil {
 		return err
 	}
 
-	fingerprint := retransmission.CalculateFingerprint(
-		channel.identifier,
-		message.Payload,
+	unmarshaler, found := lc.unmarshalersByType[string(message.Type())]
+	if !found {
+		return fmt.Errorf("couldn't find unmarshaler for type %s", string(message.Type()))
+	}
+
+	unmarshaled := unmarshaler()
+	err = unmarshaled.Unmarshal(bytes)
+	if err != nil {
+		return err
+	}
+
+	netMessage := internal.BasicMessage(
+		lc.identifier,
+		unmarshaled,
+		"local",
+		key.Marshal(lc.staticKey),
+		lc.nextSeqno(),
 	)
 
-	protocolMessage := retransmission.NewNetworkMessage(
-		internal.BasicMessage(
-			channel.identifier,
-			unmarshaled,
-			"local",
-			key.Marshal(channel.staticKey),
-		),
-		fingerprint,
-		message.Retransmission,
+	retransmission.ScheduleRetransmissions(
+		ctx,
+		lc.retransmissionTicker,
+		func() error {
+			return doSend(lc, netMessage)
+		},
 	)
+
+	return doSend(lc, netMessage)
+}
+
+func doSend(channel *localChannel, message net.Message) error {
+	channelsMutex.Lock()
+	targetChannels := channels[channel.name]
+	channelsMutex.Unlock()
 
 	for _, targetChannel := range targetChannels {
-		targetChannel.deliver(protocolMessage)
+		targetChannel.deliver(message)
 	}
 
 	return nil
 }
 
-func (lc *localChannel) deliver(message retransmission.NetworkMessage) {
+func (lc *localChannel) deliver(message net.Message) {
 	lc.messageHandlersMutex.Lock()
 	snapshot := make([]*messageHandler, len(lc.messageHandlers))
 	copy(snapshot, lc.messageHandlers)
 	lc.messageHandlersMutex.Unlock()
 
 	for _, handler := range snapshot {
-		go func(message retransmission.NetworkMessage, handler *messageHandler) {
+		go func(message net.Message, handler *messageHandler) {
 			select {
 			case handler.channel <- message:
 			// Nothing to do here; we block until the message is handled
@@ -227,43 +241,10 @@ func (lc *localChannel) deliver(message retransmission.NetworkMessage) {
 	}
 }
 
-func (lc *localChannel) Send(ctx context.Context, message net.TaggedMarshaler) error {
-	messageProto, err := lc.messageProto(message)
-	if err != nil {
-		return err
-	}
-
-	retransmission.ScheduleRetransmissions(
-		ctx,
-		lc.retransmissionTicker,
-		messageProto,
-		func(msg *pb.NetworkMessage) error {
-			return doSend(lc, msg)
-		},
-	)
-
-	return doSend(lc, messageProto)
-}
-
-func (lc *localChannel) messageProto(
-	message net.TaggedMarshaler,
-) (*pb.NetworkMessage, error) {
-	payloadBytes, err := message.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.NetworkMessage{
-		Payload: payloadBytes,
-		Sender:  []byte(lc.identifier.String()),
-		Type:    []byte(message.Type()),
-	}, nil
-}
-
 func (lc *localChannel) Recv(ctx context.Context, handler func(m net.Message)) {
 	messageHandler := &messageHandler{
 		ctx:     ctx,
-		channel: make(chan retransmission.NetworkMessage),
+		channel: make(chan net.Message),
 	}
 
 	lc.messageHandlersMutex.Lock()
@@ -328,7 +309,7 @@ func (lc *localChannel) RegisterUnmarshaler(
 	return
 }
 
-func (lc *localChannel) AddFilter(filter net.BroadcastChannelFilter) error {
+func (lc *localChannel) SetFilter(filter net.BroadcastChannelFilter) error {
 	return nil // no-op
 }
 

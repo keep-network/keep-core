@@ -1,3 +1,12 @@
+/**
+ * Important: the KeepRandomBeaconOperatorRewardsStub contract should be deployed to the network!
+ * 
+ * This script:
+ *  - delegates stake to operators. For each operator uses the same beneficiary(magpie) address,
+ *  - adds 20 mock groups of which 9 makes stale,
+ *  - emits fake withdrawal events.
+ *  */ 
+
 const KeepToken = artifacts.require("./KeepToken.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 // The KeepRandomBeaconOperatorRewardsStub contract should be deployed to the network
@@ -84,6 +93,12 @@ module.exports = async function() {
   console.log('number of groups:', numberOfGroups.toString());
   console.log('first active index:', firstActiveIndex.toString());
 
+  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 1)
+  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 3)
+  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 1)
+  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 5)
+  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 6)  
+
   async function registerNewGroups (numberOfGroups) {
     const groupReward = web3.utils.toWei('14500', 'Gwei');
     for (let i = 0; i < numberOfGroups; i++) {
@@ -91,9 +106,7 @@ module.exports = async function() {
       const groupPubKey = crypto.randomBytes(32);
       await keepRandomBeaconOerator.registerNewGroup(groupPubKey)
       await keepRandomBeaconOerator.addGroupMemberReward(groupPubKey, groupReward);
-      await keepRandomBeaconOerator.addGroupMember(groupPubKey, accounts[1]);
-      await keepRandomBeaconOerator.addGroupMember(groupPubKey, accounts[1]);
-      await keepRandomBeaconOerator.addGroupMember(groupPubKey, accounts[1]);
+      await keepRandomBeaconOerator.setGroupMembers(groupPubKey, [accounts[1], accounts[2]]);
       console.log('created group', await keepRandomBeaconOerator.getGroupPublicKey(i));
     }
   }

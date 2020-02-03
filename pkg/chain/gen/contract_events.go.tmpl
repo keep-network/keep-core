@@ -1,4 +1,5 @@
 {{- $contract := . -}}
+{{- $logger := (print $contract.ShortVar "Logger") -}}
 {{- range $i, $event := .Events }}
 
 type {{$contract.FullVar}}{{$event.CapsName}}Func func(
@@ -6,6 +7,70 @@ type {{$contract.FullVar}}{{$event.CapsName}}Func func(
 )
 
 func ({{$contract.ShortVar}} *{{$contract.Class}}) Watch{{$event.CapsName}}(
+	success {{$contract.FullVar}}{{$event.CapsName}}Func,
+	fail func(err error) error,
+	{{$event.IndexedFilterDeclarations -}}
+) (subscription.EventSubscription, error) {
+    errorChan := make(chan error)
+    unsubscribeChan := make(chan struct{})
+
+    // Delay which must be preserved before a new resubscription attempt.
+    // There is no sense to resubscribe immediately after the fail of current
+    // subscription because the publisher must have some time to recover.
+    retryDelay := 5 * time.Second
+
+    watch := func() {
+    	failCallback := func(err error) error {
+    		fail(err)
+    		errorChan <- err // trigger resubscription signal
+    		return err
+    	}
+
+    	subscription, err := {{$contract.ShortVar}}.subscribe{{$event.CapsName}}(
+    	    success,
+    	    failCallback,
+    	    {{$event.IndexedFilters}}
+    	)
+    	if err != nil {
+    		errorChan <- err // trigger resubscription signal
+    		return
+    	}
+
+    	// wait for unsubscription signal
+    	<-unsubscribeChan
+    	subscription.Unsubscribe()
+    }
+
+    // trigger the resubscriber goroutine
+    go func() {
+    	go watch() // trigger first subscription
+
+    	for {
+    		select {
+    		case <-errorChan:
+    		    {{$logger}}.Warning(
+                    "subscription to event {{$event.CapsName}} terminated with error; " +
+                        "resubscription attempt will be performed after the retry delay",
+                )
+    			time.Sleep(retryDelay)
+    			go watch()
+    		case <-unsubscribeChan:
+    			// shutdown the resubscriber goroutine on unsubscribe signal
+    			return
+    		}
+    	}
+    }()
+
+    // closing the unsubscribeChan will trigger a unsubscribe signal and
+    // run unsubscription for all subscription instances
+    unsubscribeCallback := func() {
+    	close(unsubscribeChan)
+    }
+
+    return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func ({{$contract.ShortVar}} *{{$contract.Class}}) subscribe{{$event.CapsName}}(
 	success {{$contract.FullVar}}{{$event.CapsName}}Func,
 	fail func(err error) error,
 	{{$event.IndexedFilterDeclarations -}}

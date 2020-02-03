@@ -7,7 +7,6 @@ contract GroupsTerminationStub {
 
     constructor() public {
         groups.groupActiveTime = 5;
-        groups.activeGroupsThreshold = 1;
     }
 
     function addGroup(bytes memory groupPubKey) public {
@@ -22,10 +21,6 @@ contract GroupsTerminationStub {
 
     function terminateGroup(uint256 groupIndex) public {
         groups.terminatedGroups.push(groupIndex);
-    }
-
-    function setActiveGroupsThreshold(uint256 threshold) public {
-        groups.activeGroupsThreshold = threshold;
     }
 
     function selectGroup(uint256 seed) public returns(uint256) {

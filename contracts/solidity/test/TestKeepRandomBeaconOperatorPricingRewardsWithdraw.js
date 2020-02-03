@@ -36,18 +36,16 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     groupSize = web3.utils.toBN(3)
     await operatorContract.setGroupSize(groupSize)
 
-    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, 0)
-    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, 0)
-    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, 0)
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, operator1, 0)
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, operator2, 0)
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, operator3, 0)
 
     group1 = crypto.randomBytes(128)
     group2 = crypto.randomBytes(128)
     group3 = crypto.randomBytes(128)
 
     await operatorContract.registerNewGroup(group1)
-    await operatorContract.addGroupMember(group1, operator1)
-    await operatorContract.addGroupMember(group1, operator2)
-    await operatorContract.addGroupMember(group1, operator2)
+    await operatorContract.setGroupMembers(group1, [operator1, operator2, operator2])
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
@@ -57,9 +55,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     // Register second group with all members as operator1
     await operatorContract.registerNewGroup(group2)
-    await operatorContract.addGroupMember(group2, operator1)
-    await operatorContract.addGroupMember(group2, operator1)
-    await operatorContract.addGroupMember(group2, operator1)
+    await operatorContract.setGroupMembers(group2, [operator1, operator1, operator1])
 
     // New request will expire the first group
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
@@ -67,6 +63,8 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     let entryFee = await serviceContract.entryFeeBreakdown()
     memberBaseReward = entryFee.groupProfitFee.div(groupSize)
+
+    mineBlocks(4) // make sure groups become stale in tests
   })
 
   beforeEach(async () => {
@@ -103,9 +101,9 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     // operator1 has 1 member in group1 and 3 members in group2
     let expectedReward = memberBaseReward.muln(4)
     let memberIndices = await operatorContract.getGroupMemberIndices(group1, operator1)
-    await operatorContract.withdrawGroupMemberRewards(0, memberIndices, {from: operator1})
+    await operatorContract.withdrawGroupMemberRewards(operator1, 0, memberIndices)
     memberIndices = await operatorContract.getGroupMemberIndices(group2, operator1)
-    await operatorContract.withdrawGroupMemberRewards(1, memberIndices, {from: operator1})
+    await operatorContract.withdrawGroupMemberRewards(operator1, 1, memberIndices)
 
     assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary1))).eq(beneficiary1balance.add(expectedReward)), "Unexpected beneficiary balance")
   })
@@ -122,7 +120,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     // operator2 has 2 members in group1 only
     let expectedReward = memberBaseReward.muln(2)
     let memberIndices = await operatorContract.getGroupMemberIndices(group1, operator2)
-    await operatorContract.withdrawGroupMemberRewards(0, memberIndices, {from: operator2})
+    await operatorContract.withdrawGroupMemberRewards(operator2, 0, memberIndices)
     assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary2balance.add(expectedReward)), "Unexpected beneficiary balance")
   })
 
@@ -140,7 +138,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let beneficiary3balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary3))
 
     // operator3 doesn't have any group members, nothing can be withdrawn even using valid indices from other members
-    await operatorContract.withdrawGroupMemberRewards(0, memberIndices, {from: operator3})
+    await operatorContract.withdrawGroupMemberRewards(operator3, 0, memberIndices)
     assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary3))).eq(beneficiary3balance), "Unexpected beneficiary balance")
   })
 
@@ -152,7 +150,10 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let beneficiary1balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary1))
 
     // Nothing can be withdrawn
-    await operatorContract.withdrawGroupMemberRewards(1, memberIndices, {from: operator1})
+    await expectThrowWithMessage(
+      operatorContract.withdrawGroupMemberRewards(operator1, 1, memberIndices),
+      "Group must be expired and stale"
+    )
     assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary1))).eq(beneficiary1balance), "Unexpected beneficiary balance")
   })
 
@@ -165,7 +166,10 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
     // Nothing can be withdrawn
-    await operatorContract.withdrawGroupMemberRewards(0, memberIndices, {from: operator2})
+    await expectThrowWithMessage(
+      operatorContract.withdrawGroupMemberRewards(operator2, 0, memberIndices),
+      "Group must be expired and stale"
+    )
     assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary2balance), "Unexpected beneficiary balance")
   })
 })

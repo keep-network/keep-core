@@ -13,7 +13,6 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -339,6 +338,25 @@ func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.IsStaleGroup(groupPublicKey)
 }
 
+func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
+	[]chain.StakerAddress,
+	error,
+) {
+	members, err := ec.keepRandomBeaconOperatorContract.GetGroupMembers(
+		groupPublicKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	stakerAddresses := make([]chain.StakerAddress, len(members))
+	for i, member := range members {
+		stakerAddresses[i] = member.Bytes()
+	}
+
+	return stakerAddresses, nil
+}
+
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
@@ -368,9 +386,9 @@ func (ec *ethereumChain) ReportRelayEntryTimeout() error {
 }
 
 func (ec *ethereumChain) SubmitDKGResult(
-	participantIndex group.MemberIndex,
+	participantIndex chain.GroupMemberIndex,
 	result *relaychain.DKGResult,
-	signatures map[group.MemberIndex][]byte,
+	signatures map[chain.GroupMemberIndex][]byte,
 ) *async.EventDKGResultSubmissionPromise {
 	resultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
@@ -433,10 +451,9 @@ func (ec *ethereumChain) SubmitDKGResult(
 	}
 
 	if _, err = ec.keepRandomBeaconOperatorContract.SubmitDkgResult(
-		participantIndex.Int(),
+		big.NewInt(int64(participantIndex)),
 		result.GroupPublicKey,
-		result.Disqualified,
-		result.Inactive,
+		result.Misbehaved,
 		signaturesOnChainFormat,
 		membersIndicesOnChainFormat,
 	); err != nil {
@@ -453,7 +470,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 // concatenated signatures. Signatures and member indices are returned in the
 // matching order. It requires each signature to be exactly 65-byte long.
 func convertSignaturesToChainFormat(
-	signatures map[group.MemberIndex][]byte,
+	signatures map[chain.GroupMemberIndex][]byte,
 ) ([]*big.Int, []byte, error) {
 	var membersIndices []*big.Int
 	var signaturesSlice []byte
@@ -467,7 +484,7 @@ func convertSignaturesToChainFormat(
 				SignatureSize,
 			)
 		}
-		membersIndices = append(membersIndices, memberIndex.Int())
+		membersIndices = append(membersIndices, big.NewInt(int64(memberIndex)))
 		signaturesSlice = append(signaturesSlice, signature...)
 	}
 
@@ -485,7 +502,7 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 ) (relaychain.DKGResultHash, error) {
 
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
-	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Disqualified, dkgResult.Inactive)
+	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
 
 	return relaychain.DKGResultHashFromBytes(hash)
 }
