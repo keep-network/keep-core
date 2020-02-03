@@ -1,9 +1,16 @@
 import {bls} from './helpers/data';
 import mineBlocks from './helpers/mineBlocks';
 import {initContracts} from './helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
+
+import stakeAndGenesis from './helpers/stakeAndGenesis';
+
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
 contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
+
+  const groupSize = 3;
+  const groupThreshold = 2;
 
   let operatorContract, serviceContract, callbackContract;
 
@@ -20,11 +27,18 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
     serviceContract = contracts.serviceContract;
     callbackContract = await CallbackContract.new();
 
-    // Using stub method to add first group to help testing.
-    await operatorContract.registerNewGroup(bls.groupPubKey);
-    operatorContract.setGroupSize(3);
-    let group = await operatorContract.getGroupPublicKey(0);
-    await operatorContract.setGroupMembers(group, [accounts[0], accounts[1], accounts[2]]);
+    await operatorContract.setGroupSize(groupSize);
+    await operatorContract.setGroupThreshold(groupThreshold);
+
+    await stakeAndGenesis(accounts, contracts);
+  });
+
+  beforeEach(async () => {
+    await createSnapshot()
+  });
+
+  afterEach(async () => {
+    await restoreSnapshot()
   });
 
   it("should produce entry if callback contract was not provided", async function() {
@@ -56,18 +70,20 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should successfully call method on a callback contract and trigger new group creation", async function() {
-    mineBlocks(130); // Make sure dkgTimeout passed so relay entry can start group selection
-    assert.isTrue(await operatorContract.isGroupSelectionPossible(), "GroupSelectionPossible");
-    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
-
     // Fund DKG pool
     const groupCreationGasEstimate = await operatorContract.groupCreationGasEstimate();
     const fluctuationMargin = await operatorContract.fluctuationMargin();
     const priceFeedEstimate = await serviceContract.priceFeedEstimate();
     const gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
     await serviceContract.fundDkgFeePool({value: groupCreationGasEstimate.mul(gasPriceWithFluctuationMargin)});
+
+    // Make sure DKG is possible
+    assert.isTrue(await operatorContract.isGroupSelectionPossible(), "Group selection should be possible");
+
+    // Request relay entry with a callback
+    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
+    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
 
     await operatorContract.relayEntry(bls.groupSignature);
 
@@ -91,37 +107,33 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should submit relay entry and trigger new group creation with failed callback", async function() {
-    mineBlocks(130); // Make sure dkgTimeout passed so relay entry can start group selection
-    assert.isTrue(await operatorContract.isGroupSelectionPossible(), "GroupSelectionPossible");
-    let callbackGas = 1; // Wrong gas estimation
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas) 
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
-
-    // Fund DKG pool
-    const groupCreationGasEstimate = await operatorContract.groupCreationGasEstimate();
-    const fluctuationMargin = await operatorContract.fluctuationMargin();
-    const priceFeedEstimate = await serviceContract.priceFeedEstimate();
-    const gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
-    await serviceContract.fundDkgFeePool({value: groupCreationGasEstimate.mul(gasPriceWithFluctuationMargin)});
-
-    await operatorContract.relayEntry(bls.groupSignature);
-
-    assert.equal((await operatorContract.getPastEvents())[1].event,
-      'GroupSelectionStarted', "Should start group selection"
-    );
-
-    assert.equal((await operatorContract.getPastEvents())[1].args['newEntry'].toString(),
-      bls.groupSignatureNumber.toString(), "Should start group selection with new entry"
-    );
-
-    assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
-      bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
-    );
-
-    let result = web3.utils.toBN(await callbackContract.lastEntry());
-      assert.isFalse(
-      result.eq(bls.groupSignatureNumber),
-      "Unexpected callback"
-    );
+     // Fund DKG pool
+     const groupCreationGasEstimate = await operatorContract.groupCreationGasEstimate();
+     const fluctuationMargin = await operatorContract.fluctuationMargin();
+     const priceFeedEstimate = await serviceContract.priceFeedEstimate();
+     const gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
+     await serviceContract.fundDkgFeePool({value: groupCreationGasEstimate.mul(gasPriceWithFluctuationMargin)});
+ 
+     // Make sure DKG is possible
+     assert.isTrue(await operatorContract.isGroupSelectionPossible(), "Group selection should be possible");
+ 
+     // Request relay entry with a callback using wrong gas estimate
+     let callbackGas = 1; // wrong gas estimate
+     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
+     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
+ 
+     await operatorContract.relayEntry(bls.groupSignature);
+ 
+     assert.equal((await operatorContract.getPastEvents())[1].event,
+       'GroupSelectionStarted', "Should start group selection"
+     );
+ 
+     assert.equal((await operatorContract.getPastEvents())[1].args['newEntry'].toString(),
+       bls.groupSignatureNumber.toString(), "Should start group selection with new entry"
+     );
+     
+     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
+       bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
+     );
   });
 });
