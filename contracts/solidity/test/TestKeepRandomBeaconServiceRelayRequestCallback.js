@@ -56,7 +56,7 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should successfully call method on a callback contract and trigger new group creation", async function() {
-    mineBlocks(110); // Make sure dkgTimeout passed so relay entry can start group selection
+    mineBlocks(130); // Make sure dkgTimeout passed so relay entry can start group selection
     assert.isTrue(await operatorContract.isGroupSelectionPossible(), "GroupSelectionPossible");
     let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
@@ -91,7 +91,7 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should submit relay entry and trigger new group creation with failed callback", async function() {
-    mineBlocks(110); // Make sure dkgTimeout passed so relay entry can start group selection
+    mineBlocks(130); // Make sure dkgTimeout passed so relay entry can start group selection
     assert.isTrue(await operatorContract.isGroupSelectionPossible(), "GroupSelectionPossible");
     let callbackGas = 1; // Wrong gas estimation
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas) 
