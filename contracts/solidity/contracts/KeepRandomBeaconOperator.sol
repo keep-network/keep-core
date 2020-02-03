@@ -283,23 +283,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *   current candidate group selection.
      */
     function submitTicket(bytes32 ticket) public {
-        uint64 ticketValue;
-        uint160 stakerValue;
-        uint32 virtualStakerIndex;
-
-        bytes memory ticketBytes = abi.encodePacked(ticket);
-        /* solium-disable-next-line */
-        assembly {
-            // ticket value is 8 bytes long
-            ticketValue := mload(add(ticketBytes, 8))
-            // staker value is 20 bytes long
-            stakerValue := mload(add(ticketBytes, 28))
-            // virtual staker index is 4 bytes long
-            virtualStakerIndex := mload(add(ticketBytes, 32))
-        }
-
         uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(minimumStake);
-        groupSelection.submitTicket(ticketValue, uint256(stakerValue), uint256(virtualStakerIndex), stakingWeight);
+        groupSelection.submitTicket(ticket, stakingWeight);
     }
 
     /**
