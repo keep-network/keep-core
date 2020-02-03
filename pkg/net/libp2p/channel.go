@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	subscriptionWorkers = runtime.NumCPU()
+	subscriptionWorkers = 32
 	messageWorkers      = runtime.NumCPU()
 )
 

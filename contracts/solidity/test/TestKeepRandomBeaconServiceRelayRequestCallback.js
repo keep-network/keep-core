@@ -23,9 +23,7 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
     await operatorContract.registerNewGroup(bls.groupPubKey);
     operatorContract.setGroupSize(3);
     let group = await operatorContract.getGroupPublicKey(0);
-    await operatorContract.addGroupMember(group, accounts[0]);
-    await operatorContract.addGroupMember(group, accounts[1]);
-    await operatorContract.addGroupMember(group, accounts[2]);
+    await operatorContract.setGroupMembers(group, [accounts[0], accounts[1], accounts[2]]);
   });
 
   it("should produce entry if callback contract was not provided", async function() {

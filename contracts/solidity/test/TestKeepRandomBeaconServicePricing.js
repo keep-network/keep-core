@@ -37,9 +37,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     groupSize = web3.utils.toBN(3);
     await operatorContract.setGroupSize(groupSize);
     group = await operatorContract.getGroupPublicKey(0);
-    await operatorContract.addGroupMember(group, operator1);
-    await operatorContract.addGroupMember(group, operator2);
-    await operatorContract.addGroupMember(group, operator3);
+    await operatorContract.setGroupMembers(group, [operator1, operator2, operator3])
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, 0);
     await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, 0);

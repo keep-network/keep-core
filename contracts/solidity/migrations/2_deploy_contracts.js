@@ -12,9 +12,16 @@ const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
 const Registry = artifacts.require("./Registry.sol");
 
-const withdrawalDelay = 86400; // 1 day
+let initializationPeriod = 50000; // ~6 days
+const undelegationPeriod = 800000; // ~3 months
 
-module.exports = async function(deployer) {
+module.exports = async function(deployer, network) {
+
+  // Set the stake initialization period to 1 block for local development and testnet.
+  if (network == 'local' || network == 'ropsten') {
+    initializationPeriod = 1;
+  }
+
   await deployer.deploy(ModUtils);
   await deployer.link(ModUtils, AltBn128);
   await deployer.deploy(AltBn128);
@@ -22,7 +29,7 @@ module.exports = async function(deployer) {
   await deployer.deploy(BLS);
   await deployer.deploy(KeepToken);
   await deployer.deploy(Registry);
-  await deployer.deploy(TokenStaking, KeepToken.address, Registry.address, withdrawalDelay);
+  await deployer.deploy(TokenStaking, KeepToken.address, Registry.address, initializationPeriod, undelegationPeriod);
   await deployer.deploy(TokenGrant, KeepToken.address, TokenStaking.address);
   await deployer.deploy(GroupSelection);
   await deployer.link(GroupSelection, KeepRandomBeaconOperator);
@@ -34,7 +41,5 @@ module.exports = async function(deployer) {
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
-
-  // TODO: replace with a secure authorization protocol (addressed in RFC 11).
   await deployer.deploy(KeepRandomBeaconOperator, KeepRandomBeaconService.address, TokenStaking.address);
 };

@@ -1581,8 +1581,8 @@ func (rm *ReconstructingMember) calculateLagrangeCoefficient(memberID group.Memb
 					big.NewInt(int64(otherID)),
 					new(big.Int).ModInverse(
 						new(big.Int).Sub(
-							otherID.Int(),
-							memberID.Int(),
+							big.NewInt(int64(otherID)),
+							big.NewInt(int64(memberID)),
 						),
 						bn256.Order,
 					),
@@ -1622,7 +1622,7 @@ func (rm *ReconstructingMember) reconstructIndividualPublicKeys() {
 }
 
 func pow(id group.MemberIndex, y int) *big.Int {
-	return new(big.Int).Exp(id.Int(), big.NewInt(int64(y)), nil)
+	return new(big.Int).Exp(big.NewInt(int64(id)), big.NewInt(int64(y)), nil)
 }
 
 // CombineGroupPublicKey calculates a group public key by combining individual
