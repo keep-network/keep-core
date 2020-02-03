@@ -48,11 +48,25 @@ Things you will need:
 
 === Docker
 
+You can download the latest Keep client release here: <Docker Hub link>
+
 === Deployment Recommendations
 
 == Staking Your KEEP
 
-Stuff stuff dapp stuff stake stuff make stuff clicky clicky
+Regardless of how you deploy your Keep client, you must stake at least `minimumStake` with your Keep client operator account.  The Keep staking-dapp is the recommended method for managing your stake.
+
+=== Download the staking-dapp
+
+You can download the latest staking-dapp release here: <Docker Hub link>
+
+=== Run the staking-dapp
+
+Instructions for running
+
+=== Use the staking-dapp
+
+Instructions or link to instructions (with screens?) on using the staking-dapp.
 
 == Configuration
 
