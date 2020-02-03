@@ -334,7 +334,7 @@ workflows:
           context: keep-dev
           requires:
             - build_staking_dapp
-build-test-migrate-publish-keep-test:
+  build-test-migrate-publish-keep-test:
     jobs:
       - keep_test_approval:
           type: approval
