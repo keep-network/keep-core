@@ -70,7 +70,30 @@ Instructions or link to instructions (with screens?) on using the staking-dapp.
 
 === Network
 
-Keep clients need to talk out to the Keep Network and Ethereum.  Keep clients need to accept incoming connnections from the Keep network.  This typically breaks down firewall rules that allow public ingress on port `3919`, and egress on port `3919` / HTTP.  If you set a different port in your keep-client configuration, or configure peers with non-default ports configured, firewall rules will need to be adjusted accordingly.
+See the following table for **default** network requirements.
+
+[%header,cols=2*]
+|===
+|Egress
+|Port
+
+|Ethereum Network
+|`8545` / `8546`
+
+|Keep Network
+|`3919`
+|===
+
+[%header,cols=2*]
+|===
+|Ingress
+|Port
+
+|Keep Network
+|`3919`
+|===
+
+**NOTE:** If you set a different `port` in your keep-client configuration, or configure `peers` with non-default ports configured, firewall rules will need to be adjusted accordingly.
 
 === Application
 
