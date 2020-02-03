@@ -389,8 +389,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
             dkgSubmitterReimbursementFee = 0;
             // Reimburse submitter with actual DKG cost.
-            (bool success, ) = magpie.call.value(reimbursementFee)("");
-            require(success, "Failed reimburse actual DKG cost");
+            magpie.call.value(reimbursementFee)("");
 
             // Return surplus to the contract that started DKG.
             groupSelectionStarterContract.fundDkgFeePool.value(surplus)();
@@ -398,8 +397,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             // If submitter used higher gas price reimburse only dkgSubmitterReimbursementFee max.
             reimbursementFee = dkgSubmitterReimbursementFee;
             dkgSubmitterReimbursementFee = 0;
-            (bool success, ) = magpie.call.value(reimbursementFee)("");
-            require(success, "Failed reimburse DKG fee");
+            magpie.call.value(reimbursementFee)("");
         }
     }
 
@@ -492,8 +490,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(submitterReward)("");
-        require(success, "Failed send relay submitter reward");
+        stakingContract.magpieOf(msg.sender).call.value(submitterReward)("");
 
         if (subsidy > 0) {
             signingRequest.serviceContract.call.value(subsidy)(abi.encodeWithSignature("fundRequestSubsidyFeePool()"));
@@ -726,8 +723,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function withdrawGroupMemberRewards(address operator, uint256 groupIndex, uint256[] memory groupMemberIndices) public nonReentrant {
         uint256 accumulatedRewards = groups.withdrawFromGroup(operator, groupIndex, groupMemberIndices);
-        (bool success, ) = stakingContract.magpieOf(operator).call.value(accumulatedRewards)("");
-        require(success, "Failed withdraw rewards");
+        stakingContract.magpieOf(operator).call.value(accumulatedRewards)("");
         emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, accumulatedRewards, groupIndex);
     }
 
