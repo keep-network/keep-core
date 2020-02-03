@@ -513,10 +513,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // Make sure not to spend more than what was received from the service contract for the callback
         uint256 gasLimit = signingRequest.callbackFee.div(priceFeedEstimate);
 
-        bool success;
         bytes memory data;
         uint256 gasBeforeCallback = gasleft();
-        (success, data) = signingRequest.serviceContract.call.gas(gasLimit)(abi.encodeWithSignature("executeCallback(uint256,uint256)", signingRequest.relayRequestId, entry));
+        (, data) = signingRequest.serviceContract.call.gas(gasLimit)(abi.encodeWithSignature("executeCallback(uint256,uint256)", signingRequest.relayRequestId, entry));
         uint256 gasSpent = gasBeforeCallback.sub(gasleft());
         uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
 
@@ -728,8 +727,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function withdrawGroupMemberRewards(address operator, uint256 groupIndex, uint256[] memory groupMemberIndices) public nonReentrant {
         uint256 accumulatedRewards = groups.withdrawFromGroup(operator, groupIndex, groupMemberIndices);
-        stakingContract.magpieOf(operator).call.value(accumulatedRewards)("");
-        emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, accumulatedRewards, groupIndex);
+        (bool success, ) = stakingContract.magpieOf(operator).call.value(accumulatedRewards)("");
+        if (success) {
+            emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, accumulatedRewards, groupIndex);
+        }
     }
 
     /**

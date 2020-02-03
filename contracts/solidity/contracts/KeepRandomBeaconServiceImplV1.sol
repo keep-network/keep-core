@@ -324,9 +324,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
             "Callback contract not found"
         );
 
-        bool success; // Store status of external contract call.
-        (success, ) = _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
-        require(success, "Failed execute callback");
+        _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
 
         surplusRecipient = _callbacks[requestId].surplusRecipient;
         delete _callbacks[requestId];
