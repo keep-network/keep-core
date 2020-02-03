@@ -66,6 +66,9 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
 
     bytes internal _previousEntry;
 
+    // Cost of executing executeCallback() on this contract, require checks and .call
+    uint256 internal _baseCallbackGas;
+
     struct Callback {
         address callbackContract;
         string callbackMethod;
@@ -273,7 +276,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         _requestSubsidyFeePool = _requestSubsidyFeePool.add(surplus);
 
         if (callbackContract != address(0)) {
-            _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackFee, callbackGas, msg.sender);
+            _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackFee, callbackGas.add(_baseCallbackGas), msg.sender);
         }
 
         // Send 1% of the request subsidy pool to the requestor.
@@ -349,6 +352,20 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
     }
 
     /**
+     * @dev Set base callback gas required for relay entry callback.
+     */
+    function setBaseCallbackGas(uint256 baseCallbackGas) public onlyOperatorContractUpgrader {
+        _baseCallbackGas = baseCallbackGas;
+    }
+
+    /**
+     * @dev Get base callback gas required for relay entry callback.
+     */
+    function baseCallbackGas() public view returns(uint256) {
+        return _baseCallbackGas;
+    }
+
+    /**
      * @dev Set the gas price in wei for estimating relay entry request payment.
      * @param priceFeedEstimate is the gas price required for estimating relay entry request payment.
      */
@@ -384,7 +401,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         // We take the gas price from the price feed to not let malicious
         // miner-requestors manipulate the gas price when requesting relay entry
         // and underpricing expensive callbacks.
-        return callbackGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
+        return (callbackGas.add(_baseCallbackGas)).mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
     }
 
     /**

@@ -511,7 +511,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function executeCallback(SigningRequest memory signingRequest, uint256 entry) internal {
         // Make sure not to spend more than what was received from the service contract for the callback
-        uint256 gasLimit = signingRequest.callbackFee.div(priceFeedEstimate);
+        uint256 gasLimit = signingRequest.callbackFee.div(gasPriceWithFluctuationMargin(priceFeedEstimate));
 
         bytes memory data;
         uint256 gasBeforeCallback = gasleft();

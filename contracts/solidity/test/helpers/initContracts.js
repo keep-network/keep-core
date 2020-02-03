@@ -46,6 +46,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await registry.approveOperatorContract(operatorContract.address);
   await serviceContract.initialize(priceFeedEstimate, fluctuationMargin, dkgContributionMargin, withdrawalDelay, registry.address);
   await serviceContract.addOperatorContract(operatorContract.address);
+  await serviceContract.setBaseCallbackGas(18848);
 
   let dkgGasEstimate = await operatorContract.dkgGasEstimate();
   let gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(web3.utils.toBN(fluctuationMargin)).div(web3.utils.toBN(100)));
