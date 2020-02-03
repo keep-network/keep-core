@@ -224,21 +224,6 @@ Keep uses the Ethereum Ropsten Testnet.
 
 [%header,cols=2*]
 |===
-|Utility
-|Address
-
-|ModUtils
-|`0x621a0dD8bfB1E29DE1B9E897CBfb602520586890`
-
-|AltBn128
-|`0xdE29680BB6cb5B1767Cc590926fad26B56F15A3F`
-
-|BLS
-|`0xa1199fa46Bf3F7905b696fBC224aEE4a1d62547b`
-|===
-
-[%header,cols=2*]
-|===
 |Token
 |
 
