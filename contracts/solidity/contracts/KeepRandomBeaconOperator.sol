@@ -498,7 +498,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         stakingContract.magpieOf(msg.sender).call.value(submitterReward)("");
 
         if (subsidy > 0) {
-            signingRequest.serviceContract.call.value(subsidy)(abi.encodeWithSignature("fundRequestSubsidyFeePool()"));
+            signingRequest.serviceContract.call.gas(35000).value(subsidy)(abi.encodeWithSignature("fundRequestSubsidyFeePool()"));
         }
 
         currentEntryStartBlock = 0;
@@ -535,7 +535,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             // Expecting 32 bytes data containing 20 byte address
             if (data.length == 32) {
                 address surplusRecipient = data.toAddress(12);
-                (success, ) = surplusRecipient.call.value(callbackSurplus)("");
+                surplusRecipient.call.gas(8000).value(callbackSurplus)("");
             }
         } else {
             // Reimburse submitter with the callback payment sent by the requestor.
