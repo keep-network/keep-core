@@ -477,10 +477,15 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         emit RelayEntrySubmitted();
 
-        ServiceContract(signingRequest.serviceContract).entryCreated(
-            signingRequest.relayRequestId,
-            _groupSignature,
-            msg.sender
+        // Spend no more than groupSelectionGasEstimate + 40000 gas max
+        // This will prevent relayEntry failure in case the service contract is compromised
+        signingRequest.serviceContract.call.gas(groupSelectionGasEstimate.add(40000))(
+            abi.encodeWithSignature(
+                "entryCreated(uint256,bytes,address)",
+                signingRequest.relayRequestId,
+                _groupSignature,
+                msg.sender
+            )
         );
 
         if (signingRequest.callbackFee > 0) {
