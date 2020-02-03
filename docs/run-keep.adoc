@@ -174,7 +174,7 @@ Keep clients need to talk out to the Keep Network and Ethereum.  Keep clients ne
 |Yes
 
 |`AnnouncedAddresses`
-|Multiaddr formatted hostnames or addresses annouced to the Keep Network.
+|Multiaddr formatted hostnames or addresses annouced to the Keep Network. More on multiaddr format https://docs.libp2p.io/reference/glossary/#multiaddr[here].
 |[""]
 |No
 |===
