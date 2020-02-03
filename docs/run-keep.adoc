@@ -50,6 +50,10 @@ Things you will need:
 
 === Deployment Recommendations
 
+== Staking Your KEEP
+
+Stuff stuff dapp stuff stake stuff make stuff clicky clicky
+
 == Configuration
 
 === Network
@@ -195,10 +199,6 @@ Keep clients need to talk out to the Keep Network and Ethereum.  Keep clients ne
 == Logging
 
 Our logging really isn't configurable so maybe we don't need this?
-
-== Staking Your KEEP (Maybe this goes towards the top of this doc?)
-
-Stuff stuff dapp stuff stake stuff make stuff clicky clicky
 
 == Connection Info (I'm not convinced this should be in this doc but it should be somewhere :shrug:)
 
