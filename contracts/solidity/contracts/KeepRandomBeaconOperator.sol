@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./TokenStaking.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
@@ -25,6 +26,7 @@ interface ServiceContract {
  */
 contract KeepRandomBeaconOperator is ReentrancyGuard {
     using SafeMath for uint256;
+    using BytesLib for bytes;
     using AddressArrayUtils for address[];
     using GroupSelection for GroupSelection.Storage;
     using Groups for Groups.Storage;
@@ -521,20 +523,16 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // Make sure not to spend more than what was received from the service contract for the callback
         uint256 gasLimit = signingRequest.callbackFee.div(priceFeedEstimate);
 
+        bool success;
+        bytes memory data;
         uint256 gasBeforeCallback = gasleft();
-        address surplusRecipient = ServiceContract(signingRequest.serviceContract).executeCallback.gas(gasLimit)(
-            signingRequest.relayRequestId,
-            entry
-        );
-
+        (success, data) = signingRequest.serviceContract.call.gas(gasLimit)(abi.encodeWithSignature("executeCallback(uint256,uint256)", signingRequest.relayRequestId, entry));
         uint256 gasSpent = gasBeforeCallback.sub(gasleft());
         uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
 
         // Obtain the actual callback gas expenditure and refund the surplus.
         uint256 callbackSurplus = 0;
         uint256 actualCallbackFee = gasSpent.mul(gasPrice);
-
-        bool success; // Store status of external contract call.
         // If we spent less on the callback than the customer transferred for the
         // callback execution, we need to reimburse the difference.
         if (actualCallbackFee < signingRequest.callbackFee) {
@@ -544,8 +542,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             require(success, "Failed reimburse actual callback cost");
 
             // Return callback surplus to the requestor.
-            (success, ) = surplusRecipient.call.value(callbackSurplus)("");
-            require(success, "Failed send callback surplus");
+            // Expecting 32 bytes data containing 20 byte address
+            if (data.length == 32) {
+                address surplusRecipient = data.toAddress(12);
+                (success, ) = surplusRecipient.call.value(callbackSurplus)("");
+                require(success, "Failed send callback surplus");
+            }
         } else {
             // Reimburse submitter with the callback payment sent by the requestor.
             (success, ) = msg.sender.call.value(signingRequest.callbackFee)("");

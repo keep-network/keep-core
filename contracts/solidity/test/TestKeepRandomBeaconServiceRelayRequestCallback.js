@@ -91,4 +91,39 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
       "Unexpected entry value passed to the callback"
     );
   });
+
+  it("should submit relay entry and trigger new group creation with failed callback", async function() {
+    mineBlocks(110); // Make sure dkgTimeout passed so relay entry can start group selection
+    assert.isTrue(await operatorContract.isGroupSelectionPossible(), "GroupSelectionPossible");
+    let callbackGas = 1; // Wrong gas estimation
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas) 
+    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
+
+    // Fund DKG pool
+    const groupCreationGasEstimate = await operatorContract.groupCreationGasEstimate();
+    const fluctuationMargin = await operatorContract.fluctuationMargin();
+    const priceFeedEstimate = await serviceContract.priceFeedEstimate();
+    const gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
+    await serviceContract.fundDkgFeePool({value: groupCreationGasEstimate.mul(gasPriceWithFluctuationMargin)});
+
+    await operatorContract.relayEntry(bls.groupSignature);
+
+    assert.equal((await operatorContract.getPastEvents())[1].event,
+      'GroupSelectionStarted', "Should start group selection"
+    );
+
+    assert.equal((await operatorContract.getPastEvents())[1].args['newEntry'].toString(),
+      bls.groupSignatureNumber.toString(), "Should start group selection with new entry"
+    );
+
+    assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
+      bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
+    );
+
+    let result = web3.utils.toBN(await callbackContract.lastEntry());
+      assert.isFalse(
+      result.eq(bls.groupSignatureNumber),
+      "Unexpected callback"
+    );
+  });
 });
