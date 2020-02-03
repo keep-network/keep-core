@@ -14,8 +14,8 @@ import (
 const (
 	libp2pMessageSigning              = true
 	libp2pStrictSignatureVerification = true
-	libp2pPeerOutboundQueueSize       = 128
-	libp2pValidationQueueSize         = 128
+	libp2pPeerOutboundQueueSize       = 256
+	libp2pValidationQueueSize         = 4096
 )
 
 type channelManager struct {
@@ -72,15 +72,21 @@ func (cm *channelManager) getChannel(name string) (*channel, error) {
 	cm.channelsMutex.Unlock()
 
 	if !exists {
+		// Ensure we update our cache of known channels
+		cm.channelsMutex.Lock()
+		defer cm.channelsMutex.Unlock()
+
+		channel, exists = cm.channels[name]
+		if exists {
+			return channel, nil
+		}
+
 		channel, err = cm.newChannel(name)
 		if err != nil {
 			return nil, err
 		}
 
-		// Ensure we update our cache of known channels
-		cm.channelsMutex.Lock()
 		cm.channels[name] = channel
-		cm.channelsMutex.Unlock()
 	}
 
 	return channel, nil
@@ -98,6 +104,7 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		peerStore:            cm.peerStore,
 		pubsub:               cm.pubsub,
 		subscription:         sub,
+		incomingMessageQueue: make(chan *pubsub.Message, incomingMessageThrottle),
 		messageHandlers:      make([]*messageHandler, 0),
 		unmarshalersByType:   make(map[string]func() net.TaggedUnmarshaler),
 		retransmissionTicker: cm.retransmissionTicker,

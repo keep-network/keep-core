@@ -8,29 +8,22 @@ import "./Registry.sol";
 /**
  * @title TokenStaking
  * @dev A token staking contract for a specified standard ERC20Burnable token.
- * A holder of the specified token can stake its tokens to this contract
- * and unstake after withdrawal delay is over.
+ * A holder of the specified token can stake delegate its tokens to this contract
+ * and recover the stake after undelegation period is over.
  */
 contract TokenStaking is StakeDelegatable {
 
     using UintArrayUtils for uint256[];
 
     event Staked(address indexed from, uint256 value);
-    event InitiatedUnstake(address indexed operator, uint256 value, uint256 createdAt);
-    event FinishedUnstake(address operator);
-
-    struct Withdrawal {
-        uint256 amount;
-        uint256 createdAt;
-    }
+    event Undelegated(address indexed operator, uint256 undelegatedAt);
+    event RecoveredStake(address operator, uint256 recoveredAt);
 
     // Registry contract with a list of approved operator contracts and upgraders.
     Registry public registry;
 
     // Authorized operator contracts.
     mapping(address => mapping (address => bool)) internal authorizations;
-
-    mapping(address => Withdrawal) public withdrawals;
 
     modifier onlyApprovedOperatorContract(address operatorContract) {
         require(
@@ -44,13 +37,18 @@ contract TokenStaking is StakeDelegatable {
      * @dev Creates a token staking contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
      * @param _registry Address of a keep registry that will be linked to this contract.
-     * @param _delay Withdrawal delay for unstake.
+     * @param _initializationPeriod To avoid certain attacks on work selection, recently created
+     * operators must wait for a specific period of time before being eligible for work selection.
+     * @param _undelegationPeriod The staking contract guarantees that an undelegated operator’s
+     * stakes will stay locked for a number of blocks after undelegation, and thus available as
+     * collateral for any work the operator is engaged in.
      */
-    constructor(address _tokenAddress, address _registry, uint256 _delay) public {
+    constructor(address _tokenAddress, address _registry, uint256 _initializationPeriod, uint256 _undelegationPeriod) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20Burnable(_tokenAddress);
         registry = Registry(_registry);
-        stakeWithdrawalDelay = _delay;
+        initializationPeriod = _initializationPeriod;
+        undelegationPeriod = _undelegationPeriod;
     }
 
     /**
@@ -70,79 +68,84 @@ contract TokenStaking is StakeDelegatable {
 
         address payable magpie = address(uint160(_extraData.toAddress(0)));
         address operator = _extraData.toAddress(20);
-        require(operatorToOwner[operator] == address(0), "Operator address is already in use.");
+        require(operators[operator].owner == address(0), "Operator address is already in use.");
         address authorizer = _extraData.toAddress(40);
-
-        operatorToOwner[operator] = _from;
-        operatorToMagpie[operator] = magpie;
-        operatorToAuthorizer[operator] = authorizer;
-        ownerOperators[_from].push(operator);
 
         // Transfer tokens to this contract.
         token.transferFrom(_from, address(this), _value);
 
-        // Maintain a record of the stake amount by the sender.
-        stakeBalances[operator] = stakeBalances[operator].add(_value);
+        operators[operator] = Operator(_value, block.number, 0, _from, magpie, authorizer);
+        ownerOperators[_from].push(operator);
+
         emit Staked(operator, _value);
     }
 
     /**
-     * @notice Initiates unstake of staked tokens and returns withdrawal request ID.
-     * You will be able to call `finishUnstake()` with this ID and finish
-     * unstake once withdrawal delay is over.
-     * @param _value The amount to be unstaked.
+     * @notice Cancels stake of tokens within the operator initialization period
+     * without being subjected to the token lockup for the undelegation period.
+     * This can be used to undo mistaken delegation to the wrong operator address.
      * @param _operator Address of the stake operator.
      */
-    function initiateUnstake(uint256 _value, address _operator) public {
-        address owner = operatorToOwner[_operator];
+    function cancelStake(address _operator) public {
+        address owner = operators[_operator].owner;
         require(
             msg.sender == _operator ||
-            msg.sender == owner, "Only operator or the owner of the stake can initiate unstake.");
-        require(_value <= stakeBalances[_operator], "Staker must have enough tokens to unstake.");
+            msg.sender == owner, "Only operator or the owner of the stake can cancel the delegation."
+        );
 
-        stakeBalances[_operator] = stakeBalances[_operator].sub(_value);
-        uint256 createdAt = now;
-        withdrawals[_operator] = Withdrawal(withdrawals[_operator].amount.add(_value), createdAt);
+        require(
+            block.number <= operators[_operator].createdAt.add(initializationPeriod),
+            "Initialization period is over"
+        );
 
-        emit InitiatedUnstake(_operator, _value, createdAt);
+        uint256 amount = operators[_operator].amount;
+        delete operators[_operator];
+        token.safeTransfer(owner, amount);
     }
 
     /**
-     * @notice Finishes unstake of the tokens of provided withdrawal request.
-     * You can only finish unstake once withdrawal delay is over for the request,
-     * otherwise the function will fail and remaining gas is returned.
+     * @notice Undelegates staked tokens. You will be able to recover your stake by calling
+     * `recoverStake()` with operator address once undelegation period is over.
+     * @param _operator Address of the stake operator.
+     */
+    function undelegate(address _operator) public {
+        address owner = operators[_operator].owner;
+        require(
+            msg.sender == _operator ||
+            msg.sender == owner, "Only operator or the owner of the stake can undelegate."
+        );
+        operators[_operator].undelegatedAt = block.number;
+        emit Undelegated(_operator, block.number);
+    }
+
+    /**
+     * @notice Recovers staked tokens and transfers them back to the owner. Recovering
+     * tokens can only be performed when the operator is finished undelegating.
      * @param _operator Operator address.
      */
-    function finishUnstake(address _operator) public {
-        require(now >= withdrawals[_operator].createdAt.add(stakeWithdrawalDelay), "Can not finish unstake before withdrawal delay is over.");
-        address owner = operatorToOwner[_operator];
+    function recoverStake(address _operator) public {
+        require(
+            block.number >= operators[_operator].undelegatedAt.add(undelegationPeriod),
+            "Can not recover stake before undelegation period is over."
+        );
+        address owner = operators[_operator].owner;
+        uint256 amount = operators[_operator].amount;
+        delete operators[_operator];
 
-        // No need to call approve since msg.sender will be this staking contract.
-        token.safeTransfer(owner, withdrawals[_operator].amount);
-
-        // Cleanup withdrawal record.
-        delete withdrawals[_operator];
-
-        // Release operator only when the stake is depleted
-        if (stakeBalances[_operator] <= 0) {
-            operatorToOwner[_operator] = address(0);
-            ownerOperators[owner].removeAddress(_operator);
-        }
-
-        emit FinishedUnstake(_operator);
+        token.safeTransfer(owner, amount);
+        emit RecoveredStake(_operator, block.number);
     }
 
     /**
-     * @dev Gets withdrawal request by Operator.
-     * @param _operator address of withdrawal request.
-     * @return amount The amount the given operator will be able to withdraw
-     *                once the withdrawal delay has passed.
-     * @return createdAt The initiation time of the withdrawal request for the
-     *                   given operator, used to determine when the withdrawal
-     *                   delay has passed.
+     * @dev Gets undelegate request by Operator.
+     * @param _operator Operator address.
+     * @return amount The amount the given operator will be able to recover
+     * once undelegation period has passed.
+     * @return undelegatedAt The time of undelegate request used to determine
+     * when the undelegation period has passed.
      */
-    function getWithdrawal(address _operator) public view returns (uint256 amount, uint256 createdAt) {
-        return (withdrawals[_operator].amount, withdrawals[_operator].createdAt);
+    function getUndelegation(address _operator) public view returns (uint256 amount, uint256 undelegatedAt) {
+        return (operators[_operator].amount, operators[_operator].undelegatedAt);
     }
 
     /**
@@ -157,7 +160,7 @@ contract TokenStaking is StakeDelegatable {
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
-            stakeBalances[operator] = stakeBalances[operator].sub(amount);
+            operators[operator].amount = operators[operator].amount.sub(amount);
         }
 
         token.burn(misbehavedOperators.length.mul(amount));
@@ -181,7 +184,7 @@ contract TokenStaking is StakeDelegatable {
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
-            stakeBalances[operator] = stakeBalances[operator].sub(amount);
+            operators[operator].amount = operators[operator].amount.sub(amount);
         }
 
         uint256 total = misbehavedOperators.length.mul(amount);
@@ -205,12 +208,61 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Checks if operator contract has been authorized for the provided operator.
+     * @dev Gets the eligible stake balance of the specified address.
+     * An eligible stake is a stake that passed the initialization period
+     * and is not currently undelegating. Also, the operator had to approve
+     * the specified operator contract.
+     *
+     * Operator with a minimum required amount of eligible stake can join the
+     * network and participate in new work selection.
+     *
      * @param _operator address of stake operator.
      * @param _operatorContract address of operator contract.
-     * @return Returns True if operator contract has been authorized for the provided operator.
+     * @return an uint256 representing the eligible stake balance.
      */
-    function isAuthorized(address _operator, address _operatorContract) public view returns (bool) {
-        return authorizations[_operatorContract][_operator];
+    function eligibleStake(
+        address _operator,
+        address _operatorContract
+    ) public view returns (uint256 balance) {
+        bool isAuthorized = authorizations[_operatorContract][_operator];
+
+        Operator memory operator = operators[_operator];
+
+        bool isActive = block.number >= operator.createdAt.add(initializationPeriod);
+        bool notUndelegated = block.number <= operator.undelegatedAt || operator.undelegatedAt == 0;
+
+        if (isAuthorized && isActive && notUndelegated) {
+            balance = operator.amount;
+        }
+    }
+
+    /**
+     * @dev Gets the active stake balance of the specified address.
+     * An active stake is a stake that passed the initialization period.
+     * Also, the operator had to approve the specified operator contract.
+     *
+     * The difference between eligible stake is that active stake does not make
+     * the operator eligible for work selection but it may be still finishing
+     * earlier work during undelegation period. Operator with a minimum required
+     * amount of active stake can join the network but cannot be selected to any
+     * new work.
+     *
+     * @param _operator address of stake operator.
+     * @param _operatorContract address of operator contract.
+     * @return an uint256 representing the eligible stake balance.
+     */
+    function activeStake(
+        address _operator,
+        address _operatorContract
+    ) public view returns (uint256 balance) {
+        bool isAuthorized = authorizations[_operatorContract][_operator];
+
+        Operator memory operator = operators[_operator];
+
+        bool isActive = block.number >= operator.createdAt.add(initializationPeriod);
+
+        if (isAuthorized && isActive) {
+            balance = operator.amount;
+        }
     }
 }

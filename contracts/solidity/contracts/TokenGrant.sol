@@ -18,7 +18,7 @@ interface tokenSender {
 /**
  * @title TokenGrant
  * @dev A token grant contract for a specified standard ERC20Burnable token.
- * Has additional functionality to stake/unstake token grants.
+ * Has additional functionality to stake delegate/undelegate token grants.
  * Tokens are granted to the grantee via vesting scheme and can be
  * withdrawn gradually based on the vesting schedule cliff and vesting duration.
  * Optionally grant can be revoked by the token grant manager.
@@ -312,28 +312,44 @@ contract TokenGrant {
     }
 
     /**
-     * @notice Initiate unstake of the token grant.
-     * @param _operator Operator of the stake.
+     * @notice Cancels delegation within the operator initialization period
+     * without being subjected to the stake lockup for the undelegation period.
+     * This can be used to undo mistaken delegation to the wrong operator address.
+     * @param _operator Address of the stake operator.
      */
-    function initiateUnstake(address _operator) public {
+    function cancelStake(address _operator) public {
         uint256 grantId = grantStakes[_operator].grantId;
         require(
             msg.sender == _operator || msg.sender == grants[grantId].grantee,
-            "Only operator or grantee can initiate unstake."
+            "Only operator or grantee can cancel the delegation."
         );
 
-        TokenStaking(grantStakes[_operator].stakingContract).initiateUnstake(grantStakes[_operator].amount, _operator);
+        TokenStaking(grantStakes[_operator].stakingContract).cancelStake(_operator);
     }
 
     /**
-     * @notice Finish unstake of the token grant.
+     * @notice Undelegate the token grant.
      * @param _operator Operator of the stake.
      */
-    function finishUnstake(address _operator) public {
+    function undelegate(address _operator) public {
+        uint256 grantId = grantStakes[_operator].grantId;
+        require(
+            msg.sender == _operator || msg.sender == grants[grantId].grantee,
+            "Only operator or grantee can undelegate."
+        );
+
+        TokenStaking(grantStakes[_operator].stakingContract).undelegate(_operator);
+    }
+
+    /**
+     * @notice Recover stake of the token grant.
+     * @param _operator Operator of the stake.
+     */
+    function recoverStake(address _operator) public {
         uint256 grantId = grantStakes[_operator].grantId;
         grants[grantId].staked = grants[grantId].staked.sub(grantStakes[_operator].amount);
 
-        TokenStaking(grantStakes[_operator].stakingContract).finishUnstake(_operator);
+        TokenStaking(grantStakes[_operator].stakingContract).recoverStake(_operator);
         delete grantStakes[_operator];
     }
 }

@@ -30,7 +30,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(bls.groupPubKey);
     let group = await operatorContract.getGroupPublicKey(0);
-    await operatorContract.addGroupMember(group, accounts[0]);
+    await operatorContract.setGroupMembers(group, [accounts[0]]);
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     entryFeeBreakdown = await serviceContract.entryFeeBreakdown();
@@ -208,7 +208,7 @@ contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
     await serviceContract.initiateWithdrawal({from: account_one});
     await expectThrow(serviceContract.finishWithdrawal(account_three, {from: account_one}));
 
-    // jump in time, full withdrawal delay
+    // jump in time, full undelegation period
     await increaseTimeTo(await latestTime()+duration.days(30));
 
     let receiverStartBalance = await web3.eth.getBalance(account_three);

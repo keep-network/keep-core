@@ -2,25 +2,23 @@ package retransmission
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 )
 
 func TestRetransmitExpectedNumberOfTimes(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 510*time.Millisecond)
 	defer cancel()
 
-	retransmissionsCount := 0
+	var retransmissionsCount uint64
 	ScheduleRetransmissions(
 		ctx,
 		NewTimeTicker(ctx, 50*time.Millisecond),
-		&pb.NetworkMessage{},
-		func(msg *pb.NetworkMessage) error {
-			retransmissionsCount++
+		func() error {
+			atomic.AddUint64(&retransmissionsCount, 1)
 			return nil
 		},
 	)
@@ -32,144 +30,6 @@ func TestRetransmitExpectedNumberOfTimes(t *testing.T) {
 	}
 }
 
-func TestUpdateRetransmissionCounter(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 260*time.Millisecond)
-	defer cancel()
-
-	var retransmissions []*pb.NetworkMessage
-	ScheduleRetransmissions(
-		ctx,
-		NewTimeTicker(ctx, 50*time.Millisecond),
-		&pb.NetworkMessage{},
-		func(msg *pb.NetworkMessage) error {
-			retransmissions = append(retransmissions, msg)
-			return nil
-		},
-	)
-
-	<-ctx.Done()
-
-	for i := 1; i <= 5; i++ {
-		message := retransmissions[i-1]
-		if uint32(i) != message.Retransmission {
-			t.Errorf(
-				"unexpected retransmission counter\nactual: [%v]\nexpected:   [%v]",
-				i,
-				message.Retransmission,
-			)
-		}
-	}
-}
-
-func TestRetransmitOriginalContent(t *testing.T) {
-	sender := []byte("this is sender")
-	encrypted := true
-	payload := []byte("this is payload")
-	messageType := []byte("this is type")
-	channel := []byte("this is channel")
-
-	message := &pb.NetworkMessage{
-		Sender:    sender,
-		Encrypted: encrypted,
-		Payload:   payload,
-		Type:      messageType,
-		Channel:   channel,
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 110*time.Millisecond)
-	defer cancel()
-
-	var retransmissions []*pb.NetworkMessage
-	ScheduleRetransmissions(
-		ctx,
-		NewTimeTicker(ctx, 50*time.Millisecond),
-		message,
-		func(msg *pb.NetworkMessage) error {
-			retransmissions = append(retransmissions, msg)
-			return nil
-		},
-	)
-
-	<-ctx.Done()
-
-	for i := 0; i < 2; i++ {
-		message := retransmissions[i]
-
-		testutils.AssertBytesEqual(t, sender, message.Sender)
-		testutils.AssertBytesEqual(t, payload, message.Payload)
-		testutils.AssertBytesEqual(t, messageType, message.Type)
-		testutils.AssertBytesEqual(t, channel, message.Channel)
-		if encrypted != message.Encrypted {
-			t.Errorf("unexpected 'Encrypted' field value")
-		}
-	}
-}
-
-func TestHandlerReceiveMessage(t *testing.T) {
-	var received []net.Message
-
-	handler := WithRetransmissionSupport(func(message net.Message) {
-		received = append(received, message)
-	})
-
-	handler(&mockNetworkMessage{
-		fingerprint:    "ABC",
-		retransmission: 0,
-	})
-
-	if len(received) != 1 {
-		t.Fatalf(
-			"unexpected number of accepted messages\nactual:   [%v]\nexpected: [1]",
-			len(received),
-		)
-	}
-}
-
-func TestHandlerReceiveRetransmission(t *testing.T) {
-	var received []net.Message
-
-	handler := WithRetransmissionSupport(func(message net.Message) {
-		received = append(received, message)
-	})
-
-	handler(&mockNetworkMessage{
-		fingerprint:    "ABC",
-		retransmission: 1,
-	})
-
-	if len(received) != 1 {
-		t.Fatalf(
-			"unexpected number of accepted messages\nactual:   [%v]\nexpected: [1]",
-			len(received),
-		)
-	}
-}
-
-func TestHandlerReceiveMessageAndRetransmission(t *testing.T) {
-	var received []net.Message
-
-	handler := WithRetransmissionSupport(func(message net.Message) {
-		received = append(received, message)
-	})
-
-	handler(&mockNetworkMessage{
-		fingerprint:    "ABC",
-		retransmission: 0,
-	})
-
-	handler(&mockNetworkMessage{
-		fingerprint:    "ABC",
-		retransmission: 1,
-	})
-
-	if len(received) != 1 {
-		t.Fatalf(
-			"unexpected number of accepted messages\nactual:   [%v]\nexpected: [1]",
-			len(received),
-		)
-	}
-}
-
 func TestHandlerReceiveUniqueMessages(t *testing.T) {
 	var received []net.Message
 
@@ -177,64 +37,50 @@ func TestHandlerReceiveUniqueMessages(t *testing.T) {
 		received = append(received, message)
 	})
 
-	handler(&mockNetworkMessage{
-		fingerprint:    "ABC",
-		retransmission: 0,
-	})
+	handler(&mockNetworkMessage{senderID: "a", seqno: 1})
+	handler(&mockNetworkMessage{senderID: "a", seqno: 2})
+	handler(&mockNetworkMessage{senderID: "a", seqno: 4})
+	handler(&mockNetworkMessage{senderID: "b", seqno: 1})
+	handler(&mockNetworkMessage{senderID: "b", seqno: 2})
 
-	handler(&mockNetworkMessage{
-		fingerprint:    "DEF",
-		retransmission: 0,
-	})
-
-	if len(received) != 2 {
+	if len(received) != 5 {
 		t.Fatalf(
-			"unexpected number of accepted messages\nactual:   [%v]\nexpected: [2]",
+			"unexpected number of accepted messages\nactual:   [%v]\nexpected: [5]",
 			len(received),
 		)
 	}
 }
 
-func TestHandlerIdenticalMessages(t *testing.T) {
+func TestHandlerReceiveRetransmissions(t *testing.T) {
 	var received []net.Message
 
 	handler := WithRetransmissionSupport(func(message net.Message) {
 		received = append(received, message)
 	})
 
-	handler(&mockNetworkMessage{
-		fingerprint:    "ABC",
-		retransmission: 0,
-	})
+	handler(&mockNetworkMessage{senderID: "a", seqno: 1})
+	handler(&mockNetworkMessage{senderID: "a", seqno: 2})
+	handler(&mockNetworkMessage{senderID: "a", seqno: 2})
+	handler(&mockNetworkMessage{senderID: "a", seqno: 1})
+	handler(&mockNetworkMessage{senderID: "b", seqno: 2})
+	handler(&mockNetworkMessage{senderID: "b", seqno: 1})
+	handler(&mockNetworkMessage{senderID: "b", seqno: 1})
 
-	handler(&mockNetworkMessage{
-		fingerprint:    "ABC",
-		retransmission: 0,
-	})
-
-	if len(received) != 2 {
+	if len(received) != 4 {
 		t.Fatalf(
-			"unexpected number of accepted messages\nactual:   [%v]\nexpected: [2]",
+			"unexpected number of accepted messages\nactual:   [%v]\nexpected: [4]",
 			len(received),
 		)
 	}
 }
 
 type mockNetworkMessage struct {
-	fingerprint    string
-	retransmission uint32
-}
-
-func (mnm *mockNetworkMessage) Fingerprint() string {
-	return mnm.fingerprint
-}
-
-func (mnm *mockNetworkMessage) Retransmission() uint32 {
-	return mnm.retransmission
+	senderID string
+	seqno    uint64
 }
 
 func (mnm *mockNetworkMessage) TransportSenderID() net.TransportIdentifier {
-	panic("not implemented")
+	return &mockTransportIdentifier{mnm.senderID}
 }
 
 func (mnm *mockNetworkMessage) Payload() interface{} {
@@ -249,62 +95,14 @@ func (mnm *mockNetworkMessage) SenderPublicKey() []byte {
 	panic("not implemented")
 }
 
-func TestCalculateFingerprint(t *testing.T) {
-	tests := map[string]struct {
-		sender1                 string
-		sender2                 string
-		payload1                string
-		payload2                string
-		sameFingerprintExpected bool
-	}{
-		"different sender, same payload": {
-			sender1:                 "bob",
-			sender2:                 "alice",
-			payload1:                "blockchain",
-			payload2:                "blockchain",
-			sameFingerprintExpected: false,
-		},
-		"same sender, different payload": {
-			sender1:                 "bob",
-			sender2:                 "bob",
-			payload1:                "btc",
-			payload2:                "eth",
-			sameFingerprintExpected: false,
-		},
-		"same sender, same payload": {
-			sender1:                 "alice",
-			sender2:                 "alice",
-			payload1:                "blockchain",
-			payload2:                "blockchain",
-			sameFingerprintExpected: true,
-		},
-	}
-
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			fingerprint1 := CalculateFingerprint(
-				localIdentifier(test.sender1),
-				[]byte(test.payload1),
-			)
-
-			fingerprint2 := CalculateFingerprint(
-				localIdentifier(test.sender2),
-				[]byte(test.payload2),
-			)
-
-			if fingerprint1 == fingerprint2 && !test.sameFingerprintExpected {
-				t.Errorf("same fingerprints")
-			}
-
-			if fingerprint1 != fingerprint2 && test.sameFingerprintExpected {
-				t.Errorf("different fingerprints")
-			}
-		})
-	}
+func (mnm *mockNetworkMessage) Seqno() uint64 {
+	return mnm.seqno
 }
 
-type localIdentifier string
+type mockTransportIdentifier struct {
+	senderID string
+}
 
-func (li localIdentifier) String() string {
-	return string(li)
+func (mti *mockTransportIdentifier) String() string {
+	return mti.senderID
 }

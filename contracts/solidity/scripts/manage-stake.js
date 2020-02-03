@@ -8,17 +8,15 @@
 
     $ truffle exec scripts/manage-stake.js stake 0x524f2E0176350d950fA630D9A5a59A0a190DAf48 10000 0xFa3DA235947AaB49D439f3BcB46effD1a7237E32
 
-  To initiate unstake, use 'initiate-unstake' command and provide two parameters:
-  - operator address
-  - amount of KEEP to unstake
+  To undelegate, use 'undelegate' command and provide operator address as a parameter
 
-    $ truffle exec scripts/manage-stake.js initiate-unstake 0x524f2E0176350d950fA630D9A5a59A0a190DAf48 100
+    $ truffle exec scripts/manage-stake.js undelegate 0x524f2E0176350d950fA630D9A5a59A0a190DAf48
 
-  To finish unstaking, use 'finish-unstake' command and provide operator address
+  To recover stake, use 'recover-stake' command and provide operator address
   as a parameter. Please bear in mind you may need to wait for the expected 
-  withdrawal delay time to be able to finish unstaking.
+  undelegation period time to be able to recover stake.
 
-    $ truffle exec scripts/manage-stake.js finish-unstake 0x524f2E0176350d950fA630D9A5a59A0a190DAf48
+    $ truffle exec scripts/manage-stake.js recover-stake 0x524f2E0176350d950fA630D9A5a59A0a190DAf48
 
   To print information about the stake, use 'print-stake' command and provide
   operator address as a parameter.
@@ -45,11 +43,11 @@ module.exports = async function() {
         case "stake":         
             await stake();
             break;
-        case "initiate-unstake":               
-            await initiateUnstake(); 
+        case "undelegate":               
+            await undelegate(); 
             break;
-        case "finish-unstake":            
-            await finishUnstake();
+        case "recover-stake":            
+            await recoverStake();
             break;
         case "print-stake":
             console.log(`Getting stake info for operator ${operator}`); 
@@ -96,23 +94,21 @@ module.exports = async function() {
         }
     }
 
-    async function initiateUnstake() {
-        const amountToUnstake = process.argv[6];
-
-        console.log(`Initiating unstake of ${amountToUnstake} KEEP from operator ${operator}`);  
+    async function undelegate() {
+        console.log(`Undelegate stake from operator ${operator}`);
 
         try {          
-          await tokenStaking.initiateUnstake(amountToUnstake, operator);
+          await tokenStaking.undelegate(operator);
         } catch (err) {
             console.log(err);
         }
     }
 
-    async function finishUnstake() {
-        console.log(`Finishing unstake from operator ${operator}`); 
+    async function recoverStake() {
+        console.log(`Recover stake from operator ${operator}`); 
         
         try {
-          await tokenStaking.finishUnstake(operator);          
+          await tokenStaking.recoverStake(operator);          
         } catch (err) {
             console.log(err);
         }
@@ -126,10 +122,11 @@ module.exports = async function() {
                 return;
             }
 
-            console.log(`KEEP owner:     ${owner.toString()}`);
-            console.log(`KEEP unstaked:  ${(await getOwnerBalance()).toString()}`);            
-            console.log(`KEEP staked:    ${(await getStakeBalance()).toString()}`);
-            console.log(`Minimum stake:  ${(await getMinimumStake()).toString()}`);
+            console.log(`KEEP owner:             ${owner.toString()}`);
+            console.log(`KEEP tokens available:  ${(await getOwnerBalance()).toString()}`);            
+            console.log(`KEEP eligible stake:    ${(await getEligibleStake()).toString()}`);
+            console.log(`KEEP active stake:      ${(await getActiveStake()).toString()}`);
+            console.log(`Minimum stake:          ${(await getMinimumStake()).toString()}`);
         } catch (err) {
             console.log(err);
         }  
@@ -139,8 +136,12 @@ module.exports = async function() {
         return tokenStaking.ownerOf(operator);
     }
 
-    async function getStakeBalance() {
-      return tokenStaking.balanceOf(operator)
+    async function getEligibleStake() {
+      return tokenStaking.eligibleStake(operator, keepRandomBeaconOperator.address);
+    }
+
+    async function getActiveStake() {
+        return tokenStaking.activeStake(operator, keepRandomBeaconOperator.address);
     }
 
     async function getMinimumStake() {
