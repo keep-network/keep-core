@@ -276,7 +276,8 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         _requestSubsidyFeePool = _requestSubsidyFeePool.add(surplus);
 
         if (callbackContract != address(0)) {
-            _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackFee, callbackGas.add(_baseCallbackGas), msg.sender);
+            callbackGas = callbackGas == 0 ? 0 : callbackGas.add(_baseCallbackGas);
+            _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackFee, callbackGas, msg.sender);
         }
 
         // Send 1% of the request subsidy pool to the requestor.
@@ -401,7 +402,8 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         // We take the gas price from the price feed to not let malicious
         // miner-requestors manipulate the gas price when requesting relay entry
         // and underpricing expensive callbacks.
-        return (callbackGas.add(_baseCallbackGas)).mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
+        callbackGas = callbackGas == 0 ? 0 : callbackGas.add(_baseCallbackGas);
+        return callbackGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
     }
 
     /**
