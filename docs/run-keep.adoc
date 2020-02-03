@@ -17,7 +17,7 @@ Things you will need:
 - Keep client executable
 - Keep client configuration file
 - Ethereum account and keyfile
-- Staked KEEP tokens
+- KEEP tokens
 
 === System Recommendations
 
