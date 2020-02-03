@@ -398,10 +398,12 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
      * @param callbackGas Gas required for the callback.
      */
     function callbackFee(uint256 callbackGas) public view returns(uint256) {
+        // gas for the callback itself plus additional operational costs of
+        // executing the callback
+        callbackGas = callbackGas == 0 ? 0 : callbackGas.add(_baseCallbackGas);
         // We take the gas price from the price feed to not let malicious
         // miner-requestors manipulate the gas price when requesting relay entry
         // and underpricing expensive callbacks.
-        callbackGas = callbackGas == 0 ? 0 : callbackGas.add(_baseCallbackGas);
         return callbackGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
     }
 
