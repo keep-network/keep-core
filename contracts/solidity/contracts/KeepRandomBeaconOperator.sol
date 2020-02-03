@@ -12,7 +12,6 @@ import "./libraries/operator/DKGResultVerification.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
-    function executeCallback(uint256 requestId, uint256 entry) external returns (address payable surplusRecipient);
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
 }
@@ -422,7 +421,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 requestId,
         bytes memory previousEntry
     ) public payable onlyServiceContract {
-        uint256 entryVerificationAndProfitFee = groupProfitFee().add(entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate)));
+        uint256 entryVerificationAndProfitFee = groupProfitFee().add(
+            entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate))
+        );
         require(
             msg.value >= entryVerificationAndProfitFee,
             "Insufficient new entry fee"
@@ -519,11 +520,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         // Obtain the actual callback gas expenditure and refund the surplus.
         uint256 callbackSurplus = 0;
+        uint256 callbackFee = signingRequest.callbackFee;
         uint256 actualCallbackFee = gasSpent.mul(gasPrice);
         // If we spent less on the callback than the customer transferred for the
         // callback execution, we need to reimburse the difference.
-        if (actualCallbackFee < signingRequest.callbackFee) {
-            callbackSurplus = signingRequest.callbackFee.sub(actualCallbackFee);
+        if (actualCallbackFee < callbackFee) {
+            callbackSurplus = callbackFee.sub(actualCallbackFee);
             // Reimburse submitter with his actual callback cost.
             msg.sender.call.value(actualCallbackFee)("");
 
@@ -535,7 +537,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             }
         } else {
             // Reimburse submitter with the callback payment sent by the requestor.
-            msg.sender.call.value(signingRequest.callbackFee)("");
+            msg.sender.call.value(callbackFee)("");
         }
     }
 
