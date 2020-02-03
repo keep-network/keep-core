@@ -495,7 +495,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         require(success, "Failed send relay submitter reward");
 
         if (subsidy > 0) {
-            ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
+            signingRequest.serviceContract.call.value(subsidy)(abi.encodeWithSignature("fundRequestSubsidyFeePool()"));
         }
 
         currentEntryStartBlock = 0;
@@ -525,20 +525,17 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         if (actualCallbackFee < signingRequest.callbackFee) {
             callbackSurplus = signingRequest.callbackFee.sub(actualCallbackFee);
             // Reimburse submitter with his actual callback cost.
-            (success, ) = msg.sender.call.value(actualCallbackFee)("");
-            require(success, "Failed reimburse actual callback cost");
+            msg.sender.call.value(actualCallbackFee)("");
 
             // Return callback surplus to the requestor.
             // Expecting 32 bytes data containing 20 byte address
             if (data.length == 32) {
                 address surplusRecipient = data.toAddress(12);
                 (success, ) = surplusRecipient.call.value(callbackSurplus)("");
-                require(success, "Failed send callback surplus");
             }
         } else {
             // Reimburse submitter with the callback payment sent by the requestor.
-            (success, ) = msg.sender.call.value(signingRequest.callbackFee)("");
-            require(success, "Failed reimburse callback payment");
+            msg.sender.call.value(signingRequest.callbackFee)("");
         }
     }
 
