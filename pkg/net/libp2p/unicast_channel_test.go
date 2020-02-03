@@ -77,7 +77,7 @@ func TestSendReceiveUnicastChannel(t *testing.T) {
 		for _, message := range peer1Messages {
 			send := withRetry(func() error {
 				return peer1Channel.Send(&message)
-			}, 1, 10*time.Second)
+			}, 3, 10*time.Second)
 			if err := send; err != nil {
 				t.Fatal(err)
 			}
@@ -97,7 +97,7 @@ func TestSendReceiveUnicastChannel(t *testing.T) {
 		for _, message := range peer2Messages {
 			send := withRetry(func() error {
 				return peer2Channel.Send(&message)
-			}, 1, 10*time.Second)
+			}, 3, 10*time.Second)
 			if err := send; err != nil {
 				t.Fatal(err)
 			}
