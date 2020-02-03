@@ -133,6 +133,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         _pendingWithdrawal = 0;
         _previousEntry = _beaconSeed;
         _registry = registry;
+        _baseCallbackGas = 18848;
     }
 
     /**
@@ -349,13 +350,6 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
             OperatorContract(latestOperatorContract).createGroup.value(groupCreationFee)(entry, submitter);
             _dkgFeePool = _dkgFeePool.sub(groupCreationFee);
         }
-    }
-
-    /**
-     * @dev Set base callback gas required for relay entry callback.
-     */
-    function setBaseCallbackGas(uint256 baseCallbackGas) public onlyOperatorContractUpgrader {
-        _baseCallbackGas = baseCallbackGas;
     }
 
     /**

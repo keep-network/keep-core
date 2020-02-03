@@ -28,7 +28,6 @@ module.exports = async function(deployer, network) {
 
     await keepRandomBeaconOperator.setPriceFeedEstimate(priceFeedEstimate);
     await registry.approveOperatorContract(keepRandomBeaconOperator.address);
-    keepRandomBeaconService.setBaseCallbackGas(18848);
     keepRandomBeaconService.addOperatorContract(
         keepRandomBeaconOperator.address
     );
