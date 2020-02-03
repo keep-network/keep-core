@@ -12,7 +12,10 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   const groupSize = 3;
   const groupThreshold = 2;
 
-  let operatorContract, serviceContract, callbackContract;
+  let operatorContract, serviceContract, callbackContract,
+    submitterExpectedReimbursement, submitterExpectedReimbursementGroupSelection,
+    operator = accounts[1], // make sure these match the ones in stakeAndGenesis.js
+    beneficiary = accounts[4];
 
   beforeEach(async () => {
     let contracts = await initContracts(
@@ -31,6 +34,14 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
     await operatorContract.setGroupThreshold(groupThreshold);
 
     await stakeAndGenesis(accounts, contracts);
+
+    const entryFeeBreakdown = await serviceContract.entryFeeBreakdown()
+    const groupSelectionGasEstimate = await operatorContract.groupSelectionGasEstimate();
+    const fluctuationMargin = await operatorContract.fluctuationMargin();
+    const priceFeedEstimate = await operatorContract.priceFeedEstimate();
+    const gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).divn(100));
+    submitterExpectedReimbursement = entryFeeBreakdown.entryVerificationFee;
+    submitterExpectedReimbursementGroupSelection = submitterExpectedReimbursement.add(groupSelectionGasEstimate.mul(gasPriceWithFluctuationMargin))
   });
 
   beforeEach(async () => {
@@ -44,7 +55,11 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   it("should produce entry if callback contract was not provided", async function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
-    await operatorContract.relayEntry(bls.groupSignature);
+    const startBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
+    await operatorContract.relayEntry(bls.groupSignature, {from: operator});
+
+    let submitterReimbursement = web3.utils.toBN((await web3.eth.getBalance(beneficiary))).sub(startBalance);
+    assert.isTrue(submitterReimbursement.eq(submitterExpectedReimbursement), "Unexpected submitter reimbursement");
 
     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
       bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
@@ -55,8 +70,11 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
     let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
+    const startBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
+    await operatorContract.relayEntry(bls.groupSignature, {from: operator});
 
-    await operatorContract.relayEntry(bls.groupSignature);
+    let submitterReimbursement = web3.utils.toBN((await web3.eth.getBalance(beneficiary))).sub(startBalance);
+    assert.isTrue(submitterReimbursement.eq(submitterExpectedReimbursement), "Unexpected submitter reimbursement");
 
     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
       bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
@@ -84,8 +102,11 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
     let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
+    const startBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
+    await operatorContract.relayEntry(bls.groupSignature, {from: operator});
 
-    await operatorContract.relayEntry(bls.groupSignature);
+    let submitterReimbursement = web3.utils.toBN((await web3.eth.getBalance(beneficiary))).sub(startBalance);
+    assert.isTrue(submitterReimbursement.eq(submitterExpectedReimbursementGroupSelection), "Unexpected submitter reimbursement");
 
     assert.equal((await operatorContract.getPastEvents())[1].event,
       'GroupSelectionStarted', "Should start group selection"
@@ -107,33 +128,37 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   });
 
   it("should submit relay entry and trigger new group creation with failed callback", async function() {
-     // Fund DKG pool
-     const groupCreationGasEstimate = await operatorContract.groupCreationGasEstimate();
-     const fluctuationMargin = await operatorContract.fluctuationMargin();
-     const priceFeedEstimate = await serviceContract.priceFeedEstimate();
-     const gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
-     await serviceContract.fundDkgFeePool({value: groupCreationGasEstimate.mul(gasPriceWithFluctuationMargin)});
- 
-     // Make sure DKG is possible
-     assert.isTrue(await operatorContract.isGroupSelectionPossible(), "Group selection should be possible");
- 
-     // Request relay entry with a callback using wrong gas estimate
-     let callbackGas = 1; // wrong gas estimate
-     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
- 
-     await operatorContract.relayEntry(bls.groupSignature);
- 
-     assert.equal((await operatorContract.getPastEvents())[1].event,
-       'GroupSelectionStarted', "Should start group selection"
-     );
- 
-     assert.equal((await operatorContract.getPastEvents())[1].args['newEntry'].toString(),
-       bls.groupSignatureNumber.toString(), "Should start group selection with new entry"
-     );
-     
-     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
-       bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
-     );
+    // Fund DKG pool
+    const groupCreationGasEstimate = await operatorContract.groupCreationGasEstimate();
+    const fluctuationMargin = await operatorContract.fluctuationMargin();
+    const priceFeedEstimate = await serviceContract.priceFeedEstimate();
+    const gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
+    await serviceContract.fundDkgFeePool({value: groupCreationGasEstimate.mul(gasPriceWithFluctuationMargin)});
+
+    // Make sure DKG is possible
+    assert.isTrue(await operatorContract.isGroupSelectionPossible(), "Group selection should be possible");
+
+    // Request relay entry with a callback using wrong gas estimate
+    let callbackGas = 1; // wrong gas estimate
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
+    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
+
+    const startBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
+    await operatorContract.relayEntry(bls.groupSignature, {from: operator});
+
+    let submitterReimbursement = web3.utils.toBN((await web3.eth.getBalance(beneficiary))).sub(startBalance);
+    assert.isTrue(submitterReimbursement.eq(submitterExpectedReimbursementGroupSelection), "Unexpected submitter reimbursement");
+
+    assert.equal((await operatorContract.getPastEvents())[1].event,
+      'GroupSelectionStarted', "Should start group selection"
+    );
+
+    assert.equal((await operatorContract.getPastEvents())[1].args['newEntry'].toString(),
+      bls.groupSignatureNumber.toString(), "Should start group selection with new entry"
+    );
+    
+    assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
+      bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
+    );
   });
 });
