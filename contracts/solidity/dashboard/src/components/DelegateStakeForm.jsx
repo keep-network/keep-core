@@ -1,12 +1,15 @@
 import React from 'react'
-import Button from './Button'
+import { SubmitButton } from './Button'
 import FormInput from './FormInput'
 import { withFormik } from 'formik'
-import { validateAmountInRange, validateEthAddress } from '../forms/common-validators'
+import { validateAmountInRange, validateEthAddress, getErrorsObj } from '../forms/common-validators'
+import { useCustomOnSubmitFormik } from '../hooks/useCustomOnSubmitFormik'
 
-const DelegateStakeForm = ({ handleSubmit }) => {
+const DelegateStakeForm = (props) => {
+  const onSubmit = useCustomOnSubmitFormik(props.onSubmit)
+
   return (
-    <form className="delegate-stake-form tile flex flex-column" onSubmit={handleSubmit}>
+    <form className="delegate-stake-form tile flex flex-column">
       <FormInput
         name="stakeTokens"
         type="text"
@@ -22,12 +25,15 @@ const DelegateStakeForm = ({ handleSubmit }) => {
         type="text"
         label="Operator Address"
       />
-      <Button
+      <SubmitButton
         className="btn btn-primary btn-large"
         type="submit"
+        onSubmitAction={onSubmit}
+        withMessageActionIsPending={false}
+        triggerManuallyFetch={true}
       >
         DELEGATE STAKE
-      </Button>
+      </SubmitButton>
     </form>
   )
 }
@@ -43,12 +49,8 @@ const connectedWithFormik = withFormik({
     errors.beneficiaryAddress = validateEthAddress(beneficiaryAddress)
     errors.operatorAddress = validateEthAddress(operatorAddress)
 
-    return errors
+    return getErrorsObj(errors)
   },
-  handleSubmit: (values, { props }) => {
-    console.log('submit', values, props)
-  },
-
   displayName: 'DelegateStakeForm',
 })(DelegateStakeForm)
 
