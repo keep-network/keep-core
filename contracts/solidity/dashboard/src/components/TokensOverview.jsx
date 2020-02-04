@@ -2,7 +2,7 @@ import React from 'react'
 
 const TokensOverview = () => {
   return (
-    <section className="tile">
+    <section id="tokens-overview" className="tile">
       <h5>Totals</h5>
       <section>
         <h5>Owned Tokens: 200</h5>

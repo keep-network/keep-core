@@ -2,7 +2,7 @@ import React from 'react'
 
 const Grants = () => {
   return (
-    <section className="tile">
+    <section id="grants" className="tile">
       <h5>Grants</h5>
 
     </section>
