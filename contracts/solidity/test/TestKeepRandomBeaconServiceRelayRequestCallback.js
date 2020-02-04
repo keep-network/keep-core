@@ -13,7 +13,7 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
   const groupThreshold = 2;
 
   let operatorContract, serviceContract, callbackContract,
-    submitterExpectedReimbursement, submitterExpectedReimbursementGroupSelection,
+    submitterExpectedReimbursement, submitterExpectedReimbursementGroupSelection, priceFeedEstimate,
     operator = accounts[1], // make sure these match the ones in stakeAndGenesis.js
     beneficiary = accounts[4];
 
@@ -35,10 +35,10 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
 
     await stakeAndGenesis(accounts, contracts);
 
+    priceFeedEstimate = await operatorContract.priceFeedEstimate();
     const entryFeeBreakdown = await serviceContract.entryFeeBreakdown()
     const groupSelectionGasEstimate = await operatorContract.groupSelectionGasEstimate();
     const fluctuationMargin = await operatorContract.fluctuationMargin();
-    const priceFeedEstimate = await operatorContract.priceFeedEstimate();
     const gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).divn(100));
     submitterExpectedReimbursement = entryFeeBreakdown.entryVerificationFee;
     submitterExpectedReimbursementGroupSelection = submitterExpectedReimbursement.add(groupSelectionGasEstimate.mul(gasPriceWithFluctuationMargin))
@@ -74,6 +74,8 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
     await operatorContract.relayEntry(bls.groupSignature, {from: operator});
 
     let submitterReimbursement = web3.utils.toBN((await web3.eth.getBalance(beneficiary))).sub(startBalance);
+    let expectedReimbursmentGas = (await serviceContract.baseCallbackGas()).addn(callbackGas);
+    submitterExpectedReimbursement = submitterExpectedReimbursement.add(expectedReimbursmentGas.mul(priceFeedEstimate));
     assert.isTrue(submitterReimbursement.eq(submitterExpectedReimbursement), "Unexpected submitter reimbursement");
 
     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
@@ -106,6 +108,8 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
     await operatorContract.relayEntry(bls.groupSignature, {from: operator});
 
     let submitterReimbursement = web3.utils.toBN((await web3.eth.getBalance(beneficiary))).sub(startBalance);
+    let expectedReimbursmentGas = (await serviceContract.baseCallbackGas()).addn(callbackGas);
+    submitterExpectedReimbursementGroupSelection = submitterExpectedReimbursementGroupSelection.add(expectedReimbursmentGas.mul(priceFeedEstimate));
     assert.isTrue(submitterReimbursement.eq(submitterExpectedReimbursementGroupSelection), "Unexpected submitter reimbursement");
 
     assert.equal((await operatorContract.getPastEvents())[1].event,
@@ -139,7 +143,8 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
     assert.isTrue(await operatorContract.isGroupSelectionPossible(), "Group selection should be possible");
 
     // Request relay entry with a callback using wrong gas estimate
-    let callbackGas = 1; // wrong gas estimate
+    let realCallbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let callbackGas = 1; // Requestor provides wrong gas
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate});
 
@@ -147,6 +152,9 @@ contract('TestKeepRandomBeaconServiceRelayRequestCallback', function(accounts) {
     await operatorContract.relayEntry(bls.groupSignature, {from: operator});
 
     let submitterReimbursement = web3.utils.toBN((await web3.eth.getBalance(beneficiary))).sub(startBalance);
+    let expectedReimbursmentGas = (await serviceContract.baseCallbackGas()).addn(realCallbackGas);
+    submitterExpectedReimbursementGroupSelection = submitterExpectedReimbursementGroupSelection.add(expectedReimbursmentGas.mul(priceFeedEstimate));
+
     assert.isTrue(submitterReimbursement.eq(submitterExpectedReimbursementGroupSelection), "Unexpected submitter reimbursement");
 
     assert.equal((await operatorContract.getPastEvents())[1].event,

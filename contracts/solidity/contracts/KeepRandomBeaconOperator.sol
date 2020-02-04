@@ -523,12 +523,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 callbackSurplus = 0;
         uint256 callbackFee = signingRequest.callbackFee;
         uint256 actualCallbackFee = gasSpent.mul(gasPrice);
+
+        address payable magpie = stakingContract.magpieOf(msg.sender);
         // If we spent less on the callback than the customer transferred for the
         // callback execution, we need to reimburse the difference.
         if (actualCallbackFee < callbackFee) {
             callbackSurplus = callbackFee.sub(actualCallbackFee);
             // Reimburse submitter with his actual callback cost.
-            msg.sender.call.value(actualCallbackFee)("");
+            magpie.call.value(actualCallbackFee)("");
 
             // Return callback surplus to the requestor.
             // Expecting 32 bytes data containing 20 byte address
@@ -538,7 +540,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             }
         } else {
             // Reimburse submitter with the callback payment sent by the requestor.
-            msg.sender.call.value(callbackFee)("");
+            magpie.call.value(callbackFee)("");
         }
     }
 
