@@ -1,41 +1,23 @@
 import React from 'react'
 import Button from './Button'
 import FormInput from './FormInput'
-import { useFormik } from 'formik'
+import { withFormik } from 'formik'
+import { validateAmountInRange, validateEthAddress } from '../forms/common-validators'
 
-const DelegateStakeForm = () => {
-  const { handleSubmit, getFieldMeta, getFieldProps } = useFormik({
-    initialValues: {
-      beneficiaryAddress: '',
-      stakeTokens: '',
-      operatorAddress: '',
-    }, onSubmit: (values) => {
-      console.log('values', values)
-    },
-    validate: (values) => {
-      console.log('validation')
-    },
-  })
-
+const DelegateStakeForm = ({ handleSubmit }) => {
   return (
     <form className="delegate-stake-form tile flex flex-column" onSubmit={handleSubmit}>
       <FormInput
-        getFieldProps={getFieldProps}
-        getFieldMeta={getFieldMeta}
         name="stakeTokens"
         type="text"
         label="Stake Tokens"
       />
       <FormInput
-        getFieldProps={getFieldProps}
-        getFieldMeta={getFieldMeta}
         name="beneficiaryAddress"
         type="text"
         label="Beneficiary Address"
       />
       <FormInput
-        getFieldProps={getFieldProps}
-        getFieldMeta={getFieldMeta}
         name="operatorAddress"
         type="text"
         label="Operator Address"
@@ -50,4 +32,24 @@ const DelegateStakeForm = () => {
   )
 }
 
-export default DelegateStakeForm
+const connectedWithFormik = withFormik({
+  mapPropsToValues: () => ({ beneficiaryAddress: '', stakeTokens: '', operatorAddress: '' }),
+  validate: (values, props) => {
+    const { availableTokens, minStake } = props
+    const { beneficiaryAddress, operatorAddress, stakeTokens } = values
+    const errors = {}
+
+    errors.stakeTokens = validateAmountInRange(stakeTokens, availableTokens, minStake)
+    errors.beneficiaryAddress = validateEthAddress(beneficiaryAddress)
+    errors.operatorAddress = validateEthAddress(operatorAddress)
+
+    return errors
+  },
+  handleSubmit: (values, { props }) => {
+    console.log('submit', values, props)
+  },
+
+  displayName: 'DelegateStakeForm',
+})(DelegateStakeForm)
+
+export default connectedWithFormik
