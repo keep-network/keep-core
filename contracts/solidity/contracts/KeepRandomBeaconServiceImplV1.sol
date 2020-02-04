@@ -389,7 +389,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
     /**
      * @dev Get the minimum payment in wei for relay entry callback.
      * The returned value includes safety margin for gas price fluctuations.
-     * @param callbackGas Gas required for the callback.
+     * @param _callbackGas Gas required for the callback.
      */
     function callbackFee(uint256 _callbackGas) public view returns(uint256) {
         // gas for the callback itself plus additional operational costs of
