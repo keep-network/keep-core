@@ -22,11 +22,15 @@ export const validateAmountInRange = (value, maxValue, minValue = 0) => {
 
   if (isBlankString(value)) {
     return 'Required'
-  } else if (REGEXP_ONLY_NUMBERS.test(value)) {
+  } else if (!REGEXP_ONLY_NUMBERS.test(value)) {
     return 'Invalid value'  
   } else if (validateValueInBN.gte(maxValueInBN)) {
     return 'You do not have enough KEEP tokens'
   } else if (minValueInBN.gte(validateValueInBN)) {
     return `You have to stake more than ${minValueInBN.toString()} KEEP tokens`
   }
+}
+
+export const getErrorsObj = (errors) => {
+  return Object.keys(errors).every((name) => !errors[name]) ? {} : errors
 }
