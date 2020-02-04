@@ -305,3 +305,25 @@ Keep uses the Ethereum Ropsten Testnet.
 ==== Faucet
 
 The KEEP faucet will issue and stake KEEP to the address requested.  Once an account is staked on the network you cannot issue tokens to, or stake via the faucet again (That's ok though, once should be enough).
+
+To use the faucet you need an Ethereum account address handy.
+
+**Faucet Endpoint:** `https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten/`
+
+**Using a browser:**
+
+Drop the fauct endpoint into your browser of choice with the parameter `?address=<your-ethereum-account-address>`, e.g.
+
+[small]*`https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten/?address=0x1112222333344445556667778889990001112222`*
+
+
+**Using Curl:** (from a terminal)
+
+[small]*`curl https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten/'?address=<your-ethereum-account-address>'`*
+
+If your account successfully funds and stakes you should see a success log:
+
+> 0x1112222333344445556667778889990001112222 staked with 20000000 KEEP!
+
+If you run into an error, find us on Slack.
+
