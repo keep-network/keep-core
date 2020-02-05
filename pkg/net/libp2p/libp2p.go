@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -131,6 +133,23 @@ func (p *provider) Peers() []string {
 
 func (p *provider) ConnectionManager() net.ConnectionManager {
 	return p.connectionManager
+}
+
+func (p *provider) SeekTransportIdentifier(address common.Address) (net.TransportIdentifier, error) {
+	addressHex := address.Hex()
+
+	for _, peerID := range p.connectionManager.Peerstore().Peers() {
+		statickKey, err := p.connectionManager.GetPeerPublicKey(peerID.String())
+		if err != nil {
+			continue
+		}
+
+		if key.NetworkPubKeyToEthAddress(statickKey) == addressHex {
+			return peerID, nil
+		}
+	}
+
+	return nil, fmt.Errorf("transport identifier not found for address: [%v]", addressHex)
 }
 
 type connectionManager struct {

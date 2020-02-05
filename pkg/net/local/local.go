@@ -5,7 +5,10 @@ package local
 
 import (
 	"context"
+	"fmt"
 	"sync"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -66,6 +69,21 @@ func (lp *localProvider) Peers() []string {
 
 func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
 	lp.connectionManager.peers[peerID] = pubKey
+}
+
+func (lp *localProvider) SeekTransportIdentifier(address common.Address) (net.TransportIdentifier, error) {
+	unicastChannelManagersMutex.RLock()
+	defer unicastChannelManagersMutex.RUnlock()
+
+	addressHex := address.Hex()
+
+	for transportIdentifier, channelManager := range unicastChannelManagers {
+		if key.NetworkPubKeyToEthAddress(channelManager.staticKey) == addressHex {
+			return localIdentifier(transportIdentifier), nil
+		}
+	}
+
+	return nil, fmt.Errorf("transport identifier not found for address: [%v]", addressHex)
 }
 
 // Connect returns a local instance of a net provider that does not go over the

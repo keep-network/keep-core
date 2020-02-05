@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/ecdsa"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
@@ -63,6 +65,10 @@ type Provider interface {
 	Peers() []string
 	// ConnectionManager returns the connection manager used by the provider.
 	ConnectionManager() ConnectionManager
+
+	// SeekTransportIdentifier searches a network transport identifier for
+	// given address. It doesn't guarantee the transport identifier will be found.
+	SeekTransportIdentifier(address common.Address) (TransportIdentifier, error)
 }
 
 // ConnectionManager is an interface which exposes peers a client is connected
