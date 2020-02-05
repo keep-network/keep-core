@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { SubmitButton } from './Button'
 import FormInput from './FormInput'
-import { withFormik } from 'formik'
+import { withFormik, useFormikContext } from 'formik'
 import { validateAmountInRange, validateEthAddress, getErrorsObj } from '../forms/common-validators'
 import { useCustomOnSubmitFormik } from '../hooks/useCustomOnSubmitFormik'
 
@@ -11,16 +11,21 @@ const DelegateStakeForm = (props) => {
   return (
     <form className="delegate-stake-form tile flex flex-column">
       <h5>Delegate Stake</h5>
-      <div className="tabs flex">
-        <div className="tab active">OWNED</div>
-        <div className="tab inactive">GRANTED</div>
-      </div>
-      <div className="input-wrapper flex flex-column">
+      <ContextSwitch />
+      <div className="input-wrapper flex flex-row">
         <FormInput
           name="stakeTokens"
           type="text"
           label="Token Amount"
         />
+        <div className="flex flex-1 flex-column flex-column-center">
+          <div className="text text-smaller" style={{ marginTop: '1.5rem' }}>
+            Min Stake: {props.minStake} KEEP
+          </div>
+          <div className="text text-smaller" style={{ marginTop: '1rem' }}>
+            {props.availableTokens} KEEP available
+          </div>
+        </div>
       </div>
       <FormInput
         name="beneficiaryAddress"
@@ -31,6 +36,11 @@ const DelegateStakeForm = (props) => {
         name="operatorAddress"
         type="text"
         label="Operator Address"
+      />
+      <FormInput
+        name="authorizerAddress"
+        type="text"
+        label="Authorizer Address"
       />
       <SubmitButton
         className="btn btn-primary btn-large"
@@ -45,16 +55,54 @@ const DelegateStakeForm = (props) => {
   )
 }
 
+const ContextSwitch = (props) => {
+  const { setFieldValue, values } = useFormikContext()
+
+  const getClassName = useCallback((contextName) => {
+    return values.context === contextName ? 'active' : 'inactive'
+  }, [values.context])
+
+  const onClick = useCallback((event) => {
+    setFieldValue('context', event.target.id, false)
+  }, [])
+
+  return (
+    <div className="tabs flex">
+      <div
+        id="owned"
+        className={`tab ${getClassName('owned')}`}
+        onClick={onClick}
+      >
+        OWNED
+      </div>
+      <div
+        id="granted"
+        className={`tab ${getClassName('granted')}`}
+        onClick={onClick}
+      >
+        GRANTED
+      </div>
+    </div>
+  )
+}
+
 const connectedWithFormik = withFormik({
-  mapPropsToValues: () => ({ beneficiaryAddress: '', stakeTokens: '', operatorAddress: '' }),
+  mapPropsToValues: () => ({
+    beneficiaryAddress: '',
+    stakeTokens: '',
+    operatorAddress: '',
+    authorizerAddress: '',
+    context: 'granted',
+  }),
   validate: (values, props) => {
     const { availableTokens, minStake } = props
-    const { beneficiaryAddress, operatorAddress, stakeTokens } = values
+    const { beneficiaryAddress, operatorAddress, stakeTokens, authorizerAddress } = values
     const errors = {}
 
     errors.stakeTokens = validateAmountInRange(stakeTokens, availableTokens, minStake)
     errors.beneficiaryAddress = validateEthAddress(beneficiaryAddress)
     errors.operatorAddress = validateEthAddress(operatorAddress)
+    errors.authorizerAddress = validateEthAddress(authorizerAddress)
 
     return getErrorsObj(errors)
   },
