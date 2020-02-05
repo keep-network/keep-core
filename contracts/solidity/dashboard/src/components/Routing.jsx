@@ -1,6 +1,5 @@
 import React from 'react'
 import { Route, Switch, Redirect } from 'react-router-dom'
-import OverviewTab from './OverviewTab'
 import StakeTab from './StakeTab'
 import TokenGrantsTab from './TokenGrantsTab'
 import CreateTokenGrantsTab from './CreateTokenGrantsTab'
