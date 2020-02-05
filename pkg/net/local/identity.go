@@ -1,6 +1,9 @@
 package local
 
-import "math/rand"
+import (
+	"encoding/hex"
+	"math/rand"
+)
 
 var letterRunes = [52]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
 	'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
@@ -20,4 +23,8 @@ func randomIdentifier() localIdentifier {
 	}
 
 	return localIdentifier(runes)
+}
+
+func localIdentifierFromPublicKey(publicKey []byte) localIdentifier {
+	return localIdentifier(hex.EncodeToString(publicKey))
 }

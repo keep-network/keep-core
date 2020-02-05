@@ -4,7 +4,8 @@
 package local
 
 import (
-	"fmt"
+	"context"
+	"encoding/hex"
 	"sync"
 
 	"github.com/ipfs/go-log"
@@ -25,9 +26,10 @@ type Provider interface {
 }
 
 type localProvider struct {
-	id                localIdentifier
-	staticKey         *key.NetworkPublic
-	connectionManager *localConnectionManager
+	id                    localIdentifier
+	staticKey             *key.NetworkPublic
+	connectionManager     *localConnectionManager
+	unicastChannelManager *unicastChannelManager
 }
 
 func (lp *localProvider) ID() net.TransportIdentifier {
@@ -38,13 +40,13 @@ func (lp *localProvider) UnicastChannelWith(peerID net.TransportIdentifier) (
 	net.UnicastChannel,
 	error,
 ) {
-	return nil, fmt.Errorf("not implemented")
+	return lp.unicastChannelManager.UnicastChannelWith(peerID)
 }
 
 func (lp *localProvider) OnUnicastChannelOpened(
 	handler func(channel net.UnicastChannel),
 ) {
-	// no-op
+	lp.unicastChannelManager.OnUnicastChannelOpened(context.Background(), handler)
 }
 
 func (lp *localProvider) BroadcastChannelFor(name string) (net.BroadcastChannel, error) {
@@ -67,6 +69,10 @@ func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
 	lp.connectionManager.peers[peerID] = pubKey
 }
 
+func (p *localProvider) CreateTransportIdentifier(publicKey []byte) net.TransportIdentifier {
+	return localIdentifierFromPublicKey(publicKey)
+}
+
 // Connect returns a local instance of a net provider that does not go over the
 // network.
 func Connect() Provider {
@@ -82,10 +88,13 @@ func Connect() Provider {
 // over the network. The returned instance uses the provided network key to
 // identify network messages.
 func ConnectWithKey(staticKey *key.NetworkPublic) Provider {
+	publicKey, _ := hex.DecodeString(key.NetworkPubKeyToEthAddress(staticKey)[2:])
+
 	return &localProvider{
-		id:                randomIdentifier(),
-		staticKey:         staticKey,
-		connectionManager: &localConnectionManager{peers: make(map[string]*key.NetworkPublic)},
+		id:                    randomIdentifier(),
+		staticKey:             staticKey,
+		connectionManager:     &localConnectionManager{peers: make(map[string]*key.NetworkPublic)},
+		unicastChannelManager: newUnicastChannelManager(publicKey),
 	}
 }
 
