@@ -139,12 +139,12 @@ func (p *provider) SeekTransportIdentifier(address common.Address) (net.Transpor
 	addressHex := address.Hex()
 
 	for _, peerID := range p.connectionManager.Peerstore().Peers() {
-		statickKey, err := p.connectionManager.GetPeerPublicKey(peerID.String())
+		staticKey, err := p.connectionManager.GetPeerPublicKey(peerID.String())
 		if err != nil {
 			continue
 		}
 
-		if key.NetworkPubKeyToEthAddress(statickKey) == addressHex {
+		if key.NetworkPubKeyToEthAddress(staticKey) == addressHex {
 			return peerID, nil
 		}
 	}
