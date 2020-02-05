@@ -18,7 +18,7 @@ const DelegateStakeForm = (props) => {
           type="text"
           label="Token Amount"
         />
-        <div className="flex flex-1 flex-column flex-column-center">
+        <div className="flex flex-column flex-column-center">
           <div className="text text-smaller" style={{ marginTop: '1.5rem' }}>
             Min Stake: {props.minStake} KEEP
           </div>
