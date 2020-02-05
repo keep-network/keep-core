@@ -23,6 +23,7 @@ const TokensPage = () => {
 
   return (
     <React.Fragment>
+      <h3>My Tokens</h3>
       <div className="flex flex-1 flex-row-space-between flex-wrap">
         <DelegateStakeForm onSubmit={handleSubmit} minStake={100} availableTokens={3000}/>
         <TokensOverview />
