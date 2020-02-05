@@ -1,5 +1,6 @@
 import React from 'react'
 import SlashedTokensList from './SlashedTokensList'
+import { LoadingOverlay } from './Loadable'
 
 const SlashedTokens = (props) => {
   return (
