@@ -2,7 +2,6 @@ package local
 
 import (
 	"context"
-	"encoding/hex"
 	"reflect"
 	"testing"
 	"time"
@@ -28,7 +27,7 @@ func TestNewChannelNotification(t *testing.T) {
 		peer2NewChannelNotificationCount++
 	})
 
-	remotePeerID := localIdentifierFromPublicKey(peer2PubKey)
+	remotePeerID := createLocalIdentifier(peer2PubKey)
 	peer1Provider.UnicastChannelWith(remotePeerID)
 
 	<-ctx.Done() // give some time for notifications...
@@ -59,7 +58,7 @@ func TestExistingChannelNotification(t *testing.T) {
 		newChannelNotificationCount++
 	})
 
-	remotePeerID := localIdentifierFromPublicKey(peer2PubKey)
+	remotePeerID := createLocalIdentifier(peer2PubKey)
 	peer1Provider.UnicastChannelWith(remotePeerID)
 	peer1Provider.UnicastChannelWith(remotePeerID)
 
@@ -83,8 +82,8 @@ func TestSendAndReceive(t *testing.T) {
 	peer1Provider, peer1PubKey := initTestProvider()
 	peer2Provider, peer2PubKey := initTestProvider()
 
-	remotePeer1ID := localIdentifierFromPublicKey(peer1PubKey)
-	remotePeer2ID := localIdentifierFromPublicKey(peer2PubKey)
+	remotePeer1ID := createLocalIdentifier(peer1PubKey)
+	remotePeer2ID := createLocalIdentifier(peer2PubKey)
 
 	channel1, err := peer1Provider.UnicastChannelWith(remotePeer2ID)
 	if err != nil {
@@ -185,7 +184,7 @@ func TestTalkToSelf(t *testing.T) {
 	//
 	peerProvider, peerPubKey := initTestProvider()
 
-	peerTransportID := localIdentifierFromPublicKey(peerPubKey)
+	peerTransportID := createLocalIdentifier(peerPubKey)
 
 	channel1, err := peerProvider.UnicastChannelWith(peerTransportID)
 	if err != nil {
@@ -372,9 +371,8 @@ func TestTimedOutHandlerNotReceiveUnicastMessage(t *testing.T) {
 func initTestProvider() (net.Provider, []byte) {
 	_, staticKey, _ := key.GenerateStaticNetworkKey()
 	provider := ConnectWithKey(staticKey)
-	publicKey, _ := hex.DecodeString(key.NetworkPubKeyToEthAddress(staticKey)[2:])
 
-	return provider, publicKey
+	return provider, networkPubKeyToEthAddress(staticKey)
 }
 
 type mockMessage struct {

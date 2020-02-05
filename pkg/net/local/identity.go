@@ -16,7 +16,7 @@ func (li localIdentifier) String() string {
 	return string(li)
 }
 
-func randomIdentifier() localIdentifier {
+func randomLocalIdentifier() localIdentifier {
 	runes := make([]rune, 32)
 	for i := range runes {
 		runes[i] = letterRunes[rand.Intn(len(letterRunes))]
@@ -25,6 +25,6 @@ func randomIdentifier() localIdentifier {
 	return localIdentifier(runes)
 }
 
-func localIdentifierFromPublicKey(publicKey []byte) localIdentifier {
+func createLocalIdentifier(publicKey []byte) localIdentifier {
 	return localIdentifier(hex.EncodeToString(publicKey))
 }

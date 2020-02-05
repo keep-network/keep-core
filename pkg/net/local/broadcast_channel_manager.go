@@ -31,7 +31,7 @@ func getBroadcastChannel(name string, staticKey *key.NetworkPublic) net.Broadcas
 		broadcastChannels[name] = localChannels
 	}
 
-	identifier := randomIdentifier()
+	identifier := randomLocalIdentifier()
 	channel := &localChannel{
 		name:                 name,
 		identifier:           &identifier,

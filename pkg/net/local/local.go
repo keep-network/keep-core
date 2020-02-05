@@ -70,32 +70,35 @@ func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
 }
 
 func (p *localProvider) CreateTransportIdentifier(publicKey []byte) net.TransportIdentifier {
-	return localIdentifierFromPublicKey(publicKey)
+	return createLocalIdentifier(publicKey)
 }
 
 // Connect returns a local instance of a net provider that does not go over the
 // network.
 func Connect() Provider {
-	_, public, err := key.GenerateStaticNetworkKey()
+	_, staticKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		panic(err)
 	}
 
-	return ConnectWithKey(public)
+	return ConnectWithKey(staticKey)
 }
 
 // ConnectWithKey returns a local instance of net provider that does not go
 // over the network. The returned instance uses the provided network key to
 // identify network messages.
 func ConnectWithKey(staticKey *key.NetworkPublic) Provider {
-	publicKey, _ := hex.DecodeString(key.NetworkPubKeyToEthAddress(staticKey)[2:])
-
 	return &localProvider{
-		id:                    randomIdentifier(),
+		id:                    randomLocalIdentifier(),
 		staticKey:             staticKey,
 		connectionManager:     &localConnectionManager{peers: make(map[string]*key.NetworkPublic)},
-		unicastChannelManager: newUnicastChannelManager(publicKey),
+		unicastChannelManager: newUnicastChannelManager(networkPubKeyToEthAddress(staticKey)),
 	}
+}
+
+func networkPubKeyToEthAddress(staticKey *key.NetworkPublic) []byte {
+	result, _ := hex.DecodeString(key.NetworkPubKeyToEthAddress(staticKey)[2:])
+	return result
 }
 
 func (lp *localProvider) ConnectionManager() net.ConnectionManager {

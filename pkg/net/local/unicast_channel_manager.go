@@ -33,7 +33,7 @@ func newUnicastChannelManager(
 	unicastChannelManagersMutex.Lock()
 	defer unicastChannelManagersMutex.Unlock()
 
-	transportID := localIdentifierFromPublicKey(publicKey)
+	transportID := createLocalIdentifier(publicKey)
 
 	existingChannelManager, ok := unicastChannelManagers[transportID.String()]
 	if ok {
