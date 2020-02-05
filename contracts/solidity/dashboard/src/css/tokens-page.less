@@ -1,6 +1,52 @@
 
 .delegate-stake-form {
     flex-basis: 54%;
+
+   .tabs {
+       flex: 1;
+       .tab {
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           flex: 1;
+           &:hover {
+               cursor: pointer;
+           }
+           &.active {
+               position: relative;
+               font-weight: bold;
+                border: 1px solid @grey;
+                border-bottom: none;
+
+                &:before {
+                    position: absolute;
+                    content: "";
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 5px;
+                    background: @aqua-marine;
+                }
+            }
+            &.inactive {
+                border-bottom: 1px solid @grey;
+                background: #E6E6E6;
+                padding-left: 6px;
+                background-clip: content-box;
+                &:first-of-type {
+                    padding-left: 0px;
+                    padding-right: 6px;
+                }
+            }
+    
+       }
+   }
+    .input-wrapper {
+        flex: 1;
+        border: 1px solid @grey;
+        border-top: 0;
+        padding: 1.5rem;
+    }
 }
 
 #tokens-overview {

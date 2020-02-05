@@ -10,11 +10,17 @@ const DelegateStakeForm = (props) => {
 
   return (
     <form className="delegate-stake-form tile flex flex-column">
-      <FormInput
-        name="stakeTokens"
-        type="text"
-        label="Stake Tokens"
-      />
+      <div className="tabs flex">
+        <div className="tab active">OWNED</div>
+        <div className="tab inactive">GRANTED</div>
+      </div>
+      <div className="input-wrapper flex flex-column">
+        <FormInput
+          name="stakeTokens"
+          type="text"
+          label="Stake Tokens"
+        />
+      </div>
       <FormInput
         name="beneficiaryAddress"
         type="text"
