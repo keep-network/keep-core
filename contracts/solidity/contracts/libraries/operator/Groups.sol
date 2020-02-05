@@ -16,10 +16,6 @@ library Groups {
     }
 
     struct Storage {
-        // The minimal number of groups that should not expire to protect the
-        // minimal network throughput.
-        uint256 activeGroupsThreshold;
-    
         // Time in blocks after which a group expires.
         uint256 groupActiveTime;
 
@@ -195,11 +191,6 @@ library Groups {
     /**
      * @dev Gets the cutoff time in blocks until which the given group is
      * considered as an active group assuming it hasn't been terminated before.
-     * The group may not be marked as expired even though its active
-     * time has passed if one of the rules inside `selectGroup` function are not
-     * met (e.g. minimum active group threshold). Hence, this value informs when
-     * the group may no longer be considered as active but it does not mean that
-     * the group will be immediatelly considered not as such.
      */
     function groupActiveTimeOf(
         Storage storage self,
@@ -274,19 +265,11 @@ library Groups {
      * @dev Goes through groups starting from the oldest one that is still
      * active and checks if it hasn't expired. If so, updates the information
      * about expired groups so that all expired groups are marked as such.
-     * It does not mark more than `activeGroupsThreshold` active groups as
-     * expired.
      */
-    function expireOldGroups(
-        Storage storage self
-    ) internal {
+    function expireOldGroups(Storage storage self) internal {
         // move expiredGroupOffset as long as there are some groups that should
-        // be marked as expired and we are above activeGroupsThreshold of
-        // active groups.
-        while(
-            groupActiveTimeOf(self, self.groups[self.expiredGroupOffset]) < block.number &&
-            numberOfGroups(self) > self.activeGroupsThreshold
-        ) {
+        // be marked as expired
+        while(groupActiveTimeOf(self, self.groups[self.expiredGroupOffset]) < block.number) {
             self.expiredGroupOffset++;
         }
 

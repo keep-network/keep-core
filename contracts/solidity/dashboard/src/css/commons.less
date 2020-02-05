@@ -10,8 +10,20 @@
 }
 
 .flex {
-    display: flex;
-    &-column {
+  display: flex;
+  &-1 {
+    flex: 1;
+  }
+
+  &-2 {
+    flex: 2;
+  }
+
+  &-3{
+    flex: 3;
+  }
+
+  &-column {
       flex-direction: column;
     }
     &-row {
@@ -28,6 +40,23 @@
     }
 }
 
-.self-start {
-    align-self: flex-start;
+.self {
+    &-start {
+      align-self: flex-start;
+    }
+
+    &-end {
+      align-self: flex-end;
+    }
+
+    &-center {
+      align-self: center;
+    }
+}
+
+.balance {
+  margin-top: 0;
+  color: @aqua-marine;
+  letter-spacing: -1px;
+  line-height: 52px;
 }

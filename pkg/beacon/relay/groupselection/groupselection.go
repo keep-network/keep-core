@@ -59,7 +59,7 @@ func CandidateToNewGroup(
 	initialSubmissionTickets, reactiveSubmissionTickets, err :=
 		generateTickets(
 			newEntry.Bytes(),
-			staker.ID(),
+			staker.Address(),
 			availableStake,
 			chainConfig.MinimumStake,
 			naturalThreshold(chainConfig),

@@ -65,7 +65,7 @@ func (n *Node) JoinGroupIfEligible(
 	indexes := make([]uint8, 0)
 	for index, selectedStaker := range groupSelectionResult.SelectedStakers {
 		// See if we are amongst those chosen
-		if bytes.Compare(selectedStaker, n.Staker.ID()) == 0 {
+		if bytes.Compare(selectedStaker, n.Staker.Address()) == 0 {
 			indexes = append(indexes, uint8(index))
 		}
 	}

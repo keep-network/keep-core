@@ -36,6 +36,10 @@
 .loading-overlay-container { 
 	position: relative;
 	
+	.tile ~ .loading-overlay {
+	   height: calc(100% - 1.2rem) !important;
+	}
+
 	.loading-overlay {
 		position: absolute;
 		display: flex;
@@ -47,5 +51,7 @@
 		width: 100%;
 		height: 100%;
 	}
+	
 }
+
 

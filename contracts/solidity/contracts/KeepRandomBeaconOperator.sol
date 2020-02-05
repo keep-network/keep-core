@@ -165,12 +165,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
+
         groups.stakingContract = TokenStaking(_stakingContract);
+        groups.groupActiveTime = TokenStaking(_stakingContract).undelegationPeriod();
 
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
-        groups.activeGroupsThreshold = 5;
-        groups.groupActiveTime = 3000;
 
         dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10);
         dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;
@@ -283,23 +283,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *   current candidate group selection.
      */
     function submitTicket(bytes32 ticket) public {
-        uint64 ticketValue;
-        uint160 stakerValue;
-        uint32 virtualStakerIndex;
-
-        bytes memory ticketBytes = abi.encodePacked(ticket);
-        /* solium-disable-next-line */
-        assembly {
-            // ticket value is 8 bytes long
-            ticketValue := mload(add(ticketBytes, 8))
-            // staker value is 20 bytes long
-            stakerValue := mload(add(ticketBytes, 28))
-            // virtual staker index is 4 bytes long
-            virtualStakerIndex := mload(add(ticketBytes, 32))
-        }
-
-        uint256 stakingWeight = stakingContract.balanceOf(msg.sender).div(minimumStake);
-        groupSelection.submitTicket(ticketValue, uint256(stakerValue), uint256(virtualStakerIndex), stakingWeight);
+        uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(minimumStake);
+        groupSelection.submitTicket(ticket, stakingWeight);
     }
 
     /**
@@ -602,15 +587,21 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Checks that the specified user has enough stake and that this
-     * contract has been authorized by the staker for potential slashing.
-     * @param staker Specifies the identity of the staker.
-     * @return True if staked enough to participate in the group, false otherwise.
+     * @dev Checks if the specified account has enough active stake to become
+     * network operator and that this contract has been authorized for potential
+     * slashing.
+     *
+     * Having the required minimum of active stake makes the operator eligible
+     * to join the network. If the active stake is not currently undelegating,
+     * operator is also eligible for work selection.
+     *
+     * @param staker Staker's address
+     * @return True if has enough active stake to participate in the network,
+     * false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
         return (
-            stakingContract.isAuthorized(staker, address(this)) &&
-            stakingContract.balanceOf(staker) >= minimumStake
+            stakingContract.activeStake(staker, address(this)) >= minimumStake
         );
     }
 

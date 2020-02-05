@@ -13,10 +13,19 @@
 @import 'commons.less';
 @import 'withdrawal-rewards-history.less';
 @import 'tokens-page.less';
+@import 'operator-page.less';
 
 html {
-  font-size: 16px;
+  font-size: 12px;
   background: @backgroud;
+
+  @media screen and (min-width: 750px) {
+    font-size: 14px;
+  }
+
+  @media screen and (min-width: 1200px) {
+    font-size: 16px;
+  }
 }
 
 .main {
@@ -25,11 +34,12 @@ html {
   flex-direction: column;
   background: @backgroud;
   >.content {
+    overflow-x: hidden;
     max-width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    margin: calc(100px + 1.5rem) 1.5rem 0;
+    margin: calc(@header-height + 1.5rem) 1.5rem 0;
   }
 }
 
@@ -161,7 +171,7 @@ html {
 @media screen and (min-width: 1250px) {
   .header {
     > .logo {
-      width: @side-menu-width;
+      width: @logo-width;
     }
 
     > .web3 {
@@ -190,7 +200,7 @@ html {
 
   .main {
     > .content {
-      margin: calc(@header-height + 5rem) 5rem 0 calc(@side-menu-width + 5rem)
+      margin: calc(@header-height + 2rem) 5rem 0 calc(@side-menu-width + 5rem)
     }
   }
 }
