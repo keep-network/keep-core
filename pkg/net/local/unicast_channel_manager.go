@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/net/key"
+
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -13,7 +15,7 @@ var unicastChannelManagers = make(map[string]*unicastChannelManager)
 
 type unicastChannelManager struct {
 	transportID net.TransportIdentifier
-	publicKey   []byte
+	staticKey   *key.NetworkPublic
 
 	channelsMutex *sync.RWMutex
 	channels      map[net.TransportIdentifier]*unicastChannel
@@ -28,12 +30,12 @@ type onChannelOpenedHandler struct {
 }
 
 func newUnicastChannelManager(
-	publicKey []byte,
+	staticKey *key.NetworkPublic,
 ) *unicastChannelManager {
 	unicastChannelManagersMutex.Lock()
 	defer unicastChannelManagersMutex.Unlock()
 
-	transportID := createLocalIdentifier(publicKey)
+	transportID := createLocalIdentifier(staticKey)
 
 	existingChannelManager, ok := unicastChannelManagers[transportID.String()]
 	if ok {
@@ -42,7 +44,7 @@ func newUnicastChannelManager(
 
 	channelManager := &unicastChannelManager{
 		transportID:                  transportID,
-		publicKey:                    publicKey,
+		staticKey:                    staticKey,
 		channelsMutex:                &sync.RWMutex{},
 		channels:                     make(map[net.TransportIdentifier]*unicastChannel),
 		onChannelOpenedHandlersMutex: &sync.RWMutex{},
@@ -101,7 +103,7 @@ func (up *unicastChannelManager) createUnicastChannelWith(
 		return channel
 	}
 
-	channel = newUnicastChannel(up.transportID, up.publicKey, peer)
+	channel = newUnicastChannel(up.transportID, up.staticKey, peer)
 	up.addUnicastChannel(channel)
 
 	if notify {

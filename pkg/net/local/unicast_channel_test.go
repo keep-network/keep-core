@@ -15,7 +15,7 @@ func TestNewChannelNotification(t *testing.T) {
 	defer cancel()
 
 	peer1Provider, _ := initTestProvider()
-	peer2Provider, peer2PubKey := initTestProvider()
+	peer2Provider, peer2StaticKey := initTestProvider()
 
 	peer1NewChannelNotificationCount := 0
 	peer1Provider.OnUnicastChannelOpened(func(channel net.UnicastChannel) {
@@ -27,7 +27,7 @@ func TestNewChannelNotification(t *testing.T) {
 		peer2NewChannelNotificationCount++
 	})
 
-	remotePeerID := createLocalIdentifier(peer2PubKey)
+	remotePeerID := createLocalIdentifier(peer2StaticKey)
 	peer1Provider.UnicastChannelWith(remotePeerID)
 
 	<-ctx.Done() // give some time for notifications...
@@ -51,14 +51,14 @@ func TestExistingChannelNotification(t *testing.T) {
 	defer cancel()
 
 	peer1Provider, _ := initTestProvider()
-	peer2Provider, peer2PubKey := initTestProvider()
+	peer2Provider, peer2StaticKey := initTestProvider()
 
 	newChannelNotificationCount := 0
 	peer2Provider.OnUnicastChannelOpened(func(channel net.UnicastChannel) {
 		newChannelNotificationCount++
 	})
 
-	remotePeerID := createLocalIdentifier(peer2PubKey)
+	remotePeerID := createLocalIdentifier(peer2StaticKey)
 	peer1Provider.UnicastChannelWith(remotePeerID)
 	peer1Provider.UnicastChannelWith(remotePeerID)
 
@@ -79,11 +79,11 @@ func TestSendAndReceive(t *testing.T) {
 	//
 	// Prepare communication channel between peer1 and peer2
 	//
-	peer1Provider, peer1PubKey := initTestProvider()
-	peer2Provider, peer2PubKey := initTestProvider()
+	peer1Provider, peer1StaticKey := initTestProvider()
+	peer2Provider, peer2StaticKey := initTestProvider()
 
-	remotePeer1ID := createLocalIdentifier(peer1PubKey)
-	remotePeer2ID := createLocalIdentifier(peer2PubKey)
+	remotePeer1ID := createLocalIdentifier(peer1StaticKey)
+	remotePeer2ID := createLocalIdentifier(peer2StaticKey)
 
 	channel1, err := peer1Provider.UnicastChannelWith(remotePeer2ID)
 	if err != nil {
@@ -182,9 +182,9 @@ func TestTalkToSelf(t *testing.T) {
 	//
 	// Prepare self-communication channel (e.g. two goroutines)
 	//
-	peerProvider, peerPubKey := initTestProvider()
+	peerProvider, peerStaticKey := initTestProvider()
 
-	peerTransportID := createLocalIdentifier(peerPubKey)
+	peerTransportID := createLocalIdentifier(peerStaticKey)
 
 	channel1, err := peerProvider.UnicastChannelWith(peerTransportID)
 	if err != nil {
@@ -262,11 +262,11 @@ func TestReceiveUnicastMessage(t *testing.T) {
 	defer cancel2()
 
 	peer1ID := localIdentifier("peer-0x1231AA")
-	peer1PubKey := []byte("0x1231AA")
+	_, peer1StaticKey, _ := key.GenerateStaticNetworkKey()
 
 	peer2ID := localIdentifier("peer-0xAEA712")
 
-	unicastChannel := newUnicastChannel(peer1ID, peer1PubKey, peer2ID)
+	unicastChannel := newUnicastChannel(peer1ID, peer1StaticKey, peer2ID)
 	unicastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &mockMessage{}
 	})
@@ -324,11 +324,11 @@ func TestTimedOutHandlerNotReceiveUnicastMessage(t *testing.T) {
 	defer cancel2()
 
 	peer1ID := localIdentifier("peer-0xAAEF12")
-	peer1PubKey := []byte("0xAAEF12")
+	_, peer1StaticKey, _ := key.GenerateStaticNetworkKey()
 
 	peer2ID := localIdentifier("peer-0x121211")
 
-	unicastChannel := newUnicastChannel(peer1ID, peer1PubKey, peer2ID)
+	unicastChannel := newUnicastChannel(peer1ID, peer1StaticKey, peer2ID)
 	unicastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &mockMessage{}
 	})
@@ -368,11 +368,11 @@ func TestTimedOutHandlerNotReceiveUnicastMessage(t *testing.T) {
 	}
 }
 
-func initTestProvider() (net.Provider, []byte) {
+func initTestProvider() (net.Provider, *key.NetworkPublic) {
 	_, staticKey, _ := key.GenerateStaticNetworkKey()
 	provider := ConnectWithKey(staticKey)
 
-	return provider, networkPubKeyToEthAddress(staticKey)
+	return provider, staticKey
 }
 
 type mockMessage struct {

@@ -5,7 +5,6 @@ package local
 
 import (
 	"context"
-	"encoding/hex"
 	"sync"
 
 	"github.com/ipfs/go-log"
@@ -69,10 +68,6 @@ func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
 	lp.connectionManager.peers[peerID] = pubKey
 }
 
-func (p *localProvider) CreateTransportIdentifier(publicKey []byte) net.TransportIdentifier {
-	return createLocalIdentifier(publicKey)
-}
-
 // Connect returns a local instance of a net provider that does not go over the
 // network.
 func Connect() Provider {
@@ -92,13 +87,8 @@ func ConnectWithKey(staticKey *key.NetworkPublic) Provider {
 		id:                    randomLocalIdentifier(),
 		staticKey:             staticKey,
 		connectionManager:     &localConnectionManager{peers: make(map[string]*key.NetworkPublic)},
-		unicastChannelManager: newUnicastChannelManager(networkPubKeyToEthAddress(staticKey)),
+		unicastChannelManager: newUnicastChannelManager(staticKey),
 	}
-}
-
-func networkPubKeyToEthAddress(staticKey *key.NetworkPublic) []byte {
-	result, _ := hex.DecodeString(key.NetworkPubKeyToEthAddress(staticKey)[2:])
-	return result
 }
 
 func (lp *localProvider) ConnectionManager() net.ConnectionManager {

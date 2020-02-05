@@ -6,6 +6,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/keep-network/keep-core/pkg/net/key"
+
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 )
@@ -16,7 +18,7 @@ type unicastChannel struct {
 	structMutex *sync.RWMutex
 
 	senderTransportID net.TransportIdentifier
-	senderPublicKey   []byte
+	senderStaticKey   *key.NetworkPublic
 
 	receiverTransportID net.TransportIdentifier
 
@@ -31,13 +33,13 @@ type unicastChannelRecv struct {
 
 func newUnicastChannel(
 	senderTransportID net.TransportIdentifier,
-	senderPublicKey []byte,
+	senderStaticKey *key.NetworkPublic,
 	receiverTransportID net.TransportIdentifier,
 ) *unicastChannel {
 	return &unicastChannel{
 		structMutex:         &sync.RWMutex{},
 		senderTransportID:   senderTransportID,
-		senderPublicKey:     senderPublicKey,
+		senderStaticKey:     senderStaticKey,
 		receiverTransportID: receiverTransportID,
 		messageReceivers:    make([]*unicastChannelRecv, 0),
 		unmarshalersByType:  make(map[string]func() net.TaggedUnmarshaler),
@@ -109,7 +111,7 @@ func (uc *unicastChannel) receiveMessage(
 		uc.senderTransportID,
 		unmarshaled,
 		messageType,
-		uc.senderPublicKey,
+		key.Marshal(uc.senderStaticKey),
 		uc.nextSeqno(),
 	)
 

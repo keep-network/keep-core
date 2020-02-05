@@ -3,6 +3,8 @@ package local
 import (
 	"encoding/hex"
 	"math/rand"
+
+	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 var letterRunes = [52]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
@@ -25,6 +27,6 @@ func randomLocalIdentifier() localIdentifier {
 	return localIdentifier(runes)
 }
 
-func createLocalIdentifier(publicKey []byte) localIdentifier {
-	return localIdentifier(hex.EncodeToString(publicKey))
+func createLocalIdentifier(staticKey *key.NetworkPublic) localIdentifier {
+	return localIdentifier(hex.EncodeToString(key.Marshal(staticKey)))
 }
