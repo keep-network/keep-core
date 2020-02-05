@@ -22,8 +22,7 @@ export const useCustomOnSubmitFormik = (onSubmitAction) => {
 
     // Validation
     const errors = await validateForm(values)
-    console.log('errors', errors)
-    if (errors) {
+    if (Object.keys(errors).length > 0) {
       setSubmitting(false)
       return
     }
