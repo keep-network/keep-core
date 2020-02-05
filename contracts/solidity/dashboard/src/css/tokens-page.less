@@ -3,8 +3,8 @@
     flex-basis: 54%;
 
    .tabs {
-       flex: 1;
        .tab {
+           padding: 1.5rem 0;
            display: flex;
            justify-content: center;
            align-items: center;
@@ -13,8 +13,8 @@
                cursor: pointer;
            }
            &.active {
-               position: relative;
-               font-weight: bold;
+                position: relative;
+                font-weight: bold;
                 border: 1px solid @grey;
                 border-bottom: none;
 
@@ -32,17 +32,28 @@
                 border-bottom: 1px solid @grey;
                 background: #E6E6E6;
                 padding-left: 6px;
-                background-clip: content-box;
+                background-clip: border-box;
+                position: relative;
+                &:before {
+                    position: absolute;
+                    content: "";
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 5px;
+                    background: @white;
+                }
                 &:first-of-type {
-                    padding-left: 0px;
-                    padding-right: 6px;
+                    &:before {
+                        left: calc(100% - 5px);
+                    }
                 }
             }
     
        }
-   }
+    }
+   
     .input-wrapper {
-        flex: 1;
         border: 1px solid @grey;
         border-top: 0;
         padding: 1.5rem;
