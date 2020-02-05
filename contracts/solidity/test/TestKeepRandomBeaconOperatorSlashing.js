@@ -3,6 +3,7 @@ import stakeDelegate from './helpers/stakeDelegate'
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 import {bls} from './helpers/data'
 import expectThrowWithMessage from './helpers/expectThrowWithMessage'
+import mineBlocks from './helpers/mineBlocks'
 
 contract('KeepRandomBeaconOperator', function(accounts) {
   let token, stakingContract, serviceContract, operatorContract, minimumStake, largeStake, entryFeeEstimate, groupIndex,
@@ -29,9 +30,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     groupIndex = 0
     await operatorContract.registerNewGroup(bls.groupPubKey)
-    await operatorContract.addGroupMember(bls.groupPubKey, operator1)
-    await operatorContract.addGroupMember(bls.groupPubKey, operator2)
-    await operatorContract.addGroupMember(bls.groupPubKey, operator3)
+    await operatorContract.setGroupMembers(bls.groupPubKey, [operator1, operator2, operator3])
 
     minimumStake = await operatorContract.minimumStake()
     largeStake = minimumStake.muln(2)
@@ -88,5 +87,27 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     assert.isTrue((await stakingContract.balanceOf(operator3)).eq(minimumStake), "Unexpected operator 3 balance")
 
     assert.isTrue((await token.balanceOf(tattletale)).isZero(), "Unexpected tattletale balance")
+  })
+
+  it("should be able to report failure to produce entry after relay entry timeout", async () => {
+    let operator1balance = await stakingContract.balanceOf(operator1)
+    let operator2balance = await stakingContract.balanceOf(operator2)
+    let operator3balance = await stakingContract.balanceOf(operator3)
+
+    await expectThrowWithMessage(
+      operatorContract.reportRelayEntryTimeout({from: tattletale}),
+      "Entry did not time out."
+    )
+
+    mineBlocks(20)
+    await operatorContract.reportRelayEntryTimeout({from: tattletale})
+
+    assert.isTrue((await stakingContract.balanceOf(operator1)).eq(operator1balance.sub(minimumStake)), "Unexpected operator 1 balance")
+    assert.isTrue((await stakingContract.balanceOf(operator2)).eq(operator2balance.sub(minimumStake)), "Unexpected operator 2 balance")
+    assert.isTrue((await stakingContract.balanceOf(operator3)).eq(operator3balance.sub(minimumStake)), "Unexpected operator 3 balance")
+
+    // Expecting 5% of all the seized tokens with reward adjustment of (20 / 64) = 31%
+    let expectedTattletaleReward = minimumStake.muln(3).muln(5).divn(100).muln(31).divn(100)
+    assert.isTrue((await token.balanceOf(tattletale)).eq(expectedTattletaleReward), "Unexpected tattletale balance")
   })
 })

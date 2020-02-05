@@ -13,7 +13,8 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   magpie = accounts[1],
   operator1 = accounts[2], tickets1,
   operator2 = accounts[3], tickets2,
-  operator3 = accounts[4], tickets3;
+  operator3 = accounts[4], tickets3,
+  authorizer = owner;
 
   const minimumStake = web3.utils.toBN(200000);
   const operator1StakingWeight = 2000;
@@ -39,17 +40,21 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await operatorContract.setGroupSize(groupSize)
 
     await stakeDelegate(
-      stakingContract, token, owner, operator1, magpie, operator1,
+      stakingContract, token, owner, operator1, magpie, authorizer,
       minimumStake.mul(web3.utils.toBN(operator1StakingWeight))
     );
     await stakeDelegate(
-      stakingContract, token, owner, operator2, magpie, operator2,
+      stakingContract, token, owner, operator2, magpie, authorizer,
       minimumStake.mul(web3.utils.toBN(operator2StakingWeight))
     );
     await stakeDelegate(
-      stakingContract, token, owner, operator3, magpie, operator3,
+      stakingContract, token, owner, operator3, magpie, authorizer,
       minimumStake.mul(web3.utils.toBN(operator3StakingWeight))
     );
+
+    await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
+    await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
+    await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
 
     tickets1 = generateTickets(
       await operatorContract.getGroupSelectionRelayEntry(), 

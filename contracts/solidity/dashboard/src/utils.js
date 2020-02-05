@@ -2,14 +2,28 @@ import Web3 from 'web3'
 import BigNumber from 'bignumber.js'
 import moment from 'moment'
 
-export function displayAmount(amount, decimals, precision) {
+moment.updateLocale('en', {
+  relativeTime: {
+    d: '1 day',
+    dd: (number, withoutSuffix, key, isFuture) => {
+      const weeks = Math.round(number / 7)
+      if (number < 7) {
+        return number + ' days'
+      } else {
+        return weeks + ' week' + (weeks === 1 ? '' : 's')
+      }
+    },
+  },
+})
+
+export function displayAmount(amount, decimals = 18, precision = 0) {
   if (amount) {
     amount = new BigNumber(amount)
     return amount.div(new BigNumber(10).pow(new BigNumber(decimals))).toFixed(precision)
   }
 }
 
-export function formatAmount(amount, decimals) {
+export function formatAmount(amount, decimals = 18) {
   amount = new BigNumber(amount)
   return amount.times(new BigNumber(10).pow(new BigNumber(decimals)))
 }
@@ -27,6 +41,9 @@ export const getWeb3SocketProvider = () => {
 }
 
 export const shortenAddress = (address) => {
+  if (!address) {
+    return ''
+  }
   const firstFourCharacters = address.substr(2, 4)
   const lastFourCharacters = address.substr(address.length - 4, address.length - 1)
 

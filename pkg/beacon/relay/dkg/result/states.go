@@ -14,6 +14,9 @@ import (
 // represents a given state in the state machine for signing dkg results
 type signingState = state.State
 
+const resultSigningStateDelayBlocks = 1
+const resultSigningStateActiveBlocks = 5
+
 // resultSigningState is the state during which group members sign their preferred
 // dkg result (by hashing their dkg result, and then signing the result), and
 // share this over the broadcast channel.
@@ -35,11 +38,11 @@ type resultSigningState struct {
 }
 
 func (rss *resultSigningState) DelayBlocks() uint64 {
-	return state.DefaultMessagingStateDelayBlocks
+	return resultSigningStateDelayBlocks
 }
 
 func (rss *resultSigningState) ActiveBlocks() uint64 {
-	return state.DefaultMessagingStateActiveBlocks
+	return resultSigningStateActiveBlocks
 }
 
 func (rss *resultSigningState) Initiate(ctx context.Context) error {

@@ -165,14 +165,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
+
         groups.stakingContract = TokenStaking(_stakingContract);
+        groups.groupActiveTime = TokenStaking(_stakingContract).undelegationPeriod();
 
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
-        groups.activeGroupsThreshold = 5;
-        groups.groupActiveTime = 3000;
 
-        dkgResultVerification.timeDKG = 6*(1+5);
+        dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10);
         dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;
         dkgResultVerification.groupSize = groupSize;
         // TODO: For now, the required number of signatures is equal to group
@@ -283,23 +283,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *   current candidate group selection.
      */
     function submitTicket(bytes32 ticket) public {
-        uint64 ticketValue;
-        uint160 stakerValue;
-        uint32 virtualStakerIndex;
-
-        bytes memory ticketBytes = abi.encodePacked(ticket);
-        /* solium-disable-next-line */
-        assembly {
-            // ticket value is 8 bytes long
-            ticketValue := mload(add(ticketBytes, 8))
-            // staker value is 20 bytes long
-            stakerValue := mload(add(ticketBytes, 28))
-            // virtual staker index is 4 bytes long
-            virtualStakerIndex := mload(add(ticketBytes, 32))
-        }
-
-        uint256 stakingWeight = stakingContract.balanceOf(msg.sender).div(minimumStake);
-        groupSelection.submitTicket(ticketValue, uint256(stakerValue), uint256(virtualStakerIndex), stakingWeight);
+        uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(minimumStake);
+        groupSelection.submitTicket(ticket, stakingWeight);
     }
 
     /**
@@ -330,14 +315,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *
      * @param submitterMemberIndex Claimed submitter candidate group member index
      * @param groupPubKey Generated candidate group public key
-     * @param disqualified Bytes representing disqualified group members;
-     * 1 at the specific index means that the member has been disqualified.
-     * Indexes reflect positions of members in the group, as outputted by the
-     * group selection protocol.
-     * @param inactive Bytes representing inactive group members;
-     * 1 at the specific index means that the member has been marked as inactive.
-     * Indexes reflect positions of members in the group, as outputted by the
-     * group selection protocol.
+     * @param misbehaved Bytes array of misbehaved (disqualified or inactive)
+     * group members indexes in ascending order; Indexes reflect positions of
+     * members in the group as outputted by the group selection protocol.
      * @param signatures Concatenation of signatures from members supporting the
      * result.
      * @param signingMembersIndexes Indices of members corresponding to each
@@ -346,8 +326,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     function submitDkgResult(
         uint256 submitterMemberIndex,
         bytes memory groupPubKey,
-        bytes memory disqualified,
-        bytes memory inactive,
+        bytes memory misbehaved,
         bytes memory signatures,
         uint[] memory signingMembersIndexes
     ) public {
@@ -356,21 +335,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         dkgResultVerification.verify(
             submitterMemberIndex,
             groupPubKey,
-            disqualified,
-            inactive,
+            misbehaved,
             signatures,
             signingMembersIndexes,
             members,
             groupSelection.ticketSubmissionStartBlock + groupSelection.ticketSubmissionTimeout
         );
 
-        for (uint i = 0; i < groupSize; i++) {
-            // Check member was neither marked as inactive nor as disqualified
-            if(inactive[i] == 0x00 && disqualified[i] == 0x00) {
-                groups.addGroupMember(groupPubKey, members[i]);
-            }
-        }
-
+        groups.setGroupMembers(groupPubKey, members, misbehaved);
         groups.addGroup(groupPubKey);
         reimburseDkgSubmitter();
         emit DkgResultPublishedEvent(groupPubKey);
@@ -583,13 +555,16 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     /**
      * @dev Function used to inform about the fact the currently ongoing
      * new relay entry generation operation timed out. As a result, the group
-     * which was supposed to produce a new relay entry is immediatelly
+     * which was supposed to produce a new relay entry is immediately
      * terminated and a new group is selected to produce a new relay entry.
+     * All members of the group are punished by seizing minimum stake of
+     * their tokens. The submitter of the transaction is rewarded with a
+     * tattletale reward which is limited to min(1, 20 / group_size) of the
+     * maximum tattletale reward.
      */
     function reportRelayEntryTimeout() public {
         require(hasEntryTimedOut(), "Entry did not time out");
-
-        groups.terminateGroup(signingRequest.groupIndex);
+        groups.reportRelayEntryTimeout(signingRequest.groupIndex, groupSize, minimumStake);
 
         // We could terminate the last active group. If that's the case,
         // do not try to execute signing again because there is no group
@@ -612,15 +587,21 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Checks that the specified user has enough stake and that this
-     * contract has been authorized by the staker for potential slashing.
-     * @param staker Specifies the identity of the staker.
-     * @return True if staked enough to participate in the group, false otherwise.
+     * @dev Checks if the specified account has enough active stake to become
+     * network operator and that this contract has been authorized for potential
+     * slashing.
+     *
+     * Having the required minimum of active stake makes the operator eligible
+     * to join the network. If the active stake is not currently undelegating,
+     * operator is also eligible for work selection.
+     *
+     * @param staker Staker's address
+     * @return True if has enough active stake to participate in the network,
+     * false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
         return (
-            stakingContract.isAuthorized(staker, address(this)) &&
-            stakingContract.balanceOf(staker) >= minimumStake
+            stakingContract.activeStake(staker, address(this)) >= minimumStake
         );
     }
 
