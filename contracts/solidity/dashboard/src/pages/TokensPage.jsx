@@ -1,8 +1,6 @@
 import React, { useContext } from 'react'
 import DelegateStakeForm from '../components/DelegateStakeForm'
 import TokensOverview from '../components/TokensOverview'
-import Grants from '../components/Grants'
-import DelegatedTokens from '../components/DelegatedTokens'
 import Undelegations from '../components/Undelegations'
 import { Web3Context } from '../components/WithWeb3Context'
 import { useShowMessage } from '../components/Message'
@@ -28,10 +26,6 @@ const TokensPage = () => {
       <div className="flex flex-1 flex-row-space-between flex-wrap">
         <DelegateStakeForm onSubmit={handleSubmit} minStake={100} availableTokens={3000}/>
         <TokensOverview />
-      </div>
-      <div className="flex flex-row flex-row-space-between flex-wrap">
-        <Grants />
-        <DelegatedTokens />
       </div>
       <Undelegations />
     </React.Fragment>
