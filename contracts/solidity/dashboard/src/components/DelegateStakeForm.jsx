@@ -10,6 +10,7 @@ const DelegateStakeForm = (props) => {
 
   return (
     <form className="delegate-stake-form tile flex flex-column">
+      <h5>Delegate Stake</h5>
       <div className="tabs flex">
         <div className="tab active">OWNED</div>
         <div className="tab inactive">GRANTED</div>
@@ -18,7 +19,7 @@ const DelegateStakeForm = (props) => {
         <FormInput
           name="stakeTokens"
           type="text"
-          label="Stake Tokens"
+          label="Token Amount"
         />
       </div>
       <FormInput
