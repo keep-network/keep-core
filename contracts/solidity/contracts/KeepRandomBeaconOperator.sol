@@ -505,7 +505,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 gasAfterCallback = gasleft();
         uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
 
-        Reimbursements.reimburseCallbackSurplus(
+        Reimbursements.reimburseCallback(
             stakingContract,
             priceFeedEstimate,
             gasLimit,
