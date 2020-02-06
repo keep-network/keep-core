@@ -96,8 +96,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     uint256 public relayEntryTimeout = relayEntryGenerationTime.add(groupSize.mul(resultPublicationBlockStep));
 
     // Gas required to verify BLS signature and produce successful relay
-    // entry. Excludes callback and DKG gas.
-    uint256 public entryVerificationGasEstimate = 240000;
+    // entry. Excludes callback and DKG gas. The worst case (most expensive)
+    // scenario.
+    uint256 public entryVerificationGasEstimate = 280000;
 
     // Gas required to submit DKG result. Excludes initiation of group selection.
     uint256 public dkgGasEstimate = 1740000;
