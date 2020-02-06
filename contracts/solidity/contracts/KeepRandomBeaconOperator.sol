@@ -2,13 +2,13 @@ pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./TokenStaking.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./libraries/operator/GroupSelection.sol";
 import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
+import "./libraries/operator/Reimbursements.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
@@ -25,7 +25,6 @@ interface ServiceContract {
  */
 contract KeepRandomBeaconOperator is ReentrancyGuard {
     using SafeMath for uint256;
-    using BytesLib for bytes;
     using AddressArrayUtils for address[];
     using GroupSelection for GroupSelection.Storage;
     using Groups for Groups.Storage;
@@ -495,45 +494,25 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @param entry The generated random number.
      */
     function executeCallback(SigningRequest memory signingRequest, uint256 entry) internal {
-        // Make sure not to spend more than what was received from the service contract for the callback
-        uint256 gasLimit = signingRequest.callbackFee.div(gasPriceWithFluctuationMargin(priceFeedEstimate));
-
-        bytes memory data;
-        uint256 gasBeforeCallback = gasleft();
-        (, data) = signingRequest.serviceContract.call.gas(gasLimit)(abi.encodeWithSignature("executeCallback(uint256,uint256)", signingRequest.relayRequestId, entry));
-        uint256 gasAfterCallback = gasleft();
-        uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
-        uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
-
-        // Obtain the actual callback gas expenditure and refund the surplus.
-        //
-        // In case of heavily underpriced transactions, EVM may wrap the call
-        // with additional opcodes. In this case gasSpent > gasLimit.
-        // The worst scenario cost is included in entry verification fee.
-        // If this happens we return just the gasLimit here.
-        uint256 actualCallbackGas = gasSpent < gasLimit ? gasSpent : gasLimit;
-        uint256 actualCallbackFee = actualCallbackGas.mul(gasPrice);
-
         uint256 callbackFee = signingRequest.callbackFee;
 
-        address payable magpie = stakingContract.magpieOf(msg.sender);
-        // If we spent less on the callback than the customer transferred for the
-        // callback execution, we need to reimburse the difference.
-        if (actualCallbackFee < callbackFee) {
-            uint256 callbackSurplus = callbackFee.sub(actualCallbackFee);
-            // Reimburse submitter with his actual callback cost.
-            magpie.call.value(actualCallbackFee)("");
+        // Make sure not to spend more than what was received from the service contract for the callback
+        uint256 gasLimit = callbackFee.div(gasPriceWithFluctuationMargin(priceFeedEstimate));
 
-            // Return callback surplus to the requestor.
-            // Expecting 32 bytes data containing 20 byte address
-            if (data.length == 32) {
-                address surplusRecipient = data.toAddress(12);
-                surplusRecipient.call.gas(8000).value(callbackSurplus)("");
-            }
-        } else {
-            // Reimburse submitter with the callback payment sent by the requestor.
-            magpie.call.value(callbackFee)("");
-        }
+        bytes memory callbackReturnData;
+        uint256 gasBeforeCallback = gasleft();
+        (, callbackReturnData) = signingRequest.serviceContract.call.gas(gasLimit)(abi.encodeWithSignature("executeCallback(uint256,uint256)", signingRequest.relayRequestId, entry));
+        uint256 gasAfterCallback = gasleft();
+        uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
+
+        Reimbursements.reimburseCallbackSurplus(
+            stakingContract,
+            priceFeedEstimate,
+            gasLimit,
+            gasSpent,
+            callbackFee,
+            callbackReturnData
+        );
     }
 
     /**
