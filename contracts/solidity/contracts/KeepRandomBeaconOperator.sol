@@ -411,7 +411,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             "Insufficient new entry fee"
         );
         uint256 callbackFee = msg.value.sub(entryVerificationAndProfitFee);
-        signRelayEntry(requestId, previousEntry, msg.sender, msg.value.sub(callbackFee), callbackFee);
+        signRelayEntry(
+            requestId, previousEntry, msg.sender,
+            entryVerificationAndProfitFee, callbackFee
+        );
     }
 
     function signRelayEntry(
