@@ -1,6 +1,6 @@
 
 .delegate-stake-form {
-    flex-basis: 54%;
+    flex-basis: 100%;
 
    .tabs {
        margin-top: 1.5rem;
@@ -68,6 +68,16 @@
 }
 
 #tokens-overview {
-    flex-basis: 44%;
+    flex-basis: 100%;
     align-self: flex-start;
+}
+
+@media screen and (min-width: 750px) {
+    #tokens-overview {
+        flex-basis: 44%;
+    }
+
+    .delegate-stake-form {
+        flex-basis: 54%;
+    }
 }
