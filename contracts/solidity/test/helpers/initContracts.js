@@ -48,6 +48,11 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   await registry.approveOperatorContract(operatorContract.address);
   await serviceContract.initialize(priceFeedEstimate, fluctuationMargin, dkgContributionMargin, withdrawalDelay, registry.address);
+
+  // Set service contract owner as operator contract upgrader by default
+  const operatorContractUpgrader = await serviceContract.owner()
+  await registry.setOperatorContractUpgrader(serviceContract.address, operatorContractUpgrader);
+
   await serviceContract.addOperatorContract(operatorContract.address);
 
   let dkgGasEstimate = await operatorContract.dkgGasEstimate();
