@@ -8,6 +8,7 @@ import "./utils/AddressArrayUtils.sol";
 import "./libraries/operator/GroupSelection.sol";
 import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
+import "./libraries/operator/Reimbursements.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
@@ -95,8 +96,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     uint256 public relayEntryTimeout = relayEntryGenerationTime.add(groupSize.mul(resultPublicationBlockStep));
 
     // Gas required to verify BLS signature and produce successful relay
-    // entry. Excludes callback and DKG gas.
-    uint256 public entryVerificationGasEstimate = 240000;
+    // entry. Excludes callback and DKG gas. The worst case (most expensive)
+    // scenario.
+    uint256 public entryVerificationGasEstimate = 280000;
 
     // Gas required to submit DKG result. Excludes initiation of group selection.
     uint256 public dkgGasEstimate = 1740000;
@@ -118,6 +120,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     struct SigningRequest {
         uint256 relayRequestId;
         uint256 entryVerificationAndProfitFee;
+        uint256 callbackFee;
         uint256 groupIndex;
         bytes previousEntry;
         address serviceContract;
@@ -371,8 +374,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
             dkgSubmitterReimbursementFee = 0;
             // Reimburse submitter with actual DKG cost.
-            (bool success, ) = magpie.call.value(reimbursementFee)("");
-            require(success, "Failed reimburse actual DKG cost");
+            magpie.call.value(reimbursementFee)("");
 
             // Return surplus to the contract that started DKG.
             groupSelectionStarterContract.fundDkgFeePool.value(surplus)();
@@ -380,8 +382,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             // If submitter used higher gas price reimburse only dkgSubmitterReimbursementFee max.
             reimbursementFee = dkgSubmitterReimbursementFee;
             dkgSubmitterReimbursementFee = 0;
-            (bool success, ) = magpie.call.value(reimbursementFee)("");
-            require(success, "Failed reimburse DKG fee");
+            magpie.call.value(reimbursementFee)("");
         }
     }
 
@@ -403,18 +404,26 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 requestId,
         bytes memory previousEntry
     ) public payable onlyServiceContract {
+        uint256 entryVerificationAndProfitFee = groupProfitFee().add(
+            entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate))
+        );
         require(
-            msg.value >= groupProfitFee().add(entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate))),
+            msg.value >= entryVerificationAndProfitFee,
             "Insufficient new entry fee"
         );
-        signRelayEntry(requestId, previousEntry, msg.sender, msg.value);
+        uint256 callbackFee = msg.value.sub(entryVerificationAndProfitFee);
+        signRelayEntry(
+            requestId, previousEntry, msg.sender,
+            entryVerificationAndProfitFee, callbackFee
+        );
     }
 
     function signRelayEntry(
         uint256 requestId,
         bytes memory previousEntry,
         address serviceContract,
-        uint256 entryVerificationAndProfitFee
+        uint256 entryVerificationAndProfitFee,
+        uint256 callbackFee
     ) internal {
         require(!isEntryInProgress() || hasEntryTimedOut(), "Beacon is busy");
 
@@ -424,6 +433,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         signingRequest = SigningRequest(
             requestId,
             entryVerificationAndProfitFee,
+            callbackFee,
             groupIndex,
             previousEntry,
             serviceContract
@@ -455,23 +465,58 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         emit RelayEntrySubmitted();
 
-        ServiceContract(signingRequest.serviceContract).entryCreated(
-            signingRequest.relayRequestId,
-            _groupSignature,
-            msg.sender
+        // Spend no more than groupSelectionGasEstimate + 40000 gas max
+        // This will prevent relayEntry failure in case the service contract is compromised
+        signingRequest.serviceContract.call.gas(groupSelectionGasEstimate.add(40000))(
+            abi.encodeWithSignature(
+                "entryCreated(uint256,bytes,address)",
+                signingRequest.relayRequestId,
+                _groupSignature,
+                msg.sender
+            )
         );
+
+        if (signingRequest.callbackFee > 0) {
+            executeCallback(signingRequest, uint256(keccak256(_groupSignature)));
+        }
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        (bool success, ) = stakingContract.magpieOf(msg.sender).call.value(submitterReward)("");
-        require(success, "Failed send relay submitter reward");
+        stakingContract.magpieOf(msg.sender).call.value(submitterReward)("");
 
         if (subsidy > 0) {
-            ServiceContract(signingRequest.serviceContract).fundRequestSubsidyFeePool.value(subsidy)();
+            signingRequest.serviceContract.call.gas(35000).value(subsidy)(abi.encodeWithSignature("fundRequestSubsidyFeePool()"));
         }
 
         currentEntryStartBlock = 0;
+    }
+
+    /**
+     * @dev Executes customer specified callback for the relay entry request.
+     * @param signingRequest Request data tracked internally by this contract.
+     * @param entry The generated random number.
+     */
+    function executeCallback(SigningRequest memory signingRequest, uint256 entry) internal {
+        uint256 callbackFee = signingRequest.callbackFee;
+
+        // Make sure not to spend more than what was received from the service contract for the callback
+        uint256 gasLimit = callbackFee.div(gasPriceWithFluctuationMargin(priceFeedEstimate));
+
+        bytes memory callbackReturnData;
+        uint256 gasBeforeCallback = gasleft();
+        (, callbackReturnData) = signingRequest.serviceContract.call.gas(gasLimit)(abi.encodeWithSignature("executeCallback(uint256,uint256)", signingRequest.relayRequestId, entry));
+        uint256 gasAfterCallback = gasleft();
+        uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
+
+        Reimbursements.reimburseCallback(
+            stakingContract,
+            priceFeedEstimate,
+            gasLimit,
+            gasSpent,
+            callbackFee,
+            callbackReturnData
+        );
     }
 
     /**
@@ -574,7 +619,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
                 signingRequest.relayRequestId,
                 signingRequest.previousEntry,
                 signingRequest.serviceContract,
-                signingRequest.entryVerificationAndProfitFee
+                signingRequest.entryVerificationAndProfitFee,
+                signingRequest.callbackFee
             );
         }
     }
@@ -659,8 +705,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     function withdrawGroupMemberRewards(address operator, uint256 groupIndex, uint256[] memory groupMemberIndices) public nonReentrant {
         uint256 accumulatedRewards = groups.withdrawFromGroup(operator, groupIndex, groupMemberIndices);
         (bool success, ) = stakingContract.magpieOf(operator).call.value(accumulatedRewards)("");
-        require(success, "Failed withdraw rewards");
-        emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, accumulatedRewards, groupIndex);
+        if (success) {
+            emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, accumulatedRewards, groupIndex);
+        }
     }
 
     /**

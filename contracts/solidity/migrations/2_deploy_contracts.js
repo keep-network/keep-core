@@ -10,6 +10,7 @@ const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.s
 const GroupSelection = artifacts.require("./libraries/operator/GroupSelection.sol");
 const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
+const Reimbursements = artifacts.require("./libraries/operator/Reimbursements.sol");
 const Registry = artifacts.require("./Registry.sol");
 
 let initializationPeriod = 50000; // ~6 days
@@ -38,6 +39,8 @@ module.exports = async function(deployer, network) {
   await deployer.link(Groups, KeepRandomBeaconOperator);
   await deployer.deploy(DKGResultVerification);
   await deployer.link(DKGResultVerification, KeepRandomBeaconOperator);
+  await deployer.deploy(Reimbursements);
+  await deployer.link(Reimbursements, KeepRandomBeaconOperator);
   await deployer.link(BLS, KeepRandomBeaconOperator);
   await deployer.deploy(KeepRandomBeaconServiceImplV1);
   await deployer.deploy(KeepRandomBeaconService, KeepRandomBeaconServiceImplV1.address);
