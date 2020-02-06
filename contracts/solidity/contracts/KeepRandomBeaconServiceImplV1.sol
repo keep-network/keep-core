@@ -95,10 +95,10 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
     hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
 
     /**
-     * @dev Throws if called by any account other than the operator contract upgrader.
+     * @dev Throws if called by any account other than the operator contract upgrader authorized for this service contract.
      */
     modifier onlyOperatorContractUpgrader() {
-        address operatorContractUpgrader = Registry(_registry).operatorContractUpgrader();
+        address operatorContractUpgrader = Registry(_registry).operatorContractUpgraderFor(address(this));
         require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
         _;
     }
