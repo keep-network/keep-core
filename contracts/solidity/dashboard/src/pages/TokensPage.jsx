@@ -7,6 +7,7 @@ import { tokensPageService } from '../services/tokens-page.service'
 import DelegatedTokensList from '../components/DelegatedTokensList'
 import { Web3Context } from '../components/WithWeb3Context'
 import { useShowMessage, messageType } from '../components/Message'
+import web3Utils from 'web3-utils'
 
 const initialData = {
   ownedKeepBalance: '',
@@ -22,7 +23,7 @@ const initialData = {
 const TokensPage = () => {
   const web3Context = useContext(Web3Context)
   const showMessage = useShowMessage()
-  const [state] = useFetchData(tokensPageService.fetchTokensPageData, initialData)
+  const [state, setData] = useFetchData(tokensPageService.fetchTokensPageData, initialData)
   const {
     ownedKeepBalance,
     pendingUndelegationBalance,
@@ -35,9 +36,20 @@ const TokensPage = () => {
   } = state.data
 
   const handleSubmit = async (values, onTransactionHashCallback) => {
+    const { stakeTokens, operatorAddress, beneficiaryAddress } = values
     try {
       await tokensPageService.delegateStake(web3Context, values, onTransactionHashCallback)
       showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Staking delegate transaction has been successfully completed' })
+      const amount = web3Utils.toBN(stakeTokens).mul(web3Utils.toBN(10).pow(web3Utils.toBN(18)))
+      const updatedKeepBalance = web3Utils.toBN(ownedKeepBalance).sub(amount)
+      const updatedTokenStakingBalance = web3Utils.toBN(tokenStakingBalance).add(amount)
+      const updatedDelegations = [{ operatorAddress, beneficiary: beneficiaryAddress, amount: amount.toString() }, ...delegations]
+      setData({
+        ...state.data,
+        ownedKeepBalance: updatedKeepBalance,
+        tokenStakingBalance: updatedTokenStakingBalance,
+        delegations: updatedDelegations,
+      })
     } catch (error) {
       showMessage({ type: messageType.ERROR, title: 'Staking delegate action has been failed ', content: error.message })
     }
