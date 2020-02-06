@@ -4,9 +4,10 @@ import FormInput from './FormInput'
 import { withFormik, useFormikContext } from 'formik'
 import { validateAmountInRange, validateEthAddress, getErrorsObj } from '../forms/common-validators'
 import { useCustomOnSubmitFormik } from '../hooks/useCustomOnSubmitFormik'
+import { displayAmount } from '../utils'
 
-const DelegateStakeForm = (props) => {
-  const onSubmit = useCustomOnSubmitFormik(props.onSubmit)
+const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...formikProps }) => {
+  const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
 
   return (
     <form className="delegate-stake-form tile flex flex-column">
@@ -20,10 +21,10 @@ const DelegateStakeForm = (props) => {
         />
         <div className="flex flex-column flex-column-center">
           <div className="text text-smaller" style={{ marginTop: '1.5rem' }}>
-            Min Stake: {props.minStake} KEEP
+            Min Stake: {displayAmount(minStake)} KEEP
           </div>
           <div className="text text-smaller" style={{ marginTop: '1rem' }}>
-            {props.availableTokens} KEEP available
+            {formikProps.values.context === 'granted' ? displayAmount(grantBalance) : displayAmount(keepBalance)} KEEP available
           </div>
         </div>
       </div>
@@ -45,7 +46,7 @@ const DelegateStakeForm = (props) => {
       <SubmitButton
         className="btn btn-primary btn-large"
         type="submit"
-        onSubmitAction={onSubmit}
+        onSubmitAction={onSubmitBtn}
         withMessageActionIsPending={false}
         triggerManuallyFetch={true}
       >
@@ -69,18 +70,18 @@ const ContextSwitch = (props) => {
   return (
     <div className="tabs flex">
       <div
-        id="owned"
-        className={`tab ${getClassName('owned')}`}
-        onClick={onClick}
-      >
-        OWNED
-      </div>
-      <div
         id="granted"
         className={`tab ${getClassName('granted')}`}
         onClick={onClick}
       >
         GRANTED
+      </div>
+      <div
+        id="owned"
+        className={`tab ${getClassName('owned')}`}
+        onClick={onClick}
+      >
+        OWNED
       </div>
     </div>
   )
@@ -95,11 +96,11 @@ const connectedWithFormik = withFormik({
     context: 'granted',
   }),
   validate: (values, props) => {
-    const { availableTokens, minStake } = props
-    const { beneficiaryAddress, operatorAddress, stakeTokens, authorizerAddress } = values
+    const { keepBalance, grantBalance, minStake } = props
+    const { beneficiaryAddress, operatorAddress, stakeTokens, authorizerAddress, context } = values
     const errors = {}
 
-    errors.stakeTokens = validateAmountInRange(stakeTokens, availableTokens, minStake)
+    errors.stakeTokens = validateAmountInRange(stakeTokens, context === 'granted' ? grantBalance : keepBalance, minStake)
     errors.beneficiaryAddress = validateEthAddress(beneficiaryAddress)
     errors.operatorAddress = validateEthAddress(operatorAddress)
     errors.authorizerAddress = validateEthAddress(authorizerAddress)
