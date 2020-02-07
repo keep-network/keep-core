@@ -91,8 +91,9 @@ type TaggedUnmarshaler interface {
 // Every implementation must fulfill the following guarantees:
 // 1. If the channel was opened without errors, the communication is possible.
 // 2. Communication is performed through a direct connection.
-// 3. If a message was sent without errors, it will actually reach the
-//    receiver. It doesn't matter what the receiver will do after.
+// 3. If a message was sent with no errors, it was received by the remote peer
+// 	  on the network level. Though, it does not guarantee that the remote peer
+// 	  handled that message.
 type UnicastChannel interface {
 	// Send function publishes a message m to the channel. Message m needs to
 	// conform to the marshalling interface.
