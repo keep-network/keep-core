@@ -3,7 +3,7 @@ name: NPM
 on:
   push:
     branches:
-      - master
+      - add-npm-publish-action
     paths:
       - "contracts/solidity/contracts/**"
       - "contracts/solidity/package.json"
