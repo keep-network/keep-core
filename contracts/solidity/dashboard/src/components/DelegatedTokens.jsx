@@ -1,24 +1,16 @@
-import React, { useEffect, useContext } from 'react'
+import React, { useContext } from 'react'
 import AddressShortcut from './AddressShortcut'
 import { operatorService } from '../services/token-staking.service'
 import { useFetchData } from '../hooks/useFetchData'
 import { LoadingOverlay } from './Loadable'
 import { displayAmount } from '../utils'
 import { Web3Context } from './WithWeb3Context'
-import UndelegateForm from './UndelegateForm'
+import UndelegateStakeButton from './UndelegateStakeButton'
 
-const DelegatedTokens = ({ latestUnstakeEvent }) => {
-  const { utils } = useContext(Web3Context)
-  const [state, setData] = useFetchData(operatorService.fetchDelegatedTokensData, {})
+const DelegatedTokens = (props) => {
+  const { yourAddress } = useContext(Web3Context)
+  const [state] = useFetchData(operatorService.fetchDelegatedTokensData, {})
   const { isFetching, data: { stakedBalance, ownerAddress, beneficiaryAddress } } = state
-
-  useEffect(() => {
-    if (latestUnstakeEvent) {
-      const { returnValues: { value } } = latestUnstakeEvent
-      const updatedStakeBalance = utils.toBN(stakedBalance).sub(utils.toBN(value))
-      setData({ stakedBalance: updatedStakeBalance, ownerAddress, beneficiaryAddress })
-    }
-  }, [latestUnstakeEvent])
 
   return (
     <section id="delegated-tokens" className="flex flex-row-space-between">
@@ -41,7 +33,10 @@ const DelegatedTokens = ({ latestUnstakeEvent }) => {
         <p className="text-warning border flex flex-1">
           Starting an undelegation restarts the amount of time, or undelegation period, until tokens are returned to the owner
         </p>
-        <UndelegateForm />
+        <UndelegateStakeButton
+          btnClassName="btn btn-primary btn-large"
+          operator={yourAddress}
+        />
       </section>
     </section>
   )
