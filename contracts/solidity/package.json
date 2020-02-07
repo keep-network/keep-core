@@ -6,6 +6,9 @@
     "type": "git",
     "url": "https://github.com/keep-network/contracts.git"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "scripts": {
     "truffle": "truffle",
     "test": "rm -rf build && truffle compile && truffle test",
