@@ -41,7 +41,7 @@ export const Web3Status = (props) => {
 
     return (
       <div className="web3-status success">
-        Account logged in
+        You are logged in securely to MetaMask.
       </div>
     )
   }
