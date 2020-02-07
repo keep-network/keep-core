@@ -30,6 +30,8 @@ export const SideMenu = (props) => {
       <ul>
         <NavLink exact to="/overview" label='TOKENS'/>
         <NavLink exact to="/rewards" label='REWARDS'/>
+        <NavLink exact to="/operations" label='OPERATIONS'/>
+
         { isTokenHolder &&
             <>
                 <NavLink exact to="/stake" label='STAKE'/>

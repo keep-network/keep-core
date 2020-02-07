@@ -59,7 +59,7 @@ contract('KeepRandomBeaconService', function(accounts) {
 
         let callbackFee = await serviceContract.callbackFee(callbackGas);
         
-        let expectedCallbackFee = 261840; // 1091 * 160 * 150%
+        let expectedCallbackFee = 4784640; // (18845 + 1091) * 160 * 150%
         assert.equal(expectedCallbackFee, callbackFee);
     });
 
@@ -80,9 +80,9 @@ contract('KeepRandomBeaconService', function(accounts) {
         // entry verification fee = 12 * 200 * 150% = 3600
         // dkg contribution fee = (14 + 2) * 200 * 1% = 32
         // group profit fee = 13 * 3 = 39
-        // callback fee = 7 * 200 * 150% = 2100
-        // entry fee = 3600 + 32 + 39 + 2100 = 5771
-        let expectedEntryFeeEstimate = 5771;
+        // callback fee = (18845 + 7) * 200 * 150% = 5655600
+        // entry fee = 3600 + 32 + 39 + 5655600 = 5659271
+        let expectedEntryFeeEstimate = 5659271;
         assert.equal(expectedEntryFeeEstimate, entryFeeEstimate)
     });
 });
