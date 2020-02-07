@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
 
@@ -12,7 +13,10 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
-const protocolID = "/keep/unicast/1.0.0"
+const (
+	protocolID       = "/keep/unicast/1.0.0"
+	handshakeTimeout = 5 * time.Second
+)
 
 type unicastChannelManager struct {
 	ctx context.Context
@@ -80,6 +84,21 @@ func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 	channel.handleStream(stream)
 }
 
+func (ucm *unicastChannelManager) getUnicastChannelWithHandshake(
+	peerID net.TransportIdentifier,
+) (
+	*unicastChannel,
+	error,
+) {
+	err := ucm.trialHandshake(peerID)
+	if err != nil {
+		return nil, fmt.Errorf("handshake error: [%v]", err)
+	}
+
+	channel, _, err := ucm.getUnicastChannel(peerID)
+	return channel, err
+}
+
 func (ucm *unicastChannelManager) getUnicastChannel(
 	peerID net.TransportIdentifier,
 ) (
@@ -97,7 +116,7 @@ func (ucm *unicastChannelManager) getUnicastChannel(
 	ucm.channelsMutex.Unlock()
 
 	if !exists {
-		newChannel, err := ucm.newUnicastChannel(peerID, initDirection)
+		newChannel, err := ucm.newUnicastChannel(peerID)
 		if err != nil {
 			return nil, exists, err
 		}
@@ -118,7 +137,6 @@ func (ucm *unicastChannelManager) getUnicastChannel(
 
 func (ucm *unicastChannelManager) newUnicastChannel(
 	peerID net.TransportIdentifier,
-	initDirection ChannelInitDirection,
 ) (*unicastChannel, error) {
 	remotePeer, err := peer.IDB58Decode(peerID.String())
 	if err != nil {
@@ -137,16 +155,43 @@ func (ucm *unicastChannelManager) newUnicastChannel(
 		unmarshalersByType: make(map[string]func() net.TaggedUnmarshaler),
 	}
 
+	return channel, nil
+}
+
+func (ucm *unicastChannelManager) trialHandshake(peerID net.TransportIdentifier) error {
+	remotePeer, err := peer.IDB58Decode(peerID.String())
+	if err != nil {
+		return err
+	}
+
 	hasConnectionWithPeer := ucm.p2phost.Network().
 		Connectedness(remotePeer) == network.Connected
 
-	if initDirection == Outbound && !hasConnectionWithPeer {
+	if !hasConnectionWithPeer {
 		// Trigger a handshake in order to check if peer is reachable.
-		err = channel.handshake()
-		if err != nil {
-			return nil, fmt.Errorf("handshake failed: [%v]", err)
+		ctx, cancel := context.WithTimeout(context.Background(), handshakeTimeout)
+		defer cancel()
+
+		handshakeError := make(chan error)
+		handshakeSuccess := make(chan struct{})
+
+		go func() {
+			_, err := ucm.p2phost.NewStream(ctx, remotePeer, protocolID)
+			if err != nil {
+				handshakeError <- err
+			}
+			handshakeSuccess <- struct{}{}
+		}()
+
+		select {
+		case <-handshakeSuccess:
+			return nil
+		case err := <-handshakeError:
+			return err
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 	}
 
-	return channel, nil
+	return nil
 }

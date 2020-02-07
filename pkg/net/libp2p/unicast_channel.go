@@ -326,28 +326,3 @@ func (uc *unicastChannel) deliver(message net.Message) {
 		}(message, handler)
 	}
 }
-
-func (uc *unicastChannel) handshake() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	handshakeError := make(chan error)
-	handshakeSuccess := make(chan struct{})
-
-	go func() {
-		_, err := uc.streamFactory(ctx, uc.remotePeerID)
-		if err != nil {
-			handshakeError <- err
-		}
-		handshakeSuccess <- struct{}{}
-	}()
-
-	select {
-	case <-handshakeSuccess:
-		return nil
-	case err := <-handshakeError:
-		return err
-	case <-ctx.Done():
-		return fmt.Errorf("handshake timeout")
-	}
-}
