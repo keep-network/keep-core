@@ -138,6 +138,7 @@ func (lc *localChannel) removeHandler(handler *messageHandler) {
 		if h.channel == handler.channel {
 			lc.messageHandlers[i] = lc.messageHandlers[len(lc.messageHandlers)-1]
 			lc.messageHandlers = lc.messageHandlers[:len(lc.messageHandlers)-1]
+			break
 		}
 	}
 }
@@ -148,14 +149,10 @@ func (lc *localChannel) RegisterUnmarshaler(
 	tpe := unmarshaler().Type()
 
 	lc.unmarshalersMutex.Lock()
-	_, exists := lc.unmarshalersByType[tpe]
-	if exists {
-		err = fmt.Errorf("type %s already has an associated unmarshaler", tpe)
-	} else {
-		lc.unmarshalersByType[tpe] = unmarshaler
-	}
-	lc.unmarshalersMutex.Unlock()
-	return
+	defer lc.unmarshalersMutex.Unlock()
+
+	lc.unmarshalersByType[tpe] = unmarshaler
+	return nil
 }
 
 func (lc *localChannel) SetFilter(filter net.BroadcastChannelFilter) error {
