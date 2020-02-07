@@ -58,29 +58,6 @@ const keepRandomBeaconOperatorContractAddress = keepRandomBeaconOperatorParsed.n
 async function provisionKeepClient() {
 
   try {
-    // If it's a bootstrap peer we assume existing account and use it accordingly.
-    if (process.env.KEEP_CLIENT_TYPE === 'bootstrap') {
-      console.log('###########  Provisioning keep-client Bootstrap Peer! ###########');
-      console.log('\n<<<<<<<<<<<< Setting Up Operator Account ' + '>>>>>>>>>>>>');
-
-      var operator = process.env.KEEP_CLIENT_ETH_ACCOUNT;
-      console.log("Using pre-configured bootstrap peer account " + operator);
-
-      // We need to unlock the operator account only in bootstrap case since it's hosted on ETH node.
-      await unlockEthAccount(operator, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
-    } else {
-      console.log('###########  Provisioning keep-client Standard Peer! ###########');
-      console.log('\n<<<<<<<<<<<< Setting Up Operator Account ' + '>>>>>>>>>>>>');
-
-      let operatorEthAccountPassword = process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD;
-      let operatorAccount = await createEthAccount('operator');
-      var operator = operatorAccount['address'];
-
-      await createEthAccountKeyfile(operatorAccount['privateKey'], operatorEthAccountPassword);
-
-      // We wallet add to make the local account available to web3 functions in the script.
-      await web3.eth.accounts.wallet.add(operatorAccount['privateKey']);
-    }
     // Eth account that contracts are migrated against.
     let contractOwner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
     // Eth account that's both miner and coinbase on internal testnet
@@ -124,7 +101,7 @@ async function isStaked(operator) {
 
 async function stakeOperatorAccount(operator, contractOwner) {
 
-  let magpie = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+  let magpie = contractOwner;
   let authorizer = contractOwner;
   let staked = await isStaked(operator);
 
@@ -146,51 +123,24 @@ async function stakeOperatorAccount(operator, contractOwner) {
   }
 
   let delegation = '0x' + Buffer.concat([
-    Buffer.from(magpie.substr(2), 'hex'), 
+    Buffer.from(magpie.substr(2), 'hex'),
     Buffer.from(operator.substr(2), 'hex'),
     Buffer.from(authorizer.substr(2), 'hex')
   ]).toString('hex');
 
-  console.log('Staking 1000000 KEEP tokens on operator account ' + operator);
+  console.log('Staking 2000000 KEEP tokens on operator account ' + operator);
 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
-    formatAmount(10000000, 18),
+    formatAmount(20000000, 18),
     delegation).send({from: contractOwner})
 
-  await tokenStakingContract.authorizeOperatorContract(operatorAddress, keepRandomBeaconOperatorContractAddress, {from: authorizer});
+  await tokenStakingContract.authorizeOperatorContract(
+    operatorAddress,
+    keepRandomBeaconOperatorContractAddress,
+    {from: authorizer});
 
   console.log('Account ' + operator + ' staked!');
-};
-
-async function createEthAccount(accountName) {
-
-  let ethAccount = await web3.eth.accounts.create();
-
-  // We write to a file for later passage to the keep-client container
-  fs.writeFile('/mnt/keep-client/config/eth_account_address', ethAccount['address'], (error) => {
-    if (error) throw error;
-  });
-  console.log(accountName + ' Account '  + ethAccount['address'] + ' Created!');
-  return ethAccount;
-};
-
-// We are creating a local account.  We must manually generate a keyfile for use by the keep-client
-async function createEthAccountKeyfile(ethAccountPrivateKey, ethAccountPassword) {
-
-  let ethAccountKeyfile = await web3.eth.accounts.encrypt(ethAccountPrivateKey, ethAccountPassword);
-
-  // We write to a file for later passage to the keep-client container
-  fs.writeFile('/mnt/keep-client/config/eth_account_keyfile', JSON.stringify(ethAccountKeyfile), (error) => {
-    if (error) throw error;
-  });
-  console.log('Keyfile generated!');
-};
-
-async function unlockEthAccount(ethAccount, ethAccountPassword) {
-
-  await web3.eth.personal.unlockAccount(ethAccount, ethAccountPassword, 150000);
-  console.log('Account ' + ethAccount + ' unlocked!');
 };
 
 async function fundOperatorAccount(operator, purse, etherToTransfer) {
