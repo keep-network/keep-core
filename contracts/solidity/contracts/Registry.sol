@@ -80,4 +80,8 @@ contract Registry {
     function operatorContractUpgraderFor(address _serviceContract) public view returns (address) {
         return operatorContractUpgraders[_serviceContract];
     }
+
+    function operatorContractUpgraderFor2(address _serviceContract) public view returns (address) {
+        return operatorContractUpgraders[_serviceContract];
+    }
 }
