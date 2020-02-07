@@ -5,12 +5,25 @@
 .tile {
     background: @white;
     padding: 2rem;
+    margin-bottom: 1.2rem;
     .box-shadow(0px, 4px, 4px,rgba(196, 196, 196, 0.3));
 }
 
 .flex {
-    display: flex;
-    &-column {
+  display: flex;
+  &-1 {
+    flex: 1;
+  }
+
+  &-2 {
+    flex: 2;
+  }
+
+  &-3{
+    flex: 3;
+  }
+
+  &-column {
       flex-direction: column;
     }
     &-row {
@@ -24,6 +37,23 @@
     }
 }
 
-.self-start {
-    align-self: flex-start;
+.self {
+    &-start {
+      align-self: flex-start;
+    }
+
+    &-end {
+      align-self: flex-end;
+    }
+
+    &-center {
+      align-self: center;
+    }
+}
+
+.balance {
+  margin-top: 0;
+  color: @aqua-marine;
+  letter-spacing: -1px;
+  line-height: 52px;
 }

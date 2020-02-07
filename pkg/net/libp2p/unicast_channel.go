@@ -22,7 +22,10 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 )
 
-const readerMaxSize = 1 << 20
+const (
+	readerMaxSize = 1 << 20
+	sendTimeout   = 10 * time.Second
+)
 
 type streamFactory func(ctx context.Context, peerID peer.ID) (network.Stream, error)
 
@@ -56,7 +59,7 @@ func (uc *unicastChannel) nextSeqno() uint64 {
 }
 
 func (uc *unicastChannel) Send(message net.TaggedMarshaler) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
 	defer cancel()
 
 	logger.Debugf(

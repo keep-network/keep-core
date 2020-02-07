@@ -40,6 +40,8 @@ type TaggedMarshaler interface {
 // return a provider type, which is an informational string indicating what type
 // of provider this is, the list of IP addresses on which it can listen, and
 // known peers from peer discovery mechanims.
+//
+// TODO: move AddrStrings and Peers to the ConnectionManager interface.
 type Provider interface {
 	// ID returns provider identifier.
 	ID() TransportIdentifier
