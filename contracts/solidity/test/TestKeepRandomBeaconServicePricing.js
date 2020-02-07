@@ -37,9 +37,7 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     groupSize = web3.utils.toBN(3);
     await operatorContract.setGroupSize(groupSize);
     group = await operatorContract.getGroupPublicKey(0);
-    await operatorContract.addGroupMember(group, operator1);
-    await operatorContract.addGroupMember(group, operator2);
-    await operatorContract.addGroupMember(group, operator3);
+    await operatorContract.setGroupMembers(group, [operator1, operator2, operator3])
 
     await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, 0);
     await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, 0);
@@ -54,6 +52,8 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     // Set higher gas price
     await serviceContract.setPriceFeedEstimate(defaultPriceFeedEstimate.mul(web3.utils.toBN(10)));
+    await operatorContract.setPriceFeedEstimate(defaultPriceFeedEstimate.mul(web3.utils.toBN(10)));
+    let baseCallbackGas = await serviceContract.baseCallbackGas();
     let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     let excessCallbackFee = await serviceContract.callbackFee(callbackGas)
@@ -67,23 +67,22 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
     let requestorBalance = await web3.eth.getBalance(requestor);
 
+    await operatorContract.setPriceFeedEstimate(defaultPriceFeedEstimate);
     await operatorContract.relayEntry(bls.groupSignature);
 
-    // Put back the default gas price
-    await serviceContract.setPriceFeedEstimate(defaultPriceFeedEstimate);
-    let expectedCallbackFee = await serviceContract.callbackFee((callbackGas/1.5).toFixed()) // Remove 1.5 fluctuation safety margin
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
-    // Ethereum transaction min cost varies i.e. 20864-21000 Gas resulting slightly different
-    // eth amounts: Surplus 0.00219018 vs Refund 0.00218752 so rounding up those for the tests
-    let surplus = web3.utils.fromWei(web3.utils.toBN(excessCallbackFee).sub(web3.utils.toBN(expectedCallbackFee)), 'ether')
-    let refund = web3.utils.fromWei(web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance)), 'ether')
-    assert.isTrue(Math.round(surplus*1000)/1000 === Math.round(refund*1000)/1000, "Callback gas surplus should be refunded to the requestor.");
+    let expectedCallbackFee = baseCallbackGas.addn(callbackGas).mul(defaultPriceFeedEstimate)
+    let refund = web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance))
+    let surplus = excessCallbackFee.sub(expectedCallbackFee)
+    assert.isTrue(surplus.eq(refund), "Callback gas surplus should be refunded to the requestor.");
   });
 
   it("should successfully refund callback gas surplus to the requestor if gas estimation was high", async function() {
+    let defaultPriceFeedEstimate = await serviceContract.priceFeedEstimate();
     let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
-    let expectedCallbackFee = await serviceContract.callbackFee((callbackGas/1.5).toFixed()); // Remove 1.5 fluctuation safety margin
+    let baseCallbackGas = await serviceContract.baseCallbackGas();
+    let expectedCallbackFee = baseCallbackGas.addn(callbackGas).mul(defaultPriceFeedEstimate);
 
     let excessCallbackGas = web3.utils.toBN(callbackGas).mul(web3.utils.toBN(2)); // Set higher callback gas estimate.
     let excessCallbackFee = await serviceContract.callbackFee(excessCallbackGas);
@@ -100,11 +99,9 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     await operatorContract.relayEntry(bls.groupSignature);
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
-    // Ethereum transaction min cost varies i.e. 20864-21000 Gas resulting slightly different
-    // eth amounts: Surplus 0.00219018 vs Refund 0.00218752 so rounding up those for the tests
-    let surplus = web3.utils.fromWei(web3.utils.toBN(excessCallbackFee).sub(web3.utils.toBN(expectedCallbackFee)), 'ether')
-    let refund = web3.utils.fromWei(web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance)), 'ether')
-    assert.isTrue(Math.round(surplus*1000)/1000 === Math.round(refund*1000)/1000, "Callback gas surplus should be refunded to the requestor.");
+    let surplus = excessCallbackFee.sub(expectedCallbackFee)
+    let refund = web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance))
+    assert.isTrue(surplus.eq(refund), "Callback gas surplus should be refunded to the requestor.");
   });
 
   it("should send group reward to each operator.", async function() {

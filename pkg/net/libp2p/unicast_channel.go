@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net/internal"
@@ -21,11 +22,20 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 )
 
-const readerMaxSize = 1 << 20
+const (
+	readerMaxSize = 1 << 20
+	sendTimeout   = 10 * time.Second
+)
 
 type streamFactory func(ctx context.Context, peerID peer.ID) (network.Stream, error)
 
 type unicastChannel struct {
+	// channel-scoped atomic counter for sequence numbers
+	//
+	// Must be declared at the top of the struct!
+	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
+	counter uint64
+
 	clientIdentity *identity
 
 	remotePeerID peer.ID
@@ -44,8 +54,12 @@ type unicastMessageHandler struct {
 	channel chan net.Message
 }
 
+func (uc *unicastChannel) nextSeqno() uint64 {
+	return atomic.AddUint64(&uc.counter, 1)
+}
+
 func (uc *unicastChannel) Send(message net.TaggedMarshaler) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
 	defer cancel()
 
 	logger.Debugf(
@@ -71,6 +85,8 @@ func (uc *unicastChannel) Send(message net.TaggedMarshaler) error {
 		if err != nil {
 			return err
 		}
+
+		messageProto.SequenceNumber = uc.nextSeqno()
 		return uc.send(stream, messageProto)
 	case err := <-streamError:
 		return err
@@ -266,7 +282,7 @@ func (uc *unicastChannel) processMessage(message *pb.NetworkMessage) error {
 		unmarshaled,
 		string(message.Type),
 		key.Marshal(networkKey),
-		uint64(0),
+		message.SequenceNumber,
 	))
 
 	return err

@@ -75,7 +75,10 @@ func TestSendReceiveUnicastChannel(t *testing.T) {
 			{Sender: identity1, Recipient: identity2, Payload: "three"},
 		}
 		for _, message := range peer1Messages {
-			if err := peer1Channel.Send(&message); err != nil {
+			send := withRetry(func() error {
+				return peer1Channel.Send(&message)
+			}, 3, 10*time.Second)
+			if err := send; err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -92,7 +95,10 @@ func TestSendReceiveUnicastChannel(t *testing.T) {
 			{Sender: identity1, Recipient: identity2, Payload: "five"},
 		}
 		for _, message := range peer2Messages {
-			if err := peer2Channel.Send(&message); err != nil {
+			send := withRetry(func() error {
+				return peer2Channel.Send(&message)
+			}, 3, 10*time.Second)
+			if err := send; err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -112,6 +118,20 @@ func TestSendReceiveUnicastChannel(t *testing.T) {
 			)
 		}
 	})
+}
+
+func withRetry(function func() error, retryCount int, waitTime time.Duration) error {
+	var err error
+
+	for i := 0; i < retryCount+1; i++ {
+		err = function()
+		if err == nil {
+			return nil
+		}
+		time.Sleep(waitTime)
+	}
+
+	return err
 }
 
 func assertReceivedMessages(

@@ -14,13 +14,6 @@ import (
 
 const protocolID = "/keep/unicast/1.0.0"
 
-type ChannelInitDirection int
-
-const (
-	Inbound ChannelInitDirection = iota
-	Outbound
-)
-
 type unicastChannelManager struct {
 	ctx context.Context
 
@@ -68,7 +61,7 @@ func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 		stream.Conn().RemotePeer(),
 	)
 
-	channel, err := ucm.getUnicastChannel(stream.Conn().RemotePeer(), Inbound)
+	channel, isExistingChannel, err := ucm.getUnicastChannel(stream.Conn().RemotePeer())
 	if err != nil {
 		logger.Errorf(
 			"[%v] incoming stream [%v] from peer [%v] dropped: [%v]",
@@ -80,14 +73,18 @@ func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 		return
 	}
 
+	if !isExistingChannel && ucm.channelOpenedHandler != nil {
+		ucm.channelOpenedHandler(channel)
+	}
+
 	channel.handleStream(stream)
 }
 
 func (ucm *unicastChannelManager) getUnicastChannel(
 	peerID net.TransportIdentifier,
-	initDirection ChannelInitDirection,
 ) (
 	*unicastChannel,
+	bool,
 	error,
 ) {
 	var (
@@ -102,7 +99,7 @@ func (ucm *unicastChannelManager) getUnicastChannel(
 	if !exists {
 		newChannel, err := ucm.newUnicastChannel(peerID, initDirection)
 		if err != nil {
-			return nil, err
+			return nil, exists, err
 		}
 
 		// Creating a new channel can take some time. One should double-check
@@ -112,17 +109,11 @@ func (ucm *unicastChannelManager) getUnicastChannel(
 		if !exists {
 			channel = newChannel
 			ucm.channels[peerID] = newChannel
-
-			// One should invoke the channel opened handler only in case
-			// when the new channel was initiated by the remote peer.
-			if initDirection == Inbound && ucm.channelOpenedHandler != nil {
-				ucm.channelOpenedHandler(newChannel)
-			}
 		}
 		ucm.channelsMutex.Unlock()
 	}
 
-	return channel, nil
+	return channel, exists, nil
 }
 
 func (ucm *unicastChannelManager) newUnicastChannel(

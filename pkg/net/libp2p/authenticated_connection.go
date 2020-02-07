@@ -460,3 +460,24 @@ func (ac *authenticatedConnection) verify(
 
 	return nil
 }
+
+// LocalPeer retrieves the local peer.
+func (ac *authenticatedConnection) LocalPeer() peer.ID {
+	return ac.localPeerID
+}
+
+// LocalPrivateKey retrieves the local peer's privateKey
+func (ac *authenticatedConnection) LocalPrivateKey() libp2pcrypto.PrivKey {
+	return ac.localPeerPrivateKey
+}
+
+// RemotePeer returns the remote peer ID if we initiated the dial. Otherwise, it
+// returns "" (because this connection isn't actually secure).
+func (ac *authenticatedConnection) RemotePeer() peer.ID {
+	return ac.remotePeerID
+}
+
+// RemotePublicKey retrieves the remote public key.
+func (ac *authenticatedConnection) RemotePublicKey() libp2pcrypto.PubKey {
+	return ac.remotePeerPublicKey
+}

@@ -15,6 +15,8 @@ import (
 
 var logger = log.Logger("keep-relay")
 
+const maxGroupSize = 255
+
 // NewNode returns an empty Node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
 func NewNode(

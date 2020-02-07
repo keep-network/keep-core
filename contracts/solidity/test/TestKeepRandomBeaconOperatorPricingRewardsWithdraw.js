@@ -45,9 +45,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     group3 = crypto.randomBytes(128)
 
     await operatorContract.registerNewGroup(group1)
-    await operatorContract.addGroupMember(group1, operator1)
-    await operatorContract.addGroupMember(group1, operator2)
-    await operatorContract.addGroupMember(group1, operator2)
+    await operatorContract.setGroupMembers(group1, [operator1, operator2, operator2])
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
@@ -57,9 +55,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     // Register second group with all members as operator1
     await operatorContract.registerNewGroup(group2)
-    await operatorContract.addGroupMember(group2, operator1)
-    await operatorContract.addGroupMember(group2, operator1)
-    await operatorContract.addGroupMember(group2, operator1)
+    await operatorContract.setGroupMembers(group2, [operator1, operator1, operator1])
 
     // New request will expire the first group
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
@@ -67,6 +63,8 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     let entryFee = await serviceContract.entryFeeBreakdown()
     memberBaseReward = entryFee.groupProfitFee.div(groupSize)
+
+    mineBlocks(4) // make sure groups become stale in tests
   })
 
   beforeEach(async () => {

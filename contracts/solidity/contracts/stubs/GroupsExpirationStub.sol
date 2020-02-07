@@ -7,7 +7,6 @@ contract GroupsExpirationStub {
 
     constructor() public {
         groups.groupActiveTime = 20;
-        groups.activeGroupsThreshold = 5;
         groups.relayEntryTimeout = 10;
     }
 

@@ -132,7 +132,7 @@ func executeDKG(
 		go func() {
 			signer, err := dkg.ExecuteDKG(
 				seed,
-				i,
+				uint8(i),
 				relayConfig.GroupSize,
 				relayConfig.DishonestThreshold(),
 				startBlockHeight,
