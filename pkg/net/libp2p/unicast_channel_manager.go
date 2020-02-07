@@ -4,15 +4,19 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
 
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
-	peer "github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/peer"
 )
 
-const protocolID = "/keep/unicast/1.0.0"
+const (
+	protocolID       = "/keep/unicast/1.0.0"
+	handshakeTimeout = 5 * time.Second
+)
 
 type unicastChannelManager struct {
 	ctx context.Context
@@ -80,6 +84,21 @@ func (ucm *unicastChannelManager) handleIncomingStream(stream network.Stream) {
 	channel.handleStream(stream)
 }
 
+func (ucm *unicastChannelManager) getUnicastChannelWithHandshake(
+	peerID net.TransportIdentifier,
+) (
+	*unicastChannel,
+	error,
+) {
+	err := ucm.trialHandshake(peerID)
+	if err != nil {
+		return nil, fmt.Errorf("handshake error: [%v]", err)
+	}
+
+	channel, _, err := ucm.getUnicastChannel(peerID)
+	return channel, err
+}
+
 func (ucm *unicastChannelManager) getUnicastChannel(
 	peerID net.TransportIdentifier,
 ) (
@@ -137,4 +156,42 @@ func (ucm *unicastChannelManager) newUnicastChannel(
 	}
 
 	return channel, nil
+}
+
+func (ucm *unicastChannelManager) trialHandshake(peerID net.TransportIdentifier) error {
+	remotePeer, err := peer.IDB58Decode(peerID.String())
+	if err != nil {
+		return err
+	}
+
+	hasConnectionWithPeer := ucm.p2phost.Network().
+		Connectedness(remotePeer) == network.Connected
+
+	if !hasConnectionWithPeer {
+		// Trigger a handshake in order to check if peer is reachable.
+		ctx, cancel := context.WithTimeout(context.Background(), handshakeTimeout)
+		defer cancel()
+
+		handshakeError := make(chan error)
+		handshakeSuccess := make(chan struct{})
+
+		go func() {
+			_, err := ucm.p2phost.NewStream(ctx, remotePeer, protocolID)
+			if err != nil {
+				handshakeError <- err
+			}
+			handshakeSuccess <- struct{}{}
+		}()
+
+		select {
+		case <-handshakeSuccess:
+			return nil
+		case err := <-handshakeError:
+			return err
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+
+	return nil
 }

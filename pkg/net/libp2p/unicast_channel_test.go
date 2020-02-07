@@ -14,27 +14,6 @@ import (
 	"github.com/multiformats/go-multiaddr"
 )
 
-func TestCreateUnicastChannel(t *testing.T) {
-	ctx := context.Background()
-
-	withNetwork(ctx, t, func(
-		identity1 *identity,
-		identity2 *identity,
-		provider1 net.Provider,
-		provider2 net.Provider,
-	) {
-		_, err := provider1.UnicastChannelWith(identity2.id)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = provider2.UnicastChannelWith(identity1.id)
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
-}
-
 func TestSendReceiveUnicastChannel(t *testing.T) {
 	ctx := context.Background()
 
