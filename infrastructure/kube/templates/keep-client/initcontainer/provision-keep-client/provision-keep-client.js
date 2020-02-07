@@ -84,7 +84,7 @@ async function provisionKeepClient() {
     console.log('\n<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>');
     await createKeepClientConfig(operator);
 
-    console.log("\n########### keep-client Provisioning Complete! ###########");
+    console.log('\n########### keep-client Provisioning Complete! ###########');
   }
   catch(error) {
     console.error(error.message);
@@ -152,18 +152,18 @@ async function stakeOperatorAccount(operator, contractOwner) {
 
 async function fundOperatorAccount(operator, purse, etherToTransfer) {
 
-  let funded = await isFunded(operator)
-  let transferAmount = web3.utils.toWei(etherToTransfer, "ether")
+  let funded = await isFunded(operator);
+  let transferAmount = web3.utils.toWei(etherToTransfer, 'ether');
 
   if (funded === true) {
     console.log('Operator account is funded already!');
     return;
   } else {
-    console.log("Funding account " + operator + " with " + transferAmount + " wei from purse " + purse);
+    console.log('Funding account ' + operator + ' with ' + transferAmount + ' wei from purse ' + purse);
     await web3.eth.sendTransaction({from:purse, to:operator, value:transferAmount});
-    console.log("Account " + operator + " funded!");
+    console.log('Account ' + operator + ' funded!');
   }
-}
+};
 
 async function createKeepClientConfig(operator) {
 
@@ -194,7 +194,7 @@ async function createKeepClientConfig(operator) {
       if (error) throw error;
     });
   }));
-  console.log("keep-client config written to /mnt/keep-client/config/keep-client-config.toml");
+  console.log('keep-client config written to /mnt/keep-client/config/keep-client-config.toml');
 };
 
 /*
