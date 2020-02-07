@@ -1,39 +1,29 @@
-import React, { useEffect, useContext } from 'react'
+import React, { useEffect } from 'react'
 import PendingUndelegationList from './PendingUndelegationList'
 import { useFetchData } from '../hooks/useFetchData'
 import { operatorService } from '../services/token-staking.service'
-import { formatDate, displayAmount } from '../utils'
+import web3Utils from 'web3-utils'
+import { displayAmount } from '../utils'
 import { LoadingOverlay } from './Loadable'
-import { Web3Context } from './WithWeb3Context'
-import moment from 'moment'
 
 const initialData = { pendinUndelegations: [] }
 
 const PendingUndelegation = ({ latestUnstakeEvent }) => {
-  const { utils } = useContext(Web3Context)
   const [state, setData] = useFetchData(operatorService.fetchPendingUndelegation, initialData)
   const { isFetching, data: {
-    stakeWithdrawalDelayInSec,
     pendingUnstakeBalance,
-    undelegatedOn,
-    stakeWithdrawalDelay,
+    undelegationComplete,
+    undelegationPeriod,
     pendinUndelegations,
   } } = state
 
   useEffect(() => {
     if (latestUnstakeEvent) {
-      const { id, returnValues: { createdAt, value } } = latestUnstakeEvent
-      const newPendingUndelegation = { eventId: id, createdAt: moment.unix(createdAt), amount: value }
-      const updatedPendingUnstakeBalance = utils.toBN(pendingUnstakeBalance).add(utils.toBN(value))
-      const updatedUndelegations = [newPendingUndelegation, ...pendinUndelegations]
-      const updatedUndelegatedOn = moment.unix(createdAt).add(stakeWithdrawalDelayInSec, 'seconds')
-
+      const { returnValues: { undelegatedAt } } = latestUnstakeEvent
+      const undelegationComplete = web3Utils.toBN(undelegatedAt).add(web3Utils.toBN(undelegationPeriod))
       setData({
-        stakeWithdrawalDelayInSec,
-        pendingUnstakeBalance: updatedPendingUnstakeBalance,
-        undelegatedOn: updatedUndelegatedOn,
-        stakeWithdrawalDelay,
-        pendinUndelegations: updatedUndelegations,
+        ...state.data,
+        undelegationComplete,
       })
     }
   }, [latestUnstakeEvent])
@@ -49,11 +39,11 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
           </div>
           <div className="flex flex-1 flex-column">
             <span className="text-label">UNDELEGATION COMPLETE</span>
-            <span className="text-big">{undelegatedOn ? formatDate(undelegatedOn) : '-'}</span>
+            <span className="text-big">{undelegationComplete ? `${undelegationComplete} block` : '-'}</span>
           </div>
           <div className="flex flex-1 flex-column">
             <span className="text-label">UNDELEGATION PERIOD</span>
-            <span className="text-big">{stakeWithdrawalDelay}</span>
+            <span className="text-big">{undelegationPeriod} blocks</span>
           </div>
         </div>
         <div>
