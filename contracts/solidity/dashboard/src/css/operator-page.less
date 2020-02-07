@@ -34,11 +34,8 @@
 
     #delegated-form-section {
         justify-content: space-between;
-        .inline-form {
-            width: 100%;
-            input {
-                flex: 2;
-            }
+        .btn {
+            align-self: flex-start;
         }
     }
 
@@ -74,17 +71,6 @@
         
         #delegated-form-section {
             flex-basis: 49%;
-            .inline-form {
-                &.undelegation-form {
-                    flex-direction: column;
-                    input {
-                        width: 100%;
-                        padding-left: 1rem;
-                        margin-bottom: 2rem;
-                        line-height: 3.5rem;
-                    }
-                }
-            }
         }
     }
 }
