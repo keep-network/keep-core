@@ -1,7 +1,7 @@
 import { useEffect, useRef, useContext, useState } from 'react'
 import { Web3Context } from '../components/WithWeb3Context'
 
-export const useSubscribeToContractEvent = (contractName, eventName, subscribeToEventCallback, options) => {
+export const useSubscribeToContractEvent = (contractName, eventName, options) => {
   const web3Context = useContext(Web3Context)
   const event = useRef(null)
   const contract = web3Context[contractName]
