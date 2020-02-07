@@ -23,10 +23,10 @@ module.exports = {
     },
     keep_test: {
       provider: function() {
-        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD, "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5")
+        return new HDWalletProvider("EBAE221D3C6A4707B1B00927CE9DD6F866DC426658842CE3CFF5EBDAC2BF6000", "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5")
       },
       gas: 6721975,
-      network_id: process.env.ETH_NETWORK_ID
+      network_id: 3
     },
     ropsten: {
       provider: function() {
