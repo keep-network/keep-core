@@ -12,6 +12,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 )
 
+const messageHandlerThrottle = 256
+
 type messageHandler struct {
 	ctx     context.Context
 	channel chan net.Message
@@ -80,25 +82,18 @@ func (lc *localChannel) deliver(message net.Message) {
 	lc.messageHandlersMutex.Unlock()
 
 	for _, handler := range snapshot {
-		go func(message net.Message, handler *messageHandler) {
-			select {
-			case handler.channel <- message:
-			// Nothing to do here; we block until the message is handled
-			// or until the context gets closed.
-			// This way we don't lose any message but also don't stay
-			// with any dangling goroutines if there is no longer anyone
-			// to receive messages.
-			case <-handler.ctx.Done():
-				return
-			}
-		}(message, handler)
+		select {
+		case handler.channel <- message:
+		default:
+			logger.Warningf("handler too slow, dropping message")
+		}
 	}
 }
 
 func (lc *localChannel) Recv(ctx context.Context, handler func(m net.Message)) {
 	messageHandler := &messageHandler{
 		ctx:     ctx,
-		channel: make(chan net.Message),
+		channel: make(chan net.Message, messageHandlerThrottle),
 	}
 
 	lc.messageHandlersMutex.Lock()
