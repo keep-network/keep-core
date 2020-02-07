@@ -27,9 +27,18 @@ h4, .h4 {
   font-size: 22px;
 }
 
+h5, .h5 {
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 130%;
+}
+
 h6, .h6 {
   font-size: 20px;
   font-weight: 500;
+  line-height: 145%;
+  letter-spacing: 0.05em;
+  font-variant: small-caps;
 }
 
 h1, .h1,
@@ -53,8 +62,15 @@ small, .small {
     line-height: 1.33;
   }
 
+  h4, .h4,
+  h5, .h5,
+  h6, .h6 {
+    font-size: 16px;
+    line-height: 1;
+  }
+
   h2, .h2 {
-    margin-bottom: 50px;
+    margin-bottom: 20px;
   }
 }
 
@@ -66,7 +82,51 @@ a {
   color: @link-color;
 }
 
-.small-title {
-  font-size: 16px;
-  font-weight: 500;
+.text {
+  &-primary {
+    color: @aqua-marine;
+  }
+
+  &-darker-grey {
+    color: @darker-grey;
+  }
+
+  &-grey {
+    color: @grey;
+  }
+
+  &-dark-red {
+    color: @dark-red !important;
+  }
+
+  &-label {
+    font-size: 1rem;
+    color: @darker-grey;
+    line-height: 145%;
+    letter-spacing: 0.05em;
+    font-variant: small-caps;
+  }
+
+  &-big {
+    font-weight: normal;
+    font-size: 1.2rem !important;
+    line-height: 145%;
+    color: @darker-grey;
+  }
+
+  &-samll {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  &-warning {
+    &.border {
+      padding-left: 1rem;
+      border-left: 3px solid @warning-color;
+    }
+    font-weight: 500;
+    font-size: 0.9rem;
+    line-height: 22px;
+    color: @warning-color;
+  }
 }

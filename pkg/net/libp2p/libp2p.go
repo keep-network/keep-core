@@ -66,8 +66,9 @@ type Config struct {
 }
 
 type provider struct {
-	channelManagerMutex sync.Mutex
-	channelManagr       *channelManager
+	channelManagerMutex     sync.Mutex
+	broadcastChannelManager *channelManager
+	unicastChannelManager   *unicastChannelManager
 
 	identity *identity
 	host     host.Host
@@ -77,10 +78,22 @@ type provider struct {
 	connectionManager *connectionManager
 }
 
-func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
+func (p *provider) UnicastChannelWith(
+	peerID net.TransportIdentifier,
+) (net.UnicastChannel, error) {
+	return p.unicastChannelManager.getUnicastChannelWithHandshake(peerID)
+}
+
+func (p *provider) OnUnicastChannelOpened(
+	handler func(channel net.UnicastChannel),
+) {
+	p.unicastChannelManager.onChannelOpened(handler)
+}
+
+func (p *provider) BroadcastChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
-	return p.channelManagr.getChannel(name)
+	return p.broadcastChannelManager.getChannel(name)
 }
 
 func (p *provider) Type() string {
@@ -200,19 +213,22 @@ func Connect(
 
 	host.Network().Notify(buildNotifiee())
 
-	cm, err := newChannelManager(ctx, identity, host, ticker)
+	broadcastChannelManager, err := newChannelManager(ctx, identity, host, ticker)
 	if err != nil {
 		return nil, err
 	}
 
+	unicastChannelManager := newUnicastChannelManager(ctx, identity, host)
+
 	router := dht.NewDHT(ctx, host, dssync.MutexWrap(dstore.NewMapDatastore()))
 
 	provider := &provider{
-		channelManagr: cm,
-		identity:      identity,
-		host:          rhost.Wrap(host, router),
-		routing:       router,
-		addrs:         host.Addrs(),
+		broadcastChannelManager: broadcastChannelManager,
+		unicastChannelManager:   unicastChannelManager,
+		identity:                identity,
+		host:                    rhost.Wrap(host, router),
+		routing:                 router,
+		addrs:                   host.Addrs(),
 	}
 
 	if len(config.Peers) == 0 {

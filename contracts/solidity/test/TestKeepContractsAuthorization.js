@@ -31,7 +31,7 @@ contract('Registry', function(accounts) {
 
     await registry.setRegistryKeeper(registryKeeper)
     await registry.setPanicButton(panicButton)
-    await registry.setOperatorContractUpgrader(operatorContractUpgrader)
+    await registry.setOperatorContractUpgrader(serviceContract.address, operatorContractUpgrader)
   })
 
   beforeEach(async () => {

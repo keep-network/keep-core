@@ -137,6 +137,7 @@ func (c *channel) removeHandler(handler *messageHandler) {
 		if h.channel == handler.channel {
 			c.messageHandlers[i] = c.messageHandlers[len(c.messageHandlers)-1]
 			c.messageHandlers = c.messageHandlers[:len(c.messageHandlers)-1]
+			break
 		}
 	}
 }
