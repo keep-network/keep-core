@@ -116,7 +116,7 @@ func pingRequest(c *cli.Context) error {
 	}
 
 	// When we call ChannelFor, we create a coordination point for peers
-	broadcastChannel, err := netProvider.ChannelFor(ping)
+	broadcastChannel, err := netProvider.BroadcastChannelFor(ping)
 	if err != nil {
 		return err
 	}
