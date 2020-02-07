@@ -76,7 +76,7 @@ async function provisionKeepClient() {
     of the bootstrap peer to InitContainer generated accounts.
     */
     console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operator + ' >>>>>>>>>>>>');
-    await fundOperatorAccount(operator, purse, '1');
+    await fundOperatorAccount(operator, purse, '10');
 
     console.log('\n<<<<<<<<<<<< Staking Operator Account ' + operator + ' >>>>>>>>>>>>');
     await stakeOperatorAccount(operator, contractOwner);
@@ -97,6 +97,13 @@ async function isStaked(operator) {
   console.log('Checking if operator account is already staked:');
   let stakedAmount = await tokenStakingContract.methods.balanceOf(operator).call();
   return stakedAmount != 0;
+}
+
+async function isFunded(operator) {
+
+  console.log('Checking if operator account has ether:')
+  let fundedAmount = await web3.fromWei(eth.getBalance(operator), 'ether')
+  return isFunded !< 1;
 }
 
 async function stakeOperatorAccount(operator, contractOwner) {
@@ -145,11 +152,17 @@ async function stakeOperatorAccount(operator, contractOwner) {
 
 async function fundOperatorAccount(operator, purse, etherToTransfer) {
 
+  let funded = await isFunded(operator)
   let transferAmount = web3.utils.toWei(etherToTransfer, "ether")
 
-  console.log("Funding account " + operator + " with " + transferAmount + " wei from purse " + purse);
-  await web3.eth.sendTransaction({from:purse, to:operator, value:transferAmount});
-  console.log("Account " + operator + " funded!");
+  if (funded === true) {
+    console.log('Operator account is funded already!');
+    return;
+  } else {
+    console.log("Funding account " + operator + " with " + transferAmount + " wei from purse " + purse);
+    await web3.eth.sendTransaction({from:purse, to:operator, value:transferAmount});
+    console.log("Account " + operator + " funded!");
+  }
 }
 
 async function createKeepClientConfig(operator) {
