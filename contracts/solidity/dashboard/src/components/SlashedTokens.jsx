@@ -1,10 +1,15 @@
 import React from 'react'
 import SlashedTokensList from './SlashedTokensList'
 import { LoadingOverlay } from './Loadable'
+import { useFetchData } from '../hooks/useFetchData'
+import { slashedTokensService } from '../services/slashed-tokens.service'
 
 const SlashedTokens = (props) => {
+  const [state] = useFetchData(slashedTokensService.fetchSlashedTokens, [])
+  const { data, isFetching } = state
+
   return (
-    <LoadingOverlay isFetching={false}>
+    <LoadingOverlay isFetching={isFetching}>
       <section id="slashed-tokens" className="tile">
         <h5>
             Slashed Tokens
@@ -14,7 +19,7 @@ const SlashedTokens = (props) => {
           A slash results in a removal of a portion of your delegated KEEP tokens.
           You can see a record below of all slashes.
         </span>
-        <SlashedTokensList />
+        <SlashedTokensList slashedTokens={data} />
       </section>
     </LoadingOverlay>
 
