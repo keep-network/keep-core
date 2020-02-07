@@ -1,0 +1,48 @@
+name: NPM
+
+on:
+  push:
+    branches:
+      - another-workflow-test
+    paths:
+      - "contracts/solidity/contracts/**"
+      - "contracts/solidity/package.json"
+      - "contracts/solidity/package-lock.json"
+
+jobs:
+  publish-contracts:
+    # Don't run the job if commit message starts with `[CI]`.
+    if: startsWith(github.event.commits[0].message, '[CI]') == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "11.x"
+          registry-url: "https://npm.pkg.github.com"
+      - name: Publish package
+        working-directory: ./contracts/solidity
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Bump version
+        working-directory: ./contracts/solidity
+        run: |
+          PACKAGE_VERSION=$(npm version prerelease --preid=pre)
+          echo "::set-env name=PACKAGE_VERSION::$PACKAGE_VERSION"
+      - name: Setup git
+        run: |
+          git remote set-url origin https://${{ secrets.CI_GITHUB_TOKEN }}@github.com/keep-network/keep-core.git
+          git config user.email "thesis-heimdall@users.noreply.github.com"
+          git config user.name "Heimdall"
+      - name: Commit
+        working-directory: ./contracts/solidity
+        env:
+          PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
+        run: |
+          GITHUB_REF=${{ github.ref }}
+          BRANCH=${GITHUB_REF#refs/heads/} # strip branch name from github reference, branch name is prefixed with `refs/heads`
+          git checkout $BRANCH
+          git add package.json package-lock.json
+          git commit -m "[CI] Auto-bump pre-release package to $PACKAGE_VERSION"
+          git push origin $BRANCH
