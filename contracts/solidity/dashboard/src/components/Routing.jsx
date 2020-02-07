@@ -22,7 +22,9 @@ class Routing extends React.Component {
 
     return contractsDataIsFetching ? <Loadable /> : (
       <Switch>
-        <Route exact path='/overview' component={OverviewTab} />
+        {/* Commented due to RFC-17 implementation.
+        A new overview page has been implemented. Check here https://github.com/keep-network/keep-core/pull/1332 */}
+        {/* <Route exact path='/overview' component={OverviewTab} /> */}
         <Route exact path='/operations' component={OperatorPage} />
         <Route exact path='/rewards' component={Rewards} />
         {isTokenHolder && <Route exact path='/stake' component={StakeTab} /> }
