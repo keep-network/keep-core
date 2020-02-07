@@ -62,21 +62,19 @@ async function provisionKeepClient() {
     let contractOwner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
     // Account that we fund ether from.  Contract owner should always have ether.
     let purse = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-
-    console.log('\n<<<<<<<<<<<< Unlocking Contract Owner Account ' + contractOwner + ' >>>>>>>>>>>>');
+    // Operator account, should be set in Kube config
+    let operator = process.env.KEEP_CLIENT_ETH_ACCOUNT
     //Transactions during staking are sent from contractOwner, must be unlocked before start.
     await unlockEthAccount(contractOwner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
 
-    console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operator + ' >>>>>>>>>>>>');
+    console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operator} >>>>>>>>>>>>`);
     await fundOperatorAccount(operator, purse, '10');
 
-    console.log('\n<<<<<<<<<<<< Staking Operator Account ' + operator + ' >>>>>>>>>>>>');
+    console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operator} >>>>>>>>>>>>`);
     await stakeOperatorAccount(operator, contractOwner);
 
     console.log('\n<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>');
     await createKeepClientConfig(operator);
-
-    console.log('\n########### keep-client Provisioning Complete! ###########');
   }
   catch(error) {
     console.error(error.message);
@@ -86,7 +84,7 @@ async function provisionKeepClient() {
 
 async function isStaked(operator) {
 
-  console.log('Checking if operator account is already staked:');
+  console.log('Checking if operator account is staked:');
   let stakedAmount = await tokenStakingContract.methods.balanceOf(operator).call();
   return stakedAmount != 0;
 }
@@ -115,10 +113,10 @@ async function stakeOperatorAccount(operator, contractOwner) {
     console.log('Subtype relay-requester set. No staking needed, exiting staking!');
     return;
   } else if (staked === true) {
-    console.log('Staked operator account set, exiting staking!');
+    console.log('Operator account already staked, exiting!');
     return;
   } else {
-    console.log('Unstaked operator account set, staking account!');
+    console.log('Staking operator account!');
   }
 
   let delegation = '0x' + Buffer.concat([
@@ -127,7 +125,7 @@ async function stakeOperatorAccount(operator, contractOwner) {
     Buffer.from(authorizer.substr(2), 'hex')
   ]).toString('hex');
 
-  console.log('Staking 2000000 KEEP tokens on operator account ' + operator);
+  console.log(`Staking 2000000 KEEP tokens on operator account ${operator}`);
 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
@@ -139,7 +137,7 @@ async function stakeOperatorAccount(operator, contractOwner) {
     keepRandomBeaconOperatorContractAddress,
     {from: authorizer});
 
-  console.log('Account ' + operator + ' staked!');
+  console.log(`Account ${operator} staked!`);
 };
 
 async function fundOperatorAccount(operator, purse, etherToTransfer) {
@@ -151,17 +149,17 @@ async function fundOperatorAccount(operator, purse, etherToTransfer) {
     console.log('Operator account is funded already!');
     return;
   } else {
-    console.log('Funding account ' + operator + ' with ' + transferAmount + ' wei from purse ' + purse);
+    console.log(`Funding account ${operator} with ${etherToTransfer} ether from purse ${purse}`);
     await web3.eth.sendTransaction({from:purse, to:operator, value:transferAmount});
-    console.log('Account ' + operator + ' funded!');
+    console.log(`Account ${operator} funded!`);
   }
 };
 
 async function createKeepClientConfig(operator) {
 
-  fs.createReadStream('/tmp/keep-client-config-template.toml', 'utf8').pipe(concat(function(data) {
+  fs.createReadStream('/tmp/keep-client-config-template.toml', 'utf8').pipe(concat(function(configFileStream) {
 
-    let parsedConfigFile = toml.parse(data);
+    let parsedConfigFile = toml.parse(configFileStream);
 
     parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
     parsedConfigFile.ethereum.URLRPC = ethHost + ':' + ethRpcPort;
