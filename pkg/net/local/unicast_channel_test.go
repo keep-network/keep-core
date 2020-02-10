@@ -2,7 +2,6 @@ package local
 
 import (
 	"context"
-	"reflect"
 	"testing"
 	"time"
 
@@ -251,68 +250,6 @@ func TestTalkToSelf(t *testing.T) {
 	case <-chan2Received: // ok
 	case <-ctx.Done():
 		t.Fatal("expected message not arrived")
-	}
-}
-
-func TestReceiveUnicastMessage(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	defer cancel()
-
-	ctx2, cancel2 := context.WithCancel(context.Background())
-	defer cancel2()
-
-	peer1ID := localIdentifier("peer-0x1231AA")
-	_, peer1StaticKey, _ := key.GenerateStaticNetworkKey()
-
-	peer2ID := localIdentifier("peer-0xAEA712")
-
-	unicastChannel := newUnicastChannel(peer1ID, peer1StaticKey, peer2ID)
-	unicastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-		return &mockMessage{}
-	})
-
-	received := make(chan net.Message)
-	unicastChannel.Recv(ctx, func(msg net.Message) {
-		received <- msg
-	})
-
-	received2 := make(chan net.Message)
-	unicastChannel.Recv(ctx2, func(msg net.Message) {
-		received2 <- msg
-	})
-
-	message := &mockMessage{"hello"}
-	marshaled, err := message.Marshal()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	unicastChannel.receiveMessage(marshaled, message.Type())
-
-	select {
-	case <-ctx.Done():
-		t.Fatal("expected message not received")
-	case actual := <-received:
-		if !reflect.DeepEqual(actual.Payload(), message) {
-			t.Errorf(
-				"unexpected message\nactual:   [%v]\nexpected: [%v]",
-				actual,
-				message,
-			)
-		}
-	}
-
-	select {
-	case <-ctx.Done():
-		t.Fatal("expected message not received")
-	case actual := <-received2:
-		if !reflect.DeepEqual(actual.Payload(), message) {
-			t.Errorf(
-				"unexpected message\nactual:   [%v]\nexpected: [%v]",
-				actual,
-				message,
-			)
-		}
 	}
 }
 
