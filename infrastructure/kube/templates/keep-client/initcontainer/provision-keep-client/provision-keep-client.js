@@ -179,8 +179,9 @@ async function createKeepClientConfig(operatorAddress) {
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
+    parsedConfigFile.LibP2P.Peers = process.env.KEEP_CLIENT_PEERS
     parsedConfigFile.LibP2P.Port = 3919;
-    parsedConfigFile.Storage.DataDir = process.env.KEEP_DATA_DIR;
+    parsedConfigFile.Storage.DataDir = process.env.KEEP_CLIENT_DATA_DIR;
 
     /*
     tomlify.toToml() writes our Seed/Port values as a float.  The added precision renders our config
