@@ -20,7 +20,7 @@
 
 [LibP2P]
   Peers = [""]
-  Port =
+  Port = ""
   AnnouncedAddresses = [""]
 
 [Storage]
