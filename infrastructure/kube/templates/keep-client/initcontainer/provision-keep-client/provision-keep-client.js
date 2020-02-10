@@ -54,27 +54,25 @@ const keepRandomBeaconOperatorJsonFile = '/tmp/KeepRandomBeaconOperator.json';
 const keepRandomBeaconOperatorParsed = JSON.parse(fs.readFileSync(keepRandomBeaconOperatorJsonFile));
 const keepRandomBeaconOperatorContractAddress = keepRandomBeaconOperatorParsed.networks[ethNetworkId].address;
 
-// Stake a target eth account
 async function provisionKeepClient() {
 
   try {
     // Eth account that contracts are migrated against.
-    let contractOwner = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+    let contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
     // Account that we fund ether from.  Contract owner should always have ether.
     let purse = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
     // Operator account, should be set in Kube config
-    let operator = process.env.KEEP_CLIENT_ETH_ACCOUNT
-    //Transactions during staking are sent from contractOwner, must be unlocked before start.
-    await unlockEthAccount(contractOwner, process.env.KEEP_CLIENT_ETH_ACCOUNT_PASSWORD);
+    let operatorAddress = process.env.KEEP_CLIENT_ETH_ACCOUNT
+    let operatorKeyfile = process.env.KEEP_CLIENT_ETH_KEYFILE
 
-    console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operator} >>>>>>>>>>>>`);
-    await fundOperatorAccount(operator, purse, '10');
+    console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
+    await fundOperator(operatorAddress, purse, '10');
 
-    console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operator} >>>>>>>>>>>>`);
-    await stakeOperatorAccount(operator, contractOwner);
+    console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`);
+    await stakeOperator(operatorAddress, contractOwnerAddress);
 
     console.log('\n<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>');
-    await createKeepClientConfig(operator);
+    await createKeepClientConfig(operatorAddress);
   }
   catch(error) {
     console.error(error.message);
@@ -82,25 +80,25 @@ async function provisionKeepClient() {
   }
 };
 
-async function isStaked(operator) {
+async function isStaked(operatorAddress) {
 
-  console.log('Checking if operator account is staked:');
-  let stakedAmount = await tokenStakingContract.methods.balanceOf(operator).call();
+  console.log('Checking if operator address is staked:');
+  let stakedAmount = await tokenStakingContract.methods.balanceOf(operatorAddress).call();
   return stakedAmount != 0;
 }
 
-async function isFunded(operator) {
+async function isFunded(operatorAddress) {
 
-  console.log('Checking if operator account has ether:')
-  let fundedAmount = await web3.fromWei(eth.getBalance(operator), 'ether')
+  console.log('Checking if operator address has ether:')
+  let fundedAmount = await web3.fromWei(eth.getBalance(operatorAddress), 'ether')
   return isFunded !< 1;
 }
 
-async function stakeOperatorAccount(operator, contractOwner) {
+async function stakeOperator(operatorAddress, contractOwnerAddress) {
 
-  let magpie = contractOwner;
-  let authorizer = contractOwner;
-  let staked = await isStaked(operator);
+  let magpie = contractOwnerAddress;
+  let authorizer = contractOwnerAddress;
+  let staked = await isStaked(operatorAddress);
 
   /*
   We need to stake only in cases where an operator account is not already staked.  If the account
@@ -121,41 +119,41 @@ async function stakeOperatorAccount(operator, contractOwner) {
 
   let delegation = '0x' + Buffer.concat([
     Buffer.from(magpie.substr(2), 'hex'),
-    Buffer.from(operator.substr(2), 'hex'),
+    Buffer.from(operatorAddress.substr(2), 'hex'),
     Buffer.from(authorizer.substr(2), 'hex')
   ]).toString('hex');
 
-  console.log(`Staking 2000000 KEEP tokens on operator account ${operator}`);
+  console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
     formatAmount(20000000, 18),
-    delegation).send({from: contractOwner})
+    delegation).send({from: contractOwnerAddress})
 
   await tokenStakingContract.authorizeOperatorContract(
     operatorAddress,
     keepRandomBeaconOperatorContractAddress,
     {from: authorizer});
 
-  console.log(`Account ${operator} staked!`);
+  console.log(`Account ${operatorAddress} staked!`);
 };
 
-async function fundOperatorAccount(operator, purse, etherToTransfer) {
+async function fundOperator(operatorAddress, purse, etherToTransfer) {
 
-  let funded = await isFunded(operator);
+  let funded = await isFunded(operatorAddress);
   let transferAmount = web3.utils.toWei(etherToTransfer, 'ether');
 
   if (funded === true) {
-    console.log('Operator account is funded already!');
+    console.log('Operator address is already funded, exiting!');
     return;
   } else {
-    console.log(`Funding account ${operator} with ${etherToTransfer} ether from purse ${purse}`);
-    await web3.eth.sendTransaction({from:purse, to:operator, value:transferAmount});
-    console.log(`Account ${operator} funded!`);
+    console.log(`Funding account ${operatorAddress} with ${etherToTransfer} ether from purse ${purse}`);
+    await web3.eth.sendTransaction({from:purse, to:operatorAddress, value:transferAmount});
+    console.log(`Account ${operatorAddress} funded!`);
   }
 };
 
-async function createKeepClientConfig(operator) {
+async function createKeepClientConfig(operatorAddress) {
 
   fs.createReadStream('/tmp/keep-client-config-template.toml', 'utf8').pipe(concat(function(configFileStream) {
 
@@ -163,8 +161,8 @@ async function createKeepClientConfig(operator) {
 
     parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
     parsedConfigFile.ethereum.URLRPC = ethHost + ':' + ethRpcPort;
-    parsedConfigFile.ethereum.account.Address = operator;
-    parsedConfigFile.ethereum.account.KeyFile = process.env.KEEP_CLIENT_ETH_KEYFILE;
+    parsedConfigFile.ethereum.account.Address = operatorAddress;
+    parsedConfigFile.ethereum.account.KeyFile = operatorKeyfile;
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
