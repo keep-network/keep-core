@@ -8,7 +8,7 @@ export const Web3Status = (props) => {
     if (isFetching) {
       return (
         <div className="web3-status loading">
-          loading...
+          Loading...
         </div>
       )
     }
@@ -23,8 +23,16 @@ export const Web3Status = (props) => {
 
     if (!web3) {
       return (
-        <div className="web3-status alert">
-          Web3 not detected. We suggest&nbsp;<a href="http://metamask.io" target="_blank" rel="noopener noreferrer">MetaMask</a>.
+        <div className="web3-status alert flex">
+          <div>
+            <div className="title">
+              Install the MetaMask browser extension
+            </div>
+            <div className="sub-title">
+              You can then use the dapp in your current browser.
+            </div>
+          </div>
+          <a href="http://metamask.io" target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm text-white">INSTALL METAMASK</a>
         </div>
       )
     }

@@ -8,11 +8,19 @@
       font-weight: 500;
       line-height: 1.5rem;
       font-style: normal;
-      padding: .25em .8rem;
+      padding: .3rem .8rem;
       text-align: left;
-      border: 2px solid black ;
-      border-radius: 5px;
-      font-weight: bold;
+      border: 1px solid black ;
+
+      .title {
+        margin-right: 1.3rem;
+      }
+
+      .sub-title {
+        font-size: 0.75rem;
+        font-weight: normal;
+        line-height: 0.8rem;
+      }
 
       &.success {
         background: @mint;
@@ -24,12 +32,17 @@
         border-color: #67598a;
       }
       &.alert {
-        color: @rose-pink;
-        border-color: @rose-pink;
+        color: @black;
+        background: @pink;
+        border-color: @red;
         margin-bottom: 0;
-        & > a {
+        border-radius: 0;
+        a {
+          margin-left: 1.3rem;
+          padding: .6rem;
+          font-size: .75rem !important;
           color: @rose-pink;
-          text-decoration: underline;
+          text-decoration: none;
         }
       }
       &.notify {
