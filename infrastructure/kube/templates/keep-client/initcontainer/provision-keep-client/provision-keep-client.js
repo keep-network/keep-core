@@ -15,15 +15,15 @@ const ethNetworkId = process.env.ETH_NETWORK_ID;
 
 // Contract owner info
 if (process.env.ETH_NETWORK === 'ropsten') {
-  const contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-  const contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWONER_ETH_ACCOUNT_PRIVATE_KEY, process.env.ETH_HOSTNAME);
+  var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+  var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, `${ethRPCHost}:${ethRPCPort}`);
 } else if (process.env.ETH_NETWORK === 'internal')  {
-  const contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-  const contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWONER_ETH_ACCOUNT_PRIVATE_KEY, process.env.ETH_HOSTNAME);
+  var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+  var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, `${ethRPCHost}:${ethRPCPort}`);
 } else {
   console.log('Invalid ETH network selected, please use ropsten or internal.');
   process.exit(1);
-}
+};
 
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
@@ -76,7 +76,6 @@ async function provisionKeepClient() {
     let purse = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
     // Operator account, should be set in Kube config
     let operatorAddress = process.env.KEEP_CLIENT_ETH_ACCOUNT
-    let operatorKeyfile = process.env.KEEP_CLIENT_ETH_KEYFILE
 
     console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
     await fundOperator(operatorAddress, purse, '10');
@@ -103,8 +102,9 @@ async function isStaked(operatorAddress) {
 async function isFunded(operatorAddress) {
 
   console.log('Checking if operator address has ether:')
-  let fundedAmount = await web3.fromWei(eth.getBalance(operatorAddress), 'ether')
-  return isFunded !< 1;
+  let fundedAmount = await web3.utils.fromWei(
+    await web3.eth.getBalance(operatorAddress), 'ether')
+  return fundedAmount >= 1;
 }
 
 async function stakeOperator(operatorAddress, contractOwnerAddress) {
@@ -143,10 +143,9 @@ async function stakeOperator(operatorAddress, contractOwnerAddress) {
     formatAmount(20000000, 18),
     delegation).send({from: contractOwnerAddress})
 
-  await tokenStakingContract.authorizeOperatorContract(
+  await tokenStakingContract.methods.authorizeOperatorContract(
     operatorAddress,
-    keepRandomBeaconOperatorContractAddress,
-    {from: authorizer});
+    keepRandomBeaconOperatorContractAddress).send({from: authorizer});
 
   console.log(`Account ${operatorAddress} staked!`);
 };
@@ -172,15 +171,16 @@ async function createKeepClientConfig(operatorAddress) {
 
     let parsedConfigFile = toml.parse(configFileStream);
 
-    parsedConfigFile.ethereum.URL = `${ethWSHost}:${ethWsPort}`;
-    parsedConfigFile.ethereum.URLRPC = `${ethRPCHost}:${ethRpcPort}`;
+    parsedConfigFile.ethereum.URL = `${ethWSHost}:${ethWSPort}`;
+    parsedConfigFile.ethereum.URLRPC = `${ethRPCHost}:${ethRPCPort}`;
     parsedConfigFile.ethereum.account.Address = operatorAddress;
-    parsedConfigFile.ethereum.account.KeyFile = operatorKeyfile;
+    parsedConfigFile.ethereum.account.KeyFile = process.env.KEEP_CLIENT_ETH_KEYFILE;
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
-    parsedConfigFile.LibP2P.Peers = process.env.KEEP_CLIENT_PEERS
-    parsedConfigFile.LibP2P.Port = 3919;
+    parsedConfigFile.LibP2P.Peers = [ process.env.KEEP_CLIENT_PEERS ];
+    parsedConfigFile.LibP2P.Port = Number(process.env.KEEP_CLIENT_PORT);
+    parsedConfigFile.LibP2P.AnnouncedAddresses = [ process.env.KEEP_CLIENT_ANNOUNCED_ADDRESSES ];
     parsedConfigFile.Storage.DataDir = process.env.KEEP_CLIENT_DATA_DIR;
 
     /*
