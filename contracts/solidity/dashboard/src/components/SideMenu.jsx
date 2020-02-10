@@ -3,6 +3,8 @@ import { Link, useRouteMatch } from 'react-router-dom'
 import { Web3Status } from './Web3Status'
 import { Web3Context } from './WithWeb3Context'
 import { ContractsDataContext } from './ContractsDataContextProvider'
+import AddressShortcut from './AddressShortcut'
+import { NetworkStatus } from './NetworkStatus'
 
 export const SideMenuContext = React.createContext({})
 
@@ -41,8 +43,9 @@ export const SideMenu = (props) => {
         { isKeepTokenContractDeployer && <NavLink exact to="/create-token-grants" label='CREATE TOKEN GRANTS'/> }
         <Web3Status />
         <div className='account-address'>
-          <strong>Account address: </strong>
-          <p className="txt-primary">{yourAddress}</p>
+          <span className="text-label text-bold">ADDRESS&nbsp;</span>
+          <AddressShortcut classNames="text-small" address={yourAddress} />
+          <NetworkStatus />
         </div>
       </ul>
     </nav>
