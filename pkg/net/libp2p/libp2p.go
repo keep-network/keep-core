@@ -2,6 +2,7 @@ package libp2p
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"sync"
 	"time"
@@ -131,6 +132,14 @@ func (p *provider) Peers() []string {
 
 func (p *provider) ConnectionManager() net.ConnectionManager {
 	return p.connectionManager
+}
+
+func (p *provider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
+	net.TransportIdentifier,
+	error,
+) {
+	networkPublicKey := key.NetworkPublic(publicKey)
+	return peer.IDFromPublicKey(&networkPublicKey)
 }
 
 type connectionManager struct {
