@@ -98,11 +98,6 @@ jobs:
             cp /tmp/keep-client/contracts/* infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             cd infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             docker build \
-              --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
-              --build-arg ETH_WS_PORT=$ETH_WS_PORT \
-              --build-arg ETH_RPC_PORT=$ETH_RPC_PORT \
-              --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
-              --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
               -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer .
       - run:
           name: Save keep-client-initcontainer image
