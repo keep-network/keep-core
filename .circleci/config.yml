@@ -123,6 +123,7 @@ jobs:
           command: |
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
+            export CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
             mkdir -p /tmp/keep-client/contracts
             contracts/solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
