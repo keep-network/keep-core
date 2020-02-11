@@ -98,11 +98,11 @@ jobs:
             cp /tmp/keep-client/contracts/* infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             cd infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             docker build \
-              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer .
+              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client .
       - run:
-          name: Save keep-client-initcontainer image
+          name: Save initcontainer-provision-keep-client image
           command: |
-            docker save -o /tmp/keep-client/docker-images/keep-client-initcontainer.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer
+            docker save -o /tmp/keep-client/docker-images/initcontainer-provision-keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
@@ -138,7 +138,7 @@ jobs:
           name: Load Docker images
           command: |
             docker load -i /tmp/keep-client/docker-images/keep-client.tar
-            docker load -i /tmp/keep-client/docker-images/keep-client-initcontainer.tar
+            docker load -i /tmp/keep-client/docker-images/initcontainer-provision-keep-client.tar
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -147,7 +147,7 @@ jobs:
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
-          image: keep-client-initcontainer
+          image: initcontainer-provision-keep-client
           tag: latest
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
