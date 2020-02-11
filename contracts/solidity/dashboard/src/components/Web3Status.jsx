@@ -32,7 +32,13 @@ export const Web3Status = (props) => {
               You can then use the dapp in your current browser.
             </div>
           </div>
-          <a href="http://metamask.io" target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm text-white">INSTALL METAMASK</a>
+          <a
+            href="http://metamask.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-transparent btn-sm">
+              install metamask
+          </a>
         </div>
       )
     }
