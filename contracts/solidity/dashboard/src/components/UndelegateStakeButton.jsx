@@ -27,13 +27,14 @@ const UndelegateStakeButton = (props) => {
       onSubmitAction={undelegate}
       pendingMessageTitle='Undelegate transaction is pending...'
     >
-      UNDELEGATE
+      {props.btnText}
     </SubmitButton>
   )
 }
 
 UndelegateStakeButton.defaultProps = {
   btnClassName: 'btn btn-primary btn-sm',
+  btnText: 'UNDELEGATE',
 }
 
 export default UndelegateStakeButton

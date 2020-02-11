@@ -16,7 +16,7 @@ const DelegatedTokens = (props) => {
     <section id="delegated-tokens" className="flex flex-row-space-between">
       <LoadingOverlay isFetching={isFetching} >
         <section id="delegated-tokens-summary" className="tile flex flex-column">
-          <h5>My Delegated Tokens</h5>
+          <h5>DelegatedTokens</h5>
           <h2 className="balance">
             {stakedBalance && `${displayAmount(stakedBalance)}`}
           </h2>
@@ -29,12 +29,14 @@ const DelegatedTokens = (props) => {
         </section>
       </LoadingOverlay>
       <section id="delegated-form-section" className="tile flex flex-column ">
-        <h5 className="flex flex-1">Undelegate Tokens</h5>
-        <p className="text-warning border flex flex-1">
-          Starting an undelegation restarts the amount of time, or undelegation period, until tokens are returned to the owner
+        <h5 className="flex">Undelegate All Tokens</h5>
+        <p className="text-warning border flex">
+          This will return all of your delegated tokens to the original owner address.
         </p>
+        <h6 className="text-label">pending undelegation</h6>
         <UndelegateStakeButton
-          btnClassName="btn btn-primary btn-large"
+          btnText='undelegate all my tokens'
+          btnClassName="btn btn-default btn-large"
           operator={yourAddress}
         />
       </section>

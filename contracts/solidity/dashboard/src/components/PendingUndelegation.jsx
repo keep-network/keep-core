@@ -36,11 +36,11 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
   return (
     <LoadingOverlay isFetching={isFetching}>
       <section id="pending-undelegation" className="tile">
-        <h5>Pending Undelegation</h5>
+        <h5>Pending Token Undelegations</h5>
         <div className="flex pending-undelegation-summary">
           <div className="flex flex-1 flex-column">
             <span className="text-label">TOTAL (KEEP)</span>
-            <h2 className="balance flex flex-2">{pendingUnstakeBalance && `${displayAmount(pendingUnstakeBalance)}`}</h2>
+            <h5 className="text-darker-grey flex flex-2">{pendingUnstakeBalance && `${displayAmount(pendingUnstakeBalance)}`}</h5>
           </div>
           <div className="flex flex-1 flex-column">
             <span className="text-label">UNDELEGATION COMPLETE</span>
