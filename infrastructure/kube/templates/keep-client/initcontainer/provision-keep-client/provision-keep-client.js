@@ -7,23 +7,15 @@ const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 // ETH host info
 const ethNetwork = process.env.ETH_NETWORK;
-const ethRPCHost = process.env.ETH_HOSTNAME;
+const ethRPCHost = process.env.ETH_RPC_HOSTNAME;
 const ethRPCPort = process.env.ETH_RPC_PORT;
 const ethWSHost = process.env.ETH_WS_HOSTNAME
 const ethWSPort = process.env.ETH_WS_PORT;
 const ethNetworkId = process.env.ETH_NETWORK_ID;
 
 // Contract owner info
-if (process.env.ETH_NETWORK === 'ropsten') {
-  var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-  var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, `${ethRPCHost}:${ethRPCPort}`);
-} else if (process.env.ETH_NETWORK === 'internal')  {
-  var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-  var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, `${ethRPCHost}:${ethRPCPort}`);
-} else {
-  console.log('Invalid ETH network selected, please use ropsten or internal.');
-  process.exit(1);
-};
+var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, `${ethRPCHost}:${ethRPCPort}`);
 
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
@@ -174,7 +166,7 @@ async function createKeepClientConfig(operatorAddress) {
     parsedConfigFile.ethereum.URL = `${ethWSHost}:${ethWSPort}`;
     parsedConfigFile.ethereum.URLRPC = `${ethRPCHost}:${ethRPCPort}`;
     parsedConfigFile.ethereum.account.Address = operatorAddress;
-    parsedConfigFile.ethereum.account.KeyFile = process.env.KEEP_CLIENT_ETH_KEYFILE;
+    parsedConfigFile.ethereum.account.KeyFile = process.env.KEEP_CLIENT_ETH_KEYFILE_PATH;
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
