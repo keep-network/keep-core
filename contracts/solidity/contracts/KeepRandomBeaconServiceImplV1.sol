@@ -5,6 +5,7 @@ import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./DelayedWithdrawal.sol";
 import "./Registry.sol";
+import "./IRandomBeacon.sol";
 
 
 interface OperatorContract {
@@ -29,7 +30,7 @@ interface OperatorContract {
  * Warning: you can't set constants directly in the contract and must use initialize()
  * please see openzeppelin upgradeable contracts approach for more info.
  */
-contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
+contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IRandomBeacon {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
 
