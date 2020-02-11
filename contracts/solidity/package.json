@@ -6,6 +6,9 @@
     "type": "git",
     "url": "ssh://git@github.com/keep-network/keep-core.git"
   },
+  "files": [
+    "contracts/**/*.sol"
+  ],
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
