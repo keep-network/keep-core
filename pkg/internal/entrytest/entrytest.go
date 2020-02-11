@@ -99,7 +99,7 @@ func executeSigning(
 	if err != nil {
 		return nil, err
 	}
-	broadcastChannel, err := network.ChannelFor(
+	broadcastChannel, err := network.BroadcastChannelFor(
 		fmt.Sprintf("entry-test-%v", randomSelector),
 	)
 	if err != nil {

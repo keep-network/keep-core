@@ -169,7 +169,7 @@ variable "gke_subnet" {
 }
 
 variable "eth_tx_ropsten_loadbalancer_name" {
-  description = "The name for your Atlantis IP."
+  description = "The name for your ropsten tx node IP."
   default     = "keep-dev-eth-tx-ropsten-loadbalancer-external-ip"
 }
 
@@ -178,12 +178,12 @@ variable "eth_tx_ropsten_loadbalancer_address_type" {
   default     = "external"
 }
 
-variable "eth_tx_ropsten_light_loadbalancer_name" {
-  description = "The name for your Atlantis IP."
-  default     = "keep-dev-eth-tx-ropsten-light-loadbalancer-external-ip"
+variable "eth_miner_ropsten_loadbalancer_name" {
+  description = "The name for your ropsten miner IP."
+  default     = "keep-dev-eth-miner-ropsten-loadbalancer-external-ip"
 }
 
-variable "eth_tx_ropsten_light_loadbalancer_address_type" {
+variable "eth_miner_ropsten_loadbalancer_address_type" {
   description = "Internet facing or not. internal or external"
   default     = "external"
 }

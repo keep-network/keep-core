@@ -237,7 +237,7 @@ func initTestChannel(channelName string) (*key.NetworkPublic, net.BroadcastChann
 	}
 
 	provider := ConnectWithKey(staticKey)
-	localChannel, err := provider.ChannelFor(channelName)
+	localChannel, err := provider.BroadcastChannelFor(channelName)
 	if err != nil {
 		return nil, nil, err
 	}

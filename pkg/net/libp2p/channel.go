@@ -137,6 +137,7 @@ func (c *channel) removeHandler(handler *messageHandler) {
 		if h.channel == handler.channel {
 			c.messageHandlers[i] = c.messageHandlers[len(c.messageHandlers)-1]
 			c.messageHandlers = c.messageHandlers[:len(c.messageHandlers)-1]
+			break
 		}
 	}
 }
@@ -146,10 +147,6 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 
 	c.unmarshalersMutex.Lock()
 	defer c.unmarshalersMutex.Unlock()
-
-	if _, exists := c.unmarshalersByType[tpe]; exists {
-		return fmt.Errorf("type %s already has an associated unmarshaler", tpe)
-	}
 
 	c.unmarshalersByType[tpe] = unmarshaler
 	return nil

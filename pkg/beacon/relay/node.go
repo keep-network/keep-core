@@ -73,7 +73,7 @@ func (n *Node) JoinGroupIfEligible(
 	if len(indexes) > 0 {
 		// create temporary broadcast channel for DKG using the group selection
 		// seed
-		broadcastChannel, err := n.netProvider.ChannelFor(newEntry.Text(16))
+		broadcastChannel, err := n.netProvider.BroadcastChannelFor(newEntry.Text(16))
 		if err != nil {
 			logger.Errorf("failed to get broadcast channel: [%v]", err)
 			return
