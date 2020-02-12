@@ -1,7 +1,7 @@
 import React from 'react'
 import { useField } from 'formik'
 
-const FromInput = ({ label, ...props }) => {
+const FormInput = ({ label, ...props }) => {
   const [field, meta] = useField(props.name, props.type)
 
   return (
@@ -17,4 +17,4 @@ const FromInput = ({ label, ...props }) => {
   )
 }
 
-export default React.memo(FromInput)
+export default React.memo(FormInput)
