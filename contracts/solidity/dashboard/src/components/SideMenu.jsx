@@ -30,7 +30,7 @@ export const SideMenu = (props) => {
   return (
     <nav className={`${ isOpen ? 'active ' : '' }side-menu`}>
       <ul>
-        <NavLink exact to="/overview" label='TOKENS'/>
+        <NavLink exact to="/tokens" label='TOKENS'/>
         <NavLink exact to="/rewards" label='REWARDS'/>
         <NavLink exact to="/operations" label='OPERATIONS'/>
 

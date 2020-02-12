@@ -12,6 +12,7 @@
 @import 'no-data.less';
 @import 'commons.less';
 @import 'withdrawal-rewards-history.less';
+@import 'tokens-page.less';
 @import 'operator-page.less';
 @import 'network-status.less';
 
@@ -26,6 +27,10 @@ html {
   @media screen and (min-width: 1200px) {
     font-size: 16px;
   }
+}
+
+ul {
+  padding-left: 0;
 }
 
 .main {
@@ -138,6 +143,12 @@ html {
     }
 
     > .web3 > .web3-status {
+      &.alert {
+        flex-direction: column;
+        a {
+          margin-top: 1rem;
+        }
+      }
       text-align: center;
       margin: 1rem;
     }
@@ -146,7 +157,7 @@ html {
   }
 }
 
-@media screen and (min-width: 600px) {
+@media screen and (min-width: 700px) {
  .header {
     > .web3 {
       display: flex;
