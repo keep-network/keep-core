@@ -13,7 +13,7 @@ const TokensOverview = ({ keepBalance, stakingBalance, pendingUndelegationBalanc
           <p className="text-smaller text-grey">Tokens you own that are delegated to an operator and doing work on the network.</p>
         </div>
         <div className="text-samll">
-          Pengind Undelegated Tokens: {displayAmount(pendingUndelegationBalance)}
+          Pending Undelegated Tokens: {displayAmount(pendingUndelegationBalance)}
           <p className="text-smaller text-grey">Stake undelegated from an operator. Estimated X number of blocks until available.</p>
         </div>
         <hr />
