@@ -15,12 +15,15 @@ export const fetchTokensPageData = async (web3Context) => {
     tokenGrantsStakeBalance,
     minimumStake,
     operatorsAddresses,
+    undelegationPeriod,
   ] = await Promise.all([
     contractService.makeCall(web3Context, KEEP_TOKEN_CONTRACT_NAME, 'balanceOf', yourAddress),
     contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'balanceOf', yourAddress),
     contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'stakeBalanceOf', yourAddress),
     contractService.makeCall(web3Context, OPERATOR_CONTRACT_NAME, 'minimumStake'),
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'operatorsOf', yourAddress),
+    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'undelegationPeriod'),
+
   ])
 
   for (let i = 0; i < operatorsAddresses.length; i++) {
@@ -42,6 +45,7 @@ export const fetchTokensPageData = async (web3Context) => {
 
   return {
     ownedKeepBalance,
+    undelegationPeriod,
     tokenStakingBalance: tokenStakingBalance.toString(),
     pendingUndelegationBalance: pendingUndelegationBalance.toString(),
     tokenGrantsBalance,

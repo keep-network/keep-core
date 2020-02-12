@@ -1,7 +1,14 @@
 import React from 'react'
 import { displayAmount } from '../utils'
 
-const TokensOverview = ({ keepBalance, stakingBalance, pendingUndelegationBalance, grantBalance, tokenGrantsStakeBalance }) => {
+const TokensOverview = ({
+  undelegationPeriod,
+  keepBalance,
+  stakingBalance,
+  pendingUndelegationBalance,
+  grantBalance,
+  tokenGrantsStakeBalance,
+}) => {
   return (
     <section id="tokens-overview" className="tile">
       <h5>Totals</h5>
@@ -14,7 +21,7 @@ const TokensOverview = ({ keepBalance, stakingBalance, pendingUndelegationBalanc
         </div>
         <div className="text-samll">
           Pending Undelegated Tokens: {displayAmount(pendingUndelegationBalance)}
-          <p className="text-smaller text-grey">Stake undelegated from an operator. Estimated X number of blocks until available.</p>
+          <p className="text-smaller text-grey">Stake undelegated from an operator. Estimated {undelegationPeriod} number of blocks until available.</p>
         </div>
         <hr />
       </section>

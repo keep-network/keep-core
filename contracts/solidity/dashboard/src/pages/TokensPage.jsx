@@ -25,6 +25,7 @@ const TokensPage = () => {
   const showMessage = useShowMessage()
   const [state, setData] = useFetchData(tokensPageService.fetchTokensPageData, initialData)
   const {
+    undelegationPeriod,
     ownedKeepBalance,
     pendingUndelegationBalance,
     tokenStakingBalance,
@@ -71,6 +72,7 @@ const TokensPage = () => {
           pendingUndelegationBalance={pendingUndelegationBalance}
           grantBalance={tokenGrantsBalance}
           tokenGrantsStakeBalance={tokenGrantsStakeBalance}
+          undelegationPeriod={undelegationPeriod}
         />
       </div>
       <Undelegations undelegations={undelegations} />
