@@ -6,7 +6,6 @@ const Web3 = require('web3');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 // ETH host info
-const ethNetwork = process.env.ETH_NETWORK;
 const ethRPCHost = process.env.ETH_RPC_HOSTNAME;
 const ethRPCPort = process.env.ETH_RPC_PORT;
 const ethWSHost = process.env.ETH_WS_HOSTNAME
@@ -77,6 +76,8 @@ async function provisionKeepClient() {
 
     console.log('\n<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>');
     await createKeepClientConfig(operatorAddress);
+
+    process.exit();
   }
   catch(error) {
     console.error(error.message);
