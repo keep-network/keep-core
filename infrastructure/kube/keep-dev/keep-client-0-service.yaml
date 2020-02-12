@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: keep-client-0
-  namespace: ropsten
+  namespace: default
   labels:
     app: keep-client
     type: client-0
