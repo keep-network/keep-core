@@ -1,0 +1,113 @@
+.select-wrapper {
+    width: 100%;
+    position: relative;
+}
+
+.select {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-width: 1px;
+    border-style: solid;
+    border-color: @black;
+
+    &-trigger {
+        height: 50px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1.5rem;
+        font-size: 1.2rem;
+        font-weight: normal;
+        color: @black;
+        line-height: 25px;
+        background: @white;
+        cursor: pointer;
+    }
+
+    &.open .options{
+        opacity: 1;
+        visibility: visible;
+        pointer-events: all;
+    }
+
+    > .options {
+        list-style: none;
+        padding-left: 0;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        border: 1px solid @black;
+        border-top: 0;
+        background: @white;
+        transition: all 0.5s;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        z-index: 2;
+        max-height: 150px;
+        overflow-x: scroll;
+
+        > .option {
+            display: flex;
+            align-items: center;
+            height: 50px;
+            position: relative;
+            padding: 0 1rem 0 1rem;
+            font-size: 1.2rem;
+            font-weight: normal;
+            color: @black;
+            line-height: 25px;
+            cursor: pointer;
+            transition: all 0.5s;
+
+            &:hover {
+                cursor: pointer;
+                background-color: @pale-grey;
+            }
+
+            &.selected {
+                color: @aqua-marine;
+                background-color: @pale-grey;
+            }
+        }
+    }
+}
+
+.arrow {
+    position: relative;
+    height: 15px;
+    width: 15px;
+
+    &:before, &:after {
+        content: "";
+        position: absolute;
+        bottom: 0px;
+        width: 0.10rem;
+        height: 100%;
+        transition: all 0.5s;
+        background-color: @black;
+    }
+
+    &:before {
+        left: -5px;
+        transform: rotate(45deg);
+
+        .open & {
+            left: -5px;
+            transform: rotate(-45deg);
+        }
+    }
+
+    &:after {
+        left: 5px;
+        transform: rotate(-45deg);
+
+        .open & {
+            left: 5px;
+            transform: rotate(45deg);
+        }
+    }
+}
