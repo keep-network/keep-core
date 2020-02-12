@@ -35,7 +35,6 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
     using AddressArrayUtils for address[];
 
     event RelayEntryRequested(uint256 requestId);
-    event RelayEntryGenerated(uint256 requestId, uint256 entry);
 
     // The price feed estimate is used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use both values to
