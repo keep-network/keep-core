@@ -1,20 +1,23 @@
 {
   "name": "@keep-network/keep-core",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Smart Contracts for the Keep Network",
   "repository": {
     "type": "git",
     "url": "ssh://git@github.com/keep-network/keep-core.git"
   },
   "files": [
-    "contracts/**/*.sol"
+    "contracts/**/*.sol",
+    "build"
   ],
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
   "scripts": {
     "truffle": "truffle",
-    "test": "rm -rf build && truffle compile && truffle test",
+    "clean": "rm -rf build",
+    "compile": "npm run clean && truffle compile --contracts_build_directory=./build/truffle",
+    "test": "npm run clean && truffle compile && truffle test",
     "demo": "truffle migrate --reset && truffle exec ./scripts/demo.js",
     "lint": "solium --dir ./contracts"
   },
