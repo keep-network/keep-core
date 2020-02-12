@@ -76,8 +76,7 @@ async function provisionKeepClient() {
 
     console.log('\n<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>');
     await createKeepClientConfig(operatorAddress);
-
-    process.exit();
+    process.exit()
   }
   catch(error) {
     console.error(error.message);
@@ -160,9 +159,7 @@ async function fundOperator(operatorAddress, purse, etherToTransfer) {
 
 async function createKeepClientConfig(operatorAddress) {
 
-  fs.createReadStream('/tmp/keep-client-config-template.toml', 'utf8').pipe(concat(function(configFileStream) {
-
-    let parsedConfigFile = toml.parse(configFileStream);
+    let parsedConfigFile = toml.parse(fs.readFileSync('/tmp/keep-client-config-template.toml', 'utf8'));
 
     parsedConfigFile.ethereum.URL = `${ethWSHost}:${ethWSPort}`;
     parsedConfigFile.ethereum.URLRPC = `${ethRPCHost}:${ethRPCPort}`;
@@ -184,12 +181,8 @@ async function createKeepClientConfig(operatorAddress) {
     let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
       replace: (key, value) => { return (key == 'Port') ? value.toFixed(0) : false }
     });
-
-    fs.writeFile('/mnt/keep-client/config/keep-client-config.toml', formattedConfigFile, (error) => {
-      if (error) throw error;
-    });
-  }));
-  console.log('keep-client config written to /mnt/keep-client/config/keep-client-config.toml');
+    fs.writeFileSync('/mnt/keep-client/config/keep-client-config.toml', formattedConfigFile)
+    console.log('keep-client config written to /mnt/keep-client/config/keep-client-config.toml');
 };
 
 /*
