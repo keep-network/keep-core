@@ -52,8 +52,27 @@
 }
 
 .balance {
-  margin-top: 0;
+  margin: 0;
   color: @aqua-marine;
   letter-spacing: -1px;
   line-height: 52px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: .5rem;
+
+  &.grey {
+    background: @grey;
+  }
+
+  &.black {
+    background: @black;
+  }
+
+  &.brown {
+    background: @warning-color;
+  }
 }
