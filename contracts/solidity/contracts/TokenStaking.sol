@@ -3,7 +3,6 @@ pragma solidity ^0.5.4;
 import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
 import "./Registry.sol";
-import "./ITokenStaking.sol";
 
 
 /**
@@ -12,7 +11,7 @@ import "./ITokenStaking.sol";
  * A holder of the specified token can stake delegate its tokens to this contract
  * and recover the stake after undelegation period is over.
  */
-contract TokenStaking is StakeDelegatable, ITokenStaking {
+contract TokenStaking is StakeDelegatable {
 
     using UintArrayUtils for uint256[];
 
