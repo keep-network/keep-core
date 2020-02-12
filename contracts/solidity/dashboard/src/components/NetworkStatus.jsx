@@ -7,7 +7,7 @@ export const NetworkStatus = (props) => {
   return (
     <div className="network-status flex flex-row-center">
       <div className={`network-indicator ${!error ? 'connected' : 'error' }`} />
-      <span className="text-label">{error ? 'worng network' : `connected: ${networkType}`}</span>
+      <span className="text-label">{error ? 'wrong network' : `connected: ${networkType}`}</span>
     </div>
   )
 }
