@@ -67,7 +67,7 @@ async function provisionKeepClient() {
     // Account that we fund ether from.  Contract owner should always have ether.
     let purse = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
     // Operator account, should be set in Kube config
-    let operatorAddress = process.env.KEEP_CLIENT_ETH_ACCOUNT
+    let operatorAddress = process.env.KEEP_CLIENT_ETH_ACCOUNT_ADDRESS;
 
     console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
     await fundOperator(operatorAddress, purse, '10');
