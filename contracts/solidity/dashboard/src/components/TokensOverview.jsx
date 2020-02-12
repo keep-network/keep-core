@@ -13,7 +13,7 @@ const TokensOverview = ({
     <section id="tokens-overview" className="tile">
       <h5>Totals</h5>
       <section>
-        <span className="text-label text-white" style={{ background: '#AC6E16', padding: '.2rem' }}>OWNED</span>
+        <span className="text-label text-white text-bg-warning">OWNED</span>
         <h2 className="balance">{displayAmount(keepBalance)}</h2>
         <div className="text-samll">
           Staked Owned Tokens: {displayAmount(stakingBalance)}
@@ -26,7 +26,7 @@ const TokensOverview = ({
         <hr />
       </section>
       <section>
-        <span className="text-label text-white" style={{ background: '#AC6E16', padding: '.2rem' }}>GRANTED</span>
+        <span className="text-label text-white text-bg-warning">GRANTED</span>
         <h2 className="balance">{displayAmount(grantBalance)}</h2>
         <div className="text-samll">
           Staked Tokens: {displayAmount(tokenGrantsStakeBalance)}
