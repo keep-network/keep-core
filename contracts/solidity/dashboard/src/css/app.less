@@ -136,6 +136,12 @@ ul {
     }
 
     > .web3 > .web3-status {
+      &.alert {
+        flex-direction: column;
+        a {
+          margin-top: 1rem;
+        }
+      }
       text-align: center;
       margin: 1rem;
     }
@@ -144,7 +150,7 @@ ul {
   }
 }
 
-@media screen and (min-width: 600px) {
+@media screen and (min-width: 700px) {
  .header {
     > .web3 {
       display: flex;
