@@ -1,10 +1,16 @@
 {
-  "name": "keep-contracts",
-  "version": "0.1.0",
+  "name": "@keep-network/keep-core",
+  "version": "0.9.1",
   "description": "Smart Contracts for the Keep Network",
   "repository": {
     "type": "git",
-    "url": "https://github.com/keep-network/contracts.git"
+    "url": "ssh://git@github.com/keep-network/keep-core.git"
+  },
+  "files": [
+    "contracts/**/*.sol"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   },
   "scripts": {
     "truffle": "truffle",

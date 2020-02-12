@@ -148,10 +148,6 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 	c.unmarshalersMutex.Lock()
 	defer c.unmarshalersMutex.Unlock()
 
-	if _, exists := c.unmarshalersByType[tpe]; exists {
-		return fmt.Errorf("type %s already has an associated unmarshaler", tpe)
-	}
-
 	c.unmarshalersByType[tpe] = unmarshaler
 	return nil
 }
