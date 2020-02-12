@@ -8,8 +8,10 @@ pragma solidity ^0.5.4;
  */
 interface IRandomBeacon {
     /**
-     * @notice Event is emitted when a new relay entry is generated for specific
-     * relay request ID.
+     * @notice Event emitted for each new relay entry generated. It contains
+     * request ID allowing to associate the generated relay entry with relay
+     * request created previously with `requestRelayEntry` function. Event is
+     * emitted no matter if callback was executed or not.
      *
      * @param requestId Relay request ID for which entry was generated.
      * @param entry Generated relay entry.
