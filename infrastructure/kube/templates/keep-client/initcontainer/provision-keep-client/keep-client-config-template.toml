@@ -19,9 +19,9 @@
     KeepRandomBeaconService = ""
 
 [LibP2P]
-  Peers = [""]
+  Peers = []
   Port = ""
-  AnnouncedAddresses = [""]
+  AnnouncedAddresses = []
 
 [Storage]
   DataDir = ""
