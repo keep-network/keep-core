@@ -31,27 +31,6 @@ jobs:
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # TODO: Disabled following steps as current repo configuration does not allow
-      # pushing directly to master branch, what is required after committing the
-      # version bump.
-      # - name: Bump version
-      #   working-directory: ./contracts/solidity
-      #   run: |
-      #     PACKAGE_VERSION=$(npm version prerelease --preid=pre)
-      #     echo "::set-env name=PACKAGE_VERSION::$PACKAGE_VERSION"
-      # - name: Setup git
-      #   run: |
-      #     git remote set-url origin https://${{ secrets.CI_GITHUB_TOKEN }}@github.com/keep-network/keep-core.git
-      #     git config user.email "thesis-heimdall@users.noreply.github.com"
-      #     git config user.name "Heimdall"
-      # - name: Commit
-      #   working-directory: ./contracts/solidity
-      #   env:
-      #     PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
-      #   run: |
-      #     GITHUB_REF=${{ github.ref }}
-      #     BRANCH=${GITHUB_REF#refs/heads/} # strip branch name from github reference, branch name is prefixed with `refs/heads`
-      #     git checkout $BRANCH
-      #     git add package.json package-lock.json
-      #     git commit -m "[CI] Auto-bump pre-release package to $PACKAGE_VERSION"
-      #     git push origin $BRANCH
+      # TODO: Add version auto bumping and commit. We disabled it as repo
+      # configuration does not allow pushing directly to master branch, what
+      # is required after committing the version bump.
