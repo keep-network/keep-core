@@ -5,13 +5,13 @@ metadata:
   name: keep-client-0
   namespace: default
   labels:
-    app: keep-client
-    type: client-0
+    app: keep
+    type: beacon-0
 spec:
   ports:
   - port: 3919
     targetPort: 3919
     name: tcp-3919
   selector:
-    app: keep-client
-    type: client-0
+    app: keep
+    type: beacon-0

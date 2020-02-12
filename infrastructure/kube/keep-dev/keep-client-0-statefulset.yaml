@@ -5,14 +5,14 @@ metadata:
   name: keep-client-0
   namespace: default
   labels:
-    app: keep-client
-    type: client-0
+    app: keep
+    type: beacon-0
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: keep-client
-      type: client-0
+      app: keep
+      type: beacon-0
   serviceName: keep-client-0
   volumeClaimTemplates:
   - metadata:
@@ -32,12 +32,13 @@ spec:
   template:
     metadata:
       labels:
-        app: keep-client
-        type: client-0
+        app: keep
+        type: beacon-0
     spec:
       containers:
-      - name: keep-client
+      - name: keep-client-0
         image: gcr.io/keep-dev-fe24/keep-client
+        imagePullPolicy: Always
         ports:
           - containerPort: 3919
         env:
@@ -51,18 +52,25 @@ spec:
         volumeMounts:
           - name: keep-client-config
             mountPath: /mnt/keep-client/config
-          - name: eth-account-keyfile
-            mountPath: /mnt/keep-client/keyfile
           - name: keep-client-data
             mountPath: /mnt/keep-client/data
+          - name: eth-account-keyfile
+            mountPath: /mnt/keep-client/keyfile
         command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "start"]
       volumes:
+      - name: keep-client-config
+        persistentVolumeClaim:
+          claimName: keep-client-config
+      - name: keep-client-data
+        persistentVolumeClaim:
+          claimName: keep-client-data
       - name: eth-account-keyfile
         configMap:
           name: eth-account-info
           items:
             - key: account-0-keyfile
               path: account-0-keyfile
+
       initContainers:
       - name: initcontainer-provision-keep-client
         image: gcr.io/keep-dev-fe24/initcontainer-provision-keep-client
@@ -120,10 +128,10 @@ spec:
             value: /mnt/keep-client/keyfile/account-0-keyfile
 
           - name: KEEP_CLIENT_PEERS
-            value: ''
+            value: 'goat'
 
           - name: KEEP_CLIENT_ANNOUNCED_ADDRESSES
-            value: ''
+            value: 'fish'
 
           - name: KEEP_CLIENT_PORT
             value: '3919'
