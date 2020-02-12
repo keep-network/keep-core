@@ -14,6 +14,7 @@
 @import 'withdrawal-rewards-history.less';
 @import 'tokens-page.less';
 @import 'operator-page.less';
+@import 'network-status.less';
 
 html {
   font-size: 12px;
@@ -66,7 +67,11 @@ ul {
     height: @header-height;
   }
   
-  > .web3, > .account-address {
+  > .web3 {
+    display: none;
+  }
+
+  > .account-address {
     display: none;
   }
 
@@ -133,6 +138,8 @@ ul {
 
     > .account-address {
       font-size: 0.8rem;
+      margin-left: 1rem;
+      text-align: left;
     }
 
     > .web3 > .web3-status {
@@ -159,6 +166,20 @@ ul {
 
   .side-menu {
     ul > .web3 {
+      visibility: hidden;
+    }
+  }
+}
+
+@media screen and (min-width: 750px) {
+  .header {
+    > .account-address {
+        display: block;
+      }
+  }
+
+  .side-menu {
+    ul > .account-address {
       visibility: hidden;
     }
   }
@@ -191,7 +212,7 @@ ul {
     }
 
     > .account-address {
-      display: block;
+      margin-right: 1.5rem;
     }
 
     > .menu-button {
