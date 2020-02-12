@@ -20,6 +20,12 @@ jobs:
         with:
           node-version: "11.x"
           registry-url: "https://npm.pkg.github.com"
+      - name: Install dependencies
+        working-directory: ./contracts/solidity
+        run: npm install
+      - name: Compile source code
+        working-directory: ./contracts/solidity
+        run: npm run compile
       - name: Publish package
         working-directory: ./contracts/solidity
         run: npm publish
