@@ -18,8 +18,9 @@ moment.updateLocale('en', {
 
 export function displayAmount(amount, decimals = 18, precision = 0) {
   if (amount) {
-    amount = new BigNumber(amount)
-    return amount.div(new BigNumber(10).pow(new BigNumber(decimals))).toFixed(precision)
+    return new BigNumber(amount)
+      .div(new BigNumber(10).pow(new BigNumber(decimals)))
+      .toFormat(precision)
   }
 }
 

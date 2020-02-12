@@ -1,6 +1,6 @@
 import { contractService } from './contracts.service'
 import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
-import moment from 'moment'
+import web3Utils from 'web3-utils'
 
 const fetchDelegatedTokensData = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -13,28 +13,22 @@ const fetchDelegatedTokensData = async (web3Context) => {
   return { stakedBalance, ownerAddress, beneficiaryAddress }
 }
 
-const fetchPendingUndelegation = async (web3Context, ...args) => {
+const fetchPendingUndelegation = async (web3Context) => {
   const { yourAddress } = web3Context
-  const [withdrawals, stakeWithdrawalDelayInSec, events] = await Promise.all([
-    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'withdrawals', yourAddress),
-    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'stakeWithdrawalDelay'),
-    contractService.getPastEvents(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'InitiatedUnstake', { fromBlock: '0', filter: { operator: yourAddress } }),
+  const [undelegation, undelegationPeriod] = await Promise.all([
+    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'getUndelegation', yourAddress),
+    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'undelegationPeriod'),
   ])
 
-  const undelegatedOn = withdrawals.amount === '0' ?
-    null :
-    moment.unix(withdrawals.createdAt).add(stakeWithdrawalDelayInSec, 'seconds')
-  const stakeWithdrawalDelay = moment().add(stakeWithdrawalDelayInSec, 'seconds').fromNow(stakeWithdrawalDelayInSec)
-  const pendinUndelegations = events
-    .map(({ id, returnValues: { value, createdAt } }) => ({ eventId: id, amount: value, createdAt: moment.unix(createdAt) }))
-    .reverse()
+  const undelegationAtInBN = web3Utils.toBN(undelegation.undelegatedAt).add(web3Utils.toBN(undelegationPeriod))
+  const isUndelegation = undelegation.undelegatedAt === '0'
+  const pendingUnstakeBalance = isUndelegation ? 0 : undelegation.amount
+  const undelegationComplete = isUndelegation ? null : undelegationAtInBN.toString()
 
   return {
-    pendingUnstakeBalance: withdrawals.amount,
-    undelegatedOn,
-    stakeWithdrawalDelay,
-    stakeWithdrawalDelayInSec,
-    pendinUndelegations,
+    pendingUnstakeBalance,
+    undelegationComplete,
+    undelegationPeriod,
   }
 }
 
