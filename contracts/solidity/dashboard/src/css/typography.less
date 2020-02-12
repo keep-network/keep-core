@@ -82,6 +82,13 @@ a {
   color: @link-color;
 }
 
+label {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 145%;
+  color: @darker-grey
+}
+
 .text {
   &-primary {
     color: @aqua-marine;
@@ -97,6 +104,10 @@ a {
 
   &-dark-red {
     color: @dark-red !important;
+  }
+
+  &-white {
+    color: @white !important;
   }
 
   &-label {
@@ -119,6 +130,12 @@ a {
     font-weight: 500;
   }
 
+  &-smaller {
+    font-size: .9rem;
+    font-weight: normal;
+    line-height: 1rem;
+  }
+
   &-warning {
     &.border {
       padding-left: 1rem;
@@ -128,5 +145,12 @@ a {
     font-size: 0.9rem;
     line-height: 22px;
     color: @warning-color;
+  }
+
+  &-bg {
+    &-warning {
+      padding: .2rem;
+      background-color: @warning-color;
+    }
   }
 }
