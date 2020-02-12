@@ -208,6 +208,16 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
+     * @dev Checks if operator contract has access to the staked token balance of
+     * the provided operator.
+     * @param _operator address of stake operator.
+     * @param _operatorContract address of operator contract.
+     */
+    function isAuthorizedForOperator(address _operator, address _operatorContract) public view returns (bool) {
+        return authorizations[_operatorContract][_operator];
+    }
+
+    /**
      * @dev Gets the eligible stake balance of the specified address.
      * An eligible stake is a stake that passed the initialization period
      * and is not currently undelegating. Also, the operator had to approve

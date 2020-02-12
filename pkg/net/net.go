@@ -65,6 +65,10 @@ type Provider interface {
 	Peers() []string
 	// ConnectionManager returns the connection manager used by the provider.
 	ConnectionManager() ConnectionManager
+
+	// CreateTransportIdentifier creates a transport identifier based on the
+	// provided public key.
+	CreateTransportIdentifier(publicKey ecdsa.PublicKey) (TransportIdentifier, error)
 }
 
 // ConnectionManager is an interface which exposes peers a client is connected
