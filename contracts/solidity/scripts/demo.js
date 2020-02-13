@@ -62,7 +62,7 @@ module.exports = async function() {
   }
 
   // Make sure grant manager has some tokens to be able to create a grant.
-  await token.transfer(grantManager, formatAmount(100000, 18), {from: owner})
+  await token.transfer(grantManager, formatAmount(140000, 18), {from: owner})
 
   // Grant tokens to grantee.
   let amount = formatAmount(70000, 18);
@@ -85,11 +85,25 @@ module.exports = async function() {
   )
   let grantId = (await tokenGrant.getPastEvents())[0].args[0].toNumber()
 
-  // Operator must sign grantee and grant contract address since grant contract becomes the owner during staking.
-  let signature1 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(tokenGrant.address), granteeOperator)).substr(2), 'hex');
-  let signature2 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(grantee), granteeOperator)).substr(2), 'hex');
-  let delegation = Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature1, signature2]);
-  await tokenGrant.stake(grantId, tokenStaking.address, 10, delegation, {from: grantee});
+  await token.approveAndCall(
+    tokenGrant.address,
+    amount,
+    Buffer.concat([
+      Buffer.from(grantee.substr(2), 'hex'),
+      web3.utils.toBN(vestingDuration).toBuffer('be', 32),
+      web3.utils.toBN(start).toBuffer('be', 32),
+      web3.utils.toBN(cliff).toBuffer('be', 32),
+      Buffer.from(revocable ? "01" : "00", 'hex'),
+    ]),
+    {from: grantManager}
+  )
 
+  const grantDelegation = '0x' + Buffer.concat([
+    Buffer.from(owner.substr(2), 'hex'), // magpie
+    Buffer.from(granteeOperator.substr(2), 'hex'), // operator
+    Buffer.from(owner.substr(2), 'hex') // authorizer
+  ]).toString('hex');
+  await tokenGrant.stake(grantId, tokenStaking.address, formatAmount(7000, 18), grantDelegation, {from: grantee})
+  
   process.exit();
 };
