@@ -1,0 +1,32 @@
+section.timeline {
+    position: relative;
+
+    &:after {
+        content: '';
+        position: absolute;
+        width: 2px;
+        background-color: @grey;
+        top: .5rem;
+        bottom: 0;
+        left: 7px;
+      }
+
+    .breakpoint {
+        position: relative;
+
+        &:before{
+            top: .5rem;
+            content: '';
+            position: absolute;
+            .dot(16px, @aqua-marine);
+            z-index: 1;
+        }
+
+        &-content {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 30px 20px 30px;
+            background-color: white;
+        }
+    }
+}
