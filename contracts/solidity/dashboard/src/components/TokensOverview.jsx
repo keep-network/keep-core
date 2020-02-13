@@ -27,7 +27,7 @@ const TokensOverview = ({
         <hr />
       </section>
       <section>
-        <span className="text-label text-white text-bg-warning">GRANTED</span>
+        <h3 className="text-darker-grey">Granted Tokens</h3>
         <h2 className="balance">{displayAmount(grantBalance)}</h2>
         <TokenGrantOverview />
       </section>
