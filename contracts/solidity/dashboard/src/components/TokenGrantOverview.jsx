@@ -22,10 +22,13 @@ const TokenGrantOverview = (props) => {
   }
 
   return (
-    <div className="token-grant-overview">
-      <div className="text-big">
-        Grant ID {selectedGrant.id}
-      </div>
+    <div className="token-grant-overview" style={data.length === 0 ? { display: 'none' } : {}}>
+      {data.length > 1 && <h6 className="text-darker-grey">{`${data.length} grants`}</h6>}
+      {data.length === 1 &&
+        <div className="text-big">
+          Grant ID {selectedGrant.id}
+        </div>
+      }
       <div className="flex flex-row-center flex-row-space-between">
         <h4 className="balance">{displayAmount(selectedGrant.amount)}&nbsp;KEEP</h4>
         <a href="#" className="text-warning">Vesting schedule</a>
@@ -34,21 +37,24 @@ const TokenGrantOverview = (props) => {
         Issued on {formatDate(selectedGrant.start * 1000)}
       </div>
       <div>
-        <Dropdown
-          onSelect={onSelect}
-          options={data}
-          valuePropertyName='id'
-          labelPropertyName='id'
-          selectedItem={selectedGrant}
-          labelPrefix='Grant ID'
-          noItemSelectedText='Select Grant'
-        />
+        {
+          data.length > 1 &&
+          <Dropdown
+            onSelect={onSelect}
+            options={data}
+            valuePropertyName='id'
+            labelPropertyName='id'
+            selectedItem={selectedGrant}
+            labelPrefix='Grant ID'
+            noItemSelectedText='Select Grant'
+          />
+        }
         <ProgressBar
           total={selectedGrant.amount}
           items={[
             { value: selectedGrant.vested, color: colors.grey, label: 'Vested' },
-            { value: selectedGrant.released, color: colors.brown, label: 'Relesed' },
-            { value: selectedGrant.staked, color: colors.black, label: 'Staked' },
+            { value: selectedGrant.released, color: colors.primary, label: 'Relesed' },
+            { value: selectedGrant.staked, color: colors.brown, label: 'Staked' },
           ]}
           withLegend
         />
