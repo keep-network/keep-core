@@ -6,12 +6,12 @@ metadata:
   namespace: default
   labels:
     app: keep
-    type: beacon-0
+    type: beacon
+    id: '0'
 spec:
   ports:
   - port: 3919
     targetPort: 3919
     name: tcp-3919
   selector:
-    app: keep
-    type: beacon-0
+    id: '0'

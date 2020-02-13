@@ -3,18 +3,18 @@ apiVersion: apps/v1
 kind: StatefulSet
 
 metadata:
-  name: keep-client-0
+  name: keep-client-4
   namespace: default
   labels:
     app: keep
     type: beacon
-    id: '0'
+    id: '4'
 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      id: '0'
+      id: '4'
   serviceName: keep-client-0
   volumeClaimTemplates:
   - metadata:
@@ -38,7 +38,7 @@ spec:
       labels:
         app: keep
         type: beacon
-        id: '0'
+        id: '4'
 
     spec:
       containers:
@@ -53,7 +53,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: eth-account-passphrases
-                key: account-0
+                key: account-4
           - name: LOG_LEVEL
             value: debug
 
@@ -82,8 +82,8 @@ spec:
         configMap:
           name: eth-account-info
           items:
-            - key: account-0-keyfile
-              path: account-0-keyfile
+            - key: account-4-keyfile
+              path: account-4-keyfile
 
       initContainers:
       - name: initcontainer-provision-keep-client
@@ -137,13 +137,13 @@ spec:
             valueFrom:
               configMapKeyRef:
                 name: eth-account-info
-                key: account-0-address
+                key: account-4-address
 
           - name: KEEP_CLIENT_ETH_KEYFILE_PATH
-            value: /mnt/keep-client/keyfile/account-0-keyfile
+            value: /mnt/keep-client/keyfile/account-4-keyfile
 
           - name: KEEP_CLIENT_PEERS
-            value: /ip4/10.102.100.40/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY
+            value: /ip4/10.102.100.66/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf
 
           - name: KEEP_CLIENT_ANNOUNCED_ADDRESSES
             value: ''
