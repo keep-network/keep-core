@@ -1,30 +1,31 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { displayAmount } from '../utils'
-import web3Utils from 'web3-utils'
+import BigNumber from 'bignumber.js'
 
 const calculateWidth = (value, total) => {
-  const valueInBN = web3Utils.toBN(value || 0)
-  const totalInBN = web3Utils.toBN(total || 1)
+  const valueInBn = new BigNumber(value || 0)
+  const totalInBn = new BigNumber(total || 1)
 
-  return valueInBN.mul(web3Utils.toBN(100)).div(totalInBN).toString()
+  return valueInBn.multipliedBy(100).div(totalInBn).toFixed(2).toString()
 }
 
 const ProgressBar = ({ total, items, height, withLegend }) => {
-  const bars = items
-    .map((item) => ({ ...item, width: calculateWidth(item.value, total) }))
-    .sort((a, b) => b.width - a.width)
-
-  const renderProgressBar = (item, index) => <ProgressBarItem
-    key={index}
-    {...item}
-    index={index}
-    wrapperHeight={height}
-  />
+  const bars = useMemo(() => {
+    return items
+      .map((item) => ({ ...item, width: calculateWidth(item.value, total) }))
+      .sort((a, b) => b.width - a.width)
+      .map((item, index) => <ProgressBarItem
+        key={index}
+        {...item}
+        index={index}
+        wrapperHeight={height}
+      />)
+  }, [total, items])
 
   return (
     <React.Fragment>
       <div className="progress-bar-wrapper" style={{ height: `${height}px` }}>
-        {bars.map(renderProgressBar)}
+        {bars}
       </div>
       {withLegend && items.map(renderProgressBarLegendItem)}
     </React.Fragment>
@@ -58,4 +59,4 @@ ProgressBar.defaultProps = {
   height: '10',
 }
 
-export default ProgressBar
+export default React.memo(ProgressBar)
