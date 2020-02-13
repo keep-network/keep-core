@@ -1,40 +1,31 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 
 const Timeline = ({ title, breakePoints }) => {
+  const breakePointComponents = useMemo(() => {
+    return breakePoints.map(renderBreakPoint)
+  }, [breakePointComponents])
+
   return (
-    <section className="timeline">
-      <div className="breakpoint">
-        <div className="breakpoint-content">
-          <div>10 VESTED</div>
-          <div>11/02/2019</div>
-        </div>
-      </div>
-      <div className="breakpoint">
-        <div className="breakpoint-content">
-          <div>10 VESTED</div>
-          <div>11/02/2019</div>
-        </div>
-      </div>
-      <div className="breakpoint">
-        <div className="breakpoint-content">
-          <div>10 VESTED</div>
-          <div>11/02/2019</div>
-        </div>
-      </div>
-      <div className="breakpoint">
-        <div className="breakpoint-content">
-          <div>10 VESTED</div>
-          <div>11/02/2019</div>
-        </div>
-      </div>
-      <div className="breakpoint">
-        <div className="breakpoint-content">
-          <div>10 VESTED</div>
-          <div>11/02/2019</div>
-        </div>
-      </div>
-    </section>
+    <React.Fragment>
+      <h6>{title}</h6>
+      <section className="timeline">
+        {breakePointComponents}
+      </section>
+    </React.Fragment>
   )
 }
 
-export default Timeline
+const TimelineBreakPoint = ({ label, date, dotColorClassName }) => {
+  return (
+    <div className={`breakpoint ${dotColorClassName || ''}`}>
+      <div className="breakpoint-content">
+        <div>{label}</div>
+        <div>{date}</div>
+      </div>
+    </div>
+  )
+}
+
+const renderBreakPoint = (item, index) => <TimelineBreakPoint key={index} {...item}/>
+
+export default React.memo(Timeline)
