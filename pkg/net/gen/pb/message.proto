@@ -28,6 +28,9 @@ message NetworkMessage {
   // Sequence number of the message. Retransmissions have the same sequence 
   // number as the original message.
   uint64 sequenceNumber = 6;
+
+  // Message signature.
+  bytes signature = 7;
 }
 
 message Identity {

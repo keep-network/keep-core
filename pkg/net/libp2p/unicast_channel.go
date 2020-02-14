@@ -87,6 +87,12 @@ func (uc *unicastChannel) Send(message net.TaggedMarshaler) error {
 		}
 
 		messageProto.SequenceNumber = uc.nextSeqno()
+
+		err = signMessage(messageProto, uc.clientIdentity.privKey)
+		if err != nil {
+			return err
+		}
+
 		return uc.send(stream, messageProto)
 	case err := <-streamError:
 		return err
@@ -266,6 +272,10 @@ func (uc *unicastChannel) processMessage(message *pb.NetworkMessage) error {
 			senderIdentifier.id,
 			uc.remotePeerID,
 		)
+	}
+
+	if err := verifyMessageSignature(message, senderIdentifier.pubKey); err != nil {
+		return err
 	}
 
 	networkKey := key.Libp2pKeyToNetworkKey(senderIdentifier.pubKey)
