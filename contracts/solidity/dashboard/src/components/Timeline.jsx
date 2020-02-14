@@ -7,7 +7,7 @@ const Timeline = ({ title, breakePoints }) => {
 
   return (
     <React.Fragment>
-      <h6>{title}</h6>
+      <div className="text-title text-darker-grey">{title}</div>
       <section className="timeline">
         {breakePointComponents}
       </section>
