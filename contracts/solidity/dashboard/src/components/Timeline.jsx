@@ -19,8 +19,10 @@ const TimelineBreakPoint = ({ label, date, dotColorClassName }) => {
   return (
     <div className={`breakpoint ${dotColorClassName || ''}`}>
       <div className="breakpoint-content">
-        <div>{label}</div>
-        <div>{date}</div>
+        <div className="text-big text-black">{label}</div>
+        <div className="text-small text-grey">
+          {date}
+        </div>
       </div>
     </div>
   )
