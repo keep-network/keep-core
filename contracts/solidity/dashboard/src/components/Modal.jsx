@@ -23,8 +23,11 @@ const Modal = React.memo(({ closeModal, ...props }) => {
   return ReactDOM.createPortal(
     <div ref={modalOverlay} className="modal-overlay" onClick={onOverlayClick}>
       <div className="modal-content">
-        <div className="modal-close" onClick={closeModal}>
-          <Icons.Cross width={18} height={18} />
+        <div className="flex">
+          <h5 className="text-darker-grey">{props.title}</h5>
+          <div className="modal-close" onClick={closeModal}>
+            <Icons.Cross width={18} height={18} />
+          </div>
         </div>
         {props.children}
       </div>
