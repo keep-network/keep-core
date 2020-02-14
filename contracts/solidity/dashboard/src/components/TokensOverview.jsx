@@ -1,5 +1,7 @@
 import React from 'react'
 import { displayAmount } from '../utils'
+import { useModal } from '../hooks/useModal'
+import TokenGrantVestingSchedule from './TokenGrantVestingSchedule'
 
 const TokensOverview = ({
   undelegationPeriod,
@@ -9,8 +11,13 @@ const TokensOverview = ({
   grantBalance,
   tokenGrantsStakeBalance,
 }) => {
+  const { showModal, ModalComponent } = useModal()
+
   return (
     <section id="tokens-overview" className="tile">
+      <ModalComponent title="Vesting Schedule Summary">
+        <TokenGrantVestingSchedule />
+      </ModalComponent>
       <h5>Totals</h5>
       <section>
         <span className="text-label text-white text-bg-warning">OWNED</span>
@@ -28,6 +35,7 @@ const TokensOverview = ({
       <section>
         <span className="text-label text-white text-bg-warning">GRANTED</span>
         <h2 className="balance">{displayAmount(grantBalance)}</h2>
+        <span className="text-warning" onClick={showModal}>Vesting schedule</span>
         <div className="text-samll">
           Staked Tokens: {displayAmount(tokenGrantsStakeBalance)}
           <p className="text-smaller text-grey">Tokens you were granted that are delegated to an operator and doing work on the network.</p>
