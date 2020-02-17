@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react'
+import { formatDate } from '../utils'
 
-const Timeline = ({ title, breakePoints }) => {
+const Timeline = ({ title, breakepoints }) => {
   const breakePointComponents = useMemo(() => {
-    return breakePoints.map(renderBreakPoint)
-  }, [breakePointComponents])
+    return breakepoints.map(renderBreakPoint)
+  }, [breakepoints])
 
   return (
     <React.Fragment>
@@ -21,7 +22,7 @@ const TimelineBreakPoint = ({ label, date, dotColorClassName }) => {
       <div className="breakpoint-content">
         <div className="text-big text-black">{label}</div>
         <div className="text-small text-grey">
-          {date}
+          {formatDate(date)}
         </div>
       </div>
     </div>
