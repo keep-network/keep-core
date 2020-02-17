@@ -3,8 +3,6 @@ import { contractService } from './contracts.service'
 import moment from 'moment'
 import { displayAmount } from '../utils'
 
-const ONE_WEEK_IN_SEC= 604800
-
 const fetchGrantVestingSchedule = async (web3Context, grantId) => {
   const { eth } = web3Context
 
