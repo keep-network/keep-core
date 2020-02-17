@@ -3,14 +3,15 @@ import React, { useState } from 'react'
 const Dropdown = ({ onSelect, options, valuePropertyName, labelPropertyName, selectedItem, labelPrefix, noItemSelectedText }) => {
   const [isOpen, setIsOpen] = useState(false)
 
-  const renderDropdownItem = (item) => <DropdownItem
-    key={item[valuePropertyName]}
-    value={item[valuePropertyName]}
-    label={item[labelPropertyName]}
-    isSelected={item[valuePropertyName] == selectedItem[valuePropertyName]}
-    onChange={onChange}
-    labelPrefix={labelPrefix}
-  />
+  const renderDropdownItem = (item) =>
+    <DropdownItem
+      key={item[valuePropertyName]}
+      value={item[valuePropertyName]}
+      label={item[labelPropertyName]}
+      isSelected={item[valuePropertyName] == selectedItem[valuePropertyName]}
+      onChange={onChange}
+      labelPrefix={labelPrefix}
+    />
 
   const onChange = (e) => {
     const selectedItem = options.find((option) => option[valuePropertyName] == e.target.value)

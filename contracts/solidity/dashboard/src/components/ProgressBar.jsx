@@ -14,12 +14,13 @@ const ProgressBar = ({ total, items, height, withLegend }) => {
     return items
       .map((item) => ({ ...item, width: calculateWidth(item.value, total) }))
       .sort((a, b) => b.width - a.width)
-      .map((item, index) => <ProgressBarItem
-        key={index}
-        {...item}
-        index={index}
-        wrapperHeight={height}
-      />)
+      .map((item, index) =>
+        <ProgressBarItem
+          key={index}
+          {...item}
+          index={index}
+          wrapperHeight={height}
+        />)
   }, [total, items])
 
   return (
