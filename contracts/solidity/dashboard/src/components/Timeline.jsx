@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import { formatDate } from '../utils'
 
-const Timeline = ({ title, breakepoints }) => {
+const Timeline = ({ title, breakepoints, footer }) => {
   const breakePointComponents = useMemo(() => {
     return breakepoints.map(renderBreakPoint)
   }, [breakepoints])
@@ -12,6 +12,7 @@ const Timeline = ({ title, breakepoints }) => {
       <section className="timeline">
         {breakePointComponents}
       </section>
+      {footer}
     </React.Fragment>
   )
 }
