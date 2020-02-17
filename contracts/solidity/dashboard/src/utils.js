@@ -58,11 +58,7 @@ export const wait = (ms) => {
 }
 
 export const formatDate = (dateMillis) => {
-  const now = moment()
   const date = moment(dateMillis)
 
-  if (now.isSame(date, 'year')) {
-    return date.format('MMM DD')
-  }
-  return date.format('MMM DD YYYY')
+  return date.format('MM/DD/YYYY')
 }
