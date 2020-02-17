@@ -2,9 +2,12 @@ import React, { useMemo } from 'react'
 import { displayAmount } from '../utils'
 import BigNumber from 'bignumber.js'
 
+const defaultValue = 0
+const totalDefaultValue = 1
+
 const calculateWidth = (value, total) => {
-  const valueInBn = new BigNumber(value || 0)
-  const totalInBn = new BigNumber(total || 1)
+  const valueInBn = new BigNumber(value || defaultValue)
+  const totalInBn = new BigNumber(total || totalDefaultValue)
 
   return valueInBn.multipliedBy(100).div(totalInBn).toFixed(2).toString()
 }
