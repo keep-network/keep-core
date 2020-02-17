@@ -31,6 +31,7 @@ contract TokenGrant {
 
     event CreatedTokenGrant(uint256 id);
     event WithdrawnTokenGrant(uint256 indexed id, uint256 amount);
+    event StakedGrant(uint256 indexed id, address operator, uint256 value);
     event RevokedTokenGrant(uint256 id);
 
     struct Grant {
@@ -309,6 +310,7 @@ contract TokenGrant {
         // Staking contract expects 40 bytes _extraData for stake delegation.
         // 20 bytes magpie's address + 20 bytes operator's address.
         tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData);
+        emit StakedGrant(_id, operator, _amount);
     }
 
     /**
