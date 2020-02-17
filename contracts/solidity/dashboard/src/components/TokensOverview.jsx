@@ -1,5 +1,6 @@
 import React from 'react'
 import { displayAmount } from '../utils'
+import TokenGrantOverview from './TokenGrantOverview'
 
 const TokensOverview = ({
   undelegationPeriod,
@@ -26,12 +27,9 @@ const TokensOverview = ({
         <hr />
       </section>
       <section>
-        <span className="text-label text-white text-bg-warning">GRANTED</span>
+        <h3 className="text-darker-grey">Granted Tokens</h3>
         <h2 className="balance">{displayAmount(grantBalance)}</h2>
-        <div className="text-samll">
-          Staked Tokens: {displayAmount(tokenGrantsStakeBalance)}
-          <p className="text-smaller text-grey">Tokens you were granted that are delegated to an operator and doing work on the network.</p>
-        </div>
+        <TokenGrantOverview />
       </section>
     </section>
   )
