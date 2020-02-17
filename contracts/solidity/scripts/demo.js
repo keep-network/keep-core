@@ -16,8 +16,8 @@ function getAccounts() {
   });
 };
 
-module.exports = async function() {
-
+module.exports = async function () {
+  try {
   const accounts = await getAccounts();
   const token = await KeepToken.deployed();
   const tokenStaking = await TokenStaking.deployed();
@@ -94,7 +94,9 @@ module.exports = async function() {
   let signature1 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(tokenGrant.address), granteeOperator)).substr(2), 'hex');
   let signature2 = Buffer.from((await web3.eth.sign(web3.utils.soliditySha3(grantee), granteeOperator)).substr(2), 'hex');
   let delegation = Buffer.concat([Buffer.from(magpie.substr(2), 'hex'), signature1, signature2]);
-  await tokenGrant.stake(grantId, tokenStaking.address, 10, delegation, {from: grantee});
-
+  } catch (err) {
+    console.error('unexpected error:', err)
+    process.exit(1)
+  }
   process.exit();
 };
