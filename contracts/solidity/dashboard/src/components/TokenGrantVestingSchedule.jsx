@@ -1,7 +1,13 @@
 import React from 'react'
 import Timeline from './Timeline'
+import { useFetchData } from '../hooks/useFetchData'
+import { tokenGrantsService } from '../services/token-grants.service'
 
 const TokenGrantVestingSchedule = ({ }) => {
+  const [state] = useFetchData(tokenGrantsService.fetchGrantVestingSchedule, [], 0)
+  const { isFetching, data } = state
+
+  console.log('data', data)
   return (
     <div>
       <div className="text-big text-darker-grey">
@@ -26,12 +32,7 @@ const TokenGrantVestingSchedule = ({ }) => {
       <div className="mt-1">
         <Timeline
           title='schedule'
-          breakePoints={[
-            { dotColorClassName: 'grey', date: '11/11/2020', label: '10 Vested' },
-            { dotColorClassName: 'grey', date: '12/11/2020', label: '10 Vested' },
-            { dotColorClassName: 'grey', date: '13/11/2020', label: '10 Vested' },
-            { dotColorClassName: '', date: '14/11/2020', label: '10 Released' },
-          ]}
+          breakepoints={data}
         />
         <div className="text-smaller text-darker-grey">
             Vesting will continue until completion on 11/01/2020
