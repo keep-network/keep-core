@@ -101,11 +101,6 @@ async function isFunded(operatorAddress) {
   return fundedAmount >= 1;
 }
 
-async function isAuthorized(operatorAddress) {
-  let authorized = await tokenStakingContract.methods.isAuthorizedForOperator(operatorAddress, keepRandomBeaconOperatorContractAddress).call();
-  return authorized;
-}
-
 async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) {
 
   let magpie = contractOwnerAddress;
@@ -139,25 +134,13 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
     formatAmount(20000000, 18),
     delegation).send({from: contractOwnerAddress})
 
-  console.log(`Account ${operatorAddress} staked!`);
+  console.log(`Staked!`);
 };
 
 async function authorizeOperatorContract(operatorAddress, authorizer) {
 
-  let authorized = await isAuthorized(operatorAddress);
-
-  /*
-  We need to stake only in cases where an operator account is not already staked.  If the account
-  is staked, or the client type is relay-requester we need to exit staking, albeit for different
-  reasons.  In the case where the account is already staked, additional staking will fail.
-  Clients of type relay-requester don't need to be staked to submit a request, they're acting more
-  as a consumer of the network, rather than an operator.
-  */
   if (process.env.KEEP_CLIENT_TYPE === 'relay-requester') {
     console.log('Subtype relay-requester set. No authorization needed, exiting!');
-    return;
-  } else if (authorized === true) {
-    console.log('Operator account already authorized, exiting!');
     return;
   } else {
     console.log(`Authorizing Operator Contract ${keepRandomBeaconOperatorContractAddress} for operator account ${operatorAddress}`);
@@ -167,8 +150,7 @@ async function authorizeOperatorContract(operatorAddress, authorizer) {
     keepRandomBeaconOperatorContractAddress).send({from: authorizer});
 
   console.log(`Authorized!`);
-
-},
+};
 
 async function fundOperator(operatorAddress, purse, etherToTransfer) {
 
