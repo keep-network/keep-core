@@ -6,15 +6,13 @@ const Web3 = require('web3');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 // ETH host info
-const ethRPCHost = process.env.ETH_RPC_HOSTNAME;
-const ethRPCPort = process.env.ETH_RPC_PORT;
-const ethWSHost = process.env.ETH_WS_HOSTNAME
-const ethWSPort = process.env.ETH_WS_PORT;
+const ethRPCUrl = process.env.ETH_RPC_URL
+const ethWSUrl = process.env.ETH_WS_URL
 const ethNetworkId = process.env.ETH_NETWORK_ID;
 
 // Contract owner info
 var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, `${ethRPCHost}:${ethRPCPort}`);
+var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
@@ -161,8 +159,8 @@ async function createKeepClientConfig(operatorAddress) {
 
     let parsedConfigFile = toml.parse(fs.readFileSync('/tmp/keep-client-config-template.toml', 'utf8'));
 
-    parsedConfigFile.ethereum.URL = `${ethWSHost}:${ethWSPort}`;
-    parsedConfigFile.ethereum.URLRPC = `${ethRPCHost}:${ethRPCPort}`;
+    parsedConfigFile.ethereum.URL = ethWSUrl;
+    parsedConfigFile.ethereum.URLRPC = ethRPCUrl;
     parsedConfigFile.ethereum.account.Address = operatorAddress;
     parsedConfigFile.ethereum.account.KeyFile = process.env.KEEP_CLIENT_ETH_KEYFILE_PATH;
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
