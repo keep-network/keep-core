@@ -57,9 +57,15 @@ export const fetchTokensPageData = async (web3Context) => {
 }
 
 const delegateStake = async (web3Context, data, onTransactionHashCallback) => {
-  const { authorizerAddress, beneficiaryAddress, operatorAddress, stakeTokens, context } = data
+  const {
+    authorizerAddress,
+    beneficiaryAddress,
+    operatorAddress,
+    stakeTokens,
+    context,
+    selectedGrant,
+  } = data
   const amount = web3Utils.toBN(stakeTokens).mul(web3Utils.toBN(10).pow(web3Utils.toBN(18))).toString()
-  console.log('value', amount)
   const delegation = '0x' + Buffer.concat([
     Buffer.from(beneficiaryAddress.substr(2), 'hex'),
     Buffer.from(operatorAddress.substr(2), 'hex'),
@@ -73,13 +79,11 @@ const delegateStake = async (web3Context, data, onTransactionHashCallback) => {
       .approveAndCall(stakingContract.options.address, amount, delegation)
       .send({ from: yourAddress })
       .on('transactionHash', onTransactionHashCallback)
+  } else if (context === 'granted') {
+    await grantContract.methods.stake(selectedGrant.id, stakingContract.options.address, amount, delegation)
+      .send({ from: yourAddress })
+      .on('transactionHash', onTransactionHashCallback)
   }
-  // TODO delegate stake for token grants
-  // else if (context === 'granted') {
-  //   await grantContract.methods.stake(grantId, stakingContract.options.address, formatAmount(amount).toString(), delegation)
-  //     .send({ from: yourAddress })
-  //     .on('transactionHash', onTransactionHashCallback)
-  // }
 }
 
 export const tokensPageService = {
