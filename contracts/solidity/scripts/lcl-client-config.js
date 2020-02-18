@@ -41,6 +41,7 @@ module.exports = async function () {
             Here we format the default rendering to write the config file with Seed/Port values as needed.
             */
             let formattedConfigFile = tomlify.toToml(fileContent, {
+                space: 2,
                 replace: (key, value) => { return (key == 'Port') ? value.toFixed(0) : false }
             });
 
