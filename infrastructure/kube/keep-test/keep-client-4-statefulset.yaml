@@ -93,29 +93,17 @@ spec:
         imagePullPolicy: Always
 
         env:
-          - name: ETH_RPC_HOSTNAME
+          - name: ETH_RPC_URL
             valueFrom:
               configMapKeyRef:
                 name: eth-network-ropsten
-                key: rpc-hostname
+                key: rpc-url
 
-          - name: ETH_RPC_PORT
+          - name: ETH_WS_URL
             valueFrom:
               configMapKeyRef:
                 name: eth-network-ropsten
-                key: rpc-port
-
-          - name: ETH_WS_HOSTNAME
-            valueFrom:
-              configMapKeyRef:
-                name: eth-network-ropsten
-                key: ws-hostname
-
-          - name: ETH_WS_PORT
-            valueFrom:
-              configMapKeyRef:
-                name: eth-network-ropsten
-                key: ws-port
+                key: ws-url
 
           - name: ETH_NETWORK_ID
             valueFrom:
@@ -132,7 +120,7 @@ spec:
           - name: CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
             valueFrom:
               secretKeyRef:
-                name: eth-network-internal
+                name: eth-network-ropsten
                 key: contract-owner-eth-account-private-key
 
           - name: KEEP_CLIENT_ETH_ACCOUNT_ADDRESS
