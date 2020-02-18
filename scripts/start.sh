@@ -4,7 +4,7 @@ set -e
 # Dafault inputs.
 KEEP_ETHEREUM_PASSWORD_DEFAULT="password"
 LOG_LEVEL_DEFAULT="info"
-CONFIG_FILE_PATH_DEFAULT="./config.toml"
+CONFIG_FILE_PATH_DEFAULT=$(realpath -m $(dirname $0)/../config.toml)
 
 # Read user inputs.
 read -p "Enter ethereum accounts password [$KEEP_ETHEREUM_PASSWORD_DEFAULT]: " ethereum_password
@@ -21,7 +21,7 @@ LOG_START='\n\e[1;36m' # new line + bold + color
 LOG_END='\n\e[0m' # new line + reset color
 
 KEEP_CORE_PATH=$(realpath $(dirname $0)/../)
-KEEP_CORE_CONFIG_FILE_PATH=$(realpath $KEEP_CORE_PATH/$CONFIG_FILE_PATH)
+KEEP_CORE_CONFIG_FILE_PATH=$(realpath $CONFIG_FILE_PATH)
 
 printf "${LOG_START}Starting keep-core client...${LOG_END}"
 cd $KEEP_CORE_PATH

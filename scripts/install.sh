@@ -3,7 +3,7 @@ set -e
 
 # Dafault inputs.
 KEEP_ETHEREUM_PASSWORD_DEFAULT="password"
-CONFIG_FILE_PATH_DEFAULT="./config.toml"
+CONFIG_FILE_PATH_DEFAULT=$(realpath -m $(dirname $0)/../config.toml)
 
 # Read user inputs.
 read -p "Enter ethereum accounts password [$KEEP_ETHEREUM_PASSWORD_DEFAULT]: " ethereum_password
@@ -18,7 +18,7 @@ LOG_END='\n\e[0m' # new line + reset color
 
 printf "${LOG_START}Starting installation...${LOG_END}"
 KEEP_CORE_PATH=$(realpath $(dirname $0)/../)
-KEEP_CORE_CONFIG_FILE_PATH=$(realpath $KEEP_CORE_PATH/$CONFIG_FILE_PATH)
+KEEP_CORE_CONFIG_FILE_PATH=$(realpath $CONFIG_FILE_PATH)
 KEEP_CORE_SOL_PATH=$(realpath $KEEP_CORE_PATH/contracts/solidity)
 
 cd $KEEP_CORE_SOL_PATH
