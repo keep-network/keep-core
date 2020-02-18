@@ -2,11 +2,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: keep-client-2
-  namespace: ropsten
+  name: keep-client-0
+  namespace: default
   labels:
-    app: keep-client
-    type: client-2
+    app: keep
+    type: beacon
+    id: '0'
 spec:
   type: LoadBalancer
   ports:
@@ -14,5 +15,4 @@ spec:
     targetPort: 3919
     name: tcp-3919
   selector:
-    app: keep-client
-    type: client-2
+    id: '0'
