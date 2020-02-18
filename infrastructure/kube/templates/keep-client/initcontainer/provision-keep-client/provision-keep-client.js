@@ -12,6 +12,7 @@ const ethNetworkId = process.env.ETH_NETWORK_ID;
 
 // Contract owner info
 var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+var authorizer = contractOwnerAddress
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
 /*
@@ -70,7 +71,10 @@ async function provisionKeepClient() {
     await fundOperator(operatorAddress, purse, '10');
 
     console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`);
-    await stakeOperator(operatorAddress, contractOwnerAddress);
+    await stakeOperator(operatorAddress, contractOwnerAddress, authorizer);
+
+    console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${keepRandomBeaconOperatorContractAddress} >>>>>>>>>>>>`);
+    await authorizeOperatorContract(operatorAddress, authorizer);
 
     console.log('\n<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>');
     await createKeepClientConfig(operatorAddress);
@@ -97,10 +101,14 @@ async function isFunded(operatorAddress) {
   return fundedAmount >= 1;
 }
 
-async function stakeOperator(operatorAddress, contractOwnerAddress) {
+async function isAuthorized(operatorAddress) {
+  let authorized = await tokenStakingContract.methods.isAuthorizedForOperator(operatorAddress, keepRandomBeaconOperatorContractAddress).call();
+  return authorized;
+}
+
+async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) {
 
   let magpie = contractOwnerAddress;
-  let authorizer = contractOwnerAddress;
   let staked = await isStaked(operatorAddress);
 
   /*
@@ -111,13 +119,13 @@ async function stakeOperator(operatorAddress, contractOwnerAddress) {
   as a consumer of the network, rather than an operator.
   */
   if (process.env.KEEP_CLIENT_TYPE === 'relay-requester') {
-    console.log('Subtype relay-requester set. No staking needed, exiting staking!');
+    console.log('Subtype relay-requester set. No staking needed, exiting!');
     return;
   } else if (staked === true) {
     console.log('Operator account already staked, exiting!');
     return;
   } else {
-    console.log('Staking operator account!');
+    console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
   }
 
   let delegation = '0x' + Buffer.concat([
@@ -126,19 +134,41 @@ async function stakeOperator(operatorAddress, contractOwnerAddress) {
     Buffer.from(authorizer.substr(2), 'hex')
   ]).toString('hex');
 
-  console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
-
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
     formatAmount(20000000, 18),
     delegation).send({from: contractOwnerAddress})
 
+  console.log(`Account ${operatorAddress} staked!`);
+};
+
+async function authorizeOperatorContract(operatorAddress, authorizer) {
+
+  let authorized = await isAuthorized(operatorAddress);
+
+  /*
+  We need to stake only in cases where an operator account is not already staked.  If the account
+  is staked, or the client type is relay-requester we need to exit staking, albeit for different
+  reasons.  In the case where the account is already staked, additional staking will fail.
+  Clients of type relay-requester don't need to be staked to submit a request, they're acting more
+  as a consumer of the network, rather than an operator.
+  */
+  if (process.env.KEEP_CLIENT_TYPE === 'relay-requester') {
+    console.log('Subtype relay-requester set. No authorization needed, exiting!');
+    return;
+  } else if (authorized === true) {
+    console.log('Operator account already authorized, exiting!');
+    return;
+  } else {
+    console.log(`Authorizing Operator Contract ${keepRandomBeaconOperatorContractAddress} for operator account ${operatorAddress}`);
+  }
   await tokenStakingContract.methods.authorizeOperatorContract(
     operatorAddress,
     keepRandomBeaconOperatorContractAddress).send({from: authorizer});
 
-  console.log(`Account ${operatorAddress} staked!`);
-};
+  console.log(`Authorized!`);
+
+},
 
 async function fundOperator(operatorAddress, purse, etherToTransfer) {
 
