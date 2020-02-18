@@ -25,7 +25,6 @@ module.exports = async function () {
     } catch (error) {
       console.log(`\nAccount: ${account} not unlocked!`)
       console.error(error)
-      process.exit(1)
     }
     console.log(`\n---------------------------------`)
   }
