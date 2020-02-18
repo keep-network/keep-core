@@ -20,7 +20,7 @@ export function displayAmount(amount, decimals = 18, precision = 0) {
   if (amount) {
     return new BigNumber(amount)
       .div(new BigNumber(10).pow(new BigNumber(decimals)))
-      .toFormat(precision)
+      .toFormat(precision, BigNumber.ROUND_DOWN)
   }
 }
 
