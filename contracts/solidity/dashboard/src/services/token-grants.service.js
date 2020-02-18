@@ -4,6 +4,24 @@ import moment from 'moment'
 import { displayAmount } from '../utils'
 import web3Utils from 'web3-utils'
 
+const fetchGrants = async (web3Context) => {
+  const { yourAddress } = web3Context
+  const grantIds = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrants', yourAddress)
+  const grants = []
+
+  for (let i = 0; i < grantIds.length; i++) {
+    const grantDetails = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrant', grantIds[i])
+    const vestingSchedule = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantVestingSchedule', grantIds[i])
+
+    const vested = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'grantedAmount', grantIds[i])
+    const released = grantDetails.withdrawn
+
+    grants.push({ id: grantIds[i], vested, released, ...vestingSchedule, ...grantDetails })
+  }
+
+  return grants
+}
+
 const fetchGrantVestingSchedule = async (web3Context, grantId) => {
   const { eth } = web3Context
   const { cliff, start, duration } = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantVestingSchedule', grantId)
@@ -42,5 +60,6 @@ const fetchGrantVestingSchedule = async (web3Context, grantId) => {
 }
 
 export const tokenGrantsService = {
+  fetchGrants,
   fetchGrantVestingSchedule,
 }
