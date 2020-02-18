@@ -12,6 +12,8 @@ const ethNetworkId = process.env.ETH_NETWORK_ID;
 
 // Contract owner info
 var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+var authorizer = contractOwnerAddress
+
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
 /*
@@ -70,7 +72,10 @@ async function provisionKeepClient() {
     await fundOperator(operatorAddress, purse, '10');
 
     console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`);
-    await stakeOperator(operatorAddress, contractOwnerAddress);
+    await stakeOperator(operatorAddress, contractOwnerAddress, authorizer);
+
+    console.log(`\n<<<<<<<<<<<< Authorizing Operator Contract ${keepRandomBeaconOperatorContractAddress} >>>>>>>>>>>>`);
+    await authorizeOperatorContract(operatorAddress, authorizer);
 
     console.log('\n<<<<<<<<<<<< Creating keep-client Config File >>>>>>>>>>>>');
     await createKeepClientConfig(operatorAddress);
@@ -97,10 +102,9 @@ async function isFunded(operatorAddress) {
   return fundedAmount >= 1;
 }
 
-async function stakeOperator(operatorAddress, contractOwnerAddress) {
+async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) {
 
   let magpie = contractOwnerAddress;
-  let authorizer = contractOwnerAddress;
   let staked = await isStaked(operatorAddress);
 
   /*
@@ -111,13 +115,13 @@ async function stakeOperator(operatorAddress, contractOwnerAddress) {
   as a consumer of the network, rather than an operator.
   */
   if (process.env.KEEP_CLIENT_TYPE === 'relay-requester') {
-    console.log('Subtype relay-requester set. No staking needed, exiting staking!');
+    console.log('Subtype relay-requester set. No staking needed, exiting!');
     return;
   } else if (staked === true) {
     console.log('Operator account already staked, exiting!');
     return;
   } else {
-    console.log('Staking operator account!');
+    console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
   }
 
   let delegation = '0x' + Buffer.concat([
@@ -126,18 +130,27 @@ async function stakeOperator(operatorAddress, contractOwnerAddress) {
     Buffer.from(authorizer.substr(2), 'hex')
   ]).toString('hex');
 
-  console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
-
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
     formatAmount(20000000, 18),
     delegation).send({from: contractOwnerAddress})
 
+  console.log(`Staked!`);
+};
+
+async function authorizeOperatorContract(operatorAddress, authorizer) {
+
+  if (process.env.KEEP_CLIENT_TYPE === 'relay-requester') {
+    console.log('Subtype relay-requester set. No authorization needed, exiting!');
+    return;
+  } else {
+    console.log(`Authorizing Operator Contract ${keepRandomBeaconOperatorContractAddress} for operator account ${operatorAddress}`);
+  }
   await tokenStakingContract.methods.authorizeOperatorContract(
     operatorAddress,
     keepRandomBeaconOperatorContractAddress).send({from: authorizer});
 
-  console.log(`Account ${operatorAddress} staked!`);
+  console.log(`Authorized!`);
 };
 
 async function fundOperator(operatorAddress, purse, etherToTransfer) {
