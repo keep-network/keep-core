@@ -1,7 +1,5 @@
 import React from 'react'
 import { displayAmount } from '../utils'
-import { useModal } from '../hooks/useModal'
-import TokenGrantVestingSchedule from './TokenGrantVestingSchedule'
 import TokenGrantOverview from './TokenGrantOverview'
 
 const TokensOverview = ({
@@ -12,13 +10,8 @@ const TokensOverview = ({
   grantBalance,
   tokenGrantsStakeBalance,
 }) => {
-  const { showModal, ModalComponent } = useModal()
-
   return (
     <section id="tokens-overview" className="tile">
-      <ModalComponent title="Vesting Schedule Summary">
-        <TokenGrantVestingSchedule />
-      </ModalComponent>
       <h5>Totals</h5>
       <section>
         <span className="text-label text-white text-bg-warning">OWNED</span>

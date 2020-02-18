@@ -29,13 +29,25 @@ const fetchGrantVestingSchedule = async (web3Context, grantId) => {
 
   const vested = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'grantedAmount', grantId)
   const cliffDuration = web3Utils.toBN(cliff).sub(web3Utils.toBN(start))
-  const vestedAmountAfterCliff = web3Utils.toBN(amount).mul(cliffDuration).div(web3Utils.toBN(duration))
+  const vestedAmountAfterCliff = web3Utils.toBN(amount).mul(cliffDuration).div(web3Utils.toBN(duration)).div(web3Utils.toBN(12))
 
-  const cliffBreakpoint = { dotColorClassName: 'grey ring', label: 'Cliff Start', date: moment.unix(start) }
-  const afterCliffBreakpoint = { dotColorClassName: 'grey', label: `Cliff End Will ${displayAmount(vestedAmountAfterCliff, 18, 2)} Vested`, date: moment.unix(cliff) }
+  const cliffBreakpoint = {
+    dotColorClassName: 'grey ring',
+    label: 'Cliff Start',
+    date: moment.unix(start),
+  }
+  const afterCliffBreakpoint = {
+    dotColorClassName: 'grey ring',
+    label: `Cliff End ${displayAmount(vestedAmountAfterCliff, 18, 2)} KEEP Will Be Vested`,
+    date: moment.unix(cliff),
+  }
   const breakpoints = [cliffBreakpoint, afterCliffBreakpoint]
   if (moment.unix(cliff).isBefore(moment())) {
-    breakpoints.push({ dotColorClassName: 'grey', label: `${displayAmount(vested)} Vested`, date: moment() })
+    breakpoints.push({
+      dotColorClassName: 'grey',
+      label: `${displayAmount(vested, 18, 2)} KEEP Vested`,
+      date: moment(),
+    })
   }
 
   const filterObj = { fromBlock: '0', filter: { id: grantId } }
@@ -46,14 +58,22 @@ const fetchGrantVestingSchedule = async (web3Context, grantId) => {
     const { blockNumber, returnValues: { amount } } = withdrawEvents[i]
 
     const withdrawnAt = (await eth.getBlock(blockNumber)).timestamp
-    breakpoints.push({ dotColorClassName: 'primary', label: `Released ${displayAmount(amount)}`, date: moment.unix(withdrawnAt) })
+    breakpoints.push({
+      dotColorClassName: 'primary',
+      label: `${displayAmount(amount)} KEEP Released `,
+      date: moment.unix(withdrawnAt),
+    })
   }
 
   for (let i = 0; i < stakedEvents.length; i++) {
     const { blockNumber, returnValues: { value } } = stakedEvents[i]
 
     const withdrawnAt = (await eth.getBlock(blockNumber)).timestamp
-    breakpoints.push({ dotColorClassName: 'brown', label: `Staked ${displayAmount(value)}`, date: moment.unix(withdrawnAt) })
+    breakpoints.push({
+      dotColorClassName: 'brown',
+      label: `${displayAmount(value)} KEEP Staked`,
+      date: moment.unix(withdrawnAt),
+    })
   }
 
   return breakpoints.sort((a, b) => a.date.diff(b.date))
