@@ -8,7 +8,6 @@ import DelegatedTokensList from '../components/DelegatedTokensList'
 import { Web3Context } from '../components/WithWeb3Context'
 import { useShowMessage, messageType } from '../components/Message'
 import web3Utils from 'web3-utils'
-import SpeechBubbleInfo from '../components/SpeechBubbleInfo'
 
 const initialData = {
   ownedKeepBalance: '',
