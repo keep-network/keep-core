@@ -5,6 +5,7 @@ import { formatDate, displayAmount } from '../utils'
 import Dropdown from './Dropdown'
 import ProgressBar from './ProgressBar'
 import { colors } from '../constants/colors'
+import SelectedGrantDropdown from './SelectedGrantDropdown'
 
 const TokenGrantOverview = (props) => {
   const [state] = useFetchData(tokenGrantsService.fetchGrants, [])
@@ -47,7 +48,9 @@ const TokenGrantOverview = (props) => {
             selectedItem={selectedGrant}
             labelPrefix='Grant ID'
             noItemSelectedText='Select Grant'
-          />
+            label="Select Grant"
+            selectedItemComponent={<SelectedGrantDropdown grant={selectedGrant} />}
+            />
         }
         <ProgressBar
           total={selectedGrant.amount}

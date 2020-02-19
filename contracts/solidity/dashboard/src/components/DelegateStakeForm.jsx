@@ -15,6 +15,7 @@ import { colors } from '../constants/colors'
 import Dropdown from './Dropdown'
 import { tokenGrantsService } from '../services/token-grants.service'
 import { useFetchData } from '../hooks/useFetchData'
+import SelectedGrantDropdown from './SelectedGrantDropdown'
 
 const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...formikProps }) => {
   const [{ data }] = useFetchData(tokenGrantsService.fetchGrants, [])
@@ -48,6 +49,8 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...f
                 selectedItem={formikProps.values.selectedGrant}
                 labelPrefix='Grant ID'
                 noItemSelectedText='Select Grant'
+                label="Select Grant"
+                selectedItemComponent={<SelectedGrantDropdown grant={formikProps.values.selectedGrant} />}
               />
             }
             <FormInput
