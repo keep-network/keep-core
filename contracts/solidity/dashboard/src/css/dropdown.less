@@ -1,24 +1,23 @@
 .select-wrapper {
     width: 100%;
     position: relative;
+    margin-bottom: 1rem;
 }
 
 .select {
     position: relative;
     display: flex;
     flex-direction: column;
-    border-width: 1px;
-    border-style: solid;
-    border-color: @black;
+    border: 1px solid @black;
 
     &-trigger {
-        height: 50px;
+        min-height: 50px;
         position: relative;
         display: flex;
         flex-direction: row !important;
         align-items: center;
         justify-content: space-between;
-        padding: 0 1.5rem;
+        padding: 0 1rem;
         font-size: 1.2rem;
         font-weight: normal;
         color: @black;
