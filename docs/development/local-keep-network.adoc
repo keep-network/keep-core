@@ -163,7 +163,8 @@ $ geth --port 3000 --networkid 1101 --identity "somerandomidentity" \
     --rpcapi "db,ssh,miner,admin,eth,net,web3,personal" \
     --wsapi "db,ssh,miner,admin,eth,net,web3,personal" \
     --datadir=$GETH_DATA_DIR --syncmode "fast" \
-    --miner.etherbase=$GETH_ETHEREUM_ACCOUNT --mine --miner.threads=1
+    --miner.etherbase=$GETH_ETHEREUM_ACCOUNT --mine --miner.threads=1 \
+    --allow-insecure-unlock
 
 INFO [10-31|15:02:22.113] Maximum peer count                       ETH=25 LES=0 total=25
 INFO [10-31|15:02:22.128] Starting peer-to-peer node               instance=Geth/somerandomidentity/v1.8.14-stable/darwin-amd64/go1.10.3
