@@ -70,7 +70,7 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...f
             </div>
           </div>
         </div>
-        <div className="addresses-section flex flex-column flex-1">
+        <div className="addresses-section flex flex-column flex-1 self-start">
           <div className="text-big text-black mb-1">Enter Addresses</div>
           <FormInput
             name="beneficiaryAddress"
