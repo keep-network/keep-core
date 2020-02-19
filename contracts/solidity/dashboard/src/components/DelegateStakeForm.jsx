@@ -32,10 +32,9 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...f
   }
 
   return (
-    <form className="delegate-stake-form tile flex flex-column">
-      <h5>Delegate Stake</h5>
-      <div className="flex">
-        <div className="flex flex-column flex-1">
+    <form className="delegate-stake-form flex flex-column">
+      <div className="flex flex-row">
+        <div className="stake-token-section flex flex-column flex-1">
           <div className="text-big text-black">Select Token Amount</div>
           <ContextSwitch />
           <div className="input-wrapper">
@@ -64,11 +63,11 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...f
               {displayAmount(getContextBalance())} KEEP available
             </div>
             <div className="text-smaller text-grey mb-1">
-            Min Stake: {displayAmount(minStake)} KEEP
+              Min Stake: {displayAmount(minStake)} KEEP
             </div>
           </div>
         </div>
-        <div className="flex flex-column flex-1" style={{ marginLeft: '1rem' }}>
+        <div className="addresses-section flex flex-column flex-1">
           <div className="text-big text-black mb-1">Enter Addresses</div>
           <FormInput
             name="beneficiaryAddress"
@@ -94,7 +93,7 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...f
         withMessageActionIsPending={false}
         triggerManuallyFetch={true}
       >
-          DELEGATE STAKE
+            DELEGATE STAKE
       </SubmitButton>
     </form>
   )

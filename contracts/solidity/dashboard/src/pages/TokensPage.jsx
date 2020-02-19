@@ -8,6 +8,7 @@ import DelegatedTokensList from '../components/DelegatedTokensList'
 import { Web3Context } from '../components/WithWeb3Context'
 import { useShowMessage, messageType } from '../components/Message'
 import web3Utils from 'web3-utils'
+import SpeechBubbleInfo from '../components/SpeechBubbleInfo'
 
 const initialData = {
   ownedKeepBalance: '',
@@ -59,13 +60,25 @@ const TokensPage = () => {
   return (
     <React.Fragment>
       <h3>My Tokens</h3>
-      <div className="flex flex-1 flex-row-space-between flex-wrap">
-        <DelegateStakeForm
-          onSubmit={handleSubmit}
-          minStake={minimumStake}
-          keepBalance={ownedKeepBalance}
-          grantBalance={tokenGrantsBalance}
-        />
+      <div className="tokens-wrapper flex flex-1 flex-row-space-between flex-wrap">
+        <section id="delegate-stake-section" className="tile">
+          <h2 className="text-darker-grey">Delegate Stake</h2>
+          <div className="text-big text-black">
+            Earn ETH rewards by delegating stake to an operator address.
+            All ETH rewards will be sent to the address you set as the beneficiary.
+          </div>
+          <div>
+            A&nbsp;<span className="text-bold">stake</span>&nbsp;is an amount of KEEP
+            that’s bonded in order to participate in the threshold relay and, optionally, the Keep network.
+          </div>
+          <hr/>
+          <DelegateStakeForm
+            onSubmit={handleSubmit}
+            minStake={minimumStake}
+            keepBalance={ownedKeepBalance}
+            grantBalance={tokenGrantsBalance}
+          />
+        </section>
         <TokensOverview
           keepBalance={ownedKeepBalance}
           stakingBalance={tokenStakingBalance}

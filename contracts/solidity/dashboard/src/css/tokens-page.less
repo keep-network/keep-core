@@ -1,6 +1,12 @@
+#delegate-stake-section {
+    flex-basis: 100%;
+    align-self: flex-start;
+}
 
 .delegate-stake-form {
-    flex-basis: 100%;
+    div.flex.flex-row:first-of-type {
+        flex-direction: column;
+    }
 
    .tabs {
        margin-top: 1rem;
@@ -72,11 +78,42 @@
     align-self: flex-start;
 }
 
+.tokens-wrapper { 
+    flex-wrap: wrap-reverse;
+}
+
 @media screen and (min-width: 750px) {
+    #tokens-overview {
+        flex-basis: 100%;
+    }
+
+    #delegate-stake-section {
+        flex-basis: 100%;
+    }
+}
+
+@media screen and (min-width: 950px) {
+    .tokens-wrapper { 
+        flex-wrap: wrap;
+    }
+
     #tokens-overview {
         flex-basis: 40%;
     }
 
-    .delegate-stake-form {
+    #delegate-stake-section {
         flex-basis: 58%;
+    }
+}
+
+@media screen and (min-width: 1550px) {
+    .delegate-stake-form {
+        div.flex.flex-row:first-of-type {
+            flex-direction: row;
+        }
+
+        .addresses-section {
+            margin-left: 1rem;
+        }
+    }
 }
