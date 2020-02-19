@@ -1,6 +1,16 @@
 import React, { useState } from 'react'
 
-const Dropdown = ({ onSelect, options, valuePropertyName, labelPropertyName, selectedItem, labelPrefix, noItemSelectedText }) => {
+const Dropdown = ({
+  label,
+  onSelect,
+  options,
+  valuePropertyName,
+  labelPropertyName,
+  selectedItem,
+  labelPrefix,
+  noItemSelectedText,
+  selectedItemComponent,
+}) => {
   const [isOpen, setIsOpen] = useState(false)
 
   const renderDropdownItem = (item) =>
@@ -19,18 +29,32 @@ const Dropdown = ({ onSelect, options, valuePropertyName, labelPropertyName, sel
     setIsOpen(false)
   }
 
+  const renderSelectedItem = () => {
+    if (!selectedItem) {
+      return <span>${noItemSelectedText}</span>
+    } else if (selectedItemComponent) {
+      return selectedItemComponent
+    } else {
+      return <span>{`${labelPrefix} ${selectedItem[labelPropertyName]}`}</span>
+    }
+  }
+
+
   return (
-    <div className="select-wrapper">
-      <div className={`select${isOpen ? ' open' : ''}`}>
-        <div className="select-trigger" onClick={() => setIsOpen(!isOpen)}>
-          <span>{selectedItem ? `${labelPrefix} ${selectedItem[labelPropertyName]}` : noItemSelectedText}</span>
-          <div className="arrow"/>
+    <React.Fragment>
+      <label className="text-small text-darker-grey">{label}</label>
+      <div className="select-wrapper">
+        <div className={`select${isOpen ? ' open' : ''}`}>
+          <div className="select-trigger" onClick={() => setIsOpen(!isOpen)}>
+            {renderSelectedItem()}
+            <div className="arrow"/>
+          </div>
+          <ul className="options">
+            {options.map(renderDropdownItem)}
+          </ul>
         </div>
-        <ul className="options">
-          {options.map(renderDropdownItem)}
-        </ul>
       </div>
-    </div>
+    </React.Fragment>
   )
 }
 
@@ -49,6 +73,7 @@ const dropdownPropsAreEqual = (prevProps, nextProps) => {
 
 Dropdown.defaultProps = {
   noItemSelectedText: 'Select Item',
+  label: 'Select Item',
 }
 
 export default React.memo(Dropdown, dropdownPropsAreEqual)
