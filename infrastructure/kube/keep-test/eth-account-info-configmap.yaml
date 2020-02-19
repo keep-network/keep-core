@@ -4,6 +4,9 @@ metadata:
   name: eth-account-info
   namespace: default
 data:
+  relay-requester-address: "0xcd5524a79afd81f1a25c1298d41a8e9271a759e5"
+  relay-requester-keyfile: |
+    {"address":"cd5524a79afd81f1a25c1298d41a8e9271a759e5","crypto":{"cipher":"aes-128-ctr","ciphertext":"8218af1cb5da7eccd70ac1b7eae3a21df2130bf76e34ce146efe33e68c3f0984","cipherparams":{"iv":"bafa5af5602116398d8dc3c394b8460d"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"2cf504c3b85067d793c1e278dc51cf66d162fb485904b3c1536b5b30e9e73580"},"mac":"9e414c00af2dbf82c6cd2ab05f71b7525cae0b76a463cd0f82b0d8d6404c726d"},"id":"e4cb5dc2-82db-4577-b7ca-b196ab1d2264","version":3}
   account-0-address: "0x0ec14bc7cca82c942cf276f6bbd0413216ddb2be"
   account-0-keyfile: |
     {"address":"0ec14bc7cca82c942cf276f6bbd0413216ddb2be","crypto":{"cipher":"aes-128-ctr","ciphertext":"d1e1885d30a2c25a54664487db4d69da496951733de6ceb4d5f565fe62eaba79","cipherparams":{"iv":"8cacad8a1b79982f568948b7f97b3dd3"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"00bfb9f49e54e6dba5b1b0c5b09904998fcfa10d0381b90bf26d45904a4e2636"},"mac":"9038c2a02d7837e448088fb19fc76e9d6c5063e8f1cb0addb40dc9df061b4928"},"id":"afb99070-073f-4dc6-b0d7-92b41fcf0afb","version":3}
