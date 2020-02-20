@@ -8,6 +8,7 @@ import DelegatedTokensList from '../components/DelegatedTokensList'
 import { Web3Context } from '../components/WithWeb3Context'
 import { useShowMessage, messageType } from '../components/Message'
 import web3Utils from 'web3-utils'
+import SpeechBubbleInfo from '../components/SpeechBubbleInfo'
 
 const initialData = {
   ownedKeepBalance: '',
@@ -66,10 +67,10 @@ const TokensPage = () => {
             Earn ETH rewards by delegating stake to an operator address.
             All ETH rewards will be sent to the address you set as the beneficiary.
           </div>
-          <div>
+          <SpeechBubbleInfo>
             A&nbsp;<span className="text-bold">stake</span>&nbsp;is an amount of KEEP
             that’s bonded in order to participate in the threshold relay and, optionally, the Keep network.
-          </div>
+          </SpeechBubbleInfo>
           <hr/>
           <DelegateStakeForm
             onSubmit={handleSubmit}

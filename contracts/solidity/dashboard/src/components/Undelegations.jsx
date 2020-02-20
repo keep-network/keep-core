@@ -1,11 +1,15 @@
 import React from 'react'
 import { displayAmount } from '../utils'
 import AddressShortcut from './AddressShortcut'
+import SpeechBubbleInfo from './SpeechBubbleInfo'
 
 const Undelegations = ({ undelegations }) => {
   return (
     <section className="tile">
       <h5>Undelegations</h5>
+      <SpeechBubbleInfo className="mt-1 mb-1">
+        <span className="text-bold">Recover</span>&nbsp;undelegated tokens to return them to your token balance.
+      </SpeechBubbleInfo>
       <div className="flex flex-row-center">
         <div className="flex-1 text-label">
           UNDELEGATION STARTED
