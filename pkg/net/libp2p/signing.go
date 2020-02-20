@@ -13,7 +13,10 @@ func signMessage(
 	message *pb.UnicastNetworkMessage,
 	privateKey libp2pcrypto.PrivKey,
 ) error {
-	bytes, err := message.Marshal()
+	messageCopy := *message
+	messageCopy.Signature = nil
+
+	bytes, err := messageCopy.Marshal()
 	if err != nil {
 		return err
 	}
