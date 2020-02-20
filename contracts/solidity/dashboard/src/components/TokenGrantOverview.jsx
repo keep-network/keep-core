@@ -50,7 +50,7 @@ const TokenGrantOverview = (props) => {
             noItemSelectedText='Select Grant'
             label="Select Grant"
             selectedItemComponent={<SelectedGrantDropdown grant={selectedGrant} />}
-            />
+          />
         }
         <ProgressBar
           total={selectedGrant.amount}
