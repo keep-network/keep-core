@@ -6,7 +6,7 @@ const SelectedGrantDropdown = ({ grant }) => {
   return (
     <div className="flex flex-column">
       <div className="text-smaller">
-        Grant issued {grant.start && formatDate(moment.unix(grant.start))}
+        Grant issued {grant.start && formatDate(moment.unix(grant.start).add(grant.duration, 'seconds'))}
       </div>
       <div className="text-smaller text-grey">
         Grant ID {grant.id}
