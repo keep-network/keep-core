@@ -7,6 +7,8 @@ import (
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 )
 
+const signPrefix = "keep-unicast:"
+
 func signMessage(
 	message *pb.UnicastNetworkMessage,
 	privateKey libp2pcrypto.PrivKey,
@@ -15,6 +17,8 @@ func signMessage(
 	if err != nil {
 		return err
 	}
+
+	bytes = withSignPrefix(bytes)
 
 	signature, err := privateKey.Sign(bytes)
 	if err != nil {
@@ -38,6 +42,8 @@ func verifyMessageSignature(
 		return err
 	}
 
+	bytes = withSignPrefix(bytes)
+
 	valid, err := publicKey.Verify(bytes, message.Signature)
 	if err != nil {
 		return err
@@ -48,4 +54,8 @@ func verifyMessageSignature(
 	}
 
 	return nil
+}
+
+func withSignPrefix(bytes []byte) []byte {
+	return append([]byte(signPrefix), bytes...)
 }
