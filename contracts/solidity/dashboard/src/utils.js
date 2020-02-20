@@ -20,7 +20,7 @@ export function displayAmount(amount, decimals = 18, precision = 0) {
   if (amount) {
     return new BigNumber(amount)
       .div(new BigNumber(10).pow(new BigNumber(decimals)))
-      .toFormat(precision)
+      .toFormat(precision, BigNumber.ROUND_DOWN)
   }
 }
 
@@ -58,11 +58,7 @@ export const wait = (ms) => {
 }
 
 export const formatDate = (dateMillis) => {
-  const now = moment()
   const date = moment(dateMillis)
 
-  if (now.isSame(date, 'year')) {
-    return date.format('MMM DD')
-  }
-  return date.format('MMM DD YYYY')
+  return date.format('MM/DD/YYYY')
 }
