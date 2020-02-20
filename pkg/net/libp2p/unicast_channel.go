@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net/internal"
@@ -30,12 +29,6 @@ const (
 type streamFactory func(ctx context.Context, peerID peer.ID) (network.Stream, error)
 
 type unicastChannel struct {
-	// channel-scoped atomic counter for sequence numbers
-	//
-	// Must be declared at the top of the struct!
-	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
-	counter uint64
-
 	clientIdentity *identity
 
 	remotePeerID peer.ID
@@ -52,10 +45,6 @@ type unicastChannel struct {
 type unicastMessageHandler struct {
 	ctx     context.Context
 	channel chan net.Message
-}
-
-func (uc *unicastChannel) nextSeqno() uint64 {
-	return atomic.AddUint64(&uc.counter, 1)
 }
 
 func (uc *unicastChannel) Send(message net.TaggedMarshaler) error {
@@ -85,8 +74,6 @@ func (uc *unicastChannel) Send(message net.TaggedMarshaler) error {
 		if err != nil {
 			return err
 		}
-
-		messageProto.SequenceNumber = uc.nextSeqno()
 
 		err = signMessage(messageProto, uc.clientIdentity.privKey)
 		if err != nil {
@@ -130,7 +117,7 @@ func (uc *unicastChannel) send(stream network.Stream, message proto.Message) err
 
 func (uc *unicastChannel) messageProto(
 	message net.TaggedMarshaler,
-) (*pb.NetworkMessage, error) {
+) (*pb.UnicastNetworkMessage, error) {
 	payloadBytes, err := message.Marshal()
 	if err != nil {
 		return nil, err
@@ -141,7 +128,7 @@ func (uc *unicastChannel) messageProto(
 		return nil, err
 	}
 
-	return &pb.NetworkMessage{
+	return &pb.UnicastNetworkMessage{
 		Payload: payloadBytes,
 		Sender:  senderIdentityBytes,
 		Type:    []byte(message.Type()),
@@ -219,7 +206,7 @@ func (uc *unicastChannel) handleStream(stream network.Stream) {
 		reader := protoio.NewDelimitedReader(stream, readerMaxSize)
 
 		for {
-			messageProto := new(pb.NetworkMessage)
+			messageProto := new(pb.UnicastNetworkMessage)
 			err := reader.ReadMsg(messageProto)
 			if err != nil {
 				if err != io.EOF {
@@ -237,7 +224,7 @@ func (uc *unicastChannel) handleStream(stream network.Stream) {
 			)
 
 			// Every message should be independent from any other message.
-			go func(message *pb.NetworkMessage) {
+			go func(message *pb.UnicastNetworkMessage) {
 				if err := uc.processMessage(message); err != nil {
 					logger.Error(err)
 					return
@@ -247,7 +234,7 @@ func (uc *unicastChannel) handleStream(stream network.Stream) {
 	}()
 }
 
-func (uc *unicastChannel) processMessage(message *pb.NetworkMessage) error {
+func (uc *unicastChannel) processMessage(message *pb.UnicastNetworkMessage) error {
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
 	unmarshaled, err := uc.getUnmarshalingContainerByType(string(message.Type))
@@ -292,7 +279,7 @@ func (uc *unicastChannel) processMessage(message *pb.NetworkMessage) error {
 		unmarshaled,
 		string(message.Type),
 		key.Marshal(networkKey),
-		message.SequenceNumber,
+		uint64(0),
 	))
 
 	return err

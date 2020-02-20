@@ -8,7 +8,7 @@ import (
 )
 
 func signMessage(
-	message *pb.NetworkMessage,
+	message *pb.UnicastNetworkMessage,
 	privateKey libp2pcrypto.PrivKey,
 ) error {
 	bytes, err := message.Marshal()
@@ -27,7 +27,7 @@ func signMessage(
 }
 
 func verifyMessageSignature(
-	message *pb.NetworkMessage,
+	message *pb.UnicastNetworkMessage,
 	publicKey libp2pcrypto.PubKey,
 ) error {
 	messageCopy := *message

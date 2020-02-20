@@ -3,34 +3,37 @@ syntax = "proto3";
 option go_package = "pb";
 package net;
 
-// NetworkMessage contains a marshalled payload. It also contains the Identity
-// of the sender. Optionally, a Message may contain an encrypted payload for
-// messages which need to be secret; in this case, the encrypted field will be 
-// set.
-message NetworkMessage {
+// BroadcastNetworkMessage represents a network message used by broadcast
+// channels.
+message BroadcastNetworkMessage {
   // The PublicKey of the sender.
   bytes sender = 1;
 
-  // A flag indicating whether the payload is encrypted.
-  bool encrypted = 2;
-
   // A marshaled Protocol Message.
-  bytes payload = 3;
+  bytes payload = 2;
 
   // Type of the message as registered by the protocol.
-  bytes type = 4;
+  bytes type = 3;
 
-  // Channel is the group name as well as the pubsub channel
-  // Channel names are Keccak(StakingPubKey1 || ... || StakingPubKeyN) of
-  // all valid group members.
-  bytes channel = 5;
-
-  // Sequence number of the message. Retransmissions have the same sequence 
+  // Sequence number of the message. Retransmissions have the same sequence
   // number as the original message.
-  uint64 sequenceNumber = 6;
+  uint64 sequenceNumber = 4;
+}
+
+// UnicastNetworkMessage represents a network message used by unicast
+// channels.
+message UnicastNetworkMessage {
+  // The PublicKey of the sender.
+  bytes sender = 1;
+
+  // A marshaled Protocol Message.
+  bytes payload = 2;
+
+  // Type of the message as registered by the protocol.
+  bytes type = 3;
 
   // Message signature.
-  bytes signature = 7;
+  bytes signature = 4;
 }
 
 message Identity {

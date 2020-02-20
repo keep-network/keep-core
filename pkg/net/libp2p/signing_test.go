@@ -23,11 +23,10 @@ func TestSignAndVerify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	message := &pb.NetworkMessage{
-		Sender:         identityBytes,
-		Payload:        []byte{5, 15, 25, 30, 35},
-		Type:           []byte{1},
-		SequenceNumber: 1,
+	message := &pb.UnicastNetworkMessage{
+		Sender:  identityBytes,
+		Payload: []byte{5, 15, 25, 30, 35},
+		Type:    []byte{1},
 	}
 
 	err = signMessage(message, identity.privKey)
