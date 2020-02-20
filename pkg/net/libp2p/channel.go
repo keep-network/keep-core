@@ -154,7 +154,7 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 
 func (c *channel) messageProto(
 	message net.TaggedMarshaler,
-) (*pb.NetworkMessage, error) {
+) (*pb.BroadcastNetworkMessage, error) {
 	payloadBytes, err := message.Marshal()
 	if err != nil {
 		return nil, err
@@ -165,14 +165,14 @@ func (c *channel) messageProto(
 		return nil, err
 	}
 
-	return &pb.NetworkMessage{
+	return &pb.BroadcastNetworkMessage{
 		Payload: payloadBytes,
 		Sender:  senderIdentityBytes,
 		Type:    []byte(message.Type()),
 	}, nil
 }
 
-func (c *channel) publishToPubSub(message *pb.NetworkMessage) error {
+func (c *channel) publishToPubSub(message *pb.BroadcastNetworkMessage) error {
 	messageBytes, err := message.Marshal()
 	if err != nil {
 		return err
@@ -232,7 +232,7 @@ func (c *channel) incomingMessageWorker(ctx context.Context) {
 }
 
 func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
-	var messageProto pb.NetworkMessage
+	var messageProto pb.BroadcastNetworkMessage
 	if err := proto.Unmarshal(pubsubMessage.Data, &messageProto); err != nil {
 		return err
 	}
@@ -242,7 +242,7 @@ func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
 
 func (c *channel) processContainerMessage(
 	proposedSender peer.ID,
-	message pb.NetworkMessage,
+	message pb.BroadcastNetworkMessage,
 ) error {
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
