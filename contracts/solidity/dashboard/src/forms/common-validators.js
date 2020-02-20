@@ -8,6 +8,12 @@ const isBlankString = (value) => {
   return !value || REGEXP_NOT_BLANK_STRING.test(value)
 }
 
+export const validateRequiredValue = (value) => {
+  if (isBlankString(value)) {
+    return 'Required'
+  }
+}
+
 export const validateEthAddress = (address, required = true) => {
   if (required && isBlankString(address)) {
     return 'Required'
