@@ -43,7 +43,16 @@ const Badge = ({ height, width }) => (
   </svg>
 )
 
+const Cross = ({ height, width, ...restProps }) => (
+  <svg height={height} width={width} {...restProps} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M1 19L19 1" stroke="#6D6D6D" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M19 19L1 1" stroke="#6D6D6D" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+
 export {
   Keep,
   Badge,
+  Cross,
 }

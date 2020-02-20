@@ -6,11 +6,14 @@ import Dropdown from './Dropdown'
 import ProgressBar from './ProgressBar'
 import { colors } from '../constants/colors'
 import SelectedGrantDropdown from './SelectedGrantDropdown'
+import { useModal } from '../hooks/useModal'
+import TokenGrantVestingSchedule from './TokenGrantVestingSchedule'
 
 const TokenGrantOverview = (props) => {
   const [state] = useFetchData(tokenGrantsService.fetchGrants, [])
   const { data } = state
   const [selectedGrant, setSelectedGrant] = useState({})
+  const { showModal, ModalComponent } = useModal()
 
   useEffect(() => {
     if (selectedGrant && data.length > 0) {
@@ -24,6 +27,9 @@ const TokenGrantOverview = (props) => {
 
   return (
     <div className="token-grant-overview" style={data.length === 0 ? { display: 'none' } : {}}>
+      <ModalComponent title="Vesting Schedule Summary">
+        <TokenGrantVestingSchedule grant={selectedGrant} />
+      </ModalComponent>
       {data.length > 1 && <h6 className="text-darker-grey">{`${data.length} grants`}</h6>}
       {data.length === 1 &&
         <div className="text-big">
@@ -32,7 +38,7 @@ const TokenGrantOverview = (props) => {
       }
       <div className="flex flex-row-center flex-row-space-between">
         <h4 className="balance">{displayAmount(selectedGrant.amount)}&nbsp;KEEP</h4>
-        <a href="#" className="text-warning">Vesting schedule</a>
+        <span className="text-warning text-link" onClick={showModal}>Vesting Schedule</span>
       </div>
       <div className="text-smaller text-grey">
         Issued on {formatDate(selectedGrant.start * 1000)}

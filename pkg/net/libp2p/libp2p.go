@@ -24,6 +24,7 @@ import (
 	libp2pnet "github.com/libp2p/go-libp2p-core/network"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	dhtopts "github.com/libp2p/go-libp2p-kad-dht/opts"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 
@@ -191,6 +192,45 @@ func (cm *connectionManager) DisconnectPeer(peerHash string) {
 	}
 }
 
+// ConnectOptions allows to set various options used by libp2p.
+type ConnectOptions struct {
+	RoutingTableRefreshPeriod time.Duration
+	BootstrapMinPeerThreshold int
+}
+
+// Defaults from libp2p.
+func defaultConnectOptions() *ConnectOptions {
+	var options ConnectOptions
+
+	options.RoutingTableRefreshPeriod = 1 * time.Hour
+	options.BootstrapMinPeerThreshold = 4
+
+	return &options
+}
+
+func (co *ConnectOptions) apply(options ...ConnectOption) {
+	for _, option := range options {
+		option(co)
+	}
+}
+
+// ConnectOption allows to set an options used by libp2p.
+type ConnectOption func(options *ConnectOptions)
+
+// WithRoutingTableRefreshPeriod set a refresh period of the routing table.
+func WithRoutingTableRefreshPeriod(period time.Duration) ConnectOption {
+	return func(options *ConnectOptions) {
+		options.RoutingTableRefreshPeriod = period
+	}
+}
+
+// WithBootstrapMinPeerThreshold set a minimal peer threshold for bootstrap process.
+func WithBootstrapMinPeerThreshold(threshold int) ConnectOption {
+	return func(options *ConnectOptions) {
+		options.BootstrapMinPeerThreshold = threshold
+	}
+}
+
 // Connect connects to a libp2p network based on the provided config. The
 // connection is managed in part by the passed context, and provides access to
 // the functionality specified in the net.Provider interface.
@@ -203,7 +243,11 @@ func Connect(
 	staticKey *key.NetworkPrivate,
 	stakeMonitor chain.StakeMonitor,
 	ticker *retransmission.Ticker,
+	options ...ConnectOption,
 ) (net.Provider, error) {
+	connectOptions := defaultConnectOptions()
+	connectOptions.apply(options...)
+
 	identity, err := createIdentity(staticKey)
 	if err != nil {
 		return nil, err
@@ -229,7 +273,18 @@ func Connect(
 
 	unicastChannelManager := newUnicastChannelManager(ctx, identity, host)
 
-	router := dht.NewDHT(ctx, host, dssync.MutexWrap(dstore.NewMapDatastore()))
+	dhtDatastore := dssync.MutexWrap(dstore.NewMapDatastore())
+	router, err := dht.New(
+		ctx,
+		host,
+		dhtopts.Datastore(dhtDatastore),
+		dhtopts.RoutingTableRefreshPeriod(
+			connectOptions.RoutingTableRefreshPeriod,
+		),
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	provider := &provider{
 		broadcastChannelManager: broadcastChannelManager,
@@ -244,7 +299,11 @@ func Connect(
 		logger.Infof("node's peers list is empty")
 	}
 
-	if err := provider.bootstrap(ctx, config.Peers); err != nil {
+	if err := provider.bootstrap(
+		ctx,
+		config.Peers,
+		connectOptions.BootstrapMinPeerThreshold,
+	); err != nil {
 		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
 	}
 
@@ -346,16 +405,21 @@ func parseMultiaddresses(addresses []string) []ma.Multiaddr {
 	return multiaddresses
 }
 
-func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {
+func (p *provider) bootstrap(
+	ctx context.Context,
+	bootstrapPeers []string,
+	minPeerThreshold int,
+) error {
 	peerInfos, err := extractMultiAddrFromPeers(bootstrapPeers)
 	if err != nil {
 		return err
 	}
 
-	bootstraConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
+	bootstrapConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
 
 	// TODO: allow this to be a configurable value
-	bootstraConfig.Period = BootstrapCheckPeriod
+	bootstrapConfig.Period = BootstrapCheckPeriod
+	bootstrapConfig.MinPeerThreshold = minPeerThreshold
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.
@@ -363,7 +427,7 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 		p.identity.id,
 		p.host,
 		p.routing,
-		bootstraConfig,
+		bootstrapConfig,
 	)
 	return err
 }
