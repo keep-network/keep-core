@@ -47,7 +47,7 @@ const TokenGrantVestingSchedule = ({ grant }) => {
       <div className="mt-1">
         <Timeline
           title='schedule'
-          breakepoints={data}
+          breakpoints={data}
           footer={
             <div className="mb-3 text-smaller text-darker-grey">
               Vesting will continue until completion on {formatDate(fullyVestedDate)}

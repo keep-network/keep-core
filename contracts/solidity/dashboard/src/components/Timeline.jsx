@@ -1,23 +1,23 @@
 import React, { useMemo } from 'react'
 import { formatDate } from '../utils'
 
-const Timeline = ({ title, breakepoints, footer }) => {
-  const breakePointComponents = useMemo(() => {
-    return breakepoints.map(renderBreakPoint)
-  }, [breakepoints])
+const Timeline = ({ title, breakpoints, footer }) => {
+  const breakpointComponents = useMemo(() => {
+    return breakpoints.map(renderBreakpoint)
+  }, [breakpoints])
 
   return (
     <React.Fragment>
       <div className="text-title text-darker-grey">{title}</div>
       <section className="timeline">
-        {breakePointComponents}
+        {breakpointComponents}
       </section>
       {footer}
     </React.Fragment>
   )
 }
 
-const TimelineBreakPoint = ({ label, date, dotColorClassName }) => {
+const TimelineBreakpoint = ({ label, date, dotColorClassName }) => {
   return (
     <div className={`breakpoint ${dotColorClassName || ''}`}>
       <div className="breakpoint-content">
@@ -30,6 +30,6 @@ const TimelineBreakPoint = ({ label, date, dotColorClassName }) => {
   )
 }
 
-const renderBreakPoint = (item, index) => <TimelineBreakPoint key={index} {...item}/>
+const renderBreakpoint = (item, index) => <TimelineBreakpoint key={index} {...item}/>
 
 export default React.memo(Timeline)
