@@ -16,6 +16,7 @@ config.*.toml
 *.abi
 *.account
 pkg/**/gen/*/*.go
+!pkg/gen/async/*.go
 !pkg/chain/gen/cmd/cmd*.go
 !pkg/chain/gen/options/options*.go
 
