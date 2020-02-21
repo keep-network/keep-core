@@ -33,6 +33,7 @@ main.test
 # Infrastructure
 .terraform
 infrastructure/gcp/service-accounts*
+infrastructure/kube/*/.secrets*
 
 # keys
 keystore
