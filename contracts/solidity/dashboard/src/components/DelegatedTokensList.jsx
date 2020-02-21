@@ -1,6 +1,7 @@
 import React from 'react'
 import { displayAmount } from '../utils'
 import AddressShortcut from './AddressShortcut'
+import UndelegateStakeButton from './UndelegateStakeButton'
 
 const DelegatedTokensList = ({ delegatedTokens }) => {
   return (
@@ -19,6 +20,7 @@ const DelegatedTokensList = ({ delegatedTokens }) => {
         <div className="flex-1 text-label">
           AMOUNT
         </div>
+        <div className="flex-1"/>
       </div>
       <ul className="flex flex-column">
         {delegatedTokens && delegatedTokens.map(renderDelegatedTokensItem)}
@@ -27,17 +29,24 @@ const DelegatedTokensList = ({ delegatedTokens }) => {
   )
 }
 
-const DelegatedTokensListItem = ({ undelegation }) => {
+const DelegatedTokensListItem = ({ delegation }) => {
   return (
-    <li className="flex flex-row flex-row-space-between">
-      <div className="flex-1 text-bit">{undelegation.createdAt}</div>
-      <div className="flex-1 text-bit"><AddressShortcut address={undelegation.beneficiary} /></div>
-      <div className="flex-1 text-bit"><AddressShortcut address={undelegation.operatorAddress} /></div>
-      <div className="flex-1 text-bit">{displayAmount(undelegation.amount)} KEEP</div>
+    <li className="flex flex-row flex-row-center flex-row-space-between mb-05">
+      <div className="flex-1 text-bit">{delegation.createdAt}</div>
+      <div className="flex-1 text-bit"><AddressShortcut address={delegation.beneficiary} /></div>
+      <div className="flex-1 text-bit"><AddressShortcut address={delegation.operatorAddress} /></div>
+      <div className="flex-1 text-bit">{displayAmount(delegation.amount)} KEEP</div>
+      <div className="flex-1 text-bit">
+        <UndelegateStakeButton
+          isInInitializationPeriod={delegation.isInInitializationPeriod}
+          btnClassName="btn btn-sm btn-default"
+          operator={delegation.operatorAddress}
+        />
+      </div>
     </li>
   )
 }
 
-const renderDelegatedTokensItem = (item) => <DelegatedTokensListItem key={item.operatorAddress} undelegation={item} />
+const renderDelegatedTokensItem = (item) => <DelegatedTokensListItem key={item.operatorAddress} delegation={item} />
 
 export default DelegatedTokensList
