@@ -31,7 +31,7 @@ const DelegatedTokensList = ({ delegatedTokens }) => {
 
 const DelegatedTokensListItem = ({ delegation }) => {
   return (
-    <li className="flex flex-row flex-row-center flex-row-space-between mb-05">
+    <li className="flex flex-row flex-row-center flex-row-space-between" style={{ marginBottom: `0.5rem` }}>
       <div className="flex-1 text-bit">{delegation.createdAt}</div>
       <div className="flex-1 text-bit"><AddressShortcut address={delegation.beneficiary} /></div>
       <div className="flex-1 text-bit"><AddressShortcut address={delegation.operatorAddress} /></div>
