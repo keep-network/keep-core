@@ -40,7 +40,9 @@ export const fetchTokensPageData = async (web3Context) => {
       delegations.push(operatorData)
       tokenStakingBalance = tokenStakingBalance.add(balance)
     }
-    if (!operatorData.undelegatedAt === '0') {
+    if (operatorData.undelegatedAt !== '0') {
+      operatorData.undelegationCompleteAt = web3Utils.toBN(undelegatedAt).add(web3Utils.toBN(undelegationPeriod))
+      operatorData.canRecoverStake = web3Utils.toBN(await eth.getBlockNumber()).gte(operatorData.undelegationCompleteAt)
       pendingUndelegationBalance = pendingUndelegationBalance.add(balance)
       undelegations.push(operatorData)
     }
