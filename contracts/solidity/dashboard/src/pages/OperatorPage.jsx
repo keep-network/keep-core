@@ -9,14 +9,13 @@ import { Web3Context } from '../components/WithWeb3Context'
 const OperatorPage = (props) => {
   const { yourAddress } = useContext(Web3Context)
   const { latestEvent } =
-    useSubscribeToContractEvent(TOKEN_STAKING_CONTRACT_NAME, 'InitiatedUnstake', { filter: { operator: yourAddress } })
+    useSubscribeToContractEvent(TOKEN_STAKING_CONTRACT_NAME, 'Undelegated', { filter: { operator: yourAddress } })
 
   return (
     <>
       <h3>My Token Operations</h3>
-      <DelegatedTokens latestUnstakeEvent={latestEvent} />
+      <DelegatedTokens />
       <PendingUndelegation latestUnstakeEvent={latestEvent} />
-      {/* TODO fetching slashed info form the contract */}
       {/* <SlashedTokens /> */}
     </>
 

@@ -3,7 +3,6 @@ pragma solidity ^0.5.4;
 import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
 import "./Registry.sol";
-import "./ITokenStaking.sol";
 
 
 /**
@@ -12,7 +11,7 @@ import "./ITokenStaking.sol";
  * A holder of the specified token can stake delegate its tokens to this contract
  * and recover the stake after undelegation period is over.
  */
-contract TokenStaking is StakeDelegatable, ITokenStaking {
+contract TokenStaking is StakeDelegatable {
 
     using UintArrayUtils for uint256[];
 
@@ -206,6 +205,16 @@ contract TokenStaking is StakeDelegatable, ITokenStaking {
         onlyOperatorAuthorizer(_operator)
         onlyApprovedOperatorContract(_operatorContract) {
         authorizations[_operatorContract][_operator] = true;
+    }
+
+    /**
+     * @dev Checks if operator contract has access to the staked token balance of
+     * the provided operator.
+     * @param _operator address of stake operator.
+     * @param _operatorContract address of operator contract.
+     */
+    function isAuthorizedForOperator(address _operator, address _operatorContract) public view returns (bool) {
+        return authorizations[_operatorContract][_operator];
     }
 
     /**

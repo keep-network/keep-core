@@ -63,7 +63,7 @@ export default function Button({ isFetching, children, ...props }) {
   )
 }
 
-export const SubmitButton = ({ onSubmitAction, withMessageActionIsPending, pendingMessageTitle, pendingMessageContent, ...props }) => {
+export const SubmitButton = ({ onSubmitAction, withMessageActionIsPending, pendingMessageTitle, pendingMessageContent, triggerManuallyFetch, ...props }) => {
   const [isFetching, setIsFetching] = useState(false)
   const { showMessage, closeMessage } = useContext(MessagesContext)
 
@@ -75,15 +75,23 @@ export const SubmitButton = ({ onSubmitAction, withMessageActionIsPending, pendi
     closeMessage(infoMessage)
   }
 
+  const openMessageInfo = () => {
+    infoMessage = showMessage(infoMessage)
+  }
+
+  const setFetching = () => setIsFetching(true)
+
   const onButtonClick = async (event) => {
     event.preventDefault()
-    setIsFetching(true)
+    if (!triggerManuallyFetch) {
+      setIsFetching(true)
+    }
     if (withMessageActionIsPending) {
       infoMessage = showMessage(infoMessage)
     }
 
     try {
-      await onSubmitAction(onTransactionHashCallback)
+      await onSubmitAction(onTransactionHashCallback, openMessageInfo, setFetching)
       setIsFetching(false)
     } catch (error) {
       setIsFetching(false)
@@ -98,6 +106,7 @@ export const SubmitButton = ({ onSubmitAction, withMessageActionIsPending, pendi
 
 SubmitButton.defaultProps = {
   withMessageActionIsPending: true,
+  triggerManuallyFetch: false,
   pendingMessageTitle: 'Action is pending',
   pendingMessageContent: '',
 }

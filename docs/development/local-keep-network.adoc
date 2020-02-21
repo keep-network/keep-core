@@ -11,6 +11,7 @@ toc::[]
 The `scripts/macos-setup.sh` installs all required packages. Please consult
 <<README.adoc#getting-set-up,Keep developer documentation>> for details.
 
+[#set-up-local-ethereum]
 == Setting up local Ethereum client
 
 Create directories for Ethereum client data:
@@ -20,6 +21,9 @@ $ mkdir ~/ethereum
 $ mkdir ~/ethereum/data
 $ mkdir ~/ethereum/data/keystore
 ```
+
+[#ethereum-accounts]
+=== Generate ethereum accounts
 
 Create a new account for Ethereum client, set the password to just `password`.
 For a real environment, please use some better password.
@@ -91,6 +95,8 @@ Account #4: {64c20c1ae603c30553de4ea5dd10cc1760b956be} keystore:///Users/piotr/e
 Account #5: {c4cba981a8edb64276f71a49f9392bad7a726417} keystore:///Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-35-31.551964909Z--c4cba981a8edb64276f71a49f9392bad7a726417
 ```
 
+=== Initialize chain
+
 Initialize your local Ethereum node from `genesis.json` file. This allows to
 issue some tokens to the accounts we just created. We assign tokens to all
 addresses. The account under alloc is the address of the account prepended with
@@ -146,6 +152,8 @@ INFO [10-31|15:55:25.827] Persisted trie from memory database      nodes=8 size=
 INFO [10-31|15:55:25.846] Successfully wrote genesis state         database=lightchaindata                                 hash=d15d63…61dab6
 ```
 
+=== Run ethereum client
+
 Start Ethereum client locally using client's wallet address.
 
 ```
@@ -153,8 +161,10 @@ $ geth --port 3000 --networkid 1101 --identity "somerandomidentity" \
     --ws --wsaddr "127.0.0.1" --wsport "8546" --wsorigins "*" \
     --rpc --rpcport "8545" --rpcaddr "127.0.0.1" --rpccorsdomain "" \
     --rpcapi "db,ssh,miner,admin,eth,net,web3,personal" \
+    --wsapi "db,ssh,miner,admin,eth,net,web3,personal" \
     --datadir=$GETH_DATA_DIR --syncmode "fast" \
-    --miner.etherbase=$GETH_ETHEREUM_ACCOUNT --mine --miner.threads=1
+    --miner.etherbase=$GETH_ETHEREUM_ACCOUNT --mine --miner.threads=1 \
+    --allow-insecure-unlock
 
 INFO [10-31|15:02:22.113] Maximum peer count                       ETH=25 LES=0 total=25
 INFO [10-31|15:02:22.128] Starting peer-to-peer node               instance=Geth/somerandomidentity/v1.8.14-stable/darwin-amd64/go1.10.3
@@ -191,6 +201,46 @@ INFO [10-31|15:03:49.852] 🔨 mined potential block                  number=1 h
 (...)
 ```
 
+[#quick-installation]
+== Quick installation
+
+To quickly install and start a single client use the installation script.
+
+=== Prerequisites
+To run the script some manual preparation is needed:
+
+- <<set-up-local-ethereum>>,
+- <<client-config-file>> for the single client (default name: `config.toml`).
+
+=== Install script
+The `install.sh` script will:
+
+- run <<contracts-deployment>>,
+- run <<token-staking>>,
+- update <<client-contracts-config, client contracts configuration>>
+- <<build-client>>.
+
+The script will ask you for password to <<ethereum-accounts,previously created>>
+ethereum accounts and the client config file path.
+
+To start the installation execute:
+```
+./scripts/install.sh
+```
+
+=== Start client
+
+To start the client execute:
+```
+./scripts/start.sh
+```
+
+=== Run genesis entry request
+
+For the network to be fully functional you need to initialize the
+<<genesis-entry>>.
+
+[#contracts-deployment]
 == Keep contracts deployment
 
 Before we deploy Keep contracts to the local Ethereum network or stake Keep
@@ -290,6 +340,7 @@ Saving successful migration to network...
 Saving artifacts...
 ```
 
+[#token-staking]
 == Keep token staking
 
 Each Keep peer needs to have a minimum number of KEEP tokens staked under its
@@ -311,10 +362,12 @@ successfully staked KEEP tokens for account 0xc4cba981a8edb64276f71a49f9392bad7a
 
 == Setting up local Keep peers
 
+[#client-config-file]
+=== Prepare configuration file
 
 For each Keep peer we need to create a separate configuration file. We need at
-least one bootstrap peer in the network. Here, we will create one bootstrap peer
-and 4 other peers pointing to it.
+least one bootstrap peer in the network. Other peers are not required.
+Here, we will create one bootstrap peer and 4 other peers pointing to it.
 
 Let's create a configuration for the bootstrap peer first:
 ```
@@ -322,24 +375,45 @@ $ cp config.toml.SAMPLE config.local.1.toml
 ```
 
 Next, edit `config.local.1.toml` and update `[ethereum.account]` section to
-point to the secound account (the first one is used by Ethereum client):
-```
+point to the second <<ethereum-accounts,generated account>> (the first 
+one is used by Ethereum client):
+```toml
 [ethereum.account]
         Address            = "0x3e208f39da1bc335464f40d85546ad6a1b66a9a4"
         KeyFile            = "/Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-28-13.525596422Z--3e208f39da1bc335464f40d85546ad6a1b66a9a4"
 ```
 
+[#client-contracts-config]
 Update `[ethereum.ContractAddresses]` section to point to the previously
-deployed contract instances. Please use addresses of `KeepRandomBeaconOperator`,
-`KeepRandomBeaconService` and `TokenStaking` contracts:
-```
+*deployed contract* instances. 
+
+NOTE: Updating contracts addresses is not required when running <<Quick installation>>
+script.
+
+Please use addresses of `KeepRandomBeaconOperator`, `KeepRandomBeaconService` and 
+`TokenStaking` contracts:
+
+```toml
 [ethereum.ContractAddresses]
         KeepRandomBeaconService = "0x15045ff30d6327345cc052cc4b8c28dbe974a74b"
         KeepRandomBeaconOperator = "0xdff3075ca23fe28697d5c4f171cf04abd79bd837"
         TokenStaking = "0xDfc7251170abd753342B585Adcd8BCEE48aDb379"
 ```
 
-Next, create configuration files for other peers:
+In the `config.local.1.toml` enable *network settings* for bootstrap peer:
+```toml
+[LibP2P]
+        Port = 3919
+```
+
+And set a *storage directory* for the bootstrap peer:
+```toml
+[Storage]
+  DataDir = "/Users/username/.keep/keep-core/storage/client-1"
+```
+This directory must be created before peer start.
+
+Next, create *configuration files for other peers*:
 ```
 $ cp config.local.1.toml config.local.2.toml
 $ cp config.local.1.toml config.local.3.toml
@@ -347,26 +421,21 @@ $ cp config.local.1.toml config.local.4.toml
 $ cp config.local.1.toml config.local.5.toml
 ```
 
-In the `config.local.1.toml` enable network settings for bootstrap peer:
-```
-[LibP2P]
-        Port = 3919
-```
+NOTE: Configuration of other peers will <<update-peers-config,have  to be updated>>
+after running the bootstrap peer.
 
-And set a storage directory for the bootstrap peer:
-```
-[Storage]
-  DataDir = "/Users/username/keepdata/1"
-```
-This directory must be created before peer start.
+[#build-client]
+=== Build client
 
 Build the `keep-core` executable:
 ```
 go generate ./...
-go build
+go build -a -o keep-core .
 ```
 
-And start the peer:
+=== Start bootstrap peer
+
+Start the bootstrap peer:
 ```
 $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.1.toml start
 ------------------------------------------------------------------------------------------------
@@ -377,74 +446,79 @@ $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config
 ------------------------------------------------------------------------------------------------
 ```
 
+[#update-peers-config]
+==== Update other peers configuration
+
 The next thing we need to do is to alter configuration file of each peer.
 Please modify `Port` number so that it is unique for each
 peer and update the address of the bootstrap peer. We also need to update
 ethereum account and key file so that each Keep client uses a different account.
 
 In `config.local.2.toml`:
-```
+```toml
 [LibP2P]
         Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca"]
         Port = 3920
 ```
-```
+```toml
 [ethereum.account]
         Address            = "0xb7314de01d5f3188c7df0a9e95f3477bcaae2120"
         KeyFile            = "/Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-31-43.391759751Z--b7314de01d5f3188c7df0a9e95f3477bcaae2120"
 ```
-```
+```toml
 [Storage]
-  DataDir = "/Users/username/keepdata/2"
+  DataDir = "/Users/username/.keep/keep-core/storage/client-2"
 ```
 
 In `config.local.3.toml`:
-```
+```toml
 [LibP2P]
         Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca"]
         Port = 3921
 ```
-```
+```toml
 [ethereum.account]
         Address            = "0x5ef1e10dd1830af50924db623c7a9d90bf8a71be"
         KeyFile            = "/Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-34-52.920270040Z--5ef1e10dd1830af50924db623c7a9d90bf8a71be"
 ```
-```
+```toml
 [Storage]
-  DataDir = "/Users/username/keepdata/3"
+  DataDir =  "/Users/username/.keep/keep-core/storage/client-3"
 ```
 
 In `config.local.4.toml`:
-```
+```toml
 [LibP2P]
         Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca"]
         Port = 3922
 ```
-```
+```toml
 [ethereum.account]
         Address            = "0x64c20c1ae603c30553de4ea5dd10cc1760b956be"
         KeyFile            = "/Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-35-12.560028755Z--64c20c1ae603c30553de4ea5dd10cc1760b956be"
 ```
-```
+```toml
 [Storage]
-  DataDir = "/Users/username/keepdata/4"
+  DataDir =  "/Users/username/.keep/keep-core/storage/client-4"
 ```
 
 In `config.local.5.toml`:
-```
+```toml
 [LibP2P]
         Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca"]
         Port = 3923
 ```
-```
+```toml
 [ethereum.account]
         Address            = "0xc4cba981a8edb64276f71a49f9392bad7a726417"
         KeyFile            = "/Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-35-31.551964909Z--c4cba981a8edb64276f71a49f9392bad7a726417"
 ```
-```
+```toml
 [Storage]
-  DataDir = "/Users/username/keepdata/5"
+  DataDir =  "/Users/username/.keep/keep-core/storage/client-5"
 ```
+
+==== Start other peers
 
 Finally, we can start each instance:
 ```
@@ -487,6 +561,7 @@ $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config
 ------------------------------------------------------------------------------------------------
 ```
 
+[#genesis-entry]
 == Genesis entry
 
 In order to trigger creation of the first group genesis entry must be submitted. The script includes
@@ -497,8 +572,6 @@ $ truffle exec ./scripts/genesis.js --network local
 Using network 'development'.
 
 Genesis entry successfully submitted.
-
-
 ```
 
 
@@ -572,4 +645,3 @@ endpoints.  Reach out in the https://www.flowdock.com/app/cardforcoin/ops[DevOps
 ==== Keep Network
 
 - link:[keep-client-bootstrap-peer-0.default.svc.cluster.local:3919]
-
