@@ -13,7 +13,7 @@ spec:
   selector:
     matchLabels:
       id: '1'
-  serviceName: keep-client-0
+  serviceName: keep-client-1
   volumeClaimTemplates:
   - metadata:
       name: keep-client-data
@@ -37,7 +37,7 @@ spec:
         id: '1'
     spec:
       containers:
-      - name: keep-client-0
+      - name: keep-client-1
         image: gcr.io/keep-dev-fe24/keep-client
         imagePullPolicy: Always
         ports:
