@@ -35,7 +35,7 @@ export const fetchTokensPageData = async (web3Context) => {
     const balance = web3Utils.toBN(amount)
 
     if (!balance.isZero() && operatorData.undelegatedAt === '0') {
-      const initializationOverAt = web3Utils.toBN(createdAt).add(web3Utils.toBN(initializationPeriod))
+      const initializationOverAt = web3Utils.toBN(createdAt || 0).add(web3Utils.toBN(initializationPeriod))
       operatorData.isInInitializationPeriod = initializationOverAt.gte(web3Utils.toBN(await eth.getBlockNumber()))
       delegations.push(operatorData)
       tokenStakingBalance = tokenStakingBalance.add(balance)
