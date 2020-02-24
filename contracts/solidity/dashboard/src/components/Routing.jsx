@@ -29,7 +29,7 @@ class Routing extends React.Component {
         {isTokenHolder && <Route exact path='/token-grants' component={TokenGrantsTab} /> }
         {isKeepTokenContractDeployer && <Route exact path='/create-token-grants' component={CreateTokenGrantsTab} /> }
         <Route exact path='/' >
-          <Redirect to='/overview' />
+          <Redirect to='/tokens' />
         </Route>
         <Route path="*">
           <NotFound404 />
