@@ -15,6 +15,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
         .send({ from: yourAddress })
         .on('transactionHash', onTransactionHashCallback)
       showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Recover stake transaction successfully completed' })
+      props.successCallback()
     } catch (error) {
       showMessage({ type: messageType.ERROR, title: 'Recover stake action has been failed ', content: error.message })
     }
@@ -34,6 +35,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
 RecoverStakeButton.defaultProps = {
   btnClassName: 'btn btn-sm btn-default',
   btnText: 'recover',
+  successCallback: () => {},
 }
 
 export default React.memo(RecoverStakeButton)
