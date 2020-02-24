@@ -1,6 +1,5 @@
 import React from 'react'
 import { Route, Switch, Redirect } from 'react-router-dom'
-import OverviewTab from './OverviewTab'
 import StakeTab from './StakeTab'
 import TokenGrantsTab from './TokenGrantsTab'
 import CreateTokenGrantsTab from './CreateTokenGrantsTab'
@@ -10,6 +9,7 @@ import { NotFound404 } from './NotFound404'
 import { withOnlyLoggedUser } from './WithOnlyLoggedUserHoc'
 import withWeb3Context from './WithWeb3Context'
 import { Rewards } from './Rewards'
+import TokensPage from '../pages/TokensPage'
 import OperatorPage from '../pages/OperatorPage'
 
 class Routing extends React.Component {
@@ -22,9 +22,7 @@ class Routing extends React.Component {
 
     return contractsDataIsFetching ? <Loadable /> : (
       <Switch>
-        {/* Commented due to RFC-17 implementation.
-        A new overview page has been implemented. Check here https://github.com/keep-network/keep-core/pull/1332 */}
-        {/* <Route exact path='/overview' component={OverviewTab} /> */}
+        <Route exact path='/tokens' component={TokensPage} />
         <Route exact path='/operations' component={OperatorPage} />
         <Route exact path='/rewards' component={Rewards} />
         {isTokenHolder && <Route exact path='/stake' component={StakeTab} /> }

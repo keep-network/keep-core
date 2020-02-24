@@ -12,7 +12,13 @@
 @import 'no-data.less';
 @import 'commons.less';
 @import 'withdrawal-rewards-history.less';
+@import 'tokens-page.less';
 @import 'operator-page.less';
+@import 'dropdown.less';
+@import 'network-status.less';
+@import 'timeline.less';
+@import 'modal.less';
+@import 'progress-bar.less';
 
 html {
   font-size: 12px;
@@ -25,6 +31,10 @@ html {
   @media screen and (min-width: 1200px) {
     font-size: 16px;
   }
+}
+
+ul {
+  padding-left: 0;
 }
 
 .main {
@@ -61,7 +71,11 @@ html {
     height: @header-height;
   }
   
-  > .web3, > .account-address {
+  > .web3 {
+    display: none;
+  }
+
+  > .account-address {
     display: none;
   }
 
@@ -128,9 +142,17 @@ html {
 
     > .account-address {
       font-size: 0.8rem;
+      margin-left: 1rem;
+      text-align: left;
     }
 
     > .web3 > .web3-status {
+      &.alert {
+        flex-direction: column;
+        a {
+          margin-top: 1rem;
+        }
+      }
       text-align: center;
       margin: 1rem;
     }
@@ -139,7 +161,7 @@ html {
   }
 }
 
-@media screen and (min-width: 600px) {
+@media screen and (min-width: 700px) {
  .header {
     > .web3 {
       display: flex;
@@ -148,6 +170,20 @@ html {
 
   .side-menu {
     ul > .web3 {
+      visibility: hidden;
+    }
+  }
+}
+
+@media screen and (min-width: 750px) {
+  .header {
+    > .account-address {
+        display: block;
+      }
+  }
+
+  .side-menu {
+    ul > .account-address {
       visibility: hidden;
     }
   }
@@ -180,7 +216,7 @@ html {
     }
 
     > .account-address {
-      display: block;
+      margin-right: 1.5rem;
     }
 
     > .menu-button {

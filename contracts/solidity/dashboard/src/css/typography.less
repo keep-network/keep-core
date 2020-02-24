@@ -2,7 +2,7 @@
 body {
   font-family: 'Work Sans', sans-serif;
   font-weight: normal;
-  font-size: 18px;
+  font-size: 1rem;
   color: @black;
   line-height: 1.44;
 
@@ -12,66 +12,60 @@ body {
 }
 
 h1, .h1 {
-  font-size: 62px;
+  font-size: 3.875rem;
 }
 
 h2, .h2 {
-  font-size: 50px;
+  font-size: 3.125rem;
 }
 
 h3, .h3 {
-  font-size: 32px;
+  font-size: 2rem;
 }
 
 h4, .h4 {
-  font-size: 22px;
+  margin: 0;
+  font-size: 1.5625rem;
+  font-weight: 500;
+  line-height: 145%;
 }
 
 h5, .h5 {
-  font-size: 20px;
+  margin: 0;
+  font-size: 1.25rem;
   font-weight: bold;
   line-height: 130%;
 }
 
 h6, .h6 {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 500;
   line-height: 145%;
   letter-spacing: 0.05em;
   font-variant: small-caps;
+  margin: 0;
+}
+
+h1, .h1,
+h2, .h2,
+h3, .h3 {
+  line-height: 1.38;
+  font-weight: 800;
 }
 
 h1, .h1,
 h2, .h2,
 h3, .h3,
-h4, .h4 {
-  line-height: 1.38;
-  font-weight: 800;
+h4, .h4,
+h5, .h5,
+h6, .h6 {
+  margin: 0;
 }
+
 
 small, .small {
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.38;
-}
-
-@media @mobile {
-  h1, .h1,
-  h2, .h2,
-  h3, .h3 {
-    font-size: 30px;
-    line-height: 1.33;
-  }
-
-  h4, .h4,
-  h5, .h5,
-  h6, .h6 {
-    font-size: 16px;
-    line-height: 1;
-  }
-
-  h2, .h2 {
-    margin-bottom: 20px;
-  }
 }
 
 p {
@@ -82,9 +76,20 @@ a {
   color: @link-color;
 }
 
+label {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 145%;
+  color: @darker-grey
+}
+
 .text {
   &-primary {
     color: @aqua-marine;
+  }
+
+  &-black {
+    color: @black !important;
   }
 
   &-darker-grey {
@@ -95,8 +100,20 @@ a {
     color: @grey;
   }
 
+  &-white {
+    color: @white !important;
+  }
+
   &-dark-red {
     color: @dark-red !important;
+  }
+
+  &-bold {
+    font-weight: bold;
+  }
+  
+  &-white {
+    color: @white !important;
   }
 
   &-label {
@@ -119,6 +136,12 @@ a {
     font-weight: 500;
   }
 
+  &-smaller {
+    font-size: .9rem;
+    font-weight: normal;
+    line-height: 1rem;
+  }
+
   &-warning {
     &.border {
       padding-left: 1rem;
@@ -128,5 +151,31 @@ a {
     font-size: 0.9rem;
     line-height: 22px;
     color: @warning-color;
+  }
+
+  &-title {
+    font-weight: bold;
+    font-size: 1.25rem; 
+    line-height: 1.45rem;
+    display: flex;
+    align-items: center;
+    letter-spacing: 0.07em;
+    font-variant: small-caps;
+  }
+
+  &-bg {
+    &-warning {
+      padding: .2rem;
+      background-color: @warning-color;
+    }
+  }
+  &-link {
+    border-bottom: 1px solid transparent;
+    transition: all ease-in-out .5s;
+
+    &:hover, &:focus {
+      cursor: pointer;
+      border-color: @warning-color;
+    }
   }
 }

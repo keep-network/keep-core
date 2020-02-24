@@ -14,7 +14,7 @@ const OperatorPage = (props) => {
   return (
     <>
       <h3>My Token Operations</h3>
-      <DelegatedTokens latestUnstakeEvent={latestEvent} />
+      <DelegatedTokens />
       <PendingUndelegation latestUnstakeEvent={latestEvent} />
       <SlashedTokens />
     </>

@@ -4,16 +4,27 @@
     justify-content: center;
   
     &-status {
-      font-size: 0.8rem;
-      background-color: @pale-grey;
-      padding: 0 .5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      line-height: 1.5rem;
+      font-style: normal;
+      padding: .3rem .8rem;
       text-align: left;
-      border: 2px solid black ;
-      border-radius: 5px;
-      font-weight: bold;
+      border: 1px solid black ;
+
+      .title {
+        margin-right: 1.3rem;
+      }
+
+      .sub-title {
+        font-size: 0.75rem;
+        font-weight: normal;
+        line-height: 0.8rem;
+      }
 
       &.success {
-        color: @aqua-marine;
+        background: @mint;
+        color: @green;
         border-color: @aqua-marine;
       }
       &.loading {
@@ -21,12 +32,16 @@
         border-color: #67598a;
       }
       &.alert {
-        color: @rose-pink;
-        border-color: @rose-pink;
+        color: @black;
+        background: @pink;
+        border-color: @red;
         margin-bottom: 0;
-        & > a {
-          color: @rose-pink;
-          text-decoration: underline;
+        border-radius: 0;
+        a {
+          margin-left: 1.3rem;
+          padding: .6rem;
+          font-size: .75rem !important;
+          text-decoration: none;
         }
       }
       &.notify {

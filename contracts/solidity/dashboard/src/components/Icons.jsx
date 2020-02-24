@@ -43,7 +43,31 @@ const Badge = ({ height, width }) => (
   </svg>
 )
 
+const Cross = ({ height, width, ...restProps }) => (
+  <svg height={height} width={width} {...restProps} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M1 19L19 1" stroke="#6D6D6D" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M19 19L1 1" stroke="#6D6D6D" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+const SpeechBubble = (props) => (
+  <div className="speech-bubble-icon-wrapper">
+    <svg width="17" height="20" viewBox="0 0 17 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fillRule="evenodd" clipRule="evenodd" d="M15.6667 16H9.33333L4 20V16H1.33333C0.596954 16 0 15.403 0 14.6667V1.33333C0 0.596954 0.596954 0 1.33333 0H15.6667C16.403 0 17 0.596954 17 1.33333V14.6667C17 15.403 16.403 16 15.6667 16Z" fill="#48DBB4"/>
+    </svg>
+    <svg width="19" height="22" viewBox="0 0 19 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fillRule="evenodd" clipRule="evenodd" d="M16.6667 17H10.3333L5 21V17H2.33333C1.59695 17 1 16.403 1 15.6667V2.33333C1 1.59695 1.59695 1 2.33333 1H16.6667C17.403 1 18 1.59695 18 2.33333V15.6667C18 16.403 17.403 17 16.6667 17Z" stroke="#4C4C4C" strokeWidth="1.5" strokeLinecap="round" stroke-Linejoin="round"/>
+    </svg>
+    <svg width="7" height="11" viewBox="0 0 7 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1.5 2.9996C1.50019 1.98263 2.26358 1.12775 3.27405 1.01292C4.28451 0.898093 5.22025 1.55989 5.44862 2.55089C5.677 3.54189 5.12527 4.54647 4.16647 4.88546C3.76677 5.02677 3.49963 5.40477 3.49985 5.82872V5.99937" stroke="#4C4C4C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M3.49974 8.99902C3.36168 8.99902 3.24976 9.11094 3.24976 9.249C3.24976 9.38707 3.36168 9.49899 3.49974 9.49899C3.6378 9.49899 3.74972 9.38707 3.74972 9.249C3.74972 9.11094 3.6378 8.99902 3.49974 8.99902V8.99902" stroke="#4C4C4C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  </div>
+)
+
 export {
   Keep,
   Badge,
+  Cross,
+  SpeechBubble,
 }
