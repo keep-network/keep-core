@@ -41,7 +41,6 @@ const Undelegations = ({ undelegations, successUndelegationCallback }) => {
 }
 
 const UndelegationItem = React.memo(({ undelegation, successUndelegationCallback }) => {
-
   return (
     <li className="flex flex-row flex-row-space-between">
       <div className="flex-1 text-big">{undelegation.undelegatedAt}</div>
