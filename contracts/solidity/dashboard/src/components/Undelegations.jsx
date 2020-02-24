@@ -4,7 +4,14 @@ import AddressShortcut from './AddressShortcut'
 import SpeechBubbleInfo from './SpeechBubbleInfo'
 import RecoverStakeButton from './RecoverStakeButton'
 
-const Undelegations = ({ undelegations }) => {
+const Undelegations = ({ undelegations, successUndelegationCallback }) => {
+  const renderUndelegationItem = (item) =>
+    <UndelegationItem
+      key={item.operatorAddress}
+      undelegation={item}
+      successUndelegationCallback={successUndelegationCallback}
+    />
+
   return (
     <section className="tile">
       <h5>Undelegations</h5>
@@ -33,7 +40,7 @@ const Undelegations = ({ undelegations }) => {
   )
 }
 
-const UndelegationItem = React.memo(({ undelegation }) => {
+const UndelegationItem = React.memo(({ undelegation, successUndelegationCallback }) => {
 
   return (
     <li className="flex flex-row flex-row-space-between">
@@ -44,6 +51,7 @@ const UndelegationItem = React.memo(({ undelegation }) => {
       <div className="flex-1 text-big">
         {undelegation.canRecoverStake ?
           <RecoverStakeButton
+            successCallback={successUndelegationCallback}
             operatorAddress={undelegation.operatorAddress}
           /> :
           `undelegation will be completed at ${undelegation.undelegationCompleteAt.toString()}`
@@ -52,7 +60,5 @@ const UndelegationItem = React.memo(({ undelegation }) => {
     </li>
   )
 })
-
-const renderUndelegationItem = (item) => <UndelegationItem key={item.operatorAddress} undelegation={item} />
 
 export default Undelegations

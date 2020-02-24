@@ -16,6 +16,7 @@ const TokenGrantOverview = (props) => {
   const { showModal, ModalComponent } = useModal()
 
   useEffect(() => {
+    console.log('render token grant overview', data)
     if (selectedGrant && data.length > 0) {
       setSelectedGrant(data[0])
     }

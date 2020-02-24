@@ -3,7 +3,14 @@ import { displayAmount } from '../utils'
 import AddressShortcut from './AddressShortcut'
 import UndelegateStakeButton from './UndelegateStakeButton'
 
-const DelegatedTokensList = ({ delegatedTokens }) => {
+const DelegatedTokensList = ({ delegatedTokens, successDelegationCallback }) => {
+  const renderDelegatedTokensItem = (item) =>
+    <DelegatedTokensListItem
+      key={item.operatorAddress}
+      delegation={item}
+      successDelegationCallback={successDelegationCallback}
+    />
+
   return (
     <section className="tile">
       <h5>Delageted Tokens</h5>
@@ -29,7 +36,7 @@ const DelegatedTokensList = ({ delegatedTokens }) => {
   )
 }
 
-const DelegatedTokensListItem = ({ delegation }) => {
+const DelegatedTokensListItem = React.memo(({ delegation, successDelegationCallback }) => {
   return (
     <li className="flex flex-row flex-row-center flex-row-space-between" style={{ marginBottom: `0.5rem` }}>
       <div className="flex-1 text-bit">{delegation.createdAt}</div>
@@ -41,12 +48,11 @@ const DelegatedTokensListItem = ({ delegation }) => {
           isInInitializationPeriod={delegation.isInInitializationPeriod}
           btnClassName="btn btn-sm btn-default"
           operator={delegation.operatorAddress}
+          successCallback={successDelegationCallback}
         />
       </div>
     </li>
   )
-}
-
-const renderDelegatedTokensItem = (item) => <DelegatedTokensListItem key={item.operatorAddress} delegation={item} />
+})
 
 export default DelegatedTokensList
