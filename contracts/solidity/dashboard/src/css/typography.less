@@ -84,6 +84,11 @@ label {
 }
 
 .text {
+
+  &-success {
+    color: @success-color !important;
+  }
+
   &-primary {
     color: @aqua-marine;
   }
@@ -110,6 +115,10 @@ label {
 
   &-bold {
     font-weight: bold;
+  }
+
+  &-normal {
+    font-weight: normal !important;
   }
   
   &-white {
@@ -167,6 +176,12 @@ label {
     &-warning {
       padding: .2rem;
       background-color: @warning-color;
+    }
+    &-pending-light { 
+      background-color: @pending-light-color;
+    }
+    &-success-light { 
+      background-color: @success-light-color;
     }
   }
   &-link {
