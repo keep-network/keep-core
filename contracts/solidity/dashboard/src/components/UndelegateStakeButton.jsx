@@ -16,6 +16,7 @@ const UndelegateStakeButton = (props) => {
         .send({ from: yourAddress })
         .on('transactionHash', onTransactionHashCallback)
       showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Undelegate transaction successfully completed' })
+      props.successCallback()
     } catch (error) {
       showMessage({ type: messageType.ERROR, title: 'Undelegate action has been failed ', content: error.message })
     }
@@ -36,6 +37,7 @@ UndelegateStakeButton.defaultProps = {
   btnClassName: 'btn btn-primary btn-sm',
   btnText: 'undelegate',
   isInInitializationPeriod: false,
+  successCallback: () => {},
 }
 
 export default UndelegateStakeButton
