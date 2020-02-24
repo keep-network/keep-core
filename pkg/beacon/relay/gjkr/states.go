@@ -1,6 +1,8 @@
 package gjkr
 
 import (
+	"context"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/state"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -8,40 +10,28 @@ import (
 
 type keyGenerationState = state.State
 
-// joinState is the state during which a member announces itself to the key
-// generation broadcast channel to initiate the distributed protocol.
-// `JoinMessage`s are valid in this state.
-type joinState struct {
-	channel net.BroadcastChannel
-	member  *LocalMember
-}
+const (
+	silentStateDelayBlocks  = 0
+	silentStateActiveBlocks = 0
 
-func (js *joinState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
-}
+	ephemeralKeyPairStateDelayBlocks  = 1
+	ephemeralKeyPairStateActiveBlocks = 5
 
-func (js *joinState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
-}
+	commitmentStateDelayBlocks  = 1
+	commitmentStateActiveBlocks = 5
 
-func (js *joinState) Initiate() error {
-	return nil
-}
+	commitmentVerificationStateDelayBlocks  = 1
+	commitmentVerificationStateActiveBlocks = 10
 
-func (js *joinState) Receive(msg net.Message) error {
-	return nil
-}
+	pointsShareStateDelayBlocks  = 1
+	pointsShareStateActiveBlocks = 5
 
-func (js *joinState) Next() keyGenerationState {
-	return &ephemeralKeyPairGenerationState{
-		channel: js.channel,
-		member:  js.member.InitializeEphemeralKeysGeneration(),
-	}
-}
+	pointsValidationStateDelayBlocks  = 1
+	pointsValidationStateActiveBlocks = 10
 
-func (js *joinState) MemberIndex() group.MemberIndex {
-	return js.member.ID
-}
+	keyRevealStateDelayBlocks  = 1
+	keyRevealStateActiveBlocks = 5
+)
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
 // public ephemeral keys generated for other members of the group.
@@ -56,20 +46,20 @@ type ephemeralKeyPairGenerationState struct {
 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return ephemeralKeyPairStateDelayBlocks
 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return ephemeralKeyPairStateActiveBlocks
 }
 
-func (ekpgs *ephemeralKeyPairGenerationState) Initiate() error {
+func (ekpgs *ephemeralKeyPairGenerationState) Initiate(ctx context.Context) error {
 	message, err := ekpgs.member.GenerateEphemeralKeyPair()
 	if err != nil {
 		return err
 	}
 
-	if err := ekpgs.channel.Send(message); err != nil {
+	if err := ekpgs.channel.Send(ctx, message); err != nil {
 		return err
 	}
 	return nil
@@ -112,14 +102,14 @@ type symmetricKeyGenerationState struct {
 }
 
 func (skgs *symmetricKeyGenerationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
-func (skgs *symmetricKeyGenerationState) Initiate() error {
+func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
 	skgs.member.MarkInactiveMembers(skgs.previousPhaseMessages)
 	return skgs.member.GenerateSymmetricKeys(skgs.previousPhaseMessages)
 }
@@ -154,24 +144,24 @@ type commitmentState struct {
 }
 
 func (cs *commitmentState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return commitmentStateDelayBlocks
 }
 
 func (cs *commitmentState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return commitmentStateActiveBlocks
 }
 
-func (cs *commitmentState) Initiate() error {
+func (cs *commitmentState) Initiate(ctx context.Context) error {
 	sharesMsg, commitmentsMsg, err := cs.member.CalculateMembersSharesAndCommitments()
 	if err != nil {
 		return err
 	}
 
-	if err := cs.channel.Send(sharesMsg); err != nil {
+	if err := cs.channel.Send(ctx, sharesMsg); err != nil {
 		return err
 	}
 
-	if err := cs.channel.Send(commitmentsMsg); err != nil {
+	if err := cs.channel.Send(ctx, commitmentsMsg); err != nil {
 		return err
 	}
 
@@ -229,14 +219,14 @@ type commitmentsVerificationState struct {
 }
 
 func (cvs *commitmentsVerificationState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return commitmentVerificationStateDelayBlocks
 }
 
 func (cvs *commitmentsVerificationState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return commitmentVerificationStateActiveBlocks
 }
 
-func (cvs *commitmentsVerificationState) Initiate() error {
+func (cvs *commitmentsVerificationState) Initiate(ctx context.Context) error {
 	cvs.member.MarkInactiveMembers(
 		cvs.previousPhaseSharesMessages,
 		cvs.previousPhaseCommitmentsMessages,
@@ -249,7 +239,7 @@ func (cvs *commitmentsVerificationState) Initiate() error {
 		return err
 	}
 
-	if err := cvs.channel.Send(accusationsMsg); err != nil {
+	if err := cvs.channel.Send(ctx, accusationsMsg); err != nil {
 		return err
 	}
 
@@ -297,14 +287,14 @@ type sharesJustificationState struct {
 }
 
 func (sjs *sharesJustificationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (sjs *sharesJustificationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
-func (sjs *sharesJustificationState) Initiate() error {
+func (sjs *sharesJustificationState) Initiate(ctx context.Context) error {
 	sjs.member.MarkInactiveMembers(sjs.previousPhaseAccusationsMessages)
 
 	err := sjs.member.ResolveSecretSharesAccusationsMessages(
@@ -343,14 +333,14 @@ type qualificationState struct {
 }
 
 func (qs *qualificationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (qs *qualificationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
-func (qs *qualificationState) Initiate() error {
+func (qs *qualificationState) Initiate(ctx context.Context) error {
 	qs.member.CombineMemberShares()
 	return nil
 }
@@ -383,16 +373,16 @@ type pointsShareState struct {
 }
 
 func (pss *pointsShareState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return pointsShareStateDelayBlocks
 }
 
 func (pss *pointsShareState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return pointsShareStateActiveBlocks
 }
 
-func (pss *pointsShareState) Initiate() error {
+func (pss *pointsShareState) Initiate(ctx context.Context) error {
 	message := pss.member.CalculatePublicKeySharePoints()
-	if err := pss.channel.Send(message); err != nil {
+	if err := pss.channel.Send(ctx, message); err != nil {
 		return err
 	}
 
@@ -439,14 +429,14 @@ type pointsValidationState struct {
 }
 
 func (pvs *pointsValidationState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return pointsValidationStateDelayBlocks
 }
 
 func (pvs *pointsValidationState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return pointsValidationStateActiveBlocks
 }
 
-func (pvs *pointsValidationState) Initiate() error {
+func (pvs *pointsValidationState) Initiate(ctx context.Context) error {
 	pvs.member.MarkInactiveMembers(pvs.previousPhaseMessages)
 	accusationMsg, err := pvs.member.VerifyPublicKeySharePoints(
 		pvs.previousPhaseMessages,
@@ -455,7 +445,7 @@ func (pvs *pointsValidationState) Initiate() error {
 		return err
 	}
 
-	if err := pvs.channel.Send(accusationMsg); err != nil {
+	if err := pvs.channel.Send(ctx, accusationMsg); err != nil {
 		return err
 	}
 
@@ -500,14 +490,14 @@ type pointsJustificationState struct {
 }
 
 func (pjs *pointsJustificationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (pjs *pointsJustificationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
-func (pjs *pointsJustificationState) Initiate() error {
+func (pjs *pointsJustificationState) Initiate(ctx context.Context) error {
 	pjs.member.MarkInactiveMembers(pjs.previousPhaseMessages)
 
 	err := pjs.member.ResolvePublicKeySharePointsAccusationsMessages(
@@ -548,20 +538,20 @@ type keyRevealState struct {
 }
 
 func (rs *keyRevealState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return keyRevealStateDelayBlocks
 }
 
 func (rs *keyRevealState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return keyRevealStateActiveBlocks
 }
 
-func (rs *keyRevealState) Initiate() error {
+func (rs *keyRevealState) Initiate(ctx context.Context) error {
 	revealMsg, err := rs.member.RevealMisbehavedMembersKeys()
 	if err != nil {
 		return err
 	}
 
-	if err := rs.channel.Send(revealMsg); err != nil {
+	if err := rs.channel.Send(ctx, revealMsg); err != nil {
 		return err
 	}
 
@@ -605,14 +595,14 @@ type reconstructionState struct {
 }
 
 func (rs *reconstructionState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (rs *reconstructionState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
-func (rs *reconstructionState) Initiate() error {
+func (rs *reconstructionState) Initiate(ctx context.Context) error {
 	rs.member.MarkInactiveMembers(rs.previousPhaseMessages)
 	if err := rs.member.ReconstructMisbehavedIndividualKeys(
 		rs.previousPhaseMessages,
@@ -649,14 +639,14 @@ type combinationState struct {
 }
 
 func (cs *combinationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (cs *combinationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
-func (cs *combinationState) Initiate() error {
+func (cs *combinationState) Initiate(ctx context.Context) error {
 	cs.member.CombineGroupPublicKey()
 	return nil
 }
@@ -687,14 +677,14 @@ type finalizationState struct {
 }
 
 func (fs *finalizationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (fs *finalizationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
-func (fs *finalizationState) Initiate() error {
+func (fs *finalizationState) Initiate(ctx context.Context) error {
 	return nil
 }
 

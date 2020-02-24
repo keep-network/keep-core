@@ -5,10 +5,11 @@ import grantTokens from './helpers/grantTokens';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
+const Registry = artifacts.require("./Registry.sol");
 
 contract('TestTokenGrant', function(accounts) {
 
-  let token, grantContract, stakingContract,
+  let token, registry, grantContract, stakingContract,
     amount, vestingDuration, start, cliff,
     grant_manager = accounts[0],
     account_two = accounts[1],
@@ -16,7 +17,8 @@ contract('TestTokenGrant', function(accounts) {
 
   before(async () => {
     token = await KeepToken.new();
-    stakingContract = await TokenStaking.new(token.address, duration.days(30));
+    registry = await Registry.new();
+    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(1), duration.days(30));
     grantContract = await TokenGrant.new(token.address, stakingContract.address);
     amount = web3.utils.toBN(100);
     vestingDuration = duration.days(30);
@@ -88,7 +90,7 @@ contract('TestTokenGrant', function(accounts) {
     let grant = await grantContract.getGrant(id);
     assert.equal(grant[0].eq(amount), true, "Grant should maintain a record of the granted amount.");
     assert.equal(grant[1].isZero(), true, "Grant should have 0 amount withdrawn initially.");
-    assert.equal(grant[2], false, "Grant should initially be unstaked.");
+    assert.equal(grant[2], false, "Grant should initially be undelegated.");
     assert.equal(grant[3], false, "Grant should not be marked as revoked initially.");
 
     let schedule = await grantContract.getGrantVestingSchedule(id);

@@ -1,5 +1,6 @@
 require('babel-register');
 require('babel-polyfill');
+const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 module.exports = {
   networks: {
@@ -9,16 +10,27 @@ module.exports = {
       network_id: "*"
     },
     keep_dev: {
-      host: "localhost",
-      port: 8545,
-      network_id: "*",
-      from: "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB"
+      provider: function() {
+        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "http://localhost:8545")
+      },
+      gas: 6721975,
+      network_id: 1101
     },
+
     keep_dev_vpn: {
-      host: "eth-tx-node.default.svc.cluster.local",
-      port: 8545,
-      network_id: "*",
-      from: "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB"
+      provider: function() {
+        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "http://eth-tx-node.default.svc.cluster.local:8545")
+      },
+      gas: 6721975,
+      network_id: 1101
+    },
+
+    ropsten: {
+      provider: function() {
+        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5")
+      },
+      gas: 6721975,
+      network_id: 3
     }
   },
 
@@ -34,7 +46,7 @@ module.exports = {
 
   compilers: {
     solc: {
-      version: "0.5.4",
+      version: "0.5.14",
       optimizer: {
         enabled: true,
         runs: 200

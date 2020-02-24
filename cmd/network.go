@@ -18,6 +18,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/pborman/uuid"
 	"github.com/urfave/cli"
@@ -92,6 +93,7 @@ func pingRequest(c *cli.Context) error {
 		libp2pConfig,
 		privKey,
 		stakeMonitor,
+		retransmission.NewTimeTicker(ctx, 50*time.Millisecond),
 	)
 	if err != nil {
 		return err
@@ -114,7 +116,7 @@ func pingRequest(c *cli.Context) error {
 	}
 
 	// When we call ChannelFor, we create a coordination point for peers
-	broadcastChannel, err := netProvider.ChannelFor(ping)
+	broadcastChannel, err := netProvider.BroadcastChannelFor(ping)
 	if err != nil {
 		return err
 	}
@@ -138,39 +140,19 @@ func pingRequest(c *cli.Context) error {
 		pongChan = make(chan net.Message)
 	)
 
-	err = broadcastChannel.Recv(
-		net.HandleMessageFunc{
-			Type: pong,
-			Handler: func(msg net.Message) error {
-				// Do some message routing
-				if msg.Type() == pong {
-					pongChan <- msg
-				}
-				return nil
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-	defer broadcastChannel.UnregisterRecv(pong)
+	broadcastChannel.Recv(ctx, func(msg net.Message) {
+		// Do some message routing
+		if msg.Type() == pong {
+			pongChan <- msg
+		}
+	})
 
-	err = broadcastChannel.Recv(
-		net.HandleMessageFunc{
-			Type: ping,
-			Handler: func(msg net.Message) error {
-				// Do some message routing
-				if msg.Type() == ping {
-					pingChan <- msg
-				}
-				return nil
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-	defer broadcastChannel.UnregisterRecv(ping)
+	broadcastChannel.Recv(ctx, func(msg net.Message) {
+		// Do some message routing
+		if msg.Type() == ping {
+			pingChan <- msg
+		}
+	})
 
 	// Give ourselves a moment to form a mesh with the other peer
 	for {
@@ -194,7 +176,7 @@ func pingRequest(c *cli.Context) error {
 
 		go func(msg *PingMessage) {
 			<-start
-			err := broadcastChannel.Send(message)
+			err := broadcastChannel.Send(ctx, message)
 			if err != nil {
 				fmt.Fprintf(
 					os.Stderr,
@@ -229,7 +211,7 @@ func pingRequest(c *cli.Context) error {
 				Sender:  netProvider.ID().String(),
 				Payload: pong + " corresponding to " + pingPayload.Payload,
 			}
-			err := broadcastChannel.Send(message)
+			err := broadcastChannel.Send(ctx, message)
 			if err != nil {
 				return err
 			}

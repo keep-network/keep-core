@@ -14,6 +14,7 @@
     box-shadow: none;
     border-radius: @border-radius;
     outline: 0;
+    line-height: 25px;
 
     &.form-control {
       border-color: transparent;
@@ -108,6 +109,23 @@
   }
 }
 
+.form {
+  &-input {
+    margin-bottom: 1.5rem;
+
+    input {
+      padding: 1rem .75rem;
+      line-height: 1rem;
+    }
+  }
+
+  &-error {
+    color: @dark-red;
+    font-size: .9rem;
+    font-weight: 500;
+  }
+}
+
 .email-form {
   position: relative;
   .error-message {
@@ -133,5 +151,30 @@
   .form-inline input.form-control, .well {
     min-width: 500px;
     overflow-wrap: break-word;
+  }
+}
+
+.inline-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  align-self: flex-start;
+  justify-content: center;
+
+  input {
+    padding-left: 1rem;
+    margin-bottom: 2rem;
+    line-height: 3.5rem;
+  }
+
+  @media screen and (min-width: 750px) {
+    flex-direction: row;
+    justify-content: stretch;
+
+    input {
+      line-height: 2rem;
+      margin-right: 1rem;
+      margin-bottom: 0;
+    }
   }
 }

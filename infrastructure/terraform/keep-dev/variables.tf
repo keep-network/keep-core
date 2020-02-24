@@ -168,12 +168,22 @@ variable "gke_subnet" {
   }
 }
 
-variable "atlantis_ip_name" {
-  description = "The name for your Atlantis IP."
-  default     = "keep-dev-atlantis-external-ip"
+variable "eth_tx_ropsten_loadbalancer_name" {
+  description = "The name for your ropsten tx node IP."
+  default     = "keep-dev-eth-tx-ropsten-loadbalancer-external-ip"
 }
 
-variable "atlantis_ip_address_type" {
+variable "eth_tx_ropsten_loadbalancer_address_type" {
+  description = "Internet facing or not. internal or external"
+  default     = "external"
+}
+
+variable "eth_miner_ropsten_loadbalancer_name" {
+  description = "The name for your ropsten miner IP."
+  default     = "keep-dev-eth-miner-ropsten-loadbalancer-external-ip"
+}
+
+variable "eth_miner_ropsten_loadbalancer_address_type" {
   description = "Internet facing or not. internal or external"
   default     = "external"
 }
@@ -248,6 +258,6 @@ variable "utility_box" {
     name         = "keep-dev-utility-box"
     tags         = "gke-subnet"
     machine_type = "g1-small"
-    tools        = "kubectl, helm, jq, npm, geth"
+    tools        = "kubectl, helm, jq, nodejs, geth"
   }
 }

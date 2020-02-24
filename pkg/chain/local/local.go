@@ -17,7 +17,6 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -39,7 +38,7 @@ type Chain interface {
 
 	// GetLastDKGResult returns the last DKG result submitted to the chain
 	// as well as all the signatures that supported that result.
-	GetLastDKGResult() (*relaychain.DKGResult, map[group.MemberIndex][]byte)
+	GetLastDKGResult() (*relaychain.DKGResult, map[relaychain.GroupMemberIndex][]byte)
 
 	// GetLastRelayEntry returns the last relay entry submitted to the chain.
 	GetLastRelayEntry() []byte
@@ -60,7 +59,7 @@ type localChain struct {
 	groups []localGroup
 
 	lastSubmittedDKGResult           *relaychain.DKGResult
-	lastSubmittedDKGResultSignatures map[group.MemberIndex][]byte
+	lastSubmittedDKGResultSignatures map[relaychain.GroupMemberIndex][]byte
 	lastSubmittedRelayEntry          []byte
 
 	handlerMutex                  sync.Mutex
@@ -339,6 +338,13 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	return true, nil
 }
 
+func (c *localChain) GetGroupMembers(groupPublicKey []byte) (
+	[]relaychain.StakerAddress,
+	error,
+) {
+	return nil, nil // no-op
+}
+
 func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 	for _, group := range c.groups {
 		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {
@@ -350,9 +356,9 @@ func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
-	participantIndex group.MemberIndex,
+	participantIndex relaychain.GroupMemberIndex,
 	resultToPublish *relaychain.DKGResult,
-	signatures map[group.MemberIndex][]byte,
+	signatures map[relaychain.GroupMemberIndex][]byte,
 ) *async.EventDKGResultSubmissionPromise {
 	dkgResultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
@@ -431,7 +437,7 @@ func (c *localChain) OnDKGResultSubmitted(
 
 func (c *localChain) GetLastDKGResult() (
 	*relaychain.DKGResult,
-	map[group.MemberIndex][]byte,
+	map[relaychain.GroupMemberIndex][]byte,
 ) {
 	return c.lastSubmittedDKGResult, c.lastSubmittedDKGResultSignatures
 }

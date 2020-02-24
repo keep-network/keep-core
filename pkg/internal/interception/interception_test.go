@@ -19,7 +19,7 @@ func TestPassThruNetworkMessage(t *testing.T) {
 		},
 	)
 
-	channel, err := network.ChannelFor("badger288")
+	channel, err := network.BroadcastChannelFor("badger288")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func TestModifyNetworkMessage(t *testing.T) {
 		},
 	)
 
-	channel, err := network.ChannelFor("badger288")
+	channel, err := network.BroadcastChannelFor("badger288")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestDropNetworkMessage(t *testing.T) {
 		},
 	)
 
-	channel, err := network.ChannelFor("badger288")
+	channel, err := network.BroadcastChannelFor("badger288")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,16 +112,10 @@ func testMessageRoundtrip(
 	})
 
 	handlerFiredChan := make(chan *testMessage)
-	handler := net.HandleMessageFunc{
-		Type: "test_message",
-		Handler: func(msg net.Message) error {
-			handlerFiredChan <- msg.Payload().(*testMessage)
-			return nil
-		},
-	}
-
-	channel.Recv(handler)
-	channel.Send(message)
+	channel.Recv(ctx, func(msg net.Message) {
+		handlerFiredChan <- msg.Payload().(*testMessage)
+	})
+	channel.Send(ctx, message)
 
 	select {
 	case msg := <-handlerFiredChan:

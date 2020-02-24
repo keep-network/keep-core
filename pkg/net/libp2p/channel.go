@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"runtime"
 	"sync"
+	"sync/atomic"
 
 	"github.com/btcsuite/btcd/btcec"
 
@@ -13,13 +15,30 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
+var (
+	subscriptionWorkers = 32
+	messageWorkers      = runtime.NumCPU()
+)
+
+const (
+	incomingMessageThrottle = 4096
+	messageHandlerThrottle  = 256
+)
+
 type channel struct {
+	// channel-scoped atomic counter for sequence numbers
+	//
+	// Must be declared at the top of the struct!
+	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
+	counter uint64
+
 	name string
 
 	clientIdentity *identity
@@ -28,61 +47,99 @@ type channel struct {
 	pubsubMutex sync.Mutex
 	pubsub      *pubsub.PubSub
 
-	subscription *pubsub.Subscription
+	subscription         *pubsub.Subscription
+	incomingMessageQueue chan *pubsub.Message
 
 	messageHandlersMutex sync.Mutex
-	messageHandlers      []net.HandleMessageFunc
+	messageHandlers      []*messageHandler
 
 	unmarshalersMutex  sync.Mutex
 	unmarshalersByType map[string]func() net.TaggedUnmarshaler
 
-	retransmitter *retransmitter
+	retransmissionTicker *retransmission.Ticker
+}
+
+type messageHandler struct {
+	ctx     context.Context
+	channel chan net.Message
+}
+
+func (c *channel) nextSeqno() uint64 {
+	return atomic.AddUint64(&c.counter, 1)
 }
 
 func (c *channel) Name() string {
 	return c.name
 }
 
-func (c *channel) Send(message net.TaggedMarshaler) error {
-	// Transform net.TaggedMarshaler to a protobuf message
+func (c *channel) Send(ctx context.Context, message net.TaggedMarshaler) error {
 	messageProto, err := c.messageProto(message)
 	if err != nil {
 		return err
 	}
 
-	c.retransmitter.scheduleRetransmission(messageProto, c.publishToPubSub)
-	return c.publishToPubSub(messageProto)
+	messageProto.SequenceNumber = c.nextSeqno()
+
+	doSend := func() error {
+		return c.publishToPubSub(messageProto)
+	}
+
+	retransmission.ScheduleRetransmissions(ctx, c.retransmissionTicker, doSend)
+
+	return doSend()
 }
 
-func (c *channel) Recv(handler net.HandleMessageFunc) error {
+func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
+	messageHandler := &messageHandler{
+		ctx:     ctx,
+		channel: make(chan net.Message, messageHandlerThrottle),
+	}
+
 	c.messageHandlersMutex.Lock()
-	c.messageHandlers = append(c.messageHandlers, handler)
+	c.messageHandlers = append(c.messageHandlers, messageHandler)
 	c.messageHandlersMutex.Unlock()
 
-	return nil
+	handleWithRetransmissions := retransmission.WithRetransmissionSupport(handler)
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				logger.Debug("context is done, removing handler")
+				c.removeHandler(messageHandler)
+				return
+
+			case msg := <-messageHandler.channel:
+				// Go language specification says that if one or more of the
+				// communications in the select statement can proceed, a single
+				// one that will proceed is chosen via a uniform pseudo-random
+				// selection.
+				// Thus, it can happen this communication is called when ctx is
+				// already done. Since we guarantee in the network channel API
+				// that handler is not called after ctx is done (client code
+				// could e.g. perform come cleanup), we need to double-check
+				// the context state here.
+				if messageHandler.ctx.Err() != nil {
+					continue
+				}
+
+				handleWithRetransmissions(msg)
+			}
+		}
+	}()
 }
 
-func (c *channel) UnregisterRecv(handlerType string) error {
+func (c *channel) removeHandler(handler *messageHandler) {
 	c.messageHandlersMutex.Lock()
 	defer c.messageHandlersMutex.Unlock()
 
-	removedCount := 0
-
-	// updated slice shares the same backing array and capacity as the original,
-	// so the storage is reused for the filtered slice.
-	updated := c.messageHandlers[:0]
-
-	for _, mh := range c.messageHandlers {
-		if mh.Type != handlerType {
-			updated = append(updated, mh)
-		} else {
-			removedCount++
+	for i, h := range c.messageHandlers {
+		if h.channel == handler.channel {
+			c.messageHandlers[i] = c.messageHandlers[len(c.messageHandlers)-1]
+			c.messageHandlers = c.messageHandlers[:len(c.messageHandlers)-1]
+			break
 		}
 	}
-
-	c.messageHandlers = updated[:len(c.messageHandlers)-removedCount]
-
-	return nil
 }
 
 func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) error {
@@ -91,17 +148,13 @@ func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) 
 	c.unmarshalersMutex.Lock()
 	defer c.unmarshalersMutex.Unlock()
 
-	if _, exists := c.unmarshalersByType[tpe]; exists {
-		return fmt.Errorf("type %s already has an associated unmarshaler", tpe)
-	}
-
 	c.unmarshalersByType[tpe] = unmarshaler
 	return nil
 }
 
 func (c *channel) messageProto(
 	message net.TaggedMarshaler,
-) (*pb.NetworkMessage, error) {
+) (*pb.BroadcastNetworkMessage, error) {
 	payloadBytes, err := message.Marshal()
 	if err != nil {
 		return nil, err
@@ -112,14 +165,14 @@ func (c *channel) messageProto(
 		return nil, err
 	}
 
-	return &pb.NetworkMessage{
+	return &pb.BroadcastNetworkMessage{
 		Payload: payloadBytes,
 		Sender:  senderIdentityBytes,
 		Type:    []byte(message.Type()),
 	}, nil
 }
 
-func (c *channel) publishToPubSub(message *pb.NetworkMessage) error {
+func (c *channel) publishToPubSub(message *pb.BroadcastNetworkMessage) error {
 	messageBytes, err := message.Marshal()
 	if err != nil {
 		return err
@@ -132,50 +185,64 @@ func (c *channel) publishToPubSub(message *pb.NetworkMessage) error {
 }
 
 func (c *channel) handleMessages(ctx context.Context) {
-	defer c.subscription.Cancel()
+	logger.Debugf("creating [%v] subscription workers", subscriptionWorkers)
+	for i := 0; i < subscriptionWorkers; i++ {
+		go c.subscriptionWorker(ctx)
+	}
 
+	logger.Debugf("creating [%v] message workers", messageWorkers)
+	for i := 0; i < messageWorkers; i++ {
+		go c.incomingMessageWorker(ctx)
+	}
+}
+
+func (c *channel) subscriptionWorker(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			c.subscription.Cancel()
 			return
 		default:
 			message, err := c.subscription.Next(ctx)
 			if err != nil {
-				// TODO: handle error - different error types
-				// result in different outcomes. Print err is very noisy.
 				logger.Error(err)
 				continue
 			}
 
-			// Every message should be independent from any other message.
-			go func(msg *pubsub.Message) {
-				if err := c.processPubsubMessage(msg); err != nil {
-					// TODO: handle error - different error types
-					// result in different outcomes. Print err is very noisy.
-					logger.Error(err)
-					return
-				}
-			}(message)
+			select {
+			case c.incomingMessageQueue <- message:
+			default:
+				logger.Warningf("consumers too slow, dropping message")
+			}
+		}
+	}
+}
+
+func (c *channel) incomingMessageWorker(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case msg := <-c.incomingMessageQueue:
+			if err := c.processPubsubMessage(msg); err != nil {
+				logger.Error(err)
+			}
 		}
 	}
 }
 
 func (c *channel) processPubsubMessage(pubsubMessage *pubsub.Message) error {
-	var messageProto pb.NetworkMessage
+	var messageProto pb.BroadcastNetworkMessage
 	if err := proto.Unmarshal(pubsubMessage.Data, &messageProto); err != nil {
 		return err
 	}
 
-	onFirstTimeReceived := func() error {
-		return c.processContainerMessage(pubsubMessage.GetFrom(), messageProto)
-	}
-
-	return c.retransmitter.receive(&messageProto, onFirstTimeReceived)
+	return c.processContainerMessage(pubsubMessage.GetFrom(), messageProto)
 }
 
 func (c *channel) processContainerMessage(
 	proposedSender peer.ID,
-	message pb.NetworkMessage,
+	message pb.BroadcastNetworkMessage,
 ) error {
 	// The protocol type is on the envelope; let's pull that type
 	// from our map of unmarshallers.
@@ -214,15 +281,17 @@ func (c *channel) processContainerMessage(
 		)
 	}
 
-	// Fire a message back to the protocol.
-	protocolMessage := internal.BasicMessage(
+	netMessage := internal.BasicMessage(
 		senderIdentifier.id,
 		unmarshaled,
 		string(message.Type),
 		key.Marshal(networkKey),
+		message.SequenceNumber,
 	)
 
-	return c.deliver(protocolMessage)
+	c.deliver(netMessage)
+
+	return nil
 }
 
 func (c *channel) getUnmarshalingContainerByType(messageType string) (net.TaggedUnmarshaler, error) {
@@ -239,28 +308,26 @@ func (c *channel) getUnmarshalingContainerByType(messageType string) (net.Tagged
 	return unmarshaler(), nil
 }
 
-func (c *channel) deliver(message net.Message) error {
+func (c *channel) deliver(message net.Message) {
 	c.messageHandlersMutex.Lock()
-	snapshot := make([]net.HandleMessageFunc, len(c.messageHandlers))
+	snapshot := make([]*messageHandler, len(c.messageHandlers))
 	copy(snapshot, c.messageHandlers)
 	c.messageHandlersMutex.Unlock()
 
 	for _, handler := range snapshot {
-		go func(msg net.Message, handler net.HandleMessageFunc) {
-			if err := handler.Handler(msg); err != nil {
-				// TODO: handle error
-				logger.Error(err)
-				return
-			}
-		}(message, handler)
+		select {
+		case handler.channel <- message:
+		default:
+			logger.Warningf("handler too slow, dropping message")
+		}
 	}
-
-	return nil
 }
 
-func (c *channel) AddFilter(filter net.BroadcastChannelFilter) error {
+func (c *channel) SetFilter(filter net.BroadcastChannelFilter) error {
 	c.pubsubMutex.Lock()
 	defer c.pubsubMutex.Unlock()
+
+	c.pubsub.UnregisterTopicValidator(c.name)
 
 	return c.pubsub.RegisterTopicValidator(c.name, createTopicValidator(filter))
 }

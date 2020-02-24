@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/urfave/cli"
 )
@@ -69,6 +70,11 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
+	blockCounter, err := chainProvider.BlockCounter()
+	if err != nil {
+		return err
+	}
+
 	stakeMonitor, err := chainProvider.StakeMonitor()
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
@@ -92,6 +98,7 @@ func Start(c *cli.Context) error {
 		config.LibP2P,
 		networkPrivateKey,
 		stakeMonitor,
+		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
 	)
 	if err != nil {
 		return err

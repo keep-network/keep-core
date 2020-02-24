@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: tx
-        image: ethereum/client-go:v1.9.6
+        image: ethereum/client-go:v1.9.9
         ports:
           - containerPort: 8545
           - containerPort: 8546
@@ -36,5 +36,5 @@ spec:
         volumeMounts:
           - name: eth-tx
             mountPath: /root/.ethereum
-        args: ["--testnet", "--datadir=/root/.ethereum", "--syncmode=light", "--rpc", "--rpcapi=eth,web3,personal", "--rpcport=8545", "--rpcaddr=0.0.0.0", "--rpccorsdomain=\"\"", "--rpcvhosts=*", "--ws", "--wsport=8546", "--wsaddr=0.0.0.0", "--wsorigins=*"]
+        args: ["--testnet", "--networkid=3", "--datadir=/root/.ethereum", "--syncmode=fast", "--txpool.accountslots=128", "--txpool.accountqueue=512", "--whitelist=6485846=0x43f0cd1e5b1f9c4d5cda26c240b59ee4f1b510d0a185aa8fd476d091b0097a80", "--rpc", "--rpcapi=eth,web3,personal,admin,net", "--rpcport=8545", "--rpcaddr=0.0.0.0", "--rpccorsdomain=\"\"", "--rpcvhosts=*", "--ws", "--wsport=8546", "--wsaddr=0.0.0.0", "--wsorigins=*"]
 

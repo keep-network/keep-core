@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ -z $GOOGLE_PROJECT_NAME || -z $GOOGLE_PROJECT_ID || -z $BUILD_TAG || -z $GOOGLE_REGION || -z $GOOGLE_COMPUTE_ZONE_A || -z $TRUFFLE_NETWORK ]]; then
+if [[ -z $GOOGLE_PROJECT_NAME || -z $GOOGLE_PROJECT_ID || -z $BUILD_TAG || -z $GOOGLE_REGION || -z $GOOGLE_COMPUTE_ZONE_A || -z $TRUFFLE_NETWORK || -z $CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY ]]; then
   echo "one or more required variables are undefined"
   exit 1
 fi
@@ -46,19 +46,16 @@ ssh utilitybox << EOF
   sleep 10s
   echo ">>>>>>FINISH Port Forward eth-tx-node FINISH>>>>>>"
 
-  echo "<<<<<<START Unlock Contract Owner ETH Account START<<<<<<"
-  echo "geth --exec \"personal.unlockAccount(\"${CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS}\", \"${CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD}\", 600)\" attach http://localhost:8545"
-  geth --exec "personal.unlockAccount(\"${CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS}\", \"${CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD}\", 600)" attach http://localhost:8545
-  echo ">>>>>>FINISH Unlock Contract Owner ETH Account FINISH>>>>>>"
+  echo "<<<<<<START Setting Contract Owner Key START<<<<<<"
+  echo "export CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=\$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY"
+  export CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
+  echo ">>>>>>FINISH Setting Contract Owner Key FINISH>>>>>>"
 
   echo "<<<<<<START Contract Migration START<<<<<<"
   cd /tmp/$BUILD_TAG/solidity
 
-  npm install truffle@5.0.41
-  npm install openzeppelin-solidity@2.3.0
-  npm install solidity-bytes-utils@0.0.7
-  npm install babel-register@6.26.0
-  npm install babel-polyfill@6.26.0
+  # This command uses the content of package.json in the CWD to install dependencies
+  npm i
 
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
@@ -73,4 +70,3 @@ echo "<<<<<<START Migration Dir Cleanup START<<<<<<"
 echo "ssh utilitybox rm -rf /tmp/$BUILD_TAG"
 ssh utilitybox rm -rf /tmp/$BUILD_TAG
 echo ">>>>>>FINISH Migration Dir Cleanup FINISH>>>>>>"
-

@@ -15,6 +15,8 @@ import (
 
 var logger = log.Logger("keep-relay")
 
+const maxGroupSize = 255
+
 // NewNode returns an empty Node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
 func NewNode(
@@ -96,6 +98,7 @@ func (n *Node) MonitorRelayEntry(
 func (n *Node) GenerateRelayEntry(
 	previousEntry []byte,
 	relayChain relayChain.Interface,
+	signing chain.Signing,
 	groupPublicKey []byte,
 	startBlockHeight uint64,
 ) {
@@ -105,13 +108,30 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	channel, err := n.netProvider.ChannelFor(memberships[0].ChannelName)
+	channel, err := n.netProvider.BroadcastChannelFor(memberships[0].ChannelName)
 	if err != nil {
 		logger.Errorf("could not create broadcast channel: [%v]", err)
 		return
 	}
 
 	entry.RegisterUnmarshallers(channel)
+
+	groupMembers, err := relayChain.GetGroupMembers(groupPublicKey)
+	if err != nil {
+		logger.Errorf("could not get group members: [%v]", err)
+		return
+	}
+
+	err = channel.SetFilter(
+		createGroupMemberFilter(groupMembers, signing),
+	)
+	if err != nil {
+		logger.Errorf(
+			"could not set filter for channel [%v]: [%v]",
+			channel.Name(),
+			err,
+		)
+	}
 
 	for _, member := range memberships {
 		go func(member *registry.Membership) {

@@ -1,13 +1,17 @@
 package state
 
 import (
+	"context"
 	"fmt"
-	"strconv"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
+
+// For the entire time of state transition (delay + initiate), messages
+// are not handled. We use a small buffer to unblock producers and let
+// them perform optional filtering/validation during that time.
+const receiveBuffer = 64
 
 // Machine is a state machine that executes over states implemented from State
 // interface.
@@ -34,20 +38,14 @@ func NewMachine(
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
 func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
-	// Use an unbuffered channel to serialize message processing.
-	recvChan := make(chan net.Message)
-	handler := net.HandleMessageFunc{
-		Type: fmt.Sprintf("dkg/%s", strconv.FormatInt(time.Now().UTC().UnixNano(), 16)),
-		Handler: func(msg net.Message) error {
-			recvChan <- msg
-			return nil
-		},
+	recvChan := make(chan net.Message, receiveBuffer)
+	handler := func(msg net.Message) {
+		recvChan <- msg
 	}
 
-	m.channel.Recv(handler)
-	defer m.channel.UnregisterRecv(handler.Type)
-
 	currentState := m.initialState
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	m.channel.Recv(ctx, handler)
 
 	logger.Infof(
 		"[member:%v,channel:%s] waiting for block %v to start execution",
@@ -63,12 +61,14 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	lastStateEndBlockHeight := startBlockHeight
 
 	blockWaiter, err := stateTransition(
+		ctx,
 		currentState,
 		lastStateEndBlockHeight,
 		m.blockCounter,
 		m.channel.Name()[:5],
 	)
 	if err != nil {
+		cancelCtx()
 		return nil, 0, err
 	}
 
@@ -87,6 +87,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 			}
 
 		case lastStateEndBlockHeight := <-blockWaiter:
+			cancelCtx()
 			nextState := currentState.Next()
 			if nextState == nil {
 				logger.Infof(
@@ -100,14 +101,18 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 			}
 
 			currentState = nextState
+			ctx, cancelCtx = context.WithCancel(context.Background())
+			m.channel.Recv(ctx, handler)
 
 			blockWaiter, err = stateTransition(
+				ctx,
 				currentState,
 				lastStateEndBlockHeight,
 				m.blockCounter,
 				m.channel.Name()[:5],
 			)
 			if err != nil {
+				cancelCtx()
 				return nil, 0, err
 			}
 
@@ -117,6 +122,7 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 }
 
 func stateTransition(
+	ctx context.Context,
 	currentState State,
 	lastStateEndBlockHeight uint64,
 	blockCounter chain.BlockCounter,
@@ -145,7 +151,7 @@ func stateTransition(
 		)
 	}
 
-	err = currentState.Initiate()
+	err = currentState.Initiate(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initiate new state [%v]", err)
 	}

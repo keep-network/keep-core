@@ -95,7 +95,7 @@ func executeDKG(
 		return nil, err
 	}
 
-	broadcastChannel, err := network.ChannelFor(fmt.Sprintf("dkg-test-%v", seed))
+	broadcastChannel, err := network.BroadcastChannelFor(fmt.Sprintf("dkg-test-%v", seed))
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func executeDKG(
 		go func() {
 			signer, err := dkg.ExecuteDKG(
 				seed,
-				i,
+				uint8(i),
 				relayConfig.GroupSize,
 				relayConfig.DishonestThreshold(),
 				startBlockHeight,

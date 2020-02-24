@@ -1,8 +1,0 @@
-#!/bin/bash
-DIRNAME=`dirname $0`
-kubectl create -f $DIRNAME/../kube/lcl/dashboard.yaml
-sleep 20
-kubectl create -f $DIRNAME/../kube/lcl/miner-nodes.yaml
-sleep 20
-kubectl create -f $DIRNAME/../kube/lcl/tx-nodes.yaml
-echo "EthStats Dashboard address: http://localhost:3000"

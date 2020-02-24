@@ -1,38 +1,27 @@
-# Configured by Kube. Do not edit by hand, your changes will be lost!
+# Values from Kube ConfigMap and set via InitContainer run, do not update manually.
 
 [ethereum]
-  URL = "Set by Kube"
-  URLRPC = "Set by Kube"
+  URL = ""
+  URLRPC = ""
 
   [ethereum.account]
-    Address = "Set by Kube"
-    KeyFile = "Set by Kube"
+    Address = ""
+    KeyFile = ""
 
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeaconOperator contract
-    KeepRandomBeaconOperator = "Set by Kube"
-    # TokenStaking
-    TokenStaking = "Set by Kube"
+    KeepRandomBeaconOperator = ""
+
+    # Hex-encoded address of TokenStaking contract
+    TokenStaking = ""
+
     # Hex-encoded address of KeepRandomBeaconService contract. Only needed
-    # in cases where the client's utility functions will be used (e.g., the
-    # relay subcommand).
-    KeepRandomBeaconService = "Set by Kube"
+    KeepRandomBeaconService = ""
 
 [LibP2P]
-  Peers = ["/dns4/keep-client-bootstrap-peer-0.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm9RGTm8VGne5PvZGAw9KYNDggHaEQh5wiGSKgibp2G95r", "/dns4/keep-client-bootstrap-peer-1.default.svc.cluster.local/tcp/3919/ipfs/16Uiu2HAm53SbohjCkhcbyMAaFHf7TQrf8BG6mY7sNc39Dg8c3Tuj"]
-  Port = "Set by Kube."
-  # AnnouncedAddresses:
-  # Leaving AnnouncedAddresses empty will set a default address to be
-  # announced to the network.  The default address will vary by deploy
-  # conditions.  Set AnnouncedAddresses if you have known external IPs
-  # or DNS entries you want to route traffic through.
+  Peers = []
+  Port = ""
   AnnouncedAddresses = []
 
-  # TODO: Make these configurable
-  # Number of retransmissions for each message
-  RetransmissionCycles = 5
-  # Milliseconds interval between each retransmission of a message
-  RetransmissionInterval = 1000
-
 [Storage]
-  DataDir = "Set by Kube"
+  DataDir = ""

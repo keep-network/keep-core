@@ -1,4 +1,4 @@
-FROM golang:1.12-alpine3.10 AS runtime
+FROM golang:1.13.6-alpine3.10 AS runtime
 
 ENV APP_NAME=keep-client \
 	BIN_PATH=/usr/local/bin
@@ -47,12 +47,7 @@ RUN go mod download
 
 # Install code generators.
 RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.1/protoc-gen-gogoslick && go install .
-# go-ethereum in version 1.9.7 is still on govendor and some vendor.json
-# dependencies are not properly resolved by go modules. We use 'go get' as
-# a temporary workaround and hope to switch back to 'go install' once 
-# go-ethereum migrates to go modules in 1.9.8.
-# RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.7/cmd/abigen && go install .
-RUN go get github.com/ethereum/go-ethereum/cmd/abigen@v1.9.7
+RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.10/cmd/abigen && go install .
 
 COPY ./contracts/solidity $APP_DIR/contracts/solidity
 RUN cd $APP_DIR/contracts/solidity && npm install

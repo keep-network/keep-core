@@ -2,6 +2,7 @@ package result
 
 import (
 	"bytes"
+	"context"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -12,6 +13,9 @@ import (
 
 // represents a given state in the state machine for signing dkg results
 type signingState = state.State
+
+const resultSigningStateDelayBlocks = 1
+const resultSigningStateActiveBlocks = 5
 
 // resultSigningState is the state during which group members sign their preferred
 // dkg result (by hashing their dkg result, and then signing the result), and
@@ -34,19 +38,19 @@ type resultSigningState struct {
 }
 
 func (rss *resultSigningState) DelayBlocks() uint64 {
-	return state.MessagingStateDelayBlocks
+	return resultSigningStateDelayBlocks
 }
 
 func (rss *resultSigningState) ActiveBlocks() uint64 {
-	return state.MessagingStateActiveBlocks
+	return resultSigningStateActiveBlocks
 }
 
-func (rss *resultSigningState) Initiate() error {
+func (rss *resultSigningState) Initiate(ctx context.Context) error {
 	message, err := rss.member.SignDKGResult(rss.result, rss.relayChain, rss.signing)
 	if err != nil {
 		return err
 	}
-	if err := rss.channel.Send(message); err != nil {
+	if err := rss.channel.Send(ctx, message); err != nil {
 		return err
 	}
 	return nil
@@ -135,7 +139,7 @@ func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (svs *signaturesVerificationState) Initiate() error {
+func (svs *signaturesVerificationState) Initiate(ctx context.Context) error {
 	signatures, err := svs.member.VerifyDKGResultSignatures(
 		svs.signatureMessages,
 		svs.signing,
@@ -200,7 +204,7 @@ func (rss *resultSubmissionState) ActiveBlocks() uint64 {
 	return state.SilentStateActiveBlocks
 }
 
-func (rss *resultSubmissionState) Initiate() error {
+func (rss *resultSubmissionState) Initiate(ctx context.Context) error {
 	return rss.member.SubmitDKGResult(
 		rss.result,
 		rss.signatures,

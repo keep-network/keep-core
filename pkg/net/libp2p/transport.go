@@ -4,10 +4,12 @@ import (
 	"context"
 	"net"
 
+	secio "github.com/libp2p/go-libp2p-secio"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	sec "github.com/libp2p/go-libp2p-core/sec"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/sec"
 )
 
 // ID is the multistream-select protocol ID that should be used when identifying
@@ -18,14 +20,15 @@ const handshakeID = "/keep/handshake/1.0.0"
 var _ sec.SecureTransport = (*transport)(nil)
 var _ sec.SecureConn = (*authenticatedConnection)(nil)
 
-// transport constructs an authenticated communication connection for a peer.
+// transport constructs an encrypted and authenticated connection for a peer.
 type transport struct {
-	localPeerID  peer.ID
-	privateKey   libp2pcrypto.PrivKey
-	stakeMonitor chain.StakeMonitor
+	localPeerID     peer.ID
+	privateKey      libp2pcrypto.PrivKey
+	stakeMonitor    chain.StakeMonitor
+	encryptionLayer sec.SecureTransport
 }
 
-func newAuthenticatedTransport(
+func newEncryptedAuthenticatedTransport(
 	pk libp2pcrypto.PrivKey,
 	stakeMonitor chain.StakeMonitor,
 ) (*transport, error) {
@@ -33,20 +36,32 @@ func newAuthenticatedTransport(
 	if err != nil {
 		return nil, err
 	}
+
+	encryptionLayer, err := secio.New(pk)
+	if err != nil {
+		return nil, err
+	}
+
 	return &transport{
-		localPeerID:  id,
-		privateKey:   pk,
-		stakeMonitor: stakeMonitor,
+		localPeerID:     id,
+		privateKey:      pk,
+		stakeMonitor:    stakeMonitor,
+		encryptionLayer: encryptionLayer,
 	}, nil
 }
 
 // SecureInbound secures an inbound connection.
 func (t *transport) SecureInbound(
 	ctx context.Context,
-	unauthenticatedConn net.Conn,
+	connection net.Conn,
 ) (sec.SecureConn, error) {
+	encryptedConnection, err := t.encryptionLayer.SecureInbound(ctx, connection)
+	if err != nil {
+		return nil, err
+	}
+
 	return newAuthenticatedInboundConnection(
-		unauthenticatedConn,
+		encryptedConnection,
 		t.localPeerID,
 		t.privateKey,
 		t.stakeMonitor,
@@ -56,35 +71,23 @@ func (t *transport) SecureInbound(
 // SecureOutbound secures an outbound connection.
 func (t *transport) SecureOutbound(
 	ctx context.Context,
-	unauthenticatedConn net.Conn,
+	connection net.Conn,
 	remotePeerID peer.ID,
 ) (sec.SecureConn, error) {
+	encryptedConnection, err := t.encryptionLayer.SecureOutbound(
+		ctx,
+		connection,
+		remotePeerID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return newAuthenticatedOutboundConnection(
-		unauthenticatedConn,
+		encryptedConnection,
 		t.localPeerID,
 		t.privateKey,
 		remotePeerID,
 		t.stakeMonitor,
 	)
-}
-
-// LocalPeer retrieves the local peer.
-func (ac *authenticatedConnection) LocalPeer() peer.ID {
-	return ac.localPeerID
-}
-
-// LocalPrivateKey retrieves the local peer's privateKey
-func (ac *authenticatedConnection) LocalPrivateKey() libp2pcrypto.PrivKey {
-	return ac.localPeerPrivateKey
-}
-
-// RemotePeer returns the remote peer ID if we initiated the dial. Otherwise, it
-// returns "" (because this connection isn't actually secure).
-func (ac *authenticatedConnection) RemotePeer() peer.ID {
-	return ac.remotePeerID
-}
-
-// RemotePublicKey retrieves the remote public key.
-func (ac *authenticatedConnection) RemotePublicKey() libp2pcrypto.PubKey {
-	return ac.remotePeerPublicKey
 }

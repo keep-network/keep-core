@@ -22,30 +22,64 @@ func TestConvertResult(t *testing.T) {
 		gjkrResult            *gjkr.Result
 		expectedResult        *relayChain.DKGResult
 	}{
-		"success: false, group public key: nil, DQ and IA: empty": {
+		"group public key not provided, DQ and IA empty": {
 			disqualifiedMemberIDs: []group.MemberIndex{},
 			inactiveMemberIDs:     []group.MemberIndex{},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: nil,
-				Group:          group.NewDkgGroup(3, 5),
+				Group:          group.NewDkgGroup(32, 64),
 			},
 			expectedResult: &relayChain.DKGResult{
 				GroupPublicKey: []byte{},
-				Disqualified:   []byte{0x00, 0x00, 0x00, 0x00, 0x00},
-				Inactive:       []byte{0x00, 0x00, 0x00, 0x00, 0x00},
+				Misbehaved:     []byte{},
 			},
 		},
-		"success: true, group public key: provided, DQ and IA: provided": {
-			disqualifiedMemberIDs: []group.MemberIndex{1, 3, 4},
-			inactiveMemberIDs:     []group.MemberIndex{5},
+		"group public key provided, DQ and IA empty": {
+			disqualifiedMemberIDs: []group.MemberIndex{},
+			inactiveMemberIDs:     []group.MemberIndex{},
 			gjkrResult: &gjkr.Result{
 				GroupPublicKey: publicKey,
-				Group:          group.NewDkgGroup(3, 5),
+				Group:          group.NewDkgGroup(32, 64),
 			},
 			expectedResult: &relayChain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
-				Disqualified:   []byte{0x01, 0x00, 0x01, 0x01, 0x00},
-				Inactive:       []byte{0x00, 0x00, 0x00, 0x00, 0x01},
+				Misbehaved:     []byte{},
+			},
+		},
+		"group public key provided, both DQ and IA non-empty": {
+			disqualifiedMemberIDs: []group.MemberIndex{1, 4, 3, 50},
+			inactiveMemberIDs:     []group.MemberIndex{5, 3, 50},
+			gjkrResult: &gjkr.Result{
+				GroupPublicKey: publicKey,
+				Group:          group.NewDkgGroup(32, 64),
+			},
+			expectedResult: &relayChain.DKGResult{
+				GroupPublicKey: marshalledPublicKey,
+				Misbehaved:     []byte{0x01, 0x03, 0x04, 0x05, 0x32},
+			},
+		},
+		"group public key provided, DQ empty, IA non-empty": {
+			disqualifiedMemberIDs: []group.MemberIndex{},
+			inactiveMemberIDs:     []group.MemberIndex{5},
+			gjkrResult: &gjkr.Result{
+				GroupPublicKey: publicKey,
+				Group:          group.NewDkgGroup(32, 64),
+			},
+			expectedResult: &relayChain.DKGResult{
+				GroupPublicKey: marshalledPublicKey,
+				Misbehaved:     []byte{0x05},
+			},
+		},
+		"group public key provided, DQ non-empty, IA empty": {
+			disqualifiedMemberIDs: []group.MemberIndex{60, 1, 5},
+			inactiveMemberIDs:     []group.MemberIndex{},
+			gjkrResult: &gjkr.Result{
+				GroupPublicKey: publicKey,
+				Group:          group.NewDkgGroup(32, 64),
+			},
+			expectedResult: &relayChain.DKGResult{
+				GroupPublicKey: marshalledPublicKey,
+				Misbehaved:     []byte{0x01, 0x05, 0x3C},
 			},
 		},
 	}
@@ -61,7 +95,7 @@ func TestConvertResult(t *testing.T) {
 		convertedResult := convertResult(test.gjkrResult, groupSize)
 
 		if !test.expectedResult.Equals(convertedResult) {
-			t.Fatalf("\nexpected: %v\nactual:   %v\n", test.expectedResult, convertedResult)
+			t.Errorf("\nexpected: %v\nactual:   %v\n", test.expectedResult, convertedResult)
 		}
 	}
 }

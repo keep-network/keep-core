@@ -23,10 +23,9 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
         uint256 fluctuationMargin,
         uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
-        address operatorContract
+        address registry
     )
         public
-        onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
         _initialized["KeepRandomBeaconImplV2"] = true;
@@ -38,7 +37,7 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
         fluctuationMargin;
         dkgContributionMargin;
         withdrawalDelay;
-        operatorContract;
+        registry;
     }
 
     /**
