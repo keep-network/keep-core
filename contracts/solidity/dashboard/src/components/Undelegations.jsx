@@ -42,12 +42,12 @@ const Undelegations = ({ undelegations, successUndelegationCallback }) => {
 
 const UndelegationItem = React.memo(({ undelegation, successUndelegationCallback }) => {
   return (
-    <li className="flex flex-row flex-row-space-between">
-      <div className="flex-1 text-big">{undelegation.undelegatedAt}</div>
-      <div className="flex-1 text-big"><AddressShortcut address={undelegation.beneficiary} /></div>
-      <div className="flex-1 text-big"><AddressShortcut address={undelegation.operatorAddress} /></div>
-      <div className="flex-1 text-big">{displayAmount(undelegation.amount)} KEEP</div>
-      <div className="flex-1 text-big">
+    <li className="flex flex-row text-darker-grey flex-row-center flex-row-space-between" style={{ marginBottom: `0.5rem` }}>
+      <div className="flex-1">{undelegation.undelegatedAt}</div>
+      <div className="flex-1"><AddressShortcut address={undelegation.beneficiary} /></div>
+      <div className="flex-1"><AddressShortcut address={undelegation.operatorAddress} /></div>
+      <div className="flex-1">{displayAmount(undelegation.amount)} KEEP</div>
+      <div className="flex-1">
         {undelegation.canRecoverStake ?
           <RecoverStakeButton
             successCallback={successUndelegationCallback}
