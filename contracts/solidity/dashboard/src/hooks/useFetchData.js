@@ -26,7 +26,6 @@ export const useFetchData = (serviceMethod, initialData, ...serviceMethodArgs) =
     dispatch({ type: FETCH_REQUEST_START })
     Promise.all([serviceMethod(web3Context, ...serviceMethodArgs), wait(requestTimeDelay)])
       .then(([data]) => {
-        console.log('promise from', serviceMethod)
         shouldSetState && dispatch({ type: FETCH_REQUEST_SUCCESS, payload: data })
       })
       .catch((error) => {
