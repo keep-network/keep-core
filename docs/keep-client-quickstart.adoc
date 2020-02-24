@@ -55,6 +55,8 @@ feel free.  This guide will assume you use the default paths.*
 
 === Unzip the bundle
 
+Note: Your bundle will be prefixed with a timestamp, below is just an example.
+
 ```
 mkdir keep-client-deployment-bundle
 tar -xvf keep-client-deployment-bundle.tar.gz -C keep-client-deployment-bundle
@@ -65,13 +67,13 @@ Resulting directory should look like:
 ```
 .
 ├── keep-client-deployment-bundle
-│   ├── config
-│   │   ├── eth-account-keyfile
-│   │   └── keep-client-config.toml
-│   ├── eth-account-password.txt
-│   ├── keep-client-quickstart.adoc
-│   └── keep-client-snapshot.tar
-└── keep-client-deployment-bundle.tar.gz
+├── .secrets
+│   └── eth-account-password.txt
+├── keep-client-deployment-bundle.tar.gz
+├── config
+│   ├── eth-account-keyfile
+│   └── keep-client-config.toml
+└── persistence
 ```
 
 === Load the Docker image
@@ -96,7 +98,7 @@ section `LibP2P`.  See section <<AnnouncedAddresses>> for configuration examples
 Run this from the `keep-client-deployment-bundle` directory:
 
 ```
-export KEEP_CLIENT_ETHEREUM_PASSWORD=$(cat eth-account-password.txt)
+export KEEP_CLIENT_ETHEREUM_PASSWORD=$(cat .secrets/eth-account-password.txt)
 export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
 export KEEP_CLIENT_PERSISTENCE_DIR=$(pwd)/persistence
 
