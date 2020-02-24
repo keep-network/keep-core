@@ -12,9 +12,9 @@ const SlashedTokens = (props) => {
   return (
     <LoadingOverlay isFetching={isFetching}>
       <section id="slashed-tokens" className="tile">
-        <h5>
+        <h3 className="text-darker-grey">
             Slashed Tokens
-        </h5>
+        </h3>
         <SpeechBubbleInfo>
           A &nbsp;<span className="text-bold">slash</span>&nbsp;
           is a penalty for signing group misbehavior. It results in a removal of a portion of your delegated KEEP tokens.
