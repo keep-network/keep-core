@@ -143,9 +143,14 @@ contract TokenStaking is StakeDelegatable {
      * once undelegation period has passed.
      * @return undelegatedAt The time of undelegate request used to determine
      * when the undelegation period has passed.
+     * @return createdAt The time when the stake has been created
      */
-    function getUndelegation(address _operator) public view returns (uint256 amount, uint256 undelegatedAt) {
-        return (operators[_operator].amount, operators[_operator].undelegatedAt);
+    function getUndelegation(address _operator) public view returns (uint256 amount, uint256 undelegatedAt, uint256 createdAt) {
+        return (
+            operators[_operator].amount,
+            operators[_operator].undelegatedAt,
+            operators[_operator].createdAt
+        );
     }
 
     /**
