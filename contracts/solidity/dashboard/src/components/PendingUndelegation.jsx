@@ -30,6 +30,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
             ...state.data,
             undelegationComplete,
             pendingUnstakeBalance: amount,
+            undelegationStatus: 'PENDING',
           })
         })
     }
