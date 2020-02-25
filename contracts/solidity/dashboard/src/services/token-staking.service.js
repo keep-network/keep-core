@@ -16,11 +16,14 @@ const fetchDelegatedTokensData = async (web3Context) => {
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'authorizerOf', yourAddress),
   ])
 
+  const { undelegationStatus } = await fetchPendingUndelegation(web3Context)
+
   return {
     stakedBalance,
     ownerAddress,
     beneficiaryAddress,
     authorizerAddress,
+    undelegationStatus,
   }
 }
 
