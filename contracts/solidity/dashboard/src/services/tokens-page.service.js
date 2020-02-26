@@ -29,7 +29,11 @@ export const fetchTokensPageData = async (web3Context) => {
 
   const operatorsAddressesSet = new Set(operatorsAddresses)
   for (const operatorAddress of operatorsAddressesSet) {
-    const { createdAt, undelegatedAt, amount } = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'getUndelegation', operatorAddress)
+    const {
+      createdAt,
+      undelegatedAt,
+      amount,
+    } = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'getDelegationInfo', operatorAddress)
     const beneficiary = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'magpieOf', operatorAddress)
     const operatorData = { undelegatedAt, amount, beneficiary, operatorAddress, createdAt }
     const balance = web3Utils.toBN(amount)
