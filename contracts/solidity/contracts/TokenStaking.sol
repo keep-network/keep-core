@@ -137,19 +137,20 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Gets undelegate request by Operator.
+     * @dev Gets delegation info request by Operator.
      * @param _operator Operator address.
+     * @return createdAt The time when the stake has been delegated
      * @return amount The amount the given operator will be able to recover
      * once undelegation period has passed.
      * @return undelegatedAt The time of undelegate request used to determine
      * when the undelegation period has passed.
-     * @return createdAt The time when the stake has been created
      */
-    function getUndelegation(address _operator) public view returns (uint256 amount, uint256 undelegatedAt, uint256 createdAt) {
+    function getDelegationInfo(address _operator)
+    public view returns (uint256 createdAt, uint256 amount, uint256 undelegatedAt) {
         return (
+            operators[_operator].createdAt,
             operators[_operator].amount,
-            operators[_operator].undelegatedAt,
-            operators[_operator].createdAt
+            operators[_operator].undelegatedAt
         );
     }
 
