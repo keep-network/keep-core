@@ -40,7 +40,7 @@ const fetchPendingUndelegation = async (web3Context) => {
   const undelegationComplete = isUndelegation ? undelegationCompletedAtInBN.toString() : null
   let undelegationStatus
   if (isUndelegation) {
-    undelegationStatus = web3Utils.toBN(await eth.getBlockNumber()).gt(undelegationCompletedAtInBN) ? 'COMPLETED' : 'PENDING'
+    undelegationStatus = web3Utils.toBN(await eth.getBlockNumber()).gt(undelegationCompletedAtInBN) ? 'COMPLETE' : 'PENDING'
   }
 
   return {
