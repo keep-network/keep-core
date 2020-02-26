@@ -13,6 +13,7 @@ const ethNetworkId = process.env.ETH_NETWORK_ID;
 // Contract owner info
 var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
 var authorizer = contractOwnerAddress
+
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
 /*
