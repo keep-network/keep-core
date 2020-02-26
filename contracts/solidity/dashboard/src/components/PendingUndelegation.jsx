@@ -23,7 +23,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
     if (latestUnstakeEvent) {
       const { returnValues: { operator, undelegatedAt } } = latestUnstakeEvent
       const undelegationComplete = web3Utils.toBN(undelegatedAt).add(web3Utils.toBN(undelegationPeriod))
-      stakingContract.methods.getUndelegation(operator).call()
+      stakingContract.methods.getDelegationInfo(operator).call()
         .then((data) => {
           const { amount } = data
           setData({

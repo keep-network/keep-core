@@ -30,7 +30,7 @@ const fetchDelegatedTokensData = async (web3Context) => {
 const fetchPendingUndelegation = async (web3Context) => {
   const { yourAddress, eth } = web3Context
   const [undelegation, undelegationPeriod] = await Promise.all([
-    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'getUndelegation', yourAddress),
+    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'getDelegationInfo', yourAddress),
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'undelegationPeriod'),
   ])
 
