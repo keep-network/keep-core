@@ -8,14 +8,15 @@ const UndelegateStakeButton = (props) => {
   const showMessage = useShowMessage()
 
   const undelegate = async (onTransactionHashCallback) => {
-    const { operator } = props
+    const { operator, isInInitializationPeriod } = props
 
     try {
-      await stakingContract.methods
-        .undelegate(operator)
+      await stakingContract
+        .methods[isInInitializationPeriod ? 'cancelStake' : 'undelegate'](operator)
         .send({ from: yourAddress })
         .on('transactionHash', onTransactionHashCallback)
       showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Undelegate transaction successfully completed' })
+      props.successCallback()
     } catch (error) {
       showMessage({ type: messageType.ERROR, title: 'Undelegate action has been failed ', content: error.message })
     }
@@ -27,14 +28,16 @@ const UndelegateStakeButton = (props) => {
       onSubmitAction={undelegate}
       pendingMessageTitle='Undelegate transaction is pending...'
     >
-      {props.btnText}
+      {props.isInInitializationPeriod ? 'cancel' :props.btnText }
     </SubmitButton>
   )
 }
 
 UndelegateStakeButton.defaultProps = {
   btnClassName: 'btn btn-primary btn-sm',
-  btnText: 'UNDELEGATE',
+  btnText: 'undelegate',
+  isInInitializationPeriod: false,
+  successCallback: () => {},
 }
 
 export default UndelegateStakeButton

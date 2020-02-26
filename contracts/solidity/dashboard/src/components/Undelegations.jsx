@@ -2,8 +2,16 @@ import React from 'react'
 import { displayAmount } from '../utils'
 import AddressShortcut from './AddressShortcut'
 import SpeechBubbleInfo from './SpeechBubbleInfo'
+import RecoverStakeButton from './RecoverStakeButton'
 
-const Undelegations = ({ undelegations }) => {
+const Undelegations = ({ undelegations, successUndelegationCallback }) => {
+  const renderUndelegationItem = (item) =>
+    <UndelegationItem
+      key={item.operatorAddress}
+      undelegation={item}
+      successUndelegationCallback={successUndelegationCallback}
+    />
+
   return (
     <section className="tile">
       <h5>Undelegations</h5>
@@ -23,6 +31,7 @@ const Undelegations = ({ undelegations }) => {
         <div className="flex-1 text-label">
           AMOUNT
         </div>
+        <div className="flex-1" />
       </div>
       <ul className="flex flex-column">
         {undelegations && undelegations.map(renderUndelegationItem)}
@@ -31,17 +40,24 @@ const Undelegations = ({ undelegations }) => {
   )
 }
 
-const UndelegationItem = ({ undelegation }) => {
+const UndelegationItem = React.memo(({ undelegation, successUndelegationCallback }) => {
   return (
-    <li className="flex flex-row flex-row-space-between">
-      <div className="flex-1 text-bit">{undelegation.undelegatedAt}</div>
-      <div className="flex-1 text-bit"><AddressShortcut address={undelegation.beneficiary} /></div>
-      <div className="flex-1 text-bit"><AddressShortcut address={undelegation.operatorAddress} /></div>
-      <div className="flex-1 text-bit">{displayAmount(undelegation.amount)} KEEP</div>
+    <li className="flex flex-row text-darker-grey flex-row-center flex-row-space-between" style={{ marginBottom: `0.5rem` }}>
+      <div className="flex-1">{undelegation.undelegatedAt}</div>
+      <div className="flex-1"><AddressShortcut address={undelegation.beneficiary} /></div>
+      <div className="flex-1"><AddressShortcut address={undelegation.operatorAddress} /></div>
+      <div className="flex-1">{displayAmount(undelegation.amount)} KEEP</div>
+      <div className="flex-1">
+        {undelegation.canRecoverStake ?
+          <RecoverStakeButton
+            successCallback={successUndelegationCallback}
+            operatorAddress={undelegation.operatorAddress}
+          /> :
+          `undelegation will be completed at ${undelegation.undelegationCompleteAt.toString()}`
+        }
+      </div>
     </li>
   )
-}
-
-const renderUndelegationItem = (item) => <UndelegationItem key={item.operatorAddress} undelegation={item} />
+})
 
 export default Undelegations
