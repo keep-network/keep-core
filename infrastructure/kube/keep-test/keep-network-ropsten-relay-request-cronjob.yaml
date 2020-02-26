@@ -85,7 +85,7 @@ spec:
                 valueFrom:
                   configMapKeyRef:
                     name: eth-account-info
-                    key: account-0-address
+                    key: relay-requester-address
               - name: KEEP_CLIENT_ETH_KEYFILE_PATH
                 value: /mnt/keep-client/keyfile/relay-requester-keyfile
               - name: KEEP_CLIENT_PORT
