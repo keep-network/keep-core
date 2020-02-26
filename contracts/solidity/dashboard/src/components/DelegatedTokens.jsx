@@ -6,6 +6,7 @@ import { LoadingOverlay } from './Loadable'
 import { displayAmount } from '../utils'
 import { Web3Context } from './WithWeb3Context'
 import UndelegateStakeButton from './UndelegateStakeButton'
+import RecoverStakeButton from './RecoverStakeButton'
 
 const DelegatedTokens = (props) => {
   const { yourAddress } = useContext(Web3Context)
@@ -31,8 +32,12 @@ const DelegatedTokens = (props) => {
         </div>
       )
     } else if (undelegationStatus === 'COMPLETED') {
-      // TODO render recover button component
-      return 'recover stake button here'
+      // TODO create and render notification component in the future PR.
+      return (
+        <div className="text-success text-normal text-bg-success-light self-start">
+          Undelegation completed
+        </div>
+      )
     } else {
       return (
         <UndelegateStakeButton
