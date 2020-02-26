@@ -28,7 +28,7 @@ const UndelegateStakeButton = (props) => {
       onSubmitAction={undelegate}
       pendingMessageTitle='Undelegate transaction is pending...'
     >
-      {props.isInInitializationPeriod ? 'cancel' :props.btnText }
+      {props.isInInitializationPeriod ? 'cancel' : props.btnText }
     </SubmitButton>
   )
 }
