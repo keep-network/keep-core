@@ -33,6 +33,17 @@
 	100% { transform: rotate(360deg); }
 }
 
+.tile {
+	> .loading-overlay-container {
+		> .loading-overlay {
+			top: -2rem;
+			left: -2rem;
+			height: calc(100% + 4.5rem) !important;
+			width: calc(100% + 4rem) !important;
+		}
+	}
+}
+
 .loading-overlay-container { 
 	position: relative;
 	
