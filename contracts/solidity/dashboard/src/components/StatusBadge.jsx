@@ -1,8 +1,9 @@
 import React from 'react'
+import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
 
 export const BADGE_STATUS = {
-  PENDING: { textClassName: 'text-warning', bgClassName: 'text-bg-pending-light' },
-  COMPLETE: { textClassName: 'text-success', bgClassName: 'text-bg-success-light' },
+  [PENDING_STATUS]: { textClassName: 'text-warning', bgClassName: 'text-bg-pending-light' },
+  [COMPLETE_STATUS]: { textClassName: 'text-success', bgClassName: 'text-bg-success-light' },
 }
 
 const badgeStyle = { padding: '0.1rem 0.5rem', borderRadius: '100px' }
