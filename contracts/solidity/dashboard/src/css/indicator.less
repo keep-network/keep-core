@@ -47,7 +47,12 @@
 	}
 
 	.loading-overlay {
+
+		&.hidden { 
+			visibility: hidden;
+		}
 		position: absolute;
+		visibility: visible;
 		display: flex;
 		align-items: center;
 		justify-content: center;

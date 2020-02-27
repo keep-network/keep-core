@@ -9,6 +9,7 @@ import { Web3Context } from '../components/WithWeb3Context'
 import { useShowMessage, messageType } from '../components/Message'
 import web3Utils from 'web3-utils'
 import SpeechBubbleInfo from '../components/SpeechBubbleInfo'
+import { LoadingOverlay } from '../components/Loadable'
 
 const initialData = {
   ownedKeepBalance: '',
@@ -24,7 +25,7 @@ const initialData = {
 const TokensPage = () => {
   const web3Context = useContext(Web3Context)
   const showMessage = useShowMessage()
-  const [state, setData] = useFetchData(tokensPageService.fetchTokensPageData, initialData)
+  const [state, setData, refreshData] = useFetchData(tokensPageService.fetchTokensPageData, initialData)
   const {
     undelegationPeriod,
     ownedKeepBalance,
@@ -38,10 +39,13 @@ const TokensPage = () => {
   } = state.data
 
   const handleSubmit = async (values, onTransactionHashCallback) => {
-    const { stakeTokens, operatorAddress, beneficiaryAddress } = values
+    const { stakeTokens, operatorAddress, beneficiaryAddress, context } = values
     try {
       await tokensPageService.delegateStake(web3Context, values, onTransactionHashCallback)
       showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Staking delegate transaction has been successfully completed' })
+      if (context === 'grant') {
+        return
+      }
       const amount = web3Utils.toBN(stakeTokens).mul(web3Utils.toBN(10).pow(web3Utils.toBN(18)))
       const updatedKeepBalance = web3Utils.toBN(ownedKeepBalance).sub(amount)
       const updatedTokenStakingBalance = web3Utils.toBN(tokenStakingBalance).add(amount)
@@ -59,7 +63,7 @@ const TokensPage = () => {
   }
 
   return (
-    <React.Fragment>
+    <LoadingOverlay isFetching={state.isFetching}>
       <h3>My Tokens</h3>
       <div className="tokens-wrapper flex flex-1 flex-row-space-between flex-wrap">
         <section id="delegate-stake-section" className="tile">
@@ -89,10 +93,15 @@ const TokensPage = () => {
           undelegationPeriod={undelegationPeriod}
         />
       </div>
-      <Undelegations undelegations={undelegations} />
-      <DelegatedTokensList delegatedTokens={delegations}
+      <Undelegations
+        undelegations={undelegations}
+        successUndelegationCallback={refreshData}
       />
-    </React.Fragment>
+      <DelegatedTokensList
+        delegatedTokens={delegations}
+        successDelegationCallback={refreshData}
+      />
+    </LoadingOverlay>
   )
 }
 

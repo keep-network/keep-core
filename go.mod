@@ -14,7 +14,7 @@ require (
 	github.com/ipfs/go-datastore v0.1.1
 	github.com/ipfs/go-log v0.0.1
 	github.com/keep-network/go-libp2p-bootstrap v0.0.0-20190611114437-e92bd71e8199
-	github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e
+	github.com/keep-network/keep-common v0.1.1-0.20200227080401-85802b99208f
 	github.com/libp2p/go-addr-util v0.0.1
 	github.com/libp2p/go-libp2p v0.4.1
 	github.com/libp2p/go-libp2p-connmgr v0.1.0
@@ -31,5 +31,4 @@ require (
 	github.com/urfave/cli v1.22.1
 	golang.org/x/crypto v0.0.0-20200208060501-ecb85df21340
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
-	golang.org/x/tools v0.0.0-20190925230517-ea99b82c7b93
 )
