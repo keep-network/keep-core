@@ -55,7 +55,7 @@ func connect(config ethereum.Config) (*ethereumChain, error) {
 		)
 	}
 
-	blockCounter, err := createBlockCounter(clientWS, clientRPC)
+	blockCounter, err := CreateBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
