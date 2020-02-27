@@ -257,9 +257,9 @@ contract TokenStaking is StakeDelegatable {
         uint256 undelegatedAt = operatorParams.getUndelegationBlock();
 
         bool isActive = block.number >= createdAt.add(initializationPeriod);
-        bool notUndelegated = block.number <= undelegatedAt || undelegatedAt == 0;
+        bool isUndelegating = (undelegatedAt > 0) && (block.number > undelegatedAt);
 
-        if (isAuthorized && isActive && notUndelegated) {
+        if (isAuthorized && isActive && !isUndelegating) {
             balance = operatorParams.getAmount();
         }
     }
