@@ -8,13 +8,14 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/gen/contract"
 )
 
 type ethereumChain struct {
-	config                           Config
+	config                           ethereum.Config
 	client                           bind.ContractBackend
 	clientRPC                        *rpc.Client
 	clientWS                         *rpc.Client
@@ -44,7 +45,7 @@ type ethereumUtilityChain struct {
 	keepRandomBeaconServiceContract *contract.KeepRandomBeaconService
 }
 
-func connect(config Config) (*ethereumChain, error) {
+func connect(config ethereum.Config) (*ethereumChain, error) {
 	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -128,7 +129,7 @@ func connect(config Config) (*ethereumChain, error) {
 // non- standard client interactions. Note: for other things to work correctly
 // the configuration will need to reference a websocket, "ws://", or local IPC
 // connection.
-func ConnectUtility(config Config) (chain.Utility, error) {
+func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 	base, err := connect(config)
 	if err != nil {
 		return nil, err
@@ -160,11 +161,11 @@ func ConnectUtility(config Config) (chain.Utility, error) {
 // standard handle to the chain interface. Note: for other things to work
 // correctly the configuration will need to reference a websocket, "ws://", or
 // local IPC connection.
-func Connect(config Config) (chain.Handle, error) {
+func Connect(config ethereum.Config) (chain.Handle, error) {
 	return connect(config)
 }
 
-func addressForContract(config Config, contractName string) (*common.Address, error) {
+func addressForContract(config ethereum.Config, contractName string) (*common.Address, error) {
 	addressString, exists := config.ContractAddresses[contractName]
 	if !exists {
 		return nil, fmt.Errorf(
