@@ -22,7 +22,7 @@ type ethereumChain struct {
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
 	stakingContract                  *contract.TokenStaking
 	accountKey                       *keystore.Key
-	blockCounter                     *ethereumBlockCounter
+	blockCounter                     *EthereumBlockCounter
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
