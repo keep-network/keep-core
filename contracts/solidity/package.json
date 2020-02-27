@@ -4,7 +4,7 @@
   "description": "Smart Contracts for the Keep Network",
   "repository": {
     "type": "git",
-    "url": "ssh://git@github.com/keep-network/keep-core.git"
+    "url": "https://github.com/keep-network/keep-core.git"
   },
   "files": [
     "contracts/**/*.sol",
@@ -24,12 +24,11 @@
   "author": "Matt Luongo <mhluongo@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/keep-network/contracts/issues"
+    "url": "https://github.com/keep-network/keep-core/issues"
   },
-  "homepage": "https://github.com/keep-network/contracts",
+  "homepage": "https://github.com/keep-network/keep-core/contracts/solidity",
   "dependencies": {
-    "openzeppelin-solidity": "2.4.0",
-    "solidity-bytes-utils": "0.0.7"
+    "openzeppelin-solidity": "2.4.0"
   },
   "devDependencies": {
     "@truffle/hdwallet-provider": "^1.0.25",
