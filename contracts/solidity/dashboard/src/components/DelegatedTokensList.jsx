@@ -1,8 +1,9 @@
 import React from 'react'
-import { displayAmount } from '../utils'
+import { displayAmount, getAvailableAtBlock } from '../utils'
 import AddressShortcut from './AddressShortcut'
 import UndelegateStakeButton from './UndelegateStakeButton'
 import StatusBadge, { BADGE_STATUS } from './StatusBadge'
+import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
 
 const DelegatedTokensList = ({ delegatedTokens, successDelegationCallback }) => {
   const renderDelegatedTokensItem = (item) =>
@@ -41,17 +42,20 @@ const DelegatedTokensList = ({ delegatedTokens, successDelegationCallback }) => 
 }
 
 const DelegatedTokensListItem = React.memo(({ delegation, successDelegationCallback }) => {
-  const delegationStatus = delegation.isInInitializationPeriod ? 'PENDING' : 'COMPLETE'
+  const delegationStatus = delegation.isInInitializationPeriod ? PENDING_STATUS : COMPLETE_STATUS
 
   return (
-    <li className="flex flex-row text-darker-grey flex-row-center flex-row-space-between" style={{ marginBottom: `0.5rem` }}>
+    <li className="flex flex-row text-darker-grey flex-row-center flex-row-space-between" style={{ marginBottom: `0.8rem` }}>
       <div className="flex-1">{displayAmount(delegation.amount)} KEEP</div>
-      <div className="flex flex-1">
+      <div className="flex flex-1 flex-column">
         <StatusBadge
           status={BADGE_STATUS[delegationStatus]}
           className="self-start"
           text={delegationStatus.toLowerCase()}
         />
+        <div className="text-smaller text-darker-grey">
+          {getAvailableAtBlock(delegation.initializationOverAt, delegationStatus)}
+        </div>
       </div>
       <div className="flex-1"><AddressShortcut address={delegation.beneficiary} /></div>
       <div className="flex-1"><AddressShortcut address={delegation.operatorAddress} /></div>
