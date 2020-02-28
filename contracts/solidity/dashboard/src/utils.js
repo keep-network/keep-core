@@ -1,6 +1,7 @@
 import Web3 from 'web3'
 import BigNumber from 'bignumber.js'
 import moment from 'moment'
+import web3Utils from 'web3-utils'
 
 moment.updateLocale('en', {
   relativeTime: {
@@ -61,4 +62,8 @@ export const formatDate = (dateMillis) => {
   const date = moment(dateMillis)
 
   return date.format('MM/DD/YYYY')
+}
+
+export const isSameEthAddress = (address1, address2) => {
+  return web3Utils.toChecksumAddress(address1) === web3Utils.toChecksumAddress(address2)
 }
