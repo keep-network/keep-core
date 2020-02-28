@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/gen/contract"
@@ -22,7 +23,7 @@ type ethereumChain struct {
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
 	stakingContract                  *contract.TokenStaking
 	accountKey                       *keystore.Key
-	blockCounter                     *EthereumBlockCounter
+	blockCounter                     *blockcounter.EthereumBlockCounter
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
@@ -55,7 +56,7 @@ func connect(config ethereum.Config) (*ethereumChain, error) {
 		)
 	}
 
-	blockCounter, err := CreateBlockCounter(client)
+	blockCounter, err := blockcounter.CreateBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
@@ -184,4 +185,9 @@ func addressForContract(config ethereum.Config, contractName string) (*common.Ad
 
 	address := common.HexToAddress(addressString)
 	return &address, nil
+}
+
+// BlockCounter creates a BlockCounter that uses the block number in ethereum.
+func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
+	return ec.blockCounter, nil
 }
