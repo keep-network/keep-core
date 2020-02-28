@@ -102,6 +102,11 @@
 fieldset[disabled] .btn {
   opacity: 0.5;
 
+  &.pending {
+    background-color: @black;
+    border-color: @black;
+  }
+
   &.pending, .btn-success& {
     opacity: 1;
   }
