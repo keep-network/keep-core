@@ -235,16 +235,6 @@ github.com/keep-network/cli v1.20.0 h1:mEufpPsovOVdduTTkk+a2CxS3crIrGFqUsvs58gSi
 github.com/keep-network/cli v1.20.0/go.mod h1:nzsst4JjU+rGE8Q5J839fYxectxWHpLhxKNohQWtQhA=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20190611114437-e92bd71e8199 h1:4EmAF2XUHK1kwXBhg75OO9hgTkJGK7snwJZlpbu+Yy8=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20190611114437-e92bd71e8199/go.mod h1:MtZSKNavpxpPY0VLt2sl118IxptrGQDUb/MBu+j2Yow=
-github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e h1:iGKWRCKuuqw8JhByY0d4ahnKem8bh6P/jwzCmlOOxBk=
-github.com/keep-network/keep-common v0.1.1-0.20191203134929-648c427de66e/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
-github.com/keep-network/keep-common v0.1.1-0.20200225154709-381eb713ab47 h1:TDHNcWcJr5YD/ewoaZhtQrpKmdTv5jP2LcMfOM+PKEI=
-github.com/keep-network/keep-common v0.1.1-0.20200225154709-381eb713ab47/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
-github.com/keep-network/keep-common v0.1.1-0.20200227080401-85802b99208f h1:EjFxb6jBm5yMRIF3HLC1whQTBWcTAHw8bDwL+4hQ4Go=
-github.com/keep-network/keep-common v0.1.1-0.20200227080401-85802b99208f/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
-github.com/keep-network/keep-common v0.1.1-0.20200228103757-8ac58cea8eda h1:2Ho8+6AfE1TkUFFBCXZ+byc24F/aUiZBloUgPnFIBP4=
-github.com/keep-network/keep-common v0.1.1-0.20200228103757-8ac58cea8eda/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
-github.com/keep-network/keep-common v0.1.1-0.20200228104201-0aac7dca0051 h1:FkhiQu/kitFFKI0avGBDNB4aybfZ7l2es9XusHaphZA=
-github.com/keep-network/keep-common v0.1.1-0.20200228104201-0aac7dca0051/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
 github.com/keep-network/keep-common v0.1.1-0.20200228111656-16dd370ca897 h1:0T9+w0udjSNnyR07gUiIcV3bkVZmFlGx40Byq9dqAuI=
 github.com/keep-network/keep-common v0.1.1-0.20200228111656-16dd370ca897/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
