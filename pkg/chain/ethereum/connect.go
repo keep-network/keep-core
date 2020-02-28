@@ -22,7 +22,7 @@ type ethereumChain struct {
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
 	stakingContract                  *contract.TokenStaking
 	accountKey                       *keystore.Key
-	blockCounter                     *ethereumBlockCounter
+	blockCounter                     *EthereumBlockCounter
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
@@ -55,7 +55,7 @@ func connect(config ethereum.Config) (*ethereumChain, error) {
 		)
 	}
 
-	blockCounter, err := createBlockCounter(clientWS, clientRPC)
+	blockCounter, err := CreateBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
