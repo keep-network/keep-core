@@ -1,7 +1,7 @@
 {
   "name": "@keep-network/keep-core",
   "version": "0.9.2",
-  "description": "Smart Contracts for the Keep Network",
+  "description": "Smart Contracts for the Keep Network Core",
   "repository": {
     "type": "git",
     "url": "ssh://git@github.com/keep-network/keep-core.git"
@@ -21,12 +21,12 @@
     "demo": "truffle migrate --reset && truffle exec ./scripts/demo.js",
     "lint": "solium --dir ./contracts"
   },
-  "author": "Matt Luongo <mhluongo@gmail.com>",
+  "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/keep-network/contracts/issues"
+    "url": "https://github.com/keep-network/keep-core/issues"
   },
-  "homepage": "https://github.com/keep-network/contracts",
+  "homepage": "https://github.com/keep-network/keep-core",
   "dependencies": {
     "openzeppelin-solidity": "2.4.0",
     "solidity-bytes-utils": "0.0.7"
