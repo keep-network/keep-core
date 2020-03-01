@@ -14,11 +14,11 @@ const Undelegations = ({ undelegations, successUndelegationCallback }) => {
 
   return (
     <section className="tile">
-      <h5>Undelegations</h5>
+      <h3 className="text-grey-60">Undelegations</h3>
       <SpeechBubbleInfo className="mt-1 mb-1">
         <span className="text-bold">Recover</span>&nbsp;undelegated tokens to return them to your token balance.
       </SpeechBubbleInfo>
-      <div className="flex flex-row-center">
+      <div className="flex row center">
         <div className="flex-1 text-label">
           UNDELEGATION STARTED
         </div>
@@ -33,7 +33,7 @@ const Undelegations = ({ undelegations, successUndelegationCallback }) => {
         </div>
         <div className="flex-1" />
       </div>
-      <ul className="flex flex-column">
+      <ul className="flex column">
         {undelegations && undelegations.map(renderUndelegationItem)}
       </ul>
     </section>
@@ -42,7 +42,7 @@ const Undelegations = ({ undelegations, successUndelegationCallback }) => {
 
 const UndelegationItem = React.memo(({ undelegation, successUndelegationCallback }) => {
   return (
-    <li className="flex flex-row text-darker-grey flex-row-center flex-row-space-between" style={{ marginBottom: `0.5rem` }}>
+    <li className="flex row center space-between text-grey-70" style={{ marginBottom: `0.5rem` }}>
       <div className="flex-1">{undelegation.undelegatedAt}</div>
       <div className="flex-1"><AddressShortcut address={undelegation.beneficiary} /></div>
       <div className="flex-1"><AddressShortcut address={undelegation.operatorAddress} /></div>

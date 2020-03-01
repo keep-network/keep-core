@@ -42,7 +42,7 @@ const Dropdown = ({
 
   return (
     <React.Fragment>
-      <label className="text-small text-darker-grey">{label}</label>
+      <label className="text-small text-grey-60">{label}</label>
       <div className="select-wrapper">
         <div className={`select${isOpen ? ' open' : ''}`}>
           <div className="select-trigger" onClick={() => setIsOpen(!isOpen)}>

@@ -30,34 +30,25 @@ const TokenGrantOverview = (props) => {
       <ModalComponent title="Vesting Schedule Summary">
         <TokenGrantVestingSchedule grant={selectedGrant} />
       </ModalComponent>
-      {data.length > 1 && <h6 className="text-darker-grey">{`${data.length} grants`}</h6>}
-      {data.length === 1 &&
-        <div className="text-big">
-          Grant ID {selectedGrant.id}
-        </div>
+      {
+        data.length > 1 &&
+        <Dropdown
+          onSelect={onSelect}
+          options={data}
+          valuePropertyName='id'
+          labelPropertyName='id'
+          selectedItem={selectedGrant}
+          labelPrefix='Grant ID'
+          noItemSelectedText='Select Grant'
+          label="Choose Grant"
+          selectedItemComponent={<SelectedGrantDropdown grant={selectedGrant} />}
+        />
       }
-      <div className="flex flex-row-center flex-row-space-between">
+      <div className="flex row center space-between">
         <h4 className="balance">{displayAmount(selectedGrant.amount)}&nbsp;KEEP</h4>
         <span className="text-warning text-link" onClick={showModal}>Vesting Schedule</span>
       </div>
-      <div className="text-smaller text-grey">
-        Issued on {formatDate(selectedGrant.start * 1000)}
-      </div>
       <div>
-        {
-          data.length > 1 &&
-          <Dropdown
-            onSelect={onSelect}
-            options={data}
-            valuePropertyName='id'
-            labelPropertyName='id'
-            selectedItem={selectedGrant}
-            labelPrefix='Grant ID'
-            noItemSelectedText='Select Grant'
-            label="Select Grant"
-            selectedItemComponent={<SelectedGrantDropdown grant={selectedGrant} />}
-          />
-        }
         <ProgressBar
           total={selectedGrant.amount}
           items={[

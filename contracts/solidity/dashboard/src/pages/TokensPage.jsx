@@ -63,10 +63,10 @@ const TokensPage = () => {
 
   return (
     <LoadingOverlay isFetching={state.isFetching}>
-      <h3>My Tokens</h3>
-      <div className="tokens-wrapper flex flex-1 flex-row-space-between flex-wrap">
+      <h2 className="mb-2">My Tokens</h2>
+      <div className="tokens-wrapper flex wrap flex-1 row space-between">
         <section id="delegate-stake-section" className="tile">
-          <h2 className="text-darker-grey">Delegate Stake</h2>
+          <h2 className="text-grey-70 mb-1">Delegate Stake</h2>
           <div className="text-big text-black">
             Earn ETH rewards by delegating stake to an operator address.
             All ETH rewards will be sent to the address you set as the beneficiary.
