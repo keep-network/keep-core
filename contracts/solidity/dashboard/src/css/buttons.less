@@ -1,15 +1,113 @@
-.btn {
-  letter-spacing: .07rem;
+button {
+  display: inline-block;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 0 !important;
+  margin: 0;
+  text-decoration: none;
   font-variant: small-caps;
-  font-size: 1.3rem;
-  padding: 16px 35px;
-  border-radius: 0;
+  cursor: pointer;
+  text-align: center;
+  transition: all ease-in-out .25s;
+
+  &:hover:disabled, &hover[disabled] {
+    cursor: not-allowed;
+  }
+}
+
+.btn {
+  &-lg {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+
+  &-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  &-primary {
+    font-weight: bold;
+    letter-spacing: .07rem;
+    line-height: 115%;
+    background-color: @color-black;
+    border-color: @color-black;
+    color: @primary-color;
+
+    &:hover:enabled, &:focus {
+      color: @white;
+    }
+
+    &:active:enabled {
+      background-color: @primary-color;
+      border-color: @primary-color;
+      color: @color-black;
+    }
+
+    &:disabled, &[disabled] {
+      background-color: @color-grey-20;
+      border-color: @color-grey-20;
+      color: @color-grey-30;
+    }
+  }
+
+  &-secondary {
+    position: relative;
+    font-weight: 500;
+    letter-spacing: .05rem;
+    line-height: 145%;
+    background-color: @white;
+    border: 0.5px solid @color-black;
+    color: @color-black;
+
+    &:after {
+      position: absolute;
+      content: "";
+      opacity: 0;
+      background-color: @color-black;
+      width: calc(100% + 1px;);
+      height: 3px;
+      bottom: -3.5px;
+      left: -0.5px;
+      transition: all 0.25s ease-in-out;
+    }
+
+    &:hover:enabled, &:focus {
+      &:after {
+        opacity: 1;
+      }
+    }
+
+    &:active:enabled {
+      &:after {
+        background-color: @primary-color;
+        opacity: 1;
+      }
+    }
+
+    &:disabled, &[disabled] {
+      border-color: @color-grey-20;
+      color: @color-grey-20;
+    }
+  }
+}
+
+.button-content {
+  &-enter, &-exit {
+    opacity: 0;
+
+    &-active {
+      opacity: 1;
+      transition: opacity .5s ease-in;
+    }
+  }
 }
 
 .btn-transparent {
   background-color: transparent;
-  color: @black;
-  border-color: @black;
+  color: @color-black;
+  border-color: @color-black;
 }
 
 .btn-sm {
@@ -21,19 +119,19 @@
 .btn-default {
   font-weight: 500;
   background-color: @white;
-  color: @black;
-  border-color: @black;
+  color: @color-black;
+  border-color: @color-black;
 }
 
 .btn-primary {
   font-weight: bold;
-  color: @aqua-marine;
-  background-color: @black;
-  border-color: @black;
+  color: @primary-color;
+  background-color: @color-black;
+  border-color: @color-black;
 }
 
 .txt-primary {
-  color: @link-color;
+  color: @primary-color;
 }
 
 .btn-primary,
@@ -47,9 +145,9 @@
   &.active.focus,
   &.active,
   &.focus {
-    background-color: @black;
-    border-color: @black;
-    color: lighten(@aqua-marine, 25%);
+    background-color: @color-black;
+    border-color: @color-black;
+    color: lighten(@primary-color, 25%);
   }
 
   &:focus {
@@ -70,7 +168,7 @@
   &.focus {
     border-color: darken(@white, 10%);
     background-color: darken(@white, 10%);
-    color: darken(@black, 10%);
+    color: darken(@color-black, 10%);
   }
 
   &:focus {
@@ -82,15 +180,4 @@
 .btn[disabled],
 fieldset[disabled] .btn {
   opacity: 0.5;
-}
-
-.button-content {
-  &-enter, &-exit {
-    opacity: 0;
-
-    &-active {
-      opacity: 1;
-      transition: opacity .5s ease-in;
-    }
-  }
 }
