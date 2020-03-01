@@ -2,7 +2,6 @@
 @import 'typography';
 @import 'buttons';
 @import 'forms';
-@import 'nav';
 @import 'messages';
 @import 'web3-status';
 @import 'indicator';
@@ -20,17 +19,14 @@
 @import 'modal.less';
 @import 'progress-bar.less';
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 html {
-  font-size: 12px;
-  background: @backgroud;
-
-  @media screen and (min-width: 750px) {
-    font-size: 14px;
-  }
-
-  @media screen and (min-width: 1200px) {
-    font-size: 16px;
-  }
+  background: @background-color;
 }
 
 ul {
@@ -41,7 +37,7 @@ ul {
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: @backgroud;
+  background: @background-color;
   >.content {
     overflow-x: hidden;
     max-width: 100%;
@@ -65,7 +61,7 @@ ul {
   align-items: center;
   background: white;
   padding: 0.5rem;
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid @color-black;
 
   .logo {
     height: @header-height;
@@ -92,8 +88,8 @@ ul {
   height: 100%;
   width: 0px;
   visibility: hidden;
-  background: white;
-  border-right: 1px solid black;
+  background: @white;
+  border-right: 1px solid @color-black;
   overflow-x: hidden;
   transition: 0.5s ease;
   
@@ -110,14 +106,14 @@ ul {
     padding: 0;
 
     & li {
-      border-bottom: 1px solid black;
+      border-bottom: 1px solid @color-black;
       padding: 1rem 0;
       width: 100%;
       font-size: 1rem;
       font-weight: normal;
       letter-spacing: .05rem;
       font-variant: small-caps;
-      border-right: 0 solid #48DBB4;
+      border-right: 0 solid @primary-color;
       transition: border-right-width 0.3s ease;
 
       &:hover {
@@ -127,13 +123,14 @@ ul {
 
       &.active-page-link {
         border-right-width: 5px;
-        color: black;
+        color: @color-black;
         font-weight: bold;
       }
     }
 
     a {
-      color: black;
+      color: @color-black;
+      text-decoration: none;
 
       &:hover, &:focus{
         text-decoration: none;

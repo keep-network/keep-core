@@ -7,13 +7,13 @@
     flex-direction: column;
     line-height: 1.3;
     background: transparent;
-    color: @black;
+    color: @color-black;
 }
 
 .message {
     padding: .5em 1em;
     margin: 1em;
-    opacity: .95;
+    opacity: .85;
 
     &-content-wrapper {
         @media @xs {
@@ -37,7 +37,7 @@
     }
 
     &-content {
-        color: @black;
+        color: @color-black;
         font-size: smaller;
         min-width: 40%;
         margin-left: 10px;
@@ -54,19 +54,16 @@
 
     &.message {
         &-success {
-            background-color: @aqua-marine;
+            background-color: @success-bg-color;
         }
         &-error {
-            background-color: @error-color;
+            background-color: @error-bg-color;
         }
         &-pending-action {
-            background-color: @warning-color;
+            background-color: @pending-bg-color;
         }
         &-info {
-            background-color: @info-color;
-        }
-        &-info {
-            background-color: @info-color;
+            background-color: @color-grey-50;
         }
     }
 
