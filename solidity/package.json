@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/keep-core",
-  "version": "0.12.0-pre.0",
+  "version": "0.12.0-pre",
   "description": "Smart Contracts for the Keep Network Core",
   "repository": {
     "type": "git",
@@ -8,7 +8,7 @@
   },
   "files": [
     "contracts/**/*.sol",
-    "build"
+    "artifacts"
   ],
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
