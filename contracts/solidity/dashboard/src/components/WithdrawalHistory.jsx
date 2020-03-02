@@ -14,16 +14,29 @@ export const WithdrawalHistory = (props) => {
 
   return (
     <LoadingOverlay isFetching={isFetching} >
-      <ul className="withdrawal-history tile">
-        <h6>Withdrawal History</h6>
-        {showAll ? data.map(renderWithdrawalHistoryItem) : data.slice(0, previewDataCount).map(renderWithdrawalHistoryItem)}
-        <SeeAllButton
-          dataLength={data.length}
-          previewDataCount={previewDataCount}
-          onClickCallback={() => setShowAll(!showAll)}
-          showAll={showAll}
-        />
-      </ul>
+      <section className="mt-1">
+        <h5 className="mb-1 text-grey-50">Rewards History</h5>
+        <div className="flex row center">
+          <div className="flex-1 text-label">
+            date
+          </div>
+          <div className="flex-1 text-label">
+            group key
+          </div>
+          <div className="flex-2 text-label">
+            amount
+          </div>
+        </div>
+        <ul className="withdrawal-history">
+          {showAll ? data.map(renderWithdrawalHistoryItem) : data.slice(0, previewDataCount).map(renderWithdrawalHistoryItem)}
+          <SeeAllButton
+            dataLength={data.length}
+            previewDataCount={previewDataCount}
+            onClickCallback={() => setShowAll(!showAll)}
+            showAll={showAll}
+          />
+        </ul>
+      </section>
     </LoadingOverlay>
   )
 }

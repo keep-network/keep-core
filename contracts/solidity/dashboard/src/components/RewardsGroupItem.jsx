@@ -15,24 +15,25 @@ export const RewardsGroupItem = ({ group, updateGroupsAfterWithdrawal }) => {
   }
 
   return (
-    <li className='group-item'>
-      <div className='group-key'>
-        <AddressShortcut address={groupPublicKey} />
-        <span>GROUP PUBLIC KEY</span>
+    <li className='group-item center'>
+      <div className='flex flex-1'>
+        <AddressShortcut
+          address={groupPublicKey}
+          classNames="text-big"
+        />
       </div>
-      <div className='group-reward'>
-        <span className='reward-value'>
-          {reward.toString()}
-        </span>
-        <span className='reward-currency'>ETH</span>
+      <div className='text-primary text-big flex flex-2'>
+        {reward.toString()} ETH
       </div>
-      <Button
-        className='btn btn-primary'
-        onClick={withdraw}
-        isFetching={isFetching}
-      >
-        WITHDRAW
-      </Button>
+      <div className='flex flex-1'>
+        <Button
+          className='btn btn-lg btn-primary'
+          onClick={withdraw}
+          isFetching={isFetching}
+        >
+          withdraw
+        </Button>
+      </div>
     </li>
   )
 }
