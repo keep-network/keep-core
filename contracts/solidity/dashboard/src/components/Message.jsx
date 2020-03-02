@@ -1,14 +1,15 @@
 import React, { useContext, useEffect } from 'react'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { ClockIndicator } from './Loadable'
+import Banner, { BANNER_TYPE } from './Banner'
 
 export const MessagesContext = React.createContext({})
 
 export const messageType = {
-  'SUCCESS': 'success',
-  'ERROR': 'error',
-  'PENDING_ACTION': 'pending-action',
-  'INFO': 'info',
+  'SUCCESS': BANNER_TYPE.SUCCESS,
+  'ERROR': BANNER_TYPE.ERROR,
+  'PENDING_ACTION': BANNER_TYPE.PENDING,
+  'INFO': BANNER_TYPE.DISABLED,
 }
 
 let messageId = 1
@@ -40,7 +41,7 @@ export class Messages extends React.Component {
                 <CSSTransition
                   timeout={messageTransitionTimeoutInMs}
                   key={message.id}
-                  classNames="message"
+                  classNames="banner"
                 >
                   <Message key={message.id} message={message} onMessageClose={this.onMessageClose} />
                 </CSSTransition>
@@ -51,12 +52,6 @@ export class Messages extends React.Component {
         </MessagesContext.Provider>
       )
     }
-}
-
-const messageIconMap = {
-  error: 'glyphicon-remove',
-  success: 'glyphicon-ok',
-  info: 'glyphicon-info-sign',
 }
 
 const closeMessageTimeoutInMs = 3250
@@ -74,23 +69,14 @@ const Message = ({ message, ...props }) => {
   }
 
   return (
-    <div className={`message message-${message.type || messageType.SUCCESS}`}>
-      <div className='message-content-wrapper'>
-        <div className="message-icon">
-          {message.type === messageType.PENDING_ACTION ?
-            <ClockIndicator /> :
-            <span className={`glyphicon ${messageIconMap[message.type]}`} aria-hidden='true' />
-          }
-        </div>
-        <div className='message-content'>
-          <span className="message-title">{message.title}</span>
-          <div>{message.content}</div>
-        </div>
-        <div className='message-icon-close' onClick={onMessageClose}>
-          <span className="glyphicon glyphicon-remove" aria-hidden='true' />
-        </div>
-      </div>
-    </div>
+    <Banner
+      type={message.type}
+      title={message.title}
+      subtitle={message.content}
+      withIcon
+      withCloseIcon
+      onCloseIcon={onMessageClose}
+    />
   )
 }
 
