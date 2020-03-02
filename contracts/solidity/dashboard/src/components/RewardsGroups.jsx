@@ -34,7 +34,7 @@ export const RewardsGroups = ({ setTotalRewardsBalance }) => {
 
   return (
     <LoadingOverlay isFetching={isFetching} classNames='group-items self-start'>
-      <section className="tile">
+      <section className="group-items tile">
         <h3 className='text-grey-70 mb-2'>Available to Withdraw</h3>
         <div className="flex row center">
           <div className="flex-1 text-label">
@@ -45,7 +45,7 @@ export const RewardsGroups = ({ setTotalRewardsBalance }) => {
           </div>
           <div className="flex-1 text-label"/>
         </div>
-        <ul className='group-items self-start'>
+        <ul className='flex flex-1 column'>
           { groups.length === 0 ?
             <NoData
               title='No rewards yet!'
