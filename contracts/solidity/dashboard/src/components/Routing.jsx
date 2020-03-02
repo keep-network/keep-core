@@ -8,9 +8,9 @@ import Loadable from './Loadable'
 import { NotFound404 } from './NotFound404'
 import { withOnlyLoggedUser } from './WithOnlyLoggedUserHoc'
 import withWeb3Context from './WithWeb3Context'
-import { Rewards } from './Rewards'
 import TokensPage from '../pages/TokensPage'
 import OperatorPage from '../pages/OperatorPage'
+import RewardsPage from '../pages/RewardsPage'
 
 class Routing extends React.Component {
   renderContent() {
@@ -24,7 +24,7 @@ class Routing extends React.Component {
       <Switch>
         <Route exact path='/tokens' component={TokensPage} />
         <Route exact path='/operations' component={OperatorPage} />
-        <Route exact path='/rewards' component={Rewards} />
+        <Route exact path='/rewards' component={RewardsPage} />
         {isTokenHolder && <Route exact path='/stake' component={StakeTab} /> }
         {isTokenHolder && <Route exact path='/token-grants' component={TokenGrantsTab} /> }
         {isKeepTokenContractDeployer && <Route exact path='/create-token-grants' component={CreateTokenGrantsTab} /> }
