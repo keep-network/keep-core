@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { colors } from '../constants/colors'
 
 const Keep = ({ color, height, width }) => (
   <svg width={width} height={height} viewBox="0 0 718 126" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -45,10 +46,14 @@ const Badge = ({ height, width }) => (
 
 const Cross = ({ height, width, ...restProps }) => (
   <svg height={height} width={width} {...restProps} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M1 19L19 1" stroke="#6D6D6D" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M19 19L1 1" stroke="#6D6D6D" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M1 19L19 1" stroke={restProps.color} strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M19 19L1 1" stroke={restProps.color} strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 )
+
+Cross.defaultProps = {
+  color: '#6D6D6D',
+}
 
 const SpeechBubble = (props) => (
   <div className="speech-bubble-icon-wrapper">
@@ -65,9 +70,21 @@ const SpeechBubble = (props) => (
   </div>
 )
 
+const OK = ({ color }) => (
+  <svg width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4.5 8.5L6.533 10.6465C6.73911 10.935 7.06732 11.1118 7.42167 11.125C7.77602 11.1382 8.11648 10.9864 8.3435 10.714L16.4375 1" stroke={color} strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M12.5872 2.3064C9.27145 0.254412 4.95279 0.941643 2.43773 3.92149C-0.0773383 6.90135 -0.0294076 11.2741 2.55037 14.1981C5.13015 17.1221 9.46283 17.7145 12.7328 15.5903C16.0028 13.4661 17.2228 9.26677 15.6 5.72115" stroke={color} strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+OK.defaultProps = {
+  color: colors.black,
+}
+
 export {
   Keep,
   Badge,
   Cross,
   SpeechBubble,
+  OK,
 }
