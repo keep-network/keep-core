@@ -25,8 +25,8 @@ const TokenGrantOverview = ({ selectedGrant }) => {
         </div>
       </div>
       <hr/>
-      <div className="flex row full-center">
-        <div>
+      <div className="flex row">
+        <div className="flex-1">
           <CircularProgressBars
             total={selectedGrant.amount}
             items={[
@@ -47,7 +47,7 @@ const TokenGrantOverview = ({ selectedGrant }) => {
             withLegend
           />
         </div>
-        <div className={`ml-2 mt-1 ${selectedGrant.readyToRealese === '0' ? 'self-start' : '' }`}>
+        <div className={`ml-2 mt-1 flex-1${selectedGrant.readyToRelease === '0' ? ' self-start' : '' }`}>
           <div className="text-label">
             unlocked
           </div>
@@ -58,11 +58,11 @@ const TokenGrantOverview = ({ selectedGrant }) => {
             </div>
           </div>
           {
-            selectedGrant.readyToRealese !== '0' &&
+            selectedGrant.readyToRelease !== '0' &&
             <div className="mt-2">
               <div>
                 <span className="text-secondary text-bold text-small">
-                  {displayAmount(selectedGrant.readyToRealese)}
+                  {displayAmount(selectedGrant.readyToRelease)}
                 &nbsp;
                 </span>
                 <span className="text-smaller text-grey-40">Ready to realese</span>
@@ -79,8 +79,8 @@ const TokenGrantOverview = ({ selectedGrant }) => {
           }
         </div>
       </div>
-      <div className="flex row full-center mt-1">
-        <div>
+      <div className="flex row mt-1">
+        <div className="flex-1">
           <CircularProgressBars
             total={selectedGrant.amount}
             items={[
@@ -94,7 +94,7 @@ const TokenGrantOverview = ({ selectedGrant }) => {
             withLegend
           />
         </div>
-        <div className="ml-2 mt-1 self-start">
+        <div className="ml-2 mt-1 self-start flex-1">
           <div className="text-label">
             staked
           </div>
