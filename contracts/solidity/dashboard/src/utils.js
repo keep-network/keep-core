@@ -62,3 +62,5 @@ export const formatDate = (dateMillis) => {
 
   return date.format('MM/DD/YYYY')
 }
+
+export const isEmptyObj = (obj) => Object.keys(obj).length === 0 && obj.constructor === Object
