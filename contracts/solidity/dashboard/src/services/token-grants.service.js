@@ -11,13 +11,13 @@ const fetchGrants = async (web3Context) => {
     const vestingSchedule = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantVestingSchedule', grantIds[i])
 
     const vested = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'grantedAmount', grantIds[i])
-    let readyToRealese = '0'
-    readyToRealese = await contractService
+    let readyToRelease = '0'
+    readyToRelease = await contractService
       .makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'withdrawable', grantIds[i])
-      .catch(() => readyToRealese = '0')
+      .catch(() => readyToRelease = '0')
     const released = grantDetails.withdrawn
 
-    grants.push({ id: grantIds[i], vested, released, readyToRealese, ...vestingSchedule, ...grantDetails })
+    grants.push({ id: grantIds[i], vested, released, readyToRelease, ...vestingSchedule, ...grantDetails })
   }
 
   return grants
