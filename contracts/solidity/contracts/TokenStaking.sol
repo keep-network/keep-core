@@ -162,17 +162,21 @@ contract TokenStaking is StakeDelegatable {
     function slash(uint256 amountToSlash, address[] memory misbehavedOperators)
         public
         onlyApprovedOperatorContract(msg.sender) {
+
+        uint256 totalAmountToSlash = 0;
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
             if (operators[operator].amount < amountToSlash) {
+                totalAmountToSlash = totalAmountToSlash.add(operators[operator].amount);
                 operators[operator].amount = 0;
             } else {
+                totalAmountToSlash = totalAmountToSlash.add(amountToSlash);
                 operators[operator].amount = operators[operator].amount.sub(amountToSlash);
             }
         }
 
-        token.burn(misbehavedOperators.length.mul(amountToSlash));
+        token.burn(totalAmountToSlash);
     }
 
     /**
