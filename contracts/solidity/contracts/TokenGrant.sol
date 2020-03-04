@@ -29,10 +29,10 @@ contract TokenGrant {
     using BytesLib for bytes;
     using AddressArrayUtils for address[];
 
-    event CreatedTokenGrant(uint256 id);
-    event WithdrawnTokenGrant(uint256 indexed id, uint256 amount);
-    event StakedGrant(uint256 indexed id, address operator, uint256 value);
-    event RevokedTokenGrant(uint256 id);
+    event TokenGrantCreated(uint256 id);
+    event TokenGrantWithdrawn(uint256 indexed grantId, uint256 amount);
+    event TokenGrantStaked(uint256 indexed grantId, uint256 amount, address operator);
+    event TokenGrantRevoked(uint256 id);
 
     struct Grant {
         address grantManager; // Token grant manager.
@@ -202,7 +202,7 @@ contract TokenGrant {
 
         // Maintain a record of the vested amount
         balances[_grantee] = balances[_grantee].add(_amount);
-        emit CreatedTokenGrant(id);
+        emit TokenGrantCreated(id);
     }
 
     /**
@@ -223,7 +223,7 @@ contract TokenGrant {
         // Transfer tokens from this contract balance to the grantee token balance.
         token.safeTransfer(grants[_id].grantee, amount);
 
-        emit WithdrawnTokenGrant(_id, amount);
+        emit TokenGrantWithdrawn(_id, amount);
     }
 
     /**
@@ -275,7 +275,7 @@ contract TokenGrant {
 
         // Transfer tokens from this contract balance to the token grant manager.
         token.safeTransfer(grants[_id].grantManager, refund);
-        emit RevokedTokenGrant(_id);
+        emit TokenGrantRevoked(_id);
     }
 
     /**
@@ -310,7 +310,7 @@ contract TokenGrant {
         // Staking contract expects 40 bytes _extraData for stake delegation.
         // 20 bytes magpie's address + 20 bytes operator's address.
         tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData);
-        emit StakedGrant(_id, operator, _amount);
+        emit TokenGrantStaked(_id, _amount, operator);
     }
 
     /**
