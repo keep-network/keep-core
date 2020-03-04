@@ -59,6 +59,15 @@ variable "editor_iam_members" {
   default = ["user:jakub.nowakowski@thesis.co", "user:nicholas.evans@thesis.co", "user:nik.grinkevich@thesis.co", "user:piotr.dyraga@thesis.co", "user:rafal.czajkowski@thesis.co"]
 }
 
+# module IAM members: viewer
+variable "viewer_iam_role" {
+  default = "roles/viewer"
+}
+
+variable "viewer_iam_members" {
+  default = ["user:kristen.borges@thesis.co"]
+}
+
 # module IAM members: storage.objectViewer
 variable "storage_objectviewer_iam_role" {
   default = "roles/storage.objectViewer"
