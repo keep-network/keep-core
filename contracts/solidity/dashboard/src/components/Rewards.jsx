@@ -6,7 +6,7 @@ export const Rewards = () => {
   const [totalRewardsBalance, setTotalRewardsBalance] = useState('0')
 
   return (
-    <div className="rewards-wrapper flex row center">
+    <div className="rewards-wrapper flex row">
       <div className="rewards-history flex column">
         <RewardsBalance balance={totalRewardsBalance} />
         <WithdrawalHistory />
