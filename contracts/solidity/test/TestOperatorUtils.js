@@ -22,8 +22,8 @@ contract('OperatorUtilsStub', (accounts) => {
     const createdAt = await opUtils.publicGetCreationBlock(params);
     const undelegatedAt = await opUtils.publicGetUndelegationBlock(params);
 
-    assert.equal(amount, allKeepEver, "The amount should be the same");
-    assert.equal(createdAt, recently, "The creation block should be the same");
-    assert.equal(undelegatedAt, billionYearsFromNow, "The undelegation block should be the same");
+    assert.equal(amount.toJSON(), allKeepEver.toJSON(), "The amount should be the same");
+    assert.equal(createdAt.toJSON(), recently.toJSON(), "The creation block should be the same");
+    assert.equal(undelegatedAt.toJSON(), billionYearsFromNow.toJSON(), "The undelegation block should be the same");
   })
 })
