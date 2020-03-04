@@ -8,6 +8,7 @@ import { tokenGrantsService } from '../services/token-grants.service'
 import { displayAmount, isEmptyObj } from '../utils'
 import { TOKEN_GRANT_CONTRACT_NAME } from '../constants/constants'
 import { add, sub, gte } from '../utils/arithmetics.utils'
+import { findIndexAndObject } from '../utils/array.utils'
 
 const TokenGrantsOverview = ({ grantBalance }) => {
   const [state, updateData] = useFetchData(tokenGrantsService.fetchGrants, [])
@@ -31,28 +32,14 @@ const TokenGrantsOverview = ({ grantBalance }) => {
       return
     }
     const { returnValues: { grantId, amount } } = stakedEvent
-    let indexInArray = null
-    let grantToUpdate = null
-    for (let index = 0; index < data.length; index++) {
-      const grant = data[index]
-      if (grant.id === grantId) {
-        grantToUpdate = grant
-        indexInArray = index
-        break
-      }
-    }
+    const { indexInArray, obj: grantToUpdate } = findIndexAndObject('id', grantId, data)
     if (indexInArray === null) {
       return
     }
     grantToUpdate.staked = add(grantToUpdate.staked, amount)
     grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
     grantToUpdate.readyToRelease = gte(grantToUpdate.readyToRelease, 0) ? grantToUpdate.readyToRelease : '0'
-    const updatedGrants = [...data]
-    updatedGrants[indexInArray] = grantToUpdate
-    updateData(updatedGrants)
-    if (grantId === selectedGrant.id) {
-      setSelectedGrant(grantToUpdate)
-    }
+    updateGrants(grantId, grantToUpdate, indexInArray)
   }, [stakedEvent.transactionHash, selectedGrant])
 
   useEffect(() => {
@@ -60,16 +47,7 @@ const TokenGrantsOverview = ({ grantBalance }) => {
       return
     }
     const { returnValues: { grantId, amount } } = withdrawanEvent
-    let indexInArray = null
-    let grantToUpdate = null
-    for (let index = 0; index < data.length; index++) {
-      const grant = data[index]
-      if (grant.id === grantId) {
-        grantToUpdate = grant
-        indexInArray = index
-        break
-      }
-    }
+    const { indexInArray, obj: grantToUpdate } = findIndexAndObject('id', grantId, data)
     if (indexInArray === null) {
       return
     }
@@ -77,14 +55,17 @@ const TokenGrantsOverview = ({ grantBalance }) => {
     grantToUpdate.readyToRelease = '0'
     grantToUpdate.released = add(grantToUpdate.released, amount)
     grantToUpdate.vested = add(grantToUpdate.released, grantToUpdate.staked)
+    updateGrants(grantId, grantToUpdate, indexInArray)
+  }, [withdrawanEvent.transactionHash, selectedGrant])
+
+  const updateGrants= (grantId, grantToUpdate, index) => {
     const updatedGrants = [...data]
-    updatedGrants[indexInArray] = grantToUpdate
+    updatedGrants[index] = grantToUpdate
     updateData(updatedGrants)
     if (grantId === selectedGrant.id) {
-      console.log('in if setSelectedGrant', withdrawanEvent)
       setSelectedGrant(grantToUpdate)
     }
-  }, [withdrawanEvent.transactionHash, selectedGrant])
+  }
 
   return (
     <section>

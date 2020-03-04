@@ -1,17 +1,34 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { formatDate, displayAmount } from '../utils'
 import { SubmitButton } from './Button'
 import { colors } from '../constants/colors'
 import { CircularProgressBars } from './CircularProgressBar'
+import { Web3Context } from './WithWeb3Context'
+import { useShowMessage, messageType } from './Message'
 import moment from 'moment'
 
 const TokenGrantOverview = ({ selectedGrant }) => {
+  const { yourAddress, grantContract } = useContext(Web3Context)
+  const showMessage = useShowMessage()
   const cliffPeriod = moment
     .unix(selectedGrant.cliff)
     .from(moment.unix(selectedGrant.start), true)
   const fullyUnlockedDate = moment
     .unix(selectedGrant.start)
     .add(selectedGrant.duration, 'seconds')
+
+  const releaseTokens = async (onTransactionHashCallback) => {
+    try {
+      await grantContract.methods
+        .withdraw(selectedGrant.id)
+        .send({ from: yourAddress })
+        .on('transactionHash', onTransactionHashCallback)
+      showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Tokens have been successfully released' })
+    } catch (error) {
+      showMessage({ type: messageType.ERROR, title: 'Error', content: error.message })
+      throw error
+    }
+  }
 
   return (
     <div className="token-grant-overview">
@@ -25,7 +42,7 @@ const TokenGrantOverview = ({ selectedGrant }) => {
         </div>
       </div>
       <hr/>
-      <div className="flex row">
+      <div className="flex">
         <div className="flex-1">
           <CircularProgressBars
             total={selectedGrant.amount}
@@ -69,18 +86,16 @@ const TokenGrantOverview = ({ selectedGrant }) => {
               </div>
               <SubmitButton
                 className="btn btn-sm btn-secondary"
-                onSubmitAction={() => {
-                  console.log('on submit action here')
-                }}
+                onSubmitAction={releaseTokens}
               >
-              release tokens
+                release tokens
               </SubmitButton>
             </div>
           }
         </div>
       </div>
-      <div className="flex row mt-1">
-        <div className="flex-1">
+      <div className="flex mt-1">
+        <div className="flex-1 self-center">
           <CircularProgressBars
             total={selectedGrant.amount}
             items={[
