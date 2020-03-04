@@ -53,6 +53,15 @@ variable "project_owner_members" {
   ]
 }
 
+# module IAM members: viewer
+variable "viewer_iam_role" {
+  default = "roles/viewer"
+}
+
+variable "viewer_iam_members" {
+  default = ["user:kristen.borges@thesis.co"]
+}
+
 # bucket vars
 ## backend bucket
 variable "backend_bucket_name" {
