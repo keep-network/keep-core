@@ -19,6 +19,8 @@ const countProgressValue = (value, total, radius) => {
     .toString()
 }
 
+const barWidth = 10
+
 const CircularProgressBar = ({
   radius,
   value,
@@ -36,8 +38,8 @@ const CircularProgressBar = ({
           className="background"
           cx={60}
           cy={60}
-          r={radius-5}
-          strokeWidth="10"
+          r={radius-(barWidth / 2)}
+          strokeWidth={barWidth}
           stroke={backgroundStroke}
         />
       }
@@ -48,8 +50,8 @@ const CircularProgressBar = ({
         className="value"
         cx={60}
         cy={60}
-        r={radius-5}
-        strokeWidth="10"
+        r={radius-(barWidth / 2)}
+        strokeWidth={barWidth}
         stroke={color}
         strokeLinecap="round"
       />
