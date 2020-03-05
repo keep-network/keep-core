@@ -8,9 +8,10 @@ import { useFetchData } from '../hooks/useFetchData'
 import rewardsService from '../services/rewards.service'
 
 const previewDataCount = 3
+const initialData = [[], '0']
 
 export const RewardsGroups = React.memo(({ setTotalRewardsBalance }) => {
-  const [state, updateData, refreshData] = useFetchData(rewardsService.fetchAvailableRewards, [[], '0'])
+  const [state, updateData, refreshData] = useFetchData(rewardsService.fetchAvailableRewards, initialData)
   const { isFetching, data: [groups, totalRewardsBalance] } = state
   const [showAll, setShowAll] = useState(false)
 

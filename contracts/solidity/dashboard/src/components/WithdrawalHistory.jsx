@@ -11,9 +11,10 @@ import web3Utils from 'web3-utils'
 import { formatDate, isSameEthAddress } from '../utils'
 
 const previewDataCount = 3
+const initialData = []
 
 export const WithdrawalHistory = (props) => {
-  const [state, updateData] = useFetchData(rewardsService.fetchWithdrawalHistory, [])
+  const [state, updateData] = useFetchData(rewardsService.fetchWithdrawalHistory, initialData)
   const { isFetching, data } = state
   const [showAll, setShowAll] = useState(false)
   const { yourAddress, eth, keepRandomBeaconOperatorContract } = useContext(Web3Context)

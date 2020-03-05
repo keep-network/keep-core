@@ -10,6 +10,7 @@ Loadable.defaultProps = {
 }
 
 export const ClockIndicator = ({ color }) => (<div className={`indicator-clock ${color}`}/>)
+
 ClockIndicator.defaultProps = {
   color: '',
 }
