@@ -2,6 +2,7 @@ import KeepToken from './contracts/KeepToken.json'
 import TokenStaking from './contracts/TokenStaking.json'
 import TokenGrant from './contracts/TokenGrant.json'
 import KeepRandomBeaconOperator from './contracts/KeepRandomBeaconOperator.json'
+import Registry from './contracts/Registry.json'
 
 export async function getKeepToken(web3) {
   return getContract(web3, KeepToken)
@@ -17,6 +18,10 @@ export async function getTokenGrant(web3) {
 
 export async function getKeepRandomBeaconOperator(web3) {
   return getContract(web3, KeepRandomBeaconOperator)
+}
+
+export async function getRegistry(web3) {
+  return getContract(web3, Registry)
 }
 
 export async function getKeepTokenContractDeployerAddress(web3) {
