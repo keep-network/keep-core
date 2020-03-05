@@ -58,7 +58,7 @@ const TokenGrantOverview = ({ selectedGrant }) => {
                 color: colors.secondary,
                 withBackgroundStroke: false,
                 radius: 48,
-                label: 'Relesed',
+                label: 'Released',
               },
             ]}
             withLegend
