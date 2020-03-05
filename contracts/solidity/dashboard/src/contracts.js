@@ -31,6 +31,24 @@ export async function getKeepTokenContractDeployerAddress(web3) {
   return transaction.from
 }
 
+export async function getContracts(web3) {
+  const contracts = await Promise.all([
+    getKeepToken(web3),
+    getTokenGrant(web3),
+    getTokenStaking(web3),
+    getKeepRandomBeaconOperator(web3),
+    getRegistry(web3),
+  ])
+
+  return {
+    token: contracts[0],
+    grantContract: contracts[1],
+    stakingContract: contracts[2],
+    keepRandomBeaconOperatorContract: contracts[3],
+    registryContract: contracts[4],
+  }
+}
+
 async function getContract(web3, contract) {
   const address = getContractAddress(contract)
   const code = await web3.eth.getCode(address)
