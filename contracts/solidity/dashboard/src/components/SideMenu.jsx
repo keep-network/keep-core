@@ -33,6 +33,7 @@ export const SideMenu = (props) => {
         <NavLink exact to="/tokens" label='TOKENS'/>
         <NavLink exact to="/rewards" label='REWARDS'/>
         <NavLink exact to="/operations" label='OPERATIONS'/>
+        <NavLink exact to="/authorizer" label='authorizer'/>
 
         { isTokenHolder &&
             <>
