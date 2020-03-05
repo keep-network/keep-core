@@ -7,12 +7,11 @@ const socialMedia = [
   { label: 'Reddit', url: 'https://www.reddit.com/r/KeepNetwork' },
 ]
 
-// TODO fix url to about us
 const aboutUs = [
-  { label: 'Whitepaper', url: 'https://twitter.com/keep_project' },
-  { label: 'Team', url: 'https://t.me/KeepNetworkOfficial' },
-  { label: 'Advisors', url: 'https://www.reddit.com/r/KeepNetwork' },
-  { label: 'Blog', url: 'https://www.reddit.com/r/KeepNetwork' },
+  { label: 'Whitepaper', url: 'https://keep.network/whitepaper' },
+  { label: 'Team', url: 'https://keep.network/#team' },
+  { label: 'Advisors', url: 'https://keep.network/#advisors' },
+  { label: 'Blog', url: 'https://blog.keep.network/' },
 ]
 
 const Footer = () => {
@@ -39,7 +38,7 @@ const Footer = () => {
 
 const FooterLinkItem = ({ label, url }) => (
   <li key={label}>
-    <a href={url}>
+    <a href={url} rel="noopener noreferrer" target="_blank" >
       <h5>{label}</h5>
     </a>
   </li>
