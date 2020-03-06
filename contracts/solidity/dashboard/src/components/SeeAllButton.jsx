@@ -8,10 +8,10 @@ export const SeeAllButton = ({ showAll, onClickCallback, previewDataCount, dataL
 
   return (
     <Button
-      className="btn btn-default see-all-btn"
+      className="btn btn-secondary see-all-btn"
       onClick={onClickCallback}
     >
-      {showAll ? 'SEE LESS' : `SEE ALL (${dataLength - previewDataCount})`}
+      {showAll ? 'see less' : `see all (${dataLength - previewDataCount})`}
     </Button>
   )
 }

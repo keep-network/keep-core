@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef, useContext } from 'react'
 import { CSSTransition } from 'react-transition-group'
-import Loadable from './Loadable'
+import { ClockIndicator } from './Loadable'
 import { messageType, MessagesContext } from './Message'
+import * as Icons from './Icons'
 
 const buttonContentTransitionTimeoutInMs = 500
 const minimumLoaderDurationInMs = 400
@@ -50,7 +51,8 @@ export default function Button({ isFetching, children, ...props }) {
       {...props}
       ref={buttonRef}
       style={showLoader ? { width: `${width}px`, height: `${height}px` } : {} }
-      disabled={showLoader}
+      disabled={props.disabled || showLoader}
+      className={`${props.className}${showLoader ? ' pending' : ''}`}
     >
       <CSSTransition
         in={showLoader}
@@ -58,16 +60,42 @@ export default function Button({ isFetching, children, ...props }) {
         classNames="button-content"
       >
         <div className="button-content">
-          { showLoader ? <Loadable text="in progress" /> : children }
+          { showLoader ?
+            <div className="flex row full-center flex-1">
+              <ClockIndicator color='primary' />
+              <span className="ml-1 text-primary">pending</span>
+            </div> :
+            children
+          }
         </div>
       </CSSTransition>
     </button>
   )
 }
 
-export const SubmitButton = ({ onSubmitAction, withMessageActionIsPending, pendingMessageTitle, pendingMessageContent, triggerManuallyFetch, ...props }) => {
+const successBtnVisibilityDuration = 5000 // 5s
+
+export const SubmitButton = ({
+  onSubmitAction,
+  withMessageActionIsPending,
+  pendingMessageTitle,
+  pendingMessageContent,
+  triggerManuallyFetch,
+  successCallback,
+  ...props
+}) => {
   const [isFetching, setIsFetching] = useState(false)
   const { showMessage, closeMessage } = useContext(MessagesContext)
+  const [showSuccessBtn, setShowSuccessBtn] = useState(false)
+  useEffect(() => {
+    if (showSuccessBtn) {
+      const timeout = setTimeout(() => {
+        setShowSuccessBtn(false)
+        successCallback()
+      }, successBtnVisibilityDuration)
+      return () => clearTimeout(timeout)
+    }
+  }, [showSuccessBtn])
 
   let pendingMessage = { type: messageType.PENDING_ACTION, sticky: true, title: pendingMessageTitle, content: pendingMessageContent }
   let infoMessage = { type: messageType.INFO, sticky: true, title: 'Waiting for the transaction confirmation...' }
@@ -95,6 +123,7 @@ export const SubmitButton = ({ onSubmitAction, withMessageActionIsPending, pendi
     try {
       await onSubmitAction(onTransactionHashCallback, openMessageInfo, setFetching)
       setIsFetching(false)
+      setShowSuccessBtn(true)
     } catch (error) {
       setIsFetching(false)
     }
@@ -103,7 +132,23 @@ export const SubmitButton = ({ onSubmitAction, withMessageActionIsPending, pendi
     closeMessage(infoMessage)
   }
 
-  return <Button {...props} onClick={onButtonClick} isFetching={isFetching} />
+  return (
+    <Button
+      {...props}
+      className={`${props.className} ${showSuccessBtn && `btn btn-success`}`}
+      onClick={onButtonClick}
+      isFetching={isFetching}
+      disabled={showSuccessBtn}
+    >
+      {showSuccessBtn ?
+        <div className="flex row full-center flex-1">
+          <Icons.OK />
+          <span className="ml-1 text-black">success</span>
+        </div> :
+        props.children
+      }
+    </Button>
+  )
 }
 
 SubmitButton.defaultProps = {
@@ -111,4 +156,5 @@ SubmitButton.defaultProps = {
   triggerManuallyFetch: false,
   pendingMessageTitle: 'Action is pending',
   pendingMessageContent: '',
+  successCallback: () => {},
 }
