@@ -24,7 +24,7 @@ export const useCustomOnSubmitFormik = (onSubmitAction) => {
     const errors = await validateForm(values)
     if (Object.keys(errors).length > 0) {
       setSubmitting(false)
-      return
+      throw new Error('Invalid form')
     }
 
     // Submission
@@ -36,6 +36,7 @@ export const useCustomOnSubmitFormik = (onSubmitAction) => {
       resetForm()
     } catch (error) {
       setSubmitting(false)
+      throw error
     }
   }
 
