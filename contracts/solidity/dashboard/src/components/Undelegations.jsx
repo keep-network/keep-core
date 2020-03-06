@@ -1,8 +1,11 @@
 import React from 'react'
-import { displayAmount } from '../utils'
+import { displayAmount, getAvailableAtBlock } from '../utils'
 import AddressShortcut from './AddressShortcut'
 import SpeechBubbleInfo from './SpeechBubbleInfo'
 import RecoverStakeButton from './RecoverStakeButton'
+import StatusBadge, { BADGE_STATUS } from './StatusBadge'
+import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
+
 
 const Undelegations = ({ undelegations, successUndelegationCallback }) => {
   const renderUndelegationItem = (item) =>
@@ -20,16 +23,19 @@ const Undelegations = ({ undelegations, successUndelegationCallback }) => {
       </SpeechBubbleInfo>
       <div className="flex row center">
         <div className="flex-1 text-label">
-          UNDELEGATION STARTED
+          undelegation amount
         </div>
         <div className="flex-1 text-label">
-          BENEFICIARY ADDRESS
+          undelegation status
         </div>
         <div className="flex-1 text-label">
-          OPERATOR ADDRESS
+          beneficiary
         </div>
         <div className="flex-1 text-label">
-          AMOUNT
+          operator
+        </div>
+        <div className="flex-1 text-label">
+          authorizer
         </div>
         <div className="flex-1" />
       </div>
@@ -41,19 +47,30 @@ const Undelegations = ({ undelegations, successUndelegationCallback }) => {
 }
 
 const UndelegationItem = React.memo(({ undelegation, successUndelegationCallback }) => {
+  const undelegationStatus = undelegation.canRecoverStake ? COMPLETE_STATUS : PENDING_STATUS
+
   return (
     <li className="flex row center space-between text-grey-70" style={{ marginBottom: `0.5rem` }}>
-      <div className="flex-1">{undelegation.undelegatedAt}</div>
+      <h5 className="flex-1 text-grey-50">{displayAmount(undelegation.amount)} KEEP</h5>
+      <div className="flex flex-1 column">
+        <StatusBadge
+          status={BADGE_STATUS[undelegationStatus]}
+          className="self-start"
+          text={undelegationStatus.toLowerCase()}
+        />
+        <div className="text-smaller text-grey-70">
+          {getAvailableAtBlock(undelegation.undelegationCompleteAt, undelegationStatus)}
+        </div>
+      </div>
       <div className="flex-1"><AddressShortcut address={undelegation.beneficiary} /></div>
       <div className="flex-1"><AddressShortcut address={undelegation.operatorAddress} /></div>
-      <div className="flex-1">{displayAmount(undelegation.amount)} KEEP</div>
+      <div className="flex-1"><AddressShortcut address={undelegation.authorizerAddress} /></div>
       <div className="flex-1">
-        {undelegation.canRecoverStake ?
+        {undelegation.canRecoverStake &&
           <RecoverStakeButton
             successCallback={successUndelegationCallback}
             operatorAddress={undelegation.operatorAddress}
-          /> :
-          `undelegation will be completed at ${undelegation.undelegationCompleteAt.toString()}`
+          />
         }
       </div>
     </li>

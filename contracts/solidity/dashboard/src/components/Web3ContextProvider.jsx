@@ -65,9 +65,9 @@ export default class Web3ContextProvider extends React.Component {
     initializeContracts = async () => {
       const { web3 } = this.state
       try {
-        //const web3EventProvider = getWeb3SocketProvider()
+        const web3EventProvider = getWeb3SocketProvider()
         const contracts = await getContracts(web3)
-        const eventContracts = await getContracts(web3)
+        const eventContracts = await getContracts(web3EventProvider)
         this.setState({
           ...contracts,
           defaultContract: contracts.stakingContract,
@@ -80,7 +80,6 @@ export default class Web3ContextProvider extends React.Component {
           eventRegistry: eventContracts.registryContract,
         })
       } catch (error) {
-        console.log('error', error)
         this.setState({
           error: 'Please select correct network',
         })
