@@ -1,6 +1,11 @@
 import { contractService } from './contracts.service'
 import web3Utils from 'web3-utils'
-import { TOKEN_STAKING_CONTRACT_NAME, TOKEN_GRANT_CONTRACT_NAME, OPERATOR_CONTRACT_NAME, KEEP_TOKEN_CONTRACT_NAME } from '../constants/constants'
+import {
+  TOKEN_STAKING_CONTRACT_NAME,
+  TOKEN_GRANT_CONTRACT_NAME,
+  OPERATOR_CONTRACT_NAME,
+  KEEP_TOKEN_CONTRACT_NAME,
+} from '../constants/constants'
 
 export const fetchTokensPageData = async (web3Context) => {
   const { yourAddress, eth } = web3Context
@@ -35,12 +40,22 @@ export const fetchTokensPageData = async (web3Context) => {
       amount,
     } = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'getDelegationInfo', operatorAddress)
     const beneficiary = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'magpieOf', operatorAddress)
-    const operatorData = { undelegatedAt, amount, beneficiary, operatorAddress, createdAt }
+    const authorizerAddress = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'authorizerOf', operatorAddress)
+
+    const operatorData = {
+      undelegatedAt,
+      amount,
+      beneficiary,
+      operatorAddress,
+      createdAt,
+      authorizerAddress,
+    }
     const balance = web3Utils.toBN(amount)
 
     if (!balance.isZero() && operatorData.undelegatedAt === '0') {
       const initializationOverAt = web3Utils.toBN(createdAt || 0).add(web3Utils.toBN(initializationPeriod))
       operatorData.isInInitializationPeriod = initializationOverAt.gte(web3Utils.toBN(await eth.getBlockNumber()))
+      operatorData.initializationOverAt = initializationOverAt.toString()
       delegations.push(operatorData)
       tokenStakingBalance = tokenStakingBalance.add(balance)
     }
