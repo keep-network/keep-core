@@ -1,4 +1,4 @@
-button {
+button, .btn {
   display: inline-block;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -32,6 +32,11 @@ button {
     font-size: 0.9rem;
   }
 
+  &-xs {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+  }
+
   &-primary {
     font-weight: bold;
     letter-spacing: .07rem;
@@ -57,7 +62,7 @@ button {
     }
   }
 
-  &-secondary {
+  &-secondary, &-transparent {
     position: relative;
     font-weight: 500;
     letter-spacing: .05rem;
@@ -96,6 +101,10 @@ button {
       color: @color-grey-20;
     }
   }
+
+  &-transparent {
+    background-color: transparent;
+  }
 }
 
 .button-content {
@@ -109,80 +118,36 @@ button {
   }
 }
 
-.btn-transparent {
-  background-color: transparent;
-  color: @color-black;
-  border-color: @color-black;
-}
-
-.btn-sm {
-  font-size: 0.95rem;
-  padding: 6px 14px;
-  border-radius: 0;
-}
-
-.btn-default {
-  font-weight: 500;
-  background-color: @white;
-  color: @color-black;
-  border-color: @color-black;
-}
-
-.btn-primary {
-  font-weight: bold;
-  color: @primary-color;
-  background-color: @color-black;
-  border-color: @color-black;
-}
-
-.txt-primary {
-  color: @primary-color;
-}
-
-.btn-primary,
-.btn-primary[disabled],
-.btn-primary.disabled {
-  transition: 0.25s all ease-in;
-
-  &:hover,
-  &:focus,
-  &:active,
-  &.active.focus,
-  &.active,
-  &.focus {
-    background-color: @color-black;
-    border-color: @color-black;
-    color: lighten(@primary-color, 25%);
-  }
-
-  &:focus {
-    outline: 0;
-  }
-}
-
-.btn-default,
-.btn-default[disabled],
-.btn-default.disabled {
-  transition: 0.25s all ease-in;
-
-  &:hover,
-  &:focus,
-  &:active,
-  &.active.focus,
-  &.active,
-  &.focus {
-    border-color: darken(@white, 10%);
-    background-color: darken(@white, 10%);
-    color: darken(@color-black, 10%);
-  }
-
-  &:focus {
-    outline: 0;
-  }
-}
-
 .btn.disabled,
 .btn[disabled],
 fieldset[disabled] .btn {
   opacity: 0.5;
+
+  &.pending {
+    background-color: @color-black;
+    border-color: @color-black;
+  }
+
+  &.pending, .btn-success& {
+    opacity: 1;
+  }
+}
+
+.btn-success,
+.btn-success[disabled] {
+  opacity: 1;
+  font-weight: bold;
+  color: @color-black;
+  background-color: @primary-color;
+  border-color:  @primary-color;
+
+  &:hover,
+  &:focus,
+  &:active,
+  &.active.focus,
+  &.active,
+  &.focus {
+    background-color: @primary-color;
+    border-color:  @primary-color;
+  }
 }

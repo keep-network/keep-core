@@ -2,7 +2,7 @@ import React, { useEffect, useContext } from 'react'
 import { useFetchData } from '../hooks/useFetchData'
 import { operatorService } from '../services/token-staking.service'
 import web3Utils from 'web3-utils'
-import { displayAmount } from '../utils'
+import { displayAmount, isSameEthAddress } from '../utils'
 import { LoadingOverlay } from './Loadable'
 import { Web3Context } from './WithWeb3Context'
 import StatusBadge, { BADGE_STATUS } from './StatusBadge'
@@ -10,7 +10,7 @@ import StatusBadge, { BADGE_STATUS } from './StatusBadge'
 const initialData = { pendinUndelegations: [] }
 
 const PendingUndelegation = ({ latestUnstakeEvent }) => {
-  const { stakingContract } = useContext(Web3Context)
+  const { stakingContract, yourAddress } = useContext(Web3Context)
   const [state, setData] = useFetchData(operatorService.fetchPendingUndelegation, initialData)
   const { isFetching, data: {
     pendingUnstakeBalance,
@@ -22,6 +22,9 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
   useEffect(() => {
     if (latestUnstakeEvent) {
       const { returnValues: { operator, undelegatedAt } } = latestUnstakeEvent
+      if (!isSameEthAddress(yourAddress, operator)) {
+        return
+      }
       const undelegationComplete = web3Utils.toBN(undelegatedAt).add(web3Utils.toBN(undelegationPeriod))
       stakingContract.methods.getDelegationInfo(operator).call()
         .then((data) => {
