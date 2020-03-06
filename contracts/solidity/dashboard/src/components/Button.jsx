@@ -61,7 +61,7 @@ export default function Button({ isFetching, children, ...props }) {
       >
         <div className="button-content">
           { showLoader ?
-            <div className="flex flex-1 flex-center">
+            <div className="flex row full-center flex-1">
               <ClockIndicator color='primary' />
               <span className="ml-1 text-primary">pending</span>
             </div> :
@@ -141,7 +141,7 @@ export const SubmitButton = ({
       disabled={showSuccessBtn}
     >
       {showSuccessBtn ?
-        <div className="flex flex-1 flex-center">
+        <div className="flex row full-center flex-1">
           <Icons.OK />
           <span className="ml-1 text-black">success</span>
         </div> :

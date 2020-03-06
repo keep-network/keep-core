@@ -6,6 +6,8 @@ import { LoadingOverlay } from './Loadable'
 import { displayAmount } from '../utils'
 import { Web3Context } from './WithWeb3Context'
 import UndelegateStakeButton from './UndelegateStakeButton'
+import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
+import Banner, { BANNER_TYPE } from './Banner'
 
 const DelegatedTokens = (props) => {
   const { yourAddress } = useContext(Web3Context)
@@ -19,22 +21,27 @@ const DelegatedTokens = (props) => {
   } } = state
 
   const undelegationSuccessCallback = () => {
-    setData({ ...state.data, undelegationStatus: 'PENDING' })
+    setData({ ...state.data, undelegationStatus: PENDING_STATUS })
   }
 
   const renderUndelegationStatus = () => {
-    if (undelegationStatus === 'PENDING') {
-      // TODO create and render notification component in the future PR.
+    if (undelegationStatus === PENDING_STATUS) {
       return (
-        <div className="text-pending text-normal bg-pending self-start">
-          Undelegation is pending
+        <div className="self-start">
+          <Banner
+            type={BANNER_TYPE.PENDING}
+            title='Undelegation is pending'
+          />
         </div>
       )
-    } else if (undelegationStatus === 'COMPLETED') {
-      // TODO create and render notification component in the future PR.
+    } else if (undelegationStatus === COMPLETE_STATUS) {
       return (
-        <div className="text-success text-normal bg-success self-start">
-          Undelegation completed
+        <div className="self-start">
+          <Banner
+            type={BANNER_TYPE.SUCCESS}
+            title='Undelegation completed'
+            withIcon
+          />
         </div>
       )
     } else {
