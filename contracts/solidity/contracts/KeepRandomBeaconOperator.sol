@@ -749,8 +749,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function reportUnauthorizedSigning(
         uint256 groupIndex,
-        bytes memory signedGroupPubKey
+        bytes memory signedMsgSender
     ) public {
-        groups.reportUnauthorizedSigning(groupIndex, signedGroupPubKey, minimumStake);
+        groups.reportUnauthorizedSigning(groupIndex, signedMsgSender, minimumStake);
     }
 }
