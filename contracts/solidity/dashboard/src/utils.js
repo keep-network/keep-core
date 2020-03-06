@@ -1,6 +1,8 @@
 import Web3 from 'web3'
 import BigNumber from 'bignumber.js'
 import moment from 'moment'
+import { PENDING_STATUS, COMPLETE_STATUS } from './constants/constants'
+import web3Utils from 'web3-utils'
 
 moment.updateLocale('en', {
   relativeTime: {
@@ -61,4 +63,16 @@ export const formatDate = (dateMillis) => {
   const date = moment(dateMillis)
 
   return date.format('MM/DD/YYYY')
+}
+
+export const getAvailableAtBlock = (blockNumber, status) => {
+  if (status === PENDING_STATUS) {
+    return `until ${blockNumber} block`
+  } else if (status === COMPLETE_STATUS) {
+    return `at ${blockNumber} block`
+  }
+}
+
+export const isSameEthAddress = (address1, address2) => {
+  return web3Utils.toChecksumAddress(address1) === web3Utils.toChecksumAddress(address2)
 }

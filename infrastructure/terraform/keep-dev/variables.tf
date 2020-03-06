@@ -145,7 +145,7 @@ variable "gke_node_pool" {
   default {
     name         = "default-node-pool"
     node_count   = "1"
-    machine_type = "n1-standard-2"
+    machine_type = "n1-standard-4"
     disk_type    = "pd-ssd"
     disk_size_gb = 100
     auto_repair  = "true"

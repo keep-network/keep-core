@@ -156,19 +156,27 @@ contract TokenStaking is StakeDelegatable {
     /**
      * @dev Slash provided token amount from every member in the misbehaved
      * operators array and burn 100% of all the tokens.
-     * @param amount Token amount to slash from every misbehaved operator.
+     * @param amountToSlash Token amount to slash from every misbehaved operator.
      * @param misbehavedOperators Array of addresses to seize the tokens from.
      */
-    function slash(uint256 amount, address[] memory misbehavedOperators) 
+    function slash(uint256 amountToSlash, address[] memory misbehavedOperators)
         public
         onlyApprovedOperatorContract(msg.sender) {
+
+        uint256 totalAmountToSlash = 0;
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
-            operators[operator].amount = operators[operator].amount.sub(amount);
+            if (operators[operator].amount < amountToSlash) {
+                totalAmountToSlash = totalAmountToSlash.add(operators[operator].amount);
+                operators[operator].amount = 0;
+            } else {
+                totalAmountToSlash = totalAmountToSlash.add(amountToSlash);
+                operators[operator].amount = operators[operator].amount.sub(amountToSlash);
+            }
         }
 
-        token.burn(misbehavedOperators.length.mul(amount));
+        token.burn(totalAmountToSlash);
     }
 
     /**
