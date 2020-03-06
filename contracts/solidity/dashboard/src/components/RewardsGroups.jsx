@@ -29,15 +29,25 @@ export const RewardsGroups = React.memo(({ setTotalRewardsBalance }) => {
 
   return (
     <LoadingOverlay isFetching={isFetching} classNames='group-items self-start'>
-      <ul className='group-items self-start tile'>
-        { groups.length === 0 ?
-          <NoData
-            title='No rewards yet!'
-            iconComponent={<Icons.Badge width={100} height={100} />}
-            content='You can withdraw any future earned rewards from your delegated stake on this page.'
-          /> :
+      <section className="group-items tile">
+        <h3 className='text-grey-70 mb-2'>Available to Withdraw</h3>
+        <div className="flex row center">
+          <div className="flex-1 text-label">
+            group key
+          </div>
+          <div className="flex-2 text-label">
+            amount
+          </div>
+          <div className="flex-1 text-label"/>
+        </div>
+        <ul className='flex flex-1 column'>
+          { groups.length === 0 ?
+            <NoData
+              title='No rewards yet!'
+              iconComponent={<Icons.Badge width={100} height={100} />}
+              content='You can withdraw any future earned rewards from your delegated stake on this page.'
+            /> :
           <>
-            <h6>Withdrawal Overview</h6>
             {showAll ? groups.map(renderGroupItem) : groups.slice(0, previewDataCount).map(renderGroupItem)}
             <SeeAllButton
               dataLength={groups.length}
@@ -46,9 +56,9 @@ export const RewardsGroups = React.memo(({ setTotalRewardsBalance }) => {
               showAll={showAll}
             />
           </>
-        }
-      </ul>
-
+          }
+        </ul>
+      </section>
     </LoadingOverlay>
   )
 })
