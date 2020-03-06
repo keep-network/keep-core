@@ -5,7 +5,7 @@ export const useSubscribeToContractEvent = (contractName, eventName, subscribeTo
   const web3Context = useContext(Web3Context)
   const event = useRef(null)
   const contract = web3Context[contractName]
-  const [latestEvent, setLatestEvent] = useState(null)
+  const [latestEvent, setLatestEvent] = useState({})
 
   useEffect(() => {
     const subscribeToEvent = (error, event) => {

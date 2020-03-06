@@ -36,13 +36,13 @@ const ProgressBar = ({ total, items, height, withLegend }) => {
   )
 }
 
-const renderProgressBarLegendItem = (item, index) => <ProgressBarLegendItem key={index} {...item} />
+export const renderProgressBarLegendItem = (item, index) => <ProgressBarLegendItem key={index} {...item} />
 
-const ProgressBarLegendItem = React.memo(({ value, label, color }) => {
+export const ProgressBarLegendItem = React.memo(({ value, label, color }) => {
   return (
     <div className="flex row center">
       <div className="dot" style={{ backgroundColor: color }}/>
-      {displayAmount(value)}&nbsp;KEEP&nbsp;<span className="text-small text-grey">{label}</span>
+      <span className="text-small">{displayAmount(value)}&nbsp;KEEP&nbsp;</span><span className="text-smaller text-grey-40">{label}</span>
     </div>
   )
 })
