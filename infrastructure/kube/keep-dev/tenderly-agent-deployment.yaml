@@ -1,0 +1,33 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: tenderly-agent
+  labels:
+    app: tenderly
+    type: agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tenderly-agent
+      type: agent
+  template:
+    metadata:
+      labels:
+        app: tenderly-agent
+        type: agent
+    spec:
+      containers:
+      - name: tenderly-agent
+        image: gcr.io/tenderly-public/tenderly-agent:latest
+        volumeMounts:
+          - name: tenderly-agent-config
+            mountPath: /tenderly/config
+      volumes:
+        - name: tenderly-agent-config
+          configMap:
+            name: tenderly-agent
+            items:
+             - key: config.yaml
+               path: config.yaml

@@ -1,0 +1,33 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tenderly-agent
+  namespace: default
+data:
+  config.yaml: |
+    agent:
+      database_path: .db
+      networks:
+        1101:
+          name: keep-dev
+          address: 0.0.0.0:8555
+          # the address and port of your local node
+          # note: this is the address from the perspective of the container
+          rpc_server: eth-tx-node.default.svc.cluster.local:8545
+          node_type: geth
+          chain_config:
+            chainId: 1101
+            homesteadBlock: 0
+            eip150Block: 0
+            eip155Block: 0
+            eip158Block: 0
+            byzantiumBlock: 0
+            constantinopleBlock: 0
+            petersburgBlock: 0
+            istanbulBlock: 0
+            clique:
+              period: 1
+              epoch: 30000
+          # cert_file: ./.tenderly/cert/testnet.crt # optional
+          # key_file: ./.tenderly/private/testnet.key # optional
+
