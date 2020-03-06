@@ -65,9 +65,17 @@ const SpeechBubble = (props) => (
   </div>
 )
 
+const OK = (props) => (
+  <svg width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4.5 8.5L6.533 10.6465C6.73911 10.935 7.06732 11.1118 7.42167 11.125C7.77602 11.1382 8.11648 10.9864 8.3435 10.714L16.4375 1" stroke="#0A0806" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M12.5872 2.3064C9.27145 0.254412 4.95279 0.941643 2.43773 3.92149C-0.0773383 6.90135 -0.0294076 11.2741 2.55037 14.1981C5.13015 17.1221 9.46283 17.7145 12.7328 15.5903C16.0028 13.4661 17.2228 9.26677 15.6 5.72115" stroke="#0A0806" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
 export {
   Keep,
   Badge,
   Cross,
   SpeechBubble,
+  OK,
 }

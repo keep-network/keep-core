@@ -7,21 +7,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
-const (
-	// Subscription identifier to receive blocks as they are mined.
-	newHeadsSubscription = "newHeads"
-	// RPC call identifier to get a block's information given its number.
-	getBlockByNumber = "eth_getBlockByNumber"
-	// RPC call parameter to reference the latest block rather than a particular
-	// number.
-	latestBlock = "latest"
-)
-
-type ethereumBlockCounter struct {
+type EthereumBlockCounter struct {
 	structMutex         sync.Mutex
 	latestBlockHeight   uint64
 	subscriptionChannel chan block
@@ -38,7 +30,7 @@ type watcher struct {
 	channel chan uint64
 }
 
-func (ebc *ethereumBlockCounter) WaitForBlockHeight(blockNumber uint64) error {
+func (ebc *EthereumBlockCounter) WaitForBlockHeight(blockNumber uint64) error {
 	waiter, err := ebc.BlockHeightWaiter(blockNumber)
 	if err != nil {
 		return err
@@ -47,7 +39,7 @@ func (ebc *ethereumBlockCounter) WaitForBlockHeight(blockNumber uint64) error {
 	return nil
 }
 
-func (ebc *ethereumBlockCounter) BlockHeightWaiter(
+func (ebc *EthereumBlockCounter) BlockHeightWaiter(
 	blockNumber uint64,
 ) (<-chan uint64, error) {
 	newWaiter := make(chan uint64)
@@ -69,11 +61,11 @@ func (ebc *ethereumBlockCounter) BlockHeightWaiter(
 	return newWaiter, nil
 }
 
-func (ebc *ethereumBlockCounter) CurrentBlock() (uint64, error) {
+func (ebc *EthereumBlockCounter) CurrentBlock() (uint64, error) {
 	return ebc.latestBlockHeight, nil
 }
 
-func (ebc *ethereumBlockCounter) WatchBlocks(ctx context.Context) <-chan uint64 {
+func (ebc *EthereumBlockCounter) WatchBlocks(ctx context.Context) <-chan uint64 {
 	watcher := &watcher{
 		ctx:     ctx,
 		channel: make(chan uint64),
@@ -103,7 +95,7 @@ func (ebc *ethereumBlockCounter) WatchBlocks(ctx context.Context) <-chan uint64 
 // receiveBlocks gets each new block back from Geth and extracts the
 // block height (topBlockNumber) form it. For each block height that is being
 // waited on a message will be sent.
-func (ebc *ethereumBlockCounter) receiveBlocks() {
+func (ebc *EthereumBlockCounter) receiveBlocks() {
 	for block := range ebc.subscriptionChannel {
 		topBlockNumber, err := strconv.ParseInt(block.Number, 0, 32)
 		if err != nil {
@@ -161,25 +153,22 @@ func (ebc *ethereumBlockCounter) receiveBlocks() {
 }
 
 // subscribeBlocks creates a subscription to Geth to get each block.
-func (ebc *ethereumBlockCounter) subscribeBlocks(
-	clientWS *rpc.Client,
-	clientRPC *rpc.Client,
-) error {
+func (ebc *EthereumBlockCounter) subscribeBlocks(ctx context.Context, client *ethclient.Client) error {
 	errorChan := make(chan error)
+	newBlockChan := make(chan *types.Header)
 
 	subscribe := func() {
 		logger.Debugf("subscribing to new blocks")
 
 		subscribeContext, cancel := context.WithTimeout(
-			context.Background(),
+			ctx,
 			10*time.Second, // timeout for subscription request
 		)
 		defer cancel()
 
-		subscription, err := clientWS.EthSubscribe(
+		subscription, err := client.SubscribeNewHead(
 			subscribeContext,
-			ebc.subscriptionChannel,
-			newHeadsSubscription,
+			newBlockChan,
 		)
 		if err != nil {
 			logger.Warningf("could not create subscription to new blocks: [%v]", err)
@@ -187,10 +176,18 @@ func (ebc *ethereumBlockCounter) subscribeBlocks(
 			return
 		}
 
-		err = <-subscription.Err()
-		logger.Warningf("subscription to new blocks interrupted: [%v]", err)
-		subscription.Unsubscribe()
-		errorChan <- err
+		for {
+			select {
+			case header := <-newBlockChan:
+				ebc.subscriptionChannel <- block{header.Number.String()}
+			case err = <-subscription.Err():
+				logger.Warningf("subscription to new blocks interrupted: [%v]", err)
+				subscription.Unsubscribe()
+				errorChan <- err
+				return
+			}
+		}
+
 	}
 
 	go func() {
@@ -201,18 +198,15 @@ func (ebc *ethereumBlockCounter) subscribeBlocks(
 		}
 	}()
 
-	var lastBlock block
-	err := clientRPC.Call(
-		&lastBlock,
-		getBlockByNumber,
-		latestBlock,
-		true,
+	lastBlock, err := client.BlockByNumber(
+		ctx,
+		nil, // if `nil` then latest known block is returned
 	)
 	if err != nil {
 		return err
 	}
 
-	ebc.subscriptionChannel <- lastBlock
+	ebc.subscriptionChannel <- block{lastBlock.Number().String()}
 
 	return nil
 }
@@ -222,13 +216,12 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	return ec.blockCounter, nil
 }
 
-func createBlockCounter(clientWS *rpc.Client, clientRPC *rpc.Client) (*ethereumBlockCounter, error) {
-	var startupBlock block
-	err := clientRPC.Call(
-		&startupBlock,
-		getBlockByNumber,
-		latestBlock,
-		true,
+func CreateBlockCounter(client *ethclient.Client) (*EthereumBlockCounter, error) {
+	ctx := context.Background()
+
+	startupBlock, err := client.BlockByNumber(
+		ctx,
+		nil, // if `nil` then latest known block is returned
 	)
 	if err != nil {
 		return nil,
@@ -238,23 +231,14 @@ func createBlockCounter(clientWS *rpc.Client, clientRPC *rpc.Client) (*ethereumB
 			)
 	}
 
-	startupBlockHeight, err := strconv.ParseInt(startupBlock.Number, 0, 32)
-	if err != nil {
-		return nil,
-			fmt.Errorf(
-				"failed to get initial number of blocks from the chain [%v]",
-				err,
-			)
-	}
-
-	blockCounter := &ethereumBlockCounter{
-		latestBlockHeight:   uint64(startupBlockHeight),
+	blockCounter := &EthereumBlockCounter{
+		latestBlockHeight:   startupBlock.NumberU64(),
 		waiters:             make(map[uint64][]chan uint64),
 		subscriptionChannel: make(chan block),
 	}
 
 	go blockCounter.receiveBlocks()
-	err = blockCounter.subscribeBlocks(clientWS, clientRPC)
+	err = blockCounter.subscribeBlocks(ctx, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe to new blocks: [%v]", err)
 	}
