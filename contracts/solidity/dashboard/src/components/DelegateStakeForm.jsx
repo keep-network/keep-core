@@ -33,9 +33,9 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...f
   }
 
   return (
-    <form className="delegate-stake-form flex flex-column">
-      <div className="flex flex-row">
-        <div className="stake-token-section flex flex-column flex-1">
+    <form className="delegate-stake-form flex column">
+      <div className="flex row">
+        <div className="stake-token-section flex column flex-1">
           <div className="text-big text-black">Select Token Amount</div>
           <ContextSwitch />
           <div className="input-wrapper">
@@ -49,7 +49,7 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...f
                 selectedItem={formikProps.values.selectedGrant}
                 labelPrefix='Grant ID'
                 noItemSelectedText='Select Grant'
-                label="Select Grant"
+                label={`Choose Grant (${data.length})`}
                 selectedItemComponent={<SelectedGrantDropdown grant={formikProps.values.selectedGrant} />}
               />
             }
@@ -62,15 +62,15 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...f
               total={getContextBalance()}
               items={[{ value: stakeTokensValue, color: colors.primary }]}
             />
-            <div className="text-small text-darker-grey">
+            <div className="text-small text-grey-50">
               {displayAmount(getContextBalance())} KEEP available
             </div>
-            <div className="text-smaller text-grey mb-1">
+            <div className="text-smaller text-grey-30 mb-1">
               Min Stake: {displayAmount(minStake)} KEEP
             </div>
           </div>
         </div>
-        <div className="addresses-section flex flex-column flex-1 self-start">
+        <div className="addresses-section flex column flex-1 self-start">
           <div className="text-big text-black mb-1">Enter Addresses</div>
           <FormInput
             name="beneficiaryAddress"
@@ -96,7 +96,7 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...f
         withMessageActionIsPending={false}
         triggerManuallyFetch={true}
       >
-            DELEGATE STAKE
+        delegate stake
       </SubmitButton>
     </form>
   )
@@ -117,17 +117,17 @@ const ContextSwitch = (props) => {
     <div className="tabs flex">
       <div
         id="granted"
-        className={`tab ${getClassName('granted')}`}
+        className={`tab text-label ${getClassName('granted')}`}
         onClick={onClick}
       >
-        GRANTED
+        granted
       </div>
       <div
         id="owned"
-        className={`tab ${getClassName('owned')}`}
+        className={`tab text-label ${getClassName('owned')}`}
         onClick={onClick}
       >
-        OWNED
+        owned
       </div>
     </div>
   )

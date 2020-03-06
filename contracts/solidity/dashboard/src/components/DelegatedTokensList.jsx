@@ -15,8 +15,8 @@ const DelegatedTokensList = ({ delegatedTokens, successDelegationCallback }) => 
 
   return (
     <section className="tile">
-      <h5>Delageted Tokens</h5>
-      <div className="flex flex-row-center mt-1">
+      <h3 className="text-grey-60">Delegations</h3>
+      <div className="flex row center mt-1">
         <div className="flex-1 text-label">
           amount
         </div>
@@ -34,7 +34,7 @@ const DelegatedTokensList = ({ delegatedTokens, successDelegationCallback }) => 
         </div>
         <div className="flex-1"/>
       </div>
-      <ul className="flex flex-column">
+      <ul className="flex column">
         {delegatedTokens && delegatedTokens.map(renderDelegatedTokensItem)}
       </ul>
     </section>
@@ -45,15 +45,15 @@ const DelegatedTokensListItem = React.memo(({ delegation, successDelegationCallb
   const delegationStatus = delegation.isInInitializationPeriod ? PENDING_STATUS : COMPLETE_STATUS
 
   return (
-    <li className="flex flex-row text-darker-grey flex-row-center flex-row-space-between" style={{ marginBottom: `0.8rem` }}>
-      <div className="flex-1">{displayAmount(delegation.amount)} KEEP</div>
-      <div className="flex flex-1 flex-column">
+    <li className="flex row center space-between text-grey-70" style={{ marginBottom: `0.5rem` }}>
+      <h5 className="flex-1 text-grey-50">{displayAmount(delegation.amount)} KEEP</h5>
+      <div className="flex flex-1 column">
         <StatusBadge
           status={BADGE_STATUS[delegationStatus]}
           className="self-start"
           text={delegationStatus.toLowerCase()}
         />
-        <div className="text-smaller text-darker-grey">
+        <div className="text-smaller text-grey-70">
           {getAvailableAtBlock(delegation.initializationOverAt, delegationStatus)}
         </div>
       </div>
@@ -63,7 +63,7 @@ const DelegatedTokensListItem = React.memo(({ delegation, successDelegationCallb
       <div className="flex-1">
         <UndelegateStakeButton
           isInInitializationPeriod={delegation.isInInitializationPeriod}
-          btnClassName="btn btn-sm btn-default"
+          btnClassName="btn btn-sm btn-secondary"
           operator={delegation.operatorAddress}
           successCallback={successDelegationCallback}
         />

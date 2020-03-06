@@ -10,7 +10,7 @@
       font-style: normal;
       padding: .3rem .8rem;
       text-align: left;
-      border: 1px solid black ;
+      border: 1px solid @color-black;
 
       .title {
         margin-right: 1.3rem;
@@ -23,18 +23,18 @@
       }
 
       &.success {
-        background: @mint;
-        color: @green;
-        border-color: @aqua-marine;
+        background: @success-bg-color;
+        color: @success-color;
+        border-color: @success-color;
       }
       &.loading {
-        color: #67598a;
-        border-color: #67598a;
+        color: @secondary-color;
+        border-color: @secondary-color;
       }
       &.alert {
-        color: @black;
-        background: @pink;
-        border-color: @red;
+        color: @color-black;
+        background: @error-bg-color;
+        border-color: @error-color;
         margin-bottom: 0;
         border-radius: 0;
         a {
@@ -45,14 +45,14 @@
         }
       }
       &.notify {
-        color: #cda48d;
-        border-color: #cda48d;
+        color: @pending-color;
+        border-color: @pending-bg-color;
         & > span {
           text-decoration: underline;
           transition: color .2s ease-in;
           &:hover {
               cursor: pointer;
-              color: darken(#cda48d, 2%);
+              color: darken(@pending-color, 2%);
           }
         }
       }

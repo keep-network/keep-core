@@ -8,7 +8,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    border: 1px solid @black;
+    border: 0.5px solid @color-black;
 
     &-trigger {
         min-height: 50px;
@@ -20,7 +20,7 @@
         padding: 0 1rem;
         font-size: 1.2rem;
         font-weight: normal;
-        color: @black;
+        color: @color-black;
         line-height: 25px;
         background: @white;
         cursor: pointer;
@@ -33,22 +33,22 @@
     }
 
     > .options {
-        list-style: none;
-        padding-left: 0;
         position: absolute;
-        top: 100%;
-        left: -1px;
-        right: -1px;
-        border: 1px solid @black;
-        border-top: 0;
-        background: @white;
-        transition: all 0.5s;
-        opacity: 0;
         visibility: hidden;
-        pointer-events: none;
-        z-index: 2;
+        background: @white;
+        list-style: none;
+        top: 100%;
+        left: -0.5px;
+        right: -0.5px;
+        border: 0.5px solid @color-black;
+        border-top: 0;
         max-height: 150px;
+        padding-left: 0;
+        opacity: 0;
+        z-index: 2;
         overflow-x: scroll;
+        pointer-events: none;
+        transition: all 0.5s;
 
         > .option {
             display: flex;
@@ -56,21 +56,21 @@
             height: 50px;
             position: relative;
             padding: 0 1rem 0 1rem;
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: normal;
-            color: @black;
+            color: @color-black;
             line-height: 25px;
             cursor: pointer;
             transition: all 0.5s;
 
             &:hover {
                 cursor: pointer;
-                background-color: @pale-grey;
+                background-color: @success-bg-color;
             }
 
             &.selected {
-                color: @aqua-marine;
-                background-color: @pale-grey;
+                color: @primary-color;
+                background-color: @success-bg-color;;
             }
         }
     }
@@ -85,10 +85,10 @@
         content: "";
         position: absolute;
         bottom: 0px;
-        width: 0.10rem;
+        width: 1px;
         height: 100%;
         transition: all 0.5s;
-        background-color: @black;
+        background-color: @color-grey-70;
     }
 
     &:before {

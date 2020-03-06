@@ -10,8 +10,8 @@ const SlashedTokensList = (props) => {
         <span className="text-label flex flex-1">AMOUNT (KEEP)</span>
         <span className="text-label flex flex-1">MIN STAKE (KEEP)</span>
       </div>
-      <ul className="flex flex-column flex-1">
-        <li className="flex flex-row flex-1" >
+      <ul className="flex column flex-1">
+        <li className="flex row flex-1" >
           <div className="details text-big flex-2">
             <p className="text-big">
               Group 12305162340123 was selected to do work and not enough members participated.
@@ -25,7 +25,7 @@ const SlashedTokensList = (props) => {
             50
           </span>
         </li>
-        <li className="flex flex-row flex-1" >
+        <li className="flex row flex-1" >
           <div className="details text-big flex-2">
             <p className="text-big">
               Group 12305162340123 key was leaked. Private key was published outside of the members of the signing group.

@@ -34,7 +34,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
 }
 
 RecoverStakeButton.defaultProps = {
-  btnClassName: 'btn btn-sm btn-default',
+  btnClassName: 'btn btn-sm btn-secondary',
   btnText: 'recover',
   successCallback: () => {},
 }

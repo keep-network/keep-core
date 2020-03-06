@@ -42,13 +42,13 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
   return (
     <LoadingOverlay isFetching={isFetching}>
       <section id="pending-undelegation" className="tile">
-        <h3 className="text-darker-grey">Token Undelegation</h3>
+        <h3 className="text-grey-60">Token Undelegation</h3>
         <div className="flex pending-undelegation-summary mt-1">
-          <div className="flex flex-1 flex-column">
+          <div className="flex flex-1 column">
             <span className="text-label">amount</span>
-            <h5 className="text-darker-grey flex flex-2">{pendingUnstakeBalance && `${displayAmount(pendingUnstakeBalance)}`}</h5>
+            <h5 className="text-grey-70 flex flex-2">{pendingUnstakeBalance && `${displayAmount(pendingUnstakeBalance)}`}</h5>
           </div>
-          <div className="flex flex-1 flex-column">
+          <div className="flex flex-1 column">
             <span className="text-label">undelegation status</span>
             {undelegationStatus &&
               <StatusBadge
@@ -58,11 +58,11 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
               />
             }
           </div>
-          <div className="flex flex-1 flex-column">
+          <div className="flex flex-1 column">
             <span className="text-label">completed</span>
             <span className="text-big">{undelegationComplete ? `${undelegationComplete} block` : '-'}</span>
           </div>
-          <div className="flex flex-1 flex-column">
+          <div className="flex flex-1 column">
             <span className="text-label">undelegation period</span>
             <span className="text-big">{undelegationPeriod} blocks</span>
           </div>
