@@ -70,14 +70,17 @@ const SpeechBubble = (props) => (
   </div>
 )
 
-const KeepCircle = (props) => (
+const KeepCircle = ({ color }) => (
   <svg className="keep-circle" width="58" height="58" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       d="M29 0.25C13.1271 0.25 0.25 13.1271 0.25 29C0.25 44.8729 13.1271 57.75 29 57.75C44.8729 57.75 57.75 44.8729 57.75 29C57.7258 13.1271 44.8487 0.25 29 0.25ZM41.0557 22.5735H39.2437L33.7595 28.9758L39.2437 35.3782H41.0557V40.5242H29.4107V35.4265H31.2227L27.6229 31.2227H26.1492V35.4265H28.2027V40.5242H16.9202V35.3782H19.3603V29V22.5735H16.9202V17.4275H19.6985V19.3361H21.1964V17.4275H23.9265V19.3361H25.4244V17.4275H28.1786V22.5011H26.125V26.7048H27.5987L31.1985 22.5011H29.3866V17.4275H41.0315V22.5735H41.0557Z"
-      fill="#E6E6E6"
-    />
+      fill={color}/>
   </svg>
 )
+
+KeepCircle.defaultProps = {
+  color: colors.lightGrey,
+}
 
 const OK = ({ color }) => (
   <svg width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
