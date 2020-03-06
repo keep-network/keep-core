@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react'
 import AuthorizeContracts from '../components/AuthorizeContracts'
 import AuthorizationHistory from '../components/AuthorizationHistory'
-import { authorizationPageService } from '../services/authorization-page.service.js'
+import { authorizationService } from '../services/authorization.service'
 import { LoadingOverlay } from '../components/Loadable'
 import { useFetchData } from '../hooks/useFetchData'
 import Dropdown from '../components/Dropdown'
 import { Web3Context } from '../components/WithWeb3Context'
 import { useShowMessage, messageType } from '../components/Message'
+import AuthorizationInfo from '../components/AuthorizationInfo'
 
 const initialData = {}
 
@@ -15,7 +16,7 @@ const AuthorizerPage = () => {
     state,
     updateData,
     refreshData
-  ] = useFetchData(authorizationPageService.fetchAuthorizationPageData, initialData)
+  ] = useFetchData(authorizationService.fetchAuthorizationPageData, initialData)
   const { yourAddress, stakingContract } = useContext(Web3Context)
   const showMessage = useShowMessage()
 
@@ -55,6 +56,7 @@ const AuthorizerPage = () => {
         noItemSelectedText='Select Operator'
         label={`Choose Operator`}
       />
+      <AuthorizationInfo />
       <LoadingOverlay isFetching={isFetching}>
         <AuthorizeContracts
           contracts={data[operator.address] && data[operator.address].contractsToAuthorize}
