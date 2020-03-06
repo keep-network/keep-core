@@ -50,8 +50,8 @@ const DelegatedTokens = (props) => {
   }
   return (
     <section id="delegated-tokens" className="flex row space-between">
-      <LoadingOverlay isFetching={isFetching} >
-        <section id="delegated-tokens-summary" className="tile flex column">
+      <section id="delegated-tokens-summary" className="tile flex column">
+        <LoadingOverlay isFetching={isFetching} >
           <h3 className="text-grey-60 mb-1">Delegated Tokens</h3>
           <h2 className="balance">
             {stakedBalance && `${displayAmount(stakedBalance)}`} KEEP
@@ -74,10 +74,10 @@ const DelegatedTokens = (props) => {
               classNames='text-small text-normal text-darker-grey'
             />
           </h6>
-        </section>
-      </LoadingOverlay>
-      <LoadingOverlay isFetching={isFetching} >
-        <section id="delegated-form-section" className="tile flex column ">
+        </LoadingOverlay>
+      </section>
+      <section id="delegated-form-section" className="tile flex column ">
+        <LoadingOverlay isFetching={isFetching} classNames="flex flex-1 column" >
           <h3 className="text-grey-60">Undelegate All Tokens</h3>
           <div className="text-big text-grey-70 mt-1 mb-1">
             Click undelegate below to return all of your delegated KEEP tokens to their original owner address.
@@ -85,8 +85,8 @@ const DelegatedTokens = (props) => {
           <div className="flex" style={{ marginTop: 'auto' }}>
             {renderUndelegationStatus()}
           </div>
-        </section>
-      </LoadingOverlay>
+        </LoadingOverlay>
+      </section>
     </section>
   )
 }

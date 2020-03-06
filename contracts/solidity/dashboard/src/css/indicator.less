@@ -1,11 +1,18 @@
 .indicator {
 	&-clock {
 		position: relative;
-		width: 30px;
-		height: 30px;
-		border: 2px solid @color-black;
+		width: 20px;
+		height: 20px;
+		border: 1px solid @color-black;
 		border-radius: 50%;
 		background: transparent;
+
+		&.primary {
+			border-color: @aqua-marine;
+			&:after, &:before {
+				background: @aqua-marine;
+			}
+		}
 		
 		&:after, &:before {
 			position: absolute;
@@ -30,6 +37,17 @@
 @keyframes round {
 	0% { transform: rotate(0deg); }
 	100% { transform: rotate(360deg); }
+}
+
+.tile {
+	> .loading-overlay-container {
+		> .loading-overlay {
+			top: -2rem;
+			left: -2rem;
+			height: calc(100% + 4.5rem) !important;
+			width: calc(100% + 4rem) !important;
+		}
+	}
 }
 
 .loading-overlay-container { 

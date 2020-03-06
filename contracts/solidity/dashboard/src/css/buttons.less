@@ -130,6 +130,25 @@ button {
   border-color: @color-black;
 }
 
+.btn-success,
+.btn-success[disabled] {
+  opacity: 1;
+  font-weight: bold;
+  color: @black;
+  background-color: @aqua-marine;
+  border-color:  @aqua-marine;
+
+  &:hover,
+  &:focus,
+  &:active,
+  &.active.focus,
+  &.active,
+  &.focus {
+    background-color: @aqua-marine;
+    border-color: @aqua-marine;
+  }
+}
+
 .txt-primary {
   color: @primary-color;
 }
@@ -180,4 +199,13 @@ button {
 .btn[disabled],
 fieldset[disabled] .btn {
   opacity: 0.5;
+
+  &.pending {
+    background-color: @black;
+    border-color: @black;
+  }
+
+  &.pending, .btn-success& {
+    opacity: 1;
+  }
 }

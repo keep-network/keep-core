@@ -1,6 +1,7 @@
 import { contractService } from './contracts.service'
 import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
 import web3Utils from 'web3-utils'
+import { COMPLETE_STATUS, PENDING_STATUS } from '../constants/constants'
 
 const fetchDelegatedTokensData = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -40,7 +41,7 @@ const fetchPendingUndelegation = async (web3Context) => {
   const undelegationComplete = isUndelegation ? undelegationCompletedAtInBN.toString() : null
   let undelegationStatus
   if (isUndelegation) {
-    undelegationStatus = web3Utils.toBN(await eth.getBlockNumber()).gt(undelegationCompletedAtInBN) ? 'COMPLETED' : 'PENDING'
+    undelegationStatus = web3Utils.toBN(await eth.getBlockNumber()).gt(undelegationCompletedAtInBN) ? COMPLETE_STATUS : PENDING_STATUS
   }
 
   return {
