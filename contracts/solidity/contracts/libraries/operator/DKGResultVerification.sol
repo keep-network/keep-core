@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
-import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
+import "../../utils/BytesLib.sol";
 import "./GroupSelection.sol";
 
 library DKGResultVerification {
