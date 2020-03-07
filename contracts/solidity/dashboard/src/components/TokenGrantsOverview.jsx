@@ -6,7 +6,7 @@ import { useFetchData } from '../hooks/useFetchData'
 import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEvent'
 import { tokenGrantsService } from '../services/token-grants.service'
 import { displayAmount, isEmptyObj } from '../utils'
-import { TOKEN_GRANT_CONTRACT_NAME } from '../constants/constants'
+import { TOKEN_GRANT_CONTRACT_NAME_EVENTS } from '../constants/constants'
 import { add, sub, gte } from '../utils/arithmetics.utils'
 import { findIndexAndObject } from '../utils/array.utils'
 
@@ -14,8 +14,8 @@ const TokenGrantsOverview = ({ grantBalance }) => {
   const [state, updateData] = useFetchData(tokenGrantsService.fetchGrants, [])
   const { data } = state
   const [selectedGrant, setSelectedGrant] = useState({})
-  const { latestEvent: stakedEvent } = useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME, 'TokenGrantStaked')
-  const { latestEvent: withdrawanEvent } = useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME, 'TokenGrantWithdrawn')
+  const { latestEvent: stakedEvent } = useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME_EVENTS, 'TokenGrantStaked')
+  const { latestEvent: withdrawanEvent } = useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME_EVENTS, 'TokenGrantWithdrawn')
 
   useEffect(() => {
     if (selectedGrant && data.length > 0) {
