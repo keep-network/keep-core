@@ -19,18 +19,18 @@ const AuthorizationInfo = (props) => {
   return (
     <LoadingOverlay isFetching={isFetching}>
       <section className="tile">
-        <h3 className="text-grey-60">Authorization Info</h3>
+        <h3 className="text-grey-60">Authorization</h3>
         {contracts.map((contract) => (
           <div key={contract.contractAddress} className="mb-1">
             You have been successfully authorized by authorizer&nbsp;
             <AddressShortcut address={contract.authorizer}/>&nbsp;
-            to&nbsp;
+            to &nbsp;
             <a
               href={ETHERSCAN_DEFAULT_URL + contract.contractAddress}
               rel="noopener noreferrer"
               target="_blank"
             >
-                operator contract
+              operator contract
             </a>.
           </div>
         ))}
