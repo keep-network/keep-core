@@ -30,11 +30,11 @@ export const SideMenu = (props) => {
   return (
     <nav className={`${ isOpen ? 'active ' : '' }side-menu`}>
       <ul>
-        <NavLink exact to="/tokens" label='TOKENS'/>
-        <NavLink exact to="/rewards" label='REWARDS'/>
-        <NavLink exact to="/operations" label='OPERATIONS'/>
+        <NavLink exact to="/tokens" label='tokens'/>
+        <NavLink exact to="/rewards" label='rewards'/>
+        <NavLink exact to="/operations" label='operations'/>
         <NavLink exact to="/authorizer" label='authorizer'/>
-        { isKeepTokenContractDeployer && <NavLink exact to="/create-token-grants" label='CREATE TOKEN GRANTS'/> }
+        { isKeepTokenContractDeployer && <NavLink exact to="/create-token-grants" label='create token grants'/> }
         <Web3Status />
         <div className='account-address'>
           <span className="text-label text-bold">ADDRESS&nbsp;</span>
