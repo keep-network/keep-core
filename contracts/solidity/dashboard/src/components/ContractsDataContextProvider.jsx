@@ -89,9 +89,21 @@ class ContractsDataContextProvider extends React.Component {
       }
     }
 
+    refreshKeepTokenBalance = async () => {
+      const { web3: { token, yourAddress, utils } } = this.props
+
+      const tokenBalance = new utils.BN(await token.methods.balanceOf(yourAddress).call())
+      this.setState({
+        tokenBalance,
+      })
+    }
+
     render() {
       return (
-        <ContractsDataContext.Provider value={{ ...this.state }}>
+        <ContractsDataContext.Provider value={{
+          refreshKeepTokenBalance: this.refreshKeepTokenBalance,
+          ...this.state,
+        }}>
           {this.props.children}
         </ContractsDataContext.Provider>
       )
