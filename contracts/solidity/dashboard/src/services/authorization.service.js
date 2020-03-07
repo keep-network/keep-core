@@ -1,12 +1,11 @@
 import { contractService } from './contracts.service'
 import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
 import { registryService } from './registry.service'
-import web3Utils from 'web3-utils'
+import { isSameEthAddress } from '../utils'
 
 const fetchAuthorizationPageData = async (web3Context) => {
   const { yourAddress } = web3Context
   const approvedContractsInRegistry = await registryService.fetchAuthorizedOperatorContracts(web3Context)
-  console.log('aappp', approvedContractsInRegistry)
   const stakedEvents = await contractService.getPastEvents(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'Staked', { fromBlock: '0' })
   const visitedOperators = {}
   const authorizerOperators = []
@@ -21,7 +20,7 @@ const fetchAuthorizationPageData = async (web3Context) => {
     }
     visitedOperators[operatorAddress] = operatorAddress
     const authorizerOfOperator = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'authorizerOf', operatorAddress)
-    if (web3Utils.toChecksumAddress(yourAddress) === web3Utils.toChecksumAddress(authorizerOfOperator)) {
+    if (isSameEthAddress(authorizerOfOperator, yourAddress)) {
       authorizerOperators.push(operatorAddress)
     }
   }

@@ -3,12 +3,17 @@ import AddressShortcut from './AddressShortcut'
 import { SubmitButton } from './Button'
 import { ETHERSCAN_DEFAULT_URL } from '../constants/constants'
 
-const AuthorizeContracts = ({ contracts, onAuthorizeBtn }) => {
+const AuthorizeContracts = ({
+  contracts,
+  onAuthorizeBtn,
+  onAuthorizeSuccessCallback,
+}) => {
   const renderAuthorizeContractsItem = (item) => (
     <AuthorizeContractsItem
       key={item.contractAddress}
       contract={item}
       onAuthorizeBtn={onAuthorizeBtn}
+      onAuthorizeSuccessCallback={onAuthorizeSuccessCallback}
     />
   )
 
@@ -34,7 +39,11 @@ const AuthorizeContracts = ({ contracts, onAuthorizeBtn }) => {
   )
 }
 
-const AuthorizeContractsItem = ({ contract, onAuthorizeBtn }) => {
+const AuthorizeContractsItem = ({
+  contract,
+  onAuthorizeBtn,
+  onAuthorizeSuccessCallback,
+}) => {
   const authorize = async (onTransactionHashCallback) => {
     await onAuthorizeBtn(contract, onTransactionHashCallback)
   }
@@ -54,10 +63,11 @@ const AuthorizeContractsItem = ({ contract, onAuthorizeBtn }) => {
       </div>
       <div className="flex-1">
         <SubmitButton
-          className="btn btn-primary btn-lg"
+          className="btn btn-primary btn-lg flex-1"
           onSubmitAction={authorize}
+          successCallback={onAuthorizeSuccessCallback}
         >
-        authorize
+          authorize
         </SubmitButton>
       </div>
     </li>

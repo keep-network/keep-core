@@ -41,7 +41,7 @@ const AuthorizationHistoryItem = ({ contract }) => {
       <div className="flex flex-1">
         <StatusBadge
           className="self-start"
-          status={BADGE_STATUS.COMPLETED}
+          status={BADGE_STATUS.COMPLETE}
           text="authorized"
         />
       </div>
