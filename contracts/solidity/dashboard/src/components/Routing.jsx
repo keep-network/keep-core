@@ -9,6 +9,7 @@ import TokensPage from '../pages/TokensPage'
 import OperatorPage from '../pages/OperatorPage'
 import AuthorizerPage from '../pages/AuthorizerPage'
 import RewardsPage from '../pages/RewardsPage'
+import CreateTokenGrantPage from '../pages/CreateTokenGrantPage'
 
 class Routing extends React.Component {
   renderContent() {
@@ -24,6 +25,7 @@ class Routing extends React.Component {
         <Route exact path='/operations' component={OperatorPage} />
         <Route exact path='/rewards' component={RewardsPage} />
         <Route exact path='/authorizer' component={AuthorizerPage} />
+        {isKeepTokenContractDeployer && <Route exact path='/create-token-grants' component={CreateTokenGrantPage} />}
         <Route exact path='/' >
           <Redirect to='/tokens' />
         </Route>
