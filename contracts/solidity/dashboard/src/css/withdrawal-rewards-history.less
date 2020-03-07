@@ -2,11 +2,10 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 1.5rem;
 
     .address-shortcut {
-        font-size: 16px;
-        font-weight: 500;
+        font-size: 0.9rem;
+        color: @color-grey-70;
     }
 }
 
@@ -15,7 +14,11 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid @black;
-    padding: .5rem 0;
+    border-bottom: 0.25px solid @color-grey-70;
+    padding: 1rem 0;
+
+    &:last-of-type {
+        margin-bottom: 1rem;
+        border: none;
+    }
 }

@@ -1,156 +1,18 @@
-.form-inline {
-  display: inline-block;
-  border: solid 2px @light-blue-grey;
-  border-radius: @border-radius;
-  background-color: @white;
-  margin: 0 0 1em;
-  position: relative;
-  transition: 0.25s all ease-in;
-
-  input {
-    padding: 12px;
-    height: auto;
-    border-color: transparent;
-    box-shadow: none;
-    border-radius: @border-radius;
-    outline: 0;
-    line-height: 25px;
-
-    &.form-control {
-      border-color: transparent;
-      box-shadow: none;
-      display: inline-block;
-      width: 100%;
-      min-width: 300px;
-    }
-  }
-
-  .form-group {
-    display: inline-block;
-    margin-bottom: 0;
-    width: 100%;
-
-    &.has-success {
-      .form-control {
-        &:focus {
-          border-color: transparent;
-          box-shadow: none;
-        }
-      }
-    }
-
-    &.has-error {
-      .form-control {
-        &:focus {
-          border-color: transparent;
-          box-shadow: none;
-        }
-      }
-    }
-  }
-
-  .btn {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 120px;
-    transition: 0.25s all ease-in;
-
-    &:focus {
-      outline: 0;
-    }
-
-    &:active {
-      width: 100%;
-      color: transparent;
-      background-color: @link-active-color;
-      border-color: @link-active-color;
-    }
-  }
-
-  &.has-error {
-    border-color: @error-color;
-
-    .form-group {
-      .form-control {
-        &:focus {
-          border-color: transparent;
-        }
-      }
-    }
-
-    .btn {
-      background-color: @error-color;
-      border-color: @error-color;
-    }
-  }
-
-  &.request-sent {
-    border-color: @link-active-color;
-
-    .btn {
-      width: 100%;
-      color: transparent;
-      background-color: @link-active-color;
-      border-color: @link-active-color;
-    }
-  }
-
-  &.request-success {
-    border-color: @background-dark-color;
-    background-color: @background-dark-color;
-    border-radius: 8px;
-
-    .btn {
-      border-radius: 8px;
-      background-color: @background-dark-color;
-      border-color: @background-dark-color;
-    }
-  }
+input {
+  font-size: 1rem;
+  padding: 1rem .75rem;
+  line-height: 1rem;
 }
 
 .form {
   &-input {
     margin-bottom: 1.5rem;
-
-    input {
-      padding: 1rem .75rem;
-      line-height: 1rem;
-    }
   }
 
   &-error {
-    color: @dark-red;
+    color: @pending-color;
     font-size: .9rem;
     font-weight: 500;
-  }
-}
-
-.email-form {
-  position: relative;
-  .error-message {
-    color: @error-color;
-    position: absolute;
-    width: 100%;
-    top: calc(100% - 15px);
-    left: 0;
-    text-align: center;
-  }
-
-  .success-message {
-    width: 100%;
-    position: absolute;
-    top: 9px;
-    left: 0;
-    text-align: center;
-    color: @white;
-  }
-}
-
-.signing-form {
-  .form-inline input.form-control, .well {
-    min-width: 500px;
-    overflow-wrap: break-word;
   }
 }
 

@@ -1,9 +1,22 @@
 @import (inline) "fonts.css";
+
+html {
+  font-size: 12px;
+
+  @media screen and (min-width: 750px) {
+    font-size: 14px;
+  }
+
+  @media screen and (min-width: 1200px) {
+    font-size: 16px;
+  }
+}
+
 body {
   font-family: 'Work Sans', sans-serif;
   font-weight: normal;
   font-size: 1rem;
-  color: @black;
+  color: @color-black;
   line-height: 1.44;
 
   @media @tablet-up {
@@ -12,45 +25,45 @@ body {
 }
 
 h1, .h1 {
-  font-size: 3.875rem;
+  font-size: 4.375rem;
 }
 
 h2, .h2 {
   font-size: 3.125rem;
+  
+}
+
+h1, h2 {
+  font-weight: 800;
+  line-height: 104%;
+  letter-spacing: -1px;
 }
 
 h3, .h3 {
   font-size: 2rem;
+  font-weight: 800;
+  line-height: 120%;
 }
 
 h4, .h4 {
-  margin: 0;
   font-size: 1.5625rem;
   font-weight: 500;
   line-height: 145%;
 }
 
 h5, .h5 {
-  margin: 0;
   font-size: 1.25rem;
   font-weight: bold;
   line-height: 130%;
+  font-weight: bold;
 }
 
 h6, .h6 {
   font-size: 1.25rem;
   font-weight: 500;
   line-height: 145%;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.05rem;
   font-variant: small-caps;
-  margin: 0;
-}
-
-h1, .h1,
-h2, .h2,
-h3, .h3 {
-  line-height: 1.38;
-  font-weight: 800;
 }
 
 h1, .h1,
@@ -73,46 +86,23 @@ p {
 }
 
 a {
-  color: @link-color;
+  color: @primary-color;
 }
 
 label {
   font-size: 1rem;
   font-weight: 500;
   line-height: 145%;
-  color: @darker-grey
+  color: @color-grey-60
 }
 
 .text {
-
-  &-success {
-    color: @success-color !important;
-  }
-
-  &-primary {
-    color: @aqua-marine;
-  }
-
-  &-black {
-    color: @black !important;
-  }
-
-  &-darker-grey {
-    color: @darker-grey;
-  }
-
-  &-grey {
-    color: @grey;
-  }
-
-  &-white {
-    color: @white !important;
-  }
-
-  &-dark-red {
-    color: @dark-red !important;
-  }
-
+  each(@text-colors, {
+    &-@{key} {
+      color: @value !important;
+    }
+  });
+  
   &-bold {
     font-weight: bold;
   }
@@ -120,14 +110,10 @@ label {
   &-normal {
     font-weight: normal !important;
   }
-  
-  &-white {
-    color: @white !important;
-  }
 
   &-label {
     font-size: 1rem;
-    color: @darker-grey;
+    color: @color-grey-60;
     line-height: 145%;
     letter-spacing: 0.05em;
     font-variant: small-caps;
@@ -137,7 +123,7 @@ label {
     font-weight: normal;
     font-size: 1.2rem !important;
     line-height: 145%;
-    color: @darker-grey;
+    color: @color-grey-60;
   }
 
   &-samll {
@@ -151,17 +137,6 @@ label {
     line-height: 1rem;
   }
 
-  &-warning {
-    &.border {
-      padding-left: 1rem;
-      border-left: 3px solid @warning-color;
-    }
-    font-weight: 500;
-    font-size: 0.9rem;
-    line-height: 22px;
-    color: @warning-color;
-  }
-
   &-title {
     font-weight: bold;
     font-size: 1.25rem; 
@@ -172,25 +147,13 @@ label {
     font-variant: small-caps;
   }
 
-  &-bg {
-    &-warning {
-      padding: .2rem;
-      background-color: @warning-color;
-    }
-    &-pending-light { 
-      background-color: @pending-light-color;
-    }
-    &-success-light { 
-      background-color: @success-light-color;
-    }
-  }
   &-link {
     border-bottom: 1px solid transparent;
     transition: all ease-in-out .5s;
 
     &:hover, &:focus {
       cursor: pointer;
-      border-color: @warning-color;
+      border-color: @pending-color;
     }
   }
 }

@@ -4,7 +4,7 @@
 }
 
 .delegate-stake-form {
-    div.flex.flex-row:first-of-type {
+    div.flex.row:first-of-type {
         flex-direction: column;
     }
 
@@ -20,9 +20,10 @@
                cursor: pointer;
            }
            &.active {
+                color: @color-black;
                 position: relative;
                 font-weight: bold;
-                border: 1px solid @grey;
+                border: 0.25px solid @color-grey-70;
                 border-bottom: none;
 
                 &:before {
@@ -32,12 +33,13 @@
                     left: 0;
                     width: 100%;
                     height: 5px;
-                    background: @aqua-marine;
+                    background: @primary-color;
                 }
             }
             &.inactive {
-                border-bottom: 1px solid @grey;
-                background: #E6E6E6;
+                color: @color-grey-40;
+                border-bottom: 0.25px solid @color-grey-70;
+                background: @color-grey-20;
                 padding-left: 6px;
                 background-clip: border-box;
                 position: relative;
@@ -61,7 +63,7 @@
     }
    
     .input-wrapper {
-        border: 1px solid @grey;
+        border: 0.25px solid @color-grey-70;
         border-top: 0;
         padding: 1.5rem;
         padding-bottom: 0;
@@ -108,7 +110,7 @@
 
 @media screen and (min-width: 1550px) {
     .delegate-stake-form {
-        div.flex.flex-row:first-of-type {
+        div.flex.row:first-of-type {
             flex-direction: row;
         }
 

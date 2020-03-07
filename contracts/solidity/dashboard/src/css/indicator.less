@@ -1,18 +1,24 @@
 .indicator {
 	&-clock {
 		position: relative;
-		width: 30px;
-		height: 30px;
-		border: 2px solid @black;
+		width: 20px;
+		height: 20px;
+		border: 1px solid @color-black;
 		border-radius: 50%;
 		background: transparent;
+
+		&.primary {
+			border-color: @primary-color;
+			&:after, &:before {
+				background: @primary-color;
+			}
+		}
 		
 		&:after, &:before {
 			position: absolute;
 			content: '';
-			background: @black;
-			border-radius: 50%;
-			height: 2px;
+			background: @color-black;
+			height: 1px;
 			top: 50%;
 			left: 50%;
 			transform-origin: left;
@@ -31,6 +37,17 @@
 @keyframes round {
 	0% { transform: rotate(0deg); }
 	100% { transform: rotate(360deg); }
+}
+
+.tile {
+	> .loading-overlay-container {
+		> .loading-overlay {
+			top: -2rem;
+			left: -2rem;
+			height: calc(100% + 4.5rem) !important;
+			width: calc(100% + 4rem) !important;
+		}
+	}
 }
 
 .loading-overlay-container { 
@@ -52,7 +69,8 @@
 		justify-content: center;
 		top: 0;
 		left: 0;
-		background: rgba(196, 196, 196, 0.8);
+		background: @color-grey-30;
+		opacity: .8;
 		width: 100%;
 		height: 100%;
 	}

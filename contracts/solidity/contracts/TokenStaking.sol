@@ -161,22 +161,35 @@ contract TokenStaking is StakeDelegatable {
     /**
      * @dev Slash provided token amount from every member in the misbehaved
      * operators array and burn 100% of all the tokens.
-     * @param amount Token amount to slash from every misbehaved operator.
+     * @param amountToSlash Token amount to slash from every misbehaved operator.
      * @param misbehavedOperators Array of addresses to seize the tokens from.
      */
-    function slash(uint256 amount, address[] memory misbehavedOperators) 
+    function slash(uint256 amountToSlash, address[] memory misbehavedOperators)
         public
         onlyApprovedOperatorContract(msg.sender) {
+
+        uint256 totalAmountToBurn = 0;
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
+
             uint256 operatorParams = operators[operator].packedParams;
-            uint256 oldAmount = operatorParams.getAmount();
-            uint256 newAmount = oldAmount.sub(amount);
-            operators[operator].packedParams = operatorParams.setAmount(newAmount);
+            uint256 currentAmount = operatorParams.getAmount();
+
+            if (currentAmount < amountToSlash) {
+                totalAmountToBurn = totalAmountToBurn.add(currentAmount);
+
+                uint256 newAmount = 0;
+                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+            } else {
+                totalAmountToBurn = totalAmountToBurn.add(amountToSlash);
+
+                uint256 newAmount = currentAmount.sub(amountToSlash);
+                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+            }
         }
 
-        token.burn(misbehavedOperators.length.mul(amount));
+        token.burn(totalAmountToBurn);
     }
 
     /**

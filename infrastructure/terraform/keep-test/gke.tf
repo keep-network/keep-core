@@ -68,22 +68,3 @@ module "gke_cluster" {
 
   labels = "${local.labels}"
 }
-
-/* Using this module will create a data read and an update for the
- * prometheus-to-sd resource on each Terraform planand apply run.  These
- * updates will do nothing and are an artifact of the depends_on in the
- * modules data resource. Terraform team is aware and have a proposed fix
- * in the works.
-*/
-module "gke_cluster_metrics" {
-  source    = "git@github.com:thesis/infrastructure.git//terraform/modules/gke_metrics"
-  namespace = "${var.gke_metrics_namespace}"
-
-  kube_state_metrics {
-    version = "${var.kube_state_metrics["version"]}"
-  }
-
-  prometheus_to_sd {
-    version = "${var.prometheus_to_sd["version"]}"
-  }
-}

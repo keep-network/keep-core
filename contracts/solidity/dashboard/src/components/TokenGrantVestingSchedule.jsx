@@ -18,10 +18,10 @@ const TokenGrantVestingSchedule = ({ grant }) => {
 
   return (
     <div>
-      <div className="text-big text-darker-grey">
+      <div className="text-big text-grey-60">
         Grant ID {grant.id}
       </div>
-      <div className="flex flex-row-space-between text-small text-grey">
+      <div className="flex row space-between text-small text-grey-30">
         <div>
             Start Date {formatDate(moment.unix(grant.start))}
           <div className="text-smaller">
@@ -33,8 +33,8 @@ const TokenGrantVestingSchedule = ({ grant }) => {
         </div>
       </div>
       <div className="mt-1">
-        <div className="text-title text-darker-grey">total</div>
-        <div className="text-big text-darker-grey">{displayAmount(grant.amount)} KEEP</div>
+        <div className="text-title text-grey-60">total</div>
+        <div className="text-big text-grey-60">{displayAmount(grant.amount)} KEEP</div>
         <ProgressBar
           total={grant.amount}
           items={[
@@ -49,7 +49,7 @@ const TokenGrantVestingSchedule = ({ grant }) => {
           title='schedule'
           breakpoints={data}
           footer={
-            <div className="mb-3 text-smaller text-darker-grey">
+            <div className="mb-3 text-smaller text-grey-60">
               Vesting will continue until completion on {formatDate(fullyVestedDate)}
             </div>
           }

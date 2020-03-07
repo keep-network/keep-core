@@ -2,9 +2,7 @@
 @import 'typography';
 @import 'buttons';
 @import 'forms';
-@import 'nav';
 @import 'messages';
-@import 'web3-status';
 @import 'indicator';
 @import 'menu-button';
 @import 'rewards';
@@ -19,18 +17,20 @@
 @import 'timeline.less';
 @import 'modal.less';
 @import 'progress-bar.less';
+@import 'banner.less';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 html {
-  font-size: 12px;
-  background: @backgroud;
+  background: @background-color;
+}
 
-  @media screen and (min-width: 750px) {
-    font-size: 14px;
-  }
-
-  @media screen and (min-width: 1200px) {
-    font-size: 16px;
-  }
+html, body, #root {
+  height: 100vh;
 }
 
 ul {
@@ -38,16 +38,16 @@ ul {
 }
 
 .main {
-  width: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  background: @backgroud;
-  >.content {
+  background: @background-color;
+  
+  > .content {
+    flex: 1 0 auto;
     overflow-x: hidden;
-    max-width: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     margin: calc(@header-height + 1.5rem) 1.5rem 0;
   }
 }
@@ -65,7 +65,7 @@ ul {
   align-items: center;
   background: white;
   padding: 0.5rem;
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid @color-black;
 
   .logo {
     height: @header-height;
@@ -88,12 +88,12 @@ ul {
   position: fixed;
   top: @header-height;
   left: 0;
-  z-index: 10;
+  z-index: 12;
   height: 100%;
   width: 0px;
   visibility: hidden;
-  background: white;
-  border-right: 1px solid black;
+  background: @white;
+  border-right: 1px solid @color-black;
   overflow-x: hidden;
   transition: 0.5s ease;
   
@@ -110,14 +110,14 @@ ul {
     padding: 0;
 
     & li {
-      border-bottom: 1px solid black;
+      border-bottom: 1px solid @color-black;
       padding: 1rem 0;
       width: 100%;
       font-size: 1rem;
       font-weight: normal;
       letter-spacing: .05rem;
       font-variant: small-caps;
-      border-right: 0 solid #48DBB4;
+      border-right: 0 solid @primary-color;
       transition: border-right-width 0.3s ease;
 
       &:hover {
@@ -127,13 +127,14 @@ ul {
 
       &.active-page-link {
         border-right-width: 5px;
-        color: black;
+        color: @color-black;
         font-weight: bold;
       }
     }
 
     a {
-      color: black;
+      color: @color-black;
+      text-decoration: none;
 
       &:hover, &:focus{
         text-decoration: none;
@@ -158,6 +159,61 @@ ul {
     }
 
 
+  }
+}
+
+footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 200px;
+  color: @white;
+  background-color: @color-black;
+  margin-top: 3rem;
+  padding: 2rem;
+  z-index: 11;
+
+  svg {
+    min-height: 58px !important;
+    margin-bottom: 1rem;
+  }
+
+  .signature {
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  ul {
+    align-self: flex-start;
+    list-style: none;
+
+    a {
+      text-decoration: none;
+      color: @color-grey-10;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+  
+}
+
+@media screen and (min-width: 576px) {
+  footer {
+    flex-direction: row;
+    align-items: flex-start;
+
+    ul {
+      margin: 0 2rem;
+    }
+  
+    .signature {
+      margin: 0;
+      margin-left: auto;
+      text-align: right;
+    }
   }
 }
 
@@ -227,6 +283,7 @@ ul {
   .side-menu {
     width: @side-menu-width;
     visibility: visible;
+    z-index: 10;
     
     ul > .account-address, .web3 {
       visibility: hidden;
