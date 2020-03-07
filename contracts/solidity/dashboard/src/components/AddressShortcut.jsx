@@ -1,5 +1,5 @@
 import React from 'react'
-import { shortenAddress } from '../utils'
+import { shortenAddress } from '../utils/general.utils'
 
 const AddressShortcut = ({ address, classNames }) => {
   return (

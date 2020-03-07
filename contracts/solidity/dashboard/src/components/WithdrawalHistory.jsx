@@ -8,7 +8,7 @@ import rewardsService from '../services/rewards.service'
 import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEvent'
 import { OPERATOR_CONTRACT_NAME_EVENTS } from '../constants/constants'
 import web3Utils from 'web3-utils'
-import { formatDate, isSameEthAddress } from '../utils'
+import { formatDate, isSameEthAddress } from '../utils/general.utils'
 
 const previewDataCount = 3
 const initialData = []

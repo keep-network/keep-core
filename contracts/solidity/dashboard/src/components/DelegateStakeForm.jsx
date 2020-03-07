@@ -9,7 +9,7 @@ import {
   validateRequiredValue,
 } from '../forms/common-validators'
 import { useCustomOnSubmitFormik } from '../hooks/useCustomOnSubmitFormik'
-import { displayAmount, formatAmount } from '../utils'
+import { displayAmount, formatAmount } from '../utils/general.utils'
 import ProgressBar from './ProgressBar'
 import { colors } from '../constants/colors'
 import Dropdown from './Dropdown'

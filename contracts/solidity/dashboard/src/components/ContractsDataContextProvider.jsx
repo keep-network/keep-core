@@ -1,6 +1,6 @@
 import React from 'react'
 import withWeb3Context from './WithWeb3Context'
-import { displayAmount } from '../utils'
+import { displayAmount } from '../utils/general.utils'
 import { getKeepTokenContractDeployerAddress } from '../contracts'
 
 export const ContractsDataContext = React.createContext({})

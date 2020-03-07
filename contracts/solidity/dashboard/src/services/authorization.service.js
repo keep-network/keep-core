@@ -1,7 +1,7 @@
 import { contractService } from './contracts.service'
 import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
 import { registryService } from './registry.service'
-import { isSameEthAddress } from '../utils'
+import { isSameEthAddress } from '../utils/general.utils'
 
 const fetchAuthorizationPageData = async (web3Context) => {
   const { yourAddress } = web3Context

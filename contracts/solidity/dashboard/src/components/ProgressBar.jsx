@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { displayAmount } from '../utils'
+import { displayAmount } from '../utils/general.utils'
 import BigNumber from 'bignumber.js'
 
 const defaultValue = 0

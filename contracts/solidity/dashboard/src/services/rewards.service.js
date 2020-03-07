@@ -1,4 +1,4 @@
-import { formatDate, wait } from '../utils'
+import { formatDate, wait } from '../utils/general.utils'
 
 const fetchAvailableRewards = async (web3Context) => {
   const { keepRandomBeaconOperatorContract, stakingContract, yourAddress, utils } = web3Context
