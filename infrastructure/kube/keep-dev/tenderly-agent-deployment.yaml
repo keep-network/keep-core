@@ -10,12 +10,12 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tenderly-agent
+      app: tenderly
       type: agent
   template:
     metadata:
       labels:
-        app: tenderly-agent
+        app: tenderly
         type: agent
     spec:
       containers:
