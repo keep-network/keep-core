@@ -28,6 +28,8 @@ contract Registry {
     // 0 - NULL (default), 1 - APPROVED, 2 - DISABLED
     mapping(address => uint256) public operatorContracts;
 
+    event OperatorContractApproved(address operatorContract);
+
     modifier onlyGovernance() {
         require(governance == msg.sender, "Not authorized");
         _;
@@ -67,6 +69,7 @@ contract Registry {
 
     function approveOperatorContract(address operatorContract) public onlyRegistryKeeper {
         operatorContracts[operatorContract] = 1;
+        emit OperatorContractApproved(operatorContract);
     }
 
     function disableOperatorContract(address operatorContract) public onlyPanicButton {
