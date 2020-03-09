@@ -75,7 +75,7 @@ contract TokenStaking is StakeDelegatable {
         token.transferFrom(_from, address(this), _value);
 
         operators[operator] = Operator(
-            OperatorUtils.pack(_value, block.number, 0),
+            OperatorParams.pack(_value, block.number, 0),
             _from,
             magpie,
             authorizer

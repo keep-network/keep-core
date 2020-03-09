@@ -6,7 +6,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./utils/AddressArrayUtils.sol";
-import "./utils/OperatorUtils.sol";
+import "./utils/OperatorParams.sol";
 
 
 /**
@@ -18,7 +18,7 @@ contract StakeDelegatable {
     using SafeERC20 for ERC20Burnable;
     using BytesLib for bytes;
     using AddressArrayUtils for address[];
-    using OperatorUtils for uint256;
+    using OperatorParams for uint256;
 
     ERC20Burnable public token;
 
