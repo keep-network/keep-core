@@ -58,6 +58,8 @@ COPY ./pkg/beacon/relay/entry/gen $APP_DIR/pkg/beacon/relay/entry/gen
 COPY ./pkg/beacon/relay/gjkr/gen $APP_DIR/pkg/beacon/relay/gjkr/gen
 COPY ./pkg/beacon/relay/dkg/result/gen $APP_DIR/pkg/beacon/relay/dkg/result/gen
 COPY ./pkg/beacon/relay/registry/gen $APP_DIR/pkg/beacon/relay/registry/gen
+# Need this to resolve imports in generated Ethereum commands.
+COPY ./config $APP_DIR/config
 RUN go generate ./.../gen 
 
 COPY ./ $APP_DIR/

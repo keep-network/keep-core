@@ -15,9 +15,9 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
         .send({ from: yourAddress })
         .on('transactionHash', onTransactionHashCallback)
       showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Recover stake transaction successfully completed' })
-      props.successCallback()
     } catch (error) {
       showMessage({ type: messageType.ERROR, title: 'Recover stake action has been failed ', content: error.message })
+      throw error
     }
   }, [operatorAddress, yourAddress])
 
@@ -26,6 +26,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
       className={props.btnClassName}
       onSubmitAction={recoverStake}
       pendingMessageTitle='Recover stake transaction is pending...'
+      successCallback={props.successCallback}
     >
       {props.btnText}
     </SubmitButton>
@@ -33,7 +34,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
 }
 
 RecoverStakeButton.defaultProps = {
-  btnClassName: 'btn btn-sm btn-default',
+  btnClassName: 'btn btn-sm btn-secondary',
   btnText: 'recover',
   successCallback: () => {},
 }

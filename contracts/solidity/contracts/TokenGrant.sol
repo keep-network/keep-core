@@ -3,7 +3,7 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "./utils/BytesLib.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./TokenStaking.sol";
 
@@ -29,9 +29,10 @@ contract TokenGrant {
     using BytesLib for bytes;
     using AddressArrayUtils for address[];
 
-    event CreatedTokenGrant(uint256 id);
-    event WithdrawnTokenGrant(uint256 amount);
-    event RevokedTokenGrant(uint256 id);
+    event TokenGrantCreated(uint256 id);
+    event TokenGrantWithdrawn(uint256 indexed grantId, uint256 amount);
+    event TokenGrantStaked(uint256 indexed grantId, uint256 amount, address operator);
+    event TokenGrantRevoked(uint256 id);
 
     struct Grant {
         address grantManager; // Token grant manager.
@@ -179,7 +180,7 @@ contract TokenGrant {
         uint256 _duration = _extraData.toUint(20);
         uint256 _start = _extraData.toUint(52);
         uint256 _cliff = _extraData.toUint(84);
-        
+
         require(_grantee != address(0), "Grantee address can't be zero.");
         require(_cliff <= _duration, "Vesting cliff duration must be less or equal total vesting duration.");
 
@@ -201,7 +202,7 @@ contract TokenGrant {
 
         // Maintain a record of the vested amount
         balances[_grantee] = balances[_grantee].add(_amount);
-        emit CreatedTokenGrant(id);
+        emit TokenGrantCreated(id);
     }
 
     /**
@@ -222,7 +223,7 @@ contract TokenGrant {
         // Transfer tokens from this contract balance to the grantee token balance.
         token.safeTransfer(grants[_id].grantee, amount);
 
-        emit WithdrawnTokenGrant(amount);
+        emit TokenGrantWithdrawn(_id, amount);
     }
 
     /**
@@ -274,7 +275,7 @@ contract TokenGrant {
 
         // Transfer tokens from this contract balance to the token grant manager.
         token.safeTransfer(grants[_id].grantManager, refund);
-        emit RevokedTokenGrant(_id);
+        emit TokenGrantRevoked(_id);
     }
 
     /**
@@ -309,6 +310,7 @@ contract TokenGrant {
         // Staking contract expects 40 bytes _extraData for stake delegation.
         // 20 bytes magpie's address + 20 bytes operator's address.
         tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData);
+        emit TokenGrantStaked(_id, _amount, operator);
     }
 
     /**

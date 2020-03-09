@@ -3,6 +3,7 @@ pragma solidity ^0.5.4;
 import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
 import "./Registry.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
 
 /**
@@ -14,6 +15,7 @@ import "./Registry.sol";
 contract TokenStaking is StakeDelegatable {
 
     using UintArrayUtils for uint256[];
+    using SafeERC20 for ERC20Burnable;
 
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
@@ -72,7 +74,7 @@ contract TokenStaking is StakeDelegatable {
         address authorizer = _extraData.toAddress(40);
 
         // Transfer tokens to this contract.
-        token.transferFrom(_from, address(this), _value);
+        token.safeTransferFrom(_from, address(this), _value);
 
         operators[operator] = Operator(_value, block.number, 0, _from, magpie, authorizer);
         ownerOperators[_from].push(operator);
@@ -156,19 +158,27 @@ contract TokenStaking is StakeDelegatable {
     /**
      * @dev Slash provided token amount from every member in the misbehaved
      * operators array and burn 100% of all the tokens.
-     * @param amount Token amount to slash from every misbehaved operator.
+     * @param amountToSlash Token amount to slash from every misbehaved operator.
      * @param misbehavedOperators Array of addresses to seize the tokens from.
      */
-    function slash(uint256 amount, address[] memory misbehavedOperators) 
+    function slash(uint256 amountToSlash, address[] memory misbehavedOperators)
         public
         onlyApprovedOperatorContract(msg.sender) {
+
+        uint256 totalAmountToSlash = 0;
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
-            operators[operator].amount = operators[operator].amount.sub(amount);
+            if (operators[operator].amount < amountToSlash) {
+                totalAmountToSlash = totalAmountToSlash.add(operators[operator].amount);
+                operators[operator].amount = 0;
+            } else {
+                totalAmountToSlash = totalAmountToSlash.add(amountToSlash);
+                operators[operator].amount = operators[operator].amount.sub(amountToSlash);
+            }
         }
 
-        token.burn(misbehavedOperators.length.mul(amount));
+        token.burn(totalAmountToSlash);
     }
 
     /**
@@ -195,7 +205,7 @@ contract TokenStaking is StakeDelegatable {
         uint256 total = misbehavedOperators.length.mul(amount);
         uint256 tattletaleReward = (total.mul(5).div(100)).mul(rewardMultiplier).div(100);
 
-        token.transfer(tattletale, tattletaleReward);
+        token.safeTransfer(tattletale, tattletaleReward);
         token.burn(total.sub(tattletaleReward));
     }
 

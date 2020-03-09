@@ -4,11 +4,11 @@ import moment from 'moment'
 
 const SelectedGrantDropdown = ({ grant }) => {
   return (
-    <div className="flex flex-column">
+    <div className="flex column">
       <div className="text-smaller">
-        Grant issued {grant.start && formatDate(moment.unix(grant.start).add(grant.duration, 'seconds'))}
+        Issued on {grant.start && formatDate(moment.unix(grant.start).add(grant.duration, 'seconds'))}
       </div>
-      <div className="text-smaller text-grey">
+      <div className="text-smaller text-grey-60">
         Grant ID {grant.id}
       </div>
     </div>

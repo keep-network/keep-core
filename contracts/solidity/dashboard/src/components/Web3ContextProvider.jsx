@@ -67,7 +67,7 @@ export default class Web3ContextProvider extends React.Component {
       try {
         const web3EventProvider = getWeb3SocketProvider()
         const [token, grantContract, stakingContract, keepRandomBeaconOperatorContract] = await this.getContracts(web3)
-        const [eventToken, eventGrantContract, eventStakingContract] = await this.getContracts(web3EventProvider)
+        const [eventToken, eventGrantContract, eventStakingContract, eventKeepRandomBeaconOperatorContract] = await this.getContracts(web3EventProvider)
         this.setState({
           token,
           grantContract,
@@ -79,6 +79,7 @@ export default class Web3ContextProvider extends React.Component {
           eventToken,
           eventGrantContract,
           eventStakingContract,
+          eventKeepRandomBeaconOperatorContract,
         })
       } catch (error) {
         this.setState({

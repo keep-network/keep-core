@@ -1,42 +1,72 @@
-// Colors
+// high emphasis
+@color-brand-mint: #48DBB4;
+@color-brand-violet: #7850CD;
 
-@aqua-marine: #48dbb4;
-@pale-grey: #edfaf7;
-@light-blue-grey: #cfe6e0;
-@light-green: #c3e6dc;
-@charcoal: #293330;
-@gunmetal: #505e5b;
-@steel-grey: #6c807a;
+// medium emphasis
+@color-brass: #AC6E16;
+@color-black: #0A0806;
+
+// grey spectrum
+@color-grey-10: #F6F6F6;
+@color-grey-20: #E6E6E6;
+@color-grey-30: #C4C4C4;
+@color-grey-40: #AAAAAA;
+@color-grey-50: #818181;
+@color-grey-60: #6D6D6D;
+@color-grey-70: #4C4C4C;
+
+// status
+@color-green: #118263;
+@color-green-bg: #D7F6EE;
+@color-red: #b70a0a;
+@color-red-bg: #FFE9E9;
+@color-brass-bg: #F8E9D3;
+
+// other
 @white: #fff;
-@black: #0A0806;
-@rose-pink: #f57f97;
-@grey: #C4C4C4;
-@darker-grey: #4C4C4C;
-@light-grey: #F2F2F2;
-@dark-red: #B70A0A;
-@mint: #D7F7EE;
-@green: #118263;
-@red: #E10B0B;
-@pink: #FFE9E9;
-@light-green: #D7F6EE;
 
-@info-color: #8bc2ed;
-@warning-color: #AC6E16;
-@pending-light-color: #F8E9D3;
-@success-light-color: @light-green;
-@success-color: @green;
-@link-color: @aqua-marine;
-@link-active-color: @gunmetal;
-@syntax-highlight-color: @rose-pink;
-@light-on-dark-color: @white;
-@grey-on-light-color: @gunmetal;
-@error-color: @rose-pink;
-@background-light-color: @pale-grey;
-@background-dark-color: @charcoal;
-@background-med-color: @aqua-marine;
-@background-med-light-color: @light-green;
-@background-med-dark-color: @gunmetal;
-@backgroud: #E6E6E6;
+@primary-color: @color-brand-mint;
+@secondary-color: @color-brand-violet;
+@success-color: @color-green;
+@success-bg-color: @color-green-bg;
+@error-color: @color-red;
+@error-bg-color: @color-red-bg;
+@pending-color: @color-brass;
+@pending-bg-color: @color-brass-bg;
+@validation-color: @color-brass;
+@background-color: @color-grey-20;
+
+@text-colors: {
+       white: @white;
+       black: @color-black;
+       primary: @primary-color;
+       secondary: @secondary-color;
+       success: @success-color;
+       error: @error-color;
+       pending: @pending-color;
+       grey-10: @color-grey-10;
+       grey-20: @color-grey-20;
+       grey-30: @color-grey-30;
+       grey-40: @color-grey-40;
+       grey-50: @color-grey-50;
+       grey-60: @color-grey-60;
+       grey-70: @color-grey-70;
+}
+
+@bg-colors: {
+       success: @success-bg-color;
+       error: @error-bg-color;
+       pending: @pending-bg-color;
+}
+
+@directions-shortcuts: {
+       r: 'right';
+       l: 'left';
+       t: 'top';
+       b: 'bottom';
+}
+
+@margin-and-padding-values: 1, 2, 3;
 
 @header-height: 80px;
 @side-menu-width: 250px;
