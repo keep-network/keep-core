@@ -1,8 +1,10 @@
 import { contractService } from './contracts.service'
 import { REGISTRY_CONTRACT_NAME } from '../constants/constants'
+import { CONTRACT_DEPLOY_BLOCK_NUMBER } from '../contracts'
+
 
 const fetchAuthorizedOperatorContracts = async (web3Context) => {
-  const options = { fromBlock: '0' }
+  const options = { fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[REGISTRY_CONTRACT_NAME] }
   const events = await contractService
     .getPastEvents(
       web3Context,

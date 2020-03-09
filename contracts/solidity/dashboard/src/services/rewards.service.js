@@ -1,4 +1,8 @@
 import { formatDate, wait } from '../utils/general.utils'
+import { CONTRACT_DEPLOY_BLOCK_NUMBER } from '../contracts'
+import {
+  OPERATOR_CONTRACT_NAME,
+} from '../constants/constants'
 
 const fetchAvailableRewards = async (web3Context) => {
   const { keepRandomBeaconOperatorContract, stakingContract, yourAddress, utils } = web3Context
@@ -101,7 +105,7 @@ const withdrawRewardFromGroup = async (groupIndex, groupMembersIndices, web3Cont
 
 const fetchWithdrawalHistory = async (web3Context) => {
   const { keepRandomBeaconOperatorContract, yourAddress, utils, eth } = web3Context
-  const searchFilters = { fromBlock: 0, filter: { beneficiary: yourAddress } }
+  const searchFilters = { fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[OPERATOR_CONTRACT_NAME], filter: { beneficiary: yourAddress } }
 
   try {
     const events = await keepRandomBeaconOperatorContract.getPastEvents('GroupMemberRewardsWithdrawn', searchFilters)
