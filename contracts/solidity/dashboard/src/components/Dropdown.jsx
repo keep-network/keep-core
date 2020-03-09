@@ -12,6 +12,7 @@ const Dropdown = ({
   selectedItemComponent,
 }) => {
   const [isOpen, setIsOpen] = useState(false)
+  console.log('ooooooppppttt', options)
 
   const renderDropdownItem = (item) =>
     <DropdownItem
@@ -23,8 +24,8 @@ const Dropdown = ({
       labelPrefix={labelPrefix}
     />
 
-  const onChange = (e) => {
-    const selectedItem = options.find((option) => option[valuePropertyName] == e.target.value)
+  const onChange = (value) => {
+    const selectedItem = options.find((option) => option[valuePropertyName] == value)
     onSelect(selectedItem)
     setIsOpen(false)
   }
@@ -60,7 +61,7 @@ const Dropdown = ({
 
 const DropdownItem = React.memo(({ value, label, labelPrefix, isSelected, onChange }) => {
   return (
-    <li className={`option${isSelected ? ' selected' : ''}`} value={value} onClick={onChange}>
+    <li className={`option${isSelected ? ' selected' : ''}`} onClick={() => onChange(value)}>
       {`${labelPrefix} ${label}`}
     </li>
   )
