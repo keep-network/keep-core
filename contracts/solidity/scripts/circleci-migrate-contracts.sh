@@ -40,10 +40,17 @@ ssh utilitybox << EOF
   echo ">>>>>>FINISH Download Kube Creds FINISH>>>>>>"
 
   echo "<<<<<<START Port Forward eth-tx-node START<<<<<<"
-  echo "nohup timeout 600 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &"
-  echo "sleep 10s"
-  nohup timeout 600 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
-  sleep 10s
+
+  if [[ ! -z `netstat -an | grep '8545'` ]]
+  then
+    echo "kubectl port forward already running"
+  else
+    echo "nohup kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &"
+    echo "sleep 10s"
+    nohup kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
+    sleep 10s
+  fi
+
   echo ">>>>>>FINISH Port Forward eth-tx-node FINISH>>>>>>"
 
   echo "<<<<<<START Setting Contract Owner Key START<<<<<<"
