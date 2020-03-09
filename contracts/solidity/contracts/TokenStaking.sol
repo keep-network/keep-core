@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
+import "./utils/PercentUtils.sol";
 import "./Registry.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
@@ -15,6 +16,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 contract TokenStaking is StakeDelegatable {
 
     using UintArrayUtils for uint256[];
+    using PercentUtils for uint256;
     using SafeERC20 for ERC20Burnable;
 
     event Staked(address indexed from, uint256 value);
@@ -203,7 +205,7 @@ contract TokenStaking is StakeDelegatable {
         }
 
         uint256 total = misbehavedOperators.length.mul(amount);
-        uint256 tattletaleReward = (total.mul(5).div(100)).mul(rewardMultiplier).div(100);
+        uint256 tattletaleReward = (total.percent(5)).percent(rewardMultiplier);
 
         token.safeTransfer(tattletale, tattletaleReward);
         token.burn(total.sub(tattletaleReward));
