@@ -1,5 +1,5 @@
 import React from 'react'
-import { displayAmount } from '../utils'
+import { displayAmount } from '../utils/general.utils'
 import TokenGrantsOverview from './TokenGrantsOverview'
 
 const TokensOverview = ({

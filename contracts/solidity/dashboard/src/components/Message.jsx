@@ -1,6 +1,5 @@
 import React, { useContext, useEffect } from 'react'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { ClockIndicator } from './Loadable'
 import Banner, { BANNER_TYPE } from './Banner'
 
 export const MessagesContext = React.createContext({})

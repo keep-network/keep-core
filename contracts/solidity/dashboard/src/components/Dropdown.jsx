@@ -12,7 +12,6 @@ const Dropdown = ({
   selectedItemComponent,
 }) => {
   const [isOpen, setIsOpen] = useState(false)
-  console.log('ooooooppppttt', options)
 
   const renderDropdownItem = (item) =>
     <DropdownItem

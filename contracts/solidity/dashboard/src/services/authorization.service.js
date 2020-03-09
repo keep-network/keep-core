@@ -1,12 +1,18 @@
 import { contractService } from './contracts.service'
 import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
 import { registryService } from './registry.service'
-import { isSameEthAddress } from '../utils'
+import { isSameEthAddress } from '../utils/general.utils'
+import { CONTRACT_DEPLOY_BLOCK_NUMBER } from '../contracts'
 
 const fetchAuthorizationPageData = async (web3Context) => {
   const { yourAddress } = web3Context
   const approvedContractsInRegistry = await registryService.fetchAuthorizedOperatorContracts(web3Context)
-  const stakedEvents = await contractService.getPastEvents(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'Staked', { fromBlock: '0' })
+  const stakedEvents = await contractService.getPastEvents(
+    web3Context,
+    TOKEN_STAKING_CONTRACT_NAME,
+    'Staked',
+    { fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME] }
+  )
   const visitedOperators = {}
   const authorizerOperators = []
   const data = {}

@@ -1,5 +1,5 @@
 import React from 'react'
-import { displayAmount, getAvailableAtBlock } from '../utils'
+import { displayAmount, getAvailableAtBlock } from '../utils/general.utils'
 import AddressShortcut from './AddressShortcut'
 import UndelegateStakeButton from './UndelegateStakeButton'
 import StatusBadge, { BADGE_STATUS } from './StatusBadge'

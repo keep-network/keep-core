@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import { formatDate, displayAmount } from '../utils'
+import { formatDate, displayAmount } from '../utils/general.utils'
 import { SubmitButton } from './Button'
 import { colors } from '../constants/colors'
 import { CircularProgressBars } from './CircularProgressBar'

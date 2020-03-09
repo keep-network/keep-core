@@ -1,5 +1,5 @@
 import React from 'react'
-import { getWeb3, getWeb3SocketProvider } from '../utils'
+import { getWeb3, getWeb3SocketProvider } from '../utils/general.utils'
 import { Web3Context } from './WithWeb3Context'
 import { MessagesContext, messageType } from './Message'
 import { getContracts } from '../contracts'

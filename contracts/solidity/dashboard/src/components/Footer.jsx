@@ -37,13 +37,13 @@ const Footer = () => {
 }
 
 const FooterLinkItem = ({ label, url }) => (
-  <li key={label}>
+  <li>
     <a href={url} rel="noopener noreferrer" target="_blank" >
       <h5>{label}</h5>
     </a>
   </li>
 )
 
-const renderFooterLinkItem = (item) => <FooterLinkItem {...item} />
+const renderFooterLinkItem = (item) => <FooterLinkItem key={item.label} {...item} />
 
 export default Footer

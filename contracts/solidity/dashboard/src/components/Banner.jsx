@@ -24,7 +24,7 @@ const Banner = ({
   return (
     <div className={`banner banner-${type.className}`}>
       {withIcon &&
-        <div className="banner-icon">
+        <div className="banner-icon flex">
           {type.iconComponent}
         </div>
       }

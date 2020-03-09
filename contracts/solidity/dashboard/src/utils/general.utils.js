@@ -1,7 +1,7 @@
 import Web3 from 'web3'
 import BigNumber from 'bignumber.js'
 import moment from 'moment'
-import { PENDING_STATUS, COMPLETE_STATUS } from './constants/constants'
+import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
 import web3Utils from 'web3-utils'
 
 moment.updateLocale('en', {
