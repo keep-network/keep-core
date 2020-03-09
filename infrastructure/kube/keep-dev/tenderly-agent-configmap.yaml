@@ -28,6 +28,28 @@ data:
             clique:
               period: 1
               epoch: 30000
-          # cert_file: ./.tenderly/cert/testnet.crt # optional
-          # key_file: ./.tenderly/private/testnet.key # optional
+          cert_file: ./.tenderly/cert/tenderly-agent.crt # optional
+          key_file: ./.tenderly/private/tenderly-agent.key # optional
+  tenderly-agent.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIDSTCCAjECCQDOwN/Y2oFDPDANBgkqhkiG9w0BAQsFADBfMRkwFwYDVQQDDBBk
+    ZXYua2VlcC5uZXR3b3JrMRAwDgYDVQQIDAdHZW9yZ2lhMRAwDgYDVQQHDAdBdGxh
+    bnRhMQ0wCwYDVQQKDARLZWVwMQ8wDQYDVQQLDAZEZXZPcHMwHhcNMjAwMzA5MjA0
+    NzQ3WhcNMzAwMzA3MjA0NzQ3WjBuMSgwJgYDVQQDDB90ZW5kZXJseS1hZ2VudC5k
+    ZXYua2VlcC5uZXR3b3JrMRAwDgYDVQQIDAdHZW9yZ2lhMRAwDgYDVQQHDAdBdGxh
+    bnRhMQ0wCwYDVQQKDARLZWVwMQ8wDQYDVQQLDAZEZXZPcHMwggEiMA0GCSqGSIb3
+    DQEBAQUAA4IBDwAwggEKAoIBAQDaJCPohw0cQXyzUinOW8cmGKpRtrwlvf/8pyUA
+    1UPLTQ0h0QGFyba1ErceF3TAQLTmvoW5nmaQBkVlR++JynQIm4ZKQXlKNkBYM1qN
+    5ce2sZpzIzJuatKA6BgFPh2R/p9YY9o+lMpeJCJ7wDnMuG5LrGk52g4Jb3zUu2XD
+    CdO9eZfUFnATlnBQ3UX5cbdyKmkTBPUijXezAevcFmdyoGCp/W0zdS1Slu25nRNd
+    EYKKBEfob/73aGWUuVdbnE01q9fguzzFAN5LEWewXDFCQ/sm8OdpvN62LvKmEXP7
+    Dl4GHtkVq69bzQ1gGDwWr8GRkPKMnSALUETgQx8qBtA4JNQfAgMBAAEwDQYJKoZI
+    hvcNAQELBQADggEBAGEbIPTdTv6/LLf1y/rbFd/mYy2EbB5s7OcGXEDlUO00P7X3
+    PcFZ88rVEWRc4eZxSFmPmwiDId5kEHXarsyM1yl2mG2Z08hNkTvq822GrgW+0dXy
+    EGuA512oQ491CLv+rIz0l/Cv0pMfICJXZsyiPArU2CPdA9JAfVEqQbGyd/TNr20p
+    p6fM4nqzd/m2gD7tFj9r3TJYNk5m1eiNsVV82SszaCgTK+ZagugWwXXd5snY4Zck
+    W1gG7eVF0RAMFjpAaquWGwAUtoqs2Wmx1w8cIp7Kw+3a8GEEUKxfNIXoWzs9tSEX
+    ApE5j9Uc3rETemy0x812OBR6iWj80TBPaaYyPzc=
+    -----END CERTIFICATE-----
+
 
