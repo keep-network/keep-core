@@ -41,7 +41,7 @@ ssh utilitybox << EOF
 
   echo "<<<<<<START Port Forward eth-tx-node START<<<<<<"
 
-  if [[ ! -z `netstat -an | grep '8545'` ]]
+  if [[ ! -z $(netstat -an | grep '8545') ]]
   then
     echo "kubectl port forward already running"
   else
