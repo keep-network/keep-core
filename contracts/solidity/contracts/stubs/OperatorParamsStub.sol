@@ -1,15 +1,15 @@
 pragma solidity ^0.5.4;
-import "../utils/OperatorUtils.sol";
+import "../utils/OperatorParams.sol";
 
-contract OperatorUtilsStub {
-    using OperatorUtils for uint256;
+contract OperatorParamsStub {
+    using OperatorParams for uint256;
 
     function publicPack(
         uint256 amount,
         uint256 createdAt,
         uint256 undelegatedAt
     ) public pure returns (uint256) {
-        return OperatorUtils.pack(amount, createdAt, undelegatedAt);
+        return OperatorParams.pack(amount, createdAt, undelegatedAt);
     }
 
     function publicGetAmount(uint256 packed) public pure returns (uint256) {

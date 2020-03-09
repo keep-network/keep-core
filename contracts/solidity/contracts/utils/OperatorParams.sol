@@ -1,6 +1,6 @@
 pragma solidity ^0.5.4;
 
-library OperatorUtils {
+library OperatorParams {
     uint256 constant BLOCKHEIGHT_WIDTH = 64;
     uint256 constant AMOUNT_WIDTH = 128;
 

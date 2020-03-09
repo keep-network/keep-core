@@ -1,6 +1,6 @@
-const OperatorUtilsStub = artifacts.require('./stubs/OperatorUtilsStub.sol');
+const OperatorParamsStub = artifacts.require('./stubs/OperatorParamsStub.sol');
 
-contract('OperatorUtilsStub', (accounts) => {
+contract('OperatorParamsStub', (accounts) => {
   let opUtils;
   const eighteen = web3.utils.toBN(18)
   const ten = web3.utils.toBN(10)
@@ -13,7 +13,7 @@ contract('OperatorUtilsStub', (accounts) => {
   const billionYearsFromNow = blocksPerYear.mul(billion);
 
   before(async () => {
-      opUtils = await OperatorUtilsStub.new();
+      opUtils = await OperatorParamsStub.new();
   });
 
   it("should roundtrip values", async () => {
