@@ -39,17 +39,12 @@ ssh utilitybox << EOF
   gcloud container clusters get-credentials $GOOGLE_PROJECT_NAME --region $GOOGLE_REGION --internal-ip --project=$GOOGLE_PROJECT_ID
   echo ">>>>>>FINISH Download Kube Creds FINISH>>>>>>"
 
+  # If the port-forward is already running this will fail and continue.
   echo "<<<<<<START Port Forward eth-tx-node START<<<<<<"
-
-  if [[ ! -z $(netstat -an | grep '8545') ]]
-  then
-    echo "kubectl port forward already running"
-  else
-    echo "nohup kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &"
-    echo "sleep 10s"
-    nohup kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
-    sleep 10s
-  fi
+  echo "nohup kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &"
+  echo "sleep 10s"
+  nohup kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
+  sleep 10s
 
   echo ">>>>>>FINISH Port Forward eth-tx-node FINISH>>>>>>"
 
