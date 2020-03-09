@@ -61,11 +61,10 @@ library OperatorParams {
         amount = getAmount(packedParams);
         createdAt = getCreationBlock(packedParams);
         undelegatedAt = getUndelegationBlock(packedParams);
-
-        return (amount, createdAt, undelegatedAt);
     }
 
-    function getAmount(uint256 packedParams) internal pure returns (uint256) {
+    function getAmount(uint256 packedParams)
+        internal pure returns (uint256) {
         return (packedParams >> AMOUNT_SHIFT) & AMOUNT_MAX;
     }
 
@@ -80,7 +79,8 @@ library OperatorParams {
         );
     }
 
-    function getCreationBlock(uint256 packedParams) internal pure returns (uint256) {
+    function getCreationBlock(uint256 packedParams)
+        internal pure returns (uint256) {
         return (packedParams >> CREATION_SHIFT) & BLOCKHEIGHT_MAX;
     }
 
@@ -95,7 +95,8 @@ library OperatorParams {
         );
     }
 
-    function getUndelegationBlock(uint256 packedParams) internal pure returns (uint256) {
+    function getUndelegationBlock(uint256 packedParams)
+        internal pure returns (uint256) {
         return packedParams & BLOCKHEIGHT_MAX;
     }
 
