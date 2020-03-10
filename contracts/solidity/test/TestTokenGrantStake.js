@@ -1,24 +1,33 @@
-import { sign } from './helpers/signature';
+import mineBlocks from './helpers/mineBlocks';
 import { duration, increaseTimeTo } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import expectThrow from './helpers/expectThrow';
+import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import grantTokens from './helpers/grantTokens';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
+const Registry = artifacts.require("./Registry.sol");
 
 contract('TestTokenGrantStake', function(accounts) {
 
-  let token, grantContract, stakingContract,
+  let token, registry, grantContract, stakingContract,
     id, amount,
     account_one = accounts[0],
     account_two = accounts[3],
     account_two_operator = accounts[4],
-    account_two_magpie = accounts[5];
+    account_two_magpie = accounts[5],
+    account_two_authorizer = accounts[6];
+
+  const initializationPeriod = 10;
+  const undelegationPeriod = 30;
 
   beforeEach(async () => {
     token = await KeepToken.new();
-    stakingContract = await TokenStaking.new(token.address, duration.days(30));
+    registry = await Registry.new();
+    stakingContract = await TokenStaking.new(
+      token.address, registry.address, initializationPeriod, undelegationPeriod
+    );
     grantContract = await TokenGrant.new(token.address, stakingContract.address);
 
     let vestingDuration = duration.days(60),
@@ -33,36 +42,49 @@ contract('TestTokenGrantStake', function(accounts) {
 
 
   it("should stake granted tokens correctly", async function() {
-
     let delegation = Buffer.concat([
       Buffer.from(account_two_magpie.substr(2), 'hex'),
-      Buffer.from(account_two_operator.substr(2), 'hex')]);
+      Buffer.from(account_two_operator.substr(2), 'hex'),
+      Buffer.from(account_two_authorizer.substr(2), 'hex')
+    ]);
 
     // should throw if stake granted tokens called by anyone except grant grantee
-    await expectThrow(grantContract.stake(id, stakingContract.address, amount, delegation));
+    await expectThrowWithMessage(
+      grantContract.stake(id, stakingContract.address, amount, delegation),
+      "Only grantee of the grant can stake it."
+    );
 
     // stake granted tokens can be only called by grant grantee
     await grantContract.stake(id, stakingContract.address, amount, delegation, {from: account_two});
     let account_two_operator_stake_balance = await stakingContract.balanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.eq(amount), true, "Should stake grant amount");
 
-    // should throw if initiate unstake called by anyone except grant grantee
-    await expectThrow(grantContract.initiateUnstake(account_two_operator));
+    // should throw if undelegate called by anyone except grant grantee
+    await expectThrowWithMessage(
+      grantContract.undelegate(account_two_operator),
+      "Only operator or grantee can undelegate."
+    );
 
-    // Initiate unstake of granted tokens by grant grantee
-    await grantContract.initiateUnstake(account_two_operator, {from: account_two});
+    // Undelegate granted tokens by grant grantee
+    await grantContract.undelegate(account_two_operator, {from: account_two});
 
-    // should not be able to finish unstake before withdrawal delay is over
-    await expectThrow(grantContract.finishUnstake(account_two_operator));
+    // should not be able to recover stake before undelegation period is over
+    await expectThrowWithMessage(
+      grantContract.recoverStake(account_two_operator),
+      "Can not recover stake before undelegation period is over."
+    );
 
     // should not be able to withdraw grant as its still locked for staking
     await expectThrow(grantContract.withdraw(id));
 
-    // jump in time over withdrawal delay
-    await increaseTimeTo(await latestTime()+duration.days(30));
-    await grantContract.finishUnstake(account_two_operator);
+    // jump in time over undelegation period
+    await mineBlocks(undelegationPeriod);
+    await grantContract.recoverStake(account_two_operator);
     account_two_operator_stake_balance = await stakingContract.balanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.isZero(), true, "Stake grant amount should be 0");
+
+    // jump in time to allow tokens to vest
+    await increaseTimeTo(await latestTime()+duration.days(30));
 
     // should be able to withdraw 'withdrawable' granted amount as it's not locked for staking anymore
     await grantContract.withdraw(id);
@@ -79,6 +101,5 @@ contract('TestTokenGrantStake', function(accounts) {
     await grantContract.stake(id, stakingContract.address, updatedGrantBalance, delegation, {from: account_two});
     account_two_operator_stake_balance = await stakingContract.balanceOf.call(account_two_operator);
     assert.equal(account_two_operator_stake_balance.eq(updatedGrantBalance), true, "Should stake grant amount");
-
   });
 });

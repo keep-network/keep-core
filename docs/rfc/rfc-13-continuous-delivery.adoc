@@ -172,7 +172,8 @@ Sample Commands:
 truffle migrate --reset --network keep_dev
 
 # unlock ETH accounts
-truffle exec ./get-and-unlock-eth-accounts.js http://eth-tx-node.default.svc.cluster.local:8545 eth-account-passphrase --network keep_dev
+KEEP_ACCOUNT_PASSWORD=eth-account-passphrase \
+  truffle exec ./unlock-eth-accounts.js --network keep_dev
 
 # stake ETH accounts
 truffle exec ./demo.js --network keep_dev

@@ -217,8 +217,7 @@ type FinalizingMember struct {
 	*CombiningMember
 }
 
-// NewMember creates a new member in an initial state, ready to execute DKG
-// protocol.
+// NewMember creates a new member in an initial state
 func NewMember(
 	memberID group.MemberIndex,
 	groupSize,

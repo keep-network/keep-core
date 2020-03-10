@@ -31,9 +31,7 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
     await operatorContract.registerNewGroup(bls.groupPubKey);
     operatorContract.setGroupSize(3);
     let group = await operatorContract.getGroupPublicKey(0);
-    await operatorContract.addGroupMember(group, accounts[0]);
-    await operatorContract.addGroupMember(group, accounts[1]);
-    await operatorContract.addGroupMember(group, accounts[2]);
+    await operatorContract.setGroupMembers(group, [accounts[0], accounts[1], accounts[2]]);
 
     // Modify state so we can test later that eternal storage works as expected after upgrade
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
@@ -52,7 +50,7 @@ contract('TestKeepRandomBeaconServiceUpgrade', function(accounts) {
   it("should be able to upgrade implementation and initialize it with new data", async function() {
     let previousEntryBefore = await serviceContractV2.previousEntry();
     await serviceContractProxy.upgradeTo(serviceContractImplV2.address);
-    await serviceContractV2.initialize(100, 100, 100, duration.days(0), operatorContract.address);
+    await serviceContractV2.initialize(100, 100, 100, duration.days(0), '0x0000000000000000000000000000000000000000');
 
     assert.isTrue(await serviceContractV2.initialized(), "Implementation contract should be initialized.");
 

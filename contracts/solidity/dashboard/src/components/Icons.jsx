@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { colors } from '../constants/colors'
 
 const Keep = ({ color, height, width }) => (
   <svg width={width} height={height} viewBox="0 0 718 126" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -43,7 +44,60 @@ const Badge = ({ height, width }) => (
   </svg>
 )
 
+const Cross = ({ height, width, ...restProps }) => (
+  <svg height={height} width={width} {...restProps} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M1 19L19 1" stroke={restProps.color} strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M19 19L1 1" stroke={restProps.color} strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+Cross.defaultProps = {
+  color: '#6D6D6D',
+}
+
+const SpeechBubble = (props) => (
+  <div className="speech-bubble-icon-wrapper">
+    <svg width="17" height="20" viewBox="0 0 17 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fillRule="evenodd" clipRule="evenodd" d="M15.6667 16H9.33333L4 20V16H1.33333C0.596954 16 0 15.403 0 14.6667V1.33333C0 0.596954 0.596954 0 1.33333 0H15.6667C16.403 0 17 0.596954 17 1.33333V14.6667C17 15.403 16.403 16 15.6667 16Z" fill="#48DBB4"/>
+    </svg>
+    <svg width="19" height="22" viewBox="0 0 19 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fillRule="evenodd" clipRule="evenodd" d="M16.6667 17H10.3333L5 21V17H2.33333C1.59695 17 1 16.403 1 15.6667V2.33333C1 1.59695 1.59695 1 2.33333 1H16.6667C17.403 1 18 1.59695 18 2.33333V15.6667C18 16.403 17.403 17 16.6667 17Z" stroke="#4C4C4C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+    <svg width="7" height="11" viewBox="0 0 7 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1.5 2.9996C1.50019 1.98263 2.26358 1.12775 3.27405 1.01292C4.28451 0.898093 5.22025 1.55989 5.44862 2.55089C5.677 3.54189 5.12527 4.54647 4.16647 4.88546C3.76677 5.02677 3.49963 5.40477 3.49985 5.82872V5.99937" stroke="#4C4C4C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M3.49974 8.99902C3.36168 8.99902 3.24976 9.11094 3.24976 9.249C3.24976 9.38707 3.36168 9.49899 3.49974 9.49899C3.6378 9.49899 3.74972 9.38707 3.74972 9.249C3.74972 9.11094 3.6378 8.99902 3.49974 8.99902V8.99902" stroke="#4C4C4C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  </div>
+)
+
+const KeepCircle = ({ color }) => (
+  <svg className="keep-circle" width="58" height="58" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M29 0.25C13.1271 0.25 0.25 13.1271 0.25 29C0.25 44.8729 13.1271 57.75 29 57.75C44.8729 57.75 57.75 44.8729 57.75 29C57.7258 13.1271 44.8487 0.25 29 0.25ZM41.0557 22.5735H39.2437L33.7595 28.9758L39.2437 35.3782H41.0557V40.5242H29.4107V35.4265H31.2227L27.6229 31.2227H26.1492V35.4265H28.2027V40.5242H16.9202V35.3782H19.3603V29V22.5735H16.9202V17.4275H19.6985V19.3361H21.1964V17.4275H23.9265V19.3361H25.4244V17.4275H28.1786V22.5011H26.125V26.7048H27.5987L31.1985 22.5011H29.3866V17.4275H41.0315V22.5735H41.0557Z"
+      fill={color}/>
+  </svg>
+)
+
+KeepCircle.defaultProps = {
+  color: colors.lightGrey,
+}
+
+const OK = ({ color }) => (
+  <svg width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4.5 8.5L6.533 10.6465C6.73911 10.935 7.06732 11.1118 7.42167 11.125C7.77602 11.1382 8.11648 10.9864 8.3435 10.714L16.4375 1" stroke={color} strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M12.5872 2.3064C9.27145 0.254412 4.95279 0.941643 2.43773 3.92149C-0.0773383 6.90135 -0.0294076 11.2741 2.55037 14.1981C5.13015 17.1221 9.46283 17.7145 12.7328 15.5903C16.0028 13.4661 17.2228 9.26677 15.6 5.72115" stroke={color} strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+OK.defaultProps = {
+  color: colors.black,
+}
+
 export {
   Keep,
   Badge,
+  Cross,
+  SpeechBubble,
+  KeepCircle,
+  OK,
 }

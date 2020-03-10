@@ -1,9 +1,9 @@
 import React from 'react'
-import { shortenAddress } from '../utils'
+import { shortenAddress } from '../utils/general.utils'
 
-const AddressShortcut = ({ address }) => {
+const AddressShortcut = ({ address, classNames }) => {
   return (
-    <span className='address-shortcut'>
+    <span className={`address-shortcut ${classNames}`}>
       { shortenAddress(address) }
     </span>
   )

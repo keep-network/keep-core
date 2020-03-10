@@ -98,16 +98,11 @@ jobs:
             cp /tmp/keep-client/contracts/* infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             cd infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             docker build \
-              --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
-              --build-arg ETH_WS_PORT=$ETH_WS_PORT \
-              --build-arg ETH_RPC_PORT=$ETH_RPC_PORT \
-              --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
-              --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
-              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer .
+              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client .
       - run:
-          name: Save keep-client-initcontainer image
+          name: Save initcontainer-provision-keep-client image
           command: |
-            docker save -o /tmp/keep-client/docker-images/keep-client-initcontainer.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer
+            docker save -o /tmp/keep-client/docker-images/initcontainer-provision-keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
@@ -128,13 +123,14 @@ jobs:
           command: |
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
+            export CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
             mkdir -p /tmp/keep-client/contracts
             contracts/solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
             - contracts
-  publish_docker_images:
+  publish_keep_client:
     executor: gcp-gcr/default
     steps:
       - attach_workspace:
@@ -143,7 +139,7 @@ jobs:
           name: Load Docker images
           command: |
             docker load -i /tmp/keep-client/docker-images/keep-client.tar
-            docker load -i /tmp/keep-client/docker-images/keep-client-initcontainer.tar
+            docker load -i /tmp/keep-client/docker-images/initcontainer-provision-keep-client.tar
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -152,7 +148,7 @@ jobs:
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
-          image: keep-client-initcontainer
+          image: initcontainer-provision-keep-client
           tag: latest
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
@@ -174,7 +170,7 @@ jobs:
           name: Upload contract data
           command: |
             cd /tmp/keep-client/contracts
-            gsutil -m cp * gs://keep-dev-contract-data/keep-core
+            gsutil -m cp * gs://${CONTRACT_DATA_BUCKET}/keep-core
 
   build_staking_dapp:
     executor: docker-node
@@ -290,7 +286,7 @@ workflows:
   solidity:
     jobs:
       - test_solidity
-  build_test_migrate_publish:
+  build-test-migrate-publish-keep-dev:
     jobs:
       - build_client_and_test_go:
           context: keep-dev
@@ -309,7 +305,7 @@ workflows:
           context: keep-dev
           requires:
             - build_client_and_test_go
-      - publish_docker_images:
+      - publish_keep_client:
           filters:
             branches:
               only: master
@@ -336,6 +332,81 @@ workflows:
           context: keep-dev
           requires:
             - build_staking_dapp
+  build-test-migrate-publish-keep-test:
+      jobs:
+        - keep_test_approval:
+            type: approval
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                ignore: /.*/
+        - build_client_and_test_go:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                ignore: /.*/
+            requires:
+              - keep_test_approval
+        - build_initcontainer:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                ignore: /.*/
+            requires:
+              - migrate_contracts
+              - build_client_and_test_go
+        - migrate_contracts:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                ignore: /.*/
+            requires:
+              - build_client_and_test_go
+        - publish_keep_client:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                ignore: /.*/
+            requires:
+              - build_client_and_test_go
+              - build_initcontainer
+              - migrate_contracts
+        - publish_contract_data:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                ignore: /.*/
+            requires:
+              - build_client_and_test_go
+              - migrate_contracts
+        - build_staking_dapp:
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                ignore: /.*/
+            requires:
+              - migrate_contracts
+        - publish_staking_dapp:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                ignore: /.*/
+            requires:
+              - build_staking_dapp
   docs:
     jobs:
       - generate_docs_tex

@@ -15,7 +15,7 @@ import (
 // ExecuteDKG runs the full distributed key generation lifecycle.
 func ExecuteDKG(
 	seed *big.Int,
-	index int, // starts with 0
+	index uint8, // starts with 0
 	groupSize int,
 	dishonestThreshold int,
 	startBlockHeight uint64,

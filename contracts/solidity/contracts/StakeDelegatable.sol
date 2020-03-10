@@ -1,9 +1,9 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "./utils/BytesLib.sol";
 import "./utils/AddressArrayUtils.sol";
 
 
@@ -13,23 +13,36 @@ import "./utils/AddressArrayUtils.sol";
  */
 contract StakeDelegatable {
     using SafeMath for uint256;
-    using SafeERC20 for ERC20;
+    using SafeERC20 for ERC20Burnable;
     using BytesLib for bytes;
     using AddressArrayUtils for address[];
 
-    ERC20 public token;
+    ERC20Burnable public token;
 
-    uint256 public stakeWithdrawalDelay;
-
-    // Stake balances.
-    mapping(address => uint256) public stakeBalances;
-
-    // Stake delegation mappings.
-    mapping(address => address) public operatorToOwner;
-    mapping(address => address payable) public operatorToMagpie;
+    uint256 public initializationPeriod;
+    uint256 public undelegationPeriod;
 
     // List of operators for the stake owner.
     mapping(address => address[]) public ownerOperators;
+
+    struct Operator {
+        uint256 amount;
+        uint256 createdAt;
+        uint256 undelegatedAt;
+        address owner;
+        address payable beneficiary;
+        address authorizer;
+    }
+
+    mapping(address => Operator) public operators;
+
+    modifier onlyOperatorAuthorizer(address _operator) {
+        require(
+            operators[_operator].authorizer == msg.sender,
+            "Not operator authorizer"
+        );
+        _;
+    }
 
     /**
      * @dev Gets the stake balance of the specified address.
@@ -37,7 +50,7 @@ contract StakeDelegatable {
      * @return An uint256 representing the amount staked by the passed address.
      */
     function balanceOf(address _address) public view returns (uint256 balance) {
-        return stakeBalances[_address];
+        return operators[_address].amount;
     }
 
     /**
@@ -53,7 +66,7 @@ contract StakeDelegatable {
      * @return Stake owner address.
      */
     function ownerOf(address _operator) public view returns (address) {
-        return operatorToOwner[_operator];
+        return operators[_operator].owner;
     }
 
     /**
@@ -61,6 +74,14 @@ contract StakeDelegatable {
      * @return Magpie address.
      */
     function magpieOf(address _operator) public view returns (address payable) {
-        return operatorToMagpie[_operator];
+        return operators[_operator].beneficiary;
+    }
+
+    /**
+     * @dev Gets the authorizer for the specified operator address.
+     * @return Authorizer address.
+     */
+    function authorizerOf(address _operator) public view returns (address) {
+        return operators[_operator].authorizer;
     }
 }

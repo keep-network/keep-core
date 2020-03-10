@@ -1,12 +1,34 @@
+.rewards-wrapper {
+    flex-direction: column-reverse !important;
+    .rewards-history {
+        width: 100%;
+    }
+
+    .group-items {
+        margin-bottom: 1.5rem;
+        width: 100%;
+        align-self: unset;
+    }
+}
+
+.rewards-balance {
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    h2 {
+        color: @primary-color;
+        letter-spacing: -1px;
+    }
+    h6 {
+        letter-spacing: .05rem;
+        font-variant: small-caps;
+    }
+}
+
 .group-items {
+    margin: 0;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-
-    p {
-        font-size: 1.5rem;
-        margin-top: 2rem;
-    }
 }
 
 .see-all-btn {
@@ -20,10 +42,15 @@
     flex-basis: 100%;
     flex-wrap: wrap;
     align-items: center;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid @black;
-    padding: 1rem 0;
+    justify-content: center;
+    border-bottom: 0.25px solid @color-grey-70;
+    padding: .5rem 0;
     transition: transform 420ms cubic-bezier( .165, .84, .44, 1);
+
+    &:last-of-type {
+        margin-bottom: 1rem;
+        border: none;
+    }
 
     .group-key, .group-reward {
         display: flex;
@@ -33,18 +60,14 @@
         
         .address-shortcut, .reward-value {
             font-size: 1.5rem;
-            color: @black;
+            color: @color-black;
         }
         
         span {
             font-size: 0.8rem;
-            color: @grey;
+            color: @color-grey-30;
         }
         
-    }
-
-    .group-reward {
-        align-items: flex-end;
     }
 
     button {
@@ -53,11 +76,26 @@
     }
 
     &:hover {
-        transform: scale(1.02);
+        transform: scale(1.005);
     }
 }
 
-@media screen and (min-width: 750px) {
+@media screen and (min-width: 1100px) {
+    .rewards-wrapper {
+        flex-direction: row !important;
+        justify-content: space-between;
+        
+        .rewards-history {
+            flex-basis: 30%;
+            align-self: flex-start;
+            margin-right: 1rem;
+        }
+        .group-items {
+            align-self: flex-start;
+            flex-basis: 70%;
+        }
+    }
+
     .group-item {
         flex-wrap: nowrap;
         flex-direction: row;
@@ -84,9 +122,9 @@
                 align-self: flex-end;
             }
         }
-    
-        &:hover {
-            transform: scale(1.02);
+
+        .group-reward {
+            align-items: flex-end;
         }
     }
 
@@ -94,4 +132,3 @@
         width: 400px;
     }
 }
-

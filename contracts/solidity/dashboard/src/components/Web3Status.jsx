@@ -1,5 +1,6 @@
 import React, { useContext } from 'react'
 import { Web3Context } from './WithWeb3Context'
+import Banner, { BANNER_TYPE } from './Banner'
 
 export const Web3Status = (props) => {
   const { web3, isFetching, yourAddress, connectAppWithAccount, error } = useContext(Web3Context)
@@ -7,42 +8,57 @@ export const Web3Status = (props) => {
   const renderStatus = () => {
     if (isFetching) {
       return (
-        <div className="web3-status loading">
-          loading...
-        </div>
+        <Banner
+          type={BANNER_TYPE.DISABLED}
+          title='Loading ...'
+        />
       )
     }
 
     if (error) {
       return (
-        <div className="web3-status alert">
-          {error}
-        </div>
+        <Banner
+          type={BANNER_TYPE.ERROR}
+          title={error}
+        />
       )
     }
 
     if (!web3) {
       return (
-        <div className="web3-status alert">
-          Web3 not detected. We suggest&nbsp;<a href="http://metamask.io" target="_blank" rel="noopener noreferrer">MetaMask</a>.
-        </div>
+        <Banner
+          type={BANNER_TYPE.ERROR}
+          title='Install the MetaMask browser extension'
+          subtitle='You can then use the dapp in your current browser.'
+        >
+          <a
+            href="http://metamask.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-transparent btn-xs ml-1">
+              install metamask
+          </a>
+        </Banner>
       )
     }
 
     if (!yourAddress) {
       return (
-        <div className="web3-status notify">
-          <span onClick={connectAppWithAccount}>
-            Please log in and connect with dApp
-          </span>
-        </div>
+        <Banner
+          titleClassName="text-link"
+          type={BANNER_TYPE.PENDING}
+          title='Please log in and connect with dApp'
+          onTitleClick={connectAppWithAccount}
+        />
       )
     }
 
     return (
-      <div className="web3-status success">
-        Account logged in
-      </div>
+      <Banner
+        type={BANNER_TYPE.SUCCESS}
+        title='You are logged in securely to MetaMask.'
+        withIcon
+      />
     )
   }
 

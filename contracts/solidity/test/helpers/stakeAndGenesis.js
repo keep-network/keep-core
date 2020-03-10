@@ -26,6 +26,9 @@ export default async function stakeAndGenesis(accounts, contracts) {
     let operator1 = accounts[1];
     let operator2 = accounts[2];
     let operator3 = accounts[3];
+    let beneficiary1 = accounts[4];
+    let beneficiary2 = accounts[5];
+    let beneficiary3 = accounts[6];
 
     let operatorContract = contracts.operatorContract;
     let stakingContract = contracts.stakingContract;
@@ -33,12 +36,17 @@ export default async function stakeAndGenesis(accounts, contracts) {
     let ticket;
 
     let owner = accounts[0];
+    let authorizer = accounts[0];
 
     await operatorContract.setMinimumStake(minimumStake);
 
-    await stakeDelegate(stakingContract, token, owner, operator1, operator1, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)));
-    await stakeDelegate(stakingContract, token, owner, operator2, operator2, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)));
-    await stakeDelegate(stakingContract, token, owner, operator3, operator3, minimumStake.mul(web3.utils.toBN(operator3StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, authorizer, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, authorizer, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, authorizer, minimumStake.mul(web3.utils.toBN(operator3StakingWeight)));
+
+    await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
+    await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
+    await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
 
     let groupSize = await operatorContract.groupSize();
 
@@ -73,9 +81,8 @@ export default async function stakeAndGenesis(accounts, contracts) {
 
     mineBlocks(resultPublicationTime);
 
-    let disqualified = '0x0000000000000000000000000000000000000000';
-    let inactive = '0x0000000000000000000000000000000000000000';
-    let resultHash = web3.utils.soliditySha3(bls.groupPubKey, disqualified, inactive);
+    let misbehaved = '0x';
+    let resultHash = web3.utils.soliditySha3(bls.groupPubKey, misbehaved);
 
     let signingMemberIndices = [];
     let signatures = undefined;
@@ -88,7 +95,7 @@ export default async function stakeAndGenesis(accounts, contracts) {
     }
 
     await operatorContract.submitDkgResult(
-      1, bls.groupPubKey, disqualified, inactive, signatures, signingMemberIndices,
+      1, bls.groupPubKey, misbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0]}
     );
 }

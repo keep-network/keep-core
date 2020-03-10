@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "../KeepRandomBeaconOperator.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "../utils/BytesLib.sol";
 
 contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconOperator {
 
@@ -12,7 +12,6 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
         address _stakingContract
     ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
         groups.groupActiveTime = 5;
-        groups.activeGroupsThreshold = 1;
         groups.relayEntryTimeout = 10;
     }
 
@@ -35,8 +34,8 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
         groups.addGroup(groupPublicKey);
     }
 
-    function addGroupMember(bytes memory groupPublicKey, address member) public {
-        groups.addGroupMember(groupPublicKey, member);
+    function setGroupMembers(bytes memory groupPublicKey, address[] memory members) public {
+        groups.setGroupMembers(groupPublicKey, members, hex"");
     }
 
     function relayEntry() public returns (uint256) {

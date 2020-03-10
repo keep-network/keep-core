@@ -9,7 +9,6 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         address _stakingContract
     ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
         groups.groupActiveTime = 5;
-        groups.activeGroupsThreshold = 1;
         groups.relayEntryTimeout = 10;
     }
 
@@ -17,12 +16,16 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         groups.addGroup(groupPublicKey);
     }
 
-    function addGroupMember(bytes memory groupPublicKey, address member) public {
-        groups.addGroupMember(groupPublicKey, member);
+    function setGroupMembers(bytes memory groupPublicKey, address[] memory members) public {
+        groups.setGroupMembers(groupPublicKey, members, hex"");
     }
 
     function addGroupMemberReward(bytes memory groupPubKey, uint256 groupMemberReward) public {
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
+    }
+
+    function emitRewardsWithdrawnEvent(address operator, uint256 groupIndex) public {
+        emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, 1000 wei, groupIndex);
     }
 
 }

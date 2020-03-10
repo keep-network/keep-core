@@ -1,6 +1,6 @@
 import React from 'react'
 import withWeb3Context from './WithWeb3Context'
-import { displayAmount } from '../utils'
+import { displayAmount } from '../utils/general.utils'
 import { getKeepTokenContractDeployerAddress } from '../contracts'
 
 export const ContractsDataContext = React.createContext({})
@@ -44,7 +44,7 @@ class ContractsDataContextProvider extends React.Component {
 
     getContractsInfo = async () => {
       const { web3: { web3, token, stakingContract, grantContract, yourAddress, changeDefaultContract, utils } } = this.props
-      if (!web3) {
+      if (!token.methods || !stakingContract.methods || !grantContract.methods || !yourAddress) {
         return
       }
       try {
@@ -84,13 +84,26 @@ class ContractsDataContextProvider extends React.Component {
           contractsDataIsFetching: false,
         })
       } catch (error) {
+        console.log('error', error)
         this.setState({ contractsDataIsFetching: false })
       }
     }
 
+    refreshKeepTokenBalance = async () => {
+      const { web3: { token, yourAddress, utils } } = this.props
+
+      const tokenBalance = new utils.BN(await token.methods.balanceOf(yourAddress).call())
+      this.setState({
+        tokenBalance,
+      })
+    }
+
     render() {
       return (
-        <ContractsDataContext.Provider value={{ ...this.state }}>
+        <ContractsDataContext.Provider value={{
+          refreshKeepTokenBalance: this.refreshKeepTokenBalance,
+          ...this.state,
+        }}>
           {this.props.children}
         </ContractsDataContext.Provider>
       )

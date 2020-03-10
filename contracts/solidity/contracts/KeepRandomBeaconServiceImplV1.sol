@@ -1,22 +1,23 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./DelayedWithdrawal.sol";
+import "./Registry.sol";
+import "./IRandomBeacon.sol";
 
 
 interface OperatorContract {
     function entryVerificationGasEstimate() external view returns(uint256);
-    function dkgGasEstimate() external view returns(uint256);
+    function groupCreationGasEstimate() external view returns(uint256);
     function groupProfitFee() external view returns(uint256);
     function sign(
         uint256 requestId,
         bytes calldata previousEntry
     ) external payable;
     function numberOfGroups() external view returns(uint256);
-    function createGroup(uint256 newEntry) external payable;
+    function createGroup(uint256 newEntry, address payable submitter) external payable;
     function isGroupSelectionPossible() external view returns (bool);
 }
 
@@ -29,12 +30,11 @@ interface OperatorContract {
  * Warning: you can't set constants directly in the contract and must use initialize()
  * please see openzeppelin upgradeable contracts approach for more info.
  */
-contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, ReentrancyGuard {
+contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IRandomBeacon {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
 
     event RelayEntryRequested(uint256 requestId);
-    event RelayEntryGenerated(uint256 requestId, uint256 entry);
 
     // The price feed estimate is used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use both values to
@@ -66,6 +66,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
 
     bytes internal _previousEntry;
 
+    // Cost of executing executeCallback() on this contract, require checks and .call
+    uint256 internal _baseCallbackGas;
+
     struct Callback {
         address callbackContract;
         string callbackMethod;
@@ -75,6 +78,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
     }
 
     mapping(uint256 => Callback) internal _callbacks;
+
+    // Registry contract with a list of approved operator contracts and upgraders.
+    address internal _registry;
 
     address[] internal _operatorContracts;
 
@@ -89,6 +95,15 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
     hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
 
     /**
+     * @dev Throws if called by any account other than the operator contract upgrader authorized for this service contract.
+     */
+    modifier onlyOperatorContractUpgrader() {
+        address operatorContractUpgrader = Registry(_registry).operatorContractUpgraderFor(address(this));
+        require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
+        _;
+    }
+
+    /**
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param priceFeedEstimate The price feed estimate is used to calculate the gas price for
      * reimbursement next to the actual gas price from the transaction. We use both values to defend
@@ -98,17 +113,16 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
-     * @param operatorContract Operator contract linked to this contract.
+     * @param registry Registry contract linked to this contract.
      */
     function initialize(
         uint256 priceFeedEstimate,
         uint256 fluctuationMargin,
         uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
-        address operatorContract
+        address registry
     )
         public
-        onlyOwner
     {
         require(!initialized(), "Contract is already initialized.");
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
@@ -117,9 +131,9 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
         _dkgContributionMargin = dkgContributionMargin;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
-        _operatorContracts.push(operatorContract);
-
         _previousEntry = _beaconSeed;
+        _registry = registry;
+        _baseCallbackGas = 18845;
     }
 
     /**
@@ -133,7 +147,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
      * @dev Adds operator contract
      * @param operatorContract Address of the operator contract.
      */
-    function addOperatorContract(address operatorContract) public onlyOwner {
+    function addOperatorContract(address operatorContract) public onlyOperatorContractUpgrader {
+        require(
+            Registry(_registry).isApprovedOperatorContract(operatorContract),
+            "Operator contract is not approved"
+        );
         _operatorContracts.push(operatorContract);
     }
 
@@ -141,7 +159,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
      * @dev Removes operator contract
      * @param operatorContract Address of the operator contract.
      */
-    function removeOperatorContract(address operatorContract) public onlyOwner {
+    function removeOperatorContract(address operatorContract) public onlyOperatorContractUpgrader {
         _operatorContracts.removeAddress(operatorContract);
     }
 
@@ -169,8 +187,15 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
 
         uint256 totalNumberOfGroups;
 
+        uint256 approvedContractsCounter;
+        address[] memory approvedContracts = new address[](_operatorContracts.length);
+
         for (uint i = 0; i < _operatorContracts.length; i++) {
-            totalNumberOfGroups += OperatorContract(_operatorContracts[i]).numberOfGroups();
+            if (Registry(_registry).isApprovedOperatorContract(_operatorContracts[i])) {
+                totalNumberOfGroups += OperatorContract(_operatorContracts[i]).numberOfGroups();
+                approvedContracts[approvedContractsCounter] = _operatorContracts[i];
+                approvedContractsCounter++;
+            }
         }
 
         require(totalNumberOfGroups > 0, "Total number of groups must be greater than zero.");
@@ -180,15 +205,15 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
         uint256 selectedContract;
         uint256 indexByGroupCount;
 
-        for (uint256 i = 0; i < _operatorContracts.length; i++) {
-            indexByGroupCount += OperatorContract(_operatorContracts[i]).numberOfGroups();
+        for (uint256 i = 0; i < approvedContractsCounter; i++) {
+            indexByGroupCount += OperatorContract(approvedContracts[i]).numberOfGroups();
             if (selectedIndex < indexByGroupCount) {
-                return _operatorContracts[selectedContract];
+                return approvedContracts[selectedContract];
             }
             selectedContract++;
         }
 
-        return _operatorContracts[selectedContract];
+        return approvedContracts[selectedContract];
     }
 
     /**
@@ -224,13 +249,15 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
         );
 
         (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
-        uint256 callbackFee = msg.value.sub(entryVerificationFee).sub(dkgContributionFee).sub(groupProfitFee);
+        uint256 callbackFee = msg.value.sub(entryVerificationFee)
+            .sub(dkgContributionFee).sub(groupProfitFee);
 
         _dkgFeePool += dkgContributionFee;
 
         OperatorContract operatorContract = OperatorContract(
             selectOperatorContract(uint256(keccak256(_previousEntry)))
         );
+
         uint256 selectedOperatorContractFee = operatorContract.groupProfitFee().add(
             operatorContract.entryVerificationGasEstimate().mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)));
 
@@ -238,7 +265,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
         uint256 requestId = _requestCounter;
 
         operatorContract.sign.value(
-            selectedOperatorContractFee
+            selectedOperatorContractFee.add(callbackFee)
         )(requestId, _previousEntry);
 
         // If selected operator contract is cheaper than expected return the
@@ -281,83 +308,62 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
         uint256 entryAsNumber = uint256(keccak256(entry));
         emit RelayEntryGenerated(requestId, entryAsNumber);
 
-        if (_callbacks[requestId].callbackContract != address(0)) {
-            executeEntryCreatedCallback(requestId, entryAsNumber, submitter);
-            delete _callbacks[requestId];
-        }
-
-        triggerDkgIfApplicable(entryAsNumber);
+        createGroupIfApplicable(entryAsNumber, submitter);
     }
 
     /**
      * @dev Executes customer specified callback for the relay entry request.
      * @param requestId Request id tracked internally by this contract.
      * @param entry The generated random number.
-     * @param submitter Relay entry submitter.
+     * @return Address to receive callback surplus.
      */
-    function executeEntryCreatedCallback(uint256 requestId, uint256 entry, address payable submitter) internal {
-        bool success; // Store status of external contract call.
-        bytes memory data; // Store result data of external contract call.
+    function executeCallback(uint256 requestId, uint256 entry) public returns (address payable surplusRecipient) {
+        require(
+            _operatorContracts.contains(msg.sender),
+            "Only authorized operator contract can call execute callback."
+        );
 
-        uint256 gasBeforeCallback = gasleft();
-        (success, data) = _callbacks[requestId].callbackContract.call.gas(
-            _callbacks[requestId].callbackGas
-        )(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
-        uint256 gasSpent = gasBeforeCallback.sub(gasleft()).add(21000); // Also reimburse 21000 gas (ethereum transaction minimum gas)
+        require(
+            _callbacks[requestId].callbackContract != address(0),
+            "Callback contract not found"
+        );
 
-        uint256 gasPrice = _priceFeedEstimate;
-        // We need to check if tx.gasprice is non-zero as a workaround to a bug
-        // in go-ethereum:
-        // https://github.com/ethereum/go-ethereum/pull/20189
-        if (tx.gasprice > 0 && tx.gasprice < _priceFeedEstimate) {
-            gasPrice = tx.gasprice;
-        }
+        _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
 
-        // Obtain the actual callback gas expenditure and refund the surplus.
-        uint256 callbackSurplus = 0;
-        uint256 callbackFee = gasSpent.mul(gasPrice);
-
-        // If we spent less on the callback than the customer transferred for the
-        // callback execution, we need to reimburse the difference.
-        if (callbackFee < _callbacks[requestId].callbackFee) {
-            callbackSurplus = _callbacks[requestId].callbackFee.sub(callbackFee);
-            // Reimburse submitter with his actual callback cost.
-            (success, ) = submitter.call.value(callbackFee)("");
-            require(success, "Failed reimburse actual callback cost");
-
-            // Return callback surplus to the requestor.
-            (success, ) = _callbacks[requestId].surplusRecipient.call.value(callbackSurplus)("");
-            require(success, "Failed send callback surplus");
-
-        } else {
-            // Reimburse submitter with the callback payment sent by the requestor.
-            (success, ) = submitter.call.value(_callbacks[requestId].callbackFee)("");
-            require(success, "Failed reimburse callback payment");
-        }
+        surplusRecipient = _callbacks[requestId].surplusRecipient;
+        delete _callbacks[requestId];
     }
 
     /**
      * @dev Triggers the selection process of a new candidate group if the DKG
      * fee pool equals or exceeds DKG cost estimate.
      * @param entry The generated random number.
+     * @param submitter Relay entry submitter - operator.
      */
-    function triggerDkgIfApplicable(uint256 entry) internal {
+    function createGroupIfApplicable(uint256 entry, address payable submitter) internal {
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 dkgFeeEstimate = OperatorContract(latestOperatorContract).dkgGasEstimate().mul(
+        uint256 groupCreationFee = OperatorContract(latestOperatorContract).groupCreationGasEstimate().mul(
             gasPriceWithFluctuationMargin(_priceFeedEstimate)
         );
 
-        if (_dkgFeePool >= dkgFeeEstimate && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
-            OperatorContract(latestOperatorContract).createGroup.value(dkgFeeEstimate)(entry);
-            _dkgFeePool = _dkgFeePool.sub(dkgFeeEstimate);
+        if (_dkgFeePool >= groupCreationFee && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
+            OperatorContract(latestOperatorContract).createGroup.value(groupCreationFee)(entry, submitter);
+            _dkgFeePool = _dkgFeePool.sub(groupCreationFee);
         }
+    }
+
+    /**
+     * @dev Get base callback gas required for relay entry callback.
+     */
+    function baseCallbackGas() public view returns(uint256) {
+        return _baseCallbackGas;
     }
 
     /**
      * @dev Set the gas price in wei for estimating relay entry request payment.
      * @param priceFeedEstimate is the gas price required for estimating relay entry request payment.
      */
-    function setPriceFeedEstimate(uint256 priceFeedEstimate) public onlyOwner {
+    function setPriceFeedEstimate(uint256 priceFeedEstimate) public onlyOperatorContractUpgrader {
         _priceFeedEstimate = priceFeedEstimate;
     }
 
@@ -383,9 +389,12 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
     /**
      * @dev Get the minimum payment in wei for relay entry callback.
      * The returned value includes safety margin for gas price fluctuations.
-     * @param callbackGas Gas required for the callback.
+     * @param _callbackGas Gas required for the callback.
      */
-    function callbackFee(uint256 callbackGas) public view returns(uint256) {
+    function callbackFee(uint256 _callbackGas) public view returns(uint256) {
+        // gas for the callback itself plus additional operational costs of
+        // executing the callback
+        uint256 callbackGas = _callbackGas == 0 ? 0 : _callbackGas.add(_baseCallbackGas);
         // We take the gas price from the price feed to not let malicious
         // miner-requestors manipulate the gas price when requesting relay entry
         // and underpricing expensive callbacks.
@@ -398,6 +407,7 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
      */
     function entryFeeEstimate(uint256 callbackGas) public view returns(uint256) {
         (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
+
         return entryVerificationFee.add(dkgContributionFee).add(groupProfitFee).add(callbackFee(callbackGas));
     }
 
@@ -429,11 +439,11 @@ contract KeepRandomBeaconServiceImplV1 is Ownable, DelayedWithdrawal, Reentrancy
 
         // Use DKG gas estimate from the latest operator contract since it will be used for the next group creation.
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 dkgGas = OperatorContract(latestOperatorContract).dkgGasEstimate();
+        uint256 groupCreationGas = OperatorContract(latestOperatorContract).groupCreationGasEstimate();
 
         return (
             entryVerificationGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)),
-            dkgGas.mul(_priceFeedEstimate).mul(_dkgContributionMargin).div(100),
+            groupCreationGas.mul(_priceFeedEstimate).mul(_dkgContributionMargin).div(100),
             groupProfitFee
         );
     }

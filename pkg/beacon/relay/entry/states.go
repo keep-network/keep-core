@@ -14,19 +14,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// EntryMessagingStateDelayBlocks is a delay in blocks for a state exchanging
-// network messages as a part of its execution.
-//
-// One block is given for all state machines cooperating over the network
-// so that they can enter the given state before any message for this
-// state is sent. This way we make sure that no messages are dropped.
-const EntryMessagingStateDelayBlocks = 1
-
-// EntryMessagingStateActiveBlocks is a number of blocks for which a state
-// exchanging network messages as a part of its execution should be active.
-const EntryMessagingStateActiveBlocks = 3
-
 type signingState = state.State
+
+const signatureShareStateDelayBlocks = 1
+const signatureShareStateActiveBlocks = 3
 
 type signingStateBase struct {
 	channel      net.BroadcastChannel
@@ -50,11 +41,11 @@ type signatureShareState struct {
 }
 
 func (sss *signatureShareState) DelayBlocks() uint64 {
-	return EntryMessagingStateDelayBlocks
+	return signatureShareStateDelayBlocks
 }
 
 func (sss *signatureShareState) ActiveBlocks() uint64 {
-	return EntryMessagingStateActiveBlocks
+	return signatureShareStateActiveBlocks
 }
 
 func (sss *signatureShareState) Initiate(ctx context.Context) error {

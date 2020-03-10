@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
-import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "openzeppelin-solidity/contracts/cryptography/ECDSA.sol";
+import "../../utils/BytesLib.sol";
 import "./GroupSelection.sol";
 
 library DKGResultVerification {
@@ -34,14 +34,9 @@ library DKGResultVerification {
      *
      * @param submitterMemberIndex Claimed submitter candidate group member index
      * @param groupPubKey Generated candidate group public key
-     * @param disqualified Bytes representing disqualified group members;
-     * 1 at the specific index means that the member has been disqualified.
-     * Indexes reflect positions of members in the group, as outputted by the
-     * group selection protocol.
-     * @param inactive Bytes representing inactive group members;
-     * 1 at the specific index means that the member has been marked as inactive.
-     * Indexes reflect positions of members in the group, as outputted by the
-     * group selection protocol.
+     * @param misbehaved Bytes array of misbehaved (disqualified or inactive)
+     * group members indexes; Indexes reflect positions of members in the group,
+     * as outputted by the group selection protocol.
      * @param signatures Concatenation of signatures from members supporting the
      * result.
      * @param signingMemberIndices Indices of members corresponding to each
@@ -58,8 +53,7 @@ library DKGResultVerification {
         Storage storage self,
         uint256 submitterMemberIndex,
         bytes memory groupPubKey,
-        bytes memory disqualified,
-        bytes memory inactive,
+        bytes memory misbehaved,
         bytes memory signatures,
         uint256[] memory signingMemberIndices,
         address[] memory members,
@@ -83,12 +77,7 @@ library DKGResultVerification {
         require(signaturesCount == signingMemberIndices.length, "Unexpected signatures count");
         require(signaturesCount >= self.signatureThreshold, "Too few signatures");
 
-        require(
-            disqualified.length == self.groupSize && inactive.length == self.groupSize,
-            "Malformed misbehaving array"
-        );
-
-        bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, disqualified, inactive));
+        bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, misbehaved));
 
         bytes memory current; // Current signature to be checked.
 
