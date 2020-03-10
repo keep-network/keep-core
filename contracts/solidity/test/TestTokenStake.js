@@ -57,10 +57,9 @@ contract.only('TokenStaking', function(accounts) {
     );
   });
 
-  it("should allow to cancel delegation", async () => {
+  it("should update balances when delegating", async () => {
     // Starting balances
     let account_one_starting_balance = await token.balanceOf.call(account_one);
-
     let data = Buffer.concat([
       Buffer.from(account_one_magpie.substr(2), 'hex'),
       Buffer.from(account_one_operator.substr(2), 'hex'),
@@ -84,10 +83,28 @@ contract.only('TokenStaking', function(accounts) {
     expect(account_one_operator_stake_balance).to.eq.BN(
       stakingAmount,
       "Staking amount should be added to the operator balance"
+    ); 
+  })
+
+  it("should allow to cancel delegation", async () => {
+    // Starting balances
+    let account_one_starting_balance = await token.balanceOf.call(account_one);
+
+    let data = Buffer.concat([
+      Buffer.from(account_one_magpie.substr(2), 'hex'),
+      Buffer.from(account_one_operator.substr(2), 'hex'),
+      Buffer.from(account_one_authorizer.substr(2), 'hex')
+    ]);
+    
+    await token.approveAndCall(
+      stakingContract.address, stakingAmount, 
+      '0x' + data.toString('hex'), 
+      {from: account_one}
     );
     
     // Cancel stake
     await stakingContract.cancelStake(account_one_operator, {from: account_one});
+
     expect(account_one_starting_balance).to.eq.BN(
       await token.balanceOf.call(account_one),
       "Staking amount should be transferred back to owner"
