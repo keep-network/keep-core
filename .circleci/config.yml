@@ -189,7 +189,7 @@ jobs:
           name: Run Docker build
           working_directory: ~/project/contracts/solidity/dashboard
           command: |
-            docker build --tag keep-staking-dapp .
+            docker build --build-arg DAPP_ENV=$TRUFFLE_NETWORK --tag keep-staking-dapp .
       - run:
           name: Save keep-staking-dapp image
           working_directory: ~/project/contracts/solidity/dashboard
