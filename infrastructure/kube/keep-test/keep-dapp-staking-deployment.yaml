@@ -1,0 +1,26 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: keep-dapp-staking
+  labels:
+    keel.sh/policy: all
+    app: keep-dapp
+    type: staking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keep-dapp
+      type: staking
+  template:
+    metadata:
+      labels:
+        app: keep-dapp
+        type: staking
+    spec:
+      containers:
+      - name: keep-dapp-staking
+        image: gcr.io/keep-test-f3e0/keep-staking-dapp
+        ports:
+          - containerPort: 80
