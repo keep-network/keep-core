@@ -174,6 +174,22 @@ contract TokenGrant {
     }
 
     /**
+     * @dev Gets grant stake details of the given operator.
+     * @param grantee The operator address.
+     * @return grantId ID of the token grant.
+     * @return amount The amount of tokens the given operator delegated.
+     * @return stakingContract The address of staking contract.
+     */
+    function getGrantStakeDetails(address operator) public view returns (uint256 grantId, uint256 amount, address stakingContract) {
+        return (
+            grantStakes[operator].grantId,
+            grantStakes[operator].amount,
+            grantStakes[operator].stakingContract
+        );
+    }
+
+
+    /**
      * @notice Receives approval of token transfer and creates a token grant with a vesting
      * schedule where balance withdrawn to the grantee gradually in a linear fashion until
      * start + duration. By then all of the balance will have vested.
