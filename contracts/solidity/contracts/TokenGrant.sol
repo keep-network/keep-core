@@ -175,7 +175,7 @@ contract TokenGrant {
 
     /**
      * @dev Gets grant stake details of the given operator.
-     * @param grantee The operator address.
+     * @param operator The operator address.
      * @return grantId ID of the token grant.
      * @return amount The amount of tokens the given operator delegated.
      * @return stakingContract The address of staking contract.
