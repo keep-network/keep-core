@@ -424,4 +424,14 @@ library AltBn128 {
         return c[0] != 0;
     }
 
+    /**
+     * @dev Creates a signature over msg.sender using a group private key.
+     */
+    function sign(uint256 secretKey) internal view returns(uint256, uint256) {
+        G1Point memory p_1 = g1HashToPoint(abi.encodePacked(msg.sender));
+        G1Point memory p_2 = scalarMultiply(p_1, secretKey);
+
+        return (p_2.x, p_2.y);
+    }
+
 }
