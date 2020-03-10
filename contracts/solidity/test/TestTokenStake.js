@@ -58,8 +58,8 @@ contract.only('TokenStaking', function(accounts) {
   });
 
   it("should update balances when delegating", async () => {
-    // Starting balances
-    let account_one_starting_balance = await token.balanceOf.call(account_one);
+    let ownerStartBalance = await token.balanceOf.call(account_one);
+
     let data = Buffer.concat([
       Buffer.from(account_one_magpie.substr(2), 'hex'),
       Buffer.from(account_one_operator.substr(2), 'hex'),
@@ -72,23 +72,21 @@ contract.only('TokenStaking', function(accounts) {
       {from: account_one}
     );
     
-    // Ending balances
-    let account_one_ending_balance = await token.balanceOf.call(account_one);
-    let account_one_operator_stake_balance = await stakingContract.balanceOf.call(account_one_operator);
+    let ownerEndBalance = await token.balanceOf.call(account_one);
+    let operatorEndStakeBalance = await stakingContract.balanceOf.call(account_one_operator);
     
-    expect(account_one_ending_balance).to.eq.BN(
-      account_one_starting_balance.sub(stakingAmount),
+    expect(ownerEndBalance).to.eq.BN(
+      ownerStartBalance.sub(stakingAmount),
       "Staking amount should be transferred from owner balance"
     );
-    expect(account_one_operator_stake_balance).to.eq.BN(
+    expect(operatorEndStakeBalance).to.eq.BN(
       stakingAmount,
       "Staking amount should be added to the operator balance"
     ); 
   })
 
   it("should allow to cancel delegation", async () => {
-    // Starting balances
-    let account_one_starting_balance = await token.balanceOf.call(account_one);
+    let ownerStartBalance = await token.balanceOf.call(account_one);
 
     let data = Buffer.concat([
       Buffer.from(account_one_magpie.substr(2), 'hex'),
@@ -101,15 +99,17 @@ contract.only('TokenStaking', function(accounts) {
       '0x' + data.toString('hex'), 
       {from: account_one}
     );
-    
-    // Cancel stake
+
     await stakingContract.cancelStake(account_one_operator, {from: account_one});
 
-    expect(account_one_starting_balance).to.eq.BN(
-      await token.balanceOf.call(account_one),
+    let ownerEndBalance = await token.balanceOf.call(account_one);
+    let operatorEndStakeBalance = await stakingContract.balanceOf.call(account_one_operator);
+
+    expect(ownerEndBalance).to.eq.BN(
+      ownerStartBalance,
       "Staking amount should be transferred back to owner"
     );
-    expect(await stakingContract.balanceOf.call(account_one_operator)).to.eq.BN( 
+    expect(operatorEndStakeBalance).to.eq.BN( 
       0, 
       "Staking amount should be removed from operator balance"
     );
