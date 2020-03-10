@@ -45,7 +45,12 @@ contract TokenStaking is StakeDelegatable {
      * stakes will stay locked for a number of blocks after undelegation, and thus available as
      * collateral for any work the operator is engaged in.
      */
-    constructor(address _tokenAddress, address _registry, uint256 _initializationPeriod, uint256 _undelegationPeriod) public {
+    constructor(
+        address _tokenAddress,
+        address _registry,
+        uint256 _initializationPeriod,
+        uint256 _undelegationPeriod
+    ) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20Burnable(_tokenAddress);
         registry = Registry(_registry);
