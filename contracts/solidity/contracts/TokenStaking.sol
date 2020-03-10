@@ -3,6 +3,7 @@ pragma solidity ^0.5.4;
 import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
 import "./Registry.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
 
 /**
@@ -14,6 +15,7 @@ import "./Registry.sol";
 contract TokenStaking is StakeDelegatable {
 
     using UintArrayUtils for uint256[];
+    using SafeERC20 for ERC20Burnable;
 
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
@@ -72,7 +74,7 @@ contract TokenStaking is StakeDelegatable {
         address authorizer = _extraData.toAddress(40);
 
         // Transfer tokens to this contract.
-        token.transferFrom(_from, address(this), _value);
+        token.safeTransferFrom(_from, address(this), _value);
 
         operators[operator] = Operator(
             OperatorParams.pack(_value, block.number, 0),
@@ -219,7 +221,7 @@ contract TokenStaking is StakeDelegatable {
         uint256 total = misbehavedOperators.length.mul(amount);
         uint256 tattletaleReward = (total.mul(5).div(100)).mul(rewardMultiplier).div(100);
 
-        token.transfer(tattletale, tattletaleReward);
+        token.safeTransfer(tattletale, tattletaleReward);
         token.burn(total.sub(tattletaleReward));
     }
 

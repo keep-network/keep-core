@@ -1,5 +1,5 @@
 import web3Utils from 'web3-utils'
-import { displayAmount } from '../utils'
+import { displayAmount } from '../utils/general.utils'
 
 const REGEXP_NOT_BLANK_STRING = /^\s*$/
 const REGEXP_ONLY_NUMBERS = /^\d+$/

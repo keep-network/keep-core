@@ -1,8 +1,8 @@
 import React from 'react'
-import { getWeb3, getWeb3SocketProvider } from '../utils'
+import { getWeb3, getWeb3SocketProvider } from '../utils/general.utils'
 import { Web3Context } from './WithWeb3Context'
-import { getKeepToken, getTokenStaking, getTokenGrant, getKeepRandomBeaconOperator } from '../contracts'
 import { MessagesContext, messageType } from './Message'
+import { getContracts } from '../contracts'
 
 export default class Web3ContextProvider extends React.Component {
     static contextType = MessagesContext
@@ -66,20 +66,18 @@ export default class Web3ContextProvider extends React.Component {
       const { web3 } = this.state
       try {
         const web3EventProvider = getWeb3SocketProvider()
-        const [token, grantContract, stakingContract, keepRandomBeaconOperatorContract] = await this.getContracts(web3)
-        const [eventToken, eventGrantContract, eventStakingContract, eventKeepRandomBeaconOperatorContract] = await this.getContracts(web3EventProvider)
+        const contracts = await getContracts(web3)
+        const eventContracts = await getContracts(web3EventProvider)
         this.setState({
-          token,
-          grantContract,
-          stakingContract,
-          defaultContract: stakingContract,
-          keepRandomBeaconOperatorContract,
+          ...contracts,
+          defaultContract: contracts.stakingContract,
           utils: web3.utils,
           eth: web3.eth,
-          eventToken,
-          eventGrantContract,
-          eventStakingContract,
-          eventKeepRandomBeaconOperatorContract,
+          eventToken: eventContracts.token,
+          eventGrantContract: eventContracts.grantContract,
+          eventStakingContract: eventContracts.stakingContract,
+          eventKeepRandomBeaconOperatorContract: eventContracts.keepRandomBeaconOperatorContract,
+          eventRegistry: eventContracts.registryContract,
         })
       } catch (error) {
         this.setState({
@@ -87,13 +85,6 @@ export default class Web3ContextProvider extends React.Component {
         })
       }
     }
-
-    getContracts = async (web3) => await Promise.all([
-      getKeepToken(web3),
-      getTokenGrant(web3),
-      getTokenStaking(web3),
-      getKeepRandomBeaconOperator(web3),
-    ])
 
     accountHasBeenChanged = ([yourAddress]) => {
       if (!yourAddress) {
@@ -115,7 +106,13 @@ export default class Web3ContextProvider extends React.Component {
 
     render() {
       return (
-        <Web3Context.Provider value={{ ...this.state, changeDefaultContract: this.changeDefaultContract, connectAppWithAccount: this.connectAppWithAccount }}>
+        <Web3Context.Provider
+          value={{
+            ...this.state,
+            changeDefaultContract: this.changeDefaultContract,
+            connectAppWithAccount: this.connectAppWithAccount,
+          }}
+        >
           {this.props.children}
         </Web3Context.Provider>
       )

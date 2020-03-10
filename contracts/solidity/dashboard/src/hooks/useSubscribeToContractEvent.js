@@ -1,5 +1,6 @@
 import { useEffect, useRef, useContext, useState } from 'react'
 import { Web3Context } from '../components/WithWeb3Context'
+import { isEmptyObj } from '../utils/general.utils'
 
 export const useSubscribeToContractEvent = (contractName, eventName, subscribeToEventCallback = () => {}) => {
   const web3Context = useContext(Web3Context)
@@ -22,7 +23,7 @@ export const useSubscribeToContractEvent = (contractName, eventName, subscribeTo
   }, [])
 
   useEffect(() => {
-    if (!latestEvent) {
+    if (isEmptyObj(latestEvent)) {
       return
     }
     subscribeToEventCallback(latestEvent)

@@ -2,7 +2,7 @@ import React, { useEffect, useContext } from 'react'
 import { useFetchData } from '../hooks/useFetchData'
 import { operatorService } from '../services/token-staking.service'
 import web3Utils from 'web3-utils'
-import { displayAmount, isSameEthAddress } from '../utils'
+import { displayAmount, isSameEthAddress, isEmptyObj } from '../utils/general.utils'
 import { LoadingOverlay } from './Loadable'
 import { Web3Context } from './WithWeb3Context'
 import StatusBadge, { BADGE_STATUS } from './StatusBadge'
@@ -20,7 +20,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
   } } = state
 
   useEffect(() => {
-    if (latestUnstakeEvent) {
+    if (!isEmptyObj(latestUnstakeEvent)) {
       const { returnValues: { operator, undelegatedAt } } = latestUnstakeEvent
       if (!isSameEthAddress(yourAddress, operator)) {
         return
@@ -37,7 +37,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
           })
         })
     }
-  }, [latestUnstakeEvent])
+  }, [latestUnstakeEvent.transactionHash])
 
   return (
     <LoadingOverlay isFetching={isFetching}>
