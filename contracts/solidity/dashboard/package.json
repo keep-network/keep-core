@@ -21,7 +21,7 @@
     "watch-css": "npm run build-css && less-watch-compiler src/css src app.less",
     "start-js": "react-scripts start",
     "setup": "./scripts/copy-contracts.sh ../build/contracts",
-    "start": "npm run watch-css & npm run start-js",
+    "start": "npm run setup && npm run watch-css & npm run start-js",
     "build": "npm run build-css && sh -ac '. .env.${REACT_APP_ENV}; react-scripts build'",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
