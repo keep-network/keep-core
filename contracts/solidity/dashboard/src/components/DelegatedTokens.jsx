@@ -18,6 +18,7 @@ const DelegatedTokens = (props) => {
     beneficiaryAddress,
     authorizerAddress,
     undelegationStatus,
+    isUndelegationFromGrant,
   } } = state
 
   const undelegationSuccessCallback = () => {
@@ -51,6 +52,7 @@ const DelegatedTokens = (props) => {
           btnClassName="btn btn-primary btn-lg flex-1"
           operator={yourAddress}
           successCallback={undelegationSuccessCallback}
+          isFromGrant={isUndelegationFromGrant}
         />
       )
     }
