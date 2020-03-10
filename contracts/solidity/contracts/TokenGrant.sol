@@ -74,6 +74,9 @@ contract TokenGrant {
     // available to be withdrawn to the grantee
     mapping(address => uint256) public balances;
 
+    // Mapping of operator addresses per particular grantee address.
+    mapping(address => address[]) public granteesToOperators;
+
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress address of a token that will be linked to this contract.
@@ -157,6 +160,15 @@ contract TokenGrant {
      */
     function getGrants(address _granteeOrGrantManager) public view returns (uint256[] memory) {
         return grantIndices[_granteeOrGrantManager];
+    }
+
+    /**
+     * @dev Gets operator addresses of the specified grantee address.
+     * @param grantee The grantee address.
+     * @return An array of all operators for a given grantee.
+     */
+    function getGranteeOperators(address grantee) public view returns (address[] memory) {
+        return granteesToOperators[grantee];
     }
 
     /**
@@ -305,6 +317,7 @@ contract TokenGrant {
 
         // Keep staking record.
         grantStakes[operator] = GrantStake(_id, _stakingContract, _amount);
+        granteesToOperators[grants[_id].grantee].push(operator);
         grants[_id].staked += _amount;
 
         // Staking contract expects 40 bytes _extraData for stake delegation.
