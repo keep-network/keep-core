@@ -7,6 +7,9 @@
     div.flex.row:first-of-type {
         flex-direction: column;
     }
+    .addresses-section {
+        width: 100%;
+    }
 
    .tabs {
        margin-top: 1rem;
@@ -106,15 +109,27 @@
     #delegate-stake-section {
         flex-basis: 58%;
     }
+}
 
-    .delegate-stake-form {
-        .addresses-section {
-            width: 100%;
-        }
+@media screen and (min-width: 1250px) {
+    #tokens-overview {
+        flex-basis: 100%;
+    }
+
+    #delegate-stake-section {
+        flex-basis: 100%;
     }
 }
 
 @media screen and (min-width: 1550px) {
+    #tokens-overview {
+        flex-basis: 40%;
+    }
+
+    #delegate-stake-section {
+        flex-basis: 58%;
+    }
+
     .delegate-stake-form {
         div.flex.row:first-of-type {
             flex-direction: row;
