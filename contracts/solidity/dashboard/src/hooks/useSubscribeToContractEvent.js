@@ -27,7 +27,7 @@ export const useSubscribeToContractEvent = (contractName, eventName, subscribeTo
       return
     }
     subscribeToEventCallback(latestEvent)
-  }, [latestEvent])
+  }, [latestEvent.transactionHash])
 
   return { latestEvent }
 }
