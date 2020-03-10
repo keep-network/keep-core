@@ -356,6 +356,8 @@ contract TokenGrant {
             msg.sender == _operator || msg.sender == grants[grantId].grantee,
             "Only operator or grantee can cancel the delegation."
         );
+        grants[grantId].staked = grants[grantId].staked.sub(grantStakes[_operator].amount);
+
 
         TokenStaking(grantStakes[_operator].stakingContract).cancelStake(_operator);
     }
