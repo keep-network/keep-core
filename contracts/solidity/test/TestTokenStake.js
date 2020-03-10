@@ -12,7 +12,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract('TokenStaking', function(accounts) {
+contract.only('TokenStaking', function(accounts) {
 
   let token, registry, stakingContract;
     
@@ -145,7 +145,7 @@ contract('TokenStaking', function(accounts) {
   it("should allow to cancel delegation just before initialization period is over", async () => {
     await delegate(operatorOne);
 
-    await mineBlocks(initializationPeriod - 2)
+    await mineBlocks(initializationPeriod - 1)
 
     await stakingContract.cancelStake(operatorOne, {from: ownerOne})
   })
@@ -166,6 +166,8 @@ contract('TokenStaking', function(accounts) {
 
     await mineBlocks(initializationPeriod);
     await stakingContract.undelegate(operatorOne, {from: operatorOne});
+
+    await mineBlocks(undelegationPeriod - 1);
 
     await expectThrowWithMessage(
       stakingContract.recoverStake(operatorOne),
@@ -278,7 +280,7 @@ contract('TokenStaking', function(accounts) {
 
     await mineBlocks(initializationPeriod);
 
-    let activeStake = await stakingContract.activeStake(operatorOne, operatorContract)
+    let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
 
     expect(activeStake).to.eq.BN(
       stakingAmount,
@@ -292,7 +294,9 @@ contract('TokenStaking', function(accounts) {
       operatorOne, operatorContract, {from: authorizer}
     )
 
-    let activeStake = await stakingContract.activeStake(operatorOne, operatorContract)
+    await mineBlocks(initializationPeriod - 1)
+
+    let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
 
     expect(activeStake).to.eq.BN(
       0,
@@ -304,7 +308,7 @@ contract('TokenStaking', function(accounts) {
     await delegate(operatorOne)
     await mineBlocks(initializationPeriod);
 
-    let activeStake = await stakingContract.activeStake(operatorOne, operatorContract)
+    let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
 
     expect(activeStake).to.eq.BN(
       0,
@@ -320,7 +324,7 @@ contract('TokenStaking', function(accounts) {
 
     await stakingContract.cancelStake(operatorOne, {from: ownerOne});
 
-    let activeStake = await stakingContract.activeStake(operatorOne, operatorContract)
+    let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
 
     expect(activeStake).to.eq.BN(
       0,
@@ -339,7 +343,7 @@ contract('TokenStaking', function(accounts) {
     await mineBlocks(undelegationPeriod);    
     await stakingContract.recoverStake(operatorOne);
     
-    let activeStake = await stakingContract.activeStake(operatorOne, operatorContract)
+    let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
 
     expect(activeStake).to.eq.BN(
       0,
@@ -355,7 +359,7 @@ contract('TokenStaking', function(accounts) {
 
     await mineBlocks(initializationPeriod);
 
-    let eligibleStake = await stakingContract.eligibleStake(operatorOne, operatorContract)
+    let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
 
     expect(eligibleStake).to.eq.BN(
       stakingAmount,
@@ -369,7 +373,9 @@ contract('TokenStaking', function(accounts) {
       operatorOne, operatorContract, {from: authorizer}
     )
 
-    let eligibleStake = await stakingContract.eligibleStake(operatorOne, operatorContract)
+    await mineBlocks(initializationPeriod - 1);
+
+    let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
 
     expect(eligibleStake).to.eq.BN(
       0,
@@ -382,7 +388,7 @@ contract('TokenStaking', function(accounts) {
 
     await mineBlocks(initializationPeriod);
 
-    let eligibleStake = await stakingContract.eligibleStake(operatorOne, operatorContract)
+    let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
 
     expect(eligibleStake).to.eq.BN(
       0,
@@ -398,7 +404,7 @@ contract('TokenStaking', function(accounts) {
 
     await stakingContract.cancelStake(operatorOne, {from: ownerOne})
 
-    let eligibleStake = await stakingContract.eligibleStake(operatorOne, operatorContract)
+    let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
 
     expect(eligibleStake).to.eq.BN(
       0,
@@ -417,7 +423,7 @@ contract('TokenStaking', function(accounts) {
 
     await mineBlocks(1)
 
-    let eligibleStake = await stakingContract.eligibleStake(operatorOne, operatorContract)
+    let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
 
     expect(eligibleStake).to.eq.BN(
       0,

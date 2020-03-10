@@ -142,7 +142,7 @@ contract TokenStaking is StakeDelegatable {
     function recoverStake(address _operator) public {
         uint256 operatorParams = operators[_operator].packedParams;
         require(
-            block.number >= operatorParams.getUndelegationBlock().add(undelegationPeriod),
+            block.number > operatorParams.getUndelegationBlock().add(undelegationPeriod),
             "Can not recover stake before undelgation period is over."
         );
         address owner = operators[_operator].owner;
@@ -278,7 +278,7 @@ contract TokenStaking is StakeDelegatable {
         uint256 createdAt = operatorParams.getCreationBlock();
         uint256 undelegatedAt = operatorParams.getUndelegationBlock();
 
-        bool isActive = block.number >= createdAt.add(initializationPeriod);
+        bool isActive = block.number > createdAt.add(initializationPeriod);
         bool isUndelegating = (undelegatedAt > 0) && (block.number > undelegatedAt);
 
         if (isAuthorized && isActive && !isUndelegating) {
@@ -310,7 +310,7 @@ contract TokenStaking is StakeDelegatable {
         uint256 operatorParams = operators[_operator].packedParams;
         uint256 createdAt = operatorParams.getCreationBlock();
 
-        bool isActive = block.number >= createdAt.add(initializationPeriod);
+        bool isActive = block.number > createdAt.add(initializationPeriod);
 
         if (isAuthorized && isActive) {
             balance = operatorParams.getAmount();
