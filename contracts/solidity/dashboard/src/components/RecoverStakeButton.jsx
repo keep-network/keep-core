@@ -2,14 +2,20 @@ import React, { useContext, useCallback } from 'react'
 import { SubmitButton } from './Button'
 import { Web3Context } from './WithWeb3Context'
 import { useShowMessage, messageType } from './Message'
+import { TOKEN_GRANT_CONTRACT_NAME, TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
 
 const RecoverStakeButton = ({ operatorAddress, ...props }) => {
-  const { yourAddress, stakingContract } = useContext(Web3Context)
+  const web3Context = useContext(Web3Context)
+  const { yourAddress } = web3Context
   const showMessage = useShowMessage()
 
   const recoverStake = useCallback(async (onTransactionHashCallback) => {
+    const { isFromGrant } = props
+    const contract = web3Context[isFromGrant ? TOKEN_GRANT_CONTRACT_NAME : TOKEN_STAKING_CONTRACT_NAME]
+    console.log('eeooeeo', isFromGrant ? TOKEN_GRANT_CONTRACT_NAME : TOKEN_STAKING_CONTRACT_NAME )
+
     try {
-      await stakingContract
+      await contract
         .methods
         .recoverStake(operatorAddress)
         .send({ from: yourAddress })
@@ -19,7 +25,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
       showMessage({ type: messageType.ERROR, title: 'Recover stake action has been failed ', content: error.message })
       throw error
     }
-  }, [operatorAddress, yourAddress])
+  }, [operatorAddress, yourAddress, props.isFromGrant])
 
   return (
     <SubmitButton
@@ -37,6 +43,7 @@ RecoverStakeButton.defaultProps = {
   btnClassName: 'btn btn-sm btn-secondary',
   btnText: 'recover',
   successCallback: () => {},
+  isFromGrant: false,
 }
 
 export default React.memo(RecoverStakeButton)
