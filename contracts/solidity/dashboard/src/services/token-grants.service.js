@@ -5,7 +5,7 @@ import web3Utils from 'web3-utils'
 
 const fetchGrants = async (web3Context) => {
   const { yourAddress } = web3Context
-  const grantIds = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrants', yourAddress)  
+  const grantIds = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrants', yourAddress)
   const grants = []
 
   for (let i = 0; i < grantIds.length; i++) {
