@@ -20,5 +20,5 @@ type Result struct {
 	// Shares of the group public key for each individual member of the group.
 	// They are used for verification of signatures received from other
 	// members created using their respective group private key share.
-	GroupPublicKeyShares map[group.MemberIndex]*bn256.G2
+	GroupPublicKeyShares func() map[group.MemberIndex]*bn256.G2
 }

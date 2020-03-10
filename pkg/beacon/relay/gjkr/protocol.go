@@ -1671,15 +1671,15 @@ func (rm *CombiningMember) CombineGroupPublicKey() {
 	}
 
 	rm.groupPublicKey = groupPublicKey
-
-	rm.combineGroupPublicKeyShares()
 }
 
-// combineGroupPublicKeyShares combines group public key shares for each
+// groupPublicKeyShares combines group public key shares for each
 // individual member in the group. Those group public key shares are
 // needed to perform the verification of relay entry signature shares coming
 // from given group member.
-func (rm *CombiningMember) combineGroupPublicKeyShares() {
+func (rm *CombiningMember) groupPublicKeyShares() map[group.MemberIndex]*bn256.G2 {
+	groupPublicKeyShares := make(map[group.MemberIndex]*bn256.G2)
+
 	// Calculate group public key shares for all other operating members.
 	for _, receiverID := range rm.group.OperatingMemberIDs() {
 		if receiverID == rm.ID {
@@ -1709,6 +1709,8 @@ func (rm *CombiningMember) combineGroupPublicKeyShares() {
 			}
 		}
 
-		rm.groupPublicKeyShares[receiverID] = sum
+		groupPublicKeyShares[receiverID] = sum
 	}
+
+	return groupPublicKeyShares
 }

@@ -94,15 +94,15 @@ func TestCombineGroupPublicKeyShares(t *testing.T) {
 		new(bn256.G2).ScalarBaseMult(big.NewInt(32)),
 	}
 
-	member.combineGroupPublicKeyShares()
+	groupPublicKeyShares := member.groupPublicKeyShares()
 
 	expectedGroupPublicKeySharesLength := 2 // groupSize - 1 (combining member)
-	if len(member.groupPublicKeyShares) != expectedGroupPublicKeySharesLength {
+	if len(groupPublicKeyShares) != expectedGroupPublicKeySharesLength {
 		t.Fatalf(
 			"incorrect group public key shares count"+
 				"\nexpected: %v\nactual:   %v\n",
 			expectedGroupPublicKeySharesLength,
-			len(member.groupPublicKeyShares),
+			len(groupPublicKeyShares),
 		)
 	}
 
@@ -112,12 +112,12 @@ func TestCombineGroupPublicKeyShares(t *testing.T) {
 	// part3 = 30 * 2^0 + 31 * 2^1 + 32 * 2^2 = 220
 	// groupPublicKeyShare = part1 + part2 + part3 = 450
 	expectedGroupPublicKeyShareMember2 := new(bn256.G2).ScalarBaseMult(big.NewInt(450))
-	if member.groupPublicKeyShares[2].String() != expectedGroupPublicKeyShareMember2.String() {
+	if groupPublicKeyShares[2].String() != expectedGroupPublicKeyShareMember2.String() {
 		t.Fatalf(
 			"incorrect group public share for "+
 				"member 2\nexpected: %v\nactual:   %v\n",
 			expectedGroupPublicKeyShareMember2,
-			member.groupPublicKeyShares[2],
+			groupPublicKeyShares[2],
 		)
 	}
 
@@ -127,12 +127,12 @@ func TestCombineGroupPublicKeyShares(t *testing.T) {
 	// part3 = 30 * 3^0 + 31 * 3^1 + 32 * 3^2 = 411
 	// groupPublicKeyShare = part1 + part2 + part3 = 843
 	expectedGroupPublicKeyShareMember3 := new(bn256.G2).ScalarBaseMult(big.NewInt(843))
-	if member.groupPublicKeyShares[3].String() != expectedGroupPublicKeyShareMember3.String() {
+	if groupPublicKeyShares[3].String() != expectedGroupPublicKeyShareMember3.String() {
 		t.Fatalf(
 			"incorrect group public share for "+
 				"member 3\nexpected: %v\nactual:   %v\n",
 			expectedGroupPublicKeyShareMember3,
-			member.groupPublicKeyShares[3],
+			groupPublicKeyShares[3],
 		)
 	}
 }
@@ -174,15 +174,15 @@ func TestCombineGroupPublicKeyShares_WithReconstruction(t *testing.T) {
 		},
 	}}
 
-	member.combineGroupPublicKeyShares()
+	groupPublicKeyShares := member.groupPublicKeyShares()
 
 	expectedGroupPublicKeySharesLength := 1 // groupSize - 1 (combining member) - 1 (inactive member)
-	if len(member.groupPublicKeyShares) != expectedGroupPublicKeySharesLength {
+	if len(groupPublicKeyShares) != expectedGroupPublicKeySharesLength {
 		t.Fatalf(
 			"incorrect group public key shares count"+
 				"\nexpected: %v\nactual:   %v\n",
 			expectedGroupPublicKeySharesLength,
-			len(member.groupPublicKeyShares),
+			len(groupPublicKeyShares),
 		)
 	}
 
@@ -192,12 +192,12 @@ func TestCombineGroupPublicKeyShares_WithReconstruction(t *testing.T) {
 	// part3 = 50 (revealed share)
 	// groupPublicKeyShare = part1 + part2 + part3 = 280
 	expectedGroupPublicKeyShareMember2 := new(bn256.G2).ScalarBaseMult(big.NewInt(280))
-	if member.groupPublicKeyShares[2].String() != expectedGroupPublicKeyShareMember2.String() {
+	if groupPublicKeyShares[2].String() != expectedGroupPublicKeyShareMember2.String() {
 		t.Fatalf(
 			"incorrect group public share for "+
 				"member 2\nexpected: %v\nactual:   %v\n",
 			expectedGroupPublicKeyShareMember2,
-			member.groupPublicKeyShares[2],
+			groupPublicKeyShares[2],
 		)
 	}
 }
