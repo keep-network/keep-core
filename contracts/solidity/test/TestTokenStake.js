@@ -1,5 +1,4 @@
 import mineBlocks from './helpers/mineBlocks';
-import expectThrow from './helpers/expectThrow';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 
@@ -15,16 +14,17 @@ const expect = chai.expect
 
 contract('TokenStaking', function(accounts) {
 
-  let token, registry, stakingContract,
-    account_one = accounts[0],
-    account_one_operator = accounts[1],
-    account_one_magpie = accounts[2],
-    account_one_authorizer = accounts[3],
-    account_two = accounts[4];
-
+  let token, registry, stakingContract;
+    
+  const ownerOne = accounts[0],
+    ownerTwo = accounts[1],
+    operatorOne = accounts[2],
+    operatorTwo = accounts[3],
+    magpie = accounts[4],
+    authorizer = accounts[5];
+    
   const initializationPeriod = 10;
   const undelegationPeriod = 30;
-
   const stakingAmount = web3.utils.toBN(10000000);
 
   before(async () => {
@@ -43,51 +43,51 @@ contract('TokenStaking', function(accounts) {
     await restoreSnapshot()
   })
 
-  async function delegate() {
+  async function delegate(operator) {
     let data = Buffer.concat([
-      Buffer.from(account_one_magpie.substr(2), 'hex'),
-      Buffer.from(account_one_operator.substr(2), 'hex'),
-      Buffer.from(account_one_authorizer.substr(2), 'hex')
+      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(operator.substr(2), 'hex'),
+      Buffer.from(authorizer.substr(2), 'hex')
     ]);
     
-    await token.approveAndCall(
+    return token.approveAndCall(
       stakingContract.address, stakingAmount, 
       '0x' + data.toString('hex'), 
-      {from: account_one}
+      {from: ownerOne}
     );
   }
 
-  it("should send tokens correctly", async function() {
+  it("should send tokens correctly", async () => {
     let amount = web3.utils.toBN(1000000000);
 
     // Starting balances
-    let account_one_starting_balance = await token.balanceOf.call(account_one);
-    let account_two_starting_balance = await token.balanceOf.call(account_two);
+    let ownerOneStartingBalance = await token.balanceOf.call(ownerOne);
+    let ownerTwoStartingBalance = await token.balanceOf.call(ownerTwo);
 
     // Send tokens
-    await token.transfer(account_two, amount, {from: account_one});
+    await token.transfer(ownerTwo, amount, {from: ownerOne});
 
     // Ending balances
-    let account_one_ending_balance = await token.balanceOf.call(account_one);
-    let account_two_ending_balance = await token.balanceOf.call(account_two);
+    let ownerOneEndingBalance = await token.balanceOf.call(ownerOne);
+    let ownerTwoEndingBalance = await token.balanceOf.call(ownerTwo);
 
-    expect(account_one_ending_balance).to.eq.BN(
-      account_one_starting_balance.sub(amount), 
+    expect(ownerOneEndingBalance).to.eq.BN(
+      ownerOneStartingBalance.sub(amount), 
       "Amount wasn't correctly taken from the sender"
     )
-    expect(account_two_ending_balance).to.eq.BN(
-      account_two_starting_balance.add(amount), 
+    expect(ownerTwoEndingBalance).to.eq.BN(
+      ownerTwoStartingBalance.add(amount), 
       "Amount wasn't correctly sent to the receiver"
     );
   });
 
   it("should update balances when delegating", async () => {
-    let ownerStartBalance = await token.balanceOf.call(account_one);
+    let ownerStartBalance = await token.balanceOf.call(ownerOne);
 
-    await delegate();
+    await delegate(operatorOne);
     
-    let ownerEndBalance = await token.balanceOf.call(account_one);
-    let operatorEndStakeBalance = await stakingContract.balanceOf.call(account_one_operator);
+    let ownerEndBalance = await token.balanceOf.call(ownerOne);
+    let operatorEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
     
     expect(ownerEndBalance).to.eq.BN(
       ownerStartBalance.sub(stakingAmount),
@@ -99,15 +99,18 @@ contract('TokenStaking', function(accounts) {
     ); 
   })
 
-  it("should allow to cancel delegation", async () => {
-    let ownerStartBalance = await token.balanceOf.call(account_one);
+  it("should allow to delegate, undelegate, and recover stake", async () => {
+    let ownerStartBalance = await token.balanceOf.call(ownerOne)
 
-    await delegate();
+    await delegate(operatorOne);
 
-    await stakingContract.cancelStake(account_one_operator, {from: account_one});
-
-    let ownerEndBalance = await token.balanceOf.call(account_one);
-    let operatorEndStakeBalance = await stakingContract.balanceOf.call(account_one_operator);
+    await mineBlocks(initializationPeriod);
+    await stakingContract.undelegate(operatorOne, {from: operatorOne});
+    await mineBlocks(undelegationPeriod);    
+    await stakingContract.recoverStake(operatorOne);
+        
+    let ownerEndBalance = await token.balanceOf.call(ownerOne);
+    let operatorEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
 
     expect(ownerEndBalance).to.eq.BN(
       ownerStartBalance,
@@ -119,107 +122,101 @@ contract('TokenStaking', function(accounts) {
     );
   })
 
-  it("should allow to cancel stake before initialization period is over", async () => {
-    await delegate()
+  it("should allow to cancel delegation right away", async () => {
+    let ownerStartBalance = await token.balanceOf.call(ownerOne);
+
+    await delegate(operatorOne);
+
+    await stakingContract.cancelStake(operatorOne, {from: ownerOne});
+
+    let ownerEndBalance = await token.balanceOf.call(ownerOne);
+    let operatorEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
+
+    expect(ownerEndBalance).to.eq.BN(
+      ownerStartBalance,
+      "Staking amount should be transferred back to owner"
+    );
+    expect(operatorEndStakeBalance).to.eq.BN( 
+      0, 
+      "Staking amount should be removed from operator balance"
+    );
+  })
+
+  it("should allow to cancel delegation just before initialization period is over", async () => {
+    await delegate(operatorOne);
 
     await mineBlocks(initializationPeriod - 2)
 
-    await stakingContract.cancelStake(account_one_operator, {from: account_one})
+    await stakingContract.cancelStake(operatorOne, {from: ownerOne})
   })
 
-  it("should not allow to cancel stake after initialization period is over", async () => {
-    await delegate();
+  it("should not allow to cancel delegation after initialization period is over", async () => {
+    await delegate(operatorOne);
 
     await mineBlocks(initializationPeriod);
 
     await expectThrowWithMessage(
-      stakingContract.cancelStake(account_one_operator, {from: account_one}),
+      stakingContract.cancelStake(operatorOne, {from: ownerOne}),
       "Initialization period is over"
     );
   })
 
   it("should not allow to recover stake before undelegation period is over", async () => {
-    await delegate();
+    await delegate(operatorOne);
 
     await mineBlocks(initializationPeriod);
-    await stakingContract.undelegate(account_one_operator, {from: account_one_operator});
+    await stakingContract.undelegate(operatorOne, {from: operatorOne});
 
     await expectThrowWithMessage(
-      stakingContract.recoverStake(account_one_operator),
+      stakingContract.recoverStake(operatorOne),
       "Can not recover stake before undelgation period is over"
     )
   })
 
-  it("should stake delegate and undelegate tokens correctly", async function() {
-    // Starting balances
-    let account_one_starting_balance = await token.balanceOf.call(account_one);
+  it("should not allow to delegate to the same operator twice", async () => {
+    await delegate(operatorOne);
 
-    let data = Buffer.concat([
-      Buffer.from(account_one_magpie.substr(2), 'hex'),
-      Buffer.from(account_one_operator.substr(2), 'hex'),
-      Buffer.from(account_one_authorizer.substr(2), 'hex')
-    ]);
+    await expectThrowWithMessage(
+      delegate(operatorOne),
+      "Operator address is already in use."
+    )
+  })
 
-    // Stake tokens using approveAndCall pattern
-    await token.approveAndCall(stakingContract.address, stakingAmount, '0x' + data.toString('hex'), {from: account_one});
+  it("should not allow to delegate to the same operator even after recovering stake", async () => {
+    await delegate(operatorOne);
 
-    // jump in time, full initialization period
     await mineBlocks(initializationPeriod);
+    await stakingContract.undelegate(operatorOne, {from: operatorOne});
+    await mineBlocks(undelegationPeriod);    
+    await stakingContract.recoverStake(operatorOne);
+        
+    await expectThrowWithMessage(
+      delegate(operatorOne),
+      "Operator address is already in use."
+    )
+  })
 
-    // Can not cancel stake
-    await expectThrow(stakingContract.cancelStake(account_one_operator, {from: account_one}));
+  it("should allow to delegate to two different operators", async () => {
+    let ownerStartBalance = await token.balanceOf.call(ownerOne)
 
-    // Undelegate tokens as operator
-    await stakingContract.undelegate(account_one_operator, {from: account_one_operator});
+    await delegate(operatorOne);
+    await delegate(operatorTwo);
 
-    // should not be able to recover stake
-    await expectThrow(stakingContract.recoverStake(account_one_operator));
+    let ownerEndBalance = await token.balanceOf.call(ownerOne);
+    let operatorOneEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
+    let operatorTwoEndStakeBalance = await stakingContract.balanceOf.call(operatorTwo);
 
-    // jump in time, full undelegation period
-    await mineBlocks(undelegationPeriod);
-
-    // should be able to recover stake
-    await stakingContract.recoverStake(account_one_operator);
-
-    // should fail cause there is no stake to recover
-    await expectThrow(stakingContract.recoverStake(account_one_operator));
-
-    // check balances
-    let account_one_ending_balance = await token.balanceOf.call(account_one);
-    let account_one_operator_stake_balance = await stakingContract.balanceOf.call(account_one_operator);
-
-    expect(account_one_ending_balance).to.eq.BN(
-      account_one_starting_balance, 
-      "Staking amount should be transfered to sender balance"
+    expect(ownerEndBalance).to.eq.BN(
+      ownerStartBalance.sub(stakingAmount).sub(stakingAmount),
+      "Staking amount should be transferred from owner balance"
     );
-    expect(account_one_operator_stake_balance).to.eq.BN(
-      0, 
-      "Staking amount should be removed from sender staking balance"
+    expect(operatorOneEndStakeBalance).to.eq.BN(
+      stakingAmount,
+      "Staking amount should be added to the operator balance"
     );
-
-    // Starting balances
-    account_one_starting_balance = await token.balanceOf.call(account_one);
-
-    data = Buffer.concat([
-      Buffer.from(account_one_magpie.substr(2), 'hex'),
-      Buffer.from(account_one_operator.substr(2), 'hex'),
-      Buffer.from(account_one_authorizer.substr(2), 'hex')
-    ]);
-
-    // Stake tokens using approveAndCall pattern
-    await token.approveAndCall(stakingContract.address, stakingAmount, '0x' + data.toString('hex'), {from: account_one});
-
-    // Ending balances
-    account_one_ending_balance = await token.balanceOf.call(account_one);
-    account_one_operator_stake_balance = await stakingContract.balanceOf.call(account_one_operator);
-
-    expect(account_one_ending_balance).to.eq.BN(
-      account_one_starting_balance.sub(stakingAmount), 
-      "Staking amount should be transfered from sender balance for the second time"
+    expect(operatorTwoEndStakeBalance).to.eq.BN(
+      stakingAmount,
+      "Staking amount should be added to the operator balance"
     );
-    expect(account_one_operator_stake_balance).to.eq.BN(
-      stakingAmount, 
-      "Staking amount should be added to the sender staking balance for the second time"
-    );
-  });
+  })
 });
