@@ -7,9 +7,13 @@ import { tokensPageService } from '../services/tokens-page.service'
 import DelegatedTokensList from '../components/DelegatedTokensList'
 import { Web3Context } from '../components/WithWeb3Context'
 import { useShowMessage, messageType } from '../components/Message'
-import web3Utils from 'web3-utils'
 import SpeechBubbleInfo from '../components/SpeechBubbleInfo'
 import { LoadingOverlay } from '../components/Loadable'
+import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEvent.js'
+import { TOKEN_STAKING_CONTRACT_NAME_EVENTS } from '../constants/constants'
+import { isSameEthAddress } from '../utils/general.utils'
+import { sub, add } from '../utils/arithmetics.utils'
+import { findIndexAndObject, compareEthAddresses } from '../utils/array.utils'
 
 const initialData = {
   ownedKeepBalance: '',
@@ -26,6 +30,10 @@ const TokensPage = () => {
   const web3Context = useContext(Web3Context)
   const showMessage = useShowMessage()
   const [state, setData, refreshData] = useFetchData(tokensPageService.fetchTokensPageData, initialData)
+  useSubscribeToStakedEvent(state.data, setData)
+  useSubscribeToUndelegatedEvent(state.data, setData)
+  useSubscribeToRecoveredStakeEvent(state.data, setData)
+
   const {
     undelegationPeriod,
     ownedKeepBalance,
@@ -39,23 +47,9 @@ const TokensPage = () => {
   } = state.data
 
   const handleSubmit = async (values, onTransactionHashCallback) => {
-    const { stakeTokens, operatorAddress, beneficiaryAddress, context } = values
     try {
       await tokensPageService.delegateStake(web3Context, values, onTransactionHashCallback)
       showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Staking delegate transaction has been successfully completed' })
-      if (context === 'grant') {
-        return
-      }
-      const amount = web3Utils.toBN(stakeTokens).mul(web3Utils.toBN(10).pow(web3Utils.toBN(18)))
-      const updatedKeepBalance = web3Utils.toBN(ownedKeepBalance).sub(amount)
-      const updatedTokenStakingBalance = web3Utils.toBN(tokenStakingBalance).add(amount)
-      const updatedDelegations = [{ operatorAddress, beneficiary: beneficiaryAddress, amount: amount.toString() }, ...delegations]
-      setData({
-        ...state.data,
-        ownedKeepBalance: updatedKeepBalance,
-        tokenStakingBalance: updatedTokenStakingBalance,
-        delegations: updatedDelegations,
-      })
     } catch (error) {
       showMessage({ type: messageType.ERROR, title: 'Staking delegate action has been failed ', content: error.message })
       throw error
@@ -99,10 +93,191 @@ const TokensPage = () => {
       />
       <DelegatedTokensList
         delegatedTokens={delegations}
-        successDelegationCallback={refreshData}
+        cancelStakeSuccessCallback={refreshData}
       />
     </LoadingOverlay>
   )
 }
 
 export default TokensPage
+
+const useSubscribeToStakedEvent = async (data, setData) => {
+  const {
+    yourAddress,
+    grantContract,
+    stakingContract,
+  } = useContext(Web3Context)
+
+  const {
+    ownedKeepBalance,
+    tokenStakingBalance,
+    delegations,
+    initializationPeriod,
+  } = data
+
+  const subscribeToEventCallback = async (event) => {
+    const { blockNumber, returnValues: { from, value } } = event
+    const owner = await stakingContract.methods.ownerOf(from).call()
+    let isFromGrant = false
+
+    if (isSameEthAddress(grantContract.options.address, owner)) {
+      isFromGrant = true
+      const { grantId } = await grantContract.methods.getGrantStakeDetails(from).call()
+      const { grantee } = await grantContract.methods.getGrant(grantId).call()
+      if (!isSameEthAddress(grantee, yourAddress)) {
+        return
+      }
+    } else if (!isSameEthAddress(owner, yourAddress)) {
+      return
+    }
+
+    const beneficiary = await stakingContract.methods.magpieOf(from).call()
+    const authorizerAddress = await stakingContract.methods.authorizerOf(from).call()
+
+    const delegation = {
+      createdAt: blockNumber,
+      operatorAddress: from,
+      authorizerAddress,
+      beneficiary,
+      amount: value,
+    }
+    let keepBalance = ownedKeepBalance
+    let keepStakingBalance = tokenStakingBalance
+
+    const initializationOverAt = add(blockNumber || 0, initializationPeriod)
+    delegation.isInInitializationPeriod = true
+    delegation.initializationOverAt = initializationOverAt.toString()
+    if (!isFromGrant) {
+      keepBalance = sub(keepBalance, value)
+      keepStakingBalance = add(keepStakingBalance, value)
+    }
+
+    setData({
+      ...data,
+      ownedKeepBalance: keepBalance,
+      tokenStakingBalance: keepStakingBalance,
+      delegations: [delegation, ...delegations],
+    })
+  }
+  useSubscribeToContractEvent(
+    TOKEN_STAKING_CONTRACT_NAME_EVENTS,
+    'Staked',
+    subscribeToEventCallback
+  )
+}
+
+const useSubscribeToUndelegatedEvent = (data, setData) => {
+  const {
+    yourAddress,
+    grantContract,
+    stakingContract,
+  } = useContext(Web3Context)
+
+  const {
+    pendingUndelegationBalance,
+    undelegations,
+    undelegationPeriod,
+    delegations,
+    tokenStakingBalance,
+  } = data
+
+  const subscribeToEventCallback = async (event) => {
+    const { blockNumber, returnValues: { operator } } = event
+    const owner = await stakingContract.methods.ownerOf(operator).call()
+    let isFromGrant = false
+
+    if (isSameEthAddress(grantContract.options.address, owner)) {
+      isFromGrant = true
+      const { grantId } = await grantContract.methods.getGrantStakeDetails(operator).call()
+      const { grantee } = await grantContract.methods.getGrant(grantId).call()
+      if (!isSameEthAddress(grantee, yourAddress)) {
+        return
+      }
+    } else if (!isSameEthAddress(owner, yourAddress)) {
+      return
+    }
+
+    const beneficiary = await stakingContract.methods.magpieOf(operator).call()
+    const authorizerAddress = await stakingContract.methods.authorizerOf(operator).call()
+    const { amount } = await stakingContract.methods.getDelegationInfo(operator).call()
+
+    const undelegation = {
+      createdAt: blockNumber,
+      operatorAddress: operator,
+      authorizerAddress,
+      beneficiary,
+      amount,
+    }
+    const updatedDelegations = [...delegations]
+    const { indexInArray } = findIndexAndObject('operatorAddress', operator, updatedDelegations, compareEthAddresses)
+    if (indexInArray !== null) {
+      updatedDelegations.splice(indexInArray, 1)
+    }
+
+    let keepStakingBalance = tokenStakingBalance
+    let keepPendingUndelegationBalance = pendingUndelegationBalance
+
+    undelegation.undelegationCompleteAt = add(blockNumber, undelegationPeriod)
+    undelegation.canRecoverStake = false
+
+    if (!isFromGrant) {
+      keepPendingUndelegationBalance = add(pendingUndelegationBalance, amount)
+      keepStakingBalance = sub(keepStakingBalance, amount)
+    }
+
+    setData({
+      ...data,
+      tokenStakingBalance: keepStakingBalance,
+      pendingUndelegationBalance: keepPendingUndelegationBalance,
+      undelegations: [undelegation, ...undelegations],
+      delegations: [...updatedDelegations],
+    })
+  }
+  useSubscribeToContractEvent(
+    TOKEN_STAKING_CONTRACT_NAME_EVENTS,
+    'Undelegated',
+    subscribeToEventCallback,
+  )
+}
+
+const useSubscribeToRecoveredStakeEvent = async (data, setData) => {
+  const {
+    ownedKeepBalance,
+    undelegations,
+    pendingUndelegationBalance,
+  } = data
+
+  const subscribeToEventCallback = async (event) => {
+    const { returnValues: { operator } } = event
+    let keepBalance = ownedKeepBalance
+    let keepUndelegationBalance = pendingUndelegationBalance
+
+    const updatedUndelegations = [...undelegations]
+    const {
+      indexInArray,
+      obj: recoveredUndelegation,
+    } = findIndexAndObject('operatorAddress', operator, updatedUndelegations, compareEthAddresses)
+
+    if (indexInArray !== null) {
+      updatedUndelegations.splice(indexInArray, 1)
+
+      if (!recoveredUndelegation.isFromGrant) {
+        keepBalance = add(keepBalance, recoveredUndelegation.amount)
+        keepUndelegationBalance = sub(keepUndelegationBalance, recoveredUndelegation.amount)
+      }
+    }
+
+    setData({
+      ...data,
+      ownedKeepBalance: keepBalance,
+      pendingUndelegationBalance: keepUndelegationBalance,
+      undelegations: [...updatedUndelegations],
+    })
+  }
+
+  useSubscribeToContractEvent(
+    TOKEN_STAKING_CONTRACT_NAME_EVENTS,
+    'RecoveredStake',
+    subscribeToEventCallback
+  )
+}
