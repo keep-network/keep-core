@@ -82,9 +82,17 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   })
 
   it("should be able to report unauthorized signing", async () => {
+    let g1point = await operatorContract.signOverMsgSender(bls.secretKey, {from: tattletale});
+    let g1pointX = web3.utils.toHex(g1point[0].toString())
+    let g1pointY = web3.utils.toHex(g1point[1].toString())
+    let tattletaleSignature = '0x' + Buffer.concat([
+      Buffer.from(g1pointX.substr(2), 'hex'),
+      Buffer.from(g1pointY.substr(2), 'hex')
+    ]).toString('hex');
+
     await operatorContract.reportUnauthorizedSigning(
       groupIndex,
-      bls.signedGroupPubKey,
+      tattletaleSignature,
       {from: tattletale}
     )
 

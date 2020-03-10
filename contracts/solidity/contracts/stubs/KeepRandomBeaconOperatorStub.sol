@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "../KeepRandomBeaconOperator.sol";
+import "./AltBn128Stub.sol";
 
 /**
  * @title KeepRandomBeaconOperatorStub
@@ -58,5 +59,9 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
     function timeDKG() public view returns (uint256) {
         return dkgResultVerification.timeDKG;
+    }
+
+    function signOverMsgSender(uint256 secretKey) public view returns (uint256, uint256) {
+        return AltBn128Stub.sign(secretKey);
     }
 }
