@@ -12,7 +12,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract.only('TokenStaking', function(accounts) {
+contract('TokenStaking', function(accounts) {
 
   let token, registry, stakingContract;
     
@@ -105,7 +105,7 @@ contract.only('TokenStaking', function(accounts) {
     await delegate(operatorOne);
 
     await mineBlocks(initializationPeriod);
-    await stakingContract.undelegate(operatorOne, {from: operatorOne});
+    await stakingContract.undelegate(operatorOne, {from: ownerOne});
     await mineBlocks(undelegationPeriod);    
     await stakingContract.recoverStake(operatorOne);
         
@@ -165,7 +165,7 @@ contract.only('TokenStaking', function(accounts) {
     await delegate(operatorOne);
 
     await mineBlocks(initializationPeriod);
-    await stakingContract.undelegate(operatorOne, {from: operatorOne});
+    await stakingContract.undelegate(operatorOne, {from: ownerOne});
 
     await mineBlocks(undelegationPeriod - 1);
 
@@ -188,7 +188,7 @@ contract.only('TokenStaking', function(accounts) {
     await delegate(operatorOne);
 
     await mineBlocks(initializationPeriod);
-    await stakingContract.undelegate(operatorOne, {from: operatorOne});
+    await stakingContract.undelegate(operatorOne, {from: ownerOne});
     await mineBlocks(undelegationPeriod);    
     await stakingContract.recoverStake(operatorOne);
         
@@ -222,13 +222,47 @@ contract.only('TokenStaking', function(accounts) {
     );
   })
 
+  it("should let operator cancel delegation", async () => {
+    await delegate(operatorOne)
+
+    await stakingContract.cancelStake(operatorOne, {from: operatorOne})
+    // ok, no exception
+  })
+
+  it("should not allow third party to cancel delegation", async () => {
+    await delegate(operatorOne)
+
+    await expectThrowWithMessage(
+      stakingContract.cancelStake(operatorOne, {from: operatorTwo}),
+      "Only operator or the owner of the stake can cancel the delegation"
+    )
+  })
+
+  it("should let operator undelegate", async () => {
+    await delegate(operatorOne)
+
+    await mineBlocks(initializationPeriod)
+    await stakingContract.undelegate(operatorOne, {from: operatorOne})
+    // ok, no exceptions
+  })
+
+  it("should not allow third party to undelegate", async () => {
+    await delegate(operatorOne)
+
+    await mineBlocks(initializationPeriod)
+    await expectThrowWithMessage(
+      stakingContract.undelegate(operatorOne, {from: operatorTwo}),
+      "Only operator or the owner of the stake can undelegate"
+    )
+  })
+
   it("should retain delegation info after recovering stake", async () => {
     await delegate(operatorOne)
     await mineBlocks(initializationPeriod)
 
     let delegationInfoBefore = await stakingContract.getDelegationInfo.call(operatorOne)
     
-    await stakingContract.undelegate(operatorOne, {from: operatorOne})
+    await stakingContract.undelegate(operatorOne, {from: ownerOne})
     let undelegationBlock = await web3.eth.getBlockNumber()
     await mineBlocks(undelegationPeriod)
     await stakingContract.recoverStake(operatorOne)
@@ -339,7 +373,7 @@ contract.only('TokenStaking', function(accounts) {
     )
 
     await mineBlocks(initializationPeriod);
-    await stakingContract.undelegate(operatorOne, {from: operatorOne});
+    await stakingContract.undelegate(operatorOne, {from: ownerOne});
     await mineBlocks(undelegationPeriod);    
     await stakingContract.recoverStake(operatorOne);
     
@@ -419,7 +453,7 @@ contract.only('TokenStaking', function(accounts) {
     )
 
     await mineBlocks(initializationPeriod);
-    await stakingContract.undelegate(operatorOne, {from: operatorOne})
+    await stakingContract.undelegate(operatorOne, {from: ownerOne})
 
     await mineBlocks(1)
 
