@@ -74,6 +74,9 @@ contract TokenGrant {
     // available to be withdrawn to the grantee
     mapping(address => uint256) public balances;
 
+    // Mapping of operator addresses per particular grantee address.
+    mapping(address => address[]) public granteesToOperators;
+
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress address of a token that will be linked to this contract.
@@ -119,13 +122,15 @@ contract TokenGrant {
      * @return staked The amount of tokens that have been staked from the grant.
      * @return revoked A boolean indicating whether the grant has been revoked,
      *                 which is to say that it is no longer vesting.
+     * @return grantee The grantee of grant.
      */
-    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, bool revoked) {
+    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, bool revoked, address grantee) {
         return (
             grants[_id].amount,
             grants[_id].withdrawn,
             grants[_id].staked,
-            grants[_id].revoked
+            grants[_id].revoked,
+            grants[_id].grantee
         );
     }
 
@@ -158,6 +163,31 @@ contract TokenGrant {
     function getGrants(address _granteeOrGrantManager) public view returns (uint256[] memory) {
         return grantIndices[_granteeOrGrantManager];
     }
+
+    /**
+     * @dev Gets operator addresses of the specified grantee address.
+     * @param grantee The grantee address.
+     * @return An array of all operators for a given grantee.
+     */
+    function getGranteeOperators(address grantee) public view returns (address[] memory) {
+        return granteesToOperators[grantee];
+    }
+
+    /**
+     * @dev Gets grant stake details of the given operator.
+     * @param operator The operator address.
+     * @return grantId ID of the token grant.
+     * @return amount The amount of tokens the given operator delegated.
+     * @return stakingContract The address of staking contract.
+     */
+    function getGrantStakeDetails(address operator) public view returns (uint256 grantId, uint256 amount, address stakingContract) {
+        return (
+            grantStakes[operator].grantId,
+            grantStakes[operator].amount,
+            grantStakes[operator].stakingContract
+        );
+    }
+
 
     /**
      * @notice Receives approval of token transfer and creates a token grant with a vesting
@@ -305,6 +335,7 @@ contract TokenGrant {
 
         // Keep staking record.
         grantStakes[operator] = GrantStake(_id, _stakingContract, _amount);
+        granteesToOperators[grants[_id].grantee].push(operator);
         grants[_id].staked += _amount;
 
         // Staking contract expects 40 bytes _extraData for stake delegation.
