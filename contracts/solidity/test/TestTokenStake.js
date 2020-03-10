@@ -60,14 +60,11 @@ contract('TokenStaking', function(accounts) {
   it("should send tokens correctly", async () => {
     let amount = web3.utils.toBN(1000000000);
 
-    // Starting balances
     let ownerOneStartingBalance = await token.balanceOf.call(ownerOne);
     let ownerTwoStartingBalance = await token.balanceOf.call(ownerTwo);
 
-    // Send tokens
     await token.transfer(ownerTwo, amount, {from: ownerOne});
 
-    // Ending balances
     let ownerOneEndingBalance = await token.balanceOf.call(ownerOne);
     let ownerTwoEndingBalance = await token.balanceOf.call(ownerTwo);
 
@@ -218,5 +215,55 @@ contract('TokenStaking', function(accounts) {
       stakingAmount,
       "Staking amount should be added to the operator balance"
     );
+  })
+
+  it("should retain delegation info after recovering stake", async () => {
+    await delegate(operatorOne)
+    await mineBlocks(initializationPeriod)
+
+    let delegationInfoBefore = await stakingContract.getDelegationInfo.call(operatorOne)
+    
+    await stakingContract.undelegate(operatorOne, {from: operatorOne})
+    let undelegationBlock = await web3.eth.getBlockNumber()
+    await mineBlocks(undelegationPeriod)
+    await stakingContract.recoverStake(operatorOne)
+
+    let delegationInfoAfter = await stakingContract.getDelegationInfo.call(operatorOne)
+
+    expect(delegationInfoAfter.createdAt).to.eq.BN(
+      delegationInfoBefore.createdAt,
+      "Unexpected delegation creation block"
+    )
+    expect(delegationInfoAfter.amount).to.eq.BN(
+      0,
+      "Should have no delegated tokens"
+    )
+    expect(delegationInfoAfter.undelegatedAt).to.eq.BN(
+      undelegationBlock,
+      "Unexpected undelegation block"
+    )
+  })
+
+  it("should retain delegation info after cancelling delegation", async () => {
+    await delegate(operatorOne);
+
+    let delegationInfoBefore = await stakingContract.getDelegationInfo.call(operatorOne)
+
+    await stakingContract.cancelStake(operatorOne, {from: ownerOne});
+
+    let delegationInfoAfter = await stakingContract.getDelegationInfo.call(operatorOne)
+
+    expect(delegationInfoAfter.createdAt).to.eq.BN(
+      delegationInfoBefore.createdAt,
+      "Unexpected delegation creation block"
+    )
+    expect(delegationInfoAfter.amount).to.eq.BN(
+      0,
+      "Should have no delegated tokens"
+    )
+    expect(delegationInfoAfter.undelegatedAt).to.eq.BN(
+      0,
+      "Unexpected undelegation block"
+    )
   })
 });
