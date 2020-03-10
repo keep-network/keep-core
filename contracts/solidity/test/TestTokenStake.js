@@ -57,7 +57,7 @@ contract('TestTokenStake', function(accounts) {
     ]);
 
     // Stake tokens using approveAndCall pattern
-    await token.approveAndCall(stakingContract.address, stakingAmount, '0x' + data.toString('hex'), {from: account_one});
+    const { receipt } = await token.approveAndCall(stakingContract.address, stakingAmount, '0x' + data.toString('hex'), {from: account_one});
 
     // Ending balances
     let account_one_ending_balance = await token.balanceOf.call(account_one);
@@ -65,6 +65,11 @@ contract('TestTokenStake', function(accounts) {
 
     assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(stakingAmount)), true, "Staking amount should be transferred from owner balance");
     assert.equal(account_one_operator_stake_balance.eq(stakingAmount), true, "Staking amount should be added to the operator balance");
+
+    const { amount, undelegatedAt, createdAt } = await stakingContract.getDelegationInfo.call(account_one_operator)
+    assert.equal(amount.eq(stakingAmount), true, "The amount should be the same as staked")
+    assert.equal(undelegatedAt.eq(web3.utils.toBN(0)), true, "Undelegated at should be 0")
+    assert.equal(createdAt.eq(web3.utils.toBN(receipt.blockNumber)), true, "The block number should be the same as in receipt")
 
     // Cancel stake
     await stakingContract.cancelStake(account_one_operator, {from: account_one});
