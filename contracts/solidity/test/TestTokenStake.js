@@ -1,10 +1,17 @@
 import mineBlocks from './helpers/mineBlocks';
 import expectThrow from './helpers/expectThrow';
+
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const Registry = artifacts.require("./Registry.sol");
 
-contract('TokenStaking', function(accounts) {
+const BN = web3.utils.BN
+
+const chai = require('chai')
+chai.use(require('bn-chai')(BN))
+const expect = chai.expect
+
+contract.only('TokenStaking', function(accounts) {
 
   let token, registry, stakingContract,
     account_one = accounts[0],
@@ -40,8 +47,14 @@ contract('TokenStaking', function(accounts) {
     let account_one_ending_balance = await token.balanceOf.call(account_one);
     let account_two_ending_balance = await token.balanceOf.call(account_two);
 
-    assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(amount)), true, "Amount wasn't correctly taken from the sender");
-    assert.equal(account_two_ending_balance.eq(account_two_starting_balance.add(amount)), true, "Amount wasn't correctly sent to the receiver");
+    expect(account_one_ending_balance).to.eq.BN(
+      account_one_starting_balance.sub(amount), 
+      "Amount wasn't correctly taken from the sender"
+    )
+    expect(account_two_ending_balance).to.eq.BN(
+      account_two_starting_balance.add(amount), 
+      "Amount wasn't correctly sent to the receiver"
+    );
   });
 
   it("should allow to cancel delegation", async () => {
@@ -64,27 +77,23 @@ contract('TokenStaking', function(accounts) {
     let account_one_ending_balance = await token.balanceOf.call(account_one);
     let account_one_operator_stake_balance = await stakingContract.balanceOf.call(account_one_operator);
     
-    assert.equal(
-      account_one_ending_balance.eq(account_one_starting_balance.sub(stakingAmount)), 
-      true, 
+    expect(account_one_ending_balance).to.eq.BN(
+      account_one_starting_balance.sub(stakingAmount),
       "Staking amount should be transferred from owner balance"
     );
-    assert.equal(
-      account_one_operator_stake_balance.eq(stakingAmount), 
-      true, 
+    expect(account_one_operator_stake_balance).to.eq.BN(
+      stakingAmount,
       "Staking amount should be added to the operator balance"
     );
     
     // Cancel stake
     await stakingContract.cancelStake(account_one_operator, {from: account_one});
-    assert.equal(
-      account_one_starting_balance.eq(await token.balanceOf.call(account_one)), 
-      true, 
+    expect(account_one_starting_balance).to.eq.BN(
+      await token.balanceOf.call(account_one),
       "Staking amount should be transferred back to owner"
     );
-    assert.equal(
-      (await stakingContract.balanceOf.call(account_one_operator)).isZero(), 
-      true, 
+    expect(await stakingContract.balanceOf.call(account_one_operator)).to.eq.BN( 
+      0, 
       "Staking amount should be removed from operator balance"
     );
   })
@@ -127,8 +136,14 @@ contract('TokenStaking', function(accounts) {
     let account_one_ending_balance = await token.balanceOf.call(account_one);
     let account_one_operator_stake_balance = await stakingContract.balanceOf.call(account_one_operator);
 
-    assert.equal(account_one_ending_balance.eq(account_one_starting_balance), true, "Staking amount should be transfered to sender balance");
-    assert.equal(account_one_operator_stake_balance.isZero(), true, "Staking amount should be removed from sender staking balance");
+    expect(account_one_ending_balance).to.eq.BN(
+      account_one_starting_balance, 
+      "Staking amount should be transfered to sender balance"
+    );
+    expect(account_one_operator_stake_balance).to.eq.BN(
+      0, 
+      "Staking amount should be removed from sender staking balance"
+    );
 
     // Starting balances
     account_one_starting_balance = await token.balanceOf.call(account_one);
@@ -146,7 +161,13 @@ contract('TokenStaking', function(accounts) {
     account_one_ending_balance = await token.balanceOf.call(account_one);
     account_one_operator_stake_balance = await stakingContract.balanceOf.call(account_one_operator);
 
-    assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(stakingAmount)), true, "Staking amount should be transfered from sender balance for the second time");
-    assert.equal(account_one_operator_stake_balance.eq(stakingAmount), true, "Staking amount should be added to the sender staking balance for the second time");
+    expect(account_one_ending_balance).to.eq.BN(
+      account_one_starting_balance.sub(stakingAmount), 
+      "Staking amount should be transfered from sender balance for the second time"
+    );
+    expect(account_one_operator_stake_balance).to.eq.BN(
+      stakingAmount, 
+      "Staking amount should be added to the sender staking balance for the second time"
+    );
   });
 });
