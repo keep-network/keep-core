@@ -122,13 +122,15 @@ contract TokenGrant {
      * @return staked The amount of tokens that have been staked from the grant.
      * @return revoked A boolean indicating whether the grant has been revoked,
      *                 which is to say that it is no longer vesting.
+     * @return grantee The grantee of grant.
      */
-    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, bool revoked) {
+    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, bool revoked, address grantee) {
         return (
             grants[_id].amount,
             grants[_id].withdrawn,
             grants[_id].staked,
-            grants[_id].revoked
+            grants[_id].revoked,
+            grants[_id].grantee
         );
     }
 
