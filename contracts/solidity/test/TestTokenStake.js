@@ -1,5 +1,6 @@
 import mineBlocks from './helpers/mineBlocks';
 import expectThrow from './helpers/expectThrow';
+import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 
 const KeepToken = artifacts.require('./KeepToken.sol');
@@ -42,6 +43,20 @@ contract('TokenStaking', function(accounts) {
     await restoreSnapshot()
   })
 
+  async function delegate() {
+    let data = Buffer.concat([
+      Buffer.from(account_one_magpie.substr(2), 'hex'),
+      Buffer.from(account_one_operator.substr(2), 'hex'),
+      Buffer.from(account_one_authorizer.substr(2), 'hex')
+    ]);
+    
+    await token.approveAndCall(
+      stakingContract.address, stakingAmount, 
+      '0x' + data.toString('hex'), 
+      {from: account_one}
+    );
+  }
+
   it("should send tokens correctly", async function() {
     let amount = web3.utils.toBN(1000000000);
 
@@ -69,17 +84,7 @@ contract('TokenStaking', function(accounts) {
   it("should update balances when delegating", async () => {
     let ownerStartBalance = await token.balanceOf.call(account_one);
 
-    let data = Buffer.concat([
-      Buffer.from(account_one_magpie.substr(2), 'hex'),
-      Buffer.from(account_one_operator.substr(2), 'hex'),
-      Buffer.from(account_one_authorizer.substr(2), 'hex')
-    ]);
-    
-    await token.approveAndCall(
-      stakingContract.address, stakingAmount, 
-      '0x' + data.toString('hex'), 
-      {from: account_one}
-    );
+    await delegate();
     
     let ownerEndBalance = await token.balanceOf.call(account_one);
     let operatorEndStakeBalance = await stakingContract.balanceOf.call(account_one_operator);
@@ -97,17 +102,7 @@ contract('TokenStaking', function(accounts) {
   it("should allow to cancel delegation", async () => {
     let ownerStartBalance = await token.balanceOf.call(account_one);
 
-    let data = Buffer.concat([
-      Buffer.from(account_one_magpie.substr(2), 'hex'),
-      Buffer.from(account_one_operator.substr(2), 'hex'),
-      Buffer.from(account_one_authorizer.substr(2), 'hex')
-    ]);
-    
-    await token.approveAndCall(
-      stakingContract.address, stakingAmount, 
-      '0x' + data.toString('hex'), 
-      {from: account_one}
-    );
+    await delegate();
 
     await stakingContract.cancelStake(account_one_operator, {from: account_one});
 
@@ -122,6 +117,37 @@ contract('TokenStaking', function(accounts) {
       0, 
       "Staking amount should be removed from operator balance"
     );
+  })
+
+  it("should allow to cancel stake before initialization period is over", async () => {
+    await delegate()
+
+    await mineBlocks(initializationPeriod - 2)
+
+    await stakingContract.cancelStake(account_one_operator, {from: account_one})
+  })
+
+  it("should not allow to cancel stake after initialization period is over", async () => {
+    await delegate();
+
+    await mineBlocks(initializationPeriod);
+
+    await expectThrowWithMessage(
+      stakingContract.cancelStake(account_one_operator, {from: account_one}),
+      "Initialization period is over"
+    );
+  })
+
+  it("should not allow to recover stake before undelegation period is over", async () => {
+    await delegate();
+
+    await mineBlocks(initializationPeriod);
+    await stakingContract.undelegate(account_one_operator, {from: account_one_operator});
+
+    await expectThrowWithMessage(
+      stakingContract.recoverStake(account_one_operator),
+      "Can not recover stake before undelgation period is over"
+    )
   })
 
   it("should stake delegate and undelegate tokens correctly", async function() {
