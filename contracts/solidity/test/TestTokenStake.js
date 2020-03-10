@@ -1,5 +1,6 @@
 import mineBlocks from './helpers/mineBlocks';
 import expectThrow from './helpers/expectThrow';
+import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
@@ -11,7 +12,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract.only('TokenStaking', function(accounts) {
+contract('TokenStaking', function(accounts) {
 
   let token, registry, stakingContract,
     account_one = accounts[0],
@@ -32,6 +33,14 @@ contract.only('TokenStaking', function(accounts) {
       token.address, registry.address, initializationPeriod, undelegationPeriod
     );
   });
+
+  beforeEach(async () => {
+    await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot()
+  })
 
   it("should send tokens correctly", async function() {
     let amount = web3.utils.toBN(1000000000);
