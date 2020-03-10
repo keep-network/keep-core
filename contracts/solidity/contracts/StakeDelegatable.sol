@@ -1,10 +1,12 @@
 pragma solidity ^0.5.4;
+pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./utils/BytesLib.sol";
 import "./utils/AddressArrayUtils.sol";
+import "./utils/OperatorParams.sol";
 
 
 /**
@@ -16,6 +18,7 @@ contract StakeDelegatable {
     using SafeERC20 for ERC20Burnable;
     using BytesLib for bytes;
     using AddressArrayUtils for address[];
+    using OperatorParams for uint256;
 
     ERC20Burnable public token;
 
@@ -26,9 +29,7 @@ contract StakeDelegatable {
     mapping(address => address[]) public ownerOperators;
 
     struct Operator {
-        uint256 amount;
-        uint256 createdAt;
-        uint256 undelegatedAt;
+        uint256 packedParams;
         address owner;
         address payable beneficiary;
         address authorizer;
@@ -50,7 +51,7 @@ contract StakeDelegatable {
      * @return An uint256 representing the amount staked by the passed address.
      */
     function balanceOf(address _address) public view returns (uint256 balance) {
-        return operators[_address].amount;
+        return operators[_address].packedParams.getAmount();
     }
 
     /**
