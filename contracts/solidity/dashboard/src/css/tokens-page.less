@@ -23,7 +23,7 @@
                 color: @color-black;
                 position: relative;
                 font-weight: bold;
-                border: 0.25px solid @color-grey-70;
+                border: 1px solid @color-grey-70;
                 border-bottom: none;
 
                 &:before {
@@ -38,7 +38,7 @@
             }
             &.inactive {
                 color: @color-grey-40;
-                border-bottom: 0.25px solid @color-grey-70;
+                border-bottom: 1px solid @color-grey-70;
                 background: @color-grey-20;
                 padding-left: 6px;
                 background-clip: border-box;
@@ -63,7 +63,7 @@
     }
    
     .input-wrapper {
-        border: 0.25px solid @color-grey-70;
+        border: 1px solid @color-grey-70;
         border-top: 0;
         padding: 1.5rem;
         padding-bottom: 0;
@@ -105,6 +105,12 @@
 
     #delegate-stake-section {
         flex-basis: 58%;
+    }
+
+    .delegate-stake-form {
+        .addresses-section {
+            width: 100%;
+        }
     }
 }
 
