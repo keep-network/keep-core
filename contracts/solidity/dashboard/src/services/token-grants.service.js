@@ -1,14 +1,18 @@
 import { TOKEN_GRANT_CONTRACT_NAME } from '../constants/constants'
 import { contractService } from './contracts.service'
+import { isSameEthAddress } from '../utils/general.utils'
 import web3Utils from 'web3-utils'
 
 const fetchGrants = async (web3Context) => {
   const { yourAddress } = web3Context
-  const grantIds = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrants', yourAddress)
+  const grantIds = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrants', yourAddress)  
   const grants = []
 
   for (let i = 0; i < grantIds.length; i++) {
     const grantDetails = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrant', grantIds[i])
+    if (!isSameEthAddress(yourAddress, grantDetails.grantee)) {
+      continue
+    }
     const vestingSchedule = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantVestingSchedule', grantIds[i])
 
     const vested = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'grantedAmount', grantIds[i])
