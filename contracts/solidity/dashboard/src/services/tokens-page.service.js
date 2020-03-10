@@ -98,7 +98,7 @@ const getDelegations = async (
 
     if (!balance.isZero() && operatorData.undelegatedAt === '0') {
       const initializationOverAt = web3Utils.toBN(createdAt || 0).add(web3Utils.toBN(initializationPeriod))
-      operatorData.isInInitializationPeriod = initializationOverAt.gte(web3Utils.toBN(await eth.getBlockNumber()))
+      operatorData.isInInitializationPeriod = initializationOverAt.gt(web3Utils.toBN(await eth.getBlockNumber()))
       operatorData.initializationOverAt = initializationOverAt.toString()
       delegations.push(operatorData)
       if (!isFromGrant) {
@@ -107,7 +107,7 @@ const getDelegations = async (
     }
     if (operatorData.undelegatedAt !== '0') {
       operatorData.undelegationCompleteAt = web3Utils.toBN(undelegatedAt).add(web3Utils.toBN(undelegationPeriod))
-      operatorData.canRecoverStake = web3Utils.toBN(await eth.getBlockNumber()).gte(operatorData.undelegationCompleteAt)
+      operatorData.canRecoverStake = web3Utils.toBN(await eth.getBlockNumber()).gt(operatorData.undelegationCompleteAt)
       if (!isFromGrant) {
         pendingUndelegationBalance = pendingUndelegationBalance.add(balance)
       }
