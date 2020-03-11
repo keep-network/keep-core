@@ -4,7 +4,7 @@ import {bls} from '../helpers/data';
 import {initContracts} from '../helpers/initContracts';
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
 
-contract('KeepRandomBeaconOperator', (accounts) => {
+contract('KeepRandomBeaconOperator/RelayEntry', (accounts) => {
   let serviceContract, operatorContract;
 
   before(async () => {

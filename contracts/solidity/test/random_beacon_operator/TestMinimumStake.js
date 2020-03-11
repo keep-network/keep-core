@@ -1,7 +1,7 @@
 import expectThrow from '../helpers/expectThrow';
 import {initContracts} from '../helpers/initContracts';
 
-contract('TestKeepRandomBeaconOperator', function(accounts) {
+contract('TestKeepRandomBeaconOperator/MinimumStake', function(accounts) {
 
   let operatorContract;
 

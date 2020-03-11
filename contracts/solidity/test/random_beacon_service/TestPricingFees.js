@@ -2,7 +2,7 @@ import {initContracts} from '../helpers/initContracts';
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
 import {bls} from '../helpers/data';
 
-contract('KeepRandomBeaconService', function(accounts) {
+contract('KeepRandomBeaconService/PricingFees', function(accounts) {
     let serviceContract;
     let operatorContract;
 

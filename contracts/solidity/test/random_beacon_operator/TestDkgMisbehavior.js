@@ -6,7 +6,7 @@ import packTicket from '../helpers/packTicket'
 import generateTickets from '../helpers/generateTickets'
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot'
 
-contract('KeepRandomBeaconOperator', function(accounts) {
+contract('KeepRandomBeaconOperator/DkgMisbehavior', function(accounts) {
   let token, stakingContract, operatorContract, minimumStake,
     owner = accounts[0],
     operator1 = accounts[1],

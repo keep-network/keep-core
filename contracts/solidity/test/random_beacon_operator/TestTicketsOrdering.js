@@ -1,7 +1,7 @@
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
 const GroupSelectionStub = artifacts.require('./stubs/GroupSelectionStub.sol');
 
-contract('KeepRandomBeaconOperator', function() {
+contract('KeepRandomBeaconOperator/TicketsOrdering', function() {
   const groupSize = 10;
   
   let groupSelectionStub;

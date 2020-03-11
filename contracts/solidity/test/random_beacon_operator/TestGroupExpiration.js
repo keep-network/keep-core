@@ -4,7 +4,7 @@ const GroupsExpirationStub = artifacts.require('./stubs/GroupsExpirationStub.sol
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
 const Groups = artifacts.require('./libraries/operator/Groups.sol');
 
-contract('KeepRandomBeaconOperator', function(accounts) {
+contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
 
   let groups;
 

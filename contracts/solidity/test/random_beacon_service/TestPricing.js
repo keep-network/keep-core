@@ -4,7 +4,7 @@ import stakeDelegate from '../helpers/stakeDelegate';
 import {initContracts} from '../helpers/initContracts';
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
-contract('TestKeepRandomBeaconServicePricing', function(accounts) {
+contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
 
   let token, stakingContract, operatorContract, serviceContract, callbackContract, entryFee, groupSize, group,
     owner = accounts[0],

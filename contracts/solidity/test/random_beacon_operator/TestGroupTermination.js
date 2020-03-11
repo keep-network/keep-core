@@ -4,7 +4,7 @@ import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
 const GroupsTerminationStub = artifacts.require('./stubs/GroupsTerminationStub.sol')
 const Groups = artifacts.require('./libraries/operator/Groups.sol');
 
-contract('KeepRandomBeaconOperator', function(accounts) {
+contract('KeepRandomBeaconOperator/GroupTermination', function(accounts) {
     let groups;
 
     const groupActiveTime = 5;

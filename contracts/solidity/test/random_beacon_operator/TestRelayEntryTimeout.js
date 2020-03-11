@@ -4,7 +4,7 @@ import {initContracts} from '../helpers/initContracts';
 import mineBlocks from '../helpers/mineBlocks';
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
 
-contract("KeepRandomBeaconOperator", function(accounts) {
+contract("KeepRandomBeaconOperator/RelayEntryTimeout", function(accounts) {
   let operatorContract, serviceContract, fee;
   const blocksForward = 20;
   const requestCounter = 0;
