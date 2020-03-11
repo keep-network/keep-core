@@ -213,8 +213,10 @@ contract TokenStaking is StakeDelegatable {
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
+
             uint256 operatorParams = operators[operator].packedParams;
             uint256 oldAmount = operatorParams.getAmount();
+
             if (oldAmount < amountToSeize) {
                 totalAmountToSeize = totalAmountToSeize.add(oldAmount);
                 operators[operator].packedParams = operatorParams.setAmount(0);

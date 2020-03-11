@@ -64,7 +64,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
     let amountToSlash = web3.utils.toBN(42000000);
     let balanceBeforeSlashing = await stakingContract.balanceOf(operator1)
-    await stakingContract.slash(web3.utils.toBN(amountToSlash), [operator1], {from: anotherOperatorContract})
+    await stakingContract.slash(amountToSlash, [operator1], {from: anotherOperatorContract})
     let balanceAfterSlashing = await stakingContract.balanceOf(operator1)
 
     assert.isTrue((balanceBeforeSlashing.sub(amountToSlash)).eq(balanceAfterSlashing), "Unexpected balance after token slasing")
@@ -76,9 +76,36 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await stakingContract.authorizeOperatorContract(operator1, anotherOperatorContract, {from: authorizer})
 
     let amountToSlash = largeStake.add(web3.utils.toBN(100));
-    await stakingContract.slash(web3.utils.toBN(amountToSlash), [operator1], {from: anotherOperatorContract})
+    await stakingContract.slash(amountToSlash, [operator1], {from: anotherOperatorContract})
 
     assert.isTrue((await stakingContract.balanceOf(operator1)).isZero(), "Unexpected balance after token slasing")
+  })
+
+  it("should seize token amount", async () => {
+    await registry.setRegistryKeeper(registryKeeper)
+    await registry.approveOperatorContract(anotherOperatorContract, {from: registryKeeper})
+    await stakingContract.authorizeOperatorContract(operator1, anotherOperatorContract, {from: authorizer})
+
+    let operatorBalanceBeforeSeizing = await stakingContract.balanceOf(operator1)
+    let tattletaleBalanceBeforeSeizing = await token.balanceOf(tattletale)
+    
+    let amountToSeize = web3.utils.toBN(42000000);
+    let rewardMultiplier = web3.utils.toBN(25)
+    await stakingContract.seize(amountToSeize, rewardMultiplier, tattletale, [operator1], {from: anotherOperatorContract})
+    
+    let operatorBalanceAfterSeizing = await stakingContract.balanceOf(operator1)
+    let tattletaleBalanceAfterSeizing = await token.balanceOf(tattletale)
+    
+    assert.isTrue(
+      (operatorBalanceBeforeSeizing.sub(amountToSeize)).eq(operatorBalanceAfterSeizing), 
+      "Unexpected balance for operator after token seizing"
+    )
+
+    let expectedTattletaleReward = web3.utils.toBN(525000)
+    assert.isTrue(
+      (tattletaleBalanceBeforeSeizing.add(expectedTattletaleReward)).eq(tattletaleBalanceAfterSeizing), 
+      "Unexpected balance for tattletale after token seizing"
+    )
   })
 
   it("should be able to report unauthorized signing", async () => {
