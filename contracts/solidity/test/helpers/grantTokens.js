@@ -1,4 +1,9 @@
-export default async function grantTokens(grantContract, token, amount, from, grantee, vestingDuration, start, cliff, revocable) {
+export default async function grantTokens(
+    grantContract,
+    token, amount,
+    from, grantee,
+    vestingDuration, start, cliff,
+    revocable) {
   let grantData = Buffer.concat([
     Buffer.from(grantee.substr(2), 'hex'),
     web3.utils.toBN(vestingDuration).toBuffer('be', 32),
