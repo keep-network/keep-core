@@ -365,8 +365,8 @@ contract TokenGrant {
         );
         grants[grantId].staked = grants[grantId].staked.sub(grantStakes[_operator].amount);
 
-
         TokenStaking(grantStakes[_operator].stakingContract).cancelStake(_operator);
+        delete grantStakes[_operator];
     }
 
     /**
