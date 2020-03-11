@@ -142,6 +142,8 @@ contract('TokenStaking', function(accounts) {
   })
 
   it("should allow to cancel delegation just before initialization period is over", async () => {
+    let ownerStartBalance = await token.balanceOf.call(ownerOne);
+    
     await delegate(operatorOne);
 
     await mineBlocks(initializationPeriod - 1)
