@@ -90,16 +90,5 @@ contract('TestTokenGrantStake', function(accounts) {
     await grantContract.withdraw(id);
     let account_two_ending_balance = await token.balanceOf.call(account_two);
     assert.equal(account_two_ending_balance.gte(amount.div(web3.utils.toBN(2))), true, "Should have some withdrawn grant amount");
-
-    // Get grant available balance after withdraw
-    let grant = await grantContract.getGrant(id);
-    let grantAmount = grant[0];
-    let grantReleased = grant[1];
-    let updatedGrantBalance = grantAmount.sub(grantReleased);
-
-    // should be able to delegate stake to the same operator after finishing unstaking
-    await grantContract.stake(id, stakingContract.address, updatedGrantBalance, delegation, {from: account_two});
-    account_two_operator_stake_balance = await stakingContract.balanceOf.call(account_two_operator);
-    assert.equal(account_two_operator_stake_balance.eq(updatedGrantBalance), true, "Should stake grant amount");
   });
 });
