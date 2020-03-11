@@ -1,9 +1,9 @@
-import {initContracts} from './helpers/initContracts'
-import stakeDelegate from './helpers/stakeDelegate'
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
-import {bls} from './helpers/data'
-import expectThrowWithMessage from './helpers/expectThrowWithMessage'
-import mineBlocks from './helpers/mineBlocks'
+import {initContracts} from '../helpers/initContracts'
+import stakeDelegate from '../helpers/stakeDelegate'
+import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
+import {bls} from '../helpers/data'
+import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
+import mineBlocks from '../helpers/mineBlocks'
 
 contract('KeepRandomBeaconOperator', function(accounts) {
   let token, stakingContract, serviceContract, operatorContract, minimumStake, largeStake, entryFeeEstimate, groupIndex,

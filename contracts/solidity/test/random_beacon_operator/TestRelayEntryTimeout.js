@@ -1,8 +1,8 @@
-import expectThrowWithMessage from './helpers/expectThrowWithMessage';
-import {bls} from './helpers/data';
-import {initContracts} from './helpers/initContracts';
-import mineBlocks from './helpers/mineBlocks';
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
+import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
+import {bls} from '../helpers/data';
+import {initContracts} from '../helpers/initContracts';
+import mineBlocks from '../helpers/mineBlocks';
+import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
 
 contract("KeepRandomBeaconOperator", function(accounts) {
   let operatorContract, serviceContract, fee;

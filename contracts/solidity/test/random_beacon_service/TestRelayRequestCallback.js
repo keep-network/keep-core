@@ -1,7 +1,7 @@
-import {bls} from './helpers/data';
-import {initContracts} from './helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
-import stakeAndGenesis from './helpers/stakeAndGenesis';
+import {bls} from '../helpers/data';
+import {initContracts} from '../helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+import stakeAndGenesis from '../helpers/stakeAndGenesis';
 
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 

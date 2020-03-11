@@ -1,7 +1,7 @@
-import mineBlocks from './helpers/mineBlocks';
-import {bls} from './helpers/data';
-import stakeDelegate from './helpers/stakeDelegate';
-import {initContracts} from './helpers/initContracts';
+import mineBlocks from '../helpers/mineBlocks';
+import {bls} from '../helpers/data';
+import stakeDelegate from '../helpers/stakeDelegate';
+import {initContracts} from '../helpers/initContracts';
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
 contract('TestKeepRandomBeaconServicePricing', function(accounts) {

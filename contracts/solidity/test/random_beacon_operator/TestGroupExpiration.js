@@ -1,8 +1,8 @@
-import mineBlocks from './helpers/mineBlocks';
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
+import mineBlocks from '../helpers/mineBlocks';
+import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
 const GroupsExpirationStub = artifacts.require('./stubs/GroupsExpirationStub.sol')
-import expectThrowWithMessage from './helpers/expectThrowWithMessage';
-const Groups = artifacts.require("./libraries/operator/Groups.sol");
+import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
+const Groups = artifacts.require('./libraries/operator/Groups.sol');
 
 contract('KeepRandomBeaconOperator', function(accounts) {
 

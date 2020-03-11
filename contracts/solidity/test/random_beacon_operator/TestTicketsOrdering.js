@@ -1,5 +1,5 @@
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
-const GroupSelectionStub = artifacts.require("./stubs/GroupSelectionStub.sol");
+import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+const GroupSelectionStub = artifacts.require('./stubs/GroupSelectionStub.sol');
 
 contract('KeepRandomBeaconOperator', function() {
   const groupSize = 10;

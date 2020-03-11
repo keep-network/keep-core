@@ -1,5 +1,5 @@
-import expectThrow from './helpers/expectThrow';
-import {initContracts} from './helpers/initContracts';
+import expectThrow from '../helpers/expectThrow';
+import {initContracts} from '../helpers/initContracts';
 
 contract('TestKeepRandomBeaconOperator', function(accounts) {
 

@@ -1,9 +1,9 @@
 const crypto = require("crypto")
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
-import stakeDelegate from './helpers/stakeDelegate'
-import {initContracts} from './helpers/initContracts'
-import expectThrowWithMessage from './helpers/expectThrowWithMessage';
-import mineBlocks from './helpers/mineBlocks'
+import {createSnapshot, restoreSnapshot} from '../helpers/snapshot'
+import stakeDelegate from '../helpers/stakeDelegate'
+import {initContracts} from '../helpers/initContracts'
+import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
+import mineBlocks from '../helpers/mineBlocks'
 
 contract('KeepRandomBeaconOperator', function(accounts) {
 

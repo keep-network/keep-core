@@ -1,6 +1,6 @@
-import {initContracts} from './helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
-import {bls} from './helpers/data';
+import {initContracts} from '../helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+import {bls} from '../helpers/data';
 
 contract('KeepRandomBeaconService', function(accounts) {
     let serviceContract;

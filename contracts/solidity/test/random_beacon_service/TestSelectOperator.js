@@ -1,6 +1,6 @@
-import expectThrow from './helpers/expectThrow';
-import expectThrowWithMessage from './helpers/expectThrowWithMessage';
-import {initContracts} from './helpers/initContracts';
+import expectThrow from '../helpers/expectThrow';
+import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
+import {initContracts} from '../helpers/initContracts';
 const OperatorContract = artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
 
 contract('TestKeepRandomBeaconServiceSelectOperator', function() {
