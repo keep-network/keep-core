@@ -291,7 +291,6 @@ contract TokenGrant {
      * @param _id Grant ID.
      */
     function revoke(uint256 _id) public {
-
         require(grants[_id].grantManager == msg.sender, "Only grant manager can revoke.");
         require(grants[_id].revocable, "Grant must be revocable in the first place.");
         require(!grants[_id].revoked, "Grant must not be already revoked.");
@@ -330,8 +329,7 @@ contract TokenGrant {
         address operator = _extraData.toAddress(20);
 
         // Calculate available amount. Amount of vested tokens minus what user already withdrawn and staked.
-        uint256 available = grants[_id].amount.sub(grants[_id].withdrawn).sub(grants[_id].staked);
-        require(_amount <= available, "Must have available granted amount to stake.");
+        require(_amount <= availableToStake(_id), "Must have available granted amount to stake.");
 
         // Keep staking record.
         grantStakes[operator] = GrantStake(_id, _stakingContract, _amount);
@@ -342,6 +340,15 @@ contract TokenGrant {
         // 20 bytes magpie's address + 20 bytes operator's address.
         tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData);
         emit TokenGrantStaked(_id, _amount, operator);
+    }
+
+    /**
+      @notice Returns the amount of tokens available for staking from the grant.
+      It's the amount of granted tokens minus those released and already staked.
+      @param _grantId Identifier of the grant
+     */
+    function availableToStake(uint256 _grantId) public view returns (uint256) {
+        return grants[_grantId].amount.sub(grants[_grantId].withdrawn).sub(grants[_grantId].staked);
     }
 
     /**
