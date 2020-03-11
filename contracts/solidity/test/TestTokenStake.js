@@ -171,7 +171,7 @@ contract('TokenStaking', function(accounts) {
 
     await expectThrowWithMessage(
       stakingContract.recoverStake(operatorOne),
-      "Can not recover stake before undelgation period is over"
+      "Can not recover stake before undelegation period is over"
     )
   })
 

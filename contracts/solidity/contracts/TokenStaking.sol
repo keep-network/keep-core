@@ -143,7 +143,7 @@ contract TokenStaking is StakeDelegatable {
         uint256 operatorParams = operators[_operator].packedParams;
         require(
             block.number > operatorParams.getUndelegationBlock().add(undelegationPeriod),
-            "Can not recover stake before undelgation period is over."
+            "Can not recover stake before undelegation period is over."
         );
         address owner = operators[_operator].owner;
         uint256 amount = operatorParams.getAmount();
