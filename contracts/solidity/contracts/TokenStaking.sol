@@ -111,9 +111,9 @@ contract TokenStaking is StakeDelegatable {
             "Initialization period is over"
         );
 
+        uint256 amount = operatorParams.getAmount();
         operators[_operator].packedParams = operatorParams.setAmount(0);
 
-        uint256 amount = operatorParams.getAmount();
         token.safeTransfer(owner, amount);
     }
 
