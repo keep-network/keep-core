@@ -4,7 +4,7 @@ import "../cryptography/AltBn128.sol";
 
 library AltBn128Stub {
     function sign(uint256 secretKey) public view returns(uint256, uint256) {
-        return AltBn128.sign(secretKey);
+        return AltBn128.sign(abi.encodePacked(msg.sender), secretKey);
     }
 
     function g1HashToPoint(bytes memory message) public view returns(bytes memory) {
