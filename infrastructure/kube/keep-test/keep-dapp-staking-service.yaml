@@ -19,15 +19,17 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: keep-dapp-staking
+  name: keep-staking-dapp
+  namespace: staking-dapp
   labels:
-    app: keep-dapp
-    type: staking
+    app: staking-dapp
+    type: dapp
 spec:
+  type: NodePort
   ports:
-  - port: 80
+  - name: keep-staking-dapp-http
+    port: 80
     targetPort: 80
-    name: tcp-80
   selector:
-    app: keep-dapp
-    type: staking
+    app: staking-dapp
+    type: dapp
