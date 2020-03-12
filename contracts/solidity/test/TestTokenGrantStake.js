@@ -281,4 +281,27 @@ contract.only('TokenGrant/Stake', function(accounts) {
       "Only operator or grantee can undelegate"
     )
   })
+
+  it("should recover tokens recovered outside the grant contract", async () => {
+    await delegate(grantee, operatorOne, grantAmount);
+
+    await mineBlocks(initializationPeriod);
+    await grantContract.undelegate(operatorOne, {from: grantee});
+    await mineBlocks(undelegationPeriod);
+    await stakingContract.recoverStake(operatorOne);
+    let availablePre = await grantContract.availableToStake(grantId);
+
+    expect(availablePre).to.eq.BN(
+      0,
+      "Staked tokens should be displaced"
+    );
+
+    await grantContract.recoverStake(operatorOne);
+    let availablePost = await grantContract.availableToStake(grantId);
+
+    expect(availablePost).to.eq.BN(
+      grantAmount,
+      "Staked tokens should be recovered safely"
+    );
+  })
 });

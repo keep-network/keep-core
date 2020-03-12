@@ -376,6 +376,8 @@ contract TokenGrant {
 
     /**
      * @notice Recover stake of the token grant.
+     * Recovers the tokens correctly
+     * even if they were earlier recovered directly in the staking contract.
      * @param _operator Operator of the stake.
      */
     function recoverStake(address _operator) public {
@@ -385,14 +387,5 @@ contract TokenGrant {
         grants[grantId].staked = grants[grantId].staked.sub(returned);
 
         delete grantStakes[_operator];
-    }
-
-    /// @notice Return tokens that were recovered by the operator
-    /// without going through the token grant contract.
-    function returnTokens(address _operator) public {
-        TokenGrantStake grantStake = grantStakes[_operator];
-        uint256 returned = grantStake.returnTokens();
-        uint256 grantId = grantStake.getGrantId();
-        grants[grantId].staked = grants[grantId].staked.sub(returned);
     }
 }

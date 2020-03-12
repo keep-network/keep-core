@@ -87,7 +87,7 @@ contract TokenGrantStake {
         return returnTokens();
     }
 
-    function returnTokens() onlyGrant public returns (uint256) {
+    function returnTokens() internal returns (uint256) {
         uint256 returnedAmount = token.balanceOf(address(this));
         amount -= returnedAmount;
         token.transfer(tokenGrant, returnedAmount);
