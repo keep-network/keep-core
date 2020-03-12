@@ -13,7 +13,7 @@ library OperatorParams {
     // These are packed as [amount | createdAt | undelegatedAt]
     //
     // Staked KEEP is stored in an uint128,
-    // which is sufficient ecause KEEP tokens have 18 decimals (2^60)
+    // which is sufficient because KEEP tokens have 18 decimals (2^60)
     // and there will be at most 10^9 KEEP in existence (2^30).
     //
     // Creation and undelegation times are stored in an uint64 each.
