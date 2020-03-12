@@ -17,7 +17,11 @@ contract.only('TokenGrant/Stake', function(accounts) {
     grantee_1 = accounts[1],
     operator_1 = accounts[2],
     beneficiary_1 = accounts[3],
-    authorizer_1 = accounts[4];
+    authorizer_1 = accounts[4],
+    grantee_2 = accounts[5],
+    operator_2 = accounts[6],
+    beneficiary_2 = accounts[7],
+    authorizer_2 = accounts[8];
 
   const initializationPeriod = 10;
   const undelegationPeriod = 30;
