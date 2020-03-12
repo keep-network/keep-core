@@ -6,6 +6,7 @@ import { CircularProgressBars } from './CircularProgressBar'
 import { Web3Context } from './WithWeb3Context'
 import { useShowMessage, messageType } from './Message'
 import moment from 'moment'
+import { gt } from '../utils/arithmetics.utils'
 
 const TokenGrantOverview = ({ selectedGrant }) => {
   const { yourAddress, grantContract } = useContext(Web3Context)
@@ -75,7 +76,7 @@ const TokenGrantOverview = ({ selectedGrant }) => {
             </div>
           </div>
           {
-            selectedGrant.readyToRelease !== '0' &&
+            gt(selectedGrant.readyToRelease || 0, 0) &&
             <div className="mt-2">
               <div>
                 <span className="text-secondary text-bold text-small">
