@@ -2,15 +2,14 @@ import mineBlocks from './helpers/mineBlocks';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 
-const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const Registry = artifacts.require("./Registry.sol");
-
 const BN = web3.utils.BN
-
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
+
+const KeepToken = artifacts.require('./KeepToken.sol');
+const TokenStaking = artifacts.require('./TokenStaking.sol');
+const Registry = artifacts.require("./Registry.sol");
 
 contract('TokenStaking', function(accounts) {
 
@@ -143,11 +142,25 @@ contract('TokenStaking', function(accounts) {
   })
 
   it("should allow to cancel delegation just before initialization period is over", async () => {
+    let ownerStartBalance = await token.balanceOf.call(ownerOne);
+    
     await delegate(operatorOne);
 
     await mineBlocks(initializationPeriod - 1)
 
     await stakingContract.cancelStake(operatorOne, {from: ownerOne})
+
+    let ownerEndBalance = await token.balanceOf.call(ownerOne);
+    let operatorEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
+
+    expect(ownerEndBalance).to.eq.BN(
+      ownerStartBalance,
+      "Staking amount should be transferred back to owner"
+    );
+    expect(operatorEndStakeBalance).to.eq.BN( 
+      0, 
+      "Staking amount should be removed from operator balance"
+    );
   })
 
   it("should not allow to cancel delegation after initialization period is over", async () => {
