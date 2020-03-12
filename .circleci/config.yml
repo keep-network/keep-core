@@ -172,7 +172,7 @@ jobs:
             cd /tmp/keep-client/contracts
             gsutil -m cp * gs://${CONTRACT_DATA_BUCKET}/keep-core
 
-  build_staking_dapp:
+  build_token_dashboard_dapp:
     executor: docker-node
     steps:
       - attach_workspace:
@@ -189,30 +189,30 @@ jobs:
           name: Run Docker build
           working_directory: ~/project/contracts/solidity/dashboard
           command: |
-            docker build --build-arg DAPP_ENV=$TRUFFLE_NETWORK --tag keep-staking-dapp .
+            docker build --build-arg DAPP_ENV=$TRUFFLE_NETWORK --tag keep-token-dashboard-dapp .
       - run:
-          name: Save keep-staking-dapp image
+          name: Save keep-token-dashboard-dapp image
           working_directory: ~/project/contracts/solidity/dashboard
           command: |
-            mkdir -p /tmp/keep-staking-dapp/docker-images/
-            docker save -o /tmp/keep-staking-dapp/docker-images/keep-staking-dapp.tar keep-staking-dapp
+            mkdir -p /tmp/keep-token-dashboard-dapp/docker-images/
+            docker save -o /tmp/keep-token-dashboard-dapp/docker-images/keep-token-dashboard-dapp.tar keep-token-dashboard-dapp
       - persist_to_workspace:
-          root: /tmp/keep-staking-dapp
+          root: /tmp/keep-token-dashboard-dapp
           paths:
             - docker-images
-  publish_staking_dapp:
+  publish_token_dashboard_dapp:
     executor: gcp-gcr/default
     steps:
       - attach_workspace:
-          at: /tmp/keep-staking-dapp
+          at: /tmp/keep-token-dashboard-dapp
       - run:
-          name: Load keep-staking-dapp image
+          name: Load keep-token-dashboard-dapp image
           command: |
-            docker load -i /tmp/keep-staking-dapp/docker-images/keep-staking-dapp.tar
+            docker load -i /tmp/keep-token-dashboard-dapp/docker-images/keep-token-dashboard-dapp.tar
       - run:
           name: Tag Docker image
           command: |
-            docker tag keep-staking-dapp $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-staking-dapp
+            docker tag keep-token-dashboard-dapp $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-token-dashboard-dapp
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -221,7 +221,7 @@ jobs:
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
-          image: keep-staking-dapp
+          image: keep-token-dashboard-dapp
           tag: latest
 
   generate_docs_tex:
@@ -322,16 +322,16 @@ workflows:
           requires:
             - build_client_and_test_go
             - migrate_contracts
-      - build_staking_dapp:
+      - build_token_dashboard_dapp:
           requires:
             - migrate_contracts
-      - publish_staking_dapp:
+      - publish_token_dashboard_dapp:
           filters:
             branches:
               only: master
           context: keep-dev
           requires:
-            - build_staking_dapp
+            - build_token_dashboard_dapp
   build-test-migrate-publish-keep-test:
       jobs:
         - keep_test_approval:
@@ -390,7 +390,7 @@ workflows:
             requires:
               - build_client_and_test_go
               - migrate_contracts
-        - build_staking_dapp:
+        - build_token_dashboard_dapp:
             filters:
               tags:
                 only: /^v.*/
@@ -398,7 +398,7 @@ workflows:
                 ignore: /.*/
             requires:
               - migrate_contracts
-        - publish_staking_dapp:
+        - publish_token_dashboard_dapp:
             context: keep-test
             filters:
               tags:
@@ -406,7 +406,7 @@ workflows:
               branches:
                 ignore: /.*/
             requires:
-              - build_staking_dapp
+              - build_token_dashboard_dapp
   docs:
     jobs:
       - generate_docs_tex
