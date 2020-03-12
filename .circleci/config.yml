@@ -181,6 +181,11 @@ jobs:
           docker_layer_caching: true
       - checkout
       - run:
+          name: Set Gcloud Auth for bucket access
+          command: |
+            echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+      - run:
           name: Fetch contract artifacts
           working_directory: ~/project/contracts/solidity/dashboard
           command: |
