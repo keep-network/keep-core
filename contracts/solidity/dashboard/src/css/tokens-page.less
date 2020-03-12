@@ -7,6 +7,9 @@
     div.flex.row:first-of-type {
         flex-direction: column;
     }
+    .addresses-section {
+        width: 100%;
+    }
 
    .tabs {
        margin-top: 1rem;
@@ -23,7 +26,7 @@
                 color: @color-black;
                 position: relative;
                 font-weight: bold;
-                border: 0.25px solid @color-grey-70;
+                border: 1px solid @color-grey-70;
                 border-bottom: none;
 
                 &:before {
@@ -38,7 +41,7 @@
             }
             &.inactive {
                 color: @color-grey-40;
-                border-bottom: 0.25px solid @color-grey-70;
+                border-bottom: 1px solid @color-grey-70;
                 background: @color-grey-20;
                 padding-left: 6px;
                 background-clip: border-box;
@@ -63,7 +66,7 @@
     }
    
     .input-wrapper {
-        border: 0.25px solid @color-grey-70;
+        border: 1px solid @color-grey-70;
         border-top: 0;
         padding: 1.5rem;
         padding-bottom: 0;
@@ -108,7 +111,25 @@
     }
 }
 
+@media screen and (min-width: 1250px) {
+    #tokens-overview {
+        flex-basis: 100%;
+    }
+
+    #delegate-stake-section {
+        flex-basis: 100%;
+    }
+}
+
 @media screen and (min-width: 1550px) {
+    #tokens-overview {
+        flex-basis: 40%;
+    }
+
+    #delegate-stake-section {
+        flex-basis: 58%;
+    }
+
     .delegate-stake-form {
         div.flex.row:first-of-type {
             flex-direction: row;
