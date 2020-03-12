@@ -2,7 +2,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: keep-dapp-token-dashboard
+  name: keep-token-dashboard-dapp
   labels:
     keel.sh/policy: all
     app: keep-token-dashboard
