@@ -19,8 +19,7 @@ RUN npm install
 COPY src /app/src
 COPY public /app/public
 
-ARG DAPP_ENV
-RUN REACT_APP_ENV=$DAPP_ENV npm run build
+RUN npm run build
 
 # Production environment
 FROM nginx:1.17-alpine
