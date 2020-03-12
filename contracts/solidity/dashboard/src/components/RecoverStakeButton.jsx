@@ -12,7 +12,6 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
   const recoverStake = useCallback(async (onTransactionHashCallback) => {
     const { isFromGrant } = props
     const contract = web3Context[isFromGrant ? TOKEN_GRANT_CONTRACT_NAME : TOKEN_STAKING_CONTRACT_NAME]
-    console.log('eeooeeo', isFromGrant ? TOKEN_GRANT_CONTRACT_NAME : TOKEN_STAKING_CONTRACT_NAME )
 
     try {
       await contract

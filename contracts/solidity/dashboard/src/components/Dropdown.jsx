@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { isEmptyObj } from '../utils/general.utils'
 
 const Dropdown = ({
   label,
@@ -30,8 +31,10 @@ const Dropdown = ({
   }
 
   const renderSelectedItem = () => {
-    if (!selectedItem) {
-      return <span>${noItemSelectedText}</span>
+    if (options && options.length === 0) {
+      return <span className="text-smaller">No items to select</span>
+    } else if (isEmptyObj(selectedItem)) {
+      return <span>{noItemSelectedText}</span>
     } else if (selectedItemComponent) {
       return selectedItemComponent
     } else {
