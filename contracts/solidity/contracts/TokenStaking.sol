@@ -209,28 +209,31 @@ contract TokenStaking is StakeDelegatable {
         address tattletale,
         address[] memory misbehavedOperators
     ) public onlyApprovedOperatorContract(msg.sender) {
-        uint256 totalAmountToSeize = 0;
+        uint256 totalAmountToBurn = 0;
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
 
             uint256 operatorParams = operators[operator].packedParams;
-            uint256 oldAmount = operatorParams.getAmount();
+            uint256 currentAmount = operatorParams.getAmount();
 
-            if (oldAmount < amountToSeize) {
-                totalAmountToSeize = totalAmountToSeize.add(oldAmount);
-                operators[operator].packedParams = operatorParams.setAmount(0);
-            } else {
-                uint256 newAmount = oldAmount.sub(amountToSeize);
+            if (currentAmount < amountToSeize) {
+                totalAmountToBurn = totalAmountToBurn.add(currentAmount);
+
+                uint256 newAmount = 0;
                 operators[operator].packedParams = operatorParams.setAmount(newAmount);
-                totalAmountToSeize = totalAmountToSeize.add(amountToSeize);
+            } else {
+                totalAmountToBurn = totalAmountToBurn.add(amountToSeize);
+
+                uint256 newAmount = currentAmount.sub(amountToSeize);
+                operators[operator].packedParams = operatorParams.setAmount(newAmount);
             }
         }
 
-        uint256 tattletaleReward = (totalAmountToSeize.mul(5).div(100)).mul(rewardMultiplier).div(100);
+        uint256 tattletaleReward = (totalAmountToBurn.mul(5).div(100)).mul(rewardMultiplier).div(100);
 
         token.safeTransfer(tattletale, tattletaleReward);
-        token.burn(totalAmountToSeize.sub(tattletaleReward));
+        token.burn(totalAmountToBurn.sub(tattletaleReward));
     }
 
     /**

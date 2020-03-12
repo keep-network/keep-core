@@ -93,6 +93,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       "Unexpected balance for operator after token seizing"
     )
 
+    // 525000 = (42000000 * 5 / 100) * 25 / 100
     let expectedTattletaleReward = web3.utils.toBN(525000)
     assert.isTrue(
       (tattletaleBalanceBeforeSeizing.add(expectedTattletaleReward)).eq(tattletaleBalanceAfterSeizing), 
@@ -103,7 +104,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
   it("should seize no more than available operator's amount", async () => {
     let tattletaleBalanceBeforeSeizing = await token.balanceOf(tattletale)
     
-    let amountToSeize = largeStake.add(web3.utils.toBN(100));
+    let amountToSeize = largeStake.add(web3.utils.toBN(100)); // 400000000000000000000100
     let rewardMultiplier = web3.utils.toBN(10)
     await stakingContract.seize(amountToSeize, rewardMultiplier, tattletale, [operator1], {from: anotherOperatorContract})
     
@@ -114,6 +115,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
       "Unexpected balance for operator after token seizing"
     )
     
+    // 2000000000000000000000 = (400000000000000000000100 * 5 / 100) * 10 / 100
     let expectedTattletaleReward = web3.utils.toBN("2000000000000000000000")
     assert.isTrue(
       (tattletaleBalanceBeforeSeizing.add(expectedTattletaleReward)).eq(tattletaleBalanceAfterSeizing), 
