@@ -45,7 +45,12 @@ contract TokenStaking is StakeDelegatable {
      * stakes will stay locked for a number of blocks after undelegation, and thus available as
      * collateral for any work the operator is engaged in.
      */
-    constructor(address _tokenAddress, address _registry, uint256 _initializationPeriod, uint256 _undelegationPeriod) public {
+    constructor(
+        address _tokenAddress,
+        address _registry,
+        uint256 _initializationPeriod,
+        uint256 _undelegationPeriod
+    ) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20Burnable(_tokenAddress);
         registry = Registry(_registry);
@@ -107,7 +112,8 @@ contract TokenStaking is StakeDelegatable {
         );
 
         uint256 amount = operatorParams.getAmount();
-        delete operators[_operator];
+        operators[_operator].packedParams = operatorParams.setAmount(0);
+
         token.safeTransfer(owner, amount);
     }
 
@@ -136,12 +142,13 @@ contract TokenStaking is StakeDelegatable {
     function recoverStake(address _operator) public {
         uint256 operatorParams = operators[_operator].packedParams;
         require(
-            block.number >= operatorParams.getUndelegationBlock().add(undelegationPeriod),
+            block.number > operatorParams.getUndelegationBlock().add(undelegationPeriod),
             "Can not recover stake before undelegation period is over."
         );
         address owner = operators[_operator].owner;
         uint256 amount = operatorParams.getAmount();
-        delete operators[_operator];
+
+        operators[_operator].packedParams = operatorParams.setAmount(0);
 
         token.safeTransfer(owner, amount);
         emit RecoveredStake(_operator, block.number);
@@ -271,7 +278,7 @@ contract TokenStaking is StakeDelegatable {
         uint256 createdAt = operatorParams.getCreationBlock();
         uint256 undelegatedAt = operatorParams.getUndelegationBlock();
 
-        bool isActive = block.number >= createdAt.add(initializationPeriod);
+        bool isActive = block.number > createdAt.add(initializationPeriod);
         bool isUndelegating = (undelegatedAt > 0) && (block.number > undelegatedAt);
 
         if (isAuthorized && isActive && !isUndelegating) {
@@ -303,7 +310,7 @@ contract TokenStaking is StakeDelegatable {
         uint256 operatorParams = operators[_operator].packedParams;
         uint256 createdAt = operatorParams.getCreationBlock();
 
-        bool isActive = block.number >= createdAt.add(initializationPeriod);
+        bool isActive = block.number > createdAt.add(initializationPeriod);
 
         if (isAuthorized && isActive) {
             balance = operatorParams.getAmount();
