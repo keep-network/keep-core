@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "../../utils/BytesLib.sol";
 
 /**
  * The group selection protocol is an interactive method of selecting candidate
@@ -106,6 +106,49 @@ library GroupSelection {
 
     /**
      * @dev Submits ticket to request to participate in a new candidate group.
+     * @param ticket Bytes representation of a ticket that holds the following:
+     * - ticketValue: first 8 bytes of a result of keccak256 cryptography hash
+     *   function on the combination of the group selection seed (previous
+     *   beacon output), staker-specific value (address) and virtual staker index.
+     * - stakerValue: a staker-specific value which is the address of the staker.
+     * - virtualStakerIndex: 4-bytes number within a range of 1 to staker's weight;
+     *   has to be unique for all tickets submitted by the given staker for the
+     *   current candidate group selection.
+     * @param stakingWeight Ratio of the minimum stake to the candidate's
+     * stake.
+     */
+    function submitTicket(
+        Storage storage self,
+        bytes32 ticket,
+        uint256 stakingWeight
+    ) public {
+        uint64 ticketValue;
+        uint160 stakerValue;
+        uint32 virtualStakerIndex;
+
+        bytes memory ticketBytes = abi.encodePacked(ticket);
+        /* solium-disable-next-line */
+        assembly {
+            // ticket value is 8 bytes long
+            ticketValue := mload(add(ticketBytes, 8))
+            // staker value is 20 bytes long
+            stakerValue := mload(add(ticketBytes, 28))
+            // virtual staker index is 4 bytes long
+            virtualStakerIndex := mload(add(ticketBytes, 32))
+        }
+
+        submitTicket(
+            self,
+            ticketValue,
+            uint256(stakerValue),
+            uint256(virtualStakerIndex),
+            stakingWeight
+        );
+    }
+
+
+    /**
+     * @dev Submits ticket to request to participate in a new candidate group.
      * @param ticketValue First 8 bytes of a result of keccak256 cryptography hash
      * function on the combination of the group selection seed (previous
      * beacon output), staker-specific value (address) and virtual staker index.
@@ -113,7 +156,7 @@ library GroupSelection {
      * @param virtualStakerIndex 4-bytes number within a range of 1 to staker's weight;
      * has to be unique for all tickets submitted by the given staker for the
      * current candidate group selection.
-     * @param stakingWeight Relation of the minimum stake to the candidate's
+     * @param stakingWeight Ratio of the minimum stake to the candidate's
      * stake.
      */
     function submitTicket(

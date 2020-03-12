@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: tx
-        image: ethereum/client-go:v1.9.6
+        image: ethereum/client-go:v1.9.9
         ports:
           - containerPort: 8545
           - containerPort: 8546

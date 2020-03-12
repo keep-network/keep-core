@@ -1,0 +1,113 @@
+.select-wrapper {
+    width: 100%;
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.select {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid @color-black;
+
+    &-trigger {
+        min-height: 50px;
+        position: relative;
+        display: flex;
+        flex-direction: row !important;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1rem;
+        font-size: 1.2rem;
+        font-weight: normal;
+        color: @color-black;
+        line-height: 25px;
+        background: @white;
+        cursor: pointer;
+    }
+
+    &.open .options{
+        opacity: 1;
+        visibility: visible;
+        pointer-events: all;
+    }
+
+    > .options {
+        position: absolute;
+        visibility: hidden;
+        background: @white;
+        list-style: none;
+        top: 100%;
+        left: -1px;
+        right: -1px;
+        border: 1px solid @color-black;
+        border-top: 0;
+        max-height: 150px;
+        padding-left: 0;
+        opacity: 0;
+        z-index: 2;
+        overflow-x: scroll;
+        pointer-events: none;
+        transition: all 0.5s;
+
+        > .option {
+            display: flex;
+            align-items: center;
+            height: 50px;
+            position: relative;
+            padding: 0 1rem 0 1rem;
+            font-size: 1rem;
+            font-weight: normal;
+            color: @color-black;
+            line-height: 25px;
+            cursor: pointer;
+            transition: all 0.5s;
+
+            &:hover {
+                cursor: pointer;
+                background-color: @success-bg-color;
+            }
+
+            &.selected {
+                color: @primary-color;
+                background-color: @success-bg-color;;
+            }
+        }
+    }
+}
+
+.arrow {
+    position: relative;
+    height: 15px;
+    width: 15px;
+
+    &:before, &:after {
+        content: "";
+        position: absolute;
+        bottom: 0px;
+        width: 1px;
+        height: 100%;
+        transition: all 0.5s;
+        background-color: @color-grey-70;
+    }
+
+    &:before {
+        left: -5px;
+        transform: rotate(-45deg);
+
+        .open & {
+            left: -5px;
+            transform: rotate(45deg);
+        }
+    }
+
+    &:after {
+        left: 5px;
+        transform: rotate(45deg);
+
+        .open & {
+            left: 5px;
+            transform: rotate(-45deg);
+        }
+    }
+}

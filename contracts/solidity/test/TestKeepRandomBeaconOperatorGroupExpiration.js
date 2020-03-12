@@ -4,12 +4,11 @@ const GroupsExpirationStub = artifacts.require('./stubs/GroupsExpirationStub.sol
 import expectThrowWithMessage from './helpers/expectThrowWithMessage';
 const Groups = artifacts.require("./libraries/operator/Groups.sol");
 
-contract('GroupsExpirationStub', function(accounts) {
+contract('KeepRandomBeaconOperator', function(accounts) {
 
   let groups;
 
   const groupActiveTime = 20;
-  const activeGroupsThreshold = 5;
   const relayEntryTimeout = 10;
 
   before(async () => {
@@ -38,7 +37,7 @@ contract('GroupsExpirationStub', function(accounts) {
     // If current block is larger than group registration block by group active time then
     // it is not necessary to mine any blocks cause the group is already expired
     if (currentBlock - groupRegistrationBlock <= groupActiveTime) {
-      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock));
+      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
     }
   }
 
@@ -86,15 +85,7 @@ contract('GroupsExpirationStub', function(accounts) {
     });
     it("EAA beacon_value = 0", async function() {
       let selectedIndex = await runExpirationTest(3, 1, 0);
-      assert.equal(0, selectedIndex); // min active threshold does not let to move offset
-    });
-    it("EAAAA beacon_value = 0", async function() {
-      let selectedIndex = await runExpirationTest(5, 1, 0);
-      assert.equal(0, selectedIndex); // min active threshold does not let to move offset
-    });
-    it("EAAAAA beacon_value = 0", async function() {
-      let selectedIndex = await runExpirationTest(6, 1, 0);
-      assert.equal(1, selectedIndex); // min active threshold does allow to move offset
+      assert.equal(1, selectedIndex);
     });
     it("EEEEAAAAAA beacon_value = 0", async function() { 
       let selectedIndex = await runExpirationTest(10, 4, 0);
@@ -146,19 +137,19 @@ contract('GroupsExpirationStub', function(accounts) {
     });
     it("EEEEEEEEEA beacon_value = 0", async function() {
       let selectedIndex = await runExpirationTest(10, 9, 0);
-      assert.equal(5, selectedIndex); // min active threshold does not let to move offset further than to 5
+      assert.equal(9, selectedIndex);
     });
     it("EEEEEEEEEA beacon_value = 1", async function() {
       let selectedIndex = await runExpirationTest(10, 9, 1);
-      assert.equal(6, selectedIndex); // min active threshold does not let to move offset further than to 5
+      assert.equal(9, selectedIndex);
     });
     it("EEEEEEEEEA beacon_value = 10", async function() {
       let selectedIndex = await runExpirationTest(10, 9, 10);
-      assert.equal(5, selectedIndex); // min active threshold does not let to move offset further than to 5
+      assert.equal(9, selectedIndex);
     });
     it("EEEEEEEEEA beacon_value = 11", async function() {
       let selectedIndex = await runExpirationTest(10, 9, 11);
-      assert.equal(6, selectedIndex); // min active threshold does not let to move offset further than to 5
+      assert.equal(9, selectedIndex);
     });
   });
   
@@ -166,8 +157,7 @@ contract('GroupsExpirationStub', function(accounts) {
   // - we check whether the first group is stale and assert it is not since
   //   an active group cannot be stale
   it("should not mark group as stale if it is active", async function() {
-    let groupsCount = activeGroupsThreshold + 1
-    await addGroups(groupsCount);
+    await addGroups(6);
 
     let pubKey = await groups.getGroupPublicKey(0);
 
@@ -183,9 +173,10 @@ contract('GroupsExpirationStub', function(accounts) {
  there are other expired groups", async function() {
     let groupsCount = 15
     await addGroups(groupsCount);
-    await expireGroup(9); // expire first 10 groups (we index from 0)
+    await expireGroup(8); // move height to expire first 9 groups (we index from 0)
 
-    await groups.selectGroup(0);
+    // this will move height by one and expire 9 + 1 groups
+    await groups.selectGroup(0); 
 
     for (var i = 10; i < groupsCount; i++) {
       let pubKey = await groups.getGroupPublicKey(i);
@@ -203,9 +194,10 @@ contract('GroupsExpirationStub', function(accounts) {
  there are other stale groups", async function() {
     let groupsCount = 15
     await addGroups(groupsCount);
-    await expireGroup(9); // expire first 10 groups (we index from 0)
+    await expireGroup(8); // move height to expire first 9 groups (we index from 0)
 
-    await groups.selectGroup(0);
+    // this will move height by one and expire 9 + 1 groups
+    await groups.selectGroup(0); 
 
     await mineBlocks(relayEntryTimeout);
 
@@ -213,21 +205,19 @@ contract('GroupsExpirationStub', function(accounts) {
       let pubKey = await groups.getGroupPublicKey(i);
       let isStale = await groups.isStaleGroup(pubKey);
 
-      assert.equal(isStale, false, "Group should not be marked as stale")
+      assert.equal(isStale, false, `Group at index ${i} should not be marked as stale`)
     }
   });
 
-  // - we start with [AAAAA]
+  // - we start with [AAAAAA]
   // - we mine as many blocks as needed to have all the groups qualify as stale
   // - we check whether the group at position 0 is stale
   // - group should not be marked as stale since it is not marked as expired
   //   (no group selection was triggered); group can be stale only if it has
-  //   been marked as expired - `selectGroup` may decide not to mark group as
-  //   expired even though it reached its expiration time (minimum threshold)
+  //   been marked as expired
   it("should not mark group as stale if its expiration time passed but\
  it is not marked as such", async function() {
-    let groupsCount = activeGroupsThreshold + 1
-    await addGroups(groupsCount);
+    await addGroups(6);
 
     let pubKey = await groups.getGroupPublicKey(0);
 
@@ -246,8 +236,7 @@ contract('GroupsExpirationStub', function(accounts) {
   //   relay request timeout did not pass since the group expiration block
   it("should not mark group as stale if it is expired but\
  can be still signing relay entry", async function() {
-    let groupsCount = activeGroupsThreshold + 1
-    await addGroups(groupsCount);
+    await addGroups(6);
 
     let pubKey = await groups.getGroupPublicKey(0);
 
@@ -267,8 +256,7 @@ contract('GroupsExpirationStub', function(accounts) {
   //   relay request timeout did pass since the group expiration block
   it("should mark group as stale if it is expired and\
  can be no longer signing relay entry", async function() {
-     let groupsCount = activeGroupsThreshold + 1
-     await addGroups(groupsCount);
+     await addGroups(6);
  
      let pubKey = await groups.getGroupPublicKey(0);
  
@@ -286,8 +274,7 @@ contract('GroupsExpirationStub', function(accounts) {
    // - we check whether group with a non-existing public key is stale and
    //   we assert the check should fail
    it("should fail stale check if group could not be found", async function() {
-    let groupsCount = activeGroupsThreshold + 1
-    await addGroups(groupsCount);
+    await addGroups(6);
 
     let pubKey = "0x1337"; // group with such pub key does not exist
     await expectThrowWithMessage(

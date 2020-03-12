@@ -15,6 +15,8 @@ import (
 
 var logger = log.Logger("keep-relay")
 
+const maxGroupSize = 255
+
 // NewNode returns an empty Node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
 func NewNode(
@@ -106,7 +108,7 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	channel, err := n.netProvider.ChannelFor(memberships[0].ChannelName)
+	channel, err := n.netProvider.BroadcastChannelFor(memberships[0].ChannelName)
 	if err != nil {
 		logger.Errorf("could not create broadcast channel: [%v]", err)
 		return

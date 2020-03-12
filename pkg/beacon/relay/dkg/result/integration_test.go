@@ -37,8 +37,7 @@ func TestExecute_IA_members24_phase13(t *testing.T) {
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize)
 	dkgtest.AssertMemberFailuresCount(t, result, 0)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertNoDisqualifiedMembers(t, result)
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertNoMisbehavingMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 5}...)
 }

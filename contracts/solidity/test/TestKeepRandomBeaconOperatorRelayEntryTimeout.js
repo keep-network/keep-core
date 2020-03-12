@@ -24,7 +24,7 @@ contract("KeepRandomBeaconOperator", function(accounts) {
     await operatorContract.addServiceContract(accounts[0])  
 
     await operatorContract.registerNewGroup(bls.groupPubKey);
-    await operatorContract.addGroupMember(bls.groupPubKey, accounts[0]);
+    await operatorContract.setGroupMembers(bls.groupPubKey, [accounts[0]]);
 
     fee = await serviceContract.entryFeeEstimate(0);
   });

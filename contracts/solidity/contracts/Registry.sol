@@ -18,13 +18,17 @@ contract Registry {
     // that have been previously approved by the Registry Keeper.
     address internal panicButton;
 
-    // Operator Contract Upgrader can add approved operator contracts to
-    // the service contract and deprecate old ones.
-    address public operatorContractUpgrader;
+    // Each service contract has a Operator Contract Upgrader whose purpose
+    // is to manage operator contracts for that specific service contract.
+    // The Operator Contract Upgrader can add new operator contracts to the
+    // service contract’s operator contract list, and deprecate old ones.
+    mapping(address => address) public operatorContractUpgraders;
 
     // The registry of operator contracts
     // 0 - NULL (default), 1 - APPROVED, 2 - DISABLED
     mapping(address => uint256) public operatorContracts;
+
+    event OperatorContractApproved(address operatorContract);
 
     modifier onlyGovernance() {
         require(governance == msg.sender, "Not authorized");
@@ -45,7 +49,6 @@ contract Registry {
         governance = msg.sender;
         registryKeeper = msg.sender;
         panicButton = msg.sender;
-        operatorContractUpgrader = msg.sender;
     }
 
     function setGovernance(address _governance) public onlyGovernance {
@@ -60,12 +63,13 @@ contract Registry {
         panicButton = _panicButton;
     }
 
-    function setOperatorContractUpgrader(address _operatorContractUpgrader) public onlyGovernance {
-        operatorContractUpgrader = _operatorContractUpgrader;
+    function setOperatorContractUpgrader(address _serviceContract, address _operatorContractUpgrader) public onlyGovernance {
+        operatorContractUpgraders[_serviceContract] = _operatorContractUpgrader;
     }
 
     function approveOperatorContract(address operatorContract) public onlyRegistryKeeper {
         operatorContracts[operatorContract] = 1;
+        emit OperatorContractApproved(operatorContract);
     }
 
     function disableOperatorContract(address operatorContract) public onlyPanicButton {
@@ -74,5 +78,9 @@ contract Registry {
 
     function isApprovedOperatorContract(address operatorContract) public view returns (bool) {
         return operatorContracts[operatorContract] == 1;
+    }
+
+    function operatorContractUpgraderFor(address _serviceContract) public view returns (address) {
+        return operatorContractUpgraders[_serviceContract];
     }
 }

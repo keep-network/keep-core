@@ -7,12 +7,15 @@ import mineBlocks from './helpers/mineBlocks'
 
 contract('KeepRandomBeaconOperator', function(accounts) {
   let token, stakingContract, serviceContract, operatorContract, minimumStake, largeStake, entryFeeEstimate, groupIndex,
+    registry,
     owner = accounts[0],
     operator1 = accounts[1],
     operator2 = accounts[2],
     operator3 = accounts[3],
     tattletale = accounts[4],
-    authorizer = accounts[5]
+    authorizer = accounts[5],
+    anotherOperatorContract = accounts[6],
+    registryKeeper = accounts[7]
 
   before(async () => {
     let contracts = await initContracts(
@@ -27,12 +30,11 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     stakingContract = contracts.stakingContract
     serviceContract = contracts.serviceContract
     operatorContract = contracts.operatorContract
+    registry = contracts.registry
 
     groupIndex = 0
     await operatorContract.registerNewGroup(bls.groupPubKey)
-    await operatorContract.addGroupMember(bls.groupPubKey, operator1)
-    await operatorContract.addGroupMember(bls.groupPubKey, operator2)
-    await operatorContract.addGroupMember(bls.groupPubKey, operator3)
+    await operatorContract.setGroupMembers(bls.groupPubKey, [operator1, operator2, operator3])
 
     minimumStake = await operatorContract.minimumStake()
     largeStake = minimumStake.muln(2)
@@ -53,6 +55,30 @@ contract('KeepRandomBeaconOperator', function(accounts) {
 
   afterEach(async () => {
     await restoreSnapshot()
+  })
+
+  it("should slash token amount", async () => {
+    await registry.setRegistryKeeper(registryKeeper)
+    await registry.approveOperatorContract(anotherOperatorContract, {from: registryKeeper})
+    await stakingContract.authorizeOperatorContract(operator1, anotherOperatorContract, {from: authorizer})
+
+    let amountToSlash = web3.utils.toBN(42000000);
+    let balanceBeforeSlashing = await stakingContract.balanceOf(operator1)
+    await stakingContract.slash(web3.utils.toBN(amountToSlash), [operator1], {from: anotherOperatorContract})
+    let balanceAfterSlashing = await stakingContract.balanceOf(operator1)
+
+    assert.isTrue((balanceBeforeSlashing.sub(amountToSlash)).eq(balanceAfterSlashing), "Unexpected balance after token slasing")
+  })
+
+  it("should slash no more than available operator's amount", async () => {
+    await registry.setRegistryKeeper(registryKeeper)
+    await registry.approveOperatorContract(anotherOperatorContract, {from: registryKeeper})
+    await stakingContract.authorizeOperatorContract(operator1, anotherOperatorContract, {from: authorizer})
+
+    let amountToSlash = largeStake.add(web3.utils.toBN(100));
+    await stakingContract.slash(web3.utils.toBN(amountToSlash), [operator1], {from: anotherOperatorContract})
+
+    assert.isTrue((await stakingContract.balanceOf(operator1)).isZero(), "Unexpected balance after token slasing")
   })
 
   it("should be able to report unauthorized signing", async () => {

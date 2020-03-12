@@ -10,6 +10,29 @@ import (
 
 type keyGenerationState = state.State
 
+const (
+	silentStateDelayBlocks  = 0
+	silentStateActiveBlocks = 0
+
+	ephemeralKeyPairStateDelayBlocks  = 1
+	ephemeralKeyPairStateActiveBlocks = 5
+
+	commitmentStateDelayBlocks  = 1
+	commitmentStateActiveBlocks = 5
+
+	commitmentVerificationStateDelayBlocks  = 1
+	commitmentVerificationStateActiveBlocks = 10
+
+	pointsShareStateDelayBlocks  = 1
+	pointsShareStateActiveBlocks = 5
+
+	pointsValidationStateDelayBlocks  = 1
+	pointsValidationStateActiveBlocks = 10
+
+	keyRevealStateDelayBlocks  = 1
+	keyRevealStateActiveBlocks = 5
+)
+
 // ephemeralKeyPairGenerationState is the state during which members broadcast
 // public ephemeral keys generated for other members of the group.
 // `EphemeralPublicKeyMessage`s are valid in this state.
@@ -23,11 +46,11 @@ type ephemeralKeyPairGenerationState struct {
 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) DelayBlocks() uint64 {
-	return state.DefaultMessagingStateDelayBlocks
+	return ephemeralKeyPairStateDelayBlocks
 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) ActiveBlocks() uint64 {
-	return state.DefaultMessagingStateActiveBlocks
+	return ephemeralKeyPairStateActiveBlocks
 }
 
 func (ekpgs *ephemeralKeyPairGenerationState) Initiate(ctx context.Context) error {
@@ -79,11 +102,11 @@ type symmetricKeyGenerationState struct {
 }
 
 func (skgs *symmetricKeyGenerationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (skgs *symmetricKeyGenerationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
 func (skgs *symmetricKeyGenerationState) Initiate(ctx context.Context) error {
@@ -121,11 +144,11 @@ type commitmentState struct {
 }
 
 func (cs *commitmentState) DelayBlocks() uint64 {
-	return state.DefaultMessagingStateDelayBlocks
+	return commitmentStateDelayBlocks
 }
 
 func (cs *commitmentState) ActiveBlocks() uint64 {
-	return state.DefaultMessagingStateActiveBlocks
+	return commitmentStateActiveBlocks
 }
 
 func (cs *commitmentState) Initiate(ctx context.Context) error {
@@ -196,11 +219,11 @@ type commitmentsVerificationState struct {
 }
 
 func (cvs *commitmentsVerificationState) DelayBlocks() uint64 {
-	return state.DefaultMessagingStateDelayBlocks
+	return commitmentVerificationStateDelayBlocks
 }
 
 func (cvs *commitmentsVerificationState) ActiveBlocks() uint64 {
-	return state.DefaultMessagingStateActiveBlocks
+	return commitmentVerificationStateActiveBlocks
 }
 
 func (cvs *commitmentsVerificationState) Initiate(ctx context.Context) error {
@@ -264,11 +287,11 @@ type sharesJustificationState struct {
 }
 
 func (sjs *sharesJustificationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (sjs *sharesJustificationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
 func (sjs *sharesJustificationState) Initiate(ctx context.Context) error {
@@ -310,11 +333,11 @@ type qualificationState struct {
 }
 
 func (qs *qualificationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (qs *qualificationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
 func (qs *qualificationState) Initiate(ctx context.Context) error {
@@ -350,11 +373,11 @@ type pointsShareState struct {
 }
 
 func (pss *pointsShareState) DelayBlocks() uint64 {
-	return state.DefaultMessagingStateDelayBlocks
+	return pointsShareStateDelayBlocks
 }
 
 func (pss *pointsShareState) ActiveBlocks() uint64 {
-	return state.DefaultMessagingStateActiveBlocks
+	return pointsShareStateActiveBlocks
 }
 
 func (pss *pointsShareState) Initiate(ctx context.Context) error {
@@ -406,11 +429,11 @@ type pointsValidationState struct {
 }
 
 func (pvs *pointsValidationState) DelayBlocks() uint64 {
-	return state.DefaultMessagingStateDelayBlocks
+	return pointsValidationStateDelayBlocks
 }
 
 func (pvs *pointsValidationState) ActiveBlocks() uint64 {
-	return state.DefaultMessagingStateActiveBlocks
+	return pointsValidationStateActiveBlocks
 }
 
 func (pvs *pointsValidationState) Initiate(ctx context.Context) error {
@@ -467,11 +490,11 @@ type pointsJustificationState struct {
 }
 
 func (pjs *pointsJustificationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (pjs *pointsJustificationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
 func (pjs *pointsJustificationState) Initiate(ctx context.Context) error {
@@ -515,11 +538,11 @@ type keyRevealState struct {
 }
 
 func (rs *keyRevealState) DelayBlocks() uint64 {
-	return state.DefaultMessagingStateDelayBlocks
+	return keyRevealStateDelayBlocks
 }
 
 func (rs *keyRevealState) ActiveBlocks() uint64 {
-	return state.DefaultMessagingStateActiveBlocks
+	return keyRevealStateActiveBlocks
 }
 
 func (rs *keyRevealState) Initiate(ctx context.Context) error {
@@ -572,11 +595,11 @@ type reconstructionState struct {
 }
 
 func (rs *reconstructionState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (rs *reconstructionState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
 func (rs *reconstructionState) Initiate(ctx context.Context) error {
@@ -616,11 +639,11 @@ type combinationState struct {
 }
 
 func (cs *combinationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (cs *combinationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
 func (cs *combinationState) Initiate(ctx context.Context) error {
@@ -654,11 +677,11 @@ type finalizationState struct {
 }
 
 func (fs *finalizationState) DelayBlocks() uint64 {
-	return state.SilentStateDelayBlocks
+	return silentStateDelayBlocks
 }
 
 func (fs *finalizationState) ActiveBlocks() uint64 {
-	return state.SilentStateActiveBlocks
+	return silentStateActiveBlocks
 }
 
 func (fs *finalizationState) Initiate(ctx context.Context) error {

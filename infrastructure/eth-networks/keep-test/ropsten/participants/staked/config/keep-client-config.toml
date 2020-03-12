@@ -3,23 +3,23 @@
   URLRPC = "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
 
   [ethereum.account]
-    Address = "0xdbcd9a619b4d48ba67059a78734bb3b7ee6ece57"
+    Address = "0xca8754f7060a0648824f274e3a4d897fa497139d"
     KeyFile = "/mnt/keep-client/config/eth-account-keyfile"
 
   # Contracts are already deployed to Ropsten.  They are subject to change on deployment.
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeaconOperator contract
-    KeepRandomBeaconOperator = "0xBf136B8Afd6A8F6B571c23B04aBFCa7AFb0D404E"
+    KeepRandomBeaconOperator = "0xa15A2BBD4bf2C57cd7AB3143421e91b25B194e33"
     # TokenStaking
-    TokenStaking = "0x4a7ecCb36784931FfB75BCdcBd95aCA9F63Cb90E"
+    TokenStaking = "0xb3aD38CFFd64A2022EF8a269188eBF8DA77218f8"
     # Hex-encoded address of KeepRandomBeaconService contract. Only needed
     # in cases where the client's utility functions will be used (e.g., the
     # relay subcommand).
-    KeepRandomBeaconService = "0x1200952A8EB287006f4f61Effa67d85447a67Ab0"
+    KeepRandomBeaconService = "0xb444874Ba0E3FA9850cA5531e9a807dF87a3835b"
 
 # Testnet bootstrap peers hosted by the folks at Keep.
 [LibP2P]
-  Peers = ["/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAmDKyX7xmLMEAuWtDw5oBLN3L9xtKXSFn8hUEVtukZkuHp", "/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm359ykqT4QAehewxGLCqY7vTNHLP1ao9EjieZS8jdeKp5", "/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmS29jNiEX2vAtcjZVhPjU5HWKZNjpWj1gp4SKMGwnSfrg", "/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8SrKDSKZnj3syGjQ1B8F6bDokP93wikjUgpdx4sWCN5L"]
+  Peers = ["/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH", "/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY", "/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp", "/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf", "/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAkxRTeySEWZfW9C83GPFpQUXvrygmZryCN6DL4piZrbAv4"]
   Port = 3919
   # AnnouncedAddresses:
   # Leaving AnnouncedAddresses empty will set a default address to be

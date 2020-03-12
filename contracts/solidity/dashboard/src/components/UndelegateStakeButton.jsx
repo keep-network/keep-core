@@ -1,32 +1,47 @@
 import React, { useContext } from 'react'
 import { Web3Context } from './WithWeb3Context'
-import { useShowMessage } from './Message'
+import { useShowMessage, messageType } from './Message'
 import { SubmitButton } from './Button'
+import { TOKEN_GRANT_CONTRACT_NAME, TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
 
 const UndelegateStakeButton = (props) => {
-  const web3 = useContext(Web3Context)
+  const web3Context = useContext(Web3Context)
+  const { yourAddress } = web3Context
   const showMessage = useShowMessage()
 
   const undelegate = async (onTransactionHashCallback) => {
-    const { amount, operator } = props
-
+    const { operator, isInInitializationPeriod, isFromGrant } = props
+    const contract = web3Context[isFromGrant ? TOKEN_GRANT_CONTRACT_NAME : TOKEN_STAKING_CONTRACT_NAME]
     try {
-      await web3.stakingContract.methods.initiateUnstake(amount, operator).send({ from: web3.yourAddress }).on('transactionHash', onTransactionHashCallback)
-      showMessage({ type: 'success', title: 'Success', content: 'Undelegate transaction successfully completed' })
+      await contract
+        .methods[isInInitializationPeriod ? 'cancelStake' : 'undelegate'](operator)
+        .send({ from: yourAddress })
+        .on('transactionHash', onTransactionHashCallback)
+      showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Undelegate transaction successfully completed' })
     } catch (error) {
-      showMessage({ type: 'error', title: 'Undelegate action has been failed ', content: error.message })
+      showMessage({ type: messageType.ERROR, title: 'Undelegate action has been failed ', content: error.message })
+      throw error
     }
   }
 
   return (
     <SubmitButton
-      className="btn btn-primary btn-sm"
+      className={props.btnClassName}
       onSubmitAction={undelegate}
       pendingMessageTitle='Undelegate transaction is pending...'
+      successCallback={props.successCallback}
     >
-      Undelegate
+      {props.isInInitializationPeriod ? 'cancel' : props.btnText }
     </SubmitButton>
   )
+}
+
+UndelegateStakeButton.defaultProps = {
+  btnClassName: 'btn btn-primary btn-sm',
+  btnText: 'undelegate',
+  isInInitializationPeriod: false,
+  successCallback: () => {},
+  isFromGrant: false,
 }
 
 export default UndelegateStakeButton

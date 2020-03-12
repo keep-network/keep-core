@@ -4,91 +4,45 @@
     top: .5rem;
     left: .5rem;
     display: flex;
+    flex: none;
     flex-direction: column;
+    justify-content: flex-start;
     line-height: 1.3;
     background: transparent;
-    color: @black;
-}
+    color: @color-black;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 
-.message {
-    padding: .5em 1em;
-    margin: 1em;
-    opacity: .95;
-
-    &-content-wrapper {
-        @media @xs {
-            width: 15em;
-        }
-        width: 20em;
-        flex: 1;
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
+    @media screen and (min-width: 1000px) {
+        top: 2rem;
+        left: 2rem;
     }
 
-    &-icon {
-        font-size: 1.5em;
-        &-close {
-            font-size: .8em;
-            &:hover {
-                cursor: pointer;
+    .banner {
+        &-content-wrapper {
+           width: 20rem;
+        }
+        margin-bottom: 1rem;
+        &-enter {
+            opacity: .01;
+            &-active {
+                opacity: .8;
+                transition: opacity 250ms ease-in;
+            }
+        }
+        
+        //exit animation
+        &-exit {
+            max-height: 500px;
+            &-active {
+                max-height: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+                margin-bottom: 0;
+                border-width: 0;
+                overflow: hidden;
+                transition: all 0.5s cubic-bezier(0, 1, 0, 1);
             }
         }
     }
-
-    &-content {
-        color: @black;
-        font-size: smaller;
-        min-width: 40%;
-        margin-left: 10px;
-        margin-right: auto;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-    }
-
-    &-content > span {
-        font-size: larger;
-        font-weight: bold;
-        padding: 0 0 .5em 0;
-    }
-
-    &.message {
-        &-success {
-            background-color: @aqua-marine;
-        }
-        &-error {
-            background-color: @error-color;
-        }
-        &-pending-action {
-            background-color: @warning-color;
-        }
-        &-info {
-            background-color: @info-color;
-        }
-        &-info {
-            background-color: @info-color;
-        }
-    }
-
-    //enter animation
-    &-enter {
-        opacity: .01;
-        &-active {
-            opacity: .8;
-            transition: opacity 250ms ease-in;
-        }
-    }
-    
-    //exit animation
-    &-exit {
-        max-height: 500px;
-        &-active {
-            max-height: 0;
-            overflow: hidden;
-            margin: 0 1em;
-            padding: 0 1em;
-            transition: max-height 0.5s cubic-bezier(0, 1, 0, 1), margin 0.5s cubic-bezier(0, 1, 0, 1) ;
-        }
-    }
-
 }
