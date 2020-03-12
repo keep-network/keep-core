@@ -5,12 +5,12 @@ import UndelegateStakeButton from './UndelegateStakeButton'
 import StatusBadge, { BADGE_STATUS } from './StatusBadge'
 import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
 
-const DelegatedTokensList = ({ delegatedTokens, successDelegationCallback }) => {
+const DelegatedTokensList = ({ delegatedTokens, cancelStakeSuccessCallback }) => {
   const renderDelegatedTokensItem = (item) =>
     <DelegatedTokensListItem
       key={item.operatorAddress}
       delegation={item}
-      successDelegationCallback={successDelegationCallback}
+      cancelStakeSuccessCallback={cancelStakeSuccessCallback}
     />
 
   return (
@@ -41,7 +41,7 @@ const DelegatedTokensList = ({ delegatedTokens, successDelegationCallback }) => 
   )
 }
 
-const DelegatedTokensListItem = React.memo(({ delegation, successDelegationCallback }) => {
+const DelegatedTokensListItem = React.memo(({ delegation, cancelStakeSuccessCallback }) => {
   const delegationStatus = delegation.isInInitializationPeriod ? PENDING_STATUS : COMPLETE_STATUS
 
   return (
@@ -63,9 +63,10 @@ const DelegatedTokensListItem = React.memo(({ delegation, successDelegationCallb
       <div className="flex-1">
         <UndelegateStakeButton
           isInInitializationPeriod={delegation.isInInitializationPeriod}
+          isFromGrant={delegation.isFromGrant}
           btnClassName="btn btn-sm btn-secondary"
           operator={delegation.operatorAddress}
-          successCallback={successDelegationCallback}
+          successCallback={delegation.isInInitializationPeriod ? cancelStakeSuccessCallback : () => {}}
         />
       </div>
     </li>

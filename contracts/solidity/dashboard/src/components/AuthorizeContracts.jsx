@@ -61,7 +61,7 @@ const AuthorizeContractsItem = ({
         View in Block Explorer
         </a>
       </div>
-      <div className="flex-1">
+      <div className="flex-1 flex">
         <SubmitButton
           className="btn btn-primary btn-lg flex-1"
           onSubmitAction={authorize}
