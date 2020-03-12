@@ -189,7 +189,7 @@ jobs:
           name: Run Docker build
           working_directory: ~/project/contracts/solidity/dashboard
           command: |
-            docker build --build-arg DAPP_ENV=$TRUFFLE_NETWORK --tag keep-token-dashboard-dapp .
+            docker build --tag keep-token-dashboard-dapp .
       - run:
           name: Save keep-token-dashboard-dapp image
           working_directory: ~/project/contracts/solidity/dashboard
