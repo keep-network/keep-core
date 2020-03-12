@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"math/big"
 	"sync"
-	"time"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -15,11 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-)
-
-const (
-	dkgPublicationDelayTime = 5 * time.Minute
-	dkgPublicationDelayStep = uint64(10)
 )
 
 // Node represents the current state of a relay node.
@@ -111,8 +105,6 @@ func (n *Node) JoinGroupIfEligible(
 					relayChain,
 					signing,
 					broadcastChannel,
-					dkgPublicationDelayTime,
-					dkgPublicationDelayStep,
 				)
 				if err != nil {
 					logger.Errorf("failed to execute dkg: [%v]", err)

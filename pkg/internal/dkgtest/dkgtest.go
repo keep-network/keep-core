@@ -140,8 +140,6 @@ func executeDKG(
 				chain.ThresholdRelay(),
 				chain.Signing(),
 				broadcastChannel,
-				1*time.Second,
-				5,
 			)
 			if signer != nil {
 				signersMutex.Lock()

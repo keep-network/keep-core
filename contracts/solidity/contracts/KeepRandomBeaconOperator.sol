@@ -175,7 +175,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
 
-        dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10);
+        dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10) + 20;
         dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;
         dkgResultVerification.groupSize = groupSize;
         // TODO: For now, the required number of signatures is equal to group

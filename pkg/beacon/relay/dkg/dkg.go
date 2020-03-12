@@ -1,7 +1,6 @@
 package dkg
 
 import (
-	"context"
 	"fmt"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -9,7 +8,6 @@ import (
 	"github.com/ipfs/go-log"
 
 	"math/big"
-	"time"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	dkgResult "github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
@@ -20,6 +18,8 @@ import (
 )
 
 var logger = log.Logger("keep-dkg")
+
+const publicationDelayBlocks = 20
 
 // ExecuteDKG runs the full distributed key generation lifecycle.
 func ExecuteDKG(
@@ -32,8 +32,6 @@ func ExecuteDKG(
 	relayChain relayChain.Interface,
 	signing chain.Signing,
 	channel net.BroadcastChannel,
-	publicationDelayTime time.Duration,
-	publicationDelayStep uint64,
 ) (*ThresholdSigner, error) {
 	// The staker index should begin with 1
 	playerIndex := group.MemberIndex(index + 1)
@@ -60,16 +58,20 @@ func ExecuteDKG(
 
 	logger.Debugf(
 		"[member:%v] GJKR ended at block [%v]; "+
-			"waiting [%v] before DKG result publication",
+			"waiting [%v] blocks before DKG result publication",
 		playerIndex,
 		gjkrEndBlockHeight,
-		publicationDelayTime,
+		publicationDelayBlocks,
 	)
 
-	// Calculations of group public key shares are time-expensive.
-	// They takes around 3 minutes for each member when group size is 64.
-	// To avoid desynchronization between members they are triggered in
-	// a separate goroutine.
+	// Calculation of group public key shares is time-expensive.
+	// It takes around 3 minutes for each member when group size is 64.
+	// To avoid desynchronization between members it is triggered in
+	// a separate goroutine. Apart from that, result publication is delayed
+	// to reduce the gap between successful on-chain group registration and
+	// the moment when threshold signers are ready. This is important
+	// because during this gap the group is blind for incoming relay entry
+	// requests.
 	groupPublicKeySharesChan := make(chan map[group.MemberIndex]*bn256.G2)
 	go func() {
 		logger.Debugf(
@@ -87,44 +89,7 @@ func ExecuteDKG(
 		groupPublicKeySharesChan <- groupPublicKeyShares
 	}()
 
-	// In order to keep members synchronized while group public key shares
-	// are calculated, each member waits the same amount of time before
-	// proceeding with DKG result publication. It is important to choose an
-	// amount of time which will allow to complete calculations with high
-	// probability.
-	ctx, cancel := context.WithTimeout(context.Background(), publicationDelayTime)
-	defer cancel()
-
-	startPublicationBlockHeight := gjkrEndBlockHeight
-	for {
-		startPublicationBlockHeight += publicationDelayStep
-		err := blockCounter.WaitForBlockHeight(startPublicationBlockHeight)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"[member:%v] wait for block height [%v] failed: [%v]",
-				playerIndex,
-				startPublicationBlockHeight,
-				err,
-			)
-		}
-
-		if ctx.Err() != nil {
-			startPublicationBlockHeight += publicationDelayStep
-			break
-		}
-	}
-
-	var groupPublicKeyShares map[group.MemberIndex]*bn256.G2
-
-	select {
-	case groupPublicKeyShares = <-groupPublicKeySharesChan:
-		// Group public key shares have been calculated on time.
-	default:
-		return nil, fmt.Errorf(
-			"[member:%v] group public key shares have not been calculated on time",
-			playerIndex,
-		)
-	}
+	startPublicationBlockHeight := gjkrEndBlockHeight + publicationDelayBlocks
 
 	logger.Debugf(
 		"[member:%v] DKG result publication scheduled for block [%v]",
@@ -149,6 +114,9 @@ func ExecuteDKG(
 			err,
 		)
 	}
+
+	// Wait for group public key shares calculation outcome.
+	groupPublicKeyShares := <-groupPublicKeySharesChan
 
 	return &ThresholdSigner{
 		memberIndex:          playerIndex,
