@@ -323,12 +323,12 @@ workflows:
             - build_client_and_test_go
             - migrate_contracts
       - build_token_dashboard_dapp:
-          requires:
-            - migrate_contracts
+          # requires:
+          #   - migrate_contracts
       - publish_token_dashboard_dapp:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - build_token_dashboard_dapp
