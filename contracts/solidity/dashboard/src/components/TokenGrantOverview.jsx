@@ -36,7 +36,7 @@ const TokenGrantOverview = ({ selectedGrant }) => {
       <div>
         <h2 className="balance">{displayAmount(selectedGrant.amount)}&nbsp;KEEP</h2>
         <div className="text-small text-grey-40">
-          Issued: 01/01/2020
+          Issued: {formatDate(moment.unix(selectedGrant.start))}
           <span className="text-smaller text-grey-30">&nbsp;Cliff: {cliffPeriod}</span>
           <br/>
           Fully Unlocked: {formatDate(fullyUnlockedDate)}
