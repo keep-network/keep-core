@@ -173,7 +173,7 @@ jobs:
             gsutil -m cp * gs://${CONTRACT_DATA_BUCKET}/keep-core
 
   build_token_dashboard_dapp:
-    executor: docker-node
+    executor: docker-thesis-buildpack
     steps:
       - attach_workspace:
           at: /tmp/keep-client
