@@ -2,6 +2,15 @@
 
 Summary of Keep private testnet releases in reverse chronological order.
 
+== 2020-03-13
+
+=== NEW FEATURES
+
+- We're proud to annouce the Keep token dashboard!  Find at at `http://dashboard.test.keep.network`
+  The token dashboard allows you to manage your KEEP grants, staking, authorizations, and
+  operations.  We'll be shipping a separate guide over the coming weeks.  To use the dashboard all
+  you need to do is load your issued keep-client Ethereum account into metamask.
+
 == 2020-02-18
 
 === BUGFIXES
