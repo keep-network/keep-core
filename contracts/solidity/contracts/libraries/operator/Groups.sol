@@ -299,11 +299,13 @@ library Groups {
         }
 
         uint256 terminatedExpirations = originalTerminatedCount - _terminatedCount;
+        uint256 terminatedReplacements = _terminatedCount < terminatedExpirations ?
+            _terminatedCount : terminatedExpirations;
 
         // If changed, delete the stale terminated groups
         if (terminatedExpirations > 0) {
             self.terminatedGroups.length = _terminatedCount;
-            for (uint i = 0; i < _terminatedCount; i++) {
+            for (uint i = 0; i < terminatedReplacements; i++) {
                 uint256 replacementGroup = (originalTerminatedCount - 1) - i;
                 self.terminatedGroups[i] = _terminatedGroups[replacementGroup];
             }
