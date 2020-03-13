@@ -34,7 +34,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
 
-    let delayFactor = await operatorContract.delayFactor();        
+    let delayFactor = await operatorContract.delayFactor.call();        
 
     let expectedDelayFactor = web3.utils.toBN(10000000000000000);
     assert.isTrue(expectedDelayFactor.eq(delayFactor));
@@ -44,9 +44,9 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
 
-    mineBlocks(await operatorContract.relayEntryGenerationTime());
+    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1));
 
-    let delayFactor = await operatorContract.delayFactor();
+    let delayFactor = await operatorContract.delayFactor.call();
 
     let expectedDelayFactor = web3.utils.toBN(10000000000000000);
     assert.isTrue(expectedDelayFactor.eq(delayFactor));
@@ -56,9 +56,9 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
 
-    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1));
+    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(2));
 
-    let delayFactor = await operatorContract.delayFactor();
+    let delayFactor = await operatorContract.delayFactor.call();
 
     let expectedDelayFactor = web3.utils.toBN('9896104600694443');
     assert.isTrue(expectedDelayFactor.eq(delayFactor));
@@ -68,9 +68,9 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
 
-    mineBlocks((await operatorContract.relayEntryTimeout()).subn(1));
+    mineBlocks(await operatorContract.relayEntryTimeout());
 
-    let delayFactor = await operatorContract.delayFactor();        
+    let delayFactor = await operatorContract.delayFactor.call();        
 
     let expectedDelayFactor = web3.utils.toBN('271267361111');
     assert.isTrue(expectedDelayFactor.eq(delayFactor));        
@@ -96,7 +96,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     // 10020 * 140000 * 150% (fluctuation margin)
     let expectedSubmitterReward = web3.utils.toBN("2104200000");
     
-    let rewards = await operatorContract.getNewEntryRewardsBreakdown(); 
+    let rewards = await operatorContract.getNewEntryRewardsBreakdown.call(); 
 
     assert.isTrue(
       expectedGroupMemberReward.eq(rewards.groupMemberReward),
@@ -122,7 +122,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});  
 
-    mineBlocks(await operatorContract.relayEntryGenerationTime()); 
+    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1)); 
 
     // No delay so entire group member base reward is paid and nothing
     // goes to the subsidy pool.
@@ -134,7 +134,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     // 10050 * 150000 * 150% (fluctuation margin)
     let expectedSubmitterReward = web3.utils.toBN("2261250000");
     
-    let rewards = await operatorContract.getNewEntryRewardsBreakdown(); 
+    let rewards = await operatorContract.getNewEntryRewardsBreakdown.call(); 
     
     assert.isTrue(
       expectedGroupMemberReward.eq(rewards.groupMemberReward),
@@ -160,7 +160,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});  
 
-    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1));  
+    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(2));  
 
     // There is one block of delay so the delay factor is 0.9896104600694443.
     // Group member reward should be scaled by the delay factor: 
@@ -191,7 +191,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     // 127168000 - 125846720 - 66060 = 1255220
     let expectedSubsidy = web3.utils.toBN("1255220");              
 
-    let rewards = await operatorContract.getNewEntryRewardsBreakdown(); 
+    let rewards = await operatorContract.getNewEntryRewardsBreakdown.call(); 
     
     assert.isTrue(
       expectedGroupMemberReward.eq(rewards.groupMemberReward),
@@ -217,7 +217,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate}); 
 
-    mineBlocks((await operatorContract.relayEntryTimeout()).subn(1));
+    mineBlocks(await operatorContract.relayEntryTimeout());
 
     // There is one block left before the timeout so the delay factor is 
     // 0.0000271267361111.
@@ -249,7 +249,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     // 88448000000 - 2399296 - 4422280034 = 84023320670
     let expectedSubsidy = web3.utils.toBN("84023320670");    
 
-    let rewards = await operatorContract.getNewEntryRewardsBreakdown();
+    let rewards = await operatorContract.getNewEntryRewardsBreakdown.call();
     
     assert.isTrue(
       expectedGroupMemberReward.eq(rewards.groupMemberReward),

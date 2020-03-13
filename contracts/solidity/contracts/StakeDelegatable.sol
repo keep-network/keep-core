@@ -1,5 +1,4 @@
 pragma solidity ^0.5.4;
-pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
@@ -25,8 +24,9 @@ contract StakeDelegatable {
     uint256 public initializationPeriod;
     uint256 public undelegationPeriod;
 
-    // List of operators for the stake owner.
     mapping(address => address[]) public ownerOperators;
+
+    mapping(address => Operator) public operators;
 
     struct Operator {
         uint256 packedParams;
@@ -34,8 +34,6 @@ contract StakeDelegatable {
         address payable beneficiary;
         address authorizer;
     }
-
-    mapping(address => Operator) public operators;
 
     modifier onlyOperatorAuthorizer(address _operator) {
         require(
@@ -46,20 +44,20 @@ contract StakeDelegatable {
     }
 
     /**
+     * @dev Gets the list of operators of the specified address.
+     * @return An array of addresses.
+     */
+    function operatorsOf(address _address) public view returns (address[] memory) {
+        return ownerOperators[_address];
+    }
+
+    /**
      * @dev Gets the stake balance of the specified address.
      * @param _address The address to query the balance of.
      * @return An uint256 representing the amount staked by the passed address.
      */
     function balanceOf(address _address) public view returns (uint256 balance) {
         return operators[_address].packedParams.getAmount();
-    }
-
-    /**
-     * @dev Gets the list of operators of the specified address.
-     * @return An array of addresses.
-     */
-    function operatorsOf(address _address) public view returns (address[] memory) {
-        return ownerOperators[_address];
     }
 
     /**
