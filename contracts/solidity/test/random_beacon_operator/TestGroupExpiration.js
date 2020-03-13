@@ -48,7 +48,9 @@ contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
       // count since we index from 0.
       await expireGroup(expiredCount - 1); 
     }
-    return groups.selectGroup.call(beaconValue);
+    let selectedIndex = await groups.selectGroup.call(beaconValue);
+    await groups.selectGroup(beaconValue);
+    return selectedIndex;
   }
 
   it("should be able to count the number of active groups", async function() {
