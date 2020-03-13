@@ -26,8 +26,10 @@ contract.only('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
   });
 
   async function addGroups(numberOfGroups) {
-    for (var i = 1; i <= numberOfGroups; i++)
-      await groups.addGroup([i]);
+      for (var i = 1; i <= numberOfGroups; i++) {
+          await groups.addGroup([i]);
+          mineBlocks(1);
+      }
   }
 
   async function expireGroup(groupIndex) {
