@@ -282,14 +282,30 @@ library Groups {
             self.expiredGroupOffset = _expiredGroupOffset;
         }
 
+        // Cache number of terminated groups
+        uint256 originalTerminatedCount = self.terminatedGroups.length;
+        uint256 _terminatedCount = originalTerminatedCount;
+
+        uint256[] memory _terminatedGroups = self.terminatedGroups;
+
         // Go through all terminatedGroups and if some of the terminated
         // groups are expired, remove them from terminatedGroups collection.
         // This is needed because we evaluate the shift of selected group index
         // based on how many non-expired groups has been terminated.
-        for (uint i = 0; i < self.terminatedGroups.length; i++) {
-            if (_expiredGroupOffset > self.terminatedGroups[i]) {
-                self.terminatedGroups[i] = self.terminatedGroups[self.terminatedGroups.length - 1];
-                self.terminatedGroups.length--;
+        for (uint i = 0; i < originalTerminatedCount; i++) {
+            if (_expiredGroupOffset > _terminatedGroups[i]) {
+                _terminatedCount--;
+            }
+        }
+
+        uint256 terminatedExpirations = originalTerminatedCount - _terminatedCount;
+
+        // If changed, delete the stale terminated groups
+        if (terminatedExpirations > 0) {
+            self.terminatedGroups.length = _terminatedCount;
+            for (uint i = 0; i < _terminatedCount; i++) {
+                uint256 replacementGroup = (originalTerminatedCount - 1) - i;
+                self.terminatedGroups[i] = _terminatedGroups[replacementGroup];
             }
         }
     }
