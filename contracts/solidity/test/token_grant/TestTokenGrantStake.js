@@ -1,9 +1,9 @@
-import mineBlocks from './helpers/mineBlocks';
-import { duration, increaseTimeTo } from './helpers/increaseTime';
-import latestTime from './helpers/latestTime';
-import expectThrow from './helpers/expectThrow';
-import expectThrowWithMessage from './helpers/expectThrowWithMessage'
-import grantTokens from './helpers/grantTokens';
+import mineBlocks from '../helpers/mineBlocks';
+import { duration, increaseTimeTo } from '../helpers/increaseTime';
+import latestTime from '../helpers/latestTime';
+import expectThrow from '../helpers/expectThrow';
+import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
+import grantTokens from '../helpers/grantTokens';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
