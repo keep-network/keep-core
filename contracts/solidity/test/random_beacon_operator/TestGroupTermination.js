@@ -115,7 +115,7 @@ contract.only('KeepRandomBeaconOperator/GroupTermination', function(accounts) {
         assert.equal(0, selectedIndex);
       })
     })
-    
+
     describe("should not select expired or terminated groups", async () => {
       it("ETA beacon_value = 0", async function() {
         let selectedIndex = await runTerminationTest(3, 1, [1], 0);
@@ -171,6 +171,49 @@ contract.only('KeepRandomBeaconOperator/GroupTermination', function(accounts) {
       })
       it("EEETTATAAT beacon_value = 5", async function() {
         let selectedIndex = await runTerminationTest(10, 3, [3, 4, 6, 9], 5);
+        assert.equal(8, selectedIndex)
+      })
+    })
+
+    describe("should correctly expire terminated groups", async () => {
+      it("EXA beacon_value = 0", async function() {
+        let selectedIndex = await runTerminationTest(3, 2, [1], 0);
+        assert.equal(2, selectedIndex)
+      })
+      it("EXA beacon_value = 1", async function() {
+        let selectedIndex = await runTerminationTest(3, 2, [1], 1);
+        assert.equal(2, selectedIndex)
+      })
+      it("EXA beacon_value = 2", async function() {
+        let selectedIndex = await runTerminationTest(3, 2, [1], 2);
+        assert.equal(2, selectedIndex)
+      })
+      it("EXA beacon_value = 3", async function() {
+        let selectedIndex = await runTerminationTest(3, 2, [1], 3);
+        assert.equal(2, selectedIndex)
+      })
+      it("EEEXXATAA beacon_value = 0", async function() {
+        let selectedIndex = await runTerminationTest(9, 5, [3, 4, 6], 0);
+        assert.equal(5, selectedIndex)
+      })
+      it("EEEXXATAA beacon_value = 1", async function() {
+        let selectedIndex = await runTerminationTest(9, 5, [3, 4, 6], 1);
+        assert.equal(7, selectedIndex)
+      })
+      it("EEEXXATAA beacon_value = 2", async function() {
+        let selectedIndex = await runTerminationTest(9, 5, [3, 4, 6], 2);
+        assert.equal(8, selectedIndex)
+      })
+      it("EEEXXATAA beacon_value = 3", async function() {
+        let selectedIndex = await runTerminationTest(9, 5, [3, 4, 6], 3);
+        assert.equal(5, selectedIndex)
+      })
+      it("EEEXXATAA beacon_value = 4", async function() {
+        let selectedIndex = await runTerminationTest(9, 5, [3, 4, 6], 4);
+        assert.equal(7, selectedIndex)
+      })
+      it("EEEXXATAA beacon_value = 5", async function() {
+        let selectedIndex = await runTerminationTest(9, 5, [3, 4, 6], 5);
         assert.equal(8, selectedIndex)
       })
     })
