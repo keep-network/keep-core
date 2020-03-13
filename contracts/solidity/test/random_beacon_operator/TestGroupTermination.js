@@ -32,7 +32,9 @@ contract('KeepRandomBeaconOperator/GroupTermination', function(accounts) {
         await groups.terminateGroup(groupIndex);
       }
 
-      return groups.selectGroup.call(beaconValue);
+      let selectedIndex = await groups.selectGroup.call(beaconValue);
+      await groups.selectGroup(beaconValue);
+      return selectedIndex;
     }
     
     describe("should not select terminated groups", async () => {
