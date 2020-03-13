@@ -23,7 +23,7 @@ const AuthorizerPage = () => {
   const [operator, setOperator] = useState({})
 
   useEffect(() => {
-    if (data && Object.keys(data).length >= 0) {
+    if (data && Object.keys(data).length > 0) {
       setOperator({ address: Object.keys(data)[0] })
     }
   }, [data])

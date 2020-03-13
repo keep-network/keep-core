@@ -37,7 +37,7 @@ contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
     // If current block is larger than group registration block by group active time then
     // it is not necessary to mine any blocks cause the group is already expired
     if (currentBlock - groupRegistrationBlock <= groupActiveTime) {
-      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock));
+      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
     }
   }
 
