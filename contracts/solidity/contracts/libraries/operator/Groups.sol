@@ -267,10 +267,19 @@ library Groups {
      * about expired groups so that all expired groups are marked as such.
      */
     function expireOldGroups(Storage storage self) internal {
+        // Cache the expiredGroupOffset
+        uint256 originalExpiredGroupOffset = self.expiredGroupOffset;
+        uint256 _expiredGroupOffset = originalExpiredGroupOffset;
+
         // move expiredGroupOffset as long as there are some groups that should
         // be marked as expired
-        while(groupActiveTimeOf(self, self.groups[self.expiredGroupOffset]) < block.number) {
-            self.expiredGroupOffset++;
+        while(groupActiveTimeOf(self, self.groups[_expiredGroupOffset]) < block.number) {
+            _expiredGroupOffset++;
+        }
+
+        // If changed, overwrite stored expiredGroupOffset
+        if (_expiredGroupOffset > originalExpiredGroupOffset) {
+            self.expiredGroupOffset = _expiredGroupOffset;
         }
 
         // Go through all terminatedGroups and if some of the terminated
@@ -278,7 +287,7 @@ library Groups {
         // This is needed because we evaluate the shift of selected group index
         // based on how many non-expired groups has been terminated.
         for (uint i = 0; i < self.terminatedGroups.length; i++) {
-            if (self.expiredGroupOffset > self.terminatedGroups[i]) {
+            if (_expiredGroupOffset > self.terminatedGroups[i]) {
                 self.terminatedGroups[i] = self.terminatedGroups[self.terminatedGroups.length - 1];
                 self.terminatedGroups.length--;
             }
