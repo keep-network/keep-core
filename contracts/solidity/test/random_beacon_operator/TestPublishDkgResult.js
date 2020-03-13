@@ -1,15 +1,15 @@
-import { sign } from './helpers/signature';
-import mineBlocks from './helpers/mineBlocks';
-import packTicket from './helpers/packTicket';
-import generateTickets from './helpers/generateTickets';
-import stakeDelegate from './helpers/stakeDelegate';
-import expectThrow from './helpers/expectThrow';
-import shuffleArray from './helpers/shuffle';
-import {initContracts} from './helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
+import { sign } from '../helpers/signature';
+import mineBlocks from '../helpers/mineBlocks';
+import packTicket from '../helpers/packTicket';
+import generateTickets from '../helpers/generateTickets';
+import stakeDelegate from '../helpers/stakeDelegate';
+import expectThrow from '../helpers/expectThrow';
+import shuffleArray from '../helpers/shuffle';
+import {initContracts} from '../helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
 
 
-contract('TestKeepRandomBeaconOperatorPublishDkgResult', function(accounts) {
+contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
 
   let resultPublicationTime, token, stakingContract, operatorContract,
   owner = accounts[0], magpie = accounts[4], ticket,

@@ -2,8 +2,8 @@ pragma solidity ^0.5.4;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
-import "../contracts/utils/AddressArrayUtils.sol";
-import "../contracts/utils/UintArrayUtils.sol";
+import "../../contracts/utils/AddressArrayUtils.sol";
+import "../../contracts/utils/UintArrayUtils.sol";
 
 
 contract TestUtils {  

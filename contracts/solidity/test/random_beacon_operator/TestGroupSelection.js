@@ -1,13 +1,13 @@
-import expectThrow from './helpers/expectThrow';
-import mineBlocks from './helpers/mineBlocks';
-import packTicket from './helpers/packTicket';
-import generateTickets from './helpers/generateTickets';
-import stakeDelegate from './helpers/stakeDelegate';
-import {initContracts} from './helpers/initContracts';
-import expectThrowWithMessage from './helpers/expectThrowWithMessage';
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
+import expectThrow from '../helpers/expectThrow';
+import mineBlocks from '../helpers/mineBlocks';
+import packTicket from '../helpers/packTicket';
+import generateTickets from '../helpers/generateTickets';
+import stakeDelegate from '../helpers/stakeDelegate';
+import {initContracts} from '../helpers/initContracts';
+import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
+import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
 
-contract('KeepRandomBeaconOperator', function(accounts) {
+contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
   let operatorContract,
   owner = accounts[0], 
   magpie = accounts[1],

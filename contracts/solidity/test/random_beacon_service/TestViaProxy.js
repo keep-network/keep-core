@@ -1,12 +1,12 @@
-import { duration, increaseTimeTo } from './helpers/increaseTime';
-import {bls} from './helpers/data';
-import latestTime from './helpers/latestTime';
-import expectThrow from './helpers/expectThrow';
-import {initContracts} from './helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
+import { duration, increaseTimeTo } from '../helpers/increaseTime';
+import {bls} from '../helpers/data';
+import latestTime from '../helpers/latestTime';
+import expectThrow from '../helpers/expectThrow';
+import {initContracts} from '../helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from "../helpers/snapshot";
 const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
 
-contract('TestKeepRandomBeaconServiceViaProxy', function(accounts) {
+contract('TestKeepRandomBeaconService/ViaProxy', function(accounts) {
 
   let serviceContract, serviceContractProxy, operatorContract,
     account_one = accounts[0],

@@ -1,7 +1,7 @@
-import { duration, increaseTimeTo } from './helpers/increaseTime';
-import latestTime from './helpers/latestTime';
-import expectThrow from './helpers/expectThrow';
-import grantTokens from './helpers/grantTokens';
+import { duration, increaseTimeTo } from '../helpers/increaseTime';
+import latestTime from '../helpers/latestTime';
+import expectThrow from '../helpers/expectThrow';
+import grantTokens from '../helpers/grantTokens';
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');

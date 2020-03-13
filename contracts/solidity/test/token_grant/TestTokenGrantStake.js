@@ -1,9 +1,10 @@
-import mineBlocks from './helpers/mineBlocks';
-import { duration, increaseTimeTo } from './helpers/increaseTime';
-import latestTime from './helpers/latestTime';
-import expectThrowWithMessage from './helpers/expectThrowWithMessage'
-import grantTokens from './helpers/grantTokens';
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+import mineBlocks from '../helpers/mineBlocks';
+import { duration, increaseTimeTo } from '../helpers/increaseTime';
+import latestTime from '../helpers/latestTime';
+import expectThrow from '../helpers/expectThrow';
+import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
+import grantTokens from '../helpers/grantTokens';
+import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
 
 const BN = web3.utils.BN
 const chai = require('chai')
