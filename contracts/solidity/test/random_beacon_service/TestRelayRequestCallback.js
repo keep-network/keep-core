@@ -1,13 +1,13 @@
-import {bls} from './helpers/data';
-import {initContracts} from './helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
-import stakeAndGenesis from './helpers/stakeAndGenesis';
+import {bls} from '../helpers/data';
+import {initContracts} from '../helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+import stakeAndGenesis from '../helpers/stakeAndGenesis';
 
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
 // A set of integration tests for the beacon pricing mechanism related to
 // callback reimbursement.
-contract('KeepRandomBeacon', function(accounts) {
+contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
 
   const groupSize = 3;
   const groupThreshold = 2;

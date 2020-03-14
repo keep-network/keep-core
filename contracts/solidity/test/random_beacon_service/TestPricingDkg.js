@@ -1,10 +1,10 @@
-import {initContracts} from './helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
-import {bls} from './helpers/data';
+import {initContracts} from '../helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+import {bls} from '../helpers/data';
 
-import stakeAndGenesis from './helpers/stakeAndGenesis';
+import stakeAndGenesis from '../helpers/stakeAndGenesis';
 
-contract('KeepRandomBeaconService', (accounts) => {
+contract('KeepRandomBeaconService/PricingDkg', (accounts) => {
 
     const groupSize = 20;
     const groupThreshold = 11;

@@ -1,9 +1,9 @@
-import {initContracts} from './helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot";
-import {bls} from './helpers/data';
-import mineBlocks from './helpers/mineBlocks';
+import {initContracts} from '../helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+import {bls} from '../helpers/data';
+import mineBlocks from '../helpers/mineBlocks';
 
-contract('KeepRandomBeaconOperator', function(accounts) {
+contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
   let serviceContract;
   let operatorContract;
 
