@@ -18,30 +18,32 @@ contract TokenGrantStake {
     using BytesLib for bytes;
 
     ERC20Burnable token;
+    TokenStaking tokenStaking;
+
     address tokenGrant; // Address of the master grant contract.
+
     uint256 grantId; // ID of the grant for this stake.
-    TokenStaking stakingContract; // Staking contract.
     uint256 amount; // Amount of staked tokens.
     address operator; // Operator of the stake.
 
     constructor(
         address _tokenAddress,
         uint256 _grantId,
-        address _stakingContract
+        address _tokenStaking
     ) public {
         require(
             _tokenAddress != address(0x0),
             "Token address can't be zero."
         );
         require(
-            _stakingContract != address(0x0),
+            _tokenStaking != address(0x0),
             "Staking contract address can't be zero."
         );
 
         token = ERC20Burnable(_tokenAddress);
         tokenGrant = msg.sender;
         grantId = _grantId;
-        stakingContract = TokenStaking(_stakingContract);
+        tokenStaking = TokenStaking(_tokenStaking);
     }
 
     function stake(
@@ -51,7 +53,7 @@ contract TokenGrantStake {
         amount = _amount;
         operator = _extraData.toAddress(20);
         tokenSender(address(token)).approveAndCall(
-            address(stakingContract),
+            address(tokenStaking),
             _amount,
             _extraData
         );
@@ -66,32 +68,32 @@ contract TokenGrantStake {
     }
 
     function getStakingContract() public view onlyGrant returns (address) {
-        return address(stakingContract);
+        return address(tokenStaking);
     }
 
     function getDetails() public view onlyGrant returns (
         uint256 _grantId,
         uint256 _amount,
-        address _stakingContract
+        address _tokenStaking
     ) {
         return (
             grantId,
             amount,
-            address(stakingContract)
+            address(tokenStaking)
         );
     }
 
     function cancelStake() public onlyGrant returns (uint256) {
-        stakingContract.cancelStake(operator);
+        tokenStaking.cancelStake(operator);
         return returnTokens();
     }
 
     function undelegate() public onlyGrant {
-        stakingContract.undelegate(operator);
+        tokenStaking.undelegate(operator);
     }
 
     function recoverStake() public onlyGrant returns (uint256) {
-        stakingContract.recoverStake(operator);
+        tokenStaking.recoverStake(operator);
         return returnTokens();
     }
 
