@@ -16,7 +16,7 @@ const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
 
-contract('TokenGrant', function(accounts) {
+contract('TokenGrant/Stake', function(accounts) {
 
   let tokenContract, registryContract, grantContract, stakingContract;
 
@@ -281,5 +281,28 @@ contract('TokenGrant', function(accounts) {
       grantContract.undelegate(operatorOne, {from: operatorTwo}),
       "Only operator or grantee can undelegate"
     )
+  })
+
+  it("should recover tokens recovered outside the grant contract", async () => {
+    await delegate(grantee, operatorOne, grantAmount);
+
+    await mineBlocks(initializationPeriod);
+    await grantContract.undelegate(operatorOne, {from: grantee});
+    await mineBlocks(undelegationPeriod);
+    await stakingContract.recoverStake(operatorOne);
+    let availablePre = await grantContract.availableToStake(grantId);
+
+    expect(availablePre).to.eq.BN(
+      0,
+      "Staked tokens should be displaced"
+    );
+
+    await grantContract.recoverStake(operatorOne);
+    let availablePost = await grantContract.availableToStake(grantId);
+
+    expect(availablePost).to.eq.BN(
+      grantAmount,
+      "Staked tokens should be recovered safely"
+    );
   })
 });
