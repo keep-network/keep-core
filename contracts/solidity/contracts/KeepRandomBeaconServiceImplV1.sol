@@ -3,6 +3,7 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./utils/AddressArrayUtils.sol";
+import "./utils/PercentUtils.sol";
 import "./DelayedWithdrawal.sol";
 import "./Registry.sol";
 import "./IRandomBeacon.sol";
@@ -32,6 +33,7 @@ interface OperatorContract {
  */
 contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IRandomBeacon {
     using SafeMath for uint256;
+    using PercentUtils for uint256;
     using AddressArrayUtils for address[];
 
     event RelayEntryRequested(uint256 requestId);
@@ -282,7 +284,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
 
         // Send 1% of the request subsidy pool to the requestor.
         if (_requestSubsidyFeePool >= 100) {
-            uint256 amount = _requestSubsidyFeePool.div(100);
+            uint256 amount = _requestSubsidyFeePool.percent(1);
             _requestSubsidyFeePool -= amount;
             (bool success, ) = msg.sender.call.value(amount)("");
             require(success, "Failed send subsidy fee");
@@ -383,7 +385,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
      * @param gasPrice Gas price in wei.
      */
     function gasPriceWithFluctuationMargin(uint256 gasPrice) internal view returns (uint256) {
-        return gasPrice.add(gasPrice.mul(_fluctuationMargin).div(100));
+        return gasPrice.add(gasPrice.percent(_fluctuationMargin));
     }
 
     /**
@@ -443,7 +445,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
 
         return (
             entryVerificationGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)),
-            groupCreationGas.mul(_priceFeedEstimate).mul(_dkgContributionMargin).div(100),
+            groupCreationGas.mul(_priceFeedEstimate).percent(_dkgContributionMargin),
             groupProfitFee
         );
     }
