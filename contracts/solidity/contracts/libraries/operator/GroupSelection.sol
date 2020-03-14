@@ -65,7 +65,7 @@ library GroupSelection {
         // previousTicketIndex[3] -> 3 note: index that holds a lowest
         // value points to itself because there is no `nil` in Solidity.
         // Traversing from tail: [2]->[0]->[1]->[3] result in 175->151->42->7
-        mapping(uint256 => uint256) previousTicketIndex;
+        bytes previousTicketIndices;
 
         // Tail represents an index of a ticket in a tickets[] array which holds
         // the highest ticket value. It is a tail of the linked list defined by
@@ -227,7 +227,11 @@ library GroupSelection {
      * below the group size.
      */
     function addTicket(Storage storage self, uint64 newTicketValue) internal {
-        uint256[] memory ordered = getTicketValueOrderedIndices(self);
+        uint256[] memory previousTicketIndex = readPreviousTicketIndices(self);
+        uint256[] memory ordered = getTicketValueOrderedIndices(
+            self,
+            previousTicketIndex
+        );
 
         // any ticket goes when the tickets array size is lower than the group size
         if (self.tickets.length < self.groupSize) {
@@ -239,20 +243,20 @@ library GroupSelection {
                 self.tickets.push(newTicketValue);
                 uint256 oldTail = self.tail;
                 self.tail = self.tickets.length-1;
-                self.previousTicketIndex[self.tail] = oldTail;
+                previousTicketIndex[self.tail] = oldTail;
             // lower than the current lowest
             } else if (newTicketValue < self.tickets[ordered[0]]) {
                 self.tickets.push(newTicketValue);
                 // last element points to itself
-                self.previousTicketIndex[self.tickets.length - 1] = self.tickets.length - 1;
+                previousTicketIndex[self.tickets.length - 1] = self.tickets.length - 1;
                 // previous lowest ticket points to the new lowest
-                self.previousTicketIndex[ordered[0]] = self.tickets.length - 1;
+                previousTicketIndex[ordered[0]] = self.tickets.length - 1;
             // higher than the lowest ticket value and lower than the highest ticket value
             } else {
                 self.tickets.push(newTicketValue);
                 uint256 j = findReplacementIndex(self, newTicketValue, ordered);
-                self.previousTicketIndex[self.tickets.length - 1] = self.previousTicketIndex[j];
-                self.previousTicketIndex[j] = self.tickets.length - 1;
+                previousTicketIndex[self.tickets.length - 1] = previousTicketIndex[j];
+                previousTicketIndex[j] = self.tickets.length - 1;
             }
             self.candidate[newTicketValue] = msg.sender;
         } else if (newTicketValue < self.tickets[self.tail]) {
@@ -261,18 +265,18 @@ library GroupSelection {
             if (newTicketValue < self.tickets[ordered[0]]) {
                 // replacing highest ticket with the new lowest
                 self.tickets[self.tail] = newTicketValue;
-                uint256 newTail = self.previousTicketIndex[self.tail];
-                self.previousTicketIndex[ordered[0]] = self.tail;
-                self.previousTicketIndex[self.tail] = self.tail;
+                uint256 newTail = previousTicketIndex[self.tail];
+                previousTicketIndex[ordered[0]] = self.tail;
+                previousTicketIndex[self.tail] = self.tail;
                 self.tail = newTail;
             } else { // new ticket is between lowest and highest
                 uint256 j = findReplacementIndex(self, newTicketValue, ordered);
                 self.tickets[self.tail] = newTicketValue;
                 // do not change the order if a new ticket is still highest
                 if (j != self.tail) {
-                    uint newTail = self.previousTicketIndex[self.tail];
-                    self.previousTicketIndex[self.tail] = self.previousTicketIndex[j];
-                    self.previousTicketIndex[j] = self.tail;
+                    uint newTail = previousTicketIndex[self.tail];
+                    previousTicketIndex[self.tail] = previousTicketIndex[j];
+                    previousTicketIndex[j] = self.tail;
                     self.tail = newTail;
                 }
             }
@@ -281,6 +285,7 @@ library GroupSelection {
             delete self.candidate[ticketToRemove];
             self.candidate[newTicketValue] = msg.sender;
         }
+        storePreviousTicketIndices(self, previousTicketIndex);
     }
 
     /**
@@ -308,6 +313,27 @@ library GroupSelection {
         return ordered[lo];
     }
 
+    function readPreviousTicketIndices(Storage storage self)
+        internal view returns (uint256[] memory uncompressed)
+    {
+        bytes memory compressed = self.previousTicketIndices;
+        uncompressed = new uint256[](self.groupSize);
+        for (uint256 i = 0; i < compressed.length; i++) {
+            uncompressed[i] = uint256(uint8(compressed[i]));
+        }
+    }
+
+    function storePreviousTicketIndices(
+        Storage storage self,
+        uint256[] memory uncompressed
+    ) internal {
+        bytes memory compressed = new bytes(uncompressed.length);
+        for (uint256 i = 0; i < compressed.length; i++) {
+            compressed[i] = bytes1(uint8(uncompressed[i]));
+        }
+        self.previousTicketIndices = compressed;
+    }
+
     /**
      * @dev Creates an array of ticket indexes based on their values in the ascending order:
      *
@@ -315,13 +341,16 @@ library GroupSelection {
      * ordered[n-2] = previousTicketIndex[tail]
      * ordered[n-3] = previousTicketIndex[ordered[n-2]]
      */
-    function getTicketValueOrderedIndices(Storage storage self) internal view returns (uint256[] memory) {
+    function getTicketValueOrderedIndices(
+        Storage storage self,
+        uint256[] memory previousIndices
+    ) internal view returns (uint256[] memory) {
         uint256[] memory ordered = new uint256[](self.tickets.length);
         if (ordered.length > 0) {
             ordered[self.tickets.length-1] = self.tail;
             if (ordered.length > 1) {
                 for (uint256 i = self.tickets.length - 1; i > 0; i--) {
-                    ordered[i-1] = self.previousTicketIndex[ordered[i]];
+                    ordered[i-1] = previousIndices[ordered[i]];
                 }
             }
         }
@@ -340,11 +369,12 @@ library GroupSelection {
 
         require(self.tickets.length >= self.groupSize, "Not enough tickets submitted");
 
+        uint256[] memory previousTicketIndex = readPreviousTicketIndices(self);
         address[] memory selected = new address[](self.groupSize);
         uint256 ticketIndex = self.tail;
         selected[self.tickets.length - 1] = self.candidate[self.tickets[ticketIndex]];
         for (uint256 i = self.tickets.length - 1; i > 0; i--) {
-            ticketIndex = self.previousTicketIndex[ticketIndex];
+            ticketIndex = previousTicketIndex[ticketIndex];
             selected[i-1] = self.candidate[self.tickets[ticketIndex]];
         }
 

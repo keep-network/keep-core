@@ -39,10 +39,6 @@ export const getWeb3 = () => {
   return null
 }
 
-export const getWeb3SocketProvider = () => {
-  return new Web3(process.env.REACT_APP_ETH_NETWORK_WEB_SOCKET_ADDRESS)
-}
-
 export const shortenAddress = (address) => {
   if (!address) {
     return ''

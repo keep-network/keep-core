@@ -20,7 +20,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   before(async () => {
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
+      artifacts.require('./TokenStakingStub.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
@@ -77,6 +77,27 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     assert.isTrue((await stakingContract.balanceOf(operator1)).isZero(), "Unexpected balance after token slasing")
   })
 
+  it("should revert slashing when operator stakes are not active yet", async () => {
+    stakingContract.setInitializationPeriod(100)
+    let amountToSlash = web3.utils.toBN(42000000);
+    
+    await expectThrowWithMessage(
+      stakingContract.slash(amountToSlash, [operator1], {from: anotherOperatorContract}),
+      "Operator stake must be active"
+      );
+  })
+    
+  it("should revert seizing when operator stakes are not active yet", async () => {
+    stakingContract.setInitializationPeriod(100)
+    let amountToSeize = web3.utils.toBN(42000000);
+    let rewardMultiplier = web3.utils.toBN(25)
+      
+    await expectThrowWithMessage(
+      stakingContract.seize(amountToSeize, rewardMultiplier, tattletale, [operator1], {from: anotherOperatorContract}),
+      "Operator stake must be active"
+    );
+  })
+    
   it("should seize token amount", async () => {
     let operatorBalanceBeforeSeizing = await stakingContract.balanceOf(operator1)
     let tattletaleBalanceBeforeSeizing = await token.balanceOf(tattletale)
