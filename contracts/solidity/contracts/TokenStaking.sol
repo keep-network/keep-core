@@ -185,6 +185,11 @@ contract TokenStaking is StakeDelegatable {
             require(authorizations[msg.sender][operator], "Not authorized");
 
             uint256 operatorParams = operators[operator].packedParams;
+            require(
+                block.number > operatorParams.getCreationBlock().add(initializationPeriod),
+                "Operator stake must be active"
+            );
+
             uint256 currentAmount = operatorParams.getAmount();
 
             if (currentAmount < amountToSlash) {
@@ -224,6 +229,11 @@ contract TokenStaking is StakeDelegatable {
             require(authorizations[msg.sender][operator], "Not authorized");
 
             uint256 operatorParams = operators[operator].packedParams;
+            require(
+                block.number > operatorParams.getCreationBlock().add(initializationPeriod),
+                "Operator stake must be active"
+            );
+
             uint256 currentAmount = operatorParams.getAmount();
 
             if (currentAmount < amountToSeize) {
