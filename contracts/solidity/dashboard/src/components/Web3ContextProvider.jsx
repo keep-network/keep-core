@@ -1,5 +1,5 @@
 import React from 'react'
-import { getWeb3, getWeb3SocketProvider } from '../utils/general.utils'
+import { getWeb3 } from '../utils/general.utils'
 import { Web3Context } from './WithWeb3Context'
 import { MessagesContext, messageType } from './Message'
 import { getContracts } from '../contracts'
@@ -65,19 +65,12 @@ export default class Web3ContextProvider extends React.Component {
     initializeContracts = async () => {
       const { web3 } = this.state
       try {
-        const web3EventProvider = getWeb3SocketProvider()
         const contracts = await getContracts(web3)
-        const eventContracts = await getContracts(web3EventProvider)
         this.setState({
           ...contracts,
           defaultContract: contracts.stakingContract,
           utils: web3.utils,
           eth: web3.eth,
-          eventToken: eventContracts.token,
-          eventGrantContract: eventContracts.grantContract,
-          eventStakingContract: eventContracts.stakingContract,
-          eventKeepRandomBeaconOperatorContract: eventContracts.keepRandomBeaconOperatorContract,
-          eventRegistry: eventContracts.registryContract,
         })
       } catch (error) {
         this.setState({

@@ -10,19 +10,15 @@ export const Web3Context = React.createContext({
   utils: {},
   eth: {},
   error: '',
-  eventToken: { options: { address: '' } },
-  eventStakingContract: { options: { address: '' } },
-  eventGrantContract: { options: { address: '' } },
 })
 
 const withWeb3Context = (Component) => {
   return (props) => (
     <Web3Context.Consumer>
-      {({ eventToken, eventStakingContract, eventGrantContract, ...web3 }) => (
+      {(web3) => (
         <Component
           {...props}
           web3={web3}
-          web3EventProvider={{ eventGrantContract, eventStakingContract, eventToken }}
         />
       )}
     </Web3Context.Consumer>

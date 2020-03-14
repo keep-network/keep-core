@@ -1,6 +1,8 @@
 import { TOKEN_GRANT_CONTRACT_NAME } from '../constants/constants'
 import { contractService } from './contracts.service'
+import { isSameEthAddress } from '../utils/general.utils'
 import web3Utils from 'web3-utils'
+import { sub } from '../utils/arithmetics.utils'
 
 const fetchGrants = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -9,16 +11,23 @@ const fetchGrants = async (web3Context) => {
 
   for (let i = 0; i < grantIds.length; i++) {
     const grantDetails = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrant', grantIds[i])
+    if (!isSameEthAddress(yourAddress, grantDetails.grantee)) {
+      continue
+    }
     const vestingSchedule = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantVestingSchedule', grantIds[i])
 
     const vested = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'grantedAmount', grantIds[i])
     let readyToRelease = '0'
-    readyToRelease = await contractService
-      .makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'withdrawable', grantIds[i])
-      .catch(() => readyToRelease = '0')
+    try {
+      readyToRelease = await contractService
+        .makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'withdrawable', grantIds[i])
+    } catch (error) {
+      readyToRelease = '0'
+    }
     const released = grantDetails.withdrawn
+    const availableToStake = sub(sub(grantDetails.amount, grantDetails.withdrawn), grantDetails.staked)
 
-    grants.push({ id: grantIds[i], vested, released, readyToRelease, ...vestingSchedule, ...grantDetails })
+    grants.push({ id: grantIds[i], vested, released, readyToRelease, availableToStake, ...vestingSchedule, ...grantDetails })
   }
 
   return grants

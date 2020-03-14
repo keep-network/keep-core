@@ -47,7 +47,12 @@ contract TokenStaking is StakeDelegatable {
      * stakes will stay locked for a number of blocks after undelegation, and thus available as
      * collateral for any work the operator is engaged in.
      */
-    constructor(address _tokenAddress, address _registry, uint256 _initializationPeriod, uint256 _undelegationPeriod) public {
+    constructor(
+        address _tokenAddress,
+        address _registry,
+        uint256 _initializationPeriod,
+        uint256 _undelegationPeriod
+    ) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20Burnable(_tokenAddress);
         registry = Registry(_registry);
@@ -78,7 +83,12 @@ contract TokenStaking is StakeDelegatable {
         // Transfer tokens to this contract.
         token.safeTransferFrom(_from, address(this), _value);
 
-        operators[operator] = Operator(_value, block.number, 0, _from, magpie, authorizer);
+        operators[operator] = Operator(
+            OperatorParams.pack(_value, block.number, 0),
+            _from,
+            magpie,
+            authorizer
+        );
         ownerOperators[_from].push(operator);
 
         emit Staked(operator, _value);
@@ -96,14 +106,16 @@ contract TokenStaking is StakeDelegatable {
             msg.sender == _operator ||
             msg.sender == owner, "Only operator or the owner of the stake can cancel the delegation."
         );
+        uint256 operatorParams = operators[_operator].packedParams;
 
         require(
-            block.number <= operators[_operator].createdAt.add(initializationPeriod),
+            block.number <= operatorParams.getCreationBlock().add(initializationPeriod),
             "Initialization period is over"
         );
 
-        uint256 amount = operators[_operator].amount;
-        delete operators[_operator];
+        uint256 amount = operatorParams.getAmount();
+        operators[_operator].packedParams = operatorParams.setAmount(0);
+
         token.safeTransfer(owner, amount);
     }
 
@@ -118,7 +130,9 @@ contract TokenStaking is StakeDelegatable {
             msg.sender == _operator ||
             msg.sender == owner, "Only operator or the owner of the stake can undelegate."
         );
-        operators[_operator].undelegatedAt = block.number;
+        uint256 oldParams = operators[_operator].packedParams;
+        uint256 newParams = oldParams.setUndelegationBlock(block.number);
+        operators[_operator].packedParams = newParams;
         emit Undelegated(_operator, block.number);
     }
 
@@ -128,13 +142,15 @@ contract TokenStaking is StakeDelegatable {
      * @param _operator Operator address.
      */
     function recoverStake(address _operator) public {
+        uint256 operatorParams = operators[_operator].packedParams;
         require(
-            block.number >= operators[_operator].undelegatedAt.add(undelegationPeriod),
+            block.number > operatorParams.getUndelegationBlock().add(undelegationPeriod),
             "Can not recover stake before undelegation period is over."
         );
         address owner = operators[_operator].owner;
-        uint256 amount = operators[_operator].amount;
-        delete operators[_operator];
+        uint256 amount = operatorParams.getAmount();
+
+        operators[_operator].packedParams = operatorParams.setAmount(0);
 
         token.safeTransfer(owner, amount);
         emit RecoveredStake(_operator, block.number);
@@ -143,18 +159,14 @@ contract TokenStaking is StakeDelegatable {
     /**
      * @dev Gets stake delegation info for the given operator.
      * @param _operator Operator address.
-     * @return createdAt The time when the stake has been delegated.
      * @return amount The amount of tokens the given operator delegated.
+     * @return createdAt The time when the stake has been delegated.
      * @return undelegatedAt The time when undelegation has been requested.
      * If undelegation has not been requested, 0 is returned.
      */
     function getDelegationInfo(address _operator)
-    public view returns (uint256 createdAt, uint256 amount, uint256 undelegatedAt) {
-        return (
-            operators[_operator].createdAt,
-            operators[_operator].amount,
-            operators[_operator].undelegatedAt
-        );
+    public view returns (uint256 amount, uint256 createdAt, uint256 undelegatedAt) {
+        return operators[_operator].packedParams.unpack();
     }
 
     /**
@@ -167,48 +179,70 @@ contract TokenStaking is StakeDelegatable {
         public
         onlyApprovedOperatorContract(msg.sender) {
 
-        uint256 totalAmountToSlash = 0;
+        uint256 totalAmountToBurn = 0;
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
-            if (operators[operator].amount < amountToSlash) {
-                totalAmountToSlash = totalAmountToSlash.add(operators[operator].amount);
-                operators[operator].amount = 0;
+
+            uint256 operatorParams = operators[operator].packedParams;
+            uint256 currentAmount = operatorParams.getAmount();
+
+            if (currentAmount < amountToSlash) {
+                totalAmountToBurn = totalAmountToBurn.add(currentAmount);
+
+                uint256 newAmount = 0;
+                operators[operator].packedParams = operatorParams.setAmount(newAmount);
             } else {
-                totalAmountToSlash = totalAmountToSlash.add(amountToSlash);
-                operators[operator].amount = operators[operator].amount.sub(amountToSlash);
+                totalAmountToBurn = totalAmountToBurn.add(amountToSlash);
+
+                uint256 newAmount = currentAmount.sub(amountToSlash);
+                operators[operator].packedParams = operatorParams.setAmount(newAmount);
             }
         }
 
-        token.burn(totalAmountToSlash);
+        token.burn(totalAmountToBurn);
     }
 
     /**
      * @dev Seize provided token amount from every member in the misbehaved
      * operators array. The tattletale is rewarded with 5% of the total seized
      * amount scaled by the reward adjustment parameter and the rest 95% is burned.
-     * @param amount Token amount to seize from every misbehaved operator.
+     * @param amountToSeize Token amount to seize from every misbehaved operator.
      * @param rewardMultiplier Reward adjustment in percentage. Min 1% and 100% max.
      * @param tattletale Address to receive the 5% reward.
      * @param misbehavedOperators Array of addresses to seize the tokens from.
      */
     function seize(
-        uint256 amount,
+        uint256 amountToSeize,
         uint256 rewardMultiplier,
         address tattletale,
         address[] memory misbehavedOperators
     ) public onlyApprovedOperatorContract(msg.sender) {
+        uint256 totalAmountToBurn = 0;
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
-            operators[operator].amount = operators[operator].amount.sub(amount);
+
+            uint256 operatorParams = operators[operator].packedParams;
+            uint256 currentAmount = operatorParams.getAmount();
+
+            if (currentAmount < amountToSeize) {
+                totalAmountToBurn = totalAmountToBurn.add(currentAmount);
+
+                uint256 newAmount = 0;
+                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+            } else {
+                totalAmountToBurn = totalAmountToBurn.add(amountToSeize);
+
+                uint256 newAmount = currentAmount.sub(amountToSeize);
+                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+            }
         }
 
-        uint256 total = misbehavedOperators.length.mul(amount);
-        uint256 tattletaleReward = (total.percent(5)).percent(rewardMultiplier);
+        uint256 tattletaleReward = (totalAmountToBurn.percent(5)).percent(rewardMultiplier);
 
         token.safeTransfer(tattletale, tattletaleReward);
-        token.burn(total.sub(tattletaleReward));
+        token.burn(totalAmountToBurn.sub(tattletaleReward));
     }
 
     /**
@@ -253,13 +287,15 @@ contract TokenStaking is StakeDelegatable {
     ) public view returns (uint256 balance) {
         bool isAuthorized = authorizations[_operatorContract][_operator];
 
-        Operator memory operator = operators[_operator];
+        uint256 operatorParams = operators[_operator].packedParams;
+        uint256 createdAt = operatorParams.getCreationBlock();
+        uint256 undelegatedAt = operatorParams.getUndelegationBlock();
 
-        bool isActive = block.number >= operator.createdAt.add(initializationPeriod);
-        bool notUndelegated = block.number <= operator.undelegatedAt || operator.undelegatedAt == 0;
+        bool isActive = block.number > createdAt.add(initializationPeriod);
+        bool isUndelegating = (undelegatedAt > 0) && (block.number > undelegatedAt);
 
-        if (isAuthorized && isActive && notUndelegated) {
-            balance = operator.amount;
+        if (isAuthorized && isActive && !isUndelegating) {
+            balance = operatorParams.getAmount();
         }
     }
 
@@ -284,12 +320,13 @@ contract TokenStaking is StakeDelegatable {
     ) public view returns (uint256 balance) {
         bool isAuthorized = authorizations[_operatorContract][_operator];
 
-        Operator memory operator = operators[_operator];
+        uint256 operatorParams = operators[_operator].packedParams;
+        uint256 createdAt = operatorParams.getCreationBlock();
 
-        bool isActive = block.number >= operator.createdAt.add(initializationPeriod);
+        bool isActive = block.number > createdAt.add(initializationPeriod);
 
         if (isAuthorized && isActive) {
-            balance = operator.amount;
+            balance = operatorParams.getAmount();
         }
     }
 }
