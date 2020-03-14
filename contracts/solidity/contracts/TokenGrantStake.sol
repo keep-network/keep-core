@@ -39,7 +39,7 @@ contract TokenGrantStake {
     function stake(
         uint256 _amount,
         bytes memory _extraData
-    ) onlyGrant public {
+    ) public onlyGrant {
         amount = _amount;
         operator = _extraData.toAddress(20);
         tokenSender(address(token)).approveAndCall(
@@ -49,19 +49,19 @@ contract TokenGrantStake {
         );
     }
 
-    function getGrantId() onlyGrant public view returns (uint256) {
+    function getGrantId() public view onlyGrant returns (uint256) {
         return grantId;
     }
 
-    function getAmount() onlyGrant public view returns (uint256) {
+    function getAmount() public view onlyGrant returns (uint256) {
         return amount;
     }
 
-    function getStakingContract() onlyGrant public view returns (address) {
+    function getStakingContract() public view onlyGrant returns (address) {
         return address(stakingContract);
     }
 
-    function getDetails() onlyGrant public view returns (
+    function getDetails() public view onlyGrant returns (
         uint256 _grantId,
         uint256 _amount,
         address _stakingContract
@@ -73,16 +73,16 @@ contract TokenGrantStake {
         );
     }
 
-    function cancelStake() onlyGrant public returns (uint256) {
+    function cancelStake() public onlyGrant returns (uint256) {
         stakingContract.cancelStake(operator);
         return returnTokens();
     }
 
-    function undelegate() onlyGrant public {
+    function undelegate() public onlyGrant {
         stakingContract.undelegate(operator);
     }
 
-    function recoverStake() onlyGrant public returns (uint256) {
+    function recoverStake() public onlyGrant returns (uint256) {
         stakingContract.recoverStake(operator);
         return returnTokens();
     }
