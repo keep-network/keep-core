@@ -29,7 +29,15 @@ contract TokenGrantStake {
         uint256 _grantId,
         address _stakingContract
     ) public {
-        require(_tokenAddress != address(0x0), "Token address can't be zero.");
+        require(
+            _tokenAddress != address(0x0),
+            "Token address can't be zero."
+        );
+        require(
+            _stakingContract != address(0x0),
+            "Staking contract address can't be zero."
+        );
+
         token = ERC20Burnable(_tokenAddress);
         tokenGrant = msg.sender;
         grantId = _grantId;
