@@ -187,7 +187,7 @@ contract TokenStaking is StakeDelegatable {
             uint256 operatorParams = operators[operator].packedParams;
             require(
                 block.number > operatorParams.getCreationBlock().add(initializationPeriod),
-                "Operator stakes must be active"
+                "Operator stake must be active"
             );
 
             uint256 currentAmount = operatorParams.getAmount();
@@ -226,12 +226,12 @@ contract TokenStaking is StakeDelegatable {
         uint256 totalAmountToBurn = 0;
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
-            uint256 operatorParams = operators[operator].packedParams;
-
             require(authorizations[msg.sender][operator], "Not authorized");
+
+            uint256 operatorParams = operators[operator].packedParams;
             require(
                 block.number > operatorParams.getCreationBlock().add(initializationPeriod),
-                "Operator stakes must be active"
+                "Operator stake must be active"
             );
 
             uint256 currentAmount = operatorParams.getAmount();

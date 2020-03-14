@@ -83,7 +83,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     
     await expectThrowWithMessage(
       stakingContract.slash(amountToSlash, [operator1], {from: anotherOperatorContract}),
-      "Operator stakes must be active"
+      "Operator stake must be active"
       );
   })
     
@@ -94,7 +94,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
       
     await expectThrowWithMessage(
       stakingContract.seize(amountToSeize, rewardMultiplier, tattletale, [operator1], {from: anotherOperatorContract}),
-      "Operator stakes must be active"
+      "Operator stake must be active"
     );
   })
     
