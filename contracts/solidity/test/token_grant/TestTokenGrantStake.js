@@ -16,7 +16,7 @@ const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
 
-contract.only('TokenGrant/Stake', function(accounts) {
+contract('TokenGrant/Stake', function(accounts) {
 
   let tokenContract, registryContract, grantContract, stakingContract;
 
