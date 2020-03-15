@@ -5,7 +5,6 @@ const Registry = artifacts.require("./Registry.sol");
 
 const withdrawalDelay = 86400; // 1 day
 let priceFeedEstimate = web3.utils.toWei(web3.utils.toBN(20), 'Gwei');
-const fluctuationMargin = 50; // 50%
 const dkgContributionMargin = 1; // 1%
 
 module.exports = async function(deployer, network) {
@@ -20,7 +19,6 @@ module.exports = async function(deployer, network) {
 
     keepRandomBeaconService.initialize(
         priceFeedEstimate,
-        fluctuationMargin,
         dkgContributionMargin,
         withdrawalDelay,
         registry.address

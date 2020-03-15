@@ -93,8 +93,8 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
     // The entire entry verification fee is paid to the submitter 
     // regardless of their gas expenditure. The submitter is free to spend 
     // less or more, keeping the surplus or paying the difference:
-    // 10020 * 140000 * 150% (fluctuation margin)
-    let expectedSubmitterReward = web3.utils.toBN("2104200000");
+    // 10020 * 140000
+    let expectedSubmitterReward = web3.utils.toBN("1402800000");
     
     let rewards = await operatorContract.getNewEntryRewardsBreakdown.call(); 
 
@@ -131,8 +131,8 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
     // The entire entry verification fee is paid to the submitter 
     // regardless of their gas expenditure. The submitter is free to spend 
     // less or more, keeping the surplus or paying the difference:
-    // 10050 * 150000 * 150% (fluctuation margin)
-    let expectedSubmitterReward = web3.utils.toBN("2261250000");
+    // 10050 * 150000
+    let expectedSubmitterReward = web3.utils.toBN("1507500000");
     
     let rewards = await operatorContract.getNewEntryRewardsBreakdown.call(); 
     
@@ -170,14 +170,14 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
     // The entire entry verification fee is paid to the submitter 
     // regardless of their gas expenditure. The submitter is free to spend 
     // less or more, keeping the surplus or paying the difference:
-    // 50050 * 1400000 * 150% (fluctuation margin) = 105105000000
+    // 50050 * 1400000 = 70070000000
     // 
     // To incentivize a race for the submitter position, the submitter 
     // receives delay penalty * group size * 0.05 as an extra reward:
     // 1987000 * (1 - 0.9896104600694443) * 64 * 5% = ~66060
     //
-    // 105105000000 + 66060 = 105105066060          
-    let expectedSubmitterReward = web3.utils.toBN("105105066060");  
+    // 70070000000 + 66060 = 70070066060          
+    let expectedSubmitterReward = web3.utils.toBN("70070066060");  
 
     // If the amount paid out to the signing group in group rewards and the 
     // submitter’s extra reward is less than the profit margin, the 
@@ -228,14 +228,14 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
     // The entire entry verification fee is paid to the submitter 
     // regardless of their gas expenditure. The submitter is free to spend 
     // less or more, keeping the surplus or paying the difference:
-    // 50020 * 2000000 * 150% (fluctuation margin) = 150060000000
+    // 50020 * 2000000 = 100040000000
     // 
     // To incentivize a race for the submitter position, the submitter 
     // receives delay penalty * group size * 0.05 as an extra reward:
     // 1382000000 * (1 - 0.0000271267361111) * 64 * 5% = ~4422280034
     //
-    // 150060000000 + 4422280034 = 154482280034          
-    let expectedSubmitterReward = web3.utils.toBN("154482280034"); 
+    // 100040000000 + 4422280034 = 104462280034          
+    let expectedSubmitterReward = web3.utils.toBN("104462280034"); 
 
     // If the amount paid out to the signing group in group rewards and the 
     // submitter’s extra reward is less than the profit margin, the 

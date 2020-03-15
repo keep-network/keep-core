@@ -70,10 +70,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // gas price. Expressed in wei.
     uint256 public priceFeedEstimate = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
 
-    // Fluctuation margin to cover the immediate rise in gas price.
-    // Expressed in percentage.
-    uint256 public fluctuationMargin = 50; // 50%
-
     // Size of a group in the threshold relay.
     uint256 public groupSize = 64;
 
@@ -108,9 +104,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // Gas required to trigger DKG (starting group selection).
     uint256 public groupSelectionGasEstimate = 100000;
 
-    // Reimbursement for the submitter of the DKG result.
-    // This value is set when a new DKG request comes to the operator contract.
-    // It contains a full payment for DKG multiplied by the fluctuation margin.
+    // Reimbursement for the submitter of the DKG result. This value is set when
+    // a new DKG request comes to the operator contract.
+    //
     // When submitting DKG result, the submitter is reimbursed with the actual cost
     // and some part of the fee stored in this field may be returned to the service
     // contract.
@@ -211,26 +207,13 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Adds a safety margin for gas price fluctuations to the current gas price.
-     * The gas price for DKG or relay entry is set when the request is processed
-     * but the result submission transaction will be sent later. We add a safety
-     * margin that should be sufficient for getting requests processed within a
-     * a deadline under all circumstances.
-     * @param gasPrice Gas price in wei.
-     */
-    function gasPriceWithFluctuationMargin(uint256 gasPrice) internal view returns (uint256) {
-        return gasPrice.add(gasPrice.percent(fluctuationMargin));
-    }
-
-    /**
      * @dev Triggers the selection process of a new candidate group.
      * @param _newEntry New random beacon value that stakers will use to
      * generate their tickets.
      * @param submitter Operator of this contract.
      */
     function createGroup(uint256 _newEntry, address payable submitter) public payable onlyServiceContract {
-        uint256 groupSelectionStartFee = groupSelectionGasEstimate
-            .mul(gasPriceWithFluctuationMargin(priceFeedEstimate));
+        uint256 groupSelectionStartFee = groupSelectionGasEstimate.mul(priceFeedEstimate);
 
         groupSelectionStarterContract = ServiceContract(msg.sender);
         startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
@@ -242,7 +225,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
         require(
-            _payment >= gasPriceWithFluctuationMargin(priceFeedEstimate).mul(dkgGasEstimate),
+            _payment >= priceFeedEstimate.mul(dkgGasEstimate),
             "Insufficient DKG fee"
         );
 
@@ -407,7 +390,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         bytes memory previousEntry
     ) public payable onlyServiceContract {
         uint256 entryVerificationAndProfitFee = groupProfitFee().add(
-            entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate))
+            entryVerificationGasEstimate.mul(priceFeedEstimate)
         );
         require(
             msg.value >= entryVerificationAndProfitFee,
@@ -503,11 +486,17 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 callbackFee = signingRequest.callbackFee;
 
         // Make sure not to spend more than what was received from the service contract for the callback
-        uint256 gasLimit = callbackFee.div(gasPriceWithFluctuationMargin(priceFeedEstimate));
+        uint256 gasLimit = callbackFee.div(priceFeedEstimate);
 
         bytes memory callbackReturnData;
         uint256 gasBeforeCallback = gasleft();
-        (, callbackReturnData) = signingRequest.serviceContract.call.gas(gasLimit)(abi.encodeWithSignature("executeCallback(uint256,uint256)", signingRequest.relayRequestId, entry));
+        (, callbackReturnData) = signingRequest.serviceContract.call.gas(
+            gasLimit
+        )(abi.encodeWithSignature(
+            "executeCallback(uint256,uint256)",
+            signingRequest.relayRequestId,
+            entry
+        ));
         uint256 gasAfterCallback = gasleft();
         uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
 

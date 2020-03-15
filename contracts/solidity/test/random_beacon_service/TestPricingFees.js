@@ -36,7 +36,7 @@ contract('KeepRandomBeaconService/PricingFees', function(accounts) {
         let fees = await serviceContract.entryFeeBreakdown();
         let entryVerificationFee = fees.entryVerificationFee;
 
-        let expectedEntryVerificationFee = 3600; // 200 * 12 * 150%
+        let expectedEntryVerificationFee = 2400; // 200 * 12
         assert.equal(expectedEntryVerificationFee, entryVerificationFee);
     });
 
@@ -59,7 +59,7 @@ contract('KeepRandomBeaconService/PricingFees', function(accounts) {
 
         let callbackFee = await serviceContract.callbackFee(callbackGas);
         
-        let expectedCallbackFee = 4784640; // (18845 + 1091) * 160 * 150%
+        let expectedCallbackFee = 3189920; // (18846 + 1091) * 160
         assert.equal(expectedCallbackFee, callbackFee);
     });
 
@@ -77,12 +77,12 @@ contract('KeepRandomBeaconService/PricingFees', function(accounts) {
             callbackGas
         );
 
-        // entry verification fee = 12 * 200 * 150% = 3600
+        // entry verification fee = 12 * 200 = 2400
         // dkg contribution fee = (14 + 2) * 200 * 1% = 32
         // group profit fee = 13 * 3 = 39
-        // callback fee = (18845 + 7) * 200 * 150% = 5655600
-        // entry fee = 3600 + 32 + 39 + 5655600 = 5659271
-        let expectedEntryFeeEstimate = 5659271;
+        // callback fee = (18846 + 7) * 200 = 3770600
+        // entry fee = 2400 + 32 + 39 + 3770600 = 3773071
+        let expectedEntryFeeEstimate = 3773071;
         assert.equal(expectedEntryFeeEstimate, entryFeeEstimate)
     });
 });

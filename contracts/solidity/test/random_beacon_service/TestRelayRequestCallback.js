@@ -477,9 +477,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     let priceFeedEstimate = web3.utils.toBN(
       await operatorContract.priceFeedEstimate()
     )
-    let groupCreationFee = priceFeedEstimate.mul(groupSelectionGasEstimate.add(
-      groupSelectionGasEstimate.muln(50).divn(100) // with fluctuation margin
-    ))
+    let groupCreationFee = priceFeedEstimate.mul(groupSelectionGasEstimate)
 
     // the sum of ether paid to beneficiary and customer should equal
     // entry verification, group creation, and callback fee passed to the beacon 
@@ -509,14 +507,10 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
   // a new group creation.
   async function fundDkgPool() {
     const groupCreationGasEstimate = await operatorContract.groupCreationGasEstimate();
-    const fluctuationMargin = await operatorContract.fluctuationMargin();
     const priceFeedEstimate = await serviceContract.priceFeedEstimate();
-    const gasPriceWithFluctuationMargin = priceFeedEstimate.add(
-      priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100))
-    );
     
     await serviceContract.fundDkgFeePool(
-      {value: groupCreationGasEstimate.mul(gasPriceWithFluctuationMargin)}
+      {value: groupCreationGasEstimate.mul(priceFeedEstimate)}
     );
   }
 });
