@@ -47,10 +47,9 @@ contract('TokenGrant/Stake', function(accounts) {
       initializationPeriod, 
       undelegationPeriod
     );
-    grantContract = await TokenGrant.new(
-      tokenContract.address, 
-      stakingContract.address
-    );
+    grantContract = await TokenGrant.new(tokenContract.address);
+    
+    await grantContract.authorizeStakingContract(stakingContract.address);
 
     grantStart = await latestTime();
 
@@ -242,7 +241,28 @@ contract('TokenGrant/Stake', function(accounts) {
     );  
   })
 
-  it("should not allow anyone but grantee to stake", async () => {
+  it("should not allow to delegate to not authorized staking contract", async () => {
+    const delegation = Buffer.concat([
+      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(operatorOne.substr(2), 'hex'),
+      Buffer.from(authorizer.substr(2), 'hex')
+    ]);
+
+    const notAuthorizedContract = "0x9E8E3487dCCd6a50045792fAfe8Ac71600B649a9"
+
+    await expectThrowWithMessage(
+      grantContract.stake(
+        grantId, 
+        notAuthorizedContract, 
+        grantAmount, 
+        delegation, 
+        {from: grantee}
+      ),
+      "Provided staking contract is not authorized"
+    )
+  })
+
+  it("should not allow anyone but grantee to delegate", async () => {
     await expectThrowWithMessage(
       delegate(operatorOne, operatorOne, grantAmount),
       "Only grantee of the grant can stake it."
