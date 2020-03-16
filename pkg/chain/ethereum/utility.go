@@ -16,7 +16,7 @@ func (euc *ethereumUtilityChain) Genesis() error {
 	}
 
 	// expressed in wei
-	gasPrice, err := euc.keepRandomBeaconOperatorContract.PriceFeedEstimate()
+	gasPrice, err := euc.keepRandomBeaconOperatorContract.GasPriceCeiling()
 	if err != nil {
 		return err
 	}
