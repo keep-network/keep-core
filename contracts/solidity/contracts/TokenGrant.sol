@@ -264,7 +264,15 @@ contract TokenGrant {
      * @param _id Grant ID.
      */
     function withdrawable(uint256 _id) public view returns (uint256) {
-        return grantedAmount(_id).sub(grants[_id].withdrawn).sub(grants[_id].staked);
+        uint256 unlocked = grantedAmount(_id);
+        uint256 withdrawn = grants[_id].withdrawn;
+        uint256 staked = grants[_id].staked;
+
+        if (withdrawn.add(staked) >= unlocked) {
+            return 0;
+        } else {
+            return unlocked.sub(withdrawn).sub(staked);
+        }
     }
 
     /**
