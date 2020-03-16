@@ -62,7 +62,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   })
 
   it("should slash token amount", async () => {
-    let amountToSlash = web3.utils.toBN(42000000);
+    let amountToSlash = web3.utils.toBN(42000);
     let balanceBeforeSlashing = await stakingContract.balanceOf(operator1)
     await stakingContract.slash(amountToSlash, [operator1], {from: anotherOperatorContract})
     let balanceAfterSlashing = await stakingContract.balanceOf(operator1)
@@ -89,7 +89,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     
   it("should revert seizing when operator stakes are not active yet", async () => {
     stakingContract.setInitializationPeriod(100)
-    let amountToSeize = web3.utils.toBN(42000000);
+    let amountToSeize = web3.utils.toBN(42000);
     let rewardMultiplier = web3.utils.toBN(25)
       
     await expectThrowWithMessage(
@@ -102,7 +102,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     let operatorBalanceBeforeSeizing = await stakingContract.balanceOf(operator1)
     let tattletaleBalanceBeforeSeizing = await token.balanceOf(tattletale)
     
-    let amountToSeize = web3.utils.toBN(42000000);
+    let amountToSeize = web3.utils.toBN(42000);
     let rewardMultiplier = web3.utils.toBN(25)
     await stakingContract.seize(amountToSeize, rewardMultiplier, tattletale, [operator1], {from: anotherOperatorContract})
     
@@ -114,8 +114,8 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
       "Unexpected balance for operator after token seizing"
     )
 
-    // 525000 = (42000000 * 5 / 100) * 25 / 100
-    let expectedTattletaleReward = web3.utils.toBN(525000)
+    // 525000 = (42000 * 5 / 100) * 25 / 100
+    let expectedTattletaleReward = web3.utils.toBN(525)
     assert.isTrue(
       (tattletaleBalanceBeforeSeizing.add(expectedTattletaleReward)).eq(tattletaleBalanceAfterSeizing), 
       "Unexpected balance for tattletale after token seizing"
@@ -125,7 +125,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   it("should seize no more than available operator's amount", async () => {
     let tattletaleBalanceBeforeSeizing = await token.balanceOf(tattletale)
     
-    let amountToSeize = largeStake.add(web3.utils.toBN(100)); // 400000000000000000000100
+    let amountToSeize = largeStake.add(web3.utils.toBN(100)); // 400100
     let rewardMultiplier = web3.utils.toBN(10)
     await stakingContract.seize(amountToSeize, rewardMultiplier, tattletale, [operator1], {from: anotherOperatorContract})
     
@@ -136,8 +136,8 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
       "Unexpected balance for operator after token seizing"
     )
     
-    // 2000000000000000000000 = (400000000000000000000100 * 5 / 100) * 10 / 100
-    let expectedTattletaleReward = web3.utils.toBN("2000000000000000000000")
+    // 2000 = (400100 * 5 / 100) * 10 / 100
+    let expectedTattletaleReward = web3.utils.toBN("2000")
     assert.isTrue(
       (tattletaleBalanceBeforeSeizing.add(expectedTattletaleReward)).eq(tattletaleBalanceAfterSeizing), 
       "Unexpected balance for tattletale after token seizing"
