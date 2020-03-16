@@ -6,6 +6,9 @@ pragma solidity ^0.5.4;
  * @dev Governance owned registry of approved contracts and roles.
  */
 contract Registry {
+
+    enum ContractStatus { Approved, Disabled }
+
     // Governance role is to enable recovery from key compromise by rekeying other roles.
     address internal governance;
 
@@ -25,8 +28,7 @@ contract Registry {
     mapping(address => address) public operatorContractUpgraders;
 
     // The registry of operator contracts
-    // 0 - NULL (default), 1 - APPROVED, 2 - DISABLED
-    mapping(address => uint256) public operatorContracts;
+    mapping(address => ContractStatus) public operatorContracts;
 
     event OperatorContractApproved(address operatorContract);
 
@@ -73,16 +75,16 @@ contract Registry {
             "Operator contract has been disabled"
         );
 
-        operatorContracts[operatorContract] = 1;
+        operatorContracts[operatorContract] = ContractStatus.Approved;
         emit OperatorContractApproved(operatorContract);
     }
 
     function disableOperatorContract(address operatorContract) public onlyPanicButton {
-        operatorContracts[operatorContract] = 2;
+        operatorContracts[operatorContract] = ContractStatus.Disabled;
     }
 
     function isApprovedOperatorContract(address operatorContract) public view returns (bool) {
-        return operatorContracts[operatorContract] == 1;
+        return operatorContracts[operatorContract] == ContractStatus.Approved;
     }
 
     function operatorContractUpgraderFor(address _serviceContract) public view returns (address) {
@@ -90,6 +92,6 @@ contract Registry {
     }
 
     function isDisabledOperatorContract(address operatorContract) internal view returns (bool) {
-        return operatorContracts[operatorContract] == 2;
+        return operatorContracts[operatorContract] == ContractStatus.Disabled;
     }
 }
