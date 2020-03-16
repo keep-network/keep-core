@@ -9,7 +9,7 @@ import {initContracts} from '../helpers/initContracts';
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
 
 
-contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
+contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
 
   let resultPublicationTime, token, stakingContract, operatorContract,
   owner = accounts[0], magpie = accounts[4], ticket,
@@ -119,7 +119,7 @@ contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
     let dkgGasEstimate = await operatorContract.dkgGasEstimate();
     let submitterCustomGasPrice = web3.utils.toWei(web3.utils.toBN(25), 'gwei');
-    let expectedSubmitterReward = dkgGasEstimate.mul(await operatorContract.priceFeedEstimate());
+    let expectedSubmitterReward = dkgGasEstimate.mul(await operatorContract.gasPriceCeiling());
 
     await operatorContract.submitDkgResult(
       1, groupPubKey, misbehaved, signatures, signingMemberIndices,
@@ -138,7 +138,7 @@ contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     let dkgSubmitterReimbursementFee = web3.utils.toBN(await web3.eth.getBalance(operatorContract.address));
     let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
 
-    await operatorContract.setPriceFeedEstimate(web3.utils.toWei(web3.utils.toBN(100), 'gwei'));
+    await operatorContract.setGasPriceCeiling(web3.utils.toWei(web3.utils.toBN(100), 'gwei'));
 
     await operatorContract.submitDkgResult(
       1, groupPubKey, misbehaved, signatures, signingMemberIndices,

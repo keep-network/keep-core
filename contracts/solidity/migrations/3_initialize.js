@@ -24,7 +24,6 @@ module.exports = async function(deployer, network) {
         registry.address
     );
 
-    await keepRandomBeaconOperator.setPriceFeedEstimate(priceFeedEstimate);
     await registry.approveOperatorContract(keepRandomBeaconOperator.address);
 
     // Set service contract owner as operator contract upgrader by default

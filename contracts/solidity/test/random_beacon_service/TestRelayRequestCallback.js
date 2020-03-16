@@ -474,10 +474,8 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     let groupSelectionGasEstimate = web3.utils.toBN(
       await operatorContract.groupSelectionGasEstimate()
     )
-    let priceFeedEstimate = web3.utils.toBN(
-      await operatorContract.priceFeedEstimate()
-    )
-    let groupCreationFee = priceFeedEstimate.mul(groupSelectionGasEstimate)
+    let gasPriceCeiling = await operatorContract.gasPriceCeiling()
+    let groupCreationFee = gasPriceCeiling.mul(groupSelectionGasEstimate)
 
     // the sum of ether paid to beneficiary and customer should equal
     // entry verification, group creation, and callback fee passed to the beacon 

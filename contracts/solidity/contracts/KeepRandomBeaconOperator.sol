@@ -64,11 +64,11 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 145*1e11; // 14500 Gwei, 10% of operational cost
 
-    // The price feed estimate is used to calculate the gas price for reimbursement
-    // next to the actual gas price from the transaction. We use both values to
-    // defend against malicious miner-submitters who can manipulate transaction
-    // gas price. Expressed in wei.
-    uint256 public priceFeedEstimate = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
+    // Gas price ceiling value used to calculate the gas price for reimbursement
+    // next to the actual gas price from the transaction. We use gas price
+    // ceiling to defend against malicious miner-submitters who can manipulate
+    // transaction gas price.
+    uint256 public gasPriceCeiling = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
 
     // Size of a group in the threshold relay.
     uint256 public groupSize = 64;
@@ -199,21 +199,13 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Set the gas price in wei for calculating reimbursements.
-     * @param _priceFeedEstimate is the gas price for calculating reimbursements.
-     */
-    function setPriceFeedEstimate(uint256 _priceFeedEstimate) public onlyOwner {
-        priceFeedEstimate = _priceFeedEstimate;
-    }
-
-    /**
      * @dev Triggers the selection process of a new candidate group.
      * @param _newEntry New random beacon value that stakers will use to
      * generate their tickets.
      * @param submitter Operator of this contract.
      */
     function createGroup(uint256 _newEntry, address payable submitter) public payable onlyServiceContract {
-        uint256 groupSelectionStartFee = groupSelectionGasEstimate.mul(priceFeedEstimate);
+        uint256 groupSelectionStartFee = groupSelectionGasEstimate.mul(gasPriceCeiling);
 
         groupSelectionStarterContract = ServiceContract(msg.sender);
         startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
@@ -225,7 +217,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
         require(
-            _payment >= priceFeedEstimate.mul(dkgGasEstimate),
+            _payment >= gasPriceCeiling.mul(dkgGasEstimate),
             "Insufficient DKG fee"
         );
 
@@ -344,11 +336,11 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * be returned to the DKG fee pool of the service contract which triggered the DKG.
      */
     function reimburseDkgSubmitter() internal {
-        uint256 gasPrice = priceFeedEstimate;
+        uint256 gasPrice = gasPriceCeiling;
         // We need to check if tx.gasprice is non-zero as a workaround to a bug
         // in go-ethereum:
         // https://github.com/ethereum/go-ethereum/pull/20189
-        if (tx.gasprice > 0 && tx.gasprice < priceFeedEstimate) {
+        if (tx.gasprice > 0 && tx.gasprice < gasPriceCeiling) {
             gasPrice = tx.gasprice;
         }
 
@@ -390,7 +382,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         bytes memory previousEntry
     ) public payable onlyServiceContract {
         uint256 entryVerificationAndProfitFee = groupProfitFee().add(
-            entryVerificationGasEstimate.mul(priceFeedEstimate)
+            entryVerificationGasEstimate.mul(gasPriceCeiling)
         );
         require(
             msg.value >= entryVerificationAndProfitFee,
@@ -485,8 +477,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     function executeCallback(SigningRequest memory signingRequest, uint256 entry) internal {
         uint256 callbackFee = signingRequest.callbackFee;
 
-        // Make sure not to spend more than what was received from the service contract for the callback
-        uint256 gasLimit = callbackFee.div(priceFeedEstimate);
+        // Make sure not to spend more than what was received from the service
+        // contract for the callback
+        uint256 gasLimit = callbackFee.div(gasPriceCeiling);
 
         bytes memory callbackReturnData;
         uint256 gasBeforeCallback = gasleft();
@@ -502,7 +495,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         Reimbursements.reimburseCallback(
             stakingContract,
-            priceFeedEstimate,
+            gasPriceCeiling,
             gasLimit,
             gasSpent,
             callbackFee,

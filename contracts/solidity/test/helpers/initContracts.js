@@ -56,8 +56,6 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   let dkgGasEstimate = await operatorContract.dkgGasEstimate();
 
-  await operatorContract.setPriceFeedEstimate(priceFeedEstimate);
-
   // Genesis should include payment to cover DKG cost to create first group
   await operatorContract.genesis({value: dkgGasEstimate.mul(priceFeedEstimate)});
 

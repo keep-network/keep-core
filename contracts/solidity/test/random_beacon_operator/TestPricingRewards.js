@@ -81,7 +81,7 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
     await operatorContract.setGroupMemberBaseReward(1410);
     await operatorContract.setEntryVerificationGasEstimate(10020);
     await serviceContract.setPriceFeedEstimate(140000);
-    await operatorContract.setPriceFeedEstimate(140000);
+    await operatorContract.setGasPriceCeiling(140000);
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
@@ -117,7 +117,7 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
     await operatorContract.setGroupMemberBaseReward(966);
     await operatorContract.setEntryVerificationGasEstimate(10050);
     await serviceContract.setPriceFeedEstimate(150000);
-    await operatorContract.setPriceFeedEstimate(150000);  
+    await operatorContract.setGasPriceCeiling(150000);  
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});  
@@ -155,7 +155,7 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
     await operatorContract.setGroupMemberBaseReward(1987000);
     await operatorContract.setEntryVerificationGasEstimate(50050);
     await serviceContract.setPriceFeedEstimate(1400000);
-    await operatorContract.setPriceFeedEstimate(1400000);  
+    await operatorContract.setGasPriceCeiling(1400000);  
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});  
@@ -212,7 +212,7 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
     await operatorContract.setGroupMemberBaseReward(1382000000);
     await operatorContract.setEntryVerificationGasEstimate(50020);
     await serviceContract.setPriceFeedEstimate(2000000);
-    await operatorContract.setPriceFeedEstimate(2000000);  
+    await operatorContract.setGasPriceCeiling(2000000);  
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate}); 
