@@ -27,7 +27,13 @@ library Reimbursements {
         uint256 callbackFee,
         bytes memory callbackReturnData
     ) public {
-        uint256 gasPrice = tx.gasprice < gasPriceCeiling ? tx.gasprice : gasPriceCeiling;
+        uint256 gasPrice = gasPriceCeiling;
+        // We need to check if tx.gasprice is non-zero as a workaround to a bug
+        // in go-ethereum:
+        // https://github.com/ethereum/go-ethereum/pull/20189
+        if (tx.gasprice > 0 && tx.gasprice < gasPriceCeiling) {
+            gasPrice = tx.gasprice;
+        }
 
         // Obtain the actual callback gas expenditure and refund the surplus.
         //
