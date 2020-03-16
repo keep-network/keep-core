@@ -5,6 +5,7 @@ import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./TokenStaking.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
+import "./utils/PercentUtils.sol";
 import "./libraries/operator/GroupSelection.sol";
 import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
@@ -25,6 +26,7 @@ interface ServiceContract {
  */
 contract KeepRandomBeaconOperator is ReentrancyGuard {
     using SafeMath for uint256;
+    using PercentUtils for uint256;
     using AddressArrayUtils for address[];
     using GroupSelection for GroupSelection.Storage;
     using Groups for Groups.Storage;
@@ -220,7 +222,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @param gasPrice Gas price in wei.
      */
     function gasPriceWithFluctuationMargin(uint256 gasPrice) internal view returns (uint256) {
-        return gasPrice.add(gasPrice.mul(fluctuationMargin).div(100));
+        return gasPrice.add(gasPrice.percent(fluctuationMargin));
     }
 
     /**
@@ -539,7 +541,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // The entry verification fee to cover the cost of verifying the submission,
         // paid regardless of their gas expenditure
         // Submitter extra reward - 5% of the delay penalties of the entire group
-        uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).mul(5).div(100).div(decimals);
+        uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).percent(5).div(decimals);
         uint256 entryVerificationFee = signingRequest.entryVerificationAndProfitFee.sub(groupProfitFee());
         submitterReward = entryVerificationFee.add(submitterExtraReward);
 

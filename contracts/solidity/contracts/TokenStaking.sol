@@ -2,6 +2,7 @@ pragma solidity ^0.5.4;
 
 import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
+import "./utils/PercentUtils.sol";
 import "./Registry.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
@@ -14,6 +15,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
  */
 contract TokenStaking is StakeDelegatable {
     using UintArrayUtils for uint256[];
+    using PercentUtils for uint256;
     using SafeERC20 for ERC20Burnable;
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
@@ -186,6 +188,11 @@ contract TokenStaking is StakeDelegatable {
             require(authorizations[msg.sender][operator], "Not authorized");
 
             uint256 operatorParams = operators[operator].packedParams;
+            require(
+                block.number > operatorParams.getCreationBlock().add(initializationPeriod),
+                "Operator stake must be active"
+            );
+
             uint256 currentAmount = operatorParams.getAmount();
 
             if (currentAmount < amountToSlash) {
@@ -208,31 +215,47 @@ contract TokenStaking is StakeDelegatable {
      * @dev Seize provided token amount from every member in the misbehaved
      * operators array. The tattletale is rewarded with 5% of the total seized
      * amount scaled by the reward adjustment parameter and the rest 95% is burned.
-     * @param amount Token amount to seize from every misbehaved operator.
+     * @param amountToSeize Token amount to seize from every misbehaved operator.
      * @param rewardMultiplier Reward adjustment in percentage. Min 1% and 100% max.
      * @param tattletale Address to receive the 5% reward.
      * @param misbehavedOperators Array of addresses to seize the tokens from.
      */
     function seize(
-        uint256 amount,
+        uint256 amountToSeize,
         uint256 rewardMultiplier,
         address tattletale,
         address[] memory misbehavedOperators
     ) public onlyApprovedOperatorContract(msg.sender) {
+        uint256 totalAmountToBurn = 0;
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[msg.sender][operator], "Not authorized");
+
             uint256 operatorParams = operators[operator].packedParams;
-            uint256 oldAmount = operatorParams.getAmount();
-            uint256 newAmount = oldAmount.sub(amount);
-            operators[operator].packedParams = operatorParams.setAmount(newAmount);
+            require(
+                block.number > operatorParams.getCreationBlock().add(initializationPeriod),
+                "Operator stake must be active"
+            );
+
+            uint256 currentAmount = operatorParams.getAmount();
+
+            if (currentAmount < amountToSeize) {
+                totalAmountToBurn = totalAmountToBurn.add(currentAmount);
+
+                uint256 newAmount = 0;
+                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+            } else {
+                totalAmountToBurn = totalAmountToBurn.add(amountToSeize);
+
+                uint256 newAmount = currentAmount.sub(amountToSeize);
+                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+            }
         }
 
-        uint256 total = misbehavedOperators.length.mul(amount);
-        uint256 tattletaleReward = (total.mul(5).div(100)).mul(rewardMultiplier).div(100);
+        uint256 tattletaleReward = (totalAmountToBurn.percent(5)).percent(rewardMultiplier);
 
         token.safeTransfer(tattletale, tattletaleReward);
-        token.burn(total.sub(tattletaleReward));
+        token.burn(totalAmountToBurn.sub(tattletaleReward));
     }
 
     /**

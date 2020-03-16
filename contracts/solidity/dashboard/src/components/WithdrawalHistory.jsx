@@ -6,7 +6,7 @@ import { LoadingOverlay } from './Loadable'
 import { useFetchData } from '../hooks/useFetchData'
 import rewardsService from '../services/rewards.service'
 import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEvent'
-import { OPERATOR_CONTRACT_NAME_EVENTS } from '../constants/constants'
+import { OPERATOR_CONTRACT_NAME } from '../constants/constants'
 import web3Utils from 'web3-utils'
 import { formatDate, isSameEthAddress } from '../utils/general.utils'
 
@@ -36,7 +36,7 @@ export const WithdrawalHistory = (props) => {
   }
 
   useSubscribeToContractEvent(
-    OPERATOR_CONTRACT_NAME_EVENTS,
+    OPERATOR_CONTRACT_NAME,
     'GroupMemberRewardsWithdrawn',
     subscribeToEventCallback
   )
