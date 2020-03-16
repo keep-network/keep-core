@@ -11,8 +11,6 @@ import (
 )
 
 func TestConvertResult(t *testing.T) {
-	groupSize := 5
-
 	publicKey := new(bn256.G2).ScalarBaseMult(big.NewInt(2))
 	marshalledPublicKey := publicKey.Marshal()
 
@@ -92,7 +90,7 @@ func TestConvertResult(t *testing.T) {
 			test.gjkrResult.Group.MarkMemberAsInactive(inactiveMember)
 		}
 
-		convertedResult := convertResult(test.gjkrResult, groupSize)
+		convertedResult := ConvertGjkrResult(test.gjkrResult)
 
 		if !test.expectedResult.Equals(convertedResult) {
 			t.Errorf("\nexpected: %v\nactual:   %v\n", test.expectedResult, convertedResult)

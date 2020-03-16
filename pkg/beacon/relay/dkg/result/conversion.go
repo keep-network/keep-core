@@ -8,11 +8,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
 
-// convertResult transforms GJKR protocol execution result to a chain specific
-// DKG result form. It serializes a group public key to bytes and converts
-// disqualified and inactive members lists to one list of misbehaving
+// ConvertGjkrResult transforms GJKR protocol execution result to a chain
+// specific DKG result form. It serializes a group public key to bytes and
+// converts disqualified and inactive members lists to one list of misbehaving
 // participants where each byte represents misbehaving member index.
-func convertResult(gjkrResult *gjkr.Result, groupSize int) *relayChain.DKGResult {
+func ConvertGjkrResult(gjkrResult *gjkr.Result) *relayChain.DKGResult {
 	groupPublicKey := make([]byte, 0)
 
 	// We convert the point G2, to compress the point correctly

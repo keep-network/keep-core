@@ -42,7 +42,7 @@ func Publish(
 		signing:                 signing,
 		blockCounter:            blockCounter,
 		member:                  NewSigningMember(memberIndex, dkgGroup),
-		result:                  convertResult(result, dkgGroup.GroupSize()),
+		result:                  ConvertGjkrResult(result),
 		signatureMessages:       make([]*DKGResultHashSignatureMessage, 0),
 		signingStartBlockHeight: startBlockHeight,
 	}
