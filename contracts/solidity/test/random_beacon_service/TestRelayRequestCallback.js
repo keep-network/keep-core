@@ -101,7 +101,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     );
   })
 
-  // price feed estimate > tx.gasprice
+  // gas price ceiling > tx.gasprice
   it("should reimburse submitter and customer for executing callback with lower tx.gasprice", async () => {
     let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
@@ -133,7 +133,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     );
   });
 
-  // price feed estimate == tx.gasprice
+  // gas price ceiling == tx.gasprice
   it("should reimburse submitter and customer for executing callback with expected tx.gasprice", async () => {
     let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
@@ -165,7 +165,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     );
   });
 
-  // price feed estimate < tx.gasprice
+  // gas price ceiling < tx.gasprice
   it("should reimburse submitter and customer for executing callback with higher tx.gasprice", async () => {
     let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
@@ -176,17 +176,17 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
       }
     );
 
-    // use higher price than the price feed
+    // use higher price than the gas price ceiling
     let relayEntryTxGasPrice = web3.utils.toBN(web3.utils.toWei('30', 'Gwei'));
     // higher tx.gasprice should not be used for reimbursement - maximum gas
-    // price is the one from price feed
+    // price is the one from the gas price ceiling
     let gasPriceForReimbursement = web3.utils.toBN(web3.utils.toWei('20', 'Gwei'));
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
     await operatorContract.relayEntry(bls.groupSignature, {
       from: operator, 
-      gasPrice: relayEntryTxGasPrice// tx.gasprice is the same as price feed estimate
+      gasPrice: relayEntryTxGasPrice// tx.gasprice is the same as the gas price ceiling
     });
     let customerEndBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryEndBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
@@ -231,7 +231,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     );
   });
 
-  // price feed estimate == tx.gasprice
+  // gas price ceiling == tx.gasprice
   it("should trigger new group creation, execute callback, reimburse submitter " + 
      "and customer with expected tx.gasprice", async () => {
     await fundDkgPool();
@@ -245,7 +245,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
       }
     );
 
-    // use the same gas price as price feed
+    // use the same gas price as the gas price ceiling
     let relayEntryTxGasPrice = web3.utils.toBN(web3.utils.toWei('20', 'Gwei'));
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
@@ -266,7 +266,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     );
   })
 
-  // price feed estimate > tx.gasprice
+  // gas price ceiling > tx.gasprice
   it("should trigger new group selection, execute callback, reimburse submitter " +
      "and customer with lower tx.gasprice", async () => {
     await fundDkgPool();
@@ -301,7 +301,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     );
   })
  
-  // price feed estimate < tx.gasprice
+  // gas price ceiling < tx.gasprice
   it("should trigger new group selection, execute callback, reimburse submitter " +
     "and customer with higher tx.gasprice", async () => {
     await fundDkgPool();
@@ -315,10 +315,10 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
       }
     );
   
-    // use higher price than the price feed
+    // use higher price than the gas price ceiling
     let relayEntryTxGasPrice = web3.utils.toBN(web3.utils.toWei('30', 'Gwei'));
     // higher tx.gasprice should not be used for reimbursement - maximum gas
-    // price is the one from price feed
+    // price is the one from the gas price ceiling
     let gasPriceForReimbursement = web3.utils.toBN(web3.utils.toWei('20', 'Gwei'));
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
@@ -372,7 +372,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
       callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate}
     );
   
-    // use the same gas price as price feed
+    // use the same gas price as the gas price ceiling
     let relayEntryTxGasPrice = web3.utils.toBN(web3.utils.toWei('20', 'Gwei'));
   
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
@@ -504,11 +504,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
   // Sends to DKG fee pool on the service contract enough ether to start
   // a new group creation.
   async function fundDkgPool() {
-    const groupCreationGasEstimate = await operatorContract.groupCreationGasEstimate();
-    const priceFeedEstimate = await serviceContract.priceFeedEstimate();
-    
-    await serviceContract.fundDkgFeePool(
-      {value: groupCreationGasEstimate.mul(priceFeedEstimate)}
-    );
+    const groupCreationFee = await operatorContract.groupCreationFee();  
+    await serviceContract.fundDkgFeePool({value: groupCreationFee});
   }
 });

@@ -30,7 +30,7 @@ contract('KeepRandomBeaconService/PricingFees', function(accounts) {
     });
 
     it("should correctly evaluate entry verification fee", async () => {
-        await serviceContract.setPriceFeedEstimate(200);
+        await operatorContract.setGasPriceCeiling(200);
         await operatorContract.setEntryVerificationGasEstimate(12);        
 
         let fees = await serviceContract.entryFeeBreakdown();
@@ -41,7 +41,7 @@ contract('KeepRandomBeaconService/PricingFees', function(accounts) {
     });
 
     it("should correctly evaluate DKG contribution fee", async () => {
-        await serviceContract.setPriceFeedEstimate(1234);
+        await operatorContract.setGasPriceCeiling(1234);
         await operatorContract.setDkgGasEstimate(13);
         await operatorContract.setGroupSelectionGasEstimate(2);
 
@@ -52,19 +52,8 @@ contract('KeepRandomBeaconService/PricingFees', function(accounts) {
         assert.equal(expectedDkgContributionFee, dkgContributionFee);
     });
 
-    it("should correctly evaluate callback fee", async function() {
-        await serviceContract.setPriceFeedEstimate(160);
-
-        let callbackGas = 1091;
-
-        let callbackFee = await serviceContract.callbackFee(callbackGas);
-        
-        let expectedCallbackFee = 3189920; // (18846 + 1091) * 160
-        assert.equal(expectedCallbackFee, callbackFee);
-    });
-
     it("should correctly evaluate entry fee estimate", async () => {
-        await serviceContract.setPriceFeedEstimate(200);
+        await operatorContract.setGasPriceCeiling(200);
         await operatorContract.setEntryVerificationGasEstimate(12); 
         await operatorContract.setDkgGasEstimate(14); 
         await operatorContract.setGroupSize(13);

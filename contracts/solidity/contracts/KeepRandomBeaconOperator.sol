@@ -382,7 +382,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         bytes memory previousEntry
     ) public payable onlyServiceContract {
         uint256 entryVerificationAndProfitFee = groupProfitFee().add(
-            entryVerificationGasEstimate.mul(gasPriceCeiling)
+            entryVerificationFee()
         );
         require(
             msg.value >= entryVerificationAndProfitFee,
@@ -709,20 +709,28 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Estimates gas for group creation. Includes the cost of DKG and the
-     * cost of triggering group selection.
+     * @dev Returns fee for entry verification in wei. Does not include group
+     * profit fee, DKG contribution or callback fee.
      */
-    function groupCreationGasEstimate() public view returns (uint256) {
-        return dkgGasEstimate.add(groupSelectionGasEstimate);
+    function entryVerificationFee() public view returns (uint256) {
+        return entryVerificationGasEstimate.mul(gasPriceCeiling);
     }
 
-     /**
+    /**
+     * @dev Returns fee for group creation in wei. Includes the cost of DKG
+     * and the cost of triggering group selection.
+     */
+    function groupCreationFee() public view returns (uint256) {
+        return dkgGasEstimate.add(groupSelectionGasEstimate).mul(gasPriceCeiling);
+    }
+
+    /**
      * @dev Returns members of the given group by group public key.
      */
     function getGroupMembers(bytes memory groupPubKey) public view returns (address[] memory members) {
         return groups.getGroupMembers(groupPubKey);
     }
-
+    
     /**
      * @dev Reports unauthorized signing for the provided group. Must provide
      * a valid signature of the group address as a message. Successful signature
