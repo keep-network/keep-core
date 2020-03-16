@@ -4,6 +4,7 @@ import latestTime from './helpers/latestTime';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import grantTokens from './helpers/grantTokens';
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+import {stake} from './helpers/data';
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -46,6 +47,7 @@ contract('TokenGrant', function(accounts) {
       initializationPeriod, 
       undelegationPeriod
     );
+    stakingContract.setMinimumStake(stake.minimumStake, tokenOwner)
     grantContract = await TokenGrant.new(
       tokenContract.address, 
       stakingContract.address
@@ -92,7 +94,7 @@ contract('TokenGrant', function(accounts) {
   }
 
   it("should update balances when delegating", async () => {
-    let amountToDelegate = web3.utils.toBN(20000);
+    let amountToDelegate = stake.minimumStake;
     let remaining = grantAmount.sub(amountToDelegate)
 
     await delegate(grantee, operatorOne, amountToDelegate);
@@ -195,7 +197,7 @@ contract('TokenGrant', function(accounts) {
   })
 
   it("should not allow to delegate to the same operator twice", async () => {
-    let amountToDelegate = web3.utils.toBN(20000);
+    let amountToDelegate = stake.minimumStake;
     await delegate(grantee, operatorOne, amountToDelegate);
 
     await expectThrowWithMessage(
@@ -218,7 +220,7 @@ contract('TokenGrant', function(accounts) {
   })
 
   it("should allow to delegate to two different operators", async () => {
-    let amountToDelegate = web3.utils.toBN(20000);
+    let amountToDelegate = stake.minimumStake;
 
     await delegate(grantee, operatorOne, amountToDelegate);
     await delegate(grantee, operatorTwo, amountToDelegate);

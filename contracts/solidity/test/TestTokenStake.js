@@ -1,6 +1,7 @@
 import mineBlocks from './helpers/mineBlocks';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+import {stake} from './helpers/data';
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -33,6 +34,7 @@ contract('TokenStaking', function(accounts) {
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod
     );
+    stakingContract.setMinimumStake(stake.minimumStake, ownerOne)
 
     await registry.approveOperatorContract(operatorContract);
   });

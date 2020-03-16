@@ -10,14 +10,15 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   let token, registry, stakingContract,
     serviceContractImplV1, serviceContractProxy, serviceContract,
-    operatorContract;
+    operatorContract, accounts;
 
   let priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei = 20 * 10^9 wei)
     fluctuationMargin = 50, // 50%
     dkgContributionMargin = 1, // 1%
     withdrawalDelay = 1,
     stakeInitializationPeriod = 1,
-    stakeUndelegationPeriod = 30;
+    stakeUndelegationPeriod = 30,
+    minimumStake = web3.utils.toBN(200000);
 
   // Initialize Keep token contract
   token = await KeepToken.new();
@@ -27,6 +28,8 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   // Initialize staking contract
   stakingContract = await TokenStaking.new(token.address, registry.address, stakeInitializationPeriod, stakeUndelegationPeriod);
+  accounts = await web3.eth.getAccounts();
+  await stakingContract.setMinimumStake(minimumStake, accounts[0]);
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new();
@@ -44,6 +47,8 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await KeepRandomBeaconOperator.link("Groups", groups.address);
   await KeepRandomBeaconOperator.link("DKGResultVerification", dkgResultVerification.address);
   await KeepRandomBeaconOperator.link("Reimbursements", reimbursements.address);
+
+
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address);
 
   await registry.approveOperatorContract(operatorContract.address);

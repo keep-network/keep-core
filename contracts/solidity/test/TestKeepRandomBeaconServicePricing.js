@@ -7,7 +7,7 @@ const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 contract('TestKeepRandomBeaconServicePricing', function(accounts) {
 
   let token, stakingContract, operatorContract, serviceContract, callbackContract, entryFee, groupSize, group,
-    owner = accounts[0],
+    owner = accounts[0], minimumStake,
     requestor = accounts[1],
     operator1 = accounts[2],
     operator2 = accounts[3],
@@ -38,10 +38,11 @@ contract('TestKeepRandomBeaconServicePricing', function(accounts) {
     await operatorContract.setGroupSize(groupSize);
     group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.setGroupMembers(group, [operator1, operator2, operator3])
+    minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, 0);
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, 0);
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, 0);
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, minimumStake);
 
     entryFee = await serviceContract.entryFeeBreakdown()
   });

@@ -55,10 +55,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
     TokenStaking internal stakingContract;
 
-    // Minimum amount of KEEP that allows sMPC cluster client to participate in
-    // the Keep network. Expressed as number with 18-decimal places.
-    uint256 public minimumStake = 200000 * 1e18;
-
     // Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 145*1e11; // 14500 Gwei, 10% of operational cost
 
@@ -114,6 +110,16 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // contract.
     uint256 public dkgSubmitterReimbursementFee;
 
+    uint256 internal currentEntryStartBlock;
+
+    // Minimum amount of KEEP that allows sMPC cluster client to participate in
+    // the Keep network.
+    uint256 internal minimumStake;
+
+    // Seed value used for the genesis group selection.
+    // https://www.wolframalpha.com/input/?i=pi+to+78+digits
+    uint256 internal _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
+
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
 
@@ -125,13 +131,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         bytes previousEntry;
         address serviceContract;
     }
-
-    uint256 internal currentEntryStartBlock;
     SigningRequest internal signingRequest;
 
-    // Seed value used for the genesis group selection.
-    // https://www.wolframalpha.com/input/?i=pi+to+78+digits
-    uint256 internal _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
     /**
      * @dev Triggers the first group selection. Genesis can be called only when
@@ -168,6 +169,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
+
+        minimumStake = stakingContract.minimumStake();
 
         groups.stakingContract = TokenStaking(_stakingContract);
         groups.groupActiveTime = TokenStaking(_stakingContract).undelegationPeriod();

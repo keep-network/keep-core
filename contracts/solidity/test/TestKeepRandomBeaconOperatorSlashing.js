@@ -36,7 +36,7 @@ contract('KeepRandomBeaconOperator', function(accounts) {
     await operatorContract.registerNewGroup(bls.groupPubKey)
     await operatorContract.setGroupMembers(bls.groupPubKey, [operator1, operator2, operator3])
 
-    minimumStake = await operatorContract.minimumStake()
+    minimumStake = await stakingContract.minimumStake()
     largeStake = minimumStake.muln(2)
     await stakeDelegate(stakingContract, token, owner, operator1, owner, authorizer, largeStake)
     await stakeDelegate(stakingContract, token, owner, operator2, owner, authorizer, minimumStake)
