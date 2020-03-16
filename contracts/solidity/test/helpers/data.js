@@ -34,3 +34,7 @@ export const bls = {
   // uint256(keccak256(nextNextNextGroupSignatureNumber))
   nextNextNextGroupSignatureNumber: web3.utils.toBN("76547413554296705539222469062348207443894285352667024772941555864069963020436"),
 };
+
+export const stake = {
+  minimumStake: web3.utils.toBN(200000)
+}
