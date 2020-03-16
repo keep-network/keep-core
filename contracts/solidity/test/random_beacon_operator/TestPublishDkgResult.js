@@ -130,7 +130,7 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     assert.isTrue(updatedMagpieBalance.eq(magpieBalance.add(expectedSubmitterReward)), "Submitter should receive expected reward.");
   });
 
-  it("should send max dkgSubmitterReimbursementFee to the submitter in case of a much higher price than priceFeedEstimate.", async function() {
+  it("should send max dkgSubmitterReimbursementFee to the submitter in case of a much higher price than gas price ceiling", async function() {
     // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
