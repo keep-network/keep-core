@@ -395,7 +395,7 @@ contract('TokenGrant/Stake', function(accounts) {
     )
   })
 
-  it.only("should not allow to withdraw tokens", async () => {
+  it("should not allow to withdraw tokens", async () => {
     await increaseTimeTo(grantStart + shortGrantDuration)
     const withdrawable = await grantContract.withdrawable(shortGrantId)
     await delegate(grantee, operatorOne, grantAmount, shortGrantId)
