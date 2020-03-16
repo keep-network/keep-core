@@ -6,16 +6,6 @@ import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import grantTokens from '../helpers/grantTokens';
 import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
 
-function formatAmount(amount) {
-  return web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(18)))
-}
-
-export const wait = (ms) => {
-  return new Promise((resolve) => {
-    return setTimeout(resolve, ms)
-  })
-}
-
 const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
@@ -102,7 +92,7 @@ contract('TokenGrant/Stake', function(accounts) {
     await restoreSnapshot()
   })
 
-  async function delegate(grantee, operator, amount, grantId = grantId) {
+  async function delegate(grantee, operator, amount, grantId) {
     let delegation = Buffer.concat([
       Buffer.from(magpie.substr(2), 'hex'),
       Buffer.from(operator.substr(2), 'hex'),
@@ -122,7 +112,7 @@ contract('TokenGrant/Stake', function(accounts) {
     let amountToDelegate = web3.utils.toBN(20000);
     let remaining = grantAmount.sub(amountToDelegate)
 
-    await delegate(grantee, operatorOne, amountToDelegate);
+    await delegate(grantee, operatorOne, amountToDelegate, grantId);
 
     let availableForStaking = await grantContract.availableToStake.call(grantId)
     let operatorBalance = await stakingContract.balanceOf.call(operatorOne);
@@ -138,7 +128,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should allow to delegate, undelegate, and recover grant", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
 
     await mineBlocks(initializationPeriod);
     await grantContract.undelegate(operatorOne, {from: grantee});
@@ -159,7 +149,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should allow to cancel delegation right away", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
 
     await grantContract.cancelStake(operatorOne, {from: grantee});
 
@@ -177,7 +167,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should allow to cancel delegation just before initialization period is over", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
     
     await mineBlocks(initializationPeriod - 1);
 
@@ -197,7 +187,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow to cancel delegation after initialization period is over", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
     
     await mineBlocks(initializationPeriod);
 
@@ -208,7 +198,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow to recover stake before undelegation period is over", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
 
     await mineBlocks(initializationPeriod);
     await grantContract.undelegate(operatorOne, {from: grantee});
@@ -223,23 +213,23 @@ contract('TokenGrant/Stake', function(accounts) {
 
   it("should not allow to delegate to the same operator twice", async () => {
     let amountToDelegate = web3.utils.toBN(20000);
-    await delegate(grantee, operatorOne, amountToDelegate);
+    await delegate(grantee, operatorOne, amountToDelegate, grantId);
 
     await expectThrowWithMessage(
-      delegate(grantee, operatorOne, amountToDelegate),
+      delegate(grantee, operatorOne, amountToDelegate, grantId),
       "Operator address is already in use"
     )
   })
 
   it("should not allow to delegate to the same operator even after recovering stake", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
     await mineBlocks(initializationPeriod);
     await grantContract.undelegate(operatorOne, {from: grantee});
     await mineBlocks(undelegationPeriod);
     await grantContract.recoverStake(operatorOne, {from: grantee});
 
     await expectThrowWithMessage(
-      delegate(grantee, operatorOne, grantAmount),
+      delegate(grantee, operatorOne, grantAmount, grantId),
       "Operator address is already in use."
     )
   })
@@ -247,8 +237,8 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should allow to delegate to two different operators", async () => {
     let amountToDelegate = web3.utils.toBN(20000);
 
-    await delegate(grantee, operatorOne, amountToDelegate);
-    await delegate(grantee, operatorTwo, amountToDelegate);
+    await delegate(grantee, operatorOne, amountToDelegate, grantId);
+    await delegate(grantee, operatorTwo, amountToDelegate, grantId);
 
     let availableForStaking = await grantContract.availableToStake.call(grantId)
     let operatorOneBalance = await stakingContract.balanceOf.call(operatorOne);
@@ -270,20 +260,20 @@ contract('TokenGrant/Stake', function(accounts) {
 
   it("should not allow anyone but grantee to stake", async () => {
     await expectThrowWithMessage(
-      delegate(operatorOne, operatorOne, grantAmount),
+      delegate(operatorOne, operatorOne, grantAmount, grantId),
       "Only grantee of the grant can stake it."
     );
   })
 
   it("should let operator cancel delegation", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
   
     await grantContract.cancelStake(operatorOne, {from: operatorOne})
     // ok, no exception
   })
 
   it("should not allow third party to cancel delegation", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
 
     await expectThrowWithMessage(
       grantContract.cancelStake(operatorOne, {from: operatorTwo}),
@@ -292,7 +282,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should let operator undelegate", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
 
     await mineBlocks(initializationPeriod);
     await grantContract.undelegate(operatorOne, {from: operatorOne})
@@ -300,7 +290,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow third party to undelegate", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
 
     await mineBlocks(initializationPeriod);
     await expectThrowWithMessage(
@@ -310,7 +300,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should recover tokens recovered outside the grant contract", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
 
     await mineBlocks(initializationPeriod);
     await grantContract.undelegate(operatorOne, {from: grantee});
