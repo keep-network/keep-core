@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: keep-dapp-token-dashboard-http
-  namespace: keep-dapp-token-dashboard
+  namespace: default
   labels:
     app: keep-dapp
     type: keep-token-dashboard
@@ -12,15 +12,15 @@ metadata:
     kubernetes.io/ingress.allow-http: "true"
 spec:
   backend:
-    # This assumes service eth-dashboard-http exists and routes to healthy endpoints
-    serviceName: keep-dapp-token-dashboard-http
+    # This assumes service eth-dashboard exists and routes to healthy endpoints
+    serviceName: keep-dapp-token-dashboard
     servicePort: 80
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: keep-dapp-token-dashboard
-  namespace: keep-dapp-token-dashboard
+  namespace: default
   labels:
     app: keep-dapp
     type: keep-token-dashboard
