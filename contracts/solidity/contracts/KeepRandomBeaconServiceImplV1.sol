@@ -64,7 +64,13 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
 
     bytes internal _previousEntry;
 
-    // Cost of executing executeCallback() on this contract, require checks and .call
+    // The cost of executing executeCallback() code of this contract, includes
+    // everything but the logic of the external contract called.
+    // The value is used to estimate the cost of executing a callback and is
+    // used for calculating callback call surplus reimbursement for requestor.
+    //
+    // This value has to be updated in case of EVM opcode price change, but since
+    // upgrading service contract is easy, it is not a worrisome problem.
     uint256 internal _baseCallbackGas;
 
     struct Callback {
