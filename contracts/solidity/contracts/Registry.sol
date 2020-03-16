@@ -71,8 +71,8 @@ contract Registry {
 
     function approveOperatorContract(address operatorContract) public onlyRegistryKeeper {
         require(
-            !isDisabledOperatorContract(operatorContract),
-            "Operator contract has been disabled"
+            operatorContracts[operatorContract] == 0,
+            "Only new operator contracts without previous status can be approved"
         );
 
         operatorContracts[operatorContract] = ContractStatus.Approved;
@@ -80,6 +80,11 @@ contract Registry {
     }
 
     function disableOperatorContract(address operatorContract) public onlyPanicButton {
+        require(
+            isApprovedOperatorContract(operatorContract),
+            "Only approved operator contracts can be disabled"
+        );
+
         operatorContracts[operatorContract] = ContractStatus.Disabled;
     }
 
@@ -89,9 +94,5 @@ contract Registry {
 
     function operatorContractUpgraderFor(address _serviceContract) public view returns (address) {
         return operatorContractUpgraders[_serviceContract];
-    }
-
-    function isDisabledOperatorContract(address operatorContract) internal view returns (bool) {
-        return operatorContracts[operatorContract] == ContractStatus.Disabled;
     }
 }
