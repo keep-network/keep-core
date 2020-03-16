@@ -44,6 +44,10 @@ contract('TokenGrant/Stake', function(accounts) {
     grantVestingDuration = duration.days(60),
     grantCliff = duration.days(10),
     grantRevocable = false;
+
+  let shortGrantId;
+  const shortGrantDuration = 60;
+  const shortGrantCliff = 1;
     
   const initializationPeriod = 10;
   const undelegationPeriod = 30;
@@ -76,6 +80,18 @@ contract('TokenGrant/Stake', function(accounts) {
       grantCliff, 
       grantRevocable
     );
+
+    shortGrantId = await grantTokens(
+      grantContract, 
+      tokenContract,
+      grantAmount,
+      tokenOwner, 
+      grantee, 
+      shortGrantDuration, 
+      grantStart, 
+      shortGrantCliff, 
+      false,
+    );
   });
 
   beforeEach(async () => {
@@ -86,7 +102,7 @@ contract('TokenGrant/Stake', function(accounts) {
     await restoreSnapshot()
   })
 
-  async function delegate(grantee, operator, amount) {
+  async function delegate(grantee, operator, amount, grantId = grantId) {
     let delegation = Buffer.concat([
       Buffer.from(magpie.substr(2), 'hex'),
       Buffer.from(operator.substr(2), 'hex'),
@@ -314,5 +330,88 @@ contract('TokenGrant/Stake', function(accounts) {
       grantAmount,
       "Staked tokens should be recovered safely"
     );
+  })
+
+  it("should allow to wihtdraw some tokens", async () => {
+    await increaseTimeTo(grantStart + shortGrantDuration - 30)
+
+    const withdrawable = await grantContract.withdrawable(shortGrantId)
+    const granteeTokenGrantBalance = await grantContract.balanceOf(grantee)
+    await grantContract.withdraw(shortGrantId)
+    const granteeTokenGrantBalancePost = await grantContract.balanceOf(grantee)
+
+    const granteeTokenBalance = await tokenContract.balanceOf(grantee)
+    const gratDetails = await grantContract.getGrant(shortGrantId)
+    
+    expect(withdrawable).to.be.gt.BN(
+      0,
+      "Should allow to withdraw more than 0"
+    )
+    expect(withdrawable).to.be.lt.BN(
+      grantAmount,
+      `Should allow to withdraw less than ${grantAmount.toString()}`
+    )
+    expect(granteeTokenBalance).to.eq.BN(
+      gratDetails.withdrawn,
+      "Grantee KEEP token balance should be euqlas to the grant withdrawn amount"
+    )
+    expect(granteeTokenGrantBalance.sub(granteeTokenGrantBalancePost)).to.eq.BN(
+      gratDetails.withdrawn,
+      "Grantee token grant balance should be updated"
+    )
+  })
+
+  it("should allow to wihtdraw the whole grant amount ", async () => {
+    await increaseTimeTo(grantStart + shortGrantDuration)
+
+    const withdrawable = await grantContract.withdrawable(shortGrantId)
+    const granteeTokenGrantBalance = await grantContract.balanceOf(grantee)
+    await grantContract.withdraw(shortGrantId)
+    const withdrawablePost = await grantContract.withdrawable(shortGrantId)
+    const granteeTokenGrantBalancePost = await grantContract.balanceOf(grantee)
+
+    const granteeTokenBalance = await tokenContract.balanceOf(grantee)
+    const gratDetails = await grantContract.getGrant(shortGrantId)
+
+    expect(withdrawable).to.eq.BN(
+      grantAmount,
+      "The withdrawable amount should be equals to the whole grant amount"
+    )
+    expect(granteeTokenBalance).to.eq.BN(
+      grantAmount,
+      "Grantee KEEP token balance should be euqlas to the grant amount"
+    )
+    expect(withdrawablePost).to.eq.BN(
+      0,
+      "The withdrawable amount should be equals to 0, when the whole grant amount has been withdrawn"
+    )
+    expect(granteeTokenGrantBalance.sub(grantAmount)).to.eq.BN(
+      granteeTokenGrantBalancePost,
+      "Grantee token grant balance should be updated"
+    )
+    expect(gratDetails.withdrawn).to.eq.BN(
+      grantAmount,
+      "The grant withdrawan amount should be updated"
+    )
+  })
+
+  it.only("should not allow to withdraw tokens", async () => {
+    await increaseTimeTo(grantStart + shortGrantDuration)
+    const withdrawable = await grantContract.withdrawable(shortGrantId)
+    await delegate(grantee, operatorOne, grantAmount, shortGrantId)
+    const withdrawableAfterStake = await grantContract.withdrawable(shortGrantId)
+
+    await expectThrowWithMessage(
+      grantContract.withdraw(shortGrantId),
+      "Grant available to withdraw amount should be greater than zero."
+    )
+    expect(withdrawable).to.eq.BN(
+      grantAmount,
+      "The withdrawable amount should be equals to the whole grant amount"
+    )
+    expect(withdrawableAfterStake).to.eq.BN(
+      0,
+      "The withdrawable amount should be equals to 0"
+    )
   })
 });
