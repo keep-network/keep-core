@@ -19,7 +19,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     dkgContributionMargin = 1, // 1%
     withdrawalDelay = 1,
     stakeInitializationPeriod = 1,
-    stakeUndelegationPeriod = 30,
+    stakeUndelegationPeriod = 30;
 
   // Initialize Keep token contract
   token = await KeepToken.new();
