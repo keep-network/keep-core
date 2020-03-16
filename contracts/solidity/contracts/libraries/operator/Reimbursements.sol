@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "../../utils/BytesLib.sol";
 import "../../TokenStaking.sol";
 
 library Reimbursements {

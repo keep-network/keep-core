@@ -25,22 +25,16 @@ export const SideMenuProvider = (props) => {
 export const SideMenu = (props) => {
   const { isOpen } = useContext(SideMenuContext)
   const { yourAddress } = useContext(Web3Context)
-  const { isTokenHolder, isKeepTokenContractDeployer } = useContext(ContractsDataContext)
+  const { isKeepTokenContractDeployer } = useContext(ContractsDataContext)
 
   return (
     <nav className={`${ isOpen ? 'active ' : '' }side-menu`}>
       <ul>
-        <NavLink exact to="/tokens" label='TOKENS'/>
-        <NavLink exact to="/rewards" label='REWARDS'/>
-        <NavLink exact to="/operations" label='OPERATIONS'/>
-
-        { isTokenHolder &&
-            <>
-                <NavLink exact to="/stake" label='STAKE'/>
-                <NavLink exact to="/token-grants" label='TOKE GRANTS'/>
-            </>
-        }
-        { isKeepTokenContractDeployer && <NavLink exact to="/create-token-grants" label='CREATE TOKEN GRANTS'/> }
+        <NavLink exact to="/tokens" label='tokens'/>
+        <NavLink exact to="/rewards" label='rewards'/>
+        <NavLink exact to="/operations" label='operations'/>
+        <NavLink exact to="/authorizer" label='authorizer'/>
+        { isKeepTokenContractDeployer && <NavLink exact to="/create-token-grants" label='create token grants'/> }
         <Web3Status />
         <div className='account-address'>
           <span className="text-label text-bold">ADDRESS&nbsp;</span>

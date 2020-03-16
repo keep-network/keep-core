@@ -86,7 +86,11 @@ p {
 }
 
 a {
-  color: @primary-color;
+  text-decoration: none;
+  color: @secondary-color;
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 label {

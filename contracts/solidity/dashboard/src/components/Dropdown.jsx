@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { isEmptyObj } from '../utils/general.utils'
 
 const Dropdown = ({
   label,
@@ -23,15 +24,17 @@ const Dropdown = ({
       labelPrefix={labelPrefix}
     />
 
-  const onChange = (e) => {
-    const selectedItem = options.find((option) => option[valuePropertyName] == e.target.value)
+  const onChange = (value) => {
+    const selectedItem = options.find((option) => option[valuePropertyName] == value)
     onSelect(selectedItem)
     setIsOpen(false)
   }
 
   const renderSelectedItem = () => {
-    if (!selectedItem) {
-      return <span>${noItemSelectedText}</span>
+    if (options && options.length === 0) {
+      return <span className="text-smaller">No items to select</span>
+    } else if (isEmptyObj(selectedItem)) {
+      return <span>{noItemSelectedText}</span>
     } else if (selectedItemComponent) {
       return selectedItemComponent
     } else {
@@ -60,7 +63,7 @@ const Dropdown = ({
 
 const DropdownItem = React.memo(({ value, label, labelPrefix, isSelected, onChange }) => {
   return (
-    <li className={`option${isSelected ? ' selected' : ''}`} value={value} onClick={onChange}>
+    <li className={`option${isSelected ? ' selected' : ''}`} onClick={() => onChange(value)}>
       {`${labelPrefix} ${label}`}
     </li>
   )

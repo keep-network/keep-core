@@ -23,10 +23,16 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html {
   background: @background-color;
+}
+
+html, body, #root {
+  height: 100vh;
 }
 
 ul {
@@ -34,16 +40,16 @@ ul {
 }
 
 .main {
-  width: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: @background-color;
-  >.content {
+  
+  > .content {
+    flex: 1 0 auto;
     overflow-x: hidden;
-    max-width: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     margin: calc(@header-height + 1.5rem) 1.5rem 0;
   }
 }
@@ -59,7 +65,7 @@ ul {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  background: white;
+  background: @white;
   padding: 0.5rem;
   border-bottom: 1px solid @color-black;
 
@@ -84,7 +90,7 @@ ul {
   position: fixed;
   top: @header-height;
   left: 0;
-  z-index: 10;
+  z-index: 12;
   height: 100%;
   width: 0px;
   visibility: hidden;
@@ -158,6 +164,61 @@ ul {
   }
 }
 
+footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: @footer-min-height;
+  color: @white;
+  background-color: @color-black;
+  margin-top: 3rem;
+  padding: 2rem;
+  z-index: 11;
+
+  svg {
+    min-height: 58px !important;
+    margin-bottom: 1rem;
+  }
+
+  .signature {
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  ul {
+    align-self: flex-start;
+    list-style: none;
+
+    a {
+      text-decoration: none;
+      color: @color-grey-10;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+  
+}
+
+@media screen and (min-width: 576px) {
+  footer {
+    flex-direction: row;
+    align-items: flex-start;
+
+    ul {
+      margin: 0 2rem;
+    }
+  
+    .signature {
+      margin: 0;
+      margin-left: auto;
+      text-align: right;
+    }
+  }
+}
+
 @media screen and (min-width: 700px) {
  .header {
     > .web3 {
@@ -224,6 +285,7 @@ ul {
   .side-menu {
     width: @side-menu-width;
     visibility: visible;
+    z-index: 10;
     
     ul > .account-address, .web3 {
       visibility: hidden;

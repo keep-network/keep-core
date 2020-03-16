@@ -7,6 +7,7 @@ import * as Icons from './Icons'
 const buttonContentTransitionTimeoutInMs = 500
 const minimumLoaderDurationInMs = 400
 const minWidthPendingButton = 130
+const minHeightPendingButton = 38
 
 const useMinimumLoaderDuration = (showLoader, setShowLoader, isFetching) => {
   useEffect(() => {
@@ -30,9 +31,13 @@ const useCurrentButtonDimensions = (buttonRef, children) => {
     if (buttonRef.current && buttonRef.current.getBoundingClientRect().width) {
       const width = buttonRef.current.getBoundingClientRect().width
       setWidth(width < minWidthPendingButton ? minWidthPendingButton : width)
+    } else {
+      setWidth(minWidthPendingButton)
     }
     if (buttonRef.current && buttonRef.current.getBoundingClientRect().height) {
       setHeight(buttonRef.current.getBoundingClientRect().height)
+    } else {
+      setHeight(minHeightPendingButton)
     }
   }, [children])
 

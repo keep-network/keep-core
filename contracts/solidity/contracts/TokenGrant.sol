@@ -3,17 +3,10 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "./utils/BytesLib.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./TokenStaking.sol";
-
-
-/**
- @dev Interface of sender contract for approveAndCall pattern.
-*/
-interface tokenSender {
-    function approveAndCall(address _spender, uint256 _value, bytes calldata _extraData) external;
-}
+import "./TokenGrantStake.sol";
 
 /**
  * @title TokenGrant
@@ -47,12 +40,6 @@ contract TokenGrant {
         uint256 staked; // Amount that was staked by the grantee.
     }
 
-    struct GrantStake {
-        uint256 grantId; // Id of the grant.
-        address stakingContract; // Staking contract.
-        uint256 amount; // Amount of staked tokens.
-    }
-
     uint256 public numGrants;
 
     ERC20Burnable public token;
@@ -63,7 +50,7 @@ contract TokenGrant {
     mapping(uint256 => Grant) public grants;
 
     // Token grants stakes.
-    mapping(address => GrantStake) public grantStakes;
+    mapping(address => TokenGrantStake) public grantStakes;
 
     // Mapping of token grant IDs per particular address
     // involved in a grant as a grantee or as a grant manager.
@@ -73,6 +60,9 @@ contract TokenGrant {
     // This includes granted tokens that are already vested and
     // available to be withdrawn to the grantee
     mapping(address => uint256) public balances;
+
+    // Mapping of operator addresses per particular grantee address.
+    mapping(address => address[]) public granteesToOperators;
 
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20Burnable token.
@@ -119,13 +109,15 @@ contract TokenGrant {
      * @return staked The amount of tokens that have been staked from the grant.
      * @return revoked A boolean indicating whether the grant has been revoked,
      *                 which is to say that it is no longer vesting.
+     * @return grantee The grantee of grant.
      */
-    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, bool revoked) {
+    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, bool revoked, address grantee) {
         return (
             grants[_id].amount,
             grants[_id].withdrawn,
             grants[_id].staked,
-            grants[_id].revoked
+            grants[_id].revoked,
+            grants[_id].grantee
         );
     }
 
@@ -160,6 +152,27 @@ contract TokenGrant {
     }
 
     /**
+     * @dev Gets operator addresses of the specified grantee address.
+     * @param grantee The grantee address.
+     * @return An array of all operators for a given grantee.
+     */
+    function getGranteeOperators(address grantee) public view returns (address[] memory) {
+        return granteesToOperators[grantee];
+    }
+
+    /**
+     * @dev Gets grant stake details of the given operator.
+     * @param operator The operator address.
+     * @return grantId ID of the token grant.
+     * @return amount The amount of tokens the given operator delegated.
+     * @return stakingContract The address of staking contract.
+     */
+    function getGrantStakeDetails(address operator) public view returns (uint256 grantId, uint256 amount, address stakingContract) {
+        return grantStakes[operator].getDetails();
+    }
+
+
+    /**
      * @notice Receives approval of token transfer and creates a token grant with a vesting
      * schedule where balance withdrawn to the grantee gradually in a linear fashion until
      * start + duration. By then all of the balance will have vested.
@@ -180,7 +193,7 @@ contract TokenGrant {
         uint256 _duration = _extraData.toUint(20);
         uint256 _start = _extraData.toUint(52);
         uint256 _cliff = _extraData.toUint(84);
-        
+
         require(_grantee != address(0), "Grantee address can't be zero.");
         require(_cliff <= _duration, "Vesting cliff duration must be less or equal total vesting duration.");
 
@@ -261,7 +274,6 @@ contract TokenGrant {
      * @param _id Grant ID.
      */
     function revoke(uint256 _id) public {
-
         require(grants[_id].grantManager == msg.sender, "Only grant manager can revoke.");
         require(grants[_id].revocable, "Grant must be revocable in the first place.");
         require(!grants[_id].revoked, "Grant must not be already revoked.");
@@ -300,17 +312,33 @@ contract TokenGrant {
         address operator = _extraData.toAddress(20);
 
         // Calculate available amount. Amount of vested tokens minus what user already withdrawn and staked.
-        uint256 available = grants[_id].amount.sub(grants[_id].withdrawn).sub(grants[_id].staked);
-        require(_amount <= available, "Must have available granted amount to stake.");
+        require(_amount <= availableToStake(_id), "Must have available granted amount to stake.");
 
         // Keep staking record.
-        grantStakes[operator] = GrantStake(_id, _stakingContract, _amount);
+        TokenGrantStake grantStake = new TokenGrantStake(
+            address(token),
+            _id,
+            _stakingContract
+        );
+        grantStakes[operator] = grantStake;
+        granteesToOperators[grants[_id].grantee].push(operator);
         grants[_id].staked += _amount;
+
+        token.transfer(address(grantStake), _amount);
 
         // Staking contract expects 40 bytes _extraData for stake delegation.
         // 20 bytes magpie's address + 20 bytes operator's address.
-        tokenSender(address(token)).approveAndCall(_stakingContract, _amount, _extraData);
+        grantStake.stake(_amount, _extraData);
         emit TokenGrantStaked(_id, _amount, operator);
+    }
+
+    /**
+      @notice Returns the amount of tokens available for staking from the grant.
+      It's the amount of granted tokens minus those released and already staked.
+      @param _grantId Identifier of the grant
+     */
+    function availableToStake(uint256 _grantId) public view returns (uint256) {
+        return grants[_grantId].amount.sub(grants[_grantId].withdrawn).sub(grants[_grantId].staked);
     }
 
     /**
@@ -320,13 +348,15 @@ contract TokenGrant {
      * @param _operator Address of the stake operator.
      */
     function cancelStake(address _operator) public {
-        uint256 grantId = grantStakes[_operator].grantId;
+        TokenGrantStake grantStake = grantStakes[_operator];
+        uint256 grantId = grantStake.getGrantId();
         require(
             msg.sender == _operator || msg.sender == grants[grantId].grantee,
             "Only operator or grantee can cancel the delegation."
         );
 
-        TokenStaking(grantStakes[_operator].stakingContract).cancelStake(_operator);
+        uint256 returned = grantStake.cancelStake();
+        grants[grantId].staked = grants[grantId].staked.sub(returned);
     }
 
     /**
@@ -334,24 +364,28 @@ contract TokenGrant {
      * @param _operator Operator of the stake.
      */
     function undelegate(address _operator) public {
-        uint256 grantId = grantStakes[_operator].grantId;
+        TokenGrantStake grantStake = grantStakes[_operator];
+        uint256 grantId = grantStake.getGrantId();
         require(
             msg.sender == _operator || msg.sender == grants[grantId].grantee,
             "Only operator or grantee can undelegate."
         );
 
-        TokenStaking(grantStakes[_operator].stakingContract).undelegate(_operator);
+        grantStake.undelegate();
     }
 
     /**
      * @notice Recover stake of the token grant.
+     * Recovers the tokens correctly
+     * even if they were earlier recovered directly in the staking contract.
      * @param _operator Operator of the stake.
      */
     function recoverStake(address _operator) public {
-        uint256 grantId = grantStakes[_operator].grantId;
-        grants[grantId].staked = grants[grantId].staked.sub(grantStakes[_operator].amount);
+        TokenGrantStake grantStake = grantStakes[_operator];
+        uint256 returned = grantStake.recoverStake();
+        uint256 grantId = grantStake.getGrantId();
+        grants[grantId].staked = grants[grantId].staked.sub(returned);
 
-        TokenStaking(grantStakes[_operator].stakingContract).recoverStake(_operator);
         delete grantStakes[_operator];
     }
 }

@@ -9,7 +9,7 @@ import {
   validateRequiredValue,
 } from '../forms/common-validators'
 import { useCustomOnSubmitFormik } from '../hooks/useCustomOnSubmitFormik'
-import { displayAmount, formatAmount } from '../utils'
+import { displayAmount, formatAmount } from '../utils/general.utils'
 import ProgressBar from './ProgressBar'
 import { colors } from '../constants/colors'
 import Dropdown from './Dropdown'
@@ -24,7 +24,7 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...f
 
   const getContextBalance = () => {
     const { values: { context, selectedGrant } } = formikProps
-    return context === 'granted' ? selectedGrant.amount : keepBalance
+    return context === 'granted' ? selectedGrant.availableToStake : keepBalance
   }
 
   const isGrantContext = () => {
@@ -146,8 +146,8 @@ const connectedWithFormik = withFormik({
     const { keepBalance, minStake } = props
     const { beneficiaryAddress, operatorAddress, stakeTokens, authorizerAddress, context, selectedGrant } = values
     const errors = {}
-    const selectedGrantBalance = selectedGrant.amount
-    errors.stakeTokens = validateAmountInRange(stakeTokens, context === 'granted' ? selectedGrantBalance : keepBalance, minStake)
+    const contextBalance = context === 'granted' ? selectedGrant.availableToStake : keepBalance
+    errors.stakeTokens = validateAmountInRange(stakeTokens, contextBalance, minStake)
     errors.selectedGrant = context === 'granted' && validateRequiredValue(selectedGrant.id)
     errors.beneficiaryAddress = validateEthAddress(beneficiaryAddress)
     errors.operatorAddress = validateEthAddress(operatorAddress)

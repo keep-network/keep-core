@@ -3,7 +3,7 @@ import AddressShortcut from './AddressShortcut'
 import { operatorService } from '../services/token-staking.service'
 import { useFetchData } from '../hooks/useFetchData'
 import { LoadingOverlay } from './Loadable'
-import { displayAmount } from '../utils'
+import { displayAmount } from '../utils/general.utils'
 import { Web3Context } from './WithWeb3Context'
 import UndelegateStakeButton from './UndelegateStakeButton'
 import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
@@ -18,6 +18,7 @@ const DelegatedTokens = (props) => {
     beneficiaryAddress,
     authorizerAddress,
     undelegationStatus,
+    isUndelegationFromGrant,
   } } = state
 
   const undelegationSuccessCallback = () => {
@@ -51,6 +52,7 @@ const DelegatedTokens = (props) => {
           btnClassName="btn btn-primary btn-lg flex-1"
           operator={yourAddress}
           successCallback={undelegationSuccessCallback}
+          isFromGrant={isUndelegationFromGrant}
         />
       )
     }

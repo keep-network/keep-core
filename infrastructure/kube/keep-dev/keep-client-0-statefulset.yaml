@@ -12,6 +12,8 @@ spec:
   replicas: 1
   selector:
     matchLabels:
+      app: keep
+      type: beacon
       id: '0'
   serviceName: keep-client-0
   volumeClaimTemplates:

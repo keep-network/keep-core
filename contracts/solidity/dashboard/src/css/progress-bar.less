@@ -22,3 +22,18 @@
         margin: 1.5rem 0;
     }
 }
+
+.wrapper-circular-progress-bar {
+    .circular-progress-bar {
+        circle {
+            transition: 0.35s stroke-dashoffset;
+            // axis compensation
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    }
+    
+    .keep-circle {
+        transform: translate(25%, 25%);        
+    }
+}

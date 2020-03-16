@@ -1,5 +1,5 @@
 import React from 'react'
-import { displayAmount, getAvailableAtBlock } from '../utils'
+import { displayAmount, getAvailableAtBlock } from '../utils/general.utils'
 import AddressShortcut from './AddressShortcut'
 import SpeechBubbleInfo from './SpeechBubbleInfo'
 import RecoverStakeButton from './RecoverStakeButton'
@@ -7,12 +7,11 @@ import StatusBadge, { BADGE_STATUS } from './StatusBadge'
 import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
 
 
-const Undelegations = ({ undelegations, successUndelegationCallback }) => {
+const Undelegations = ({ undelegations }) => {
   const renderUndelegationItem = (item) =>
     <UndelegationItem
       key={item.operatorAddress}
       undelegation={item}
-      successUndelegationCallback={successUndelegationCallback}
     />
 
   return (
@@ -46,7 +45,7 @@ const Undelegations = ({ undelegations, successUndelegationCallback }) => {
   )
 }
 
-const UndelegationItem = React.memo(({ undelegation, successUndelegationCallback }) => {
+const UndelegationItem = React.memo(({ undelegation }) => {
   const undelegationStatus = undelegation.canRecoverStake ? COMPLETE_STATUS : PENDING_STATUS
 
   return (
@@ -68,7 +67,7 @@ const UndelegationItem = React.memo(({ undelegation, successUndelegationCallback
       <div className="flex-1">
         {undelegation.canRecoverStake &&
           <RecoverStakeButton
-            successCallback={successUndelegationCallback}
+            isFromGrant={undelegation.isFromGrant}
             operatorAddress={undelegation.operatorAddress}
           />
         }

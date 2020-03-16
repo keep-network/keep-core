@@ -1,6 +1,6 @@
 pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "../../utils/BytesLib.sol";
 import "../../cryptography/AltBn128.sol";
 import "../../cryptography/BLS.sol";
 import "../../TokenStaking.sol";

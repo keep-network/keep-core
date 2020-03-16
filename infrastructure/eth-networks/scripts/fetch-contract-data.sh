@@ -14,7 +14,7 @@ TARGET_DIR=../keep-test/ropsten
   then
     echo "--Current gcloud project: ${CURRENT_PROJECT}"
     echo "--Setting your gcloud context to the keep-test project!"
-    gcloud config set project $KEEP_TEST_PROJECT_ID
+    gcloud config set project $SOURCE_PROJECT_ID
     for contract in "${CONTRACTS[@]}"; do
       gsutil cp gs://${SOURCE_CONTRACT_BUCKET}/$contract $TARGET_DIR
     done

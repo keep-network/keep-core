@@ -6,9 +6,9 @@ import { LoadingOverlay } from './Loadable'
 import { useFetchData } from '../hooks/useFetchData'
 import rewardsService from '../services/rewards.service'
 import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEvent'
-import { OPERATOR_CONTRACT_NAME_EVENTS } from '../constants/constants'
+import { OPERATOR_CONTRACT_NAME } from '../constants/constants'
 import web3Utils from 'web3-utils'
-import { formatDate, isSameEthAddress } from '../utils'
+import { formatDate, isSameEthAddress } from '../utils/general.utils'
 
 const previewDataCount = 3
 const initialData = []
@@ -36,23 +36,36 @@ export const WithdrawalHistory = (props) => {
   }
 
   useSubscribeToContractEvent(
-    OPERATOR_CONTRACT_NAME_EVENTS,
+    OPERATOR_CONTRACT_NAME,
     'GroupMemberRewardsWithdrawn',
     subscribeToEventCallback
   )
 
   return (
     <LoadingOverlay isFetching={isFetching} >
-      <ul className="withdrawal-history tile">
-        <h6>Withdrawal History</h6>
-        {showAll ? data.map(renderWithdrawalHistoryItem) : data.slice(0, previewDataCount).map(renderWithdrawalHistoryItem)}
-        <SeeAllButton
-          dataLength={data.length}
-          previewDataCount={previewDataCount}
-          onClickCallback={() => setShowAll(!showAll)}
-          showAll={showAll}
-        />
-      </ul>
+      <section className="mt-1">
+        <h5 className="mb-1 text-grey-50">Rewards History</h5>
+        <div className="flex row center">
+          <div className="flex-1 text-label">
+            date
+          </div>
+          <div className="flex-1 text-label">
+            group key
+          </div>
+          <div className="flex-2 text-label">
+            amount
+          </div>
+        </div>
+        <ul className="withdrawal-history">
+          {showAll ? data.map(renderWithdrawalHistoryItem) : data.slice(0, previewDataCount).map(renderWithdrawalHistoryItem)}
+          <SeeAllButton
+            dataLength={data.length}
+            previewDataCount={previewDataCount}
+            onClickCallback={() => setShowAll(!showAll)}
+            showAll={showAll}
+          />
+        </ul>
+      </section>
     </LoadingOverlay>
   )
 }

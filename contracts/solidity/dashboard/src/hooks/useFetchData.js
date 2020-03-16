@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useContext, useCallback } from 'react'
 import { Web3Context } from '../components/WithWeb3Context'
-import { wait } from '../utils'
+import { wait } from '../utils/general.utils'
 
 const FETCH_REQUEST_START = 'FETCH_REQUEST_START'
 const FETCH_REQUEST_SUCCESS = 'FETCH_REQUEST_SUCCESS'
