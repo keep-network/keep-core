@@ -68,6 +68,11 @@ contract Registry {
     }
 
     function approveOperatorContract(address operatorContract) public onlyRegistryKeeper {
+        require(
+            !isDisabledOperatorContract(operatorContract),
+            "Operator contract has been disabled"
+        );
+
         operatorContracts[operatorContract] = 1;
         emit OperatorContractApproved(operatorContract);
     }
@@ -82,5 +87,9 @@ contract Registry {
 
     function operatorContractUpgraderFor(address _serviceContract) public view returns (address) {
         return operatorContractUpgraders[_serviceContract];
+    }
+
+    function isDisabledOperatorContract(address operatorContract) internal view returns (bool) {
+        return operatorContracts[operatorContract] == 2;
     }
 }
