@@ -33,9 +33,6 @@ module.exports = async function () {
     let grantManager = accounts[5];
     let granteeOperator = accounts[6];
 
-    // Approve operator contract in the Registry.
-    await registry.approveOperatorContract(operatorContract.address, { from: owner })
-
     // Stake delegate tokens for first 5 accounts as operators,
     // including the first account where owner operating for themself.
     for (let i = 0; i < 5; i++) {
