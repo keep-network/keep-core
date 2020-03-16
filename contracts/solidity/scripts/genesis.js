@@ -1,13 +1,12 @@
 const KeepRandomBeaconOperator = artifacts.require('KeepRandomBeaconOperator.sol')
 
 module.exports = async function () {
-
   try {
     const contract = await KeepRandomBeaconOperator.deployed()
   
     const dkgGas = await contract.dkgGasEstimate()
-    const priceFeedEstimate = await contract.priceFeedEstimate()
-    const dkgFee = dkgGas.mul(priceFeedEstimate)
+    const gasPrice = await contract.gasPriceCeiling()
+    const dkgFee = dkgGas.mul(gasPrice)
 
     await contract.genesis({value: dkgFee})
     console.log('Genesis successfully triggered.')    
