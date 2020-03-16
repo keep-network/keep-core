@@ -40,10 +40,10 @@ contract('TestKeepRandomBeaconService/SelectOperator', function() {
     await serviceContract.removeOperatorContract(operatorContract.address);
     await expectThrow(serviceContract.selectOperatorContract(0)); // Should revert since no operator contract present.
 
-    await registry.approveOperatorContract(operatorContract.address);
-    await serviceContract.addOperatorContract(operatorContract.address);
+    await registry.approveOperatorContract(operatorContract2.address);
+    await serviceContract.addOperatorContract(operatorContract2.address);
     result = await serviceContract.selectOperatorContract(0);
-    assert.equal(result, operatorContract.address, "Operator contract should be added");
+    assert.equal(result, operatorContract2.address, "Operator contract should be added");
 
   });
 
