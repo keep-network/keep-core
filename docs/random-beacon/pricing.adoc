@@ -11,13 +11,7 @@ The pricing method avoids
 the known downfalls of previously considered, more complex, schemes,
 such as price discrimination being defeated by callback pooling.
 
-== Implementation
-
-=== UML diagram
-[ditaa]
-+-----------------+            
-|  estimate_fee   |            
-+-----------------+       
+== Implementation   
 
 === Making requests
 
