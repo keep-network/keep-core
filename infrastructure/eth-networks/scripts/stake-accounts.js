@@ -94,7 +94,7 @@ async function authorizeOperatorContract(operatorAddress, authorizer) {
     operatorAddress,
     keepRandomBeaconOperatorContractAddress).send({from: authorizer});
 
-  console.log(`Authorized!`);
+  console.log(`Account ${operatorAddress} Authorized!`);
 };
 
 operatorAddresses.forEach(operatorAddress => {

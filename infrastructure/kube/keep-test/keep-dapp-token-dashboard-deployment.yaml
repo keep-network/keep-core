@@ -3,6 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: keep-dapp-token-dashboard
+  namespace: default
   labels:
     keel.sh/policy: all
     app: keep-dapp

@@ -16,7 +16,7 @@ spec:
       app: keep
       type: beacon
       id: '3'
-  serviceName: keep-client-0
+  serviceName: keep-client-3
   volumeClaimTemplates:
   - metadata:
       name: keep-client-data
@@ -41,7 +41,7 @@ spec:
         network: ropsten
     spec:
       containers:
-      - name: keep-client-0
+      - name: keep-client-3
         image: gcr.io/keep-test-f3e0/keep-client
         imagePullPolicy: Always
         ports:
