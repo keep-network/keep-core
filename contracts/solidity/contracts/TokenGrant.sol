@@ -44,7 +44,9 @@ contract TokenGrant {
 
     ERC20Burnable public token;
 
-    address[] public stakingContracts;
+    // Staking contracts authorized by the given grant manager.
+    // grant manager -> staking contract -> authorized?
+    mapping(address => mapping (address => bool)) internal stakingContracts;
 
     // Token grants.
     mapping(uint256 => Grant) public grants;
@@ -67,12 +69,22 @@ contract TokenGrant {
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress address of a token that will be linked to this contract.
-     * @param _stakingContract Address of a staking contract that will be linked to this contract.
      */
-    constructor(address _tokenAddress, address _stakingContract) public {
+    constructor(address _tokenAddress) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20Burnable(_tokenAddress);
-        stakingContracts.push(_stakingContract);
+    }
+
+    /**
+     * @dev Used by grant manager to authorize staking contract with the given
+     * address.
+     */
+    function authorizeStakingContract(address _stakingContract) public {
+        require(
+            _stakingContract != address(0x0),
+            "Staking contract address can't be zero"
+        );
+        stakingContracts[msg.sender][_stakingContract] = true;
     }
 
     /**
@@ -303,7 +315,7 @@ contract TokenGrant {
         require(!grants[_id].revocable, "Revocable grants can not be staked.");
         require(grants[_id].grantee == msg.sender, "Only grantee of the grant can stake it.");
         require(
-            stakingContracts.contains(_stakingContract),
+            stakingContracts[grants[_id].grantManager][_stakingContract],
             "Provided staking contract is not authorized."
         );
 
