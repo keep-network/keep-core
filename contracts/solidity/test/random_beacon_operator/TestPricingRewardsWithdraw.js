@@ -4,12 +4,13 @@ import stakeDelegate from '../helpers/stakeDelegate'
 import {initContracts} from '../helpers/initContracts'
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
 import mineBlocks from '../helpers/mineBlocks'
+import {stake} from '../helpers/data';
 
 contract('KeepRandomBeaconOperator/PricingRewardsWithdraw', function(accounts) {
 
   let token, stakingContract, operatorContract, serviceContract,
     groupSize, memberBaseReward, entryFeeEstimate,
-    group1, group2, group3, minimumStake,
+    group1, group2, group3,
     owner = accounts[0],
     requestor = accounts[1],
     operator1 = accounts[2],
@@ -35,11 +36,10 @@ contract('KeepRandomBeaconOperator/PricingRewardsWithdraw', function(accounts) {
 
     groupSize = web3.utils.toBN(3)
     await operatorContract.setGroupSize(groupSize)
-    minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, operator1, minimumStake)
-    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, operator2, minimumStake)
-    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, operator3, minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, operator1, stake.minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, operator2, stake.minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, operator3, stake.minimumStake)
 
     group1 = crypto.randomBytes(128)
     group2 = crypto.randomBytes(128)

@@ -1,3 +1,5 @@
+import {stake} from './data';
+
 const BLS = artifacts.require('./cryptography/BLS.sol');
 const GroupSelection = artifacts.require('./libraries/operator/GroupSelection.sol');
 const Groups = artifacts.require('./libraries/operator/Groups.sol');
@@ -18,7 +20,6 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     withdrawalDelay = 1,
     stakeInitializationPeriod = 1,
     stakeUndelegationPeriod = 30,
-    minimumStake = web3.utils.toBN(200000);
 
   // Initialize Keep token contract
   token = await KeepToken.new();
@@ -29,7 +30,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   // Initialize staking contract
   stakingContract = await TokenStaking.new(token.address, registry.address, stakeInitializationPeriod, stakeUndelegationPeriod);
   accounts = await web3.eth.getAccounts();
-  await stakingContract.setMinimumStake(minimumStake, accounts[0]);
+  await stakingContract.setMinimumStake(stake.minimumStake, accounts[0]);
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new();
@@ -47,8 +48,6 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await KeepRandomBeaconOperator.link("Groups", groups.address);
   await KeepRandomBeaconOperator.link("DKGResultVerification", dkgResultVerification.address);
   await KeepRandomBeaconOperator.link("Reimbursements", reimbursements.address);
-
-
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address);
 
   await registry.approveOperatorContract(operatorContract.address);

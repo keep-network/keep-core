@@ -1,13 +1,14 @@
 import mineBlocks from '../helpers/mineBlocks';
-import {bls} from '../helpers/data';
+import {bls, stake} from '../helpers/data';
 import stakeDelegate from '../helpers/stakeDelegate';
 import {initContracts} from '../helpers/initContracts';
+
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
 contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
 
   let token, stakingContract, operatorContract, serviceContract, callbackContract, entryFee, groupSize, group,
-    owner = accounts[0], minimumStake,
+    owner = accounts[0],
     requestor = accounts[1],
     operator1 = accounts[2],
     operator2 = accounts[3],
@@ -38,11 +39,10 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     await operatorContract.setGroupSize(groupSize);
     group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.setGroupMembers(group, [operator1, operator2, operator3])
-    minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, stake.minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, stake.minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, stake.minimumStake);
 
     entryFee = await serviceContract.entryFeeBreakdown()
   });
