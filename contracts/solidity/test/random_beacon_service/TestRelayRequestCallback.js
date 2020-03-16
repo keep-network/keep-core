@@ -7,7 +7,7 @@ const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
 // A set of integration tests for the beacon pricing mechanism related to
 // callback reimbursement.
-contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
+contract.only('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
 
   const groupSize = 3;
   const groupThreshold = 2;
@@ -144,8 +144,8 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
       }
     );
 
-    // use the same gas price as price feed
-    let relayEntryTxGasPrice = web3.utils.toBN(web3.utils.toWei('20', 'Gwei'));
+    // use the same gas price as the gas price ceiling
+    let relayEntryTxGasPrice = web3.utils.toBN(web3.utils.toWei('30', 'Gwei'));
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
@@ -177,16 +177,16 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     );
 
     // use higher price than the gas price ceiling
-    let relayEntryTxGasPrice = web3.utils.toBN(web3.utils.toWei('30', 'Gwei'));
+    let relayEntryTxGasPrice = web3.utils.toBN(web3.utils.toWei('50', 'Gwei'));
     // higher tx.gasprice should not be used for reimbursement - maximum gas
     // price is the one from the gas price ceiling
-    let gasPriceForReimbursement = web3.utils.toBN(web3.utils.toWei('20', 'Gwei'));
+    let gasPriceForReimbursement = web3.utils.toBN(web3.utils.toWei('30', 'Gwei'));
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
     await operatorContract.relayEntry(bls.groupSignature, {
       from: operator, 
-      gasPrice: relayEntryTxGasPrice// tx.gasprice is the same as the gas price ceiling
+      gasPrice: relayEntryTxGasPrice
     });
     let customerEndBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryEndBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
@@ -246,7 +246,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     );
 
     // use the same gas price as the gas price ceiling
-    let relayEntryTxGasPrice = web3.utils.toBN(web3.utils.toWei('20', 'Gwei'));
+    let relayEntryTxGasPrice = web3.utils.toBN(web3.utils.toWei('30', 'Gwei'));
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
@@ -316,10 +316,10 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     );
   
     // use higher price than the gas price ceiling
-    let relayEntryTxGasPrice = web3.utils.toBN(web3.utils.toWei('30', 'Gwei'));
+    let relayEntryTxGasPrice = web3.utils.toBN(web3.utils.toWei('40', 'Gwei'));
     // higher tx.gasprice should not be used for reimbursement - maximum gas
     // price is the one from the gas price ceiling
-    let gasPriceForReimbursement = web3.utils.toBN(web3.utils.toWei('20', 'Gwei'));
+    let gasPriceForReimbursement = web3.utils.toBN(web3.utils.toWei('30', 'Gwei'));
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));

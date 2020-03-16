@@ -111,14 +111,14 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
-  it("should send reward to the DKG submitter.", async function() {
+  it("should send reward to the DKG submitter", async function() {
     // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
     let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
     let dkgGasEstimate = await operatorContract.dkgGasEstimate();
-    let submitterCustomGasPrice = web3.utils.toWei(web3.utils.toBN(25), 'gwei');
+    let submitterCustomGasPrice = web3.utils.toWei(web3.utils.toBN(35), 'gwei');
     let expectedSubmitterReward = dkgGasEstimate.mul(await operatorContract.gasPriceCeiling());
 
     await operatorContract.submitDkgResult(
