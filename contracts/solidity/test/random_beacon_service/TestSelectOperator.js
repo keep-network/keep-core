@@ -1,6 +1,7 @@
 import expectThrow from '../helpers/expectThrow';
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
 import {initContracts} from '../helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from "../helpers/snapshot";
 const OperatorContract = artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
 
 contract('TestKeepRandomBeaconService/SelectOperator', function() {
@@ -31,6 +32,14 @@ contract('TestKeepRandomBeaconService/SelectOperator', function() {
     operatorContract3.registerNewGroup("0x0");
     operatorContract3.registerNewGroup("0x0");
     operatorContract3.registerNewGroup("0x0");
+  });
+
+  beforeEach(async () => {
+    await createSnapshot()
+  });
+
+  afterEach(async () => {
+    await restoreSnapshot()
   });
 
   it("service contract owner should be able to remove and add operator contracts.", async function() {
