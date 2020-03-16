@@ -45,7 +45,6 @@ Requests made while the beacon is busy will be rejected
 and the transaction reverted.
 
 === Receiving a request
-How are customer requests handled by the protocol?
 
 A request sent to a non-busy beacon is checked for
 _request fee_ >= _entry fee estimate_ + _callback gas amount_ from the request.
@@ -116,7 +115,6 @@ When a valid entry submission is received on-chain:
 - and fees, rewards and refunds are paid out
 
 ==== Callback processing
-How are callbacks processed?
 
 A callback is called using the callback gas amount as the maximum gas. 
 If the callback gas amount is insufficient,
@@ -193,7 +191,6 @@ is < _profit margin + entry verification fee_,
 the difference is added to the _request subsidy pool_.
 
 ==== Group reward
-How are group members compensated?
 
 The group reward is paid to every member of the signing group,
 including the submitter, upon submission of a valid entry.
@@ -230,7 +227,6 @@ If the submission deadline is reached and the delay factor reaches 0,
 the entry submission fails and all group members are penalized.
 
 ==== Submitter reward
-How are submitters compensated?
 
 In addition to the _group reward_,
 the submitter is reimbursed for gas fees
@@ -299,7 +295,6 @@ tricks the contract into consuming twice the gas as normal, they will be able
 to get twice the reimbursement as well. 
 
 === Cost estimates
-todo: How do we estimate the various costs?
 
 ==== Gas price feed
 
@@ -334,7 +329,6 @@ The exact implementation of this gas price feed
 is out for scope for this RFC.
 
 ==== DKG cost estimate
-How do we calculate the cost of running the DKG?
 
 The gas required for DKG should be calculated.
 DKG gas cost should include only DKG result submission.
