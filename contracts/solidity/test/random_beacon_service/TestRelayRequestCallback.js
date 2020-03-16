@@ -7,7 +7,7 @@ const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
 // A set of integration tests for the beacon pricing mechanism related to
 // callback reimbursement.
-contract.only('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
+contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
 
   const groupSize = 3;
   const groupThreshold = 2;
