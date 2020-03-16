@@ -7,7 +7,7 @@ pragma solidity ^0.5.4;
  */
 contract Registry {
 
-    enum ContractStatus { Approved, Disabled }
+    enum ContractStatus { New, Approved, Disabled }
 
     // Governance role is to enable recovery from key compromise by rekeying other roles.
     address internal governance;
@@ -71,8 +71,8 @@ contract Registry {
 
     function approveOperatorContract(address operatorContract) public onlyRegistryKeeper {
         require(
-            operatorContracts[operatorContract] == 0,
-            "Only new operator contracts without previous status can be approved"
+            operatorContracts[operatorContract] == ContractStatus.New,
+            "Only new operator contracts can be approved"
         );
 
         operatorContracts[operatorContract] = ContractStatus.Approved;
