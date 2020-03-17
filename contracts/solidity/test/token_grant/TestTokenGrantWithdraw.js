@@ -150,10 +150,6 @@ contract('TokenGrant/Withdraw', function(accounts) {
       grantContract.withdraw(grantId),
       "Grant available to withdraw amount should be greater than zero."
     )
-    expect(withdrawable).to.eq.BN(
-      grantAmount,
-      "The withdrawable amount should be equal to the whole grant amount"
-    )
     expect(withdrawableAfterStake).to.eq.BN(
       0,
       "The withdrawable amount should be equal to 0"
