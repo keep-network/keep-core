@@ -202,7 +202,7 @@ contract TokenGrant {
         uint256 _cliff = _extraData.toUint(84);
 
         require(_grantee != address(0), "Grantee address can't be zero.");
-        require(_cliff <= _duration, "Vesting cliff duration must be less or equal total unlocking duration.");
+        require(_cliff <= _duration, "Unlocking cliff duration must be less or equal total unlocking duration.");
 
         bool _revocable;
         if (_extraData.slice(116, 1)[0] == 0x01) {
@@ -259,7 +259,7 @@ contract TokenGrant {
         if (now < grants[_id].cliff) {
             return 0; // Cliff period is not over.
         } else if (now >= grants[_id].start.add(grants[_id].duration) || grants[_id].revoked) {
-            return balance; // Vesting period is finished.
+            return balance; // Unlocking period is finished.
         } else {
             return balance.mul(now.sub(grants[_id].start)).div(grants[_id].duration);
         }
