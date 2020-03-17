@@ -69,7 +69,6 @@ contract('TokenGrant/Revoke', function(accounts) {
   })
 
   it("should allow to revoke grant", async () => {
-    const granteeTokenGrantBalanceBefore = await grantContract.balanceOf(grantee);
     const grantManagerKeepBalanceBefore = await tokenContract.balanceOf(tokenOwner);
 
     await increaseTimeTo(grantStart + duration.seconds(30));
@@ -81,19 +80,17 @@ contract('TokenGrant/Revoke', function(accounts) {
 
     const grantDetails = await grantContract.getGrant(grantId);
 
-    const granteeTokenGrantBalanceAfter = await grantContract.balanceOf(grantee);
     const grantManagerKeepBalanceAfter = await tokenContract.balanceOf(tokenOwner);
 
-    expect(granteeTokenGrantBalanceAfter).to.eq.BN(granteeTokenGrantBalanceBefore.sub(lockedTokens));
     expect(grantManagerKeepBalanceAfter).to.eq.BN(grantManagerKeepBalanceBefore.add(lockedTokens));
-    expect(grantDetails.revokedAt).to.be.gt(0);
+    expect(grantDetails.revokedAt).to.be.gt.BN(0);
     expect(withdrawableAfter.add(lockedTokens)).to.eq.BN(grantAmount);
   })
 
   it("should not allow to revoke grant if sender is not a grant manager", async () => {
     expectThrowWithMessage(
-        grantContract.revoke(grantId, { from: grantee }),
-        "Only grant manager can revoke."
+      grantContract.revoke(grantId, { from: grantee }),
+      "Only grant manager can revoke."
     );
   })
 
@@ -111,8 +108,17 @@ contract('TokenGrant/Revoke', function(accounts) {
     );
     
     expectThrowWithMessage(
-        grantContract.revoke(nonRevocableGrantId, { from: tokenOwner }),
-        "Grant must be revocable in the first place."
+      grantContract.revoke(nonRevocableGrantId, { from: tokenOwner }),
+      "Grant must be revocable in the first place."
     );
   })
+
+  // it("should not allow to revoke grant multiple times", async () => {
+  //   await grantContract.revoke(grantId, { from: tokenOwner });
+  
+  //   expectThrowWithMessage(
+  //     grantContract.revoke(grantId, { from: tokenOwner }),
+  //     "Grant must not be already revoked."
+  //   );
+  // })
 });
