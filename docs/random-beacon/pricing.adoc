@@ -276,7 +276,7 @@ service contract.
 
 The on-chain DKG result submission code needs to have all deterministic 
 and time-bounded run paths that are independent of miner-controlled inputs. 
-If the miner-submitter pays the gas price estimated by the price feed, but 
+If the miner-submitter pays the gas price as set in the gas price ceiling, but 
 tricks the contract into consuming twice the gas as normal, they will be able 
 to get twice the reimbursement as well. 
 
@@ -315,7 +315,7 @@ The gas required for DKG should be calculated.
 DKG gas cost should include only DKG result submission.
 Ticket submission costs are covered
 by the expected return from getting into a signing group.
-Multiply DKG gas by gas estimate to get DKG cost estimate.
+Multiply DKG gas by gas price ceiling to get DKG cost estimate.
 Use a DKG frequency divider _d_ to set the group creation rate;
 once every _d_ entries on average.
 Divide DKG cost estimate by _d_ to get DKG contribution for each entry.
@@ -323,17 +323,13 @@ Divide DKG cost estimate by _d_ to get DKG contribution for each entry.
 The maximum DKG gas cost should be hardcoded in the operator contract.
 The service contract takes the highest applicable gas cost
 from all operator contracts being used
-and multiplies it by the fluctuation margin times gas price feed's estimate.
+and multiplies it by the gas price ceiling.
 
-Because DKG is performed when sufficient gas money has accumulated,
-fluctuations in gas prices don't need special consideration.
-When gas costs are rising,
-DKG gets performed less frequently
-until prices (and thus gas cost contributions) stabilize.
-As long as the fluctuation safety factor is sufficient
+As long as the gas price ceiling is sufficient
 to cover the immediate rise in gas fees during DKG execution
-the beacon is capable of generating new groups.
-Similarly, when gas costs fall DKG gets triggered faster.
+the beacon is capable of generating new groups without requiring
+DKG result submitter to take a hit for submitting the result with
+a higher gas price.
 
 ==== Entry verification fee
 
@@ -342,5 +338,4 @@ The maximum entry verification gas cost
 are hardcoded in the operator contract.
 The service contract takes the highest applicable gas cost
 from all operator contracts being used
-and multiplies it by the fluctuation margin (e.g. 1.5) times
-gas price feed's estimate to get entry verification fee.
+and multiplies it by the gas price ceiling to get entry verification fee.
