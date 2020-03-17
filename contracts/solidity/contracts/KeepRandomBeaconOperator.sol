@@ -43,7 +43,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     event GroupMemberRewardsWithdrawn(address indexed beneficiary, address operator, uint256 amount, uint256 groupIndex);
 
-    event GroupPunishment(uint256 indexed groupIndex, uint256 seizedTokensPerMember, uint256 typeOfPunishment);
+    event RelayEntryTimeoutReported(uint256 indexed groupIndex);
+
+    event UnauthorizedSigningReported(uint256 indexed groupIndex);
 
     GroupSelection.Storage groupSelection;
     Groups.Storage groups;
@@ -134,9 +136,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // Seed value used for the genesis group selection.
     // https://www.wolframalpha.com/input/?i=pi+to+78+digits
     uint256 internal _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
-
-    uint256 private constant relayEntryTimeoutPunishment = 0;
-    uint256 private constant unauthorizedSigningPunishment = 1;
 
     /**
      * @dev Triggers the first group selection. Genesis can be called only when
@@ -629,7 +628,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             );
         }
 
-        emit GroupPunishment(signingRequest.groupIndex, minimumStake, relayEntryTimeoutPunishment);
+        emit RelayEntryTimeoutReported(signingRequest.groupIndex);
     }
 
     /**
@@ -758,7 +757,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 groupIndex,
         bytes memory signedGroupPubKey
     ) public {
-        groups.reportUnauthorizedSigning(groupIndex, signedGroupPubKey, minimumStake);
-        emit GroupPunishment(groupIndex, minimumStake, unauthorizedSigningPunishment);
+        bool proofIsValid = groups
+            .reportUnauthorizedSigning(
+                groupIndex,
+                signedGroupPubKey,
+                minimumStake
+            );
+        if (proofIsValid) {
+            emit UnauthorizedSigningReported(groupIndex);
+        }
     }
 }
