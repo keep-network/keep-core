@@ -240,8 +240,8 @@ contract TokenGrant {
     }
 
     /**
-     * @notice Calculates and returns vested grant amount.
-     * @dev Calculates token grant amount that has already vested,
+     * @notice Calculates and returns unlocked grant amount.
+     * @dev Calculates token grant amount that has already unlocked,
      * including any tokens that have already been withdrawn by the grantee as well
      * as any tokens that are available to withdraw but have not yet been withdrawn.
      * @param _id Grant ID.
@@ -260,7 +260,7 @@ contract TokenGrant {
 
     /**
      * @notice Calculates withdrawable granted amount.
-     * @dev Calculates the amount that has already vested but hasn't been withdrawn yet.
+     * @dev Calculates the amount that has already unlocked but hasn't been withdrawn yet.
      * @param _id Grant ID.
      */
     function withdrawable(uint256 _id) public view returns (uint256) {
