@@ -17,7 +17,7 @@ such as price discrimination being defeated by callback pooling.
 
 A request begins with the query 
 `entry_fee_estimate = estimate_fee(callback_gas_amount)`
-, which provides the customer with an estimated gas cost to use in the request. 
+, which provides the customer with an estimated fee to use in the request. 
 The fee estimate is only valid for the transaction it is called in,
 so the customer must make the request immediately after obtaining the estimate.
 Insufficient payment will lead to the request being rejected
@@ -69,13 +69,6 @@ is inevitably prone to off-by-one errors _somewhere_
 and doing the incrementing at request time seems the simplest.
 ]
 
-- the _estimated gas price_ at the time of the request{blank}footnote:[This
-means we don't need to assume the price feed remains stable
-between the making of the request and the paying out of rewards.
-If the gas price feed is guaranteed to not change
-until a valid entry is received, this is not necessary.
-]
-
 - the _request fee_ paid
 
 === Serving a request
@@ -116,7 +109,7 @@ callback execution is skipped
 and the rest of the relay entry submission code is processed as usual.
 
 _callback expenditure_ is calculated as,
-gas spent on call * minimum(_estimated gas price_, _callback expenditure_).
+gas spent on call * minimum(gas price ceiling, actual gas price during transaction).
 
 The minimum of the gas price is included
 to protect the beacon and requester against malicious miner-submitters.
@@ -135,13 +128,12 @@ by setting the gas price to the provided maximum.
 The requester is billed for the entire gas budget
 even if they really only spent a small fraction of it.
 
-A callback execution that uses more gas than specified in the request,
-it will run out of gas.
+A callback execution that uses more gas than specified in the request
+will run out of gas.
 A callback execution can cost more than was quoted and paid for
-only when the gas cost of the transaction exceeds the quoted estimate
-(which includes the safety margin mentioned in the gas price feed section).
+only when the gas cost of the transaction exceeds the gas price ceiling.
 The submitter is intended to take the hit
-for submitting with a gas price that exceeds the estimate.
+for submitting with a gas price that exceeds the gas price ceiling.
 
 === Requester refund
 
@@ -265,7 +257,7 @@ cost reimbursement for the submitter.
 
 After the DKG result is submitted:
 
-_DKG result submission expenditure = minimum(estimated gas price at submission, actual gas price during transaction) * gas spent on call_
+_DKG result submission expenditure = minimum(gas price ceiling, actual gas price during transaction) * gas spent on call_
 
 The entire DKG result submission expenditure is returned to the submitter
 from the _DKG fee pool_ of the operator contract.
@@ -290,20 +282,18 @@ to get twice the reimbursement as well.
 
 === Cost estimates
 
-==== Gas price feed
+==== Gas price ceiling
 
-A short-term gas price feed is required
+A gas price ceiling is required
 to estimate the gas cost components.
 
-The critical feature of the gas price feed is
-that the feed price multiplied by a safety margin for fluctuations (e.g. 1.5)
+The critical feature of the gas price ceiling is
+that the ceiling price
 should be sufficient for getting beacon entries processed
 within the deadline under all circumstances.
-The gas price estimate for an entry is set when the request is processed,
-but the entry submission transaction will be sent later.
 
 If actual gas prices rise to a level
-where the feed price and margin are insufficient
+where gas price ceiling is insufficient
 for getting a transaction to be mined,
 and stays there for the duration of the entry submission window,
 the basic profit margin for the operators cannot be guaranteed.
@@ -318,9 +308,6 @@ will incentivize group members to pay the gas prices
 up to the (theoretical) limit
 where gas for the entry submission transaction
 costs as much as the KEEP tokens at stake.
-
-The exact implementation of this gas price feed
-is out for scope for this RFC.
 
 ==== DKG cost estimate
 
