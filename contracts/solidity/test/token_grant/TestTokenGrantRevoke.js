@@ -1,0 +1,118 @@
+import { duration, increaseTimeTo } from '../helpers/increaseTime';
+import latestTime from '../helpers/latestTime';
+import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
+import grantTokens from '../helpers/grantTokens';
+import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
+
+const BN = web3.utils.BN
+const chai = require('chai')
+chai.use(require('bn-chai')(BN))
+const expect = chai.expect
+
+const KeepToken = artifacts.require('./KeepToken.sol');
+const TokenStaking = artifacts.require('./TokenStaking.sol');
+const TokenGrant = artifacts.require('./TokenGrant.sol');
+const Registry = artifacts.require("./Registry.sol");
+
+contract('TokenGrant/Revoke', function(accounts) {
+
+  let tokenContract, registryContract, grantContract, stakingContract;
+
+  const tokenOwner = accounts[0],
+    grantee = accounts[1];
+
+  let grantId;
+  let grantStart;
+  const grantAmount = web3.utils.toBN(1000000000);
+  const grantRevocable = true;
+  const grantDuration = duration.seconds(60);;
+  const grantCliff = duration.seconds(1);
+    
+  const initializationPeriod = 10;
+  const undelegationPeriod = 30;
+
+  before(async () => {
+    tokenContract = await KeepToken.new();
+    registryContract = await Registry.new();
+    stakingContract = await TokenStaking.new(
+      tokenContract.address, 
+      registryContract.address, 
+      initializationPeriod, 
+      undelegationPeriod
+    );
+    grantContract = await TokenGrant.new(
+      tokenContract.address, 
+      stakingContract.address
+    );
+
+    grantStart = await latestTime();
+
+    grantId = await grantTokens(
+      grantContract, 
+      tokenContract,
+      grantAmount,
+      tokenOwner, 
+      grantee, 
+      grantDuration, 
+      grantStart, 
+      grantCliff, 
+      grantRevocable,
+    );
+  });
+
+  beforeEach(async () => {
+    await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot()
+  })
+
+  it("should allow to revoke grant", async () => {
+    const granteeTokenGrantBalanceBefore = await grantContract.balanceOf(grantee);
+    const grantManagerKeepBalanceBefore = await tokenContract.balanceOf(tokenOwner);
+
+    await increaseTimeTo(grantStart + duration.seconds(30));
+    const withdrawable = await grantContract.withdrawable(grantId);
+    const lockedTokens = grantAmount.sub(withdrawable);
+    
+    await grantContract.revoke(grantId, { from: tokenOwner });
+    const withdrawableAfter = await grantContract.withdrawable(grantId);
+
+    const grantDetails = await grantContract.getGrant(grantId);
+
+    const granteeTokenGrantBalanceAfter = await grantContract.balanceOf(grantee);
+    const grantManagerKeepBalanceAfter = await tokenContract.balanceOf(tokenOwner);
+
+    expect(granteeTokenGrantBalanceAfter).to.eq.BN(granteeTokenGrantBalanceBefore.sub(lockedTokens));
+    expect(grantManagerKeepBalanceAfter).to.eq.BN(grantManagerKeepBalanceBefore.add(lockedTokens));
+    expect(grantDetails.revokedAt).to.be.gt(0);
+    expect(withdrawableAfter.add(lockedTokens)).to.eq.BN(grantAmount);
+  })
+
+  it("should not allow to revoke grant if sender is not a grant manager", async () => {
+    expectThrowWithMessage(
+        grantContract.revoke(grantId, { from: grantee }),
+        "Only grant manager can revoke."
+    );
+  })
+
+  it("should not allow to revoke grant if the grant is non revocable", async () => {
+    const nonRevocableGrantId= await grantTokens(
+        grantContract, 
+        tokenContract,
+        grantAmount,
+        tokenOwner, 
+        grantee, 
+        grantDuration, 
+        grantStart, 
+        grantCliff, 
+        false,
+    );
+    
+    expectThrowWithMessage(
+        grantContract.revoke(nonRevocableGrantId, { from: tokenOwner }),
+        "Grant must be revocable in the first place."
+    );
+  })
+});

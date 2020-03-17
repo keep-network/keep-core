@@ -30,7 +30,7 @@ contract TokenGrant {
     struct Grant {
         address grantManager; // Token grant manager.
         address grantee; // Address to which granted tokens are going to be withdrawn.
-        bool revoked; // Whether the grant was revoked by the grant manager.
+        uint256 revokedAt; // Timestamp at which grant was revoked by the grant manager.
         bool revocable; // Whether grant manager can revoke the grant.
         uint256 amount; // Amount of tokens to be granted.
         uint256 duration; // Duration in seconds of the period in which the granted tokens will vest.
@@ -111,12 +111,12 @@ contract TokenGrant {
      *                 which is to say that it is no longer vesting.
      * @return grantee The grantee of grant.
      */
-    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, bool revoked, address grantee) {
+    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, uint256 revokedAt, address grantee) {
         return (
             grants[_id].amount,
             grants[_id].withdrawn,
             grants[_id].staked,
-            grants[_id].revoked,
+            grants[_id].revokedAt,
             grants[_id].grantee
         );
     }
@@ -203,7 +203,7 @@ contract TokenGrant {
         }
 
         uint256 id = numGrants++;
-        grants[id] = Grant(_from, _grantee, false, _revocable, _amount, _duration, _start, _start.add(_cliff), 0, 0);
+        grants[id] = Grant(_from, _grantee, 0, _revocable, _amount, _duration, _start, _start.add(_cliff), 0, 0);
 
         // Maintain a record to make it easier to query grants by grant manager.
         grantIndices[_from].push(id);
@@ -251,8 +251,10 @@ contract TokenGrant {
 
         if (now < grants[_id].cliff) {
             return 0; // Cliff period is not over.
-        } else if (now >= grants[_id].start.add(grants[_id].duration) || grants[_id].revoked) {
+        } else if (now >= grants[_id].start.add(grants[_id].duration)) {
             return balance; // Vesting period is finished.
+        } else if(grants[_id].revokedAt > 0) {
+            return balance.mul(grants[_id].revokedAt.sub(grants[_id].start)).div(grants[_id].duration);
         } else {
             return balance.mul(now.sub(grants[_id].start)).div(grants[_id].duration);
         }
@@ -276,11 +278,11 @@ contract TokenGrant {
     function revoke(uint256 _id) public {
         require(grants[_id].grantManager == msg.sender, "Only grant manager can revoke.");
         require(grants[_id].revocable, "Grant must be revocable in the first place.");
-        require(!grants[_id].revoked, "Grant must not be already revoked.");
+        require(grants[_id].revokedAt < 0, "Grant must not be already revoked.");
 
         uint256 amount = withdrawable(_id);
         uint256 refund = grants[_id].amount.sub(amount);
-        grants[_id].revoked = true;
+        grants[_id].revokedAt = now;
 
         // Update grantee's grants balance.
         balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(refund);
