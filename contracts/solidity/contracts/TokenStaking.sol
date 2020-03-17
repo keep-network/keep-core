@@ -125,15 +125,34 @@ contract TokenStaking is StakeDelegatable {
      * @param _operator Address of the stake operator.
      */
     function undelegate(address _operator) public {
+        undelegateAt(_operator, block.number);
+    }
+
+    /**
+     * @notice Set an undelegation time for staked tokens.
+     * Undelegation will begin at the specified block.
+     * You will be able to recover your stake by calling
+     * `recoverStake()` with operator address once undelegation period is over.
+     * @param _operator Address of the stake operator.
+     * @param _undelegationBlock The block undelegation is to start at.
+     */
+    function undelegateAt(
+        address _operator,
+        uint256 _undelegationBlock
+    ) public {
         address owner = operators[_operator].owner;
         require(
             msg.sender == _operator ||
             msg.sender == owner, "Only operator or the owner of the stake can undelegate."
         );
+        require(
+            _undelegationBlock >= block.number,
+            "May not set undelegation block in the past"
+        );
         uint256 oldParams = operators[_operator].packedParams;
-        uint256 newParams = oldParams.setUndelegationBlock(block.number);
+        uint256 newParams = oldParams.setUndelegationBlock(_undelegationBlock);
         operators[_operator].packedParams = newParams;
-        emit Undelegated(_operator, block.number);
+        emit Undelegated(_operator, _undelegationBlock);
     }
 
     /**

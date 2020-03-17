@@ -1,4 +1,5 @@
 import mineBlocks from './helpers/mineBlocks';
+import latestBlock from './helpers/latestBlock';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 
@@ -251,23 +252,89 @@ contract('TokenStaking', function(accounts) {
     )
   })
 
-  it("should let operator undelegate", async () => {
-    await delegate(operatorOne)
+    describe("undelegate", async () => {
+        it("should let operator undelegate", async () => {
+            await delegate(operatorOne)
 
-    await mineBlocks(initializationPeriod)
-    await stakingContract.undelegate(operatorOne, {from: operatorOne})
-    // ok, no exceptions
-  })
+            await mineBlocks(initializationPeriod)
+            await stakingContract.undelegate(operatorOne, {from: operatorOne})
+            // ok, no exceptions
+        })
 
-  it("should not allow third party to undelegate", async () => {
-    await delegate(operatorOne)
+        it("should not allow third party to undelegate", async () => {
+            await delegate(operatorOne)
 
-    await mineBlocks(initializationPeriod)
-    await expectThrowWithMessage(
-      stakingContract.undelegate(operatorOne, {from: operatorTwo}),
-      "Only operator or the owner of the stake can undelegate"
-    )
-  })
+            await mineBlocks(initializationPeriod)
+            await expectThrowWithMessage(
+                stakingContract.undelegate(operatorOne, {from: operatorTwo}),
+                "Only operator or the owner of the stake can undelegate"
+            )
+        })
+    })
+
+    describe("undelegateAt", async () => {
+        it("should let operator undelegate", async () => {
+            await delegate(operatorOne)
+
+            await mineBlocks(initializationPeriod)
+
+            let currentBlock = await latestBlock()
+
+            await stakingContract.undelegateAt(
+                operatorOne,
+                currentBlock + 10,
+                {from: operatorOne}
+            )
+            // ok, no exceptions
+        })
+
+        it("should not allow third party to undelegate", async () => {
+            await delegate(operatorOne)
+
+            await mineBlocks(initializationPeriod)
+
+            let currentBlock = await latestBlock()
+
+            await expectThrowWithMessage(
+                stakingContract.undelegateAt(
+                    operatorOne, currentBlock + 10,
+                    {from: operatorTwo}
+                ),
+                "Only operator or the owner of the stake can undelegate"
+            )
+        })
+
+        it("should permit undelegating at the current block", async () => {
+            await delegate(operatorOne)
+
+            await mineBlocks(initializationPeriod)
+
+            let currentBlock = await latestBlock()
+
+            await stakingContract.undelegateAt(
+                operatorOne,
+                currentBlock + 1,
+                {from: operatorOne}
+            )
+            // ok, no exceptions
+        })
+
+        it("should not permit undelegating in the past", async () => {
+            await delegate(operatorOne)
+
+            await mineBlocks(initializationPeriod)
+
+            let currentBlock = await latestBlock()
+
+            await expectThrowWithMessage(
+                stakingContract.undelegateAt(
+                    operatorOne, currentBlock,
+                    {from: operatorOne}
+                ),
+                "May not set undelegation block in the past"
+            )
+        })
+    })
 
   it("should retain delegation info after recovering stake", async () => {
     await delegate(operatorOne)
