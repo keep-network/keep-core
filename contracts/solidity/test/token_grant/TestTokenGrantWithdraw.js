@@ -81,18 +81,18 @@ contract('TokenGrant/Withdraw', function(accounts) {
     const granteeTokenGrantBalancePost = await grantContract.balanceOf(grantee)
 
     const granteeTokenBalance = await tokenContract.balanceOf(grantee)
-    const gratDetails = await grantContract.getGrant(grantId)
+    const grantDetails = await grantContract.getGrant(grantId)
     
     expect(withdrawable).to.be.gt.BN(
       0,
       "Should allow to withdraw more than 0"
     )
     expect(granteeTokenBalance).to.eq.BN(
-      gratDetails.withdrawn,
+      grantDetails.withdrawn,
       "Grantee KEEP token balance should be equal to the grant withdrawn amount"
     )
     expect(granteeTokenGrantBalancePre.sub(granteeTokenGrantBalancePost)).to.eq.BN(
-      gratDetails.withdrawn,
+      grantDetails.withdrawn,
       "Grantee token grant balance should be updated"
     )
   })
@@ -107,7 +107,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
     const granteeTokenGrantBalancePost = await grantContract.balanceOf(grantee)
 
     const granteeTokenBalance = await tokenContract.balanceOf(grantee)
-    const gratDetails = await grantContract.getGrant(grantId)
+    const grantDetails = await grantContract.getGrant(grantId)
 
     expect(withdrawablePre).to.eq.BN(
       grantAmount,
@@ -125,7 +125,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
       granteeTokenGrantBalancePost,
       "Grantee token grant balance should be updated"
     )
-    expect(gratDetails.withdrawn).to.eq.BN(
+    expect(grantDetails.withdrawn).to.eq.BN(
       grantAmount,
       "The grant withdrawan amount should be updated"
     )
