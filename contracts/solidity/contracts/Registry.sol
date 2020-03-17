@@ -71,7 +71,7 @@ contract Registry {
 
     function approveOperatorContract(address operatorContract) public onlyRegistryKeeper {
         require(
-            operatorContracts[operatorContract] == ContractStatus.New,
+            isNewOperatorContract(operatorContract),
             "Only new operator contracts can be approved"
         );
 
@@ -86,6 +86,10 @@ contract Registry {
         );
 
         operatorContracts[operatorContract] = ContractStatus.Disabled;
+    }
+
+    function isNewOperatorContract(address operatorContract) public view returns (bool) {
+        return operatorContracts[operatorContract] == ContractStatus.New;
     }
 
     function isApprovedOperatorContract(address operatorContract) public view returns (bool) {
