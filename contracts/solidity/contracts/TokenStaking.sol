@@ -141,15 +141,26 @@ contract TokenStaking is StakeDelegatable {
         uint256 _undelegationBlock
     ) public {
         address owner = operators[_operator].owner;
+        bool sentByOwner = msg.sender == owner;
         require(
             msg.sender == _operator ||
-            msg.sender == owner, "Only operator or the owner of the stake can undelegate."
+            sentByOwner, "Only operator or the owner of the stake can undelegate."
         );
         require(
             _undelegationBlock >= block.number,
             "May not set undelegation block in the past"
         );
         uint256 oldParams = operators[_operator].packedParams;
+        uint256 existingUndelegationBlock = oldParams.getUndelegationBlock();
+        require(
+            // Undelegation not in progress OR
+            existingUndelegationBlock == 0 ||
+            // Undelegating sooner than previously set time OR
+            existingUndelegationBlock > _undelegationBlock ||
+            // Owner may override
+            sentByOwner,
+            "Only the owner may postpone previously set undelegation"
+        );
         uint256 newParams = oldParams.setUndelegationBlock(_undelegationBlock);
         operators[_operator].packedParams = newParams;
         emit Undelegated(_operator, _undelegationBlock);
