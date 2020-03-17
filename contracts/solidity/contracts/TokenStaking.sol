@@ -332,6 +332,10 @@ contract TokenStaking is StakeDelegatable {
         uint256 undelegatedAt = operatorParams.getUndelegationBlock();
 
         bool isActive = block.number > createdAt.add(initializationPeriod);
+        // `undelegatedAt` may be set to a block in the future,
+        // to schedule undelegation in advance.
+        // In this case the operator is still eligible
+        // until the block `undelegatedAt`.
         bool isUndelegating = (undelegatedAt > 0) && (block.number > undelegatedAt);
 
         if (isAuthorized && isActive && !isUndelegating) {
