@@ -337,10 +337,6 @@ contract('TokenGrant/Stake', function(accounts) {
       0,
       "Should allow to withdraw more than 0"
     )
-    expect(withdrawable).to.be.lt.BN(
-      grantAmount,
-      `Should allow to withdraw less than ${grantAmount.toString()}`
-    )
     expect(granteeTokenBalance).to.eq.BN(
       gratDetails.withdrawn,
       "Grantee KEEP token balance should be euqlas to the grant withdrawn amount"
