@@ -10,7 +10,7 @@ import { useShowMessage, messageType } from '../components/Message'
 import SpeechBubbleInfo from '../components/SpeechBubbleInfo'
 import { LoadingOverlay } from '../components/Loadable'
 import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEvent.js'
-import { TOKEN_STAKING_CONTRACT_NAME_EVENTS } from '../constants/constants'
+import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
 import { isSameEthAddress } from '../utils/general.utils'
 import { sub, add } from '../utils/arithmetics.utils'
 import { findIndexAndObject, compareEthAddresses } from '../utils/array.utils'
@@ -160,7 +160,7 @@ const useSubscribeToStakedEvent = async (data, setData) => {
     })
   }
   useSubscribeToContractEvent(
-    TOKEN_STAKING_CONTRACT_NAME_EVENTS,
+    TOKEN_STAKING_CONTRACT_NAME,
     'Staked',
     subscribeToEventCallback
   )
@@ -234,7 +234,7 @@ const useSubscribeToUndelegatedEvent = (data, setData) => {
     })
   }
   useSubscribeToContractEvent(
-    TOKEN_STAKING_CONTRACT_NAME_EVENTS,
+    TOKEN_STAKING_CONTRACT_NAME,
     'Undelegated',
     subscribeToEventCallback,
   )
@@ -276,7 +276,7 @@ const useSubscribeToRecoveredStakeEvent = async (data, setData) => {
   }
 
   useSubscribeToContractEvent(
-    TOKEN_STAKING_CONTRACT_NAME_EVENTS,
+    TOKEN_STAKING_CONTRACT_NAME,
     'RecoveredStake',
     subscribeToEventCallback
   )

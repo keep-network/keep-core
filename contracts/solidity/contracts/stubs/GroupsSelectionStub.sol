@@ -33,6 +33,6 @@ contract GroupSelectionStub {
     * getPreviousTicketIndex(2) = 0
     */
     function getPreviousTicketIndex(uint256 higherTicketValueIndex) public view returns (uint256) {
-        return groupSelection.previousTicketIndex[higherTicketValueIndex];
+        return uint256(uint8(groupSelection.previousTicketIndices[higherTicketValueIndex]));
     }
 }
