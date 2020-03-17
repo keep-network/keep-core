@@ -12,8 +12,8 @@ import "./TokenGrantStake.sol";
  * @title TokenGrant
  * @dev A token grant contract for a specified standard ERC20Burnable token.
  * Has additional functionality to stake delegate/undelegate token grants.
- * Tokens are granted to the grantee via vesting scheme and can be
- * withdrawn gradually based on the vesting schedule cliff and vesting duration.
+ * Tokens are granted to the grantee via unlocking scheme and can be
+ * withdrawn gradually based on the unlocking schedule cliff and unlocking duration.
  * Optionally grant can be revoked by the token grant manager.
  */
 contract TokenGrant {
@@ -33,9 +33,9 @@ contract TokenGrant {
         bool revoked; // Whether the grant was revoked by the grant manager.
         bool revocable; // Whether grant manager can revoke the grant.
         uint256 amount; // Amount of tokens to be granted.
-        uint256 duration; // Duration in seconds of the period in which the granted tokens will vest.
-        uint256 start; // Timestamp at which vesting will start.
-        uint256 cliff; // Duration in seconds of the cliff after which tokens will begin to vest.
+        uint256 duration; // Duration in seconds of the period in which the granted tokens will unlock.
+        uint256 start; // Timestamp at which unlocking will start.
+        uint256 cliff; // Duration in seconds of the cliff after which tokens will begin to unlock.
         uint256 withdrawn; // Amount that was withdrawn to the grantee.
         uint256 staked; // Amount that was staked by the grantee.
     }
@@ -57,7 +57,7 @@ contract TokenGrant {
     mapping(address => uint256[]) public grantIndices;
 
     // Token grants balances. Sum of all granted tokens to a grantee.
-    // This includes granted tokens that are already vested and
+    // This includes granted tokens that are already unlocked and
     // available to be withdrawn to the grantee
     mapping(address => uint256) public balances;
 
@@ -99,7 +99,7 @@ contract TokenGrant {
 
     /**
      * @dev Gets grant by ID. Returns only basic grant data.
-     * If you need vesting schedule for the grant you must call `getGrantVestingSchedule()`
+     * If you need unlocking schedule for the grant you must call `getGrantUnlockingSchedule()`
      * This is to avoid Ethereum `Stack too deep` issue described here:
      * https://forum.ethereum.org/discussion/2400/error-stack-too-deep-try-removing-local-variables
      * @param _id ID of the token grant.
@@ -108,7 +108,7 @@ contract TokenGrant {
      *                   from the grant.
      * @return staked The amount of tokens that have been staked from the grant.
      * @return revoked A boolean indicating whether the grant has been revoked,
-     *                 which is to say that it is no longer vesting.
+     *                 which is to say that it is no longer unlocking.
      * @return grantee The grantee of grant.
      */
     function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, bool revoked, address grantee) {
@@ -122,18 +122,25 @@ contract TokenGrant {
     }
 
     /**
-     * @dev Gets grant vesting schedule by grant ID.
+     * @dev Gets grant unlocking schedule by grant ID.
      * @param _id ID of the token grant.
      * @return grantManager The address designated as the manager of the grant,
      *                      which is the only address that can revoke this grant.
      * @return duration The duration, in seconds, during which the tokens will
-     *                  vesting linearly.
+     *                  unlocking linearly.
      * @return start The start time, as a timestamp comparing to `now`.
      * @return cliff The duration, in seconds, before which none of the tokens
-     *                in the token will be vested, and after which a linear
-     *                amount based on the age of the grant will be vested.
+     *                in the token will be unlocked, and after which a linear
+     *                amount based on the age of the grant will be unlocked.
      */
-    function getGrantVestingSchedule(uint256 _id) public view returns (address grantManager, uint256 duration, uint256 start, uint256 cliff) {
+    function getGrantUnlockingSchedule(
+        uint256 _id
+    ) public view returns (
+        address grantManager,
+        uint256 duration,
+        uint256 start,
+        uint256 cliff
+    ) {
         return (
             grants[_id].grantManager,
             grants[_id].duration,
@@ -173,16 +180,16 @@ contract TokenGrant {
 
 
     /**
-     * @notice Receives approval of token transfer and creates a token grant with a vesting
+     * @notice Receives approval of token transfer and creates a token grant with a unlocking
      * schedule where balance withdrawn to the grantee gradually in a linear fashion until
-     * start + duration. By then all of the balance will have vested.
+     * start + duration. By then all of the balance will have unlocked.
      * @param _from The owner of the tokens who approved them to transfer.
      * @param _amount Approved amount for the transfer to create token grant.
      * @param _token Token contract address.
      * @param _extraData This byte array must have the following values concatenated:
      * grantee (20 bytes) Address of the grantee.
-     * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to vest.
-     * start (32 bytes) Timestamp at which vesting will start.
+     * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to unlock.
+     * start (32 bytes) Timestamp at which unlocking will start.
      * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
      */
     function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
@@ -195,7 +202,7 @@ contract TokenGrant {
         uint256 _cliff = _extraData.toUint(84);
 
         require(_grantee != address(0), "Grantee address can't be zero.");
-        require(_cliff <= _duration, "Vesting cliff duration must be less or equal total vesting duration.");
+        require(_cliff <= _duration, "Vesting cliff duration must be less or equal total unlocking duration.");
 
         bool _revocable;
         if (_extraData.slice(116, 1)[0] == 0x01) {
@@ -213,14 +220,14 @@ contract TokenGrant {
 
         token.safeTransferFrom(_from, address(this), _amount);
 
-        // Maintain a record of the vested amount
+        // Maintain a record of the unlocked amount
         balances[_grantee] = balances[_grantee].add(_amount);
         emit TokenGrantCreated(id);
     }
 
     /**
      * @notice Withdraws Token grant amount to grantee.
-     * @dev Transfers vested tokens of the token grant to grantee.
+     * @dev Transfers unlocked tokens of the token grant to grantee.
      * @param _id Grant ID.
      */
     function withdraw(uint256 _id) public {
@@ -277,7 +284,7 @@ contract TokenGrant {
 
     /**
      * @notice Allows the grant manager to revoke the grant.
-     * @dev Granted tokens that are already vested (releasable amount) remain so grantee can still withdraw them
+     * @dev Granted tokens that are already unlocked (releasable amount) remain so grantee can still withdraw them
      * the rest are returned to the token grant manager.
      * @param _id Grant ID.
      */
@@ -300,7 +307,7 @@ contract TokenGrant {
 
     /**
      * @notice Stake token grant.
-     * @dev Stakable token grant amount is the amount of vested tokens minus what user already withdrawn from the grant
+     * @dev Stakable token grant amount is the amount of unlocked tokens minus what user already withdrawn from the grant
      * @param _id Grant Id.
      * @param _stakingContract Address of the staking contract.
      * @param _amount Amount to stake.
@@ -319,7 +326,7 @@ contract TokenGrant {
         require(_extraData.length == 60, "Stake delegation data must be provided.");
         address operator = _extraData.toAddress(20);
 
-        // Calculate available amount. Amount of vested tokens minus what user already withdrawn and staked.
+        // Calculate available amount. Amount of unlocked tokens minus what user already withdrawn and staked.
         require(_amount <= availableToStake(_id), "Must have available granted amount to stake.");
 
         // Keep staking record.
