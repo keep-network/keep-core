@@ -127,6 +127,8 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
         public
     {
         require(!initialized(), "Contract is already initialized.");
+        require(registry != address(0), "Incorrect registry address");
+
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _priceFeedEstimate = priceFeedEstimate;
         _fluctuationMargin = fluctuationMargin;
