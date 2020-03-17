@@ -388,13 +388,14 @@ library Groups {
      * should be punished by seizing their tokens. The submitter of this proof is
      * rewarded with 5% of the total seized amount scaled by the reward adjustment
      * parameter and the rest 95% is burned.
+     * Returns true if the proof is valid, otherwise false.
      */
     function reportUnauthorizedSigning(
         Storage storage self,
         uint256 groupIndex,
         bytes memory signedGroupPubKey,
         uint256 minimumStake
-    ) public {
+    ) public returns(bool) {
         require(!isStaleGroup(self, groupIndex), "Group can not be stale");
         bytes memory groupPubKey = getGroupPublicKey(self, groupIndex);
 
@@ -412,7 +413,9 @@ library Groups {
         if (!isGroupTerminated(self, groupIndex) && isSignatureValid) {
             terminateGroup(self, groupIndex);
             self.stakingContract.seize(minimumStake, 100, msg.sender, self.groupMembers[groupPubKey]);
+            return true;
         }
+        return false;
     }
 
     function reportRelayEntryTimeout(
