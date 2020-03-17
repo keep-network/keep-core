@@ -1,10 +1,10 @@
 import mineBlocks from '../helpers/mineBlocks';
 import { duration, increaseTimeTo } from '../helpers/increaseTime';
 import latestTime from '../helpers/latestTime';
-import expectThrow from '../helpers/expectThrow';
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import grantTokens from '../helpers/grantTokens';
 import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
+import delegateStakeFromGrant from '../helpers/delegateStakeFromGrant'
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -34,10 +34,6 @@ contract('TokenGrant/Stake', function(accounts) {
     grantVestingDuration = duration.days(60),
     grantCliff = duration.days(10),
     grantRevocable = false;
-
-  let shortGrantId;
-  const shortGrantDuration = 60;
-  const shortGrantCliff = 1;
     
   const initializationPeriod = 10;
   const undelegationPeriod = 30;
@@ -70,18 +66,6 @@ contract('TokenGrant/Stake', function(accounts) {
       grantCliff, 
       grantRevocable
     );
-
-    shortGrantId = await grantTokens(
-      grantContract, 
-      tokenContract,
-      grantAmount,
-      tokenOwner, 
-      grantee, 
-      shortGrantDuration, 
-      grantStart, 
-      shortGrantCliff, 
-      false,
-    );
   });
 
   beforeEach(async () => {
@@ -92,27 +76,24 @@ contract('TokenGrant/Stake', function(accounts) {
     await restoreSnapshot()
   })
 
-  async function delegate(grantee, operator, amount, grantId) {
-    let delegation = Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
-      Buffer.from(operator.substr(2), 'hex'),
-      Buffer.from(authorizer.substr(2), 'hex')
-    ]);
-
-    return grantContract.stake(
-      grantId, 
-      stakingContract.address, 
-      amount, 
-      delegation, 
-      {from: grantee}
-    );
+  async function delegate(grantee, operator, amount) {
+    return await delegateStakeFromGrant(
+      grantContract,
+      stakingContract.address,
+      grantee,
+      operator,
+      magpie,
+      authorizer,
+      amount,
+      grantId
+    )
   }
 
   it("should update balances when delegating", async () => {
     let amountToDelegate = web3.utils.toBN(20000);
     let remaining = grantAmount.sub(amountToDelegate)
 
-    await delegate(grantee, operatorOne, amountToDelegate, grantId);
+    await delegate(grantee, operatorOne, amountToDelegate);
 
     let availableForStaking = await grantContract.availableToStake.call(grantId)
     let operatorBalance = await stakingContract.balanceOf.call(operatorOne);
@@ -128,7 +109,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should allow to delegate, undelegate, and recover grant", async () => {
-    await delegate(grantee, operatorOne, grantAmount, grantId);
+    await delegate(grantee, operatorOne, grantAmount);
 
     await mineBlocks(initializationPeriod);
     await grantContract.undelegate(operatorOne, {from: grantee});
@@ -149,7 +130,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should allow to cancel delegation right away", async () => {
-    await delegate(grantee, operatorOne, grantAmount, grantId);
+    await delegate(grantee, operatorOne, grantAmount);
 
     await grantContract.cancelStake(operatorOne, {from: grantee});
 
@@ -167,7 +148,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should allow to cancel delegation just before initialization period is over", async () => {
-    await delegate(grantee, operatorOne, grantAmount, grantId);
+    await delegate(grantee, operatorOne, grantAmount);
     
     await mineBlocks(initializationPeriod - 1);
 
@@ -187,7 +168,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow to cancel delegation after initialization period is over", async () => {
-    await delegate(grantee, operatorOne, grantAmount, grantId);
+    await delegate(grantee, operatorOne, grantAmount);
     
     await mineBlocks(initializationPeriod);
 
@@ -198,7 +179,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow to recover stake before undelegation period is over", async () => {
-    await delegate(grantee, operatorOne, grantAmount, grantId);
+    await delegate(grantee, operatorOne, grantAmount);
 
     await mineBlocks(initializationPeriod);
     await grantContract.undelegate(operatorOne, {from: grantee});
@@ -213,7 +194,7 @@ contract('TokenGrant/Stake', function(accounts) {
 
   it("should not allow to delegate to the same operator twice", async () => {
     let amountToDelegate = web3.utils.toBN(20000);
-    await delegate(grantee, operatorOne, amountToDelegate, grantId);
+    await delegate(grantee, operatorOne, amountToDelegate);
 
     await expectThrowWithMessage(
       delegate(grantee, operatorOne, amountToDelegate, grantId),
@@ -222,14 +203,14 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow to delegate to the same operator even after recovering stake", async () => {
-    await delegate(grantee, operatorOne, grantAmount, grantId);
+    await delegate(grantee, operatorOne, grantAmount);
     await mineBlocks(initializationPeriod);
     await grantContract.undelegate(operatorOne, {from: grantee});
     await mineBlocks(undelegationPeriod);
     await grantContract.recoverStake(operatorOne, {from: grantee});
 
     await expectThrowWithMessage(
-      delegate(grantee, operatorOne, grantAmount, grantId),
+      delegate(grantee, operatorOne, grantAmount),
       "Operator address is already in use."
     )
   })
@@ -237,8 +218,8 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should allow to delegate to two different operators", async () => {
     let amountToDelegate = web3.utils.toBN(20000);
 
-    await delegate(grantee, operatorOne, amountToDelegate, grantId);
-    await delegate(grantee, operatorTwo, amountToDelegate, grantId);
+    await delegate(grantee, operatorOne, amountToDelegate);
+    await delegate(grantee, operatorTwo, amountToDelegate);
 
     let availableForStaking = await grantContract.availableToStake.call(grantId)
     let operatorOneBalance = await stakingContract.balanceOf.call(operatorOne);
@@ -260,7 +241,7 @@ contract('TokenGrant/Stake', function(accounts) {
 
   it("should not allow anyone but grantee to stake", async () => {
     await expectThrowWithMessage(
-      delegate(operatorOne, operatorOne, grantAmount, grantId),
+      delegate(operatorOne, operatorOne, grantAmount),
       "Only grantee of the grant can stake it."
     );
   })
@@ -273,7 +254,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow third party to cancel delegation", async () => {
-    await delegate(grantee, operatorOne, grantAmount, grantId);
+    await delegate(grantee, operatorOne, grantAmount);
 
     await expectThrowWithMessage(
       grantContract.cancelStake(operatorOne, {from: operatorTwo}),
@@ -282,7 +263,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should let operator undelegate", async () => {
-    await delegate(grantee, operatorOne, grantAmount, grantId);
+    await delegate(grantee, operatorOne, grantAmount);
 
     await mineBlocks(initializationPeriod);
     await grantContract.undelegate(operatorOne, {from: operatorOne})
@@ -290,7 +271,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow third party to undelegate", async () => {
-    await delegate(grantee, operatorOne, grantAmount, grantId);
+    await delegate(grantee, operatorOne, grantAmount);
 
     await mineBlocks(initializationPeriod);
     await expectThrowWithMessage(
@@ -300,7 +281,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should recover tokens recovered outside the grant contract", async () => {
-    await delegate(grantee, operatorOne, grantAmount, grantId);
+    await delegate(grantee, operatorOne, grantAmount);
 
     await mineBlocks(initializationPeriod);
     await grantContract.undelegate(operatorOne, {from: grantee});
@@ -320,84 +301,5 @@ contract('TokenGrant/Stake', function(accounts) {
       grantAmount,
       "Staked tokens should be recovered safely"
     );
-  })
-
-  it("should allow to wihtdraw some tokens", async () => {
-    await increaseTimeTo(grantStart + shortGrantDuration - 30)
-
-    const withdrawable = await grantContract.withdrawable(shortGrantId)
-    const granteeTokenGrantBalance = await grantContract.balanceOf(grantee)
-    await grantContract.withdraw(shortGrantId)
-    const granteeTokenGrantBalancePost = await grantContract.balanceOf(grantee)
-
-    const granteeTokenBalance = await tokenContract.balanceOf(grantee)
-    const gratDetails = await grantContract.getGrant(shortGrantId)
-    
-    expect(withdrawable).to.be.gt.BN(
-      0,
-      "Should allow to withdraw more than 0"
-    )
-    expect(granteeTokenBalance).to.eq.BN(
-      gratDetails.withdrawn,
-      "Grantee KEEP token balance should be euqlas to the grant withdrawn amount"
-    )
-    expect(granteeTokenGrantBalance.sub(granteeTokenGrantBalancePost)).to.eq.BN(
-      gratDetails.withdrawn,
-      "Grantee token grant balance should be updated"
-    )
-  })
-
-  it("should allow to wihtdraw the whole grant amount ", async () => {
-    await increaseTimeTo(grantStart + shortGrantDuration)
-
-    const withdrawable = await grantContract.withdrawable(shortGrantId)
-    const granteeTokenGrantBalance = await grantContract.balanceOf(grantee)
-    await grantContract.withdraw(shortGrantId)
-    const withdrawablePost = await grantContract.withdrawable(shortGrantId)
-    const granteeTokenGrantBalancePost = await grantContract.balanceOf(grantee)
-
-    const granteeTokenBalance = await tokenContract.balanceOf(grantee)
-    const gratDetails = await grantContract.getGrant(shortGrantId)
-
-    expect(withdrawable).to.eq.BN(
-      grantAmount,
-      "The withdrawable amount should be equals to the whole grant amount"
-    )
-    expect(granteeTokenBalance).to.eq.BN(
-      grantAmount,
-      "Grantee KEEP token balance should be euqlas to the grant amount"
-    )
-    expect(withdrawablePost).to.eq.BN(
-      0,
-      "The withdrawable amount should be equals to 0, when the whole grant amount has been withdrawn"
-    )
-    expect(granteeTokenGrantBalance.sub(grantAmount)).to.eq.BN(
-      granteeTokenGrantBalancePost,
-      "Grantee token grant balance should be updated"
-    )
-    expect(gratDetails.withdrawn).to.eq.BN(
-      grantAmount,
-      "The grant withdrawan amount should be updated"
-    )
-  })
-
-  it("should not allow to withdraw tokens", async () => {
-    await increaseTimeTo(grantStart + shortGrantDuration)
-    const withdrawable = await grantContract.withdrawable(shortGrantId)
-    await delegate(grantee, operatorOne, grantAmount, shortGrantId)
-    const withdrawableAfterStake = await grantContract.withdrawable(shortGrantId)
-
-    await expectThrowWithMessage(
-      grantContract.withdraw(shortGrantId),
-      "Grant available to withdraw amount should be greater than zero."
-    )
-    expect(withdrawable).to.eq.BN(
-      grantAmount,
-      "The withdrawable amount should be equals to the whole grant amount"
-    )
-    expect(withdrawableAfterStake).to.eq.BN(
-      0,
-      "The withdrawable amount should be equals to 0"
-    )
   })
 });
