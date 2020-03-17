@@ -5,6 +5,9 @@ import {bls} from '../helpers/data'
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import mineBlocks from '../helpers/mineBlocks'
 
+const AltBn128Stub = artifacts.require("./stubs/AltBn128Stub.sol");
+const KeepRandomBeaconOperatorStub = artifacts.require("./stubs/KeepRandomBeaconOperatorStub.sol");
+
 contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   let token, stakingContract, serviceContract, operatorContract, minimumStake, largeStake, entryFeeEstimate, groupIndex,
     registry,
@@ -15,15 +18,19 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     tattletale = accounts[4],
     authorizer = accounts[5],
     anotherOperatorContract = accounts[6],
-    registryKeeper = accounts[7]
+    registryKeeper = accounts[7],
+    altBn128
 
   before(async () => {
+    const altBn128Stub = await AltBn128Stub.new();
+    await KeepRandomBeaconOperatorStub.link("AltBn128Stub", altBn128Stub.address); 
+    
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStakingStub.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+      KeepRandomBeaconOperatorStub
     )
 
     token = contracts.token
@@ -31,6 +38,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     serviceContract = contracts.serviceContract
     operatorContract = contracts.operatorContract
     registry = contracts.registry
+    altBn128 = await AltBn128Stub.new();
 
     groupIndex = 0
     await operatorContract.registerNewGroup(bls.groupPubKey)
@@ -145,7 +153,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   })
 
   it("should be able to report unauthorized signing", async () => {
-    let g1point = await operatorContract.signOverMsgSender(bls.secretKey, {from: tattletale});
+    let g1point = await altBn128.sign(bls.secretKey, {from: tattletale});
     let g1pointX = web3.utils.toHex(g1point[0].toString())
     let g1pointY = web3.utils.toHex(g1point[1].toString())
     let tattletaleSignature = '0x' + Buffer.concat([

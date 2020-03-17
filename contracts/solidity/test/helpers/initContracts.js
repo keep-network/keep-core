@@ -4,7 +4,6 @@ const Groups = artifacts.require('./libraries/operator/Groups.sol');
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
 const Reimbursements = artifacts.require("./libraries/operator/Reimbursements.sol");
 const Registry = artifacts.require("./Registry.sol");
-const AltBn128Stub = artifacts.require("./stubs/AltBn128Stub.sol");
 
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
@@ -41,12 +40,10 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   const groups = await Groups.new();
   const dkgResultVerification = await DKGResultVerification.new();
   const reimbursements = await Reimbursements.new();
-  const altBn128Stub = await AltBn128Stub.new();
   await KeepRandomBeaconOperator.link("GroupSelection", groupSelection.address);
   await KeepRandomBeaconOperator.link("Groups", groups.address);
   await KeepRandomBeaconOperator.link("DKGResultVerification", dkgResultVerification.address);
   await KeepRandomBeaconOperator.link("Reimbursements", reimbursements.address);
-  await KeepRandomBeaconOperator.link("AltBn128Stub", altBn128Stub.address);
 
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address);
 
