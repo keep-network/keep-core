@@ -14,7 +14,7 @@ contract('TestKeepRandomBeaconService/Upgrade', function(accounts) {
   before(async () => {
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
+      artifacts.require('./stubs/TokenStakingStub.sol'),
       ServiceContractProxy,
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')

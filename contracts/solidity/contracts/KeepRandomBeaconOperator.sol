@@ -114,10 +114,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     uint256 internal currentEntryStartBlock;
 
-    // Minimum amount of KEEP that allows sMPC cluster client to participate in
-    // the Keep network.
-    uint256 internal minimumStake;
-
     // Seed value used for the genesis group selection.
     // https://www.wolframalpha.com/input/?i=pi+to+78+digits
     uint256 internal _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
@@ -171,8 +167,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
-
-        minimumStake = stakingContract.minimumStake();
 
         groups.stakingContract = TokenStaking(_stakingContract);
         groups.groupActiveTime = TokenStaking(_stakingContract).undelegationPeriod();
@@ -291,6 +285,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *   current candidate group selection.
      */
     function submitTicket(bytes32 ticket) public {
+        uint256 minimumStake = stakingContract.minimumStake();
         uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(minimumStake);
         groupSelection.submitTicket(ticket, stakingWeight);
     }
@@ -389,14 +384,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             dkgSubmitterReimbursementFee = 0;
             magpie.call.value(reimbursementFee)("");
         }
-    }
-
-    /**
-     * @dev Set the minimum amount of KEEP that allows a Keep network client to participate in a group.
-     * @param _minimumStake Amount in KEEP.
-     */
-    function setMinimumStake(uint256 _minimumStake) public onlyOwner {
-        minimumStake = _minimumStake;
     }
 
     /**
@@ -614,6 +601,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function reportRelayEntryTimeout() public {
         require(hasEntryTimedOut(), "Entry did not time out");
+
+        uint256 minimumStake = stakingContract.minimumStake();
         groups.reportRelayEntryTimeout(signingRequest.groupIndex, groupSize, minimumStake);
 
         // We could terminate the last active group. If that's the case,
@@ -635,25 +624,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function groupProfitFee() public view returns(uint256) {
         return groupMemberBaseReward.mul(groupSize);
-    }
-
-    /**
-     * @dev Checks if the specified account has enough active stake to become
-     * network operator and that this contract has been authorized for potential
-     * slashing.
-     *
-     * Having the required minimum of active stake makes the operator eligible
-     * to join the network. If the active stake is not currently undelegating,
-     * operator is also eligible for work selection.
-     *
-     * @param staker Staker's address
-     * @return True if has enough active stake to participate in the network,
-     * false otherwise.
-     */
-    function hasMinimumStake(address staker) public view returns(bool) {
-        return (
-            stakingContract.activeStake(staker, address(this)) >= minimumStake
-        );
     }
 
     /**
@@ -756,6 +726,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 groupIndex,
         bytes memory signedGroupPubKey
     ) public {
+        uint256 minimumStake = stakingContract.minimumStake();
         groups.reportUnauthorizedSigning(groupIndex, signedGroupPubKey, minimumStake);
     }
 }

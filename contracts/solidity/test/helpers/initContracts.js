@@ -12,7 +12,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   let token, registry, stakingContract,
     serviceContractImplV1, serviceContractProxy, serviceContract,
-    operatorContract, accounts;
+    operatorContract;
 
   let priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei = 20 * 10^9 wei)
     fluctuationMargin = 50, // 50%
@@ -29,8 +29,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   // Initialize staking contract
   stakingContract = await TokenStaking.new(token.address, registry.address, stakeInitializationPeriod, stakeUndelegationPeriod);
-  accounts = await web3.eth.getAccounts();
-  await stakingContract.setMinimumStake(stake.minimumStake, accounts[0]);
+  await stakingContract.setMinimumStake(stake.minimumStake);
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new();

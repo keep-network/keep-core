@@ -14,4 +14,8 @@ contract TokenStakingStub is TokenStaking {
     function setInitializationPeriod(uint256 _initializationPeriod) public {
         initializationPeriod = _initializationPeriod;
     }
+
+    function setMinimumStake(uint256 _minimumStake) public {
+        minimumStake = _minimumStake;
+    }
 }

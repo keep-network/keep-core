@@ -7,6 +7,7 @@ import expectThrow from '../helpers/expectThrow';
 import shuffleArray from '../helpers/shuffle';
 import {initContracts} from '../helpers/initContracts';
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+import { stake } from '../helpers/data';
 
 
 contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
@@ -24,14 +25,13 @@ contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
 
   const groupSize = 20;
   const groupThreshold = 15;
-  const minimumStake = web3.utils.toBN(200000);
   const resultPublicationBlockStep = 3;
 
   before(async () => {
 
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
+      artifacts.require('./stubs/TokenStakingStub.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
@@ -43,11 +43,10 @@ contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
 
     operatorContract.setGroupSize(groupSize);
     operatorContract.setGroupThreshold(groupThreshold);
-    operatorContract.setMinimumStake(minimumStake);
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, minimumStake.mul(web3.utils.toBN(3000)))
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, stake.minimumStake.mul(web3.utils.toBN(2000)))
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, stake.minimumStake.mul(web3.utils.toBN(2000)))
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, stake.minimumStake.mul(web3.utils.toBN(3000)))
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: owner})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: owner})

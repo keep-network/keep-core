@@ -9,7 +9,7 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
+const TokenStaking = artifacts.require('./stubs/TokenStakingStub.sol');
 const Registry = artifacts.require("./Registry.sol");
 
 contract('TokenStaking', function(accounts) {
@@ -34,7 +34,7 @@ contract('TokenStaking', function(accounts) {
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod
     );
-    stakingContract.setMinimumStake(stake.minimumStake, ownerOne)
+    stakingContract.setMinimumStake(stake.minimumStake)
 
     await registry.approveOperatorContract(operatorContract);
   });

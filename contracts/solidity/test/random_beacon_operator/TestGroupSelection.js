@@ -6,6 +6,7 @@ import stakeDelegate from '../helpers/stakeDelegate';
 import {initContracts} from '../helpers/initContracts';
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+import { stake } from '../helpers/data';
 
 contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
   let operatorContract,
@@ -16,7 +17,6 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
   operator3 = accounts[4], tickets3,
   authorizer = owner;
 
-  const minimumStake = web3.utils.toBN(200000);
   const operator1StakingWeight = 2000;
   const operator2StakingWeight = 2000;
   const operator3StakingWeight = 3000;
@@ -25,7 +25,7 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
   before(async () => {
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
+      artifacts.require('./stubs/TokenStakingStub.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./stubs/KeepRandomBeaconOperatorGroupSelectionStub.sol')
@@ -36,20 +36,19 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
 
     operatorContract = contracts.operatorContract;
 
-    await stakingContract.setMinimumStake(minimumStake, owner)
     await operatorContract.setGroupSize(groupSize)
 
     await stakeDelegate(
       stakingContract, token, owner, operator1, magpie, authorizer,
-      minimumStake.mul(web3.utils.toBN(operator1StakingWeight))
+      stake.minimumStake.mul(web3.utils.toBN(operator1StakingWeight))
     );
     await stakeDelegate(
       stakingContract, token, owner, operator2, magpie, authorizer,
-      minimumStake.mul(web3.utils.toBN(operator2StakingWeight))
+      stake.minimumStake.mul(web3.utils.toBN(operator2StakingWeight))
     );
     await stakeDelegate(
       stakingContract, token, owner, operator3, magpie, authorizer,
-      minimumStake.mul(web3.utils.toBN(operator3StakingWeight))
+      stake.minimumStake.mul(web3.utils.toBN(operator3StakingWeight))
     );
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
