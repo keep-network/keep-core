@@ -246,7 +246,7 @@ contract TokenGrant {
      * as any tokens that are available to withdraw but have not yet been withdrawn.
      * @param _id Grant ID.
      */
-    function grantedAmount(uint256 _id) public view returns (uint256) {
+    function unlockedAmount(uint256 _id) public view returns (uint256) {
         uint256 balance = grants[_id].amount;
 
         if (now < grants[_id].cliff) {
@@ -264,7 +264,7 @@ contract TokenGrant {
      * @param _id Grant ID.
      */
     function withdrawable(uint256 _id) public view returns (uint256) {
-        uint256 unlocked = grantedAmount(_id);
+        uint256 unlocked = unlockedAmount(_id);
         uint256 withdrawn = grants[_id].withdrawn;
         uint256 staked = grants[_id].staked;
 
