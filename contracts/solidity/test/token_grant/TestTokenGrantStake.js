@@ -1,10 +1,10 @@
 import mineBlocks from '../helpers/mineBlocks';
 import { duration, increaseTimeTo } from '../helpers/increaseTime';
 import latestTime from '../helpers/latestTime';
-import expectThrow from '../helpers/expectThrow';
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import grantTokens from '../helpers/grantTokens';
 import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
+import delegateStakeFromGrant from '../helpers/delegateStakeFromGrant'
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -47,10 +47,9 @@ contract('TokenGrant/Stake', function(accounts) {
       initializationPeriod, 
       undelegationPeriod
     );
-    grantContract = await TokenGrant.new(
-      tokenContract.address, 
-      stakingContract.address
-    );
+    grantContract = await TokenGrant.new(tokenContract.address);
+    
+    await grantContract.authorizeStakingContract(stakingContract.address);
 
     grantStart = await latestTime();
 
@@ -77,19 +76,16 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   async function delegate(grantee, operator, amount) {
-    let delegation = Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
-      Buffer.from(operator.substr(2), 'hex'),
-      Buffer.from(authorizer.substr(2), 'hex')
-    ]);
-
-    return grantContract.stake(
-      grantId, 
-      stakingContract.address, 
-      amount, 
-      delegation, 
-      {from: grantee}
-    );
+    return await delegateStakeFromGrant(
+      grantContract,
+      stakingContract.address,
+      grantee,
+      operator,
+      magpie,
+      authorizer,
+      amount,
+      grantId
+    )
   }
 
   it("should update balances when delegating", async () => {
@@ -200,7 +196,7 @@ contract('TokenGrant/Stake', function(accounts) {
     await delegate(grantee, operatorOne, amountToDelegate);
 
     await expectThrowWithMessage(
-      delegate(grantee, operatorOne, amountToDelegate),
+      delegate(grantee, operatorOne, amountToDelegate, grantId),
       "Operator address is already in use"
     )
   })
@@ -242,7 +238,28 @@ contract('TokenGrant/Stake', function(accounts) {
     );  
   })
 
-  it("should not allow anyone but grantee to stake", async () => {
+  it("should not allow to delegate to not authorized staking contract", async () => {
+    const delegation = Buffer.concat([
+      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(operatorOne.substr(2), 'hex'),
+      Buffer.from(authorizer.substr(2), 'hex')
+    ]);
+
+    const notAuthorizedContract = "0x9E8E3487dCCd6a50045792fAfe8Ac71600B649a9"
+
+    await expectThrowWithMessage(
+      grantContract.stake(
+        grantId, 
+        notAuthorizedContract, 
+        grantAmount, 
+        delegation, 
+        {from: grantee}
+      ),
+      "Provided staking contract is not authorized"
+    )
+  })
+
+  it("should not allow anyone but grantee to delegate", async () => {
     await expectThrowWithMessage(
       delegate(operatorOne, operatorOne, grantAmount),
       "Only grantee of the grant can stake it."
@@ -250,7 +267,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should let operator cancel delegation", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
   
     await grantContract.cancelStake(operatorOne, {from: operatorOne})
     // ok, no exception
