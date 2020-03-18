@@ -69,24 +69,37 @@ contract('TokenGrant/Revoke', function(accounts) {
 
   it("should allow to revoke grant", async () => {
     const grantManagerKeepBalanceBefore = await tokenContract.balanceOf(tokenOwner);
-
     await increaseTimeTo(grantStart + duration.seconds(30));
     const withdrawable = await grantContract.withdrawable(grantId);
     const refund = grantAmount.sub(withdrawable);
     
     await grantContract.revoke(grantId, { from: tokenOwner });
+
     const withdrawableAfter = await grantContract.withdrawable(grantId);
-
     const grantDetails = await grantContract.getGrant(grantId);
-
     const grantManagerKeepBalanceAfter = await tokenContract.balanceOf(tokenOwner);
-
     const unlockedAmount = await grantContract.unlockedAmount(grantId);
 
-    expect(grantManagerKeepBalanceAfter).to.eq.BN(grantManagerKeepBalanceBefore.add(refund));
-    expect(grantDetails.revokedAt).to.be.gt.BN(0);
-    expect(withdrawableAfter.add(refund)).to.eq.BN(grantAmount);
-    expect(unlockedAmount.add(refund)).to.eq.BN(grantAmount);
+    expect(grantManagerKeepBalanceAfter).to.eq.BN(
+      grantManagerKeepBalanceBefore.add(refund),
+      "The grant manager KEEP balance should be updated"
+    );
+    expect(grantDetails.revokedAt).to.be.gt.BN(
+      0,
+      "revokedAt should be greater than zero"
+    );
+    expect(withdrawableAfter.add(refund)).to.eq.BN(
+      grantAmount,
+      "Should be equal to the total grant amount"
+    );
+    expect(grantDetails.revokedAmount).to.eq.BN(
+      grantAmount.sub(unlockedAmount),
+      "Revoked amount should be equal to the subtraction grant amount and unlocked amount"
+    );
+    expect(grantDetails.revokedAmount).to.eq.BN(
+      refund,
+      "Revoked amount should be equal to returned amount to the grant creator"
+    )
   })
 
   it("should not allow to revoke grant if sender is not a grant manager", async () => {
