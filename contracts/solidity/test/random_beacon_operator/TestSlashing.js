@@ -154,8 +154,8 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
 
   it("should be able to report unauthorized signing", async () => {
     let g1point = await altBn128.sign(bls.secretKey, {from: tattletale});
-    let g1pointX = web3.utils.toHex(g1point[0].toString())
-    let g1pointY = web3.utils.toHex(g1point[1].toString())
+    let g1pointX = web3.utils.padLeft(web3.utils.toHex(g1point[0].toString()), 64)
+    let g1pointY = web3.utils.padLeft(web3.utils.toHex(g1point[1].toString()), 64)
     let tattletaleSignature = '0x' + Buffer.concat([
       Buffer.from(g1pointX.substr(2), 'hex'),
       Buffer.from(g1pointY.substr(2), 'hex')
