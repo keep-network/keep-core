@@ -136,4 +136,44 @@ contract('TokenGrant/Revoke', function(accounts) {
       "Grant must not be already revoked."
     );
   })
+
+  it("should be able to revoke the grant but no amount is refunded since duration of the unlocking is over.", async () => {
+    const grantDuration = web3.utils.toBN(0);
+    const grantCliff = web3.utils.toBN(0);
+
+    const grantManagerKeepBalance = await tokenContract.balanceOf(tokenOwner);
+    
+    const fullyUnlockedGrantId = await grantTokens(
+      grantContract, 
+      tokenContract,
+      grantAmount,
+      tokenOwner, 
+      grantee, 
+      grantDuration, 
+      grantStart, 
+      grantCliff, 
+      grantRevocable,
+      );
+      
+    const granteeGrantBalanceBefore = await grantContract.balanceOf.call(grantee);
+    const grantManagerKeepBalanceBeforeRevoke= await tokenContract.balanceOf(tokenOwner);
+
+    await grantContract.revoke(fullyUnlockedGrantId, { from: tokenOwner });
+    
+    const grantManagerKeepBalanceAfterRevoke = await tokenContract.balanceOf(tokenOwner);
+    const granteeGrantBalanceAfter = await grantContract.balanceOf.call(grantee);
+
+    expect(grantManagerKeepBalanceBeforeRevoke).to.eq.BN(
+      grantManagerKeepBalance.sub(grantAmount),
+      "Amount should be taken out from grant manager main balance"
+    );
+    expect(granteeGrantBalanceAfter).to.eq.BN(
+      granteeGrantBalanceBefore,
+      "Amount should stay at grantee's grant balance"
+    );
+    expect(grantManagerKeepBalanceAfterRevoke).to.eq.BN(
+      grantManagerKeepBalanceBeforeRevoke,
+      "No amount to be returned to grant manager since unlocking duration is over"
+    );
+  });
 });
