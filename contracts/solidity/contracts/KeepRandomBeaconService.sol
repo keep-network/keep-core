@@ -70,8 +70,6 @@ contract KeepRandomBeaconService is Ownable, Proxy {
         setImplementation(_implementation);
 
         setUpgradeTimeDelay(1 days);
-
-        setAdmin(msg.sender);
     }
 
     /**
@@ -84,7 +82,7 @@ contract KeepRandomBeaconService is Ownable, Proxy {
      */
     function upgradeToAndCall(address _newImplementation, bytes memory _data)
     public
-    onlyAdmin
+    onlyOwner
     {
         address currentImplementation = _implementation();
         require(
@@ -256,37 +254,5 @@ contract KeepRandomBeaconService is Ownable, Proxy {
         assembly {
             sstore(position, _upgradeInitiatedTimestamp)
         }
-    }
-
-    /**
-     * @notice The admin slot.
-     * @return The contract owner's address.
-     */
-    function admin() public view returns (address adm) {
-        bytes32 slot = ADMIN_SLOT;
-        /* solium-disable-next-line */
-        assembly {
-            adm := sload(slot)
-        }
-    }
-
-    /**
-     * @dev Sets the address of the proxy admin.
-     * @param _newAdmin Address of the new proxy admin.
-     */
-    function setAdmin(address _newAdmin) internal {
-        bytes32 slot = ADMIN_SLOT;
-        /* solium-disable-next-line */
-        assembly {
-            sstore(slot, _newAdmin)
-        }
-    }
-
-    /**
-     * @dev Throws if called by any account other than the contract owner.
-     */
-    modifier onlyAdmin() {
-        require(msg.sender == admin(), "Caller is not the admin");
-        _;
     }
 }
