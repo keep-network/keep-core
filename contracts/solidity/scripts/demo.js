@@ -32,6 +32,7 @@ module.exports = async function () {
     let grantee = accounts[0];
     let grantManager = accounts[5];
     let granteeOperator = accounts[6];
+    await tokenGrant.authorizeStakingContract(tokenStaking.address, { from: grantManager });
 
     // Stake delegate tokens for first 5 accounts as operators,
     // including the first account where owner operating for themself.
