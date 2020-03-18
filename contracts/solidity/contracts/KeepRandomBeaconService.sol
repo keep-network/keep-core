@@ -13,13 +13,6 @@ contract KeepRandomBeaconService is Ownable, Proxy {
     using SafeMath for uint256;
 
     /**
-     * @dev Storage slot with the admin of the contract.
-     * This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1.
-     * It is validated in the constructor.
-     */
-    bytes32 internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
-
-    /**
      * @dev Storage slot with the address of the current implementation.
      * This is the keccak-256 hash of "eip1967.proxy.implementation"
      * subtracted by 1. It is validated in the constructor.
@@ -53,7 +46,6 @@ contract KeepRandomBeaconService is Ownable, Proxy {
 
     constructor(address _implementation, bytes memory _data) public {
         assertSlot(IMPLEMENTATION_SLOT, "eip1967.proxy.implementation");
-        assertSlot(ADMIN_SLOT, "eip1967.proxy.admin");
         assertSlot(UPGRADE_TIME_DELAY_SLOT, "network.keep.randombeacon.proxy.upgradeTimeDelay");
         assertSlot(UPGRADE_IMPLEMENTATION_SLOT, "network.keep.randombeacon.proxy.upgradeImplementation");
         assertSlot(UPGRADE_INIT_TIMESTAMP_SLOT, "network.keep.randombeacon.proxy.upgradeInitiatedTimestamp");
