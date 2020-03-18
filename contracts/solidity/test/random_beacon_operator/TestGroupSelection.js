@@ -17,9 +17,9 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
   operator3 = accounts[4], tickets3,
   authorizer = owner;
 
-  const operator1StakingWeight = 2000;
-  const operator2StakingWeight = 2000;
-  const operator3StakingWeight = 3000;
+  const operator1StakingWeight = 100;
+  const operator2StakingWeight = 200;
+  const operator3StakingWeight = 300;
   const groupSize = 3;
 
   before(async () => {
@@ -38,9 +38,9 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
 
     await operatorContract.setGroupSize(groupSize)
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, authorizer, stake.minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, authorizer, stake.minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, authorizer, stake.minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, authorizer, stake.minimumStake.mul(web3.utils.toBN(operator1StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, authorizer, stake.minimumStake.mul(web3.utils.toBN(operator2StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, authorizer, stake.minimumStake.mul(web3.utils.toBN(operator3StakingWeight)));
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
@@ -85,7 +85,7 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
 
   it("should accept valid ticket with maximum virtual staker index", async () => {
     let ticket = packTicket(tickets1[tickets1.length - 1].valueHex, tickets1.length, operator1);
-    await operatorContract.submitTicket(ticket,{from: operator1});
+    await operatorContract.submitTicket(ticket, {from: operator1});
 
     let submittedCount = await operatorContract.submittedTicketsCount();
     assert.equal(1, submittedCount, "Ticket should be accepted");
