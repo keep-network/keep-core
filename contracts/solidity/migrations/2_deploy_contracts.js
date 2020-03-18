@@ -40,7 +40,7 @@ module.exports = async function(deployer, network) {
   await deployer.deploy(KeepToken);
   await deployer.deploy(Registry);
   await deployer.deploy(TokenStaking, KeepToken.address, Registry.address, initializationPeriod, undelegationPeriod);
-  await deployer.deploy(TokenGrant, KeepToken.address, TokenStaking.address);
+  await deployer.deploy(TokenGrant, KeepToken.address);
   await deployer.deploy(GroupSelection);
   await deployer.link(GroupSelection, KeepRandomBeaconOperator);
   await deployer.link(BLS, Groups);
