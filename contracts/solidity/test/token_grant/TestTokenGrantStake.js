@@ -32,7 +32,7 @@ contract('TokenGrant/Stake', function(accounts) {
   let grantId;
   let grantStart;
 
-  const grantAmount = stake.minimumStake,
+  const grantAmount = stake.minimumStake.mul(web3.utils.toBN(10)),
     grantVestingDuration = duration.days(60),
     grantCliff = duration.days(10),
     grantRevocable = false;
