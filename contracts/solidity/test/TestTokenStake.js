@@ -641,5 +641,59 @@ contract('TokenStaking', function(accounts) {
         "There should be no eligible stake"
       )
     })
+
+    it("should report eligible stake for future undelegation", async () => {
+      await delegate(operatorOne);
+      await stakingContract.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizer}
+      )
+  
+      const delegationTime = 10
+
+      let currentBlock = await latestBlock()
+      await stakingContract.undelegateAt(
+        operatorOne, 
+        currentBlock + initializationPeriod + delegationTime, 
+        {from: ownerOne}
+      );
+
+      await mineBlocks(initializationPeriod);
+      let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
+      expect(eligibleStake).to.eq.BN(
+        stakingAmount,
+        "Eligible stake should equal staked amount"
+      )
+
+      await mineBlocks(delegationTime - 1);
+      eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
+      expect(eligibleStake).to.eq.BN(
+        stakingAmount,
+        "Eligible stake should equal staked amount"
+      )
+    })
+
+    it("should report no eligible stake for passed future undelegation", async () => {
+      await delegate(operatorOne);
+      await stakingContract.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizer}
+      )
+  
+      const delegationTime = 10
+
+      let currentBlock = await latestBlock()
+      await stakingContract.undelegateAt(
+        operatorOne, 
+        currentBlock + initializationPeriod + delegationTime, 
+        {from: ownerOne}
+      );
+
+      await mineBlocks(initializationPeriod + delegationTime);
+
+      let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
+      expect(eligibleStake).to.eq.BN(
+        0,
+        "There should be no active stake"
+      )
+    })
   })
 });
