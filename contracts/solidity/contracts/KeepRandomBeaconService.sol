@@ -1,5 +1,6 @@
 pragma solidity ^0.5.4;
 
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/upgradeability/Proxy.sol";
 
@@ -8,7 +9,7 @@ import "@openzeppelin/upgrades/contracts/upgradeability/Proxy.sol";
  * @dev A proxy contract to provide upgradable Random Beacon functionality.
  * All calls to this proxy contract are delegated to the implementation contract.
  */
-contract KeepRandomBeaconService is Proxy {
+contract KeepRandomBeaconService is Ownable, Proxy {
     using SafeMath for uint256;
 
     /**
