@@ -40,10 +40,9 @@ contract('TokenGrant/Revoke', function(accounts) {
       initializationPeriod, 
       undelegationPeriod
     );
-    grantContract = await TokenGrant.new(
-      tokenContract.address, 
-      stakingContract.address
-    );
+    grantContract = await TokenGrant.new(tokenContract.address);
+    
+    await grantContract.authorizeStakingContract(stakingContract.address);
 
     grantStart = await latestTime();
 
@@ -73,7 +72,7 @@ contract('TokenGrant/Revoke', function(accounts) {
 
     await increaseTimeTo(grantStart + duration.seconds(30));
     const withdrawable = await grantContract.withdrawable(grantId);
-    const lockedTokens = grantAmount.sub(withdrawable);
+    const refund = grantAmount.sub(withdrawable);
     
     await grantContract.revoke(grantId, { from: tokenOwner });
     const withdrawableAfter = await grantContract.withdrawable(grantId);
@@ -82,13 +81,16 @@ contract('TokenGrant/Revoke', function(accounts) {
 
     const grantManagerKeepBalanceAfter = await tokenContract.balanceOf(tokenOwner);
 
-    expect(grantManagerKeepBalanceAfter).to.eq.BN(grantManagerKeepBalanceBefore.add(lockedTokens));
+    const unlockedAmount = await grantContract.unlockedAmount(grantId);
+
+    expect(grantManagerKeepBalanceAfter).to.eq.BN(grantManagerKeepBalanceBefore.add(refund));
     expect(grantDetails.revokedAt).to.be.gt.BN(0);
-    expect(withdrawableAfter.add(lockedTokens)).to.eq.BN(grantAmount);
+    expect(withdrawableAfter.add(refund)).to.eq.BN(grantAmount);
+    expect(unlockedAmount.add(refund)).to.eq.BN(grantAmount);
   })
 
   it("should not allow to revoke grant if sender is not a grant manager", async () => {
-    expectThrowWithMessage(
+    await expectThrowWithMessage(
       grantContract.revoke(grantId, { from: grantee }),
       "Only grant manager can revoke."
     );
@@ -107,18 +109,18 @@ contract('TokenGrant/Revoke', function(accounts) {
         false,
     );
     
-    expectThrowWithMessage(
+    await expectThrowWithMessage(
       grantContract.revoke(nonRevocableGrantId, { from: tokenOwner }),
       "Grant must be revocable in the first place."
     );
   })
 
-  // it("should not allow to revoke grant multiple times", async () => {
-  //   await grantContract.revoke(grantId, { from: tokenOwner });
+  it("should not allow to revoke grant multiple times", async () => {
+    await grantContract.revoke(grantId, { from: tokenOwner });
   
-  //   expectThrowWithMessage(
-  //     grantContract.revoke(grantId, { from: tokenOwner }),
-  //     "Grant must not be already revoked."
-  //   );
-  // })
+    await expectThrowWithMessage(
+      grantContract.revoke(grantId, { from: tokenOwner }),
+      "Grant must not be already revoked."
+    );
+  })
 });
