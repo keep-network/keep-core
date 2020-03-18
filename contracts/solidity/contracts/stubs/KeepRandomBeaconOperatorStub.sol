@@ -56,6 +56,10 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         return groups.groups[groupIndex].groupPubKey;
     }
 
+    function setGasPriceCeiling(uint256 _gasPriceCeiling) public {
+        gasPriceCeiling = _gasPriceCeiling;
+    }
+
     function timeDKG() public view returns (uint256) {
         return dkgResultVerification.timeDKG;
     }

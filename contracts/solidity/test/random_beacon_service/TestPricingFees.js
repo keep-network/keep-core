@@ -30,18 +30,18 @@ contract('KeepRandomBeaconService/PricingFees', function(accounts) {
     });
 
     it("should correctly evaluate entry verification fee", async () => {
-        await serviceContract.setPriceFeedEstimate(200);
+        await operatorContract.setGasPriceCeiling(200);
         await operatorContract.setEntryVerificationGasEstimate(12);        
 
         let fees = await serviceContract.entryFeeBreakdown();
         let entryVerificationFee = fees.entryVerificationFee;
 
-        let expectedEntryVerificationFee = 3600; // 200 * 12 * 150%
+        let expectedEntryVerificationFee = 2400; // 200 * 12
         assert.equal(expectedEntryVerificationFee, entryVerificationFee);
     });
 
     it("should correctly evaluate DKG contribution fee", async () => {
-        await serviceContract.setPriceFeedEstimate(1234);
+        await operatorContract.setGasPriceCeiling(1234);
         await operatorContract.setDkgGasEstimate(13);
         await operatorContract.setGroupSelectionGasEstimate(2);
 
@@ -52,19 +52,8 @@ contract('KeepRandomBeaconService/PricingFees', function(accounts) {
         assert.equal(expectedDkgContributionFee, dkgContributionFee);
     });
 
-    it("should correctly evaluate callback fee", async function() {
-        await serviceContract.setPriceFeedEstimate(160);
-
-        let callbackGas = 1091;
-
-        let callbackFee = await serviceContract.callbackFee(callbackGas);
-        
-        let expectedCallbackFee = 4784640; // (18845 + 1091) * 160 * 150%
-        assert.equal(expectedCallbackFee, callbackFee);
-    });
-
     it("should correctly evaluate entry fee estimate", async () => {
-        await serviceContract.setPriceFeedEstimate(200);
+        await operatorContract.setGasPriceCeiling(200);
         await operatorContract.setEntryVerificationGasEstimate(12); 
         await operatorContract.setDkgGasEstimate(14); 
         await operatorContract.setGroupSize(13);
@@ -77,12 +66,12 @@ contract('KeepRandomBeaconService/PricingFees', function(accounts) {
             callbackGas
         );
 
-        // entry verification fee = 12 * 200 * 150% = 3600
+        // entry verification fee = 12 * 200 = 2400
         // dkg contribution fee = (14 + 2) * 200 * 1% = 32
         // group profit fee = 13 * 3 = 39
-        // callback fee = (18845 + 7) * 200 * 150% = 5655600
-        // entry fee = 3600 + 32 + 39 + 5655600 = 5659271
-        let expectedEntryFeeEstimate = 5659271;
+        // callback fee = (18846 + 7) * 200 = 3770600
+        // entry fee = 2400 + 32 + 39 + 3770600 = 3773071
+        let expectedEntryFeeEstimate = 3773071;
         assert.equal(expectedEntryFeeEstimate, entryFeeEstimate)
     });
 });

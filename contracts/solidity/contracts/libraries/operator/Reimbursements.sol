@@ -13,6 +13,7 @@ library Reimbursements {
      * usage to the submitter's beneficiary address and if necessary to the
      * callback requestor (surplus recipient).
      * @param stakingContract Staking contract to get the address of the beneficiary
+     * @param gasPriceCeiling Gas price ceiling in wei
      * @param gasLimit Gas limit set for the callback
      * @param gasSpent Gas spent by the submitter on the callback
      * @param callbackFee Fee paid for the callback by the requestor
@@ -20,13 +21,19 @@ library Reimbursements {
      */
     function reimburseCallback(
         TokenStaking stakingContract,
-        uint256 priceFeedEstimate,
+        uint256 gasPriceCeiling,
         uint256 gasLimit,
         uint256 gasSpent,
         uint256 callbackFee,
         bytes memory callbackReturnData
     ) public {
-        uint256 gasPrice = tx.gasprice < priceFeedEstimate ? tx.gasprice : priceFeedEstimate;
+        uint256 gasPrice = gasPriceCeiling;
+        // We need to check if tx.gasprice is non-zero as a workaround to a bug
+        // in go-ethereum:
+        // https://github.com/ethereum/go-ethereum/pull/20189
+        if (tx.gasprice > 0 && tx.gasprice < gasPriceCeiling) {
+            gasPrice = tx.gasprice;
+        }
 
         // Obtain the actual callback gas expenditure and refund the surplus.
         //

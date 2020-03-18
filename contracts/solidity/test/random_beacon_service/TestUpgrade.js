@@ -6,7 +6,7 @@ const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol');
 const ServiceContractImplV2 = artifacts.require('./examples/KeepRandomBeaconServiceUpgradeExample.sol');
 
 
-contract('TestKeepRandomBeaconService/Upgrade', function(accounts) {
+contract('KeepRandomBeaconService/Upgrade', function(accounts) {
 
   let operatorContract, serviceContractProxy, serviceContract, serviceContractImplV2, serviceContractV2,
     account_two = accounts[1];
@@ -50,7 +50,7 @@ contract('TestKeepRandomBeaconService/Upgrade', function(accounts) {
   it("should be able to upgrade implementation and initialize it with new data", async function() {
     let previousEntryBefore = await serviceContractV2.previousEntry();
     await serviceContractProxy.upgradeTo(serviceContractImplV2.address);
-    await serviceContractV2.initialize(100, 100, 100, duration.days(0), '0x0000000000000000000000000000000000000000');
+    await serviceContractV2.initialize(100, 100, duration.days(0), '0x0000000000000000000000000000000000000000');
 
     assert.isTrue(await serviceContractV2.initialized(), "Implementation contract should be initialized.");
 

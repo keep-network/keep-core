@@ -30,11 +30,7 @@ contract('KeepRandomBeaconService/PricingDkg', (accounts) => {
 
         await stakeAndGenesis(accounts, contracts);    
 
-        let groupCreationGasEstimate = await operatorContract.groupCreationGasEstimate();
-        let fluctuationMargin = await operatorContract.fluctuationMargin();
-        let priceFeedEstimate = await serviceContract.priceFeedEstimate();
-        let gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(fluctuationMargin).div(web3.utils.toBN(100)));
-        groupCreationFee = groupCreationGasEstimate.mul(gasPriceWithFluctuationMargin);
+        groupCreationFee = await operatorContract.groupCreationFee();
     });
     
     beforeEach(async () => {

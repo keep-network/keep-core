@@ -1,6 +1,7 @@
 import expectThrow from '../helpers/expectThrow';
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
 import {initContracts} from '../helpers/initContracts';
+import {createSnapshot, restoreSnapshot} from "../helpers/snapshot";
 const OperatorContract = artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
 
 contract('TestKeepRandomBeaconService/SelectOperator', function() {
@@ -33,6 +34,14 @@ contract('TestKeepRandomBeaconService/SelectOperator', function() {
     operatorContract3.registerNewGroup("0x0");
   });
 
+  beforeEach(async () => {
+    await createSnapshot()
+  });
+
+  afterEach(async () => {
+    await restoreSnapshot()
+  });
+
   it("service contract owner should be able to remove and add operator contracts.", async function() {
     let result = await serviceContract.selectOperatorContract(0);
     assert.equal(result, operatorContract.address, "Operator contract added during initialization should present in the service contract.");
@@ -40,10 +49,10 @@ contract('TestKeepRandomBeaconService/SelectOperator', function() {
     await serviceContract.removeOperatorContract(operatorContract.address);
     await expectThrow(serviceContract.selectOperatorContract(0)); // Should revert since no operator contract present.
 
-    await registry.approveOperatorContract(operatorContract.address);
-    await serviceContract.addOperatorContract(operatorContract.address);
+    await registry.approveOperatorContract(operatorContract2.address);
+    await serviceContract.addOperatorContract(operatorContract2.address);
     result = await serviceContract.selectOperatorContract(0);
-    assert.equal(result, operatorContract.address, "Operator contract should be added");
+    assert.equal(result, operatorContract2.address, "Operator contract should be added");
 
   });
 

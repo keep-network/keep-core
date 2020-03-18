@@ -6,6 +6,7 @@ import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import grantTokens from '../helpers/grantTokens';
 import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
 import { stake } from '../helpers/data';
+import delegateStakeFromGrant from '../helpers/delegateStakeFromGrant'
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -77,19 +78,16 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   async function delegate(grantee, operator, amount) {
-    let delegation = Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
-      Buffer.from(operator.substr(2), 'hex'),
-      Buffer.from(authorizer.substr(2), 'hex')
-    ]);
-
-    return grantContract.stake(
-      grantId, 
-      stakingContract.address, 
-      amount, 
-      delegation, 
-      {from: grantee}
-    );
+    return await delegateStakeFromGrant(
+      grantContract,
+      stakingContract.address,
+      grantee,
+      operator,
+      magpie,
+      authorizer,
+      amount,
+      grantId
+    )
   }
 
   it("should update balances when delegating", async () => {
@@ -200,7 +198,7 @@ contract('TokenGrant/Stake', function(accounts) {
     await delegate(grantee, operatorOne, amountToDelegate);
 
     await expectThrowWithMessage(
-      delegate(grantee, operatorOne, amountToDelegate),
+      delegate(grantee, operatorOne, amountToDelegate, grantId),
       "Operator address is already in use"
     )
   })
@@ -271,7 +269,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should let operator cancel delegation", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
   
     await grantContract.cancelStake(operatorOne, {from: operatorOne})
     // ok, no exception

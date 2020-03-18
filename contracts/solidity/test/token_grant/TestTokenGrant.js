@@ -94,7 +94,7 @@ contract('TokenGrant', function(accounts) {
     assert.equal(grant[2], false, "Grant should initially be undelegated.");
     assert.equal(grant[3], false, "Grant should not be marked as revoked initially.");
 
-    let schedule = await grantContract.getGrantVestingSchedule(id);
+    let schedule = await grantContract.getGrantUnlockingSchedule(id);
     assert.equal(schedule[0], grant_manager, "Grant should maintain a record of the grant manager.");
     assert.equal(schedule[1].eq(web3.utils.toBN(vestingDuration)), true, "Grant should have vesting schedule duration.");
     assert.equal(schedule[2].eq(web3.utils.toBN(start)), true, "Grant should have start time.");
