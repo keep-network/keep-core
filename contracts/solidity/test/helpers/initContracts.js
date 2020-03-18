@@ -1,5 +1,3 @@
-import {stake} from './data';
-
 const BLS = artifacts.require('./cryptography/BLS.sol');
 const GroupSelection = artifacts.require('./libraries/operator/GroupSelection.sol');
 const Groups = artifacts.require('./libraries/operator/Groups.sol');

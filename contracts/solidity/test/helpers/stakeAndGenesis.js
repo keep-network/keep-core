@@ -30,12 +30,16 @@ export default async function stakeAndGenesis(accounts, contracts) {
     let token = contracts.token;
     let ticket;
 
+    const operator1StakingWeight = 100;
+    const operator2StakingWeight = 200;
+    const operator3StakingWeight = 300;
+
     let owner = accounts[0];
     let authorizer = accounts[0];
 
-    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, authorizer, stake.minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, authorizer, stake.minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, authorizer, stake.minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, authorizer, stake.minimumStake.mul(web3.utils.toBN(operator1StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, authorizer, stake.minimumStake.mul(web3.utils.toBN(operator2StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, authorizer, stake.minimumStake.mul(web3.utils.toBN(operator3StakingWeight)));
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
@@ -43,9 +47,9 @@ export default async function stakeAndGenesis(accounts, contracts) {
 
     let groupSize = await operatorContract.groupSize();
 
-    let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, 2000);
-    let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, 2000);
-    let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, 3000);
+    let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, operator1StakingWeight);
+    let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, operator2StakingWeight);
+    let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, operator3StakingWeight);
 
     for(let i = 0; i < groupSize; i++) {
       ticket = packTicket(tickets1[i].valueHex, tickets1[i].virtualStakerIndex, operator1);
