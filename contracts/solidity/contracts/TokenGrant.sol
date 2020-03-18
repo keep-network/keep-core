@@ -31,6 +31,7 @@ contract TokenGrant {
         address grantManager; // Token grant manager.
         address grantee; // Address to which granted tokens are going to be withdrawn.
         uint256 revokedAt; // Timestamp at which grant was revoked by the grant manager.
+        uint256 revokedAmount; // Amount of tokens to be unlocked until the grant has been revoked.
         bool revocable; // Whether grant manager can revoke the grant.
         uint256 amount; // Amount of tokens to be granted.
         uint256 duration; // Duration in seconds of the period in which the granted tokens will unlock.
@@ -222,7 +223,7 @@ contract TokenGrant {
         }
 
         uint256 id = numGrants++;
-        grants[id] = Grant(_from, _grantee, 0, _revocable, _amount, _duration, _start, _start.add(_cliff), 0, 0);
+        grants[id] = Grant(_from, _grantee, 0, 0, _revocable, _amount, _duration, _start, _start.add(_cliff), 0, 0);
 
         // Maintain a record to make it easier to query grants by grant manager.
         grantIndices[_from].push(id);
@@ -270,7 +271,9 @@ contract TokenGrant {
 
         if (now < grants[_id].cliff) {
             return 0; // Cliff period is not over.
-        } else if (now >= grants[_id].start.add(grants[_id].duration) || grants[_id].revoked) {
+        } else if (grants[_id].revokedAt > 0) {
+            return grants[_id].revokedAmount;
+        } else if (now >= grants[_id].start.add(grants[_id].duration)) {
             return balance; // Unlocking period is finished.
         } else {
             return balance.mul(now.sub(grants[_id].start)).div(grants[_id].duration);
@@ -308,6 +311,7 @@ contract TokenGrant {
         uint256 amount = withdrawable(_id);
         uint256 refund = grants[_id].amount.sub(amount);
         grants[_id].revokedAt = now;
+        grants[_id].revokedAmount = amount;
 
         // Update grantee's grants balance.
         balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(refund);
