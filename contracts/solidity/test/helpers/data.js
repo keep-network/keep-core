@@ -36,5 +36,5 @@ export const bls = {
 };
 
 export const stake = {
-  minimumStake: web3.utils.toBN(200000)
+  minimumStake: web3.utils.toBN(200000).mul(web3.utils.toBN(10**18))
 }
