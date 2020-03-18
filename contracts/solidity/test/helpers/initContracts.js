@@ -29,7 +29,6 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   // Initialize staking contract
   stakingContract = await TokenStaking.new(token.address, registry.address, stakeInitializationPeriod, stakeUndelegationPeriod);
-  await stakingContract.setMinimumStake(stake.minimumStake);
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new();

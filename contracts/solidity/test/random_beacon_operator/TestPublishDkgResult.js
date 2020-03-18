@@ -44,9 +44,9 @@ contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     operatorContract.setGroupSize(groupSize);
     operatorContract.setGroupThreshold(groupThreshold);
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, stake.minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, stake.minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, stake.minimumStake.mul(web3.utils.toBN(3000)))
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, stake.minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, stake.minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, stake.minimumStake)
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: owner})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: owner})

@@ -31,7 +31,7 @@ contract('TokenGrant/Stake', function(accounts) {
   let grantId;
   let grantStart;
 
-  const grantAmount = web3.utils.toBN(1000000000),
+  const grantAmount = stake.minimumStake,
     grantVestingDuration = duration.days(60),
     grantCliff = duration.days(10),
     grantRevocable = false;
@@ -48,7 +48,6 @@ contract('TokenGrant/Stake', function(accounts) {
       initializationPeriod, 
       undelegationPeriod
     );
-    stakingContract.setMinimumStake(stake.minimumStake)
     grantContract = await TokenGrant.new(tokenContract.address);
     
     await grantContract.authorizeStakingContract(stakingContract.address);

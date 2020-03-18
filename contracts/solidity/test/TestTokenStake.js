@@ -26,7 +26,7 @@ contract('TokenStaking', function(accounts) {
     
   const initializationPeriod = 10;
   const undelegationPeriod = 30;
-  const stakingAmount = web3.utils.toBN(10000000);
+  const stakingAmount = stake.minimumStake;
 
   before(async () => {
     token = await KeepToken.new();
@@ -34,7 +34,6 @@ contract('TokenStaking', function(accounts) {
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod
     );
-    stakingContract.setMinimumStake(stake.minimumStake)
 
     await registry.approveOperatorContract(operatorContract);
   });
