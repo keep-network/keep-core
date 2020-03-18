@@ -336,7 +336,7 @@ contract TokenStaking is StakeDelegatable {
         // to schedule undelegation in advance.
         // In this case the operator is still eligible
         // until the block `undelegatedAt`.
-        bool isUndelegating = (undelegatedAt > 0) && (block.number > undelegatedAt);
+        bool isUndelegating = (undelegatedAt != 0) && (block.number > undelegatedAt);
 
         if (isAuthorized && isActive && !isUndelegating) {
             balance = operatorParams.getAmount();
