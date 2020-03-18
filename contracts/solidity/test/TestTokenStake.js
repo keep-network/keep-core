@@ -240,7 +240,7 @@ contract('TokenStaking', function(accounts) {
     await delegate(operatorOne)
 
     await stakingContract.cancelStake(operatorOne, {from: operatorOne})
-    // ok, no exception
+    // ok, no revert
   })
 
   it("should not allow third party to cancel delegation", async () => {
@@ -258,7 +258,7 @@ contract('TokenStaking', function(accounts) {
 
       await mineBlocks(initializationPeriod)
       await stakingContract.undelegate(operatorOne, {from: operatorOne})
-      // ok, no exceptions
+      // ok, no revert
     })
 
     it("should not allow third party to undelegate", async () => {
@@ -268,6 +268,26 @@ contract('TokenStaking', function(accounts) {
       await expectThrowWithMessage(
         stakingContract.undelegate(operatorOne, {from: operatorTwo}),
         "Only operator or the owner of the stake can undelegate"
+      )
+    })
+
+    it("should permit undelegating at the block when initialization " + 
+    "period passed", async () => {
+      await delegate(operatorOne)
+
+      await mineBlocks(initializationPeriod)
+      await stakingContract.undelegate(operatorOne, {from: operatorOne})
+      // ok, no revert
+    })
+
+    it("should not permit undelegating at the block before initialization " + 
+    "period passed", async () => {
+      await delegate(operatorOne)
+
+      await mineBlocks(initializationPeriod - 1)
+      await expectThrowWithMessage(
+        stakingContract.undelegate(operatorOne, {from: operatorOne}),
+        "Cannot undelegate in initialization period, use cancelStake instead"
       )
     })
 
@@ -284,7 +304,7 @@ contract('TokenStaking', function(accounts) {
       )
 
       await stakingContract.undelegate(operatorOne, {from: operatorOne})
-      // ok, no exceptions
+      // ok, no revert
     })
 
     it("should let the owner postpone undelegation", async () => {
@@ -297,7 +317,7 @@ contract('TokenStaking', function(accounts) {
         operatorOne,
         {from: ownerOne}
       )
-      // ok, no exceptions
+      // ok, no revert
     })
 
     it("should not let the operator postpone undelegation", async () => {
@@ -326,7 +346,7 @@ contract('TokenStaking', function(accounts) {
         currentBlock + 10,
         {from: operatorOne}
       )
-      // ok, no exceptions
+      // ok, no revert
     })
 
     it("should not allow third party to undelegate", async () => {
@@ -357,7 +377,33 @@ contract('TokenStaking', function(accounts) {
         currentBlock + 1,
         {from: operatorOne}
       )
-      // ok, no exceptions
+      // ok, no revert
+    })
+
+    it("should permit undelegating at the block when initialization " +
+    "period passed", async () => {
+      await delegate(operatorOne)
+
+      let currentBlock = await latestBlock()
+      await stakingContract.undelegateAt(
+        operatorOne, currentBlock + initializationPeriod + 1,
+        {from: operatorOne}
+      )
+      // ok, no revert
+    })
+
+    it("should not permit undelegating at the block before initialization " + 
+    "period passed", async () => {
+      await delegate(operatorOne)
+
+      let currentBlock = await latestBlock()
+      await expectThrowWithMessage(
+        stakingContract.undelegateAt(
+          operatorOne, currentBlock + initializationPeriod,
+          {from: operatorOne}
+        ),
+        "Cannot undelegate in initialization period, use cancelStake instead"
+      )
     })
 
     it("should not permit undelegating in the past", async () => {
@@ -393,7 +439,7 @@ contract('TokenStaking', function(accounts) {
         currentBlock + 10,
         {from: operatorOne}
       )
-      // ok, no exceptions
+      // ok, no revert
     })
 
     it("should let the owner postpone undelegation", async () => {
@@ -409,7 +455,7 @@ contract('TokenStaking', function(accounts) {
         currentBlock + 10,
         {from: ownerOne}
       )
-      // ok, no exceptions
+      // ok, no revert
     })
 
     it("should not let the operator postpone undelegation", async () => {
@@ -480,162 +526,220 @@ contract('TokenStaking', function(accounts) {
     )
   })
 
-  it("should report active stake after initialization period is over", async () => {
-    await delegate(operatorOne)
-    await stakingContract.authorizeOperatorContract(
-      operatorOne, operatorContract, {from: authorizer}
-    )
-
-    await mineBlocks(initializationPeriod);
-
-    let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
-
-    expect(activeStake).to.eq.BN(
-      stakingAmount,
-      "Active stake should equal staked amount"
-    )
+  describe("activeStake", async () => {
+    it("should report active stake after initialization period is over", async () => {
+      await delegate(operatorOne)
+      await stakingContract.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizer}
+      )
+  
+      await mineBlocks(initializationPeriod);
+  
+      let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
+  
+      expect(activeStake).to.eq.BN(
+        stakingAmount,
+        "Active stake should equal staked amount"
+      )
+    })
+  
+    it("should report no active stake before initialization period is over", async () => {
+      await delegate(operatorOne)
+      await stakingContract.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizer}
+      )
+  
+      await mineBlocks(initializationPeriod - 1)
+  
+      let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
+  
+      expect(activeStake).to.eq.BN(
+        0,
+        "There should be no active stake"
+      )
+    })
+  
+    it("should report no active stake for not authorized operator contract", async () => {
+      await delegate(operatorOne)
+      await mineBlocks(initializationPeriod);
+  
+      let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
+  
+      expect(activeStake).to.eq.BN(
+        0,
+        "There should be no active stake"
+      )
+    })
+  
+    it("should report no active stake after cancelling delegation", async () => {
+      await delegate(operatorOne);
+      await stakingContract.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizer}
+      )
+  
+      await stakingContract.cancelStake(operatorOne, {from: ownerOne});
+  
+      let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
+  
+      expect(activeStake).to.eq.BN(
+        0,
+        "There should be no active stake"
+      )
+    })
+  
+    it("should report no active stake after recovering stake", async () => {
+      await delegate(operatorOne);
+      await stakingContract.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizer}
+      )
+  
+      await mineBlocks(initializationPeriod);
+      await stakingContract.undelegate(operatorOne, {from: ownerOne});
+      await mineBlocks(undelegationPeriod);    
+      await stakingContract.recoverStake(operatorOne);
+      
+      let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
+  
+      expect(activeStake).to.eq.BN(
+        0,
+        "There should be no active stake"
+      )
+    })
   })
+  
+  describe("eligibleStake", async () => {
+    it("should report eligible stake after initialization period is over", async () => {
+      await delegate(operatorOne)
+      await stakingContract.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizer}
+      )
+  
+      await mineBlocks(initializationPeriod);
+  
+      let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
+  
+      expect(eligibleStake).to.eq.BN(
+        stakingAmount,
+        "Eligible stake should equal staked amount"
+      )
+    })
+  
+    it("should report no eligible stake before initialization period is over", async () => {
+      await delegate(operatorOne)
+      await stakingContract.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizer}
+      )
+  
+      await mineBlocks(initializationPeriod - 1);
+  
+      let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
+  
+      expect(eligibleStake).to.eq.BN(
+        0,
+        "There should be no active stake"
+      )
+    })
+  
+    it("should report no eligible stake for not authorized operator contract", async () => {
+      await delegate(operatorOne)
+  
+      await mineBlocks(initializationPeriod);
+  
+      let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
+  
+      expect(eligibleStake).to.eq.BN(
+        0,
+        "There should be no eligible stake"
+      )
+    })
+  
+    it("should report no eligible stake after cancelling delegation", async () => {
+      await delegate(operatorOne);
+      await stakingContract.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizer}
+      )
+  
+      await stakingContract.cancelStake(operatorOne, {from: ownerOne})
+  
+      let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
+  
+      expect(eligibleStake).to.eq.BN(
+        0,
+        "There should be no eligible stake"
+      )
+    })
+  
+    it("should report no eligible stake when undelegating", async () => {
+      await delegate(operatorOne);
+      await stakingContract.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizer}
+      )
+  
+      await mineBlocks(initializationPeriod);
+      await stakingContract.undelegate(operatorOne, {from: ownerOne})
+  
+      await mineBlocks(1)
+  
+      let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
+  
+      expect(eligibleStake).to.eq.BN(
+        0,
+        "There should be no eligible stake"
+      )
+    })
 
-  it("should report no active stake before initialization period is over", async () => {
-    await delegate(operatorOne)
-    await stakingContract.authorizeOperatorContract(
-      operatorOne, operatorContract, {from: authorizer}
-    )
+    it("should report eligible stake for future undelegation", async () => {
+      await delegate(operatorOne);
+      await stakingContract.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizer}
+      )
+  
+      const delegationTime = 10
 
-    await mineBlocks(initializationPeriod - 1)
+      let currentBlock = await latestBlock()
+      await stakingContract.undelegateAt(
+        operatorOne, 
+        currentBlock + initializationPeriod + delegationTime, 
+        {from: ownerOne}
+      );
 
-    let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
+      await mineBlocks(initializationPeriod);
+      let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
+      expect(eligibleStake).to.eq.BN(
+        stakingAmount,
+        "Eligible stake should equal staked amount"
+      )
 
-    expect(activeStake).to.eq.BN(
-      0,
-      "There should be no active stake"
-    )
-  })
+      await mineBlocks(delegationTime - 1);
+      eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
+      expect(eligibleStake).to.eq.BN(
+        stakingAmount,
+        "Eligible stake should equal staked amount"
+      )
+    })
 
-  it("should report no active stake for not authorized operator contract", async () => {
-    await delegate(operatorOne)
-    await mineBlocks(initializationPeriod);
+    it("should report no eligible stake for passed future undelegation", async () => {
+      await delegate(operatorOne);
+      await stakingContract.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizer}
+      )
+  
+      const delegationTime = 10
 
-    let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
+      let currentBlock = await latestBlock()
+      await stakingContract.undelegateAt(
+        operatorOne, 
+        currentBlock + initializationPeriod + delegationTime, 
+        {from: ownerOne}
+      );
 
-    expect(activeStake).to.eq.BN(
-      0,
-      "There should be no active stake"
-    )
-  })
+      await mineBlocks(initializationPeriod + delegationTime);
 
-  it("should report no active stake after cancelling delegation", async () => {
-    await delegate(operatorOne);
-    await stakingContract.authorizeOperatorContract(
-      operatorOne, operatorContract, {from: authorizer}
-    )
-
-    await stakingContract.cancelStake(operatorOne, {from: ownerOne});
-
-    let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
-
-    expect(activeStake).to.eq.BN(
-      0,
-      "There should be no active stake"
-    )
-  })
-
-  it("should report no active stake after recovering stake", async () => {
-    await delegate(operatorOne);
-    await stakingContract.authorizeOperatorContract(
-      operatorOne, operatorContract, {from: authorizer}
-    )
-
-    await mineBlocks(initializationPeriod);
-    await stakingContract.undelegate(operatorOne, {from: ownerOne});
-    await mineBlocks(undelegationPeriod);    
-    await stakingContract.recoverStake(operatorOne);
-    
-    let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
-
-    expect(activeStake).to.eq.BN(
-      0,
-      "There should be no active stake"
-    )
-  })
-
-  it("should report eligible stake after initialization period is over", async () => {
-    await delegate(operatorOne)
-    await stakingContract.authorizeOperatorContract(
-      operatorOne, operatorContract, {from: authorizer}
-    )
-
-    await mineBlocks(initializationPeriod);
-
-    let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
-
-    expect(eligibleStake).to.eq.BN(
-      stakingAmount,
-      "Eligible stake should equal staked amount"
-    )
-  })
-
-  it("should report no eligible stake before initialization period is over", async () => {
-    await delegate(operatorOne)
-    await stakingContract.authorizeOperatorContract(
-      operatorOne, operatorContract, {from: authorizer}
-    )
-
-    await mineBlocks(initializationPeriod - 1);
-
-    let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
-
-    expect(eligibleStake).to.eq.BN(
-      0,
-      "There should be no active stake"
-    )
-  })
-
-  it("should report no eligible stake for not authorized operator contract", async () => {
-    await delegate(operatorOne)
-
-    await mineBlocks(initializationPeriod);
-
-    let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
-
-    expect(eligibleStake).to.eq.BN(
-      0,
-      "There should be no eligible stake"
-    )
-  })
-
-  it("should report no eligible stake after cancelling delegation", async () => {
-    await delegate(operatorOne);
-    await stakingContract.authorizeOperatorContract(
-      operatorOne, operatorContract, {from: authorizer}
-    )
-
-    await stakingContract.cancelStake(operatorOne, {from: ownerOne})
-
-    let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
-
-    expect(eligibleStake).to.eq.BN(
-      0,
-      "There should be no eligible stake"
-    )
-  })
-
-  it("should report no eligible stake when undelegating", async () => {
-    await delegate(operatorOne);
-    await stakingContract.authorizeOperatorContract(
-      operatorOne, operatorContract, {from: authorizer}
-    )
-
-    await mineBlocks(initializationPeriod);
-    await stakingContract.undelegate(operatorOne, {from: ownerOne})
-
-    await mineBlocks(1)
-
-    let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
-
-    expect(eligibleStake).to.eq.BN(
-      0,
-      "There should be no eligible stake"
-    )
+      let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
+      expect(eligibleStake).to.eq.BN(
+        0,
+        "There should be no active stake"
+      )
+    })
   })
 });
