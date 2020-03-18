@@ -6,6 +6,9 @@ pragma solidity ^0.5.4;
  * @dev Governance owned registry of approved contracts and roles.
  */
 contract Registry {
+
+    enum ContractStatus { New, Approved, Disabled }
+
     // Governance role is to enable recovery from key compromise by rekeying other roles.
     address internal governance;
 
@@ -25,8 +28,7 @@ contract Registry {
     mapping(address => address) public operatorContractUpgraders;
 
     // The registry of operator contracts
-    // 0 - NULL (default), 1 - APPROVED, 2 - DISABLED
-    mapping(address => uint256) public operatorContracts;
+    mapping(address => ContractStatus) public operatorContracts;
 
     event OperatorContractApproved(address operatorContract);
 
@@ -68,16 +70,30 @@ contract Registry {
     }
 
     function approveOperatorContract(address operatorContract) public onlyRegistryKeeper {
-        operatorContracts[operatorContract] = 1;
+        require(
+            isNewOperatorContract(operatorContract),
+            "Only new operator contracts can be approved"
+        );
+
+        operatorContracts[operatorContract] = ContractStatus.Approved;
         emit OperatorContractApproved(operatorContract);
     }
 
     function disableOperatorContract(address operatorContract) public onlyPanicButton {
-        operatorContracts[operatorContract] = 2;
+        require(
+            isApprovedOperatorContract(operatorContract),
+            "Only approved operator contracts can be disabled"
+        );
+
+        operatorContracts[operatorContract] = ContractStatus.Disabled;
+    }
+
+    function isNewOperatorContract(address operatorContract) public view returns (bool) {
+        return operatorContracts[operatorContract] == ContractStatus.New;
     }
 
     function isApprovedOperatorContract(address operatorContract) public view returns (bool) {
-        return operatorContracts[operatorContract] == 1;
+        return operatorContracts[operatorContract] == ContractStatus.Approved;
     }
 
     function operatorContractUpgraderFor(address _serviceContract) public view returns (address) {
