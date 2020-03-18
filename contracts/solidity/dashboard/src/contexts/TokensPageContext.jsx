@@ -1,22 +1,22 @@
-import React, { useContext, useReducer, useCallback, useMemo } from 'react'
+import React, { useContext, useReducer, useCallback, useMemo, useEffect } from 'react'
 import { Web3Context } from '../components/WithWeb3Context'
 import { findIndexAndObject, compareEthAddresses } from '../utils/array.utils'
+import { tokensPageService } from '../services/tokens-page.service'
+import { tokenGrantsService } from '../services/token-grants.service'
+import { useFetchData } from '../hooks/useFetchData'
 
-const REFRESH_KEEP_TOKEN_BALANCE = 'REFRESH_KEEP_TOKEN_BALANCE'
-const REFRESH_GRANT_TOKEN_BALANCE = 'REFRESH_GRANT_TOKEN_BALANCE'
-const UPDATE_GRANT_BY_ID = 'UPDATE_GRANT_BY_ID'
-const UPDATE_OWNED_UNDELEGATIONS_TOKEN_BALANCE = 'UPDATE_OWNED_UNDELEGATIONS_BALANCE'
-const UPDATE_OWNED_DELEGATEN_TOKENS_BALANCE = 'UPDATE_DELEGATEN_TOKENS_BALANCE'
-const ADD_DELEGATION = 'ADD_DELEGATION'
-const REMOVE_DELEGATION = 'REMOVE_DELEGATION'
-const ADD_UNDELEGATION = 'ADD_UNDELEGATION'
-const REMOVE_UNDELEGATION = 'REMOVE_UNDELEGATION'
+export const REFRESH_KEEP_TOKEN_BALANCE = 'REFRESH_KEEP_TOKEN_BALANCE'
+export const REFRESH_GRANT_TOKEN_BALANCE = 'REFRESH_GRANT_TOKEN_BALANCE'
+export const UPDATE_GRANT_BY_ID = 'UPDATE_GRANT_BY_ID'
+export const UPDATE_OWNED_UNDELEGATIONS_TOKEN_BALANCE = 'UPDATE_OWNED_UNDELEGATIONS_BALANCE'
+export const UPDATE_OWNED_DELEGATED_TOKENS_BALANCE = 'UPDATE_OWNED_DELEGATED_TOKENS_BALANCE'
+export const ADD_DELEGATION = 'ADD_DELEGATION'
+export const REMOVE_DELEGATION = 'REMOVE_DELEGATION'
+export const ADD_UNDELEGATION = 'ADD_UNDELEGATION'
+export const REMOVE_UNDELEGATION = 'REMOVE_UNDELEGATION'
+const SET_STATE = 'SET_STATE'
 
-const TokensPageContext = React.createContext({
-  refreshKeepTokenBalance: () => {},
-  refreshGrantTokenBalance: () => {},
-  dispatch: () => {},
-  grants: [],
+const tokesnPageServiceInitialData = {
   delegations: [],
   undelegations: [],
   keepTokenBalance: '0',
@@ -25,10 +25,22 @@ const TokensPageContext = React.createContext({
   ownedTokensDelegationsBalance: '0',
   initializationPeriod: '0',
   undelegationPeriod: '0',
+  minimumStake: '0',
+}
+
+const TokensPageContext = React.createContext({
+  refreshKeepTokenBalance: () => {},
+  refreshGrantTokenBalance: () => {},
+  dispatch: () => {},
+  grants: [],
+  ...tokesnPageServiceInitialData,
 })
 
-const TokenPageContextProvider = () => {
+const TokenPageContextProvider = (props) => {
   const web3Context = useContext(Web3Context)
+  const [{ data, isFetching: tokesnPageDataIsFetching }] = useFetchData(tokensPageService.fetchTokensPageData, tokesnPageServiceInitialData)
+  const [{ data: grants, isFetching: grantsAreFetching }, , refreshGrants] = useFetchData(tokenGrantsService.fetchGrants, [])
+
   const [state, dispatch] = useReducer(tokensPageReducer, {
     grants: [],
     delegations: [],
@@ -39,7 +51,16 @@ const TokenPageContextProvider = () => {
     ownedTokensDelegationsBalance: '0',
     initializationPeriod: '0',
     undelegationPeriod: '0',
+    isFetching: true,
   })
+
+  useEffect(() => {
+    dispatch({ type: SET_STATE, payload: { ...data, isFetching: tokesnPageDataIsFetching } })
+  }, [data, tokesnPageDataIsFetching])
+
+  useEffect(() => {
+    dispatch({ type: SET_STATE, payload: { grants, isFetching: grantsAreFetching } })
+  }, [grants, grantsAreFetching])
 
   const contextValue = useMemo(() => {
     return { state, dispatch }
@@ -61,18 +82,30 @@ const TokenPageContextProvider = () => {
 
   return (
     <TokensPageContext.Provider value={{
-      ...contextValue.state,
+      ...state,
       dispatch: contextValue.dispatch,
       refreshKeepTokenBalance,
       refreshGrantTokenBalance,
+      refreshGrants,
     }}>
-      {children}
+      {props.children}
     </TokensPageContext.Provider>
   )
 }
 
+export default TokenPageContextProvider
+
+export const useTokensPageContext = () => {
+  return useContext(TokensPageContext)
+}
+
 const tokensPageReducer = (state, action) => {
   switch (action.type) {
+  case SET_STATE:
+    return {
+      ...state,
+      ...action.payload,
+    }
   case REFRESH_KEEP_TOKEN_BALANCE:
     return {
       ...state,
@@ -93,7 +126,7 @@ const tokensPageReducer = (state, action) => {
       ...state,
       ownedTokensUndelegationsBalance: action.payload.operation(state.ownedTokensUndelegationsBalance, action.payload.value),
     }
-  case UPDATE_OWNED_DELEGATEN_TOKENS_BALANCE:
+  case UPDATE_OWNED_DELEGATED_TOKENS_BALANCE:
     return {
       ...state,
       ownedTokensDelegationsBalance: action.payload.operation(state.ownedTokensDelegationsBalance, action.payload.value),
@@ -106,7 +139,7 @@ const tokensPageReducer = (state, action) => {
   case REMOVE_DELEGATION:
     return {
       ...state,
-      delegations: removeFromDelegationOrUndelegation(...state.delegations, action.payload),
+      delegations: removeFromDelegationOrUndelegation([...state.delegations], action.payload),
     }
   case ADD_UNDELEGATION:
     return {
@@ -116,7 +149,7 @@ const tokensPageReducer = (state, action) => {
   case REMOVE_UNDELEGATION:
     return {
       ...state,
-      undelegations: removeFromDelegationOrUndelegation(...state.undelegations, action.payload),
+      undelegations: removeFromDelegationOrUndelegation([...state.undelegations], action.payload),
     }
   default:
     return { ...state }
@@ -124,7 +157,7 @@ const tokensPageReducer = (state, action) => {
 }
 
 const removeFromDelegationOrUndelegation = (array, id) => {
-  const { indexInArray } = findIndexAndObject(id, 'operatorAddress', array, compareEthAddresses)
+  const { indexInArray } = findIndexAndObject('operatorAddress', id, array, compareEthAddresses)
   if (indexInArray === null) {
     return array
   }
@@ -134,7 +167,7 @@ const removeFromDelegationOrUndelegation = (array, id) => {
 }
 
 const updateGrants = (grants, { grantId, dataToUpdate }) => {
-  const { indexInArray, obj } = findIndexAndObject(grantId, 'id', grants)
+  const { indexInArray, obj } = findIndexAndObject('id', grantId, grants)
   if (indexInArray === null) {
     return grants
   }

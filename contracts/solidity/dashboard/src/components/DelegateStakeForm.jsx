@@ -13,16 +13,13 @@ import { displayAmount, formatAmount } from '../utils/general.utils'
 import ProgressBar from './ProgressBar'
 import { colors } from '../constants/colors'
 import Dropdown from './Dropdown'
-import { tokenGrantsService } from '../services/token-grants.service'
-import { useFetchData } from '../hooks/useFetchData'
 import SelectedGrantDropdown from './SelectedGrantDropdown'
 import {
   normalizeAmount,
   formatAmount as formatFormAmount,
 } from '../forms/form.utils.js'
 
-const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...formikProps }) => {
-  const [{ data }] = useFetchData(tokenGrantsService.fetchGrants, [])
+const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grants, ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const stakeTokensValue = formatAmount(formikProps.values.stakeTokens)
 
@@ -47,13 +44,13 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...f
               isGrantContext() &&
               <Dropdown
                 onSelect={(selectedGrant) => formikProps.setFieldValue('selectedGrant', selectedGrant, true)}
-                options={data}
+                options={grants}
                 valuePropertyName='id'
                 labelPropertyName='id'
                 selectedItem={formikProps.values.selectedGrant}
                 labelPrefix='Grant ID'
                 noItemSelectedText='Select Grant'
-                label={`Choose Grant (${data.length})`}
+                label={`Choose Grant (${grants.length})`}
                 selectedItemComponent={<SelectedGrantDropdown grant={formikProps.values.selectedGrant} />}
               />
             }
