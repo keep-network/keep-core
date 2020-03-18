@@ -240,7 +240,7 @@ contract('TokenStaking', function(accounts) {
     await delegate(operatorOne)
 
     await stakingContract.cancelStake(operatorOne, {from: operatorOne})
-    // ok, no exception
+    // ok, no revert
   })
 
   it("should not allow third party to cancel delegation", async () => {
@@ -258,7 +258,7 @@ contract('TokenStaking', function(accounts) {
 
       await mineBlocks(initializationPeriod)
       await stakingContract.undelegate(operatorOne, {from: operatorOne})
-      // ok, no exceptions
+      // ok, no revert
     })
 
     it("should not allow third party to undelegate", async () => {
@@ -268,6 +268,26 @@ contract('TokenStaking', function(accounts) {
       await expectThrowWithMessage(
         stakingContract.undelegate(operatorOne, {from: operatorTwo}),
         "Only operator or the owner of the stake can undelegate"
+      )
+    })
+
+    it("should permit undelegating at the block when initialization " + 
+    "period passed", async () => {
+      await delegate(operatorOne)
+
+      await mineBlocks(initializationPeriod)
+      await stakingContract.undelegate(operatorOne, {from: operatorOne})
+      // ok, no revert
+    })
+
+    it("should not permit undelegating at the block before initialization " + 
+    "period passed", async () => {
+      await delegate(operatorOne)
+
+      await mineBlocks(initializationPeriod - 1)
+      await expectThrowWithMessage(
+        stakingContract.undelegate(operatorOne, {from: operatorOne}),
+        "Cannot undelegate in initialization period, use cancelStake instead"
       )
     })
 
@@ -284,7 +304,7 @@ contract('TokenStaking', function(accounts) {
       )
 
       await stakingContract.undelegate(operatorOne, {from: operatorOne})
-      // ok, no exceptions
+      // ok, no revert
     })
 
     it("should let the owner postpone undelegation", async () => {
@@ -297,7 +317,7 @@ contract('TokenStaking', function(accounts) {
         operatorOne,
         {from: ownerOne}
       )
-      // ok, no exceptions
+      // ok, no revert
     })
 
     it("should not let the operator postpone undelegation", async () => {
@@ -326,7 +346,7 @@ contract('TokenStaking', function(accounts) {
         currentBlock + 10,
         {from: operatorOne}
       )
-      // ok, no exceptions
+      // ok, no revert
     })
 
     it("should not allow third party to undelegate", async () => {
@@ -357,7 +377,33 @@ contract('TokenStaking', function(accounts) {
         currentBlock + 1,
         {from: operatorOne}
       )
-      // ok, no exceptions
+      // ok, no revert
+    })
+
+    it("should permit undelegating at the block when initialization " +
+    "period passed", async () => {
+      await delegate(operatorOne)
+
+      let currentBlock = await latestBlock()
+      await stakingContract.undelegateAt(
+        operatorOne, currentBlock + initializationPeriod + 1,
+        {from: operatorOne}
+      )
+      // ok, no revert
+    })
+
+    it("should not permit undelegating at the block before initialization " + 
+    "period passed", async () => {
+      await delegate(operatorOne)
+
+      let currentBlock = await latestBlock()
+      await expectThrowWithMessage(
+        stakingContract.undelegateAt(
+          operatorOne, currentBlock + initializationPeriod,
+          {from: operatorOne}
+        ),
+        "Cannot undelegate in initialization period, use cancelStake instead"
+      )
     })
 
     it("should not permit undelegating in the past", async () => {
@@ -393,7 +439,7 @@ contract('TokenStaking', function(accounts) {
         currentBlock + 10,
         {from: operatorOne}
       )
-      // ok, no exceptions
+      // ok, no revert
     })
 
     it("should let the owner postpone undelegation", async () => {
@@ -409,7 +455,7 @@ contract('TokenStaking', function(accounts) {
         currentBlock + 10,
         {from: ownerOne}
       )
-      // ok, no exceptions
+      // ok, no revert
     })
 
     it("should not let the operator postpone undelegation", async () => {
