@@ -5,7 +5,6 @@ import latestTime from '../helpers/latestTime';
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import grantTokens from '../helpers/grantTokens';
 import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
-import { stake } from '../helpers/data';
 import delegateStakeFromGrant from '../helpers/delegateStakeFromGrant'
 
 const BN = web3.utils.BN
@@ -20,7 +19,8 @@ const Registry = artifacts.require("./Registry.sol");
 
 contract('TokenGrant/Stake', function(accounts) {
 
-  let tokenContract, registryContract, grantContract, stakingContract;
+  let tokenContract, registryContract, grantContract, stakingContract,
+    minimumStake, grantAmount;
 
   const tokenOwner = accounts[0],
     grantee = accounts[1],
@@ -32,14 +32,13 @@ contract('TokenGrant/Stake', function(accounts) {
   let grantId;
   let grantStart;
 
-  const grantAmount = stake.minimumStake.mul(web3.utils.toBN(10)),
-    grantVestingDuration = duration.days(60),
-    grantCliff = duration.days(10),
-    grantRevocable = false;
-    
+  const grantVestingDuration = duration.days(60),
+  grantCliff = duration.days(10),
+  grantRevocable = false;
+  
   const initializationPeriod = 10;
   const undelegationPeriod = 30;
-
+  
   before(async () => {
     tokenContract = await KeepToken.new();
     registryContract = await Registry.new();
@@ -48,15 +47,18 @@ contract('TokenGrant/Stake', function(accounts) {
       registryContract.address, 
       initializationPeriod, 
       undelegationPeriod
-    );
-    grantContract = await TokenGrant.new(tokenContract.address);
-    
-    await grantContract.authorizeStakingContract(stakingContract.address);
+      );
 
-    grantStart = await latestTime();
-
-    // Grant tokens
-    grantId = await grantTokens(
+      grantContract = await TokenGrant.new(tokenContract.address);
+      
+      await grantContract.authorizeStakingContract(stakingContract.address);
+      
+      grantStart = await latestTime();
+      minimumStake = await stakingContract.minimumStake()
+      grantAmount = minimumStake.mul(web3.utils.toBN(10)),
+      
+      // Grant tokens
+      grantId = await grantTokens(
       grantContract, 
       tokenContract, 
       grantAmount, 
@@ -91,7 +93,7 @@ contract('TokenGrant/Stake', function(accounts) {
   }
 
   it("should update balances when delegating", async () => {
-    let amountToDelegate = stake.minimumStake;
+    let amountToDelegate = minimumStake;
     let remaining = grantAmount.sub(amountToDelegate)
 
     await delegate(grantee, operatorOne, amountToDelegate);
@@ -194,7 +196,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow to delegate to the same operator twice", async () => {
-    let amountToDelegate = stake.minimumStake;
+    let amountToDelegate = minimumStake;
     await delegate(grantee, operatorOne, amountToDelegate);
 
     await expectThrowWithMessage(
@@ -217,7 +219,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should allow to delegate to two different operators", async () => {
-    let amountToDelegate = stake.minimumStake;
+    let amountToDelegate = minimumStake;
 
     await delegate(grantee, operatorOne, amountToDelegate);
     await delegate(grantee, operatorTwo, amountToDelegate);

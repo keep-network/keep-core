@@ -24,7 +24,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
   before(async () => {
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./stubs/TokenStakingStub.sol'),
+      artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       artifacts.require('./stubs/KeepRandomBeaconOperatorCallbackStub.sol')

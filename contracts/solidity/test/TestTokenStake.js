@@ -2,7 +2,6 @@ import mineBlocks from './helpers/mineBlocks';
 import latestBlock from './helpers/latestBlock';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
-import {stake} from './helpers/data';
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -15,7 +14,7 @@ const Registry = artifacts.require("./Registry.sol");
 
 contract('TokenStaking', function(accounts) {
 
-  let token, registry, stakingContract;
+  let token, registry, stakingContract, stakingAmount;
     
   const ownerOne = accounts[0],
     ownerTwo = accounts[1],
@@ -27,8 +26,6 @@ contract('TokenStaking', function(accounts) {
     
   const initializationPeriod = 10;
   const undelegationPeriod = 30;
-  const stakingAmount = stake.minimumStake;
-
   before(async () => {
     token = await KeepToken.new();
     registry = await Registry.new();
@@ -37,6 +34,8 @@ contract('TokenStaking', function(accounts) {
     );
 
     await registry.approveOperatorContract(operatorContract);
+
+    stakingAmount = await stakingContract.minimumStake();
   });
 
   beforeEach(async () => {

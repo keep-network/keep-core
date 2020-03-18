@@ -2,7 +2,7 @@ import generateTickets from './generateTickets';
 import mineBlocks from './mineBlocks';
 import packTicket from './packTicket';
 import {sign} from './signature';
-import {bls, stake} from './data';
+import {bls} from './data';
 import stakeDelegate from './stakeDelegate';
 
 
@@ -37,9 +37,11 @@ export default async function stakeAndGenesis(accounts, contracts) {
     let owner = accounts[0];
     let authorizer = accounts[0];
 
-    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, authorizer, stake.minimumStake.mul(web3.utils.toBN(operator1StakingWeight)));
-    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, authorizer, stake.minimumStake.mul(web3.utils.toBN(operator2StakingWeight)));
-    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, authorizer, stake.minimumStake.mul(web3.utils.toBN(operator3StakingWeight)));
+    let minimumStake = await stakingContract.minimumStake()
+
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, authorizer, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, authorizer, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, authorizer, minimumStake.mul(web3.utils.toBN(operator3StakingWeight)));
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})

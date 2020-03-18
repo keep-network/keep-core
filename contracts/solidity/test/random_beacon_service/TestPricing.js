@@ -1,5 +1,5 @@
 import mineBlocks from '../helpers/mineBlocks';
-import {bls, stake} from '../helpers/data';
+import {bls} from '../helpers/data';
 import stakeDelegate from '../helpers/stakeDelegate';
 import {initContracts} from '../helpers/initContracts';
 
@@ -39,10 +39,11 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     await operatorContract.setGroupSize(groupSize);
     group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.setGroupMembers(group, [operator1, operator2, operator3])
+    let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, stake.minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, stake.minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, stake.minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, minimumStake);
 
     entryFee = await serviceContract.entryFeeBreakdown()
   });

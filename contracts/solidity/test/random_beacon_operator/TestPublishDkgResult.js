@@ -7,7 +7,6 @@ import expectThrow from '../helpers/expectThrow';
 import shuffleArray from '../helpers/shuffle';
 import {initContracts} from '../helpers/initContracts';
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
-import { stake } from '../helpers/data';
 
 
 contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
@@ -47,9 +46,11 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     const operator1StakingWeight = 100;
     const operator2StakingWeight = 200;
     const operator3StakingWeight = 300;
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, stake.minimumStake.mul(web3.utils.toBN(operator1StakingWeight)))
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, stake.minimumStake.mul(web3.utils.toBN(operator2StakingWeight)))
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, stake.minimumStake.mul(web3.utils.toBN(operator3StakingWeight)))
+    let minimumStake = await stakingContract.minimumStake()
+
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)))
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)))
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, minimumStake.mul(web3.utils.toBN(operator3StakingWeight)))
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: owner})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: owner})

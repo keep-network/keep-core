@@ -14,7 +14,6 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
-import { stake } from '../helpers/data';
 
 contract('TokenGrant/Withdraw', function(accounts) {
 
@@ -26,9 +25,8 @@ contract('TokenGrant/Withdraw', function(accounts) {
     magpie = accounts[4],
     authorizer = accounts[5];
 
-  let grantId;
-  let grantStart;
-  const grantAmount = stake.minimumStake;
+  let grantId, grantStart, grantAmount;
+
   const grantRevocable = false;
   const grantDuration = duration.seconds(60);;
   const grantCliff = duration.seconds(1);
@@ -45,6 +43,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
       initializationPeriod, 
       undelegationPeriod
     );
+    grantAmount = await stakingContract.minimumStake();
 
     grantContract = await TokenGrant.new(tokenContract.address);
 
