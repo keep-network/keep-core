@@ -31,7 +31,7 @@ contract TokenGrant {
         address grantManager; // Token grant manager.
         address grantee; // Address to which granted tokens are going to be withdrawn.
         uint256 revokedAt; // Timestamp at which grant was revoked by the grant manager.
-        uint256 revokedAmount; // Amount of tokens to be unlocked until the grant has been revoked.
+        uint256 revokedAmount; // The number of tokens returned to the grant creator.
         bool revocable; // Whether grant manager can revoke the grant.
         uint256 amount; // Amount of tokens to be granted.
         uint256 duration; // Duration in seconds of the period in which the granted tokens will unlock.
@@ -124,11 +124,19 @@ contract TokenGrant {
      *                 which is to say that it is no longer unlocking.
      * @return grantee The grantee of grant.
      */
-    function getGrant(uint256 _id) public view returns (uint256 amount, uint256 withdrawn, uint256 staked, uint256 revokedAt, address grantee) {
+    function getGrant(uint256 _id) public view returns (
+        uint256 amount,
+        uint256 withdrawn,
+        uint256 staked,
+        uint256 revokedAmount,
+        uint256 revokedAt,
+        address grantee
+    ) {
         return (
             grants[_id].amount,
             grants[_id].withdrawn,
             grants[_id].staked,
+            grants[_id].revokedAmount,
             grants[_id].revokedAt,
             grants[_id].grantee
         );
@@ -272,7 +280,7 @@ contract TokenGrant {
         if (now < grants[_id].cliff) {
             return 0; // Cliff period is not over.
         } else if (grants[_id].revokedAt > 0) {
-            return grants[_id].revokedAmount;
+            return balance.sub(grants[_id].revokedAmount);
         } else if (now >= grants[_id].start.add(grants[_id].duration)) {
             return balance; // Unlocking period is finished.
         } else {
@@ -311,7 +319,7 @@ contract TokenGrant {
         uint256 amount = withdrawable(_id);
         uint256 refund = grants[_id].amount.sub(amount);
         grants[_id].revokedAt = now;
-        grants[_id].revokedAmount = amount;
+        grants[_id].revokedAmount = refund;
 
         // Update grantee's grants balance.
         balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(refund);
