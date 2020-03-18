@@ -15,7 +15,7 @@ contract('Registry', function(accounts) {
 
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
-      artifacts.require('./stubs/TokenStakingStub.sol'),
+      artifacts.require('./TokenStaking.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
       KeepRandomBeaconOperator

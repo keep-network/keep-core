@@ -14,7 +14,7 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./stubs/TokenStakingStub.sol');
+const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
 
