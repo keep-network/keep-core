@@ -279,7 +279,7 @@ contract TokenGrant {
 
         if (now < grants[_id].cliff) {
             return 0; // Cliff period is not over.
-        } else if (grants[_id].revokedAt > 0) {
+        } else if (grants[_id].revokedAt != 0) {
             return balance.sub(grants[_id].revokedAmount);
         } else if (now >= grants[_id].start.add(grants[_id].duration)) {
             return balance; // Unlocking period is finished.
