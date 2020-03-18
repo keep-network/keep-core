@@ -14,6 +14,7 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
+import { stake } from '../helpers/data';
 
 contract('TokenGrant/Withdraw', function(accounts) {
 
@@ -27,7 +28,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
 
   let grantId;
   let grantStart;
-  const grantAmount = web3.utils.toBN(1000000000);
+  const grantAmount = stake.minimumStake;
   const grantRevocable = false;
   const grantDuration = duration.seconds(60);;
   const grantCliff = duration.seconds(1);
