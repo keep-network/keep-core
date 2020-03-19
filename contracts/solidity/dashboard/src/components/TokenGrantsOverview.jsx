@@ -2,17 +2,20 @@ import React, { useEffect, useState } from 'react'
 import TokenGrantOverview from './TokenGrantOverview'
 import Dropdown from './Dropdown'
 import SelectedGrantDropdown from './SelectedGrantDropdown'
-import { useFetchData } from '../hooks/useFetchData'
 import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEvent'
-import { tokenGrantsService } from '../services/token-grants.service'
 import { displayAmount, isEmptyObj } from '../utils/general.utils'
 import { TOKEN_GRANT_CONTRACT_NAME } from '../constants/constants'
-import { add, sub, gte } from '../utils/arithmetics.utils'
 import { findIndexAndObject } from '../utils/array.utils'
-import { useTokensPageContext } from '../contexts/TokensPageContext'
+import { useTokensPageContext, GRANT_STAKED, GRANT_WITHDRAWN } from '../contexts/TokensPageContext'
 
 const TokenGrantsOverview = (props) => {
-  const { grants, grantTokenBalance } = useTokensPageContext()
+  const {
+    grants,
+    grantTokenBalance,
+    dispatch,
+    refreshGrantTokenBalance,
+    refreshKeepTokenBalance,
+  } = useTokensPageContext()
   const [selectedGrant, setSelectedGrant] = useState({})
   const { latestEvent: stakedEvent } = useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME, 'TokenGrantStaked')
   const { latestEvent: withdrawanEvent } = useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME, 'TokenGrantWithdrawn')
@@ -20,6 +23,9 @@ const TokenGrantsOverview = (props) => {
   useEffect(() => {
     if (isEmptyObj(selectedGrant) && grants.length > 0) {
       setSelectedGrant(grants[0])
+    } else if (!isEmptyObj(selectedGrant)) {
+      const { obj: updatedGrant } = findIndexAndObject('id', selectedGrant.id, grants)
+      setSelectedGrant(updatedGrant)
     }
   }, [grants])
 
@@ -27,45 +33,23 @@ const TokenGrantsOverview = (props) => {
     setSelectedGrant(selectedItem)
   }
 
-  // useEffect(() => {
-  //   if (isEmptyObj(stakedEvent)) {
-  //     return
-  //   }
-  //   const { returnValues: { grantId, amount } } = stakedEvent
-  //   const { indexInArray, obj: grantToUpdate } = findIndexAndObject('id', grantId, data)
-  //   if (indexInArray === null) {
-  //     return
-  //   }
-  //   grantToUpdate.staked = add(grantToUpdate.staked, amount)
-  //   grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
-  //   grantToUpdate.readyToRelease = gte(grantToUpdate.readyToRelease, 0) ? grantToUpdate.readyToRelease : '0'
-  //   updateGrants(grantId, grantToUpdate, indexInArray)
-  // }, [stakedEvent.transactionHash, selectedGrant])
+  useEffect(() => {
+    if (isEmptyObj(stakedEvent)) {
+      return
+    }
+    const { returnValues: { grantId, amount } } = stakedEvent
+    dispatch({ type: GRANT_STAKED, payload: { grantId, amount } })
+  }, [stakedEvent.transactionHash])
 
-  // useEffect(() => {
-  //   if (isEmptyObj(withdrawanEvent)) {
-  //     return
-  //   }
-  //   const { returnValues: { grantId, amount } } = withdrawanEvent
-  //   const { indexInArray, obj: grantToUpdate } = findIndexAndObject('id', grantId, data)
-  //   if (indexInArray === null) {
-  //     return
-  //   }
-
-  //   grantToUpdate.readyToRelease = '0'
-  //   grantToUpdate.released = add(grantToUpdate.released, amount)
-  //   grantToUpdate.vested = add(grantToUpdate.released, grantToUpdate.staked)
-  //   updateGrants(grantId, grantToUpdate, indexInArray)
-  // }, [withdrawanEvent.transactionHash, selectedGrant])
-
-  // const updateGrants= (grantId, grantToUpdate, index) => {
-  //   const updatedGrants = [...data]
-  //   updatedGrants[index] = grantToUpdate
-  //   updateData(updatedGrants)
-  //   if (grantId === selectedGrant.id) {
-  //     setSelectedGrant(grantToUpdate)
-  //   }
-  // }
+  useEffect(() => {
+    if (isEmptyObj(withdrawanEvent)) {
+      return
+    }
+    const { returnValues: { grantId, amount } } = withdrawanEvent
+    dispatch({ type: GRANT_WITHDRAWN, payload: { grantId, amount } })
+    refreshGrantTokenBalance()
+    refreshKeepTokenBalance()
+  }, [withdrawanEvent.transactionHash])
 
   return (
     <section>

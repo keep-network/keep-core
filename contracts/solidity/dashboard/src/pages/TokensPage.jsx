@@ -101,11 +101,11 @@ const TokensPageWithContext = () => (
 export default React.memo(TokensPageWithContext)
 
 const useSubscribeToStakedEvent = async () => {
+  const web3Context = useContext(Web3Context)
   const {
-    yourAddress,
     grantContract,
     stakingContract,
-  } = useContext(Web3Context)
+  } = web3Context
 
   const {
     initializationPeriod,
@@ -115,25 +115,11 @@ const useSubscribeToStakedEvent = async () => {
 
   const subscribeToEventCallback = async (event) => {
     const { blockNumber, returnValues: { from, value } } = event
-    let isFromGrant = true
-    let grantStakeDetails = {}
-    try {
-      grantStakeDetails = await grantContract.methods.getGrantStakeDetails(from).call()
-    } catch (error) {
-      isFromGrant = false
-    }
+    const grantStakeDetails = await getGrantDetails(from, grantContract)
+    const isFromGrant = grantStakeDetails !== null
 
-    if (isFromGrant) {
-      const { grantId } = grantStakeDetails
-      const { grantee } = await grantContract.methods.getGrant(grantId).call()
-      if (!isSameEthAddress(grantee, yourAddress)) {
-        return
-      }
-    } else {
-      const owner = await stakingContract.methods.ownerOf(from).call()
-      if (!isSameEthAddress(owner, yourAddress)) {
-        return
-      }
+    if (!isAddressedToCurrentAccount(from, web3Context, grantStakeDetails)) {
+      return
     }
 
     const delegation = {
@@ -149,8 +135,6 @@ const useSubscribeToStakedEvent = async () => {
     if (!isFromGrant) {
       refreshKeepTokenBalance()
       dispatch({ type: UPDATE_OWNED_DELEGATED_TOKENS_BALANCE, payload: { operation: add, value } })
-    } else {
-
     }
 
     dispatch({ type: ADD_DELEGATION, payload: delegation })
@@ -163,11 +147,11 @@ const useSubscribeToStakedEvent = async () => {
 }
 
 const useSubscribeToUndelegatedEvent = () => {
+  const web3Context = useContext(Web3Context)
   const {
-    yourAddress,
     grantContract,
     stakingContract,
-  } = useContext(Web3Context)
+  } = web3Context
 
   const {
     undelegationPeriod,
@@ -176,25 +160,11 @@ const useSubscribeToUndelegatedEvent = () => {
 
   const subscribeToEventCallback = async (event) => {
     const { blockNumber, returnValues: { operator } } = event
-    let isFromGrant = true
-    let grantStakeDetails = {}
-    try {
-      grantStakeDetails = await grantContract.methods.getGrantStakeDetails(operator).call()
-    } catch (error) {
-      isFromGrant = false
-    }
+    const grantStakeDetails = await getGrantDetails(operator, grantContract)
+    const isFromGrant = grantStakeDetails !== null
 
-    if (isFromGrant) {
-      const { grantId } = grantStakeDetails
-      const { grantee } = await grantContract.methods.getGrant(grantId).call()
-      if (!isSameEthAddress(grantee, yourAddress)) {
-        return
-      }
-    } else {
-      const owner = await stakingContract.methods.ownerOf(operator).call()
-      if (!isSameEthAddress(owner, yourAddress)) {
-        return
-      }
+    if (!isAddressedToCurrentAccount(operator, web3Context, grantStakeDetails)) {
+      return
     }
 
     const { amount } = await stakingContract.methods.getDelegationInfo(operator).call()
@@ -261,4 +231,27 @@ const useSubscribeToRecoveredStakeEvent = async () => {
     'RecoveredStake',
     subscribeToEventCallback
   )
+}
+
+const getGrantDetails = async (operator, grantContract) => {
+  let grantStakeDetails = null
+  try {
+    grantStakeDetails = await grantContract.methods.getGrantStakeDetails(operator).call()
+  } catch (error) {
+    return grantStakeDetails
+  }
+  return grantStakeDetails
+}
+
+const isAddressedToCurrentAccount = async (operator, web3Context, grantStakeDetails) => {
+  const { yourAddress, grantContract, stakingContract } = web3Context
+  const isFromGrant = grantStakeDetails !== null
+  if (isFromGrant) {
+    const { grantId } = grantStakeDetails
+    const { grantee } = await grantContract.methods.getGrant(grantId).call()
+    return !isSameEthAddress(grantee, yourAddress)
+  } else {
+    const owner = await stakingContract.methods.ownerOf(operator).call()
+    return !isSameEthAddress(owner, yourAddress)
+  }
 }
