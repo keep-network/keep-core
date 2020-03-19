@@ -26,7 +26,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
       artifacts.require('./TokenStakingStub.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require("./stubs/KeepRandomBeaconOperatorStub.sol")
+      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
     )
 
     token = contracts.token

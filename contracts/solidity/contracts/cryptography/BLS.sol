@@ -53,7 +53,7 @@ library BLS {
         bytes memory message,
         bytes memory signature
     ) public view returns (bool) {
-        AltBn128.G1Point memory point = AltBn128.g1HashToPoint(abi.encodePacked(message));
+        AltBn128.G1Point memory point = AltBn128.g1HashToPoint(message);
         bytes memory messageAsPoint = AltBn128.g1Marshal(point);
 
         return verify(publicKey, messageAsPoint, signature);

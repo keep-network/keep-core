@@ -398,10 +398,7 @@ library Groups {
         require(!isStaleGroup(self, groupIndex), "Group can not be stale");
         bytes memory groupPubKey = getGroupPublicKey(self, groupIndex);
 
-        AltBn128.G1Point memory point = AltBn128.g1HashToPoint(abi.encodePacked(msg.sender));
-        bytes memory message = AltBn128.g1Marshal(point);
-
-        bool isSignatureValid = BLS.verify(groupPubKey, message, signedMsgSender);
+        bool isSignatureValid = BLS.verifyBytes(groupPubKey, abi.encodePacked(msg.sender), signedMsgSender);
 
         if (!isGroupTerminated(self, groupIndex) && isSignatureValid) {
             terminateGroup(self, groupIndex);
