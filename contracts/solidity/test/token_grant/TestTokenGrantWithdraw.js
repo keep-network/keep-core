@@ -46,7 +46,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
     grantAmount = (await stakingContract.minimumStake()).mul(web3.utils.toBN(10));
 
     grantContract = await TokenGrant.new(tokenContract.address);
-
+    
     await grantContract.authorizeStakingContract(stakingContract.address);
 
     grantStart = await latestTime();
