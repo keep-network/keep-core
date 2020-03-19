@@ -6,7 +6,11 @@ import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEven
 import { displayAmount, isEmptyObj } from '../utils/general.utils'
 import { TOKEN_GRANT_CONTRACT_NAME } from '../constants/constants'
 import { findIndexAndObject } from '../utils/array.utils'
-import { useTokensPageContext, GRANT_STAKED, GRANT_WITHDRAWN } from '../contexts/TokensPageContext'
+import { useTokensPageContext } from '../contexts/TokensPageContext'
+import {
+  GRANT_STAKED,
+  GRANT_WITHDRAWN,
+} from '../reducers/tokens-page.reducer.js'
 
 const TokenGrantsOverview = (props) => {
   const {

@@ -13,15 +13,15 @@ import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
 import { isSameEthAddress } from '../utils/general.utils'
 import { sub, add } from '../utils/arithmetics.utils'
 import { findIndexAndObject, compareEthAddresses } from '../utils/array.utils'
-import TokensPageContextProvider, {
-  useTokensPageContext,
+import TokensPageContextProvider, { useTokensPageContext } from '../contexts/TokensPageContext'
+import {
   ADD_DELEGATION,
   UPDATE_OWNED_DELEGATED_TOKENS_BALANCE,
   REMOVE_DELEGATION,
   ADD_UNDELEGATION,
   UPDATE_OWNED_UNDELEGATIONS_TOKEN_BALANCE,
   REMOVE_UNDELEGATION,
-} from '../contexts/TokensPageContext'
+} from '../reducers/tokens-page.reducer.js'
 
 const TokensPage = () => {
   const web3Context = useContext(Web3Context)
