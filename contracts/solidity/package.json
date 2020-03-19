@@ -28,8 +28,9 @@
   },
   "homepage": "https://github.com/keep-network/keep-core/contracts/solidity",
   "dependencies": {
-    "openzeppelin-solidity": "2.4.0",
-    "@openzeppelin/upgrades": "^2.7.2"
+    "@openzeppelin/contracts-ethereum-package": "^2.4.0",
+    "@openzeppelin/upgrades": "^2.7.2",
+    "openzeppelin-solidity": "2.4.0"
   },
   "devDependencies": {
     "@openzeppelin/test-helpers": "^0.5.4",
