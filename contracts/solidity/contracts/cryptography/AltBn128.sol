@@ -425,7 +425,7 @@ library AltBn128 {
     }
 
     /**
-     * @dev Creates a signature over message using a group private key.
+     * @dev Creates a signature over message using the provided secret key.
      */
     function sign(bytes memory message, uint256 secretKey) internal view returns(uint256, uint256) {
         G1Point memory p_1 = g1HashToPoint(message);
