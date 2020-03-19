@@ -4,6 +4,7 @@ import expectThrow from '../helpers/expectThrow';
 import {initContracts} from '../helpers/initContracts';
 import latestTime from "../helpers/latestTime";
 import {createSnapshot, restoreSnapshot} from "../helpers/snapshot";
+import expectThrowWithMessage from "../helpers/expectThrowWithMessage";
 const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol');
 const ServiceContractImplV2 = artifacts.require('./examples/KeepRandomBeaconServiceUpgradeExample.sol');
 const {expectEvent, time} = require("@openzeppelin/test-helpers");
@@ -73,7 +74,7 @@ contract('KeepRandomBeaconService/Upgrade', function(accounts) {
     );
   });
 
-  it("should fail to upgrade implementation if called by not contract owner", async function() {
+  it("should fail to upgrade implementation if called by not contract admin", async function() {
     const initialize = serviceContractV2.contract.methods
         .initialize(
             100,
@@ -81,11 +82,14 @@ contract('KeepRandomBeaconService/Upgrade', function(accounts) {
             '0x0000000000000000000000000000000000000001'
         ).encodeABI();
 
-    await expectThrow(serviceContractProxy.upgradeToAndCall(
-        serviceContractImplV2.address,
-        initialize,
-        {from: account_two}
-    ));
+    await expectThrowWithMessage(
+        serviceContractProxy.upgradeToAndCall(
+            serviceContractImplV2.address,
+            initialize,
+            {from: account_two}
+        ),
+        "Caller is not the admin"
+    );
   });
 
   it("should be able to upgrade implementation and initialize it with new data", async function() {
