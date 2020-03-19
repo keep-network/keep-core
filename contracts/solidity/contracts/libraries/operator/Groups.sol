@@ -399,13 +399,7 @@ library Groups {
         bytes memory groupPubKey = getGroupPublicKey(self, groupIndex);
 
         AltBn128.G1Point memory point = AltBn128.g1HashToPoint(abi.encodePacked(msg.sender));
-        bytes memory message = new bytes(64);
-        bytes32 x = bytes32(point.x);
-        bytes32 y = bytes32(point.y);
-        assembly {
-            mstore(add(message, 32), x)
-            mstore(add(message, 64), y)
-        }
+        bytes memory message = AltBn128.g1Marshal(point);
 
         bool isSignatureValid = BLS.verify(groupPubKey, message, signedMsgSender);
 

@@ -234,6 +234,8 @@ library AltBn128 {
         bytes memory m = new bytes(64);
         bytes32 x = bytes32(point.x);
         bytes32 y = bytes32(point.y);
+
+        /* solium-disable-next-line */
         assembly {
             mstore(add(m, 32), x)
             mstore(add(m, 64), y)
