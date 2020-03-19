@@ -743,7 +743,7 @@ contract('TokenStaking', function(accounts) {
     })
   })
 
-  it("should not allow to proceed when tokens amount is less than the minimum stake", async () => {
+  it("should not allow to proceed with staking when amount is less than the minimum stake", async () => {
     let data = '0x' + Buffer.concat([
       Buffer.from(magpie.substr(2), 'hex'),
       Buffer.from(operatorOne.substr(2), 'hex'),
