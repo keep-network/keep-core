@@ -56,7 +56,7 @@ const TokensPage = () => {
   return (
     <LoadingOverlay isFetching={isFetching}>
       <h2 className="mb-2">My Tokens</h2>
-      <div className="tokens-wrapper flex wrap flex-1 row space-between">
+      <div className="tokens-wrapper">
         <section id="delegate-stake-section" className="tile">
           <h2 className="text-grey-70 mb-1">Delegate Stake</h2>
           <div className="text-big text-black">
