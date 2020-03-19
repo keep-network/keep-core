@@ -67,6 +67,9 @@ contract TokenGrant {
     // Mapping of operator addresses per particular grantee address.
     mapping(address => address[]) public granteesToOperators;
 
+    // Mapping of grant IDs to pending grantee reassignments.
+    mapping(uint256 => address) public pendingReassignments;
+
     /**
      * @dev Creates a token grant contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress address of a token that will be linked to this contract.
@@ -197,6 +200,17 @@ contract TokenGrant {
      */
     function getGrantStakeDetails(address operator) public view returns (uint256 grantId, uint256 amount, address stakingContract) {
         return grantStakes[operator].getDetails();
+    }
+
+    /// @notice Return whether the given grant has a pending reassignment request.
+    function hasPendingReassignment(uint256 grantId) public view returns (bool) {
+        return pendingReassignments[grantId] != address(0);
+    }
+
+    /// @notice Return the requested new grantee address for the grant.
+    /// @dev Returns `address(0)` if no reassignment is requested.
+    function getPendingReassignment(uint256 grantId) public view returns (address) {
+        return pendingReassignments[grantId];
     }
 
 
@@ -427,5 +441,63 @@ contract TokenGrant {
         grants[grantId].staked = grants[grantId].staked.sub(returned);
 
         delete grantStakes[_operator];
+    }
+
+    function requestGranteeReassignment(
+        uint256 grantId,
+        address newGrantee
+    ) public {
+        require(
+            newGrantee != address(0),
+            "Must specify new grantee address"
+        );
+        address currentGrantee = grants[grantId].grantee;
+        require(
+            msg.sender == currentGrantee,
+            "Only grantee may request reassignment"
+        );
+        require(
+            newGrantee != currentGrantee,
+            "New grantee must be different"
+        );
+        require(
+            pendingReassignments[grantId] == address(0),
+            "A pending reassignment may not be changed"
+        );
+        pendingReassignments[grantId] = newGrantee;
+    }
+
+    function confirmGranteeReassignment(
+        uint256 grantId
+    ) public {
+        address newGrantee = pendingReassignments[grantId];
+        require(
+            newGrantee != address(0),
+            "No reassignment requested"
+        );
+        require(
+            msg.sender == grants[grantId].grantManager,
+            "Only grant manager may confirm grantee reassignment"
+        );
+        // address oldGrantee = grants[grantId].grantee;
+        grants[grantId].grantee = newGrantee;
+        pendingReassignments[grantId] = address(0);
+
+        // TODO: set granteesToOperators etc.
+    }
+
+    function refuseGranteeReassignment(
+        uint256 grantId
+    ) public {
+        address newGrantee = pendingReassignments[grantId];
+        require(
+            newGrantee != address(0),
+            "No reassignment requested"
+        );
+        require(
+            msg.sender == grants[grantId].grantManager,
+            "Only grant manager may refuse grantee reassignment"
+        );
+        pendingReassignments[grantId] = address(0);
     }
 }
