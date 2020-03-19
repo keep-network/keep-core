@@ -153,7 +153,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   })
 
   it("should be able to report unauthorized signing", async () => {
-    let tattletaleSignature = await altBn128.sign(bls.secretKey, {from: tattletale});
+    let tattletaleSignature = await altBn128.sign(tattletale, bls.secretKey);
 
     await operatorContract.reportUnauthorizedSigning(
       groupIndex,
