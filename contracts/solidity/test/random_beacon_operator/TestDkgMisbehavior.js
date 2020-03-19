@@ -7,7 +7,7 @@ import generateTickets from '../helpers/generateTickets'
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot'
 
 contract('KeepRandomBeaconOperator/DkgMisbehavior', function(accounts) {
-  let token, stakingContract, operatorContract, minimumStake,
+  let token, stakingContract, operatorContract,
     owner = accounts[0],
     operator1 = accounts[1],
     operator2 = accounts[2],
@@ -34,7 +34,8 @@ contract('KeepRandomBeaconOperator/DkgMisbehavior', function(accounts) {
     operatorContract = contracts.operatorContract
     operatorContract.setGroupSize(5)
     operatorContract.setGroupThreshold(3)
-    minimumStake = await operatorContract.minimumStake()
+
+    let minimumStake = await stakingContract.minimumStake()
 
     await stakeDelegate(stakingContract, token, owner, operator1, owner, authorizer, minimumStake)
     await stakeDelegate(stakingContract, token, owner, operator2, owner, authorizer, minimumStake)

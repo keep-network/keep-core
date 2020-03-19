@@ -44,7 +44,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     await operatorContract.registerNewGroup(bls.groupPubKey)
     await operatorContract.setGroupMembers(bls.groupPubKey, [operator1, operator2, operator3])
 
-    minimumStake = await operatorContract.minimumStake()
+    minimumStake = await stakingContract.minimumStake()
     largeStake = minimumStake.muln(2)
     await stakeDelegate(stakingContract, token, owner, operator1, owner, authorizer, largeStake)
     await stakeDelegate(stakingContract, token, owner, operator2, owner, authorizer, minimumStake)
@@ -116,7 +116,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     
     let operatorBalanceAfterSeizing = await stakingContract.balanceOf(operator1)
     let tattletaleBalanceAfterSeizing = await token.balanceOf(tattletale)
-    
+
     assert.isTrue(
       (operatorBalanceBeforeSeizing.sub(amountToSeize)).eq(operatorBalanceAfterSeizing), 
       "Unexpected balance for operator after token seizing"

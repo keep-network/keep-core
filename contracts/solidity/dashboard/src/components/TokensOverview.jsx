@@ -7,11 +7,10 @@ const TokensOverview = ({
   keepBalance,
   stakingBalance,
   pendingUndelegationBalance,
-  grantBalance,
 }) => {
   return (
     <section id="tokens-overview" className="tile">
-      <TokenGrantsOverview grantBalance={grantBalance} />
+      <TokenGrantsOverview />
       <hr />
       <section>
         <h4 className="text-grey-60">Owned Tokens</h4>

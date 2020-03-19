@@ -2,6 +2,7 @@ import mineBlocks from '../helpers/mineBlocks';
 import {bls} from '../helpers/data';
 import stakeDelegate from '../helpers/stakeDelegate';
 import {initContracts} from '../helpers/initContracts';
+
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
 contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
@@ -38,10 +39,11 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     await operatorContract.setGroupSize(groupSize);
     group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.setGroupMembers(group, [operator1, operator2, operator3])
+    let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, 0);
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, 0);
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, 0);
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, minimumStake);
 
     entryFee = await serviceContract.entryFeeBreakdown()
   });
@@ -153,7 +155,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
     let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
     let expectedDelayPenalty = memberBaseReward.sub(memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2))));
-    let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).mul(web3.utils.toBN(5)).div(web3.utils.toBN(100));
+    let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).muln(5).div(web3.utils.toBN(100));
     let requestSubsidy = entryFee.groupProfitFee.sub(expectedGroupMemberReward.mul(groupSize)).sub(expectedSubmitterExtraReward);
 
     let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
