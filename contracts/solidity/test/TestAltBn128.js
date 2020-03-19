@@ -4,7 +4,7 @@ const BLS = artifacts.require('./cryptography/BLS.sol');
 const AltBn128 = artifacts.require('./cryptography/AltBn128.sol');
 const AltBn128Stub = artifacts.require('./stubs/AltBn128Stub.sol');
 
-contract('TestBLSRoundtrip', function() {
+contract('AltBn128', function() {
   let blsLibrary, altBn128Library, altBn128;
   
   before(async () => {
