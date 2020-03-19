@@ -16,6 +16,10 @@ import Dropdown from './Dropdown'
 import { tokenGrantsService } from '../services/token-grants.service'
 import { useFetchData } from '../hooks/useFetchData'
 import SelectedGrantDropdown from './SelectedGrantDropdown'
+import {
+  normalizeAmount,
+  formatAmount as formatFormAmount,
+} from '../forms/form.utils.js'
 
 const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...formikProps }) => {
   const [{ data }] = useFetchData(tokenGrantsService.fetchGrants, [])
@@ -57,6 +61,8 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grantBalance, ...f
               name="stakeTokens"
               type="text"
               label="Token Amount"
+              normalize={normalizeAmount}
+              format={formatFormAmount}
             />
             <ProgressBar
               total={getContextBalance()}
