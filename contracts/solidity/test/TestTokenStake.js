@@ -638,4 +638,18 @@ contract('TokenStaking', function(accounts) {
       "There should be no eligible stake"
     )
   })
+
+  it("should not allow to proceed when tokens amount is less than the minimum stake", async () => {
+    let data = '0x' + Buffer.concat([
+      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(operatorOne.substr(2), 'hex'),
+      Buffer.from(authorizer.substr(2), 'hex')
+    ]).toString('hex');
+    
+    let lessMinimumStake = stakingAmount.sub(web3.utils.toBN(1))
+    await expectThrowWithMessage(
+      token.approveAndCall(stakingContract.address, lessMinimumStake, data),
+      "Tokens amount must be greater than the minimum stake"
+    );
+  })
 });
