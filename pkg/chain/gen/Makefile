@@ -33,6 +33,7 @@ abi/%.abi: ${solidity_dir}/contracts/%.sol
 	solc solidity-bytes-utils/=${solidity_dir}/node_modules/solidity-bytes-utils/ \
 		 openzeppelin-solidity/=${solidity_dir}/node_modules/openzeppelin-solidity/ \
 		 @openzeppelin/upgrades/=${solidity_dir}/node_modules/@openzeppelin/upgrades/ \
+		 @openzeppelin/contracts-ethereum-package/=${solidity_dir}/node_modules/@openzeppelin/contracts-ethereum-package/ \
 		 --allow-paths ${solidity_dir} \
 		 --overwrite \
 		 --abi \
