@@ -154,7 +154,12 @@ contract TokenStaking is StakeDelegatable {
             "May not set undelegation block in the past"
         );
         uint256 oldParams = operators[_operator].packedParams;
+        uint256 existingCreationBlock = oldParams.getCreationBlock();
         uint256 existingUndelegationBlock = oldParams.getUndelegationBlock();
+        require(
+            _undelegationBlock > existingCreationBlock.add(initializationPeriod),
+            "Cannot undelegate in initialization period, use cancelStake instead"
+        );
         require(
             // Undelegation not in progress OR
             existingUndelegationBlock == 0 ||
@@ -339,7 +344,7 @@ contract TokenStaking is StakeDelegatable {
         // to schedule undelegation in advance.
         // In this case the operator is still eligible
         // until the block `undelegatedAt`.
-        bool isUndelegating = (undelegatedAt > 0) && (block.number > undelegatedAt);
+        bool isUndelegating = (undelegatedAt != 0) && (block.number > undelegatedAt);
 
         if (isAuthorized && isActive && !isUndelegating) {
             balance = operatorParams.getAmount();
