@@ -217,6 +217,9 @@ contract('KeepRandomBeaconService/Upgrade', function(accounts) {
     await increaseTimeTo(upgradeStartedTime + duration.days(1) - duration.minutes(1))
 
     // Must wait for the entire upgrade time delay before completing the upgrade
-    await expectThrow(serviceContractProxy.completeUpgrade());
+    await expectThrowWithMessage(
+      serviceContractProxy.completeUpgrade(),
+      "Timer not elapsed"
+    );
   })
 });
