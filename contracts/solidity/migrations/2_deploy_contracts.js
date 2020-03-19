@@ -47,7 +47,7 @@ module.exports = async function(deployer, network) {
 
   const keepRandomBeaconServiceImplV1 = await deployer.deploy(KeepRandomBeaconServiceImplV1);
 
-  const krbsInitializeCallData = keepRandomBeaconServiceImplV1.contract.methods
+  const initialize = keepRandomBeaconServiceImplV1.contract.methods
       .initialize(
           dkgContributionMargin,
           withdrawalDelay,
@@ -57,7 +57,7 @@ module.exports = async function(deployer, network) {
   await deployer.deploy(
       KeepRandomBeaconService,
       KeepRandomBeaconServiceImplV1.address,
-      krbsInitializeCallData
+      initialize
   );
 
   await deployer.deploy(KeepRandomBeaconOperator, KeepRandomBeaconService.address, TokenStaking.address);
