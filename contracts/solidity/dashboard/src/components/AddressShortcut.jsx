@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { shortenAddress } from '../utils/general.utils'
 
 
@@ -6,19 +6,37 @@ const AddressShortcut = ({ address, classNames }) => {
   const addressElement = useRef(null)
   const [copyStatus, setCopyStatus] = useState('Copy to clipboard')
 
+  useEffect(() => {
+    const copyEventListener = (event) => {
+      event.preventDefault()
+      if (event.clipboardData) {
+        event.clipboardData.setData('text/plain', address)
+      } else if (window.clipboardData) {
+        window.clipboardData.setData('Text', address)
+      } else {
+        setCopyStatus(`Cannot copy value: ${address}!`)
+      }
+    }
+    if (addressElement.current !== null) {
+      addressElement.current.addEventListener('copy', copyEventListener)
+      return () => {
+        addressElement.current.removeEventListener('copy', copyEventListener)
+      }
+    }
+  })
+
   const copyToClipboard = () => {
     try {
       if (document.selection) {
         const range = document.body.createTextRange()
         range.moveToElementText(addressElement.current)
         range.select().createTextRange()
-        document.execCommand('copy')
       } else if (window.getSelection) {
         const range = document.createRange()
         range.selectNode(addressElement.current)
         window.getSelection().addRange(range)
-        document.execCommand('copy')
       }
+      document.execCommand('copy')
       setCopyStatus('Copied!')
     } catch (error) {
       setCopyStatus(`Cannot copy value: ${address}!`)
