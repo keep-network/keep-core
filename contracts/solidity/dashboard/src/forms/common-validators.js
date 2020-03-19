@@ -33,9 +33,9 @@ export const validateAmountInRange = (value, maxValue, minValue = 0) => {
   } else if (!REGEXP_ONLY_NUMBERS.test(value)) {
     return 'Invalid value'
   } else if (validateValueInBN.gt(maxValueInBN)) {
-    return `The value should be less than or equals to ${displayAmount(maxValueInBN).toString()}`
+    return `The value should be less than or equal ${displayAmount(maxValueInBN).toString()}`
   } else if (validateValueInBN.lt(minValueInBN)) {
-    return `The value should be greater than or equlas to ${displayAmount(minValueInBN).toString()}`
+    return `The value should be greater than or equal ${displayAmount(minValueInBN).toString()}`
   }
 }
 

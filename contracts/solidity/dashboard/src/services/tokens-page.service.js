@@ -3,7 +3,6 @@ import web3Utils from 'web3-utils'
 import {
   TOKEN_STAKING_CONTRACT_NAME,
   TOKEN_GRANT_CONTRACT_NAME,
-  OPERATOR_CONTRACT_NAME,
   KEEP_TOKEN_CONTRACT_NAME,
 } from '../constants/constants'
 import { sub, gt } from '../utils/arithmetics.utils'
@@ -23,7 +22,7 @@ export const fetchTokensPageData = async (web3Context) => {
     contractService.makeCall(web3Context, KEEP_TOKEN_CONTRACT_NAME, 'balanceOf', yourAddress),
     contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'balanceOf', yourAddress),
     contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'stakeBalanceOf', yourAddress),
-    contractService.makeCall(web3Context, OPERATOR_CONTRACT_NAME, 'minimumStake'),
+    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'minimumStake'),
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'operatorsOf', yourAddress),
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'undelegationPeriod'),
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'initializationPeriod'),
