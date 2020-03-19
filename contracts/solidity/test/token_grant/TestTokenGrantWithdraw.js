@@ -44,9 +44,8 @@ contract('TokenGrant/Withdraw', function(accounts) {
       initializationPeriod, 
       undelegationPeriod
     );
-
     grantContract = await TokenGrant.new(tokenContract.address);
-
+    
     await grantContract.authorizeStakingContract(stakingContract.address);
 
     grantStart = await latestTime();
