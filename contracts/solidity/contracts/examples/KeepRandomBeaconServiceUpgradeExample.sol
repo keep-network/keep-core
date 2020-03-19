@@ -12,6 +12,10 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
 
     uint256 internal _newVar;
 
+    constructor() public {
+        _initialized["KeepRandomBeaconImplV2"] = true;
+    }
+
     /**
      * @dev Example of overriding existing function.
      * Reference http://solidity.readthedocs.io/en/develop/contracts.html#inheritance
@@ -19,7 +23,6 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
      * same number/types of inputs.
      */
     function initialize(
-        uint256 priceFeedEstimate,
         uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
         address registry
@@ -32,7 +35,6 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
         _newVar = 1234;
 
         // silence solc warnings, it's just an example
-        priceFeedEstimate;
         dkgContributionMargin;
         withdrawalDelay;
         registry;
