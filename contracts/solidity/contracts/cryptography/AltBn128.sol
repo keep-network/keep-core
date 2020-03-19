@@ -228,7 +228,7 @@ library AltBn128 {
     }
 
     /**
-     * @dev Marshals a point on G1 to compressed bytes form.
+     * @dev Marshals a point on G1 to bytes form.
      */
     function g1Marshal(G1Point memory point) internal pure returns(bytes memory) {
         bytes memory m = new bytes(64);
