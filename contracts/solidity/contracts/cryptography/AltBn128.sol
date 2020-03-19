@@ -228,6 +228,21 @@ library AltBn128 {
     }
 
     /**
+     * @dev Marshals a point on G1 to compressed bytes form.
+     */
+    function g1Marshal(G1Point memory point) internal pure returns(bytes memory) {
+        bytes memory m = new bytes(64);
+        bytes32 x = bytes32(point.x);
+        bytes32 y = bytes32(point.y);
+        assembly {
+            mstore(add(m, 32), x)
+            mstore(add(m, 64), y)
+        }
+
+        return m;
+    }
+
+    /**
      * @dev Unmarshals a point on G2 from bytes in an uncompressed form.
      */
     function g2Unmarshal(bytes memory m) internal pure returns(G2Point memory) {

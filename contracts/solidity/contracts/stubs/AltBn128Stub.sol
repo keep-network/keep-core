@@ -9,14 +9,6 @@ library AltBn128Stub {
 
     function g1HashToPoint(bytes memory message) public view returns(bytes memory) {
         AltBn128.G1Point memory point = AltBn128.g1HashToPoint(message);
-        bytes memory messageHashed = new bytes(64);
-        bytes32 x = bytes32(point.x);
-        bytes32 y = bytes32(point.y);
-        assembly {
-            mstore(add(messageHashed, 32), x)
-            mstore(add(messageHashed, 64), y)
-        }
-
-        return messageHashed;
+        return AltBn128.g1Marshal(point);
     }
 }
