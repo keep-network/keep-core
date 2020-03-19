@@ -1,6 +1,5 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/upgradeability/Proxy.sol";
 
@@ -9,8 +8,15 @@ import "@openzeppelin/upgrades/contracts/upgradeability/Proxy.sol";
  * @dev A proxy contract to provide upgradable Random Beacon functionality.
  * All calls to this proxy contract are delegated to the implementation contract.
  */
-contract KeepRandomBeaconService is Ownable, Proxy {
+contract KeepRandomBeaconService is Proxy {
     using SafeMath for uint256;
+
+    /**
+     * @dev Storage slot with the admin of the contract.
+     * This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1.
+     * It is validated in the constructor.
+     */
+    bytes32 internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
     /**
      * @dev Storage slot with the address of the current implementation.
@@ -46,6 +52,7 @@ contract KeepRandomBeaconService is Ownable, Proxy {
 
     constructor(address _implementation, bytes memory _data) public {
         assertSlot(IMPLEMENTATION_SLOT, "eip1967.proxy.implementation");
+        assertSlot(ADMIN_SLOT, "eip1967.proxy.admin");
         assertSlot(UPGRADE_TIME_DELAY_SLOT, "network.keep.randombeacon.proxy.upgradeTimeDelay");
         assertSlot(UPGRADE_IMPLEMENTATION_SLOT, "network.keep.randombeacon.proxy.upgradeImplementation");
         assertSlot(UPGRADE_INIT_TIMESTAMP_SLOT, "network.keep.randombeacon.proxy.upgradeInitiatedTimestamp");
@@ -62,6 +69,8 @@ contract KeepRandomBeaconService is Ownable, Proxy {
         setImplementation(_implementation);
 
         setUpgradeTimeDelay(1 days);
+
+        setAdmin(msg.sender);
     }
 
     /**
@@ -74,7 +83,7 @@ contract KeepRandomBeaconService is Ownable, Proxy {
      */
     function upgradeToAndCall(address _newImplementation, bytes memory _data)
     public
-    onlyOwner
+    onlyAdmin
     {
         address currentImplementation = _implementation();
         require(
@@ -246,5 +255,37 @@ contract KeepRandomBeaconService is Ownable, Proxy {
         assembly {
             sstore(position, _upgradeInitiatedTimestamp)
         }
+    }
+
+    /**
+     * @notice The admin slot.
+     * @return The contract owner's address.
+     */
+    function admin() public view returns (address adm) {
+        bytes32 slot = ADMIN_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            adm := sload(slot)
+        }
+    }
+
+    /**
+     * @dev Sets the address of the proxy admin.
+     * @param _newAdmin Address of the new proxy admin.
+     */
+    function setAdmin(address _newAdmin) internal {
+        bytes32 slot = ADMIN_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            sstore(slot, _newAdmin)
+        }
+    }
+
+    /**
+     * @dev Throws if called by any account other than the contract owner.
+     */
+    modifier onlyAdmin() {
+        require(msg.sender == admin(), "Caller is not the admin");
+        _;
     }
 }
