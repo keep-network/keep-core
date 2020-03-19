@@ -112,7 +112,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     // Seed value used for the genesis group selection.
     // https://www.wolframalpha.com/input/?i=pi+to+78+digits
-    uint256 internal _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
+    uint256 internal constant _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
