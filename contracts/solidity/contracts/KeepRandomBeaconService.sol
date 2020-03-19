@@ -82,8 +82,8 @@ contract KeepRandomBeaconService is Proxy {
      * @param _data Delegate call data for implementation initialization.
      */
     function upgradeToAndCall(address _newImplementation, bytes memory _data)
-    public
-    onlyAdmin
+        public
+        onlyAdmin
     {
         address currentImplementation = _implementation();
         require(
@@ -196,9 +196,9 @@ contract KeepRandomBeaconService is Proxy {
     }
 
     function upgradeTimeDelay()
-    public
-    view
-    returns (uint256 _upgradeTimeDelay)
+        public
+        view
+        returns (uint256 _upgradeTimeDelay)
     {
         bytes32 position = UPGRADE_TIME_DELAY_SLOT;
         /* solium-disable-next-line */
@@ -216,9 +216,9 @@ contract KeepRandomBeaconService is Proxy {
     }
 
     function newImplementation()
-    public
-    view
-    returns (address _newImplementation)
+        public
+        view
+        returns (address _newImplementation)
     {
         bytes32 position = UPGRADE_IMPLEMENTATION_SLOT;
         /* solium-disable-next-line */
@@ -236,9 +236,9 @@ contract KeepRandomBeaconService is Proxy {
     }
 
     function upgradeInitiatedTimestamp()
-    public
-    view
-    returns (uint256 _upgradeInitiatedTimestamp)
+        public
+        view
+        returns (uint256 _upgradeInitiatedTimestamp)
     {
         bytes32 position = UPGRADE_INIT_TIMESTAMP_SLOT;
         /* solium-disable-next-line */
@@ -248,7 +248,7 @@ contract KeepRandomBeaconService is Proxy {
     }
 
     function setUpgradeInitiatedTimestamp(uint256 _upgradeInitiatedTimestamp)
-    internal
+        internal
     {
         bytes32 position = UPGRADE_INIT_TIMESTAMP_SLOT;
         /* solium-disable-next-line */
