@@ -2,7 +2,7 @@ import { contractService } from './contracts.service'
 import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
 import web3Utils from 'web3-utils'
 import { COMPLETE_STATUS, PENDING_STATUS } from '../constants/constants'
-import { isSameEthAddress } from '../utils/general.utils.js'
+import { gt } from '../utils/arithmetics.utils'
 
 const fetchDelegatedTokensData = async (web3Context) => {
   const { yourAddress, grantContract } = web3Context
@@ -18,10 +18,13 @@ const fetchDelegatedTokensData = async (web3Context) => {
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'authorizerOf', yourAddress),
   ])
 
-  let isUndelegationFromGrant
-  if (isSameEthAddress(grantContract.options.address, ownerAddress)) {
-    isUndelegationFromGrant = true
+  let isUndelegationFromGrant = true
+  try {
+    await grantContract.methods.getGrantStakeDetails(yourAddress).call()
+  } catch (error) {
+    isUndelegationFromGrant = false
   }
+
   const { undelegationStatus } = await fetchPendingUndelegation(web3Context)
 
   return {
@@ -47,7 +50,7 @@ const fetchPendingUndelegation = async (web3Context) => {
   const undelegationComplete = isUndelegation ? undelegationCompletedAtInBN.toString() : null
   let undelegationStatus
   if (isUndelegation) {
-    undelegationStatus = web3Utils.toBN(await eth.getBlockNumber()).gt(undelegationCompletedAtInBN) ? COMPLETE_STATUS : PENDING_STATUS
+    undelegationStatus = gt(await eth.getBlockNumber(), undelegationCompletedAtInBN) ? COMPLETE_STATUS : PENDING_STATUS
   }
 
   return {

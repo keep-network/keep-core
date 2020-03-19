@@ -2,26 +2,36 @@ import React, { useEffect, useState } from 'react'
 import TokenGrantOverview from './TokenGrantOverview'
 import Dropdown from './Dropdown'
 import SelectedGrantDropdown from './SelectedGrantDropdown'
-import { useFetchData } from '../hooks/useFetchData'
 import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEvent'
-import { tokenGrantsService } from '../services/token-grants.service'
 import { displayAmount, isEmptyObj } from '../utils/general.utils'
 import { TOKEN_GRANT_CONTRACT_NAME } from '../constants/constants'
-import { add, sub, gte } from '../utils/arithmetics.utils'
 import { findIndexAndObject } from '../utils/array.utils'
+import { useTokensPageContext } from '../contexts/TokensPageContext'
+import {
+  GRANT_STAKED,
+  GRANT_WITHDRAWN,
+} from '../reducers/tokens-page.reducer.js'
 
-const TokenGrantsOverview = ({ grantBalance }) => {
-  const [state, updateData] = useFetchData(tokenGrantsService.fetchGrants, [])
-  const { data } = state
+const TokenGrantsOverview = (props) => {
+  const {
+    grants,
+    grantTokenBalance,
+    dispatch,
+    refreshGrantTokenBalance,
+    refreshKeepTokenBalance,
+  } = useTokensPageContext()
   const [selectedGrant, setSelectedGrant] = useState({})
   const { latestEvent: stakedEvent } = useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME, 'TokenGrantStaked')
   const { latestEvent: withdrawanEvent } = useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME, 'TokenGrantWithdrawn')
 
   useEffect(() => {
-    if (selectedGrant && data.length > 0) {
-      setSelectedGrant(data[0])
+    if (isEmptyObj(selectedGrant) && grants.length > 0) {
+      setSelectedGrant(grants[0])
+    } else if (!isEmptyObj(selectedGrant)) {
+      const { obj: updatedGrant } = findIndexAndObject('id', selectedGrant.id, grants)
+      setSelectedGrant(updatedGrant)
     }
-  }, [data])
+  }, [grants])
 
   const onSelect = (selectedItem) => {
     setSelectedGrant(selectedItem)
@@ -32,51 +42,29 @@ const TokenGrantsOverview = ({ grantBalance }) => {
       return
     }
     const { returnValues: { grantId, amount } } = stakedEvent
-    const { indexInArray, obj: grantToUpdate } = findIndexAndObject('id', grantId, data)
-    if (indexInArray === null) {
-      return
-    }
-    grantToUpdate.staked = add(grantToUpdate.staked, amount)
-    grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
-    grantToUpdate.readyToRelease = gte(grantToUpdate.readyToRelease, 0) ? grantToUpdate.readyToRelease : '0'
-    updateGrants(grantId, grantToUpdate, indexInArray)
-  }, [stakedEvent.transactionHash, selectedGrant])
+    dispatch({ type: GRANT_STAKED, payload: { grantId, amount } })
+  }, [stakedEvent.transactionHash])
 
   useEffect(() => {
     if (isEmptyObj(withdrawanEvent)) {
       return
     }
     const { returnValues: { grantId, amount } } = withdrawanEvent
-    const { indexInArray, obj: grantToUpdate } = findIndexAndObject('id', grantId, data)
-    if (indexInArray === null) {
-      return
-    }
-
-    grantToUpdate.readyToRelease = '0'
-    grantToUpdate.released = add(grantToUpdate.released, amount)
-    grantToUpdate.vested = add(grantToUpdate.released, grantToUpdate.staked)
-    updateGrants(grantId, grantToUpdate, indexInArray)
-  }, [withdrawanEvent.transactionHash, selectedGrant])
-
-  const updateGrants= (grantId, grantToUpdate, index) => {
-    const updatedGrants = [...data]
-    updatedGrants[index] = grantToUpdate
-    updateData(updatedGrants)
-    if (grantId === selectedGrant.id) {
-      setSelectedGrant(grantToUpdate)
-    }
-  }
+    dispatch({ type: GRANT_WITHDRAWN, payload: { grantId, amount } })
+    refreshGrantTokenBalance()
+    refreshKeepTokenBalance()
+  }, [withdrawanEvent.transactionHash])
 
   return (
     <section>
       <h4 className="text-grey-60">Granted Tokens</h4>
-      <h2 className="balance">{displayAmount(grantBalance)}</h2>
-      <div style={data.length === 0 ? { display: 'none' } : {}}>
+      <h2 className="balance">{displayAmount(grantTokenBalance)}</h2>
+      <div style={grants.length === 0 ? { display: 'none' } : {}}>
         {
-          data.length > 1 &&
+          grants.length > 1 &&
               <Dropdown
                 onSelect={onSelect}
-                options={data}
+                options={grants}
                 valuePropertyName='id'
                 labelPropertyName='id'
                 selectedItem={selectedGrant}
