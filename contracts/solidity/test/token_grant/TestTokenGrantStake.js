@@ -55,7 +55,7 @@ contract('TokenGrant/Stake', function(accounts) {
     
     grantStart = await latestTime();
     minimumStake = await stakingContract.minimumStake()
-    grantAmount = minimumStake.mul(web3.utils.toBN(10)),
+    grantAmount = minimumStake.muln(10),
     
     // Grant tokens
     grantId = await grantTokens(
@@ -93,7 +93,7 @@ contract('TokenGrant/Stake', function(accounts) {
   }
 
   it("should update balances when delegating", async () => {
-    let amountToDelegate = minimumStake.mul(web3.utils.toBN(5));
+    let amountToDelegate = minimumStake.muln(5);
     let remaining = grantAmount.sub(amountToDelegate)
 
     await delegate(grantee, operatorOne, amountToDelegate);
@@ -196,7 +196,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow to delegate to the same operator twice", async () => {
-    let amountToDelegate = minimumStake.mul(web3.utils.toBN(5));
+    let amountToDelegate = minimumStake.muln(5);
     await delegate(grantee, operatorOne, amountToDelegate);
 
     await expectThrowWithMessage(
@@ -219,7 +219,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should allow to delegate to two different operators", async () => {
-    let amountToDelegate = minimumStake.mul(web3.utils.toBN(5));
+    let amountToDelegate = minimumStake.muln(5);
 
     await delegate(grantee, operatorOne, amountToDelegate);
     await delegate(grantee, operatorTwo, amountToDelegate);

@@ -39,9 +39,9 @@ export default async function stakeAndGenesis(accounts, contracts) {
 
     let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, authorizer, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)));
-    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, authorizer, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)));
-    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, authorizer, minimumStake.mul(web3.utils.toBN(operator3StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, authorizer, minimumStake.muln(operator1StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, authorizer, minimumStake.muln(operator2StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, authorizer, minimumStake.muln(operator3StakingWeight));
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})

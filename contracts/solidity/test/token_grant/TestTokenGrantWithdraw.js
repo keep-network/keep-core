@@ -43,7 +43,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
       initializationPeriod, 
       undelegationPeriod
     );
-    grantAmount = (await stakingContract.minimumStake()).mul(web3.utils.toBN(10));
+    grantAmount = (await stakingContract.minimumStake()).muln(10);
 
     grantContract = await TokenGrant.new(tokenContract.address);
     

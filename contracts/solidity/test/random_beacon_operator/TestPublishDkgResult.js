@@ -48,9 +48,9 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     const operator3StakingWeight = 300;
     let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)))
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)))
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, minimumStake.mul(web3.utils.toBN(operator3StakingWeight)))
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, minimumStake.muln(operator1StakingWeight))
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, minimumStake.muln(operator2StakingWeight))
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, minimumStake.muln(operator3StakingWeight))
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: owner})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: owner})

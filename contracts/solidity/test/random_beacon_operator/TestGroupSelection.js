@@ -38,9 +38,9 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
     await operatorContract.setGroupSize(groupSize)
     let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, authorizer, minimumStake.mul(web3.utils.toBN(operator1StakingWeight)));
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, authorizer, minimumStake.mul(web3.utils.toBN(operator2StakingWeight)));
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, authorizer, minimumStake.mul(web3.utils.toBN(operator3StakingWeight)));
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, authorizer, minimumStake.muln(operator1StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, authorizer, minimumStake.muln(operator2StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, authorizer, minimumStake.muln(operator3StakingWeight));
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})

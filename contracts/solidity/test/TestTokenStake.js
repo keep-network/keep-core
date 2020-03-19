@@ -14,7 +14,7 @@ const Registry = artifacts.require("./Registry.sol");
 
 contract('TokenStaking', function(accounts) {
 
-  let token, registry, stakingContract, stakingAmount;
+  let token, registry, stakingContract, stakingAmount, minimumStake;
     
   const ownerOne = accounts[0],
     ownerTwo = accounts[1],
@@ -35,7 +35,8 @@ contract('TokenStaking', function(accounts) {
 
     await registry.approveOperatorContract(operatorContract);
 
-    stakingAmount = await stakingContract.minimumStake();
+    stakingAmount = await stakingContract.minimumStake().muln(20);
+    minimumStake = await stakingContract.minimumStake();
   });
 
   beforeEach(async () => {
@@ -750,7 +751,7 @@ contract('TokenStaking', function(accounts) {
       Buffer.from(authorizer.substr(2), 'hex')
     ]).toString('hex');
     
-    let lessMinimumStake = stakingAmount.sub(web3.utils.toBN(1))
+    let lessMinimumStake = stakingAmount.subn(1)
     await expectThrowWithMessage(
       token.approveAndCall(stakingContract.address, lessMinimumStake, data),
       "Tokens amount must be greater than the minimum stake"

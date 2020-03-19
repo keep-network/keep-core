@@ -155,7 +155,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
     let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
     let expectedDelayPenalty = memberBaseReward.sub(memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2))));
-    let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).mul(web3.utils.toBN(5)).div(web3.utils.toBN(100));
+    let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).muln(5).div(web3.utils.toBN(100));
     let requestSubsidy = entryFee.groupProfitFee.sub(expectedGroupMemberReward.mul(groupSize)).sub(expectedSubmitterExtraReward);
 
     let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
