@@ -92,15 +92,19 @@ const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grants, ...formikP
           />
         </div>
       </div>
-      <SubmitButton
-        className="btn btn-primary btn-large"
-        type="submit"
-        onSubmitAction={onSubmitBtn}
-        withMessageActionIsPending={false}
-        triggerManuallyFetch={true}
-      >
-        delegate stake
-      </SubmitButton>
+      <div>
+        <SubmitButton
+          className="btn btn-primary btn-large"
+          type="submit"
+          onSubmitAction={onSubmitBtn}
+          withMessageActionIsPending={false}
+          triggerManuallyFetch={true}
+        >
+          delegate stake
+        </SubmitButton>
+
+      </div>
+
     </form>
   )
 }

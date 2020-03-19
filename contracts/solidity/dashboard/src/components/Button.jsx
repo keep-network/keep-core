@@ -66,8 +66,8 @@ export default function Button({ isFetching, children, ...props }) {
       >
         <div className="button-content">
           { showLoader ?
-            <div className="flex row full-center flex-1">
-              <ClockIndicator color='primary' />
+            <div className="flex full-center">
+              <span style={{ display: 'inline-block' }}> <ClockIndicator color='primary' /></span>
               <span className="ml-1 text-primary">pending</span>
             </div> :
             children
