@@ -28,7 +28,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
   let grantId, grantStart, grantAmount;
 
   const grantRevocable = false;
-  const grantDuration = duration.seconds(60);;
+  const grantDuration = duration.seconds(60);
   const grantCliff = duration.seconds(1);
     
   const initializationPeriod = 10;
@@ -43,7 +43,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
       initializationPeriod, 
       undelegationPeriod
     );
-    grantAmount = await stakingContract.minimumStake();
+    grantAmount = (await stakingContract.minimumStake()).mul(web3.utils.toBN(10));
 
     grantContract = await TokenGrant.new(tokenContract.address);
 
