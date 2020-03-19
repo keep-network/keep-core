@@ -384,20 +384,22 @@ contract TokenStaking is StakeDelegatable {
 
     /**
      * @dev Checks if the specified account has enough active stake to become
-     * network operator and that this contract has been authorized for potential
-     * slashing.
+     * network operator and that the specified operator contract has been
+     * authorized for potential slashing.
      *
      * Having the required minimum of active stake makes the operator eligible
      * to join the network. If the active stake is not currently undelegating,
      * operator is also eligible for work selection.
      *
      * @param staker Staker's address
+     * @param operatorContract Operator contract's address
      * @return True if has enough active stake to participate in the network,
      * false otherwise.
      */
-    function hasMinimumStake(address staker) public view returns(bool) {
-        return (
-            activeStake(staker, address(this)) >= minimumStake
-        );
+    function hasMinimumStake(
+        address staker,
+        address operatorContract
+    ) public view returns(bool) {
+        return activeStake(staker, operatorContract) >= minimumStake;
     }
 }
