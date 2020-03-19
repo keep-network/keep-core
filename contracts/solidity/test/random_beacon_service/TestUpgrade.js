@@ -194,7 +194,29 @@ contract('KeepRandomBeaconService/Upgrade', function(accounts) {
     assert.equal(
         previousEntryBefore,
         previousEntryAfter,
-        "Should keep previous storage after upgrade.")
-    ;
+        "Should keep previous storage after upgrade."
+    );
   });
+
+  it("should not allow to complete upgrade before the delay passes", async () => {
+    const initialize = serviceContractV2.contract.methods
+    .initialize(
+        100,
+        duration.days(0),
+        '0x0000000000000000000000000000000000000001'
+    ).encodeABI();
+
+    await serviceContractProxy.upgradeToAndCall(
+        serviceContractImplV2.address,
+        initialize
+    );
+
+    const upgradeStartedTime = await latestTime();
+
+    // almost there, but not yet!
+    await increaseTimeTo(upgradeStartedTime + duration.days(1) - duration.minutes(1))
+
+    // Must wait for the entire upgrade time delay before completing the upgrade
+    await expectThrow(serviceContractProxy.completeUpgrade());
+  })
 });
