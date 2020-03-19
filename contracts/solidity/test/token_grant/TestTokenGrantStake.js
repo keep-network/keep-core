@@ -38,7 +38,7 @@ contract('TokenGrant/Stake', function(accounts) {
   
   const initializationPeriod = 10;
   const undelegationPeriod = 30;
-  
+
   before(async () => {
     tokenContract = await KeepToken.new();
     registryContract = await Registry.new();
