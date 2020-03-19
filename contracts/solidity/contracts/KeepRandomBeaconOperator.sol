@@ -102,7 +102,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     uint256 public dkgGasEstimate = 1740000;
 
     // Gas required to trigger DKG (starting group selection).
-    uint256 public groupSelectionGasEstimate = 100000;
+    uint256 public groupSelectionGasEstimate = 200000;
 
     // Reimbursement for the submitter of the DKG result. This value is set when
     // a new DKG request comes to the operator contract.
