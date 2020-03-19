@@ -102,6 +102,10 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
         _;
     }
 
+    constructor() public {
+        _initialized["KeepRandomBeaconServiceImplV1"] = true;
+    }
+
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay

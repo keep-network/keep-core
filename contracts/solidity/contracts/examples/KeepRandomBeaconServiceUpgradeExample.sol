@@ -12,6 +12,10 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
 
     uint256 internal _newVar;
 
+    constructor() public {
+        _initialized["KeepRandomBeaconImplV2"] = true;
+    }
+
     /**
      * @dev Example of overriding existing function.
      * Reference http://solidity.readthedocs.io/en/develop/contracts.html#inheritance
