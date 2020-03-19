@@ -1,15 +1,15 @@
 import {initContracts} from '../helpers/initContracts'
 import stakeDelegate from '../helpers/stakeDelegate'
 import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
-import {bls} from '../helpers/data'
+import {bls as blsData} from '../helpers/data'
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import mineBlocks from '../helpers/mineBlocks'
 
-const AltBn128Stub = artifacts.require("./stubs/AltBn128Stub.sol");
+const BLS = artifacts.require('./cryptography/BLS.sol');
 
 contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   let token, stakingContract, serviceContract, operatorContract, minimumStake, largeStake, entryFeeEstimate, groupIndex,
-    registry, altBn128,
+    registry, bls,
     owner = accounts[0],
     operator1 = accounts[1],
     operator2 = accounts[2],
@@ -34,11 +34,11 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     serviceContract = contracts.serviceContract
     operatorContract = contracts.operatorContract
     registry = contracts.registry
-    altBn128 = await AltBn128Stub.new();
+    bls = await BLS.new()
 
     groupIndex = 0
-    await operatorContract.registerNewGroup(bls.groupPubKey)
-    await operatorContract.setGroupMembers(bls.groupPubKey, [operator1, operator2, operator3])
+    await operatorContract.registerNewGroup(blsData.groupPubKey)
+    await operatorContract.setGroupMembers(blsData.groupPubKey, [operator1, operator2, operator3])
 
     minimumStake = await stakingContract.minimumStake()
     largeStake = minimumStake.muln(2)
@@ -149,7 +149,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   })
 
   it("should be able to report unauthorized signing", async () => {
-    let tattletaleSignature = await altBn128.sign(tattletale, bls.secretKey);
+    let tattletaleSignature = await bls.sign(tattletale, blsData.secretKey);
 
     await operatorContract.reportUnauthorizedSigning(
       groupIndex,
@@ -175,7 +175,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   it("should ignore invalid report of unauthorized signing", async () => {
     await operatorContract.reportUnauthorizedSigning(
       groupIndex,
-      bls.nextGroupSignature, // Wrong signature
+      blsData.nextGroupSignature, // Wrong signature
       {from: tattletale}
     )
 

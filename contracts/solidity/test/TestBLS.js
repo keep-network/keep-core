@@ -1,17 +1,12 @@
 import {bls as blsData} from './helpers/data'
 
 const BLS = artifacts.require('./cryptography/BLS.sol');
-const AltBn128 = artifacts.require('./cryptography/AltBn128.sol');
-const AltBn128Stub = artifacts.require('./stubs/AltBn128Stub.sol');
 
 contract('TestBLS', function() {
-  let bls, altBn128, altBn128Stub;
+  let bls;
 
   before(async () => {
     bls = await BLS.new();
-    altBn128 = await AltBn128.new();
-    await AltBn128Stub.link("AltBn128", altBn128.address);
-    altBn128Stub = await AltBn128Stub.new();
   });
 
   it("should be able to verify BLS signature", async function() {
@@ -84,11 +79,10 @@ contract('TestBLS', function() {
 
   it("should be able to sign a message and verify it", async function() {
     let message = web3.utils.stringToHex("A bear walks into a bar 123...")
+
     let signature = await bls.sign(message, blsData.secretKey);
 
-    let actualMessage = await altBn128Stub.g1HashToPoint(message);
-
-    let actual = await bls.verify(blsData.groupPubKey, actualMessage, signature)
+    let actual = await bls.verifyBytes(blsData.groupPubKey, message, signature);
     assert.isTrue(actual, "Should be able to verify valid BLS signature.");
   })
 });
