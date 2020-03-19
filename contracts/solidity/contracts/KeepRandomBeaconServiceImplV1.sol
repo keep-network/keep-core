@@ -125,7 +125,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
         _pendingWithdrawal = 0;
         _previousEntry = _beaconSeed;
         _registry = registry;
-        _baseCallbackGas = 18846;
+        _baseCallbackGas = 18789;
 
         // Initialize DelayedWithdrawal owner.
         initialize(msg.sender);
