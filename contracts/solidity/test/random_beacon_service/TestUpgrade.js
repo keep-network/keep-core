@@ -145,9 +145,6 @@ contract('KeepRandomBeaconService/Upgrade', function(accounts) {
         "Upgrade initiated timestamp should be set correctly"
     );
 
-    // Must wait upgrade time delay before complete upgrade.
-    await expectThrow(serviceContractProxy.completeUpgrade());
-
     await increaseTimeTo(await latestTime()+duration.days(1));
 
     // Getting data from new contract shouldn't
