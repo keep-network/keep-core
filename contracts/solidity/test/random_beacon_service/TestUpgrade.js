@@ -88,7 +88,7 @@ contract('KeepRandomBeaconService/Upgrade', function(accounts) {
     ));
   });
 
-  it.only("should be able to upgrade implementation and initialize it with new data", async function() {
+  it("should be able to upgrade implementation and initialize it with new data", async function() {
     let previousEntryBefore = await serviceContractV2.previousEntry();
     const firstImplAddress = await serviceContractProxy.implementation();
 
