@@ -444,11 +444,11 @@ library AltBn128 {
     /**
      * @dev Creates a signature over message using the provided secret key.
      */
-    function sign(bytes memory message, uint256 secretKey) internal view returns(uint256, uint256) {
+    function sign(bytes memory message, uint256 secretKey) internal view returns(bytes memory) {
         G1Point memory p_1 = g1HashToPoint(message);
         G1Point memory p_2 = scalarMultiply(p_1, secretKey);
 
-        return (p_2.x, p_2.y);
+        return g1Marshal(p_2);
     }
 
 }
