@@ -1,7 +1,6 @@
 pragma solidity ^0.5.4;
 
 import "../KeepRandomBeaconOperator.sol";
-import "./AltBn128Stub.sol";
 
 /**
  * @title KeepRandomBeaconOperatorStub
