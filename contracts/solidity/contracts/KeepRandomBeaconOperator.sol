@@ -733,7 +733,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /**
      * @dev Reports unauthorized signing for the provided group. Must provide
-     * a valid signature of the group address as a message. Successful signature
+     * a valid signature of the tattletale address as a message. Successful signature
      * verification means the private key has been leaked and all group members
      * should be punished by seizing their tokens. The submitter of this proof is
      * rewarded with 5% of the total seized amount scaled by the reward adjustment
