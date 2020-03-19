@@ -40,6 +40,7 @@ const TokensPage = () => {
     minimumStake,
     grants,
     isFetching,
+    refreshData,
   } = useTokensPageContext()
 
   const handleSubmit = async (values, onTransactionHashCallback) => {
@@ -83,11 +84,10 @@ const TokensPage = () => {
       </div>
       <Undelegations
         undelegations={undelegations}
-        successUndelegationCallback={() => {}}
       />
       <DelegatedTokensList
         delegatedTokens={delegations}
-        cancelStakeSuccessCallback={() => {}}
+        cancelStakeSuccessCallback={refreshData}
       />
     </LoadingOverlay>
   )

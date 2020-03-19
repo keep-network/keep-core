@@ -31,8 +31,16 @@ const TokensPageContext = React.createContext({
 
 const TokenPageContextProvider = (props) => {
   const web3Context = useContext(Web3Context)
-  const [{ data, isFetching: tokesnPageDataIsFetching }] = useFetchData(tokensPageService.fetchTokensPageData, tokesnPageServiceInitialData)
-  const [{ data: grants, isFetching: grantsAreFetching }, , refreshGrants] = useFetchData(tokenGrantsService.fetchGrants, [])
+  const [
+    { data, isFetching: tokesnPageDataIsFetching }
+    , ,
+    refreshData,
+  ] = useFetchData(tokensPageService.fetchTokensPageData, tokesnPageServiceInitialData)
+  const [
+    { data: grants, isFetching: grantsAreFetching }
+    , ,
+    refreshGrants,
+  ] = useFetchData(tokenGrantsService.fetchGrants, [])
 
   const [state, dispatch] = useReducer(tokensPageReducer, {
     grants: [],
@@ -80,6 +88,7 @@ const TokenPageContextProvider = (props) => {
       refreshKeepTokenBalance,
       refreshGrantTokenBalance,
       refreshGrants,
+      refreshData,
     }}>
       {props.children}
     </TokensPageContext.Provider>
