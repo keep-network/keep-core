@@ -6,11 +6,10 @@ import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import mineBlocks from '../helpers/mineBlocks'
 
 const AltBn128Stub = artifacts.require("./stubs/AltBn128Stub.sol");
-const KeepRandomBeaconOperatorStub = artifacts.require("./stubs/KeepRandomBeaconOperatorStub.sol");
 
 contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   let token, stakingContract, serviceContract, operatorContract, minimumStake, largeStake, entryFeeEstimate, groupIndex,
-    registry,
+    registry, altBn128,
     owner = accounts[0],
     operator1 = accounts[1],
     operator2 = accounts[2],
@@ -18,19 +17,16 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     tattletale = accounts[4],
     authorizer = accounts[5],
     anotherOperatorContract = accounts[6],
-    registryKeeper = accounts[7],
-    altBn128
+    registryKeeper = accounts[7];
 
   before(async () => {
-    const altBn128Stub = await AltBn128Stub.new();
-    await KeepRandomBeaconOperatorStub.link("AltBn128Stub", altBn128Stub.address); 
     
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStakingStub.sol'),
       artifacts.require('./KeepRandomBeaconService.sol'),
       artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      KeepRandomBeaconOperatorStub
+      artifacts.require("./stubs/KeepRandomBeaconOperatorStub.sol")
     )
 
     token = contracts.token
