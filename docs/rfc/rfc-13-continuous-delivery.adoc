@@ -176,7 +176,7 @@ KEEP_ACCOUNT_PASSWORD=eth-account-passphrase \
   truffle exec ./unlock-eth-accounts.js --network keep_dev
 
 # stake ETH accounts
-truffle exec ./demo.js --network keep_dev
+truffle exec ./delegate-tokens.js --network keep_dev
 ```
 
 
