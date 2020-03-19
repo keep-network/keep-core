@@ -19,10 +19,15 @@ const DelegatedTokens = (props) => {
     authorizerAddress,
     undelegationStatus,
     isUndelegationFromGrant,
+    isInInitializationPeriod,
   } } = state
 
   const undelegationSuccessCallback = () => {
     setData({ ...state.data, undelegationStatus: PENDING_STATUS })
+  }
+
+  const cancelSuccessCallback = () => {
+    setData({ ...state.data, stakedBalance: '0', undelegationStatus: COMPLETE_STATUS })
   }
 
   const renderUndelegationStatus = () => {
@@ -51,8 +56,9 @@ const DelegatedTokens = (props) => {
           btnText='undelegate'
           btnClassName="btn btn-primary btn-lg flex-1"
           operator={yourAddress}
-          successCallback={undelegationSuccessCallback}
+          successCallback={isInInitializationPeriod ? cancelSuccessCallback : undelegationSuccessCallback}
           isFromGrant={isUndelegationFromGrant}
+          isInInitializationPeriod={isInInitializationPeriod}
         />
       )
     }

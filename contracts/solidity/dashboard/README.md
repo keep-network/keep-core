@@ -45,7 +45,7 @@ npm install
 * run package.json demo scripts individually:
 ```
 truffle migrate --reset
-truffle exec ./scripts/demo.js
+truffle exec ./scripts/delegate-tokens.js
 ```
 * Go to the dashboard directory `cd dashboard` and run `npm install`
 

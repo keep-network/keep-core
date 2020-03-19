@@ -18,7 +18,7 @@
     "clean": "rm -rf build",
     "compile": "npm run clean && truffle compile --contracts_build_directory=./build/truffle",
     "test": "npm run clean && truffle compile && truffle test",
-    "demo": "truffle migrate --reset && truffle exec ./scripts/demo.js",
+    "demo": "truffle migrate --reset && truffle exec ./scripts/delegate-tokens.js",
     "lint": "solium --dir ./contracts"
   },
   "author": "Satoshi Nakamoto 🤪",

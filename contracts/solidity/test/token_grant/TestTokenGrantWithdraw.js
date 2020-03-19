@@ -25,11 +25,10 @@ contract('TokenGrant/Withdraw', function(accounts) {
     magpie = accounts[4],
     authorizer = accounts[5];
 
-  let grantId;
-  let grantStart;
-  const grantAmount = web3.utils.toBN(1000000000);
+  let grantId, grantStart, grantAmount;
+
   const grantRevocable = false;
-  const grantDuration = duration.seconds(60);;
+  const grantDuration = duration.seconds(60);
   const grantCliff = duration.seconds(1);
     
   const initializationPeriod = 10;
@@ -44,6 +43,8 @@ contract('TokenGrant/Withdraw', function(accounts) {
       initializationPeriod, 
       undelegationPeriod
     );
+    grantAmount = (await stakingContract.minimumStake()).muln(10);
+
     grantContract = await TokenGrant.new(tokenContract.address);
     
     await grantContract.authorizeStakingContract(stakingContract.address);

@@ -14,10 +14,13 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
  * and recover the stake after undelegation period is over.
  */
 contract TokenStaking is StakeDelegatable {
-
     using UintArrayUtils for uint256[];
     using PercentUtils for uint256;
     using SafeERC20 for ERC20Burnable;
+
+    // Minimum amount of KEEP that allows sMPC cluster client to participate in
+    // the Keep network. Expressed as number with 18-decimal places.
+    uint256 public minimumStake = 200000 * 1e18;
 
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
@@ -72,7 +75,7 @@ contract TokenStaking is StakeDelegatable {
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
-        require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
+        require(_value >= minimumStake, "Tokens amount must be greater than the minimum stake");
         require(_extraData.length == 60, "Stake delegation data must be provided.");
 
         address payable magpie = address(uint160(_extraData.toAddress(0)));
@@ -377,5 +380,26 @@ contract TokenStaking is StakeDelegatable {
         if (isAuthorized && isActive) {
             balance = operatorParams.getAmount();
         }
+    }
+
+    /**
+     * @dev Checks if the specified account has enough active stake to become
+     * network operator and that the specified operator contract has been
+     * authorized for potential slashing.
+     *
+     * Having the required minimum of active stake makes the operator eligible
+     * to join the network. If the active stake is not currently undelegating,
+     * operator is also eligible for work selection.
+     *
+     * @param staker Staker's address
+     * @param operatorContract Operator contract's address
+     * @return True if has enough active stake to participate in the network,
+     * false otherwise.
+     */
+    function hasMinimumStake(
+        address staker,
+        address operatorContract
+    ) public view returns(bool) {
+        return activeStake(staker, operatorContract) >= minimumStake;
     }
 }
