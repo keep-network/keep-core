@@ -82,7 +82,7 @@ func ExecuteDKG(
 		gjkrEndBlockHeight,
 	)
 	if err != nil {
-		logger.Errorf(
+		logger.Warningf(
 			"[member:%v] DKG result publication process failed [%v]; "+
 				"checking conditional membership possibility",
 			playerIndex,
