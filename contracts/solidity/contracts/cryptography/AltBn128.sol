@@ -443,19 +443,26 @@ library AltBn128 {
      * provided point isn't on the curve.
      */
     function scalarMultiply(G1Point memory p_1, uint256 scalar) internal view returns (G1Point memory) {
-        uint256[3] memory arg;
-        arg[0] = p_1.x;
-        arg[1] = p_1.y;
-        arg[2] = scalar;
-        uint256[2] memory p_2;
+        (uint256 x, uint256 y) = _scalarMultiply(p_1.x, p_1.y, scalar);
+        return G1Point(x, y);
+    }
+
+    function _scalarMultiply(uint256 p_1x, uint256 p_1y, uint256 scalar)
+        internal view returns (uint256 x, uint256 y) {
         /* solium-disable-next-line */
         assembly {
+            let arg := mload(0x40)
+            mstore(arg, p_1x)
+            mstore(add(arg, 0x20), p_1y)
+            mstore(add(arg, 0x40), scalar)
+            let p_2 := add(arg, 0x60)
             // 0x70 is the ECMUL precompile address
             if iszero(staticcall(not(0), 0x07, arg, 0x60, p_2, 0x40)) {
                 revert(0, 0)
             }
+            x := mload(p_2)
+            y := mload(add(p_2, 0x20))
         }
-        return G1Point(p_2[0], p_2[1]);
     }
 
     /**
