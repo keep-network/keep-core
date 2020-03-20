@@ -1,22 +1,15 @@
 import React from 'react'
 import withWeb3Context from './WithWeb3Context'
-import { displayAmount } from '../utils'
+import { isSameEthAddress } from '../utils/general.utils'
 import { getKeepTokenContractDeployerAddress } from '../contracts'
 
 export const ContractsDataContext = React.createContext({})
-
 class ContractsDataContextProvider extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      isTokenHolder: false,
-      isOperator: false,
-      isOperatorOfStakedTokenGrant: false,
       tokenBalance: '',
-      stakedGrant: '',
-      stakeOwner: '',
-      grantBalance: '',
-      grantStakeBalance: '',
+      isKeepTokenContractDeployer: false,
       contractsDataIsFetching: true,
     }
   }
@@ -43,55 +36,41 @@ class ContractsDataContextProvider extends React.Component {
     }
 
     getContractsInfo = async () => {
-      const { web3: { web3, token, stakingContract, grantContract, yourAddress, changeDefaultContract, utils } } = this.props
+      const { web3: { web3, token, stakingContract, grantContract, yourAddress, utils } } = this.props
       if (!token.methods || !stakingContract.methods || !grantContract.methods || !yourAddress) {
         return
       }
       try {
         this.setState({ contractsDataIsFetching: true })
         const tokenBalance = new utils.BN(await token.methods.balanceOf(yourAddress).call())
-        const stakeOwner = await stakingContract.methods.ownerOf(yourAddress).call()
-        const grantBalance = await grantContract.methods.balanceOf(yourAddress).call()
-        const grantStakeBalance = displayAmount(await grantContract.methods.stakeBalanceOf(yourAddress).call(), 18, 3)
-
-        const isTokenHolder = tokenBalance.gt(new utils.BN(0))
-        const isOperator = stakeOwner !== '0x0000000000000000000000000000000000000000' && utils.toChecksumAddress(yourAddress) !== utils.toChecksumAddress(stakeOwner)
-
-        // Check if your account is an operator for a staked Token Grant.
-        let stakedGrant
-        let isOperatorOfStakedTokenGrant
-        const stakedGrantByOperator = await grantContract.methods.grantStakes(yourAddress).call()
-
-        if (stakedGrantByOperator.stakingContract === stakingContract.address) {
-          isOperatorOfStakedTokenGrant = true
-          stakedGrant = await grantContract.methods.grants(stakedGrantByOperator.grantId.toString()).call()
-          changeDefaultContract(grantContract)
-        }
-
         const keepTokenContractDeployerAddress = await getKeepTokenContractDeployerAddress(web3)
-        const isKeepTokenContractDeployer = utils.toChecksumAddress(yourAddress) === utils.toChecksumAddress(keepTokenContractDeployerAddress)
+        const isKeepTokenContractDeployer = isSameEthAddress(yourAddress, keepTokenContractDeployerAddress)
 
         this.setState({
           isKeepTokenContractDeployer,
-          isOperator,
-          isTokenHolder,
-          isOperatorOfStakedTokenGrant,
           tokenBalance,
-          grantBalance,
-          grantStakeBalance,
-          stakedGrant,
-          stakeOwner,
           contractsDataIsFetching: false,
         })
       } catch (error) {
-        console.log('error', error)
         this.setState({ contractsDataIsFetching: false })
       }
     }
 
+    refreshKeepTokenBalance = async () => {
+      const { web3: { token, yourAddress, utils } } = this.props
+
+      const tokenBalance = new utils.BN(await token.methods.balanceOf(yourAddress).call())
+      this.setState({
+        tokenBalance,
+      })
+    }
+
     render() {
       return (
-        <ContractsDataContext.Provider value={{ ...this.state }}>
+        <ContractsDataContext.Provider value={{
+          refreshKeepTokenBalance: this.refreshKeepTokenBalance,
+          ...this.state,
+        }}>
           {this.props.children}
         </ContractsDataContext.Provider>
       )

@@ -1,22 +1,21 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import DelegatedTokens from '../components/DelegatedTokens'
 import PendingUndelegation from '../components/PendingUndelegation'
 import SlashedTokens from '../components/SlashedTokens'
+import AuthorizationInfo from '../components/AuthorizationInfo'
 import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEvent'
 import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
-import { Web3Context } from '../components/WithWeb3Context'
 
 const OperatorPage = (props) => {
-  const { yourAddress } = useContext(Web3Context)
   const { latestEvent } =
-    useSubscribeToContractEvent(TOKEN_STAKING_CONTRACT_NAME, 'InitiatedUnstake', { filter: { operator: yourAddress } })
+    useSubscribeToContractEvent(TOKEN_STAKING_CONTRACT_NAME, 'Undelegated')
 
   return (
     <>
-      <h3>My Token Operations</h3>
-      <DelegatedTokens latestUnstakeEvent={latestEvent} />
+      <h2 className="mb-2">My Token Operations</h2>
+      <DelegatedTokens />
       <PendingUndelegation latestUnstakeEvent={latestEvent} />
-      {/* TODO fetching slashed info form the contract */}
+      <AuthorizationInfo />
       {/* <SlashedTokens /> */}
     </>
 

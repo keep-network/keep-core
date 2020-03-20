@@ -12,9 +12,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract;
 
-  let priceFeedEstimate = web3.utils.toBN(20).mul(web3.utils.toBN(10**9)), // (20 Gwei = 20 * 10^9 wei)
-    fluctuationMargin = 50, // 50%
-    dkgContributionMargin = 1, // 1%
+  let dkgContributionMargin = 1, // 1%
     withdrawalDelay = 1,
     stakeInitializationPeriod = 1,
     stakeUndelegationPeriod = 30;
@@ -30,8 +28,16 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new();
-  serviceContractProxy = await KeepRandomBeaconService.new(serviceContractImplV1.address);
-  serviceContract = await KeepRandomBeaconServiceImplV1.at(serviceContractProxy.address)
+
+  const initialize = serviceContractImplV1.contract.methods
+      .initialize(
+          dkgContributionMargin,
+          withdrawalDelay,
+          registry.address,
+      ).encodeABI();
+
+  serviceContractProxy = await KeepRandomBeaconService.new(serviceContractImplV1.address, initialize);
+  serviceContract = await KeepRandomBeaconServiceImplV1.at(serviceContractProxy.address);
 
   // Initialize Keep Random Beacon operator contract
   const bls = await BLS.new();
@@ -44,24 +50,22 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await KeepRandomBeaconOperator.link("Groups", groups.address);
   await KeepRandomBeaconOperator.link("DKGResultVerification", dkgResultVerification.address);
   await KeepRandomBeaconOperator.link("Reimbursements", reimbursements.address);
+
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address);
 
   await registry.approveOperatorContract(operatorContract.address);
-  await serviceContract.initialize(priceFeedEstimate, fluctuationMargin, dkgContributionMargin, withdrawalDelay, registry.address);
 
   // Set service contract owner as operator contract upgrader by default
-  const operatorContractUpgrader = await serviceContract.owner()
+  const operatorContractUpgrader = await serviceContractProxy.admin()
   await registry.setOperatorContractUpgrader(serviceContract.address, operatorContractUpgrader);
 
   await serviceContract.addOperatorContract(operatorContract.address);
 
   let dkgGasEstimate = await operatorContract.dkgGasEstimate();
-  let gasPriceWithFluctuationMargin = priceFeedEstimate.add(priceFeedEstimate.mul(web3.utils.toBN(fluctuationMargin)).div(web3.utils.toBN(100)));
-
-  await operatorContract.setPriceFeedEstimate(priceFeedEstimate);
 
   // Genesis should include payment to cover DKG cost to create first group
-  await operatorContract.genesis({value: dkgGasEstimate.mul(gasPriceWithFluctuationMargin)});
+  let gasPriceCeiling = await operatorContract.gasPriceCeiling();
+  await operatorContract.genesis({value: dkgGasEstimate.mul(gasPriceCeiling)});
 
   return {
     registry: registry,

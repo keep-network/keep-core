@@ -1,9 +1,22 @@
 @import (inline) "fonts.css";
+
+html {
+  font-size: 12px;
+
+  @media screen and (min-width: 750px) {
+    font-size: 14px;
+  }
+
+  @media screen and (min-width: 1200px) {
+    font-size: 16px;
+  }
+}
+
 body {
   font-family: 'Work Sans', sans-serif;
   font-weight: normal;
-  font-size: 18px;
-  color: @black;
+  font-size: 1rem;
+  color: @color-black;
   line-height: 1.44;
 
   @media @tablet-up {
@@ -12,66 +25,60 @@ body {
 }
 
 h1, .h1 {
-  font-size: 62px;
+  font-size: 4.375rem;
 }
 
 h2, .h2 {
-  font-size: 50px;
+  font-size: 3.125rem;
+  
+}
+
+h1, h2 {
+  font-weight: 800;
+  line-height: 104%;
+  letter-spacing: -1px;
 }
 
 h3, .h3 {
-  font-size: 32px;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 120%;
 }
 
 h4, .h4 {
-  font-size: 22px;
+  font-size: 1.5625rem;
+  font-weight: 500;
+  line-height: 145%;
 }
 
 h5, .h5 {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: bold;
   line-height: 130%;
+  font-weight: bold;
 }
 
 h6, .h6 {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 500;
   line-height: 145%;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.05rem;
   font-variant: small-caps;
 }
 
 h1, .h1,
 h2, .h2,
 h3, .h3,
-h4, .h4 {
-  line-height: 1.38;
-  font-weight: 800;
+h4, .h4,
+h5, .h5,
+h6, .h6 {
+  margin: 0;
 }
+
 
 small, .small {
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.38;
-}
-
-@media @mobile {
-  h1, .h1,
-  h2, .h2,
-  h3, .h3 {
-    font-size: 30px;
-    line-height: 1.33;
-  }
-
-  h4, .h4,
-  h5, .h5,
-  h6, .h6 {
-    font-size: 16px;
-    line-height: 1;
-  }
-
-  h2, .h2 {
-    margin-bottom: 20px;
-  }
 }
 
 p {
@@ -79,29 +86,38 @@ p {
 }
 
 a {
-  color: @link-color;
+  text-decoration: none;
+  color: @secondary-color;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+label {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 145%;
+  color: @color-grey-60
 }
 
 .text {
-  &-primary {
-    color: @aqua-marine;
+  each(@text-colors, {
+    &-@{key} {
+      color: @value !important;
+    }
+  });
+  
+  &-bold {
+    font-weight: bold;
   }
 
-  &-darker-grey {
-    color: @darker-grey;
-  }
-
-  &-grey {
-    color: @grey;
-  }
-
-  &-dark-red {
-    color: @dark-red !important;
+  &-normal {
+    font-weight: normal !important;
   }
 
   &-label {
     font-size: 1rem;
-    color: @darker-grey;
+    color: @color-grey-60;
     line-height: 145%;
     letter-spacing: 0.05em;
     font-variant: small-caps;
@@ -111,7 +127,7 @@ a {
     font-weight: normal;
     font-size: 1.2rem !important;
     line-height: 145%;
-    color: @darker-grey;
+    color: @color-grey-60;
   }
 
   &-samll {
@@ -119,14 +135,29 @@ a {
     font-weight: 500;
   }
 
-  &-warning {
-    &.border {
-      padding-left: 1rem;
-      border-left: 3px solid @warning-color;
+  &-smaller {
+    font-size: .9rem;
+    font-weight: normal;
+    line-height: 1rem;
+  }
+
+  &-title {
+    font-weight: bold;
+    font-size: 1.25rem; 
+    line-height: 1.45rem;
+    display: flex;
+    align-items: center;
+    letter-spacing: 0.07em;
+    font-variant: small-caps;
+  }
+
+  &-link {
+    border-bottom: 1px solid transparent;
+    transition: all ease-in-out .5s;
+
+    &:hover, &:focus {
+      cursor: pointer;
+      border-color: @pending-color;
     }
-    font-weight: 500;
-    font-size: 0.9rem;
-    line-height: 22px;
-    color: @warning-color;
   }
 }

@@ -1,0 +1,27 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: keep-dapp-token-dashboard
+  namespace: default
+  labels:
+    keel.sh/policy: all
+    app: keep-dapp
+    type: keep-token-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keep-dapp
+      type: keep-token-dashboard
+  template:
+    metadata:
+      labels:
+        app: keep-dapp
+        type: keep-token-dashboard
+    spec:
+      containers:
+      - name: keep-dapp-token-dashboard
+        image: gcr.io/keep-test-f3e0/keep-dapp-token-dashboard
+        ports:
+          - containerPort: 80

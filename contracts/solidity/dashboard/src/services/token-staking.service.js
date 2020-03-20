@@ -1,40 +1,72 @@
 import { contractService } from './contracts.service'
 import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
-import moment from 'moment'
+import web3Utils from 'web3-utils'
+import { COMPLETE_STATUS, PENDING_STATUS } from '../constants/constants'
+import { gt, add } from '../utils/arithmetics.utils'
 
 const fetchDelegatedTokensData = async (web3Context) => {
-  const { yourAddress } = web3Context
-  const [stakedBalance, ownerAddress, beneficiaryAddress] = await Promise.all([
+  const { yourAddress, grantContract, eth } = web3Context
+  const [
+    stakedBalance,
+    ownerAddress,
+    beneficiaryAddress,
+    authorizerAddress,
+    initializationPeriod,
+  ] = await Promise.all([
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'balanceOf', yourAddress),
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'ownerOf', yourAddress),
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'magpieOf', yourAddress),
+    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'authorizerOf', yourAddress),
+    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'initializationPeriod'),
   ])
 
-  return { stakedBalance, ownerAddress, beneficiaryAddress }
-}
+  let isUndelegationFromGrant = true
+  try {
+    await grantContract.methods.getGrantStakeDetails(yourAddress).call()
+  } catch (error) {
+    isUndelegationFromGrant = false
+  }
 
-const fetchPendingUndelegation = async (web3Context, ...args) => {
-  const { yourAddress } = web3Context
-  const [withdrawals, stakeWithdrawalDelayInSec, events] = await Promise.all([
-    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'withdrawals', yourAddress),
-    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'stakeWithdrawalDelay'),
-    contractService.getPastEvents(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'InitiatedUnstake', { fromBlock: '0', filter: { operator: yourAddress } }),
-  ])
-
-  const undelegatedOn = withdrawals.amount === '0' ?
-    null :
-    moment.unix(withdrawals.createdAt).add(stakeWithdrawalDelayInSec, 'seconds')
-  const stakeWithdrawalDelay = moment().add(stakeWithdrawalDelayInSec, 'seconds').fromNow(stakeWithdrawalDelayInSec)
-  const pendinUndelegations = events
-    .map(({ id, returnValues: { value, createdAt } }) => ({ eventId: id, amount: value, createdAt: moment.unix(createdAt) }))
-    .reverse()
+  const { undelegationStatus, undelegation } = await fetchPendingUndelegation(web3Context)
+  const { createdAt } = undelegation
+  const initializationOverAt = add(createdAt || 0, initializationPeriod)
+  const isInInitializationPeriod = gt(initializationOverAt, await eth.getBlockNumber())
 
   return {
-    pendingUnstakeBalance: withdrawals.amount,
-    undelegatedOn,
-    stakeWithdrawalDelay,
-    stakeWithdrawalDelayInSec,
-    pendinUndelegations,
+    stakedBalance,
+    ownerAddress,
+    beneficiaryAddress,
+    authorizerAddress,
+    undelegationStatus,
+    isUndelegationFromGrant,
+    isInInitializationPeriod,
+  }
+}
+
+const fetchPendingUndelegation = async (web3Context) => {
+  const { yourAddress, eth } = web3Context
+  const [delegation, undelegationPeriod] = await Promise.all([
+    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'getDelegationInfo', yourAddress),
+    contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'undelegationPeriod'),
+  ])
+
+  const undelegationCompletedAtInBN = web3Utils.toBN(delegation.undelegatedAt).add(web3Utils.toBN(undelegationPeriod))
+  const isUndelegation = delegation.undelegatedAt !== '0'
+  const pendingUnstakeBalance = isUndelegation ? delegation.amount : 0
+  const undelegationComplete = isUndelegation ? undelegationCompletedAtInBN.toString() : null
+  let undelegationStatus
+  if (isUndelegation) {
+    undelegationStatus = gt(await eth.getBlockNumber(), undelegationCompletedAtInBN) ? COMPLETE_STATUS : PENDING_STATUS
+  } else if (delegation.undelegatedAt === '0' && delegation.createdAt !== '0' && delegation.amount === '0') {
+    undelegationStatus = COMPLETE_STATUS
+  }
+
+  return {
+    pendingUnstakeBalance,
+    undelegationComplete,
+    undelegationPeriod,
+    undelegationStatus,
+    undelegation: delegation,
   }
 }
 

@@ -7,7 +7,7 @@
             padding-bottom: 1.5rem;
         }
         &-list {
-            background: @light-grey;
+            background: @color-grey-20;
             padding: 2rem;
             ul {
                 padding-left: 0;
@@ -32,16 +32,6 @@
 #delegated-tokens {
     flex-direction: column;
 
-    #delegated-form-section {
-        justify-content: space-between;
-        .inline-form {
-            width: 100%;
-            input {
-                flex: 2;
-            }
-        }
-    }
-
     @media screen and (min-width: 950px) {
         flex-direction: row;
 
@@ -58,11 +48,11 @@
     @media screen and (min-width: 1000px) {
         #delegated-tokens-summary {
             justify-content: space-between;
-            flex-basis: 33%;
+            flex-basis: 38%;
         }
 
         #delegated-form-section {
-            flex-basis: 65%;
+            flex-basis: 60%;
         }
     }
 
@@ -74,17 +64,6 @@
         
         #delegated-form-section {
             flex-basis: 49%;
-            .inline-form {
-                &.undelegation-form {
-                    flex-direction: column;
-                    input {
-                        width: 100%;
-                        padding-left: 1rem;
-                        margin-bottom: 2rem;
-                        line-height: 3.5rem;
-                    }
-                }
-            }
         }
     }
 }
@@ -93,13 +72,13 @@
 
     .slashed-tokens-list {
         margin-top: 2rem;
-        ul {
+        ul {    
             margin-top: 1rem;
             padding-left: 0;
         }
         
         li {
-            border-bottom: 1px solid @grey;
+            border-bottom: 1px solid @color-grey-70;
             margin-bottom: 2rem;
             padding-bottom: 1rem;
 

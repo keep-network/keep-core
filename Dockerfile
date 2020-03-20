@@ -47,12 +47,7 @@ RUN go mod download
 
 # Install code generators.
 RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.1/protoc-gen-gogoslick && go install .
-# go-ethereum in version 1.9.7 is still on govendor and some vendor.json
-# dependencies are not properly resolved by go modules. We use 'go get' as
-# a temporary workaround and hope to switch back to 'go install' once 
-# go-ethereum migrates to go modules in 1.9.8.
-# RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.7/cmd/abigen && go install .
-RUN go get github.com/ethereum/go-ethereum/cmd/abigen@v1.9.7
+RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.10/cmd/abigen && go install .
 
 COPY ./contracts/solidity $APP_DIR/contracts/solidity
 RUN cd $APP_DIR/contracts/solidity && npm install
@@ -63,6 +58,8 @@ COPY ./pkg/beacon/relay/entry/gen $APP_DIR/pkg/beacon/relay/entry/gen
 COPY ./pkg/beacon/relay/gjkr/gen $APP_DIR/pkg/beacon/relay/gjkr/gen
 COPY ./pkg/beacon/relay/dkg/result/gen $APP_DIR/pkg/beacon/relay/dkg/result/gen
 COPY ./pkg/beacon/relay/registry/gen $APP_DIR/pkg/beacon/relay/registry/gen
+# Need this to resolve imports in generated Ethereum commands.
+COPY ./config $APP_DIR/config
 RUN go generate ./.../gen 
 
 COPY ./ $APP_DIR/

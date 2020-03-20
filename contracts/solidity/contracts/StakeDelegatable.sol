@@ -3,8 +3,9 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "./utils/BytesLib.sol";
 import "./utils/AddressArrayUtils.sol";
+import "./utils/OperatorParams.sol";
 
 
 /**
@@ -16,25 +17,23 @@ contract StakeDelegatable {
     using SafeERC20 for ERC20Burnable;
     using BytesLib for bytes;
     using AddressArrayUtils for address[];
+    using OperatorParams for uint256;
 
     ERC20Burnable public token;
 
     uint256 public initializationPeriod;
     uint256 public undelegationPeriod;
 
-    // List of operators for the stake owner.
     mapping(address => address[]) public ownerOperators;
 
+    mapping(address => Operator) public operators;
+
     struct Operator {
-        uint256 amount;
-        uint256 createdAt;
-        uint256 undelegatedAt;
+        uint256 packedParams;
         address owner;
         address payable beneficiary;
         address authorizer;
     }
-
-    mapping(address => Operator) public operators;
 
     modifier onlyOperatorAuthorizer(address _operator) {
         require(
@@ -45,20 +44,20 @@ contract StakeDelegatable {
     }
 
     /**
-     * @dev Gets the stake balance of the specified address.
-     * @param _address The address to query the balance of.
-     * @return An uint256 representing the amount staked by the passed address.
-     */
-    function balanceOf(address _address) public view returns (uint256 balance) {
-        return operators[_address].amount;
-    }
-
-    /**
      * @dev Gets the list of operators of the specified address.
      * @return An array of addresses.
      */
     function operatorsOf(address _address) public view returns (address[] memory) {
         return ownerOperators[_address];
+    }
+
+    /**
+     * @dev Gets the stake balance of the specified address.
+     * @param _address The address to query the balance of.
+     * @return An uint256 representing the amount staked by the passed address.
+     */
+    function balanceOf(address _address) public view returns (uint256 balance) {
+        return operators[_address].packedParams.getAmount();
     }
 
     /**

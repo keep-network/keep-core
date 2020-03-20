@@ -9,17 +9,17 @@ Loadable.defaultProps = {
   isFetching: true,
 }
 
-export const ClockIndicator = (props) => (<div className='indicator-clock'/>)
+export const ClockIndicator = ({ color }) => (<div className={`indicator-clock ${color}`}/>)
+
+ClockIndicator.defaultProps = {
+  color: '',
+}
 
 export const LoadingOverlay = React.memo(({ isFetching, classNames, children }) => {
-  if (!isFetching) {
-    return children
-  }
-
   return (
     <div className={`loading-overlay-container ${classNames}`}>
       {children}
-      <div className='loading-overlay'>
+      <div className={`loading-overlay${isFetching ? '' : ' hidden'}`}>
         Loading...
       </div>
     </div>

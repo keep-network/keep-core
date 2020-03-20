@@ -3,14 +3,17 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./utils/AddressArrayUtils.sol";
+import "./utils/PercentUtils.sol";
 import "./DelayedWithdrawal.sol";
 import "./Registry.sol";
+import "./IRandomBeacon.sol";
 
 
 interface OperatorContract {
-    function entryVerificationGasEstimate() external view returns(uint256);
-    function groupCreationGasEstimate() external view returns(uint256);
+    function entryVerificationFee() external view returns(uint256);
+    function groupCreationFee() external view returns(uint256);
     function groupProfitFee() external view returns(uint256);
+    function gasPriceCeiling() external view returns(uint256);
     function sign(
         uint256 requestId,
         bytes calldata previousEntry
@@ -29,22 +32,12 @@ interface OperatorContract {
  * Warning: you can't set constants directly in the contract and must use initialize()
  * please see openzeppelin upgradeable contracts approach for more info.
  */
-contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
+contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IRandomBeacon {
     using SafeMath for uint256;
+    using PercentUtils for uint256;
     using AddressArrayUtils for address[];
 
     event RelayEntryRequested(uint256 requestId);
-    event RelayEntryGenerated(uint256 requestId, uint256 entry);
-
-    // The price feed estimate is used to calculate the gas price for reimbursement
-    // next to the actual gas price from the transaction. We use both values to
-    // defend against malicious miner-submitters who can manipulate transaction
-    // gas price. Expressed in wei.
-    uint256 internal _priceFeedEstimate;
-
-    // Fluctuation margin to cover the immediate rise in gas price.
-    // Expressed in percentage.
-    uint256 internal _fluctuationMargin;
 
     // Fraction in % of the estimated cost of DKG that is included
     // in relay request fee.
@@ -66,7 +59,13 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
 
     bytes internal _previousEntry;
 
-    // Cost of executing executeCallback() on this contract, require checks and .call
+    // The cost of executing executeCallback() code of this contract, includes
+    // everything but the logic of the external contract called.
+    // The value is used to estimate the cost of executing a callback and is
+    // used for calculating callback call surplus reimbursement for requestor.
+    //
+    // This value has to be updated in case of EVM opcode price change, but since
+    // upgrading service contract is easy, it is not a worrisome problem.
     uint256 internal _baseCallbackGas;
 
     struct Callback {
@@ -103,21 +102,18 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         _;
     }
 
+    constructor() public {
+        _initialized["KeepRandomBeaconServiceImplV1"] = true;
+    }
+
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
-     * @param priceFeedEstimate The price feed estimate is used to calculate the gas price for
-     * reimbursement next to the actual gas price from the transaction. We use both values to defend
-     * against malicious miner-submitters who can manipulate transaction gas price.
-     * @param fluctuationMargin Fluctuation margin to cover the immediate rise in gas price.
-     * Expressed in percentage.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee.
      * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param registry Registry contract linked to this contract.
      */
     function initialize(
-        uint256 priceFeedEstimate,
-        uint256 fluctuationMargin,
         uint256 dkgContributionMargin,
         uint256 withdrawalDelay,
         address registry
@@ -125,15 +121,18 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         public
     {
         require(!initialized(), "Contract is already initialized.");
+        require(registry != address(0), "Incorrect registry address");
+
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
-        _priceFeedEstimate = priceFeedEstimate;
-        _fluctuationMargin = fluctuationMargin;
         _dkgContributionMargin = dkgContributionMargin;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _previousEntry = _beaconSeed;
         _registry = registry;
-        _baseCallbackGas = 18845;
+        _baseCallbackGas = 18789;
+
+        // Initialize DelayedWithdrawal owner.
+        initialize(msg.sender);
     }
 
     /**
@@ -248,7 +247,13 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
             "Payment is less than required minimum."
         );
 
-        (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
+        (
+            uint256 entryVerificationFee,
+            uint256 dkgContributionFee,
+            uint256 groupProfitFee,
+            uint256 gasPriceCeiling
+        ) = entryFeeBreakdown();
+
         uint256 callbackFee = msg.value.sub(entryVerificationFee)
             .sub(dkgContributionFee).sub(groupProfitFee);
 
@@ -259,7 +264,8 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
         );
 
         uint256 selectedOperatorContractFee = operatorContract.groupProfitFee().add(
-            operatorContract.entryVerificationGasEstimate().mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)));
+            operatorContract.entryVerificationFee()
+        );
 
         _requestCounter++;
         uint256 requestId = _requestCounter;
@@ -282,7 +288,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
 
         // Send 1% of the request subsidy pool to the requestor.
         if (_requestSubsidyFeePool >= 100) {
-            uint256 amount = _requestSubsidyFeePool.div(100);
+            uint256 amount = _requestSubsidyFeePool.percent(1);
             _requestSubsidyFeePool -= amount;
             (bool success, ) = msg.sender.call.value(amount)("");
             require(success, "Failed send subsidy fee");
@@ -342,9 +348,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
      */
     function createGroupIfApplicable(uint256 entry, address payable submitter) internal {
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 groupCreationFee = OperatorContract(latestOperatorContract).groupCreationGasEstimate().mul(
-            gasPriceWithFluctuationMargin(_priceFeedEstimate)
-        );
+        uint256 groupCreationFee = OperatorContract(latestOperatorContract).groupCreationFee();
 
         if (_dkgFeePool >= groupCreationFee && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
             OperatorContract(latestOperatorContract).createGroup.value(groupCreationFee)(entry, submitter);
@@ -360,45 +364,20 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
     }
 
     /**
-     * @dev Set the gas price in wei for estimating relay entry request payment.
-     * @param priceFeedEstimate is the gas price required for estimating relay entry request payment.
-     */
-    function setPriceFeedEstimate(uint256 priceFeedEstimate) public onlyOperatorContractUpgrader {
-        _priceFeedEstimate = priceFeedEstimate;
-    }
-
-    /**
-     * @dev Get the gas price in wei that is used to estimate relay entry request payment.
-     */
-    function priceFeedEstimate() public view returns(uint256) {
-        return _priceFeedEstimate;
-    }
-
-    /**
-     * @dev Adds a safety margin for gas price fluctuations to the current gas price.
-     * The gas price for DKG or relay entry is set when the request is processed
-     * but the result submission transaction will be sent later. We add a safety
-     * margin that should be sufficient for getting requests processed within a
-     * a deadline under all circumstances.
-     * @param gasPrice Gas price in wei.
-     */
-    function gasPriceWithFluctuationMargin(uint256 gasPrice) internal view returns (uint256) {
-        return gasPrice.add(gasPrice.mul(_fluctuationMargin).div(100));
-    }
-
-    /**
      * @dev Get the minimum payment in wei for relay entry callback.
-     * The returned value includes safety margin for gas price fluctuations.
      * @param _callbackGas Gas required for the callback.
      */
-    function callbackFee(uint256 _callbackGas) public view returns(uint256) {
+    function callbackFee(
+        uint256 _callbackGas,
+        uint256 _gasPriceCeiling
+    ) internal view returns(uint256) {
         // gas for the callback itself plus additional operational costs of
         // executing the callback
         uint256 callbackGas = _callbackGas == 0 ? 0 : _callbackGas.add(_baseCallbackGas);
         // We take the gas price from the price feed to not let malicious
         // miner-requestors manipulate the gas price when requesting relay entry
         // and underpricing expensive callbacks.
-        return callbackGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate));
+        return callbackGas.mul(_gasPriceCeiling);
     }
 
     /**
@@ -406,22 +385,28 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
      * @param callbackGas Gas required for the callback.
      */
     function entryFeeEstimate(uint256 callbackGas) public view returns(uint256) {
-        (uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee) = entryFeeBreakdown();
+        (
+            uint256 entryVerificationFee,
+            uint256 dkgContributionFee,
+            uint256 groupProfitFee,
+            uint256 gasPriceCeiling
+        ) = entryFeeBreakdown();
 
-        return entryVerificationFee.add(dkgContributionFee).add(groupProfitFee).add(callbackFee(callbackGas));
+        return entryVerificationFee
+            .add(dkgContributionFee)
+            .add(groupProfitFee)
+            .add(callbackFee(callbackGas, gasPriceCeiling));
     }
 
     /**
      * @dev Get the entry fee breakdown in wei for relay entry request.
-     * Entry verification fee returned contains safety margin for gas price fluctuations.
      */
     function entryFeeBreakdown() public view returns(
         uint256 entryVerificationFee,
         uint256 dkgContributionFee,
-        uint256 groupProfitFee
+        uint256 groupProfitFee,
+        uint256 gasPriceCeiling
     ) {
-        uint256 entryVerificationGas;
-
         // Select the most expensive entry verification from all the operator contracts
         // and the highest group profit fee from all the operator contracts. We do not
         // know what is going to be the gas price at the moment of submitting an entry,
@@ -432,19 +417,32 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard {
             OperatorContract operator = OperatorContract(_operatorContracts[i]);
 
             if (operator.numberOfGroups() > 0) {
-                entryVerificationGas = operator.entryVerificationGasEstimate() > entryVerificationGas ? operator.entryVerificationGasEstimate():entryVerificationGas;
-                groupProfitFee = operator.groupProfitFee() > groupProfitFee ? operator.groupProfitFee():groupProfitFee;
+                uint256 operatorBid = operator.entryVerificationFee();
+                if (operatorBid > entryVerificationFee) {
+                    entryVerificationFee = operatorBid;
+                }
+
+                operatorBid = operator.groupProfitFee();
+                if (operatorBid > groupProfitFee) {
+                    groupProfitFee = operatorBid;
+                }
+
+                operatorBid = operator.gasPriceCeiling();
+                if (operatorBid > gasPriceCeiling) {
+                    gasPriceCeiling = operatorBid;
+                }
             }
         }
 
         // Use DKG gas estimate from the latest operator contract since it will be used for the next group creation.
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 groupCreationGas = OperatorContract(latestOperatorContract).groupCreationGasEstimate();
+        uint256 groupCreationFee = OperatorContract(latestOperatorContract).groupCreationFee();
 
         return (
-            entryVerificationGas.mul(gasPriceWithFluctuationMargin(_priceFeedEstimate)),
-            groupCreationGas.mul(_priceFeedEstimate).mul(_dkgContributionMargin).div(100),
-            groupProfitFee
+            entryVerificationFee,
+            groupCreationFee.percent(_dkgContributionMargin),
+            groupProfitFee,
+            gasPriceCeiling
         );
     }
 

@@ -5,6 +5,7 @@ import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./TokenStaking.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
+import "./utils/PercentUtils.sol";
 import "./libraries/operator/GroupSelection.sol";
 import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
@@ -25,6 +26,7 @@ interface ServiceContract {
  */
 contract KeepRandomBeaconOperator is ReentrancyGuard {
     using SafeMath for uint256;
+    using PercentUtils for uint256;
     using AddressArrayUtils for address[];
     using GroupSelection for GroupSelection.Storage;
     using Groups for Groups.Storage;
@@ -55,22 +57,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
     TokenStaking internal stakingContract;
 
-    // Minimum amount of KEEP that allows sMPC cluster client to participate in
-    // the Keep network. Expressed as number with 18-decimal places.
-    uint256 public minimumStake = 200000 * 1e18;
-
     // Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 145*1e11; // 14500 Gwei, 10% of operational cost
 
-    // The price feed estimate is used to calculate the gas price for reimbursement
-    // next to the actual gas price from the transaction. We use both values to
-    // defend against malicious miner-submitters who can manipulate transaction
-    // gas price. Expressed in wei.
-    uint256 public priceFeedEstimate = 20*1e9; // (20 Gwei = 20 * 10^9 wei)
-
-    // Fluctuation margin to cover the immediate rise in gas price.
-    // Expressed in percentage.
-    uint256 public fluctuationMargin = 50; // 50%
+    // Gas price ceiling value used to calculate the gas price for reimbursement
+    // next to the actual gas price from the transaction. We use gas price
+    // ceiling to defend against malicious miner-submitters who can manipulate
+    // transaction gas price.
+    uint256 public gasPriceCeiling = 30*1e9; // (30 Gwei = 30 * 10^9 wei)
 
     // Size of a group in the threshold relay.
     uint256 public groupSize = 64;
@@ -104,15 +98,21 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     uint256 public dkgGasEstimate = 1740000;
 
     // Gas required to trigger DKG (starting group selection).
-    uint256 public groupSelectionGasEstimate = 100000;
+    uint256 public groupSelectionGasEstimate = 200000;
 
-    // Reimbursement for the submitter of the DKG result.
-    // This value is set when a new DKG request comes to the operator contract.
-    // It contains a full payment for DKG multiplied by the fluctuation margin.
+    // Reimbursement for the submitter of the DKG result. This value is set when
+    // a new DKG request comes to the operator contract.
+    //
     // When submitting DKG result, the submitter is reimbursed with the actual cost
     // and some part of the fee stored in this field may be returned to the service
     // contract.
     uint256 public dkgSubmitterReimbursementFee;
+
+    uint256 internal currentEntryStartBlock;
+
+    // Seed value used for the genesis group selection.
+    // https://www.wolframalpha.com/input/?i=pi+to+78+digits
+    uint256 internal constant _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
@@ -125,13 +125,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         bytes previousEntry;
         address serviceContract;
     }
-
-    uint256 internal currentEntryStartBlock;
     SigningRequest internal signingRequest;
 
-    // Seed value used for the genesis group selection.
-    // https://www.wolframalpha.com/input/?i=pi+to+78+digits
-    uint256 internal _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
     /**
      * @dev Triggers the first group selection. Genesis can be called only when
@@ -201,34 +196,13 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Set the gas price in wei for calculating reimbursements.
-     * @param _priceFeedEstimate is the gas price for calculating reimbursements.
-     */
-    function setPriceFeedEstimate(uint256 _priceFeedEstimate) public onlyOwner {
-        priceFeedEstimate = _priceFeedEstimate;
-    }
-
-    /**
-     * @dev Adds a safety margin for gas price fluctuations to the current gas price.
-     * The gas price for DKG or relay entry is set when the request is processed
-     * but the result submission transaction will be sent later. We add a safety
-     * margin that should be sufficient for getting requests processed within a
-     * a deadline under all circumstances.
-     * @param gasPrice Gas price in wei.
-     */
-    function gasPriceWithFluctuationMargin(uint256 gasPrice) internal view returns (uint256) {
-        return gasPrice.add(gasPrice.mul(fluctuationMargin).div(100));
-    }
-
-    /**
      * @dev Triggers the selection process of a new candidate group.
      * @param _newEntry New random beacon value that stakers will use to
      * generate their tickets.
      * @param submitter Operator of this contract.
      */
     function createGroup(uint256 _newEntry, address payable submitter) public payable onlyServiceContract {
-        uint256 groupSelectionStartFee = groupSelectionGasEstimate
-            .mul(gasPriceWithFluctuationMargin(priceFeedEstimate));
+        uint256 groupSelectionStartFee = groupSelectionGasEstimate.mul(gasPriceCeiling);
 
         groupSelectionStarterContract = ServiceContract(msg.sender);
         startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
@@ -240,7 +214,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
         require(
-            _payment >= gasPriceWithFluctuationMargin(priceFeedEstimate).mul(dkgGasEstimate),
+            _payment >= gasPriceCeiling.mul(dkgGasEstimate),
             "Insufficient DKG fee"
         );
 
@@ -286,6 +260,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *   current candidate group selection.
      */
     function submitTicket(bytes32 ticket) public {
+        uint256 minimumStake = stakingContract.minimumStake();
         uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(minimumStake);
         groupSelection.submitTicket(ticket, stakingWeight);
     }
@@ -359,11 +334,11 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * be returned to the DKG fee pool of the service contract which triggered the DKG.
      */
     function reimburseDkgSubmitter() internal {
-        uint256 gasPrice = priceFeedEstimate;
+        uint256 gasPrice = gasPriceCeiling;
         // We need to check if tx.gasprice is non-zero as a workaround to a bug
         // in go-ethereum:
         // https://github.com/ethereum/go-ethereum/pull/20189
-        if (tx.gasprice > 0 && tx.gasprice < priceFeedEstimate) {
+        if (tx.gasprice > 0 && tx.gasprice < gasPriceCeiling) {
             gasPrice = tx.gasprice;
         }
 
@@ -387,14 +362,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Set the minimum amount of KEEP that allows a Keep network client to participate in a group.
-     * @param _minimumStake Amount in KEEP.
-     */
-    function setMinimumStake(uint256 _minimumStake) public onlyOwner {
-        minimumStake = _minimumStake;
-    }
-
-    /**
      * @dev Creates a request to generate a new relay entry, which will include a
      * random number (by signing the previous entry's random number).
      * @param requestId Request Id trackable by service contract
@@ -405,7 +372,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         bytes memory previousEntry
     ) public payable onlyServiceContract {
         uint256 entryVerificationAndProfitFee = groupProfitFee().add(
-            entryVerificationGasEstimate.mul(gasPriceWithFluctuationMargin(priceFeedEstimate))
+            entryVerificationFee()
         );
         require(
             msg.value >= entryVerificationAndProfitFee,
@@ -500,18 +467,25 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     function executeCallback(SigningRequest memory signingRequest, uint256 entry) internal {
         uint256 callbackFee = signingRequest.callbackFee;
 
-        // Make sure not to spend more than what was received from the service contract for the callback
-        uint256 gasLimit = callbackFee.div(gasPriceWithFluctuationMargin(priceFeedEstimate));
+        // Make sure not to spend more than what was received from the service
+        // contract for the callback
+        uint256 gasLimit = callbackFee.div(gasPriceCeiling);
 
         bytes memory callbackReturnData;
         uint256 gasBeforeCallback = gasleft();
-        (, callbackReturnData) = signingRequest.serviceContract.call.gas(gasLimit)(abi.encodeWithSignature("executeCallback(uint256,uint256)", signingRequest.relayRequestId, entry));
+        (, callbackReturnData) = signingRequest.serviceContract.call.gas(
+            gasLimit
+        )(abi.encodeWithSignature(
+            "executeCallback(uint256,uint256)",
+            signingRequest.relayRequestId,
+            entry
+        ));
         uint256 gasAfterCallback = gasleft();
         uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
 
         Reimbursements.reimburseCallback(
             stakingContract,
-            priceFeedEstimate,
+            gasPriceCeiling,
             gasLimit,
             gasSpent,
             callbackFee,
@@ -536,7 +510,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // The entry verification fee to cover the cost of verifying the submission,
         // paid regardless of their gas expenditure
         // Submitter extra reward - 5% of the delay penalties of the entire group
-        uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).mul(5).div(100).div(decimals);
+        uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).percent(5).div(decimals);
         uint256 entryVerificationFee = signingRequest.entryVerificationAndProfitFee.sub(groupProfitFee());
         submitterReward = entryVerificationFee.add(submitterExtraReward);
 
@@ -609,6 +583,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function reportRelayEntryTimeout() public {
         require(hasEntryTimedOut(), "Entry did not time out");
+
+        uint256 minimumStake = stakingContract.minimumStake();
         groups.reportRelayEntryTimeout(signingRequest.groupIndex, groupSize, minimumStake);
 
         // We could terminate the last active group. If that's the case,
@@ -646,9 +622,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return (
-            stakingContract.activeStake(staker, address(this)) >= minimumStake
-        );
+        return stakingContract.hasMinimumStake(staker, address(this));
     }
 
     /**
@@ -725,14 +699,22 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Estimates gas for group creation. Includes the cost of DKG and the
-     * cost of triggering group selection.
+     * @dev Returns fee for entry verification in wei. Does not include group
+     * profit fee, DKG contribution or callback fee.
      */
-    function groupCreationGasEstimate() public view returns (uint256) {
-        return dkgGasEstimate.add(groupSelectionGasEstimate);
+    function entryVerificationFee() public view returns (uint256) {
+        return entryVerificationGasEstimate.mul(gasPriceCeiling);
     }
 
-     /**
+    /**
+     * @dev Returns fee for group creation in wei. Includes the cost of DKG
+     * and the cost of triggering group selection.
+     */
+    function groupCreationFee() public view returns (uint256) {
+        return dkgGasEstimate.add(groupSelectionGasEstimate).mul(gasPriceCeiling);
+    }
+
+    /**
      * @dev Returns members of the given group by group public key.
      */
     function getGroupMembers(bytes memory groupPubKey) public view returns (address[] memory members) {
@@ -741,7 +723,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /**
      * @dev Reports unauthorized signing for the provided group. Must provide
-     * a valid signature of the group address as a message. Successful signature
+     * a valid signature of the tattletale address as a message. Successful signature
      * verification means the private key has been leaked and all group members
      * should be punished by seizing their tokens. The submitter of this proof is
      * rewarded with 5% of the total seized amount scaled by the reward adjustment
@@ -749,8 +731,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function reportUnauthorizedSigning(
         uint256 groupIndex,
-        bytes memory signedGroupPubKey
+        bytes memory signedMsgSender
     ) public {
-        groups.reportUnauthorizedSigning(groupIndex, signedGroupPubKey, minimumStake);
+        uint256 minimumStake = stakingContract.minimumStake();
+        groups.reportUnauthorizedSigning(groupIndex, signedMsgSender, minimumStake);
     }
 }

@@ -1,47 +1,106 @@
-import React, { useEffect, useContext } from 'react'
+import React, { useContext } from 'react'
 import AddressShortcut from './AddressShortcut'
 import { operatorService } from '../services/token-staking.service'
 import { useFetchData } from '../hooks/useFetchData'
 import { LoadingOverlay } from './Loadable'
-import { displayAmount } from '../utils'
+import { displayAmount } from '../utils/general.utils'
 import { Web3Context } from './WithWeb3Context'
-import UndelegateForm from './UndelegateForm'
+import UndelegateStakeButton from './UndelegateStakeButton'
+import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
+import Banner, { BANNER_TYPE } from './Banner'
 
-const DelegatedTokens = ({ latestUnstakeEvent }) => {
-  const { utils } = useContext(Web3Context)
+const DelegatedTokens = (props) => {
+  const { yourAddress } = useContext(Web3Context)
   const [state, setData] = useFetchData(operatorService.fetchDelegatedTokensData, {})
-  const { isFetching, data: { stakedBalance, ownerAddress, beneficiaryAddress } } = state
+  const { isFetching, data: {
+    stakedBalance,
+    ownerAddress,
+    beneficiaryAddress,
+    authorizerAddress,
+    undelegationStatus,
+    isUndelegationFromGrant,
+    isInInitializationPeriod,
+  } } = state
 
-  useEffect(() => {
-    if (latestUnstakeEvent) {
-      const { returnValues: { value } } = latestUnstakeEvent
-      const updatedStakeBalance = utils.toBN(stakedBalance).sub(utils.toBN(value))
-      setData({ stakedBalance: updatedStakeBalance, ownerAddress, beneficiaryAddress })
+  const undelegationSuccessCallback = () => {
+    setData({ ...state.data, undelegationStatus: PENDING_STATUS })
+  }
+
+  const cancelSuccessCallback = () => {
+    setData({ ...state.data, stakedBalance: '0', undelegationStatus: COMPLETE_STATUS })
+  }
+
+  const renderUndelegationStatus = () => {
+    if (undelegationStatus === PENDING_STATUS) {
+      return (
+        <div className="self-start">
+          <Banner
+            type={BANNER_TYPE.PENDING}
+            title='Undelegation is pending'
+          />
+        </div>
+      )
+    } else if (undelegationStatus === COMPLETE_STATUS) {
+      return (
+        <div className="self-start">
+          <Banner
+            type={BANNER_TYPE.SUCCESS}
+            title='Undelegation completed'
+            withIcon
+          />
+        </div>
+      )
+    } else {
+      return (
+        <UndelegateStakeButton
+          btnText='undelegate'
+          btnClassName="btn btn-primary btn-lg flex-1"
+          operator={yourAddress}
+          successCallback={isInInitializationPeriod ? cancelSuccessCallback : undelegationSuccessCallback}
+          isFromGrant={isUndelegationFromGrant}
+          isInInitializationPeriod={isInInitializationPeriod}
+        />
+      )
     }
-  }, [latestUnstakeEvent])
-
+  }
   return (
-    <section id="delegated-tokens" className="flex flex-row-space-between">
-      <LoadingOverlay isFetching={isFetching} >
-        <section id="delegated-tokens-summary" className="tile flex flex-column">
-          <h5>My Delegated Tokens</h5>
+    <section id="delegated-tokens" className="flex row space-between">
+      <section id="delegated-tokens-summary" className="tile flex column">
+        <LoadingOverlay isFetching={isFetching} >
+          <h3 className="text-grey-60 mb-1">Delegated Tokens</h3>
           <h2 className="balance">
-            {stakedBalance && `${displayAmount(stakedBalance)}`}
+            {stakedBalance && `${displayAmount(stakedBalance)}`} KEEP
           </h2>
-          <h6 className="text-darker-grey">OWNER&nbsp;
-            <AddressShortcut address={ownerAddress} classNames='text-big text-darker-grey' />
+          <h6 className="text-grey-70">owner&nbsp;
+            <AddressShortcut
+              address={ownerAddress}
+              classNames='text-small text-normal text-darker-grey'
+            />
           </h6>
-          <h6 className="text-darker-grey">BENEFICIARY&nbsp;
-            <AddressShortcut address={beneficiaryAddress} classNames='text-big text-darker-grey' />
+          <h6 className="text-grey-70">beneficiary&nbsp;
+            <AddressShortcut
+              address={beneficiaryAddress}
+              classNames='text-small text-normal text-darker-grey'
+            />
           </h6>
-        </section>
-      </LoadingOverlay>
-      <section id="delegated-form-section" className="tile flex flex-column ">
-        <h5 className="flex flex-1">Undelegate Tokens</h5>
-        <p className="text-warning border flex flex-1">
-          Starting an undelegation restarts the amount of time, or undelegation period, until tokens are returned to the owner
-        </p>
-        <UndelegateForm />
+          <h6 className="text-grey-70">authorizer&nbsp;
+            <AddressShortcut
+              address={authorizerAddress}
+              classNames='text-small text-normal text-darker-grey'
+            />
+          </h6>
+        </LoadingOverlay>
+      </section>
+      <section id="delegated-form-section" className="tile flex column ">
+        <LoadingOverlay isFetching={isFetching} classNames="flex flex-1 column" >
+          <h3 className="text-grey-60">Undelegate All Tokens</h3>
+          <div className="text-big text-grey-70 mt-1 mb-1">
+            Click undelegate below to return all of your delegated KEEP tokens to their original owner address.
+          </div>
+          <div className="flex" style={{ marginTop: 'auto' }}>
+            {renderUndelegationStatus()}
+          </div>
+        </LoadingOverlay>
       </section>
     </section>
   )

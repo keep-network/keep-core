@@ -1,63 +1,71 @@
 import React, { useEffect, useContext } from 'react'
-import PendingUndelegationList from './PendingUndelegationList'
 import { useFetchData } from '../hooks/useFetchData'
 import { operatorService } from '../services/token-staking.service'
-import { formatDate, displayAmount } from '../utils'
+import web3Utils from 'web3-utils'
+import { displayAmount, isSameEthAddress, isEmptyObj } from '../utils/general.utils'
 import { LoadingOverlay } from './Loadable'
 import { Web3Context } from './WithWeb3Context'
-import moment from 'moment'
+import StatusBadge, { BADGE_STATUS } from './StatusBadge'
 
 const initialData = { pendinUndelegations: [] }
 
 const PendingUndelegation = ({ latestUnstakeEvent }) => {
-  const { utils } = useContext(Web3Context)
+  const { stakingContract, yourAddress } = useContext(Web3Context)
   const [state, setData] = useFetchData(operatorService.fetchPendingUndelegation, initialData)
   const { isFetching, data: {
-    stakeWithdrawalDelayInSec,
     pendingUnstakeBalance,
-    undelegatedOn,
-    stakeWithdrawalDelay,
-    pendinUndelegations,
+    undelegationComplete,
+    undelegationPeriod,
+    undelegationStatus,
   } } = state
 
   useEffect(() => {
-    if (latestUnstakeEvent) {
-      const { id, returnValues: { createdAt, value } } = latestUnstakeEvent
-      const newPendingUndelegation = { eventId: id, createdAt: moment.unix(createdAt), amount: value }
-      const updatedPendingUnstakeBalance = utils.toBN(pendingUnstakeBalance).add(utils.toBN(value))
-      const updatedUndelegations = [newPendingUndelegation, ...pendinUndelegations]
-      const updatedUndelegatedOn = moment.unix(createdAt).add(stakeWithdrawalDelayInSec, 'seconds')
-
-      setData({
-        stakeWithdrawalDelayInSec,
-        pendingUnstakeBalance: updatedPendingUnstakeBalance,
-        undelegatedOn: updatedUndelegatedOn,
-        stakeWithdrawalDelay,
-        pendinUndelegations: updatedUndelegations,
-      })
+    if (!isEmptyObj(latestUnstakeEvent)) {
+      const { returnValues: { operator, undelegatedAt } } = latestUnstakeEvent
+      if (!isSameEthAddress(yourAddress, operator)) {
+        return
+      }
+      const undelegationComplete = web3Utils.toBN(undelegatedAt).add(web3Utils.toBN(undelegationPeriod))
+      stakingContract.methods.getDelegationInfo(operator).call()
+        .then((data) => {
+          const { amount } = data
+          setData({
+            ...state.data,
+            undelegationComplete,
+            pendingUnstakeBalance: amount,
+            undelegationStatus: 'PENDING',
+          })
+        })
     }
-  }, [latestUnstakeEvent])
+  }, [latestUnstakeEvent.transactionHash])
 
   return (
     <LoadingOverlay isFetching={isFetching}>
       <section id="pending-undelegation" className="tile">
-        <h5>Pending Undelegation</h5>
-        <div className="flex pending-undelegation-summary">
-          <div className="flex flex-1 flex-column">
-            <span className="text-label">TOTAL (KEEP)</span>
-            <h2 className="balance flex flex-2">{pendingUnstakeBalance && `${displayAmount(pendingUnstakeBalance)}`}</h2>
+        <h3 className="text-grey-60">Token Undelegation</h3>
+        <div className="flex pending-undelegation-summary mt-1">
+          <div className="flex flex-1 column">
+            <span className="text-label">amount</span>
+            <h5 className="text-grey-70 flex flex-2">{pendingUnstakeBalance && `${displayAmount(pendingUnstakeBalance)}`}</h5>
           </div>
-          <div className="flex flex-1 flex-column">
-            <span className="text-label">UNDELEGATION COMPLETE</span>
-            <span className="text-big">{undelegatedOn ? formatDate(undelegatedOn) : '-'}</span>
+          <div className="flex flex-1 column">
+            <span className="text-label">undelegation status</span>
+            {undelegationStatus &&
+              <StatusBadge
+                className="self-start"
+                status={BADGE_STATUS[undelegationStatus]}
+                text={undelegationStatus.toLowerCase()}
+              />
+            }
           </div>
-          <div className="flex flex-1 flex-column">
-            <span className="text-label">UNDELEGATION PERIOD</span>
-            <span className="text-big">{stakeWithdrawalDelay}</span>
+          <div className="flex flex-1 column">
+            <span className="text-label">completed</span>
+            <span className="text-big">{undelegationComplete ? `${undelegationComplete} block` : '-'}</span>
           </div>
-        </div>
-        <div>
-          <PendingUndelegationList pendingUndelegations={pendinUndelegations} />
+          <div className="flex flex-1 column">
+            <span className="text-label">undelegation period</span>
+            <span className="text-big">{undelegationPeriod} blocks</span>
+          </div>
         </div>
       </section>
     </LoadingOverlay>

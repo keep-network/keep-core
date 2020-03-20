@@ -1,11 +1,13 @@
-import { useEffect, useReducer, useContext } from 'react'
+import { useEffect, useReducer, useContext, useCallback } from 'react'
 import { Web3Context } from '../components/WithWeb3Context'
-import { wait } from '../utils'
+import { wait } from '../utils/general.utils'
 
 const FETCH_REQUEST_START = 'FETCH_REQUEST_START'
 const FETCH_REQUEST_SUCCESS = 'FETCH_REQUEST_SUCCESS'
 const FETCH_REQUEST_FAILURE = 'FETCH_REQUEST_FAILURE'
 const UPDATE_DATA = 'UPDATE_DATA'
+const REFRESH_DATA = 'REFRESH_DATA'
+const syncState = { UP_TO_DATE: 'UP_TO_DATE', OBSOLETE: 'OBSOLETE' }
 
 const requestTimeDelay = 500 // 0.5s
 
@@ -15,9 +17,10 @@ export const useFetchData = (serviceMethod, initialData, ...serviceMethodArgs) =
     isFetching: true,
     isError: false,
     data: initialData,
+    syncState: syncState.UP_TO_DATE,
   })
 
-  useEffect(() => {
+  const fetchData = () => {
     let shouldSetState = true
 
     dispatch({ type: FETCH_REQUEST_START })
@@ -32,13 +35,28 @@ export const useFetchData = (serviceMethod, initialData, ...serviceMethodArgs) =
     return () => {
       shouldSetState = false
     }
-  }, [])
+  }
+
+  useEffect(fetchData, [])
+  useEffect(() => {
+    if (state.syncState === syncState.OBSOLETE) {
+      fetchData()
+    }
+  }, [state.syncState])
 
   const updateData = (updatedData) => {
     dispatch({ type: UPDATE_DATA, payload: updatedData })
   }
 
-  return [state, updateData]
+  const refreshData = useCallback(() => {
+    dispatch({ type: REFRESH_DATA })
+  }, [])
+
+  return [
+    state,
+    updateData,
+    refreshData,
+  ]
 }
 
 const dataFetchReducer = (state, action) => {
@@ -52,6 +70,7 @@ const dataFetchReducer = (state, action) => {
   case FETCH_REQUEST_SUCCESS:
     return {
       ...state,
+      syncState: syncState.UP_TO_DATE,
       isFetching: false,
       isError: false,
       data: action.payload,
@@ -66,6 +85,11 @@ const dataFetchReducer = (state, action) => {
     return {
       ...state,
       data: action.payload,
+    }
+  case REFRESH_DATA:
+    return {
+      ...state,
+      syncState: syncState.OBSOLETE,
     }
   default:
     return { ...state }
