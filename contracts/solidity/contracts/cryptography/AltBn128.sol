@@ -106,7 +106,7 @@ library AltBn128 {
         internal
         pure returns(gfP2 memory y)
     {
-        gfP2 memory x = gfP2Add(gfP2Cube(_x), twistB());
+        gfP2 memory x = gfP2CubeAddTwistB(_x);
 
         // Using formula y = x ^ (p^2 + 15) / 32 from
         // https://github.com/ethereum/beacon_chain/blob/master/beacon_chain/utils/bls.py
@@ -392,6 +392,12 @@ library AltBn128 {
         return gfP2Multiply(a, gfP2Square(a));
     }
 
+    function gfP2CubeAddTwistB(gfP2 memory a) internal pure returns (gfP2 memory) {
+        (uint256 a3x, uint256 a3y) = _gfP2Cube(a.x, a.y);
+        (uint256 x, uint256 y) = _gfP2Add(a3x, a3y, twistBx, twistBy);
+        return gfP2(x, y);
+    }
+
     function _gfP2Pow(uint256 _ax, uint256 _ay, uint256 _exp)
         internal pure returns (uint256 x, uint256 y) {
         uint256 exp = _exp;
@@ -450,7 +456,7 @@ library AltBn128 {
         gfP2 memory x3;
 
         y2 = gfP2Square(point.y);
-        x3 = gfP2Add(gfP2Cube(point.x), twistB());
+        x3 = gfP2CubeAddTwistB(point.x);
 
         return (y2.x == x3.x && y2.y == x3.y);
     }
