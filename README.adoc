@@ -15,36 +15,34 @@ in other Go projects:
 ```
 keep-core/
   Dockerfile
-  Makefile <1>
   main.go, *.go
   docs/
-  solidity/ <2>
-  cmd/ <3>
-  pkg/ <4>
+  solidity/ <1>
+  cmd/ <2>
+  pkg/ <3>
     net/
-      net.go, *.go <5>
+      net.go, *.go <4>
       libp2p/
     chain/
-      chain.go, *.go <5>
+      chain.go, *.go <4>
       ethereum/
         gen/
-          gen.go <6>
+          gen.go <5>
     relay/
       relay.go, *.go
 ```
-<1> The Makefile should be minimal, mirroring the Dockerfile when possible.
-<2> While Keep only uses Solidity at the moment, the directory structure allows
+<1> While Keep only uses Solidity at the moment, the directory structure allows
     for other contract languages.
-<3> Keep subcommands are implemented here, though they should be minimal and
+<2> Keep subcommands are implemented here, though they should be minimal and
     deal solely with user interaction. The meat of the commands should exist in
     a package fit for the appropriate purpose.
-<4> All additional packages live in `pkg/`.
-<5> The high-level interfaces for a package `mypackage` live in `mypackage.go`.
+<3> All additional packages live in `pkg/`.
+<4> The high-level interfaces for a package `mypackage` live in `mypackage.go`.
     `net` and `chain` are interface packages that expose a common interface
     to network and blockchain layers. Their subpackages provide particular
     implementations of these common interfaces. Only `cmd/` and the main
     package should interact with the implementations directly.
-<6> When a package requires generated code, it should have a subpackage named
+<5> When a package requires generated code, it should have a subpackage named
     `gen/`. This subpackage should contain a single file, `gen.go`, with a
     `// go:generate` annotation to trigger appropriate code generation. All code
     generation is done with a single invocation of `go generate` at build time.
