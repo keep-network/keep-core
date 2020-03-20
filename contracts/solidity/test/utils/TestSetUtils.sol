@@ -74,7 +74,7 @@ contract TestSetUtils {
     }
 
     function testRemoveNonLast() public {
-        SetUtils.UintSet storage set = sets[4];
+        SetUtils.UintSet storage set = sets[5];
 
         set.insert(1);
         set.insert(0);
@@ -90,6 +90,26 @@ contract TestSetUtils {
             set.enumerate(),
             [2, 0],
             "Removing an element from the middle should replace it with the last"
+        );
+    }
+
+    function testRemoveNonMember() public {
+        SetUtils.UintSet storage set = sets[6];
+
+        set.insert(1);
+        set.insert(0);
+        set.insert(2);
+        checkThisDamnEquality3(
+            set.enumerate(),
+            [1, 0, 2],
+            "Elements should be inserted correctly"
+        );
+
+        set.remove(3);
+        checkThisDamnEquality3(
+            set.enumerate(),
+            [1, 0, 2],
+            "Removing a non-member should not change the set"
         );
     }
 
