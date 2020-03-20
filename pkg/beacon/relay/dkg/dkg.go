@@ -2,10 +2,8 @@ package dkg
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 
@@ -71,6 +69,8 @@ func ExecuteDKG(
 	}
 	defer dkgResultSubscription.Unsubscribe()
 
+	startPublicationBlockHeight := gjkrEndBlockHeight
+
 	err = dkgResult.Publish(
 		playerIndex,
 		gjkrResult.Group,
@@ -79,45 +79,35 @@ func ExecuteDKG(
 		relayChain,
 		signing,
 		blockCounter,
-		gjkrEndBlockHeight,
+		startPublicationBlockHeight,
 	)
 	if err != nil {
+		// Result publication failed. It means that either the result this
+		// member proposed is not supported by the majority of group members or
+		// that the chain interaction failed. In either case, we observe the
+		// chain for the result published by any other group member and based
+		// on that, we decide whether we should stay in the final group
+		// or drop our membership.
 		logger.Warningf(
-			"[member:%v] DKG result publication process failed [%v]; "+
-				"checking conditional membership possibility",
+			"[member:%v] DKG result publication process failed [%v]",
 			playerIndex,
 			err,
 		)
 
-		// In case of DKG timeout, this context will prevent endless waiting.
-		// DKG result should be published after 3 * 64 = 192 blocks.
-		// Assuming even 30 seconds for a block, it can take a bit less than
-		// 2 hours. Waiting 3 hours seems to be a reasonable value with a
-		// security margin.
-		ctx, cancelCtx := context.WithTimeout(context.Background(), 3*time.Hour)
-		defer cancelCtx()
+		dkgResultEvent, err := waitForDkgResultEvent(
+			dkgResultChannel,
+			startPublicationBlockHeight,
+			relayChain,
+			blockCounter,
+		)
+		if err != nil {
+			return nil, err
+		}
 
-		select {
-		case dkgResultEvent := <-dkgResultChannel:
-			if shouldStayInGroup(playerIndex, gjkrResult, dkgResultEvent) {
-				logger.Debugf(
-					"[member:%v] conditional membership is possible",
-					playerIndex,
-				)
-			} else {
-				return nil, fmt.Errorf(
-					"[member:%v] DKG result publication process failed [%v] "+
-						"and conditional membership is not possible",
-					playerIndex,
-					err,
-				)
-			}
-		case <-ctx.Done():
+		if !shouldStayInGroup(playerIndex, gjkrResult, dkgResultEvent) {
 			return nil, fmt.Errorf(
-				"[member:%v] DKG result publication process failed [%v] "+
-					"and conditional membership check timed out",
+				"[member:%v] could not stay in the group",
 				playerIndex,
-				err,
 			)
 		}
 	}
@@ -127,6 +117,34 @@ func ExecuteDKG(
 		groupPublicKey:       gjkrResult.GroupPublicKey,
 		groupPrivateKeyShare: gjkrResult.GroupPrivateKeyShare,
 	}, nil
+}
+
+func waitForDkgResultEvent(
+	dkgResultChannel chan *event.DKGResultSubmission,
+	startPublicationBlockHeight uint64,
+	relayChain relayChain.Interface,
+	blockCounter chain.BlockCounter,
+) (*event.DKGResultSubmission, error) {
+	config, err := relayChain.GetConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	dkgTimeoutBlock := startPublicationBlockHeight +
+		dkgResult.SigningStateBlocks() +
+		(uint64(config.GroupSize) * config.ResultPublicationBlockStep)
+
+	dkgTimeoutBlockChannel, err := blockCounter.BlockHeightWaiter(dkgTimeoutBlock)
+	if err != nil {
+		return nil, err
+	}
+
+	select {
+	case dkgResultEvent := <-dkgResultChannel:
+		return dkgResultEvent, nil
+	case <-dkgTimeoutBlockChannel:
+		return nil, fmt.Errorf("DKG timed out")
+	}
 }
 
 func shouldStayInGroup(
@@ -139,14 +157,13 @@ func shouldStayInGroup(
 		dkgResultEvent.GroupPublicKey,
 	)
 
-	// If member didn't support the same group public key, it could not be
-	// a conditional member of the group.
+	// If member didn't support the same group public key,
+	// it could not stay in the group.
 	if !supportsSameGroupPublicKey {
 		return false
 	}
 
-	// If member is considered as misbehaved, it could not be a conditional
-	// member of the group.
+	// If member is considered as misbehaved, it could not stay in the group.
 	for _, misbehaved := range dkgResultEvent.Misbehaved {
 		if memberIndex == misbehaved {
 			return false
