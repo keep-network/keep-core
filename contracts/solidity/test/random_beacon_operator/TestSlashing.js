@@ -1,13 +1,15 @@
 import {initContracts} from '../helpers/initContracts'
 import stakeDelegate from '../helpers/stakeDelegate'
 import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
-import {bls} from '../helpers/data'
+import {bls as blsData} from '../helpers/data'
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import mineBlocks from '../helpers/mineBlocks'
 
+const BLS = artifacts.require('./cryptography/BLS.sol');
+
 contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   let token, stakingContract, serviceContract, operatorContract, minimumStake, largeStake, entryFeeEstimate, groupIndex,
-    registry,
+    registry, bls,
     owner = accounts[0],
     operator1 = accounts[1],
     operator2 = accounts[2],
@@ -15,9 +17,10 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     tattletale = accounts[4],
     authorizer = accounts[5],
     anotherOperatorContract = accounts[6],
-    registryKeeper = accounts[7]
+    registryKeeper = accounts[7];
 
   before(async () => {
+    
     let contracts = await initContracts(
       artifacts.require('./KeepToken.sol'),
       artifacts.require('./TokenStakingStub.sol'),
@@ -31,12 +34,13 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     serviceContract = contracts.serviceContract
     operatorContract = contracts.operatorContract
     registry = contracts.registry
+    bls = await BLS.new()
 
     groupIndex = 0
-    await operatorContract.registerNewGroup(bls.groupPubKey)
-    await operatorContract.setGroupMembers(bls.groupPubKey, [operator1, operator2, operator3])
+    await operatorContract.registerNewGroup(blsData.groupPubKey)
+    await operatorContract.setGroupMembers(blsData.groupPubKey, [operator1, operator2, operator3])
 
-    minimumStake = await operatorContract.minimumStake()
+    minimumStake = await stakingContract.minimumStake()
     largeStake = minimumStake.muln(2)
     await stakeDelegate(stakingContract, token, owner, operator1, owner, authorizer, largeStake)
     await stakeDelegate(stakingContract, token, owner, operator2, owner, authorizer, minimumStake)
@@ -108,7 +112,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     
     let operatorBalanceAfterSeizing = await stakingContract.balanceOf(operator1)
     let tattletaleBalanceAfterSeizing = await token.balanceOf(tattletale)
-    
+
     assert.isTrue(
       (operatorBalanceBeforeSeizing.sub(amountToSeize)).eq(operatorBalanceAfterSeizing), 
       "Unexpected balance for operator after token seizing"
@@ -145,9 +149,11 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   })
 
   it("should be able to report unauthorized signing", async () => {
+    let tattletaleSignature = await bls.sign(tattletale, blsData.secretKey);
+
     await operatorContract.reportUnauthorizedSigning(
       groupIndex,
-      bls.signedGroupPubKey,
+      tattletaleSignature,
       {from: tattletale}
     )
 
@@ -169,7 +175,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   it("should ignore invalid report of unauthorized signing", async () => {
     await operatorContract.reportUnauthorizedSigning(
       groupIndex,
-      bls.nextGroupSignature, // Wrong signature
+      blsData.nextGroupSignature, // Wrong signature
       {from: tattletale}
     )
 

@@ -392,22 +392,13 @@ library Groups {
     function reportUnauthorizedSigning(
         Storage storage self,
         uint256 groupIndex,
-        bytes memory signedGroupPubKey,
+        bytes memory signedMsgSender,
         uint256 minimumStake
     ) public {
         require(!isStaleGroup(self, groupIndex), "Group can not be stale");
         bytes memory groupPubKey = getGroupPublicKey(self, groupIndex);
 
-        AltBn128.G1Point memory point = AltBn128.g1HashToPoint(groupPubKey);
-        bytes memory message = new bytes(64);
-        bytes32 x = bytes32(point.x);
-        bytes32 y = bytes32(point.y);
-        assembly {
-            mstore(add(message, 32), x)
-            mstore(add(message, 64), y)
-        }
-
-        bool isSignatureValid = BLS.verify(groupPubKey, message, signedGroupPubKey);
+        bool isSignatureValid = BLS.verifyBytes(groupPubKey, abi.encodePacked(msg.sender), signedMsgSender);
 
         if (!isGroupTerminated(self, groupIndex) && isSignatureValid) {
             terminateGroup(self, groupIndex);

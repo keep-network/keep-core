@@ -14,9 +14,9 @@ const fetchGrants = async (web3Context) => {
     if (!isSameEthAddress(yourAddress, grantDetails.grantee)) {
       continue
     }
-    const vestingSchedule = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantVestingSchedule', grantIds[i])
+    const vestingSchedule = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantUnlockingSchedule', grantIds[i])
 
-    const vested = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'grantedAmount', grantIds[i])
+    const vested = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'unlockedAmount', grantIds[i])
     let readyToRelease = '0'
     try {
       readyToRelease = await contractService

@@ -1,8 +1,7 @@
 pragma solidity ^0.5.4;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-
 
 /**
  * @title Delayed Withdrawal

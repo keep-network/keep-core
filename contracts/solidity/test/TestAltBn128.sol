@@ -163,6 +163,18 @@ contract TestAltBn128 {
         Assert.isTrue(result, "Basic pairing check should succeed.");
     }
 
+    function testG1PointMarshaling() public {
+        AltBn128.G1Point memory point;
+        point.x = 656647519899395589093611455851658769732922739162315270379466002146796568126;
+        point.y = 5296675831567268847773497112983742440203412208935796410329912816023128374551;
+
+        bytes memory marshaledPoint = AltBn128.g1Marshal(point);
+        AltBn128.G1Point memory actual = AltBn128.g1Unmarshal(marshaledPoint);
+
+        Assert.equal(point.x, actual.x, "Unmarshaling a marshaled point should give the same x coordinate.");
+        Assert.equal(point.y, actual.y, "Unmarshaling a marshaled point should give the same y coordinate.");
+    }
+
     // Verifying sample data generated with bn256.go - Ethereum's bn256/cloudflare curve.
     function testVerifySignature() public {
 

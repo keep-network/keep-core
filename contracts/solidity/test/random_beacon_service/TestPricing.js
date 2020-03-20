@@ -2,6 +2,7 @@ import mineBlocks from '../helpers/mineBlocks';
 import {bls} from '../helpers/data';
 import stakeDelegate from '../helpers/stakeDelegate';
 import {initContracts} from '../helpers/initContracts';
+
 const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
 
 contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
@@ -38,26 +39,22 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     await operatorContract.setGroupSize(groupSize);
     group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.setGroupMembers(group, [operator1, operator2, operator3])
+    let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, 0);
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, 0);
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, 0);
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, minimumStake);
 
     entryFee = await serviceContract.entryFeeBreakdown()
   });
 
-  it("should successfully refund callback gas surplus to the requestor if gas price was high", async function() {
+  it("should successfully refund callback surplus for a lower submission gas price", async () => {
+    let gasPriceCeiling = web3.utils.toBN(web3.utils.toWei('20', 'gwei'))
+    await operatorContract.setGasPriceCeiling(gasPriceCeiling)
 
-    let defaultPriceFeedEstimate = await serviceContract.priceFeedEstimate();
-
-    // Set higher gas price
-    await serviceContract.setPriceFeedEstimate(defaultPriceFeedEstimate.mul(web3.utils.toBN(10)));
-    await operatorContract.setPriceFeedEstimate(defaultPriceFeedEstimate.mul(web3.utils.toBN(10)));
-    let baseCallbackGas = await serviceContract.baseCallbackGas();
-    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let callbackGas = web3.utils.toBN(await callbackContract.callback.estimateGas(bls.groupSignature))
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    let excessCallbackFee = await serviceContract.callbackFee(callbackGas)
-
+    
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address,
       "callback(uint256)",
@@ -65,44 +62,20 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
       {value: entryFeeEstimate, from: requestor}
     );
 
-    let requestorBalance = await web3.eth.getBalance(requestor);
-
-    await operatorContract.setPriceFeedEstimate(defaultPriceFeedEstimate);
-    await operatorContract.relayEntry(bls.groupSignature);
-
-    let updatedRequestorBalance = await web3.eth.getBalance(requestor)
-
-    let expectedCallbackFee = baseCallbackGas.addn(callbackGas).mul(defaultPriceFeedEstimate)
-    let refund = web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance))
-    let surplus = excessCallbackFee.sub(expectedCallbackFee)
-    assert.isTrue(surplus.eq(refund), "Callback gas surplus should be refunded to the requestor.");
-  });
-
-  it("should successfully refund callback gas surplus to the requestor if gas estimation was high", async function() {
-    let defaultPriceFeedEstimate = await serviceContract.priceFeedEstimate();
-    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
-    let baseCallbackGas = await serviceContract.baseCallbackGas();
-    let expectedCallbackFee = baseCallbackGas.addn(callbackGas).mul(defaultPriceFeedEstimate);
-
-    let excessCallbackGas = web3.utils.toBN(callbackGas).mul(web3.utils.toBN(2)); // Set higher callback gas estimate.
-    let excessCallbackFee = await serviceContract.callbackFee(excessCallbackGas);
-
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(excessCallbackGas)
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
-      callbackContract.address,
-      "callback(uint256)",
-      excessCallbackGas,
-      {value: entryFeeEstimate, from: requestor}
-    );
+    let submissionGasPrice = web3.utils.toBN(web3.utils.toWei('5', 'gwei'))
+    let gasPriceDiff = gasPriceCeiling.sub(submissionGasPrice)
 
     let requestorBalance = await web3.eth.getBalance(requestor);
-    await operatorContract.relayEntry(bls.groupSignature);
+    await operatorContract.relayEntry(bls.groupSignature, {gasPrice: submissionGasPrice})
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
-    let surplus = excessCallbackFee.sub(expectedCallbackFee)
     let refund = web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance))
-    assert.isTrue(surplus.eq(refund), "Callback gas surplus should be refunded to the requestor.");
-  });
+
+    let baseCallbackGas = await serviceContract.baseCallbackGas()
+    let expectedSurplus = (callbackGas.add(baseCallbackGas)).mul(gasPriceDiff)
+    
+    assert.isTrue(expectedSurplus.eq(refund), "Callback gas surplus should be refunded to the requestor.");
+  })
 
   it("should send group reward to each operator.", async function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
@@ -182,7 +155,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
     let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
     let expectedDelayPenalty = memberBaseReward.sub(memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2))));
-    let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).mul(web3.utils.toBN(5)).div(web3.utils.toBN(100));
+    let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).muln(5).div(web3.utils.toBN(100));
     let requestSubsidy = entryFee.groupProfitFee.sub(expectedGroupMemberReward.mul(groupSize)).sub(expectedSubmitterExtraReward);
 
     let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));

@@ -198,7 +198,7 @@ contract('TestKeepRandomBeaconService/ViaProxy', function(accounts) {
 
     // Send higher fee than entryFeeEstimate
     await serviceContract.methods['requestRelayEntry()'](
-      {from: account_one, value: entryFeeEstimate.mul(web3.utils.toBN(2))}
+      {from: account_one, value: entryFeeEstimate.muln(2)}
     )
 
     // should fail to withdraw if not owner
@@ -232,15 +232,5 @@ contract('TestKeepRandomBeaconService/ViaProxy', function(accounts) {
       0, 
       "Keep Random Beacon contract updated balance should be visible via serviceContractProxy."
     );
-  });
-
-  it("should fail to update gas price by non owner", async function() {
-    await expectThrow(serviceContract.setPriceFeedEstimate(123, {from: account_two}));
-  });
-
-  it("should be able to update gas price by the owner", async function() {
-    await serviceContract.setPriceFeedEstimate(123);
-    let newGasPrice = await serviceContract.priceFeedEstimate();
-    assert.equal(newGasPrice, 123, "Should be able to get updated gas price.");
   });
 });

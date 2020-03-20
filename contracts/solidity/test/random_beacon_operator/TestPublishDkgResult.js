@@ -9,7 +9,7 @@ import {initContracts} from '../helpers/initContracts';
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
 
 
-contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
+contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
 
   let resultPublicationTime, token, stakingContract, operatorContract,
   owner = accounts[0], magpie = accounts[4], ticket,
@@ -24,7 +24,6 @@ contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
 
   const groupSize = 20;
   const groupThreshold = 15;
-  const minimumStake = web3.utils.toBN(200000);
   const resultPublicationBlockStep = 3;
 
   before(async () => {
@@ -43,19 +42,24 @@ contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
 
     operatorContract.setGroupSize(groupSize);
     operatorContract.setGroupThreshold(groupThreshold);
-    operatorContract.setMinimumStake(minimumStake);
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, minimumStake.mul(web3.utils.toBN(2000)))
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, minimumStake.mul(web3.utils.toBN(3000)))
+    const operator1StakingWeight = 100;
+    const operator2StakingWeight = 200;
+    const operator3StakingWeight = 300;
+    let minimumStake = await stakingContract.minimumStake()
+
+    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, minimumStake.muln(operator1StakingWeight))
+    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, minimumStake.muln(operator2StakingWeight))
+    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, minimumStake.muln(operator3StakingWeight))
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: owner})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: owner})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: owner})
 
-    let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, 2000);
-    let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, 2000);
-    let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, 3000);
+
+    let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, operator1StakingWeight);
+    let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, operator2StakingWeight);
+    let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, operator3StakingWeight);
 
     for(let i = 0; i < groupSize; i++) {
       ticket = packTicket(tickets1[i].valueHex, tickets1[i].virtualStakerIndex, operator1);
@@ -111,15 +115,15 @@ contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
-  it("should send reward to the DKG submitter.", async function() {
+  it("should send reward to the DKG submitter", async function() {
     // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
     let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
     let dkgGasEstimate = await operatorContract.dkgGasEstimate();
-    let submitterCustomGasPrice = web3.utils.toWei(web3.utils.toBN(25), 'gwei');
-    let expectedSubmitterReward = dkgGasEstimate.mul(await operatorContract.priceFeedEstimate());
+    let submitterCustomGasPrice = web3.utils.toWei(web3.utils.toBN(35), 'gwei');
+    let expectedSubmitterReward = dkgGasEstimate.mul(await operatorContract.gasPriceCeiling());
 
     await operatorContract.submitDkgResult(
       1, groupPubKey, misbehaved, signatures, signingMemberIndices,
@@ -130,7 +134,7 @@ contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     assert.isTrue(updatedMagpieBalance.eq(magpieBalance.add(expectedSubmitterReward)), "Submitter should receive expected reward.");
   });
 
-  it("should send max dkgSubmitterReimbursementFee to the submitter in case of a much higher price than priceFeedEstimate.", async function() {
+  it("should send max dkgSubmitterReimbursementFee to the submitter in case of a much higher price than gas price ceiling", async function() {
     // Jump in time to when submitter becomes eligible to submit
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
@@ -138,7 +142,7 @@ contract('TestKeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     let dkgSubmitterReimbursementFee = web3.utils.toBN(await web3.eth.getBalance(operatorContract.address));
     let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
 
-    await operatorContract.setPriceFeedEstimate(web3.utils.toWei(web3.utils.toBN(100), 'gwei'));
+    await operatorContract.setGasPriceCeiling(web3.utils.toWei(web3.utils.toBN(100), 'gwei'));
 
     await operatorContract.submitDkgResult(
       1, groupPubKey, misbehaved, signatures, signingMemberIndices,

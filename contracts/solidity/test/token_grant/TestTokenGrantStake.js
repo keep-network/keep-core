@@ -1,10 +1,11 @@
+
 import mineBlocks from '../helpers/mineBlocks';
-import { duration, increaseTimeTo } from '../helpers/increaseTime';
+import { duration } from '../helpers/increaseTime';
 import latestTime from '../helpers/latestTime';
-import expectThrow from '../helpers/expectThrow';
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import grantTokens from '../helpers/grantTokens';
 import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
+import delegateStakeFromGrant from '../helpers/delegateStakeFromGrant'
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -18,7 +19,8 @@ const Registry = artifacts.require("./Registry.sol");
 
 contract('TokenGrant/Stake', function(accounts) {
 
-  let tokenContract, registryContract, grantContract, stakingContract;
+  let tokenContract, registryContract, grantContract, stakingContract,
+    minimumStake, grantAmount;
 
   const tokenOwner = accounts[0],
     grantee = accounts[1],
@@ -30,11 +32,10 @@ contract('TokenGrant/Stake', function(accounts) {
   let grantId;
   let grantStart;
 
-  const grantAmount = web3.utils.toBN(1000000000),
-    grantVestingDuration = duration.days(60),
-    grantCliff = duration.days(10),
-    grantRevocable = false;
-    
+  const grantVestingDuration = duration.days(60),
+  grantCliff = duration.days(10),
+  grantRevocable = false;
+  
   const initializationPeriod = 10;
   const undelegationPeriod = 30;
 
@@ -47,23 +48,25 @@ contract('TokenGrant/Stake', function(accounts) {
       initializationPeriod, 
       undelegationPeriod
     );
-    grantContract = await TokenGrant.new(
-      tokenContract.address, 
-      stakingContract.address
-    );
 
+    grantContract = await TokenGrant.new(tokenContract.address);
+    
+    await grantContract.authorizeStakingContract(stakingContract.address);
+    
     grantStart = await latestTime();
-
+    minimumStake = await stakingContract.minimumStake()
+    grantAmount = minimumStake.muln(10),
+    
     // Grant tokens
     grantId = await grantTokens(
-      grantContract, 
-      tokenContract, 
-      grantAmount, 
-      tokenOwner, 
-      grantee, 
-      grantVestingDuration, 
-      grantStart, 
-      grantCliff, 
+      grantContract,
+      tokenContract,
+      grantAmount,
+      tokenOwner,
+      grantee,
+      grantVestingDuration,
+      grantStart,
+      grantCliff,
       grantRevocable
     );
   });
@@ -77,23 +80,20 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   async function delegate(grantee, operator, amount) {
-    let delegation = Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
-      Buffer.from(operator.substr(2), 'hex'),
-      Buffer.from(authorizer.substr(2), 'hex')
-    ]);
-
-    return grantContract.stake(
-      grantId, 
-      stakingContract.address, 
-      amount, 
-      delegation, 
-      {from: grantee}
-    );
+    return await delegateStakeFromGrant(
+      grantContract,
+      stakingContract.address,
+      grantee,
+      operator,
+      magpie,
+      authorizer,
+      amount,
+      grantId
+    )
   }
 
   it("should update balances when delegating", async () => {
-    let amountToDelegate = web3.utils.toBN(20000);
+    let amountToDelegate = minimumStake.muln(5);
     let remaining = grantAmount.sub(amountToDelegate)
 
     await delegate(grantee, operatorOne, amountToDelegate);
@@ -196,11 +196,11 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow to delegate to the same operator twice", async () => {
-    let amountToDelegate = web3.utils.toBN(20000);
+    let amountToDelegate = minimumStake.muln(5);
     await delegate(grantee, operatorOne, amountToDelegate);
 
     await expectThrowWithMessage(
-      delegate(grantee, operatorOne, amountToDelegate),
+      delegate(grantee, operatorOne, amountToDelegate, grantId),
       "Operator address is already in use"
     )
   })
@@ -219,7 +219,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should allow to delegate to two different operators", async () => {
-    let amountToDelegate = web3.utils.toBN(20000);
+    let amountToDelegate = minimumStake.muln(5);
 
     await delegate(grantee, operatorOne, amountToDelegate);
     await delegate(grantee, operatorTwo, amountToDelegate);
@@ -242,7 +242,28 @@ contract('TokenGrant/Stake', function(accounts) {
     );  
   })
 
-  it("should not allow anyone but grantee to stake", async () => {
+  it("should not allow to delegate to not authorized staking contract", async () => {
+    const delegation = Buffer.concat([
+      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(operatorOne.substr(2), 'hex'),
+      Buffer.from(authorizer.substr(2), 'hex')
+    ]);
+
+    const notAuthorizedContract = "0x9E8E3487dCCd6a50045792fAfe8Ac71600B649a9"
+
+    await expectThrowWithMessage(
+      grantContract.stake(
+        grantId, 
+        notAuthorizedContract, 
+        grantAmount, 
+        delegation, 
+        {from: grantee}
+      ),
+      "Provided staking contract is not authorized"
+    )
+  })
+
+  it("should not allow anyone but grantee to delegate", async () => {
     await expectThrowWithMessage(
       delegate(operatorOne, operatorOne, grantAmount),
       "Only grantee of the grant can stake it."
@@ -250,7 +271,7 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should let operator cancel delegation", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount, grantId);
   
     await grantContract.cancelStake(operatorOne, {from: operatorOne})
     // ok, no exception
