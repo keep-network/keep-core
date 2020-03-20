@@ -26,6 +26,7 @@ contract TokenStaking is StakeDelegatable {
     event Undelegated(address indexed operator, uint256 undelegatedAt);
     event RecoveredStake(address operator, uint256 recoveredAt);
     event OperatorTokensSlashed(address indexed operator, uint256 amount);
+    event OperatorTokensSeized(address indexed operator, uint256 amount);
 
     // Registry contract with a list of approved operator contracts and upgraders.
     Registry public registry;
@@ -282,13 +283,13 @@ contract TokenStaking is StakeDelegatable {
 
                 uint256 newAmount = 0;
                 operators[operator].packedParams = operatorParams.setAmount(newAmount);
-                emit OperatorTokensSlashed(operator, currentAmount);
+                emit OperatorTokensSeized(operator, currentAmount);
             } else {
                 totalAmountToBurn = totalAmountToBurn.add(amountToSeize);
 
                 uint256 newAmount = currentAmount.sub(amountToSeize);
                 operators[operator].packedParams = operatorParams.setAmount(newAmount);
-                emit OperatorTokensSlashed(operator, amountToSeize);
+                emit OperatorTokensSeized(operator, amountToSeize);
             }
         }
 
