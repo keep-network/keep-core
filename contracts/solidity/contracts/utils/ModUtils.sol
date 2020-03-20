@@ -67,7 +67,7 @@ library ModUtils {
 
         // Note the smaller int- finding n with Legendre symbol or -1
         // should be quick
-        uint32 n = 2;
+        uint256 n = 2;
         while (legendre(n, p) != -1) {
             n = n + 1;
         }
@@ -110,12 +110,12 @@ library ModUtils {
      */
     function legendre(uint256 a, uint256 p)
         internal
-        view returns(int8)
+        view returns(int256)
     {
         uint256 raised = modExp(a, (p - 1) / uint256(2), p);
 
         if (raised == 0 || raised == 1) {
-            return int8(raised);
+            return int256(raised);
         } else if (raised == p - 1) {
             return -1;
         }
