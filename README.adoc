@@ -1,13 +1,13 @@
-== keep-core
+= keep-core
 
 The core code behind the https://keep.network[Keep network].
 
-=== Getting Started as a Developer
+== Getting Started as a Developer
 
 For now, start with the README in link:docs/development/[the developer
 docs directory].
 
-=== Directory structure
+== Directory structure
 
 The directory structure used in the Keep repository is very similar to that used
 in other Go projects:
@@ -49,27 +49,25 @@ keep-core/
     `// go:generate` annotation to trigger appropriate code generation. All code
     generation is done with a single invocation of `go generate` at build time.
 
-=== link:docs/[`docs/`]
+== link:docs/[`docs/`]
 
 Documentation related to the Keep network, Keep client, and Keep
 contracts.
 
-==== link:docs/development/[`docs/development/`]
+=== link:docs/development/[`docs/development/`]
 
 Specifically developer documentation for the various parts of Keep.
 
-=== link:solidity/[`solidity/`]
+== link:solidity/[`solidity/`]
 
 The Solidity smart contracts behind the https://keep.network[Keep network].
 
 They handle creating and managing keeps, bridging off-chain secret
 storage and the public blockchain.
 
-=== link:pkg/[`pkg/`]
+== link:pkg/[`pkg/`]
 
 The Keep Go client.
 
 It runs the Keep network’s random beacon, hosts keep nodes, and
 participates in keep computations.
-
-
