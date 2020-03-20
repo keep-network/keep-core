@@ -395,7 +395,7 @@ library Groups {
         uint256 groupIndex,
         bytes memory signedMsgSender,
         uint256 minimumStake
-    ) public returns(bool) {
+    ) public {
         require(!isStaleGroup(self, groupIndex), "Group can not be stale");
         bytes memory groupPubKey = getGroupPublicKey(self, groupIndex);
 
@@ -404,9 +404,9 @@ library Groups {
         if (!isGroupTerminated(self, groupIndex) && isSignatureValid) {
             terminateGroup(self, groupIndex);
             self.stakingContract.seize(minimumStake, 100, msg.sender, self.groupMembers[groupPubKey]);
-            return true;
+        } else {
+            revert("Group is not terminated or signature is invalid");
         }
-        return false;
     }
 
     function reportRelayEntryTimeout(

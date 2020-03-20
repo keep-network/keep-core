@@ -741,5 +741,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     ) public {
         uint256 minimumStake = stakingContract.minimumStake();
         groups.reportUnauthorizedSigning(groupIndex, signedMsgSender, minimumStake);
+        emit UnauthorizedSigningReported(groupIndex);
     }
 }
