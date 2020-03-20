@@ -4,8 +4,7 @@ The core code behind the https://keep.network[Keep network].
 
 == Getting Started as a Developer
 
-For now, start with the README in link:docs/development/[the developer
-docs directory].
+Start with the README in link:docs/development/[the developer docs directory].
 
 == Directory structure
 
