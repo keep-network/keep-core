@@ -339,6 +339,12 @@ library AltBn128 {
         );
     }
 
+    function _gfP2Add(uint256 ax, uint256 ay, uint256 bx, uint256 by)
+        internal pure returns(uint256 x, uint256 y) {
+        x = addmod(ax, bx, p);
+        y = addmod(ay, by, p);
+    }
+
     /**
      * @dev Return multiplication of two gfP2 field elements.
      */
@@ -347,6 +353,12 @@ library AltBn128 {
             addmod(mulmod(a.x, b.y, p), mulmod(b.x, a.y, p), p),
             addmod(mulmod(a.y, b.y, p), p - mulmod(a.x, b.x, p), p)
         );
+    }
+
+    function _gfP2Multiply(uint256 ax, uint256 ay, uint256 bx, uint256 by)
+        internal pure returns(uint256 x, uint256 y) {
+        x = addmod(mulmod(ax, by, p), mulmod(bx, ay, p), p);
+        y = addmod(mulmod(ay, by, p), p - mulmod(ax, bx, p), p);
     }
 
     /**
@@ -369,6 +381,26 @@ library AltBn128 {
 
             exp = exp / 2;
             a = gfP2Multiply(a, a);
+        }
+    }
+
+    function _gfP2Pow(uint256 _ax, uint256 _ay, uint256 _exp)
+        internal pure returns (uint256 x, uint256 y) {
+        uint256 exp = _exp;
+        x = 0;
+        y = 1;
+        uint256 ax = _ax;
+        uint256 ay = _ay;
+
+        // Reduce exp dividing by 2 gradually to 0 while computing final
+        // result only when exp is an odd number.
+        while (exp > 0) {
+            if (parity(exp) == 0x01) {
+                (x, y) = _gfP2Multiply(x, y, ax, ay);
+            }
+
+            exp = exp / 2;
+            (ax, ay) = _gfP2Multiply(ax, ay, ax, ay);
         }
     }
 
