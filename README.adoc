@@ -66,5 +66,5 @@ storage and the public blockchain.
 
 The Keep Go client.
 
-It runs the Keep network’s random beacon, hosts keep nodes, and
-participates in keep computations.
+It runs the Keep network’s random beacon and participates in related
+computations.
