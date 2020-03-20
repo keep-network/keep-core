@@ -116,11 +116,9 @@ library AltBn128 {
 
         y = gfP2Multiply(gfP2Pow(gfP2Pow(x, a), a), gfP2Pow(x, b));
 
-        gfP2 memory _hexRoot = hexRoot();
-
         // Multiply y by hexRoot constant to find correct y.
         while (!g2X2y(x, y)) {
-            y = gfP2Multiply(y, _hexRoot);
+            (y.x, y.y) = _gfP2Multiply(y.x, y.y, hexRootX, hexRootY);
         }
     }
 
