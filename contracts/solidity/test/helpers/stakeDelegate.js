@@ -1,5 +1,3 @@
-import { sign } from './signature';
-
 export default async function stakeDelegate(stakingContract, token, owner, operator, magpie, authorizer, stake) {
   let delegation = Buffer.concat([
     Buffer.from(magpie.substr(2), 'hex'),

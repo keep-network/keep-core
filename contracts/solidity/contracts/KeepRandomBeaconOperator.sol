@@ -57,10 +57,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
     TokenStaking internal stakingContract;
 
-    // Minimum amount of KEEP that allows sMPC cluster client to participate in
-    // the Keep network. Expressed as number with 18-decimal places.
-    uint256 public minimumStake = 200000 * 1e18;
-
     // Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 145*1e11; // 14500 Gwei, 10% of operational cost
 
@@ -112,6 +108,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // contract.
     uint256 public dkgSubmitterReimbursementFee;
 
+    uint256 internal currentEntryStartBlock;
+
+    // Seed value used for the genesis group selection.
+    // https://www.wolframalpha.com/input/?i=pi+to+78+digits
+    uint256 internal constant _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
+
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
 
@@ -123,13 +125,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         bytes previousEntry;
         address serviceContract;
     }
-
-    uint256 internal currentEntryStartBlock;
     SigningRequest internal signingRequest;
 
-    // Seed value used for the genesis group selection.
-    // https://www.wolframalpha.com/input/?i=pi+to+78+digits
-    uint256 internal _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
     /**
      * @dev Triggers the first group selection. Genesis can be called only when
@@ -263,6 +260,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *   current candidate group selection.
      */
     function submitTicket(bytes32 ticket) public {
+        uint256 minimumStake = stakingContract.minimumStake();
         uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(minimumStake);
         groupSelection.submitTicket(ticket, stakingWeight);
     }
@@ -361,14 +359,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             dkgSubmitterReimbursementFee = 0;
             magpie.call.value(reimbursementFee)("");
         }
-    }
-
-    /**
-     * @dev Set the minimum amount of KEEP that allows a Keep network client to participate in a group.
-     * @param _minimumStake Amount in KEEP.
-     */
-    function setMinimumStake(uint256 _minimumStake) public onlyOwner {
-        minimumStake = _minimumStake;
     }
 
     /**
@@ -593,6 +583,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function reportRelayEntryTimeout() public {
         require(hasEntryTimedOut(), "Entry did not time out");
+
+        uint256 minimumStake = stakingContract.minimumStake();
         groups.reportRelayEntryTimeout(signingRequest.groupIndex, groupSize, minimumStake);
 
         // We could terminate the last active group. If that's the case,
@@ -630,9 +622,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * false otherwise.
      */
     function hasMinimumStake(address staker) public view returns(bool) {
-        return (
-            stakingContract.activeStake(staker, address(this)) >= minimumStake
-        );
+        return stakingContract.hasMinimumStake(staker, address(this));
     }
 
     /**
@@ -733,7 +723,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /**
      * @dev Reports unauthorized signing for the provided group. Must provide
-     * a valid signature of the group address as a message. Successful signature
+     * a valid signature of the tattletale address as a message. Successful signature
      * verification means the private key has been leaked and all group members
      * should be punished by seizing their tokens. The submitter of this proof is
      * rewarded with 5% of the total seized amount scaled by the reward adjustment
@@ -741,8 +731,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function reportUnauthorizedSigning(
         uint256 groupIndex,
-        bytes memory signedGroupPubKey
+        bytes memory signedMsgSender
     ) public {
-        groups.reportUnauthorizedSigning(groupIndex, signedGroupPubKey, minimumStake);
+        uint256 minimumStake = stakingContract.minimumStake();
+        groups.reportUnauthorizedSigning(groupIndex, signedMsgSender, minimumStake);
     }
 }

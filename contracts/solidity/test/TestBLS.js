@@ -1,8 +1,10 @@
+import {bls as blsData} from './helpers/data'
+
 const BLS = artifacts.require('./cryptography/BLS.sol');
 
 contract('TestBLS', function() {
-
   let bls;
+
   before(async () => {
     bls = await BLS.new();
   });
@@ -74,4 +76,13 @@ contract('TestBLS', function() {
     )
     assert.isFalse(result, "Should return false for failed verification.");
   });
+
+  it("should be able to sign a message and verify it", async function() {
+    let message = web3.utils.stringToHex("A bear walks into a bar 123...")
+
+    let signature = await bls.sign(message, blsData.secretKey);
+
+    let actual = await bls.verifyBytes(blsData.groupPubKey, message, signature);
+    assert.isTrue(actual, "Should be able to verify valid BLS signature.");
+  })
 });

@@ -12,8 +12,7 @@ const initialData = {}
 
 const AuthorizerPage = () => {
   const [
-    state,
-    updateData,
+    state, ,
     refreshData,
   ] = useFetchData(authorizationService.fetchAuthorizationPageData, initialData)
   const { yourAddress, stakingContract } = useContext(Web3Context)

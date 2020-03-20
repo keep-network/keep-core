@@ -198,7 +198,7 @@ contract('TestKeepRandomBeaconService/ViaProxy', function(accounts) {
 
     // Send higher fee than entryFeeEstimate
     await serviceContract.methods['requestRelayEntry()'](
-      {from: account_one, value: entryFeeEstimate.mul(web3.utils.toBN(2))}
+      {from: account_one, value: entryFeeEstimate.muln(2)}
     )
 
     // should fail to withdraw if not owner
