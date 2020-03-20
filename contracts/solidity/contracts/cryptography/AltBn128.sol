@@ -114,7 +114,10 @@ library AltBn128 {
         uint256 a = 3869331240733915743250440106392954448556483137451914450067252501901456824595;
         uint256 b = 146360017852723390495514512480590656176144969185739259173561346299185050597;
 
-        y = gfP2Multiply(gfP2Pow(gfP2Pow(x, a), a), gfP2Pow(x, b));
+        (uint256 xbx, uint256 xby) = _gfP2Pow(x.x, x.y, b);
+        (uint256 yax, uint256 yay) = _gfP2Pow(x.x, x.y, a);
+        (uint256 ya2x, uint256 ya2y) = _gfP2Pow(yax, yay, a);
+        (y.x, y.y) = _gfP2Multiply(ya2x, ya2y, xbx, xby);
 
         // Multiply y by hexRoot constant to find correct y.
         while (!g2X2y(x, y)) {
