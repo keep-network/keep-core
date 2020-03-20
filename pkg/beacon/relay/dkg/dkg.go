@@ -99,7 +99,7 @@ func ExecuteDKG(
 
 		select {
 		case dkgResultEvent := <-dkgResultChannel:
-			if isConditionalMembershipPossible(playerIndex, gjkrResult, dkgResultEvent) {
+			if shouldStayInGroup(playerIndex, gjkrResult, dkgResultEvent) {
 				logger.Debugf(
 					"[member:%v] conditional membership is possible",
 					playerIndex,
@@ -129,7 +129,7 @@ func ExecuteDKG(
 	}, nil
 }
 
-func isConditionalMembershipPossible(
+func shouldStayInGroup(
 	memberIndex group.MemberIndex,
 	gjkrResult *gjkr.Result,
 	dkgResultEvent *event.DKGResultSubmission,
