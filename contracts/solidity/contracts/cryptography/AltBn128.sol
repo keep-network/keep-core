@@ -304,22 +304,29 @@ library AltBn128 {
      * curve.
      */
     function g1Add(G1Point memory a, G1Point memory b) internal view returns (G1Point memory) {
-        uint256[4] memory arg;
-        arg[0] = a.x;
-        arg[1] = a.y;
-        arg[2] = b.x;
-        arg[3] = b.y;
-        uint256[2] memory c;
+        uint256 x;
+        uint256 y;
+        (x, y) = _g1Add(a.x, a.y, b.x, b.y);
+        return G1Point(x, y);
+    }
 
+    function _g1Add(uint256 ax, uint256 ay, uint256 bx, uint256 by)
+        internal view returns (uint256 x, uint256 y) {
         /* solium-disable-next-line */
         assembly {
+            let arg := mload(0x40)
+            mstore(arg, ax)
+            mstore(add(arg, 0x20), ay)
+            mstore(add(arg, 0x40), bx)
+            mstore(add(arg, 0x60), by)
+            let c := add(arg, 0x80)
             // 0x60 is the ECADD precompile address
             if iszero(staticcall(not(0), 0x06, arg, 0x80, c, 0x40)) {
                 revert(0, 0)
             }
+            x := mload(c)
+            y := mload(add(c, 0x20))
         }
-
-        return G1Point(c[0], c[1]);
     }
 
     /**
