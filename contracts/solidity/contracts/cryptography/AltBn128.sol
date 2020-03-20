@@ -113,12 +113,14 @@ library AltBn128 {
         // (p^2 + 15) / 32 results into a big 512bit value, so breaking it to two uint256 as (a * a + b)
         uint256 a = 3869331240733915743250440106392954448556483137451914450067252501901456824595;
         uint256 b = 146360017852723390495514512480590656176144969185739259173561346299185050597;
-  
+
         y = gfP2Multiply(gfP2Pow(gfP2Pow(x, a), a), gfP2Pow(x, b));
-        
+
+        gfP2 memory _hexRoot = hexRoot();
+
         // Multiply y by hexRoot constant to find correct y.
         while (!g2X2y(x, y)) {
-            y = gfP2Multiply(y, hexRoot());
+            y = gfP2Multiply(y, _hexRoot);
         }
     }
 
