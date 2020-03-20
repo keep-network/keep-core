@@ -344,11 +344,11 @@ Saving artifacts...
 == Keep token staking
 
 Each Keep peer needs to have a minimum number of KEEP tokens staked under its
-account. The `demo.js` script transfers KEEP tokens and stake them for all
+account. The `delegate-tokens.js` script transfers KEEP tokens and stake them for all
 addresses available.
 
 ```
-$ truffle exec ./scripts/demo.js --network local
+$ truffle exec ./scripts/delegate-tokens.js --network local
 
 Using network 'local'.
 

@@ -102,6 +102,10 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
         _;
     }
 
+    constructor() public {
+        _initialized["KeepRandomBeaconServiceImplV1"] = true;
+    }
+
     /**
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
@@ -117,13 +121,18 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
         public
     {
         require(!initialized(), "Contract is already initialized.");
+        require(registry != address(0), "Incorrect registry address");
+
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _dkgContributionMargin = dkgContributionMargin;
         _withdrawalDelay = withdrawalDelay;
         _pendingWithdrawal = 0;
         _previousEntry = _beaconSeed;
         _registry = registry;
-        _baseCallbackGas = 18846;
+        _baseCallbackGas = 18789;
+
+        // Initialize DelayedWithdrawal owner.
+        initialize(msg.sender);
     }
 
     /**

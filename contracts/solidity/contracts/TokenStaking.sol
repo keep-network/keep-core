@@ -14,10 +14,13 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
  * and recover the stake after undelegation period is over.
  */
 contract TokenStaking is StakeDelegatable {
-
     using UintArrayUtils for uint256[];
     using PercentUtils for uint256;
     using SafeERC20 for ERC20Burnable;
+
+    // Minimum amount of KEEP that allows sMPC cluster client to participate in
+    // the Keep network. Expressed as number with 18-decimal places.
+    uint256 public minimumStake = 200000 * 1e18;
 
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
@@ -73,7 +76,7 @@ contract TokenStaking is StakeDelegatable {
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
-        require(_value <= token.balanceOf(_from), "Sender must have enough tokens.");
+        require(_value >= minimumStake, "Tokens amount must be greater than the minimum stake");
         require(_extraData.length == 60, "Stake delegation data must be provided.");
 
         address payable magpie = address(uint160(_extraData.toAddress(0)));
@@ -126,15 +129,50 @@ contract TokenStaking is StakeDelegatable {
      * @param _operator Address of the stake operator.
      */
     function undelegate(address _operator) public {
+        undelegateAt(_operator, block.number);
+    }
+
+    /**
+     * @notice Set an undelegation time for staked tokens.
+     * Undelegation will begin at the specified block.
+     * You will be able to recover your stake by calling
+     * `recoverStake()` with operator address once undelegation period is over.
+     * @param _operator Address of the stake operator.
+     * @param _undelegationBlock The block undelegation is to start at.
+     */
+    function undelegateAt(
+        address _operator,
+        uint256 _undelegationBlock
+    ) public {
         address owner = operators[_operator].owner;
+        bool sentByOwner = msg.sender == owner;
         require(
             msg.sender == _operator ||
-            msg.sender == owner, "Only operator or the owner of the stake can undelegate."
+            sentByOwner, "Only operator or the owner of the stake can undelegate."
+        );
+        require(
+            _undelegationBlock >= block.number,
+            "May not set undelegation block in the past"
         );
         uint256 oldParams = operators[_operator].packedParams;
-        uint256 newParams = oldParams.setUndelegationBlock(block.number);
+        uint256 existingCreationBlock = oldParams.getCreationBlock();
+        uint256 existingUndelegationBlock = oldParams.getUndelegationBlock();
+        require(
+            _undelegationBlock > existingCreationBlock.add(initializationPeriod),
+            "Cannot undelegate in initialization period, use cancelStake instead"
+        );
+        require(
+            // Undelegation not in progress OR
+            existingUndelegationBlock == 0 ||
+            // Undelegating sooner than previously set time OR
+            existingUndelegationBlock > _undelegationBlock ||
+            // Owner may override
+            sentByOwner,
+            "Only the owner may postpone previously set undelegation"
+        );
+        uint256 newParams = oldParams.setUndelegationBlock(_undelegationBlock);
         operators[_operator].packedParams = newParams;
-        emit Undelegated(_operator, block.number);
+        emit Undelegated(_operator, _undelegationBlock);
     }
 
     /**
@@ -307,7 +345,11 @@ contract TokenStaking is StakeDelegatable {
         uint256 undelegatedAt = operatorParams.getUndelegationBlock();
 
         bool isActive = block.number > createdAt.add(initializationPeriod);
-        bool isUndelegating = (undelegatedAt > 0) && (block.number > undelegatedAt);
+        // `undelegatedAt` may be set to a block in the future,
+        // to schedule undelegation in advance.
+        // In this case the operator is still eligible
+        // until the block `undelegatedAt`.
+        bool isUndelegating = (undelegatedAt != 0) && (block.number > undelegatedAt);
 
         if (isAuthorized && isActive && !isUndelegating) {
             balance = operatorParams.getAmount();
@@ -343,5 +385,26 @@ contract TokenStaking is StakeDelegatable {
         if (isAuthorized && isActive) {
             balance = operatorParams.getAmount();
         }
+    }
+
+    /**
+     * @dev Checks if the specified account has enough active stake to become
+     * network operator and that the specified operator contract has been
+     * authorized for potential slashing.
+     *
+     * Having the required minimum of active stake makes the operator eligible
+     * to join the network. If the active stake is not currently undelegating,
+     * operator is also eligible for work selection.
+     *
+     * @param staker Staker's address
+     * @param operatorContract Operator contract's address
+     * @return True if has enough active stake to participate in the network,
+     * false otherwise.
+     */
+    function hasMinimumStake(
+        address staker,
+        address operatorContract
+    ) public view returns(bool) {
+        return activeStake(staker, operatorContract) >= minimumStake;
     }
 }

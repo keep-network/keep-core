@@ -1,5 +1,10 @@
+.tokens-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
 #delegate-stake-section {
-    flex-basis: 100%;
+    width: 100%;
     align-self: flex-start;
 }
 
@@ -9,6 +14,10 @@
     }
     .addresses-section {
         width: 100%;
+    }
+
+    button {
+        width: 100% !important;
     }
 
    .tabs {
@@ -79,55 +88,51 @@
 }
 
 #tokens-overview {
-    flex-basis: 100%;
+    width: 100%;
     align-self: flex-start;
 }
 
-.tokens-wrapper { 
-    flex-wrap: wrap-reverse;
-}
-
-@media screen and (min-width: 750px) {
-    #tokens-overview {
-        flex-basis: 100%;
-    }
-
-    #delegate-stake-section {
-        flex-basis: 100%;
-    }
-}
-
 @media screen and (min-width: 950px) {
-    .tokens-wrapper { 
-        flex-wrap: wrap;
+    .tokens-wrapper {
+        flex-direction: row;
+        justify-content: space-between;
     }
 
     #tokens-overview {
-        flex-basis: 40%;
+        width: 40%
     }
 
     #delegate-stake-section {
-        flex-basis: 58%;
+        width: 58%;
     }
 }
 
 @media screen and (min-width: 1250px) {
+    .tokens-wrapper {
+        flex-direction: column;
+    }
+
     #tokens-overview {
-        flex-basis: 100%;
+        width: 100%;
     }
 
     #delegate-stake-section {
-        flex-basis: 100%;
+        width: 100%;
     }
 }
 
 @media screen and (min-width: 1550px) {
+    .tokens-wrapper {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
     #tokens-overview {
-        flex-basis: 40%;
+        width: 40%;
     }
 
     #delegate-stake-section {
-        flex-basis: 58%;
+        width: 58%;
     }
 
     .delegate-stake-form {

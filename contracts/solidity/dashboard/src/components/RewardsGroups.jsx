@@ -11,7 +11,7 @@ const previewDataCount = 3
 const initialData = [[], '0']
 
 export const RewardsGroups = React.memo(({ setTotalRewardsBalance }) => {
-  const [state, updateData, refreshData] = useFetchData(rewardsService.fetchAvailableRewards, initialData)
+  const [state, , refreshData] = useFetchData(rewardsService.fetchAvailableRewards, initialData)
   const { isFetching, data: [groups, totalRewardsBalance] } = state
   const [showAll, setShowAll] = useState(false)
 

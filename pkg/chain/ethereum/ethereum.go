@@ -58,7 +58,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		)
 	}
 
-	minimumStake, err := ec.keepRandomBeaconOperatorContract.MinimumStake()
+	minimumStake, err := ec.stakingContract.MinimumStake()
 	if err != nil {
 		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
 	}
