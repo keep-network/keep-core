@@ -106,7 +106,7 @@ library AltBn128 {
         internal
         pure returns(gfP2 memory y)
     {
-        gfP2 memory x = gfP2Add(gfP2Pow(_x, 3), twistB());
+        gfP2 memory x = gfP2Add(gfP2Cube(_x), twistB());
 
         // Using formula y = x ^ (p^2 + 15) / 32 from
         // https://github.com/ethereum/beacon_chain/blob/master/beacon_chain/utils/bls.py
@@ -384,6 +384,14 @@ library AltBn128 {
         }
     }
 
+    function gfP2Square(gfP2 memory a) internal pure returns (gfP2 memory) {
+        return gfP2Multiply(a, a);
+    }
+
+    function gfP2Cube(gfP2 memory a) internal pure returns (gfP2 memory) {
+        return gfP2Multiply(a, gfP2Square(a));
+    }
+
     function _gfP2Pow(uint256 _ax, uint256 _ay, uint256 _exp)
         internal pure returns (uint256 x, uint256 y) {
         uint256 exp = _exp;
@@ -404,13 +412,24 @@ library AltBn128 {
         }
     }
 
+    function _gfP2Square(uint256 _ax, uint256 _ay)
+        internal pure returns (uint256 x, uint256 y) {
+        return _gfP2Multiply(_ax, _ay, _ax, _ay);
+    }
+
+    function _gfP2Cube(uint256 _ax, uint256 _ay)
+        internal pure returns (uint256 x, uint256 y) {
+        (uint256 _bx, uint256 _by) = _gfP2Square(_ax, _ay);
+        return _gfP2Multiply(_ax, _ay, _bx, _by);
+    }
+
     /**
      * @dev Return true if G2 point's y^2 equals x.
      */
     function g2X2y(gfP2 memory x, gfP2 memory y) internal pure returns(bool) {
        
         gfP2 memory y2;
-        y2 = gfP2Pow(y, 2);
+        y2 = gfP2Square(y);
 
         return (y2.x == x.x && y2.y == x.y);
     }
@@ -430,8 +449,8 @@ library AltBn128 {
         gfP2 memory y2;
         gfP2 memory x3;
 
-        y2 = gfP2Pow(point.y, 2);
-        x3 = gfP2Add(gfP2Pow(point.x, 3), twistB());
+        y2 = gfP2Square(point.y);
+        x3 = gfP2Add(gfP2Cube(point.x), twistB());
 
         return (y2.x == x3.x && y2.y == x3.y);
     }
