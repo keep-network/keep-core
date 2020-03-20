@@ -58,7 +58,7 @@ library ModUtils {
         }
 
         uint256 s = p - 1;
-        uint8 e = 0;
+        uint256 e = 0;
 
         while (s % 2 == 0) {
             s = s / 2;
@@ -75,9 +75,9 @@ library ModUtils {
         uint256 x = modExp(a, (s + 1) / 2, p);
         uint256 b = modExp(a, s, p);
         uint256 g = modExp(n, s, p);
-        uint8 r = e;
+        uint256 r = e;
         uint256 gs = 0;
-        uint8 m = 0;
+        uint256 m = 0;
         uint256 t = b;
 
         while (true) {
