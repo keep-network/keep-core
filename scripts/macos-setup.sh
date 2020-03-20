@@ -22,9 +22,9 @@ go get -u golang.org/x/lint/golint
 echo "Installing pre-commit and specified hooks..."
 pre-commit install --install-hooks
 
-echo "Installing contracts/solidity npm and requirements..."
+echo "Installing solidity npm and requirements..."
 brew list npm &>/dev/null || brew install npm
-cd ../contracts/solidity && npm install && cd ../../scripts
+cd ../solidity && npm install && cd ../scripts
 
 echo "Installing truffle..."
 npm install -g truffle

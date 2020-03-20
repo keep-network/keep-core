@@ -56,16 +56,16 @@ branches are instead published to `+https://docs.keep.network/<branch name>/+`.
 
 == <<local-keep-network.adoc,Setting up local Keep network>>
 
-For development purposes, it is convenient to set up local Ethereum client with 
-a group of connected peers. A note-taken walkthrough covers the entire process 
-including setting up local Ethereum client, deploying Keep contracts and 
-configuring Keep peers. 
+For development purposes, it is convenient to set up local Ethereum client with
+a group of connected peers. A note-taken walkthrough covers the entire process
+including setting up local Ethereum client, deploying Keep contracts and
+configuring Keep peers.
 
 == Common problems
 
 - Please avoid using `~` when defining `$GOBIN` location and use `$HOME` instead.
-  We've been observing https://github.com/google/protobuf/issues/3355[some issues] 
-  with locating `protoc-gen-gogoslick` when running `go generate` and `$GOBIN` 
+  We've been observing https://github.com/google/protobuf/issues/3355[some issues]
+  with locating `protoc-gen-gogoslick` when running `go generate` and `$GOBIN`
   contained `~`.
 
 - For Mojave, if you have a problem with missing include or missing library and
@@ -82,7 +82,7 @@ You can also use a demo script to help you deploy contracts to your local testne
 and to have demo balances (token, staking and token grants) allocated between first
 two accounts.
 
-Go to `contracts/solidity` directory and run:
+Go to `solidity` directory and run:
 
 ```
 npm install

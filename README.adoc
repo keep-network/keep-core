@@ -18,9 +18,7 @@ keep-core/
   Makefile <1>
   main.go, *.go
   docs/
-  contracts/ <2>
-    docs/
-    solidity/
+  solidity/ <2>
   cmd/ <3>
   pkg/ <4>
     net/
@@ -60,9 +58,9 @@ contracts.
 
 Specifically developer documentation for the various parts of Keep.
 
-=== link:contracts/solidity/[`contracts/solidity/`]
+=== link:solidity/[`solidity/`]
 
-The smart contracts behind the https://keep.network[Keep network].
+The Solidity smart contracts behind the https://keep.network[Keep network].
 
 They handle creating and managing keeps, bridging off-chain secret
 storage and the public blockchain.
