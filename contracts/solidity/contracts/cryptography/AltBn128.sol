@@ -323,14 +323,6 @@ library AltBn128 {
             y.y = p - y.y;
         }
 
-        // isG2PointOnCurve
-
-        bool _isG2PointOnCurve = (y2.x == x3.x && y2.y == x3.y);
-
-        // end isG2PointOnCurve
-
-        require(_isG2PointOnCurve, "Malformed bn256.G2 point.");
-
         return G2Point(x, y);
     }
 
