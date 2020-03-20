@@ -290,33 +290,7 @@ library AltBn128 {
         mX = (x1 & ~bytes32(mask)) | (leadX >> 0);
 
         gfP2 memory x = gfP2(uint256(mX), uint256(x2));
-
-        gfP2 memory y;
-        // g2YFromX
-
-        gfP2 memory x3 = gfP2Add(gfP2Pow(x, 3), twistB());
-
-        // Using formula y = x ^ (p^2 + 15) / 32 from
-        // https://github.com/ethereum/beacon_chain/blob/master/beacon_chain/utils/bls.py
-        // (p^2 + 15) / 32 results into a big 512bit value, so breaking it to two uint256 as (a * a + b)
-        uint256 a = 3869331240733915743250440106392954448556483137451914450067252501901456824595;
-        uint256 b = 146360017852723390495514512480590656176144969185739259173561346299185050597;
-
-        y = gfP2Multiply(gfP2Pow(gfP2Pow(x3, a), a), gfP2Pow(x3, b));
-
-        // Multiply y by hexRoot constant to find correct y.
-        gfP2 memory y2;
-        while (true) {
-            // g2X2y
-            y2 = gfP2Pow(y, 2);
-
-            if (y2.x == x3.x && y2.y == x3.y) { break; }
-            // end g2X2y
-
-            y = gfP2Multiply(y, hexRoot());
-        }
-
-        // end g2YFromX
+        gfP2 memory y = g2YFromX(x);
 
         if (parity(y.x) != (m[0] & 0x80) >> 7) {
             y.x = p - y.x;
