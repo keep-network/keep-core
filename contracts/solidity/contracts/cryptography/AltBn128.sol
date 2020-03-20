@@ -469,18 +469,45 @@ library AltBn128 {
      * @dev Wrap the pairing check pre-compile introduced in Byzantium. Return
      * the result of a pairing check of 2 pairs (G1 p1, G2 p2) (G1 p3, G2 p4)
      */
-    function pairing(G1Point memory p1, G2Point memory p2, G1Point memory p3, G2Point memory p4) internal view returns (bool) {
-        uint256[12] memory arg = [
-            p1.x, p1.y, p2.x.x, p2.x.y, p2.y.x, p2.y.y, p3.x, p3.y, p4.x.x, p4.x.y, p4.y.x, p4.y.y
-        ];
-        uint[1] memory c;
+    function pairing(
+        G1Point memory p1,
+        G2Point memory p2,
+        G1Point memory p3,
+        G2Point memory p4
+    ) internal view returns (bool result) {
         /* solium-disable-next-line */
         assembly {
+            let arg := mload(0x40)
+
+            mstore(arg, mload(p1))
+            mstore(add(arg, 0x20), mload(add(p1, 0x20)))
+
+            let p2x := mload(p2)
+            mstore(add(arg, 0x40), mload(p2x))
+            mstore(add(arg, 0x60), mload(add(p2x, 0x20)))
+
+            let p2y := mload(add(p2, 0x20))
+            mstore(add(arg, 0x80), mload(p2y))
+            mstore(add(arg, 0xa0), mload(add(p2y, 0x20)))
+
+            mstore(add(arg, 0xc0), mload(p3))
+            mstore(add(arg, 0xe0), mload(add(p3, 0x20)))
+
+            let p4x := mload(p4)
+            mstore(add(arg, 0x100), mload(p4x))
+            mstore(add(arg, 0x120), mload(add(p4x, 0x20)))
+
+            let p4y := mload(add(p4, 0x20))
+            mstore(add(arg, 0x140), mload(p4y))
+            mstore(add(arg, 0x160), mload(add(p4y, 0x20)))
+
+            let c := add(arg, 0x180)
             // call(gasLimit, to, value, inputOffset, inputSize, outputOffset, outputSize)
             if iszero(staticcall(not(0), 0x08, arg, 0x180, c, 0x20)) {
                 revert(0, 0)
             }
+
+            result := not(iszero(mload(c)))
         }
-        return c[0] != 0;
     }
 }
