@@ -74,16 +74,14 @@ async function stakeOperatorAccount(operatorAddress, contractOwnerAddress) {
 
   console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
 
+  let stakeAmount = web3.utils.numberToHex('200000000000000000000000')
+
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
-    formatAmount(20000000, 18),
+    stakeAmount,
     delegation).send({from: contractOwnerAddress});
 
   console.log(`Account ${operatorAddress} staked!`);
-};
-
-function formatAmount(amount, decimals) {
-  return '0x' + web3.utils.toBN(amount).muln(10).pow(web3.utils.toBN(decimals)).toString('hex');
 };
 
 async function authorizeOperatorContract(operatorAddress, authorizer) {
