@@ -74,6 +74,7 @@ async function stakeOperatorAccount(operatorAddress, contractOwnerAddress) {
 
   console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
 
+  // Current minimumStake value configured on the TokenStaking contract.
   let stakeAmount = web3.utils.numberToHex('200000000000000000000000')
 
   await keepTokenContract.methods.approveAndCall(
