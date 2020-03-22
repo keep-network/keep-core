@@ -20,7 +20,12 @@ contract TokenStaking is StakeDelegatable {
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
     // the Keep network. Expressed as number with 18-decimal places.
-    uint256 public minimumStake = 200000 * 1e18;
+    // Initial minimum stake is higher than the final and lowered periodically based
+    // on the amount of steps and the length of the minimum stake schedule in blocks.
+    uint256 public minimumStakeScheduleStart;
+    uint256 public minimumStakeSchedule = 5760 * 365 * 2; // 2 years in blocks (avg blocks per day * days in a year * years)
+    uint256 public minimumStakeSteps = 10;
+    uint256 public minimumStakeBase = 10000 * 1e18;
 
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
@@ -61,6 +66,21 @@ contract TokenStaking is StakeDelegatable {
         registry = Registry(_registry);
         initializationPeriod = _initializationPeriod;
         undelegationPeriod = _undelegationPeriod;
+        minimumStakeScheduleStart = block.number;
+    }
+
+    /**
+     * @notice Returns minimum amount of KEEP that allows sMPC cluster client to
+     * participate in the Keep network. Expressed as number with 18-decimal places.
+     * Initial minimum stake is higher than the final and lowered periodically based
+     * on the amount of steps and the length of the minimum stake schedule in blocks.
+     */
+    function minimumStake() public view returns (uint256) {
+        if (block.number < minimumStakeScheduleStart.add(minimumStakeSchedule)) {
+            uint256 currentStep = minimumStakeSteps.mul(block.number.sub(minimumStakeScheduleStart)).div(minimumStakeSchedule);
+            return minimumStakeBase.mul(minimumStakeSteps.sub(currentStep));
+        }
+        return minimumStakeBase;
     }
 
     /**
@@ -75,7 +95,7 @@ contract TokenStaking is StakeDelegatable {
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
-        require(_value >= minimumStake, "Tokens amount must be greater than the minimum stake");
+        require(_value >= minimumStake(), "Tokens amount must be greater than the minimum stake");
         require(_extraData.length == 60, "Stake delegation data must be provided.");
 
         address payable magpie = address(uint160(_extraData.toAddress(0)));
@@ -400,6 +420,6 @@ contract TokenStaking is StakeDelegatable {
         address staker,
         address operatorContract
     ) public view returns(bool) {
-        return activeStake(staker, operatorContract) >= minimumStake;
+        return activeStake(staker, operatorContract) >= minimumStake();
     }
 }
