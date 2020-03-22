@@ -9,7 +9,7 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
+const TokenStaking = artifacts.require('./TokenStakingStub.sol');
 const Registry = artifacts.require("./Registry.sol");
 
 contract('TokenStaking', function(accounts) {
@@ -60,6 +60,25 @@ contract('TokenStaking', function(accounts) {
       {from: ownerOne}
     );
   }
+
+  it("should get correct minimum stake based on the minimum stake schedule", async () => {
+    let minimumStakeSchedule = 100;
+    await stakingContract.setMinimumStakeSchedule(minimumStakeSchedule);
+    let minimumStakeBase = await stakingContract.minimumStakeBase();
+    let minimumStakeSteps = await stakingContract.minimumStakeSteps();
+
+    expect(await stakingContract.minimumStake()).to.eq.BN(
+      minimumStakeBase.mul(minimumStakeSteps),
+      "Unexpected minimum stake amount"
+    );
+
+    await mineBlocks(minimumStakeSchedule);
+
+    expect(await stakingContract.minimumStake()).to.eq.BN(
+      minimumStakeBase,
+      "Unexpected minimum stake amount"
+    );
+  });
 
   it("should send tokens correctly", async () => {
     let amount = web3.utils.toBN(1000000000);
