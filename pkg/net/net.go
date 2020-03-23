@@ -60,9 +60,7 @@ type Provider interface {
 
 	// AddrStrings returns all listen addresses of the provider.
 	AddrStrings() []string
-	// Peers returns all known peers from the underlying peer store.
-	// This may include peers not directly connected to the provider.
-	Peers() []string
+
 	// ConnectionManager returns the connection manager used by the provider.
 	ConnectionManager() ConnectionManager
 

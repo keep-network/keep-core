@@ -118,19 +118,6 @@ func (p *provider) AddrStrings() []string {
 	return multiaddrStrings
 }
 
-func (p *provider) Peers() []string {
-	var peers []string
-	peersIDSlice := p.host.Peerstore().Peers()
-	for _, peer := range peersIDSlice {
-		// filter out our own node
-		if peer == p.identity.id {
-			continue
-		}
-		peers = append(peers, peer.String())
-	}
-	return peers
-}
-
 func (p *provider) ConnectionManager() net.ConnectionManager {
 	return p.connectionManager
 }
