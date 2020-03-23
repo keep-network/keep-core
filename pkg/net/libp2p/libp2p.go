@@ -75,7 +75,6 @@ type provider struct {
 	identity *identity
 	host     host.Host
 	routing  *dht.IpfsDHT
-	addrs    []ma.Multiaddr
 
 	connectionManager *connectionManager
 }
@@ -279,7 +278,6 @@ func Connect(
 		identity:                identity,
 		host:                    rhost.Wrap(host, router),
 		routing:                 router,
-		addrs:                   host.Addrs(),
 	}
 
 	if len(config.Peers) == 0 {
