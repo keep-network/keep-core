@@ -157,7 +157,7 @@ func pingRequest(c *cli.Context) error {
 	// Give ourselves a moment to form a mesh with the other peer
 	for {
 		time.Sleep(3 * time.Second)
-		peers := netProvider.Peers()
+		peers := netProvider.ConnectionManager().ConnectedPeers()
 		if len(peers) < 1 {
 			fmt.Println("waiting for peer...")
 			continue
