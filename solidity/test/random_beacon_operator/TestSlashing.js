@@ -179,14 +179,9 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
         blsData.nextGroupSignature, // Wrong signature
         {from: tattletale}
       ),
-      "Group is not terminated or signature is invalid"
+      "Group is terminated or the signature is invalid"
     )
-
-    assert.isTrue((await stakingContract.balanceOf(operator1)).eq(largeStake), "Unexpected operator 1 balance")
-    assert.isTrue((await stakingContract.balanceOf(operator2)).eq(minimumStake), "Unexpected operator 2 balance")
-    assert.isTrue((await stakingContract.balanceOf(operator3)).eq(minimumStake), "Unexpected operator 3 balance")
-
-    assert.isTrue((await token.balanceOf(tattletale)).isZero(), "Unexpected tattletale balance")
+    // Transaction reverted no changes are applied.
   })
 
   it("should be able to report failure to produce entry after relay entry timeout", async () => {
