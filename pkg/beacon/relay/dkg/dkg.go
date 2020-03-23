@@ -94,21 +94,15 @@ func ExecuteDKG(
 			err,
 		)
 
-		dkgResultEvent, err := waitForDkgResultEvent(
+		if err := decideMemberFate(
+			playerIndex,
+			gjkrResult,
 			dkgResultChannel,
 			startPublicationBlockHeight,
 			relayChain,
 			blockCounter,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, err
-		}
-
-		if !shouldStayInGroup(playerIndex, gjkrResult, dkgResultEvent) {
-			return nil, fmt.Errorf(
-				"[member:%v] could not stay in the group",
-				playerIndex,
-			)
 		}
 	}
 
@@ -117,6 +111,34 @@ func ExecuteDKG(
 		groupPublicKey:       gjkrResult.GroupPublicKey,
 		groupPrivateKeyShare: gjkrResult.GroupPrivateKeyShare,
 	}, nil
+}
+
+func decideMemberFate(
+	playerIndex group.MemberIndex,
+	gjkrResult *gjkr.Result,
+	dkgResultChannel chan *event.DKGResultSubmission,
+	startPublicationBlockHeight uint64,
+	relayChain relayChain.Interface,
+	blockCounter chain.BlockCounter,
+) error {
+	dkgResultEvent, err := waitForDkgResultEvent(
+		dkgResultChannel,
+		startPublicationBlockHeight,
+		relayChain,
+		blockCounter,
+	)
+	if err != nil {
+		return err
+	}
+
+	if !shouldStayInGroup(playerIndex, gjkrResult, dkgResultEvent) {
+		return fmt.Errorf(
+			"[member:%v] could not stay in the group",
+			playerIndex,
+		)
+	}
+
+	return nil
 }
 
 func waitForDkgResultEvent(
