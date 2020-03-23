@@ -120,7 +120,7 @@ library AltBn128 {
         (y.x, y.y) = _gfP2Multiply(ya2x, ya2y, xbx, xby);
 
         // Multiply y by hexRoot constant to find correct y.
-        while (!g2X2y(x, y)) {
+        while (!_g2X2y(x.x, x.y, y.x, y.y)) {
             (y.x, y.y) = _gfP2Multiply(y.x, y.y, hexRootX, hexRootY);
         }
     }
@@ -436,11 +436,17 @@ library AltBn128 {
      * @dev Return true if G2 point's y^2 equals x.
      */
     function g2X2y(gfP2 memory x, gfP2 memory y) internal pure returns(bool) {
-       
         gfP2 memory y2;
         y2 = gfP2Square(y);
 
         return (y2.x == x.x && y2.y == x.y);
+    }
+
+    function _g2X2y(uint256 xx, uint256 xy, uint256 yx, uint256 yy)
+        internal pure returns (bool) {
+        (uint256 y2x, uint256 y2y) = _gfP2Square(yx, yy);
+
+        return (y2x == xx && y2y == xy);
     }
 
     /**
