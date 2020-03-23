@@ -106,7 +106,7 @@ library AltBn128 {
         internal
         pure returns(gfP2 memory y)
     {
-        gfP2 memory x = gfP2CubeAddTwistB(_x);
+        (uint256 xx, uint256 xy) = _gfP2CubeAddTwistB(_x.x, _x.y);
 
         // Using formula y = x ^ (p^2 + 15) / 32 from
         // https://github.com/ethereum/beacon_chain/blob/master/beacon_chain/utils/bls.py
@@ -114,13 +114,13 @@ library AltBn128 {
         uint256 a = 3869331240733915743250440106392954448556483137451914450067252501901456824595;
         uint256 b = 146360017852723390495514512480590656176144969185739259173561346299185050597;
 
-        (uint256 xbx, uint256 xby) = _gfP2Pow(x.x, x.y, b);
-        (uint256 yax, uint256 yay) = _gfP2Pow(x.x, x.y, a);
+        (uint256 xbx, uint256 xby) = _gfP2Pow(xx, xy, b);
+        (uint256 yax, uint256 yay) = _gfP2Pow(xx, xy, a);
         (uint256 ya2x, uint256 ya2y) = _gfP2Pow(yax, yay, a);
         (y.x, y.y) = _gfP2Multiply(ya2x, ya2y, xbx, xby);
 
         // Multiply y by hexRoot constant to find correct y.
-        while (!_g2X2y(x.x, x.y, y.x, y.y)) {
+        while (!_g2X2y(xx, xy, y.x, y.y)) {
             (y.x, y.y) = _gfP2Multiply(y.x, y.y, hexRootX, hexRootY);
         }
     }
@@ -396,9 +396,14 @@ library AltBn128 {
     }
 
     function gfP2CubeAddTwistB(gfP2 memory a) internal pure returns (gfP2 memory) {
-        (uint256 a3x, uint256 a3y) = _gfP2Cube(a.x, a.y);
-        (uint256 x, uint256 y) = _gfP2Add(a3x, a3y, twistBx, twistBy);
+        (uint256 x, uint256 y) = _gfP2CubeAddTwistB(a.x, a.y);
         return gfP2(x, y);
+    }
+
+    function _gfP2CubeAddTwistB(uint256 ax, uint256 ay)
+        internal pure returns (uint256 x, uint256 y) {
+        (uint256 a3x, uint256 a3y) = _gfP2Cube(ax, ay);
+        return _gfP2Add(a3x, a3y, twistBx, twistBy);
     }
 
     function _gfP2Pow(uint256 _ax, uint256 _ay, uint256 _exp)
