@@ -143,7 +143,7 @@ func waitForDkgResultEvent(
 	case dkgResultEvent := <-dkgResultChannel:
 		return dkgResultEvent, nil
 	case <-timeoutBlockChannel:
-		return nil, fmt.Errorf("DKG timed out")
+		return nil, fmt.Errorf("DKG result publication timed out")
 	}
 }
 
