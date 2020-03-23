@@ -173,10 +173,13 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   })
 
   it("should ignore invalid report of unauthorized signing", async () => {
-    await operatorContract.reportUnauthorizedSigning(
-      groupIndex,
-      blsData.nextGroupSignature, // Wrong signature
-      {from: tattletale}
+    await expectThrowWithMessage(
+      operatorContract.reportUnauthorizedSigning(
+        groupIndex,
+        blsData.nextGroupSignature, // Wrong signature
+        {from: tattletale}
+      ),
+      "Group is not terminated or signature is invalid"
     )
 
     assert.isTrue((await stakingContract.balanceOf(operator1)).eq(largeStake), "Unexpected operator 1 balance")
