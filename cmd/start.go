@@ -104,7 +104,7 @@ func Start(c *cli.Context) error {
 		return err
 	}
 
-	nodeHeader(netProvider.AddrStrings(), config.LibP2P.Port)
+	nodeHeader(netProvider.ConnectionManager().AddrStrings(), config.LibP2P.Port)
 
 	persistence := persistence.NewEncryptedPersistence(
 		persistence.NewDiskHandle(config.Storage.DataDir),

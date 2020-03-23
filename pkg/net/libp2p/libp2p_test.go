@@ -184,7 +184,7 @@ func TestProviderSetAnnouncedAddresses(t *testing.T) {
 		fmt.Sprintf("/dns4/address.com/tcp/3919/ipfs/%v", provider.ID()),
 		fmt.Sprintf("/ip4/100.20.50.30/tcp/3919/ipfs/%v", provider.ID()),
 	}
-	providerAddresses := provider.AddrStrings()
+	providerAddresses := provider.ConnectionManager().AddrStrings()
 	if strings.Join(expectedAddresses, " ") != strings.Join(providerAddresses, " ") {
 		t.Fatalf(
 			"expected: provider addresses [%v]\nactual: provider addresses [%v]",

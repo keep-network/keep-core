@@ -101,7 +101,7 @@ func pingRequest(c *cli.Context) error {
 
 	if isBootstrapNode {
 		var bootstrapAddr string
-		for _, addr := range netProvider.AddrStrings() {
+		for _, addr := range netProvider.ConnectionManager().AddrStrings() {
 			if strings.Contains(addr, "ip4") && !strings.Contains(addr, "127.0.0.1") {
 				bootstrapAddr = addr
 				break
