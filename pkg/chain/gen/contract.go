@@ -1,3 +1,3 @@
 package gen
 
-//go:generate sh -c "SOLIDITY_DIR=../../../contracts/solidity make"
+//go:generate sh -c "SOLIDITY_DIR=../../../solidity make"

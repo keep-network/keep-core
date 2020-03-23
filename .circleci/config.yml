@@ -27,13 +27,13 @@ jobs:
       - run:
           name: Set up test and test result environment
           command: |
-            cd contracts/solidity
+            cd solidity
             npm install
       - run:
           name: Running testrpc
           command: ganache-cli
           background: true
-      - run: cd contracts/solidity && npm run test
+      - run: cd solidity && npm run test
       - store_test_results:
           path: /tmp/test-results
   generate_docs_solidity:
@@ -43,7 +43,7 @@ jobs:
       - run:
           name: Generate solidity docs
           command: |
-            cd contracts/solidity && npm install
+            cd solidity && npm install
             node_modules/.bin/truffle compile
             mkdir -p output
             node scripts/generate-api-docs.js > output/index.adoc
@@ -125,7 +125,7 @@ jobs:
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
             export CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
             mkdir -p /tmp/keep-client/contracts
-            contracts/solidity/scripts/circleci-migrate-contracts.sh
+            solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
@@ -182,17 +182,17 @@ jobs:
       - checkout
       - run:
           name: Copy contract artifacts
-          working_directory: ~/project/contracts/solidity/dashboard
+          working_directory: ~/project/solidity/dashboard
           command: |
             ./scripts/copy-contracts.sh /tmp/keep-client/contracts
       - run:
           name: Run Docker build
-          working_directory: ~/project/contracts/solidity/dashboard
+          working_directory: ~/project/solidity/dashboard
           command: |
             docker build --tag keep-dapp-token-dashboard .
       - run:
           name: Save keep-dapp-token-dashboard image
-          working_directory: ~/project/contracts/solidity/dashboard
+          working_directory: ~/project/solidity/dashboard
           command: |
             mkdir -p /tmp/keep-dapp-token-dashboard/docker-images/
             docker save -o /tmp/keep-dapp-token-dashboard/docker-images/keep-dapp-token-dashboard.tar keep-dapp-token-dashboard
