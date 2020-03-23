@@ -59,10 +59,11 @@ ssh utilitybox << EOF
 
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
-  echo "<<<<<<START Tenderly Push START<<<<<<"
-  tenderly login --authentication-method token --token $TENDERLY_TOKEN
-  tenderly push --networks $ETH_NETWORK_ID --tag keep-core --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG
-  echo "<<<<<<FINISH Tenderly Push FINISH<<<<<<"
+  # Temporary disablement to sort out inconsistent behavior on push
+  #echo "<<<<<<START Tenderly Push START<<<<<<"
+  #tenderly login --authentication-method token --token $TENDERLY_TOKEN
+  #tenderly push --networks $ETH_NETWORK_ID --tag keep-core --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG
+  #echo "<<<<<<FINISH Tenderly Push FINISH<<<<<<"
 EOF
 
 echo "<<<<<<START Contract Copy START<<<<<<"
