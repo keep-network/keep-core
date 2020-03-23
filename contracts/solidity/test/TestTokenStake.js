@@ -1,4 +1,6 @@
 import mineBlocks from './helpers/mineBlocks';
+import { duration, increaseTimeTo } from './helpers/increaseTime';
+import latestTime from './helpers/latestTime';
 import latestBlock from './helpers/latestBlock';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
@@ -62,7 +64,7 @@ contract('TokenStaking', function(accounts) {
   }
 
   it("should get correct minimum stake based on the minimum stake schedule", async () => {
-    let minimumStakeSchedule = 100;
+    let minimumStakeSchedule = duration.days(100);
     await stakingContract.setMinimumStakeSchedule(minimumStakeSchedule);
     let minimumStakeBase = await stakingContract.minimumStakeBase();
     let minimumStakeSteps = await stakingContract.minimumStakeSteps();
@@ -72,7 +74,7 @@ contract('TokenStaking', function(accounts) {
       "Unexpected minimum stake amount"
     );
 
-    await mineBlocks(minimumStakeSchedule);
+    await increaseTimeTo(await latestTime() + minimumStakeSchedule);
 
     expect(await stakingContract.minimumStake()).to.eq.BN(
       minimumStakeBase,

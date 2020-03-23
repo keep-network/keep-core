@@ -23,7 +23,7 @@ contract TokenStaking is StakeDelegatable {
     // Initial minimum stake is higher than the final and lowered periodically based
     // on the amount of steps and the length of the minimum stake schedule in blocks.
     uint256 public minimumStakeScheduleStart;
-    uint256 public minimumStakeSchedule = 5760 * 365 * 2; // 2 years in blocks (avg blocks per day * days in a year * years)
+    uint256 public minimumStakeSchedule = 86400 * 365 * 2; // 2 years in seconds (seconds per day * days in a year * years)
     uint256 public minimumStakeSteps = 10;
     uint256 public minimumStakeBase = 10000 * 1e18;
 
@@ -66,7 +66,7 @@ contract TokenStaking is StakeDelegatable {
         registry = Registry(_registry);
         initializationPeriod = _initializationPeriod;
         undelegationPeriod = _undelegationPeriod;
-        minimumStakeScheduleStart = block.number;
+        minimumStakeScheduleStart = block.timestamp;
     }
 
     /**
@@ -76,8 +76,8 @@ contract TokenStaking is StakeDelegatable {
      * on the amount of steps and the length of the minimum stake schedule in blocks.
      */
     function minimumStake() public view returns (uint256) {
-        if (block.number < minimumStakeScheduleStart.add(minimumStakeSchedule)) {
-            uint256 currentStep = minimumStakeSteps.mul(block.number.sub(minimumStakeScheduleStart)).div(minimumStakeSchedule);
+        if (block.timestamp < minimumStakeScheduleStart.add(minimumStakeSchedule)) {
+            uint256 currentStep = minimumStakeSteps.mul(block.timestamp.sub(minimumStakeScheduleStart)).div(minimumStakeSchedule);
             return minimumStakeBase.mul(minimumStakeSteps.sub(currentStep));
         }
         return minimumStakeBase;
