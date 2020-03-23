@@ -152,8 +152,13 @@ func shouldStayInGroup(
 	gjkrResult *gjkr.Result,
 	dkgResultEvent *event.DKGResultSubmission,
 ) bool {
+	groupPublicKey, err := gjkrResult.GroupPublicKeyBytes()
+	if err != nil {
+		return false
+	}
+
 	supportsSameGroupPublicKey := bytes.Equal(
-		dkgResult.ConvertGjkrResult(gjkrResult).GroupPublicKey,
+		groupPublicKey,
 		dkgResultEvent.GroupPublicKey,
 	)
 

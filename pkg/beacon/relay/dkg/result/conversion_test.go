@@ -90,7 +90,7 @@ func TestConvertResult(t *testing.T) {
 			test.gjkrResult.Group.MarkMemberAsInactive(inactiveMember)
 		}
 
-		convertedResult := ConvertGjkrResult(test.gjkrResult)
+		convertedResult := convertGjkrResult(test.gjkrResult)
 
 		if !test.expectedResult.Equals(convertedResult) {
 			t.Errorf("\nexpected: %v\nactual:   %v\n", test.expectedResult, convertedResult)
