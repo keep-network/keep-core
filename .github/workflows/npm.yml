@@ -5,9 +5,9 @@ on:
     branches:
       - master
     paths:
-      - "contracts/solidity/contracts/**"
-      - "contracts/solidity/package.json"
-      - "contracts/solidity/package-lock.json"
+      - "solidity/contracts/**"
+      - "solidity/package.json"
+      - "solidity/package-lock.json"
 
 jobs:
   publish-contracts:
@@ -21,13 +21,13 @@ jobs:
           node-version: "11.x"
           registry-url: "https://npm.pkg.github.com"
       - name: Install dependencies
-        working-directory: ./contracts/solidity
+        working-directory: ./solidity
         run: npm install
       - name: Compile source code
-        working-directory: ./contracts/solidity
+        working-directory: ./solidity
         run: npm run compile
       - name: Publish package
-        working-directory: ./contracts/solidity
+        working-directory: ./solidity
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

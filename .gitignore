@@ -1,5 +1,5 @@
 node_modules/
-./contracts/solidity/truffle.js
+./solidity/truffle.js
 build/
 vendor/
 _local/
