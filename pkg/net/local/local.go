@@ -61,10 +61,6 @@ func (lp *localProvider) AddrStrings() []string {
 	return make([]string, 0)
 }
 
-func (lp *localProvider) Peers() []string {
-	return make([]string, 0)
-}
-
 func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
 	lp.connectionManager.peers[peerID] = pubKey
 }

@@ -19,7 +19,7 @@ LOG_END='\n\e[0m' # new line + reset color
 printf "${LOG_START}Starting installation...${LOG_END}"
 KEEP_CORE_PATH=$(realpath $(dirname $0)/../)
 KEEP_CORE_CONFIG_FILE_PATH=$(realpath $CONFIG_FILE_PATH)
-KEEP_CORE_SOL_PATH=$(realpath $KEEP_CORE_PATH/contracts/solidity)
+KEEP_CORE_SOL_PATH=$(realpath $KEEP_CORE_PATH/solidity)
 
 cd $KEEP_CORE_SOL_PATH
 
