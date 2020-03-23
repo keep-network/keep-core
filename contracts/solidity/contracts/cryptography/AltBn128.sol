@@ -503,6 +503,7 @@ library AltBn128 {
         G1Point memory p3,
         G2Point memory p4
     ) internal view returns (bool result) {
+        uint[1] memory c;
         /* solium-disable-next-line */
         assembly {
             let arg := mload(0x40)
@@ -529,13 +530,11 @@ library AltBn128 {
             mstore(add(arg, 0x140), mload(p4y))
             mstore(add(arg, 0x160), mload(add(p4y, 0x20)))
 
-            let c := add(arg, 0x180)
             // call(gasLimit, to, value, inputOffset, inputSize, outputOffset, outputSize)
             if iszero(staticcall(not(0), 0x08, arg, 0x180, c, 0x20)) {
                 revert(0, 0)
             }
-
-            result := not(iszero(mload(c)))
         }
+        return c[0] != 0;
     }
 }
