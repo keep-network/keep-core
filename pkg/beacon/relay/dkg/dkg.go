@@ -130,11 +130,11 @@ func waitForDkgResultEvent(
 		return nil, err
 	}
 
-	dkgTimeoutBlock := startPublicationBlockHeight +
+	timeoutBlock := startPublicationBlockHeight +
 		dkgResult.SigningStateBlocks() +
 		(uint64(config.GroupSize) * config.ResultPublicationBlockStep)
 
-	dkgTimeoutBlockChannel, err := blockCounter.BlockHeightWaiter(dkgTimeoutBlock)
+	timeoutBlockChannel, err := blockCounter.BlockHeightWaiter(timeoutBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +142,7 @@ func waitForDkgResultEvent(
 	select {
 	case dkgResultEvent := <-dkgResultChannel:
 		return dkgResultEvent, nil
-	case <-dkgTimeoutBlockChannel:
+	case <-timeoutBlockChannel:
 		return nil, fmt.Errorf("DKG timed out")
 	}
 }
