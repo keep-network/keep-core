@@ -7,8 +7,8 @@ library OperatorParams {
     //
     // An OperatorParams uint256 contains:
     // - the operator's staked token amount (uint128)
-    // - the operator's creation block (uint64)
-    // - the operator's undelegation block (uint64)
+    // - the operator's creation timestamp (uint64)
+    // - the operator's undelegation timestamp (uint64)
     //
     // These are packed as [amount | createdAt | undelegatedAt]
     //
@@ -17,17 +17,15 @@ library OperatorParams {
     // and there will be at most 10^9 KEEP in existence (2^30).
     //
     // Creation and undelegation times are stored in an uint64 each.
-    // Because blocks are created every 10 to 15 seconds,
-    // there are less than 4 million blocks per year (2^22).
-    // Thus uint64s would be sufficient for a trillion years.
-    uint256 constant BLOCKHEIGHT_WIDTH = 64;
+    // Thus uint64s would be sufficient for 10^11 years.
+    uint256 constant TIMESTAMP_WIDTH = 64;
     uint256 constant AMOUNT_WIDTH = 128;
 
-    uint256 constant BLOCKHEIGHT_MAX = (2**BLOCKHEIGHT_WIDTH) - 1;
+    uint256 constant TIMESTAMP_MAX = (2**TIMESTAMP_WIDTH) - 1;
     uint256 constant AMOUNT_MAX = (2**AMOUNT_WIDTH) - 1;
 
-    uint256 constant CREATION_SHIFT = BLOCKHEIGHT_WIDTH;
-    uint256 constant AMOUNT_SHIFT = 2 * BLOCKHEIGHT_WIDTH;
+    uint256 constant CREATION_SHIFT = TIMESTAMP_WIDTH;
+    uint256 constant AMOUNT_SHIFT = 2 * TIMESTAMP_WIDTH;
 
     function pack(
         uint256 amount,
@@ -40,12 +38,12 @@ library OperatorParams {
             amount <= AMOUNT_MAX,
             "amount uint128 overflow"
         );
-        // Bitwise OR the blockheights together.
+        // Bitwise OR the timestamps together.
         // The resulting number is equal or greater than either,
         // and tells if we have a bit set outside the 64 available bits.
         require(
-            (createdAt | undelegatedAt) <= BLOCKHEIGHT_MAX,
-            "blockheight uint64 overflow"
+            (createdAt | undelegatedAt) <= TIMESTAMP_MAX,
+            "timestamp uint64 overflow"
         );
         uint256 a = amount << AMOUNT_SHIFT;
         uint256 c = createdAt << CREATION_SHIFT;
@@ -59,8 +57,8 @@ library OperatorParams {
         uint256 undelegatedAt
     ) {
         amount = getAmount(packedParams);
-        createdAt = getCreationBlock(packedParams);
-        undelegatedAt = getUndelegationBlock(packedParams);
+        createdAt = getCreationTimestamp(packedParams);
+        undelegatedAt = getUndelegationTimestamp(packedParams);
     }
 
     function getAmount(uint256 packedParams)
@@ -74,40 +72,40 @@ library OperatorParams {
     ) internal pure returns (uint256) {
         return pack(
             amount,
-            getCreationBlock(packedParams),
-            getUndelegationBlock(packedParams)
+            getCreationTimestamp(packedParams),
+            getUndelegationTimestamp(packedParams)
         );
     }
 
-    function getCreationBlock(uint256 packedParams)
+    function getCreationTimestamp(uint256 packedParams)
         internal pure returns (uint256) {
-        return (packedParams >> CREATION_SHIFT) & BLOCKHEIGHT_MAX;
+        return (packedParams >> CREATION_SHIFT) & TIMESTAMP_MAX;
     }
 
-    function setCreationBlock(
+    function setCreationTimestamp(
         uint256 packedParams,
-        uint256 creationBlockheight
+        uint256 creationTimestamp
     ) internal pure returns (uint256) {
         return pack(
             getAmount(packedParams),
-            creationBlockheight,
-            getUndelegationBlock(packedParams)
+            creationTimestamp,
+            getUndelegationTimestamp(packedParams)
         );
     }
 
-    function getUndelegationBlock(uint256 packedParams)
+    function getUndelegationTimestamp(uint256 packedParams)
         internal pure returns (uint256) {
-        return packedParams & BLOCKHEIGHT_MAX;
+        return packedParams & TIMESTAMP_MAX;
     }
 
-    function setUndelegationBlock(
+    function setUndelegationTimestamp(
         uint256 packedParams,
-        uint256 undelegationBlockheight
+        uint256 undelegationTimestamp
     ) internal pure returns (uint256) {
         return pack(
             getAmount(packedParams),
-            getCreationBlock(packedParams),
-            undelegationBlockheight
+            getCreationTimestamp(packedParams),
+            undelegationTimestamp
         );
     }
 }
