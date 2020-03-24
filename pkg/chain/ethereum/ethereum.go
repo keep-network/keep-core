@@ -41,11 +41,11 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
 	}
 
-	ticketSubmissionTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
+	ticketSubmissionRoundDuration, err :=
+		ec.keepRandomBeaconOperatorContract.TicketSubmissionRoundDuration()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error calling TicketSubmissionTimeout: [%v]",
+			"error calling TicketSubmissionRoundDuration: [%v]",
 			err,
 		)
 	}
@@ -69,12 +69,12 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 	}
 
 	return &relayconfig.Chain{
-		GroupSize:                  int(groupSize.Int64()),
-		HonestThreshold:            int(threshold.Int64()),
-		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
-		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
-		MinimumStake:               minimumStake,
-		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
+		GroupSize:                     int(groupSize.Int64()),
+		HonestThreshold:               int(threshold.Int64()),
+		TicketSubmissionRoundDuration: ticketSubmissionRoundDuration.Uint64(),
+		ResultPublicationBlockStep:    resultPublicationBlockStep.Uint64(),
+		MinimumStake:                  minimumStake,
+		RelayEntryTimeout:             relayEntryTimeout.Uint64(),
 	}, nil
 }
 
@@ -130,6 +130,10 @@ func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) [32]uint8 {
 
 func (ec *ethereumChain) GetSubmittedTickets() ([]uint64, error) {
 	return ec.keepRandomBeaconOperatorContract.SubmittedTickets()
+}
+
+func (ec *ethereumChain) TicketSubmissionTimeout() (*big.Int, error) {
+	return ec.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
 }
 
 func (ec *ethereumChain) GetSelectedParticipants() ([]chain.StakerAddress, error) {

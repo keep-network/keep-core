@@ -171,7 +171,11 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groups.stakingContract = TokenStaking(_stakingContract);
         groups.groupActiveTime = TokenStaking(_stakingContract).undelegationPeriod();
 
-        groupSelection.ticketSubmissionTimeout = 12;
+        // Default ticketSubmissionTimeout value. May be changed while
+        // starting new group selection, depending on the current minimum
+        // stake value.
+        groupSelection.ticketSubmissionTimeout = 6 + (7*6) + 6;
+        groupSelection.ticketSubmissionRoundDuration = 6;
         groupSelection.groupSize = groupSize;
 
         dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10);
@@ -271,10 +275,18 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /**
      * @dev Gets the timeout in blocks after which group candidate ticket
-     * submission is finished.
+     * submission is finished. The value is valid only in the context
+     * of last group selection.
      */
     function ticketSubmissionTimeout() public view returns (uint256) {
         return groupSelection.ticketSubmissionTimeout;
+    }
+
+    /**
+     * @dev Gets the duration of one ticket submission round in blocks.
+     */
+    function ticketSubmissionRoundDuration() public view returns (uint256) {
+        return groupSelection.ticketSubmissionRoundDuration;
     }
 
     /**

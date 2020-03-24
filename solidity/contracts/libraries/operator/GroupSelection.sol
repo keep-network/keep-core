@@ -44,6 +44,9 @@ library GroupSelection {
         // Timeout in blocks after which the ticket submission is finished.
         uint256 ticketSubmissionTimeout;
 
+        // Duration of one ticket submission round in blocks.
+        uint256 ticketSubmissionRoundDuration;
+
         // Number of block at which the group selection started and from which
         // ticket submissions are accepted.
         uint256 ticketSubmissionStartBlock;
@@ -90,6 +93,14 @@ library GroupSelection {
         self.inProgress = true;
         self.seed = _seed;
         self.ticketSubmissionStartBlock = block.number;
+
+        // ticketSubmissionTimeout consists of:
+        // - one initial ticket submission round
+        // - N reactive ticket submission rounds
+        // - one additional waiting round
+        self.ticketSubmissionTimeout = self.ticketSubmissionRoundDuration
+            .add(reactiveTicketSubmissionRounds(self).mul(self.ticketSubmissionRoundDuration))
+            .add(self.ticketSubmissionRoundDuration);
     }
 
     /**
@@ -399,5 +410,25 @@ library GroupSelection {
         for (uint i = 0; i < self.tickets.length; i++) {
             delete self.candidate[self.tickets[i]];
         }
+    }
+
+    function reactiveTicketSubmissionRounds(Storage storage self) public view returns (uint256) {
+        // TODO: pass tokenSupply and minimumStake as arguments.
+        uint256 tokenSupply = 10**27;
+        uint256 minimumStake = 200000 * 1e18;
+
+        uint256 possibleOperators = tokenSupply.div(minimumStake);
+
+        uint256 operatorsExponent = 1;
+        while(2**operatorsExponent < possibleOperators){
+            operatorsExponent++;
+        }
+
+        uint256 groupsExponent = 1;
+        while(2**groupsExponent < self.groupSize){
+            groupsExponent++;
+        }
+
+        return operatorsExponent.sub(groupsExponent);
     }
 }

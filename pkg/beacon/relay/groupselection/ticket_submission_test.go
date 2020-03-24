@@ -142,6 +142,10 @@ func (mgi *mockGroupInterface) GetSubmittedTickets() ([]uint64, error) {
 	panic("not implemented")
 }
 
+func (mgi *mockGroupInterface) TicketSubmissionTimeout() (*big.Int, error) {
+	panic("not implemented")
+}
+
 func (mgi *mockGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress, error) {
 	panic("unexpected")
 }
