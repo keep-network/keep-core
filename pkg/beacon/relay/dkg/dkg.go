@@ -116,7 +116,7 @@ func ExecuteDKG(
 // decideMemberFate decides what the member will do in case it failed
 // publishing its DKG result. Member can stay in the group if it
 // supports the same group public key as the one registered on-chain and
-// the member is not considered as misbehaved by the group.
+// the member is not considered as misbehaving by the group.
 func decideMemberFate(
 	playerIndex group.MemberIndex,
 	gjkrResult *gjkr.Result,
@@ -155,7 +155,7 @@ func decideMemberFate(
 		if playerIndex == misbehaved {
 			return fmt.Errorf(
 				"[member:%v] could not stay in the group because "+
-					"member is considered as misbehaved",
+					"member is considered as misbehaving",
 				playerIndex,
 			)
 		}
