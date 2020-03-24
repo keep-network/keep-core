@@ -175,10 +175,12 @@ func TestSubmission(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		submittedTicketsCount, err := chain.GetSubmittedTicketsCount()
+		submittedTickets, err := chain.GetSubmittedTickets()
 		if err != nil {
 			t.Fatal(err)
 		}
+
+		submittedTicketsCount := big.NewInt(int64(len(submittedTickets)))
 
 		expectedCount := big.NewInt(int64(test.expectedSubmittedTicketsCount))
 		if expectedCount.Cmp(submittedTicketsCount) != 0 {
@@ -208,8 +210,14 @@ func (stg *stubGroupInterface) SubmitTicket(ticket *chain.Ticket) *async.EventGr
 	return promise
 }
 
-func (stg *stubGroupInterface) GetSubmittedTicketsCount() (*big.Int, error) {
-	return big.NewInt(int64(len(stg.submittedTickets))), nil
+func (stg *stubGroupInterface) GetSubmittedTickets() ([]uint64, error) {
+	tickets := make([]uint64, len(stg.submittedTickets))
+
+	for i := range tickets {
+		tickets[i] = stg.submittedTickets[i].Value.Uint64()
+	}
+
+	return tickets, nil
 }
 
 func (stg *stubGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress, error) {

@@ -157,13 +157,15 @@ func startTicketSubmission(
 				initialSubmissionEndBlockHeight,
 			)
 
-			ticketsCount, err := relayChain.GetSubmittedTicketsCount()
+			tickets, err := relayChain.GetSubmittedTickets()
 			if err != nil {
 				return fmt.Errorf(
-					"could not get submitted tickets count: [%v]",
+					"could not get submitted tickets: [%v]",
 					err,
 				)
 			}
+
+			ticketsCount := big.NewInt(int64(len(tickets)))
 
 			groupSize := big.NewInt(int64(chainConfig.GroupSize))
 			if ticketsCount.Cmp(groupSize) >= 0 {

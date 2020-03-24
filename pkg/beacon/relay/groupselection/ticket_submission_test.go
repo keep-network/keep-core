@@ -138,7 +138,7 @@ func (mgi *mockGroupInterface) SubmitTicket(
 	panic("unexpected")
 }
 
-func (mgi *mockGroupInterface) GetSubmittedTicketsCount() (*big.Int, error) {
+func (mgi *mockGroupInterface) GetSubmittedTickets() ([]uint64, error) {
 	panic("not implemented")
 }
 

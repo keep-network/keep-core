@@ -121,8 +121,14 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTi
 	return promise
 }
 
-func (c *localChain) GetSubmittedTicketsCount() (*big.Int, error) {
-	return big.NewInt(int64(len(c.tickets))), nil
+func (c *localChain) GetSubmittedTickets() ([]uint64, error) {
+	tickets := make([]uint64, len(c.tickets))
+
+	for i := range tickets {
+		tickets[i] = c.tickets[i].Value.Uint64()
+	}
+
+	return tickets, nil
 }
 
 func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, error) {

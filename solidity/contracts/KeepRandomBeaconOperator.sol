@@ -278,10 +278,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Gets the number of submitted group candidate tickets so far.
+     * @dev Gets the submitted group candidate tickets so far.
      */
-    function submittedTicketsCount() public view returns (uint256) {
-        return groupSelection.tickets.length;
+    function submittedTickets() public view returns (uint64[] memory) {
+        return groupSelection.tickets;
     }
 
     /**
