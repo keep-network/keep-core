@@ -113,6 +113,10 @@ func ExecuteDKG(
 	}, nil
 }
 
+// decideMemberFate decides what the member will do in case it failed
+// publishing its DKG result. Member can stay in the group if it
+// supports the same group public key as the one registered on-chain and
+// the member is not considered as misbehaved by the group.
 func decideMemberFate(
 	playerIndex group.MemberIndex,
 	gjkrResult *gjkr.Result,
@@ -131,11 +135,30 @@ func decideMemberFate(
 		return err
 	}
 
-	if !shouldStayInGroup(playerIndex, gjkrResult, dkgResultEvent) {
+	groupPublicKey, err := gjkrResult.GroupPublicKeyBytes()
+	if err != nil {
+		return err
+	}
+
+	// If member don't support the same group public key, it could not stay
+	// in the group.
+	if !bytes.Equal(groupPublicKey, dkgResultEvent.GroupPublicKey) {
 		return fmt.Errorf(
-			"[member:%v] could not stay in the group",
+			"[member:%v] could not stay in the group because "+
+				"member do not support the same group public key",
 			playerIndex,
 		)
+	}
+
+	// If member is considered as misbehaved, it could not stay in the group.
+	for _, misbehaved := range dkgResultEvent.Misbehaved {
+		if playerIndex == misbehaved {
+			return fmt.Errorf(
+				"[member:%v] could not stay in the group because "+
+					"member is considered as misbehaved",
+				playerIndex,
+			)
+		}
 	}
 
 	return nil
@@ -167,35 +190,4 @@ func waitForDkgResultEvent(
 	case <-timeoutBlockChannel:
 		return nil, fmt.Errorf("DKG result publication timed out")
 	}
-}
-
-func shouldStayInGroup(
-	memberIndex group.MemberIndex,
-	gjkrResult *gjkr.Result,
-	dkgResultEvent *event.DKGResultSubmission,
-) bool {
-	groupPublicKey, err := gjkrResult.GroupPublicKeyBytes()
-	if err != nil {
-		return false
-	}
-
-	supportsSameGroupPublicKey := bytes.Equal(
-		groupPublicKey,
-		dkgResultEvent.GroupPublicKey,
-	)
-
-	// If member didn't support the same group public key,
-	// it could not stay in the group.
-	if !supportsSameGroupPublicKey {
-		return false
-	}
-
-	// If member is considered as misbehaved, it could not stay in the group.
-	for _, misbehaved := range dkgResultEvent.Misbehaved {
-		if memberIndex == misbehaved {
-			return false
-		}
-	}
-
-	return true
 }

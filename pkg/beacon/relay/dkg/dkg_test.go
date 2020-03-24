@@ -91,7 +91,8 @@ func TestDecideMemberFate_NotSameGroupPublicKey(t *testing.T) {
 	}
 
 	expectedError := fmt.Sprintf(
-		"[member:%v] could not stay in the group",
+		"[member:%v] could not stay in the group because "+
+			"member do not support the same group public key",
 		playerIndex,
 	)
 	if err != nil && err.Error() != expectedError {
@@ -124,7 +125,8 @@ func TestDecideMemberFate_MemberIsMisbehaved(t *testing.T) {
 	}
 
 	expectedError := fmt.Sprintf(
-		"[member:%v] could not stay in the group",
+		"[member:%v] could not stay in the group because "+
+			"member is considered as misbehaved",
 		playerIndex,
 	)
 	if err != nil && err.Error() != expectedError {
