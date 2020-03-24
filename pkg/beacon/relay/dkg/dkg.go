@@ -176,7 +176,7 @@ func waitForDkgResultEvent(
 	}
 
 	timeoutBlock := startPublicationBlockHeight +
-		dkgResult.SigningStateBlocks() +
+		dkgResult.PublicationBlocks() +
 		(uint64(config.GroupSize) * config.ResultPublicationBlockStep)
 
 	timeoutBlockChannel, err := blockCounter.BlockHeightWaiter(timeoutBlock)

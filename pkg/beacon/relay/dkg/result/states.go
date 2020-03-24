@@ -17,8 +17,8 @@ type signingState = state.State
 const resultSigningStateDelayBlocks = 1
 const resultSigningStateActiveBlocks = 5
 
-// SigningStateBlocks returns block duration of signing state
-func SigningStateBlocks() uint64 {
+// PublicationBlocks returns aggregated block duration of all publication states.
+func PublicationBlocks() uint64 {
 	return resultSigningStateDelayBlocks + resultSigningStateActiveBlocks
 }
 
