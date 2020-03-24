@@ -176,7 +176,7 @@ func waitForDkgResultEvent(
 	}
 
 	timeoutBlock := startPublicationBlockHeight +
-		dkgResult.PublicationBlocks() +
+		dkgResult.PrePublicationBlocks() +
 		(uint64(config.GroupSize) * config.ResultPublicationBlockStep)
 
 	timeoutBlockChannel, err := blockCounter.BlockHeightWaiter(timeoutBlock)
