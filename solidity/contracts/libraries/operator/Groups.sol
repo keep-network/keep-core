@@ -387,7 +387,10 @@ library Groups {
      * verification means the private key has been leaked and all group members
      * should be punished by seizing their tokens. The submitter of this proof is
      * rewarded with 5% of the total seized amount scaled by the reward adjustment
-     * parameter and the rest 95% is burned.
+     * parameter and the rest 95% is burned. Group has to be active or expired.
+     * Unauthorized signing cannot be reported for stale or terminated group.
+     * In case of reporting unauthorized signing for stale group,
+     * terminated group, or when the signature is inavlid, function reverts.
      */
     function reportUnauthorizedSigning(
         Storage storage self,
@@ -403,6 +406,8 @@ library Groups {
         if (!isGroupTerminated(self, groupIndex) && isSignatureValid) {
             terminateGroup(self, groupIndex);
             self.stakingContract.seize(minimumStake, 100, msg.sender, self.groupMembers[groupPubKey]);
+        } else {
+            revert("Group is terminated or the signature is invalid");
         }
     }
 

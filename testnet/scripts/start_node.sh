@@ -1,1 +1,0 @@
-geth --datadir /data --verbosity=6 --rpc --rpcaddr='0.0.0.0' --rpcapi='admin,personal,web3,eth,net' --rpccorsdomain='*' --ws --wsaddr='0.0.0.0' --wsorigins='*' --netrestrict=${NETRESTRICT} --networkid=${NETWORK_ID} --bootnodes=`cat /bootnode/bootnodes` --ethstats=${HOSTNAME}:${MONITOR_SECRET}@${MONITOR_SERVICE}
