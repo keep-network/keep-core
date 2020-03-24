@@ -1,6 +1,4 @@
-
-import mineBlocks from '../helpers/mineBlocks';
-import { duration } from '../helpers/increaseTime';
+import increaseTime, { duration } from '../helpers/increaseTime';
 import latestTime from '../helpers/latestTime';
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import grantTokens from '../helpers/grantTokens';
@@ -114,9 +112,9 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should allow to delegate, undelegate, and recover grant", async () => {
     await delegate(grantee, operatorOne, grantAmount);
 
-    await mineBlocks(initializationPeriod);
+    await increaseTime(initializationPeriod + 1);
     await grantContract.undelegate(operatorOne, {from: grantee});
-    await mineBlocks(undelegationPeriod);
+    await increaseTime(undelegationPeriod + 1);
     await grantContract.recoverStake(operatorOne);
 
     let availableForStaking = await grantContract.availableToStake.call(grantId)
@@ -153,7 +151,7 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should allow to cancel delegation just before initialization period is over", async () => {
     await delegate(grantee, operatorOne, grantAmount);
     
-    await mineBlocks(initializationPeriod - 1);
+    await increaseTime(initializationPeriod - 1);
 
     await grantContract.cancelStake(operatorOne, {from: grantee});
 
@@ -173,7 +171,7 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should not allow to cancel delegation after initialization period is over", async () => {
     await delegate(grantee, operatorOne, grantAmount);
     
-    await mineBlocks(initializationPeriod);
+    await increaseTime(initializationPeriod + 1);
 
     await expectThrowWithMessage(
       grantContract.cancelStake(operatorOne, {from: grantee}),
@@ -184,10 +182,10 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should not allow to recover stake before undelegation period is over", async () => {
     await delegate(grantee, operatorOne, grantAmount);
 
-    await mineBlocks(initializationPeriod);
+    await increaseTime(initializationPeriod + 1);
     await grantContract.undelegate(operatorOne, {from: grantee});
 
-    await mineBlocks(undelegationPeriod - 1);
+    await increaseTime(undelegationPeriod - 1);
 
     await expectThrowWithMessage(
       stakingContract.recoverStake(operatorOne),
@@ -207,9 +205,9 @@ contract('TokenGrant/Stake', function(accounts) {
 
   it("should not allow to delegate to the same operator even after recovering stake", async () => {
     await delegate(grantee, operatorOne, grantAmount);
-    await mineBlocks(initializationPeriod);
+    await increaseTime(initializationPeriod + 1);
     await grantContract.undelegate(operatorOne, {from: grantee});
-    await mineBlocks(undelegationPeriod);
+    await increaseTime(undelegationPeriod + 1);
     await grantContract.recoverStake(operatorOne, {from: grantee});
 
     await expectThrowWithMessage(
@@ -289,7 +287,7 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should let operator undelegate", async () => {
     await delegate(grantee, operatorOne, grantAmount);
 
-    await mineBlocks(initializationPeriod);
+    await increaseTime(initializationPeriod + 1);
     await grantContract.undelegate(operatorOne, {from: operatorOne})
     // ok, no exceptions
   })
@@ -297,7 +295,7 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should not allow third party to undelegate", async () => {
     await delegate(grantee, operatorOne, grantAmount);
 
-    await mineBlocks(initializationPeriod);
+    await increaseTime(initializationPeriod + 1);
     await expectThrowWithMessage(
       grantContract.undelegate(operatorOne, {from: operatorTwo}),
       "Only operator or grantee can undelegate"
@@ -307,9 +305,9 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should recover tokens recovered outside the grant contract", async () => {
     await delegate(grantee, operatorOne, grantAmount);
 
-    await mineBlocks(initializationPeriod);
+    await increaseTime(initializationPeriod + 1);
     await grantContract.undelegate(operatorOne, {from: grantee});
-    await mineBlocks(undelegationPeriod);
+    await increaseTime(undelegationPeriod + 1);
     await stakingContract.recoverStake(operatorOne);
     let availablePre = await grantContract.availableToStake(grantId);
 

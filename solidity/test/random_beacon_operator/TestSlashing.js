@@ -4,6 +4,7 @@ import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
 import {bls as blsData} from '../helpers/data'
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import mineBlocks from '../helpers/mineBlocks'
+import increaseTime from '../helpers/increaseTime';
 
 const BLS = artifacts.require('./cryptography/BLS.sol');
 
@@ -49,6 +50,8 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
 
+    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
+
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate})
   
@@ -82,7 +85,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   })
 
   it("should revert slashing when operator stakes are not active yet", async () => {
-    stakingContract.setInitializationPeriod(100)
+    stakingContract.setInitializationPeriod(1000)
     let amountToSlash = web3.utils.toBN(42000000);
     
     await expectThrowWithMessage(
@@ -92,7 +95,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   })
     
   it("should revert seizing when operator stakes are not active yet", async () => {
-    stakingContract.setInitializationPeriod(100)
+    stakingContract.setInitializationPeriod(1000)
     let amountToSeize = web3.utils.toBN(42000000);
     let rewardMultiplier = web3.utils.toBN(25)
       

@@ -1,5 +1,6 @@
 import generateTickets from './generateTickets';
 import mineBlocks from './mineBlocks';
+import increaseTime from './increaseTime';
 import packTicket from './packTicket';
 import {sign} from './signature';
 import {bls} from './data';
@@ -52,6 +53,8 @@ export default async function stakeAndGenesis(accounts, contracts) {
     let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, operator1StakingWeight);
     let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, operator2StakingWeight);
     let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, operator3StakingWeight);
+
+    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
 
     for(let i = 0; i < groupSize; i++) {
       ticket = packTicket(tickets1[i].valueHex, tickets1[i].virtualStakerIndex, operator1);
