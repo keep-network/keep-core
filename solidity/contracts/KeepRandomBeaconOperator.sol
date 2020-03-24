@@ -34,9 +34,11 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     event OnGroupRegistered(bytes groupPubKey);
 
-    // TODO: Rename to DkgResultSubmittedEvent
-    // TODO: Add memberIndex
-    event DkgResultPublishedEvent(bytes groupPubKey);
+    event DkgResultSubmittedEvent(
+        uint256 memberIndex,
+        bytes groupPubKey,
+        bytes misbehaved
+    );
 
     event RelayEntryRequested(bytes previousEntry, bytes groupPublicKey);
     event RelayEntrySubmitted();
@@ -327,7 +329,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groups.setGroupMembers(groupPubKey, members, misbehaved);
         groups.addGroup(groupPubKey);
         reimburseDkgSubmitter();
-        emit DkgResultPublishedEvent(groupPubKey);
+        emit DkgResultSubmittedEvent(submitterMemberIndex, groupPubKey, misbehaved);
         groupSelection.stop();
     }
 
