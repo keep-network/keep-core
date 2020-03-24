@@ -3,6 +3,7 @@ package dkg
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -77,12 +78,12 @@ func TestDecideMemberFate_NotSameGroupPublicKey(t *testing.T) {
 		blockCounter,
 	)
 
-	expectedError := fmt.Sprintf(
+	expectedError := fmt.Errorf(
 		"[member:%v] could not stay in the group because "+
 			"member do not support the same group public key",
 		playerIndex,
 	)
-	if err == nil || err.Error() != expectedError {
+	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v\n",
 			expectedError,
@@ -108,12 +109,12 @@ func TestDecideMemberFate_MemberIsMisbehaved(t *testing.T) {
 		blockCounter,
 	)
 
-	expectedError := fmt.Sprintf(
+	expectedError := fmt.Errorf(
 		"[member:%v] could not stay in the group because "+
-			"member is considered as misbehaved",
+			"member is considered as misbehaving",
 		playerIndex,
 	)
-	if err == nil || err.Error() != expectedError {
+	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v\n",
 			expectedError,
@@ -134,8 +135,8 @@ func TestDecideMemberFate_Timeout(t *testing.T) {
 		blockCounter,
 	)
 
-	expectedError := "DKG result publication timed out"
-	if err == nil || err.Error() != expectedError {
+	expectedError := fmt.Errorf("DKG result publication timed out")
+	if !reflect.DeepEqual(expectedError, err) {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v\n",
 			expectedError,
