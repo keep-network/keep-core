@@ -75,7 +75,6 @@ type provider struct {
 	identity *identity
 	host     host.Host
 	routing  *dht.IpfsDHT
-	addrs    []ma.Multiaddr
 
 	connectionManager *connectionManager
 }
@@ -104,18 +103,6 @@ func (p *provider) Type() string {
 
 func (p *provider) ID() net.TransportIdentifier {
 	return networkIdentity(p.identity.id)
-}
-
-func (p *provider) AddrStrings() []string {
-	multiaddrStrings := make([]string, 0, len(p.addrs))
-	for _, multiaddr := range p.addrs {
-		multiaddrStrings = append(
-			multiaddrStrings,
-			multiaddressWithIdentity(multiaddr, p.identity.id),
-		)
-	}
-
-	return multiaddrStrings
 }
 
 func (p *provider) ConnectionManager() net.ConnectionManager {
@@ -177,6 +164,18 @@ func (cm *connectionManager) DisconnectPeer(peerHash string) {
 			logger.Errorf("failed to disconnect: [%v]", err)
 		}
 	}
+}
+
+func (cm *connectionManager) AddrStrings() []string {
+	multiaddrStrings := make([]string, 0, len(cm.Addrs()))
+	for _, multiaddr := range cm.Addrs() {
+		multiaddrStrings = append(
+			multiaddrStrings,
+			multiaddressWithIdentity(multiaddr, cm.ID()),
+		)
+	}
+
+	return multiaddrStrings
 }
 
 // ConnectOptions allows to set various options used by libp2p.
@@ -279,7 +278,6 @@ func Connect(
 		identity:                identity,
 		host:                    rhost.Wrap(host, router),
 		routing:                 router,
-		addrs:                   host.Addrs(),
 	}
 
 	if len(config.Peers) == 0 {

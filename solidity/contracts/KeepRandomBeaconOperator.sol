@@ -47,6 +47,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     event GroupMemberRewardsWithdrawn(address indexed beneficiary, address operator, uint256 amount, uint256 groupIndex);
 
+    event RelayEntryTimeoutReported(uint256 indexed groupIndex);
+
+    event UnauthorizedSigningReported(uint256 indexed groupIndex);
+
     GroupSelection.Storage groupSelection;
     Groups.Storage groups;
     DKGResultVerification.Storage dkgResultVerification;
@@ -601,6 +605,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
                 signingRequest.callbackFee
             );
         }
+
+        emit RelayEntryTimeoutReported(signingRequest.groupIndex);
     }
 
     /**
@@ -737,5 +743,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     ) public {
         uint256 minimumStake = stakingContract.minimumStake();
         groups.reportUnauthorizedSigning(groupIndex, signedMsgSender, minimumStake);
+        emit UnauthorizedSigningReported(groupIndex);
     }
 }
