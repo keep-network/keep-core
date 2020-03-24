@@ -15,4 +15,6 @@ spec:
     targetPort: 3919
     name: tcp-3919
   selector:
+    app: keep
+    type: beacon
     id: '0'

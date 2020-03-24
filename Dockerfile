@@ -49,8 +49,8 @@ RUN go mod download
 RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.1/protoc-gen-gogoslick && go install .
 RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.10/cmd/abigen && go install .
 
-COPY ./contracts/solidity $APP_DIR/contracts/solidity
-RUN cd $APP_DIR/contracts/solidity && npm install
+COPY ./solidity $APP_DIR/solidity
+RUN cd $APP_DIR/solidity && npm install
 
 COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
@@ -58,7 +58,9 @@ COPY ./pkg/beacon/relay/entry/gen $APP_DIR/pkg/beacon/relay/entry/gen
 COPY ./pkg/beacon/relay/gjkr/gen $APP_DIR/pkg/beacon/relay/gjkr/gen
 COPY ./pkg/beacon/relay/dkg/result/gen $APP_DIR/pkg/beacon/relay/dkg/result/gen
 COPY ./pkg/beacon/relay/registry/gen $APP_DIR/pkg/beacon/relay/registry/gen
-RUN go generate ./.../gen 
+# Need this to resolve imports in generated Ethereum commands.
+COPY ./config $APP_DIR/config
+RUN go generate ./.../gen
 
 COPY ./ $APP_DIR/
 RUN go generate ./pkg/gen

@@ -1,0 +1,301 @@
+@import 'vars';
+@import 'typography';
+@import 'buttons';
+@import 'forms';
+@import 'messages';
+@import 'indicator';
+@import 'menu-button';
+@import 'rewards';
+@import 'address-shortcut';
+@import 'no-data.less';
+@import 'commons.less';
+@import 'withdrawal-rewards-history.less';
+@import 'tokens-page.less';
+@import 'operator-page.less';
+@import 'dropdown.less';
+@import 'network-status.less';
+@import 'timeline.less';
+@import 'modal.less';
+@import 'progress-bar.less';
+@import 'banner.less';
+@import 'tooltip.less';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  background: @background-color;
+}
+
+html, body, #root {
+  height: 100vh;
+}
+
+ul {
+  padding-left: 0;
+}
+
+.main {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: @background-color;
+  
+  > .content {
+    flex: 1 0 auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    margin: calc(@header-height + 1.5rem) 1.5rem 0;
+  }
+}
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: @header-height;
+  width: 100%;
+  z-index: 10;
+  display: flex;  
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  background: @white;
+  padding: 0.5rem;
+  border-bottom: 1px solid @color-black;
+
+  .logo {
+    height: @header-height;
+  }
+  
+  > .web3 {
+    display: none;
+  }
+
+  > .account-address {
+    display: none;
+  }
+
+  > .menu-button {
+    display: block;
+  }
+}
+
+.side-menu {
+  position: fixed;
+  top: @header-height;
+  left: 0;
+  z-index: 12;
+  height: 100%;
+  width: 0px;
+  visibility: hidden;
+  background: @white;
+  border-right: 1px solid @color-black;
+  overflow-x: hidden;
+  transition: 0.5s ease;
+  
+  .active& {
+    visibility: visible;
+    width: @side-menu-width;
+  }
+
+  & ul {
+    list-style: none;
+    overflow-x: hidden;
+    text-align: center;
+    width: @side-menu-width;
+    padding: 0;
+
+    & li {
+      border-bottom: 1px solid @color-black;
+      padding: 1rem 0;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: normal;
+      letter-spacing: .05rem;
+      font-variant: small-caps;
+      border-right: 0 solid @primary-color;
+      transition: border-right-width 0.3s ease;
+
+      &:hover {
+        cursor: pointer;
+        border-right-width: 5px;
+      }
+
+      &.active-page-link {
+        border-right-width: 5px;
+        color: @color-black;
+        font-weight: bold;
+      }
+    }
+
+    a {
+      color: @color-black;
+      text-decoration: none;
+
+      &:hover, &:focus{
+        text-decoration: none;
+      }
+    }
+
+    > .account-address {
+      font-size: 0.8rem;
+      margin-left: 1rem;
+      text-align: left;
+    }
+
+    > .web3 > .web3-status {
+      &.alert {
+        flex-direction: column;
+        a {
+          margin-top: 1rem;
+        }
+      }
+      text-align: center;
+      margin: 1rem;
+    }
+
+
+  }
+}
+
+footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: @footer-min-height;
+  color: @white;
+  background-color: @color-black;
+  margin-top: 3rem;
+  padding: 2rem;
+  z-index: 11;
+
+  svg {
+    min-height: 58px !important;
+    margin-bottom: 1rem;
+  }
+
+  .signature {
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  ul {
+    align-self: flex-start;
+    list-style: none;
+
+    a {
+      text-decoration: none;
+      color: @color-grey-10;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+  
+}
+
+@media screen and (min-width: 576px) {
+  footer {
+    flex-direction: row;
+    align-items: flex-start;
+
+    ul {
+      margin: 0 2rem;
+    }
+  
+    .signature {
+      margin: 0;
+      margin-left: auto;
+      text-align: right;
+    }
+  }
+}
+
+@media screen and (min-width: 700px) {
+ .header {
+    > .web3 {
+      display: flex;
+    }
+  }
+
+  .side-menu {
+    ul > .web3 {
+      visibility: hidden;
+    }
+  }
+}
+
+@media screen and (min-width: 750px) {
+  .header {
+    > .account-address {
+        display: block;
+      }
+  }
+
+  .side-menu {
+    ul > .account-address {
+      visibility: hidden;
+    }
+  }
+}
+
+@media screen and (min-width: 1000px) {
+  .header {
+     > .web3 {
+       visibility: visible;
+     }
+   }
+
+   .main {
+     > .content {
+      max-width: 2200px;
+     }
+   }
+}
+
+@media screen and (min-width: 1250px) {
+  .header {
+    > .logo {
+      width: @logo-width;
+    }
+
+    > .web3 {
+      min-width: 30%;
+      justify-content: flex-start;
+      margin-right: auto;
+    }
+
+    > .account-address {
+      margin-right: 1.5rem;
+    }
+
+    > .menu-button {
+      display: none;
+    }
+  }
+
+  .side-menu {
+    width: @side-menu-width;
+    visibility: visible;
+    z-index: 10;
+    
+    ul > .account-address, .web3 {
+      visibility: hidden;
+    }
+  }
+
+  .main {
+    > .content {
+      margin: calc(@header-height + 2rem) 5rem 0 calc(@side-menu-width + 5rem)
+    }
+  }
+}

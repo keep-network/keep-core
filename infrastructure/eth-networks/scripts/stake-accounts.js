@@ -32,7 +32,8 @@ const operatorAddresses = [
   '0x9f778b5d9b6e598e5a9dfb789500f6cf20e3203e',
   '0xc2f4c01a446f199fce344df1167c92650651f9c0',
   '0x32ce883e94ea3a75063e47064c777839aa4a0c94',
-  '0xca8754f7060a0648824f274e3a4d897fa497139d'
+  '0xca8754f7060a0648824f274e3a4d897fa497139d',
+  '0x8e258d2299bc1ee92ec9e70efb381d9b7c70c3d7'
 ];
 
 const contractDir = '../keep-test/ropsten'
@@ -58,6 +59,11 @@ const keepRandomBeaconOperatorContractJsonFile = `${contractDir}/KeepRandomBeaco
 const keepRandomBeaconOperatorContractParsed = JSON.parse(fs.readFileSync(keepRandomBeaconOperatorContractJsonFile));
 const keepRandomBeaconOperatorContractAddress = keepRandomBeaconOperatorContractParsed.networks[ethNetworkId].address;
 
+async function provisionOperatorAccount(operatorAddress, contractOwnerAddress, authorizer) {
+  await stakeOperatorAccount(operatorAddress, contractOwnerAddress)
+  await authorizeOperatorContract(operatorAddress, authorizer)
+}
+
 async function stakeOperatorAccount(operatorAddress, contractOwnerAddress) {
 
   let delegation = '0x' + Buffer.concat([
@@ -77,7 +83,7 @@ async function stakeOperatorAccount(operatorAddress, contractOwnerAddress) {
 };
 
 function formatAmount(amount, decimals) {
-  return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
+  return '0x' + web3.utils.toBN(amount).muln(10).pow(web3.utils.toBN(decimals)).toString('hex');
 };
 
 async function authorizeOperatorContract(operatorAddress, authorizer) {
@@ -88,18 +94,11 @@ async function authorizeOperatorContract(operatorAddress, authorizer) {
     operatorAddress,
     keepRandomBeaconOperatorContractAddress).send({from: authorizer});
 
-  console.log(`Authorized!`);
+  console.log(`Account ${operatorAddress} Authorized!`);
 };
 
 operatorAddresses.forEach(operatorAddress => {
-  stakeOperatorAccount(operatorAddress, contractOwnerAddress).catch(error => {
-    console.error(error);
-    process.exit(1);
-  })
-});
-
-operatorAddresses.forEach(operatorAddress => {
-  authorizeOperatorContract(operatorAddress, authorizer).catch(error => {
+  provisionOperatorAccount(operatorAddress, contractOwnerAddress, authorizer).catch(error => {
     console.error(error);
     process.exit(1);
   })

@@ -9,11 +9,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -58,7 +58,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		)
 	}
 
-	minimumStake, err := ec.keepRandomBeaconOperatorContract.MinimumStake()
+	minimumStake, err := ec.stakingContract.MinimumStake()
 	if err != nil {
 		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
 	}
@@ -103,7 +103,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 
 	_, err := ec.keepRandomBeaconOperatorContract.SubmitTicket(
 		ticketBytes,
-		options.TransactionOptions{
+		ethutil.TransactionOptions{
 			GasLimit: 250000,
 		},
 	)
