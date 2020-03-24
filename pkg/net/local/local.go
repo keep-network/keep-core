@@ -57,14 +57,6 @@ func (lp *localProvider) Type() string {
 	return "local"
 }
 
-func (lp *localProvider) AddrStrings() []string {
-	return make([]string, 0)
-}
-
-func (lp *localProvider) Peers() []string {
-	return make([]string, 0)
-}
-
 func (lp *localProvider) AddPeer(peerID string, pubKey *key.NetworkPublic) {
 	lp.connectionManager.peers[peerID] = pubKey
 }
@@ -134,4 +126,8 @@ func (lcm *localConnectionManager) DisconnectPeer(connectedPeer string) {
 	defer lcm.mutex.Unlock()
 
 	delete(lcm.peers, connectedPeer)
+}
+
+func (lcm *localConnectionManager) AddrStrings() []string {
+	return make([]string, 0)
 }
