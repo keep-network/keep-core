@@ -3,7 +3,8 @@ set -e
 
 # Dafault inputs.
 KEEP_ETHEREUM_PASSWORD_DEFAULT="password"
-CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
+KEEP_CORE_PATH=$PWD
+CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
 
 # Read user inputs.
 read -p "Enter ethereum accounts password [$KEEP_ETHEREUM_PASSWORD_DEFAULT]: " ethereum_password
@@ -17,9 +18,8 @@ LOG_START='\n\e[1;36m' # new line + bold + color
 LOG_END='\n\e[0m' # new line + reset color
 
 printf "${LOG_START}Starting installation...${LOG_END}"
-KEEP_CORE_PATH=$(realpath $(dirname $0)/../)
-KEEP_CORE_CONFIG_DIR_PATH=$(realpath $CONFIG_DIR_PATH)
-KEEP_CORE_SOL_PATH=$(realpath $KEEP_CORE_PATH/solidity)
+KEEP_CORE_CONFIG_DIR_PATH=$CONFIG_DIR_PATH
+KEEP_CORE_SOL_PATH="$KEEP_CORE_PATH/solidity"
 
 cd $KEEP_CORE_SOL_PATH
 
@@ -34,7 +34,7 @@ printf "${LOG_START}Migrating contracts...${LOG_END}"
 rm -rf build/
 truffle migrate --reset --network local
 
-KEEP_CORE_SOL_ARTIFACTS_PATH=$(realpath $KEEP_CORE_SOL_PATH/build/contracts)
+KEEP_CORE_SOL_ARTIFACTS_PATH="$KEEP_CORE_SOL_PATH/build/contracts"
 
 printf "${LOG_START}Initializing contracts...${LOG_END}"
 truffle exec scripts/delegate-tokens.js --network local
