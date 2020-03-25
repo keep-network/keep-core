@@ -100,6 +100,7 @@ library GroupSelection {
         // - one initial ticket submission round
         // - N reactive ticket submission rounds
         // - one additional waiting round
+        // One round consist of 6 blocks.
         self.ticketSubmissionTimeout = uint256(6).mul(
             reactiveTicketSubmissionRounds(_possibleOperatorsCount, self.groupSize).add(2)
         );

@@ -270,8 +270,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *   current candidate group selection.
      */
     function submitTicket(bytes32 ticket) public {
-        uint256 minimumStake = stakingContract.minimumStake();
-        uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(minimumStake);
+        uint256 stakingWeight = stakingContract.stakingWeight(msg.sender, address(this));
         groupSelection.submitTicket(ticket, stakingWeight);
     }
 
