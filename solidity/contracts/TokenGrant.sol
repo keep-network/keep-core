@@ -8,6 +8,7 @@ import "./utils/BytesLib.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./TokenStaking.sol";
 import "./TokenGrantStake.sol";
+import "./GrantStakingPolicy.sol";
 
 /**
  * @title TokenGrant
@@ -41,6 +42,7 @@ contract TokenGrant {
         uint256 cliff; // Duration in seconds of the cliff after which tokens will begin to unlock.
         uint256 withdrawn; // Amount that was withdrawn to the grantee.
         uint256 staked; // Amount that was staked by the grantee.
+        GrantStakingPolicy stakingPolicy;
     }
 
     uint256 public numGrants;
@@ -232,8 +234,22 @@ contract TokenGrant {
             _revocable = true;
         }
 
+        address _stakingPolicy = _extraData.toAddress(117);
+        require(_stakingPolicy != address(0), "Staking policy can't be zero.");
+
         uint256 id = numGrants++;
-        grants[id] = Grant(_from, _grantee, 0, 0, _revocable, _amount, _duration, _start, _start.add(_cliff), 0, 0);
+        grants[id] = Grant(
+            _from,
+            _grantee,
+            0, 0,
+            _revocable,
+            _amount,
+            _duration,
+            _start,
+            _start.add(_cliff),
+            0, 0,
+            GrantStakingPolicy(_stakingPolicy)
+        );
 
         // Maintain a record to make it easier to query grants by grant manager.
         grantIndices[_from].push(id);
@@ -380,7 +396,17 @@ contract TokenGrant {
       @param _grantId Identifier of the grant
      */
     function availableToStake(uint256 _grantId) public view returns (uint256) {
-        return grants[_grantId].amount.sub(grants[_grantId].withdrawn).sub(grants[_grantId].staked);
+        Grant storage grant = grants[_grantId];
+        uint256 stakeable = grant.stakingPolicy.getStakeableAmount(
+            now,
+            grant.amount,
+            grant.duration,
+            grant.start,
+            grant.cliff,
+            grant.withdrawn
+        );
+
+        return stakeable.sub(grant.staked);
     }
 
     /**

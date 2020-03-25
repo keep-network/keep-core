@@ -6,10 +6,11 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
+const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
 
-contract('TokenGrant', function(accounts) {
+contract.only('TokenGrant', function(accounts) {
 
-  let token, registry, grantContract, stakingContract,
+  let token, registry, grantContract, stakingContract, permissivePolicy,
     amount, vestingDuration, start, cliff,
     grant_manager = accounts[0],
     account_two = accounts[1],
@@ -21,6 +22,7 @@ contract('TokenGrant', function(accounts) {
     stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(1), duration.days(30));
     grantContract = await TokenGrant.new(token.address);
     await grantContract.authorizeStakingContract(stakingContract.address);
+    permissivePolicy = await PermissiveStakingPolicy.new()
     amount = web3.utils.toBN(100);
     vestingDuration = duration.days(30);
     start = await latestTime();
@@ -40,7 +42,12 @@ contract('TokenGrant', function(accounts) {
     let account_two_starting_balance = await token.balanceOf.call(account_two);
 
     // Grant tokens
-    let id = await grantTokens(grantContract, token, amount, grant_manager, account_two, vestingDuration, start, cliff, revocable);
+    let id = await grantTokens(
+      grantContract, token, amount,
+      grant_manager, account_two,
+      vestingDuration, start, cliff,
+      revocable, permissivePolicy.address
+    );
 
     // Ending balances
     let grant_manager_ending_balance = await token.balanceOf.call(grant_manager);
@@ -81,7 +88,12 @@ contract('TokenGrant', function(accounts) {
 
     let grant_manager_starting_balance = await token.balanceOf.call(grant_manager);
 
-    let id = await grantTokens(grantContract, token, amount, grant_manager, grantee, vestingDuration, start, cliff, true);
+    let id = await grantTokens(
+      grantContract, token, amount,
+      grant_manager, grantee,
+      vestingDuration, start, cliff,
+      true, permissivePolicy.address
+    );
 
     let grant_manager_ending_balance = await token.balanceOf.call(grant_manager);
 
