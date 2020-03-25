@@ -9,14 +9,14 @@ library ModUtils {
      */
     function modExp(uint256 base, uint256 exponent, uint256 p)
         internal
-        view returns(uint256)
+        view returns(uint256 o)
     {
-        uint256[1] memory output;
         /* solium-disable-next-line */
         assembly {
             // Args for the precompile: [<length_of_BASE> <length_of_EXPONENT>
             // <length_of_MODULUS> <BASE> <EXPONENT> <MODULUS>]
-            let args := mload(0x40)
+            let output := mload(0x40)
+            let args := add(output, 0x20)
             mstore(args, 0x20)
             mstore(add(args, 0x20), 0x20)
             mstore(add(args, 0x40), 0x20)
@@ -28,8 +28,8 @@ library ModUtils {
             if iszero(staticcall(not(0), 0x05, args, 0xc0, output, 0x20)) {
                 revert(0, 0)
             }
+            o := mload(output)
         }
-        return output[0];
     }
 
     /**
@@ -58,7 +58,7 @@ library ModUtils {
         }
 
         uint256 s = p - 1;
-        uint8 e = 0;
+        uint256 e = 0;
 
         while (s % 2 == 0) {
             s = s / 2;
@@ -67,7 +67,7 @@ library ModUtils {
 
         // Note the smaller int- finding n with Legendre symbol or -1
         // should be quick
-        uint32 n = 2;
+        uint256 n = 2;
         while (legendre(n, p) != -1) {
             n = n + 1;
         }
@@ -75,9 +75,9 @@ library ModUtils {
         uint256 x = modExp(a, (s + 1) / 2, p);
         uint256 b = modExp(a, s, p);
         uint256 g = modExp(n, s, p);
-        uint8 r = e;
+        uint256 r = e;
         uint256 gs = 0;
-        uint8 m = 0;
+        uint256 m = 0;
         uint256 t = b;
 
         while (true) {
@@ -110,12 +110,12 @@ library ModUtils {
      */
     function legendre(uint256 a, uint256 p)
         internal
-        view returns(int8)
+        view returns(int256)
     {
         uint256 raised = modExp(a, (p - 1) / uint256(2), p);
 
         if (raised == 0 || raised == 1) {
-            return int8(raised);
+            return int256(raised);
         } else if (raised == p - 1) {
             return -1;
         }

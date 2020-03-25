@@ -8,7 +8,7 @@ contract TestModUtils1 {
 
     using ModUtils for uint256;
 
-    uint8[16] smallOddPrimes = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59];
+    uint256[16] smallOddPrimes = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59];
 
     function testModExponent() public {
         uint256 a = 21;
@@ -76,9 +76,9 @@ contract TestModUtils1 {
     ];
 
     function testLegendreRange() public {
-        uint8 i;
-        uint8 j;
-        int8 leg;
+        uint256 i;
+        uint256 j;
+        int256 leg;
         for(i = 0; i < smallOddPrimes.length; i++) {
             for(j = 0; j < 50; j++) {
                 leg = ModUtils.legendre(j, smallOddPrimes[i]);
@@ -88,11 +88,11 @@ contract TestModUtils1 {
     }
 
     function testLegendreList() public {
-        uint8 i;
-        int8 leg;
+        uint256 i;
+        int256 leg;
 
         for(i = 0; i < smallOddPrimesLegendre.length; i++) {
-            leg = ModUtils.legendre(uint8(smallOddPrimesLegendre[i][1]), uint8(smallOddPrimesLegendre[i][0]));
+            leg = ModUtils.legendre(uint256(smallOddPrimesLegendre[i][1]), uint256(smallOddPrimesLegendre[i][0]));
             Assert.equal(leg, smallOddPrimesLegendre[i][2], "legendre() result differed from list");
         }
     }

@@ -390,6 +390,7 @@ func (c *localChain) SubmitDKGResult(
 	dkgResultPublicationEvent := &event.DKGResultSubmission{
 		MemberIndex:    uint32(participantIndex),
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
+		Misbehaved:     resultToPublish.Misbehaved,
 		BlockNumber:    currentBlock,
 	}
 

@@ -318,9 +318,11 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchDkgResultPublishedEvent(
+	return ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
 		func(
+			memberIndex *big.Int,
 			groupPublicKey []byte,
+			misbehaved []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupRegistration{
@@ -364,10 +366,17 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchDkgResultPublishedEvent(
-		func(groupPubKey []byte, blockNumber uint64) {
+	return ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
+		func(
+			memberIndex *big.Int,
+			groupPublicKey []byte,
+			misbehaved []byte,
+			blockNumber uint64,
+		) {
 			handler(&event.DKGResultSubmission{
-				GroupPublicKey: groupPubKey,
+				MemberIndex:    uint32(memberIndex.Uint64()),
+				GroupPublicKey: groupPublicKey,
+				Misbehaved:     misbehaved,
 				BlockNumber:    blockNumber,
 			})
 		},
