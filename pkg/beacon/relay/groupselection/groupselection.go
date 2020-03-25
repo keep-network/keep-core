@@ -16,6 +16,8 @@ import (
 
 var logger = log.Logger("keep-groupselection")
 
+// Duration of one ticket submission round in blocks. Should correspond
+// to the value set in group selection contract.
 const ticketSubmissionRoundDuration = 6
 
 // Result represents the result of group selection protocol. It contains the
@@ -122,13 +124,12 @@ func startTicketSubmission(
 
 	// Buffer quit signals - we never know if the goroutine finished
 	// before we try to cancel it. The initial ticket submission may be
-	// cancelled right after the initial submission timeout and after the
-	// reactive submission timeout and it is possible it already completed.
-	// Hence, we buffer two quit signals. The reactive ticket submission
-	// is cancelled right after the reactive submission timeout. Here as well,
-	// we do not know if the goroutine already completed, so we need to buffer
-	// one quit signal.
-	quitInitialTicketSubmission := make(chan struct{}, 2)
+	// cancelled right after the reactive submission timeout and it is possible
+	// it already completed. Hence, we buffer one quit signal.
+	// The reactive ticket submission is also cancelled right after the reactive
+	// submission timeout. Here as well, we do not know if the goroutine already
+	// completed, so we need to buffer one quit signal.
+	quitInitialTicketSubmission := make(chan struct{}, 1)
 	quitReactiveTicketSubmission := make(chan struct{}, 1)
 
 	// Check how many tickets with values below the natural threshold has been
@@ -158,73 +159,85 @@ func startTicketSubmission(
 	for {
 		select {
 		case initialSubmissionEndBlockHeight := <-initialSubmissionTimeout:
-			// Initial ticket submission phase has ended. We need to determine
-			// the total number of tickets submitted by all stakers who
-			// candidate to a new group and decide whether to stop or to
-			// enter reactive ticket submission.
+			// Initial ticket submission phase has ended. Reactive submission
+			// rounds will be triggered for tickets above the natural
+			// threshold.
 
 			logger.Infof(
 				"initial ticket submission ended at block [%v]",
 				initialSubmissionEndBlockHeight,
 			)
 
-			tickets, err := relayChain.GetSubmittedTickets()
-			if err != nil {
-				return fmt.Errorf(
-					"could not get submitted tickets: [%v]",
-					err,
-				)
-			}
+			// Obtain the number of reactive submission rounds by dividing
+			// the whole timeout by round duration and subtract two rounds
+			// corresponding to initial and waiting rounds.
+			reactiveSubmissionRounds := (ticketSubmissionTimeout.Uint64() /
+				ticketSubmissionRoundDuration) - 2
 
-			ticketsCount := big.NewInt(int64(len(tickets)))
+			for roundIndex := uint64(0); roundIndex <= reactiveSubmissionRounds; roundIndex++ {
+				roundStartDelay := roundIndex * ticketSubmissionRoundDuration
+				roundStartBlock := initialSubmissionEndBlockHeight + roundStartDelay
+				roundLeadingZeros := reactiveSubmissionRounds - roundIndex
 
-			groupSize := big.NewInt(int64(chainConfig.GroupSize))
-			if ticketsCount.Cmp(groupSize) >= 0 {
-				// If there has been enough tickets submitted to form a new
-				// group we stop ticket submission skipping the reactive ticket
-				// submission phase.
 				logger.Infof(
-					"[%v] tickets submitted by group member candidates; "+
-						"skipping reactive submission",
-					ticketsCount,
+					"reactive ticket submission round [%v] will start at "+
+						"block [%v] and cover tickets with [%v] leading zeros",
+					roundIndex,
+					roundStartBlock,
+					roundLeadingZeros,
 				)
 
-				quitInitialTicketSubmission <- struct{}{}
-			} else {
-				// If there has been not enough tickets submitted to form a new
-				// group, we enter reactive ticket submission where we'll submit
-				// remaining tickets. Note we are not stopping the goroutine
-				// potentially still submitting tickets with values below the
-				// initial threshold.
-				// The number of remaining tickets is never larger than the
-				// group size, including tickets with values below the natural
-				// threshold.
-
-				// Check how many tickets have been generated and compare this
-				// value with the group size. Decide how many tickets should be
-				// submitted. It does not make sense to submit more tickets
-				// than the group size.
-				if len(initialSubmissionTickets)+
-					len(reactiveSubmissionTickets) > chainConfig.GroupSize {
-					numberOfTicketsToSubmit = chainConfig.GroupSize -
-						len(initialSubmissionTickets)
-				} else {
-					numberOfTicketsToSubmit = len(reactiveSubmissionTickets)
+				err := blockCounter.WaitForBlockHeight(roundStartBlock)
+				if err != nil {
+					return err
 				}
 
-				logger.Infof(
-					"[%v] tickets submitted by group member candidates; "+
-						"entering reactive submission phase with [%v] "+
-						"additional tickets",
-					ticketsCount,
-					numberOfTicketsToSubmit,
-				)
+				submittedTickets, err := relayChain.GetSubmittedTickets()
+				if err != nil {
+					return fmt.Errorf(
+						"could not get submitted tickets: [%v]",
+						err,
+					)
+				}
 
-				// Submit tickets with values above the natural threshold.
-				// Do not submit more tickets than the group size including
-				// tickets with values below the natural threshold.
+				submittedTicketsCount := len(submittedTickets)
+
+				reactiveSubmissionRoundTickets := make([]*ticket, 0)
+
+				// TODO: since tickets are sorted in ascending order, this
+				// 	loop can be probably optimized.
+				for _, ticket := range reactiveSubmissionTickets {
+					ticketValueLeadingZeros := uint64(
+						ticket.uint64ValueLeadingZeros(),
+					)
+
+					if roundIndex == 0 {
+						if ticketValueLeadingZeros < roundLeadingZeros {
+							continue
+						}
+					} else {
+						if ticketValueLeadingZeros != roundLeadingZeros {
+							continue
+						}
+					}
+
+					if submittedTicketsCount == chainConfig.GroupSize &&
+						ticket.uint64Value() >= submittedTickets[submittedTicketsCount-1] {
+						continue
+					}
+
+					if len(reactiveSubmissionRoundTickets) == chainConfig.GroupSize {
+						break
+					}
+
+					reactiveSubmissionRoundTickets = append(
+						reactiveSubmissionRoundTickets,
+						ticket,
+					)
+				}
+
 				go submitTickets(
-					reactiveSubmissionTickets[:numberOfTicketsToSubmit],
+					reactiveSubmissionRoundTickets,
 					relayChain,
 					quitReactiveTicketSubmission,
 				)

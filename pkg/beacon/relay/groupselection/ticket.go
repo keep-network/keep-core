@@ -2,6 +2,7 @@ package groupselection
 
 import (
 	"math/big"
+	"math/bits"
 
 	"fmt"
 
@@ -81,4 +82,13 @@ func calculateTicketValue(
 
 func (t *ticket) intValue() *big.Int {
 	return new(big.Int).SetBytes(t.value[:])
+}
+
+func (t *ticket) uint64Value() uint64 {
+	valueBytes := t.value[:8]
+	return new(big.Int).SetBytes(valueBytes).Uint64()
+}
+
+func (t *ticket) uint64ValueLeadingZeros() int {
+	return bits.LeadingZeros64(t.uint64Value())
 }
