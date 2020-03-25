@@ -1,6 +1,7 @@
 package gjkr
 
 import (
+	"fmt"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -17,4 +18,13 @@ type Result struct {
 	// Share of the group private key. It is used for signing and should never
 	// be revealed publicly.
 	GroupPrivateKeyShare *big.Int
+}
+
+// GroupPublicKeyBytes returns marshalled group public key.
+func (r *Result) GroupPublicKeyBytes() ([]byte, error) {
+	if r.GroupPublicKey == nil {
+		return nil, fmt.Errorf("group public key is nil")
+	}
+
+	return r.GroupPublicKey.Marshal(), nil
 }

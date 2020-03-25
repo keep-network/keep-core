@@ -2,6 +2,7 @@ package libp2p
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"sync"
 	"time"
@@ -23,6 +24,7 @@ import (
 	libp2pnet "github.com/libp2p/go-libp2p-core/network"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	dhtopts "github.com/libp2p/go-libp2p-kad-dht/opts"
 	peerstore "github.com/libp2p/go-libp2p-peerstore"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 
@@ -66,21 +68,33 @@ type Config struct {
 }
 
 type provider struct {
-	channelManagerMutex sync.Mutex
-	channelManagr       *channelManager
+	channelManagerMutex     sync.Mutex
+	broadcastChannelManager *channelManager
+	unicastChannelManager   *unicastChannelManager
 
 	identity *identity
 	host     host.Host
 	routing  *dht.IpfsDHT
-	addrs    []ma.Multiaddr
 
 	connectionManager *connectionManager
 }
 
-func (p *provider) ChannelFor(name string) (net.BroadcastChannel, error) {
+func (p *provider) UnicastChannelWith(
+	peerID net.TransportIdentifier,
+) (net.UnicastChannel, error) {
+	return p.unicastChannelManager.getUnicastChannelWithHandshake(peerID)
+}
+
+func (p *provider) OnUnicastChannelOpened(
+	handler func(channel net.UnicastChannel),
+) {
+	p.unicastChannelManager.onChannelOpened(handler)
+}
+
+func (p *provider) BroadcastChannelFor(name string) (net.BroadcastChannel, error) {
 	p.channelManagerMutex.Lock()
 	defer p.channelManagerMutex.Unlock()
-	return p.channelManagr.getChannel(name)
+	return p.broadcastChannelManager.getChannel(name)
 }
 
 func (p *provider) Type() string {
@@ -91,33 +105,16 @@ func (p *provider) ID() net.TransportIdentifier {
 	return networkIdentity(p.identity.id)
 }
 
-func (p *provider) AddrStrings() []string {
-	multiaddrStrings := make([]string, 0, len(p.addrs))
-	for _, multiaddr := range p.addrs {
-		multiaddrStrings = append(
-			multiaddrStrings,
-			multiaddressWithIdentity(multiaddr, p.identity.id),
-		)
-	}
-
-	return multiaddrStrings
-}
-
-func (p *provider) Peers() []string {
-	var peers []string
-	peersIDSlice := p.host.Peerstore().Peers()
-	for _, peer := range peersIDSlice {
-		// filter out our own node
-		if peer == p.identity.id {
-			continue
-		}
-		peers = append(peers, peer.String())
-	}
-	return peers
-}
-
 func (p *provider) ConnectionManager() net.ConnectionManager {
 	return p.connectionManager
+}
+
+func (p *provider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
+	net.TransportIdentifier,
+	error,
+) {
+	networkPublicKey := key.NetworkPublic(publicKey)
+	return peer.IDFromPublicKey(&networkPublicKey)
 }
 
 type connectionManager struct {
@@ -169,6 +166,57 @@ func (cm *connectionManager) DisconnectPeer(peerHash string) {
 	}
 }
 
+func (cm *connectionManager) AddrStrings() []string {
+	multiaddrStrings := make([]string, 0, len(cm.Addrs()))
+	for _, multiaddr := range cm.Addrs() {
+		multiaddrStrings = append(
+			multiaddrStrings,
+			multiaddressWithIdentity(multiaddr, cm.ID()),
+		)
+	}
+
+	return multiaddrStrings
+}
+
+// ConnectOptions allows to set various options used by libp2p.
+type ConnectOptions struct {
+	RoutingTableRefreshPeriod time.Duration
+	BootstrapMinPeerThreshold int
+}
+
+// Defaults from libp2p.
+func defaultConnectOptions() *ConnectOptions {
+	var options ConnectOptions
+
+	options.RoutingTableRefreshPeriod = 1 * time.Hour
+	options.BootstrapMinPeerThreshold = 4
+
+	return &options
+}
+
+func (co *ConnectOptions) apply(options ...ConnectOption) {
+	for _, option := range options {
+		option(co)
+	}
+}
+
+// ConnectOption allows to set an options used by libp2p.
+type ConnectOption func(options *ConnectOptions)
+
+// WithRoutingTableRefreshPeriod set a refresh period of the routing table.
+func WithRoutingTableRefreshPeriod(period time.Duration) ConnectOption {
+	return func(options *ConnectOptions) {
+		options.RoutingTableRefreshPeriod = period
+	}
+}
+
+// WithBootstrapMinPeerThreshold set a minimal peer threshold for bootstrap process.
+func WithBootstrapMinPeerThreshold(threshold int) ConnectOption {
+	return func(options *ConnectOptions) {
+		options.BootstrapMinPeerThreshold = threshold
+	}
+}
+
 // Connect connects to a libp2p network based on the provided config. The
 // connection is managed in part by the passed context, and provides access to
 // the functionality specified in the net.Provider interface.
@@ -181,7 +229,11 @@ func Connect(
 	staticKey *key.NetworkPrivate,
 	stakeMonitor chain.StakeMonitor,
 	ticker *retransmission.Ticker,
+	options ...ConnectOption,
 ) (net.Provider, error) {
+	connectOptions := defaultConnectOptions()
+	connectOptions.apply(options...)
+
 	identity, err := createIdentity(staticKey)
 	if err != nil {
 		return nil, err
@@ -200,26 +252,43 @@ func Connect(
 
 	host.Network().Notify(buildNotifiee())
 
-	cm, err := newChannelManager(ctx, identity, host, ticker)
+	broadcastChannelManager, err := newChannelManager(ctx, identity, host, ticker)
 	if err != nil {
 		return nil, err
 	}
 
-	router := dht.NewDHT(ctx, host, dssync.MutexWrap(dstore.NewMapDatastore()))
+	unicastChannelManager := newUnicastChannelManager(ctx, identity, host)
+
+	dhtDatastore := dssync.MutexWrap(dstore.NewMapDatastore())
+	router, err := dht.New(
+		ctx,
+		host,
+		dhtopts.Datastore(dhtDatastore),
+		dhtopts.RoutingTableRefreshPeriod(
+			connectOptions.RoutingTableRefreshPeriod,
+		),
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	provider := &provider{
-		channelManagr: cm,
-		identity:      identity,
-		host:          rhost.Wrap(host, router),
-		routing:       router,
-		addrs:         host.Addrs(),
+		broadcastChannelManager: broadcastChannelManager,
+		unicastChannelManager:   unicastChannelManager,
+		identity:                identity,
+		host:                    rhost.Wrap(host, router),
+		routing:                 router,
 	}
 
 	if len(config.Peers) == 0 {
 		logger.Infof("node's peers list is empty")
 	}
 
-	if err := provider.bootstrap(ctx, config.Peers); err != nil {
+	if err := provider.bootstrap(
+		ctx,
+		config.Peers,
+		connectOptions.BootstrapMinPeerThreshold,
+	); err != nil {
 		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
 	}
 
@@ -321,16 +390,21 @@ func parseMultiaddresses(addresses []string) []ma.Multiaddr {
 	return multiaddresses
 }
 
-func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error {
+func (p *provider) bootstrap(
+	ctx context.Context,
+	bootstrapPeers []string,
+	minPeerThreshold int,
+) error {
 	peerInfos, err := extractMultiAddrFromPeers(bootstrapPeers)
 	if err != nil {
 		return err
 	}
 
-	bootstraConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
+	bootstrapConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
 
 	// TODO: allow this to be a configurable value
-	bootstraConfig.Period = BootstrapCheckPeriod
+	bootstrapConfig.Period = BootstrapCheckPeriod
+	bootstrapConfig.MinPeerThreshold = minPeerThreshold
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.
@@ -338,7 +412,7 @@ func (p *provider) bootstrap(ctx context.Context, bootstrapPeers []string) error
 		p.identity.id,
 		p.host,
 		p.routing,
-		bootstraConfig,
+		bootstrapConfig,
 	)
 	return err
 }

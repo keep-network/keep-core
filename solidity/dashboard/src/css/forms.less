@@ -1,0 +1,42 @@
+input {
+  font-size: 1rem;
+  padding: 1rem .75rem;
+  line-height: 1rem;
+}
+
+.form {
+  &-input {
+    margin-bottom: 1.5rem;
+  }
+
+  &-error {
+    color: @pending-color;
+    font-size: .9rem;
+    font-weight: 500;
+  }
+}
+
+.inline-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  align-self: flex-start;
+  justify-content: center;
+
+  input {
+    padding-left: 1rem;
+    margin-bottom: 2rem;
+    line-height: 3.5rem;
+  }
+
+  @media screen and (min-width: 750px) {
+    flex-direction: row;
+    justify-content: stretch;
+
+    input {
+      line-height: 2rem;
+      margin-right: 1rem;
+      margin-bottom: 0;
+    }
+  }
+}

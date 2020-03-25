@@ -101,7 +101,7 @@ func pingRequest(c *cli.Context) error {
 
 	if isBootstrapNode {
 		var bootstrapAddr string
-		for _, addr := range netProvider.AddrStrings() {
+		for _, addr := range netProvider.ConnectionManager().AddrStrings() {
 			if strings.Contains(addr, "ip4") && !strings.Contains(addr, "127.0.0.1") {
 				bootstrapAddr = addr
 				break
@@ -116,7 +116,7 @@ func pingRequest(c *cli.Context) error {
 	}
 
 	// When we call ChannelFor, we create a coordination point for peers
-	broadcastChannel, err := netProvider.ChannelFor(ping)
+	broadcastChannel, err := netProvider.BroadcastChannelFor(ping)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func pingRequest(c *cli.Context) error {
 	// Give ourselves a moment to form a mesh with the other peer
 	for {
 		time.Sleep(3 * time.Second)
-		peers := netProvider.Peers()
+		peers := netProvider.ConnectionManager().ConnectedPeers()
 		if len(peers) < 1 {
 			fmt.Println("waiting for peer...")
 			continue

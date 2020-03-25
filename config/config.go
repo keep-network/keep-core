@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/BurntSushi/toml"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -31,7 +31,9 @@ var (
 	KeepOpts Config
 )
 
-// ReadConfig reads in the configuration file in .toml format.
+// ReadConfig reads in the configuration file at `filePath` and returns the
+// valid config stored there, or an error if something fails while reading the
+// file or the config is invalid in a known way.
 func ReadConfig(filePath string) (*Config, error) {
 	config := &Config{}
 	if _, err := toml.DecodeFile(filePath, config); err != nil {
@@ -53,7 +55,12 @@ func ReadConfig(filePath string) (*Config, error) {
 	}
 
 	if config.Ethereum.Account.KeyFilePassword == "" {
-		return nil, fmt.Errorf("Password is required.  Set " + passwordEnvVariable + " environment variable to password or 'prompt'")
+		return nil, fmt.Errorf(
+			"password is required; set in the config file, set environment "+
+				"variable %v to the password, or set the same environment "+
+				"variable to 'prompt' to be prompted for the password at startup",
+			passwordEnvVariable,
+		)
 	}
 
 	if config.LibP2P.Port == 0 {
@@ -65,6 +72,23 @@ func ReadConfig(filePath string) (*Config, error) {
 	}
 
 	return config, nil
+}
+
+// ReadEthereumConfig reads in the configuration file at `filePath` and returns
+// its contained Ethereum config, or an error if something fails while reading
+// the file.
+//
+// This is the same as invoking ReadConfig and reading the Ethereum property
+// from the returned config, but is available for external functions that expect
+// to interact solely with Ethereum and are therefore independent of the rest of
+// the config structure.
+func ReadEthereumConfig(filePath string) (ethereum.Config, error) {
+	config, err := ReadConfig(filePath)
+	if err != nil {
+		return ethereum.Config{}, err
+	}
+
+	return config.Ethereum, nil
 }
 
 // ReadPassword prompts a user to enter a password.   The read password uses

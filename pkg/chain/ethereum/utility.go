@@ -16,26 +16,14 @@ func (euc *ethereumUtilityChain) Genesis() error {
 	}
 
 	// expressed in wei
-	gasPrice, err := euc.keepRandomBeaconOperatorContract.PriceFeedEstimate()
+	gasPrice, err := euc.keepRandomBeaconOperatorContract.GasPriceCeiling()
 	if err != nil {
 		return err
 	}
 
-	// expressed in percentage
-	fluctuationMargin, err := euc.keepRandomBeaconOperatorContract.FluctuationMargin()
-	if err != nil {
-		return err
-	}
-
-	// payment = dkgFee + fluctuationMargin * dkgFee
-	// and fluctuation margin is expressed in %, so we need to divide by 100
 	dkgFee := new(big.Int).Mul(dkgGasEstimate, gasPrice)
-	payment := new(big.Int).Add(
-		dkgFee,
-		new(big.Int).Div(new(big.Int).Mul(fluctuationMargin, dkgFee), big.NewInt(100)),
-	)
 
-	_, err = euc.keepRandomBeaconOperatorContract.Genesis(payment)
+	_, err = euc.keepRandomBeaconOperatorContract.Genesis(dkgFee)
 	return err
 }
 

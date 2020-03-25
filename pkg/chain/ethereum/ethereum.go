@@ -9,11 +9,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -58,7 +58,7 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		)
 	}
 
-	minimumStake, err := ec.keepRandomBeaconOperatorContract.MinimumStake()
+	minimumStake, err := ec.stakingContract.MinimumStake()
 	if err != nil {
 		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
 	}
@@ -103,7 +103,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 
 	_, err := ec.keepRandomBeaconOperatorContract.SubmitTicket(
 		ticketBytes,
-		options.TransactionOptions{
+		ethutil.TransactionOptions{
 			GasLimit: 250000,
 		},
 	)
@@ -314,9 +314,11 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchDkgResultPublishedEvent(
+	return ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
 		func(
+			memberIndex *big.Int,
 			groupPublicKey []byte,
+			misbehaved []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupRegistration{
@@ -360,10 +362,17 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchDkgResultPublishedEvent(
-		func(groupPubKey []byte, blockNumber uint64) {
+	return ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
+		func(
+			memberIndex *big.Int,
+			groupPublicKey []byte,
+			misbehaved []byte,
+			blockNumber uint64,
+		) {
 			handler(&event.DKGResultSubmission{
-				GroupPublicKey: groupPubKey,
+				MemberIndex:    uint32(memberIndex.Uint64()),
+				GroupPublicKey: groupPublicKey,
+				Misbehaved:     misbehaved,
 				BlockNumber:    blockNumber,
 			})
 		},
