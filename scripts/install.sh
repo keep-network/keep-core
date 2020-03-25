@@ -3,14 +3,14 @@ set -e
 
 # Dafault inputs.
 KEEP_ETHEREUM_PASSWORD_DEFAULT="password"
-CONFIG_FILE_PATH_DEFAULT=$(realpath -m $(dirname $0)/../config.toml)
+CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 
 # Read user inputs.
 read -p "Enter ethereum accounts password [$KEEP_ETHEREUM_PASSWORD_DEFAULT]: " ethereum_password
 KEEP_ETHEREUM_PASSWORD=${ethereum_password:-$KEEP_ETHEREUM_PASSWORD_DEFAULT}
 
-read -p "Enter path to keep-core client config [$CONFIG_FILE_PATH_DEFAULT]: " config_file_path
-CONFIG_FILE_PATH=${config_file_path:-$CONFIG_FILE_PATH_DEFAULT}
+read -p "Enter dir path to keep-core client configs [$CONFIG_DIR_PATH_DEFAULT]: " config_dir_path
+CONFIG_DIR_PATH=${config_dir_path:-$CONFIG_DIR_PATH_DEFAULT}
 
 # Run script.
 LOG_START='\n\e[1;36m' # new line + bold + color
@@ -18,7 +18,7 @@ LOG_END='\n\e[0m' # new line + reset color
 
 printf "${LOG_START}Starting installation...${LOG_END}"
 KEEP_CORE_PATH=$(realpath $(dirname $0)/../)
-KEEP_CORE_CONFIG_FILE_PATH=$(realpath $CONFIG_FILE_PATH)
+KEEP_CORE_CONFIG_DIR_PATH=$(realpath $CONFIG_DIR_PATH)
 KEEP_CORE_SOL_PATH=$(realpath $KEEP_CORE_PATH/solidity)
 
 cd $KEEP_CORE_SOL_PATH
@@ -39,9 +39,12 @@ KEEP_CORE_SOL_ARTIFACTS_PATH=$(realpath $KEEP_CORE_SOL_PATH/build/contracts)
 printf "${LOG_START}Initializing contracts...${LOG_END}"
 truffle exec scripts/delegate-tokens.js --network local
 
-printf "${LOG_START}Updating keep-core client config...${LOG_END}"
-KEEP_CORE_CONFIG_FILE_PATH=$KEEP_CORE_CONFIG_FILE_PATH \
-    truffle exec scripts/lcl-client-config.js --network local
+config_files=($KEEP_CORE_CONFIG_DIR_PATH/*.toml)
+printf "${LOG_START}Updating keep-core client configs...${LOG_END}"
+for f in "${config_files[@]}"; do
+    KEEP_CORE_CONFIG_FILE_PATH="/${f##/}" \
+        truffle exec scripts/lcl-client-config.js --network local
+done
 
 printf "${LOG_START}Building keep-core client...${LOG_END}"
 cd $KEEP_CORE_PATH
