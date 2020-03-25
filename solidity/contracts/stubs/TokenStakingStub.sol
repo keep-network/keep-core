@@ -14,23 +14,4 @@ contract TokenStakingStub is TokenStaking {
     function setInitializationPeriod(uint256 _initializationPeriod) public {
         initializationPeriod = _initializationPeriod;
     }
-
-    function slash(uint256 amountToSlash, address[] memory misbehavedOperators) public {
-        for (uint i = 0; i < misbehavedOperators.length; i++) {
-            address operator = misbehavedOperators[i];
-            emit TokensSlashed(operator, 1 ether);
-        }
-    }
-
-    function seize(
-        uint256 amountToSeize,
-        uint256 rewardMultiplier,
-        address tattletale,
-        address[] memory misbehavedOperators
-    ) public {
-        for (uint i = 0; i < misbehavedOperators.length; i++) {
-            address operator = misbehavedOperators[i];
-            emit TokensSeized(operator, 1 ether);
-        }
-    }
 }
