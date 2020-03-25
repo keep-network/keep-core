@@ -1,4 +1,4 @@
-import increaseTime from './helpers/increaseTime';
+import increaseTime, {duration} from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
 
@@ -47,7 +47,8 @@ contract('TokenStaking', function() {
     it("returns max value right before the next schedule step", async () => {
       let minimumStakeScheduleStart = await stakingContract.minimumStakeScheduleStart();
       let timeForStepOne = minimumStakeScheduleStart.add(minimumStakeSchedule.div(minimumStakeSteps))
-      await increaseTime(timeForStepOne.toNumber() - await latestTime() - 1);
+      // Rounding timestamp jump to 1 minute less (looks like increaseTime() can occasionally add extra seconds)
+      await increaseTime(timeForStepOne.toNumber() - await latestTime() - duration.minutes(1))
       expect(await stakingContract.minimumStake()).to.eq.BN(
         minimumStakeBase.mul(minimumStakeSteps),
         "Unexpected minimum stake amount"
