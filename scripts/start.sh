@@ -4,7 +4,7 @@ set -e
 # Dafault inputs.
 KEEP_ETHEREUM_PASSWORD_DEFAULT="password"
 LOG_LEVEL_DEFAULT="info"
-CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../)
+CONFIG_DIR_PATH_DEFAULT=$(realpath -m $(dirname $0)/../configs)
 
 # Read user inputs.
 read -p "Enter ethereum accounts password [$KEEP_ETHEREUM_PASSWORD_DEFAULT]: " ethereum_password
