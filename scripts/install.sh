@@ -39,10 +39,10 @@ KEEP_CORE_SOL_ARTIFACTS_PATH=$(realpath $KEEP_CORE_SOL_PATH/build/contracts)
 printf "${LOG_START}Initializing contracts...${LOG_END}"
 truffle exec scripts/delegate-tokens.js --network local
 
-config_files=($KEEP_CORE_CONFIG_DIR_PATH/*.toml)
 printf "${LOG_START}Updating keep-core client configs...${LOG_END}"
-for f in "${config_files[@]}"; do
-    KEEP_CORE_CONFIG_FILE_PATH="/${f##/}" \
+for CONFIG_FILE in $KEEP_CORE_CONFIG_DIR_PATH/*.toml
+do
+    KEEP_CORE_CONFIG_FILE_PATH=$CONFIG_FILE \
         truffle exec scripts/lcl-client-config.js --network local
 done
 
