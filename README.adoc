@@ -68,38 +68,3 @@ The Keep Go client.
 
 It runs the Keep network’s random beacon and participates in related
 computations.
-
-== Quick installation
-
-To quickly install and start a single client use the installation
-script.
-
-=== Install script
-
-The `+install.sh+` script will:
-
-* migrate contracts
-* build client
-
-The script will ask you for the password to previously created ethereum
-accounts.
-
-To start the installation execute:
-
-....
-./scripts/install.sh
-....
-
-=== Starting a client
-
-To start a client execute:
-
-....
-./scripts/start.sh
-....
-
-The `+start.sh+` script will ask you to provide:
-
-* ethereum password
-* path to `keep-core` config files directory
-* select a config `.toml` file for your client

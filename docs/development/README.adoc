@@ -28,6 +28,40 @@ go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
 Run `+go generate ./.../+` from `keep-core` and if everything is fine, start the
 Keep client with `go run main.go`.
 
+== Quick installation
+
+To quickly install and start a client use the following scripts.
+
+=== Install script
+
+The `+install.sh+` script will:
+
+* migrate contracts
+* build client
+
+The script will ask you for the password to previously created ethereum
+accounts.
+
+To start the installation execute:
+
+....
+./scripts/install.sh
+....
+
+=== Starting a client
+
+To start a client execute:
+
+....
+./scripts/start.sh
+....
+
+The `+start.sh+` script will ask you to:
+
+* provide ethereum password
+* provide path to `keep-core` config files directory
+* select a config `.toml` file for your client
+
 == Development Guidelines
 
 There are two primary languages in the Keep code right now:
