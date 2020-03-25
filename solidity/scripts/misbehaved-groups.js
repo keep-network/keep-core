@@ -1,6 +1,6 @@
 /**
  * Important: the KeepRandomBeaconOperatorRewardsStub
- * and the TokenStakingStub contract should be deployed to the network!
+ * and the TokenStakingSlashingStubs contract should be deployed to the network!
  * 
  * This script:
  *  - emits fake events (UnauthorizedSigningReported, RelayEntryTimeoutReported)
@@ -22,7 +22,6 @@ async function registerNewGroup (keepRandomBeaconOerator, accounts) {
   const groupPubKey = crypto.randomBytes(32);
   await keepRandomBeaconOerator.registerNewGroup(groupPubKey)
   await keepRandomBeaconOerator.setGroupMembers(groupPubKey, [accounts[1], accounts[2], accounts[1]]);
-  console.log('created group', await keepRandomBeaconOerator.getGroupPublicKey(i));
 }
   
 module.exports = async function() {
