@@ -1,6 +1,4 @@
 import mineBlocks from './helpers/mineBlocks';
-import { duration, increaseTimeTo } from './helpers/increaseTime';
-import latestTime from './helpers/latestTime';
 import latestBlock from './helpers/latestBlock';
 import expectThrowWithMessage from './helpers/expectThrowWithMessage'
 import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
@@ -11,7 +9,7 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStakingStub.sol');
+const TokenStaking = artifacts.require('./TokenStaking.sol');
 const Registry = artifacts.require("./Registry.sol");
 
 contract('TokenStaking', function(accounts) {
@@ -62,25 +60,6 @@ contract('TokenStaking', function(accounts) {
       {from: ownerOne}
     );
   }
-
-  it("should get correct minimum stake based on the minimum stake schedule", async () => {
-    let minimumStakeSchedule = duration.days(100);
-    await stakingContract.setMinimumStakeSchedule(minimumStakeSchedule);
-    let minimumStakeBase = await stakingContract.minimumStakeBase();
-    let minimumStakeSteps = await stakingContract.minimumStakeSteps();
-
-    expect(await stakingContract.minimumStake()).to.eq.BN(
-      minimumStakeBase.mul(minimumStakeSteps),
-      "Unexpected minimum stake amount"
-    );
-
-    await increaseTimeTo(await latestTime() + minimumStakeSchedule);
-
-    expect(await stakingContract.minimumStake()).to.eq.BN(
-      minimumStakeBase,
-      "Unexpected minimum stake amount"
-    );
-  });
 
   it("should send tokens correctly", async () => {
     let amount = web3.utils.toBN(1000000000);
