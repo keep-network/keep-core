@@ -44,9 +44,6 @@ library GroupSelection {
         // Timeout in blocks after which the ticket submission is finished.
         uint256 ticketSubmissionTimeout;
 
-        // Duration of one ticket submission round in blocks.
-        uint256 ticketSubmissionRoundDuration;
-
         // Number of block at which the group selection started and from which
         // ticket submissions are accepted.
         uint256 ticketSubmissionStartBlock;
@@ -103,10 +100,9 @@ library GroupSelection {
         // - one initial ticket submission round
         // - N reactive ticket submission rounds
         // - one additional waiting round
-        self.ticketSubmissionTimeout = self.ticketSubmissionRoundDuration
-            .add(reactiveTicketSubmissionRounds(_possibleOperatorsCount, self.groupSize)
-                .mul(self.ticketSubmissionRoundDuration)
-            ).add(self.ticketSubmissionRoundDuration);
+        self.ticketSubmissionTimeout = uint256(6).mul(
+            reactiveTicketSubmissionRounds(_possibleOperatorsCount, self.groupSize).add(2)
+        );
     }
 
     /**

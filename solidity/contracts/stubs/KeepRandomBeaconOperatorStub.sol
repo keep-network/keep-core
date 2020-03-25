@@ -13,8 +13,7 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         address _stakingContract
     ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
         relayEntryTimeout = 10;
-        groupSelection.ticketSubmissionTimeout = 8 + (7*8) + 8;
-        groupSelection.ticketSubmissionRoundDuration = 8;
+        groupSelection.ticketSubmissionTimeout = groupSelection.ticketSubmissionTimeout + 20;
         resultPublicationBlockStep = 3;
     }
 

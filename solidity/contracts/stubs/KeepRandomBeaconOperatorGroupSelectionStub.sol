@@ -7,8 +7,7 @@ contract KeepRandomBeaconOperatorGroupSelectionStub is KeepRandomBeaconOperator 
         address _serviceContract,
         address _stakingContract
     ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
-        groupSelection.ticketSubmissionTimeout = 8 + (7*8) + 8;
-        groupSelection.ticketSubmissionRoundDuration = 8;
+        groupSelection.ticketSubmissionTimeout = groupSelection.ticketSubmissionTimeout + 20;
     }
 
     function getGroupSelectionRelayEntry() public view returns (uint256) {
