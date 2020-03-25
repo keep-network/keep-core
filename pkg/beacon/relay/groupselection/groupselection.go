@@ -16,6 +16,8 @@ import (
 
 var logger = log.Logger("keep-groupselection")
 
+const ticketSubmissionRoundDuration = 6
+
 // Result represents the result of group selection protocol. It contains the
 // list of all stakers selected to the candidate group as well as the number of
 // block at which the group selection protocol completed.
@@ -96,7 +98,7 @@ func startTicketSubmission(
 	onGroupSelected func(*Result),
 ) error {
 	initialSubmissionTimeout, err := blockCounter.BlockHeightWaiter(
-		startBlockHeight + chainConfig.TicketSubmissionRoundDuration,
+		startBlockHeight + ticketSubmissionRoundDuration,
 	)
 	if err != nil {
 		return err

@@ -132,7 +132,7 @@ func (c *localChain) GetSubmittedTickets() ([]uint64, error) {
 }
 
 func (c *localChain) TicketSubmissionTimeout() (*big.Int, error) {
-	return big.NewInt(4), nil
+	return big.NewInt(12), nil
 }
 
 func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, error) {
@@ -301,11 +301,10 @@ func ConnectWithKey(
 
 	return &localChain{
 		relayConfig: &relayconfig.Chain{
-			GroupSize:                     groupSize,
-			HonestThreshold:               honestThreshold,
-			TicketSubmissionRoundDuration: 2,
-			ResultPublicationBlockStep:    3,
-			MinimumStake:                  minimumStake,
+			GroupSize:                  groupSize,
+			HonestThreshold:            honestThreshold,
+			ResultPublicationBlockStep: 3,
+			MinimumStake:               minimumStake,
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.EntrySubmitted)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),

@@ -140,8 +140,7 @@ func TestSubmission(t *testing.T) {
 
 	for _, test := range tests {
 		chainConfig := &config.Chain{
-			GroupSize:                     test.groupSize,
-			TicketSubmissionRoundDuration: 3,
+			GroupSize: test.groupSize,
 		}
 
 		chain := &stubGroupInterface{
@@ -168,8 +167,13 @@ func TestSubmission(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		ticketSubmissionTimeout, err := chain.TicketSubmissionTimeout()
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		err = blockCounter.WaitForBlockHeight(
-			chainConfig.TicketSubmissionRoundDuration,
+			ticketSubmissionTimeout.Uint64(),
 		)
 		if err != nil {
 			t.Fatal(err)
@@ -221,7 +225,7 @@ func (stg *stubGroupInterface) GetSubmittedTickets() ([]uint64, error) {
 }
 
 func (stg *stubGroupInterface) TicketSubmissionTimeout() (*big.Int, error) {
-	return big.NewInt(6), nil
+	return big.NewInt(12), nil
 }
 
 func (stg *stubGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress, error) {

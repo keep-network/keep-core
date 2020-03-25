@@ -9,9 +9,6 @@ type Chain struct {
 	// HonestThreshold is the minimum number of active participants behaving
 	// according to the protocol needed to generate a new relay entry.
 	HonestThreshold int
-	// TicketSubmissionRoundDuration is the duration (in blocks) of one
-	// ticket submission round.
-	TicketSubmissionRoundDuration uint64
 	// ResultPublicationBlockStep is the duration (in blocks) that has to pass
 	// before group member with the given index is eligible to submit the
 	// result.
