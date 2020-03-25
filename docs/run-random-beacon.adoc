@@ -1,6 +1,6 @@
 :toc: macro
 
-= Run Keep
+= Run Random Beacon
 
 :icons: font
 :numbered:
@@ -42,7 +42,8 @@ See the https://github.com/keep-network/keep-core/tree/master/docs/development#b
 Doesn't exist for the public yet.
 
 === Run Image
-This is a sample run command to illustrate use with config material required for running a beacon client.
+This is a sample run command to illustrate use with config material required for running a beacon
+client.
 
 ```
 export KEEP_CLIENT_ETHEREUM_PASSWORD=$(cat .secrets/eth-account-password.txt)
@@ -62,7 +63,7 @@ keep-client --config /mnt/keep-client/config/keep-client-config.toml start
 
 === Network
 
-See the following table for **default** network requirements.
+See the following table for **default** port mappings.
 
 [%header,cols=2*]
 |===
@@ -85,7 +86,8 @@ See the following table for **default** network requirements.
 |`3919`
 |===
 
-**NOTE:** If you set a different `port` in your keep-client configuration, or configure `peers` with non-default ports configured, firewall rules will need to be adjusted accordingly.
+If you set a different `port` in your keep-client configuration, or configure `peers` with
+non-default ports configured, firewall rules will need to be adjusted accordingly.
 
 === Application
 
@@ -221,7 +223,60 @@ See the following table for **default** network requirements.
 |Yes
 |===
 
+== Deployment
+
+Deployment constraints are as follows:
+
+- Each beacon client deployment requires a unique operator address.
+- Each beacon client deployment requires a unique IP address.
+
+=== Kubernetes
+
+At Keep we run on GCP + Kube. To accommodate the aforementioned constraints and system
+recommendations we use the following pattern for each of our environments:
+
+- Regional Kube cluster.
+- 5 beacon clients, each running minimum stake required by the network.
+- A LoadBalancer Service for each client.
+- A StatefulSet for each client.
+
+You can see our Ropsten Kube configurations https://github.com/keep-network/keep-core/tree/master/infrastructure/kube/keep-test[here]
+
 == Logging
+
+Below are some of the key things to look out for to make sure you're booted and connected to the
+network:
+
+=== Startup
+```
+▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▄▄▓▓▓▓▓▓▓▀      ▐▓▓▓▓▓▓▄▄▄▄         ▓▓▓▓▓▓▄▄▄▄         ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▀        ▐▓▓▓▓▓▓▓▓▓▓         ▓▓▓▓▓▓▓▓▓▓▌        ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▀▀▓▓▓▓▓▓▄       ▐▓▓▓▓▓▓▀▀▀▀         ▓▓▓▓▓▓▀▀▀▀         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀
+  ▓▓▓▓▓▓   ▀▓▓▓▓▓▓▄     ▐▓▓▓▓▓▓     ▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌
+▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+
+Trust math, not hardware.
+
+-----------------------------------------------------------------------------------------------
+| Keep Random Beacon Node                                                                     |
+|                                                                                             |
+| Port: 3919                                                                                  |
+| IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH    |
+|       /ip4/10.102.0.112/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH |
+-----------------------------------------------------------------------------------------------
+```
+
+**Bonus**: If you want to share your LibP2P address with others you can get it from the startup log.  When sharing remember to substitute the `/ipv4/` address with the public facing IP of your client if you're running on a private machine, or replace the entire `/ipv4/` segment with a DNS entry if you're using a hostname.
+
+=== Peer Connections
+
+```
+21:19:47.129 DEBUG keep-net-w: connected to [1] peers:[16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY]
+```
 
 == ETH Networks
 
