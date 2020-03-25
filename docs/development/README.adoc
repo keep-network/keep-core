@@ -28,6 +28,13 @@ go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
 Run `+go generate ./.../+` from `keep-core` and if everything is fine, start the
 Keep client with `go run main.go`.
 
+== <<local-keep-network.adoc,Setting up local Keep network>>
+
+For development purposes, it is convenient to set up local Ethereum client with
+a group of connected peers. A note-taken walkthrough covers the entire process
+including setting up local Ethereum client, deploying Keep contracts and
+configuring Keep peers.
+
 == Quick installation
 
 To quickly install and start a client use the following scripts.
@@ -88,13 +95,6 @@ available at `+https://docs.keep.network/img/generated/*.png+` (the filenames
 are identical to their TikZ sources, with a `.png` suffix instead of
 `.tikz`). These URLs are for the `master` version of the repo; non-`master`
 branches are instead published to `+https://docs.keep.network/<branch name>/+`.
-
-== <<local-keep-network.adoc,Setting up local Keep network>>
-
-For development purposes, it is convenient to set up local Ethereum client with
-a group of connected peers. A note-taken walkthrough covers the entire process
-including setting up local Ethereum client, deploying Keep contracts and
-configuring Keep peers.
 
 == Common problems
 
