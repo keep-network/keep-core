@@ -37,11 +37,11 @@ See the https://github.com/keep-network/keep-core/tree/master/docs/development#b
 
 == Docker
 
-== Get Image
+=== Get Image
 
 Doesn't exist for the public yet.
 
-== Run Image
+=== Run Image
 This is a sample run command to illustrate use with config material required for running a beacon client.
 
 ```
