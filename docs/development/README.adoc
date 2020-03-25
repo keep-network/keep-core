@@ -37,6 +37,7 @@ To quickly install and start a client use the following scripts.
 The `+install.sh+` script will:
 
 * migrate contracts
+* update client config files
 * build client
 
 The script will ask you for the password to previously created ethereum
