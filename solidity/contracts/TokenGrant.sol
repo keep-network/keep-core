@@ -3,6 +3,7 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "./libraries/grant/UnlockingSchedule.sol";
 import "./utils/BytesLib.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./TokenStaking.sol";
@@ -18,6 +19,7 @@ import "./TokenGrantStake.sol";
  */
 contract TokenGrant {
     using SafeMath for uint256;
+    using UnlockingSchedule for uint256;
     using SafeERC20 for ERC20Burnable;
     using BytesLib for bytes;
     using AddressArrayUtils for address[];
@@ -275,17 +277,17 @@ contract TokenGrant {
      * @param _id Grant ID.
      */
     function unlockedAmount(uint256 _id) public view returns (uint256) {
-        uint256 balance = grants[_id].amount;
-
-        if (now < grants[_id].cliff) {
-            return 0; // Cliff period is not over.
-        } else if (grants[_id].revokedAt != 0) {
-            return balance.sub(grants[_id].revokedAmount);
-        } else if (now >= grants[_id].start.add(grants[_id].duration)) {
-            return balance; // Unlocking period is finished.
-        } else {
-            return balance.mul(now.sub(grants[_id].start)).div(grants[_id].duration);
-        }
+        Grant storage grant = grants[_id];
+        return (grant.revokedAt != 0)
+            // Grant revoked -> return what is remaining
+            ? grant.amount.sub(grant.revokedAmount)
+            // Not revoked -> calculate the unlocked amount normally
+            : now.getUnlockedAmount(
+                grant.amount,
+                grant.duration,
+                grant.start,
+                grant.cliff
+            );
     }
 
     /**
