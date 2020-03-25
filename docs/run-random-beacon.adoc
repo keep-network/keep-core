@@ -6,22 +6,9 @@
 :numbered:
 toc::[]
 
-== Keep Types?
+== System Recommendations
 
-Here's a bippity boop about keep types.
-
-== Install
-
-Things you will need:
-
-- Keep client executable
-- Keep client configuration file
-- Ethereum account and keyfile
-- KEEP tokens
-
-=== System Recommendations
-
-- It is paramount that Keep nodes remain available to the Keep network. We strongly recommend a stable and redundant internet connection.
+- It is paramount that Keep nodes remain available to the Keep network. We encourage a stable and redundant internet connection.
 - A connection to a production grade self-hosted or third party Ethereum node deployment.
 - Persistent storage that will survive a VM or container rotation.
 - Machines:
@@ -44,11 +31,32 @@ Things you will need:
 |2 vCPU / 4 GiB RAM / 1 GiB Persistent Storage
 |===
 
-=== Build from Source
+== Build from Source
 
-=== Docker
+See the https://github.com/keep-network/keep-core/tree/master/docs/development#building[building] section in our developer docs.
 
-You can download the latest Keep client release here: <Docker Hub link>
+== Docker
+
+== Get Image
+
+Doesn't exist for the public yet.
+
+== Run Image
+This is a sample run command to illustrate use with config material required for running a beacon client.
+
+```
+export KEEP_CLIENT_ETHEREUM_PASSWORD=$(cat .secrets/eth-account-password.txt)
+export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
+export KEEP_CLIENT_PERSISTENCE_DIR=$(pwd)/persistence
+
+docker run -dit \
+--volume $KEEP_CLIENT_PERSISTENCE_DIR:/mnt/keep-client/persistence \
+--volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
+--env KEEP_ETHEREUM_PASSWORD=$KEEP_CLIENT_ETHEREUM_PASSWORD \
+--env LOG_LEVEL=debug \
+-p 3919:3919 \
+keep-client --config /mnt/keep-client/config/keep-client-config.toml start
+```
 
 == Configuration
 
@@ -84,8 +92,6 @@ See the following table for **default** network requirements.
 ==== Sample
 
 ```
-# Keep client config
-
 # Ethereum host connection info.
 [ethereum]
   URL = "ws://127.0.0.1:8546"
@@ -217,9 +223,7 @@ See the following table for **default** network requirements.
 
 == Logging
 
-Our logging really isn't configurable so maybe we don't need this?
-
-== Connection Info (I'm not convinced this should be in this doc but it should be somewhere :shrug:)
+== ETH Networks
 
 === Mainnet
 
@@ -227,33 +231,19 @@ Our logging really isn't configurable so maybe we don't need this?
 
 ==== Contracts
 
-=== Testnet
-
-Keep uses the Ethereum Ropsten Testnet.
-
-==== Available (or bootstrap?) Peers
-
-[small]*`"/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8B2HEde1pAUJH31rZehN3isd1ZFiHCdsxjFnGZehuDJZ"`*
-[small]*`"/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8SrKDSKZnj3syGjQ1B8F6bDokP93wikjUgpdx4sWCN5L"`*
-[small]*`"/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmS29jNiEX2vAtcjZVhPjU5HWKZNjpWj1gp4SKMGwnSfrg"`*
-[small]*`"/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm359ykqT4QAehewxGLCqY7vTNHLP1ao9EjieZS8jdeKp5"`*
-[small]*`"/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAmDKyX7xmLMEAuWtDw5oBLN3L9xtKXSFn8hUEVtukZkuHp"`*
-
-==== Contracts (Not sure if we should list all, or only configured)
-
 [%header,cols=2*]
 |===
 |Token
 |
 
 |KeepToken
-|`0x8f9F2e1cCAd70E292CCC6D1D20A42cD70bC76488`
+|''
 
 |TokenStaking
-|`0x4a7ecCb36784931FfB75BCdcBd95aCA9F63Cb90E`
+|''
 
 |TokenGrant
-|`0xe26E1C21d34059c7B6b882c7cDD38Ac6E169D774`
+|''
 |===
 
 [%header,cols=2*]
@@ -262,10 +252,10 @@ Keep uses the Ethereum Ropsten Testnet.
 |
 
 |Groups
-|`0x25A60dAE6eF016CB2c5391c91356F214b0620071`
+|''
 
 |GroupSelection
-|`0x723e442b7E9a59a29F4999550c1FD7db96DdD3b1`
+|''
 |===
 
 [%header,cols=2*]
@@ -274,16 +264,75 @@ Keep uses the Ethereum Ropsten Testnet.
 |
 
 |DKGResultVerification
-|`0xf3e3e41CeD437DBfcA9Ce9148A6452D249D7e2Ee`
+|''
 
 |KeepRandomBeaconServiceImplV1
-|`0xf99F40F6266cb3c6f5B92b3C5E88a0aCe1E2acA3`
+|''
 
 |KeepRandomBeaconService
-|`0x1200952A8EB287006f4f61Effa67d85447a67Ab0`
+|''
 
 |KeepRandomBeaconOperator
-|`0xBf136B8Afd6A8F6B571c23B04aBFCa7AFb0D404E`
+|''
+|===
+
+=== Testnet
+
+Keep uses the Ethereum Ropsten Testnet.
+
+==== Bootstrap Peers
+
+[small]*`"/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH"`*
+[small]*`"/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY"`*
+[small]*`"/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp"`*
+[small]*`"/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf"`*
+[small]*`"/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAkxRTeySEWZfW9C83GPFpQUXvrygmZryCN6DL4piZrbAv4"`*
+
+==== Contracts
+
+[%header,cols=2*]
+|===
+|Token
+|
+
+|KeepToken
+|`0xEF26cE3a729d4420558B10b8d9475CB84DA832c1`
+
+|TokenStaking
+|`0x585A83EdA3d29e030C49A51B46B653FEcd9c5919`
+
+|TokenGrant
+|`0xbf9c8f1125a34725CCe9a11a1b32509ED6773390`
+|===
+
+[%header,cols=2*]
+|===
+|Group
+|
+
+|Groups
+|`0xc75Df8B0aF13EFba5b44Fa2585998b208378c2E2`
+
+|GroupSelection
+|`0x49e75D5714fb92b061ED1863626BCBd458E2370f`
+|===
+
+[%header,cols=2*]
+|===
+|RandomBeacon
+|
+
+|DKGResultVerification
+|`0x721EA02c31Ed7bc0E5e6F015F0F35cE6481355e4`
+
+|KeepRandomBeaconServiceImplV1
+|`0xb8548Db4469A32f14724a0c1e436D19Fdf0Ace1A`
+
+|KeepRandomBeaconService
+|`0x17c43Fb5035b89a51b3481f7Dd11a987E7A8720d`
+
+|KeepRandomBeaconOperator
+|`0x8d804f0c36d2c3A40EE128B7a01fe5269D511206`
 |===
 
 
