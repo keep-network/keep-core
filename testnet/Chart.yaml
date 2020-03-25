@@ -1,4 +1,0 @@
-apiVersion: v1
-description: Private Ethereum network on Kubernetes
-name: testnet
-version: 0.1.0

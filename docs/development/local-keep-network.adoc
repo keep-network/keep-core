@@ -278,7 +278,7 @@ If you get `Account unlock with HTTP access is forbidden` you should run
 Ethereum client (described in the previous section) with param:
 `--allow-insecure-unlock`
 
-We also need to create a new network entry in `keep-core/contracts/solidity/truffle.js`
+We also need to create a new network entry in `keep-core/solidity/truffle.js`
 pointing to our local node and its account. This account will pay gas for Keep
 contract deployment.
 
@@ -296,7 +296,7 @@ contracts. Please save the output of as we will need to use some of the
 outputted contract addresses in the Keep peer configuration later.
 
 ```
-$ cd keep-core/contracts/solidity
+$ cd keep-core/solidity
 $ truffle migrate --reset --network local
 
 Using network 'local'.
@@ -344,11 +344,11 @@ Saving artifacts...
 == Keep token staking
 
 Each Keep peer needs to have a minimum number of KEEP tokens staked under its
-account. The `demo.js` script transfers KEEP tokens and stake them for all
+account. The `delegate-tokens.js` script transfers KEEP tokens and stake them for all
 addresses available.
 
 ```
-$ truffle exec ./scripts/demo.js --network local
+$ truffle exec ./scripts/delegte-tokens.js --network local
 
 Using network 'local'.
 
@@ -375,7 +375,7 @@ $ cp config.toml.SAMPLE config.local.1.toml
 ```
 
 Next, edit `config.local.1.toml` and update `[ethereum.account]` section to
-point to the second <<ethereum-accounts,generated account>> (the first 
+point to the second <<ethereum-accounts,generated account>> (the first
 one is used by Ethereum client):
 ```toml
 [ethereum.account]
@@ -385,12 +385,12 @@ one is used by Ethereum client):
 
 [#client-contracts-config]
 Update `[ethereum.ContractAddresses]` section to point to the previously
-*deployed contract* instances. 
+*deployed contract* instances.
 
 NOTE: Updating contracts addresses is not required when running <<Quick installation>>
 script.
 
-Please use addresses of `KeepRandomBeaconOperator`, `KeepRandomBeaconService` and 
+Please use addresses of `KeepRandomBeaconOperator`, `KeepRandomBeaconService` and
 `TokenStaking` contracts:
 
 ```toml

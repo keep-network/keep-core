@@ -40,8 +40,6 @@ type TaggedMarshaler interface {
 // return a provider type, which is an informational string indicating what type
 // of provider this is, the list of IP addresses on which it can listen, and
 // known peers from peer discovery mechanims.
-//
-// TODO: move AddrStrings and Peers to the ConnectionManager interface.
 type Provider interface {
 	// ID returns provider identifier.
 	ID() TransportIdentifier
@@ -58,11 +56,6 @@ type Provider interface {
 	// channel name.
 	BroadcastChannelFor(name string) (BroadcastChannel, error)
 
-	// AddrStrings returns all listen addresses of the provider.
-	AddrStrings() []string
-	// Peers returns all known peers from the underlying peer store.
-	// This may include peers not directly connected to the provider.
-	Peers() []string
 	// ConnectionManager returns the connection manager used by the provider.
 	ConnectionManager() ConnectionManager
 
@@ -78,6 +71,9 @@ type ConnectionManager interface {
 	ConnectedPeers() []string
 	GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error)
 	DisconnectPeer(connectedPeer string)
+
+	// AddrStrings returns all listen addresses of the provider.
+	AddrStrings() []string
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler

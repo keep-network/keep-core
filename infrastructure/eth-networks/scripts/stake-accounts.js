@@ -83,7 +83,7 @@ async function stakeOperatorAccount(operatorAddress, contractOwnerAddress) {
 };
 
 function formatAmount(amount, decimals) {
-  return '0x' + web3.utils.toBN(amount).mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals))).toString('hex');
+  return '0x' + web3.utils.toBN(amount).muln(10).pow(web3.utils.toBN(decimals)).toString('hex');
 };
 
 async function authorizeOperatorContract(operatorAddress, authorizer) {
@@ -94,7 +94,7 @@ async function authorizeOperatorContract(operatorAddress, authorizer) {
     operatorAddress,
     keepRandomBeaconOperatorContractAddress).send({from: authorizer});
 
-  console.log(`Authorized!`);
+  console.log(`Account ${operatorAddress} Authorized!`);
 };
 
 operatorAddresses.forEach(operatorAddress => {

@@ -1,0 +1,147 @@
+.tokens-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+#delegate-stake-section {
+    width: 100%;
+    align-self: flex-start;
+}
+
+.delegate-stake-form {
+    div.flex.row:first-of-type {
+        flex-direction: column;
+    }
+    .addresses-section {
+        width: 100%;
+    }
+
+    button {
+        width: 100% !important;
+    }
+
+   .tabs {
+       margin-top: 1rem;
+       .tab {
+           padding: 1.5rem 0;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           flex: 1;
+           &:hover {
+               cursor: pointer;
+           }
+           &.active {
+                color: @color-black;
+                position: relative;
+                font-weight: bold;
+                border: 1px solid @color-grey-70;
+                border-bottom: none;
+
+                &:before {
+                    position: absolute;
+                    content: "";
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 5px;
+                    background: @primary-color;
+                }
+            }
+            &.inactive {
+                color: @color-grey-40;
+                border-bottom: 1px solid @color-grey-70;
+                background: @color-grey-20;
+                padding-left: 6px;
+                background-clip: border-box;
+                position: relative;
+                &:before {
+                    position: absolute;
+                    content: "";
+                    top: 0;
+                    left: 0;
+                    height: 100%;
+                    width: 5px;
+                    background: @white;
+                }
+                &:first-of-type {
+                    &:before {
+                        left: calc(100% - 5px);
+                    }
+                }
+            }
+    
+       }
+    }
+   
+    .input-wrapper {
+        border: 1px solid @color-grey-70;
+        border-top: 0;
+        padding: 1.5rem;
+        padding-bottom: 0;
+        margin-bottom: 1rem;
+
+        .progress-bar-wrapper {
+            margin-bottom: 0;
+        }
+    }
+}
+
+#tokens-overview {
+    width: 100%;
+    align-self: flex-start;
+}
+
+@media screen and (min-width: 950px) {
+    .tokens-wrapper {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    #tokens-overview {
+        width: 40%
+    }
+
+    #delegate-stake-section {
+        width: 58%;
+    }
+}
+
+@media screen and (min-width: 1250px) {
+    .tokens-wrapper {
+        flex-direction: column;
+    }
+
+    #tokens-overview {
+        width: 100%;
+    }
+
+    #delegate-stake-section {
+        width: 100%;
+    }
+}
+
+@media screen and (min-width: 1550px) {
+    .tokens-wrapper {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    #tokens-overview {
+        width: 40%;
+    }
+
+    #delegate-stake-section {
+        width: 58%;
+    }
+
+    .delegate-stake-form {
+        div.flex.row:first-of-type {
+            flex-direction: row;
+        }
+
+        .addresses-section {
+            margin-left: 1rem;
+        }
+    }
+}
