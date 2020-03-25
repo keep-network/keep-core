@@ -84,8 +84,13 @@ library GroupSelection {
      * @param _seed pseudorandom seed value used as an input for the group
      * selection. All submitted tickets needs to have the seed mixed-in into the
      * value.
+     * @param _possibleOperatorsCount number of possible operators.
      */
-    function start(Storage storage self, uint256 _seed) public {
+    function start(
+        Storage storage self,
+        uint256 _seed,
+        uint256 _possibleOperatorsCount
+    ) public {
         // We execute the minimum required cleanup here needed in case the
         // previous group selection failed and did not clean up properly in
         // stop function.
@@ -99,8 +104,9 @@ library GroupSelection {
         // - N reactive ticket submission rounds
         // - one additional waiting round
         self.ticketSubmissionTimeout = self.ticketSubmissionRoundDuration
-            .add(reactiveTicketSubmissionRounds(self).mul(self.ticketSubmissionRoundDuration))
-            .add(self.ticketSubmissionRoundDuration);
+            .add(reactiveTicketSubmissionRounds(_possibleOperatorsCount, self.groupSize)
+                .mul(self.ticketSubmissionRoundDuration)
+            ).add(self.ticketSubmissionRoundDuration);
     }
 
     /**
@@ -412,20 +418,17 @@ library GroupSelection {
         }
     }
 
-    function reactiveTicketSubmissionRounds(Storage storage self) public view returns (uint256) {
-        // TODO: pass tokenSupply and minimumStake as arguments.
-        uint256 tokenSupply = 10**27;
-        uint256 minimumStake = 200000 * 1e18;
-
-        uint256 possibleOperators = tokenSupply.div(minimumStake);
-
+    function reactiveTicketSubmissionRounds(
+        uint256 possibleOperatorsCount,
+        uint256 groupSize
+    ) public view returns (uint256) {
         uint256 operatorsExponent = 1;
-        while(2**operatorsExponent < possibleOperators){
+        while(2**operatorsExponent < possibleOperatorsCount){
             operatorsExponent++;
         }
 
         uint256 groupsExponent = 1;
-        while(2**groupsExponent < self.groupSize){
+        while(2**groupsExponent < groupSize){
             groupsExponent++;
         }
 

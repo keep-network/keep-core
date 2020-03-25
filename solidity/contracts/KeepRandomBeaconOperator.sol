@@ -238,7 +238,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
         }
 
-        groupSelection.start(_newEntry);
+        uint256 possibleOperatorsCount = stakingContract.possibleOperatorsCount();
+        groupSelection.start(_newEntry, possibleOperatorsCount);
         emit GroupSelectionStarted(_newEntry);
         dkgSubmitterReimbursementFee = _payment;
     }

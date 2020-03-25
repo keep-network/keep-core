@@ -21,6 +21,7 @@ contract KeepRandomBeaconOperatorGroupSelectionStub is KeepRandomBeaconOperator 
     }
 
     function startGroupSelection(uint256 seed) public {
-        groupSelection.start(seed);
+        uint256 possibleOperatorsCount = stakingContract.possibleOperatorsCount();
+        groupSelection.start(seed, possibleOperatorsCount);
     }
 }

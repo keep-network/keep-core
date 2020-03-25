@@ -408,4 +408,13 @@ contract TokenStaking is StakeDelegatable {
     ) public view returns(bool) {
         return activeStake(staker, operatorContract) >= minimumStake;
     }
+
+    /**
+     * @dev Returns possible operators count.
+     */
+    function possibleOperatorsCount() public view returns (uint256) {
+        // TODO: change when stake schedule will be implemented.
+        uint256 tokenSupply = 10**27;
+        return tokenSupply.div(minimumStake);
+    }
 }
