@@ -12,7 +12,8 @@ const TokenStaking = artifacts.require('./TokenStaking.sol');
 const Registry = artifacts.require("./Registry.sol");
 
 contract('TokenStaking', function() {
-  let token, registry, stakingContract, minimumStakeBase, minimumStakeSteps, minimumStakeSchedule, keepDecimals;
+  let token, registry, stakingContract,
+    minimumStakeSteps, minimumStakeSchedule, keepDecimals;
   const initializationPeriod = 10;
   const undelegationPeriod = 30;
 
@@ -23,7 +24,6 @@ contract('TokenStaking', function() {
       token.address, registry.address, initializationPeriod, undelegationPeriod
     );
 
-    minimumStakeBase = await stakingContract.minimumStakeBase();
     minimumStakeSteps = await stakingContract.minimumStakeSteps();
     minimumStakeSchedule = await stakingContract.minimumStakeSchedule();
     keepDecimals = web3.utils.toBN(10).pow(web3.utils.toBN(18));
@@ -52,6 +52,16 @@ contract('TokenStaking', function() {
       await increaseTime(timeForStepOne.toNumber() - await latestTime() - duration.minutes(1))
       expect(await stakingContract.minimumStake()).to.eq.BN(
         web3.utils.toBN(100000).mul(keepDecimals),
+        "Unexpected minimum stake amount"
+      );
+    })
+
+    it("returns correct value right after the first schedule step", async () => {
+      let minimumStakeScheduleStart = await stakingContract.minimumStakeScheduleStart();
+      let timeForStepOne = minimumStakeScheduleStart.add(minimumStakeSchedule.div(minimumStakeSteps))
+      await increaseTime(timeForStepOne.toNumber() - await latestTime())
+      expect(await stakingContract.minimumStake()).to.eq.BN(
+        web3.utils.toBN(90000).mul(keepDecimals),
         "Unexpected minimum stake amount"
       );
     })

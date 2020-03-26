@@ -140,7 +140,8 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
       "Unexpected balance for operator after token seizing"
     )
     
-    let expectedTattletaleReward = (amountToSeize.muln(5).divn(100)).muln(10).divn(100)
+    // 1000000000000000000000 = (200000000000000000000100 * 5 / 100) * 10 / 100
+    let expectedTattletaleReward = web3.utils.toBN("1000000000000000000000")
     assert.isTrue(
       (tattletaleBalanceBeforeSeizing.add(expectedTattletaleReward)).eq(tattletaleBalanceAfterSeizing), 
       "Unexpected balance for tattletale after token seizing"
