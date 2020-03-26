@@ -6,6 +6,7 @@ package groupselection
 import (
 	"fmt"
 	"math/big"
+	"sort"
 
 	"github.com/ipfs/go-log"
 
@@ -192,6 +193,9 @@ func startTicketSubmission(
 					return err
 				}
 
+				// Get unsorted submitted tickets from the chain.
+				// This slice will be also filled by candidate tickets values
+				// in order to determine an optimal number of candidate tickets.
 				submittedTickets, err := relayChain.GetSubmittedTickets()
 				if err != nil {
 					return fmt.Errorf(
@@ -200,35 +204,77 @@ func startTicketSubmission(
 					)
 				}
 
-				submittedTicketsCount := len(submittedTickets)
+				candidateTickets := make([]*ticket, 0)
 
-				reactiveSubmissionRoundTickets := make([]*ticket, 0)
-
-				for _, ticket := range reactiveSubmissionTickets {
-					ticketLeadingZeros := uint64(ticket.leadingZeros())
+				for _, candidateTicket := range reactiveSubmissionTickets {
+					candidateTicketLeadingZeros := uint64(
+						candidateTicket.leadingZeros(),
+					)
 
 					if roundIndex == 0 {
-						if ticketLeadingZeros < roundLeadingZeros {
+						if candidateTicketLeadingZeros < roundLeadingZeros {
 							continue
 						}
 					} else {
-						if ticketLeadingZeros != roundLeadingZeros {
+						if candidateTicketLeadingZeros != roundLeadingZeros {
 							continue
 						}
 					}
 
-					if submittedTicketsCount == chainConfig.GroupSize &&
-						ticket.intValue().Uint64() >= submittedTickets[submittedTicketsCount-1] {
-						continue
+					// Sort submitted tickets slice in ascending order.
+					sort.SliceStable(
+						submittedTickets,
+						func(i, j int) bool {
+							return submittedTickets[i] < submittedTickets[j]
+						},
+					)
+
+					// If previous iteration encountered the maximum length
+					// of submitted tickets slice and was able to add a new
+					// candidate value, submitted tickets slice should be
+					// trimmed to the group size.
+					if len(submittedTickets) > chainConfig.GroupSize {
+						submittedTickets = submittedTickets[:chainConfig.GroupSize]
 					}
 
-					if len(reactiveSubmissionRoundTickets) == chainConfig.GroupSize {
+					shouldBeSubmitted := false
+					candidateTicketValue := candidateTicket.intValue().Uint64()
+
+					if len(submittedTickets) < chainConfig.GroupSize {
+						// If submitted tickets count is less than the group
+						// size the candidate ticket can be added unconditionally.
+						submittedTickets = append(
+							submittedTickets,
+							candidateTicketValue,
+						)
+						shouldBeSubmitted = true
+					} else {
+						// If submitted tickets count is equal to the group
+						// size the candidate ticket can be added only if
+						// it is smaller than the highest submitted ticket.
+						// Note that, maximum length of submitted tickets slice
+						// will be exceeded and will be trimmed in next
+						// iteration.
+						highestSubmittedTicket := submittedTickets[len(submittedTickets)-1]
+						if candidateTicketValue < highestSubmittedTicket {
+							submittedTickets = append(
+								submittedTickets,
+								candidateTicketValue,
+							)
+							shouldBeSubmitted = true
+						}
+					}
+
+					// If current candidate ticket should not be submitted,
+					// there is no sense to continue with next candidate tickets
+					// because they will have higher value than the current one.
+					if !shouldBeSubmitted {
 						break
 					}
 
-					reactiveSubmissionRoundTickets = append(
-						reactiveSubmissionRoundTickets,
-						ticket,
+					candidateTickets = append(
+						candidateTickets,
+						candidateTicket,
 					)
 				}
 
@@ -236,11 +282,11 @@ func startTicketSubmission(
 					"reactive ticket submission round [%v] submitting "+
 						"[%v] tickets",
 					roundIndex,
-					len(reactiveSubmissionRoundTickets),
+					len(candidateTickets),
 				)
 
 				go submitTickets(
-					reactiveSubmissionRoundTickets,
+					candidateTickets,
 					relayChain,
 					quitReactiveTicketSubmission,
 				)
