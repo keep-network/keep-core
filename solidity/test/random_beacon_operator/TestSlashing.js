@@ -75,7 +75,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   })
 
   it("should slash no more than available operator's amount", async () => {
-    let amountToSlash = largeStake.add(web3.utils.toBN(100));
+    let amountToSlash = largeStake.add(web3.utils.toBN(100)); // 200000000000000000000100
     await stakingContract.slash(amountToSlash, [operator1], {from: anotherOperatorContract})
 
     assert.isTrue((await stakingContract.balanceOf(operator1)).isZero(), "Unexpected balance after token slasing")

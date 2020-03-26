@@ -80,7 +80,8 @@ contract TokenStaking is StakeDelegatable {
     function minimumStake() public view returns (uint256) {
         if (block.timestamp < minimumStakeScheduleStart.add(minimumStakeSchedule)) {
             uint256 currentStep = minimumStakeSteps.mul(
-                block.timestamp.sub(minimumStakeScheduleStart)).div(minimumStakeSchedule);
+                block.timestamp.sub(minimumStakeScheduleStart)
+            ).div(minimumStakeSchedule);
             return minimumStakeBase.mul(minimumStakeSteps.sub(currentStep));
         }
         return minimumStakeBase;
