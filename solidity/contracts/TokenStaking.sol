@@ -21,7 +21,7 @@ contract TokenStaking is StakeDelegatable {
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
     // the Keep network. Expressed as number with 18-decimal places.
     // Initial minimum stake is higher than the final and lowered periodically based
-    // on the amount of steps and the length of the minimum stake schedule in blocks.
+    // on the amount of steps and the length of the minimum stake schedule in seconds.
     uint256 public minimumStakeScheduleStart;
     uint256 public constant minimumStakeSchedule = 86400 * 365 * 2; // 2 years in seconds (seconds per day * days in a year * years)
     uint256 public constant minimumStakeSteps = 10;
@@ -79,7 +79,8 @@ contract TokenStaking is StakeDelegatable {
      */
     function minimumStake() public view returns (uint256) {
         if (block.timestamp < minimumStakeScheduleStart.add(minimumStakeSchedule)) {
-            uint256 currentStep = minimumStakeSteps.mul(block.timestamp.sub(minimumStakeScheduleStart)).div(minimumStakeSchedule);
+            uint256 currentStep = minimumStakeSteps.mul(
+                block.timestamp.sub(minimumStakeScheduleStart)).div(minimumStakeSchedule);
             return minimumStakeBase.mul(minimumStakeSteps.sub(currentStep));
         }
         return minimumStakeBase;
