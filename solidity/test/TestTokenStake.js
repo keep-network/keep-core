@@ -149,7 +149,7 @@ contract('TokenStaking', function(accounts) {
     
     await delegate(operatorOne, stakingAmount);
 
-    await increaseTime(initializationPeriod - 1);
+    await increaseTime(initializationPeriod);
 
     await stakingContract.cancelStake(operatorOne, {from: ownerOne})
 
@@ -183,7 +183,7 @@ contract('TokenStaking', function(accounts) {
     await increaseTime(initializationPeriod + 1);
     await stakingContract.undelegate(operatorOne, {from: ownerOne});
 
-    await increaseTime(undelegationPeriod - 1);
+    await increaseTime(undelegationPeriod);
 
     await expectThrowWithMessage(
       stakingContract.recoverStake(operatorOne),
@@ -366,13 +366,13 @@ contract('TokenStaking', function(accounts) {
     it("should not allow third party to undelegate", async () => {
       await delegate(operatorOne, stakingAmount)
 
-      await increaseTime(initializationPeriod)
+      await increaseTime(initializationPeriod + 1)
 
       let currentTime = await latestTime()
 
       await expectThrowWithMessage(
         stakingContract.undelegateAt(
-          operatorOne, currentTime + 1,
+          operatorOne, currentTime + 10,
           {from: operatorTwo}
         ),
         "Only operator or the owner of the stake can undelegate"
@@ -382,7 +382,7 @@ contract('TokenStaking', function(accounts) {
     it("should permit undelegating at the current block", async () => {
       await delegate(operatorOne, stakingAmount)
 
-      await increaseTime(initializationPeriod)
+      await increaseTime(initializationPeriod + 1)
 
       let currentTime = await latestTime()
 
@@ -577,7 +577,7 @@ contract('TokenStaking', function(accounts) {
   
     it("should report no active stake for not authorized operator contract", async () => {
       await delegate(operatorOne, stakingAmount)
-      await increaseTime(initializationPeriod);
+      await increaseTime(initializationPeriod + 1);
   
       let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
   
@@ -646,7 +646,7 @@ contract('TokenStaking', function(accounts) {
         operatorOne, operatorContract, {from: authorizer}
       )
   
-      await increaseTime(initializationPeriod - 1);
+      await increaseTime(initializationPeriod);
   
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
   
@@ -659,7 +659,7 @@ contract('TokenStaking', function(accounts) {
     it("should report no eligible stake for not authorized operator contract", async () => {
       await delegate(operatorOne, stakingAmount)
   
-      await increaseTime(initializationPeriod);
+      await increaseTime(initializationPeriod + 1);
   
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
   

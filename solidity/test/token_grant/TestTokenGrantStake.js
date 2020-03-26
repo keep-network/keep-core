@@ -151,7 +151,7 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should allow to cancel delegation just before initialization period is over", async () => {
     await delegate(grantee, operatorOne, grantAmount);
     
-    await increaseTime(initializationPeriod - 1);
+    await increaseTime(initializationPeriod);
 
     await grantContract.cancelStake(operatorOne, {from: grantee});
 
@@ -185,7 +185,7 @@ contract('TokenGrant/Stake', function(accounts) {
     await increaseTime(initializationPeriod + 1);
     await grantContract.undelegate(operatorOne, {from: grantee});
 
-    await increaseTime(undelegationPeriod - 1);
+    await increaseTime(undelegationPeriod);
 
     await expectThrowWithMessage(
       stakingContract.recoverStake(operatorOne),
