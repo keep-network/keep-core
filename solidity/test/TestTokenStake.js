@@ -285,7 +285,7 @@ contract('TokenStaking', function(accounts) {
       )
     })
 
-    it("should permit undelegating at the block when initialization " + 
+    it("should permit undelegating at the time when initialization " + 
     "period passed", async () => {
       await delegate(operatorOne, stakingAmount)
 
@@ -294,7 +294,7 @@ contract('TokenStaking', function(accounts) {
       // ok, no revert
     })
 
-    it("should not permit undelegating at the block before initialization " + 
+    it("should not permit undelegating at the time before initialization " + 
     "period passed", async () => {
       await delegate(operatorOne, stakingAmount)
 
@@ -379,7 +379,7 @@ contract('TokenStaking', function(accounts) {
       )
     })
 
-    it("should permit undelegating at the current block", async () => {
+    it("should permit undelegating at the current time", async () => {
       await delegate(operatorOne, stakingAmount)
 
       await increaseTime(initializationPeriod + 1)
@@ -394,7 +394,7 @@ contract('TokenStaking', function(accounts) {
       // ok, no revert
     })
 
-    it("should permit undelegating at the block when initialization " +
+    it("should permit undelegating at the time when initialization " +
     "period passed", async () => {
       await delegate(operatorOne, stakingAmount)
 
@@ -406,7 +406,7 @@ contract('TokenStaking', function(accounts) {
       // ok, no revert
     })
 
-    it("should not permit undelegating at the block before initialization " + 
+    it("should not permit undelegating at the time before initialization " + 
     "period passed", async () => {
       await delegate(operatorOne, stakingAmount)
 
@@ -507,7 +507,7 @@ contract('TokenStaking', function(accounts) {
 
     expect(delegationInfoAfter.createdAt).to.eq.BN(
       delegationInfoBefore.createdAt,
-      "Unexpected delegation creation block"
+      "Unexpected delegation creation time"
     )
     expect(delegationInfoAfter.amount).to.eq.BN(
       0,
@@ -515,7 +515,7 @@ contract('TokenStaking', function(accounts) {
     )
     expect(delegationInfoAfter.undelegatedAt).to.eq.BN(
       undelegationBlock.timestamp,
-      "Unexpected undelegation block"
+      "Unexpected undelegation time"
     )
   })
 
@@ -530,7 +530,7 @@ contract('TokenStaking', function(accounts) {
 
     expect(delegationInfoAfter.createdAt).to.eq.BN(
       delegationInfoBefore.createdAt,
-      "Unexpected delegation creation block"
+      "Unexpected delegation creation time"
     )
     expect(delegationInfoAfter.amount).to.eq.BN(
       0,
@@ -538,7 +538,7 @@ contract('TokenStaking', function(accounts) {
     )
     expect(delegationInfoAfter.undelegatedAt).to.eq.BN(
       0,
-      "Unexpected undelegation block"
+      "Unexpected undelegation time"
     )
   })
 
