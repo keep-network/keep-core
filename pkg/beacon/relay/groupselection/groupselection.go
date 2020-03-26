@@ -205,14 +205,14 @@ func startTicketSubmission(
 				reactiveSubmissionRoundTickets := make([]*ticket, 0)
 
 				for _, ticket := range reactiveSubmissionTickets {
-					ticketValueLeadingZeros := uint64(ticket.leadingZeros())
+					ticketLeadingZeros := uint64(ticket.leadingZeros())
 
 					if roundIndex == 0 {
-						if ticketValueLeadingZeros < roundLeadingZeros {
+						if ticketLeadingZeros < roundLeadingZeros {
 							continue
 						}
 					} else {
-						if ticketValueLeadingZeros != roundLeadingZeros {
+						if ticketLeadingZeros != roundLeadingZeros {
 							continue
 						}
 					}
@@ -233,7 +233,7 @@ func startTicketSubmission(
 				}
 
 				logger.Infof(
-					"reactive ticket submission round [%v] will submit "+
+					"reactive ticket submission round [%v] submitting "+
 						"[%v] tickets",
 					roundIndex,
 					len(reactiveSubmissionRoundTickets),
@@ -287,9 +287,9 @@ func startTicketSubmission(
 // (group size * number of all possible ticket values) /
 // (token supply / min stake)
 func naturalThreshold(chainConfig *config.Chain) *big.Int {
-	// (2^256)-1
+	// (2^64)-1
 	ticketsSpace := new(big.Int).Sub(
-		new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil),
+		new(big.Int).Exp(big.NewInt(2), big.NewInt(64), nil),
 		big.NewInt(1),
 	)
 
