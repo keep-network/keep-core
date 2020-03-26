@@ -1,6 +1,6 @@
-import increaseTime, {duration} from './helpers/increaseTime';
-import latestTime from './helpers/latestTime';
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+import increaseTime, {duration} from '../helpers/increaseTime';
+import latestTime from '../helpers/latestTime';
+import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
 
 const BN = web3.utils.BN
 const chai = require('chai')
