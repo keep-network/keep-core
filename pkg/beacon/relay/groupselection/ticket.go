@@ -80,15 +80,11 @@ func calculateTicketValue(
 	return keccak256Hash, nil
 }
 
+// Returns 8 starting bytes of ticket value as a big integer.
 func (t *ticket) intValue() *big.Int {
-	return new(big.Int).SetBytes(t.value[:])
+	return new(big.Int).SetBytes(t.value[:8])
 }
 
-func (t *ticket) uint64Value() uint64 {
-	valueBytes := t.value[:8]
-	return new(big.Int).SetBytes(valueBytes).Uint64()
-}
-
-func (t *ticket) uint64ValueLeadingZeros() int {
-	return bits.LeadingZeros64(t.uint64Value())
+func (t *ticket) leadingZeros() int {
+	return bits.LeadingZeros64(t.intValue().Uint64())
 }

@@ -205,9 +205,7 @@ func startTicketSubmission(
 				reactiveSubmissionRoundTickets := make([]*ticket, 0)
 
 				for _, ticket := range reactiveSubmissionTickets {
-					ticketValueLeadingZeros := uint64(
-						ticket.uint64ValueLeadingZeros(),
-					)
+					ticketValueLeadingZeros := uint64(ticket.leadingZeros())
 
 					if roundIndex == 0 {
 						if ticketValueLeadingZeros < roundLeadingZeros {
@@ -220,7 +218,7 @@ func startTicketSubmission(
 					}
 
 					if submittedTicketsCount == chainConfig.GroupSize &&
-						ticket.uint64Value() >= submittedTickets[submittedTicketsCount-1] {
+						ticket.intValue().Uint64() >= submittedTickets[submittedTicketsCount-1] {
 						continue
 					}
 
