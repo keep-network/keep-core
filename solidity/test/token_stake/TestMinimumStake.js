@@ -47,7 +47,8 @@ contract('TokenStaking', function() {
 
     it("returns max value right before the next schedule step", async () => {
       let minimumStakeScheduleStart = await stakingContract.minimumStakeScheduleStart();
-      let timeForStepOne = minimumStakeScheduleStart.add(minimumStakeSchedule.div(minimumStakeSteps))
+      let stepDuration = minimumStakeSchedule.div(minimumStakeSteps)
+      let timeForStepOne = minimumStakeScheduleStart.add(stepDuration)
       // Rounding timestamp jump to 1 minute less (looks like increaseTime() can occasionally add extra seconds)
       await increaseTime(timeForStepOne.toNumber() - await latestTime() - duration.minutes(1))
       expect(await stakingContract.minimumStake()).to.eq.BN(
@@ -58,7 +59,8 @@ contract('TokenStaking', function() {
 
     it("returns correct value right after the first schedule step", async () => {
       let minimumStakeScheduleStart = await stakingContract.minimumStakeScheduleStart();
-      let timeForStepOne = minimumStakeScheduleStart.add(minimumStakeSchedule.div(minimumStakeSteps))
+      let stepDuration = minimumStakeSchedule.div(minimumStakeSteps)
+      let timeForStepOne = minimumStakeScheduleStart.add(stepDuration)
       await increaseTime(timeForStepOne.toNumber() - await latestTime())
       expect(await stakingContract.minimumStake()).to.eq.BN(
         web3.utils.toBN(90000).mul(keepDecimals),
