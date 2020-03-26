@@ -23,9 +23,9 @@ contract TokenStaking is StakeDelegatable {
     // Initial minimum stake is higher than the final and lowered periodically based
     // on the amount of steps and the length of the minimum stake schedule in blocks.
     uint256 public minimumStakeScheduleStart;
-    uint256 public minimumStakeSchedule = 86400 * 365 * 2; // 2 years in seconds (seconds per day * days in a year * years)
-    uint256 public minimumStakeSteps = 10;
-    uint256 public minimumStakeBase = 10000 * 1e18;
+    uint256 public constant minimumStakeSchedule = 86400 * 365 * 2; // 2 years in seconds (seconds per day * days in a year * years)
+    uint256 public constant minimumStakeSteps = 10;
+    uint256 public constant minimumStakeBase = 10000 * 1e18;
 
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
