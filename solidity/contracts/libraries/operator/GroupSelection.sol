@@ -52,6 +52,10 @@ library GroupSelection {
         // Concurrent group selections are not allowed.
         bool inProgress;
 
+        // Captures the minimum stake when group selection starts. This is to ensure the
+        // same staking weight divisor is applied for all member candidates participating.
+        uint256 minimumStake;
+
         // Map simulates a sorted linked list of ticket values by their indexes.
         // key -> value represent indices from the tickets[] array.
         // 'key' index holds an index of a ticket and 'value' holds an index
