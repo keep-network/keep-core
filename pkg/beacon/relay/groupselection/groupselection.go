@@ -204,8 +204,6 @@ func startTicketSubmission(
 
 				reactiveSubmissionRoundTickets := make([]*ticket, 0)
 
-				// TODO: since tickets are sorted in ascending order, this
-				// 	loop can be probably optimized.
 				for _, ticket := range reactiveSubmissionTickets {
 					ticketValueLeadingZeros := uint64(
 						ticket.uint64ValueLeadingZeros(),
@@ -235,6 +233,13 @@ func startTicketSubmission(
 						ticket,
 					)
 				}
+
+				logger.Infof(
+					"reactive ticket submission round [%v] will submit "+
+						"[%v] tickets",
+					roundIndex,
+					len(reactiveSubmissionRoundTickets),
+				)
 
 				go submitTickets(
 					reactiveSubmissionRoundTickets,
