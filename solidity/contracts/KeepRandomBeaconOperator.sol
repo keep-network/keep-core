@@ -61,10 +61,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // TODO: replace with a secure authorization protocol (addressed in RFC 11).
     TokenStaking internal stakingContract;
 
-    // Captures the minimum stake when group selection starts. This is to ensure the
-    // same staking weight divisor is applied for all member candidates participating.
-    uint256 internal groupSelectionMinimumStake;
-
     // Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 145*1e11; // 14500 Gwei, 10% of operational cost
 
@@ -236,7 +232,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
         }
 
-        groupSelectionMinimumStake = stakingContract.minimumStake();
+        groupSelection.minimumStake = stakingContract.minimumStake();
         groupSelection.start(_newEntry);
         emit GroupSelectionStarted(_newEntry);
         dkgSubmitterReimbursementFee = _payment;
@@ -269,7 +265,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *   current candidate group selection.
      */
     function submitTicket(bytes32 ticket) public {
-        uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(groupSelectionMinimumStake);
+        uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(groupSelection.minimumStake);
         groupSelection.submitTicket(ticket, stakingWeight);
     }
 
