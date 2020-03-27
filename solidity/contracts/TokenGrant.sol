@@ -358,7 +358,6 @@ contract TokenGrant {
      * Magpie address (20 bytes) where the rewards for participation are sent and operator's (20 bytes) address.
      */
     function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
-        require(!grants[_id].revocable, "Revocable grants can not be staked.");
         require(grants[_id].grantee == msg.sender, "Only grantee of the grant can stake it.");
         require(
             stakingContracts[grants[_id].grantManager][_stakingContract],

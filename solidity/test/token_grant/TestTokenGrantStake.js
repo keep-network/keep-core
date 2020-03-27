@@ -30,15 +30,16 @@ contract.only('TokenGrant/Stake', function(accounts) {
     operatorOne = accounts[2],
     operatorTwo = accounts[3],
     magpie = accounts[4],
-    authorizer = accounts[5];
+    authorizer = accounts[5],
+    revocableGrantee = accounts[6];
 
   let grantId;
+  let revocableGrantId;
   let grantStart;
 
-  const grantVestingDuration = duration.days(60),
-  grantCliff = duration.days(10),
-  grantRevocable = false;
-  
+  const grantVestingDuration = duration.days(60);
+  const grantCliff = duration.days(10);
+
   const initializationPeriod = 10;
   const undelegationPeriod = 30;
 
@@ -46,24 +47,24 @@ contract.only('TokenGrant/Stake', function(accounts) {
     tokenContract = await KeepToken.new();
     registryContract = await Registry.new();
     stakingContract = await TokenStaking.new(
-      tokenContract.address, 
-      registryContract.address, 
-      initializationPeriod, 
+      tokenContract.address,
+      registryContract.address,
+      initializationPeriod,
       undelegationPeriod
     );
 
     grantContract = await TokenGrant.new(tokenContract.address);
-    
+
     await grantContract.authorizeStakingContract(stakingContract.address);
 
-    
+
     grantStart = await latestTime();
     minimumStake = await stakingContract.minimumStake()
 
     permissivePolicy = await PermissiveStakingPolicy.new()
     employeePolicy = await EmployeeStakingPolicy.new(minimumStake);
     grantAmount = minimumStake.muln(10),
-    
+
     // Grant tokens
     grantId = await grantTokens(
       grantContract,
@@ -74,8 +75,21 @@ contract.only('TokenGrant/Stake', function(accounts) {
       grantVestingDuration,
       grantStart,
       grantCliff,
-      grantRevocable,
+      false,
       permissivePolicy.address,
+    );
+
+    revocableGrantId = await grantTokens(
+      grantContract,
+      tokenContract,
+      grantAmount,
+      tokenOwner,
+      revocableGrantee,
+      grantVestingDuration,
+      grantStart,
+      grantCliff,
+      true,
+      employeePolicy.address,
     );
   });
 
@@ -100,6 +114,19 @@ contract.only('TokenGrant/Stake', function(accounts) {
     )
   }
 
+  async function delegateRevocable(grantee, operator, amount) {
+    return await delegateStakeFromGrant(
+      grantContract,
+      stakingContract.address,
+      grantee,
+      operator,
+      magpie,
+      authorizer,
+      amount,
+      revocableGrantId
+    )
+  }
+
   it("should update balances when delegating", async () => {
     let amountToDelegate = minimumStake.muln(5);
     let remaining = grantAmount.sub(amountToDelegate)
@@ -114,7 +141,7 @@ contract.only('TokenGrant/Stake', function(accounts) {
       "All granted tokens delegated, should be nothing more available"
     )
     expect(operatorBalance).to.eq.BN(
-      amountToDelegate, 
+      amountToDelegate,
       "Staking amount should be added to the operator balance"
     );
   })
@@ -135,7 +162,7 @@ contract.only('TokenGrant/Stake', function(accounts) {
       "All granted tokens should be again available for staking"
     )
     expect(operatorBalance).to.eq.BN(
-      0, 
+      0,
       "Staking amount should be removed from operator balance"
     );
   })
@@ -153,14 +180,14 @@ contract.only('TokenGrant/Stake', function(accounts) {
       "All granted tokens should be again available for staking"
     )
     expect(operatorBalance).to.eq.BN(
-      0, 
+      0,
       "Staking amount should be removed from operator balance"
     );
   })
 
   it("should allow to cancel delegation just before initialization period is over", async () => {
     await delegate(grantee, operatorOne, grantAmount);
-    
+
     await mineBlocks(initializationPeriod - 1);
 
     await grantContract.cancelStake(operatorOne, {from: grantee});
@@ -173,14 +200,14 @@ contract.only('TokenGrant/Stake', function(accounts) {
       "All granted tokens should be again available for staking"
     )
     expect(operatorBalance).to.eq.BN(
-      0, 
+      0,
       "Staking amount should be removed from operator balance"
     );
   })
 
   it("should not allow to cancel delegation after initialization period is over", async () => {
     await delegate(grantee, operatorOne, grantAmount);
-    
+
     await mineBlocks(initializationPeriod);
 
     await expectThrowWithMessage(
@@ -241,13 +268,13 @@ contract.only('TokenGrant/Stake', function(accounts) {
       "All granted tokens delegated, should be nothing more available"
     )
     expect(operatorOneBalance).to.eq.BN(
-      amountToDelegate, 
+      amountToDelegate,
       "Staking amount should be added to the operator balance"
-    );  
+    );
     expect(operatorTwoBalance).to.eq.BN(
-      amountToDelegate, 
+      amountToDelegate,
       "Staking amount should be added to the operator balance"
-    );  
+    );
   })
 
   it("should not allow to delegate to not authorized staking contract", async () => {
@@ -261,10 +288,10 @@ contract.only('TokenGrant/Stake', function(accounts) {
 
     await expectThrowWithMessage(
       grantContract.stake(
-        grantId, 
-        notAuthorizedContract, 
-        grantAmount, 
-        delegation, 
+        grantId,
+        notAuthorizedContract,
+        grantAmount,
+        delegation,
         {from: grantee}
       ),
       "Provided staking contract is not authorized"
@@ -280,7 +307,7 @@ contract.only('TokenGrant/Stake', function(accounts) {
 
   it("should let operator cancel delegation", async () => {
     await delegate(grantee, operatorOne, grantAmount, grantId);
-  
+
     await grantContract.cancelStake(operatorOne, {from: operatorOne})
     // ok, no exception
   })
@@ -332,6 +359,18 @@ contract.only('TokenGrant/Stake', function(accounts) {
     expect(availablePost).to.eq.BN(
       grantAmount,
       "Staked tokens should be recovered safely"
+    );
+  })
+
+  it("should allow delegation of revocable grants", async () => {
+    await delegateRevocable(revocableGrantee, operatorTwo, minimumStake);
+    // ok, no exceptions
+  })
+
+  it("should not allow delegation of more than permitted", async () => {
+    await expectThrowWithMessage(
+      delegateRevocable(revocableGrantee, operatorTwo, minimumStake.addn(1)),
+      "Must have available granted amount to stake."
     );
   })
 });
