@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"math/rand"
 	"sort"
 	"sync"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ipfs/go-log"
 
@@ -113,7 +116,7 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTi
 		return c.tickets[i].Value.Cmp(c.tickets[j].Value) == -1
 	})
 
-	promise.Fulfill(&event.GroupTicketSubmission{
+	_ = promise.Fulfill(&event.GroupTicketSubmission{
 		TicketValue: ticket.Value,
 		BlockNumber: c.simulatedHeight,
 	})
@@ -125,7 +128,8 @@ func (c *localChain) GetSubmittedTickets() ([]uint64, error) {
 	tickets := make([]uint64, len(c.tickets))
 
 	for i := range tickets {
-		tickets[i] = c.tickets[i].Value.Uint64()
+		valueBytes := common.LeftPadBytes(c.tickets[i].Value.Bytes(), 32)
+		tickets[i] = binary.BigEndian.Uint64(valueBytes)
 	}
 
 	return tickets, nil
