@@ -74,9 +74,9 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
     })
   })
 
-  describe("upgradeToAndCall", async () => {
+  describe("upgradeTo", async () => {
     it("sets timestamp", async () => {
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         implementationV2.address, 
         initializeCallData,
         {from: admin}
@@ -90,7 +90,7 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
     })
 
     it("sets new implementation", async () => {
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         implementationV2.address, 
         initializeCallData,
         {from: admin}
@@ -109,7 +109,7 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
     })
   
     it("sets initialization call data", async () => {
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         implementationV2.address, 
         initializeCallData,
         {from: admin}
@@ -123,12 +123,12 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
     })
   
     it("supports empty initialization call data", async () => {
-      await proxy.upgradeToAndCall(implementationV2.address, [], {from: admin})
+      await proxy.upgradeTo(implementationV2.address, [], {from: admin})
       assert.notExists(await proxy.initializationData.call(implementationV2.address));
     })
   
     it("emits an event", async () => {
-      const receipt = await proxy.upgradeToAndCall(
+      const receipt = await proxy.upgradeTo(
         implementationV2.address, 
         initializeCallData,
         {from: admin}
@@ -143,12 +143,12 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
   
     it("allows implementation overwrite", async () => {
       const address3 = '0x4566716c07617c5854fe7dA9aE5a1219B19CCd27'
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         implementationV2.address, 
         initializeCallData,
         {from: admin}
       )
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         address3, 
         initializeCallData,
         {from: admin}
@@ -163,12 +163,12 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
   
     it("allows implementation data overwrite", async () => {
       const initializeCallData2 = '0x123456'
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         implementationV2.address, 
         initializeCallData,
         {from: admin}
       )
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         implementationV2.address, 
         initializeCallData2,
         {from: admin}
@@ -183,7 +183,7 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
   
     it("reverts on zero address", async () => {
       await expectRevert(
-        proxy.upgradeToAndCall(
+        proxy.upgradeTo(
           constants.ZERO_ADDRESS, 
           initializeCallData, 
           {from: admin}
@@ -194,7 +194,7 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
   
     it("reverts on the same address", async () => {
       await expectRevert(
-        proxy.upgradeToAndCall(
+        proxy.upgradeTo(
           implementationV1.address,
           initializeCallData,
           {from: admin}
@@ -205,7 +205,7 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
   
     it("reverts when called by non-admin", async () => {
       await expectRevert(
-        proxy.upgradeToAndCall(
+        proxy.upgradeTo(
           implementationV2.address,
           initializeCallData,
           {from: nonAdmin}
@@ -224,7 +224,7 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
     })
 
     it("reverts for non-elapsed timer", async () => {
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         implementationV2.address,
         initializeCallData,
         {from: admin}
@@ -239,7 +239,7 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
     })
 
     it("clears timestamp", async () => {
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         implementationV2.address,
         initializeCallData,
         {from: admin}
@@ -253,7 +253,7 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
     })
 
     it("sets implementation", async () => {
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         implementationV2.address,
         initializeCallData,
         {from: admin}
@@ -271,7 +271,7 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
     })
 
     it("emits an event", async () => {
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         implementationV2.address,
         initializeCallData,
         {from: admin}
@@ -288,7 +288,7 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
 
     it("supports empty initialization call data", async () => {
       const address3 = '0x4566716c07617c5854fe7dA9aE5a1219B19CCd27'
-      await proxy.upgradeToAndCall(address3, [], {from: admin})
+      await proxy.upgradeTo(address3, [], {from: admin})
       await time.increase(await proxy.upgradeTimeDelay());
 
       await proxy.completeUpgrade({from: admin});
@@ -306,7 +306,7 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
         100, 200, constants.ZERO_ADDRESS
       ).encodeABI()
 
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         implementationV2.address,
         failingData,
         {from: admin}
@@ -321,7 +321,7 @@ contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
     })
 
     it("finalizes upgrade procedure", async () => {
-      await proxy.upgradeToAndCall(
+      await proxy.upgradeTo(
         implementationV2.address,
         initializeCallData,
         {from: admin}

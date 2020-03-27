@@ -88,7 +88,7 @@ contract KeepRandomBeaconService is Proxy {
      * @param _newImplementation Address of the new vendor implementation contract.
      * @param _data Delegate call data for implementation initialization.
      */
-    function upgradeToAndCall(address _newImplementation, bytes memory _data)
+    function upgradeTo(address _newImplementation, bytes memory _data)
         public
         onlyAdmin
     {
