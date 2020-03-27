@@ -426,4 +426,29 @@ library BytesLib {
             result := keccak256(add(add(_bytes, 32), _start), _length)
         }
     }
+
+    function toBytes(address _address) internal pure returns (bytes memory) {
+        bytes memory result = new bytes(20);
+        for (uint256 i = 0; i < 20; i++) {
+            result[i] = bytes20(_address)[i];
+        }
+    }
+
+    function overwrite(
+        bytes memory _bytes,
+        uint256 _start,
+        bytes memory _source,
+        uint256 _sourceStart,
+        uint256 _length
+    ) internal pure {
+        uint256 _end = _start + _length;
+        uint256 _sourceEnd = _sourceStart + _length;
+        require(
+            _bytes.length >= _end && _source.length >= _sourceEnd,
+            "Overwrite out of bounds"
+        );
+        for (uint256 i = 0; i < _length; i++) {
+            _bytes[_start + i] = _source[_sourceStart + i];
+        }
+    }
 }
