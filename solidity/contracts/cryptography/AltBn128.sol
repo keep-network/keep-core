@@ -306,11 +306,20 @@ library AltBn128 {
      * the sum of two points on G1. Revert if the provided points aren't on the
      * curve.
      */
-    function g1Add(G1Point memory a, G1Point memory b) internal view returns (G1Point memory) {
-        uint256 x;
-        uint256 y;
-        (x, y) = _g1Add(a.x, a.y, b.x, b.y);
-        return G1Point(x, y);
+    function g1Add(G1Point memory a, G1Point memory b)
+        internal view returns (G1Point memory c) {
+        /* solium-disable-next-line */
+        assembly {
+            let arg := mload(0x40)
+            mstore(arg, mload(a))
+            mstore(add(arg, 0x20), mload(add(a, 0x20)))
+            mstore(add(arg, 0x40), mload(b))
+            mstore(add(arg, 0x60), mload(add(b, 0x20)))
+            // 0x60 is the ECADD precompile address
+            if iszero(staticcall(not(0), 0x06, arg, 0x80, c, 0x40)) {
+                revert(0, 0)
+            }
+        }
     }
 
     function _g1Add(uint256 ax, uint256 ay, uint256 bx, uint256 by)
