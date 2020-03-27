@@ -1,7 +1,7 @@
 import increaseTime from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
-import expectThrowWithMessage from './helpers/expectThrowWithMessage'
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
+import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
 
 const BN = web3.utils.BN
 const chai = require('chai')
