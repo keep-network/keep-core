@@ -1,7 +1,7 @@
 # KEEP Token Dashboard
 
 A react web app to interact with Keep network staking and token grant contracts.
-User has the ability to visualize their token and stake balances, token grant vesting schedules, stake delegate/undelegate their tokens, grant tokens via new vesting schedules.
+User has the ability to visualize their token and stake balances, token grant unlocking schedules, stake delegate/undelegate their tokens, grant tokens via new unlocking schedules.
 
 ## Development setup
 

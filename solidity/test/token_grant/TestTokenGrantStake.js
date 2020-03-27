@@ -32,7 +32,7 @@ contract('TokenGrant/Stake', function(accounts) {
   let grantId;
   let grantStart;
 
-  const grantVestingDuration = duration.days(60),
+  const grantUnlockingDuration = duration.days(60),
   grantCliff = duration.days(10),
   grantRevocable = false;
   
@@ -64,7 +64,7 @@ contract('TokenGrant/Stake', function(accounts) {
       grantAmount,
       tokenOwner,
       grantee,
-      grantVestingDuration,
+      grantUnlockingDuration,
       grantStart,
       grantCliff,
       grantRevocable
