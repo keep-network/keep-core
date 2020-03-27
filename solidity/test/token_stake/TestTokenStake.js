@@ -1,5 +1,5 @@
-import increaseTime from './helpers/increaseTime';
-import latestTime from './helpers/latestTime';
+import increaseTime from '../helpers/increaseTime';
+import latestTime from '../helpers/latestTime';
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
 
