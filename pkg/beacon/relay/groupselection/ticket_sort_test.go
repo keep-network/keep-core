@@ -43,9 +43,9 @@ func assertTicketAtIndex(t *testing.T, tickets []*ticket, index int, ticket *tic
 	}
 }
 
-func newTestTicket(virtualStakerIndex uint32, value uint32) *ticket {
+func newTestTicket(virtualStakerIndex uint32, value uint64) *ticket {
 	var bytes [32]byte
-	binary.BigEndian.PutUint32(bytes[28:], value)
+	binary.BigEndian.PutUint64(bytes[:], value)
 
 	return &ticket{
 		value: bytes,
