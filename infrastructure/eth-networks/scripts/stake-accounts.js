@@ -73,7 +73,7 @@ async function stakeOperatorAccount(operatorAddress, contractOwnerAddress) {
     Buffer.from(contractOwnerAddress.substr(2), 'hex') // authorizer
   ]).toString('hex');;
 
-  console.log(`Staking 20000000000000000000000000 KEEP tokens on operator account ${operatorAddress}`);
+  console.log(`Staking 20000000 KEEP tokens on operator account ${operatorAddress}`);
 
   // Current minimumStake value configured on the TokenStaking contract.
   let stakeAmount = web3.utils.numberToHex('20000000000000000000000000')
