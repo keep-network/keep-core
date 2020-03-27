@@ -305,6 +305,16 @@ contract('TokenStaking', function(accounts) {
       )
     })
 
+    it("should not permit undelegating at the time when initialization " +
+    "period passed", async () => {
+      await delegate(operatorOne, stakingAmount)
+      await increaseTime(initializationPeriod)
+      await expectThrowWithMessage(
+        stakingContract.undelegate(operatorOne, {from: operatorOne}),
+        "Cannot undelegate in initialization period, use cancelStake instead"
+      )
+    })
+
     it("should let the operator undelegate earlier", async () => {
       await delegate(operatorOne, stakingAmount)
 
