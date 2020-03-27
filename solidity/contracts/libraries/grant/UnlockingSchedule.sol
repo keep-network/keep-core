@@ -7,7 +7,7 @@ library UnlockingSchedule {
 
     function getUnlockedAmount(
         uint256 _now,
-        uint256 amount,
+        uint256 grantedAmount,
         uint256 duration,
         uint256 start,
         uint256 cliff
@@ -18,8 +18,8 @@ library UnlockingSchedule {
         uint256 timeElapsed = _now.sub(start);
 
         bool unlockingPeriodFinished = timeElapsed >= duration;
-        if (unlockingPeriodFinished) { return amount; }
+        if (unlockingPeriodFinished) { return grantedAmount; }
 
-        return amount.mul(timeElapsed).div(duration);
+        return grantedAmount.mul(timeElapsed).div(duration);
     }
 }
