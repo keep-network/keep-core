@@ -10,9 +10,6 @@
     "contracts/**/*.sol",
     "artifacts"
   ],
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
-  },
   "scripts": {
     "truffle": "truffle",
     "clean": "rm -rf build",
