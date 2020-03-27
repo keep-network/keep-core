@@ -193,89 +193,15 @@ func startTicketSubmission(
 					return err
 				}
 
-				// Get unsorted submitted tickets from the chain.
-				// This slice will be also filled by candidate tickets values
-				// in order to determine an optimal number of candidate tickets.
-				submittedTickets, err := relayChain.GetSubmittedTickets()
+				candidateTickets, err := roundCandidateTickets(
+					relayChain,
+					reactiveSubmissionTickets,
+					roundIndex,
+					roundLeadingZeros,
+					chainConfig.GroupSize,
+				)
 				if err != nil {
-					return fmt.Errorf(
-						"could not get submitted tickets: [%v]",
-						err,
-					)
-				}
-
-				candidateTickets := make([]*ticket, 0)
-
-				for _, candidateTicket := range reactiveSubmissionTickets {
-					candidateTicketLeadingZeros := uint64(
-						candidateTicket.leadingZeros(),
-					)
-
-					if roundIndex == 0 {
-						if candidateTicketLeadingZeros < roundLeadingZeros {
-							continue
-						}
-					} else {
-						if candidateTicketLeadingZeros != roundLeadingZeros {
-							continue
-						}
-					}
-
-					// Sort submitted tickets slice in ascending order.
-					sort.SliceStable(
-						submittedTickets,
-						func(i, j int) bool {
-							return submittedTickets[i] < submittedTickets[j]
-						},
-					)
-
-					// If previous iteration encountered the maximum length
-					// of submitted tickets slice and was able to add a new
-					// candidate value, submitted tickets slice should be
-					// trimmed to the group size.
-					if len(submittedTickets) > chainConfig.GroupSize {
-						submittedTickets = submittedTickets[:chainConfig.GroupSize]
-					}
-
-					shouldBeSubmitted := false
-					candidateTicketValue := candidateTicket.intValue().Uint64()
-
-					if len(submittedTickets) < chainConfig.GroupSize {
-						// If submitted tickets count is less than the group
-						// size the candidate ticket can be added unconditionally.
-						submittedTickets = append(
-							submittedTickets,
-							candidateTicketValue,
-						)
-						shouldBeSubmitted = true
-					} else {
-						// If submitted tickets count is equal to the group
-						// size the candidate ticket can be added only if
-						// it is smaller than the highest submitted ticket.
-						// Note that, maximum length of submitted tickets slice
-						// will be exceeded and will be trimmed in next
-						// iteration.
-						highestSubmittedTicket := submittedTickets[len(submittedTickets)-1]
-						if candidateTicketValue < highestSubmittedTicket {
-							submittedTickets = append(
-								submittedTickets,
-								candidateTicketValue,
-							)
-							shouldBeSubmitted = true
-						}
-					}
-
-					// If current candidate ticket should not be submitted,
-					// there is no sense to continue with next candidate tickets
-					// because they will have higher value than the current one.
-					if !shouldBeSubmitted {
-						break
-					}
-
-					candidateTickets = append(
-						candidateTickets,
-						candidateTicket,
-					)
+					return err
 				}
 
 				logger.Infof(
@@ -350,4 +276,103 @@ func naturalThreshold(chainConfig *config.Chain) *big.Int {
 			new(big.Int).Div(tokenSupply, chainConfig.MinimumStake),
 		),
 	)
+}
+
+// roundCandidateTickets returns tickets which should be submitted in
+// given reactive submission round.
+func roundCandidateTickets(
+	relayChain relaychain.GroupSelectionInterface,
+	reactiveSubmissionTickets []*ticket,
+	roundIndex uint64,
+	roundLeadingZeros uint64,
+	groupSize int,
+) ([]*ticket, error) {
+
+	// Get unsorted submitted tickets from the chain.
+	// This slice will be also filled by candidate tickets values
+	// in order to determine an optimal number of candidate tickets.
+	submittedTickets, err := relayChain.GetSubmittedTickets()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not get submitted tickets: [%v]",
+			err,
+		)
+	}
+
+	candidateTickets := make([]*ticket, 0)
+
+	for _, candidateTicket := range reactiveSubmissionTickets {
+		candidateTicketLeadingZeros := uint64(
+			candidateTicket.leadingZeros(),
+		)
+
+		// Check if given candidate ticket should be proceeded in current round.
+		if roundIndex == 0 {
+			if candidateTicketLeadingZeros < roundLeadingZeros {
+				continue
+			}
+		} else {
+			if candidateTicketLeadingZeros != roundLeadingZeros {
+				continue
+			}
+		}
+
+		// Sort submitted tickets slice in ascending order.
+		sort.SliceStable(
+			submittedTickets,
+			func(i, j int) bool {
+				return submittedTickets[i] < submittedTickets[j]
+			},
+		)
+
+		// If previous iteration encountered the maximum length
+		// of submitted tickets slice and was able to add a new
+		// candidate value, submitted tickets slice should be
+		// trimmed to the group size.
+		if len(submittedTickets) > groupSize {
+			submittedTickets = submittedTickets[:groupSize]
+		}
+
+		shouldBeSubmitted := false
+		candidateTicketValue := candidateTicket.intValue().Uint64()
+
+		if len(submittedTickets) < groupSize {
+			// If submitted tickets count is less than the group
+			// size the candidate ticket can be added unconditionally.
+			submittedTickets = append(
+				submittedTickets,
+				candidateTicketValue,
+			)
+			shouldBeSubmitted = true
+		} else {
+			// If submitted tickets count is equal to the group
+			// size the candidate ticket can be added only if
+			// it is smaller than the highest submitted ticket.
+			// Note that, maximum length of submitted tickets slice
+			// will be exceeded and will be trimmed in next
+			// iteration.
+			highestSubmittedTicket := submittedTickets[len(submittedTickets)-1]
+			if candidateTicketValue < highestSubmittedTicket {
+				submittedTickets = append(
+					submittedTickets,
+					candidateTicketValue,
+				)
+				shouldBeSubmitted = true
+			}
+		}
+
+		// If current candidate ticket should not be submitted,
+		// there is no sense to continue with next candidate tickets
+		// because they will have higher value than the current one.
+		if !shouldBeSubmitted {
+			break
+		}
+
+		candidateTickets = append(
+			candidateTickets,
+			candidateTicket,
+		)
+	}
+
+	return candidateTickets, nil
 }
