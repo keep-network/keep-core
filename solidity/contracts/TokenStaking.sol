@@ -380,22 +380,6 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Gets the staking weight for the specified address.
-     *
-     * @param _operator address of stake operator.
-     * @param _operatorContract address of operator contract.
-     * @return an uint256 representing the staking weight.
-     */
-    function stakingWeight(
-        address _operator,
-        address _operatorContract
-    ) public view returns (uint256) {
-        uint256 eligibleStake = eligibleStake(_operator, _operatorContract);
-        // TODO: change to minimumStake() when stake schedule will be implemented.
-        return eligibleStake.div(minimumStake);
-    }
-
-    /**
      * @dev Gets the active stake balance of the specified address.
      * An active stake is a stake that passed the initialization period.
      * Also, the operator had to approve the specified operator contract.
@@ -445,14 +429,5 @@ contract TokenStaking is StakeDelegatable {
         address operatorContract
     ) public view returns(bool) {
         return activeStake(staker, operatorContract) >= minimumStake();
-    }
-
-    /**
-     * @dev Returns possible operators count.
-     */
-    function possibleOperatorsCount() public view returns (uint256) {
-        uint256 tokenSupply = 10**27;
-        // TODO: change to minimumStake() when stake schedule will be implemented.
-        return tokenSupply.div(minimumStake);
     }
 }

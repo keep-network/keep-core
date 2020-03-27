@@ -88,13 +88,8 @@ library GroupSelection {
      * @param _seed pseudorandom seed value used as an input for the group
      * selection. All submitted tickets needs to have the seed mixed-in into the
      * value.
-     * @param _possibleOperatorsCount number of possible operators.
      */
-    function start(
-        Storage storage self,
-        uint256 _seed,
-        uint256 _possibleOperatorsCount
-    ) public {
+    function start(Storage storage self, uint256 _seed) public {
         // We execute the minimum required cleanup here needed in case the
         // previous group selection failed and did not clean up properly in
         // stop function.
@@ -103,12 +98,16 @@ library GroupSelection {
         self.seed = _seed;
         self.ticketSubmissionStartBlock = block.number;
 
+        // Calculate possible operators count by dividing total token supply
+        // by current minimum stake.
+        uint256 possibleOperatorsCount = uint256(10**27).div(self.minimumStake);
+
         // ticketSubmissionTimeout consists of:
         // - one initial ticket submission round
         // - N reactive ticket submission rounds
         // - one additional waiting round
         self.ticketSubmissionTimeout = self.ticketSubmissionRoundDuration
-            .mul(reactiveTicketSubmissionRounds(_possibleOperatorsCount, self.groupSize).add(2));
+            .mul(reactiveTicketSubmissionRounds(possibleOperatorsCount, self.groupSize).add(2));
     }
 
     /**
