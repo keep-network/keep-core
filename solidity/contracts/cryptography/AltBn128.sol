@@ -257,10 +257,10 @@ library AltBn128 {
             m.length == 128,
             "Invalid G2 bytes length"
         );
-        bytes32 xx;
-        bytes32 xy;
-        bytes32 yx;
-        bytes32 yy;
+        uint256 xx;
+        uint256 xy;
+        uint256 yx;
+        uint256 yy;
 
         /* solium-disable-next-line */
         assembly {
@@ -270,7 +270,7 @@ library AltBn128 {
             yy := mload(add(m, 0x80))
         }
 
-        return G2Point(gfP2(uint256(xx), uint256(xy)), gfP2(uint256(yx),uint256(yy)));
+        return G2Point(gfP2(xx, xy), gfP2(yx,yy));
     }
 
     /**
