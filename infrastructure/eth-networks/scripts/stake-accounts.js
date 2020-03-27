@@ -33,7 +33,8 @@ const operatorAddresses = [
   '0xc2f4c01a446f199fce344df1167c92650651f9c0',
   '0x32ce883e94ea3a75063e47064c777839aa4a0c94',
   '0xca8754f7060a0648824f274e3a4d897fa497139d',
-  '0x8e258d2299bc1ee92ec9e70efb381d9b7c70c3d7'
+  '0x8e258d2299bc1ee92ec9e70efb381d9b7c70c3d7',
+  '0x5c769c2a379ebd630aa8ac9f125176209f170e6d'
 ];
 
 const contractDir = '../keep-test/ropsten'
@@ -72,10 +73,10 @@ async function stakeOperatorAccount(operatorAddress, contractOwnerAddress) {
     Buffer.from(contractOwnerAddress.substr(2), 'hex') // authorizer
   ]).toString('hex');;
 
-  console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
+  console.log(`Staking 20000000000000000000000000 KEEP tokens on operator account ${operatorAddress}`);
 
   // Current minimumStake value configured on the TokenStaking contract.
-  let stakeAmount = web3.utils.numberToHex('200000000000000000000000')
+  let stakeAmount = web3.utils.numberToHex('20000000000000000000000000')
 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
