@@ -6,18 +6,18 @@ import { displayAmount, isSameEthAddress, isEmptyObj } from '../utils/general.ut
 import { LoadingOverlay } from './Loadable'
 import { Web3Context } from './WithWeb3Context'
 import StatusBadge, { BADGE_STATUS } from './StatusBadge'
+import { DataTable, Column } from './DataTable'
 
 const initialData = { pendinUndelegations: [] }
 
 const PendingUndelegation = ({ latestUnstakeEvent }) => {
   const { stakingContract, yourAddress } = useContext(Web3Context)
   const [state, setData] = useFetchData(operatorService.fetchPendingUndelegation, initialData)
-  const { isFetching, data: {
-    pendingUnstakeBalance,
+  const { isFetching, data } = state
+  const {
     undelegationComplete,
     undelegationPeriod,
-    undelegationStatus,
-  } } = state
+  } = data
 
   useEffect(() => {
     if (!isEmptyObj(latestUnstakeEvent)) {
@@ -43,30 +43,37 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
     <LoadingOverlay isFetching={isFetching}>
       <section id="pending-undelegation" className="tile">
         <h3 className="text-grey-60">Token Undelegation</h3>
-        <div className="flex pending-undelegation-summary mt-1">
-          <div className="flex flex-1 column">
-            <span className="text-label">amount</span>
-            <h5 className="text-grey-70 flex flex-2">{pendingUnstakeBalance && `${displayAmount(pendingUnstakeBalance)}`}</h5>
-          </div>
-          <div className="flex flex-1 column">
-            <span className="text-label">undelegation status</span>
-            {undelegationStatus &&
+        <DataTable data={[data]}>
+          <Column
+            header="amount"
+            field="pendingUnstakeBalance"
+            renderContent={({ pendingUnstakeBalance }) => (
+              pendingUnstakeBalance && `${displayAmount(pendingUnstakeBalance)}`
+            )}
+          />
+          <Column
+            header="status"
+            field="undelegationStatus"
+            renderContent={({ undelegationStatus }) => ( undelegationStatus &&
               <StatusBadge
                 className="self-start"
                 status={BADGE_STATUS[undelegationStatus]}
                 text={undelegationStatus.toLowerCase()}
               />
-            }
-          </div>
-          <div className="flex flex-1 column">
-            <span className="text-label">completed</span>
-            <span className="text-big">{undelegationComplete ? `${undelegationComplete} block` : '-'}</span>
-          </div>
-          <div className="flex flex-1 column">
-            <span className="text-label">undelegation period</span>
-            <span className="text-big">{undelegationPeriod} blocks</span>
-          </div>
-        </div>
+            )}
+          />
+          <Column
+            header="estimate"
+            field="undelegationComplete"
+            renderContent={(undlegationComplete) => (
+              undelegationComplete ? `${undelegationComplete} block` : '-'
+            )}
+          />
+          <Column
+            header="undelegation period"
+            field="undelegationPeriod"
+          />
+        </DataTable>
       </section>
     </LoadingOverlay>
   )

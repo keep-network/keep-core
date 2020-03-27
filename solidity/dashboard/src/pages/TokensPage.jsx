@@ -3,7 +3,7 @@ import DelegateStakeForm from '../components/DelegateStakeForm'
 import TokensOverview from '../components/TokensOverview'
 import Undelegations from '../components/Undelegations'
 import { tokensPageService } from '../services/tokens-page.service'
-import DelegatedTokensList from '../components/DelegatedTokensList'
+import DelegatedTokensTable from '../components/DelegatedTokensTable'
 import { Web3Context } from '../components/WithWeb3Context'
 import { useShowMessage, messageType } from '../components/Message'
 import SpeechBubbleInfo from '../components/SpeechBubbleInfo'
@@ -85,7 +85,7 @@ const TokensPage = () => {
       <Undelegations
         undelegations={undelegations}
       />
-      <DelegatedTokensList
+      <DelegatedTokensTable
         delegatedTokens={delegations}
         cancelStakeSuccessCallback={refreshData}
       />
