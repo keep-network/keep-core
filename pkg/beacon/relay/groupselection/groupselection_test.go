@@ -162,6 +162,7 @@ func TestSubmission(t *testing.T) {
 			chainConfig,
 			0, // start block height
 			onGroupSelected,
+			2,
 		)
 		if err != nil {
 			t.Fatal(err)
@@ -225,7 +226,7 @@ func (stg *stubGroupInterface) GetSubmittedTickets() ([]uint64, error) {
 }
 
 func (stg *stubGroupInterface) TicketSubmissionTimeout() (*big.Int, error) {
-	return big.NewInt(12), nil
+	return big.NewInt(10), nil
 }
 
 func (stg *stubGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress, error) {
