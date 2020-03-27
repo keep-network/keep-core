@@ -234,8 +234,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
         }
 
-        uint256 possibleOperatorsCount = stakingContract.possibleOperatorsCount();
-        groupSelection.start(_newEntry, possibleOperatorsCount);
+        groupSelection.minimumStake = stakingContract.minimumStake();
+        groupSelection.start(_newEntry);
         emit GroupSelectionStarted(_newEntry);
         dkgSubmitterReimbursementFee = _payment;
     }
@@ -267,7 +267,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *   current candidate group selection.
      */
     function submitTicket(bytes32 ticket) public {
-        uint256 stakingWeight = stakingContract.stakingWeight(msg.sender, address(this));
+        uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(groupSelection.minimumStake);
         groupSelection.submitTicket(ticket, stakingWeight);
     }
 
