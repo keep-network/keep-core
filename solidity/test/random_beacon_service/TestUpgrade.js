@@ -17,19 +17,19 @@ contract('KeepRandomBeaconService/Upgrade', function(accounts) {
   
   let initializeCallData
 
-  const admin = accounts[0]
-  const nonAdmin = accounts[1]
+  const admin = accounts[1]
+  const nonAdmin = accounts[2]
 
   before(async () => {
-    implementationV1 = await ServiceContractImplV1.new()
-    implementationV2 = await ServiceContractImplV2.new()
+    implementationV1 = await ServiceContractImplV1.new({from: admin})
+    implementationV2 = await ServiceContractImplV2.new({from: admin})
     
     initializeCallData = implementationV1.contract.methods.initialize(
       100, 200, '0x0000000000000000000000000000000000000001'
     ).encodeABI()
 
     proxy = await ServiceContractProxy.new(
-      implementationV1.address, initializeCallData
+      implementationV1.address, initializeCallData, {from: admin}
     )
   })
 
