@@ -474,14 +474,10 @@ library AltBn128 {
      * @dev Return true if G2 point is on the curve.
      */
     function isG2PointOnCurve(G2Point memory point) internal pure returns(bool) {
+        (uint256 y2x, uint256 y2y) = _gfP2Square(point.y.x, point.y.y);
+        (uint256 x3x, uint256 x3y) = _gfP2CubeAddTwistB(point.x.x, point.x.y);
 
-        gfP2 memory y2;
-        gfP2 memory x3;
-
-        y2 = gfP2Square(point.y);
-        x3 = gfP2CubeAddTwistB(point.x);
-
-        return (y2.x == x3.x && y2.y == x3.y);
+        return (y2x == x3x && y2y == x3y);
     }
 
     /**
