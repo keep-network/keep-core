@@ -512,24 +512,6 @@ library AltBn128 {
         }
     }
 
-    function _scalarMultiply(uint256 p_1x, uint256 p_1y, uint256 scalar)
-        internal view returns (uint256 x, uint256 y) {
-        /* solium-disable-next-line */
-        assembly {
-            let arg := mload(0x40)
-            mstore(arg, p_1x)
-            mstore(add(arg, 0x20), p_1y)
-            mstore(add(arg, 0x40), scalar)
-            let p_2 := add(arg, 0x60)
-            // 0x70 is the ECMUL precompile address
-            if iszero(staticcall(not(0), 0x07, arg, 0x60, p_2, 0x40)) {
-                revert(0, 0)
-            }
-            x := mload(p_2)
-            y := mload(add(p_2, 0x20))
-        }
-    }
-
     /**
      * @dev Wrap the pairing check pre-compile introduced in Byzantium. Return
      * the result of a pairing check of 2 pairs (G1 p1, G2 p2) (G1 p3, G2 p4)
