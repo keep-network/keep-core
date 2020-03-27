@@ -482,8 +482,18 @@ library AltBn128 {
      * provided point isn't on the curve.
      */
     function scalarMultiply(G1Point memory p_1, uint256 scalar) internal view returns (G1Point memory) {
-        (uint256 x, uint256 y) = _scalarMultiply(p_1.x, p_1.y, scalar);
-        return G1Point(x, y);
+        G1Point memory p_2;
+        assembly {
+            let arg := mload(0x40)
+            mstore(arg, mload(p_1))
+            mstore(add(arg, 0x20), mload(add(p_1, 0x20)))
+            mstore(add(arg, 0x40), scalar)
+            // 0x70 is the ECMUL precompile address
+            if iszero(staticcall(not(0), 0x07, arg, 0x60, p_2, 0x40)) {
+                revert(0, 0)
+            }
+        }
+        return p_2;
     }
 
     function _scalarMultiply(uint256 p_1x, uint256 p_1y, uint256 scalar)
