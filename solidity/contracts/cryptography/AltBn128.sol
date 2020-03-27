@@ -490,8 +490,8 @@ library AltBn128 {
      * match the point added to itself the same number of times. Revert if the
      * provided point isn't on the curve.
      */
-    function scalarMultiply(G1Point memory p_1, uint256 scalar) internal view returns (G1Point memory) {
-        G1Point memory p_2;
+    function scalarMultiply(G1Point memory p_1, uint256 scalar)
+        internal view returns (G1Point memory p_2) {
         assembly {
             let arg := mload(0x40)
             mstore(arg, mload(p_1))
@@ -502,7 +502,6 @@ library AltBn128 {
                 revert(0, 0)
             }
         }
-        return p_2;
     }
 
     function _scalarMultiply(uint256 p_1x, uint256 p_1y, uint256 scalar)
