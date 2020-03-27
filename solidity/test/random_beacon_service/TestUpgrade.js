@@ -1,4 +1,3 @@
-import {bls} from '../helpers/data';
 import {duration, increaseTimeTo} from '../helpers/increaseTime';
 import expectThrow from '../helpers/expectThrow';
 import {initContracts} from '../helpers/initContracts';
@@ -11,7 +10,7 @@ const {expectEvent, time} = require("@openzeppelin/test-helpers");
 
 contract('KeepRandomBeaconService/Upgrade', function(accounts) {
 
-  let operatorContract, serviceContractProxy, serviceContract, serviceContractImplV2, serviceContractV2,
+  let serviceContractProxy, serviceContract, serviceContractImplV2, serviceContractV2,
     account_one = accounts[0],
     account_two = accounts[1];
 
@@ -24,23 +23,11 @@ contract('KeepRandomBeaconService/Upgrade', function(accounts) {
       artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
     );
 
-    operatorContract = contracts.operatorContract;
     serviceContract = contracts.serviceContract;
     serviceContractProxy = await ServiceContractProxy.at(serviceContract.address);
 
     serviceContractImplV2 = await ServiceContractImplV2.new();
     serviceContractV2 = await ServiceContractImplV2.at(serviceContractProxy.address);
-
-    // Using stub method to add first group to help testing.
-    await operatorContract.registerNewGroup(bls.groupPubKey);
-    operatorContract.setGroupSize(3);
-    let group = await operatorContract.getGroupPublicKey(0);
-    await operatorContract.setGroupMembers(group, [accounts[0], accounts[1], accounts[2]]);
-
-    // Modify state so we can test later that eternal storage works as expected after upgrade
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
-    await operatorContract.relayEntry(bls.groupSignature);
   });
 
   beforeEach(async () => {
