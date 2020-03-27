@@ -6,7 +6,7 @@ pragma solidity ^0.5.4;
 contract GrantStakingPolicy {
     function getStakeableAmount(
         uint256 _now,
-        uint256 amount,
+        uint256 grantedAmount,
         uint256 duration,
         uint256 start,
         uint256 cliff,

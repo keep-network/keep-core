@@ -11,13 +11,13 @@ contract PermissiveStakingPolicy is GrantStakingPolicy {
 
     function getStakeableAmount (
         uint256 _now,
-        uint256 amount,
+        uint256 grantedAmount,
         uint256 duration,
         uint256 start,
         uint256 cliff,
         uint256 withdrawn
     ) public view returns (uint256) {
         // Can always stake the entire remaining amount.
-        return amount.sub(withdrawn);
+        return grantedAmount.sub(withdrawn);
     }
 }

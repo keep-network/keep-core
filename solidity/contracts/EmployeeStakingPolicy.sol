@@ -19,19 +19,19 @@ contract EmployeeStakingPolicy is GrantStakingPolicy {
 
     function getStakeableAmount (
         uint256 _now,
-        uint256 amount,
+        uint256 grantedAmount,
         uint256 duration,
         uint256 start,
         uint256 cliff,
         uint256 withdrawn
     ) public view returns (uint256) {
         uint256 unlocked = _now.getUnlockedAmount(
-            amount,
+            grantedAmount,
             duration,
             start,
             cliff
         );
-        uint256 remainingInGrant = amount.sub(withdrawn);
+        uint256 remainingInGrant = grantedAmount.sub(withdrawn);
         uint256 unlockedInGrant = unlocked.sub(withdrawn);
 
         // Less than minimum stake remaining
