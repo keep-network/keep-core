@@ -47,6 +47,13 @@ contract KeepRandomBeaconService is Proxy {
      */
     bytes32 internal constant UPGRADE_INIT_TIMESTAMP_SLOT = 0xb49edbaf3913780c2ef1ff781deec1eb653eab7236ff107428d60052d0f0d18d;
 
+    /// @notice Implementation initialization data to be used on the second step
+    /// of upgrade.
+    /// @dev Mapping is stored at the position calculated with keccak256 of the
+    /// new implementation address. Hence, it should be protected from clashing
+    /// with implementation's fields.
+    mapping(address => bytes) public initializationData;
+
     event UpgradeStarted(address implementation, uint256 timestamp);
     event UpgradeCompleted(address implementation);
 
@@ -95,9 +102,7 @@ contract KeepRandomBeaconService is Proxy {
             "Implementation address must be different from the current one."
         );
 
-        if (_data.length > 0) {
-            initializeImplementation(_newImplementation, _data);
-        }
+        initializationData[_newImplementation] = _data;
 
         setNewImplementation(_newImplementation);
 
@@ -115,7 +120,7 @@ contract KeepRandomBeaconService is Proxy {
      * address. It can be called after upgrade time delay period has passed since
      * upgrade initiation.
      */
-    function completeUpgrade() public {
+    function completeUpgrade() public onlyAdmin {
         require(upgradeInitiatedTimestamp() > 0, "Upgrade not initiated");
 
         require(
@@ -128,6 +133,12 @@ contract KeepRandomBeaconService is Proxy {
         address newImplementation = newImplementation();
 
         setImplementation(newImplementation);
+
+        bytes memory data = initializationData[newImplementation];
+        if (data.length > 0) {
+            initializeImplementation(newImplementation, data);
+        }
+
         setUpgradeInitiatedTimestamp(0);
 
         emit UpgradeCompleted(newImplementation);
