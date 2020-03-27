@@ -9,7 +9,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract.only('KeepRandomBeaconService/Upgrade', function(accounts) {
+contract('KeepRandomBeaconService/Upgrade', function(accounts) {
 
   let proxy
   let implementationV1
