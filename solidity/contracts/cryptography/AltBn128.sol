@@ -216,6 +216,10 @@ library AltBn128 {
      * @dev Unmarshals a point on G1 from bytes in an uncompressed form.
      */
     function g1Unmarshal(bytes memory m) internal pure returns(G1Point memory) {
+        require(
+            m.length == 64,
+            "Invalid G1 bytes length"
+        );
         bytes32 x;
         bytes32 y;
 
@@ -249,6 +253,10 @@ library AltBn128 {
      * @dev Unmarshals a point on G2 from bytes in an uncompressed form.
      */
     function g2Unmarshal(bytes memory m) internal pure returns(G2Point memory) {
+        require(
+            m.length == 128,
+            "Invalid G2 bytes length"
+        );
         bytes32 xx;
         bytes32 xy;
         bytes32 yx;
@@ -272,6 +280,10 @@ library AltBn128 {
         internal
         pure returns(G2Point memory)
     {
+        require(
+            m.length == 64,
+            "Invalid G2 compressed length"
+        );
         bytes32 x1;
         bytes32 x2;
         uint256 temp;
