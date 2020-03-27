@@ -1,6 +1,5 @@
 import React, { useState, useContext } from 'react'
 import { Web3Context } from './WithWeb3Context'
-import { WithdrawalHistoryItem } from './WithdrawalHistoryItem'
 import { SeeAllButton } from './SeeAllButton'
 import { LoadingOverlay } from './Loadable'
 import { useFetchData } from '../hooks/useFetchData'
@@ -9,6 +8,8 @@ import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEven
 import { OPERATOR_CONTRACT_NAME } from '../constants/constants'
 import web3Utils from 'web3-utils'
 import { formatDate, isSameEthAddress } from '../utils/general.utils'
+import { DataTable, Column } from './DataTable'
+import AddressShortcut from './AddressShortcut'
 
 const previewDataCount = 3
 const initialData = []
@@ -41,33 +42,35 @@ export const WithdrawalHistory = (props) => {
     subscribeToEventCallback
   )
 
+  console.log('data history',data)
+
   return (
     <LoadingOverlay isFetching={isFetching} >
-      <section className="mt-1">
+      <section className="tile">
         <h5 className="mb-1 text-grey-50">Rewards History</h5>
-        <div className="flex row center">
-          <div className="flex-1 text-label">
-            date
-          </div>
-          <div className="flex-1 text-label">
-            group key
-          </div>
-          <div className="flex-2 text-label">
-            amount
-          </div>
-        </div>
-        <ul className="withdrawal-history">
-          {showAll ? data.map(renderWithdrawalHistoryItem) : data.slice(0, previewDataCount).map(renderWithdrawalHistoryItem)}
-          <SeeAllButton
-            dataLength={data.length}
-            previewDataCount={previewDataCount}
-            onClickCallback={() => setShowAll(!showAll)}
-            showAll={showAll}
+        <DataTable data={showAll ? data : data.slice(0, previewDataCount)}>
+          <Column
+            header="amount"
+            field="amount"
+            renderContent={({ amount }) => `${amount.toString()} ETH`}
           />
-        </ul>
+          <Column
+            header="date"
+            field="date"
+          />
+          <Column
+            header="group key"
+            field="groupPublicKey"
+            renderContent={({ groupPublicKey }) => <AddressShortcut address={groupPublicKey} classNames="text-smaller" />}
+          />
+        </DataTable>
+        <SeeAllButton
+          dataLength={data.length}
+          previewDataCount={previewDataCount}
+          onClickCallback={() => setShowAll(!showAll)}
+          showAll={showAll}
+        />
       </section>
     </LoadingOverlay>
   )
 }
-
-const renderWithdrawalHistoryItem = (history, index) => <WithdrawalHistoryItem key={index} {...history} />

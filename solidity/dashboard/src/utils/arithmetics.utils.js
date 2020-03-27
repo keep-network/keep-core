@@ -8,6 +8,8 @@ export const sub = (a, b) => {
   return web3Utils.toBN(a).sub(web3Utils.toBN(b))
 }
 
+export const mul = (a, b) => web3Utils.toBN(a).mul(web3Utils.toBN(b))
+
 export const gt = (a, b) => {
   return web3Utils.toBN(a).gt(web3Utils.toBN(b))
 }
