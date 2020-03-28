@@ -1,6 +1,4 @@
-
-import mineBlocks from '../helpers/mineBlocks';
-import { duration } from '../helpers/increaseTime';
+import increaseTime, { duration, increaseTimeTo} from '../helpers/increaseTime';
 import latestTime from '../helpers/latestTime';
 import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
 import grantTokens from '../helpers/grantTokens';
@@ -11,6 +9,11 @@ const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
+
+// Depending on test network increaseTimeTo can be inconsistent and add
+// extra time. As a workaround we subtract timeRoundMargin in all cases
+// that test times before initialization/undelegation periods end.
+const timeRoundMargin = duration.minutes(1)
 
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
@@ -36,8 +39,8 @@ contract('TokenGrant/Stake', function(accounts) {
   grantCliff = duration.days(10),
   grantRevocable = false;
   
-  const initializationPeriod = 10;
-  const undelegationPeriod = 30;
+  const initializationPeriod = duration.minutes(10);
+  const undelegationPeriod = duration.minutes(30);
 
   before(async () => {
     tokenContract = await KeepToken.new();
@@ -112,11 +115,13 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should allow to delegate, undelegate, and recover grant", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    let tx = await delegate(grantee, operatorOne, grantAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-    await mineBlocks(initializationPeriod);
-    await grantContract.undelegate(operatorOne, {from: grantee});
-    await mineBlocks(undelegationPeriod);
+    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    tx = await grantContract.undelegate(operatorOne, {from: grantee})
+    let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    await increaseTimeTo(undelegatedAt + undelegationPeriod + 1)
     await grantContract.recoverStake(operatorOne);
 
     let availableForStaking = await grantContract.availableToStake.call(grantId)
@@ -151,9 +156,10 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should allow to cancel delegation just before initialization period is over", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    let tx = await delegate(grantee, operatorOne, grantAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
     
-    await mineBlocks(initializationPeriod - 1);
+    await increaseTimeTo(createdAt + initializationPeriod - timeRoundMargin)
 
     await grantContract.cancelStake(operatorOne, {from: grantee});
 
@@ -171,9 +177,10 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow to cancel delegation after initialization period is over", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    let tx = await delegate(grantee, operatorOne, grantAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
     
-    await mineBlocks(initializationPeriod);
+    await increaseTimeTo(createdAt + initializationPeriod + 1)
 
     await expectThrowWithMessage(
       grantContract.cancelStake(operatorOne, {from: grantee}),
@@ -182,12 +189,13 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow to recover stake before undelegation period is over", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    let tx = await delegate(grantee, operatorOne, grantAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-    await mineBlocks(initializationPeriod);
-    await grantContract.undelegate(operatorOne, {from: grantee});
-
-    await mineBlocks(undelegationPeriod - 1);
+    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    tx = await grantContract.undelegate(operatorOne, {from: grantee})
+    let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    await increaseTimeTo(undelegatedAt + undelegationPeriod - timeRoundMargin);
 
     await expectThrowWithMessage(
       stakingContract.recoverStake(operatorOne),
@@ -206,10 +214,12 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should not allow to delegate to the same operator even after recovering stake", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
-    await mineBlocks(initializationPeriod);
-    await grantContract.undelegate(operatorOne, {from: grantee});
-    await mineBlocks(undelegationPeriod);
+    let tx = await delegate(grantee, operatorOne, grantAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    tx = await grantContract.undelegate(operatorOne, {from: grantee})
+    let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    await increaseTimeTo(undelegatedAt + undelegationPeriod + 1)
     await grantContract.recoverStake(operatorOne, {from: grantee});
 
     await expectThrowWithMessage(
@@ -287,17 +297,19 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should let operator undelegate", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    let tx = await delegate(grantee, operatorOne, grantAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-    await mineBlocks(initializationPeriod);
+    await increaseTimeTo(createdAt + initializationPeriod + 1)
     await grantContract.undelegate(operatorOne, {from: operatorOne})
     // ok, no exceptions
   })
 
   it("should not allow third party to undelegate", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    let tx = await delegate(grantee, operatorOne, grantAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-    await mineBlocks(initializationPeriod);
+    await increaseTimeTo(createdAt + initializationPeriod + 1)
     await expectThrowWithMessage(
       grantContract.undelegate(operatorOne, {from: operatorTwo}),
       "Only operator or grantee can undelegate"
@@ -305,11 +317,13 @@ contract('TokenGrant/Stake', function(accounts) {
   })
 
   it("should recover tokens recovered outside the grant contract", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    let tx = await delegate(grantee, operatorOne, grantAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-    await mineBlocks(initializationPeriod);
-    await grantContract.undelegate(operatorOne, {from: grantee});
-    await mineBlocks(undelegationPeriod);
+    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    tx = await grantContract.undelegate(operatorOne, {from: grantee})
+    let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    await increaseTimeTo(undelegatedAt + undelegationPeriod + 1)
     await stakingContract.recoverStake(operatorOne);
     let availablePre = await grantContract.availableToStake(grantId);
 

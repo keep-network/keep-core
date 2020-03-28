@@ -13,8 +13,8 @@ const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultV
 const Reimbursements = artifacts.require("./libraries/operator/Reimbursements.sol");
 const Registry = artifacts.require("./Registry.sol");
 
-let initializationPeriod = 50000; // ~6 days
-const undelegationPeriod = 800000; // ~3 months
+let initializationPeriod = 518400; // ~6 days
+const undelegationPeriod = 7776000; // ~3 months
 const withdrawalDelay = 86400; // 1 day
 const dkgContributionMargin = 1; // 1%
 
