@@ -8,6 +8,11 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
+// Depending on test network increaseTimeTo can be inconsistent and add
+// extra time. As a workaround we subtract timeRoundMargin in all cases
+// that test times before initialization/undelegation periods end.
+const timeRoundMargin = duration.minutes(1)
+
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const Registry = artifacts.require("./Registry.sol");
@@ -23,9 +28,9 @@ contract('TokenStaking', function(accounts) {
     magpie = accounts[4],
     authorizer = accounts[5],
     operatorContract = accounts[6];
-    
-  const initializationPeriod = 10;
-  const undelegationPeriod = 30;
+
+  const initializationPeriod = duration.minutes(10);
+  const undelegationPeriod = duration.minutes(30);
   before(async () => {
     token = await KeepToken.new();
     registry = await Registry.new();
@@ -151,7 +156,7 @@ contract('TokenStaking', function(accounts) {
     let tx = await delegate(operatorOne, stakingAmount)
     let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-    await increaseTimeTo(createdAt + initializationPeriod)
+    await increaseTimeTo(createdAt + initializationPeriod - timeRoundMargin)
 
     await stakingContract.cancelStake(operatorOne, {from: ownerOne})
 
@@ -187,7 +192,7 @@ contract('TokenStaking', function(accounts) {
     await increaseTimeTo(createdAt + initializationPeriod + 1)
     tx = await stakingContract.undelegate(operatorOne, {from: ownerOne});
     let undelegatedAt = await web3.eth.getBlock(tx.receipt.blockNumber);
-    await increaseTimeTo(undelegatedAt.timestamp + undelegationPeriod);
+    await increaseTimeTo(undelegatedAt.timestamp + undelegationPeriod - timeRoundMargin);
 
     await expectThrowWithMessage(
       stakingContract.recoverStake(operatorOne),
@@ -307,7 +312,7 @@ contract('TokenStaking', function(accounts) {
       let tx = await delegate(operatorOne, stakingAmount)
       let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTimeTo(createdAt + initializationPeriod)
+      await increaseTimeTo(createdAt + initializationPeriod - timeRoundMargin)
       await expectThrowWithMessage(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
         "Cannot undelegate in initialization period, use cancelStake instead"
@@ -428,7 +433,7 @@ contract('TokenStaking', function(accounts) {
       let currentTime = await latestTime()
       await expectThrowWithMessage(
         stakingContract.undelegateAt(
-          operatorOne, currentTime + initializationPeriod,
+          operatorOne, currentTime + initializationPeriod - timeRoundMargin,
           {from: operatorOne}
         ),
         "Cannot undelegate in initialization period, use cancelStake instead"
@@ -587,7 +592,7 @@ contract('TokenStaking', function(accounts) {
         operatorOne, operatorContract, {from: authorizer}
       )
   
-      await increaseTimeTo(createdAt + initializationPeriod)
+      await increaseTimeTo(createdAt + initializationPeriod - timeRoundMargin)
   
       let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
   
@@ -671,7 +676,7 @@ contract('TokenStaking', function(accounts) {
       await stakingContract.authorizeOperatorContract(
         operatorOne, operatorContract, {from: authorizer}
       )
-      await increaseTimeTo(createdAt + initializationPeriod)
+      await increaseTimeTo(createdAt + initializationPeriod - timeRoundMargin)
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
   
       expect(eligibleStake).to.eq.BN(
