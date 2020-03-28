@@ -1,0 +1,50 @@
+name: Contracts
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "solidity/contracts/**"
+      - "solidity/package.json"
+      - "solidity/package-lock.json"
+
+jobs:
+  install-dependencies:
+    name: Install dependencies
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+        # restore cache
+      - name: Install dependencies
+        run: npm ci
+        # write cache
+        # persist artifacts
+
+  lint:
+    name: Lint
+    needs: install-dependencies
+    steps:
+      - # restore artifacts?
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - # restore artifacts?
+      - name: Compile source code
+        working-directory: ./solidity
+        run: npm run compile
+      - name: Generate API asciidoc # own job with shared artifacts?
+        working-directory: ./solidity
+        run: |
+          mkdir -p docs
+          node scripts/generate-api-docs.js > docs/index.adoc
+      - uses: thesis/compile-asciidoctor
+        with:
+          path: ./solidity/output
+      - uses: thesis/gcp-storage-bucket-action # if PR vs master
+        with:
+          target-path: ...
