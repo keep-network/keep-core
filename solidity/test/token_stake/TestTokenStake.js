@@ -151,7 +151,7 @@ contract('TokenStaking', function(accounts) {
     let tx = await delegate(operatorOne, stakingAmount)
     let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-    await increaseTimeTo(createdAt + initializationPeriod - 1)
+    await increaseTimeTo(createdAt + initializationPeriod)
 
     await stakingContract.cancelStake(operatorOne, {from: ownerOne})
 
@@ -307,7 +307,7 @@ contract('TokenStaking', function(accounts) {
       let tx = await delegate(operatorOne, stakingAmount)
       let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTimeTo(createdAt + initializationPeriod - 1)
+      await increaseTimeTo(createdAt + initializationPeriod)
       await expectThrowWithMessage(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
         "Cannot undelegate in initialization period, use cancelStake instead"
@@ -598,7 +598,7 @@ contract('TokenStaking', function(accounts) {
         operatorOne, operatorContract, {from: authorizer}
       )
   
-      await increaseTimeTo(createdAt + initializationPeriod - 1)
+      await increaseTimeTo(createdAt + initializationPeriod)
   
       let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
   
@@ -682,7 +682,7 @@ contract('TokenStaking', function(accounts) {
       await stakingContract.authorizeOperatorContract(
         operatorOne, operatorContract, {from: authorizer}
       )
-      await increaseTimeTo(createdAt + initializationPeriod - 1)
+      await increaseTimeTo(createdAt + initializationPeriod)
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
   
       expect(eligibleStake).to.eq.BN(
