@@ -39,6 +39,13 @@ contract TokenStaking is StakeDelegatable {
     // Authorized operator contracts.
     mapping(address => mapping (address => bool)) internal authorizations;
 
+    struct Lock {
+        address operatorContract;
+        uint256 endsAt;
+    }
+
+    mapping(address => Lock) public locks;
+
     modifier onlyApprovedOperatorContract(address operatorContract) {
         require(
             registry.isApprovedOperatorContract(operatorContract),
@@ -209,6 +216,12 @@ contract TokenStaking is StakeDelegatable {
             block.timestamp > operatorParams.getUndelegationTimestamp().add(undelegationPeriod),
             "Can not recover stake before undelegation period is over."
         );
+
+        require(
+            block.timestamp >= locks[_operator].endsAt || !registry.isApprovedOperatorContract(locks[_operator].operatorContract),
+            "Can not recover locked stake"
+        );
+
         address owner = operators[_operator].owner;
         uint256 amount = operatorParams.getAmount();
 
@@ -229,6 +242,37 @@ contract TokenStaking is StakeDelegatable {
     function getDelegationInfo(address _operator)
     public view returns (uint256 amount, uint256 createdAt, uint256 undelegatedAt) {
         return operators[_operator].packedParams.unpack();
+    }
+
+    /**
+     * @dev Locks given operator stake from undelegating for the specified duration.
+     * Only previously authorized operator contract can lock the stake.
+     * @param operator Operator address.
+     * @param duration Lock duration in seconds.
+     */
+    function lockStake(
+        address operator,
+        uint256 duration
+    ) public onlyApprovedOperatorContract(msg.sender) {
+        locks[operator] = Lock(
+            msg.sender,
+            block.timestamp.add(duration)
+        );
+    }
+
+    /**
+     * @dev Unlocks given operator stake. Only previously authorized operator
+     * contract can unlock the stake.
+     * @param operator Operator address.
+     */
+    function unlockStake(
+        address operator
+    ) public {
+        require(
+            locks[operator].operatorContract == msg.sender,
+            "Not authorized"
+        );
+        delete locks[operator];
     }
 
     /**
