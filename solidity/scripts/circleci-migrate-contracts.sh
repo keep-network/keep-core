@@ -54,8 +54,9 @@ ssh utilitybox << EOF
   echo "<<<<<<START Contract Migration START<<<<<<"
   cd /tmp/$BUILD_TAG/solidity
 
-  # This command uses the content of package.json in the CWD to install dependencies
-  npm i
+  # This command uses the content of package.json and package-lock.json in the
+  # CWD to install dependencies
+  npm ci
 
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
