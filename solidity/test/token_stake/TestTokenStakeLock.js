@@ -6,7 +6,7 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const Registry = artifacts.require("./Registry.sol");
 
-contract('TokenStaking', function(accounts) {
+contract.only('TokenStaking', function(accounts) {
   let token, registry, stakingContract, stakingAmount, minimumStake;
   const owner = accounts[0],
     operator = accounts[1],
