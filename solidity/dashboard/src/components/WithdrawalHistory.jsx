@@ -4,11 +4,13 @@ import { SeeAllButton } from './SeeAllButton'
 import { LoadingOverlay } from './Loadable'
 import { useFetchData } from '../hooks/useFetchData'
 import rewardsService from '../services/rewards.service'
-import web3Utils from 'web3-utils'
-import { formatDate, isSameEthAddress, isEmptyObj } from '../utils/general.utils'
 import { DataTable, Column } from './DataTable'
+import { COMPLETE_STATUS } from '../constants/constants'
+import StatusBadge, { BADGE_STATUS } from './StatusBadge'
 import AddressShortcut from './AddressShortcut'
 import moment from 'moment'
+import web3Utils from 'web3-utils'
+import { formatDate, isSameEthAddress, isEmptyObj } from '../utils/general.utils'
 
 const previewDataCount = 3
 const initialData = []
@@ -53,8 +55,15 @@ export const WithdrawalHistory = ({ latestWithdrawalEvent }) => {
             renderContent={({ amount }) => `${amount.toString()} ETH`}
           />
           <Column
-            header="date"
+            header="status"
             field="date"
+            renderContent={({ date }) => (
+              <StatusBadge
+                status={BADGE_STATUS[COMPLETE_STATUS]}
+                text={date}
+                onlyIcon
+              />
+            )}
           />
           <Column
             header="group key"
