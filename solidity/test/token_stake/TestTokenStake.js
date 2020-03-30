@@ -528,6 +528,18 @@ contract('TokenStaking', function(accounts) {
   })
 
   describe("recoverStake", async () => {
+    it("should not allow to recover stake without undelegating first", async () => {
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+  
+      await increaseTimeTo(createdAt + initializationPeriod + undelegationPeriod)
+  
+      await expectThrowWithMessage(
+        stakingContract.recoverStake(operatorOne),
+        "Can not recover without first undelegating"
+      )
+    })
+
     it("should not allow to recover stake before undelegation period is over", async () => {
       let tx = await delegate(operatorOne, stakingAmount)
       let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
