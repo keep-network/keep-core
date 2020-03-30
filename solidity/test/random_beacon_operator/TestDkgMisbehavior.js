@@ -6,6 +6,7 @@ import stakeDelegate from '../helpers/stakeDelegate'
 import packTicket from '../helpers/packTicket'
 import generateTickets from '../helpers/generateTickets'
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot'
+import {bls} from '../helpers/data';
 
 contract('KeepRandomBeaconOperator/DkgMisbehavior', function(accounts) {
   let token, stakingContract, operatorContract,
@@ -18,7 +19,7 @@ contract('KeepRandomBeaconOperator/DkgMisbehavior', function(accounts) {
     authorizer = owner,
     selectedParticipants, signatures, signingMemberIndices = [],
     misbehaved = '0x0305', // disqualified operator3, inactive operator5
-    groupPubKey = '0x1000000000000000000000000000000000000000000000000000000000000000',
+    groupPubKey = bls.groupPubKey,
     resultHash = web3.utils.soliditySha3(groupPubKey, misbehaved)
 
   before(async () => {
