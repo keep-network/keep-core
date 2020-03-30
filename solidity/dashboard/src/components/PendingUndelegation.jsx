@@ -46,11 +46,6 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
     }
   }, [latestUnstakeEvent.transactionHash])
 
-  const undelegationPeriodRelativeTime = moment().add(undelegationPeriod, 'seconds').fromNow(true)
-  const statusText = undelegationStatus === PENDING_STATUS ?
-    `${undelegationStatus.toLowerCase()}, ${undelegationCompletedAt.fromNow(true)}` :
-    undelegationStatus
-
   return (
     <LoadingOverlay isFetching={isFetching}>
       <section id="pending-undelegation" className="tile">
@@ -66,13 +61,18 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
           <Column
             header="status"
             field="undelegationStatus"
-            renderContent={({ undelegationStatus }) => ( undelegationStatus &&
-              <StatusBadge
-                className="self-start"
-                status={BADGE_STATUS[undelegationStatus]}
-                text={statusText}
-              />
-            )}
+            renderContent={({ undelegationStatus }) => {
+              const statusText = undelegationStatus === PENDING_STATUS ?
+                `${undelegationStatus.toLowerCase()}, ${undelegationCompletedAt.fromNow(true)}` :
+                undelegationStatus
+
+              return undelegationStatus &&
+                <StatusBadge
+                  className="self-start"
+                  status={BADGE_STATUS[undelegationStatus]}
+                  text={statusText.toLowerCase()}
+                />
+            }}
           />
           <Column
             header="estimate"
@@ -84,7 +84,10 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
           <Column
             header="undelegation period"
             field="undelegationPeriod"
-            renderContent={() => `${undelegationPeriodRelativeTime}`}
+            renderContent={({ undelegationPeriod }) => {
+              const undelegationPeriodRelativeTime = moment().add(undelegationPeriod, 'seconds').fromNow(true)
+              return undelegationPeriodRelativeTime
+            }}
           />
         </DataTable>
       </section>
