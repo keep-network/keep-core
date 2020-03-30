@@ -8,8 +8,26 @@ section.total-rewards-section {
         border-bottom: 1px solid @color-grey-20;
     }
 
-    .withdraw-dropdown {
+    .withdraw-dropdown-section {
         width: 100%;
+
+        .withdraw-dropdown {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: space-between;
+
+            .dropdown {
+                width: 100%;
+            }
+
+            button {
+                width: 100%;
+                margin-top: 0.8rem;
+                flex: none;
+            }
+        }
     }
 }
 
@@ -32,8 +50,20 @@ section.total-rewards-section {
             }
         }
 
-        .withdraw-dropdown {
+        .withdraw-dropdown-section {
             width: 60%;
+
+            .withdraw-dropdown {
+                .dropdown {
+                    width: 70%;
+                }
+    
+                button {
+                    width: 28%;
+                    margin-top: 0.8rem;
+                    flex: none;
+                }
+            }
         }
     }
 }
