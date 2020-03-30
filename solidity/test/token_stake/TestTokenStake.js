@@ -801,7 +801,7 @@ contract('TokenStaking', function(accounts) {
         {from: ownerOne}
       );
 
-      await increaseTimeTo(createdAt + initializationPeriod + delegationTime + 1)
+      await increaseTimeTo(createdAt + initializationPeriod + delegationTime + timeRoundMargin)
 
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
       expect(eligibleStake).to.eq.BN(
