@@ -1,5 +1,6 @@
 import { sign } from '../helpers/signature';
 import mineBlocks from '../helpers/mineBlocks';
+import increaseTime from '../helpers/increaseTime';
 import packTicket from '../helpers/packTicket';
 import generateTickets from '../helpers/generateTickets';
 import stakeDelegate from '../helpers/stakeDelegate';
@@ -56,6 +57,7 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: owner})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: owner})
 
+    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
 
     let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, operator1StakingWeight);
     let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, operator2StakingWeight);

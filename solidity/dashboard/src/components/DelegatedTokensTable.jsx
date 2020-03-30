@@ -1,5 +1,5 @@
 import React from 'react'
-import { displayAmount } from '../utils/general.utils'
+import { displayAmount, formatDate } from '../utils/general.utils'
 import AddressShortcut from './AddressShortcut'
 import UndelegateStakeButton from './UndelegateStakeButton'
 import StatusBadge, { BADGE_STATUS } from './StatusBadge'
@@ -21,10 +21,16 @@ const DelegatedTokensTable = ({ delegatedTokens, cancelStakeSuccessCallback }) =
           field="delegationStatus"
           renderContent={(delegation) => {
             const delegationStatus = delegation.isInInitializationPeriod ? PENDING_STATUS : COMPLETE_STATUS
+            const statusBadgeText = delegationStatus === PENDING_STATUS ?
+              `${delegationStatus.toLowerCase()}, ${delegation.initializationOverAt.fromNow(true)}` :
+              formatDate(delegation.initializationOverAt)
+
             return (
               <StatusBadge
                 status={BADGE_STATUS[delegationStatus]}
-                text={delegationStatus.toLowerCase()}
+                className="self-start"
+                text={statusBadgeText}
+                onlyIcon={delegationStatus === COMPLETE_STATUS}
               />
             )
           }}

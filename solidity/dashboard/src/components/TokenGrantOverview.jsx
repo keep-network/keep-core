@@ -33,14 +33,12 @@ const TokenGrantOverview = ({ selectedGrant }) => {
 
   return (
     <div className="token-grant-overview">
-      <div>
-        <h2 className="balance">{displayAmount(selectedGrant.amount)}&nbsp;KEEP</h2>
-        <div className="text-small text-grey-40">
-          Issued: {formatDate(moment.unix(selectedGrant.start))}
-          <span className="text-smaller text-grey-30">&nbsp;Cliff: {cliffPeriod}</span>
-          <br/>
-          Fully Unlocked: {formatDate(fullyUnlockedDate)}
-        </div>
+      <h2 className="balance">{displayAmount(selectedGrant.amount)}&nbsp;KEEP</h2>
+      <div className="text-small text-grey-40">
+        Issued: {formatDate(moment.unix(selectedGrant.start))}
+        <span className="text-smaller text-grey-30">&nbsp;Cliff: {cliffPeriod}</span>
+        <br/>
+        Fully Unlocked: {formatDate(fullyUnlockedDate)}
       </div>
       <hr/>
       <div className="flex">
@@ -49,15 +47,15 @@ const TokenGrantOverview = ({ selectedGrant }) => {
             total={selectedGrant.amount}
             items={[
               {
-                value: selectedGrant.vested,
-                backgroundStroke: '#D7F6EE',
+                value: selectedGrant.unlocked,
+                backgroundStroke: colors.bgSuccess,
                 color: colors.primary,
                 label: 'Unlocked',
               },
               {
                 value: selectedGrant.released,
                 color: colors.secondary,
-                withBackgroundStroke: false,
+                backgroundStroke: colors.bgSecondary,
                 radius: 48,
                 label: 'Released',
               },
@@ -70,7 +68,7 @@ const TokenGrantOverview = ({ selectedGrant }) => {
             unlocked
           </div>
           <div className="text-label">
-            {displayAmount(selectedGrant.vested)}
+            {displayAmount(selectedGrant.unlocked)}
             <div className="text-smaller text-grey-40">
               of {displayAmount(selectedGrant.amount)} total
             </div>
@@ -78,12 +76,8 @@ const TokenGrantOverview = ({ selectedGrant }) => {
           {
             gt(selectedGrant.readyToRelease || 0, 0) &&
             <div className="mt-2">
-              <div>
-                <span className="text-secondary text-bold text-small">
-                  {displayAmount(selectedGrant.readyToRelease)}
-                &nbsp;
-                </span>
-                <span className="text-smaller text-grey-40">Ready to realese</span>
+              <div className="text-secondary text-small" >
+                {`${displayAmount(selectedGrant.readyToRelease)} Available`}
               </div>
               <SubmitButton
                 className="btn btn-sm btn-secondary"

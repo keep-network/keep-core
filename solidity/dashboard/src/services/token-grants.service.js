@@ -14,9 +14,9 @@ const fetchGrants = async (web3Context) => {
     if (!isSameEthAddress(yourAddress, grantDetails.grantee)) {
       continue
     }
-    const vestingSchedule = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantUnlockingSchedule', grantIds[i])
+    const unlockingSchedule = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantUnlockingSchedule', grantIds[i])
 
-    const vested = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'unlockedAmount', grantIds[i])
+    const unlocked = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'unlockedAmount', grantIds[i])
     let readyToRelease = '0'
     try {
       readyToRelease = await contractService
@@ -27,7 +27,7 @@ const fetchGrants = async (web3Context) => {
     const released = grantDetails.withdrawn
     const availableToStake = sub(sub(grantDetails.amount, grantDetails.withdrawn), grantDetails.staked)
 
-    grants.push({ id: grantIds[i], vested, released, readyToRelease, availableToStake, ...vestingSchedule, ...grantDetails })
+    grants.push({ id: grantIds[i], unlocked, released, readyToRelease, availableToStake, ...unlockingSchedule, ...grantDetails })
   }
 
   return grants
@@ -48,8 +48,8 @@ const createGrant = async (web3Context, data, onTransationHashCallback) => {
   /**
    * Extra data contains the following values:
    * grantee (20 bytes) Address of the grantee.
-   * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to vest.
-   * start (32 bytes) Timestamp at which vesting will start.
+   * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to unlock.
+   * start (32 bytes) Timestamp at which unlocking will start.
    * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
    */
   const extraData = Buffer.concat([

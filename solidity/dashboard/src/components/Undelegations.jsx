@@ -1,5 +1,5 @@
 import React from 'react'
-import { displayAmount } from '../utils/general.utils'
+import { displayAmount, formatDate } from '../utils/general.utils'
 import AddressShortcut from './AddressShortcut'
 import SpeechBubbleInfo from './SpeechBubbleInfo'
 import RecoverStakeButton from './RecoverStakeButton'
@@ -19,10 +19,16 @@ const Undelegations = ({ undelegations }) => {
         <Column header="amount" field="amount" renderContent={({ amount }) => `${displayAmount(amount)} KEEP`} />
         <Column header="status" field="undelegationStatus" renderContent={(undelegation) => {
           const undelegationStatus = undelegation.canRecoverStake ? COMPLETE_STATUS : PENDING_STATUS
+          const statusBadgeText = undelegationStatus === PENDING_STATUS ?
+            `${undelegationStatus.toLowerCase()}, ${undelegation.undelegationCompleteAt.fromNow(true)}` :
+            formatDate(undelegation.undelegationCompleteAt)
+
           return (
             <StatusBadge
               status={BADGE_STATUS[undelegationStatus]}
-              text={undelegationStatus.toLowerCase()}
+              className="self-start"
+              text={statusBadgeText}
+              onlyIcon={undelegationStatus === COMPLETE_STATUS}
             />
           )
         }}/>

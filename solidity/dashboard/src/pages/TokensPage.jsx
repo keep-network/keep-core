@@ -22,6 +22,7 @@ import {
   UPDATE_OWNED_UNDELEGATIONS_TOKEN_BALANCE,
   REMOVE_UNDELEGATION,
 } from '../reducers/tokens-page.reducer.js'
+import moment from 'moment'
 
 const TokensPage = () => {
   const web3Context = useContext(Web3Context)
@@ -105,6 +106,7 @@ const useSubscribeToStakedEvent = async () => {
   const {
     grantContract,
     stakingContract,
+    eth,
   } = web3Context
 
   const {
@@ -121,15 +123,16 @@ const useSubscribeToStakedEvent = async () => {
     if (!isAddressedToCurrentAccount(from, web3Context, grantStakeDetails)) {
       return
     }
+    const createdAt = (await eth.getBlock(blockNumber)).timestamp
 
     const delegation = {
-      createdAt: blockNumber,
+      createdAt,
       operatorAddress: from,
       authorizerAddress: await stakingContract.methods.authorizerOf(from).call(),
       beneficiary: await stakingContract.methods.magpieOf(from).call(),
       amount: value,
       isInInitializationPeriod: true,
-      initializationOverAt: add(blockNumber || 0, initializationPeriod).toString(),
+      initializationOverAt: moment.unix(createdAt).add(initializationPeriod, 'seconds'),
     }
 
     if (!isFromGrant) {
@@ -159,7 +162,7 @@ const useSubscribeToUndelegatedEvent = () => {
   } = useTokensPageContext()
 
   const subscribeToEventCallback = async (event) => {
-    const { blockNumber, returnValues: { operator } } = event
+    const { returnValues: { operator, undelegatedAt } } = event
     const grantStakeDetails = await getGrantDetails(operator, grantContract)
     const isFromGrant = grantStakeDetails !== null
 
@@ -170,12 +173,12 @@ const useSubscribeToUndelegatedEvent = () => {
     const { amount } = await stakingContract.methods.getDelegationInfo(operator).call()
 
     const undelegation = {
-      createdAt: blockNumber,
       operatorAddress: operator,
       authorizerAddress: await stakingContract.methods.authorizerOf(operator).call(),
       beneficiary: await stakingContract.methods.magpieOf(operator).call(),
       amount,
-      undelegationCompleteAt: add(blockNumber, undelegationPeriod),
+      undelegatedAt: moment.unix(undelegatedAt),
+      undelegationCompleteAt: moment.unix(undelegatedAt).add(undelegationPeriod, 'seconds'),
       canRecoverStake: false,
     }
     dispatch({ type: REMOVE_DELEGATION, payload: operator })

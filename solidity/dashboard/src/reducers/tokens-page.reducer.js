@@ -107,7 +107,7 @@ const grantWithdrawn = (grants, { grantId, amount }) => {
   }
   grantToUpdate.readyToRelease = '0'
   grantToUpdate.released = add(grantToUpdate.released, amount)
-  grantToUpdate.vested = add(grantToUpdate.released, grantToUpdate.staked)
+  grantToUpdate.unlocked = add(grantToUpdate.released, grantToUpdate.staked)
   grantToUpdate.availableToStake = sub(grantToUpdate.availableToStake, amount)
   grantToUpdate.availableToStake = gte(grantToUpdate.availableToStake, 0) ? grantToUpdate.availableToStake : '0'
   grants[indexInArray] = grantToUpdate

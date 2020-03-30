@@ -20,19 +20,19 @@ contract OperatorParamsStub {
         return packed.setAmount(amount);
     }
 
-    function publicGetCreationBlock(uint256 packed) public pure returns (uint256) {
-        return packed.getCreationBlock();
+    function publicGetCreationTimestamp(uint256 packed) public pure returns (uint256) {
+        return packed.getCreationTimestamp();
     }
 
-    function publicSetCreationBlock(uint256 packed, uint256 creationBlock) public pure returns (uint256) {
-        return packed.setCreationBlock(creationBlock);
+    function publicSetCreationTimestamp(uint256 packed, uint256 creationTimestamp) public pure returns (uint256) {
+        return packed.setCreationTimestamp(creationTimestamp);
     }
 
-    function publicGetUndelegationBlock(uint256 packed) public pure returns (uint256) {
-        return packed.getUndelegationBlock();
+    function publicGetUndelegationTimestamp(uint256 packed) public pure returns (uint256) {
+        return packed.getUndelegationTimestamp();
     }
 
-    function publicSetUndelegationBlock(uint256 packed, uint256 undelegationBlock) public pure returns (uint256) {
-        return packed.setUndelegationBlock(undelegationBlock);
+    function publicSetUndelegationTimestamp(uint256 packed, uint256 undelegationTimestamp) public pure returns (uint256) {
+        return packed.setUndelegationTimestamp(undelegationTimestamp);
     }
 }
