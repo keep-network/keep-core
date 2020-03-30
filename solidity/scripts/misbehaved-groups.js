@@ -7,7 +7,7 @@
  *  */ 
 
 // The KeepRandomBeaconOperatorRewardsStub contract should be deployed to the network
-const Operator = artifacts.require("../stubs/KeepRandomBeaconOperatorRewardsStub.sol");
+const KeepRandomBeaconOperator = artifacts.require("../stubs/KeepRandomBeaconOperatorRewardsStub.sol");
 const crypto = require("crypto")
 
 function getAccounts() {
@@ -18,21 +18,21 @@ function getAccounts() {
   });
 }
 
-async function registerNewGroup (keepRandomBeaconOerator, accounts) {
-  const groupPubKey = crypto.randomBytes(32);
-  await keepRandomBeaconOerator.registerNewGroup(groupPubKey)
-  await keepRandomBeaconOerator.setGroupMembers(groupPubKey, [accounts[1], accounts[2], accounts[1]]);
+async function registerNewGroup (keepRandomBeaconOperator, accounts) {
+  const groupPublicKey = crypto.randomBytes(32);
+  await keepRandomBeaconOperator.registerNewGroup(groupPublicKey)
+  await keepRandomBeaconOperator.setGroupMembers(groupPublicKey, [accounts[1], accounts[2], accounts[1]]);
 }
   
 module.exports = async function() {
     try {
         const accounts = await getAccounts();
-        const keepRandomBeaconOerator = await Operator.deployed();
+        const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
         const owner = accounts[0];
-        await registerNewGroup(keepRandomBeaconOerator, accounts);
+        await registerNewGroup(keepRandomBeaconOperator, accounts);
 
-        await keepRandomBeaconOerator.reportUnauthorizedSigning(0,  Buffer.from('abc', 'hex'), { from: owner })
-        await keepRandomBeaconOerator.reportRelayEntryTimeout({ from: owner })
+        await keepRandomBeaconOperator.reportUnauthorizedSigning(0,  Buffer.from('abc', 'hex'), { from: owner })
+        await keepRandomBeaconOperator.reportRelayEntryTimeout({ from: owner })
       } catch(erorr) {
         console.log('Unexpected error', erorr);
         process.exit(1)

@@ -10,15 +10,15 @@ const SlashedTokensList = ({ slashedTokens }) => {
         <span className="text-label flex-2">details</span>
       </div>
       <ul className="flex column flex-1">
-        {slashedTokens.map(renderSlashedTokenItem)}
+        {slashedTokens.map(renderSlashedTokensItem)}
       </ul>
     </div>
   )
 }
 
-const renderSlashedTokenItem = (item) => <SlashedTokeItem key={item.id} {...item} />
+const renderSlashedTokensItem = (item) => <SlashedTokensItem key={item.id} {...item} />
 
-const SlashedTokeItem = React.memo(({ amount, date, event, groupPublicKey }) => (
+const SlashedTokensItem = React.memo(({ amount, date, event, groupPublicKey }) => (
   <li className="flex row flex-1" >
     <div className="text-big flex-1">
       <span className="text-error">{amount && `-${displayAmount(amount)} `}</span>
