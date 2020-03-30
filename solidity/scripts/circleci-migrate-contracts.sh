@@ -25,10 +25,10 @@ EOF
 echo "<<<<<<START Prep Utility Box For Migration START<<<<<<"
 echo "ssh utilitybox rm -rf /tmp/$BUILD_TAG"
 echo "ssh utilitybox mkdir /tmp/$BUILD_TAG"
-echo "scp -r contracts/solidity utilitybox:/tmp/$BUILD_TAG/"
+echo "scp -r solidity utilitybox:/tmp/$BUILD_TAG/"
 ssh utilitybox rm -rf /tmp/$BUILD_TAG
 ssh utilitybox mkdir /tmp/$BUILD_TAG
-scp -r contracts/solidity utilitybox:/tmp/$BUILD_TAG/
+scp -r solidity utilitybox:/tmp/$BUILD_TAG/
 echo ">>>>>>FINISH Prep Utility Box For Migration FINISH>>>>>>"
 
 # Run migration
