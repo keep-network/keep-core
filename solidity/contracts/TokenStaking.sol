@@ -3,6 +3,7 @@ pragma solidity ^0.5.4;
 import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/PercentUtils.sol";
+import "./utils/LockUtils.sol";
 import "./Registry.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
@@ -16,6 +17,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 contract TokenStaking is StakeDelegatable {
     using UintArrayUtils for uint256[];
     using PercentUtils for uint256;
+    using LockUtils for LockUtils.LockSet;
     using SafeERC20 for ERC20Burnable;
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
@@ -39,12 +41,7 @@ contract TokenStaking is StakeDelegatable {
     // Authorized operator contracts.
     mapping(address => mapping (address => bool)) internal authorizations;
 
-    struct Lock {
-        address operatorContract;
-        uint96 endsAt;
-    }
-
-    mapping(address => Lock) public locks;
+    mapping(address => LockUtils.LockSet) internal operatorLocks;
 
     modifier onlyApprovedOperatorContract(address operatorContract) {
         require(
@@ -218,7 +215,7 @@ contract TokenStaking is StakeDelegatable {
         );
 
         require(
-            block.timestamp >= locks[_operator].endsAt || !registry.isApprovedOperatorContract(locks[_operator].operatorContract),
+            !isStakeLocked(_operator),
             "Can not recover locked stake"
         );
 
@@ -253,8 +250,12 @@ contract TokenStaking is StakeDelegatable {
     function lockStake(
         address operator,
         uint256 duration
-    ) public onlyApprovedOperatorContract(msg.sender) {
-        locks[operator] = Lock(
+    ) public {
+        require(
+            isAuthorizedForOperator(operator, msg.sender),
+            "Not authorized"
+        );
+        operatorLocks[operator].setLock(
             msg.sender,
             uint96(block.timestamp.add(duration))
         );
@@ -269,10 +270,68 @@ contract TokenStaking is StakeDelegatable {
         address operator
     ) public {
         require(
-            locks[operator].operatorContract == msg.sender,
+            isAuthorizedForOperator(operator, msg.sender),
             "Not authorized"
         );
-        delete locks[operator];
+        operatorLocks[operator].releaseLock(msg.sender);
+    }
+
+    /// @notice Removes the lock of the specified operator contract
+    /// if the lock has expired or the contract has been disabled.
+    /// @dev Necessary for removing locks placed by contracts
+    /// that have been disabled by the panic button.
+    /// Also applicable to prevent inadvertent DoS of `recoverStake`
+    /// if too many operator contracts have failed to clean up their locks.
+    function releaseExpiredLock(
+        address operator,
+        address operatorContract
+    ) public {
+        LockUtils.LockSet storage locks = operatorLocks[operator];
+        require(
+            locks.contains(operatorContract),
+            "No matching lock present"
+        );
+        bool expired = block.timestamp >= locks.getLockTime(operatorContract);
+        bool disabled = !registry.isApprovedOperatorContract(operatorContract);
+        require(
+            expired || disabled,
+            "Lock still active and valid"
+        );
+        locks.releaseLock(operatorContract);
+    }
+
+    /// @notice Check whether the operator has any active locks
+    /// that haven't expired yet
+    /// and whose creators aren't disabled by the panic button.
+    function isStakeLocked(
+        address operator
+    ) public view returns (bool) {
+        LockUtils.Lock[] storage _locks = operatorLocks[operator].locks;
+        LockUtils.Lock memory lock;
+        for (uint i = 0; i < _locks.length; i++) {
+            lock = _locks[i];
+            if (block.timestamp < lock.expiresAt) {
+                if (registry.isApprovedOperatorContract(lock.creator)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function getActiveLocks(address operator)
+        public
+        view
+        returns (address[] memory creators, uint256[] memory expirations) {
+        uint256 lockCount = operatorLocks[operator].locks.length;
+        creators = new address[](lockCount);
+        expirations = new uint256[](lockCount);
+        LockUtils.Lock memory lock;
+        for (uint i = 0; i < lockCount; i++) {
+            lock = operatorLocks[operator].locks[i];
+            creators[i] = lock.creator;
+            expirations[i] = lock.expiresAt;
+        }
     }
 
     /**

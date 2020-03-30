@@ -31,6 +31,12 @@ contract.only('TokenStaking', function(accounts) {
     stakingAmount = minimumStake.muln(20);
 
     let tx = await delegate(operator, stakingAmount)
+    await stakingContract.authorizeOperatorContract(
+      operator,
+      operatorContract,
+      { from: authorizer },
+    );
+
     let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
     await stakingContract.lockStake(operator, lockPeriod, {from: operatorContract})
 
