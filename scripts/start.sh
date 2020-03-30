@@ -4,14 +4,36 @@ set -e
 # Dafault inputs.
 KEEP_ETHEREUM_PASSWORD_DEFAULT="password"
 LOG_LEVEL_DEFAULT="info"
-CONFIG_FILE_PATH_DEFAULT=$(realpath -m $(dirname $0)/../config.toml)
+KEEP_CORE_PATH=$PWD
+CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
 
 # Read user inputs.
 read -p "Enter ethereum accounts password [$KEEP_ETHEREUM_PASSWORD_DEFAULT]: " ethereum_password
 KEEP_ETHEREUM_PASSWORD=${ethereum_password:-$KEEP_ETHEREUM_PASSWORD_DEFAULT}
 
-read -p "Enter path to keep-core client config [$CONFIG_FILE_PATH_DEFAULT]: " config_file_path
-CONFIG_FILE_PATH=${config_file_path:-$CONFIG_FILE_PATH_DEFAULT}
+read -p "Enter path to keep-core config files directory [$CONFIG_DIR_PATH_DEFAULT]: " config_dir_path
+CONFIG_DIR_PATH=${config_dir_path:-$CONFIG_DIR_PATH_DEFAULT}
+
+config_files=($CONFIG_DIR_PATH/*.toml)
+config_files_count=${#config_files[@]}
+while :
+do
+    printf "\nSelect client config file: \n"
+    i=1
+    for o in "${config_files[@]}"; do
+        echo "$i) ${o##*/}"
+        let i++
+    done
+
+    read reply
+    if [ "$reply" -ge 1 ] && [ "$reply" -le $config_files_count ]; then
+        CONFIG_FILE_PATH=${config_files["$reply"-1]}
+        break
+    else
+        printf "\nInvalid choice. Please choose an existing option number.\n"
+    fi
+done
+printf "\nClient config file: \"$CONFIG_FILE_PATH\" \n\n"
 
 log_level_options=("info" "debug" "custom...")
 while :
@@ -42,8 +64,7 @@ echo "Log level: \"$LOG_LEVEL\""
 LOG_START='\n\e[1;36m' # new line + bold + color
 LOG_END='\n\e[0m' # new line + reset color
 
-KEEP_CORE_PATH=$(realpath $(dirname $0)/../)
-KEEP_CORE_CONFIG_FILE_PATH=$(realpath $CONFIG_FILE_PATH)
+KEEP_CORE_CONFIG_FILE_PATH=$CONFIG_FILE_PATH
 
 printf "${LOG_START}Starting keep-core client...${LOG_END}"
 cd $KEEP_CORE_PATH

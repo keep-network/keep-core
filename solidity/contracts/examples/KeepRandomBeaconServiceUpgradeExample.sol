@@ -30,6 +30,7 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
         public
     {
         require(!initialized(), "Contract is already initialized.");
+        require(registry != address(0), "Incorrect registry address");
         _initialized["KeepRandomBeaconImplV2"] = true;
         // Example of adding new data to the existing storage.
         _newVar = 1234;
