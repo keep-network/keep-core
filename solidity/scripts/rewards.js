@@ -40,74 +40,87 @@ function formatAmount(amount, decimals) {
 }
   
 module.exports = async function() {
-  const accounts = await getAccounts();
-  const token = await KeepToken.deployed();
-  const tokenStaking = await TokenStaking.deployed();
-  const contractService = await KeepRandomBeaconService.deployed();
-  const keepRandomBeaconService = await KeepRandomBeaconServiceImpl.at(contractService.address);
-  const keepRandomBeaconOerator = await Operator.deployed();
+  try {
 
-  const magpie = accounts[5];
-  const requestor = accounts[5];
-  const owner = accounts[0];
+    const accounts = await getAccounts();
+    const token = await KeepToken.deployed();
+    const tokenStaking = await TokenStaking.deployed();
+    const contractService = await KeepRandomBeaconService.deployed();
+    const keepRandomBeaconService = await KeepRandomBeaconServiceImpl.at(contractService.address);
+    const keepRandomBeaconOerator = await Operator.deployed();
+  
+    const magpie = accounts[5];
+    const requestor = accounts[5];
+    const owner = accounts[0];
+      
+    for(let i = 0; i < 5; i++) {
+      const operator = accounts[i]
+      let authorizer = accounts[i]
+  
+      const delegation = '0x' + Buffer.concat([
+        Buffer.from(magpie.substr(2), 'hex'),
+        Buffer.from(operator.substr(2), 'hex'),
+        Buffer.from(authorizer.substr(2), 'hex')
+      ]).toString('hex');
+  
+      const staked = await token.approveAndCall(
+        tokenStaking.address, 
+        formatAmount(20000000, 18),
+        delegation,
+        {from: owner}
+      ).catch((err) => {
+        console.log(`could not stake KEEP tokens for ${operator}: ${err}`);
+      });
+  
+      await tokenStaking.authorizeOperatorContract(operator, keepRandomBeaconOerator.address, { from: authorizer });
+  
+      if (staked) {
+        console.log(`successfully staked KEEP tokens for account ${operator}`);
+      }
+    }
+  
+    await registerNewGroups(10);
+    await registerNewGroups(10);
     
-  for(let i = 0; i < 5; i++) {
-    const operator = accounts[i]
-    const delegation = '0x' + Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
-      Buffer.from(operator.substr(2), 'hex')
-    ]).toString('hex');
-
-    const staked = await token.approveAndCall(
-      tokenStaking.address, 
-      formatAmount(20000000, 18),
-      delegation,
-      {from: owner}
-    ).catch((err) => {
-      console.log(`could not stake KEEP tokens for ${operator}: ${err}`);
-    });
-
-    if (staked) {
-      console.log(`successfully staked KEEP tokens for account ${operator}`);
+    const entryFeeEstimate = await keepRandomBeaconService.entryFeeEstimate(0)
+    await keepRandomBeaconService.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
+  
+    await registerNewGroups(10);
+  
+    const numberOfGroups = await keepRandomBeaconOerator.numberOfGroups()
+    const firstActiveIndex = await keepRandomBeaconOerator.getFirstActiveGroupIndex()
+  
+    for (let i = 0; i < firstActiveIndex; i++) {
+      const groupPubKey =  await keepRandomBeaconOerator.getGroupPublicKey(i);
+      const isStale = await keepRandomBeaconOerator.isStaleGroup(groupPubKey);
+  
+      console.log('group: ', groupPubKey, 'isStale: ', isStale);
     }
-  }
-
-  await registerNewGroups(10);
-
-  mineBlocks(10);
-  const entryFeeEstimate = await keepRandomBeaconService.entryFeeEstimate(0)
-  await keepRandomBeaconService.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
-
-  await registerNewGroups(10);
-
-  const numberOfGroups = await keepRandomBeaconOerator.numberOfGroups()
-  const firstActiveIndex = await keepRandomBeaconOerator.getFirstActiveGroupIndex()
-
-  for (let i = 0; i < firstActiveIndex; i++) {
-    const groupPubKey =  await keepRandomBeaconOerator.getGroupPublicKey(i);
-    const isStale = await keepRandomBeaconOerator.isStaleGroup(groupPubKey);
-
-    console.log('group: ', groupPubKey, 'isStale: ', isStale);
-  }
-
-  console.log('number of groups:', numberOfGroups.toString());
-  console.log('first active index:', firstActiveIndex.toString());
-
-  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 1)
-  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 3)
-  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 1)
-  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 5)
-  await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 6)  
-
-  async function registerNewGroups (numberOfGroups) {
-    const groupReward = web3.utils.toWei('14500', 'Gwei');
-    for (let i = 0; i < numberOfGroups; i++) {
-      console.log('register group', i+1);
-      const groupPubKey = crypto.randomBytes(32);
-      await keepRandomBeaconOerator.registerNewGroup(groupPubKey)
-      await keepRandomBeaconOerator.addGroupMemberReward(groupPubKey, groupReward);
-      await keepRandomBeaconOerator.setGroupMembers(groupPubKey, [accounts[1], accounts[2]]);
-      console.log('created group', await keepRandomBeaconOerator.getGroupPublicKey(i));
+  
+    console.log('number of groups:', numberOfGroups.toString());
+    console.log('first active index:', firstActiveIndex.toString());
+  
+    await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 1)
+    await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 3)
+    await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 1)
+    await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 5)
+    await keepRandomBeaconOerator.emitRewardsWithdrawnEvent(accounts[1], 6)  
+  
+    async function registerNewGroups (numberOfGroups) {
+      const groupReward = web3.utils.toWei('14500', 'Gwei');
+      for (let i = 0; i < numberOfGroups; i++) {
+        console.log('register group', i+1);
+        const groupPubKey = crypto.randomBytes(32);
+        await keepRandomBeaconOerator.registerNewGroup(groupPubKey)
+        await keepRandomBeaconOerator.addGroupMemberReward(groupPubKey, groupReward);
+        await keepRandomBeaconOerator.setGroupMembers(groupPubKey, [accounts[1], accounts[2]]);
+        console.log('created group', await keepRandomBeaconOerator.getGroupPublicKey(i));
+      }
     }
+  } catch(error) {
+    console.log('unexpected error', error);
+    process.exit(1);
   }
+
+  process.exit();
 }
