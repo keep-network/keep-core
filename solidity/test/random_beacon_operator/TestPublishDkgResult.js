@@ -8,7 +8,8 @@ import expectThrow from '../helpers/expectThrow';
 import shuffleArray from '../helpers/shuffle';
 import {initContracts} from '../helpers/initContracts';
 import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
-
+import {bls} from '../helpers/data';
+const { expectRevert } = require("@openzeppelin/test-helpers")
 
 contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
 
@@ -20,7 +21,7 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
   operator4 = accounts[3],
   selectedParticipants, signatures, signingMemberIndices = [],
   misbehaved = '0x',
-  groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000",
+  groupPubKey = bls.groupPubKey,
   resultHash = web3.utils.soliditySha3(groupPubKey, misbehaved);
 
   const groupSize = 20;
@@ -291,4 +292,36 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
 
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
   });
+
+  it("should fail to submit with a public key having less than 128 bytes", async () => {
+      // Jump in time to when submitter becomes eligible to submit
+      let currentBlock = await web3.eth.getBlockNumber();
+      mineBlocks(resultPublicationTime - currentBlock);
+    
+      let invalidGroupPubKey = groupPubKey.slice(0, -2)
+
+      await expectRevert(
+        operatorContract.submitDkgResult(
+          1, invalidGroupPubKey, misbehaved, signatures, 
+          signingMemberIndices, {from: selectedParticipants[0]}
+        ),
+        "Malformed group public key"
+      )
+  })
+
+  it("should fail to submit with a public key having more than 128 bytes", async () => {
+      // Jump in time to when submitter becomes eligible to submit
+      let currentBlock = await web3.eth.getBlockNumber();
+      mineBlocks(resultPublicationTime - currentBlock);
+    
+      let invalidGroupPubKey = groupPubKey + 'ff';
+
+      await expectRevert(
+        operatorContract.submitDkgResult(
+          1, invalidGroupPubKey, misbehaved, signatures, 
+          signingMemberIndices, {from: selectedParticipants[0]}
+        ),
+        "Malformed group public key"
+      ) 
+  })
 })

@@ -71,6 +71,8 @@ library DKGResultVerification {
             "Submitter not eligible"
         );
 
+        require(groupPubKey.length == 128, "Malformed group public key");
+
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Too short signatures array");
         require(signatures.length % 65 == 0, "Malformed signatures array");
