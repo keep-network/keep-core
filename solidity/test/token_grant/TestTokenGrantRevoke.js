@@ -25,11 +25,11 @@ contract('TokenGrant/Revoke', function(accounts) {
   let grantStart;
   const grantAmount = web3.utils.toBN(1000000000);
   const grantRevocable = true;
-  const grantDuration = duration.seconds(60);;
-  const grantCliff = duration.seconds(1);
+  const grantDuration = duration.minutes(60);
+  const grantCliff = duration.minutes(1);
     
-  const initializationPeriod = 10;
-  const undelegationPeriod = 30;
+  const initializationPeriod = duration.minutes(10);
+  const undelegationPeriod = duration.minutes(30);
 
   before(async () => {
     tokenContract = await KeepToken.new();
@@ -69,7 +69,7 @@ contract('TokenGrant/Revoke', function(accounts) {
 
   it("should allow to revoke grant", async () => {
     const grantManagerKeepBalanceBefore = await tokenContract.balanceOf(tokenOwner);
-    await increaseTimeTo(grantStart + duration.seconds(30));
+    await increaseTimeTo(grantStart + duration.minutes(30));
     const withdrawable = await grantContract.withdrawable(grantId);
     const refund = grantAmount.sub(withdrawable);
     
