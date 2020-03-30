@@ -15,7 +15,7 @@ const Undelegations = ({ undelegations }) => {
       <SpeechBubbleInfo className="mt-1 mb-1">
         <span className="text-bold">Recover</span>&nbsp;undelegated tokens to return them to your token balance.
       </SpeechBubbleInfo>
-      <DataTable data={undelegations}>
+      <DataTable data={undelegations} itemFieldId="operatorAddress">
         <Column header="amount" field="amount" renderContent={({ amount }) => `${displayAmount(amount)} KEEP`} />
         <Column header="status" field="undelegationStatus" renderContent={(undelegation) => {
           const undelegationStatus = undelegation.canRecoverStake ? COMPLETE_STATUS : PENDING_STATUS

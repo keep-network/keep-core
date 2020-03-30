@@ -18,7 +18,10 @@ export class DataTable extends React.Component {
     const fields = []
     React.Children.forEach(this.props.children, (children) => {
       headers.push(children.props.header)
-      fields.push( { fieldName: children.props.field, renderContent: children.props.renderContent })
+      fields.push({
+        fieldName: children.props.field,
+        renderContent: children.props.renderContent,
+      })
     })
     this.setState({ headers, fields })
   }
@@ -26,7 +29,7 @@ export class DataTable extends React.Component {
   renderItemRow = (item) => {
     const columns = this.state.fields.map((field, index) => {
       return (
-        <td key="1">
+        <td key={`${item[this.props.itemFieldId]}-${field.fieldName}-${item[field.fieldName]}`}>
           <span className="responsive-header">{this.state.headers[index]}</span>
           {field.renderContent ?
             field.renderContent(item) :
@@ -37,7 +40,7 @@ export class DataTable extends React.Component {
     })
 
     return (
-      <tr key={item.id}>
+      <tr key={item[this.props.itemFieldId]}>
         {columns}
       </tr>
     )

@@ -10,7 +10,7 @@ const DelegatedTokensTable = ({ delegatedTokens, cancelStakeSuccessCallback }) =
   return (
     <section className="tile">
       <h3 className="text-grey-60">Delegations</h3>
-      <DataTable data={delegatedTokens}>
+      <DataTable data={delegatedTokens} itemFieldId="operatorAddress">
         <Column
           header="amount"
           field="amount"

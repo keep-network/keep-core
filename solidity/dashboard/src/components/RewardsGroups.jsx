@@ -120,7 +120,7 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
       <LoadingOverlay isFetching={isFetching} classNames='group-items self-start'>
         <section className="group-items tile">
           <h3 className='text-grey-70 mb-2'>Totals</h3>
-          <DataTable data={showAll ? groups : groups.slice(0, previewDataCount)} >
+          <DataTable data={showAll ? groups : groups.slice(0, previewDataCount)} itemFieldId="groupPublicKey" >
             <Column
               header="amount"
               field="reward"

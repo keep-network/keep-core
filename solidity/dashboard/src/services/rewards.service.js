@@ -16,7 +16,7 @@ const fetchAvailableRewards = async (web3Context) => {
     const groups = []
     const groupMemberIndices = {}
 
-    for (let groupIndex = 0; groupIndex < allGroups; groupIndex++) {
+    for (let groupIndex = 0; groupIndex < 5; groupIndex++) {
       const groupPublicKey = await keepRandomBeaconOperatorContract.methods.getGroupPublicKey(groupIndex).call()
       const groupMembers = new Set(await keepRandomBeaconOperatorContract.methods.getGroupMembers(groupPublicKey).call())
       groupMemberIndices[groupPublicKey] = {}
@@ -38,7 +38,7 @@ const fetchAvailableRewards = async (web3Context) => {
 
       totalRewardsBalance = add(totalRewardsBalance, web3Utils.toWei(reward, 'ether'))
       groups.push({
-        groupIndex,
+        groupIndex: groupIndex.toString(),
         groupPublicKey,
         membersIndeces: groupMemberIndices[groupPublicKey],
         reward,
@@ -123,10 +123,16 @@ const fetchWithdrawalHistory = async (web3Context) => {
     const events = await keepRandomBeaconOperatorContract.getPastEvents('GroupMemberRewardsWithdrawn', searchFilters)
     return Promise.all(
       events.map(async (event) => {
-        const { blockNumber, returnValues: { groupIndex, amount } } = event
+        const { transactionHash, blockNumber, returnValues: { groupIndex, amount } } = event
         const withdrawnAt = (await eth.getBlock(blockNumber)).timestamp
         const groupPublicKey = await keepRandomBeaconOperatorContract.methods.getGroupPublicKey(groupIndex).call()
-        return { blockNumber, groupPublicKey, date: formatDate(withdrawnAt * 1000), amount: utils.fromWei(amount, 'ether') }
+        return {
+          blockNumber,
+          groupPublicKey,
+          date: formatDate(withdrawnAt * 1000),
+          amount: utils.fromWei(amount, 'ether'),
+          transactionHash,
+        }
       }).reverse()
     )
   } catch (error) {

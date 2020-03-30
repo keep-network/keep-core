@@ -8,7 +8,7 @@ const AuthorizationHistory = ({ contracts }) => {
   return (
     <section className="tile">
       <h3 className="text-grey-60">Authorization History</h3>
-      <DataTable data={contracts || []}>
+      <DataTable data={contracts || []} itemFieldId="contractAddress">
         <Column
           header="contract address"
           field="contractAddress"
@@ -27,7 +27,7 @@ const AuthorizationHistory = ({ contracts }) => {
         />
         <Column
           header="contract details"
-          field="contractAddress"
+          field="details"
           renderContent={(contractAddress) => (
             <a href={ETHERSCAN_DEFAULT_URL + contractAddress} rel="noopener noreferrer" target="_blank">
               View in Block Explorer

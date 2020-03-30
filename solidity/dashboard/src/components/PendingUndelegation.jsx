@@ -43,7 +43,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
     <LoadingOverlay isFetching={isFetching}>
       <section id="pending-undelegation" className="tile">
         <h3 className="text-grey-60">Token Undelegation</h3>
-        <DataTable data={[data]}>
+        <DataTable data={[data]} itemFieldId="undelegationComplete">
           <Column
             header="amount"
             field="pendingUnstakeBalance"
@@ -65,9 +65,9 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
           <Column
             header="estimate"
             field="undelegationComplete"
-            renderContent={(undlegationComplete) => (
-              undelegationComplete ? `${undelegationComplete} block` : '-'
-            )}
+            renderContent={({ undlegationComplete }) =>
+              undlegationComplete ? `${undelegationComplete} block` : '-'
+            }
           />
           <Column
             header="undelegation period"
