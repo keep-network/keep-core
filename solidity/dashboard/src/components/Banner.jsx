@@ -1,11 +1,10 @@
 import React from 'react'
 import * as Icons from './Icons'
-import { ClockIndicator } from './Loadable'
 import { colors } from '../constants/colors'
 
 export const BANNER_TYPE = {
   SUCCESS: { className: 'success', iconComponent: <Icons.OK color={colors.success} /> },
-  PENDING: { className: 'pending', iconComponent: <ClockIndicator /> },
+  PENDING: { className: 'pending', iconComponent: <Icons.PendingBadge bgColor={colors.bgPending} color={colors.pending} /> },
   ERROR: { className: 'error', iconComponent: <Icons.Cross color={colors.error} height={10} width={10} /> },
   DISABLED: { className: 'disabled', iconComponent: null },
 }

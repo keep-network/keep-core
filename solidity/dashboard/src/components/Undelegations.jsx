@@ -1,5 +1,5 @@
 import React from 'react'
-import { displayAmount, getAvailableAtBlock } from '../utils/general.utils'
+import { displayAmount, formatDate } from '../utils/general.utils'
 import AddressShortcut from './AddressShortcut'
 import SpeechBubbleInfo from './SpeechBubbleInfo'
 import RecoverStakeButton from './RecoverStakeButton'
@@ -47,6 +47,9 @@ const Undelegations = ({ undelegations }) => {
 
 const UndelegationItem = React.memo(({ undelegation }) => {
   const undelegationStatus = undelegation.canRecoverStake ? COMPLETE_STATUS : PENDING_STATUS
+  const statusBadgeText = undelegationStatus === PENDING_STATUS ?
+    `${undelegationStatus.toLowerCase()}, ${undelegation.undelegationCompleteAt.fromNow(true)}` :
+    formatDate(undelegation.undelegationCompleteAt)
 
   return (
     <li className="flex row center space-between text-grey-70" style={{ marginBottom: `0.5rem` }}>
@@ -55,11 +58,9 @@ const UndelegationItem = React.memo(({ undelegation }) => {
         <StatusBadge
           status={BADGE_STATUS[undelegationStatus]}
           className="self-start"
-          text={undelegationStatus.toLowerCase()}
+          text={statusBadgeText}
+          onlyIcon={undelegationStatus === COMPLETE_STATUS}
         />
-        <div className="text-smaller text-grey-70">
-          {getAvailableAtBlock(undelegation.undelegationCompleteAt, undelegationStatus)}
-        </div>
       </div>
       <div className="flex-1"><AddressShortcut address={undelegation.beneficiary} /></div>
       <div className="flex-1"><AddressShortcut address={undelegation.operatorAddress} /></div>
