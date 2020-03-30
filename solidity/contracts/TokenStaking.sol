@@ -41,7 +41,7 @@ contract TokenStaking is StakeDelegatable {
 
     struct Lock {
         address operatorContract;
-        uint256 endsAt;
+        uint96 endsAt;
     }
 
     mapping(address => Lock) public locks;
@@ -256,7 +256,7 @@ contract TokenStaking is StakeDelegatable {
     ) public onlyApprovedOperatorContract(msg.sender) {
         locks[operator] = Lock(
             msg.sender,
-            block.timestamp.add(duration)
+            uint96(block.timestamp.add(duration))
         );
     }
 
