@@ -226,21 +226,6 @@ contract('TokenStaking', function(accounts) {
     })
   })
 
-  it("should not allow to recover stake before undelegation period is over", async () => {
-    let tx = await delegate(operatorOne, stakingAmount)
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
-    tx = await stakingContract.undelegate(operatorOne, {from: ownerOne});
-    let undelegatedAt = await web3.eth.getBlock(tx.receipt.blockNumber);
-    await increaseTimeTo(undelegatedAt.timestamp + undelegationPeriod - timeRoundMargin);
-
-    await expectThrowWithMessage(
-      stakingContract.recoverStake(operatorOne),
-      "Can not recover stake before undelegation period is over"
-    )
-  })
-
   it("should not allow to delegate to the same operator twice", async () => {
     await delegate(operatorOne, stakingAmount)
 
@@ -539,34 +524,51 @@ contract('TokenStaking', function(accounts) {
     })
   })
 
-  it("should retain delegation info after recovering stake", async () => {
-    let tx = await delegate(operatorOne, stakingAmount)
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
-
-    let delegationInfoBefore = await stakingContract.getDelegationInfo.call(operatorOne)
-    
-    await stakingContract.undelegate(operatorOne, {from: ownerOne})
-    let blockNumber = await web3.eth.getBlockNumber()
-    let undelegationBlock = await web3.eth.getBlock(blockNumber)
+  describe("recoverStake", async () => {
+    it("should not allow to recover stake before undelegation period is over", async () => {
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
   
-    await increaseTime(undelegationPeriod + 1)
-    await stakingContract.recoverStake(operatorOne)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
+      tx = await stakingContract.undelegate(operatorOne, {from: ownerOne});
+      let undelegatedAt = await web3.eth.getBlock(tx.receipt.blockNumber);
+      await increaseTimeTo(undelegatedAt.timestamp + undelegationPeriod - timeRoundMargin);
+  
+      await expectThrowWithMessage(
+        stakingContract.recoverStake(operatorOne),
+        "Can not recover stake before undelegation period is over"
+      )
+    })
 
-    let delegationInfoAfter = await stakingContract.getDelegationInfo.call(operatorOne)
-
-    expect(delegationInfoAfter.createdAt).to.eq.BN(
-      delegationInfoBefore.createdAt,
-      "Unexpected delegation creation time"
-    )
-    expect(delegationInfoAfter.amount).to.eq.BN(
-      0,
-      "Should have no delegated tokens"
-    )
-    expect(delegationInfoAfter.undelegatedAt).to.eq.BN(
-      undelegationBlock.timestamp,
-      "Unexpected undelegation time"
-    )
+    it("should retain delegation info", async () => {
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
+  
+      let delegationInfoBefore = await stakingContract.getDelegationInfo.call(operatorOne)
+      
+      await stakingContract.undelegate(operatorOne, {from: ownerOne})
+      let blockNumber = await web3.eth.getBlockNumber()
+      let undelegationBlock = await web3.eth.getBlock(blockNumber)
+    
+      await increaseTime(undelegationPeriod + 1)
+      await stakingContract.recoverStake(operatorOne)
+  
+      let delegationInfoAfter = await stakingContract.getDelegationInfo.call(operatorOne)
+  
+      expect(delegationInfoAfter.createdAt).to.eq.BN(
+        delegationInfoBefore.createdAt,
+        "Unexpected delegation creation time"
+      )
+      expect(delegationInfoAfter.amount).to.eq.BN(
+        0,
+        "Should have no delegated tokens"
+      )
+      expect(delegationInfoAfter.undelegatedAt).to.eq.BN(
+        undelegationBlock.timestamp,
+        "Unexpected undelegation time"
+      )
+    })
   })
 
   describe("activeStake", async () => {
