@@ -83,6 +83,7 @@ library DKGResultVerification {
         require(signatures.length % 65 == 0, "Malformed signatures array");
         require(signaturesCount == signingMemberIndices.length, "Unexpected signatures count");
         require(signaturesCount >= self.signatureThreshold, "Too few signatures");
+        require(signaturesCount <= self.groupSize, "Too many signatures");
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, misbehaved));
 

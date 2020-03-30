@@ -295,68 +295,88 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
   });
 
   it("should fail to submit with a public key having less than 128 bytes", async () => {
-      // Jump in time to when submitter becomes eligible to submit
-      let currentBlock = await web3.eth.getBlockNumber();
-      mineBlocks(resultPublicationTime - currentBlock);
-    
-      let invalidGroupPubKey = groupPubKey.slice(0, -2)
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(resultPublicationTime - currentBlock);
+  
+    let invalidGroupPubKey = groupPubKey.slice(0, -2)
 
-      let s = await signResult(invalidGroupPubKey, noMisbehaved)
-      await expectRevert(
-        operatorContract.submitDkgResult(
-          1, invalidGroupPubKey, noMisbehaved, s.signatures, 
-          s.signingMemberIndices, {from: selectedParticipants[0]}
-        ),
-        "Malformed group public key"
-      )
+    let s = await signResult(invalidGroupPubKey, noMisbehaved)
+    await expectRevert(
+      operatorContract.submitDkgResult(
+        1, invalidGroupPubKey, noMisbehaved, s.signatures,
+        s.signingMemberIndices, {from: selectedParticipants[0]}
+      ),
+      "Malformed group public key"
+    )
   })
 
   it("should fail to submit with a public key having more than 128 bytes", async () => {
-      // Jump in time to when submitter becomes eligible to submit
-      let currentBlock = await web3.eth.getBlockNumber();
-      mineBlocks(resultPublicationTime - currentBlock);
-    
-      let invalidGroupPubKey = groupPubKey + 'ff';
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(resultPublicationTime - currentBlock);
+  
+    let invalidGroupPubKey = groupPubKey + 'ff';
 
-      let s = await signResult(invalidGroupPubKey, noMisbehaved)
-      await expectRevert(
-        operatorContract.submitDkgResult(
-          1, invalidGroupPubKey, noMisbehaved, s.signatures, 
-          s.signingMemberIndices, {from: selectedParticipants[0]}
-        ),
-        "Malformed group public key"
-      ) 
+    let s = await signResult(invalidGroupPubKey, noMisbehaved)
+    await expectRevert(
+      operatorContract.submitDkgResult(
+        1, invalidGroupPubKey, noMisbehaved, s.signatures,
+        s.signingMemberIndices, {from: selectedParticipants[0]}
+      ),
+      "Malformed group public key"
+    ) 
   })
 
   it("should fail to submit with too many misbehaved", async () => {
-      // Jump in time to when submitter becomes eligible to submit
-      let currentBlock = await web3.eth.getBlockNumber();
-      mineBlocks(resultPublicationTime - currentBlock);
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(resultPublicationTime - currentBlock);
 
-      let invalidMisbehaved = maxMisbehaved + 'ff';
+    let invalidMisbehaved = maxMisbehaved + 'ff';
 
-      let s = await signResult(groupPubKey, invalidMisbehaved)
-      await expectRevert(
-        operatorContract.submitDkgResult(
-          1, groupPubKey, invalidMisbehaved, s.signatures, 
-          s.signingMemberIndices, {from: selectedParticipants[0]}
-        ),
-        "Malformed misbehaved"
-      ) 
+    let s = await signResult(groupPubKey, invalidMisbehaved)
+    await expectRevert(
+      operatorContract.submitDkgResult(
+        1, groupPubKey, invalidMisbehaved, s.signatures,
+        s.signingMemberIndices, {from: selectedParticipants[0]}
+      ),
+      "Malformed misbehaved"
+    ) 
   })
 
   it("should allow to submit with maximum possible misbehaved", async () => {
-        // Jump in time to when submitter becomes eligible to submit
-        let currentBlock = await web3.eth.getBlockNumber();
-        mineBlocks(resultPublicationTime - currentBlock);
-  
-        let s = await signResult(groupPubKey, maxMisbehaved)
-      
-        await operatorContract.submitDkgResult(
-          1, groupPubKey, maxMisbehaved, s.signatures, 
-          s.signingMemberIndices, {from: selectedParticipants[0]}
-        )   
-        // ok, no exceptions
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(resultPublicationTime - currentBlock);
+
+    let s = await signResult(groupPubKey, maxMisbehaved)
+
+    await operatorContract.submitDkgResult(
+      1, groupPubKey, maxMisbehaved, s.signatures,
+      s.signingMemberIndices, {from: selectedParticipants[0]}
+    )   
+    // ok, no exceptions
+  })
+
+  it("should not allow to submit with more signatures than the group size", async () => {
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(resultPublicationTime - currentBlock);
+
+    let s = await signResult(groupPubKey, noMisbehaved)
+
+    let anotherSignature = await sign(resultHash, selectedParticipants[0])
+    s.signatures += anotherSignature.slice(2, anotherSignature.length)
+    s.signingMemberIndices.push(s.signingMemberIndices.length + 1)
+
+    await expectRevert(
+      operatorContract.submitDkgResult(
+        1, groupPubKey, noMisbehaved, s.signatures, 
+        s.signingMemberIndices, {from: selectedParticipants[0]}
+      ),
+      "Too many signatures" 
+    )  
   })
 
   async function signResult(groupPublicKey, misbehaved) {
