@@ -31,6 +31,7 @@ contract('TokenStaking', function(accounts) {
 
   const initializationPeriod = duration.minutes(10);
   const undelegationPeriod = duration.minutes(30);
+
   before(async () => {
     token = await KeepToken.new();
     registry = await Registry.new();
@@ -87,24 +88,6 @@ contract('TokenStaking', function(accounts) {
     );
   });
 
-  it("should update balances when delegating", async () => {
-    let ownerStartBalance = await token.balanceOf.call(ownerOne);
-
-    await delegate(operatorOne, stakingAmount);
-    
-    let ownerEndBalance = await token.balanceOf.call(ownerOne);
-    let operatorEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
-    
-    expect(ownerEndBalance).to.eq.BN(
-      ownerStartBalance.sub(stakingAmount),
-      "Staking amount should be transferred from owner balance"
-    );
-    expect(operatorEndStakeBalance).to.eq.BN(
-      stakingAmount,
-      "Staking amount should be added to the operator balance"
-    ); 
-  })
-
   it("should allow to delegate, undelegate, and recover stake", async () => {
     let ownerStartBalance = await token.balanceOf.call(ownerOne)
 
@@ -128,6 +111,86 @@ contract('TokenStaking', function(accounts) {
       0, 
       "Staking amount should be removed from operator balance"
     );
+  })
+
+  describe("delegate", async () => {
+    it("should update balances", async () => {
+      let ownerStartBalance = await token.balanceOf.call(ownerOne);
+  
+      await delegate(operatorOne, stakingAmount);
+      
+      let ownerEndBalance = await token.balanceOf.call(ownerOne);
+      let operatorEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
+      
+      expect(ownerEndBalance).to.eq.BN(
+        ownerStartBalance.sub(stakingAmount),
+        "Staking amount should be transferred from owner balance"
+      );
+      expect(operatorEndStakeBalance).to.eq.BN(
+        stakingAmount,
+        "Staking amount should be added to the operator balance"
+      ); 
+    })
+
+    it("should not allow to delegate to the same operator twice", async () => {
+      await delegate(operatorOne, stakingAmount)
+  
+      await expectThrowWithMessage(
+        delegate(operatorOne, stakingAmount),
+        "Operator address is already in use."
+      )
+    })
+  
+    it("should not allow to delegate to the same operator even after recovering stake", async () => {
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+  
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
+      await stakingContract.undelegate(operatorOne, {from: ownerOne});
+      await increaseTime(undelegationPeriod + 1);
+      await stakingContract.recoverStake(operatorOne);
+          
+      await expectThrowWithMessage(
+        delegate(operatorOne, stakingAmount),
+        "Operator address is already in use."
+      )
+    })
+  
+    it("should not allow to delegate less than the minimum stake", async () => {    
+      await expectThrowWithMessage(
+        delegate(operatorOne, minimumStake.subn(1)),
+        "Tokens amount must be greater than the minimum stake"
+      )
+    })
+  
+    it("should allow to delegate the minimum stake", async () => {    
+      await delegate(operatorOne, minimumStake)
+      // ok, no reverts
+    })
+  
+    it("should allow to delegate to two different operators", async () => {
+      let ownerStartBalance = await token.balanceOf.call(ownerOne)
+  
+      await delegate(operatorOne, stakingAmount);
+      await delegate(operatorTwo, stakingAmount);
+  
+      let ownerEndBalance = await token.balanceOf.call(ownerOne);
+      let operatorOneEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
+      let operatorTwoEndStakeBalance = await stakingContract.balanceOf.call(operatorTwo);
+  
+      expect(ownerEndBalance).to.eq.BN(
+        ownerStartBalance.sub(stakingAmount).sub(stakingAmount),
+        "Staking amount should be transferred from owner balance"
+      );
+      expect(operatorOneEndStakeBalance).to.eq.BN(
+        stakingAmount,
+        "Staking amount should be added to the operator balance"
+      );
+      expect(operatorTwoEndStakeBalance).to.eq.BN(
+        stakingAmount,
+        "Staking amount should be added to the operator balance"
+      );
+    })
   })
 
   describe("cancelStake", async () => {
@@ -224,66 +287,6 @@ contract('TokenStaking', function(accounts) {
         "Unexpected undelegation time"
       )
     })
-  })
-
-  it("should not allow to delegate to the same operator twice", async () => {
-    await delegate(operatorOne, stakingAmount)
-
-    await expectThrowWithMessage(
-      delegate(operatorOne, stakingAmount),
-      "Operator address is already in use."
-    )
-  })
-
-  it("should not allow to delegate to the same operator even after recovering stake", async () => {
-    let tx = await delegate(operatorOne, stakingAmount)
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
-    await stakingContract.undelegate(operatorOne, {from: ownerOne});
-    await increaseTime(undelegationPeriod + 1);
-    await stakingContract.recoverStake(operatorOne);
-        
-    await expectThrowWithMessage(
-      delegate(operatorOne, stakingAmount),
-      "Operator address is already in use."
-    )
-  })
-
-  it("should not allow to delegate less than the minimum stake", async () => {    
-    await expectThrowWithMessage(
-      delegate(operatorOne, minimumStake.subn(1)),
-      "Tokens amount must be greater than the minimum stake"
-    )
-  })
-
-  it("should allow to delegate the minimum stake", async () => {    
-    await delegate(operatorOne, minimumStake)
-    // ok, no reverts
-  })
-
-  it("should allow to delegate to two different operators", async () => {
-    let ownerStartBalance = await token.balanceOf.call(ownerOne)
-
-    await delegate(operatorOne, stakingAmount);
-    await delegate(operatorTwo, stakingAmount);
-
-    let ownerEndBalance = await token.balanceOf.call(ownerOne);
-    let operatorOneEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
-    let operatorTwoEndStakeBalance = await stakingContract.balanceOf.call(operatorTwo);
-
-    expect(ownerEndBalance).to.eq.BN(
-      ownerStartBalance.sub(stakingAmount).sub(stakingAmount),
-      "Staking amount should be transferred from owner balance"
-    );
-    expect(operatorOneEndStakeBalance).to.eq.BN(
-      stakingAmount,
-      "Staking amount should be added to the operator balance"
-    );
-    expect(operatorTwoEndStakeBalance).to.eq.BN(
-      stakingAmount,
-      "Staking amount should be added to the operator balance"
-    );
   })
 
   describe("undelegate", async () => {
@@ -794,5 +797,5 @@ contract('TokenStaking', function(accounts) {
         "There should be no active stake"
       )
     })
- })
+  })
 });
