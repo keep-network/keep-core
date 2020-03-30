@@ -10,7 +10,7 @@ const Registry = artifacts.require("./Registry.sol");
 contract('TokenGrant', function(accounts) {
 
   let token, registry, grantContract, stakingContract,
-    amount, vestingDuration, start, cliff,
+    amount, unlockingDuration, start, cliff,
     grant_manager = accounts[0],
     account_two = accounts[1],
     grantee = accounts[2];
@@ -22,7 +22,7 @@ contract('TokenGrant', function(accounts) {
     grantContract = await TokenGrant.new(token.address);
     await grantContract.authorizeStakingContract(stakingContract.address);
     amount = web3.utils.toBN(100);
-    vestingDuration = duration.days(30);
+    unlockingDuration = duration.days(30);
     start = await latestTime();
     cliff = duration.days(0);
   });
@@ -30,7 +30,7 @@ contract('TokenGrant', function(accounts) {
   it("should grant tokens correctly", async function() {
 
     let amount = web3.utils.toBN(1000000000);
-    let vestingDuration = duration.days(30);
+    let unlockingDuration = duration.days(30);
     let start = await latestTime();
     let cliff = duration.days(10);
     let revocable = true;
@@ -40,7 +40,7 @@ contract('TokenGrant', function(accounts) {
     let account_two_starting_balance = await token.balanceOf.call(account_two);
 
     // Grant tokens
-    let id = await grantTokens(grantContract, token, amount, grant_manager, account_two, vestingDuration, start, cliff, revocable);
+    let id = await grantTokens(grantContract, token, amount, grant_manager, account_two, unlockingDuration, start, cliff, revocable);
 
     // Ending balances
     let grant_manager_ending_balance = await token.balanceOf.call(grant_manager);
@@ -54,8 +54,8 @@ contract('TokenGrant', function(accounts) {
     // Should not be able to withdraw token grant (0 withdrawable amount)
     await expectThrow(grantContract.withdraw(id))
 
-    // jump in time, third vesting duration
-    await increaseTimeTo(await latestTime()+vestingDuration/3);
+    // jump in time, third unlocking duration
+    await increaseTimeTo(await latestTime()+unlockingDuration/3);
 
     // Should be able to withdraw token grant withdrawable amount
     await grantContract.withdraw(id)
@@ -64,8 +64,8 @@ contract('TokenGrant', function(accounts) {
     account_two_ending_balance = await token.balanceOf.call(account_two);
     assert.equal(account_two_ending_balance.lte(account_two_starting_balance.add(amount.div(web3.utils.toBN(2)))), true, 'Should withdraw some of the grant to the main balance')
 
-    // jump in time, full vesting duration
-    await increaseTimeTo(await latestTime()+vestingDuration);
+    // jump in time, full unlocking duration
+    await increaseTimeTo(await latestTime()+unlockingDuration);
     await grantContract.withdraw(id);
 
     // should withdraw full grant amount to the main balance
@@ -81,7 +81,7 @@ contract('TokenGrant', function(accounts) {
 
     let grant_manager_starting_balance = await token.balanceOf.call(grant_manager);
 
-    let id = await grantTokens(grantContract, token, amount, grant_manager, grantee, vestingDuration, start, cliff, true);
+    let id = await grantTokens(grantContract, token, amount, grant_manager, grantee, unlockingDuration, start, cliff, true);
 
     let grant_manager_ending_balance = await token.balanceOf.call(grant_manager);
 
@@ -96,9 +96,9 @@ contract('TokenGrant', function(accounts) {
 
     let schedule = await grantContract.getGrantUnlockingSchedule(id);
     assert.equal(schedule[0], grant_manager, "Grant should maintain a record of the grant manager.");
-    assert.equal(schedule[1].eq(web3.utils.toBN(vestingDuration)), true, "Grant should have vesting schedule duration.");
+    assert.equal(schedule[1].eq(web3.utils.toBN(unlockingDuration)), true, "Grant should have unlocking schedule duration.");
     assert.equal(schedule[2].eq(web3.utils.toBN(start)), true, "Grant should have start time.");
-    assert.equal(schedule[3].eq(web3.utils.toBN(start).add(web3.utils.toBN(cliff))), true, "Grant should have vesting schedule cliff duration.");
+    assert.equal(schedule[3].eq(web3.utils.toBN(start).add(web3.utils.toBN(cliff))), true, "Grant should have unlocking schedule cliff duration.");
 
   });
 });

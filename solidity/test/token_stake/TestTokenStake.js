@@ -1,12 +1,17 @@
-import increaseTime from './helpers/increaseTime';
-import latestTime from './helpers/latestTime';
-import expectThrowWithMessage from './helpers/expectThrowWithMessage'
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+import increaseTime, {duration, increaseTimeTo} from '../helpers/increaseTime';
+import latestTime from '../helpers/latestTime';
+import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
+import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
 
 const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
+
+// Depending on test network increaseTimeTo can be inconsistent and add
+// extra time. As a workaround we subtract timeRoundMargin in all cases
+// that test times before initialization/undelegation periods end.
+const timeRoundMargin = duration.minutes(1)
 
 const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
@@ -23,9 +28,9 @@ contract('TokenStaking', function(accounts) {
     magpie = accounts[4],
     authorizer = accounts[5],
     operatorContract = accounts[6];
-    
-  const initializationPeriod = 10;
-  const undelegationPeriod = 30;
+
+  const initializationPeriod = duration.minutes(10);
+  const undelegationPeriod = duration.minutes(30);
   before(async () => {
     token = await KeepToken.new();
     registry = await Registry.new();
@@ -103,9 +108,10 @@ contract('TokenStaking', function(accounts) {
   it("should allow to delegate, undelegate, and recover stake", async () => {
     let ownerStartBalance = await token.balanceOf.call(ownerOne)
 
-    await delegate(operatorOne, stakingAmount);
+    let tx = await delegate(operatorOne, stakingAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-    await increaseTime(initializationPeriod + 1)
+    await increaseTimeTo(createdAt + initializationPeriod + 1)
 
     await stakingContract.undelegate(operatorOne, {from: ownerOne});
     await increaseTime(undelegationPeriod + 1);
@@ -147,9 +153,10 @@ contract('TokenStaking', function(accounts) {
   it("should allow to cancel delegation just before initialization period is over", async () => {
     let ownerStartBalance = await token.balanceOf.call(ownerOne);
     
-    await delegate(operatorOne, stakingAmount);
+    let tx = await delegate(operatorOne, stakingAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-    await increaseTime(initializationPeriod - 1);
+    await increaseTimeTo(createdAt + initializationPeriod - timeRoundMargin)
 
     await stakingContract.cancelStake(operatorOne, {from: ownerOne})
 
@@ -167,9 +174,10 @@ contract('TokenStaking', function(accounts) {
   })
 
   it("should not allow to cancel delegation after initialization period is over", async () => {
-    await delegate(operatorOne, stakingAmount);
+    let tx = await delegate(operatorOne, stakingAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-    await increaseTime(initializationPeriod + 1)
+    await increaseTimeTo(createdAt + initializationPeriod + 1)
 
     await expectThrowWithMessage(
       stakingContract.cancelStake(operatorOne, {from: ownerOne}),
@@ -178,12 +186,13 @@ contract('TokenStaking', function(accounts) {
   })
 
   it("should not allow to recover stake before undelegation period is over", async () => {
-    await delegate(operatorOne, stakingAmount);
+    let tx = await delegate(operatorOne, stakingAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-    await increaseTime(initializationPeriod + 1);
-    await stakingContract.undelegate(operatorOne, {from: ownerOne});
-
-    await increaseTime(undelegationPeriod - 1);
+    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    tx = await stakingContract.undelegate(operatorOne, {from: ownerOne});
+    let undelegatedAt = await web3.eth.getBlock(tx.receipt.blockNumber);
+    await increaseTimeTo(undelegatedAt.timestamp + undelegationPeriod - timeRoundMargin);
 
     await expectThrowWithMessage(
       stakingContract.recoverStake(operatorOne),
@@ -192,7 +201,7 @@ contract('TokenStaking', function(accounts) {
   })
 
   it("should not allow to delegate to the same operator twice", async () => {
-    await delegate(operatorOne, stakingAmount);
+    await delegate(operatorOne, stakingAmount)
 
     await expectThrowWithMessage(
       delegate(operatorOne, stakingAmount),
@@ -201,9 +210,10 @@ contract('TokenStaking', function(accounts) {
   })
 
   it("should not allow to delegate to the same operator even after recovering stake", async () => {
-    await delegate(operatorOne, stakingAmount);
+    let tx = await delegate(operatorOne, stakingAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-    await increaseTime(initializationPeriod + 1);
+    await increaseTimeTo(createdAt + initializationPeriod + 1)
     await stakingContract.undelegate(operatorOne, {from: ownerOne});
     await increaseTime(undelegationPeriod + 1);
     await stakingContract.recoverStake(operatorOne);
@@ -268,37 +278,41 @@ contract('TokenStaking', function(accounts) {
 
   describe("undelegate", async () => {
     it("should let operator undelegate", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod + 1)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       await stakingContract.undelegate(operatorOne, {from: operatorOne})
       // ok, no revert
     })
 
     it("should not allow third party to undelegate", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod + 1)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       await expectThrowWithMessage(
         stakingContract.undelegate(operatorOne, {from: operatorTwo}),
         "Only operator or the owner of the stake can undelegate"
       )
     })
 
-    it("should permit undelegating at the block when initialization " + 
+    it("should permit undelegating at the time when initialization " + 
     "period passed", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod + 1)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       await stakingContract.undelegate(operatorOne, {from: operatorOne})
       // ok, no revert
     })
 
-    it("should not permit undelegating at the block before initialization " + 
+    it("should not permit undelegating at the time before initialization " + 
     "period passed", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod - 1)
+      await increaseTimeTo(createdAt + initializationPeriod - timeRoundMargin)
       await expectThrowWithMessage(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
         "Cannot undelegate in initialization period, use cancelStake instead"
@@ -306,9 +320,10 @@ contract('TokenStaking', function(accounts) {
     })
 
     it("should let the operator undelegate earlier", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod + 1)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       let currentTime = await latestTime()
 
       await stakingContract.undelegateAt(
@@ -322,9 +337,10 @@ contract('TokenStaking', function(accounts) {
     })
 
     it("should let the owner postpone undelegation", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod + 1)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       await stakingContract.undelegate(operatorOne, {from: operatorOne})
 
       await stakingContract.undelegate(
@@ -335,9 +351,10 @@ contract('TokenStaking', function(accounts) {
     })
 
     it("should not let the operator postpone undelegation", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod + 1)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       await stakingContract.undelegate(operatorOne, {from: operatorOne})
 
       await expectThrowWithMessage(
@@ -349,9 +366,10 @@ contract('TokenStaking', function(accounts) {
 
   describe("undelegateAt", async () => {
     it("should let operator undelegate", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod + 1)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
 
       let currentTime = await latestTime()
 
@@ -364,25 +382,27 @@ contract('TokenStaking', function(accounts) {
     })
 
     it("should not allow third party to undelegate", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
 
       let currentTime = await latestTime()
 
       await expectThrowWithMessage(
         stakingContract.undelegateAt(
-          operatorOne, currentTime + 1,
+          operatorOne, currentTime + 10,
           {from: operatorTwo}
         ),
         "Only operator or the owner of the stake can undelegate"
       )
     })
 
-    it("should permit undelegating at the current block", async () => {
-      await delegate(operatorOne, stakingAmount)
+    it("should permit undelegating at the current time", async () => {
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
 
       let currentTime = await latestTime()
 
@@ -394,7 +414,7 @@ contract('TokenStaking', function(accounts) {
       // ok, no revert
     })
 
-    it("should permit undelegating at the block when initialization " +
+    it("should permit undelegating at the time when initialization " +
     "period passed", async () => {
       await delegate(operatorOne, stakingAmount)
 
@@ -406,14 +426,14 @@ contract('TokenStaking', function(accounts) {
       // ok, no revert
     })
 
-    it("should not permit undelegating at the block before initialization " + 
+    it("should not permit undelegating at the time before initialization " + 
     "period passed", async () => {
       await delegate(operatorOne, stakingAmount)
 
       let currentTime = await latestTime()
       await expectThrowWithMessage(
         stakingContract.undelegateAt(
-          operatorOne, currentTime + initializationPeriod,
+          operatorOne, currentTime + initializationPeriod - timeRoundMargin,
           {from: operatorOne}
         ),
         "Cannot undelegate in initialization period, use cancelStake instead"
@@ -421,9 +441,10 @@ contract('TokenStaking', function(accounts) {
     })
 
     it("should not permit undelegating in the past", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod + 1)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
 
       let currentTime = await latestTime()
 
@@ -437,9 +458,10 @@ contract('TokenStaking', function(accounts) {
     })
 
     it("should let the operator undelegate earlier", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod + 1)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       let currentTime = await latestTime()
 
       await stakingContract.undelegateAt(
@@ -457,9 +479,10 @@ contract('TokenStaking', function(accounts) {
     })
 
     it("should let the owner postpone undelegation", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod + 1)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       await stakingContract.undelegate(operatorOne, {from: operatorOne})
 
       let currentTime = await latestTime()
@@ -473,9 +496,10 @@ contract('TokenStaking', function(accounts) {
     })
 
     it("should not let the operator postpone undelegation", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
 
-      await increaseTime(initializationPeriod + 1)
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       await stakingContract.undelegate(operatorOne, {from: operatorOne})
 
       let currentTime = await latestTime()
@@ -491,8 +515,9 @@ contract('TokenStaking', function(accounts) {
   })
 
   it("should retain delegation info after recovering stake", async () => {
-    await delegate(operatorOne, stakingAmount)
-    await increaseTime(initializationPeriod + 1)
+    let tx = await delegate(operatorOne, stakingAmount)
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    await increaseTimeTo(createdAt + initializationPeriod + 1)
 
     let delegationInfoBefore = await stakingContract.getDelegationInfo.call(operatorOne)
     
@@ -507,7 +532,7 @@ contract('TokenStaking', function(accounts) {
 
     expect(delegationInfoAfter.createdAt).to.eq.BN(
       delegationInfoBefore.createdAt,
-      "Unexpected delegation creation block"
+      "Unexpected delegation creation time"
     )
     expect(delegationInfoAfter.amount).to.eq.BN(
       0,
@@ -515,7 +540,7 @@ contract('TokenStaking', function(accounts) {
     )
     expect(delegationInfoAfter.undelegatedAt).to.eq.BN(
       undelegationBlock.timestamp,
-      "Unexpected undelegation block"
+      "Unexpected undelegation time"
     )
   })
 
@@ -530,7 +555,7 @@ contract('TokenStaking', function(accounts) {
 
     expect(delegationInfoAfter.createdAt).to.eq.BN(
       delegationInfoBefore.createdAt,
-      "Unexpected delegation creation block"
+      "Unexpected delegation creation time"
     )
     expect(delegationInfoAfter.amount).to.eq.BN(
       0,
@@ -538,18 +563,19 @@ contract('TokenStaking', function(accounts) {
     )
     expect(delegationInfoAfter.undelegatedAt).to.eq.BN(
       0,
-      "Unexpected undelegation block"
+      "Unexpected undelegation time"
     )
   })
 
   describe("activeStake", async () => {
     it("should report active stake after initialization period is over", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
       await stakingContract.authorizeOperatorContract(
         operatorOne, operatorContract, {from: authorizer}
       )
   
-      await increaseTime(initializationPeriod + 1);
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
   
       let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
   
@@ -560,12 +586,13 @@ contract('TokenStaking', function(accounts) {
     })
   
     it("should report no active stake before initialization period is over", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
       await stakingContract.authorizeOperatorContract(
         operatorOne, operatorContract, {from: authorizer}
       )
   
-      await increaseTime(initializationPeriod - 1)
+      await increaseTimeTo(createdAt + initializationPeriod - timeRoundMargin)
   
       let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
   
@@ -576,8 +603,9 @@ contract('TokenStaking', function(accounts) {
     })
   
     it("should report no active stake for not authorized operator contract", async () => {
-      await delegate(operatorOne, stakingAmount)
-      await increaseTime(initializationPeriod);
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
   
       let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
   
@@ -604,12 +632,13 @@ contract('TokenStaking', function(accounts) {
     })
   
     it("should report no active stake after recovering stake", async () => {
-      await delegate(operatorOne, stakingAmount);
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
       await stakingContract.authorizeOperatorContract(
         operatorOne, operatorContract, {from: authorizer}
       )
   
-      await increaseTime(initializationPeriod + 1);
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       await stakingContract.undelegate(operatorOne, {from: ownerOne});
       await increaseTime(undelegationPeriod + 1);    
       await stakingContract.recoverStake(operatorOne);
@@ -625,12 +654,13 @@ contract('TokenStaking', function(accounts) {
   
   describe("eligibleStake", async () => {
     it("should report eligible stake after initialization period is over", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
       await stakingContract.authorizeOperatorContract(
         operatorOne, operatorContract, {from: authorizer}
       )
   
-      await increaseTime(initializationPeriod + 1);
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
   
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
   
@@ -641,13 +671,12 @@ contract('TokenStaking', function(accounts) {
     })
   
     it("should report no eligible stake before initialization period is over", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
       await stakingContract.authorizeOperatorContract(
         operatorOne, operatorContract, {from: authorizer}
       )
-  
-      await increaseTime(initializationPeriod - 1);
-  
+      await increaseTimeTo(createdAt + initializationPeriod - timeRoundMargin)
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
   
       expect(eligibleStake).to.eq.BN(
@@ -657,9 +686,10 @@ contract('TokenStaking', function(accounts) {
     })
   
     it("should report no eligible stake for not authorized operator contract", async () => {
-      await delegate(operatorOne, stakingAmount)
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
   
-      await increaseTime(initializationPeriod);
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
   
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
   
@@ -686,12 +716,13 @@ contract('TokenStaking', function(accounts) {
     })
   
     it("should report no eligible stake when undelegating", async () => {
-      await delegate(operatorOne, stakingAmount);
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
       await stakingContract.authorizeOperatorContract(
         operatorOne, operatorContract, {from: authorizer}
       )
   
-      await increaseTime(initializationPeriod + 1);
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       await stakingContract.undelegate(operatorOne, {from: ownerOne})
   
       await increaseTime(1);
@@ -705,7 +736,8 @@ contract('TokenStaking', function(accounts) {
     })
 
     it("should report eligible stake for future undelegation", async () => {
-      await delegate(operatorOne, stakingAmount);
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
       await stakingContract.authorizeOperatorContract(
         operatorOne, operatorContract, {from: authorizer}
       )
@@ -719,7 +751,7 @@ contract('TokenStaking', function(accounts) {
         {from: ownerOne}
       );
 
-      await increaseTime(initializationPeriod + 1);
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
       expect(eligibleStake).to.eq.BN(
         stakingAmount,
@@ -735,7 +767,8 @@ contract('TokenStaking', function(accounts) {
     })
 
     it("should report no eligible stake for passed future undelegation", async () => {
-      await delegate(operatorOne, stakingAmount);
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
       await stakingContract.authorizeOperatorContract(
         operatorOne, operatorContract, {from: authorizer}
       )
@@ -749,7 +782,7 @@ contract('TokenStaking', function(accounts) {
         {from: ownerOne}
       );
 
-      await increaseTime(initializationPeriod + delegationTime + 1);
+      await increaseTimeTo(createdAt + initializationPeriod + delegationTime + 1)
 
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
       expect(eligibleStake).to.eq.BN(

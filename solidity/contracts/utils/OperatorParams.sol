@@ -17,7 +17,7 @@ library OperatorParams {
     // and there will be at most 10^9 KEEP in existence (2^30).
     //
     // Creation and undelegation times are stored in an uint64 each.
-    // Thus uint64s would be sufficient for 10^11 years.
+    // Thus uint64s would be sufficient for around 3*10^11 years.
     uint256 constant TIMESTAMP_WIDTH = 64;
     uint256 constant AMOUNT_WIDTH = 128;
 
