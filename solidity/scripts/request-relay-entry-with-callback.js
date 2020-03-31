@@ -1,10 +1,9 @@
-const crypto = require("crypto")
 const KeepRandomBeaconServiceImplV1 = artifacts.require("KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconService = artifacts.require('KeepRandomBeaconService.sol');
 
 // Example usage:
-// truffle exec ./scripts/request-relay-entry-with-callback.js yourContractAddress "callbackMethodName" callbackGas
-// truffle exec ./scripts/request-relay-entry-with-callback.js 0x9F57C01059057d821c6b4B04A4598322661C934F "callback(uint256)" 20000
+// truffle exec ./scripts/request-relay-entry-with-callback.js yourContractAddress callbackGas
+// truffle exec ./scripts/request-relay-entry-with-callback.js 0x9F57C01059057d821c6b4B04A4598322661C934F 20000
 
 module.exports = async function() {
 
@@ -12,11 +11,10 @@ module.exports = async function() {
   const contractInstance = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address)
 
   try {
-    let entryFeeEstimate = await contractInstance.entryFeeEstimate(process.argv[6]);
-    let tx = await contractInstance.methods['requestRelayEntry(address,string,uint256)'](
+    let entryFeeEstimate = await contractInstance.entryFeeEstimate(process.argv[5]);
+    let tx = await contractInstance.methods['requestRelayEntry(address,uint256)'](
       process.argv[4],
       process.argv[5],
-      process.argv[6],
       {value: entryFeeEstimate}
     )
     console.log('Successfully requested relay entry with a callback. RequestId =', tx.logs[0].args.requestId.toString())
