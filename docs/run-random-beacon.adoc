@@ -11,6 +11,9 @@ toc::[]
 - It is paramount that Keep nodes remain available to the Keep network. We encourage a stable and redundant internet connection.
 - A connection to a production grade self-hosted or third party Ethereum node deployment.
 - Persistent and redundant storage that will survive a VM or container rotation, and disk failure.
+- Each beacon client deployment requires a unique operator account.
+- Each beacon client deployment requires a unique IP address or a unique application port running
+  under the same IP.
 - Machines:
 
 [%header,cols=2*]
@@ -224,16 +227,9 @@ keep-client --config /mnt/keep-client/config/keep-client-config.toml start
 
 == Deployment Considerations
 
-Deployment constraints are as follows:
-
-- Each beacon client deployment requires a unique operator account.
-- Each beacon client deployment requires a unique IP address or a unique application port running
-  under the same IP.
-
 === Kubernetes
 
-At Keep we run on GCP + Kube. To accommodate the aforementioned constraints and system
-recommendations we use the following pattern for each of our environments:
+At Keep we run on GCP + Kube. To accommodate the aforementioned system considerations we use the following pattern for each of our environments:
 
 - Regional Kube cluster.
 - 5 beacon clients, each running minimum stake required by the network.
