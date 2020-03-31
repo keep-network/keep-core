@@ -3,7 +3,7 @@
  * 
  * This script:
  *  - delegates stake to operators. For each operator uses the same beneficiary(magpie) address,
- *  - adds 20 mock groups of which 9 makes stale,
+ *  - adds 30 mock groups of which 19 makes stale,
  *  - emits fake withdrawal events.
  *  */ 
 
