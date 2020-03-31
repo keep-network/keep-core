@@ -11,6 +11,7 @@ const Dropdown = ({
   labelPrefix,
   noItemSelectedText,
   selectedItemComponent,
+  renderOptionComponent,
 }) => {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -22,6 +23,8 @@ const Dropdown = ({
       isSelected={item[valuePropertyName] == selectedItem[valuePropertyName]}
       onChange={onChange}
       labelPrefix={labelPrefix}
+      item={item}
+      renderOptionComponent={renderOptionComponent}
     />
 
   const onChange = (value) => {
@@ -42,7 +45,6 @@ const Dropdown = ({
     }
   }
 
-
   return (
     <React.Fragment>
       <label className="text-small text-grey-60">{label}</label>
@@ -61,10 +63,18 @@ const Dropdown = ({
   )
 }
 
-const DropdownItem = React.memo(({ value, label, labelPrefix, isSelected, onChange }) => {
+const DropdownItem = React.memo(({
+  value,
+  label,
+  labelPrefix,
+  isSelected,
+  onChange,
+  renderOptionComponent,
+  item,
+}) => {
   return (
     <li className={`option${isSelected ? ' selected' : ''}`} onClick={() => onChange(value)}>
-      {`${labelPrefix} ${label}`}
+      {renderOptionComponent ? renderOptionComponent(item) : `${labelPrefix} ${label}`}
     </li>
   )
 }, (prevProps, nextProps) => prevProps.isSelected === nextProps.isSelected)

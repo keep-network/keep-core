@@ -11,17 +11,17 @@ const badgeStyle = { padding: '0.1rem 0.5rem', borderRadius: '100px' }
 
 const StatusBadge = ({ status, text, className, onlyIcon }) => {
   return onlyIcon ?
-    <div className="flex row center" >
+    <span className="flex row center" >
       {status.icon}
       <span style={{ marginLeft: '0.5rem' }}>{text}</span>
-    </div>
+    </span>
     :
-    <div
+    <span
       className={`${status.textClassName} ${status.bgClassName} text-label text-normal ${className}`}
       style={badgeStyle}
     >
       {text}
-    </div>
+    </span>
 }
 
 StatusBadge.defaultProps = {

@@ -143,7 +143,7 @@ export const SubmitButton = ({
       className={`${props.className} ${showSuccessBtn && `btn btn-success`}`}
       onClick={onButtonClick}
       isFetching={isFetching}
-      disabled={showSuccessBtn}
+      disabled={showSuccessBtn || props.disabled}
     >
       {showSuccessBtn ?
         <div className="flex row full-center flex-1">
