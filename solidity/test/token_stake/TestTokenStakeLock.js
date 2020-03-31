@@ -12,7 +12,8 @@ contract.only('TokenStaking', function(accounts) {
     operator = accounts[1],
     magpie = accounts[2],
     authorizer = accounts[3],
-    operatorContract = accounts[4];
+    operatorContract = accounts[4],
+    operatorContract2 = accounts[5];
 
   const initializationPeriod = duration.minutes(10);
   const undelegationPeriod = duration.minutes(10);
@@ -26,6 +27,7 @@ contract.only('TokenStaking', function(accounts) {
     );
 
     await registry.approveOperatorContract(operatorContract);
+    await registry.approveOperatorContract(operatorContract2);
 
     minimumStake = await stakingContract.minimumStake();
     stakingAmount = minimumStake.muln(20);
@@ -37,13 +39,14 @@ contract.only('TokenStaking', function(accounts) {
       { from: authorizer },
     );
 
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    await stakingContract.lockStake(operator, lockPeriod, {from: operatorContract})
+    await stakingContract.authorizeOperatorContract(
+      operator,
+      operatorContract2,
+      { from: authorizer },
+    );
 
+    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
     await increaseTimeTo(createdAt + initializationPeriod + 1)
-    tx = await stakingContract.undelegate(operator, {from: operator})
-    let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    await increaseTimeTo(undelegatedAt + undelegationPeriod + 1)
   });
 
   beforeEach(async () => {
@@ -68,43 +71,97 @@ contract.only('TokenStaking', function(accounts) {
     );
   }
 
-  it("should only permit recover unlocked stake", async () => {
-    await expectThrowWithMessage(
-      stakingContract.recoverStake(operator),
-      "Can not recover locked stake"
-    )
+  async function undelegate(operator) {
+    let tx = await stakingContract.undelegate(operator, {from: operator})
+    let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    await increaseTimeTo(undelegatedAt + undelegationPeriod + 1)
+  }
 
-    await expectThrowWithMessage(
-      stakingContract.unlockStake(operator),
-      "Not authorized"
-    )
+  describe("single lock", async () => {
+    before(async () => {
+      await stakingContract.lockStake(operator, lockPeriod, {from: operatorContract})
+    })
 
-    stakingContract.unlockStake(operator, {from: operatorContract})
-    await stakingContract.recoverStake(operator)
-    // ok, no revert
+    it("should only permit recover unlocked stake", async () => {
+      await undelegate(operator)
+      await expectThrowWithMessage(
+        stakingContract.recoverStake(operator),
+        "Can not recover locked stake"
+      )
+
+      await expectThrowWithMessage(
+        stakingContract.unlockStake(operator),
+        "Not authorized"
+      )
+
+      await stakingContract.unlockStake(operator, {from: operatorContract})
+      await stakingContract.recoverStake(operator)
+      // ok, no revert
+    })
+
+    it("should allow recover locked stake after lock duration has expired", async () => {
+      await undelegate(operator)
+      await expectThrowWithMessage(
+        stakingContract.recoverStake(operator),
+        "Can not recover locked stake"
+      )
+
+      await increaseTime(lockPeriod)
+      await stakingContract.recoverStake(operator, {from: operator})
+      // ok, no revert
+    })
+
+    it("should allow recover locked stake after operator contract has been disabled", async () => {
+      await undelegate(operator)
+      await expectThrowWithMessage(
+        stakingContract.recoverStake(operator),
+        "Can not recover locked stake"
+      )
+
+      // disable operator contract with panic button
+      await registry.disableOperatorContract(operatorContract)
+
+      await stakingContract.recoverStake(operator, {from: operator})
+      // ok, no revert
+    })
   })
 
-  it("should allow recover locked stake after lock duration has expired", async () => {
-    await expectThrowWithMessage(
-      stakingContract.recoverStake(operator),
-      "Can not recover locked stake"
-    )
 
-    await increaseTime(lockPeriod)
-    await stakingContract.recoverStake(operator, {from: operator})
-    // ok, no revert
-  })
+  describe("multiple locks", async () => {
+    before(async () => {
+      await stakingContract.lockStake(operator, lockPeriod, {from: operatorContract})
+      await stakingContract.lockStake(operator, lockPeriod, {from: operatorContract2})
+    })
 
-  it("should allow recover locked stake after operator contract has been disabled", async () => {
-    await expectThrowWithMessage(
-      stakingContract.recoverStake(operator),
-      "Can not recover locked stake"
-    )
+    it("should require all locks to be released before recovering tokens", async () => {
+      await undelegate(operator)
+      await stakingContract.unlockStake(operator, {from: operatorContract})
 
-    // disable operator contract with panic button
-    await registry.disableOperatorContract(operatorContract)
+      await expectThrowWithMessage(
+        stakingContract.recoverStake(operator),
+        "Can not recover locked stake"
+      )
 
-    await stakingContract.recoverStake(operator, {from: operator})
-    // ok, no revert
+      await stakingContract.unlockStake(operator, {from: operatorContract2})
+
+      await stakingContract.recoverStake(operator, {from: operator})
+      // ok, no revert
+    })
+
+    it("should count disabled contracts' locks as invalid", async () => {
+      await undelegate(operator)
+      await stakingContract.unlockStake(operator, {from: operatorContract})
+
+      await expectThrowWithMessage(
+        stakingContract.recoverStake(operator),
+        "Can not recover locked stake"
+      )
+
+      await registry.disableOperatorContract(operatorContract2)
+
+      await stakingContract.recoverStake(operator, {from: operator})
+      // ok, no revert
+    })
   })
 });
+
