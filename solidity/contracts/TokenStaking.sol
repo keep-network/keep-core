@@ -6,6 +6,9 @@ import "./utils/PercentUtils.sol";
 import "./Registry.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
+interface AuthorityDelegator {
+    function __isRecognized(address delegatedAuthorityRecipient) external returns (bool);
+}
 
 /**
  * @title TokenStaking
@@ -39,9 +42,22 @@ contract TokenStaking is StakeDelegatable {
     // Authorized operator contracts.
     mapping(address => mapping (address => bool)) internal authorizations;
 
+    // Granters of delegated authority to operator contracts.
+    // E.g. keep factories granting delegated authority to keeps.
+    // `delegatedAuthority[keep] = factory`
+    mapping(address => address) internal delegatedAuthority;
+
     modifier onlyApprovedOperatorContract(address operatorContract) {
+        bool directlyApproved = registry.isApprovedOperatorContract(operatorContract);
+        bool indirectlyApproved;
+
+        if (!directlyApproved) {
+            address authorityDelegator = delegatedAuthority[operatorContract];
+            indirectlyApproved = registry.isApprovedOperatorContract(authorityDelegator);
+        }
+
         require(
-            registry.isApprovedOperatorContract(operatorContract),
+            directlyApproved || indirectlyApproved,
             "Operator contract is not approved"
         );
         _;
@@ -346,7 +362,13 @@ contract TokenStaking is StakeDelegatable {
      * @param _operatorContract address of operator contract.
      */
     function isAuthorizedForOperator(address _operator, address _operatorContract) public view returns (bool) {
-        return authorizations[_operatorContract][_operator];
+        bool directlyAuthorized = authorizations[_operatorContract][_operator];
+        bool indirectlyAuthorized;
+        if (!directlyAuthorized) {
+            address authorityDelegator = delegatedAuthority[_operatorContract];
+            indirectlyAuthorized = authorizations[authorityDelegator][_operator];
+        }
+        return directlyAuthorized || indirectlyAuthorized;
     }
 
     /**
@@ -434,5 +456,23 @@ contract TokenStaking is StakeDelegatable {
         address operatorContract
     ) public view returns(bool) {
         return activeStake(staker, operatorContract) >= minimumStake();
+    }
+
+    /// @notice Grant the sender the same authority as `delegatedAuthoritySource`
+    /// @dev If `delegatedAuthoritySource` is an approved operator contract
+    /// and recognizes the claimant,
+    /// this relationship will be recorded in `delegatedAuthority`.
+    /// Later, the claimant can slash, seize, place locks etc.
+    /// on operators that have authorized the `delegatedAuthoritySource`.
+    /// If the `delegatedAuthoritySource` is disabled with the panic button,
+    /// any recipients of delegated authority from it will also be disabled.
+    function claimDelegatedAuthority(
+        address delegatedAuthoritySource
+    ) public onlyApprovedOperatorContract(delegatedAuthoritySource) {
+        require(
+            AuthorityDelegator(delegatedAuthoritySource).__isRecognized(msg.sender),
+            "Unrecognized claimant"
+        );
+        delegatedAuthority[msg.sender] = delegatedAuthoritySource;
     }
 }
