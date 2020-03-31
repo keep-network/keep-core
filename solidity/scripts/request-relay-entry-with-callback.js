@@ -11,11 +11,10 @@ module.exports = async function() {
   const contractInstance = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address)
 
   try {
-    let entryFeeEstimate = await contractInstance.entryFeeEstimate(process.argv[6]);
+    let entryFeeEstimate = await contractInstance.entryFeeEstimate(process.argv[5]);
     let tx = await contractInstance.methods['requestRelayEntry(address,uint256)'](
       process.argv[4],
       process.argv[5],
-      process.argv[6],
       {value: entryFeeEstimate}
     )
     console.log('Successfully requested relay entry with a callback. RequestId =', tx.logs[0].args.requestId.toString())
