@@ -11,9 +11,9 @@ toc::[]
 - It is paramount that Keep nodes remain available to the Keep network. We encourage a stable and redundant internet connection.
 - A connection to a production grade self-hosted or third party Ethereum node deployment.
 - Persistent and redundant storage that will survive a VM or container rotation, and disk failure.
-- Each beacon client deployment requires a unique operator account.
-- Each beacon client deployment requires a unique IP address or a unique application port running
-  under the same IP.
+- Each random beacon client running on the network requires a unique Ethereum operator account.
+- Each random beacon client running on the network requires a unique IP address or a unique
+  application port running under the same IP.
 - Machines:
 
 [%header,cols=2*]
@@ -66,6 +66,9 @@ non-default ports configured, firewall rules will need to be adjusted accordingl
 
 === Application
 
+Application configurations are stored in a `.toml` file and passed to the application run command
+ with the `--config` flag.
+
 ==== Sample
 
 ```
@@ -97,6 +100,7 @@ non-default ports configured, firewall rules will need to be adjusted accordingl
   # Override the node's default addresses announced in the network
   AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
 
+# Storage is encrypted
 [Storage]
   DataDir = "/my/secure/location"
 ```
@@ -172,7 +176,7 @@ non-default ports configured, firewall rules will need to be adjusted accordingl
 |`Peers`
 |Comma separated list of network peers to boostrap against.
 |[""]
-|No
+|Yes
 
 |`Port`
 |The port to run your instance of Keep on.
@@ -244,6 +248,7 @@ Below are some of the key things to look out for to make sure you're booted and 
 network:
 
 === Configurable Values
+
 ```
 LOG_LEVEL=DEBUG
 IPFS_LOGGING_FMT=nocolor
