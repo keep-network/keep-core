@@ -1,12 +1,15 @@
-import { duration, increaseTimeTo } from '../helpers/increaseTime';
-import {bls} from '../helpers/data';
-import latestTime from '../helpers/latestTime';
-import expectThrow from '../helpers/expectThrow';
-import {initContracts} from '../helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from "../helpers/snapshot";
-const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
+const { duration, increaseTimeTo } = require('../helpers/increaseTime');
+const latestTime = require('../helpers/latestTime');
+const expectThrow = require('../helpers/expectThrow.js')
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const blsData = require("../helpers/data.js")
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const {contract, web3, accounts} = require("@openzeppelin/test-environment")
 
-contract('TestKeepRandomBeaconService/ViaProxy', function(accounts) {
+const ServiceContractProxy = contract.fromArtifact('KeepRandomBeaconService')
+
+describe('TestKeepRandomBeaconService/ViaProxy', function() {
 
   let serviceContract, serviceContractProxy, operatorContract,
     account_one = accounts[0],
@@ -16,11 +19,11 @@ contract('TestKeepRandomBeaconService/ViaProxy', function(accounts) {
 
   before(async () => {
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
       ServiceContractProxy,
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorStub')
     );
 
     operatorContract = contracts.operatorContract;
@@ -28,7 +31,7 @@ contract('TestKeepRandomBeaconService/ViaProxy', function(accounts) {
     serviceContractProxy = await ServiceContractProxy.at(serviceContract.address);
 
     // Using stub method to add first group to help testing.
-    await operatorContract.registerNewGroup(bls.groupPubKey);
+    await operatorContract.registerNewGroup(blsData.groupPubKey);
     let group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.setGroupMembers(group, [accounts[0]]);
 

@@ -1,13 +1,15 @@
-import {initContracts} from '../helpers/initContracts'
-import {sign} from '../helpers/signature'
-import mineBlocks from '../helpers/mineBlocks'
-import increaseTime from '../helpers/increaseTime';
-import stakeDelegate from '../helpers/stakeDelegate'
-import packTicket from '../helpers/packTicket'
-import generateTickets from '../helpers/generateTickets'
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot'
+const {contract, web3, accounts} = require("@openzeppelin/test-environment")
+var assert = require('chai').assert
+const initContracts = require('../helpers/initContracts')
+const sign = require('../helpers/signature')
+const mineBlocks = require('../helpers/mineBlocks')
+const {increaseTime} = require('../helpers/increaseTime')
+const stakeDelegate = require('../helpers/stakeDelegate')
+const packTicket = require('../helpers/packTicket')
+const generateTickets = require('../helpers/generateTickets')
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 
-contract('KeepRandomBeaconOperator/DkgMisbehavior', function(accounts) {
+describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
   let token, stakingContract, operatorContract,
     owner = accounts[0],
     operator1 = accounts[1],
@@ -22,27 +24,27 @@ contract('KeepRandomBeaconOperator/DkgMisbehavior', function(accounts) {
     resultHash = web3.utils.soliditySha3(groupPubKey, misbehaved)
 
   before(async () => {
+    
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorStub')
     )
 
     token = contracts.token
     stakingContract = contracts.stakingContract
     operatorContract = contracts.operatorContract
-    operatorContract.setGroupSize(5)
-    operatorContract.setGroupThreshold(3)
+    operatorContract.setGroupSize(5, {from: owner})
+    operatorContract.setGroupThreshold(3, {from: owner})
 
     let minimumStake = await stakingContract.minimumStake()
-
-    await stakeDelegate(stakingContract, token, owner, operator1, owner, authorizer, minimumStake)
-    await stakeDelegate(stakingContract, token, owner, operator2, owner, authorizer, minimumStake)
-    await stakeDelegate(stakingContract, token, owner, operator3, owner, authorizer, minimumStake)
-    await stakeDelegate(stakingContract, token, owner, operator4, owner, authorizer, minimumStake)
-    await stakeDelegate(stakingContract, token, owner, operator5, owner, authorizer, minimumStake)
+    await stakeDelegate(stakingContract, token, owner, operator1, owner, authorizer, minimumStake, {from: owner})
+    await stakeDelegate(stakingContract, token, owner, operator2, owner, authorizer, minimumStake, {from: owner})
+    await stakeDelegate(stakingContract, token, owner, operator3, owner, authorizer, minimumStake, {from: owner})
+    await stakeDelegate(stakingContract, token, owner, operator4, owner, authorizer, minimumStake, {from: owner})
+    await stakeDelegate(stakingContract, token, owner, operator5, owner, authorizer, minimumStake, {from: owner})
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
@@ -52,11 +54,11 @@ contract('KeepRandomBeaconOperator/DkgMisbehavior', function(accounts) {
 
     increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
 
-    let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, 1)
-    let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, 1)
-    let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, 1)
-    let tickets4 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator4, 1)
-    let tickets5 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator5, 1)
+    let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, 1, {from: owner})
+    let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, 1, {from: owner})
+    let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, 1, {from: owner})
+    let tickets4 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator4, 1, {from: owner})
+    let tickets5 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator5, 1, {from: owner})
 
     await operatorContract.submitTicket(
       packTicket(tickets1[0].valueHex, tickets1[0].virtualStakerIndex, operator1),

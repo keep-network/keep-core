@@ -1,14 +1,16 @@
-import expectThrow from '../helpers/expectThrow';
-import mineBlocks from '../helpers/mineBlocks';
-import increaseTime from '../helpers/increaseTime';
-import packTicket from '../helpers/packTicket';
-import generateTickets from '../helpers/generateTickets';
-import stakeDelegate from '../helpers/stakeDelegate';
-import {initContracts} from '../helpers/initContracts';
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
+const expectThrow = require('../helpers/expectThrow.js')
+const {contract, accounts} = require("@openzeppelin/test-environment")
+const assert = require('chai').assert
+const initContracts = require('../helpers/initContracts')
+const {increaseTime} = require('../helpers/increaseTime')
+const stakeDelegate = require('../helpers/stakeDelegate')
+const packTicket = require('../helpers/packTicket')
+const mineBlocks = require("../helpers/mineBlocks")
+const generateTickets = require('../helpers/generateTickets')
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 
-contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
+describe('KeepRandomBeaconOperator/GroupSelection', function() {
   let operatorContract,
   owner = accounts[0], 
   magpie = accounts[1],
@@ -24,11 +26,11 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
 
   before(async () => {
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorGroupSelectionStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorGroupSelectionStub')
     );
     
     let token = contracts.token;

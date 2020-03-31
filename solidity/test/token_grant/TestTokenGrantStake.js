@@ -1,9 +1,10 @@
-import increaseTime, { duration, increaseTimeTo} from '../helpers/increaseTime';
-import latestTime from '../helpers/latestTime';
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
-import grantTokens from '../helpers/grantTokens';
-import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
-import delegateStakeFromGrant from '../helpers/delegateStakeFromGrant'
+const delegateStakeFromGrant = require('../helpers/delegateStakeFromGrant')
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const { duration, increaseTimeTo, increaseTime } = require('../helpers/increaseTime');
+const latestTime = require('../helpers/latestTime');
+const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
+const grantTokens = require('../helpers/grantTokens');
+const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -15,12 +16,12 @@ const expect = chai.expect
 // that test times before initialization/undelegation periods end.
 const timeRoundMargin = duration.minutes(1)
 
-const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const TokenGrant = artifacts.require('./TokenGrant.sol');
-const Registry = artifacts.require("./Registry.sol");
+const KeepToken = contract.fromArtifact('KeepToken');
+const TokenStaking = contract.fromArtifact('TokenStaking');
+const TokenGrant = contract.fromArtifact('TokenGrant');
+const Registry = contract.fromArtifact("Registry");
 
-contract('TokenGrant/Stake', function(accounts) {
+describe('TokenGrant/Stake', function() {
 
   let tokenContract, registryContract, grantContract, stakingContract,
     minimumStake, grantAmount;
@@ -43,18 +44,19 @@ contract('TokenGrant/Stake', function(accounts) {
   const undelegationPeriod = duration.minutes(30);
 
   before(async () => {
-    tokenContract = await KeepToken.new();
-    registryContract = await Registry.new();
+    tokenContract = await KeepToken.new({from: accounts[0]});
+    registryContract = await Registry.new({from: accounts[0]});
     stakingContract = await TokenStaking.new(
       tokenContract.address, 
       registryContract.address, 
       initializationPeriod, 
-      undelegationPeriod
+      undelegationPeriod,
+      {from: accounts[0]}
     );
 
-    grantContract = await TokenGrant.new(tokenContract.address);
+    grantContract = await TokenGrant.new(tokenContract.address, {from: accounts[0]});
     
-    await grantContract.authorizeStakingContract(stakingContract.address);
+    await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
     
     grantStart = await latestTime();
     minimumStake = await stakingContract.minimumStake()
@@ -70,7 +72,8 @@ contract('TokenGrant/Stake', function(accounts) {
       grantUnlockingDuration,
       grantStart,
       grantCliff,
-      grantRevocable
+      grantRevocable,
+      {from: accounts[0]}
     );
   });
 

@@ -1,11 +1,13 @@
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const mineBlocks = require("../helpers/mineBlocks")
+const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const crypto = require("crypto")
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot'
-import stakeDelegate from '../helpers/stakeDelegate'
-import {initContracts} from '../helpers/initContracts'
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
-import mineBlocks from '../helpers/mineBlocks'
+const stakeDelegate = require('../helpers/stakeDelegate')
 
-contract('KeepRandomBeaconOperator/PricingRewardsWithdraw', function(accounts) {
+describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
 
   let token, stakingContract, operatorContract, serviceContract,
     groupSize, memberBaseReward, entryFeeEstimate,
@@ -21,11 +23,11 @@ contract('KeepRandomBeaconOperator/PricingRewardsWithdraw', function(accounts) {
 
   before(async () => {
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorPricingRewardsWithdrawStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorPricingRewardsWithdrawStub')
     )
 
     token = contracts.token

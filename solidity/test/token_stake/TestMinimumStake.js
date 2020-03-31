@@ -1,17 +1,19 @@
-import increaseTime, {duration} from '../helpers/increaseTime';
-import latestTime from '../helpers/latestTime';
-import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
+
+const {contract, web3} = require("@openzeppelin/test-environment")
+const { duration, increaseTime } = require('../helpers/increaseTime');
+const latestTime = require('../helpers/latestTime');
+const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const Registry = artifacts.require("./Registry.sol");
+const KeepToken = contract.fromArtifact('KeepToken');
+const TokenStaking = contract.fromArtifact('TokenStaking');
+const Registry = contract.fromArtifact("Registry");
 
-contract('TokenStaking', function() {
+describe('TokenStaking', function() {
   let token, registry, stakingContract,
     minimumStakeSteps, minimumStakeSchedule, keepDecimals;
   const initializationPeriod = 10;

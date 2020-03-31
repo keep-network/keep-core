@@ -1,7 +1,8 @@
-import increaseTime, {duration, increaseTimeTo} from '../helpers/increaseTime';
-import latestTime from '../helpers/latestTime';
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
-import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const { duration, increaseTimeTo, increaseTime} = require('../helpers/increaseTime');
+const latestTime = require('../helpers/latestTime');
+const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
+const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -13,11 +14,11 @@ const expect = chai.expect
 // that test times before initialization/undelegation periods end.
 const timeRoundMargin = duration.minutes(1)
 
-const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const Registry = artifacts.require("./Registry.sol");
+const KeepToken = contract.fromArtifact('KeepToken');
+const TokenStaking = contract.fromArtifact('TokenStaking');
+const Registry = contract.fromArtifact("Registry");
 
-contract('TokenStaking', function(accounts) {
+describe('TokenStaking', function() {
 
   let token, registry, stakingContract, stakingAmount, minimumStake;
     
@@ -32,13 +33,13 @@ contract('TokenStaking', function(accounts) {
   const initializationPeriod = duration.minutes(10);
   const undelegationPeriod = duration.minutes(30);
   before(async () => {
-    token = await KeepToken.new();
-    registry = await Registry.new();
+    token = await KeepToken.new({from: accounts[0]});
+    registry = await Registry.new({from: accounts[0]});
     stakingContract = await TokenStaking.new(
-      token.address, registry.address, initializationPeriod, undelegationPeriod
+      token.address, registry.address, initializationPeriod, undelegationPeriod, {from: accounts[0]}
     );
 
-    await registry.approveOperatorContract(operatorContract);
+    await registry.approveOperatorContract(operatorContract, {from: accounts[0]});
 
     minimumStake = await stakingContract.minimumStake();
     stakingAmount = minimumStake.muln(20);

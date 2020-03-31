@@ -1,15 +1,17 @@
-import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {BN, constants, expectEvent, expectRevert, time} = require("@openzeppelin/test-helpers")
+const {contract, accounts} = require("@openzeppelin/test-environment")
+const assert = require('chai').assert
 
-const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
-const ServiceContractImplV1 = artifacts.require('./KeepRandomBeaconServiceImplV1.sol')
-const ServiceContractImplV2 = artifacts.require('./examples/KeepRandomBeaconServiceUpgradeExample.sol')
+const ServiceContractProxy = contract.fromArtifact('KeepRandomBeaconService')
+const ServiceContractImplV1 = contract.fromArtifact('KeepRandomBeaconServiceImplV1')
+const ServiceContractImplV2 = contract.fromArtifact('KeepRandomBeaconServiceUpgradeExample')
 
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract('KeepRandomBeaconService/Upgrade', function(accounts) {
+describe('KeepRandomBeaconService/Upgrade', function() {
 
   let proxy
   let implementationV1

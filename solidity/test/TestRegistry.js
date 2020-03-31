@@ -1,8 +1,11 @@
-const Registry = artifacts.require('./stubs/RegistryStub.sol');
-import expectThrowWithMessage from './helpers/expectThrowWithMessage'
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
+const expectThrowWithMessage = require('./helpers/expectThrowWithMessage.js')
+const {accounts, contract} = require("@openzeppelin/test-environment")
+var assert = require('chai').assert
 
-contract('Registry', (accounts) => {
+const Registry = contract.fromArtifact('RegistryStub');
+
+describe('Registry', () => {
     
     const owner = accounts[0]
     const governance = accounts[1]
@@ -20,7 +23,7 @@ contract('Registry', (accounts) => {
     let registry
 
     before(async () => {
-        registry = await Registry.new()
+        registry = await Registry.new({from: owner})
         await registry.setGovernance(governance, {from: owner})
         await registry.setPanicButton(panicButton, {from: governance})
         await registry.setRegistryKeeper(registryKeeper, {from: governance})

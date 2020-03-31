@@ -1,13 +1,15 @@
-import {bls} from '../helpers/data';
-import {initContracts} from '../helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
-import stakeAndGenesis from '../helpers/stakeAndGenesis';
+const stakeAndGenesis = require('../helpers/stakeAndGenesis')
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const blsData = require("../helpers/data.js")
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const {contract, web3, accounts} = require("@openzeppelin/test-environment")
 
-const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
+const CallbackContract = contract.fromArtifact('CallbackContract');
 
 // A set of integration tests for the beacon pricing mechanism related to
 // callback reimbursement.
-contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
+describe('KeepRandomBeacon/RelayRequestCallback', function() {
 
   const groupSize = 3;
   const groupThreshold = 2;
@@ -23,11 +25,11 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
 
   before(async () => {
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorCallbackStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorCallbackStub')
     );
 
     operatorContract = contracts.operatorContract;
@@ -59,10 +61,10 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
   it("should produce entry when no callback was not provided", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
-    await operatorContract.relayEntry(bls.groupSignature, {from: operator});
+    await operatorContract.relayEntry(blsData.groupSignature, {from: operator});
 
     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
-      bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
+      blsData.groupSignatureNumber.toString(), "Should emit event with the generated entry"
     );
   });
 
@@ -71,7 +73,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
 
     const beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
-    await operatorContract.relayEntry(bls.groupSignature, {from: operator});
+    await operatorContract.relayEntry(blsData.groupSignature, {from: operator});
     let beneficiaryEndBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
 
     let submitterReimbursement = beneficiaryEndBalance.sub(beneficiaryStartBalance);
@@ -83,27 +85,27 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
   })
 
   it("should produce entry and execute callback if provided", async () => {
-    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate}
     );
-    await operatorContract.relayEntry(bls.groupSignature, {from: operator});
+    await operatorContract.relayEntry(blsData.groupSignature, {from: operator});
 
     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
-      bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
+      blsData.groupSignatureNumber.toString(), "Should emit event with the generated entry"
     );
 
     let result = web3.utils.toBN(await callbackContract.lastEntry());
     assert.isTrue(
-      result.eq(bls.groupSignatureNumber), 
+      result.eq(blsData.groupSignatureNumber), 
       "Unexpected entry value passed to the callback"
     );
   })
 
   // gas price ceiling > tx.gasprice
   it("should reimburse submitter and customer for executing callback with lower tx.gasprice", async () => {
-    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address, "callback(uint256)", callbackGas, {
@@ -117,7 +119,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
-    await operatorContract.relayEntry(bls.groupSignature, {
+    await operatorContract.relayEntry(blsData.groupSignature, {
       from: operator, 
       gasPrice: relayEntryTxGasPrice
     });
@@ -135,7 +137,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
 
   // gas price ceiling == tx.gasprice
   it("should reimburse submitter and customer for executing callback with expected tx.gasprice", async () => {
-    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address, "callback(uint256)", callbackGas, {
@@ -149,7 +151,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
-    await operatorContract.relayEntry(bls.groupSignature, {
+    await operatorContract.relayEntry(blsData.groupSignature, {
       from: operator, 
       gasPrice: relayEntryTxGasPrice
     });
@@ -167,7 +169,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
 
   // gas price ceiling < tx.gasprice
   it("should reimburse submitter and customer for executing callback with higher tx.gasprice", async () => {
-    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address, "callback(uint256)", callbackGas, {
@@ -184,7 +186,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
-    await operatorContract.relayEntry(bls.groupSignature, {
+    await operatorContract.relayEntry(blsData.groupSignature, {
       from: operator, 
       gasPrice: relayEntryTxGasPrice
     });
@@ -204,29 +206,29 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     await fundDkgPool();
 
     // Request relay entry with a callback
-    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate}
     );
   
-    await operatorContract.relayEntry(bls.groupSignature, {from: operator});
+    await operatorContract.relayEntry(blsData.groupSignature, {from: operator});
   
     assert.equal((await operatorContract.getPastEvents())[1].event,
       'GroupSelectionStarted', "Should start group selection"
     );
 
     assert.equal((await operatorContract.getPastEvents())[1].args['newEntry'].toString(),
-      bls.groupSignatureNumber.toString(), "Should start group selection with new entry"
+      blsData.groupSignatureNumber.toString(), "Should start group selection with new entry"
     );
     
     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
-      bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
+      blsData.groupSignatureNumber.toString(), "Should emit event with the generated entry"
     );
 
     let result = web3.utils.toBN(await callbackContract.lastEntry());
     assert.isTrue(
-      result.eq(bls.groupSignatureNumber),
+      result.eq(blsData.groupSignatureNumber),
       "Unexpected entry value passed to the callback"
     );
   });
@@ -237,7 +239,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     await fundDkgPool();
 
     // Request relay entry with a callback
-    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address, "callback(uint256)", callbackGas, {
@@ -250,7 +252,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
-    await operatorContract.relayEntry(bls.groupSignature, {
+    await operatorContract.relayEntry(blsData.groupSignature, {
       from: operator, 
       gasPrice: relayEntryTxGasPrice
     });
@@ -272,7 +274,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     await fundDkgPool();
 
     // Request relay entry with a callback
-    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address, "callback(uint256)", callbackGas, {
@@ -285,7 +287,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
-    await operatorContract.relayEntry(bls.groupSignature, {
+    await operatorContract.relayEntry(blsData.groupSignature, {
       from: operator, 
       gasPrice: relayEntryTxGasPrice
     });
@@ -307,7 +309,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
     await fundDkgPool();
   
     // Request relay entry with a callback
-    let callbackGas = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
       callbackContract.address, "callback(uint256)", callbackGas, {
@@ -323,7 +325,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
 
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
-    await operatorContract.relayEntry(bls.groupSignature, {
+    await operatorContract.relayEntry(blsData.groupSignature, {
       from: operator, 
       gasPrice: relayEntryTxGasPrice
     });
@@ -348,23 +350,23 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
       callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate}
     );
     
-    await operatorContract.relayEntry(bls.groupSignature, {from: operator});
+    await operatorContract.relayEntry(blsData.groupSignature, {from: operator});
 
     assert.equal((await operatorContract.getPastEvents())[1].event,
       'GroupSelectionStarted', "Should start group selection"
     );
 
     assert.equal((await operatorContract.getPastEvents())[1].args['newEntry'].toString(),
-      bls.groupSignatureNumber.toString(), "Should start group selection with new entry"
+      blsData.groupSignatureNumber.toString(), "Should start group selection with new entry"
     );
   
     assert.equal((await serviceContract.getPastEvents())[0].args['entry'].toString(),
-      bls.groupSignatureNumber.toString(), "Should emit event with the generated entry"
+      blsData.groupSignatureNumber.toString(), "Should emit event with the generated entry"
     );
   })
 
   it("should reimburse submitter when callback failed", async () => {
-    let estimate = await callbackContract.callback.estimateGas(bls.groupSignature);
+    let estimate = await callbackContract.callback.estimateGas(blsData.groupSignature);
     
     let callbackGas = estimate - 10; // Requestor provides wrong gas
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
@@ -377,7 +379,7 @@ contract('KeepRandomBeacon/RelayRequestCallback', function(accounts) {
   
     let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
     let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
-    await operatorContract.relayEntry(bls.groupSignature, {
+    await operatorContract.relayEntry(blsData.groupSignature, {
       from: operator, 
       gasPrice: relayEntryTxGasPrice
     });

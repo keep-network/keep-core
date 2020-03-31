@@ -1,13 +1,15 @@
-import { duration, increaseTimeTo } from '../helpers/increaseTime';
-import latestTime from '../helpers/latestTime';
-import expectThrow from '../helpers/expectThrow';
-import grantTokens from '../helpers/grantTokens';
-const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const TokenGrant = artifacts.require('./TokenGrant.sol');
-const Registry = artifacts.require("./Registry.sol");
+const { duration, increaseTimeTo } = require('../helpers/increaseTime');
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const latestTime = require('../helpers/latestTime');
+const expectThrow = require('../helpers/expectThrow');
+const grantTokens = require('../helpers/grantTokens');
+const KeepToken = contract.fromArtifact('KeepToken');
+const TokenStaking = contract.fromArtifact('TokenStaking');
+const TokenGrant = contract.fromArtifact('TokenGrant');
+const Registry = contract.fromArtifact("Registry");
+const assert = require('chai').assert
 
-contract('TokenGrant', function(accounts) {
+describe('TokenGrant', function() {
 
   let token, registry, grantContract, stakingContract,
     amount, unlockingDuration, start, cliff,
@@ -16,11 +18,11 @@ contract('TokenGrant', function(accounts) {
     grantee = accounts[2];
 
   before(async () => {
-    token = await KeepToken.new();
-    registry = await Registry.new();
-    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(1), duration.days(30));
-    grantContract = await TokenGrant.new(token.address);
-    await grantContract.authorizeStakingContract(stakingContract.address);
+    token = await KeepToken.new({from: accounts[0]});
+    registry = await Registry.new({from: accounts[0]});
+    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(1), duration.days(30), {from: accounts[0]});
+    grantContract = await TokenGrant.new(token.address, {from: accounts[0]});
+    await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
     amount = web3.utils.toBN(100);
     unlockingDuration = duration.days(30);
     start = await latestTime();
@@ -40,7 +42,7 @@ contract('TokenGrant', function(accounts) {
     let account_two_starting_balance = await token.balanceOf.call(account_two);
 
     // Grant tokens
-    let id = await grantTokens(grantContract, token, amount, grant_manager, account_two, unlockingDuration, start, cliff, revocable);
+    let id = await grantTokens(grantContract, token, amount, grant_manager, account_two, unlockingDuration, start, cliff, revocable, {from: accounts[0]});
 
     // Ending balances
     let grant_manager_ending_balance = await token.balanceOf.call(grant_manager);
@@ -81,7 +83,7 @@ contract('TokenGrant', function(accounts) {
 
     let grant_manager_starting_balance = await token.balanceOf.call(grant_manager);
 
-    let id = await grantTokens(grantContract, token, amount, grant_manager, grantee, unlockingDuration, start, cliff, true);
+    let id = await grantTokens(grantContract, token, amount, grant_manager, grantee, unlockingDuration, start, cliff, true, {from: accounts[0]});
 
     let grant_manager_ending_balance = await token.balanceOf.call(grant_manager);
 

@@ -1,14 +1,15 @@
-import {initContracts} from '../helpers/initContracts'
-import stakeDelegate from '../helpers/stakeDelegate'
-import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
-import {bls as blsData} from '../helpers/data'
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
-import mineBlocks from '../helpers/mineBlocks'
-import increaseTime from '../helpers/increaseTime';
+const blsData = require("../helpers/data.js")
+const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
+const {increaseTime} = require('../helpers/increaseTime');
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const mineBlocks = require("../helpers/mineBlocks")
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const stakeDelegate = require('../helpers/stakeDelegate')
+const BLS = contract.fromArtifact('BLS');
 
-const BLS = artifacts.require('./cryptography/BLS.sol');
-
-contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
+describe('KeepRandomBeaconOperator/Slashing', function() {
   let token, stakingContract, serviceContract, operatorContract, minimumStake, largeStake, entryFeeEstimate, groupIndex,
     registry, bls,
     owner = accounts[0],
@@ -23,11 +24,11 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   before(async () => {
     
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStakingStub.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStakingStub'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorStub')
     )
 
     token = contracts.token
@@ -54,8 +55,9 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate})
-  
-    await registry.setRegistryKeeper(registryKeeper)
+
+    await registry.setRegistryKeeper(registryKeeper, {from: accounts[0]})
+
     await registry.approveOperatorContract(anotherOperatorContract, {from: registryKeeper})
     await stakingContract.authorizeOperatorContract(operator1, anotherOperatorContract, {from: authorizer})
   })

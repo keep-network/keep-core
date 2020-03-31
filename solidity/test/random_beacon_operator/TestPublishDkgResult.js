@@ -1,16 +1,17 @@
-import { sign } from '../helpers/signature';
-import mineBlocks from '../helpers/mineBlocks';
-import increaseTime from '../helpers/increaseTime';
-import packTicket from '../helpers/packTicket';
-import generateTickets from '../helpers/generateTickets';
-import stakeDelegate from '../helpers/stakeDelegate';
-import expectThrow from '../helpers/expectThrow';
-import shuffleArray from '../helpers/shuffle';
-import {initContracts} from '../helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+const sign = require('../helpers/signature');
+const {increaseTime} = require('../helpers/increaseTime');
+const packTicket = require('../helpers/packTicket')
+const generateTickets = require('../helpers/generateTickets');
+const shuffleArray = require('../helpers/shuffle');
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const mineBlocks = require("../helpers/mineBlocks")
+const expectThrow = require('../helpers/expectThrow.js')
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const stakeDelegate = require('../helpers/stakeDelegate')
 
-
-contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
+describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
   let resultPublicationTime, token, stakingContract, operatorContract,
   owner = accounts[0], magpie = accounts[4], ticket,
@@ -30,11 +31,11 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
   before(async () => {
 
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorStub')
     );
 
     token = contracts.token;

@@ -1,17 +1,25 @@
-import mineBlocks from '../helpers/mineBlocks';
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
-const GroupsTerminationStub = artifacts.require('./stubs/GroupsTerminationStub.sol')
-const Groups = artifacts.require('./libraries/operator/Groups.sol');
+const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
+const assert = require('chai').assert
+const mineBlocks = require("../helpers/mineBlocks")
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {contract, accounts} = require("@openzeppelin/test-environment")
+const GroupsTerminationStub = contract.fromArtifact('GroupsTerminationStub')
+const Groups = contract.fromArtifact('Groups');
+const BLS = contract.fromArtifact('BLS');
 
-contract('KeepRandomBeaconOperator/GroupTermination', function(accounts) {
+describe('KeepRandomBeaconOperator/GroupTermination', function() {
     let groups;
 
     const groupActiveTime = 5;
 
     before(async () => {
+      const bls = await BLS.new({from: accounts[0]});
+      await Groups.detectNetwork()
+      await Groups.link("BLS", bls.address);
       const groupsLibrary = await Groups.new();
+      await GroupsTerminationStub.detectNetwork()
       await GroupsTerminationStub.link("Groups", groupsLibrary.address);
+      await GroupsTerminationStub.detectNetwork()
       groups = await GroupsTerminationStub.new();
     });
 
