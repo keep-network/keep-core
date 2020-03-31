@@ -11,7 +11,7 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const Registry = artifacts.require("./Registry.sol");
 
-contract.only('TokenStaking', function() {
+contract('TokenStaking', function() {
   let token, registry, stakingContract,
     minimumStakeSteps, minimumStakeSchedule, keepDecimals;
   const initializationPeriod = 10;

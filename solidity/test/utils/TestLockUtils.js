@@ -7,7 +7,7 @@ const expect = chai.expect
 
 const LockStub = artifacts.require('./stubs/LockStub.sol');
 
-contract.only('LockStub', (accounts) => {
+contract('LockStub', (accounts) => {
   let locks;
 
   const alice = accounts[0];
