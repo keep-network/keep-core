@@ -1,4 +1,4 @@
-package groupselection
+package group
 
 import (
 	"crypto/ecdsa"
@@ -46,9 +46,9 @@ func NewMembershipValidator(
 
 // IsInGroup returns true if party with the given public key has been selected
 // to the group. Otherwise, function returns false.
-func (mv *MembershipValidator) IsInGroup(publicKey ecdsa.PublicKey) bool {
+func (mv *MembershipValidator) IsInGroup(publicKey *ecdsa.PublicKey) bool {
 	authorAddress := hex.EncodeToString(
-		mv.signing.PublicKeyToAddress(publicKey),
+		mv.signing.PublicKeyToAddress(*publicKey),
 	)
 	_, isInGroup := mv.members[authorAddress]
 	return isInGroup
@@ -60,10 +60,10 @@ func (mv *MembershipValidator) IsInGroup(publicKey ecdsa.PublicKey) bool {
 // to the group.
 func (mv *MembershipValidator) IsSelectedAtIndex(
 	index int,
-	publicKey ecdsa.PublicKey,
+	publicKey *ecdsa.PublicKey,
 ) bool {
 	authorAddress := hex.EncodeToString(
-		mv.signing.PublicKeyToAddress(publicKey),
+		mv.signing.PublicKeyToAddress(*publicKey),
 	)
 	positions, isInGroup := mv.members[authorAddress]
 
