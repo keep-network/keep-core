@@ -247,6 +247,14 @@ You can see our Ropsten Kube configurations https://github.com/keep-network/keep
 Below are some of the key things to look out for to make sure you're booted and connected to the
 network:
 
+=== Configurable Values
+```
+LOG_LEVEL=DEBUG
+IPFS_LOGGING_FMT=nocolor
+GOLOG_FILE=/var/log/keep/keep.log
+GOLOG_TRACING_FILE=/var/log/keep/trace.json
+```
+
 === Startup
 ```
 ▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
