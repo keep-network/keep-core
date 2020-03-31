@@ -6,11 +6,11 @@
 :numbered:
 toc::[]
 
-== System Recommendations
+== System Considerations
 
 - It is paramount that Keep nodes remain available to the Keep network. We encourage a stable and redundant internet connection.
 - A connection to a production grade self-hosted or third party Ethereum node deployment.
-- Persistent storage that will survive a VM or container rotation.
+- Persistent and redundant storage that will survive a VM or container rotation, and disk failure.
 - Machines:
 
 [%header,cols=2*]
@@ -222,7 +222,7 @@ docker run -dit \
 keep-client --config /mnt/keep-client/config/keep-client-config.toml start
 ```
 
-== Deployment
+== Deployment Considerations
 
 Deployment constraints are as follows:
 
