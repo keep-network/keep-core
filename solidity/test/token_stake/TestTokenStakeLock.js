@@ -124,6 +124,14 @@ contract('TokenStaking', function(accounts) {
       await stakingContract.recoverStake(operator, {from: operator})
       // ok, no revert
     })
+
+    it("should be able to reduce the duration of existing locks", async () => {
+      await stakingContract.lockStake(operator, undelegationPeriod, {from: operatorContract})
+      await undelegate(operator)
+
+      await stakingContract.recoverStake(operator, {from: operator})
+      // ok, no revert
+    })
   })
 
 
