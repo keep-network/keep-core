@@ -1,4 +1,6 @@
-export default async promise => {
+var assert = require('chai').assert
+
+module.exports = async promise => {
   try {
     await promise;
   } catch (error) {

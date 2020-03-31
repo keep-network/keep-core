@@ -1,10 +1,11 @@
-import generateTickets from './generateTickets';
-import mineBlocks from './mineBlocks';
-import increaseTime from './increaseTime';
-import packTicket from './packTicket';
-import {sign} from './signature';
-import {bls} from './data';
-import stakeDelegate from './stakeDelegate';
+const generateTickets = require('./generateTickets')
+const mineBlocks =  require('./mineBlocks')
+const {increaseTime} =  require('./increaseTime')
+const packTicket =  require('./packTicket')
+const sign =  require('./signature')
+const blsData =  require('./data.js')
+const stakeDelegate =  require('./stakeDelegate')
+const {web3} = require("@openzeppelin/test-environment")
 
 
 // Function stakes first three accounts provided in the array of accounts and
@@ -18,7 +19,7 @@ import stakeDelegate from './stakeDelegate';
 //
 // This function should be usually used on the result of initContracts which
 // initializes contracts up to the point when genesis should be performed.
-export default async function stakeAndGenesis(accounts, contracts) {
+async function stakeAndGenesis(accounts, contracts) {
     let operator1 = accounts[1];
     let operator2 = accounts[2];
     let operator3 = accounts[3];
@@ -84,7 +85,7 @@ export default async function stakeAndGenesis(accounts, contracts) {
     mineBlocks(resultPublicationTime);
 
     let misbehaved = '0x';
-    let resultHash = web3.utils.soliditySha3(bls.groupPubKey, misbehaved);
+    let resultHash = web3.utils.soliditySha3(blsData.groupPubKey, misbehaved);
 
     let signingMemberIndices = [];
     let signatures = undefined;
@@ -97,7 +98,9 @@ export default async function stakeAndGenesis(accounts, contracts) {
     }
 
     await operatorContract.submitDkgResult(
-      1, bls.groupPubKey, misbehaved, signatures, signingMemberIndices,
+      1, blsData.groupPubKey, misbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0]}
     );
 }
+
+module.exports = stakeAndGenesis

@@ -1,7 +1,8 @@
-import latestTime from './latestTime'
+const latestTime = require('./latestTime')
+const {web3} = require("@openzeppelin/test-environment")
 
 // Increases testrpc time by the passed duration in seconds
-export default function increaseTime(duration) {
+function increaseTime(duration) {
   const id = Date.now()
 
   return new Promise((resolve, reject) => {
@@ -31,14 +32,14 @@ export default function increaseTime(duration) {
  *
  * @param target time in seconds
  */
-export const increaseTimeTo = async target => {
+const increaseTimeTo = async target => {
   let now = await latestTime();
   if (target < now) throw Error(`Cannot increase current time(${now}) to a moment in the past(${target})`);
   let diff = target - now;
   return increaseTime(diff);
 }
 
-export const duration = {
+const duration = {
   seconds: function(val) { return val},
   minutes: function(val) { return val * this.seconds(60) },
   hours:   function(val) { return val * this.minutes(60) },
@@ -46,3 +47,7 @@ export const duration = {
   weeks:   function(val) { return val * this.days(7) },
   years:   function(val) { return val * this.days(365)}
 };
+
+module.exports.increaseTime = increaseTime
+module.exports.increaseTimeTo = increaseTimeTo
+module.exports.duration = duration

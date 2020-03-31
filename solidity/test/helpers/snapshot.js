@@ -1,13 +1,14 @@
 // Snapshots are a feature of some EVM implementations for improved dev UX.
 // They allow us to snapshot the entire state of the chain, and restore it at a later point.
 // https://github.com/trufflesuite/ganache-core/blob/master/README.md#custom-methods
+const {web3} = require("@openzeppelin/test-environment")
 
 const snapshotIdsStack = [];
 
 /**
  * Snapshot the state of the blockchain at the current block
  */
-export async function createSnapshot() {
+async function createSnapshot() {
     return await new Promise((res, rej) => {
         web3.currentProvider.send({
             jsonrpc: '2.0',
@@ -25,7 +26,7 @@ export async function createSnapshot() {
 /**
  * Restores the chain to a latest snapshot
  */
-export async function restoreSnapshot() {
+async function restoreSnapshot() {
     const snapshotId = snapshotIdsStack.pop();
     return await new Promise((res, rej) => {
         web3.currentProvider.send({
@@ -38,3 +39,6 @@ export async function restoreSnapshot() {
         })
     })
 }
+
+module.exports.createSnapshot = createSnapshot
+module.exports.restoreSnapshot = restoreSnapshot

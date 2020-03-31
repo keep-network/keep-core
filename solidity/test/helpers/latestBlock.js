@@ -1,4 +1,6 @@
 // Returns the number of the last mined block
-export default async promise => {
+const {web3} = require("@openzeppelin/test-environment")
+
+module.exports = async promise => {
     return (await web3.eth.getBlockNumber());
 }
