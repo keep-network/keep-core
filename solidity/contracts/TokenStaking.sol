@@ -250,11 +250,24 @@ contract TokenStaking is StakeDelegatable {
     function lockStake(
         address operator,
         uint256 duration
-    ) public {
+    ) public onlyApprovedOperatorContract(msg.sender) {
         require(
             isAuthorizedForOperator(operator, msg.sender),
             "Not authorized"
         );
+
+        (, uint256 createdAt, uint256 undelegatedAt) =
+            operators[operator].packedParams.unpack();
+
+        require(
+            block.timestamp > createdAt.add(initializationPeriod),
+            "Operator not initialized"
+        );
+        require(
+            (undelegatedAt == 0) || (block.timestamp <= undelegatedAt),
+            "Operator undelegating"
+        );
+
         operatorLocks[operator].setLock(
             msg.sender,
             uint96(block.timestamp.add(duration))

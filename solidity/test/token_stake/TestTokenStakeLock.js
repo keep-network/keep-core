@@ -9,15 +9,20 @@ const Registry = artifacts.require("./Registry.sol");
 contract('TokenStaking', function(accounts) {
   let token, registry, stakingContract, stakingAmount, minimumStake;
   const owner = accounts[0],
-    operator = accounts[1],
-    magpie = accounts[2],
-    authorizer = accounts[3],
-    operatorContract = accounts[4],
-    operatorContract2 = accounts[5];
+    operator1 = accounts[1],
+    operator2 = accounts[2],
+    operator3 = accounts[3],
+    magpie = accounts[4],
+    authorizer = accounts[5],
+    operatorContract = accounts[6],
+    operatorContract2 = accounts[7];
 
   const initializationPeriod = duration.minutes(10);
   const undelegationPeriod = duration.minutes(10);
   const lockPeriod = duration.weeks(12);
+
+  let createdAt;
+  let operator;
 
   before(async () => {
     token = await KeepToken.new();
@@ -31,22 +36,6 @@ contract('TokenStaking', function(accounts) {
 
     minimumStake = await stakingContract.minimumStake();
     stakingAmount = minimumStake.muln(20);
-
-    let tx = await delegate(operator, stakingAmount)
-    await stakingContract.authorizeOperatorContract(
-      operator,
-      operatorContract,
-      { from: authorizer },
-    );
-
-    await stakingContract.authorizeOperatorContract(
-      operator,
-      operatorContract2,
-      { from: authorizer },
-    );
-
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
   });
 
   beforeEach(async () => {
@@ -77,8 +66,75 @@ contract('TokenStaking', function(accounts) {
     await increaseTimeTo(undelegatedAt + undelegationPeriod + 1)
   }
 
+  describe("setting locks", async () => {
+    before(async () => {
+      operator = operator1;
+      let tx = await delegate(operator, stakingAmount)
+      await stakingContract.authorizeOperatorContract(
+        operator,
+        operatorContract,
+        { from: authorizer },
+      );
+
+      createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    })
+
+    it("should not permit locks on non-initialized operators", async () => {
+      await expectThrowWithMessage(
+        stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
+        "Operator not initialized"
+      )
+    })
+
+    it("should not permit locks on undelegating operators", async () => {
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
+      let tx = await stakingContract.undelegate(operator, {from: operator})
+      let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+      await increaseTimeTo(undelegatedAt + 1)
+      await expectThrowWithMessage(
+        stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
+        "Operator undelegating"
+      )
+    })
+
+    it("should not permit locks from unauthorized operator contracts", async () => {
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
+      await expectThrowWithMessage(
+        stakingContract.lockStake(operator, lockPeriod, {from: operatorContract2}),
+        "Not authorized"
+      )
+    })
+
+    it("should not permit locks from disabled operator contracts", async () => {
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
+      await registry.disableOperatorContract(operatorContract)
+      await expectThrowWithMessage(
+        stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
+        "Operator contract is not approved"
+      )
+    })
+
+    it("should not permit locks from unapproved operator contracts", async () => {
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
+      await expectThrowWithMessage(
+        stakingContract.lockStake(operator, lockPeriod, {from: operator}),
+        "Operator contract is not approved"
+      )
+    })
+  })
+
   describe("single lock", async () => {
     before(async () => {
+      operator = operator2;
+      let tx = await delegate(operator, stakingAmount)
+      await stakingContract.authorizeOperatorContract(
+        operator,
+        operatorContract,
+        { from: authorizer },
+      );
+
+      createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       await stakingContract.lockStake(operator, lockPeriod, {from: operatorContract})
     })
 
@@ -137,6 +193,22 @@ contract('TokenStaking', function(accounts) {
 
   describe("multiple locks", async () => {
     before(async () => {
+      operator = operator3;
+      let tx = await delegate(operator, stakingAmount)
+      await stakingContract.authorizeOperatorContract(
+        operator,
+        operatorContract,
+        { from: authorizer },
+      );
+
+      await stakingContract.authorizeOperatorContract(
+        operator,
+        operatorContract2,
+        { from: authorizer },
+      );
+
+      createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
       await stakingContract.lockStake(operator, lockPeriod, {from: operatorContract})
       await stakingContract.lockStake(operator, lockPeriod, {from: operatorContract2})
     })
