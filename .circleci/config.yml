@@ -179,7 +179,7 @@ jobs:
           at: /tmp/keep-client
       - checkout
       - run:
-          name: Copy contract artifacts
+          name: Bump and publish npm package
           working_directory: ~/project/solidity
           command: |
             set -x
