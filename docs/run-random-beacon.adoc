@@ -226,7 +226,7 @@ keep-client --config /mnt/keep-client/config/keep-client-config.toml start
 
 Deployment constraints are as follows:
 
-- Each beacon client deployment requires a unique operator address.
+- Each beacon client deployment requires a unique operator account.
 - Each beacon client deployment requires a unique IP address.
 
 === Kubernetes
