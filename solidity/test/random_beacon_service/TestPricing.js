@@ -53,7 +53,7 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
     let gasPriceCeiling = web3.utils.toBN(web3.utils.toWei('20', 'gwei'))
     await operatorContract.setGasPriceCeiling(gasPriceCeiling)
 
-    let callbackGas = web3.utils.toBN(await callbackContract.__beaconCallback.estimateGas(bls.groupSignature))
+    let callbackGas = web3.utils.toBN(await callbackContract.__beaconCallback.estimateGas(blsData.groupSignature))
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     
     await serviceContract.methods['requestRelayEntry(address,uint256)'](

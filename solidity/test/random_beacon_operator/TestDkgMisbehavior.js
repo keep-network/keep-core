@@ -1,3 +1,4 @@
+const blsData = require("../helpers/data")
 const {contract, web3, accounts} = require("@openzeppelin/test-environment")
 var assert = require('chai').assert
 const initContracts = require('../helpers/initContracts')
@@ -20,7 +21,7 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
     authorizer = owner,
     selectedParticipants, signatures, signingMemberIndices = [],
     misbehaved = '0x0305', // disqualified operator3, inactive operator5
-    groupPubKey = bls.groupPubKey,
+    groupPubKey = blsData.groupPubKey,
     resultHash = web3.utils.soliditySha3(groupPubKey, misbehaved)
 
   before(async () => {

@@ -1,3 +1,4 @@
+const blsData = require("../helpers/data");
 const sign = require('../helpers/signature');
 const {increaseTime} = require('../helpers/increaseTime');
 const packTicket = require('../helpers/packTicket')
@@ -9,6 +10,7 @@ const mineBlocks = require("../helpers/mineBlocks")
 const expectThrow = require('../helpers/expectThrow.js')
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {expectRevert} = require("@openzeppelin/test-helpers")
 const stakeDelegate = require('../helpers/stakeDelegate')
 
 describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
@@ -26,7 +28,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
   selectedParticipants, signatures, signingMemberIndices = [],
   noMisbehaved = '0x',
   maxMisbehaved = '0x010203040506070809', // 20 - 11 = 9 max could misbehave
-  groupPubKey = bls.groupPubKey,
+  groupPubKey = blsData.groupPubKey,
   resultHash = web3.utils.soliditySha3(groupPubKey, noMisbehaved);
 
   before(async () => {
