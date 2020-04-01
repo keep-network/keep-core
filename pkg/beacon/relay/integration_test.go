@@ -3,9 +3,12 @@
 package relay_test
 
 import (
+	"crypto/rand"
 	"fmt"
 	"math/big"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
@@ -137,6 +140,66 @@ func TestInactiveMemberPublicKeySharesReconstructionAndSigning(t *testing.T) {
 	}
 
 	signingMembersCount := honestThreshold
+	dkgResult, signingResult := runTestWithInterceptor(
+		t,
+		groupSize,
+		honestThreshold,
+		signingMembersCount,
+		interceptor,
+	)
+
+	dkgtest.AssertDkgResultPublished(t, dkgResult)
+	dkgtest.AssertSamePublicKey(t, dkgResult)
+	entrytest.AssertEntryPublished(t, signingResult)
+	entrytest.AssertNoSignerFailures(t, signingResult)
+
+	groupPublicKey, err := getFirstGroupPublicKey(dkgResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	newEntry, err := signingResult.EntryValue()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !bls.VerifyG1(groupPublicKey, previousEntryG1(), newEntry) {
+		t.Errorf("threshold signature failed BLS verification")
+	}
+}
+
+func TestInvalidSignatureSharesExists(t *testing.T) {
+	t.Parallel()
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		signatureShareMessage, ok := msg.(*entry.SignatureShareMessage)
+
+		// Member 1 sends shares which could not be unmarshalled as a G1 point.
+		if ok && signatureShareMessage.SenderID() == group.MemberIndex(1) {
+			return entry.NewSignatureShareMessage(
+				signatureShareMessage.SenderID(),
+				[]byte{0, 1},
+			)
+		}
+
+		// Member 2 sends a proper G1 point which is invalid in terms of
+		// current relay entry request.
+		if ok && signatureShareMessage.SenderID() == group.MemberIndex(2) {
+			_, randomG1, err := bn256.RandomG1(rand.Reader)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			return entry.NewSignatureShareMessage(
+				signatureShareMessage.SenderID(),
+				randomG1.Marshal(),
+			)
+		}
+
+		return msg
+	}
+
+	signingMembersCount := groupSize
 	dkgResult, signingResult := runTestWithInterceptor(
 		t,
 		groupSize,
