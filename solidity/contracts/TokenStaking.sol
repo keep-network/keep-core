@@ -6,6 +6,21 @@ import "./utils/PercentUtils.sol";
 import "./Registry.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
+// An operator contract can delegate authority to other operator contracts
+// by implementing the AuthorityDelegator interface.
+//
+// To delegate authority,
+// the recipient of delegated authority must call `claimDelegatedAuthority`,
+// specifying the contract it wants delegated authority from.
+// The staking contract calls `delegator.__isRecognized(recipient)`
+// and if the call returns `true`,
+// the named delegator contract is set as the recipient's authority delegator.
+// Any future checks of registry approval or per-operator authorization
+// will transparently mirror the delegator's status.
+//
+// Authority can be delegated recursively;
+// an operator contract receiving delegated authority
+// can recognize other operator contracts as recipients of its authority.
 interface AuthorityDelegator {
     function __isRecognized(address delegatedAuthorityRecipient) external returns (bool);
 }
