@@ -354,6 +354,9 @@ contract TokenStaking is StakeDelegatable {
     /**
      * @dev Authorizes operator contract to access staked token balance of
      * the provided operator. Can only be executed by stake operator authorizer.
+     * Contracts using delegated authority
+     * cannot be authorized with `authorizeOperatorContract`.
+     * Instead, authorize `getAuthoritySource(_operatorContract)`.
      * @param _operator address of stake operator.
      * @param _operatorContract address of operator contract.
      */
@@ -361,6 +364,10 @@ contract TokenStaking is StakeDelegatable {
         public
         onlyOperatorAuthorizer(_operator)
         onlyApprovedOperatorContract(_operatorContract) {
+        require(
+            getAuthoritySource(_operatorContract) == _operatorContract,
+            "Contract uses delegated authority"
+        );
         authorizations[_operatorContract][_operator] = true;
     }
 

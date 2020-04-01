@@ -186,6 +186,19 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
     })
   })
 
+  describe("authorizeOperatorContract", async () => {
+    it("doesn't authorize contracts using delegated authority", async () => {
+      await expectThrowWithMessage(
+        stakingContract.authorizeOperatorContract(
+          operator,
+          recognizedContract,
+          {from: authorizer}
+        ),
+        "Contract uses delegated authority"
+      );
+    })
+  })
+
   describe("slash", async () => {
     it("uses delegated authorization correctly", async () => {
       await expectThrowWithMessage(
