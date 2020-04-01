@@ -74,10 +74,10 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
       Buffer.from(operator.substr(2), 'hex'),
       Buffer.from(authorizer.substr(2), 'hex')
     ]);
-    
+
     return token.approveAndCall(
-      stakingContract.address, amount, 
-      '0x' + data.toString('hex'), 
+      stakingContract.address, amount,
+      '0x' + data.toString('hex'),
       {from: owner}
     );
   }
@@ -227,6 +227,16 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
         {from: recognizedContract}
       );
       // no error
+    })
+  })
+
+  describe("eligibleStake", async () => {
+    it("uses delegated authorization correctly", async () => {
+      expect(await stakingContract.eligibleStake(operator, recognizedContract))
+        .to.eq.BN(0);
+      await authorize(authorityDelegator);
+      expect(await stakingContract.eligibleStake(operator, recognizedContract))
+        .to.eq.BN(stakingAmount);
     })
   })
 })
