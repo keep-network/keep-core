@@ -34,7 +34,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
 
   it("should correctly evaluate delay factor right after the request", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
     let delayFactor = await operatorContract.delayFactor.call();        
 
@@ -44,7 +44,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
 
   it("should correctly evaluate delay factor at the first submission block", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
     mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1));
 
@@ -56,7 +56,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
 
   it("should correctly evaluate delay factor at the second submission block", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
     mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(2));
 
@@ -68,7 +68,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
 
   it("should correctly evaluate delay factor in the last block before timeout", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
     mineBlocks(await operatorContract.relayEntryTimeout());
 
@@ -85,7 +85,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     await operatorContract.setGasPriceCeiling(140000, {from: accounts[0]});
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
     // No delay so entire group member base reward is paid and nothing
     // goes to the subsidy pool.
@@ -120,7 +120,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     await operatorContract.setGasPriceCeiling(150000, {from: accounts[0]});
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});  
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});  
 
     mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1)); 
 
@@ -157,7 +157,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     await operatorContract.setGasPriceCeiling(1400000, {from: accounts[0]});
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});  
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});  
 
     mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(2));  
 
@@ -213,7 +213,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     await operatorContract.setGasPriceCeiling(2000000, {from: accounts[0]});
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate}); 
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]}); 
 
     mineBlocks(await operatorContract.relayEntryTimeout());
 

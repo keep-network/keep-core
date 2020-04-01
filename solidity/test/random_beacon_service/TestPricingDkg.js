@@ -45,7 +45,7 @@ describe('KeepRandomBeaconService/PricingDkg', () => {
     it("should not trigger new group selection when there are not sufficient " +
        "funds in the DKG fee pool", async () => { 
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
         let contractBalance = await web3.eth.getBalance(serviceContract.address);
 
@@ -66,7 +66,7 @@ describe('KeepRandomBeaconService/PricingDkg', () => {
     it("should trigger new group selection when there are sufficient funds in the " +
        "DKG fee pool", async () => {
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
         let sufficientPoolFunds = web3.utils.toBN(groupCreationFee);
         
@@ -84,7 +84,7 @@ describe('KeepRandomBeaconService/PricingDkg', () => {
         await serviceContract.fundDkgFeePool({value: 3 * groupCreationFee});
   
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
         await operatorContract.relayEntry(blsData.groupSignature);
 
         assert.isTrue(
@@ -94,7 +94,7 @@ describe('KeepRandomBeaconService/PricingDkg', () => {
   
         let startBlock = await operatorContract.getTicketSubmissionStartBlock();
 
-        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
         let contractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
         await operatorContract.relayEntry(blsData.nextGroupSignature);
 

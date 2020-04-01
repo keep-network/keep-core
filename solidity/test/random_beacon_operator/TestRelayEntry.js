@@ -29,7 +29,7 @@ describe('KeepRandomBeaconOperator/RelayEntry', () => {
     await operatorContract.setGroupMembers(group, [accounts[0], accounts[1], accounts[2]]);
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
   });
 
   beforeEach(async () => {

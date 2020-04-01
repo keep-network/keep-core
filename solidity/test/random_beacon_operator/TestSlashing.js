@@ -54,7 +54,7 @@ describe('KeepRandomBeaconOperator/Slashing', function() {
     increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate})
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]})
 
     await registry.setRegistryKeeper(registryKeeper, {from: accounts[0]})
 
@@ -172,7 +172,7 @@ describe('KeepRandomBeaconOperator/Slashing', function() {
 
     // Group should be terminated, expecting total number of groups to become 0
     await expectThrowWithMessage(
-      serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate}),
+      serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]}),
       "Total number of groups must be greater than zero."
     )
   })
