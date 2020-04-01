@@ -2,7 +2,6 @@ package entry
 
 import (
 	"context"
-	"fmt"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -26,7 +25,7 @@ type signingStateBase struct {
 
 	signer *dkg.ThresholdSigner
 
-	previousEntry []byte
+	previousEntry *bn256.G1
 
 	honestThreshold int
 }
@@ -49,10 +48,7 @@ func (sss *signatureShareState) ActiveBlocks() uint64 {
 }
 
 func (sss *signatureShareState) Initiate(ctx context.Context) error {
-	share, err := sss.signer.CalculateSignatureShare(sss.previousEntry)
-	if err != nil {
-		return fmt.Errorf("could not evaluate signature share: [%v]", err)
-	}
+	share := sss.signer.CalculateSignatureShare(sss.previousEntry)
 
 	sss.selfSignatureShare = share
 
@@ -125,12 +121,6 @@ func (scs *signatureCompleteState) Initiate(ctx context.Context) error {
 		scs.MemberIndex(),
 	)
 
-	previousEntryG1 := new(bn256.G1)
-	_, err := previousEntryG1.Unmarshal(scs.previousEntry)
-	if err != nil {
-		return err
-	}
-
 	for _, message := range scs.previousPhaseMessages {
 		share := new(bn256.G1)
 		_, err := share.Unmarshal(message.shareBytes)
@@ -153,7 +143,7 @@ func (scs *signatureCompleteState) Initiate(ctx context.Context) error {
 				continue
 			}
 
-			if bls.VerifyG1(publicKeyShare, previousEntryG1, share) {
+			if bls.VerifyG1(publicKeyShare, scs.previousEntry, share) {
 				logger.Debugf(
 					"[member:%v] accepting signature share from member [%v]",
 					scs.MemberIndex(),

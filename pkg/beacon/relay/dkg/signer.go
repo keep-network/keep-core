@@ -1,7 +1,6 @@
 package dkg
 
 import (
-	"fmt"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -56,14 +55,8 @@ func (ts *ThresholdSigner) GroupPublicKeyBytesCompressed() []byte {
 
 // CalculateSignatureShare takes the message and calculates signer's signature
 // share over that message.
-func (ts *ThresholdSigner) CalculateSignatureShare(message []byte) (*bn256.G1, error) {
-	g1 := new(bn256.G1)
-	_, err := g1.Unmarshal(message)
-	if err != nil {
-		return nil, fmt.Errorf("message is not valid G1 point: [%v]", err)
-	}
-
-	return bls.SignG1(ts.groupPrivateKeyShare, g1), nil
+func (ts *ThresholdSigner) CalculateSignatureShare(message *bn256.G1) *bn256.G1 {
+	return bls.SignG1(ts.groupPrivateKeyShare, message)
 }
 
 // CompleteSignature accepts signature shares from all group threshold signers
