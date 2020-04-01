@@ -125,7 +125,7 @@ func (scs *signatureCompleteState) Initiate(ctx context.Context) error {
 		share := new(bn256.G1)
 		_, err := share.Unmarshal(message.shareBytes)
 		if err != nil {
-			logger.Errorf(
+			logger.Warningf(
 				"[member:%v] failed to unmarshal signature share from member [%v]: [%v]",
 				scs.MemberIndex(),
 				message.senderID,
