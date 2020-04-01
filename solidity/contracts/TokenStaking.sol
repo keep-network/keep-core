@@ -475,4 +475,10 @@ contract TokenStaking is StakeDelegatable {
         );
         delegatedAuthority[msg.sender] = delegatedAuthoritySource;
     }
+
+    function getDelegatedAuthority(
+        address delegatedAuthorityRecipient
+    ) public view returns (address) {
+        return delegatedAuthority[delegatedAuthorityRecipient];
+    }
 }
