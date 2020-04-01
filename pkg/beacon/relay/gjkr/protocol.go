@@ -893,7 +893,8 @@ func (sm *SharingMember) isValidMemberPublicKeySharePointsMessage(
 }
 
 // isShareValidAgainstPublicKeySharePoints verifies if public key share points
-// are valid for passed share S.
+// are valid for passed share S generated for the specific member, denoted as
+// a share receiver.
 //
 // The `j` member calculated public key share points for their polynomial
 // coefficients and share `s_ji` with a polynomial for a member `i`. In this
@@ -906,7 +907,7 @@ func (sm *SharingMember) isValidMemberPublicKeySharePointsMessage(
 // What, using elliptic curve, is the same as:
 // G * s_ji == Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
-	receiverID group.MemberIndex,
+	shareReceiverID group.MemberIndex,
 	shareS *big.Int,
 	publicKeySharePoints []*bn256.G2,
 ) bool {
@@ -914,22 +915,22 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 		return false
 	}
 
-	sum := sm.publicKeyShare(receiverID, publicKeySharePoints)
+	sum := sm.publicKeyShare(shareReceiverID, publicKeySharePoints)
 	gs := new(bn256.G2).ScalarBaseMult(shareS) // G * s_ji
 
 	return gs.String() == sum.String()
 }
 
-// publicKeyShare returns public key share for given receiver based on given
-// public key share points.
+// publicKeyShare returns public key share for given share receiver based on
+// given public key share points.
 func (sm *SharingMember) publicKeyShare(
-	receiverID group.MemberIndex,
+	shareReceiverID group.MemberIndex,
 	publicKeySharePoints []*bn256.G2,
 ) *bn256.G2 {
 	var sum *bn256.G2
 	// Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 	for k, a := range publicKeySharePoints {
-		aj := new(bn256.G2).ScalarMult(a, pow(receiverID, k)) // A_j[k] * (i^k)
+		aj := new(bn256.G2).ScalarMult(a, pow(shareReceiverID, k)) // A_j[k] * (i^k)
 		if sum == nil {
 			sum = aj
 		} else {
@@ -1682,22 +1683,22 @@ func (cm *CombiningMember) ComputeGroupPublicKeyShares() {
 		groupPublicKeyShares := make(map[group.MemberIndex]*bn256.G2)
 
 		// Calculate group public key shares for all other operating members.
-		for _, receiverID := range cm.group.OperatingMemberIDs() {
-			if receiverID == cm.ID {
+		for _, operatingMemberID := range cm.group.OperatingMemberIDs() {
+			if operatingMemberID == cm.ID {
 				continue
 			}
 
 			// Calculate the first public key share for the given operating
 			// member based on the current member public key share points.
-			sum := cm.publicKeyShare(receiverID, cm.publicKeySharePoints)
+			sum := cm.publicKeyShare(operatingMemberID, cm.publicKeySharePoints)
 
 			// Iterate through the `QUAL` set and calculate subsequent
 			// public key share for the given operating member based on...
-			for senderID := range cm.receivedQualifiedSharesS {
+			for qualifiedMemberID := range cm.receivedQualifiedSharesS {
 				// ...received and valid member's public key share points...
-				if publicKeySharePoints, ok := cm.receivedValidPeerPublicKeySharePoints[senderID]; ok {
+				if publicKeySharePoints, ok := cm.receivedValidPeerPublicKeySharePoints[qualifiedMemberID]; ok {
 					publicKeyShare := cm.publicKeyShare(
-						receiverID,
+						operatingMemberID,
 						publicKeySharePoints,
 					)
 					sum = new(bn256.G2).Add(sum, publicKeyShare)
@@ -1706,9 +1707,9 @@ func (cm *CombiningMember) ComputeGroupPublicKeyShares() {
 					// the public key share.
 				} else {
 					for _, shares := range cm.revealedMisbehavedMembersShares {
-						if shares.misbehavedMemberID == senderID {
+						if shares.misbehavedMemberID == qualifiedMemberID {
 							publicKeyShare := new(bn256.G2).ScalarBaseMult(
-								shares.peerSharesS[receiverID],
+								shares.peerSharesS[operatingMemberID],
 							)
 							sum = new(bn256.G2).Add(sum, publicKeyShare)
 						}
@@ -1716,7 +1717,7 @@ func (cm *CombiningMember) ComputeGroupPublicKeyShares() {
 				}
 			}
 
-			groupPublicKeyShares[receiverID] = sum
+			groupPublicKeyShares[operatingMemberID] = sum
 		}
 
 		cm.groupPublicKeySharesChannel <- groupPublicKeyShares

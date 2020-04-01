@@ -142,7 +142,7 @@ func (scs *signatureCompleteState) Initiate(ctx context.Context) error {
 				err,
 			)
 		} else {
-			publicKey, ok := scs.signer.GroupPublicKeyShares()[message.senderID]
+			publicKeyShare, ok := scs.signer.GroupPublicKeyShares()[message.senderID]
 			if !ok {
 				logger.Warningf(
 					"[member:%v] could not validate signature share from "+
@@ -153,7 +153,7 @@ func (scs *signatureCompleteState) Initiate(ctx context.Context) error {
 				continue
 			}
 
-			if bls.VerifyG1(publicKey, previousEntryG1, share) {
+			if bls.VerifyG1(publicKeyShare, previousEntryG1, share) {
 				logger.Debugf(
 					"[member:%v] accepting signature share from member [%v]",
 					scs.MemberIndex(),
