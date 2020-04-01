@@ -19,6 +19,7 @@ func TestMembershipRoundtrip(t *testing.T) {
 		big.NewInt(1),
 		map[group.MemberIndex]*bn256.G2{
 			group.MemberIndex(1): new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
+			group.MemberIndex(2): new(bn256.G2).ScalarBaseMult(big.NewInt(11)),
 		},
 	)
 
