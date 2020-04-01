@@ -360,12 +360,12 @@ contract TokenStaking is StakeDelegatable {
         return false;
     }
 
-    /// @notice Get the active locks of the operator.
+    /// @notice Get the locks placed on the operator.
     /// @return creators The addresses of operator contracts
     /// that have placed a lock on the operator.
     /// @return expirations The expiration times
     /// of the locks placed on the operator.
-    function getActiveLocks(address operator)
+    function getLocks(address operator)
         public
         view
         returns (address[] memory creators, uint256[] memory expirations) {
