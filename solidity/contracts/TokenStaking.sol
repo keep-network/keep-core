@@ -199,12 +199,17 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @notice Recovers staked tokens and transfers them back to the owner. Recovering
-     * tokens can only be performed when the operator is finished undelegating.
+     * @notice Recovers staked tokens and transfers them back to the owner.
+     * Recovering tokens can only be performed when the operator finished
+     * undelegating.
      * @param _operator Operator address.
      */
     function recoverStake(address _operator) public {
         uint256 operatorParams = operators[_operator].packedParams;
+        require(
+            operatorParams.getUndelegationTimestamp() != 0,
+            "Can not recover without first undelegating"
+        );
         require(
             block.timestamp > operatorParams.getUndelegationTimestamp().add(undelegationPeriod),
             "Can not recover stake before undelegation period is over."

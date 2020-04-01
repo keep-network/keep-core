@@ -13,6 +13,10 @@ const stakeDelegate = require('../helpers/stakeDelegate')
 
 describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
+  const groupSize = 20;
+  const groupThreshold = 11;
+  const resultPublicationBlockStep = 3;
+
   let resultPublicationTime, token, stakingContract, operatorContract,
   owner = accounts[0], magpie = accounts[4], ticket,
   operator1 = accounts[0],
@@ -20,13 +24,10 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
   operator3 = accounts[2],
   operator4 = accounts[3],
   selectedParticipants, signatures, signingMemberIndices = [],
-  misbehaved = '0x',
-  groupPubKey = "0x1000000000000000000000000000000000000000000000000000000000000000",
-  resultHash = web3.utils.soliditySha3(groupPubKey, misbehaved);
-
-  const groupSize = 20;
-  const groupThreshold = 15;
-  const resultPublicationBlockStep = 3;
+  noMisbehaved = '0x',
+  maxMisbehaved = '0x010203040506070809', // 20 - 11 = 9 max could misbehave
+  groupPubKey = bls.groupPubKey,
+  resultHash = web3.utils.soliditySha3(groupPubKey, noMisbehaved);
 
   before(async () => {
 
@@ -113,7 +114,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await operatorContract.submitDkgResult(1, groupPubKey, misbehaved, signatures, signingMemberIndices, {from: selectedParticipants[0]})
+    await operatorContract.submitDkgResult(1, groupPubKey, noMisbehaved, signatures, signingMemberIndices, {from: selectedParticipants[0]})
     assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
@@ -129,7 +130,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     let expectedSubmitterReward = dkgGasEstimate.mul(await operatorContract.gasPriceCeiling());
 
     await operatorContract.submitDkgResult(
-      1, groupPubKey, misbehaved, signatures, signingMemberIndices,
+      1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0], gasPrice: submitterCustomGasPrice}
     )
 
@@ -148,7 +149,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     await operatorContract.setGasPriceCeiling(web3.utils.toWei(web3.utils.toBN(100), 'gwei'));
 
     await operatorContract.submitDkgResult(
-      1, groupPubKey, misbehaved, signatures, signingMemberIndices,
+      1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0], gasPrice: web3.utils.toWei(web3.utils.toBN(100), 'gwei')}
     )
     let updatedMagpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
@@ -174,7 +175,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await operatorContract.submitDkgResult(1, groupPubKey, misbehaved, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
+    await operatorContract.submitDkgResult(1, groupPubKey, noMisbehaved, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
     assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
@@ -192,7 +193,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
     // Should throw if non eligible submitter 2 tries to submit
     await expectThrow(operatorContract.submitDkgResult(
-      submitter2MemberIndex, groupPubKey, misbehaved, signatures, signingMemberIndices,
+      submitter2MemberIndex, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
       {from: submitter2})
     );
 
@@ -200,14 +201,14 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(eligibleBlockForSubmitter2 - currentBlock);
 
-    await operatorContract.submitDkgResult(submitter2MemberIndex, groupPubKey, misbehaved, signatures, signingMemberIndices, {from: submitter2})
+    await operatorContract.submitDkgResult(submitter2MemberIndex, groupPubKey, noMisbehaved, signatures, signingMemberIndices, {from: submitter2})
     assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
   it("should not be able to submit if submitter was not selected to be part of the group.", async function() {
     await expectThrow(operatorContract.submitDkgResult(
-      1, groupPubKey, misbehaved, signatures, signingMemberIndices, 
+      1, groupPubKey, noMisbehaved, signatures, signingMemberIndices, 
       {from: operator4})
     );
 
@@ -238,7 +239,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     mineBlocks(resultPublicationTime - currentBlock);
 
     await expectThrow(operatorContract.submitDkgResult(
-      1, groupPubKey, misbehaved, signatures, signingMemberIndices,
+      1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );
 
@@ -262,7 +263,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     mineBlocks(resultPublicationTime - currentBlock);
 
     await operatorContract.submitDkgResult(
-      1, groupPubKey, misbehaved, signatures, signingMemberIndices,
+      1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
 
       assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
@@ -286,10 +287,114 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     mineBlocks(resultPublicationTime - currentBlock);
 
     await expectThrow(operatorContract.submitDkgResult(
-      1, groupPubKey, misbehaved, signatures, signingMemberIndices,
+      1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0]})
     );
 
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
   });
+
+  it("should fail to submit with a public key having less than 128 bytes", async () => {
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(resultPublicationTime - currentBlock);
+  
+    let invalidGroupPubKey = groupPubKey.slice(0, -2)
+
+    let s = await signResult(invalidGroupPubKey, noMisbehaved)
+    await expectRevert(
+      operatorContract.submitDkgResult(
+        1, invalidGroupPubKey, noMisbehaved, s.signatures,
+        s.signingMemberIndices, {from: selectedParticipants[0]}
+      ),
+      "Malformed group public key"
+    )
+  })
+
+  it("should fail to submit with a public key having more than 128 bytes", async () => {
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(resultPublicationTime - currentBlock);
+  
+    let invalidGroupPubKey = groupPubKey + 'ff';
+
+    let s = await signResult(invalidGroupPubKey, noMisbehaved)
+    await expectRevert(
+      operatorContract.submitDkgResult(
+        1, invalidGroupPubKey, noMisbehaved, s.signatures,
+        s.signingMemberIndices, {from: selectedParticipants[0]}
+      ),
+      "Malformed group public key"
+    ) 
+  })
+
+  it("should fail to submit with too many misbehaved", async () => {
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(resultPublicationTime - currentBlock);
+
+    let invalidMisbehaved = maxMisbehaved + 'ff';
+
+    let s = await signResult(groupPubKey, invalidMisbehaved)
+    await expectRevert(
+      operatorContract.submitDkgResult(
+        1, groupPubKey, invalidMisbehaved, s.signatures,
+        s.signingMemberIndices, {from: selectedParticipants[0]}
+      ),
+      "Malformed misbehaved"
+    ) 
+  })
+
+  it("should allow to submit with maximum possible misbehaved", async () => {
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(resultPublicationTime - currentBlock);
+
+    let s = await signResult(groupPubKey, maxMisbehaved)
+
+    await operatorContract.submitDkgResult(
+      1, groupPubKey, maxMisbehaved, s.signatures,
+      s.signingMemberIndices, {from: selectedParticipants[0]}
+    )   
+    // ok, no exceptions
+  })
+
+  it("should not allow to submit with more signatures than the group size", async () => {
+    // Jump in time to when submitter becomes eligible to submit
+    let currentBlock = await web3.eth.getBlockNumber();
+    mineBlocks(resultPublicationTime - currentBlock);
+
+    let s = await signResult(groupPubKey, noMisbehaved)
+
+    let anotherSignature = await sign(resultHash, selectedParticipants[0])
+    s.signatures += anotherSignature.slice(2, anotherSignature.length)
+    s.signingMemberIndices.push(s.signingMemberIndices.length + 1)
+
+    await expectRevert(
+      operatorContract.submitDkgResult(
+        1, groupPubKey, noMisbehaved, s.signatures, 
+        s.signingMemberIndices, {from: selectedParticipants[0]}
+      ),
+      "Too many signatures" 
+    )  
+  })
+
+  async function signResult(groupPublicKey, misbehaved) {
+    let resultHash = web3.utils.soliditySha3(groupPublicKey, misbehaved)
+
+    signingMemberIndices = []
+    signatures = undefined
+
+    for(let i = 0; i < selectedParticipants.length; i++) {
+      let signature = await sign(resultHash, selectedParticipants[i])
+      signingMemberIndices.push(i+1)
+      if (signatures == undefined) signatures = signature
+      else signatures += signature.slice(2, signature.length)
+    }
+
+    return { 
+      signingMemberIndices: signingMemberIndices, 
+      signatures: signatures 
+    }
+  }
 })

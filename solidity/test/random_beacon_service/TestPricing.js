@@ -53,12 +53,11 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
     let gasPriceCeiling = web3.utils.toBN(web3.utils.toWei('20', 'gwei'))
     await operatorContract.setGasPriceCeiling(gasPriceCeiling)
 
-    let callbackGas = web3.utils.toBN(await callbackContract.callback.estimateGas(blsData.groupSignature))
+    let callbackGas = web3.utils.toBN(await callbackContract.__beaconCallback.estimateGas(bls.groupSignature))
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
+    await serviceContract.methods['requestRelayEntry(address,uint256)'](
       callbackContract.address,
-      "callback(uint256)",
       callbackGas,
       {value: entryFeeEstimate, from: requestor}
     );
@@ -80,9 +79,8 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
 
   it("should send group reward to each operator.", async function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    let tx = await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
+    let tx = await serviceContract.methods['requestRelayEntry(address,uint256)'](
       callbackContract.address,
-      "callback(uint256)",
       0,
       {value: entryFeeEstimate, from: requestor}
     );
@@ -132,9 +130,8 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
     // subsidy = 5250000000000000 - 207407407407407 * 5 - 210648148148148 = 4002314814814817 wei
   
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    let tx = await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
+    let tx = await serviceContract.methods['requestRelayEntry(address,uint256)'](
       callbackContract.address,
-      "callback(uint256)",
       0,
       {value: entryFeeEstimate, from: requestor}
     );

@@ -85,10 +85,10 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
   })
 
   it("should produce entry and execute callback if provided", async () => {
-    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
+    let callbackGas = await callbackContract.__beaconCallback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
-      callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate, from: customer}
+    await serviceContract.methods['requestRelayEntry(address,uint256)'](
+      callbackContract.address, callbackGas, {value: entryFeeEstimate, from: customer}
     );
     await operatorContract.relayEntry(blsData.groupSignature, {from: operator});
 
@@ -105,10 +105,10 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
 
   // gas price ceiling > tx.gasprice
   it("should reimburse submitter and customer for executing callback with lower tx.gasprice", async () => {
-    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
+    let callbackGas = await callbackContract.__beaconCallback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
-      callbackContract.address, "callback(uint256)", callbackGas, {
+    await serviceContract.methods['requestRelayEntry(address,uint256)'](
+      callbackContract.address, callbackGas, {
         value: entryFeeEstimate,
         from: customer
       }
@@ -137,10 +137,10 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
 
   // gas price ceiling == tx.gasprice
   it("should reimburse submitter and customer for executing callback with expected tx.gasprice", async () => {
-    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
+    let callbackGas = await callbackContract.__beaconCallback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
-      callbackContract.address, "callback(uint256)", callbackGas, {
+    await serviceContract.methods['requestRelayEntry(address,uint256)'](
+      callbackContract.address, callbackGas, {
         value: entryFeeEstimate,
         from: customer
       }
@@ -169,10 +169,10 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
 
   // gas price ceiling < tx.gasprice
   it("should reimburse submitter and customer for executing callback with higher tx.gasprice", async () => {
-    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
+    let callbackGas = await callbackContract.__beaconCallback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
-      callbackContract.address, "callback(uint256)", callbackGas, {
+    await serviceContract.methods['requestRelayEntry(address,uint256)'](
+      callbackContract.address, callbackGas, {
         value: entryFeeEstimate,
         from: customer
       }
@@ -206,10 +206,10 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
     await fundDkgPool();
 
     // Request relay entry with a callback
-    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
+    let callbackGas = await callbackContract.__beaconCallback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
-      callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate, from: customer}
+    await serviceContract.methods['requestRelayEntry(address,uint256)'](
+      callbackContract.address, callbackGas, {value: entryFeeEstimate, from: customer}
     );
   
     await operatorContract.relayEntry(blsData.groupSignature, {from: operator});
@@ -239,10 +239,10 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
     await fundDkgPool();
 
     // Request relay entry with a callback
-    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
+    let callbackGas = await callbackContract.__beaconCallback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
-      callbackContract.address, "callback(uint256)", callbackGas, {
+    await serviceContract.methods['requestRelayEntry(address,uint256)'](
+      callbackContract.address, callbackGas, {
         value: entryFeeEstimate,
         from: customer
       }
@@ -275,10 +275,10 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
     await fundDkgPool();
 
     // Request relay entry with a callback
-    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
+    let callbackGas = await callbackContract.__beaconCallback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
-      callbackContract.address, "callback(uint256)", callbackGas, {
+    await serviceContract.methods['requestRelayEntry(address,uint256)'](
+      callbackContract.address, callbackGas, {
         value: entryFeeEstimate,
         from: customer
       }
@@ -311,10 +311,10 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
     await fundDkgPool();
   
     // Request relay entry with a callback
-    let callbackGas = await callbackContract.callback.estimateGas(blsData.groupSignature);
+    let callbackGas = await callbackContract.__beaconCallback.estimateGas(bls.groupSignature);
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
-      callbackContract.address, "callback(uint256)", callbackGas, {
+    await serviceContract.methods['requestRelayEntry(address,uint256)'](
+      callbackContract.address, callbackGas, {
         value: entryFeeEstimate,
         from: customer
       }
@@ -349,8 +349,8 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
 
     let callbackGas = 1; // Requestor provides wrong gas
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
-      callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate, from: customer}
+    await serviceContract.methods['requestRelayEntry(address,uint256)'](
+      callbackContract.address, callbackGas, {value: entryFeeEstimate, from: customer}
     );
     
     await operatorContract.relayEntry(blsData.groupSignature, {from: operator});
@@ -369,12 +369,12 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
   })
 
   it("should reimburse submitter when callback failed", async () => {
-    let estimate = await callbackContract.callback.estimateGas(blsData.groupSignature);
+    let estimate = await callbackContract.__beaconCallback.estimateGas(bls.groupSignature);
     
     let callbackGas = estimate - 10; // Requestor provides wrong gas
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    await serviceContract.methods['requestRelayEntry(address,string,uint256)'](
-      callbackContract.address, "callback(uint256)", callbackGas, {value: entryFeeEstimate, from: customer}
+    await serviceContract.methods['requestRelayEntry(address,uint256)'](
+      callbackContract.address, callbackGas, {value: entryFeeEstimate, from: customer}
     );
   
     // use the same gas price as the gas price ceiling

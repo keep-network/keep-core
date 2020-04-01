@@ -20,7 +20,7 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
     authorizer = owner,
     selectedParticipants, signatures, signingMemberIndices = [],
     misbehaved = '0x0305', // disqualified operator3, inactive operator5
-    groupPubKey = '0x1000000000000000000000000000000000000000000000000000000000000000',
+    groupPubKey = bls.groupPubKey,
     resultHash = web3.utils.soliditySha3(groupPubKey, misbehaved)
 
   before(async () => {
