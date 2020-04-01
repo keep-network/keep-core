@@ -239,4 +239,14 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
         .to.eq.BN(stakingAmount);
     })
   })
+
+  describe("activeStake", async () => {
+    it("uses delegated authorization correctly", async () => {
+      expect(await stakingContract.activeStake(operator, recognizedContract))
+        .to.eq.BN(0);
+      await authorize(authorityDelegator);
+      expect(await stakingContract.activeStake(operator, recognizedContract))
+        .to.eq.BN(stakingAmount);
+    })
+  })
 })

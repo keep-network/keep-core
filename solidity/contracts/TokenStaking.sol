@@ -428,7 +428,7 @@ contract TokenStaking is StakeDelegatable {
         address _operator,
         address _operatorContract
     ) public view returns (uint256 balance) {
-        bool isAuthorized = authorizations[_operatorContract][_operator];
+        bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
 
         uint256 operatorParams = operators[_operator].packedParams;
         uint256 createdAt = operatorParams.getCreationTimestamp();
