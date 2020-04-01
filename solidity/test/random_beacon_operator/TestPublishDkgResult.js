@@ -63,9 +63,10 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
     increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
 
-    let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, operator1StakingWeight);
-    let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, operator2StakingWeight);
-    let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, operator3StakingWeight);
+    const groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry()
+    let tickets1 = generateTickets(groupSelectionRelayEntry, operator1, operator1StakingWeight);
+    let tickets2 = generateTickets(groupSelectionRelayEntry, operator2, operator2StakingWeight);
+    let tickets3 = generateTickets(groupSelectionRelayEntry, operator3, operator3StakingWeight);
 
     for(let i = 0; i < groupSize; i++) {
       ticket = packTicket(tickets1[i].valueHex, tickets1[i].virtualStakerIndex, operator1);

@@ -55,12 +55,12 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
 
     increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
 
-    const previousEntry = await operatorContract.getGroupSelectionRelayEntry()
-    let tickets1 = generateTickets(previousEntry, operator1, 1)
-    let tickets2 = generateTickets(previousEntry, operator2, 1)
-    let tickets3 = generateTickets(previousEntry, operator3, 1)
-    let tickets4 = generateTickets(previousEntry, operator4, 1)
-    let tickets5 = generateTickets(previousEntry, operator5, 1)
+    const groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry()
+    let tickets1 = generateTickets(groupSelectionRelayEntry, operator1, 1)
+    let tickets2 = generateTickets(groupSelectionRelayEntry, operator2, 1)
+    let tickets3 = generateTickets(groupSelectionRelayEntry, operator3, 1)
+    let tickets4 = generateTickets(groupSelectionRelayEntry, operator4, 1)
+    let tickets5 = generateTickets(groupSelectionRelayEntry, operator5, 1)
 
     await operatorContract.submitTicket(
       packTicket(tickets1[0].valueHex, tickets1[0].virtualStakerIndex, operator1),

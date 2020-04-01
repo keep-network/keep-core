@@ -51,18 +51,19 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
 
     increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
 
+    const groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry()
     tickets1 = generateTickets(
-      await operatorContract.getGroupSelectionRelayEntry(), 
+      groupSelectionRelayEntry, 
       operator1, 
       operator1StakingWeight
     );
     tickets2 = generateTickets(
-      await operatorContract.getGroupSelectionRelayEntry(), 
+      groupSelectionRelayEntry, 
       operator2, 
       operator2StakingWeight
     );
     tickets3 = generateTickets(
-      await operatorContract.getGroupSelectionRelayEntry(), 
+      groupSelectionRelayEntry, 
       operator3, 
       operator3StakingWeight
     );
