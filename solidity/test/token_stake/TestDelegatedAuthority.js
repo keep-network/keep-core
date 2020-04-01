@@ -86,6 +86,18 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
     return stakingContract.isAuthorizedForOperator(operator, operatorContract);
   }
 
+  async function authorize(operatorContract) {
+    stakingContract.authorizeOperatorContract(
+      operator,
+      operatorContract.address,
+      {from: authorizer}
+    );
+  }
+
+  async function disable(operatorContract) {
+    registry.disableOperatorContract(operatorContract.address);
+  }
+
   describe("claimDelegatedAuthority", async () => {
     it("lets contracts claim delegated authority", async () => {
       await stakingContract.claimDelegatedAuthority(
@@ -129,6 +141,48 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
 
       expect(await stakingContract.getAuthoritySource(recursivelyAuthorizedContract))
         .to.equal(outerRecursiveDelegator.address);
+    })
+  })
+
+  describe("isAuthorizedForOperator", async () => {
+    before(async () => {
+      await stakingContract.claimDelegatedAuthority(
+        authorityDelegator.address,
+        {from: recognizedContract}
+      );
+    })
+
+    it("delegates authorization correctly", async () => {
+      expect(await hasDelegatedAuthorization(recognizedContract)).to.be.false;
+      await authorize(authorityDelegator);
+      expect(await hasDelegatedAuthorization(recognizedContract)).to.be.true;
+    })
+
+    it("disables delegated authorization with the panic button", async () => {
+      await authorize(authorityDelegator);
+      await disable(authorityDelegator);
+      // Indirect test;
+      // `claimDelegatedAuthority` checks `onlyApprovedOperatorContract`
+      await expectThrowWithMessage(
+        stakingContract.claimDelegatedAuthority(
+          recognizedContract,
+          {from: unrecognizedContract}
+        ),
+        "Operator contract is not approved"
+      );
+    })
+
+    it("works recursively", async () => {
+      await innerRecursiveDelegator.claimAuthorityRecursively(
+        stakingContract.address,
+        outerRecursiveDelegator.address
+      );
+      await stakingContract.claimDelegatedAuthority(
+        innerRecursiveDelegator.address,
+        {from: recursivelyAuthorizedContract}
+      );
+      await authorize(outerRecursiveDelegator);
+      expect(await hasDelegatedAuthorization(recursivelyAuthorizedContract)).to.be.true;
     })
   })
 })
