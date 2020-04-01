@@ -185,4 +185,48 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
       expect(await hasDelegatedAuthorization(recursivelyAuthorizedContract)).to.be.true;
     })
   })
+
+  describe("slash", async () => {
+    it("uses delegated authorization correctly", async () => {
+      await expectThrowWithMessage(
+        stakingContract.slash(
+          minimumStake,
+          [operator],
+          {from: recognizedContract}
+        ),
+        "Not authorized"
+      );
+      await authorize(authorityDelegator);
+      await stakingContract.slash(
+        minimumStake,
+        [operator],
+        {from: recognizedContract}
+      );
+      // no error
+    })
+  })
+
+  describe("seize", async () => {
+    it("uses delegated authorization correctly", async () => {
+      await expectThrowWithMessage(
+        stakingContract.seize(
+          minimumStake,
+          100,
+          magpie,
+          [operator],
+          {from: recognizedContract}
+        ),
+        "Not authorized"
+      );
+      await authorize(authorityDelegator);
+      await stakingContract.seize(
+        minimumStake,
+        100,
+        magpie,
+        [operator],
+        {from: recognizedContract}
+      );
+      // no error
+    })
+  })
 })

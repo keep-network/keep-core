@@ -255,9 +255,10 @@ contract TokenStaking is StakeDelegatable {
         onlyApprovedOperatorContract(msg.sender) {
 
         uint256 totalAmountToBurn = 0;
+        address authoritySource = getAuthoritySource(msg.sender);
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
-            require(authorizations[msg.sender][operator], "Not authorized");
+            require(authorizations[authoritySource][operator], "Not authorized");
 
             uint256 operatorParams = operators[operator].packedParams;
             require(
@@ -301,9 +302,10 @@ contract TokenStaking is StakeDelegatable {
         address[] memory misbehavedOperators
     ) public onlyApprovedOperatorContract(msg.sender) {
         uint256 totalAmountToBurn = 0;
+        address authoritySource = getAuthoritySource(msg.sender);
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
-            require(authorizations[msg.sender][operator], "Not authorized");
+            require(authorizations[authoritySource][operator], "Not authorized");
 
             uint256 operatorParams = operators[operator].packedParams;
             require(
