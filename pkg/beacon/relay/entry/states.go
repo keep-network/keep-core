@@ -146,7 +146,7 @@ func (scs *signatureCompleteState) Initiate(ctx context.Context) error {
 			if !ok {
 				logger.Warningf(
 					"[member:%v] could not validate signature share from "+
-						"member [%v] because their public key was not found",
+						"member [%v]; public key share not found",
 					scs.MemberIndex(),
 					message.senderID,
 				)

@@ -1656,21 +1656,21 @@ func pow(id group.MemberIndex, y int) *big.Int {
 //    public keys were reconstructed in Phase 11.
 //
 // See Phase 12 of the protocol specification.
-func (rm *CombiningMember) CombineGroupPublicKey() {
+func (cm *CombiningMember) CombineGroupPublicKey() {
 	// Current member's individual public key `A_i0`.
-	groupPublicKey := rm.individualPublicKey()
+	groupPublicKey := cm.individualPublicKey()
 
 	// Add received peer group members' individual public keys `A_j0`.
-	for _, peerPublicKey := range rm.receivedValidPeerIndividualPublicKeys() {
+	for _, peerPublicKey := range cm.receivedValidPeerIndividualPublicKeys() {
 		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
 	}
 
 	// Add reconstructed misbehaved members' individual public keys `G * z_m`.
-	for _, peerPublicKey := range rm.reconstructedIndividualPublicKeys {
+	for _, peerPublicKey := range cm.reconstructedIndividualPublicKeys {
 		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
 	}
 
-	rm.groupPublicKey = groupPublicKey
+	cm.groupPublicKey = groupPublicKey
 }
 
 // ComputeGroupPublicKeyShares computes group public key shares for each
@@ -1687,14 +1687,14 @@ func (cm *CombiningMember) ComputeGroupPublicKeyShares() {
 				continue
 			}
 
-			// Calculate first public key share for given receiver based on
-			// current member public key share points.
+			// Calculate the first public key share for the given operating
+			// member based on the current member public key share points.
 			sum := cm.publicKeyShare(receiverID, cm.publicKeySharePoints)
 
 			// Iterate through the `QUAL` set and calculate subsequent
-			// public key share for given receiver based on...
+			// public key share for the given operating member based on...
 			for senderID := range cm.receivedQualifiedSharesS {
-				// ...received and valid other members public key share points...
+				// ...received and valid member's public key share points...
 				if publicKeySharePoints, ok := cm.receivedValidPeerPublicKeySharePoints[senderID]; ok {
 					publicKeyShare := cm.publicKeyShare(
 						receiverID,
