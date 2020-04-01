@@ -1,6 +1,10 @@
 = keep-core
 
-The core code behind the https://keep.network[Keep network].
+https://circleci.com/gh/keep-network/keep-core[image:https://circleci.com/gh/keep-network/keep-core.svg?style=svg&circle-token=ec728f5ca814b6cb2db5ffeb7258151b752a207e[CircleCI Build Status]]
+https://discord.gg/wYezN7v[image:https://img.shields.io/badge/chat-Discord-blueViolet.svg[Chat with us on Discord]]
+
+The core code behind the Keep network, a privacy, interoperability, and
+censorship-resistance toolkit for developers on Ethereum.
 
 == Getting Started as a Developer
 
