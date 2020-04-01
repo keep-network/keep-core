@@ -21,7 +21,9 @@ const DelegatedAuthorityStub = artifacts.require("./stubs/DelegatedAuthorityStub
 const initializationPeriod = 10;
 const undelegationPeriod = 30;
 
-let token, registry, stakingContract, authorityDelegator, badAuthorityDelegator;
+let token, registry, stakingContract;
+let authorityDelegator, badAuthorityDelegator;
+let innerRecursiveDelegator, outerRecursiveDelegator;
 let minimumStake, stakingAmount;
 
 contract("TokenStaking/DelegatedAuthority", async (accounts) => {
@@ -32,6 +34,7 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
   const recognizedContract = accounts[4];
   const unrecognizedContract = accounts[5];
   const unapprovedContract = accounts[6];
+  const recursivelyAuthorizedContract = accounts[7];
 
   before(async () => {
     token = await KeepToken.new();
@@ -49,6 +52,12 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
     authorityDelegator = await DelegatedAuthorityStub.new(recognizedContract);
     badAuthorityDelegator = await DelegatedAuthorityStub.new(unapprovedContract);
     await registry.approveOperatorContract(authorityDelegator.address);
+
+    innerRecursiveDelegator = await DelegatedAuthorityStub.new(
+      recursivelyAuthorizedContract);
+    outerRecursiveDelegator = await DelegatedAuthorityStub.new(
+      innerRecursiveDelegator.address);
+    await registry.approveOperatorContract(outerRecursiveDelegator.address);
   })
 
   beforeEach(async () => {
@@ -84,7 +93,7 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
         {from: recognizedContract}
       );
 
-      expect(await stakingContract.getDelegatedAuthority(recognizedContract))
+      expect(await stakingContract.getAuthoritySource(recognizedContract))
         .to.equal(authorityDelegator.address);
     })
 
@@ -106,6 +115,20 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
         ),
         "Operator contract is not approved"
       );
+    })
+
+    it("delegates authority recursively", async () => {
+      await innerRecursiveDelegator.claimAuthorityRecursively(
+        stakingContract.address,
+        outerRecursiveDelegator.address
+      );
+      await stakingContract.claimDelegatedAuthority(
+        innerRecursiveDelegator.address,
+        {from: recursivelyAuthorizedContract}
+      );
+
+      expect(await stakingContract.getAuthoritySource(recursivelyAuthorizedContract))
+        .to.equal(outerRecursiveDelegator.address);
     })
   })
 })
