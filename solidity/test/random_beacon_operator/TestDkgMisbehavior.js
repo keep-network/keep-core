@@ -20,7 +20,7 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
     operator5 = accounts[5],
     authorizer = owner,
     selectedParticipants, signatures, signingMemberIndices = [],
-    misbehaved = '0x0305', // disqualified operator3, inactive operator5
+    misbehaved = '0x0305', // disqualified operator with selected member index 3 and inactive with 5
     groupPubKey = blsData.groupPubKey,
     resultHash = web3.utils.soliditySha3(groupPubKey, misbehaved)
 
@@ -55,11 +55,12 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
 
     increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
 
-    let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, 1, {from: owner})
-    let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, 1, {from: owner})
-    let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, 1, {from: owner})
-    let tickets4 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator4, 1, {from: owner})
-    let tickets5 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator5, 1, {from: owner})
+    const previousEntry = await operatorContract.getGroupSelectionRelayEntry()
+    let tickets1 = generateTickets(previousEntry, operator1, 1)
+    let tickets2 = generateTickets(previousEntry, operator2, 1)
+    let tickets3 = generateTickets(previousEntry, operator3, 1)
+    let tickets4 = generateTickets(previousEntry, operator4, 1)
+    let tickets5 = generateTickets(previousEntry, operator5, 1)
 
     await operatorContract.submitTicket(
       packTicket(tickets1[0].valueHex, tickets1[0].virtualStakerIndex, operator1),
@@ -116,12 +117,12 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
   })
 
   it("should be able to save group members based on misbehaved data", async () => {
-    await operatorContract.submitDkgResult(1, groupPubKey, misbehaved, signatures, signingMemberIndices, {from: operator1})
+    await operatorContract.submitDkgResult(1, groupPubKey, misbehaved, signatures, signingMemberIndices, {from: selectedParticipants[0]})
     let registeredMembers = await operatorContract.getGroupMembers(groupPubKey)
-    assert.isTrue(registeredMembers.indexOf(operator1) != -1, "Member should be registered")
-    assert.isTrue(registeredMembers.indexOf(operator2) != -1, "Member should be registered")
-    assert.isTrue(registeredMembers.indexOf(operator3) == -1, "Member should not be registered")
-    assert.isTrue(registeredMembers.indexOf(operator4) != -1, "Member should be registered")
-    assert.isTrue(registeredMembers.indexOf(operator5) == -1, "Member should not be registered")
+    assert.isTrue(registeredMembers.indexOf(selectedParticipants[0]) != -1, "Member should be registered")
+    assert.isTrue(registeredMembers.indexOf(selectedParticipants[1]) != -1, "Member should be registered")
+    assert.isTrue(registeredMembers.indexOf(selectedParticipants[2]) == -1, "Member should not be registered")
+    assert.isTrue(registeredMembers.indexOf(selectedParticipants[3]) != -1, "Member should be registered")
+    assert.isTrue(registeredMembers.indexOf(selectedParticipants[4]) == -1, "Member should not be registered")
   })
 })
