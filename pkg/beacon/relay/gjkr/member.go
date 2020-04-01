@@ -174,6 +174,9 @@ type RevealingMember struct {
 type ReconstructingMember struct {
 	*RevealingMember
 
+	// Revealed shares of members from the QUAL set disqualified or marked as
+	// inactive in later phases, after QUAL set has been established.
+	revealedMisbehavedMembersShares []*misbehavedShares
 	// Disqualified members' individual private keys reconstructed from shares
 	// revealed by other group members.
 	// Stored as `<m, z_m>`, where:
@@ -197,6 +200,8 @@ type CombiningMember struct {
 	// Group public key calculated from individual public keys of all group members.
 	// Denoted as `Y` across the protocol specification.
 	groupPublicKey *bn256.G2
+
+	groupPublicKeySharesChannel chan map[group.MemberIndex]*bn256.G2
 }
 
 // InitializeFinalization returns a member to perform next protocol operations.
@@ -307,7 +312,10 @@ func (rm *RevealingMember) InitializeReconstruction() *ReconstructingMember {
 
 // InitializeCombining returns a member to perform next protocol operations.
 func (rm *ReconstructingMember) InitializeCombining() *CombiningMember {
-	return &CombiningMember{ReconstructingMember: rm}
+	return &CombiningMember{
+		ReconstructingMember:        rm,
+		groupPublicKeySharesChannel: make(chan map[group.MemberIndex]*bn256.G2),
+	}
 }
 
 // individualPrivateKey returns current member's individual private key.
@@ -345,8 +353,9 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G2 {
 // be revealed publicly.
 func (fm *FinalizingMember) Result() *Result {
 	return &Result{
-		Group:                fm.group,
-		GroupPublicKey:       fm.groupPublicKey, // nil if threshold not satisfied
-		GroupPrivateKeyShare: fm.groupPrivateKeyShare,
+		Group:                       fm.group,
+		GroupPublicKey:              fm.groupPublicKey, // nil if threshold not satisfied
+		GroupPrivateKeyShare:        fm.groupPrivateKeyShare,
+		groupPublicKeySharesChannel: fm.groupPublicKeySharesChannel,
 	}
 }
