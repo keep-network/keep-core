@@ -8,26 +8,33 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
-// MembershipValidator operates on a group selection result and lets to
+// MembershipValidator lets to validate one's membership based on the
+// provided public key.
+type MembershipValidator interface {
+	IsInGroup(publicKey *ecdsa.PublicKey) bool
+	IsValidMembership(memberID MemberIndex, publicKey []byte) bool
+}
+
+// StakersMembershipValidator operates on a group selection result and lets to
 // validate one's membership based on the provided public key.
 //
 // Validator is used to filter out messages from parties not selected to
 // the group. It is also used to confirm the position in the group of
 // a party that was selected. This is used to validate messages sent by that
 // party to all other group members.
-type MembershipValidator struct {
+type StakersMembershipValidator struct {
 	members map[string][]int // staker address -> staker positions in group
 	signing chain.Signing
 }
 
-// NewMembershipValidator creates a validator for the provided group selection
-// result.
-func NewMembershipValidator(
-	selected []relaychain.StakerAddress,
+// NewStakersMembershipValidator creates a validator for the provided
+// group selection result.
+func NewStakersMembershipValidator(
+	stakersAddresses []relaychain.StakerAddress,
 	signing chain.Signing,
-) *MembershipValidator {
+) *StakersMembershipValidator {
 	members := make(map[string][]int)
-	for position, address := range selected {
+	for position, address := range stakersAddresses {
 		addressAsString := hex.EncodeToString(address)
 		positions, ok := members[addressAsString]
 		if ok {
@@ -38,38 +45,42 @@ func NewMembershipValidator(
 		}
 	}
 
-	return &MembershipValidator{
+	return &StakersMembershipValidator{
 		members: members,
 		signing: signing,
 	}
 }
 
-// IsInGroup returns true if party with the given public key has been selected
-// to the group. Otherwise, function returns false.
-func (mv *MembershipValidator) IsInGroup(publicKey *ecdsa.PublicKey) bool {
-	authorAddress := hex.EncodeToString(
-		mv.signing.PublicKeyToAddress(*publicKey),
+// IsInGroup returns true if party with the given public key has been
+// selected to the group. Otherwise, function returns false.
+func (smv *StakersMembershipValidator) IsInGroup(
+	publicKey *ecdsa.PublicKey,
+) bool {
+	address := hex.EncodeToString(
+		smv.signing.PublicKeyToAddress(*publicKey),
 	)
-	_, isInGroup := mv.members[authorAddress]
+	_, isInGroup := smv.members[address]
 	return isInGroup
 }
 
-// IsSelectedAtIndex returns true if party with the given public key has been
-// selected to the group at the given position. If the position does not match
-// function returns false. The same happens when the party was not selected
-// to the group.
-func (mv *MembershipValidator) IsSelectedAtIndex(
-	index int,
-	publicKey *ecdsa.PublicKey,
+// IsValidMembership returns true if party with the given public key has
+// been selected to the group at the given position. If the position does
+// not match function returns false. The same happens when the party was
+// not selected to the group.
+func (smv *StakersMembershipValidator) IsValidMembership(
+	memberID MemberIndex,
+	publicKey []byte,
 ) bool {
-	authorAddress := hex.EncodeToString(
-		mv.signing.PublicKeyToAddress(*publicKey),
+	address := hex.EncodeToString(
+		smv.signing.PublicKeyBytesToAddress(publicKey),
 	)
-	positions, isInGroup := mv.members[authorAddress]
+	positions, isInGroup := smv.members[address]
 
 	if !isInGroup {
 		return false
 	}
+
+	index := int(memberID - 1)
 
 	for _, position := range positions {
 		if index == position {

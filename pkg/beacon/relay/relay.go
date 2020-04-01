@@ -123,7 +123,10 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	membershipValidator := group.NewMembershipValidator(groupMembers, signing)
+	membershipValidator := group.NewStakersMembershipValidator(
+		groupMembers,
+		signing,
+	)
 
 	err = channel.SetFilter(membershipValidator.IsInGroup)
 	if err != nil {

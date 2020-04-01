@@ -23,7 +23,7 @@ func TestIsInGroup(t *testing.T) {
 	address1 := signing.PublicKeyToAddress(*publicKey1)
 	address2 := signing.PublicKeyToAddress(*publicKey2)
 
-	validator := NewMembershipValidator(
+	validator := NewStakersMembershipValidator(
 		[]relaychain.StakerAddress{address1, address2, address2},
 		signing,
 	)
@@ -39,35 +39,35 @@ func TestIsInGroup(t *testing.T) {
 	}
 }
 
-func TestIsSelectedAtIndex(t *testing.T) {
+func TestIsValidMembership(t *testing.T) {
 	chain := local.Connect(3, 3, big.NewInt(100))
 	signing := chain.Signing()
 
-	publicKey1 := generatePublicKey(t)
-	publicKey2 := generatePublicKey(t)
-	publicKey3 := generatePublicKey(t)
+	publicKey1 := generatePublicKeyBytes(t)
+	publicKey2 := generatePublicKeyBytes(t)
+	publicKey3 := generatePublicKeyBytes(t)
 
-	address1 := signing.PublicKeyToAddress(*publicKey1)
-	address2 := signing.PublicKeyToAddress(*publicKey2)
+	address1 := signing.PublicKeyBytesToAddress(publicKey1)
+	address2 := signing.PublicKeyBytesToAddress(publicKey2)
 
-	validator := NewMembershipValidator(
+	validator := NewStakersMembershipValidator(
 		[]relaychain.StakerAddress{address2, address1, address2},
 		signing,
 	)
 
-	if !validator.IsSelectedAtIndex(0, publicKey2) {
+	if !validator.IsValidMembership(1, publicKey2) {
 		t.Errorf("staker with public key 2 has been selected at index [0]")
 	}
-	if !validator.IsSelectedAtIndex(1, publicKey1) {
+	if !validator.IsValidMembership(2, publicKey1) {
 		t.Errorf("staker with public key 1 has been selected at index [1]")
 	}
-	if !validator.IsSelectedAtIndex(2, publicKey2) {
+	if !validator.IsValidMembership(3, publicKey2) {
 		t.Errorf("staker with public key 2 has been selected at index [2]")
 	}
-	if validator.IsSelectedAtIndex(1, publicKey2) {
+	if validator.IsValidMembership(4, publicKey2) {
 		t.Errorf("staker with public key 2 has not been selected at index [2]")
 	}
-	if validator.IsSelectedAtIndex(1, publicKey3) {
+	if validator.IsValidMembership(5, publicKey3) {
 		t.Errorf("staker with public key 3 has not been selected")
 	}
 }
@@ -79,4 +79,9 @@ func generatePublicKey(t *testing.T) *ecdsa.PublicKey {
 	}
 
 	return &key.PublicKey
+}
+
+func generatePublicKeyBytes(t *testing.T) []byte {
+	publicKey := generatePublicKey(t)
+	return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
 }

@@ -4,6 +4,7 @@ package dkgtest
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"crypto/rand"
 	"fmt"
 	"math"
@@ -135,6 +136,7 @@ func executeDKG(
 				uint8(i),
 				relayConfig.GroupSize,
 				relayConfig.DishonestThreshold(),
+				&mockMembershipValidator{},
 				startBlockHeight,
 				blockCounter,
 				chain.ThresholdRelay(),
@@ -181,4 +183,19 @@ func executeDKG(
 			memberFailures,
 		}, nil
 	}
+}
+
+type mockMembershipValidator struct{}
+
+func (mmv *mockMembershipValidator) IsInGroup(
+	publicKey *ecdsa.PublicKey,
+) bool {
+	return true
+}
+
+func (mmv *mockMembershipValidator) IsValidMembership(
+	memberID group.MemberIndex,
+	publicKey []byte,
+) bool {
+	return true
 }

@@ -15,6 +15,10 @@ type memberCore struct {
 	// Group to which this member belongs.
 	group *group.Group
 
+	// Validator allowing to check public key and member index
+	// against group members
+	membershipValidator group.MembershipValidator
+
 	// Evidence log provides access to messages from earlier protocol phases
 	// for the sake of compliant resolution.
 	evidenceLog evidenceLog
@@ -217,12 +221,14 @@ func NewMember(
 	memberID group.MemberIndex,
 	groupSize,
 	dishonestThreshold int,
+	membershipValidator group.MembershipValidator,
 	seed *big.Int,
 ) (*LocalMember, error) {
 	return &LocalMember{
 		memberCore: &memberCore{
 			memberID,
 			group.NewDkgGroup(dishonestThreshold, groupSize),
+			membershipValidator,
 			newDkgEvidenceLog(),
 			newProtocolParameters(seed),
 		},

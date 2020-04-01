@@ -80,7 +80,7 @@ func (n *Node) JoinGroupIfEligible(
 			return
 		}
 
-		membershipValidator := group.NewMembershipValidator(
+		membershipValidator := group.NewStakersMembershipValidator(
 			groupSelectionResult.SelectedStakers,
 			signing,
 		)
@@ -104,6 +104,7 @@ func (n *Node) JoinGroupIfEligible(
 					playerIndex,
 					n.chainConfig.GroupSize,
 					n.chainConfig.DishonestThreshold(),
+					membershipValidator,
 					dkgStartBlockHeight,
 					n.blockCounter,
 					relayChain,
