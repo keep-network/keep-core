@@ -3,7 +3,6 @@ package ethereum
 import (
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
@@ -66,12 +65,7 @@ func (euc *ethereumUtilityChain) RequestRelayEntry() *async.EventEntryGeneratedP
 		onWatchError,
 	)
 
-	_, err = euc.keepRandomBeaconServiceContract.RequestRelayEntry(
-		common.BytesToAddress([]byte{}),
-		"",
-		callbackGas,
-		payment,
-	)
+	_, err = euc.keepRandomBeaconServiceContract.RequestRelayEntry(payment)
 	if err != nil {
 		promise.Fail(err)
 		return promise

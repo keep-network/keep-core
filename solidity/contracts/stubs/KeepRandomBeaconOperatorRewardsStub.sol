@@ -28,4 +28,19 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, 1000 wei, groupIndex);
     }
 
+    function reportUnauthorizedSigning(
+        uint256 groupIndex,
+        bytes memory signedMsgSender
+    ) public {
+        uint256 minimumStake = stakingContract.minimumStake();
+        stakingContract.seize(minimumStake, 100, msg.sender,  groups.membersOf(0));
+        emit UnauthorizedSigningReported(groupIndex);
+    }
+
+    function reportRelayEntryTimeout() public {
+        uint256 minimumStake = stakingContract.minimumStake();
+        stakingContract.seize(minimumStake, 100, msg.sender, groups.membersOf(0));
+        emit RelayEntryTimeoutReported(0);
+    }
+
 }

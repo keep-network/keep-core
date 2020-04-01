@@ -1,47 +1,43 @@
 import React from 'react'
-import moment from 'moment'
-import { formatDate } from '../utils/general.utils'
+import { formatDate, displayAmount } from '../utils/general.utils'
+import AddressShortcut from './AddressShortcut'
 
-const SlashedTokensList = (props) => {
+const SlashedTokensList = ({ slashedTokens }) => {
   return (
     <div className="slashed-tokens-list">
       <div className="flex flex-1">
-        <span className="text-label flex-2">SLASH EXPLANATION</span>
-        <span className="text-label flex flex-1">AMOUNT (KEEP)</span>
-        <span className="text-label flex flex-1">MIN STAKE (KEEP)</span>
+        <span className="text-label flex flex-1">amount</span>
+        <span className="text-label flex-2">details</span>
       </div>
       <ul className="flex column flex-1">
-        <li className="flex row flex-1" >
-          <div className="details text-big flex-2">
-            <p className="text-big">
-              Group 12305162340123 was selected to do work and not enough members participated.
-            </p>
-            <span className="text-small text-grey">{formatDate(moment())}</span>
-          </div>
-          <span className="text-big text-dark-red flex-1">
-            - 25
-          </span>
-          <span className="text-big flex-1">
-            50
-          </span>
-        </li>
-        <li className="flex row flex-1" >
-          <div className="details text-big flex-2">
-            <p className="text-big">
-              Group 12305162340123 key was leaked. Private key was published outside of the members of the signing group.
-            </p>
-            <span className="text-small text-grey">{formatDate(moment())}</span>
-          </div>
-          <span className="text-big text-dark-red flex-1">
-            - 25
-          </span>
-          <span className="text-big flex-1">
-            50
-          </span>
-        </li>
+        {slashedTokens.map(renderSlashedTokensItem)}
       </ul>
     </div>
   )
 }
+
+const renderSlashedTokensItem = (item) => <SlashedTokensItem key={item.id} {...item} />
+
+const SlashedTokensItem = React.memo(({ amount, date, event, groupPublicKey }) => (
+  <li className="flex row flex-1" >
+    <div className="text-big flex-1">
+      <span className="text-error">{amount && `-${displayAmount(amount)} `}</span>
+      <span className="text-grey-40">KEEP</span>
+    </div>
+    <div className="details flex-2">
+      <div className="text-big text-grey-70">
+        Group <AddressShortcut address={groupPublicKey} classNames="text-big text-grey-70" />&nbsp;
+        {event === 'UnauthorizedSigningReported' ?
+          'key was leaked. Private key was published outside of the members of the signing group.' :
+          'was selected to do work and not enough members participated.'
+        }
+      </div>
+      <div className="text-small text-grey-50">
+        {formatDate(date)}
+      </div>
+    </div>
+  </li>
+))
+
 
 export default SlashedTokensList

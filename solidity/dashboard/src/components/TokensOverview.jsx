@@ -1,6 +1,7 @@
 import React from 'react'
 import { displayAmount } from '../utils/general.utils'
 import TokenGrantsOverview from './TokenGrantsOverview'
+import moment from 'moment'
 
 const TokensOverview = ({
   undelegationPeriod,
@@ -8,6 +9,8 @@ const TokensOverview = ({
   stakingBalance,
   pendingUndelegationBalance,
 }) => {
+  const estimatedUndelegationPeriod = moment().add(undelegationPeriod, 'seconds').fromNow(true)
+
   return (
     <section id="tokens-overview" className="tile">
       <TokenGrantsOverview />
@@ -21,7 +24,9 @@ const TokensOverview = ({
         </div>
         <div className="text-samll">
           Pending Undelegated Tokens: {displayAmount(pendingUndelegationBalance)}
-          <p className="text-smaller text-grey-30">Stake undelegated from an operator. Estimated {undelegationPeriod} number of blocks until available.</p>
+          <p className="text-smaller text-grey-30">
+            Stake undelegated from an operator. Estimated {estimatedUndelegationPeriod} until available.
+          </p>
         </div>
       </section>
     </section>

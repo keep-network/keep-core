@@ -10,5 +10,7 @@ export const colors = {
   darkGrey: '#AAAAAA',
   lightGrey: '#E6E6E6',
   bgSuccess: '#D7F6EE',
+  pending: '#FF9900',
+  bgPending: '#F8E9D3',
   bgSecondary: '#EFE8FF',
 }

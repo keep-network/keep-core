@@ -6,6 +6,7 @@ import {
   KEEP_TOKEN_CONTRACT_NAME,
 } from '../constants/constants'
 import { sub, gt } from '../utils/arithmetics.utils'
+import moment from 'moment'
 
 export const fetchTokensPageData = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -13,7 +14,6 @@ export const fetchTokensPageData = async (web3Context) => {
   const [
     keepTokenBalance,
     grantTokenBalance,
-    tokenGrantsStakeBalance,
     minimumStake,
     operatorsAddresses,
     undelegationPeriod,
@@ -21,7 +21,6 @@ export const fetchTokensPageData = async (web3Context) => {
   ] = await Promise.all([
     contractService.makeCall(web3Context, KEEP_TOKEN_CONTRACT_NAME, 'balanceOf', yourAddress),
     contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'balanceOf', yourAddress),
-    contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'stakeBalanceOf', yourAddress),
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'minimumStake'),
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'operatorsOf', yourAddress),
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'undelegationPeriod'),
@@ -53,7 +52,6 @@ export const fetchTokensPageData = async (web3Context) => {
     undelegations,
     keepTokenBalance,
     grantTokenBalance,
-    tokenGrantsStakeBalance,
     ownedTokensDelegationsBalance: tokenStakingBalance.toString(),
     ownedTokensUndelegationsBalance: pendingUndelegationBalance.toString(),
     minimumStake,
@@ -69,7 +67,6 @@ const getDelegations = async (
   undelegationPeriod,
   isFromGrant = false,
 ) => {
-  const { eth } = web3Context
   let tokenStakingBalance = web3Utils.toBN(0)
   let pendingUndelegationBalance = web3Utils.toBN(0)
   const delegations = []
@@ -96,17 +93,17 @@ const getDelegations = async (
     const balance = web3Utils.toBN(amount)
 
     if (!balance.isZero() && operatorData.undelegatedAt === '0') {
-      const initializationOverAt = web3Utils.toBN(createdAt || 0).add(web3Utils.toBN(initializationPeriod))
-      operatorData.isInInitializationPeriod = initializationOverAt.gt(web3Utils.toBN(await eth.getBlockNumber()))
-      operatorData.initializationOverAt = initializationOverAt.toString()
+      const initializationOverAt = moment.unix(createdAt).add(initializationPeriod, 'seconds')
+      operatorData.isInInitializationPeriod = moment().isSameOrBefore(initializationOverAt)
+      operatorData.initializationOverAt = initializationOverAt
       delegations.push(operatorData)
       if (!isFromGrant) {
         tokenStakingBalance = tokenStakingBalance.add(balance)
       }
     }
     if (operatorData.undelegatedAt !== '0' && gt(amount, 0)) {
-      operatorData.undelegationCompleteAt = web3Utils.toBN(undelegatedAt).add(web3Utils.toBN(undelegationPeriod))
-      operatorData.canRecoverStake = web3Utils.toBN(await eth.getBlockNumber()).gt(operatorData.undelegationCompleteAt)
+      operatorData.undelegationCompleteAt = moment.unix(undelegatedAt).add(undelegationPeriod, 'seconds')
+      operatorData.canRecoverStake = operatorData.undelegationCompleteAt.isBefore(moment())
       if (!isFromGrant) {
         pendingUndelegationBalance = pendingUndelegationBalance.add(balance)
       }

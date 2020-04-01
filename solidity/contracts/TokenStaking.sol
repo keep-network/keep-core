@@ -7,6 +7,24 @@ import "./utils/LockUtils.sol";
 import "./Registry.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
+// An operator contract can delegate authority to other operator contracts
+// by implementing the AuthorityDelegator interface.
+//
+// To delegate authority,
+// the recipient of delegated authority must call `claimDelegatedAuthority`,
+// specifying the contract it wants delegated authority from.
+// The staking contract calls `delegator.__isRecognized(recipient)`
+// and if the call returns `true`,
+// the named delegator contract is set as the recipient's authority delegator.
+// Any future checks of registry approval or per-operator authorization
+// will transparently mirror the delegator's status.
+//
+// Authority can be delegated recursively;
+// an operator contract receiving delegated authority
+// can recognize other operator contracts as recipients of its authority.
+interface AuthorityDelegator {
+    function __isRecognized(address delegatedAuthorityRecipient) external returns (bool);
+}
 
 /**
  * @title TokenStaking
@@ -43,9 +61,14 @@ contract TokenStaking is StakeDelegatable {
 
     mapping(address => LockUtils.LockSet) internal operatorLocks;
 
+    // Granters of delegated authority to operator contracts.
+    // E.g. keep factories granting delegated authority to keeps.
+    // `delegatedAuthority[keep] = factory`
+    mapping(address => address) internal delegatedAuthority;
+
     modifier onlyApprovedOperatorContract(address operatorContract) {
         require(
-            registry.isApprovedOperatorContract(operatorContract),
+            registry.isApprovedOperatorContract(getAuthoritySource(operatorContract)),
             "Operator contract is not approved"
         );
         _;
@@ -203,12 +226,17 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @notice Recovers staked tokens and transfers them back to the owner. Recovering
-     * tokens can only be performed when the operator is finished undelegating.
+     * @notice Recovers staked tokens and transfers them back to the owner.
+     * Recovering tokens can only be performed when the operator finished
+     * undelegating.
      * @param _operator Operator address.
      */
     function recoverStake(address _operator) public {
         uint256 operatorParams = operators[_operator].packedParams;
+        require(
+            operatorParams.getUndelegationTimestamp() != 0,
+            "Can not recover without first undelegating"
+        );
         require(
             block.timestamp > operatorParams.getUndelegationTimestamp().add(undelegationPeriod),
             "Can not recover stake before undelegation period is over."
@@ -358,9 +386,10 @@ contract TokenStaking is StakeDelegatable {
         onlyApprovedOperatorContract(msg.sender) {
 
         uint256 totalAmountToBurn = 0;
+        address authoritySource = getAuthoritySource(msg.sender);
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
-            require(authorizations[msg.sender][operator], "Not authorized");
+            require(authorizations[authoritySource][operator], "Not authorized");
 
             uint256 operatorParams = operators[operator].packedParams;
             require(
@@ -404,9 +433,10 @@ contract TokenStaking is StakeDelegatable {
         address[] memory misbehavedOperators
     ) public onlyApprovedOperatorContract(msg.sender) {
         uint256 totalAmountToBurn = 0;
+        address authoritySource = getAuthoritySource(msg.sender);
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
-            require(authorizations[msg.sender][operator], "Not authorized");
+            require(authorizations[authoritySource][operator], "Not authorized");
 
             uint256 operatorParams = operators[operator].packedParams;
             require(
@@ -457,7 +487,7 @@ contract TokenStaking is StakeDelegatable {
      * @param _operatorContract address of operator contract.
      */
     function isAuthorizedForOperator(address _operator, address _operatorContract) public view returns (bool) {
-        return authorizations[_operatorContract][_operator];
+        return authorizations[getAuthoritySource(_operatorContract)][_operator];
     }
 
     /**
@@ -545,5 +575,33 @@ contract TokenStaking is StakeDelegatable {
         address operatorContract
     ) public view returns(bool) {
         return activeStake(staker, operatorContract) >= minimumStake();
+    }
+
+    /// @notice Grant the sender the same authority as `delegatedAuthoritySource`
+    /// @dev If `delegatedAuthoritySource` is an approved operator contract
+    /// and recognizes the claimant,
+    /// this relationship will be recorded in `delegatedAuthority`.
+    /// Later, the claimant can slash, seize, place locks etc.
+    /// on operators that have authorized the `delegatedAuthoritySource`.
+    /// If the `delegatedAuthoritySource` is disabled with the panic button,
+    /// any recipients of delegated authority from it will also be disabled.
+    function claimDelegatedAuthority(
+        address delegatedAuthoritySource
+    ) public onlyApprovedOperatorContract(delegatedAuthoritySource) {
+        require(
+            AuthorityDelegator(delegatedAuthoritySource).__isRecognized(msg.sender),
+            "Unrecognized claimant"
+        );
+        delegatedAuthority[msg.sender] = delegatedAuthoritySource;
+    }
+
+    function getAuthoritySource(
+        address operatorContract
+    ) public view returns (address) {
+        address delegatedAuthoritySource = delegatedAuthority[operatorContract];
+        if (delegatedAuthoritySource == address(0)) {
+            return operatorContract;
+        }
+        return getAuthoritySource(delegatedAuthoritySource);
     }
 }
