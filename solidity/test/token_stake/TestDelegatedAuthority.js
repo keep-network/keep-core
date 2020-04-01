@@ -229,4 +229,25 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
       // no error
     })
   })
+
+  describe("lockStake", async () => {
+    it("uses delegated authorization correctly", async () => {
+      let lockPeriod = duration.weeks(12);
+      await expectThrowWithMessage(
+        stakingContract.lockStake(
+          operator,
+          lockPeriod,
+          {from: recognizedContract}
+        ),
+        "Not authorized"
+      );
+      await authorize(authorityDelegator);
+      await stakingContract.lockStake(
+        operator,
+        lockPeriod,
+        {from: recognizedContract}
+      );
+      // no error
+    })
+  })
 })
