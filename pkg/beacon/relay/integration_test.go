@@ -168,7 +168,7 @@ func TestInactiveMemberPublicKeySharesReconstructionAndSigning(t *testing.T) {
 	}
 }
 
-func TestInvalidSignatureSharesExists(t *testing.T) {
+func TestsSigningWithInvalidSignatureShare(t *testing.T) {
 	t.Parallel()
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
