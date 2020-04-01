@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-
 	"github.com/ipfs/go-log"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -19,8 +17,6 @@ import (
 )
 
 var logger = log.Logger("keep-dkg")
-
-const publicationDelayBlocks = 20
 
 // ExecuteDKG runs the full distributed key generation lifecycle.
 func ExecuteDKG(
@@ -57,46 +53,7 @@ func ExecuteDKG(
 		)
 	}
 
-	logger.Debugf(
-		"[member:%v] GJKR ended at block [%v]; "+
-			"waiting [%v] blocks before DKG result publication",
-		playerIndex,
-		gjkrEndBlockHeight,
-		publicationDelayBlocks,
-	)
-
-	// Calculation of group public key shares is time-expensive.
-	// It takes around 3 minutes for each member when group size is 64.
-	// To avoid desynchronization between members it is triggered in
-	// a separate goroutine. Apart from that, result publication is delayed
-	// to reduce the gap between successful on-chain group registration and
-	// the moment when threshold signers are ready. This is important
-	// because during this gap the group is blind for incoming relay entry
-	// requests.
-	groupPublicKeySharesChan := make(chan map[group.MemberIndex]*bn256.G2)
-	go func() {
-		logger.Debugf(
-			"[member:%v] starting group public key shares calculation",
-			playerIndex,
-		)
-
-		groupPublicKeyShares := gjkrResult.GroupPublicKeyShares()
-
-		logger.Debugf(
-			"[member:%v] group public key shares calculated",
-			playerIndex,
-		)
-
-		groupPublicKeySharesChan <- groupPublicKeyShares
-	}()
-
-	startPublicationBlockHeight := gjkrEndBlockHeight + publicationDelayBlocks
-
-	logger.Debugf(
-		"[member:%v] DKG result publication scheduled for block [%v]",
-		playerIndex,
-		startPublicationBlockHeight,
-	)
+	startPublicationBlockHeight := gjkrEndBlockHeight
 
 	dkgResultChannel := make(chan *event.DKGResultSubmission)
 	dkgResultSubscription, err := relayChain.OnDKGResultSubmitted(
@@ -148,14 +105,11 @@ func ExecuteDKG(
 		}
 	}
 
-	// Wait for group public key shares calculation outcome.
-	groupPublicKeyShares := <-groupPublicKeySharesChan
-
 	return &ThresholdSigner{
 		memberIndex:          playerIndex,
 		groupPublicKey:       gjkrResult.GroupPublicKey,
 		groupPrivateKeyShare: gjkrResult.GroupPrivateKeyShare,
-		groupPublicKeyShares: groupPublicKeyShares,
+		groupPublicKeyShares: gjkrResult.GroupPublicKeyShares(),
 	}, nil
 }
 

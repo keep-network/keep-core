@@ -94,7 +94,8 @@ func TestCombineGroupPublicKeyShares(t *testing.T) {
 		new(bn256.G2).ScalarBaseMult(big.NewInt(32)),
 	}
 
-	groupPublicKeyShares := member.groupPublicKeyShares()
+	member.ComputeGroupPublicKeyShares()
+	groupPublicKeyShares := <-member.groupPublicKeySharesChannel
 
 	expectedGroupPublicKeySharesLength := 2 // groupSize - 1 (combining member)
 	if len(groupPublicKeyShares) != expectedGroupPublicKeySharesLength {
@@ -174,7 +175,8 @@ func TestCombineGroupPublicKeyShares_WithReconstruction(t *testing.T) {
 		},
 	}}
 
-	groupPublicKeyShares := member.groupPublicKeyShares()
+	member.ComputeGroupPublicKeyShares()
+	groupPublicKeyShares := <-member.groupPublicKeySharesChannel
 
 	expectedGroupPublicKeySharesLength := 1 // groupSize - 1 (combining member) - 1 (inactive member)
 	if len(groupPublicKeyShares) != expectedGroupPublicKeySharesLength {

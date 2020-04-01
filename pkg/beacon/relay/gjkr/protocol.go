@@ -1673,44 +1673,52 @@ func (rm *CombiningMember) CombineGroupPublicKey() {
 	rm.groupPublicKey = groupPublicKey
 }
 
-// groupPublicKeyShares combines group public key shares for each
+// ComputeGroupPublicKeyShares computes group public key shares for each
 // individual member in the group. Those group public key shares are
 // needed to perform the verification of relay entry signature shares coming
 // from given group member.
-func (rm *CombiningMember) groupPublicKeyShares() map[group.MemberIndex]*bn256.G2 {
-	groupPublicKeyShares := make(map[group.MemberIndex]*bn256.G2)
+func (cm *CombiningMember) ComputeGroupPublicKeyShares() {
+	go func() {
+		groupPublicKeyShares := make(map[group.MemberIndex]*bn256.G2)
 
-	// Calculate group public key shares for all other operating members.
-	for _, receiverID := range rm.group.OperatingMemberIDs() {
-		if receiverID == rm.ID {
-			continue
-		}
+		// Calculate group public key shares for all other operating members.
+		for _, receiverID := range cm.group.OperatingMemberIDs() {
+			if receiverID == cm.ID {
+				continue
+			}
 
-		// Calculate first public key share for given receiver based on
-		// current member public key share points.
-		sum := rm.publicKeyShare(receiverID, rm.publicKeySharePoints)
+			// Calculate first public key share for given receiver based on
+			// current member public key share points.
+			sum := cm.publicKeyShare(receiverID, cm.publicKeySharePoints)
 
-		// Iterate through the `QUAL` set and calculate subsequent
-		// public key share for given receiver based on...
-		for senderID := range rm.receivedQualifiedSharesS {
-			// ...received and valid other members public key share points...
-			if publicKeySharePoints, ok := rm.receivedValidPeerPublicKeySharePoints[senderID]; ok {
-				publicKeyShare := rm.publicKeyShare(receiverID, publicKeySharePoints)
-				sum = new(bn256.G2).Add(sum, publicKeyShare)
-				// ...OR in case given sender didn't send their public key share points,
-				// take their reconstructed share and recover the public key share.
-			} else {
-				for _, shares := range rm.revealedMisbehavedMembersShares {
-					if shares.misbehavedMemberID == senderID {
-						publicKeyShare := new(bn256.G2).ScalarBaseMult(shares.peerSharesS[receiverID])
-						sum = new(bn256.G2).Add(sum, publicKeyShare)
+			// Iterate through the `QUAL` set and calculate subsequent
+			// public key share for given receiver based on...
+			for senderID := range cm.receivedQualifiedSharesS {
+				// ...received and valid other members public key share points...
+				if publicKeySharePoints, ok := cm.receivedValidPeerPublicKeySharePoints[senderID]; ok {
+					publicKeyShare := cm.publicKeyShare(
+						receiverID,
+						publicKeySharePoints,
+					)
+					sum = new(bn256.G2).Add(sum, publicKeyShare)
+					// ...OR in case given sender didn't send their public key
+					// share points, take their reconstructed share and recover
+					// the public key share.
+				} else {
+					for _, shares := range cm.revealedMisbehavedMembersShares {
+						if shares.misbehavedMemberID == senderID {
+							publicKeyShare := new(bn256.G2).ScalarBaseMult(
+								shares.peerSharesS[receiverID],
+							)
+							sum = new(bn256.G2).Add(sum, publicKeyShare)
+						}
 					}
 				}
 			}
+
+			groupPublicKeyShares[receiverID] = sum
 		}
 
-		groupPublicKeyShares[receiverID] = sum
-	}
-
-	return groupPublicKeyShares
+		cm.groupPublicKeySharesChannel <- groupPublicKeyShares
+	}()
 }
