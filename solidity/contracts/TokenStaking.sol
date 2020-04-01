@@ -479,6 +479,13 @@ contract TokenStaking is StakeDelegatable {
         delegatedAuthority[msg.sender] = delegatedAuthoritySource;
     }
 
+    /// @notice Get the source of the operator contract's authority.
+    /// If the contract uses delegated authority,
+    /// returns the original source of the delegated authority.
+    /// If the contract doesn't use delegated authority,
+    /// returns the contract itself.
+    /// Authorize `getAuthoritySource(operatorContract)`
+    /// to grant `operatorContract` the authority to penalize an operator.
     function getAuthoritySource(
         address operatorContract
     ) public view returns (address) {
