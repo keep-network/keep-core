@@ -3,6 +3,7 @@ import BigNumber from 'bignumber.js'
 import moment from 'moment'
 import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
 import web3Utils from 'web3-utils'
+import { TrezorProvider } from '../connectors/trezor'
 
 moment.updateLocale('en', {
   relativeTime: {
@@ -33,7 +34,8 @@ export function formatAmount(amount, decimals = 18) {
 
 export const getWeb3 = () => {
   if (window.ethereum || window.web3) {
-    return new Web3(window.ethereum || window.web3.currentProvider)
+    return new Web3(new TrezorProvider('test@email.com', 'https://keep.network/'))
+    // return new Web3(window.ethereum || window.web3.currentProvider)
   }
 
   return null

@@ -39,24 +39,27 @@ export default class Web3ContextProvider extends React.Component {
       const { web3 } = this.state
       this.setState({ isFetching: true })
       const accounts = await web3.eth.getAccounts()
-      this.connectAppWithAccount(!accounts || accounts.length === 0)
+      console.log('accounts', accounts)
+      this.connectAppWithAccount(!accounts || accounts.length === 0, accounts)
       this.initializeContracts()
       this.state.web3.eth.currentProvider.on('accountsChanged', this.accountHasBeenChanged)
     }
 
-    connectAppWithAccount = async (withInfoMessage = true) => {
+    connectAppWithAccount = async (withInfoMessage = true, accounts) => {
       const { web3 } = this.state
       this.setState({ isFetching: true })
       withInfoMessage && this.context.showMessage({ type: messageType.INFO, title: 'Please check web3 provider' })
 
       try {
-        const [account] = await web3.currentProvider.enable()
+        const [account] = accounts
+        console.log('account', account)
         this.setState({
           yourAddress: account,
           networkType: await web3.eth.net.getNetworkType(),
           isFetching: false,
         })
       } catch (error) {
+        console.log('error', error)
         this.context.showMessage({ type: 'error', title: error.message })
         this.setState({ isFetching: false })
       }
@@ -73,6 +76,7 @@ export default class Web3ContextProvider extends React.Component {
           eth: web3.eth,
         })
       } catch (error) {
+        console.log('error contracts', error)
         this.setState({
           error: 'Please select correct network',
         })
