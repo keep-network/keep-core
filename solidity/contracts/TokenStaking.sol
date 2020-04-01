@@ -48,16 +48,8 @@ contract TokenStaking is StakeDelegatable {
     mapping(address => address) internal delegatedAuthority;
 
     modifier onlyApprovedOperatorContract(address operatorContract) {
-        bool directlyApproved = registry.isApprovedOperatorContract(operatorContract);
-        bool indirectlyApproved;
-
-        if (!directlyApproved) {
-            address authorityDelegator = delegatedAuthority[operatorContract];
-            indirectlyApproved = registry.isApprovedOperatorContract(authorityDelegator);
-        }
-
         require(
-            directlyApproved || indirectlyApproved,
+            registry.isApprovedOperatorContract(getAuthoritySource(operatorContract)),
             "Operator contract is not approved"
         );
         _;
@@ -362,13 +354,7 @@ contract TokenStaking is StakeDelegatable {
      * @param _operatorContract address of operator contract.
      */
     function isAuthorizedForOperator(address _operator, address _operatorContract) public view returns (bool) {
-        bool directlyAuthorized = authorizations[_operatorContract][_operator];
-        bool indirectlyAuthorized;
-        if (!directlyAuthorized) {
-            address authorityDelegator = delegatedAuthority[_operatorContract];
-            indirectlyAuthorized = authorizations[authorityDelegator][_operator];
-        }
-        return directlyAuthorized || indirectlyAuthorized;
+        return authorizations[getAuthoritySource(_operatorContract)][_operator];
     }
 
     /**
