@@ -135,10 +135,6 @@ func (c *localChain) GetSubmittedTickets() ([]uint64, error) {
 	return tickets, nil
 }
 
-func (c *localChain) TicketSubmissionTimeout() (*big.Int, error) {
-	return big.NewInt(12), nil
-}
-
 func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, error) {
 	c.ticketsMutex.Lock()
 	defer c.ticketsMutex.Unlock()
@@ -307,6 +303,7 @@ func ConnectWithKey(
 		relayConfig: &relayconfig.Chain{
 			GroupSize:                  groupSize,
 			HonestThreshold:            honestThreshold,
+			TicketSubmissionTimeout:    6,
 			ResultPublicationBlockStep: 3,
 			MinimumStake:               minimumStake,
 		},

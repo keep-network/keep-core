@@ -2,7 +2,6 @@ package groupselection
 
 import (
 	"encoding/binary"
-	"math/big"
 	"reflect"
 	"sort"
 	"testing"
@@ -62,7 +61,8 @@ func TestSubmission(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			chainConfig := &config.Chain{
-				GroupSize: test.groupSize,
+				GroupSize:               test.groupSize,
+				TicketSubmissionTimeout: 6,
 			}
 
 			chain := &stubGroupInterface{
@@ -89,13 +89,8 @@ func TestSubmission(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			ticketSubmissionTimeout, err := chain.TicketSubmissionTimeout()
-			if err != nil {
-				t.Fatal(err)
-			}
-
 			err = blockCounter.WaitForBlockHeight(
-				ticketSubmissionTimeout.Uint64(),
+				chainConfig.TicketSubmissionTimeout,
 			)
 			if err != nil {
 				t.Fatal(err)
@@ -441,10 +436,6 @@ func (stg *stubGroupInterface) GetSubmittedTickets() ([]uint64, error) {
 	}
 
 	return tickets, nil
-}
-
-func (stg *stubGroupInterface) TicketSubmissionTimeout() (*big.Int, error) {
-	return big.NewInt(10), nil
 }
 
 func (stg *stubGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress, error) {

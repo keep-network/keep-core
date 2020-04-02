@@ -1,8 +1,6 @@
 package chain
 
 import (
-	"math/big"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -60,10 +58,6 @@ type GroupSelectionInterface interface {
 	// GetSelectedParticipants returns `GroupSize` slice of addresses of
 	// candidates which have been selected to the currently assembling group.
 	GetSelectedParticipants() ([]StakerAddress, error)
-	// TicketSubmissionTimeout gets the timeout in blocks after which group
-	// candidate ticket submission is finished. The value is valid only in
-	// the context of last group selection.
-	TicketSubmissionTimeout() (*big.Int, error)
 }
 
 // GroupRegistrationInterface defines the subset of the relay chain interface

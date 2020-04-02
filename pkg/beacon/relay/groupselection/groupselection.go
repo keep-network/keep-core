@@ -79,13 +79,8 @@ func startTicketSubmission(
 	onGroupSelected func(*Result),
 	ticketSubmissionRoundDuration uint64,
 ) error {
-	ticketSubmissionTimeout, err := relayChain.TicketSubmissionTimeout()
-	if err != nil {
-		return err
-	}
-
 	ticketSubmissionTimeoutChannel, err := blockCounter.BlockHeightWaiter(
-		startBlockHeight + ticketSubmissionTimeout.Uint64(),
+		startBlockHeight + chainConfig.TicketSubmissionTimeout,
 	)
 	if err != nil {
 		return err
@@ -93,7 +88,7 @@ func startTicketSubmission(
 
 	quitTicketSubmission := make(chan struct{})
 
-	ticketSubmissionRounds := (ticketSubmissionTimeout.Uint64() /
+	ticketSubmissionRounds := (chainConfig.TicketSubmissionTimeout /
 		ticketSubmissionRoundDuration) - 2
 
 	for roundIndex := uint64(0); roundIndex <= ticketSubmissionRounds; roundIndex++ {
