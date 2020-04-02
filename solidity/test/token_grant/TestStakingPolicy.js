@@ -63,7 +63,6 @@ contract('EmployeeStakingPolicy', function(accounts) {
   let start = 1000;
   let duration = 2000;
   let cliff = 1500;
-  let withdrawn = 4000;
 
   before(async () => {
     policy = await EmployeeStakingPolicy.new(minimumStake);
