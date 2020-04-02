@@ -8,6 +8,21 @@ import "./GrantStakingPolicy.sol";
 /// @dev A staking policy which allows the grantee
 /// to always stake the defined minimum stake,
 /// or the unlocked amount if greater.
+///
+/// This is necessary for staking revocable token grants safely.
+/// If the entire revocable grant can be staked,
+/// the yet-to-be-unlocked amount becomes ineffective as collateral
+/// if the grant is revoked.
+/// To avoid this issue,
+/// only the unlocked amount can be staked.
+///
+/// However, grants that feature a cliff pose a problem
+/// as no tokens are unlocked until the cliff is reached.
+/// Small grants may also take a long time
+/// to unlock enough tokens to be able to stake.
+/// To permit all grants to stake from the beginning,
+/// the policy defines a minimum which can always be staked
+/// even if the grant doesn't have enough unlocked tokens.
 contract GuaranteedMinimumStakingPolicy is GrantStakingPolicy {
     using SafeMath for uint256;
     using UnlockingSchedule for uint256;
