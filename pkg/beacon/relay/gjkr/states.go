@@ -31,6 +31,9 @@ const (
 
 	keyRevealStateDelayBlocks  = 1
 	keyRevealStateActiveBlocks = 5
+
+	combinationStateDelayBlocks  = 0
+	combinationStateActiveBlocks = 20
 )
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -639,14 +642,15 @@ type combinationState struct {
 }
 
 func (cs *combinationState) DelayBlocks() uint64 {
-	return silentStateDelayBlocks
+	return combinationStateDelayBlocks
 }
 
 func (cs *combinationState) ActiveBlocks() uint64 {
-	return silentStateActiveBlocks
+	return combinationStateActiveBlocks
 }
 
 func (cs *combinationState) Initiate(ctx context.Context) error {
+	cs.member.ComputeGroupPublicKeyShares()
 	cs.member.CombineGroupPublicKey()
 	return nil
 }

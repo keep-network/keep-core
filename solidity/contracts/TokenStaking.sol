@@ -475,6 +475,9 @@ contract TokenStaking is StakeDelegatable {
     /**
      * @dev Authorizes operator contract to access staked token balance of
      * the provided operator. Can only be executed by stake operator authorizer.
+     * Contracts using delegated authority
+     * cannot be authorized with `authorizeOperatorContract`.
+     * Instead, authorize `getAuthoritySource(_operatorContract)`.
      * @param _operator address of stake operator.
      * @param _operatorContract address of operator contract.
      */
@@ -482,6 +485,10 @@ contract TokenStaking is StakeDelegatable {
         public
         onlyOperatorAuthorizer(_operator)
         onlyApprovedOperatorContract(_operatorContract) {
+        require(
+            getAuthoritySource(_operatorContract) == _operatorContract,
+            "Contract uses delegated authority"
+        );
         authorizations[_operatorContract][_operator] = true;
     }
 
@@ -512,7 +519,7 @@ contract TokenStaking is StakeDelegatable {
         address _operator,
         address _operatorContract
     ) public view returns (uint256 balance) {
-        bool isAuthorized = authorizations[_operatorContract][_operator];
+        bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
 
         uint256 operatorParams = operators[_operator].packedParams;
         uint256 createdAt = operatorParams.getCreationTimestamp();
@@ -549,7 +556,7 @@ contract TokenStaking is StakeDelegatable {
         address _operator,
         address _operatorContract
     ) public view returns (uint256 balance) {
-        bool isAuthorized = authorizations[_operatorContract][_operator];
+        bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
 
         uint256 operatorParams = operators[_operator].packedParams;
         uint256 createdAt = operatorParams.getCreationTimestamp();
@@ -600,6 +607,13 @@ contract TokenStaking is StakeDelegatable {
         delegatedAuthority[msg.sender] = delegatedAuthoritySource;
     }
 
+    /// @notice Get the source of the operator contract's authority.
+    /// If the contract uses delegated authority,
+    /// returns the original source of the delegated authority.
+    /// If the contract doesn't use delegated authority,
+    /// returns the contract itself.
+    /// Authorize `getAuthoritySource(operatorContract)`
+    /// to grant `operatorContract` the authority to penalize an operator.
     function getAuthoritySource(
         address operatorContract
     ) public view returns (address) {

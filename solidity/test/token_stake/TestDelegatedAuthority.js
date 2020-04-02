@@ -74,10 +74,10 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
       Buffer.from(operator.substr(2), 'hex'),
       Buffer.from(authorizer.substr(2), 'hex')
     ]);
-    
+
     return token.approveAndCall(
-      stakingContract.address, amount, 
-      '0x' + data.toString('hex'), 
+      stakingContract.address, amount,
+      '0x' + data.toString('hex'),
       {from: owner}
     );
   }
@@ -186,6 +186,19 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
     })
   })
 
+  describe("authorizeOperatorContract", async () => {
+    it("doesn't authorize contracts using delegated authority", async () => {
+      await expectThrowWithMessage(
+        stakingContract.authorizeOperatorContract(
+          operator,
+          recognizedContract,
+          {from: authorizer}
+        ),
+        "Contract uses delegated authority"
+      );
+    })
+  })
+
   describe("slash", async () => {
     it("uses delegated authorization correctly", async () => {
       await expectThrowWithMessage(
@@ -230,6 +243,7 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
     })
   })
 
+
   describe("lockStake", async () => {
     it("uses delegated authorization correctly", async () => {
       let lockPeriod = duration.weeks(12);
@@ -248,6 +262,26 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
         {from: recognizedContract}
       );
       // no error
+    })
+  })
+
+  describe("eligibleStake", async () => {
+    it("uses delegated authorization correctly", async () => {
+      expect(await stakingContract.eligibleStake(operator, recognizedContract))
+        .to.eq.BN(0);
+      await authorize(authorityDelegator);
+      expect(await stakingContract.eligibleStake(operator, recognizedContract))
+        .to.eq.BN(stakingAmount);
+    })
+  })
+
+  describe("activeStake", async () => {
+    it("uses delegated authorization correctly", async () => {
+      expect(await stakingContract.activeStake(operator, recognizedContract))
+        .to.eq.BN(0);
+      await authorize(authorityDelegator);
+      expect(await stakingContract.activeStake(operator, recognizedContract))
+        .to.eq.BN(stakingAmount);
     })
   })
 })

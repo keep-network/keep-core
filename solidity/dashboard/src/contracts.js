@@ -1,8 +1,8 @@
-import KeepToken from './contracts/KeepToken.json'
-import TokenStaking from './contracts/TokenStaking.json'
-import TokenGrant from './contracts/TokenGrant.json'
-import KeepRandomBeaconOperator from './contracts/KeepRandomBeaconOperator.json'
-import Registry from './contracts/Registry.json'
+import KeepToken from '@keep-network/keep-core/artifacts/KeepToken.json'
+import TokenStaking from '@keep-network/keep-core/artifacts/TokenStaking.json'
+import TokenGrant from '@keep-network/keep-core/artifacts/TokenGrant.json'
+import KeepRandomBeaconOperator from '@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json'
+import Registry from '@keep-network/keep-core/artifacts/Registry.json'
 import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
