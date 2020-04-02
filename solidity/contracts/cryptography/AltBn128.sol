@@ -361,23 +361,8 @@ library AltBn128 {
      * @dev Return gfP2 element to the power of the provided exponent.
      */
     function gfP2Pow(gfP2 memory _a, uint256 _exp) internal pure returns(gfP2 memory result) {
-        uint256 exp = _exp;
-        gfP2 memory a;
-        result.x = 0;
-        result.y = 1;
-        a.x = _a.x;
-        a.y = _a.y;
-
-        // Reduce exp dividing by 2 gradually to 0 while computing final
-        // result only when exp is an odd number.
-        while (exp > 0) {
-            if (parity(exp) == 0x01) {
-                result = gfP2Multiply(result, a);
-            }
-
-            exp = exp / 2;
-            a = gfP2Multiply(a, a);
-        }
+        (uint256 x, uint256 y) = _gfP2Pow(_a.x, _a.y, _exp);
+        return gfP2(x, y);
     }
 
     function gfP2Square(gfP2 memory a) internal pure returns (gfP2 memory) {
