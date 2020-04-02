@@ -10,7 +10,6 @@ import "./libraries/operator/GroupSelection.sol";
 import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
 import "./libraries/operator/Reimbursements.sol";
-import "./TokenGrantStake.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
