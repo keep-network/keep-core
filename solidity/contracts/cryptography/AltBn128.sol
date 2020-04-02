@@ -259,10 +259,10 @@ library AltBn128 {
             "Invalid G2 bytes length"
         );
 
-        bytes32 xx;
-        bytes32 xy;
-        bytes32 yx;
-        bytes32 yy;
+        uint256 xx;
+        uint256 xy;
+        uint256 yx;
+        uint256 yy;
 
         /* solium-disable-next-line */
         assembly {
@@ -337,25 +337,6 @@ library AltBn128 {
         }
     }
 
-    function _g1Add(uint256 ax, uint256 ay, uint256 bx, uint256 by)
-        internal view returns (uint256 x, uint256 y) {
-        /* solium-disable-next-line */
-        assembly {
-            let arg := mload(0x40)
-            mstore(arg, ax)
-            mstore(add(arg, 0x20), ay)
-            mstore(add(arg, 0x40), bx)
-            mstore(add(arg, 0x60), by)
-            let c := add(arg, 0x80)
-            // 0x60 is the ECADD precompile address
-            if iszero(staticcall(not(0), 0x06, arg, 0x80, c, 0x40)) {
-                revert(0, 0)
-            }
-            x := mload(c)
-            y := mload(add(c, 0x20))
-        }
-    }
-
     /**
      * @dev Return the sum of two gfP2 field elements.
      */
@@ -366,12 +347,6 @@ library AltBn128 {
         );
     }
 
-    function _gfP2Add(uint256 ax, uint256 ay, uint256 bx, uint256 by)
-        internal pure returns(uint256 x, uint256 y) {
-        x = addmod(ax, bx, p);
-        y = addmod(ay, by, p);
-    }
-
     /**
      * @dev Return multiplication of two gfP2 field elements.
      */
@@ -380,12 +355,6 @@ library AltBn128 {
             addmod(mulmod(a.x, b.y, p), mulmod(b.x, a.y, p), p),
             addmod(mulmod(a.y, b.y, p), p - mulmod(a.x, b.x, p), p)
         );
-    }
-
-    function _gfP2Multiply(uint256 ax, uint256 ay, uint256 bx, uint256 by)
-        internal pure returns(uint256 x, uint256 y) {
-        x = addmod(mulmod(ax, by, p), mulmod(bx, ay, p), p);
-        y = addmod(mulmod(ay, by, p), p - mulmod(ax, bx, p), p);
     }
 
     /**
@@ -424,43 +393,6 @@ library AltBn128 {
         return gfP2(x, y);
     }
 
-    function _gfP2CubeAddTwistB(uint256 ax, uint256 ay)
-        internal pure returns (uint256 x, uint256 y) {
-        (uint256 a3x, uint256 a3y) = _gfP2Cube(ax, ay);
-        return _gfP2Add(a3x, a3y, twistBx, twistBy);
-    }
-
-    function _gfP2Pow(uint256 _ax, uint256 _ay, uint256 _exp)
-        internal pure returns (uint256 x, uint256 y) {
-        uint256 exp = _exp;
-        x = 0;
-        y = 1;
-        uint256 ax = _ax;
-        uint256 ay = _ay;
-
-        // Reduce exp dividing by 2 gradually to 0 while computing final
-        // result only when exp is an odd number.
-        while (exp > 0) {
-            if (parity(exp) == 0x01) {
-                (x, y) = _gfP2Multiply(x, y, ax, ay);
-            }
-
-            exp = exp / 2;
-            (ax, ay) = _gfP2Multiply(ax, ay, ax, ay);
-        }
-    }
-
-    function _gfP2Square(uint256 _ax, uint256 _ay)
-        internal pure returns (uint256 x, uint256 y) {
-        return _gfP2Multiply(_ax, _ay, _ax, _ay);
-    }
-
-    function _gfP2Cube(uint256 _ax, uint256 _ay)
-        internal pure returns (uint256 x, uint256 y) {
-        (uint256 _bx, uint256 _by) = _gfP2Square(_ax, _ay);
-        return _gfP2Multiply(_ax, _ay, _bx, _by);
-    }
-
     /**
      * @dev Return true if G2 point's y^2 equals x.
      */
@@ -469,13 +401,6 @@ library AltBn128 {
         y2 = gfP2Square(y);
 
         return (y2.x == x.x && y2.y == x.y);
-    }
-
-    function _g2X2y(uint256 xx, uint256 xy, uint256 yx, uint256 yy)
-        internal pure returns (bool) {
-        (uint256 y2x, uint256 y2y) = _gfP2Square(yx, yy);
-
-        return (y2x == xx && y2y == xy);
     }
 
     /**
@@ -560,5 +485,61 @@ library AltBn128 {
             _c := mload(c)
         }
         return _c != 0;
+    }
+
+    function _gfP2Add(uint256 ax, uint256 ay, uint256 bx, uint256 by)
+        private pure returns(uint256 x, uint256 y) {
+        x = addmod(ax, bx, p);
+        y = addmod(ay, by, p);
+    }
+
+    function _gfP2Multiply(uint256 ax, uint256 ay, uint256 bx, uint256 by)
+        private pure returns(uint256 x, uint256 y) {
+        x = addmod(mulmod(ax, by, p), mulmod(bx, ay, p), p);
+        y = addmod(mulmod(ay, by, p), p - mulmod(ax, bx, p), p);
+    }
+
+    function _gfP2CubeAddTwistB(uint256 ax, uint256 ay)
+        private pure returns (uint256 x, uint256 y) {
+        (uint256 a3x, uint256 a3y) = _gfP2Cube(ax, ay);
+        return _gfP2Add(a3x, a3y, twistBx, twistBy);
+    }
+
+    function _gfP2Pow(uint256 _ax, uint256 _ay, uint256 _exp)
+        private pure returns (uint256 x, uint256 y) {
+        uint256 exp = _exp;
+        x = 0;
+        y = 1;
+        uint256 ax = _ax;
+        uint256 ay = _ay;
+
+        // Reduce exp dividing by 2 gradually to 0 while computing final
+        // result only when exp is an odd number.
+        while (exp > 0) {
+            if (parity(exp) == 0x01) {
+                (x, y) = _gfP2Multiply(x, y, ax, ay);
+            }
+
+            exp = exp / 2;
+            (ax, ay) = _gfP2Multiply(ax, ay, ax, ay);
+        }
+    }
+
+    function _gfP2Square(uint256 _ax, uint256 _ay)
+        private pure returns (uint256 x, uint256 y) {
+        return _gfP2Multiply(_ax, _ay, _ax, _ay);
+    }
+
+    function _gfP2Cube(uint256 _ax, uint256 _ay)
+        private pure returns (uint256 x, uint256 y) {
+        (uint256 _bx, uint256 _by) = _gfP2Square(_ax, _ay);
+        return _gfP2Multiply(_ax, _ay, _bx, _by);
+    }
+
+    function _g2X2y(uint256 xx, uint256 xy, uint256 yx, uint256 yy)
+        private pure returns (bool) {
+        (uint256 y2x, uint256 y2y) = _gfP2Square(yx, yy);
+
+        return (y2x == xx && y2y == xy);
     }
 }
