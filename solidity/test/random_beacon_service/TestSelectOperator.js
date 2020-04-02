@@ -29,12 +29,12 @@ describe('TestKeepRandomBeaconService/SelectOperator', function() {
     operatorContract2 = await OperatorContract.new(serviceContract.address, stakingContract.address, {from: accounts[0]});
     operatorContract3 = await OperatorContract.new(serviceContract.address, stakingContract.address, {from: accounts[0]});
 
-    operatorContract.registerNewGroup("0x0", {from: accounts[0]});
-    operatorContract2.registerNewGroup("0x0", {from: accounts[0]});
-    operatorContract2.registerNewGroup("0x0", {from: accounts[0]});
-    operatorContract3.registerNewGroup("0x0", {from: accounts[0]});
-    operatorContract3.registerNewGroup("0x0", {from: accounts[0]});
-    operatorContract3.registerNewGroup("0x0", {from: accounts[0]});
+    await operatorContract.registerNewGroup("0x0", {from: accounts[0]});
+    await operatorContract2.registerNewGroup("0x0", {from: accounts[0]});
+    await operatorContract2.registerNewGroup("0x0", {from: accounts[0]});
+    await operatorContract3.registerNewGroup("0x0", {from: accounts[0]});
+    await operatorContract3.registerNewGroup("0x0", {from: accounts[0]});
+    await operatorContract3.registerNewGroup("0x0", {from: accounts[0]});
   });
 
   beforeEach(async () => {
