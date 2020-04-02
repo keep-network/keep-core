@@ -3,6 +3,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
+const TokenStaking = artifacts.require('./TokenStaking.sol');
 const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
 const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
 
@@ -56,16 +57,28 @@ contract('PermissiveStakingPolicy', async (accounts) => {
 
 contract('GuaranteedMinimumStakingPolicy', async (accounts) => {
   let policy;
-  let minimumStake = 2000;
-  let largeGrant = 10000;
-  let mediumGrant = 5000;
-  let smallGrant = 1000;
+  let stakingContract;
+  let minimumStake;
+  let largeGrant;
+  let mediumGrant;
+  let smallGrant;
   let start = 1000;
   let duration = 2000;
   let cliff = 1500;
 
+  function units(n) { return minimumStake.divn(2000).muln(n); }
+
   before(async () => {
-    policy = await GuaranteedMinimumStakingPolicy.new(minimumStake);
+    stakingContract = await TokenStaking.new(
+      accounts[9],
+      accounts[9],
+      0, 0
+    );
+    policy = await GuaranteedMinimumStakingPolicy.new(stakingContract.address);
+    minimumStake = await stakingContract.minimumStake();
+    largeGrant = units(10000);
+    mediumGrant = units(5000);
+    smallGrant = units(1000);
   });
 
   async function calculate(atTimestamp, givenAmount, withdrawnAmount) {
@@ -94,7 +107,7 @@ contract('GuaranteedMinimumStakingPolicy', async (accounts) => {
 
     it("should calculate stakeable amount correctly just after cliff", async () => {
       expect(await calculate(1500, largeGrant, 0)).to.eq.BN(
-        2500,
+        units(2500),
         "Should permit unlocked amount with large grant just after cliff");
       expect(await calculate(1500, mediumGrant, 0)).to.eq.BN(
         minimumStake,
@@ -106,10 +119,10 @@ contract('GuaranteedMinimumStakingPolicy', async (accounts) => {
 
     it("should calculate stakeable amount correctly halfway through", async () => {
       expect(await calculate(2000, largeGrant, 0)).to.eq.BN(
-        5000,
+        units(5000),
         "Should permit unlocked amount with large grant halfway through");
       expect(await calculate(2000, mediumGrant, 0)).to.eq.BN(
-        2500,
+        units(2500),
         "Should permit unlocked amount with medium grant halfway through");
       expect(await calculate(2000, smallGrant, 0)).to.eq.BN(
         smallGrant,
@@ -131,64 +144,64 @@ contract('GuaranteedMinimumStakingPolicy', async (accounts) => {
 
   describe("with all unlocked tokens withdrawn", async () => {
     it("should calculate stakeable amount correctly just after cliff", async () => {
-      expect(await calculate(1500, largeGrant, 2500)).to.eq.BN(
+      expect(await calculate(1500, largeGrant, units(2500))).to.eq.BN(
         minimumStake,
         "Should permit minimum stake with large grant just after cliff");
-      expect(await calculate(1500, mediumGrant, 1250)).to.eq.BN(
+      expect(await calculate(1500, mediumGrant, units(1250))).to.eq.BN(
         minimumStake,
         "Should permit minimum stake with medium grant just after cliff");
-      expect(await calculate(1500, smallGrant, 250)).to.eq.BN(
-        750,
+      expect(await calculate(1500, smallGrant, units(250))).to.eq.BN(
+        units(750),
         "Should permit remaining amount with small grant just after cliff");
     });
 
     it("should calculate stakeable amount correctly halfway through", async () => {
-      expect(await calculate(2000, largeGrant, 5000)).to.eq.BN(
+      expect(await calculate(2000, largeGrant, units(5000))).to.eq.BN(
         minimumStake,
         "Should permit minimum stake with large grant halfway through");
-      expect(await calculate(2000, mediumGrant, 2500)).to.eq.BN(
+      expect(await calculate(2000, mediumGrant, units(2500))).to.eq.BN(
         minimumStake,
         "Should permit minimum stake with medium grant halfway through");
-      expect(await calculate(2000, smallGrant, 500)).to.eq.BN(
-        500,
+      expect(await calculate(2000, smallGrant, units(500))).to.eq.BN(
+        units(500),
         "Should permit remaining amount with small grant halfway through");
     });
 
     it("should calculate stakeable amount correctly at three quarters", async () => {
-      expect(await calculate(2500, largeGrant, 7500)).to.eq.BN(
+      expect(await calculate(2500, largeGrant, units(7500))).to.eq.BN(
         minimumStake,
         "Should permit minimum stake with large grant at three quarters");
-      expect(await calculate(2500, mediumGrant, 3750)).to.eq.BN(
-        1250,
+      expect(await calculate(2500, mediumGrant, units(3750))).to.eq.BN(
+        units(1250),
         "Should permit remaining amount with medium grant at three quarters");
-      expect(await calculate(2500, smallGrant, 750)).to.eq.BN(
-        250,
+      expect(await calculate(2500, smallGrant, units(750))).to.eq.BN(
+        units(250),
         "Should permit remaining amount with small grant at three quarters");
     });
   })
 
   describe("with half of unlocked tokens withdrawn", async () => {
     it("should calculate stakeable amount correctly just after cliff", async () => {
-      expect(await calculate(1500, largeGrant, 1250)).to.eq.BN(
+      expect(await calculate(1500, largeGrant, units(1250))).to.eq.BN(
         minimumStake,
         "Should permit minimum stake with large grant just after cliff");
-      expect(await calculate(1500, mediumGrant, 625)).to.eq.BN(
+      expect(await calculate(1500, mediumGrant, units(625))).to.eq.BN(
         minimumStake,
         "Should permit minimum stake with medium grant just after cliff");
-      expect(await calculate(1500, smallGrant, 125)).to.eq.BN(
-        875,
+      expect(await calculate(1500, smallGrant, units(125))).to.eq.BN(
+        units(875),
         "Should permit remaining amount with small grant just after cliff");
     });
 
     it("should calculate stakeable amount correctly halfway through", async () => {
-      expect(await calculate(2000, largeGrant, 2500)).to.eq.BN(
-        2500,
+      expect(await calculate(2000, largeGrant, units(2500))).to.eq.BN(
+        units(2500),
         "Should permit remaining unlocked amount with large grant halfway through");
-      expect(await calculate(2000, mediumGrant, 1250)).to.eq.BN(
+      expect(await calculate(2000, mediumGrant, units(1250))).to.eq.BN(
         minimumStake,
         "Should permit minimum stake with medium grant halfway through");
-      expect(await calculate(2000, smallGrant, 250)).to.eq.BN(
-        750,
+      expect(await calculate(2000, smallGrant, units(250))).to.eq.BN(
+        units(750),
         "Should permit remaining amount with small grant halfway through");
     });
   })

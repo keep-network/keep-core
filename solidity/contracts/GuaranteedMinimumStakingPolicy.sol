@@ -3,6 +3,7 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./libraries/grant/UnlockingSchedule.sol";
 import "./GrantStakingPolicy.sol";
+import "./TokenStaking.sol";
 
 /// @title GuaranteedMinimumStakingPolicy
 /// @dev A staking policy which allows the grantee
@@ -26,10 +27,10 @@ import "./GrantStakingPolicy.sol";
 contract GuaranteedMinimumStakingPolicy is GrantStakingPolicy {
     using SafeMath for uint256;
     using UnlockingSchedule for uint256;
-    uint256 minimumStake;
+    TokenStaking stakingContract;
 
-    constructor(uint256 _minimumStake) public {
-        minimumStake = _minimumStake;
+    constructor(address _stakingContract) public {
+        stakingContract = TokenStaking(_stakingContract);
     }
 
     function getStakeableAmount (
@@ -46,6 +47,7 @@ contract GuaranteedMinimumStakingPolicy is GrantStakingPolicy {
             start,
             cliff
         );
+        uint256 minimumStake = stakingContract.minimumStake();
         uint256 remainingInGrant = grantedAmount.sub(withdrawn);
         uint256 unlockedInGrant = unlocked.sub(withdrawn);
 
