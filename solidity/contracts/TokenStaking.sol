@@ -6,6 +6,24 @@ import "./utils/PercentUtils.sol";
 import "./Registry.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
+// An operator contract can delegate authority to other operator contracts
+// by implementing the AuthorityDelegator interface.
+//
+// To delegate authority,
+// the recipient of delegated authority must call `claimDelegatedAuthority`,
+// specifying the contract it wants delegated authority from.
+// The staking contract calls `delegator.__isRecognized(recipient)`
+// and if the call returns `true`,
+// the named delegator contract is set as the recipient's authority delegator.
+// Any future checks of registry approval or per-operator authorization
+// will transparently mirror the delegator's status.
+//
+// Authority can be delegated recursively;
+// an operator contract receiving delegated authority
+// can recognize other operator contracts as recipients of its authority.
+interface AuthorityDelegator {
+    function __isRecognized(address delegatedAuthorityRecipient) external returns (bool);
+}
 
 /**
  * @title TokenStaking
@@ -20,7 +38,12 @@ contract TokenStaking is StakeDelegatable {
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
     // the Keep network. Expressed as number with 18-decimal places.
-    uint256 public minimumStake = 200000 * 1e18;
+    // Initial minimum stake is higher than the final and lowered periodically based
+    // on the amount of steps and the length of the minimum stake schedule in seconds.
+    uint256 public minimumStakeScheduleStart;
+    uint256 public constant minimumStakeSchedule = 86400 * 365 * 2; // 2 years in seconds (seconds per day * days in a year * years)
+    uint256 public constant minimumStakeSteps = 10;
+    uint256 public constant minimumStakeBase = 10000 * 1e18;
 
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
@@ -34,9 +57,14 @@ contract TokenStaking is StakeDelegatable {
     // Authorized operator contracts.
     mapping(address => mapping (address => bool)) internal authorizations;
 
+    // Granters of delegated authority to operator contracts.
+    // E.g. keep factories granting delegated authority to keeps.
+    // `delegatedAuthority[keep] = factory`
+    mapping(address => address) internal delegatedAuthority;
+
     modifier onlyApprovedOperatorContract(address operatorContract) {
         require(
-            registry.isApprovedOperatorContract(operatorContract),
+            registry.isApprovedOperatorContract(getAuthoritySource(operatorContract)),
             "Operator contract is not approved"
         );
         _;
@@ -49,7 +77,7 @@ contract TokenStaking is StakeDelegatable {
      * @param _initializationPeriod To avoid certain attacks on work selection, recently created
      * operators must wait for a specific period of time before being eligible for work selection.
      * @param _undelegationPeriod The staking contract guarantees that an undelegated operator’s
-     * stakes will stay locked for a number of blocks after undelegation, and thus available as
+     * stakes will stay locked for a period of time after undelegation, and thus available as
      * collateral for any work the operator is engaged in.
      */
     constructor(
@@ -63,6 +91,23 @@ contract TokenStaking is StakeDelegatable {
         registry = Registry(_registry);
         initializationPeriod = _initializationPeriod;
         undelegationPeriod = _undelegationPeriod;
+        minimumStakeScheduleStart = block.timestamp;
+    }
+
+    /**
+     * @notice Returns minimum amount of KEEP that allows sMPC cluster client to
+     * participate in the Keep network. Expressed as number with 18-decimal places.
+     * Initial minimum stake is higher than the final and lowered periodically based
+     * on the amount of steps and the length of the minimum stake schedule in seconds.
+     */
+    function minimumStake() public view returns (uint256) {
+        if (block.timestamp < minimumStakeScheduleStart.add(minimumStakeSchedule)) {
+            uint256 currentStep = minimumStakeSteps.mul(
+                block.timestamp.sub(minimumStakeScheduleStart)
+            ).div(minimumStakeSchedule);
+            return minimumStakeBase.mul(minimumStakeSteps.sub(currentStep));
+        }
+        return minimumStakeBase;
     }
 
     /**
@@ -77,7 +122,7 @@ contract TokenStaking is StakeDelegatable {
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
-        require(_value >= minimumStake, "Tokens amount must be greater than the minimum stake");
+        require(_value >= minimumStake(), "Tokens amount must be greater than the minimum stake");
         require(_extraData.length == 60, "Stake delegation data must be provided.");
 
         address payable magpie = address(uint160(_extraData.toAddress(0)));
@@ -89,7 +134,7 @@ contract TokenStaking is StakeDelegatable {
         token.safeTransferFrom(_from, address(this), _value);
 
         operators[operator] = Operator(
-            OperatorParams.pack(_value, block.number, 0),
+            OperatorParams.pack(_value, block.timestamp, 0),
             _from,
             magpie,
             authorizer
@@ -114,7 +159,7 @@ contract TokenStaking is StakeDelegatable {
         uint256 operatorParams = operators[_operator].packedParams;
 
         require(
-            block.number <= operatorParams.getCreationBlock().add(initializationPeriod),
+            block.timestamp <= operatorParams.getCreationTimestamp().add(initializationPeriod),
             "Initialization period is over"
         );
 
@@ -130,20 +175,20 @@ contract TokenStaking is StakeDelegatable {
      * @param _operator Address of the stake operator.
      */
     function undelegate(address _operator) public {
-        undelegateAt(_operator, block.number);
+        undelegateAt(_operator, block.timestamp);
     }
 
     /**
      * @notice Set an undelegation time for staked tokens.
-     * Undelegation will begin at the specified block.
+     * Undelegation will begin at the specified timestamp.
      * You will be able to recover your stake by calling
      * `recoverStake()` with operator address once undelegation period is over.
      * @param _operator Address of the stake operator.
-     * @param _undelegationBlock The block undelegation is to start at.
+     * @param _undelegationTimestamp The timestamp undelegation is to start at.
      */
     function undelegateAt(
         address _operator,
-        uint256 _undelegationBlock
+        uint256 _undelegationTimestamp
     ) public {
         address owner = operators[_operator].owner;
         bool sentByOwner = msg.sender == owner;
@@ -152,39 +197,44 @@ contract TokenStaking is StakeDelegatable {
             sentByOwner, "Only operator or the owner of the stake can undelegate."
         );
         require(
-            _undelegationBlock >= block.number,
-            "May not set undelegation block in the past"
+            _undelegationTimestamp >= block.timestamp,
+            "May not set undelegation timestamp in the past"
         );
         uint256 oldParams = operators[_operator].packedParams;
-        uint256 existingCreationBlock = oldParams.getCreationBlock();
-        uint256 existingUndelegationBlock = oldParams.getUndelegationBlock();
+        uint256 existingCreationTimestamp = oldParams.getCreationTimestamp();
+        uint256 existingUndelegationTimestamp = oldParams.getUndelegationTimestamp();
         require(
-            _undelegationBlock > existingCreationBlock.add(initializationPeriod),
+            _undelegationTimestamp > existingCreationTimestamp.add(initializationPeriod),
             "Cannot undelegate in initialization period, use cancelStake instead"
         );
         require(
             // Undelegation not in progress OR
-            existingUndelegationBlock == 0 ||
+            existingUndelegationTimestamp == 0 ||
             // Undelegating sooner than previously set time OR
-            existingUndelegationBlock > _undelegationBlock ||
+            existingUndelegationTimestamp > _undelegationTimestamp ||
             // Owner may override
             sentByOwner,
             "Only the owner may postpone previously set undelegation"
         );
-        uint256 newParams = oldParams.setUndelegationBlock(_undelegationBlock);
+        uint256 newParams = oldParams.setUndelegationTimestamp(_undelegationTimestamp);
         operators[_operator].packedParams = newParams;
-        emit Undelegated(_operator, _undelegationBlock);
+        emit Undelegated(_operator, _undelegationTimestamp);
     }
 
     /**
-     * @notice Recovers staked tokens and transfers them back to the owner. Recovering
-     * tokens can only be performed when the operator is finished undelegating.
+     * @notice Recovers staked tokens and transfers them back to the owner.
+     * Recovering tokens can only be performed when the operator finished
+     * undelegating.
      * @param _operator Operator address.
      */
     function recoverStake(address _operator) public {
         uint256 operatorParams = operators[_operator].packedParams;
         require(
-            block.number > operatorParams.getUndelegationBlock().add(undelegationPeriod),
+            operatorParams.getUndelegationTimestamp() != 0,
+            "Can not recover without first undelegating"
+        );
+        require(
+            block.timestamp > operatorParams.getUndelegationTimestamp().add(undelegationPeriod),
             "Can not recover stake before undelegation period is over."
         );
         address owner = operators[_operator].owner;
@@ -193,7 +243,7 @@ contract TokenStaking is StakeDelegatable {
         operators[_operator].packedParams = operatorParams.setAmount(0);
 
         token.safeTransfer(owner, amount);
-        emit RecoveredStake(_operator, block.number);
+        emit RecoveredStake(_operator, block.timestamp);
     }
 
     /**
@@ -220,13 +270,14 @@ contract TokenStaking is StakeDelegatable {
         onlyApprovedOperatorContract(msg.sender) {
 
         uint256 totalAmountToBurn = 0;
+        address authoritySource = getAuthoritySource(msg.sender);
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
-            require(authorizations[msg.sender][operator], "Not authorized");
+            require(authorizations[authoritySource][operator], "Not authorized");
 
             uint256 operatorParams = operators[operator].packedParams;
             require(
-                block.number > operatorParams.getCreationBlock().add(initializationPeriod),
+                block.timestamp > operatorParams.getCreationTimestamp().add(initializationPeriod),
                 "Operator stake must be active"
             );
 
@@ -266,13 +317,14 @@ contract TokenStaking is StakeDelegatable {
         address[] memory misbehavedOperators
     ) public onlyApprovedOperatorContract(msg.sender) {
         uint256 totalAmountToBurn = 0;
+        address authoritySource = getAuthoritySource(msg.sender);
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
-            require(authorizations[msg.sender][operator], "Not authorized");
+            require(authorizations[authoritySource][operator], "Not authorized");
 
             uint256 operatorParams = operators[operator].packedParams;
             require(
-                block.number > operatorParams.getCreationBlock().add(initializationPeriod),
+                block.timestamp > operatorParams.getCreationTimestamp().add(initializationPeriod),
                 "Operator stake must be active"
             );
 
@@ -302,6 +354,9 @@ contract TokenStaking is StakeDelegatable {
     /**
      * @dev Authorizes operator contract to access staked token balance of
      * the provided operator. Can only be executed by stake operator authorizer.
+     * Contracts using delegated authority
+     * cannot be authorized with `authorizeOperatorContract`.
+     * Instead, authorize `getAuthoritySource(_operatorContract)`.
      * @param _operator address of stake operator.
      * @param _operatorContract address of operator contract.
      */
@@ -309,6 +364,10 @@ contract TokenStaking is StakeDelegatable {
         public
         onlyOperatorAuthorizer(_operator)
         onlyApprovedOperatorContract(_operatorContract) {
+        require(
+            getAuthoritySource(_operatorContract) == _operatorContract,
+            "Contract uses delegated authority"
+        );
         authorizations[_operatorContract][_operator] = true;
     }
 
@@ -319,7 +378,7 @@ contract TokenStaking is StakeDelegatable {
      * @param _operatorContract address of operator contract.
      */
     function isAuthorizedForOperator(address _operator, address _operatorContract) public view returns (bool) {
-        return authorizations[_operatorContract][_operator];
+        return authorizations[getAuthoritySource(_operatorContract)][_operator];
     }
 
     /**
@@ -339,18 +398,18 @@ contract TokenStaking is StakeDelegatable {
         address _operator,
         address _operatorContract
     ) public view returns (uint256 balance) {
-        bool isAuthorized = authorizations[_operatorContract][_operator];
+        bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
 
         uint256 operatorParams = operators[_operator].packedParams;
-        uint256 createdAt = operatorParams.getCreationBlock();
-        uint256 undelegatedAt = operatorParams.getUndelegationBlock();
+        uint256 createdAt = operatorParams.getCreationTimestamp();
+        uint256 undelegatedAt = operatorParams.getUndelegationTimestamp();
 
-        bool isActive = block.number > createdAt.add(initializationPeriod);
-        // `undelegatedAt` may be set to a block in the future,
+        bool isActive = block.timestamp > createdAt.add(initializationPeriod);
+        // `undelegatedAt` may be set to a time in the future,
         // to schedule undelegation in advance.
         // In this case the operator is still eligible
-        // until the block `undelegatedAt`.
-        bool isUndelegating = (undelegatedAt != 0) && (block.number > undelegatedAt);
+        // until the timestamp `undelegatedAt`.
+        bool isUndelegating = (undelegatedAt != 0) && (block.timestamp > undelegatedAt);
 
         if (isAuthorized && isActive && !isUndelegating) {
             balance = operatorParams.getAmount();
@@ -376,12 +435,12 @@ contract TokenStaking is StakeDelegatable {
         address _operator,
         address _operatorContract
     ) public view returns (uint256 balance) {
-        bool isAuthorized = authorizations[_operatorContract][_operator];
+        bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
 
         uint256 operatorParams = operators[_operator].packedParams;
-        uint256 createdAt = operatorParams.getCreationBlock();
+        uint256 createdAt = operatorParams.getCreationTimestamp();
 
-        bool isActive = block.number > createdAt.add(initializationPeriod);
+        bool isActive = block.timestamp > createdAt.add(initializationPeriod);
 
         if (isAuthorized && isActive) {
             balance = operatorParams.getAmount();
@@ -406,6 +465,41 @@ contract TokenStaking is StakeDelegatable {
         address staker,
         address operatorContract
     ) public view returns(bool) {
-        return activeStake(staker, operatorContract) >= minimumStake;
+        return activeStake(staker, operatorContract) >= minimumStake();
+    }
+
+    /// @notice Grant the sender the same authority as `delegatedAuthoritySource`
+    /// @dev If `delegatedAuthoritySource` is an approved operator contract
+    /// and recognizes the claimant,
+    /// this relationship will be recorded in `delegatedAuthority`.
+    /// Later, the claimant can slash, seize, place locks etc.
+    /// on operators that have authorized the `delegatedAuthoritySource`.
+    /// If the `delegatedAuthoritySource` is disabled with the panic button,
+    /// any recipients of delegated authority from it will also be disabled.
+    function claimDelegatedAuthority(
+        address delegatedAuthoritySource
+    ) public onlyApprovedOperatorContract(delegatedAuthoritySource) {
+        require(
+            AuthorityDelegator(delegatedAuthoritySource).__isRecognized(msg.sender),
+            "Unrecognized claimant"
+        );
+        delegatedAuthority[msg.sender] = delegatedAuthoritySource;
+    }
+
+    /// @notice Get the source of the operator contract's authority.
+    /// If the contract uses delegated authority,
+    /// returns the original source of the delegated authority.
+    /// If the contract doesn't use delegated authority,
+    /// returns the contract itself.
+    /// Authorize `getAuthoritySource(operatorContract)`
+    /// to grant `operatorContract` the authority to penalize an operator.
+    function getAuthoritySource(
+        address operatorContract
+    ) public view returns (address) {
+        address delegatedAuthoritySource = delegatedAuthority[operatorContract];
+        if (delegatedAuthoritySource == address(0)) {
+            return operatorContract;
+        }
+        return getAuthoritySource(delegatedAuthoritySource);
     }
 }

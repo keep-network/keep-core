@@ -23,8 +23,8 @@ contract('OperatorParamsStub', (accounts) => {
         recently,
         billionYearsFromNow);
       const amount = await opUtils.publicGetAmount(params);
-      const createdAt = await opUtils.publicGetCreationBlock(params);
-      const undelegatedAt = await opUtils.publicGetUndelegationBlock(params);
+      const createdAt = await opUtils.publicGetCreationTimestamp(params);
+      const undelegatedAt = await opUtils.publicGetUndelegationTimestamp(params);
 
       assert.equal(
         amount.toJSON(),
@@ -33,11 +33,11 @@ contract('OperatorParamsStub', (accounts) => {
       assert.equal(
         createdAt.toJSON(),
         recently.toJSON(),
-        "The creation block should be the same");
+        "The creation timestamp should be the same");
       assert.equal(
         undelegatedAt.toJSON(),
         billionYearsFromNow.toJSON(),
-        "The undelegation block should be the same");
+        "The undelegation timestamp should be the same");
     })
   })
 
@@ -53,31 +53,31 @@ contract('OperatorParamsStub', (accounts) => {
     })
   })
 
-  describe("setCreationBlock", async () => {
-    it("should set the creation block", async () => {
+  describe("setCreationTimestamp", async () => {
+    it("should set the creation timestamp", async () => {
       const params = await opUtils.publicPack(allKeepEver, recently, 0);
-      const newParams = await opUtils.publicSetCreationBlock(
+      const newParams = await opUtils.publicSetCreationTimestamp(
         params,
         billionYearsFromNow);
-      const creationBlock = await opUtils.publicGetCreationBlock(newParams);
+      const creationBlock = await opUtils.publicGetCreationTimestamp(newParams);
       assert.equal(
         creationBlock.toJSON(),
         billionYearsFromNow.toJSON(),
-        "The creation block should be the same");
+        "The creation timestamp should be the same");
     })
   })
 
-  describe("setUndelegationBlock", async () => {
-    it("should set the undelegation block", async () => {
+  describe("setUndelegationTimestamp", async () => {
+    it("should set the undelegation timestamp", async () => {
       const params = await opUtils.publicPack(allKeepEver, recently, 0);
-      const newParams = await opUtils.publicSetUndelegationBlock(
+      const newParams = await opUtils.publicSetUndelegationTimestamp(
         params,
         recently);
-      const undelegationBlock = await opUtils.publicGetUndelegationBlock(newParams);
+      const undelegationTimestamp = await opUtils.publicGetUndelegationTimestamp(newParams);
       assert.equal(
-        undelegationBlock.toJSON(),
+        undelegationTimestamp.toJSON(),
         recently.toJSON(),
-        "The undelegationBlock should be the same");
+        "The undelegationTimestamp should be the same");
     })
   })
 })

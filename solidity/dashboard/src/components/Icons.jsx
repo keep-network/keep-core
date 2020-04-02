@@ -95,6 +95,41 @@ OK.defaultProps = {
   color: colors.black,
 }
 
+const OKBadge = ({ bgColor, color }) => (
+  <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect fill={bgColor} y="1" width="20" height="19" rx="9.5" />
+    <path
+      stroke={color}
+      d="M6.96484 9.67466L8.50359 11.2987C8.6596 11.5171 8.90802 11.6508 9.17622 11.6608C9.44442 11.6708 9.70211 11.5559 9.87394 11.3498L16.0002 4" strokeLinecap="round" strokeLinejoin="round"/>
+    <path
+      stroke={color}
+      d="M13.0858 4.98857C10.5762 3.436 7.30743 3.95597 5.40381 6.21059C3.50019 8.46521 3.53647 11.7737 5.48907 13.9861C7.44167 16.1984 10.721 16.6467 13.196 15.0395C15.6711 13.4323 16.5945 10.2549 15.3662 7.57224" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+OKBadge.defaultProps = {
+  bgColor: colors.bgSuccess,
+  color: colors.success,
+}
+
+const PendingBadge = ({ bgColor, color }) => (
+  <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect fill={bgColor} y="1" width="20" height="19" rx="9.5" />
+    <svg width="14" height="14" x="3" y="3.5" fill="none" >
+      <path fillRule="evenodd" clipRule="evenodd" d="M7 13C10.3137 13 13 10.3137 13 7C13 3.68629 10.3137 1 7 1C3.68629 1 1 3.68629 1 7C1 10.3137 3.68629 13 7 13Z" stroke={color} strokeLinecap="round" strokeLinejoin="round"/>
+      <path fillRule="evenodd" clipRule="evenodd" d="M7 6.99979V4.85693V6.99979Z" fill="#4C4C4C"/>
+      <path d="M7 6.99979V4.85693" stroke={color} strokeLinecap="round" strokeLinejoin="round"/>
+      <path fillRule="evenodd" clipRule="evenodd" d="M7 7L9.67829 9.67886L7 7Z" fill="#4C4C4C"/>
+      <path d="M7 7L9.67829 9.67886" stroke={color} strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  </svg>
+)
+
+PendingBadge.defaultProps = {
+  bgColor: colors.bgPending,
+  color: colors.pending,
+}
+
 export {
   Keep,
   Badge,
@@ -102,4 +137,6 @@ export {
   SpeechBubble,
   KeepCircle,
   OK,
+  OKBadge,
+  PendingBadge,
 }

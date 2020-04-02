@@ -1,11 +1,10 @@
 import { contractService } from './contracts.service'
 import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
-import web3Utils from 'web3-utils'
+import moment from 'moment'
 import { COMPLETE_STATUS, PENDING_STATUS } from '../constants/constants'
-import { gt, add } from '../utils/arithmetics.utils'
 
 const fetchDelegatedTokensData = async (web3Context) => {
-  const { yourAddress, grantContract, eth } = web3Context
+  const { yourAddress, grantContract } = web3Context
   const [
     stakedBalance,
     ownerAddress,
@@ -27,10 +26,10 @@ const fetchDelegatedTokensData = async (web3Context) => {
     isUndelegationFromGrant = false
   }
 
-  const { undelegationStatus, undelegation } = await fetchPendingUndelegation(web3Context)
+  const { undelegationStatus, undelegation, undelegationPeriod } = await fetchPendingUndelegation(web3Context)
   const { createdAt } = undelegation
-  const initializationOverAt = add(createdAt || 0, initializationPeriod)
-  const isInInitializationPeriod = gt(initializationOverAt, await eth.getBlockNumber())
+  const initializationOverAt = moment.unix(createdAt).add(initializationPeriod, 'seconds')
+  const isInInitializationPeriod = moment().isSameOrBefore(initializationOverAt)
 
   return {
     stakedBalance,
@@ -40,30 +39,32 @@ const fetchDelegatedTokensData = async (web3Context) => {
     undelegationStatus,
     isUndelegationFromGrant,
     isInInitializationPeriod,
+    undelegationPeriod,
   }
 }
 
 const fetchPendingUndelegation = async (web3Context) => {
-  const { yourAddress, eth } = web3Context
+  const { yourAddress } = web3Context
   const [delegation, undelegationPeriod] = await Promise.all([
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'getDelegationInfo', yourAddress),
     contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'undelegationPeriod'),
   ])
 
-  const undelegationCompletedAtInBN = web3Utils.toBN(delegation.undelegatedAt).add(web3Utils.toBN(undelegationPeriod))
+  const { undelegatedAt } = delegation
+
   const isUndelegation = delegation.undelegatedAt !== '0'
   const pendingUnstakeBalance = isUndelegation ? delegation.amount : 0
-  const undelegationComplete = isUndelegation ? undelegationCompletedAtInBN.toString() : null
+  const undelegationCompletedAt = isUndelegation ? moment.unix(undelegatedAt).add(undelegationPeriod, 'seconds') : null
   let undelegationStatus
   if (isUndelegation) {
-    undelegationStatus = gt(await eth.getBlockNumber(), undelegationCompletedAtInBN) ? COMPLETE_STATUS : PENDING_STATUS
+    undelegationStatus = undelegationCompletedAt.isBefore(moment()) ? COMPLETE_STATUS : PENDING_STATUS
   } else if (delegation.undelegatedAt === '0' && delegation.createdAt !== '0' && delegation.amount === '0') {
     undelegationStatus = COMPLETE_STATUS
   }
 
   return {
     pendingUnstakeBalance,
-    undelegationComplete,
+    undelegationCompletedAt,
     undelegationPeriod,
     undelegationStatus,
     undelegation: delegation,

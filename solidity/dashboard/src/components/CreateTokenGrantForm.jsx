@@ -17,6 +17,10 @@ import { useShowMessage, messageType } from './Message'
 import ProgressBar from './ProgressBar'
 import { colors } from '../constants/colors'
 import { formatAmount, displayAmount } from '../utils/general.utils.js'
+import {
+  normalizeAmount,
+  formatAmount as formatFormAmount,
+} from '../forms/form.utils.js'
 
 const CreateTokenGrantForm = ({
   keepBalance,
@@ -49,6 +53,8 @@ const CreateTokenGrantForm = ({
         name="amount"
         type="text"
         label="Amount"
+        normalize={normalizeAmount}
+        format={formatFormAmount}
       />
       <div className="text-smaller text-grey-50">
         {displayAmount(keepBalance)} KEEP available
@@ -60,17 +66,17 @@ const CreateTokenGrantForm = ({
       <FormInput
         name="duration"
         type="text"
-        label="Duration (Duration in seconds of the period in which the tokens will vest)"
+        label="Duration (Duration in seconds of the period in which the tokens will unlock)"
       />
       <FormInput
         name="start"
         type="text"
-        label="Start (Timestamp at which vesting will start)"
+        label="Start (Timestamp at which unlocking will start)"
       />
       <FormInput
         name="cliff"
         type="text"
-        label="Cliff (Duration in seconds of the cliff after which tokens will begin to vest)"
+        label="Cliff (Duration in seconds of the cliff after which tokens will begin to unlock)"
       />
       <FormCheckbox
         name="revocable"

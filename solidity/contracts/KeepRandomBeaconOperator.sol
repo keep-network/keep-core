@@ -176,7 +176,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groupSelection.ticketSubmissionTimeout = 12;
         groupSelection.groupSize = groupSize;
 
-        dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10);
+        dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10) + 20;
         dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;
         dkgResultVerification.groupSize = groupSize;
         // TODO: For now, the required number of signatures is equal to group
@@ -234,6 +234,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
         }
 
+        groupSelection.minimumStake = stakingContract.minimumStake();
         groupSelection.start(_newEntry);
         emit GroupSelectionStarted(_newEntry);
         dkgSubmitterReimbursementFee = _payment;
@@ -266,8 +267,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      *   current candidate group selection.
      */
     function submitTicket(bytes32 ticket) public {
-        uint256 minimumStake = stakingContract.minimumStake();
-        uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(minimumStake);
+        uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(groupSelection.minimumStake);
         groupSelection.submitTicket(ticket, stakingWeight);
     }
 

@@ -70,7 +70,6 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
 
     struct Callback {
         address callbackContract;
-        string callbackMethod;
         uint256 callbackFee;
         uint256 callbackGas;
         address payable surplusRecipient;
@@ -129,7 +128,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
         _pendingWithdrawal = 0;
         _previousEntry = _beaconSeed;
         _registry = registry;
-        _baseCallbackGas = 18789;
+        _baseCallbackGas = 10961;
 
         // Initialize DelayedWithdrawal owner.
         initialize(msg.sender);
@@ -221,15 +220,15 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
      * @return An uint256 representing uniquely generated entry Id.
      */
     function requestRelayEntry() public payable returns (uint256) {
-        return requestRelayEntry(address(0), "", 0);
+        return requestRelayEntry(address(0), 0);
     }
 
     /**
-     * @dev Creates a request to generate a new relay entry, which will include
-     * a random number (by signing the previous entry's random number).
-     * @param callbackContract Callback contract address. Callback is called once a new relay entry has been generated.
-     * @param callbackMethod Callback contract method signature. String representation of your method with a single
-     * uint256 input parameter i.e. "relayEntryCallback(uint256)".
+     * @dev Creates a request to generate a new relay entry (random number).
+     * @param callbackContract Callback contract address. Callback is called
+     * once a new relay entry has been generated. Callback contract must
+     * declare public `__beaconCallback(uint256)` function that is going to be
+     * executed with the result, once ready.
      * @param callbackGas Gas required for the callback.
      * The customer needs to ensure they provide a sufficient callback gas
      * to cover the gas fee of executing the callback. Any surplus is returned
@@ -239,7 +238,6 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
      */
     function requestRelayEntry(
         address callbackContract,
-        string memory callbackMethod,
         uint256 callbackGas
     ) public nonReentrant payable returns (uint256) {
         require(
@@ -283,7 +281,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
         _requestSubsidyFeePool = _requestSubsidyFeePool.add(surplus);
 
         if (callbackContract != address(0)) {
-            _callbacks[requestId] = Callback(callbackContract, callbackMethod, callbackFee, callbackGas, msg.sender);
+            _callbacks[requestId] = Callback(callbackContract, callbackFee, callbackGas, msg.sender);
         }
 
         // Send 1% of the request subsidy pool to the requestor.
@@ -334,7 +332,9 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
             "Callback contract not found"
         );
 
-        _callbacks[requestId].callbackContract.call(abi.encodeWithSignature(_callbacks[requestId].callbackMethod, entry));
+        _callbacks[requestId].callbackContract.call(
+            abi.encodeWithSignature("__beaconCallback(uint256)", entry)
+        );
 
         surplusRecipient = _callbacks[requestId].surplusRecipient;
         delete _callbacks[requestId];
