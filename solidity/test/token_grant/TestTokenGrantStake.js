@@ -17,12 +17,12 @@ const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
 const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
-const EmployeeStakingPolicy = artifacts.require('./EmployeeStakingPolicy.sol');
+const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
 
 contract.only('TokenGrant/Stake', function(accounts) {
 
   let tokenContract, registryContract, grantContract, stakingContract,
-    permissivePolicy, employeePolicy,
+    permissivePolicy, minimumPolicy,
     minimumStake, grantAmount;
 
   const tokenOwner = accounts[0],
@@ -62,7 +62,7 @@ contract.only('TokenGrant/Stake', function(accounts) {
     minimumStake = await stakingContract.minimumStake()
 
     permissivePolicy = await PermissiveStakingPolicy.new()
-    employeePolicy = await EmployeeStakingPolicy.new(minimumStake);
+    minimumPolicy = await GuaranteedMinimumStakingPolicy.new(minimumStake);
     grantAmount = minimumStake.muln(10),
 
     // Grant tokens
@@ -89,7 +89,7 @@ contract.only('TokenGrant/Stake', function(accounts) {
       grantStart,
       grantCliff,
       true,
-      employeePolicy.address,
+      minimumPolicy.address,
     );
   });
 

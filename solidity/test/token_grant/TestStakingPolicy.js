@@ -4,7 +4,7 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
-const EmployeeStakingPolicy = artifacts.require('./EmployeeStakingPolicy.sol');
+const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
 
 contract('PermissiveStakingPolicy', function(accounts) {
   let policy;
@@ -54,7 +54,7 @@ contract('PermissiveStakingPolicy', function(accounts) {
   });
 });
 
-contract('EmployeeStakingPolicy', function(accounts) {
+contract('GuaranteedMinimumStakingPolicy', function(accounts) {
   let policy;
   let minimumStake = 2000;
   let largeGrant = 10000;
@@ -65,7 +65,7 @@ contract('EmployeeStakingPolicy', function(accounts) {
   let cliff = 1500;
 
   before(async () => {
-    policy = await EmployeeStakingPolicy.new(minimumStake);
+    policy = await GuaranteedMinimumStakingPolicy.new(minimumStake);
   });
 
   async function calculate(atTimestamp, givenAmount, withdrawnAmount) {

@@ -4,11 +4,11 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./libraries/grant/UnlockingSchedule.sol";
 import "./GrantStakingPolicy.sol";
 
-/// @title EmployeeStakingPolicy
+/// @title GuaranteedMinimumStakingPolicy
 /// @dev A staking policy which allows the grantee
 /// to always stake the defined minimum stake,
 /// or the unlocked amount if greater.
-contract EmployeeStakingPolicy is GrantStakingPolicy {
+contract GuaranteedMinimumStakingPolicy is GrantStakingPolicy {
     using SafeMath for uint256;
     using UnlockingSchedule for uint256;
     uint256 minimumStake;

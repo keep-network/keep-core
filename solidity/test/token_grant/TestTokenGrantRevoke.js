@@ -13,11 +13,11 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
-const EmployeeStakingPolicy = artifacts.require('./EmployeeStakingPolicy.sol');
+const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
 
 contract.only('TokenGrant/Revoke', function(accounts) {
 
-  let tokenContract, registryContract, grantContract, stakingContract, employeePolicy;
+  let tokenContract, registryContract, grantContract, stakingContract, minimumPolicy;
 
   const tokenOwner = accounts[0],
     grantee = accounts[1];
@@ -45,7 +45,7 @@ contract.only('TokenGrant/Revoke', function(accounts) {
     
     await grantContract.authorizeStakingContract(stakingContract.address);
 
-    employeePolicy = await EmployeeStakingPolicy.new(await stakingContract.minimumStake());
+    minimumPolicy = await GuaranteedMinimumStakingPolicy.new(await stakingContract.minimumStake());
 
     grantStart = await latestTime();
 
@@ -59,7 +59,7 @@ contract.only('TokenGrant/Revoke', function(accounts) {
       grantStart, 
       grantCliff, 
       grantRevocable,
-      employeePolicy.address
+      minimumPolicy.address
     );
   });
 
@@ -124,7 +124,7 @@ contract.only('TokenGrant/Revoke', function(accounts) {
         grantStart, 
         grantCliff, 
         false,
-        employeePolicy.address
+        minimumPolicy.address
     );
     
     await expectThrowWithMessage(
@@ -158,7 +158,7 @@ contract.only('TokenGrant/Revoke', function(accounts) {
       grantStart, 
       grantCliff, 
       grantRevocable,
-      employeePolicy.address
+      minimumPolicy.address
       );
       
     const granteeGrantBalanceBefore = await grantContract.balanceOf.call(grantee);
