@@ -2,10 +2,29 @@ import React, { useContext } from 'react'
 import { Web3Context } from './WithWeb3Context'
 import Banner, { BANNER_TYPE } from './Banner'
 
-export const Web3Status = (props) => {
-  const { web3, isFetching, yourAddress, connectAppWithAccount, error } = useContext(Web3Context)
+export const Web3Status = () => {
+  const {
+    web3,
+    isFetching,
+    yourAddress,
+    connectAppWithAccount,
+    error,
+    provider,
+    showConnectWalletModal,
+  } = useContext(Web3Context)
 
   const renderStatus = () => {
+    if (!provider) {
+      return (
+        <Banner
+          type={BANNER_TYPE.ERROR}
+          title='Please select a'
+        >
+          &nbsp;<span className='banner-title text-link' onClick={showConnectWalletModal}>wallet</span>
+        </Banner>
+      )
+    }
+
     if (isFetching) {
       return (
         <Banner
