@@ -65,8 +65,10 @@ func (sss *signatureShareState) Initiate(ctx context.Context) error {
 func (sss *signatureShareState) Receive(msg net.Message) error {
 	switch signatureShareMessage := msg.Payload().(type) {
 	case *SignatureShareMessage:
-		if !group.IsMessageFromSelf(sss.MemberIndex(), signatureShareMessage) { //&&
-			//group.IsSenderValid(sss.signer, signatureShareMessage, msg.SenderPublicKey()) {
+		if !group.IsMessageFromSelf(
+			sss.MemberIndex(),
+			signatureShareMessage,
+		) {
 			sss.signatureShareMessages = append(
 				sss.signatureShareMessages,
 				signatureShareMessage,
