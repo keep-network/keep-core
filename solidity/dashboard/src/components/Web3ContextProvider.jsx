@@ -1,8 +1,11 @@
 import React from 'react'
-import { getWeb3 } from '../utils/general.utils'
+import Web3 from 'web3'
+import { TrezorProvider } from '../connectors/trezor'
 import { Web3Context } from './WithWeb3Context'
 import { MessagesContext, messageType } from './Message'
 import { getContracts } from '../contracts'
+import Modal from './Modal'
+import ChooseWallet from './ChooseWallet'
 
 export default class Web3ContextProvider extends React.Component {
     static contextType = MessagesContext
@@ -10,6 +13,8 @@ export default class Web3ContextProvider extends React.Component {
     constructor(props) {
       super(props)
       this.state = {
+        showModal: true,
+        provider: null,
         web3: null,
         isFetching: false,
         yourAddress: '',
@@ -23,12 +28,38 @@ export default class Web3ContextProvider extends React.Component {
       }
     }
 
-    componentDidMount() {
-      this.initialize()
+    showModal = () => this.setState({ showModal: true })
+    closeModal = () => this.setState({ showModal: false })
+
+    getWeb3 = (providerName) => {
+      switch (providerName) {
+        case 'TREZOR': {
+          return new Web3(new TrezorProvider('test@email.com', 'https://keep.network/'))
+        }
+        case 'METAMASK': {
+          if (window.ethereum || window.web3) {
+            return new Web3(window.ethereum || window.web3.currentProvider)
+          }
+          throw new Error('No browser extention')
+        }
+        default:
+          throw new Error('Please connect to a wallet')
+      }
+    }
+
+    connectAppWithWallet = (providerName) => {
+      let web3
+      try {
+        web3 = this.getWeb3(providerName)
+        this.setState({ web3, provider: providerName, showModal: false }, this.setData)
+      } catch (error) {
+        this.setState({ providerError: error.message })
+        return
+      }
     }
 
     initialize = async () => {
-      const web3 = getWeb3()
+      const web3 = this.getWeb3()
       if (!web3) {
         return
       }
@@ -97,21 +128,26 @@ export default class Web3ContextProvider extends React.Component {
       this.setState({ yourAddress })
     }
 
-    changeDefaultContract = (defaultContract) => {
-      this.setState({ defaultContract })
-    }
-
     render() {
+      const { showModal, ...restState } = this.state
+
       return (
         <Web3Context.Provider
           value={{
-            ...this.state,
-            changeDefaultContract: this.changeDefaultContract,
+            ...restState,
             connectAppWithAccount: this.connectAppWithAccount,
+            connectAppWithWallet: this.connectAppWithWallet,
+            showConnectWalletModal: this.showModal,
           }}
         >
+          { showModal &&
+            <Modal title="Wallet" closeModal={this.closeModal}>
+              <ChooseWallet />
+            </Modal>
+          }
           {this.props.children}
         </Web3Context.Provider>
+
       )
     }
 }
