@@ -1,0 +1,41 @@
+.wallets-list {
+    list-style: none;
+
+    .wallet {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 3px;
+        padding: 2rem;
+        margin-bottom: 1rem;
+        .box-shadow(0px 1px 5px rgba(10, 8, 6, 0.25));
+
+        &:first-of-type {
+            margin-top: 2rem;
+        }
+
+        &:last-of-type {
+            margin-bottom: 0;
+        }
+
+        &:hover {
+            cursor: pointer;
+        }
+
+        h4 {
+            font-style: normal;
+            font-weight: normal;
+            font-size: 1.3rem;
+            line-height: 145%;
+            font-feature-settings: 'tnum' on, 'lnum' on;
+            color: @color-black;
+            margin-right: auto;
+        }
+
+        img {
+            width: 30px;
+            height: 30px;
+            margin-right: 0.5rem;
+        }
+    }
+}

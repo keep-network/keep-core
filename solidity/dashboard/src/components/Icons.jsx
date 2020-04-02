@@ -130,6 +130,16 @@ PendingBadge.defaultProps = {
   color: colors.pending,
 }
 
+const ArrowRight = ({ color }) => (
+  <svg width="27" height="21" viewBox="0 0 27 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path fill={color} fillRule="evenodd" clipRule="evenodd" d="M18.5856 8.41406L13 2.82843L15.8284 0L26.2426 10.4142L15.8284 20.8284L13 18L18.5859 12.4141L0 12.4141V8.41406L18.5856 8.41406Z" />
+  </svg>
+)
+
+ArrowRight.defaultProps = {
+  color: colors.darkGrey,
+}
+
 export {
   Keep,
   Badge,
@@ -139,4 +149,5 @@ export {
   OK,
   OKBadge,
   PendingBadge,
+  ArrowRight,
 }
