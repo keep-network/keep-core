@@ -6,7 +6,7 @@ const expect = chai.expect
 const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
 const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
 
-contract('PermissiveStakingPolicy', function(accounts) {
+contract('PermissiveStakingPolicy', async (accounts) => {
   let policy;
   let amount = 10000;
   let start = 1000;
@@ -29,32 +29,32 @@ contract('PermissiveStakingPolicy', function(accounts) {
     );
   }
 
-  it("should permit staking all tokens before cliff", async function() {
+  it("should permit staking all tokens before cliff", async () => {
     expect(await calculate(1400, 0)).to.eq.BN(amount);
   });
 
-  it("should permit staking all tokens after cliff", async function() {
+  it("should permit staking all tokens after cliff", async () => {
     expect(await calculate(1600, 0)).to.eq.BN(amount);
   });
 
-  it("should permit staking all tokens after unlocking", async function() {
+  it("should permit staking all tokens after unlocking", async () => {
     expect(await calculate(3100, 0)).to.eq.BN(amount);
   });
 
-  it("should permit staking remaining tokens before cliff", async function() {
+  it("should permit staking remaining tokens before cliff", async () => {
     expect(await calculate(1400, withdrawn)).to.eq.BN(amount - withdrawn);
   });
 
-  it("should permit staking remaining tokens after cliff", async function() {
+  it("should permit staking remaining tokens after cliff", async () => {
     expect(await calculate(1600, withdrawn)).to.eq.BN(amount - withdrawn);
   });
 
-  it("should permit staking remaining tokens after unlocking", async function() {
+  it("should permit staking remaining tokens after unlocking", async () => {
     expect(await calculate(3100, withdrawn)).to.eq.BN(amount - withdrawn);
   });
 });
 
-contract('GuaranteedMinimumStakingPolicy', function(accounts) {
+contract('GuaranteedMinimumStakingPolicy', async (accounts) => {
   let policy;
   let minimumStake = 2000;
   let largeGrant = 10000;
