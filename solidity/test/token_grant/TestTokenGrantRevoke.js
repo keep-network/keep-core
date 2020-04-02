@@ -45,7 +45,7 @@ contract('TokenGrant/Revoke', function(accounts) {
     
     await grantContract.authorizeStakingContract(stakingContract.address);
 
-    minimumPolicy = await GuaranteedMinimumStakingPolicy.new(await stakingContract.minimumStake());
+    minimumPolicy = await GuaranteedMinimumStakingPolicy.new(stakingContract.address);
 
     grantStart = await latestTime();
 

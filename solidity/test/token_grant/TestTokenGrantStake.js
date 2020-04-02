@@ -65,7 +65,7 @@ contract('TokenGrant/Stake', function(accounts) {
     minimumStake = await stakingContract.minimumStake()
 
     permissivePolicy = await PermissiveStakingPolicy.new()
-    minimumPolicy = await GuaranteedMinimumStakingPolicy.new(minimumStake);
+    minimumPolicy = await GuaranteedMinimumStakingPolicy.new(stakingContract.address);
     grantAmount = minimumStake.muln(10),
 
     // Grant tokens
