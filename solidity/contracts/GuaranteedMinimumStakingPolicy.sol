@@ -27,10 +27,10 @@ import "./TokenStaking.sol";
 contract GuaranteedMinimumStakingPolicy is GrantStakingPolicy {
     using SafeMath for uint256;
     using UnlockingSchedule for uint256;
-    TokenStaking stakingContract;
+    uint256 minimumStake;
 
     constructor(address _stakingContract) public {
-        stakingContract = TokenStaking(_stakingContract);
+        minimumStake = TokenStaking(_stakingContract).minimumStake();
     }
 
     function getStakeableAmount (
@@ -47,7 +47,6 @@ contract GuaranteedMinimumStakingPolicy is GrantStakingPolicy {
             start,
             cliff
         );
-        uint256 minimumStake = stakingContract.minimumStake();
         uint256 remainingInGrant = grantedAmount.sub(withdrawn);
         uint256 unlockedInGrant = unlocked.sub(withdrawn);
 
