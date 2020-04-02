@@ -26,6 +26,7 @@ module.exports = {
 		'react/prop-types': 0,
 		'react/display-name': 0,
 		'no-invalid-this': 0,
-		
+		'indent': ["error", 2, { "SwitchCase": 1 }],
+		'no-unused-vars': ["error", { "ignoreRestSiblings": true }]
 	}
 }
