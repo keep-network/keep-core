@@ -8,6 +8,7 @@ import { Web3Context } from './WithWeb3Context'
 import UndelegateStakeButton from './UndelegateStakeButton'
 import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
 import Banner, { BANNER_TYPE } from './Banner'
+import moment from 'moment'
 
 const DelegatedTokens = (props) => {
   const { yourAddress } = useContext(Web3Context)
@@ -20,6 +21,7 @@ const DelegatedTokens = (props) => {
     undelegationStatus,
     isUndelegationFromGrant,
     isInInitializationPeriod,
+    undelegationPeriod,
   } } = state
 
   const undelegationSuccessCallback = () => {
@@ -32,11 +34,14 @@ const DelegatedTokens = (props) => {
 
   const renderUndelegationStatus = () => {
     if (undelegationStatus === PENDING_STATUS) {
+      const undelegationPeriodRelativeTime = moment().add(undelegationPeriod, 'seconds').fromNow(true)
+      const title = `Undelegation is pending. Estimated to complete in ${undelegationPeriodRelativeTime}.`
       return (
         <div className="self-start">
           <Banner
             type={BANNER_TYPE.PENDING}
-            title='Undelegation is pending'
+            title={title}
+            withIcon
           />
         </div>
       )

@@ -103,10 +103,10 @@ export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
 export KEEP_CLIENT_PERSISTENCE_DIR=$(pwd)/persistence
 
 docker run -dit \
---volume $KEEP_CLIENT_PERSISTENCE_DIR:/mnt/keep-client/persistence \
---volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
---env KEEP_ETHEREUM_PASSWORD=$KEEP_CLIENT_ETHEREUM_PASSWORD \
---env LOG_LEVEL=debug \
+--volume "$KEEP_CLIENT_PERSISTENCE_DIR:/mnt/keep-client/persistence" \
+--volume "$KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config" \
+--env "KEEP_ETHEREUM_PASSWORD=$KEEP_CLIENT_ETHEREUM_PASSWORD" \
+--env "LOG_LEVEL=debug" \
 -p 3919:3919 \
 gcr.io/keep-test-f3e0/keep-client --config /mnt/keep-client/config/keep-client-config.toml start
 ```
@@ -117,12 +117,25 @@ gcr.io/keep-test-f3e0/keep-client --config /mnt/keep-client/config/keep-client-c
 
 Startup log should look like:
 ```
-Established connection with bootstrap peer [xxxxxx]
----------------------------------------------------------------------------------------------
-| Port: 3919                                                                                |
-| IPs : /ip4/127.0.0.1/tcp/3919/ipfs/xxxxxx                                                 |
-|       /ip4/172.17.0.2/tcp/3919/ipfs/xxxxx                                                 |
----------------------------------------------------------------------------------------------
+▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▄▄▓▓▓▓▓▓▓▀      ▐▓▓▓▓▓▓▄▄▄▄         ▓▓▓▓▓▓▄▄▄▄         ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▀        ▐▓▓▓▓▓▓▓▓▓▓         ▓▓▓▓▓▓▓▓▓▓▌        ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▀▀▓▓▓▓▓▓▄       ▐▓▓▓▓▓▓▀▀▀▀         ▓▓▓▓▓▓▀▀▀▀         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀
+  ▓▓▓▓▓▓   ▀▓▓▓▓▓▓▄     ▐▓▓▓▓▓▓     ▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌
+▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+
+Trust math, not hardware.
+
+-----------------------------------------------------------------------------------------------
+| Keep Random Beacon Node                                                                     |
+|                                                                                             |
+| Port: 3919                                                                                  |
+| IPs : /ip4/127.0.0.1/tcp/3919/ipfs/xxxx                                                     |
+|       /ip4/<ip-address>/tcp/3919/ipfs/xxx                                                   |
+-----------------------------------------------------------------------------------------------
 ```
 
 == Commands
@@ -135,17 +148,9 @@ grep keep-client | awk '{print $1}' | \
 xargs -I {} docker exec -t {} keep-client --config /mnt/keep-client/config/keep-client-config.toml relay request
 ```
 
-== Hosts
+== Token Dashboard
 
-=== Ethereum Network
+You can view and manage your stake with our token-dasboard.  It can be found at http://dashboard.test.keep.network/
 
-- *Dashboard:* http://eth-dashboard.test.keep.network
-- *Transactions:*
-  ** _RPC:_ http://eth-tx.test.keep.network:8545
-  ** _WebSocket:_ link:[ws://eth-tx.test.keep.network:8546]
-
-=== Keep Network
-
-- link:[bootstrap.test.keep.network:3919]
 
 

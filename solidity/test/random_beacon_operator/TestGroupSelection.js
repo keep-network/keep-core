@@ -1,5 +1,6 @@
 import expectThrow from '../helpers/expectThrow';
 import mineBlocks from '../helpers/mineBlocks';
+import increaseTime from '../helpers/increaseTime';
 import packTicket from '../helpers/packTicket';
 import generateTickets from '../helpers/generateTickets';
 import stakeDelegate from '../helpers/stakeDelegate';
@@ -45,6 +46,8 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
+
+    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
 
     tickets1 = generateTickets(
       await operatorContract.getGroupSelectionRelayEntry(), 

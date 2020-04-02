@@ -220,6 +220,7 @@ library AltBn128 {
             m.length == 64,
             "Invalid G1 bytes length"
         );
+
         bytes32 x;
         bytes32 y;
 
@@ -257,10 +258,11 @@ library AltBn128 {
             m.length == 128,
             "Invalid G2 bytes length"
         );
-        uint256 xx;
-        uint256 xy;
-        uint256 yx;
-        uint256 yy;
+
+        bytes32 xx;
+        bytes32 xy;
+        bytes32 yx;
+        bytes32 yy;
 
         /* solium-disable-next-line */
         assembly {
@@ -282,8 +284,9 @@ library AltBn128 {
     {
         require(
             m.length == 64,
-            "Invalid G2 compressed length"
+            "Invalid G2 compressed bytes length"
         );
+
         bytes32 x1;
         bytes32 x2;
         uint256 temp;

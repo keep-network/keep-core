@@ -25,10 +25,10 @@ EOF
 echo "<<<<<<START Prep Utility Box For Migration START<<<<<<"
 echo "ssh utilitybox rm -rf /tmp/$BUILD_TAG"
 echo "ssh utilitybox mkdir /tmp/$BUILD_TAG"
-echo "scp -r contracts/solidity utilitybox:/tmp/$BUILD_TAG/"
+echo "scp -r solidity utilitybox:/tmp/$BUILD_TAG/"
 ssh utilitybox rm -rf /tmp/$BUILD_TAG
 ssh utilitybox mkdir /tmp/$BUILD_TAG
-scp -r contracts/solidity utilitybox:/tmp/$BUILD_TAG/
+scp -r solidity utilitybox:/tmp/$BUILD_TAG/
 echo ">>>>>>FINISH Prep Utility Box For Migration FINISH>>>>>>"
 
 # Run migration
@@ -54,14 +54,20 @@ ssh utilitybox << EOF
   echo "<<<<<<START Contract Migration START<<<<<<"
   cd /tmp/$BUILD_TAG/solidity
 
-  # This command uses the content of package.json in the CWD to install dependencies
-  npm i
+  # This command uses the content of package.json and package-lock.json in the
+  # CWD to install dependencies
+  npm ci
 
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
   echo "<<<<<<START Tenderly Push START<<<<<<"
+  # Temporary fix for some odd push issues; OpenZeppelin contracts are
+  # referenced at two paths due to older dependencies, leading to problems
+  # resolving contracts during tenderly push.
+  ln -s node_modules/@openzeppelin @openzeppelin
   tenderly login --authentication-method token --token $TENDERLY_TOKEN
-  tenderly push --networks $ETH_NETWORK_ID --tag keep-core --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG
+  tenderly push --networks $ETH_NETWORK_ID --tag keep-core \
+    --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG || echo "tendery push failed :("
   echo "<<<<<<FINISH Tenderly Push FINISH<<<<<<"
 EOF
 

@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-
 	"github.com/ipfs/go-log"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	dkgResult "github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -54,6 +53,8 @@ func ExecuteDKG(
 		)
 	}
 
+	startPublicationBlockHeight := gjkrEndBlockHeight
+
 	dkgResultChannel := make(chan *event.DKGResultSubmission)
 	dkgResultSubscription, err := relayChain.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
@@ -68,8 +69,6 @@ func ExecuteDKG(
 		)
 	}
 	defer dkgResultSubscription.Unsubscribe()
-
-	startPublicationBlockHeight := gjkrEndBlockHeight
 
 	err = dkgResult.Publish(
 		playerIndex,
@@ -110,6 +109,7 @@ func ExecuteDKG(
 		memberIndex:          playerIndex,
 		groupPublicKey:       gjkrResult.GroupPublicKey,
 		groupPrivateKeyShare: gjkrResult.GroupPrivateKeyShare,
+		groupPublicKeyShares: gjkrResult.GroupPublicKeyShares(),
 	}, nil
 }
 

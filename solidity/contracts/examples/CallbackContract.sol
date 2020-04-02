@@ -9,19 +9,12 @@ contract CallbackContract {
 
     uint256 internal _lastEntry;
 
-    /**
-     * @dev Example of a callback method. Method signature can be
-     * calculated as bytes4(keccak256("callback(uint256)")
-    */
-    function callback(uint256 requestResponse)
+    function __beaconCallback(uint256 entry)
         public
     {
-        _lastEntry = requestResponse;
+        _lastEntry = entry;
     }
 
-    /**
-     * @dev Returns previous entry.
-     */
     function lastEntry() public view returns (uint256)
     {
         return _lastEntry;
