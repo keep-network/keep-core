@@ -69,9 +69,9 @@ contract('KeepRandomBeaconService/PricingFees', function(accounts) {
         // entry verification fee = 12 * 200 = 2400
         // dkg contribution fee = (14 + 2) * 200 * 1% = 32
         // group profit fee = 13 * 3 = 39
-        // callback fee = (18789 + 7) * 200 = 3759200
-        // entry fee = 2400 + 32 + 39 + 3759200 = 3761671
-        let expectedEntryFeeEstimate = 3761671;
+        // callback fee = (10961 + 7) * 200 = 2193600
+        // entry fee = 2400 + 32 + 39 + 2193600 = 3761671
+        let expectedEntryFeeEstimate = 2196071;
         assert.equal(expectedEntryFeeEstimate, entryFeeEstimate)
     });
 });

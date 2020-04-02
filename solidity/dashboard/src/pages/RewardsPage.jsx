@@ -1,22 +1,20 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { RewardsGroups } from '../components/RewardsGroups'
 import { WithdrawalHistory } from '../components/WithdrawalHistory'
+import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEvent'
+import { OPERATOR_CONTRACT_NAME } from '../constants/constants'
 
 const RewardsPage = () => {
-  const [totalRewardsBalance, setTotalRewardsBalance] = useState('0')
+  const { latestEvent } = useSubscribeToContractEvent(
+    OPERATOR_CONTRACT_NAME,
+    'GroupMemberRewardsWithdrawn',
+  )
 
   return (
     <>
       <h2 className="mb-2">My Rewards</h2>
-      <div className="rewards-wrapper flex row center">
-        <section className="rewards-history tile flex column">
-          <h3 className="text-grey-70 mb-1">Rewards</h3>
-          <h2 className="balance">{totalRewardsBalance} ETH</h2>
-          <hr/>
-          <WithdrawalHistory />
-        </section>
-        <RewardsGroups setTotalRewardsBalance={setTotalRewardsBalance} />
-      </div>
+      <RewardsGroups latestWithdrawalEvent={latestEvent} />
+      <WithdrawalHistory latestWithdrawalEvent={latestEvent} />
     </>
   )
 }

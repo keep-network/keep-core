@@ -18,3 +18,5 @@ export const findIndexAndObject = (propertyName, value, array, comparationFuncti
 const defaultComparisonFunction = (object, propertyName, value) => object[propertyName] === value
 
 export const compareEthAddresses = (object, propertyName, value) => isSameEthAddress(object[propertyName], value)
+
+export const isEmptyArray = (array) => !(Array.isArray(array) && array.length)

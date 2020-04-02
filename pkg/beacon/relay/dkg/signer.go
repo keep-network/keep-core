@@ -1,7 +1,6 @@
 package dkg
 
 import (
-	"fmt"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -19,6 +18,7 @@ type ThresholdSigner struct {
 	memberIndex          group.MemberIndex
 	groupPublicKey       *bn256.G2
 	groupPrivateKeyShare *big.Int
+	groupPublicKeyShares map[group.MemberIndex]*bn256.G2
 }
 
 // NewThresholdSigner returns a new ThresholdSigner
@@ -26,11 +26,13 @@ func NewThresholdSigner(
 	memberIndex group.MemberIndex,
 	groupPublicKey *bn256.G2,
 	groupPrivateKeyShare *big.Int,
+	groupPublicKeyShares map[group.MemberIndex]*bn256.G2,
 ) *ThresholdSigner {
 	return &ThresholdSigner{
 		memberIndex:          memberIndex,
 		groupPublicKey:       groupPublicKey,
 		groupPrivateKeyShare: groupPrivateKeyShare,
+		groupPublicKeyShares: groupPublicKeyShares,
 	}
 }
 
@@ -53,14 +55,8 @@ func (ts *ThresholdSigner) GroupPublicKeyBytesCompressed() []byte {
 
 // CalculateSignatureShare takes the message and calculates signer's signature
 // share over that message.
-func (ts *ThresholdSigner) CalculateSignatureShare(message []byte) (*bn256.G1, error) {
-	g1 := new(bn256.G1)
-	_, err := g1.Unmarshal(message)
-	if err != nil {
-		return nil, fmt.Errorf("message is not valid G1 point: [%v]", err)
-	}
-
-	return bls.SignG1(ts.groupPrivateKeyShare, g1), nil
+func (ts *ThresholdSigner) CalculateSignatureShare(message *bn256.G1) *bn256.G1 {
+	return bls.SignG1(ts.groupPrivateKeyShare, message)
 }
 
 // CompleteSignature accepts signature shares from all group threshold signers
@@ -73,4 +69,10 @@ func (ts *ThresholdSigner) CompleteSignature(
 	honestThreshold int,
 ) (*bn256.G1, error) {
 	return bls.RecoverSignature(signatureShares, honestThreshold)
+}
+
+// GroupPublicKeyShares returns group public key shares for each
+// individual member of the group.
+func (ts *ThresholdSigner) GroupPublicKeyShares() map[group.MemberIndex]*bn256.G2 {
+	return ts.groupPublicKeyShares
 }

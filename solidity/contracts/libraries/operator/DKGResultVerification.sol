@@ -71,11 +71,19 @@ library DKGResultVerification {
             "Submitter not eligible"
         );
 
+        require(groupPubKey.length == 128, "Malformed group public key");
+
+        require(
+            misbehaved.length <= self.groupSize - self.signatureThreshold,
+            "Malformed misbehaved bytes"
+        );
+
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Too short signatures array");
         require(signatures.length % 65 == 0, "Malformed signatures array");
         require(signaturesCount == signingMemberIndices.length, "Unexpected signatures count");
         require(signaturesCount >= self.signatureThreshold, "Too few signatures");
+        require(signaturesCount <= self.groupSize, "Too many signatures");
 
         bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, misbehaved));
 

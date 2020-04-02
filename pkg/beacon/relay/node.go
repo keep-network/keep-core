@@ -121,6 +121,11 @@ func (n *Node) JoinGroupIfEligible(
 				if err != nil {
 					logger.Errorf("failed to register a group: [%v]", err)
 				}
+
+				logger.Debugf(
+					"[member:%v] ready to operate in group",
+					signer.MemberID(),
+				)
 			}()
 		}
 	}
