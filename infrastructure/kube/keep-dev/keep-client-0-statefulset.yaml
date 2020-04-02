@@ -5,6 +5,7 @@ metadata:
   name: keep-client-0
   namespace: default
   labels:
+    keel.sh/policy: all
     app: keep
     type: beacon
     id: '0'
