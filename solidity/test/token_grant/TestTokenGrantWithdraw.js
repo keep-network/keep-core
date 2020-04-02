@@ -16,7 +16,7 @@ const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
 const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
 
-contract.only('TokenGrant/Withdraw', function(accounts) {
+contract('TokenGrant/Withdraw', function(accounts) {
 
   let tokenContract, registryContract, grantContract, stakingContract, permissivePolicy;
 

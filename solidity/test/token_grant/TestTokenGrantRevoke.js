@@ -15,7 +15,7 @@ const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
 const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
 
-contract.only('TokenGrant/Revoke', function(accounts) {
+contract('TokenGrant/Revoke', function(accounts) {
 
   let tokenContract, registryContract, grantContract, stakingContract, minimumPolicy;
 

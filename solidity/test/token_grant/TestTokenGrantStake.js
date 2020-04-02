@@ -19,7 +19,7 @@ const Registry = artifacts.require("./Registry.sol");
 const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
 const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
 
-contract.only('TokenGrant/Stake', function(accounts) {
+contract('TokenGrant/Stake', function(accounts) {
 
   let tokenContract, registryContract, grantContract, stakingContract,
     permissivePolicy, minimumPolicy,
