@@ -10,6 +10,7 @@ import "./libraries/operator/GroupSelection.sol";
 import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
 import "./libraries/operator/Reimbursements.sol";
+import "./TokenGrantStake.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
@@ -173,7 +174,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groups.stakingContract = TokenStaking(_stakingContract);
         groups.groupActiveTime = TokenStaking(_stakingContract).undelegationPeriod();
 
-        groupSelection.ticketSubmissionRoundDuration = 6;
+        // ticketSubmissionTimeout is calculated as follow:
+        // - there is 11 submission rounds
+        // - submission round duration is 6 blocks
+        // - a mining lag (2 rounds) is added to the end
+        // So: (11 * 6) + (2 * 6) = 66 + 12 = 78
+        groupSelection.ticketSubmissionTimeout = 78;
         groupSelection.groupSize = groupSize;
 
         dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10) + 20;
@@ -273,8 +279,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /**
      * @dev Gets the timeout in blocks after which group candidate ticket
-     * submission is finished. The value is valid only in the context
-     * of last group selection.
+     * submission is finished.
      */
     function ticketSubmissionTimeout() public view returns (uint256) {
         return groupSelection.ticketSubmissionTimeout;

@@ -86,7 +86,7 @@ contract("KeepRandomBeaconOperator/RelayEntryTimeout", function(accounts) {
       requestCounter, bls.previousEntry, {value: fee}
     );
 
-    mineBlocks(await operatorContract.relayEntryTimeout());
+    mineBlocks(await operatorContract.getRelayEntryTimeout());
 
     await expectThrowWithMessage(
       operatorContract.relayEntry(bls.groupSignature), 

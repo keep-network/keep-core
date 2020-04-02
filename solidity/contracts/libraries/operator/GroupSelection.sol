@@ -44,9 +44,6 @@ library GroupSelection {
         // Timeout in blocks after which the ticket submission is finished.
         uint256 ticketSubmissionTimeout;
 
-        // Duration of one ticket submission round in blocks.
-        uint256 ticketSubmissionRoundDuration;
-
         // Number of block at which the group selection started and from which
         // ticket submissions are accepted.
         uint256 ticketSubmissionStartBlock;
@@ -97,17 +94,6 @@ library GroupSelection {
         self.inProgress = true;
         self.seed = _seed;
         self.ticketSubmissionStartBlock = block.number;
-
-        // Calculate possible operators count by dividing total token supply
-        // by current minimum stake.
-        uint256 possibleOperatorsCount = uint256(10**27).div(self.minimumStake);
-
-        // ticketSubmissionTimeout consists of:
-        // - one initial ticket submission round
-        // - N reactive ticket submission rounds
-        // - one additional waiting round
-        self.ticketSubmissionTimeout = self.ticketSubmissionRoundDuration
-            .mul(reactiveTicketSubmissionRounds(possibleOperatorsCount, self.groupSize).add(2));
     }
 
     /**
@@ -417,22 +403,5 @@ library GroupSelection {
         for (uint i = 0; i < self.tickets.length; i++) {
             delete self.candidate[self.tickets[i]];
         }
-    }
-
-    function reactiveTicketSubmissionRounds(
-        uint256 possibleOperatorsCount,
-        uint256 groupSize
-    ) public view returns (uint256) {
-        uint256 operatorsExponent = 1;
-        while(2**operatorsExponent < possibleOperatorsCount){
-            operatorsExponent++;
-        }
-
-        uint256 groupsExponent = 1;
-        while(2**groupsExponent < groupSize){
-            groupsExponent++;
-        }
-
-        return operatorsExponent.sub(groupsExponent);
     }
 }
