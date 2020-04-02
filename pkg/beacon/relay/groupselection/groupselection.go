@@ -32,21 +32,6 @@ type Result struct {
 // CandidateToNewGroup attempts to generate and submit tickets for the staker to
 // join a new group.
 //
-// There are two phases of ticket submission:
-// - initial ticket submission,
-// - reactive ticket submission.
-//
-// During the initial ticket submission, only tickets with a value below the
-// natural threshold are submitted to the chain. Those tickets have the highest
-// chance of being selected to the group and this way we minimize staker's
-// gas expenditure.
-//
-// During the reactive ticket submission, all other staker's tickets are
-// submitted. Reactive ticket submission is skipped if during the initial
-// ticket submission there was enough tickets submitted to a chain to form
-// a group. Those tickets could be submitted by any stakers participating in
-// a new group selection.
-//
 // The function never submits more tickets than the group size.
 func CandidateToNewGroup(
 	relayChain relaychain.Interface,
@@ -61,28 +46,21 @@ func CandidateToNewGroup(
 	if err != nil {
 		return err
 	}
-	initialSubmissionTickets, reactiveSubmissionTickets, err :=
-		generateTickets(
-			newEntry.Bytes(),
-			staker.Address(),
-			availableStake,
-			chainConfig.MinimumStake,
-			naturalThreshold(chainConfig),
-		)
+
+	tickets, err := generateTickets(
+		newEntry.Bytes(),
+		staker.Address(),
+		availableStake,
+		chainConfig.MinimumStake,
+	)
 	if err != nil {
 		return err
 	}
 
-	logger.Infof(
-		"generated [%v] tickets for initial submission phase and [%v] "+
-			"tickets for reactive submission phase",
-		len(initialSubmissionTickets),
-		len(reactiveSubmissionTickets),
-	)
+	logger.Infof("generated [%v] tickets", len(tickets))
 
 	return startTicketSubmission(
-		initialSubmissionTickets,
-		reactiveSubmissionTickets,
+		tickets,
 		relayChain,
 		blockCounter,
 		chainConfig,
@@ -93,8 +71,7 @@ func CandidateToNewGroup(
 }
 
 func startTicketSubmission(
-	initialSubmissionTickets []*ticket,
-	reactiveSubmissionTickets []*ticket,
+	tickets []*ticket,
 	relayChain relaychain.GroupSelectionInterface,
 	blockCounter chain.BlockCounter,
 	chainConfig *config.Chain,
@@ -102,189 +79,96 @@ func startTicketSubmission(
 	onGroupSelected func(*Result),
 	ticketSubmissionRoundDuration uint64,
 ) error {
-	initialSubmissionTimeout, err := blockCounter.BlockHeightWaiter(
-		startBlockHeight + ticketSubmissionRoundDuration,
-	)
-	if err != nil {
-		return err
-	}
-
-	// ticketSubmissionTimeout consists of:
-	// - one initial ticket submission round
-	// - N reactive ticket submission rounds
-	// - one additional waiting round
 	ticketSubmissionTimeout, err := relayChain.TicketSubmissionTimeout()
 	if err != nil {
 		return err
 	}
 
-	reactiveSubmissionTimeout, err := blockCounter.BlockHeightWaiter(
+	ticketSubmissionTimeoutChannel, err := blockCounter.BlockHeightWaiter(
 		startBlockHeight + ticketSubmissionTimeout.Uint64(),
 	)
 	if err != nil {
 		return err
 	}
 
-	// Buffer quit signals - we never know if the goroutine finished
-	// before we try to cancel it. The initial ticket submission may be
-	// cancelled right after the reactive submission timeout and it is possible
-	// it already completed. Hence, we buffer one quit signal.
-	// The reactive ticket submission is also cancelled right after the reactive
-	// submission timeout. Here as well, we do not know if the goroutine already
-	// completed, so we need to buffer one quit signal.
-	quitInitialTicketSubmission := make(chan struct{}, 1)
-	quitReactiveTicketSubmission := make(chan struct{}, 1)
+	quitTicketSubmission := make(chan struct{})
 
-	// Check how many tickets with values below the natural threshold has been
-	// generated and compare this number with the group size. Decide how many
-	// tickets should be submitted. It does not make sense to submit more
-	// tickets than the group size.
-	var numberOfTicketsToSubmit int
-	if len(initialSubmissionTickets) > chainConfig.GroupSize {
-		numberOfTicketsToSubmit = chainConfig.GroupSize
-	} else {
-		numberOfTicketsToSubmit = len(initialSubmissionTickets)
+	ticketSubmissionRounds := (ticketSubmissionTimeout.Uint64() /
+		ticketSubmissionRoundDuration) - 2
+
+	for roundIndex := uint64(0); roundIndex <= ticketSubmissionRounds; roundIndex++ {
+		roundStartDelay := roundIndex * ticketSubmissionRoundDuration
+		roundStartBlock := startBlockHeight + roundStartDelay
+		roundLeadingZeros := ticketSubmissionRounds - roundIndex
+
+		logger.Infof(
+			"ticket submission round [%v] will start at "+
+				"block [%v] and cover tickets with [%v] leading zeros",
+			roundIndex,
+			roundStartBlock,
+			roundLeadingZeros,
+		)
+
+		err := blockCounter.WaitForBlockHeight(roundStartBlock)
+		if err != nil {
+			return err
+		}
+
+		candidateTickets, err := roundCandidateTickets(
+			relayChain,
+			tickets,
+			roundIndex,
+			roundLeadingZeros,
+			chainConfig.GroupSize,
+		)
+		if err != nil {
+			return err
+		}
+
+		logger.Infof(
+			"ticket submission round [%v] submitting "+
+				"[%v] tickets",
+			roundIndex,
+			len(candidateTickets),
+		)
+
+		go submitTickets(
+			candidateTickets,
+			relayChain,
+			quitTicketSubmission,
+		)
 	}
+
+	ticketSubmissionEndBlockHeight := <-ticketSubmissionTimeoutChannel
 
 	logger.Infof(
-		"entering initial ticket submission phase with [%v] tickets",
-		numberOfTicketsToSubmit,
+		"ticket submission ended at block [%v]",
+		ticketSubmissionEndBlockHeight,
 	)
 
-	// Submit tickets with values below the natural threshold.
-	// Do not submit more tickets than the group size.
-	go submitTickets(
-		initialSubmissionTickets[:numberOfTicketsToSubmit],
-		relayChain,
-		quitInitialTicketSubmission,
-	)
+	close(quitTicketSubmission)
 
-	for {
-		select {
-		case initialSubmissionEndBlockHeight := <-initialSubmissionTimeout:
-			// Initial ticket submission phase has ended. Reactive submission
-			// rounds will be triggered for tickets above the natural
-			// threshold.
-
-			logger.Infof(
-				"initial ticket submission ended at block [%v]",
-				initialSubmissionEndBlockHeight,
-			)
-
-			// Obtain the number of reactive submission rounds by dividing
-			// the whole timeout by round duration and subtract two rounds
-			// corresponding to initial and waiting rounds.
-			reactiveSubmissionRounds := (ticketSubmissionTimeout.Uint64() /
-				ticketSubmissionRoundDuration) - 2
-
-			for roundIndex := uint64(0); roundIndex <= reactiveSubmissionRounds; roundIndex++ {
-				roundStartDelay := roundIndex * ticketSubmissionRoundDuration
-				roundStartBlock := initialSubmissionEndBlockHeight + roundStartDelay
-				roundLeadingZeros := reactiveSubmissionRounds - roundIndex
-
-				logger.Infof(
-					"reactive ticket submission round [%v] will start at "+
-						"block [%v] and cover tickets with [%v] leading zeros",
-					roundIndex,
-					roundStartBlock,
-					roundLeadingZeros,
-				)
-
-				err := blockCounter.WaitForBlockHeight(roundStartBlock)
-				if err != nil {
-					return err
-				}
-
-				candidateTickets, err := roundCandidateTickets(
-					relayChain,
-					reactiveSubmissionTickets,
-					roundIndex,
-					roundLeadingZeros,
-					chainConfig.GroupSize,
-				)
-				if err != nil {
-					return err
-				}
-
-				logger.Infof(
-					"reactive ticket submission round [%v] submitting "+
-						"[%v] tickets",
-					roundIndex,
-					len(candidateTickets),
-				)
-
-				go submitTickets(
-					candidateTickets,
-					relayChain,
-					quitReactiveTicketSubmission,
-				)
-			}
-
-		case reactiveSubmissionEndBlockHeight := <-reactiveSubmissionTimeout:
-			// Reactive ticket submission phase has ended. We need to quit two
-			// potentially still running ticket submission goroutines, figure
-			// out which stakers have been selected to the group and trigger
-			// appropriate callback.
-
-			logger.Infof(
-				"reactive ticket submission ended at block [%v]",
-				reactiveSubmissionEndBlockHeight,
-			)
-
-			quitInitialTicketSubmission <- struct{}{}
-			quitReactiveTicketSubmission <- struct{}{}
-
-			selectedStakers, err := relayChain.GetSelectedParticipants()
-			if err != nil {
-				return fmt.Errorf(
-					"could not fetch selected participants after submission timeout [%v]",
-					err,
-				)
-			}
-
-			go onGroupSelected(&Result{
-				SelectedStakers:        selectedStakers,
-				GroupSelectionEndBlock: reactiveSubmissionEndBlockHeight,
-			})
-
-			return nil
-		}
+	selectedStakers, err := relayChain.GetSelectedParticipants()
+	if err != nil {
+		return fmt.Errorf(
+			"could not fetch selected participants after submission timeout [%v]",
+			err,
+		)
 	}
-}
 
-// naturalThreshold is the value for group size of N under which N virtual
-// stakers tickets would be expected to fall below if the tokens were optimally
-// staked, and the tickets values were evenly distributed in the domain of the
-// pseudorandom function.
-//
-// natural threshold =
-// (group size * number of all possible ticket values) /
-// (token supply / min stake)
-func naturalThreshold(chainConfig *config.Chain) *big.Int {
-	// (2^64)-1
-	ticketsSpace := new(big.Int).Sub(
-		new(big.Int).Exp(big.NewInt(2), big.NewInt(64), nil),
-		big.NewInt(1),
-	)
+	go onGroupSelected(&Result{
+		SelectedStakers:        selectedStakers,
+		GroupSelectionEndBlock: ticketSubmissionEndBlockHeight,
+	})
 
-	// 10^27
-	tokenSupply := new(big.Int).Exp(big.NewInt(10), big.NewInt(27), nil)
-
-	// groupSize * ( ticketsSpace / (tokenSupply / minimumStake) )
-	return new(big.Int).Mul(
-		big.NewInt(int64(chainConfig.GroupSize)),
-		new(big.Int).Div(
-			ticketsSpace,
-			new(big.Int).Div(tokenSupply, chainConfig.MinimumStake),
-		),
-	)
+	return nil
 }
 
 // roundCandidateTickets returns tickets which should be submitted in
-// given reactive submission round.
+// given ticket submission round.
 func roundCandidateTickets(
 	relayChain relaychain.GroupSelectionInterface,
-	reactiveSubmissionTickets []*ticket,
+	tickets []*ticket,
 	roundIndex uint64,
 	roundLeadingZeros uint64,
 	groupSize int,
@@ -303,7 +187,7 @@ func roundCandidateTickets(
 
 	candidateTickets := make([]*ticket, 0)
 
-	for _, candidateTicket := range reactiveSubmissionTickets {
+	for _, candidateTicket := range tickets {
 		candidateTicketLeadingZeros := uint64(
 			candidateTicket.leadingZeros(),
 		)

@@ -19,124 +19,40 @@ import (
 
 func TestSubmission(t *testing.T) {
 	var tests = map[string]struct {
-		groupSize                 int
-		initialSubmissionTickets  []*ticket
-		reactiveSubmissionTickets []*ticket
-		expectedSubmittedTickets  []uint64
+		groupSize                int
+		tickets                  []*ticket
+		expectedSubmittedTickets []uint64
 	}{
-		// Client has the same number of tickets below the natural threshold
-		// (initial submission tickets) as the group size.
-		// All initial submission tickets should be submitted to the chain.
-		// Reactive ticket submission should not be executed.
-		"only initial submission - the same number of tickets as group size": {
+		// Client has the same number of tickets as the group size.
+		// All tickets should be submitted to the chain.
+		"the same number of tickets as group size": {
 			groupSize: 4,
-			initialSubmissionTickets: []*ticket{
+			tickets: []*ticket{
 				newTestTicket(1, 1001),
 				newTestTicket(2, 1002),
 				newTestTicket(3, 1003),
 				newTestTicket(4, 1004),
-			},
-			reactiveSubmissionTickets: []*ticket{
-				newTestTicket(5, 1005),
-				newTestTicket(6, 1006),
 			},
 			expectedSubmittedTickets: []uint64{1001, 1002, 1003, 1004},
 		},
-		// Client has more tickets below the natural threshold (initial
-		// submission tickets) than the group size. Only #group_size of initial
-		// submission tickets should be submitted to the chain.
-		// Reactive ticket submission should not be executed.
-		"only initial submission - more tickets than group size": {
+		// Client has more tickets than the group size.
+		// Only #group_size of tickets should be submitted to the chain.
+		"more tickets than group size": {
 			groupSize: 2,
-			initialSubmissionTickets: []*ticket{
+			tickets: []*ticket{
 				newTestTicket(1, 1001),
 				newTestTicket(2, 1002),
 				newTestTicket(3, 1003),
 				newTestTicket(4, 1004),
-			},
-			reactiveSubmissionTickets: []*ticket{
-				newTestTicket(5, 1005),
-				newTestTicket(6, 1006),
 			},
 			expectedSubmittedTickets: []uint64{1001, 1002},
 		},
-		// Client has less tickets than the group size. Two tickets have value
-		// below the natural threshold, and there are no tickets with value
-		// above the natural threshold. All tickets should be submitted to
-		// the chain.
-		"only initial submission - less tickets than the group size": {
+		// Client has less tickets than the group size.
+		// All tickets should be submitted to the chain.
+		"less tickets than the group size": {
 			groupSize: 5,
-			initialSubmissionTickets: []*ticket{
+			tickets: []*ticket{
 				newTestTicket(1, 1001),
-				newTestTicket(2, 1002),
-			},
-			reactiveSubmissionTickets: []*ticket{},
-			expectedSubmittedTickets:  []uint64{1001, 1002},
-		},
-		// Client has less tickets below the natural threshold (initial
-		// submission tickets) than the group size. Since no one else submitted
-		// their tickets, reactive ticket submission should be executed.
-		"with reactive submission phase - the same number of tickets as group size": {
-			groupSize: 6,
-			initialSubmissionTickets: []*ticket{
-				newTestTicket(1, 1001),
-				newTestTicket(2, 1002),
-				newTestTicket(3, 1003),
-				newTestTicket(4, 1004),
-			},
-			reactiveSubmissionTickets: []*ticket{
-				newTestTicket(5, 1005),
-				newTestTicket(6, 1006),
-			},
-			expectedSubmittedTickets: []uint64{1001, 1002, 1003, 1004, 1005, 1006},
-		},
-		// Client has less tickets below the natural threshold (initial
-		// submission tickets) than the group size. Since no one else submitted
-		// their tickets, reactive ticket submission should be executed.
-		// No more tickets should be submitted by the client at overall than the
-		// #group_size, though.
-		"with reactive submission phase - more tickets than group size": {
-			groupSize: 5,
-			initialSubmissionTickets: []*ticket{
-				newTestTicket(1, 1001),
-				newTestTicket(2, 1002),
-				newTestTicket(3, 1003),
-				newTestTicket(4, 1004),
-			},
-			reactiveSubmissionTickets: []*ticket{
-				newTestTicket(5, 1005),
-				newTestTicket(6, 1006),
-				newTestTicket(7, 1007),
-				newTestTicket(8, 1008),
-			},
-			expectedSubmittedTickets: []uint64{1001, 1002, 1003, 1004, 1005},
-		},
-		// Client has no tickets below the natural threshold (initial
-		// submission tickets). Since no one else submitted their tickets,
-		// reactive ticket submission should be executed.
-		// No more tickets should be submitted by the client at overall than the
-		// #group_size, though.
-		"with reactive submission phase - no initial submission tickets": {
-			groupSize:                3,
-			initialSubmissionTickets: []*ticket{},
-			reactiveSubmissionTickets: []*ticket{
-				newTestTicket(5, 1005),
-				newTestTicket(6, 1006),
-				newTestTicket(7, 1007),
-				newTestTicket(8, 1008),
-			},
-			expectedSubmittedTickets: []uint64{1005, 1006, 1007},
-		},
-		// Client has less tickets than the group size. One ticket has value
-		// below the natural threshold, the other ticket has value above
-		// the natural threshold. Both those tickets should be submitted to
-		// the chain.
-		"with reactive submission phase - less tickets than the group size": {
-			groupSize: 5,
-			initialSubmissionTickets: []*ticket{
-				newTestTicket(1, 1001),
-			},
-			reactiveSubmissionTickets: []*ticket{
 				newTestTicket(2, 1002),
 			},
 			expectedSubmittedTickets: []uint64{1001, 1002},
@@ -161,8 +77,7 @@ func TestSubmission(t *testing.T) {
 			onGroupSelected := func(result *Result) {}
 
 			err = startTicketSubmission(
-				test.initialSubmissionTickets,
-				test.reactiveSubmissionTickets,
+				test.tickets,
 				chain,
 				blockCounter,
 				chainConfig,
@@ -204,7 +119,7 @@ func TestSubmission(t *testing.T) {
 
 func TestRoundCandidateTickets(t *testing.T) {
 	groupSize := 9
-	reactiveSubmissionRounds := uint64(7)
+	ticketSubmissionRounds := uint64(7)
 
 	tickets := []*ticket{
 		newTestTicket(1, 36028797018963968),
@@ -437,8 +352,8 @@ func TestRoundCandidateTickets(t *testing.T) {
 				submittedTickets: existingChainTickets,
 			}
 
-			for roundIndex := uint64(0); roundIndex <= reactiveSubmissionRounds; roundIndex++ {
-				roundLeadingZeros := reactiveSubmissionRounds - roundIndex
+			for roundIndex := uint64(0); roundIndex <= ticketSubmissionRounds; roundIndex++ {
+				roundLeadingZeros := ticketSubmissionRounds - roundIndex
 
 				candidateTickets, err := roundCandidateTickets(
 					relayChain,
