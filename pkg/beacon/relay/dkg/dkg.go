@@ -24,6 +24,7 @@ func ExecuteDKG(
 	index uint8, // starts with 0
 	groupSize int,
 	dishonestThreshold int,
+	membershipValidator group.MembershipValidator,
 	startBlockHeight uint64,
 	blockCounter chain.BlockCounter,
 	relayChain relayChain.Interface,
@@ -43,6 +44,7 @@ func ExecuteDKG(
 		channel,
 		dishonestThreshold,
 		seed,
+		membershipValidator,
 		startBlockHeight,
 	)
 	if err != nil {
@@ -73,6 +75,7 @@ func ExecuteDKG(
 	err = dkgResult.Publish(
 		playerIndex,
 		gjkrResult.Group,
+		membershipValidator,
 		gjkrResult,
 		channel,
 		relayChain,

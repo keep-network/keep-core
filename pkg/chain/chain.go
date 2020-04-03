@@ -78,9 +78,13 @@ type Signing interface {
 		publicKey []byte,
 	) (bool, error)
 
-	// PubkeyToAddress converts operator's public key to an address associated
-	// with the chain.
+	// PublicKeyToAddress converts operator's public key to an address
+	// associated with the chain.
 	PublicKeyToAddress(publicKey ecdsa.PublicKey) []byte
+
+	// PublicKeyToAddress converts operator's public key bytes to an address
+	// associated with the chain.
+	PublicKeyBytesToAddress(publicKey []byte) []byte
 }
 
 // Handle represents a handle to a blockchain that provides access to the core
