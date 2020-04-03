@@ -300,6 +300,10 @@ func TestRoundCandidateTickets(t *testing.T) {
 					)
 				}
 
+				// Candidate tickets must be submitted because next round
+				// will get submitted tickets from the mock chain and use
+				// them to determine an optimal number of their candidate
+				// tickets.
 				for _, ticket := range candidateTickets {
 					chainTicket, err := toChainTicket(ticket)
 					if err != nil {
