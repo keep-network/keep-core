@@ -37,7 +37,7 @@ library LockUtils {
         uint96 _expiresAt
     ) internal {
         uint256 positionPlusOne = self.positions[_creator];
-        Lock memory lock = Lock(_creator, uint96(_expiresAt));
+        Lock memory lock = Lock(_creator, _expiresAt);
         // No existing lock
         if (positionPlusOne == 0) {
             self.locks.push(lock);
@@ -56,11 +56,11 @@ library LockUtils {
     ) internal {
         uint256 positionPlusOne = self.positions[_creator];
         if (positionPlusOne != 0) {
-            uint256 memberCount = self.locks.length;
-            if (positionPlusOne != memberCount) {
-                // Not the last member,
-                // so we need to move the last member into the emptied position.
-                Lock memory lastLock = self.locks[memberCount - 1];
+            uint256 lockCount = self.locks.length;
+            if (positionPlusOne != lockCount) {
+                // Not the last lock,
+                // so we need to move the last lock into the emptied position.
+                Lock memory lastLock = self.locks[lockCount - 1];
                 self.locks[positionPlusOne - 1] = lastLock;
                 self.positions[lastLock.creator] = positionPlusOne;
             }
