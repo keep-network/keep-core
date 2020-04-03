@@ -107,7 +107,7 @@ contract('GuaranteedMinimumStakingPolicy', async (accounts) => {
 
     it("should calculate stakeable amount correctly just after cliff", async () => {
       expect(await calculate(1500, largeGrant, 0)).to.eq.BN(
-        tokens(2500),
+        tokens(125000),
         "Should permit unlocked amount with large grant just after cliff");
       expect(await calculate(1500, mediumGrant, 0)).to.eq.BN(
         minimumStake,

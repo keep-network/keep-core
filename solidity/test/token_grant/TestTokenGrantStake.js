@@ -88,7 +88,7 @@ contract('TokenGrant/Stake', function(accounts) {
       grantAmount,
       tokenOwner,
       revocableGrantee,
-      grantVestingDuration,
+      grantUnlockingDuration,
       grantStart,
       grantCliff,
       true,
