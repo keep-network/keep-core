@@ -76,14 +76,16 @@ async function stakeAndGenesis(accounts, contracts) {
     let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
     let submissionTimeout = (await operatorContract.ticketSubmissionTimeout()).toNumber();
 
-    mineBlocks(submissionTimeout);
+    let currentBlock = await web3.eth.getBlockNumber()
+    mineBlocks(ticketSubmissionStartBlock + submissionTimeout - currentBlock);
 
     let selectedParticipants = await operatorContract.selectedParticipants();
 
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
-    let resultPublicationTime = ticketSubmissionStartBlock + submissionTimeout + timeDKG;
+    let resultPublicationBlock = ticketSubmissionStartBlock + submissionTimeout + timeDKG;
 
-    mineBlocks(resultPublicationTime);
+    currentBlock = await web3.eth.getBlockNumber()
+    mineBlocks(resultPublicationBlock - currentBlock)
 
     let misbehaved = '0x';
     let resultHash = web3.utils.soliditySha3(blsData.groupPubKey, misbehaved);
