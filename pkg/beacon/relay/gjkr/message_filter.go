@@ -93,3 +93,10 @@ func (mc *memberCore) messageFilter() *group.InactiveMemberFilter {
 func (mc *memberCore) IsSenderAccepted(senderID group.MemberIndex) bool {
 	return mc.group.IsOperating(senderID)
 }
+
+func (mc *memberCore) IsSenderValid(
+	senderID group.MemberIndex,
+	senderPublicKey []byte,
+) bool {
+	return mc.membershipValidator.IsValidMembership(senderID, senderPublicKey)
+}

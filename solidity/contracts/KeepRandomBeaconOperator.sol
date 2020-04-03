@@ -173,7 +173,30 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groups.stakingContract = TokenStaking(_stakingContract);
         groups.groupActiveTime = TokenStaking(_stakingContract).undelegationPeriod();
 
-        groupSelection.ticketSubmissionTimeout = 12;
+        // There are 39 blocks to submit group selection tickets. To minimize
+        // the submitter's cost by minimizing the number of redundant tickets
+        // that are not selected into the group, the following approach is
+        // recommended:
+        //
+        // Tickets are submitted in 11 rounds, each round taking 3 blocks.
+        // As the basic principle, the number of leading zeros in the ticket
+        // value is subtracted from the number of rounds to determine the round
+        // the ticket should be submitted in:
+        // - in round 0, tickets with 11 or more leading zeros are submitted
+        // - in round 1, tickets with 10 or more leading zeros are submitted
+        // (...)
+        // - in round 11, tickets with no leading zeros are submitted.
+        //
+        // In each round, group member candidate needs to monitor tickets
+        // submitted by other candidates and compare them against tickets of
+        // the candidate not yet submitted to determine if continuing with
+        // ticket submission still makes sense.
+        //
+        // After 33 blocks, there is a 6 blocks mining lag allowing all
+        // outstanding ticket submissions to have a higher chance of being
+        // mined before the deadline.
+        groupSelection.ticketSubmissionTimeout = 3 * 11 + 6;
+
         groupSelection.groupSize = groupSize;
 
         dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10) + 20;
@@ -280,10 +303,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Gets the number of submitted group candidate tickets so far.
+     * @dev Gets the submitted group candidate tickets so far.
      */
-    function submittedTicketsCount() public view returns (uint256) {
-        return groupSelection.tickets.length;
+    function submittedTickets() public view returns (uint64[] memory) {
+        return groupSelection.tickets;
     }
 
     /**
