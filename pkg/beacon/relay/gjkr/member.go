@@ -204,7 +204,9 @@ type CombiningMember struct {
 	// Group public key calculated from individual public keys of all group members.
 	// Denoted as `Y` across the protocol specification.
 	groupPublicKey *bn256.G2
-
+	// Group public key shares calculated for each QUAL group member.
+	// Public key shares calculation is time-expensive so we do it in an async
+	// manner and publish the result to this channel, once ready.
 	groupPublicKeySharesChannel chan map[group.MemberIndex]*bn256.G2
 }
 

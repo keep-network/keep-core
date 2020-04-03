@@ -168,7 +168,7 @@ func TestInactiveMemberPublicKeySharesReconstructionAndSigning(t *testing.T) {
 	}
 }
 
-func TestsSigningWithInvalidSignatureShare(t *testing.T) {
+func TestSigningWithInvalidSignatureShare(t *testing.T) {
 	t.Parallel()
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
@@ -183,7 +183,7 @@ func TestsSigningWithInvalidSignatureShare(t *testing.T) {
 		}
 
 		// Member 2 sends a proper G1 point which is invalid in terms of
-		// current relay entry request.
+		// the current relay entry request.
 		if ok && signatureShareMessage.SenderID() == group.MemberIndex(2) {
 			_, randomG1, err := bn256.RandomG1(rand.Reader)
 			if err != nil {
