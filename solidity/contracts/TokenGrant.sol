@@ -399,14 +399,22 @@ contract TokenGrant {
      */
     function availableToStake(uint256 _grantId) public view returns (uint256) {
         Grant storage grant = grants[_grantId];
+        uint256 amount = grant.amount;
+        uint256 withdrawn = grant.withdrawn;
+        uint256 remaining = amount.sub(withdrawn);
         uint256 stakeable = grant.stakingPolicy.getStakeableAmount(
             now,
-            grant.amount,
+            amount,
             grant.duration,
             grant.start,
             grant.cliff,
-            grant.withdrawn
+            withdrawn
         );
+        // Clamp the stakeable amount to what is left in the grant
+        // in the case of a malfunctioning staking policy.
+        if (stakeable > remaining) {
+            stakeable = remaining;
+        }
 
         return stakeable.sub(grant.staked);
     }
