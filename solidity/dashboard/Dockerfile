@@ -13,7 +13,11 @@ RUN apk add --update --no-cache \
 COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
 
-RUN npm install
+# Install from lockfile.
+RUN npm ci
+
+# Resolve latest build of keep-core.
+RUN npm update @keep-network/keep-core
 
 COPY src /app/src
 COPY public /app/public

@@ -2,7 +2,6 @@ package entry
 
 import (
 	"context"
-	"fmt"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -26,7 +25,7 @@ type signingStateBase struct {
 
 	signer *dkg.ThresholdSigner
 
-	previousEntry []byte
+	previousEntry *bn256.G1
 
 	honestThreshold int
 }
@@ -49,10 +48,7 @@ func (sss *signatureShareState) ActiveBlocks() uint64 {
 }
 
 func (sss *signatureShareState) Initiate(ctx context.Context) error {
-	share, err := sss.signer.CalculateSignatureShare(sss.previousEntry)
-	if err != nil {
-		return fmt.Errorf("could not evaluate signature share: [%v]", err)
-	}
+	share := sss.signer.CalculateSignatureShare(sss.previousEntry)
 
 	sss.selfSignatureShare = share
 
@@ -129,19 +125,38 @@ func (scs *signatureCompleteState) Initiate(ctx context.Context) error {
 		share := new(bn256.G1)
 		_, err := share.Unmarshal(message.shareBytes)
 		if err != nil {
-			logger.Errorf(
+			logger.Warningf(
 				"[member:%v] failed to unmarshal signature share from member [%v]: [%v]",
 				scs.MemberIndex(),
 				message.senderID,
 				err,
 			)
 		} else {
-			logger.Debugf(
-				"[member:%v] accepting signature share from member [%v]",
-				scs.MemberIndex(),
-				message.senderID,
-			)
-			seenShares[message.senderID] = share
+			publicKeyShare, ok := scs.signer.GroupPublicKeyShares()[message.senderID]
+			if !ok {
+				logger.Warningf(
+					"[member:%v] could not validate signature share from "+
+						"member [%v]; public key share not found",
+					scs.MemberIndex(),
+					message.senderID,
+				)
+				continue
+			}
+
+			if bls.VerifyG1(publicKeyShare, scs.previousEntry, share) {
+				logger.Debugf(
+					"[member:%v] accepting signature share from member [%v]",
+					scs.MemberIndex(),
+					message.senderID,
+				)
+				seenShares[message.senderID] = share
+			} else {
+				logger.Warningf(
+					"[member:%v] rejecting invalid signature share from member [%v]",
+					scs.MemberIndex(),
+					message.senderID,
+				)
+			}
 		}
 	}
 

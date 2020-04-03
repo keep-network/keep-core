@@ -135,8 +135,8 @@ func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) [32]uint8 {
 	return ticketFixedArray
 }
 
-func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
-	return ec.keepRandomBeaconOperatorContract.SubmittedTicketsCount()
+func (ec *ethereumChain) GetSubmittedTickets() ([]uint64, error) {
+	return ec.keepRandomBeaconOperatorContract.SubmittedTickets()
 }
 
 func (ec *ethereumChain) GetSelectedParticipants() ([]chain.StakerAddress, error) {

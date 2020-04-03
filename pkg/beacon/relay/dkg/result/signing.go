@@ -19,6 +19,10 @@ type SigningMember struct {
 	// Group to which this member belongs.
 	group *group.Group
 
+	// Validator allowing to check public key and member index
+	// against group members
+	membershipValidator group.MembershipValidator
+
 	// Hash of DKG result preferred by the current participant.
 	preferredDKGResultHash relayChain.DKGResultHash
 	// Signature over preferredDKGResultHash calculated by the member.
@@ -29,10 +33,12 @@ type SigningMember struct {
 func NewSigningMember(
 	memberIndex group.MemberIndex,
 	dkgGroup *group.Group,
+	membershipValidator group.MembershipValidator,
 ) *SigningMember {
 	return &SigningMember{
-		index: memberIndex,
-		group: dkgGroup,
+		index:               memberIndex,
+		group:               dkgGroup,
+		membershipValidator: membershipValidator,
 	}
 }
 
@@ -167,4 +173,13 @@ func (sm *SigningMember) VerifyDKGResultSignatures(
 // (not marked as inactive or disqualified).
 func (sm *SigningMember) IsSenderAccepted(senderID group.MemberIndex) bool {
 	return sm.group.IsOperating(senderID)
+}
+
+// IsSenderValid checks if sender of the provided ProtocolMessage is in the
+// group and uses appropriate group member index.
+func (sm *SigningMember) IsSenderValid(
+	senderID group.MemberIndex,
+	senderPublicKey []byte,
+) bool {
+	return sm.membershipValidator.IsValidMembership(senderID, senderPublicKey)
 }
