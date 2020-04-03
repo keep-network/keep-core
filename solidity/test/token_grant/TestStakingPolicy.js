@@ -66,6 +66,8 @@ contract('GuaranteedMinimumStakingPolicy', async (accounts) => {
   let duration = 2000;
   let cliff = 1500;
 
+  // Minimum stake is 100,000 KEEP tokens at the beginning.
+  // `tokens(n)` returns a BN whose value equals `n` KEEP.
   function tokens(n) { return minimumStake.divn(100000).muln(n); }
 
   before(async () => {
