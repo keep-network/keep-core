@@ -59,6 +59,9 @@ contract TokenStaking is StakeDelegatable {
     // Authorized operator contracts.
     mapping(address => mapping (address => bool)) internal authorizations;
 
+    // Locks placed on the operator.
+    // `operatorLocks[operator]` returns all locks placed on the operator.
+    // Each authorized operator contract can place one lock on an operator.
     mapping(address => LockUtils.LockSet) internal operatorLocks;
 
     // Granters of delegated authority to operator contracts.
