@@ -106,8 +106,6 @@ func startTicketSubmission(
 		return err
 	}
 
-	quitTicketSubmission := make(chan struct{})
-
 	ticketSubmissionRounds := (chainConfig.TicketSubmissionTimeout -
 		miningLag) / ticketSubmissionRoundDuration
 
@@ -147,11 +145,7 @@ func startTicketSubmission(
 			len(candidateTickets),
 		)
 
-		go submitTickets(
-			candidateTickets,
-			relayChain,
-			quitTicketSubmission,
-		)
+		submitTickets(candidateTickets, relayChain)
 	}
 
 	ticketSubmissionEndBlockHeight := <-ticketSubmissionTimeoutChannel
@@ -160,8 +154,6 @@ func startTicketSubmission(
 		"ticket submission ended at block [%v]",
 		ticketSubmissionEndBlockHeight,
 	)
-
-	close(quitTicketSubmission)
 
 	selectedStakers, err := relayChain.GetSelectedParticipants()
 	if err != nil {

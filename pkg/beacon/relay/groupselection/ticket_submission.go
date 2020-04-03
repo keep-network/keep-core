@@ -11,31 +11,25 @@ import (
 func submitTickets(
 	tickets []*ticket,
 	relayChain relaychain.GroupSelectionInterface,
-	quit <-chan struct{},
 ) {
 	for _, ticket := range tickets {
-		select {
-		case <-quit:
-			return
-		default:
-			chainTicket, err := toChainTicket(ticket)
-			if err != nil {
+		chainTicket, err := toChainTicket(ticket)
+		if err != nil {
+			logger.Errorf(
+				"could not transform ticket to chain format: [%v]",
+				err,
+			)
+			continue
+		}
+
+		relayChain.SubmitTicket(chainTicket).OnFailure(
+			func(err error) {
 				logger.Errorf(
-					"could not transform ticket to chain format: [%v]",
+					"ticket submission failed: [%v]",
 					err,
 				)
-				continue
-			}
-
-			relayChain.SubmitTicket(chainTicket).OnFailure(
-				func(err error) {
-					logger.Errorf(
-						"ticket submission failed: [%v]",
-						err,
-					)
-				},
-			)
-		}
+			},
+		)
 	}
 }
 
