@@ -409,6 +409,11 @@ contract TokenStaking is StakeDelegatable {
                 "Operator stake must be active"
             );
 
+            require(
+                !_isStakeReleased(operator, operatorParams, msg.sender),
+                "Stake is released"
+            );
+
             uint256 currentAmount = operatorParams.getAmount();
 
             if (currentAmount < amountToSlash) {
@@ -454,6 +459,11 @@ contract TokenStaking is StakeDelegatable {
             require(
                 block.timestamp > operatorParams.getCreationTimestamp().add(initializationPeriod),
                 "Operator stake must be active"
+            );
+
+            require(
+                !_isStakeReleased(operator, operatorParams, msg.sender),
+                "Stake is released"
             );
 
             uint256 currentAmount = operatorParams.getAmount();
@@ -629,5 +639,47 @@ contract TokenStaking is StakeDelegatable {
             return operatorContract;
         }
         return getAuthoritySource(delegatedAuthoritySource);
+    }
+
+    /// @notice Is the operator with the given params initialized
+    function _isInitialized(uint256 _operatorParams)
+        internal view returns (bool) {
+        uint256 createdAt = _operatorParams.getCreationTimestamp();
+        return block.timestamp > createdAt.add(initializationPeriod);
+    }
+
+    /// @notice Is the operator with the given params undelegating
+    function _isUndelegating(uint256 _operatorParams)
+        internal view returns (bool) {
+        uint256 undelegatedAt = _operatorParams.getUndelegationTimestamp();
+        return (undelegatedAt != 0) && (block.timestamp > undelegatedAt);
+    }
+
+    /// @notice Has the operator with the given params finished undelegating
+    function _isUndelegatingFinished(uint256 _operatorParams)
+        internal view returns (bool) {
+        uint256 undelegatedAt = _operatorParams.getUndelegationTimestamp();
+        uint256 finishedAt = undelegatedAt.add(undelegationPeriod);
+        return (undelegatedAt != 0) && (block.timestamp > finishedAt);
+    }
+
+    /// @notice Get whether the operator's stake is released
+    /// as far as the operator contract is concerned.
+    /// If the operator contract has a lock on the operator,
+    /// the operator's stake is be released when the lock expires.
+    /// Otherwise the stake is released when the operator finishes undelegating.
+    function _isStakeReleased(
+        address _operator,
+        uint256 _operatorParams,
+        address _operatorContract
+    ) internal view returns (bool) {
+        if (!_isUndelegatingFinished(_operatorParams)) {
+            return false;
+        }
+        // Undelegating finished, so check locks
+        LockUtils.LockSet storage locks = operatorLocks[_operator];
+        // `getLockTime` returns 0 if the lock doesn't exist,
+        // thus we don't need to check for its presence separately.
+        return block.timestamp >= locks.getLockTime(_operatorContract);
     }
 }

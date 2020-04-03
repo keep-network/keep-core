@@ -208,6 +208,51 @@ contract('TokenStaking/Lock', function(accounts) {
       )
       // ok, no revert
     })
+
+    it("should not allow slashing/seizing non-locked stake after undelegation", async () => {
+      await undelegate(operator)
+
+      await increaseTime(lockPeriod)
+
+      await expectThrowWithMessage(
+        stakingContract.slash(
+          minimumStake, [operator],
+          {from: operatorContract}
+        ),
+        "Stake is released"
+      )
+      await expectThrowWithMessage(
+        stakingContract.seize(
+          minimumStake, 100, magpie, [operator],
+          {from: operatorContract}
+        ),
+        "Stake is released"
+      )
+    })
+
+    it("should only allow the lock creator to slash/seize after undelegation", async () => {
+      await stakingContract.authorizeOperatorContract(
+        operator,
+        operatorContract2,
+        { from: authorizer },
+      );
+      await undelegate(operator)
+
+      await expectThrowWithMessage(
+        stakingContract.slash(
+          minimumStake, [operator],
+          {from: operatorContract2}
+        ),
+        "Stake is released"
+      )
+      await expectThrowWithMessage(
+        stakingContract.seize(
+          minimumStake, 100, magpie, [operator],
+          {from: operatorContract2}
+        ),
+        "Stake is released"
+      )
+    })
   })
 
 
