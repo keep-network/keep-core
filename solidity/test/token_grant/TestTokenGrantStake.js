@@ -19,10 +19,14 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
+const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
+const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
+const EvilStakingPolicy = artifacts.require('./EvilStakingPolicy.sol');
 
 contract('TokenGrant/Stake', function(accounts) {
 
   let tokenContract, registryContract, grantContract, stakingContract,
+    permissivePolicy, minimumPolicy, evilPolicy,
     minimumStake, grantAmount;
 
   const tokenOwner = accounts[0],
@@ -30,15 +34,18 @@ contract('TokenGrant/Stake', function(accounts) {
     operatorOne = accounts[2],
     operatorTwo = accounts[3],
     magpie = accounts[4],
-    authorizer = accounts[5];
+    authorizer = accounts[5],
+    revocableGrantee = accounts[6],
+    evilGrantee = accounts[7];
 
   let grantId;
+  let revocableGrantId;
+  let evilGrantId;
   let grantStart;
 
-  const grantUnlockingDuration = duration.days(60),
-  grantCliff = duration.days(10),
-  grantRevocable = false;
-  
+  const grantUnlockingDuration = duration.days(60);
+  const grantCliff = duration.days(10);
+
   const initializationPeriod = duration.minutes(10);
   const undelegationPeriod = duration.minutes(30);
 
@@ -46,20 +53,25 @@ contract('TokenGrant/Stake', function(accounts) {
     tokenContract = await KeepToken.new();
     registryContract = await Registry.new();
     stakingContract = await TokenStaking.new(
-      tokenContract.address, 
-      registryContract.address, 
-      initializationPeriod, 
+      tokenContract.address,
+      registryContract.address,
+      initializationPeriod,
       undelegationPeriod
     );
 
     grantContract = await TokenGrant.new(tokenContract.address);
-    
+
     await grantContract.authorizeStakingContract(stakingContract.address);
-    
+
+
     grantStart = await latestTime();
     minimumStake = await stakingContract.minimumStake()
+
+    permissivePolicy = await PermissiveStakingPolicy.new()
+    minimumPolicy = await GuaranteedMinimumStakingPolicy.new(stakingContract.address);
+    evilPolicy = await EvilStakingPolicy.new()
     grantAmount = minimumStake.muln(10),
-    
+
     // Grant tokens
     grantId = await grantTokens(
       grantContract,
@@ -70,7 +82,34 @@ contract('TokenGrant/Stake', function(accounts) {
       grantUnlockingDuration,
       grantStart,
       grantCliff,
-      grantRevocable
+      false,
+      permissivePolicy.address,
+    );
+
+    revocableGrantId = await grantTokens(
+      grantContract,
+      tokenContract,
+      grantAmount,
+      tokenOwner,
+      revocableGrantee,
+      grantUnlockingDuration,
+      grantStart,
+      grantCliff,
+      true,
+      minimumPolicy.address,
+    );
+
+    evilGrantId = await grantTokens(
+      grantContract,
+      tokenContract,
+      grantAmount,
+      tokenOwner,
+      evilGrantee,
+      grantUnlockingDuration,
+      grantStart,
+      grantCliff,
+      false,
+      evilPolicy.address,
     );
   });
 
@@ -95,6 +134,32 @@ contract('TokenGrant/Stake', function(accounts) {
     )
   }
 
+  async function delegateRevocable(grantee, operator, amount) {
+    return await delegateStakeFromGrant(
+      grantContract,
+      stakingContract.address,
+      grantee,
+      operator,
+      magpie,
+      authorizer,
+      amount,
+      revocableGrantId
+    )
+  }
+
+  async function delegateEvil(grantee, operator, amount) {
+    return await delegateStakeFromGrant(
+      grantContract,
+      stakingContract.address,
+      grantee,
+      operator,
+      magpie,
+      authorizer,
+      amount,
+      evilGrantId
+    )
+  }
+
   it("should update balances when delegating", async () => {
     let amountToDelegate = minimumStake.muln(5);
     let remaining = grantAmount.sub(amountToDelegate)
@@ -109,7 +174,7 @@ contract('TokenGrant/Stake', function(accounts) {
       "All granted tokens delegated, should be nothing more available"
     )
     expect(operatorBalance).to.eq.BN(
-      amountToDelegate, 
+      amountToDelegate,
       "Staking amount should be added to the operator balance"
     );
   })
@@ -132,7 +197,7 @@ contract('TokenGrant/Stake', function(accounts) {
       "All granted tokens should be again available for staking"
     )
     expect(operatorBalance).to.eq.BN(
-      0, 
+      0,
       "Staking amount should be removed from operator balance"
     );
   })
@@ -150,7 +215,7 @@ contract('TokenGrant/Stake', function(accounts) {
       "All granted tokens should be again available for staking"
     )
     expect(operatorBalance).to.eq.BN(
-      0, 
+      0,
       "Staking amount should be removed from operator balance"
     );
   })
@@ -158,7 +223,7 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should allow to cancel delegation just before initialization period is over", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
     let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    
+
     await increaseTimeTo(createdAt + initializationPeriod - timeRoundMargin)
 
     await grantContract.cancelStake(operatorOne, {from: grantee});
@@ -171,7 +236,7 @@ contract('TokenGrant/Stake', function(accounts) {
       "All granted tokens should be again available for staking"
     )
     expect(operatorBalance).to.eq.BN(
-      0, 
+      0,
       "Staking amount should be removed from operator balance"
     );
   })
@@ -179,7 +244,7 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should not allow to cancel delegation after initialization period is over", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
     let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    
+
     await increaseTimeTo(createdAt + initializationPeriod + 1)
 
     await expectThrowWithMessage(
@@ -243,13 +308,13 @@ contract('TokenGrant/Stake', function(accounts) {
       "All granted tokens delegated, should be nothing more available"
     )
     expect(operatorOneBalance).to.eq.BN(
-      amountToDelegate, 
+      amountToDelegate,
       "Staking amount should be added to the operator balance"
-    );  
+    );
     expect(operatorTwoBalance).to.eq.BN(
-      amountToDelegate, 
+      amountToDelegate,
       "Staking amount should be added to the operator balance"
-    );  
+    );
   })
 
   it("should not allow to delegate to not authorized staking contract", async () => {
@@ -263,10 +328,10 @@ contract('TokenGrant/Stake', function(accounts) {
 
     await expectThrowWithMessage(
       grantContract.stake(
-        grantId, 
-        notAuthorizedContract, 
-        grantAmount, 
-        delegation, 
+        grantId,
+        notAuthorizedContract,
+        grantAmount,
+        delegation,
         {from: grantee}
       ),
       "Provided staking contract is not authorized"
@@ -282,7 +347,7 @@ contract('TokenGrant/Stake', function(accounts) {
 
   it("should let operator cancel delegation", async () => {
     await delegate(grantee, operatorOne, grantAmount, grantId);
-  
+
     await grantContract.cancelStake(operatorOne, {from: operatorOne})
     // ok, no exception
   })
@@ -338,6 +403,30 @@ contract('TokenGrant/Stake', function(accounts) {
     expect(availablePost).to.eq.BN(
       grantAmount,
       "Staked tokens should be recovered safely"
+    );
+  })
+
+  it("should allow delegation of revocable grants", async () => {
+    await delegateRevocable(revocableGrantee, operatorTwo, minimumStake);
+    // ok, no exceptions
+  })
+
+  it("should not allow delegation of more than permitted", async () => {
+    await expectThrowWithMessage(
+      delegateRevocable(revocableGrantee, operatorTwo, minimumStake.addn(1)),
+      "Must have available granted amount to stake."
+    );
+  })
+
+  it("should allow delegation of evil grants", async () => {
+    await delegateEvil(evilGrantee, operatorTwo, grantAmount);
+    // ok, no exceptions
+  })
+
+  it("should not allow delegation of more than in the grant", async () => {
+    await expectThrowWithMessage(
+      delegateEvil(evilGrantee, operatorTwo, grantAmount.addn(1)),
+      "Must have available granted amount to stake."
     );
   })
 });

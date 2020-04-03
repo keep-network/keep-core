@@ -14,10 +14,11 @@ const KeepToken = artifacts.require('./KeepToken.sol');
 const TokenStaking = artifacts.require('./TokenStaking.sol');
 const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
+const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
 
 contract('TokenGrant/Withdraw', function(accounts) {
 
-  let tokenContract, registryContract, grantContract, stakingContract;
+  let tokenContract, registryContract, grantContract, stakingContract, permissivePolicy;
 
   const tokenOwner = accounts[0],
     grantee = accounts[1],
@@ -49,6 +50,8 @@ contract('TokenGrant/Withdraw', function(accounts) {
     
     await grantContract.authorizeStakingContract(stakingContract.address);
 
+    permissivePolicy = await PermissiveStakingPolicy.new()
+
     grantStart = await latestTime();
 
     grantId = await grantTokens(
@@ -61,6 +64,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
       grantStart, 
       grantCliff, 
       grantRevocable,
+      permissivePolicy.address
     );
   });
 
