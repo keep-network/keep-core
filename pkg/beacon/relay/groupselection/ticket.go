@@ -2,6 +2,7 @@ package groupselection
 
 import (
 	"math/big"
+	"math/bits"
 
 	"fmt"
 
@@ -79,6 +80,11 @@ func calculateTicketValue(
 	return keccak256Hash, nil
 }
 
+// Returns 8 starting bytes of ticket value as a big integer.
 func (t *ticket) intValue() *big.Int {
-	return new(big.Int).SetBytes(t.value[:])
+	return new(big.Int).SetBytes(t.value[:8])
+}
+
+func (t *ticket) leadingZeros() int {
+	return bits.LeadingZeros64(t.intValue().Uint64())
 }
