@@ -309,8 +309,15 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Unlocks given operator stake. Only previously authorized operator
-     * contract can unlock the stake.
+     * @notice Removes a lock the caller had previously placed on the operator.
+     * @dev Only for operator contracts.
+     * To remove expired or disabled locks, use `releaseExpiredLocks`.
+     * The authorization check ensures that the caller must have been able
+     * to place a lock on the operator sometime in the past.
+     * We don't need to check for current approval status of the caller
+     * because unlocking stake cannot harm the operator
+     * nor interfere with other operator contracts.
+     * Therefore even disabled operator contracts may freely unlock stake.
      * @param operator Operator address.
      */
     function unlockStake(
