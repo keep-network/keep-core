@@ -43,14 +43,14 @@ type Result struct {
 //
 // To minimize the submitter's cost by minimizing the number of redundant
 // tickets that are not selected into the group, tickets are submitted in
-// 11 rounds, each round taking 3 blocks.
+// N rounds, each round taking 3 blocks.
 // As the basic principle, the number of leading zeros in the ticket
 // value is subtracted from the number of rounds to determine the round
 // the ticket should be submitted in:
-// - in round 0, tickets with 11 or more leading zeros are submitted
-// - in round 1, tickets with 10 or more leading zeros are submitted
+// - in round 0, tickets with N or more leading zeros are submitted
+// - in round 1, tickets with N-1 or more leading zeros are submitted
 // (...)
-// - in round 11, tickets with no leading zeros are submitted.
+// - in round N, tickets with no leading zeros are submitted.
 //
 // In each round, group member candidate needs to monitor tickets
 // submitted by other candidates and compare them against tickets of
@@ -197,7 +197,10 @@ func calculateRoundsCount(submissionTimeout uint64) (uint64, error) {
 }
 
 // roundCandidateTickets returns tickets which should be submitted in
-// given ticket submission round.
+// the given ticket submission round.
+//
+// Bear in mind that member tickets slice should be sorted in ascending
+// order by their value.
 func roundCandidateTickets(
 	relayChain relaychain.GroupSelectionInterface,
 	memberTickets []*ticket,
@@ -205,10 +208,10 @@ func roundCandidateTickets(
 	roundLeadingZeros uint64,
 	groupSize int,
 ) ([]*ticket, error) {
-
 	// Get unsorted submitted tickets from the chain.
-	// This slice will be also filled by candidate tickets values
-	// in order to determine an optimal number of candidate tickets.
+	// This slice will be also filled by candidate tickets values in order to
+	// compare subsequent member ticket values against all submitted tickets
+	// so far and determine an optimal number of candidate tickets.
 	submittedTickets, err := relayChain.GetSubmittedTickets()
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -224,7 +227,8 @@ func roundCandidateTickets(
 			candidateTicket.leadingZeros(),
 		)
 
-		// Check if given candidate ticket should be proceeded in current round.
+		// Check if the given candidate ticket should be proceeded in
+		// the current round.
 		if roundIndex == 0 {
 			if candidateTicketLeadingZeros < roundLeadingZeros {
 				continue
@@ -243,7 +247,7 @@ func roundCandidateTickets(
 			},
 		)
 
-		// If previous iteration encountered the maximum length
+		// If the previous iteration encountered the maximum length
 		// of submitted tickets slice and was able to add a new
 		// candidate value, submitted tickets slice should be
 		// trimmed to the group size.
@@ -255,7 +259,7 @@ func roundCandidateTickets(
 		candidateTicketValue := candidateTicket.intValue().Uint64()
 
 		if len(submittedTickets) < groupSize {
-			// If submitted tickets count is less than the group
+			// If the submitted tickets count is less than the group
 			// size the candidate ticket can be added unconditionally.
 			submittedTickets = append(
 				submittedTickets,
@@ -263,7 +267,7 @@ func roundCandidateTickets(
 			)
 			shouldBeSubmitted = true
 		} else {
-			// If submitted tickets count is equal to the group
+			// If the submitted tickets count is equal to the group
 			// size the candidate ticket can be added only if
 			// it is smaller than the highest submitted ticket.
 			// Note that, maximum length of submitted tickets slice

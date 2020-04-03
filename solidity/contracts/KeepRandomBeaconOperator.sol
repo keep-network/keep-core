@@ -180,7 +180,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         //
         // Tickets are submitted in 11 rounds, each round taking 3 blocks.
         // As the basic principle, the number of leading zeros in the ticket
-        //value is subtracted from the number of rounds to determine the round
+        // value is subtracted from the number of rounds to determine the round
         // the ticket should be submitted in:
         // - in round 0, tickets with 11 or more leading zeros are submitted
         // - in round 1, tickets with 10 or more leading zeros are submitted
@@ -195,7 +195,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // After 33 blocks, there is a 6 blocks mining lag allowing all
         // outstanding ticket submissions to have a higher chance of being
         // mined before the deadline.
-        groupSelection.ticketSubmissionTimeout = 39;
+        groupSelection.ticketSubmissionTimeout = 3 * 11 + 6;
 
         groupSelection.groupSize = groupSize;
 
