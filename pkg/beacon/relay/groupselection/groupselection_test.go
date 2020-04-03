@@ -62,7 +62,7 @@ func TestSubmission(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			chainConfig := &config.Chain{
 				GroupSize:               test.groupSize,
-				TicketSubmissionTimeout: 6,
+				TicketSubmissionTimeout: 12,
 			}
 
 			chain := &stubGroupInterface{

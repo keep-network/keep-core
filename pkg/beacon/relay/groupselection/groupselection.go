@@ -17,12 +17,17 @@ import (
 
 var logger = log.Logger("keep-groupselection")
 
+// Recommended parameters all clients should use to minimize their expenses.
+// It is not a must to obey but it is nice and polite. And being nice to others
+// helps in reducing own costs because other clients should respect the same
+// protocol.
 const (
-	// Duration of one ticket submission round in blocks.
-	ticketSubmissionRoundDuration = 3
+	// The number of blocks one round takes.
+	roundDuration = uint64(3)
 
-	// Duration of the mining lag in blocks.
-	miningLag = 6
+	// The delay in blocks after all rounds complete to ensure all transactions
+	// are mined
+	miningLag = uint64(6)
 )
 
 // Result represents the result of group selection protocol. It contains the
@@ -106,13 +111,15 @@ func startTicketSubmission(
 		return err
 	}
 
-	ticketSubmissionRounds := (chainConfig.TicketSubmissionTimeout -
-		miningLag) / ticketSubmissionRoundDuration
+	rounds, err := calculateRoundsCount(chainConfig.TicketSubmissionTimeout)
+	if err != nil {
+		return err
+	}
 
-	for roundIndex := uint64(0); roundIndex <= ticketSubmissionRounds; roundIndex++ {
-		roundStartDelay := roundIndex * ticketSubmissionRoundDuration
+	for roundIndex := uint64(0); roundIndex <= rounds; roundIndex++ {
+		roundStartDelay := roundIndex * roundDuration
 		roundStartBlock := startBlockHeight + roundStartDelay
-		roundLeadingZeros := ticketSubmissionRounds - roundIndex
+		roundLeadingZeros := rounds - roundIndex
 
 		logger.Infof(
 			"ticket submission round [%v] will start at "+
@@ -169,6 +176,18 @@ func startTicketSubmission(
 	})
 
 	return nil
+}
+
+// calculateRoundsCount takes the on-chain ticket submission timeout
+// and calculates the number of rounds for ticket submission. If it is not
+// possible to use the recommended round duration and mining lag because the
+// supplied timeout is too short, function returns an error.
+func calculateRoundsCount(submissionTimeout uint64) (uint64, error) {
+	if submissionTimeout-miningLag <= roundDuration {
+		return 0, fmt.Errorf("submission timeout is too short")
+	}
+
+	return (submissionTimeout - miningLag) / roundDuration, nil
 }
 
 // roundCandidateTickets returns tickets which should be submitted in
