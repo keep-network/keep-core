@@ -53,6 +53,8 @@ spec:
                 key: account-2
           - name: LOG_LEVEL
             value: debug
+          - name: IPFS_LOGGING_FMT
+            value: nocolor
         volumeMounts:
           - name: keep-client-config
             mountPath: /mnt/keep-client/config
