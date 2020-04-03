@@ -4,8 +4,6 @@ import { TrezorProvider } from '../connectors/trezor'
 import { Web3Context } from './WithWeb3Context'
 import { MessagesContext, messageType } from './Message'
 import { getContracts } from '../contracts'
-import Modal from './Modal'
-import ChooseWallet from './ChooseWallet'
 
 export default class Web3ContextProvider extends React.Component {
     static contextType = MessagesContext
@@ -42,8 +40,14 @@ export default class Web3ContextProvider extends React.Component {
           }
           throw new Error('No browser extention')
         }
+        case 'COINBASE': {
+          throw new Error('Coinbase wallet is not yet supported')
+        }
+        case 'LEDGER': {
+          throw new Error('Ledger wallet is not yet supported')
+        }
         default:
-          throw new Error('Please connect to a wallet')
+          throw new Error('Unsupported wallet')
       }
     }
 
@@ -51,11 +55,12 @@ export default class Web3ContextProvider extends React.Component {
       let web3
       try {
         web3 = this.getWeb3(providerName)
-        this.setState({ web3, provider: providerName, showModal: false }, this.setData)
       } catch (error) {
         this.setState({ providerError: error.message })
+        this.context.showMessage({ type: messageType.ERROR, title: error.message })
         return
       }
+      this.setState({ web3, provider: providerName, showModal: false }, this.setData)
     }
 
     initialize = async () => {
@@ -140,11 +145,6 @@ export default class Web3ContextProvider extends React.Component {
             showConnectWalletModal: this.showModal,
           }}
         >
-          { showModal &&
-            <Modal title="Wallet" closeModal={this.closeModal}>
-              <ChooseWallet />
-            </Modal>
-          }
           {this.props.children}
         </Web3Context.Provider>
 

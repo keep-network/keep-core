@@ -10,7 +10,6 @@ export const Web3Status = () => {
     connectAppWithAccount,
     error,
     provider,
-    showConnectWalletModal,
   } = useContext(Web3Context)
 
   const renderStatus = () => {
@@ -18,10 +17,8 @@ export const Web3Status = () => {
       return (
         <Banner
           type={BANNER_TYPE.ERROR}
-          title='Please select a'
-        >
-          &nbsp;<span className='banner-title text-link' onClick={showConnectWalletModal}>wallet</span>
-        </Banner>
+          title='Please select a wallet'
+        />
       )
     }
 

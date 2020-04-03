@@ -1,41 +1,50 @@
 .wallets-list {
     list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    margin-top: 3rem;
 
     .wallet {
+        width: 240px;
         display: flex;
+        flex-direction: column;
         justify-content: space-between;
         align-items: center;
-        border-radius: 3px;
         padding: 2rem;
         margin-bottom: 1rem;
-        .box-shadow(0px 1px 5px rgba(10, 8, 6, 0.25));
+        border: 1px solid @color-grey-20;
 
-        &:first-of-type {
-            margin-top: 2rem;
+        &-type { 
+            font-style: normal;
+            font-weight: 500;
+            font-size: 0.8rem;
+            line-height: 145%;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-feature-settings: 'tnum' on, 'lnum' on;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: @color-grey-40;
         }
 
-        &:last-of-type {
-            margin-bottom: 0;
+        &-description {
+            font-style: normal;
+            font-weight: normal;
+            font-size: 0.9rem;
+            line-height: 145%;
+            font-feature-settings: 'tnum' on, 'lnum' on;
+            color: @color-grey-60;
         }
 
         &:hover {
             cursor: pointer;
         }
 
-        h4 {
-            font-style: normal;
-            font-weight: normal;
-            font-size: 1.3rem;
-            line-height: 145%;
-            font-feature-settings: 'tnum' on, 'lnum' on;
-            color: @color-black;
-            margin-right: auto;
-        }
-
         img {
             width: 30px;
             height: 30px;
-            margin-right: 0.5rem;
+            margin-bottom: 2rem;
         }
     }
 }

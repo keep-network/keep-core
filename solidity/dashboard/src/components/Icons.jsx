@@ -137,7 +137,7 @@ const ArrowRight = ({ color }) => (
 )
 
 ArrowRight.defaultProps = {
-  color: colors.darkGrey,
+  color: colors.black,
 }
 
 export {

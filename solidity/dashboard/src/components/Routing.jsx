@@ -10,10 +10,15 @@ import OperatorPage from '../pages/OperatorPage'
 import AuthorizerPage from '../pages/AuthorizerPage'
 import RewardsPage from '../pages/RewardsPage'
 import CreateTokenGrantPage from '../pages/CreateTokenGrantPage'
+import ChooseWallet from './ChooseWallet'
 
 class Routing extends React.Component {
   renderContent() {
-    const { isKeepTokenContractDeployer, contractsDataIsFetching, web3: { error } } = this.props
+    const { isKeepTokenContractDeployer, contractsDataIsFetching, web3: { error, provider } } = this.props
+
+    if (!provider) {
+      return <ChooseWallet />
+    }
 
     if (error) {
       return null
@@ -45,4 +50,4 @@ class Routing extends React.Component {
   }
 }
 
-export default withWeb3Context(withContractsDataContext(withOnlyLoggedUser(Routing)))
+export default withWeb3Context(withContractsDataContext(Routing))
