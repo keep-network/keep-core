@@ -295,7 +295,7 @@ contract TokenStaking is StakeDelegatable {
 
         require(
             _isInitialized(operatorParams),
-            "Operator not initialized"
+            "Operator stake must be active"
         );
         require(
             !_isUndelegating(operatorParams),

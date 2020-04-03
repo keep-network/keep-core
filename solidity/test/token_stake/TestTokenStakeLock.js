@@ -82,7 +82,7 @@ contract('TokenStaking/Lock', function(accounts) {
     it("should not permit locks on non-initialized operators", async () => {
       await expectThrowWithMessage(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
-        "Operator not initialized"
+        "Operator stake must be active"
       )
     })
 
