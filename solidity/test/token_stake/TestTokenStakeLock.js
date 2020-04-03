@@ -199,6 +199,20 @@ contract('TokenStaking/Lock', function(accounts) {
       await stakingContract.recoverStake(operator, {from: operator})
       // ok, no revert
     })
+
+    it("should allow slashing/seizing locked stake after undelegation", async () => {
+      await undelegate(operator)
+
+      await stakingContract.slash(
+        minimumStake, [operator],
+        {from: operatorContract}
+      )
+      await stakingContract.seize(
+        minimumStake, 100, magpie, [operator],
+        {from: operatorContract}
+      )
+      // ok, no revert
+    })
   })
 
 
