@@ -16,7 +16,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
-func TestSubmission(t *testing.T) {
+func TestSubmitTickets(t *testing.T) {
 	var tests = map[string]struct {
 		groupSize                int
 		tickets                  []*ticket
@@ -110,7 +110,7 @@ func TestSubmission(t *testing.T) {
 
 func TestRoundCandidateTickets(t *testing.T) {
 	groupSize := 9
-	ticketSubmissionRounds := uint64(7)
+	rounds := uint64(7)
 
 	tickets := []*ticket{
 		newTestTicket(1, 36028797018963968),
@@ -127,7 +127,6 @@ func TestRoundCandidateTickets(t *testing.T) {
 	var tests = map[string]struct {
 		existingChainTickets             []uint64
 		expectedCandidateTicketsPerRound map[uint64][]*ticket
-		expectedChainTickets             []uint64
 	}{
 		"no existing chain tickets - all tickets should be submitted": {
 			existingChainTickets: []uint64{},
@@ -140,17 +139,6 @@ func TestRoundCandidateTickets(t *testing.T) {
 				5: {tickets[6]},
 				6: {tickets[7]},
 				7: {tickets[8]},
-			},
-			expectedChainTickets: []uint64{
-				36028797018963968,
-				72057594037927936,
-				144115188075855872,
-				288230376151711744,
-				576460752303423488,
-				1152921504606846976,
-				2305843009213693952,
-				4611686018427387904,
-				9223372036854775808,
 			},
 		},
 		"better chain tickets exists and their count is below the group size - " +
@@ -166,17 +154,6 @@ func TestRoundCandidateTickets(t *testing.T) {
 				6: {},
 				7: {},
 			},
-			expectedChainTickets: []uint64{
-				1000,
-				1001,
-				1002,
-				1003,
-				36028797018963968,
-				72057594037927936,
-				144115188075855872,
-				288230376151711744,
-				576460752303423488,
-			},
 		},
 		"better chain tickets exists and their count is equal the group size - " +
 			"no tickets should be submitted": {
@@ -185,9 +162,6 @@ func TestRoundCandidateTickets(t *testing.T) {
 			},
 			expectedCandidateTicketsPerRound: map[uint64][]*ticket{
 				0: {}, 1: {}, 2: {}, 3: {}, 4: {}, 5: {}, 6: {}, 7: {},
-			},
-			expectedChainTickets: []uint64{
-				1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008,
 			},
 		},
 		"worse chain tickets exists and their count is below the group size - " +
@@ -207,17 +181,6 @@ func TestRoundCandidateTickets(t *testing.T) {
 				5: {tickets[6]},
 				6: {tickets[7]},
 				7: {tickets[8]},
-			},
-			expectedChainTickets: []uint64{
-				36028797018963968,
-				72057594037927936,
-				144115188075855872,
-				288230376151711744,
-				576460752303423488,
-				1152921504606846976,
-				2305843009213693952,
-				4611686018427387904,
-				9223372036854775808,
 			},
 		},
 		"worse chain tickets exists and their count is equal the group size - " +
@@ -243,17 +206,6 @@ func TestRoundCandidateTickets(t *testing.T) {
 				6: {tickets[7]},
 				7: {tickets[8]},
 			},
-			expectedChainTickets: []uint64{
-				36028797018963968,
-				72057594037927936,
-				144115188075855872,
-				288230376151711744,
-				576460752303423488,
-				1152921504606846976,
-				2305843009213693952,
-				4611686018427387904,
-				9223372036854775808,
-			},
 		},
 		"better and worse chain tickets exists and their count is below the group size - " +
 			"only best tickets should be submitted": {
@@ -274,17 +226,6 @@ func TestRoundCandidateTickets(t *testing.T) {
 				5: {},
 				6: {},
 				7: {},
-			},
-			expectedChainTickets: []uint64{
-				1000,
-				1001,
-				1002,
-				36028797018963968,
-				72057594037927936,
-				144115188075855872,
-				288230376151711744,
-				576460752303423488,
-				1152921504606846976,
 			},
 		},
 		"better and worse chain tickets exists and their count is equal the group size - " +
@@ -310,17 +251,6 @@ func TestRoundCandidateTickets(t *testing.T) {
 				6: {},
 				7: {},
 			},
-			expectedChainTickets: []uint64{
-				1000,
-				1001,
-				1002,
-				1003,
-				36028797018963968,
-				72057594037927936,
-				144115188075855872,
-				288230376151711744,
-				576460752303423488,
-			},
 		},
 	}
 
@@ -343,8 +273,8 @@ func TestRoundCandidateTickets(t *testing.T) {
 				submittedTickets: existingChainTickets,
 			}
 
-			for roundIndex := uint64(0); roundIndex <= ticketSubmissionRounds; roundIndex++ {
-				roundLeadingZeros := ticketSubmissionRounds - roundIndex
+			for roundIndex := uint64(0); roundIndex <= rounds; roundIndex++ {
+				roundLeadingZeros := rounds - roundIndex
 
 				candidateTickets, err := roundCandidateTickets(
 					relayChain,
@@ -378,20 +308,6 @@ func TestRoundCandidateTickets(t *testing.T) {
 
 					relayChain.SubmitTicket(chainTicket)
 				}
-			}
-
-			chainTickets, err := relayChain.GetSubmittedTickets()
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if !reflect.DeepEqual(test.expectedChainTickets, chainTickets) {
-				t.Fatalf(
-					"unexpected chain tickets\n"+
-						"expected: [%v]\nactual:   [%v]",
-					test.expectedChainTickets,
-					chainTickets,
-				)
 			}
 		})
 	}
