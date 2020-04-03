@@ -2,7 +2,7 @@ import { TOKEN_GRANT_CONTRACT_NAME } from '../constants/constants'
 import { contractService } from './contracts.service'
 import { isSameEthAddress } from '../utils/general.utils'
 import web3Utils from 'web3-utils'
-import { sub } from '../utils/arithmetics.utils'
+import { getGuaranteedMinimumStakingPolicyContractAddress, getPermissiveStakingPolicyContractAddress } from '../contracts'
 
 const fetchGrants = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -25,7 +25,7 @@ const fetchGrants = async (web3Context) => {
       readyToRelease = '0'
     }
     const released = grantDetails.withdrawn
-    const availableToStake = sub(sub(grantDetails.amount, grantDetails.withdrawn), grantDetails.staked)
+    const availableToStake = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'availableToStake', grantIds[i])
 
     grants.push({ id: grantIds[i], unlocked, released, readyToRelease, availableToStake, ...unlockingSchedule, ...grantDetails })
   }
