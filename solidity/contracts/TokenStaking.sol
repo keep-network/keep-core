@@ -79,7 +79,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Creates a token staking contract for a provided Standard ERC20Burnable token.
+     * @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
      * @param _registry Address of a keep registry that will be linked to this contract.
      * @param _initializationPeriod To avoid certain attacks on work selection, recently created
@@ -261,7 +261,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Gets stake delegation info for the given operator.
+     * @notice Gets stake delegation info for the given operator.
      * @param _operator Operator address.
      * @return amount The amount of tokens the given operator delegated.
      * @return createdAt The time when the stake has been delegated.
@@ -274,7 +274,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Locks given operator stake for the specified duration.
+     * @notice Locks given operator stake for the specified duration.
      * Locked stake may not be recovered until the lock expires or is released,
      * even if the normal undelegation period has passed.
      * Only previously authorized operator contract can lock the stake.
@@ -394,7 +394,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Slash provided token amount from every member in the misbehaved
+     * @notice Slash provided token amount from every member in the misbehaved
      * operators array and burn 100% of all the tokens.
      * @param amountToSlash Token amount to slash from every misbehaved operator.
      * @param misbehavedOperators Array of addresses to seize the tokens from.
@@ -441,7 +441,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Seize provided token amount from every member in the misbehaved
+     * @notice Seize provided token amount from every member in the misbehaved
      * operators array. The tattletale is rewarded with 5% of the total seized
      * amount scaled by the reward adjustment parameter and the rest 95% is burned.
      * @param amountToSeize Token amount to seize from every misbehaved operator.
@@ -496,7 +496,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Authorizes operator contract to access staked token balance of
+     * @notice Authorizes operator contract to access staked token balance of
      * the provided operator. Can only be executed by stake operator authorizer.
      * Contracts using delegated authority
      * cannot be authorized with `authorizeOperatorContract`.
@@ -516,7 +516,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Checks if operator contract has access to the staked token balance of
+     * @notice Checks if operator contract has access to the staked token balance of
      * the provided operator.
      * @param _operator address of stake operator.
      * @param _operatorContract address of operator contract.
@@ -526,7 +526,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Gets the eligible stake balance of the specified address.
+     * @notice Gets the eligible stake balance of the specified address.
      * An eligible stake is a stake that passed the initialization period
      * and is not currently undelegating. Also, the operator had to approve
      * the specified operator contract.
@@ -559,7 +559,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Gets the active stake balance of the specified address.
+     * @notice Gets the active stake balance of the specified address.
      * An active stake is a stake that passed the initialization period.
      * Also, the operator had to approve the specified operator contract.
      *
@@ -589,7 +589,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Checks if the specified account has enough active stake to become
+     * @notice Checks if the specified account has enough active stake to become
      * network operator and that the specified operator contract has been
      * authorized for potential slashing.
      *
