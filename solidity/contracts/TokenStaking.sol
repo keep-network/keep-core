@@ -63,6 +63,7 @@ contract TokenStaking is StakeDelegatable {
     // `operatorLocks[operator]` returns all locks placed on the operator.
     // Each authorized operator contract can place one lock on an operator.
     mapping(address => LockUtils.LockSet) internal operatorLocks;
+    uint256 public constant maximumLockDuration = 86400 * 200; // 200 days in seconds
 
     // Granters of delegated authority to operator contracts.
     // E.g. keep factories granting delegated authority to keeps.
@@ -286,6 +287,7 @@ contract TokenStaking is StakeDelegatable {
             isAuthorizedForOperator(operator, msg.sender),
             "Not authorized"
         );
+        require(duration <= maximumLockDuration, "Lock duration too long");
 
         (, uint256 createdAt, uint256 undelegatedAt) =
             operators[operator].packedParams.unpack();

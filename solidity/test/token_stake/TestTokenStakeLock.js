@@ -121,6 +121,17 @@ contract('TokenStaking/Lock', function(accounts) {
         "Operator contract is not approved"
       )
     })
+
+    it("should not permit locks that exceed the maximum lock duration", async () => {
+      await increaseTimeTo(createdAt + initializationPeriod + 1)
+      let maximumDuration = await stakingContract.maximumLockDuration();
+      let longPeriod = maximumDuration.addn(1);
+      await expectThrowWithMessage(
+        stakingContract.lockStake(operator, longPeriod, {from: operatorContract}),
+        "Lock duration too long"
+      )
+
+    })
   })
 
   describe("single lock", async () => {
