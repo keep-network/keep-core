@@ -213,13 +213,16 @@ contract TokenGrant {
      * @param _token Token contract address.
      * @param _extraData This byte array must have the following values concatenated:
      * grantee (20 bytes) Address of the grantee.
+     * duration (32 bytes) Duration in seconds of the unlocking period.
      * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to unlock.
      * start (32 bytes) Timestamp at which unlocking will start.
      * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
+     * stakingPolicy (20 bytes) Address of the staking policy for the grant.
      */
     function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_amount <= token.balanceOf(_from), "Sender must have enough amount.");
+        require(_extraData.length == 137, "Invalid extra data length.");
 
         address _grantee = _extraData.toAddress(0);
         uint256 _duration = _extraData.toUint(20);
@@ -396,14 +399,22 @@ contract TokenGrant {
      */
     function availableToStake(uint256 _grantId) public view returns (uint256) {
         Grant storage grant = grants[_grantId];
+        uint256 amount = grant.amount;
+        uint256 withdrawn = grant.withdrawn;
+        uint256 remaining = amount.sub(withdrawn);
         uint256 stakeable = grant.stakingPolicy.getStakeableAmount(
             now,
-            grant.amount,
+            amount,
             grant.duration,
             grant.start,
             grant.cliff,
-            grant.withdrawn
+            withdrawn
         );
+        // Clamp the stakeable amount to what is left in the grant
+        // in the case of a malfunctioning staking policy.
+        if (stakeable > remaining) {
+            stakeable = remaining;
+        }
 
         return stakeable.sub(grant.staked);
     }

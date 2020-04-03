@@ -56,6 +56,7 @@ func Execute(
 	channel net.BroadcastChannel,
 	dishonestThreshold int,
 	seed *big.Int,
+	membershipValidator group.MembershipValidator,
 	startBlockHeight uint64,
 ) (*Result, uint64, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
@@ -64,6 +65,7 @@ func Execute(
 		memberIndex,
 		groupSize,
 		dishonestThreshold,
+		membershipValidator,
 		seed,
 	)
 	if err != nil {

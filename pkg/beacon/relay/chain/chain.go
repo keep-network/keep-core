@@ -1,8 +1,6 @@
 package chain
 
 import (
-	"math/big"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -55,9 +53,8 @@ type GroupSelectionInterface interface {
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
 	SubmitTicket(ticket *Ticket) *async.EventGroupTicketSubmissionPromise
-	// GetSubmittedTicketsCount gets the number of submitted group candidate
-	// tickets so far.
-	GetSubmittedTicketsCount() (*big.Int, error)
+	// GetSubmittedTickets gets the submitted group candidate tickets so far.
+	GetSubmittedTickets() ([]uint64, error)
 	// GetSelectedParticipants returns `GroupSize` slice of addresses of
 	// candidates which have been selected to the currently assembling group.
 	GetSelectedParticipants() ([]StakerAddress, error)

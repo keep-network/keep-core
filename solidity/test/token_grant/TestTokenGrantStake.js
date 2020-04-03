@@ -21,11 +21,12 @@ const TokenGrant = artifacts.require('./TokenGrant.sol');
 const Registry = artifacts.require("./Registry.sol");
 const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
 const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
+const EvilStakingPolicy = artifacts.require('./EvilStakingPolicy.sol');
 
 contract('TokenGrant/Stake', function(accounts) {
 
   let tokenContract, registryContract, grantContract, stakingContract,
-    permissivePolicy, minimumPolicy,
+    permissivePolicy, minimumPolicy, evilPolicy,
     minimumStake, grantAmount;
 
   const tokenOwner = accounts[0],
@@ -34,10 +35,12 @@ contract('TokenGrant/Stake', function(accounts) {
     operatorTwo = accounts[3],
     magpie = accounts[4],
     authorizer = accounts[5],
-    revocableGrantee = accounts[6];
+    revocableGrantee = accounts[6],
+    evilGrantee = accounts[7];
 
   let grantId;
   let revocableGrantId;
+  let evilGrantId;
   let grantStart;
 
   const grantUnlockingDuration = duration.days(60);
@@ -66,6 +69,7 @@ contract('TokenGrant/Stake', function(accounts) {
 
     permissivePolicy = await PermissiveStakingPolicy.new()
     minimumPolicy = await GuaranteedMinimumStakingPolicy.new(stakingContract.address);
+    evilPolicy = await EvilStakingPolicy.new()
     grantAmount = minimumStake.muln(10),
 
     // Grant tokens
@@ -88,11 +92,24 @@ contract('TokenGrant/Stake', function(accounts) {
       grantAmount,
       tokenOwner,
       revocableGrantee,
-      grantVestingDuration,
+      grantUnlockingDuration,
       grantStart,
       grantCliff,
       true,
       minimumPolicy.address,
+    );
+
+    evilGrantId = await grantTokens(
+      grantContract,
+      tokenContract,
+      grantAmount,
+      tokenOwner,
+      evilGrantee,
+      grantUnlockingDuration,
+      grantStart,
+      grantCliff,
+      false,
+      evilPolicy.address,
     );
   });
 
@@ -127,6 +144,19 @@ contract('TokenGrant/Stake', function(accounts) {
       authorizer,
       amount,
       revocableGrantId
+    )
+  }
+
+  async function delegateEvil(grantee, operator, amount) {
+    return await delegateStakeFromGrant(
+      grantContract,
+      stakingContract.address,
+      grantee,
+      operator,
+      magpie,
+      authorizer,
+      amount,
+      evilGrantId
     )
   }
 
@@ -384,6 +414,18 @@ contract('TokenGrant/Stake', function(accounts) {
   it("should not allow delegation of more than permitted", async () => {
     await expectThrowWithMessage(
       delegateRevocable(revocableGrantee, operatorTwo, minimumStake.addn(1)),
+      "Must have available granted amount to stake."
+    );
+  })
+
+  it("should allow delegation of evil grants", async () => {
+    await delegateEvil(evilGrantee, operatorTwo, grantAmount);
+    // ok, no exceptions
+  })
+
+  it("should not allow delegation of more than in the grant", async () => {
+    await expectThrowWithMessage(
+      delegateEvil(evilGrantee, operatorTwo, grantAmount.addn(1)),
       "Must have available granted amount to stake."
     );
   })
