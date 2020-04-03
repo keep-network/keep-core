@@ -156,11 +156,6 @@ contract('TokenStaking/Lock', function(accounts) {
         "Can not recover locked stake"
       )
 
-      await expectThrowWithMessage(
-        stakingContract.unlockStake(operator),
-        "Not authorized"
-      )
-
       await stakingContract.unlockStake(operator, {from: operatorContract})
       await stakingContract.recoverStake(operator)
       // ok, no revert
