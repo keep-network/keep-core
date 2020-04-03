@@ -88,7 +88,6 @@ func CandidateToNewGroup(
 		chainConfig,
 		startBlockHeight,
 		onGroupSelected,
-		ticketSubmissionRoundDuration,
 	)
 }
 
@@ -99,7 +98,6 @@ func startTicketSubmission(
 	chainConfig *config.Chain,
 	startBlockHeight uint64,
 	onGroupSelected func(*Result),
-	ticketSubmissionRoundDuration uint64,
 ) error {
 	ticketSubmissionTimeoutChannel, err := blockCounter.BlockHeightWaiter(
 		startBlockHeight + chainConfig.TicketSubmissionTimeout,

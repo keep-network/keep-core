@@ -83,7 +83,6 @@ func TestSubmission(t *testing.T) {
 				chainConfig,
 				0, // start block height
 				onGroupSelected,
-				2,
 			)
 			if err != nil {
 				t.Fatal(err)
