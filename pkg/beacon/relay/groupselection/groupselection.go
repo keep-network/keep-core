@@ -247,14 +247,6 @@ func roundCandidateTickets(
 			},
 		)
 
-		// If the previous iteration encountered the maximum length
-		// of submitted tickets slice and was able to add a new
-		// candidate value, submitted tickets slice should be
-		// trimmed to the group size.
-		if len(submittedTickets) > groupSize {
-			submittedTickets = submittedTickets[:groupSize]
-		}
-
 		shouldBeSubmitted := false
 		candidateTicketValue := candidateTicket.intValue().Uint64()
 
@@ -275,10 +267,7 @@ func roundCandidateTickets(
 			// iteration.
 			highestSubmittedTicket := submittedTickets[len(submittedTickets)-1]
 			if candidateTicketValue < highestSubmittedTicket {
-				submittedTickets = append(
-					submittedTickets,
-					candidateTicketValue,
-				)
+				submittedTickets[len(submittedTickets)-1] = candidateTicketValue
 				shouldBeSubmitted = true
 			}
 		}
