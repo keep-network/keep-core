@@ -167,7 +167,7 @@ contract TokenStaking is StakeDelegatable {
         uint256 operatorParams = operators[_operator].packedParams;
 
         require(
-            block.timestamp <= operatorParams.getCreationTimestamp().add(initializationPeriod),
+            !_isInitialized(operatorParams),
             "Initialization period is over"
         );
 
@@ -242,7 +242,7 @@ contract TokenStaking is StakeDelegatable {
             "Can not recover without first undelegating"
         );
         require(
-            block.timestamp > operatorParams.getUndelegationTimestamp().add(undelegationPeriod),
+            _isUndelegatingFinished(operatorParams),
             "Can not recover stake before undelegation period is over."
         );
 
@@ -291,15 +291,14 @@ contract TokenStaking is StakeDelegatable {
         );
         require(duration <= maximumLockDuration, "Lock duration too long");
 
-        (, uint256 createdAt, uint256 undelegatedAt) =
-            operators[operator].packedParams.unpack();
+        uint256 operatorParams = operators[operator].packedParams;
 
         require(
-            block.timestamp > createdAt.add(initializationPeriod),
+            _isInitialized(operatorParams),
             "Operator not initialized"
         );
         require(
-            (undelegatedAt == 0) || (block.timestamp <= undelegatedAt),
+            !_isUndelegating(operatorParams),
             "Operator undelegating"
         );
 
@@ -405,7 +404,7 @@ contract TokenStaking is StakeDelegatable {
 
             uint256 operatorParams = operators[operator].packedParams;
             require(
-                block.timestamp > operatorParams.getCreationTimestamp().add(initializationPeriod),
+                _isInitialized(operatorParams),
                 "Operator stake must be active"
             );
 
@@ -457,7 +456,7 @@ contract TokenStaking is StakeDelegatable {
 
             uint256 operatorParams = operators[operator].packedParams;
             require(
-                block.timestamp > operatorParams.getCreationTimestamp().add(initializationPeriod),
+                _isInitialized(operatorParams),
                 "Operator stake must be active"
             );
 
@@ -539,15 +538,13 @@ contract TokenStaking is StakeDelegatable {
         bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
 
         uint256 operatorParams = operators[_operator].packedParams;
-        uint256 createdAt = operatorParams.getCreationTimestamp();
-        uint256 undelegatedAt = operatorParams.getUndelegationTimestamp();
 
-        bool isActive = block.timestamp > createdAt.add(initializationPeriod);
+        bool isActive = _isInitialized(operatorParams);
         // `undelegatedAt` may be set to a time in the future,
         // to schedule undelegation in advance.
         // In this case the operator is still eligible
         // until the timestamp `undelegatedAt`.
-        bool isUndelegating = (undelegatedAt != 0) && (block.timestamp > undelegatedAt);
+        bool isUndelegating = _isUndelegating(operatorParams);
 
         if (isAuthorized && isActive && !isUndelegating) {
             balance = operatorParams.getAmount();
@@ -576,9 +573,8 @@ contract TokenStaking is StakeDelegatable {
         bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
 
         uint256 operatorParams = operators[_operator].packedParams;
-        uint256 createdAt = operatorParams.getCreationTimestamp();
 
-        bool isActive = block.timestamp > createdAt.add(initializationPeriod);
+        bool isActive = _isInitialized(operatorParams);
 
         if (isAuthorized && isActive) {
             balance = operatorParams.getAmount();
