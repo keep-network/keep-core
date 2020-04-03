@@ -2,7 +2,15 @@
 # This script copies contracts artifacts from provided local storage destination.
 # It expects an argument with a path to the source directory holding the contracts.
 
-CONTRACTS_NAMES=("KeepToken.json" "TokenStaking.json" "TokenGrant.json" "KeepRandomBeaconOperator.json" "Registry.json")
+CONTRACTS_NAMES=(
+  "KeepToken.json"
+  "TokenStaking.json"
+  "TokenGrant.json"
+  "KeepRandomBeaconOperator.json"
+  "Registry.json"
+  "GuaranteedMinimumStakingPolicy.json"
+  "PermissiveStakingPolicy.json"
+)
 
 SOURCE_DIR=$(realpath $1)
 DESTINATION_DIR=$(realpath $(dirname $0)/../src/contracts)

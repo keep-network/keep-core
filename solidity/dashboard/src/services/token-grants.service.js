@@ -51,13 +51,19 @@ const createGrant = async (web3Context, data, onTransationHashCallback) => {
    * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to unlock.
    * start (32 bytes) Timestamp at which unlocking will start.
    * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
+   * stakingPolicyAddress (20 bytes) The staking policy as an address
    */
+  const stakingPolicyAddress = revocable ?
+    getGuaranteedMinimumStakingPolicyContractAddress() :
+    getPermissiveStakingPolicyContractAddress()
+
   const extraData = Buffer.concat([
     Buffer.from(grantee.substr(2), 'hex'),
     web3Utils.toBN(duration).toBuffer('be', 32),
     web3Utils.toBN(start).toBuffer('be', 32),
     web3Utils.toBN(cliff).toBuffer('be', 32),
     Buffer.from(revocable ? '01' : '00', 'hex'),
+    Buffer.from(stakingPolicyAddress.substr(2), 'hex'),
   ])
 
   const formattedAmount = web3Utils.toBN(amount).mul(web3Utils.toBN(10).pow(web3Utils.toBN(18))).toString()

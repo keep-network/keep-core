@@ -19,6 +19,8 @@ const TokenStaking = require(`${getDefaultContractsPath()}/TokenStaking.json`)
 const TokenGrant = require(`${getDefaultContractsPath()}/TokenGrant.json`)
 const KeepRandomBeaconOperator = require(`${getDefaultContractsPath()}/KeepRandomBeaconOperator.json`)
 const Registry = require(`${getDefaultContractsPath()}/Registry.json`)
+const GuaranteedMinimumStakingPolicy = require(`${getDefaultContractsPath()}/GuaranteedMinimumStakingPolicy.json`)
+const PermissiveStakingPolicy = require(`${getDefaultContractsPath()}/PermissiveStakingPolicy.json`)
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
   [KEEP_TOKEN_CONTRACT_NAME]: 0,
@@ -101,3 +103,10 @@ function getContractAddress({ networks }) {
   return networks[Object.keys(networks)[0]].address
 };
 
+export function getPermissiveStakingPolicyContractAddress() {
+  return getContractAddress(PermissiveStakingPolicy)
+}
+
+export function getGuaranteedMinimumStakingPolicyContractAddress() {
+  return getContractAddress(GuaranteedMinimumStakingPolicy)
+}
