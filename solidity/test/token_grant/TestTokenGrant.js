@@ -7,11 +7,12 @@ const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const Registry = contract.fromArtifact("Registry");
+const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
 const assert = require('chai').assert
 
 describe('TokenGrant', function() {
 
-  let token, registry, grantContract, stakingContract,
+  let token, registry, grantContract, stakingContract, permissivePolicy,
     amount, unlockingDuration, start, cliff,
     grant_manager = accounts[0],
     account_two = accounts[1],
@@ -23,6 +24,7 @@ describe('TokenGrant', function() {
     stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(1), duration.days(30), {from: accounts[0]});
     grantContract = await TokenGrant.new(token.address, {from: accounts[0]});
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
+    permissivePolicy = await PermissiveStakingPolicy.new()
     amount = web3.utils.toBN(100);
     unlockingDuration = duration.days(30);
     start = await latestTime();
@@ -42,7 +44,13 @@ describe('TokenGrant', function() {
     let account_two_starting_balance = await token.balanceOf.call(account_two);
 
     // Grant tokens
-    let id = await grantTokens(grantContract, token, amount, grant_manager, account_two, unlockingDuration, start, cliff, revocable, {from: accounts[0]});
+    let id = await grantTokens(
+      grantContract, token, amount,
+      grant_manager, account_two,
+      unlockingDuration, start, cliff,
+      revocable, permissivePolicy.address,
+      {from: accounts[0]}
+    );
 
     // Ending balances
     let grant_manager_ending_balance = await token.balanceOf.call(grant_manager);
@@ -83,7 +91,13 @@ describe('TokenGrant', function() {
 
     let grant_manager_starting_balance = await token.balanceOf.call(grant_manager);
 
-    let id = await grantTokens(grantContract, token, amount, grant_manager, grantee, unlockingDuration, start, cliff, true, {from: accounts[0]});
+    let id = await grantTokens(
+      grantContract, token, amount,
+      grant_manager, grantee,
+      unlockingDuration, start, cliff,
+      true, permissivePolicy.address,
+      {from: accounts[0]}
+    );
 
     let grant_manager_ending_balance = await token.balanceOf.call(grant_manager);
 

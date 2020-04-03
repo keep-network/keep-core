@@ -1,6 +1,7 @@
 package result
 
 import (
+	"crypto/ecdsa"
 	"math/big"
 	"reflect"
 	"testing"
@@ -318,7 +319,11 @@ func initializeSigningMembers(groupSize int) ([]*SigningMember, []chain.Handle, 
 	for i := 0; i < groupSize; i++ {
 		memberIndex := group.MemberIndex(i + 1)
 
-		members[i] = NewSigningMember(memberIndex, dkgGroup)
+		members[i] = NewSigningMember(
+			memberIndex,
+			dkgGroup,
+			&mockMembershipValidator{},
+		)
 
 		privateKey, _, err := operator.GenerateKeyPair()
 		if err != nil {
@@ -334,4 +339,19 @@ func initializeSigningMembers(groupSize int) ([]*SigningMember, []chain.Handle, 
 	}
 
 	return members, chainHandles, nil
+}
+
+type mockMembershipValidator struct{}
+
+func (mmv *mockMembershipValidator) IsInGroup(
+	publicKey *ecdsa.PublicKey,
+) bool {
+	return true
+}
+
+func (mmv *mockMembershipValidator) IsValidMembership(
+	memberID group.MemberIndex,
+	publicKey []byte,
+) bool {
+	return true
 }

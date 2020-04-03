@@ -85,7 +85,7 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
     let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
     await operatorContract.submitTicket(ticket, {from: operator1});
 
-    let submittedCount = await operatorContract.submittedTicketsCount();
+    let submittedCount = (await operatorContract.submittedTickets()).length;
     assert.equal(1, submittedCount, "Ticket should be accepted");
   });
 
@@ -93,7 +93,7 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
     let ticket = packTicket(tickets1[tickets1.length - 1].valueHex, tickets1.length, operator1);
     await operatorContract.submitTicket(ticket, {from: operator1});
 
-    let submittedCount = await operatorContract.submittedTicketsCount();
+    let submittedCount = (await operatorContract.submittedTickets()).length;
     assert.equal(1, submittedCount, "Ticket should be accepted");
   });
 

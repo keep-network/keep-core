@@ -1182,6 +1182,39 @@ func TestExecute_DQ_member3_revealsDisqualifiedNonQualMemberKey_phase11(t *testi
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 5}...)
 }
 
+func TestExecute_InvalidMemberIndex(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
+		if ok && publicKeyMessage.SenderID() == group.MemberIndex(1) {
+			// Set an non-existing sender id.
+			publicKeyMessage.SetSenderId(group.MemberIndex(groupSize + 1))
+			return publicKeyMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 4, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 4, 5}...)
+}
+
 // manInTheMiddle is a helper tool allowing to easily intercept communication
 // of a chosen member with the rest of the members for all phases of DKG.
 // Man in the middle sets up symmetric keys, member shares, and commitments

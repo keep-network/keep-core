@@ -14,10 +14,11 @@ const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const Registry = contract.fromArtifact("Registry");
+const GuaranteedMinimumStakingPolicy = contract.fromArtifact("GuaranteedMinimumStakingPolicy");
 
 describe('TokenGrant/Revoke', function() {
 
-  let tokenContract, registryContract, grantContract, stakingContract;
+  let tokenContract, registryContract, grantContract, stakingContract, minimumPolicy;
 
   const tokenOwner = accounts[0],
     grantee = accounts[1];
@@ -46,7 +47,9 @@ describe('TokenGrant/Revoke', function() {
     
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
 
-    grantStart = await latestTime( {from: accounts[0]});
+    minimumPolicy = await GuaranteedMinimumStakingPolicy.new(stakingContract.address);
+
+    grantStart = await latestTime();
 
     grantId = await grantTokens(
       grantContract, 
@@ -58,6 +61,7 @@ describe('TokenGrant/Revoke', function() {
       grantStart, 
       grantCliff, 
       grantRevocable,
+      minimumPolicy.address,
       {from: accounts[0]}
     );
   });
@@ -123,6 +127,7 @@ describe('TokenGrant/Revoke', function() {
         grantStart, 
         grantCliff, 
         false,
+        minimumPolicy.address
     );
     
     await expectThrowWithMessage(
@@ -156,6 +161,7 @@ describe('TokenGrant/Revoke', function() {
       grantStart, 
       grantCliff, 
       grantRevocable,
+      minimumPolicy.address
       );
       
     const granteeGrantBalanceBefore = await grantContract.balanceOf.call(grantee);

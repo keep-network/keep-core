@@ -15,10 +15,11 @@ const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const Registry = contract.fromArtifact("Registry");
+const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
 
 describe('TokenGrant/Withdraw', function() {
 
-  let tokenContract, registryContract, grantContract, stakingContract;
+  let tokenContract, registryContract, grantContract, stakingContract, permissivePolicy;
 
   const tokenOwner = accounts[0],
     grantee = accounts[1],
@@ -51,6 +52,8 @@ describe('TokenGrant/Withdraw', function() {
     
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
 
+    permissivePolicy = await PermissiveStakingPolicy.new()
+
     grantStart = await latestTime();
 
     grantId = await grantTokens(
@@ -63,6 +66,7 @@ describe('TokenGrant/Withdraw', function() {
       grantStart, 
       grantCliff, 
       grantRevocable,
+      permissivePolicy.address,
       {from: accounts[0]}
     );
   });

@@ -893,7 +893,8 @@ func (sm *SharingMember) isValidMemberPublicKeySharePointsMessage(
 }
 
 // isShareValidAgainstPublicKeySharePoints verifies if public key share points
-// are valid for passed share S.
+// are valid for passed share S generated for the specific member, denoted as
+// a share receiver.
 //
 // The `j` member calculated public key share points for their polynomial
 // coefficients and share `s_ji` with a polynomial for a member `i`. In this
@@ -906,7 +907,7 @@ func (sm *SharingMember) isValidMemberPublicKeySharePointsMessage(
 // What, using elliptic curve, is the same as:
 // G * s_ji == Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
-	senderID group.MemberIndex,
+	shareReceiverID group.MemberIndex,
 	shareS *big.Int,
 	publicKeySharePoints []*bn256.G2,
 ) bool {
@@ -914,19 +915,29 @@ func (sm *SharingMember) isShareValidAgainstPublicKeySharePoints(
 		return false
 	}
 
-	var sum *bn256.G2 // Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
+	sum := sm.publicKeyShare(shareReceiverID, publicKeySharePoints)
+	gs := new(bn256.G2).ScalarBaseMult(shareS) // G * s_ji
+
+	return gs.String() == sum.String()
+}
+
+// publicKeyShare returns public key share for given share receiver based on
+// given public key share points.
+func (sm *SharingMember) publicKeyShare(
+	shareReceiverID group.MemberIndex,
+	publicKeySharePoints []*bn256.G2,
+) *bn256.G2 {
+	var sum *bn256.G2
+	// Σ ( A_j[k] * (i^k) ) for `k` in `[0..T]`
 	for k, a := range publicKeySharePoints {
-		aj := new(bn256.G2).ScalarMult(a, pow(senderID, k)) // A_j[k] * (i^k)
+		aj := new(bn256.G2).ScalarMult(a, pow(shareReceiverID, k)) // A_j[k] * (i^k)
 		if sum == nil {
 			sum = aj
 		} else {
 			sum = new(bn256.G2).Add(sum, aj)
 		}
 	}
-
-	gs := new(bn256.G2).ScalarBaseMult(shareS) // G * s_ji
-
-	return gs.String() == sum.String()
+	return sum
 }
 
 // ResolvePublicKeySharePointsAccusationsMessages resolves complaints received
@@ -1221,6 +1232,9 @@ func (rm *ReconstructingMember) ReconstructMisbehavedIndividualKeys(
 	if err != nil {
 		return fmt.Errorf("revealing misbehaved shares failed [%v]", err)
 	}
+	// Store for the purpose of combining group public key shares in phase 12.
+	rm.revealedMisbehavedMembersShares = revealedMisbehavedMembersShares
+
 	rm.reconstructIndividualPrivateKeys(revealedMisbehavedMembersShares) // z_m
 	rm.reconstructIndividualPublicKeys()                                 // y_m
 	return nil
@@ -1643,20 +1657,79 @@ func pow(id group.MemberIndex, y int) *big.Int {
 //    public keys were reconstructed in Phase 11.
 //
 // See Phase 12 of the protocol specification.
-func (rm *CombiningMember) CombineGroupPublicKey() {
+func (cm *CombiningMember) CombineGroupPublicKey() {
 	// Current member's individual public key `A_i0`.
-	groupPublicKey := rm.individualPublicKey()
+	groupPublicKey := cm.individualPublicKey()
 
 	// Add received peer group members' individual public keys `A_j0`.
-	for _, peerPublicKey := range rm.receivedValidPeerIndividualPublicKeys() {
+	for _, peerPublicKey := range cm.receivedValidPeerIndividualPublicKeys() {
 		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
 	}
 
 	// Add reconstructed misbehaved members' individual public keys `G * z_m`.
-	for _, peerPublicKey := range rm.reconstructedIndividualPublicKeys {
+	for _, peerPublicKey := range cm.reconstructedIndividualPublicKeys {
 		groupPublicKey = new(bn256.G2).Add(groupPublicKey, peerPublicKey)
-
 	}
 
-	rm.groupPublicKey = groupPublicKey
+	cm.groupPublicKey = groupPublicKey
+}
+
+// ComputeGroupPublicKeyShares computes group public key shares for each
+// individual member in the group. Those group public key shares are
+// needed to perform the verification of relay entry signature shares coming
+// from given group member.
+func (cm *CombiningMember) ComputeGroupPublicKeyShares() {
+	go func() {
+		logger.Infof(
+			"[member:%v] starting computation of group public key shares",
+			cm.ID,
+		)
+
+		groupPublicKeyShares := make(map[group.MemberIndex]*bn256.G2)
+
+		// Calculate group public key shares for all other operating members.
+		for _, operatingMemberID := range cm.group.OperatingMemberIDs() {
+			if operatingMemberID == cm.ID {
+				continue
+			}
+
+			// Calculate the first public key share for the given operating
+			// member based on the current member public key share points.
+			sum := cm.publicKeyShare(operatingMemberID, cm.publicKeySharePoints)
+
+			// Iterate through the `QUAL` set and calculate subsequent
+			// public key share for the given operating member based on...
+			for qualifiedMemberID := range cm.receivedQualifiedSharesS {
+				// ...received and valid member's public key share points...
+				if publicKeySharePoints, ok := cm.receivedValidPeerPublicKeySharePoints[qualifiedMemberID]; ok {
+					publicKeyShare := cm.publicKeyShare(
+						operatingMemberID,
+						publicKeySharePoints,
+					)
+					sum = new(bn256.G2).Add(sum, publicKeyShare)
+					// ...OR in case given sender didn't send their public key
+					// share points, take their reconstructed share and recover
+					// the public key share.
+				} else {
+					for _, shares := range cm.revealedMisbehavedMembersShares {
+						if shares.misbehavedMemberID == qualifiedMemberID {
+							publicKeyShare := new(bn256.G2).ScalarBaseMult(
+								shares.peerSharesS[operatingMemberID],
+							)
+							sum = new(bn256.G2).Add(sum, publicKeyShare)
+						}
+					}
+				}
+			}
+
+			groupPublicKeyShares[operatingMemberID] = sum
+		}
+
+		logger.Infof(
+			"[member:%v] completed computation of group public key shares",
+			cm.ID,
+		)
+
+		cm.groupPublicKeySharesChannel <- groupPublicKeyShares
+	}()
 }
