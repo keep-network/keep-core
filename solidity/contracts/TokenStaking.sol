@@ -274,7 +274,9 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Locks given operator stake from undelegating for the specified duration.
+     * @dev Locks given operator stake for the specified duration.
+     * Locked stake may not be recovered until the lock expires or is released,
+     * even if the normal undelegation period has passed.
      * Only previously authorized operator contract can lock the stake.
      * @param operator Operator address.
      * @param duration Lock duration in seconds.
