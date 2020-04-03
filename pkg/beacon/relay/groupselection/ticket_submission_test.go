@@ -12,7 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
-func TestSubmitAllTickets(t *testing.T) {
+func TestSubmitTicketsOnChain(t *testing.T) {
 	beaconOutput := big.NewInt(10).Bytes()
 	stakerValue := []byte("StakerValue1001")
 
@@ -36,7 +36,7 @@ func TestSubmitAllTickets(t *testing.T) {
 		},
 	}
 
-	submitTickets(tickets, mockInterface)
+	submitTicketsOnChain(tickets, mockInterface)
 
 	if len(tickets) != len(submittedTickets) {
 		t.Errorf(

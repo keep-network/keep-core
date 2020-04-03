@@ -6,9 +6,8 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
 
-// submitTickets submits tickets to the chain. It checks to see if the submission
-// period is over in between ticket submits.
-func submitTickets(
+// submitTicketsOnChain submits tickets to the chain.
+func submitTicketsOnChain(
 	tickets []*ticket,
 	relayChain relaychain.GroupSelectionInterface,
 ) {

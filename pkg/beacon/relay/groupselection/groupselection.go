@@ -84,26 +84,21 @@ func CandidateToNewGroup(
 		return err
 	}
 
-	logger.Infof("generated [%v] tickets", len(tickets))
+	logger.Infof("starting ticket submission with [%v] tickets", len(tickets))
 
-	return startTicketSubmission(
+	err = submitTickets(
 		tickets,
 		relayChain,
 		blockCounter,
 		chainConfig,
 		startBlockHeight,
-		onGroupSelected,
 	)
-}
+	if err != nil {
+		logger.Errorf("ticket submission terminated with error: [%v]", err)
+	}
 
-func startTicketSubmission(
-	tickets []*ticket,
-	relayChain relaychain.GroupSelectionInterface,
-	blockCounter chain.BlockCounter,
-	chainConfig *config.Chain,
-	startBlockHeight uint64,
-	onGroupSelected func(*Result),
-) error {
+	// Wait till the end of the ticket submission in case submitTickets failed
+	// in the middle and there is still a chance we qualified to a group.
 	ticketSubmissionTimeoutChannel, err := blockCounter.BlockHeightWaiter(
 		startBlockHeight + chainConfig.TicketSubmissionTimeout,
 	)
@@ -111,6 +106,37 @@ func startTicketSubmission(
 		return err
 	}
 
+	ticketSubmissionEndBlockHeight := <-ticketSubmissionTimeoutChannel
+
+	logger.Infof(
+		"ticket submission ended at block [%v]",
+		ticketSubmissionEndBlockHeight,
+	)
+
+	selectedStakers, err := relayChain.GetSelectedParticipants()
+	if err != nil {
+		return fmt.Errorf(
+			"could not fetch selected participants "+
+				"after submission timeout [%v]",
+			err,
+		)
+	}
+
+	go onGroupSelected(&Result{
+		SelectedStakers:        selectedStakers,
+		GroupSelectionEndBlock: ticketSubmissionEndBlockHeight,
+	})
+
+	return nil
+}
+
+func submitTickets(
+	tickets []*ticket,
+	relayChain relaychain.GroupSelectionInterface,
+	blockCounter chain.BlockCounter,
+	chainConfig *config.Chain,
+	startBlockHeight uint64,
+) error {
 	rounds, err := calculateRoundsCount(chainConfig.TicketSubmissionTimeout)
 	if err != nil {
 		return err
@@ -152,28 +178,8 @@ func startTicketSubmission(
 			len(candidateTickets),
 		)
 
-		submitTickets(candidateTickets, relayChain)
+		submitTicketsOnChain(candidateTickets, relayChain)
 	}
-
-	ticketSubmissionEndBlockHeight := <-ticketSubmissionTimeoutChannel
-
-	logger.Infof(
-		"ticket submission ended at block [%v]",
-		ticketSubmissionEndBlockHeight,
-	)
-
-	selectedStakers, err := relayChain.GetSelectedParticipants()
-	if err != nil {
-		return fmt.Errorf(
-			"could not fetch selected participants after submission timeout [%v]",
-			err,
-		)
-	}
-
-	go onGroupSelected(&Result{
-		SelectedStakers:        selectedStakers,
-		GroupSelectionEndBlock: ticketSubmissionEndBlockHeight,
-	})
 
 	return nil
 }

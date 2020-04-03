@@ -74,15 +74,12 @@ func TestSubmission(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			onGroupSelected := func(result *Result) {}
-
-			err = startTicketSubmission(
+			err = submitTickets(
 				test.tickets,
 				chain,
 				blockCounter,
 				chainConfig,
 				0, // start block height
-				onGroupSelected,
 			)
 			if err != nil {
 				t.Fatal(err)
