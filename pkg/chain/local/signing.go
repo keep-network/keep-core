@@ -87,3 +87,7 @@ func unmarshalPublicKey(
 func (ls *localSigning) PublicKeyToAddress(publicKey ecdsa.PublicKey) []byte {
 	return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
 }
+
+func (ls *localSigning) PublicKeyBytesToAddress(publicKey []byte) []byte {
+	return publicKey
+}
