@@ -17,9 +17,13 @@ import (
 
 var logger = log.Logger("keep-groupselection")
 
-// Duration of one ticket submission round in blocks. Should correspond
-// to the value set in group selection contract.
-const ticketSubmissionRoundDuration = 6
+const (
+	// Duration of one ticket submission round in blocks.
+	ticketSubmissionRoundDuration = 3
+
+	// Duration of the mining lag in blocks.
+	miningLag = 6
+)
 
 // Result represents the result of group selection protocol. It contains the
 // list of all stakers selected to the candidate group as well as the number of
@@ -29,10 +33,28 @@ type Result struct {
 	GroupSelectionEndBlock uint64
 }
 
-// CandidateToNewGroup attempts to generate and submit tickets for the staker to
-// join a new group.
+// CandidateToNewGroup attempts to generate and submit tickets for the
+// staker to join a new group.
 //
-// The function never submits more tickets than the group size.
+// To minimize the submitter's cost by minimizing the number of redundant
+// tickets that are not selected into the group, tickets are submitted in
+// 11 rounds, each round taking 3 blocks.
+// As the basic principle, the number of leading zeros in the ticket
+// value is subtracted from the number of rounds to determine the round
+// the ticket should be submitted in:
+// - in round 0, tickets with 11 or more leading zeros are submitted
+// - in round 1, tickets with 10 or more leading zeros are submitted
+// (...)
+// - in round 11, tickets with no leading zeros are submitted.
+//
+// In each round, group member candidate needs to monitor tickets
+// submitted by other candidates and compare them against tickets of
+// the candidate not yet submitted to determine if continuing with
+// ticket submission still makes sense.
+//
+// After the last round, there is a 6 blocks mining lag allowing all
+// outstanding ticket submissions to have a higher chance of being
+// mined before the deadline.
 func CandidateToNewGroup(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
@@ -88,8 +110,8 @@ func startTicketSubmission(
 
 	quitTicketSubmission := make(chan struct{})
 
-	ticketSubmissionRounds := (chainConfig.TicketSubmissionTimeout /
-		ticketSubmissionRoundDuration) - 2
+	ticketSubmissionRounds := (chainConfig.TicketSubmissionTimeout -
+		miningLag) / ticketSubmissionRoundDuration
 
 	for roundIndex := uint64(0); roundIndex <= ticketSubmissionRounds; roundIndex++ {
 		roundStartDelay := roundIndex * ticketSubmissionRoundDuration
@@ -163,7 +185,7 @@ func startTicketSubmission(
 // given ticket submission round.
 func roundCandidateTickets(
 	relayChain relaychain.GroupSelectionInterface,
-	tickets []*ticket,
+	memberTickets []*ticket,
 	roundIndex uint64,
 	roundLeadingZeros uint64,
 	groupSize int,
@@ -182,7 +204,7 @@ func roundCandidateTickets(
 
 	candidateTickets := make([]*ticket, 0)
 
-	for _, candidateTicket := range tickets {
+	for _, candidateTicket := range memberTickets {
 		candidateTicketLeadingZeros := uint64(
 			candidateTicket.leadingZeros(),
 		)
