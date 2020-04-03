@@ -1,22 +1,17 @@
-import increaseTime, {duration, increaseTimeTo} from '../helpers/increaseTime';
-import latestTime from '../helpers/latestTime';
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
-import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const { duration, increaseTimeTo } = require('../helpers/increaseTime');
+const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
+const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-// Depending on test network increaseTimeTo can be inconsistent and add
-// extra time. As a workaround we subtract timeRoundMargin in all cases
-// that test times before initialization/undelegation periods end.
-const timeRoundMargin = duration.minutes(1)
-
-const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const Registry = artifacts.require("./Registry.sol");
-const DelegatedAuthorityStub = artifacts.require("./stubs/DelegatedAuthorityStub.sol");
+const KeepToken = contract.fromArtifact('KeepToken');
+const TokenStaking = contract.fromArtifact('TokenStaking');
+const Registry = contract.fromArtifact("Registry");
+const DelegatedAuthorityStub = contract.fromArtifact("DelegatedAuthorityStub");
 
 const initializationPeriod = 10;
 const undelegationPeriod = 30;
@@ -26,7 +21,7 @@ let authorityDelegator, badAuthorityDelegator;
 let innerRecursiveDelegator, outerRecursiveDelegator;
 let minimumStake, stakingAmount;
 
-contract("TokenStaking/DelegatedAuthority", async (accounts) => {
+describe("TokenStaking/DelegatedAuthority", async () => {
   const owner = accounts[0];
   const operator = accounts[1];
   const magpie = accounts[2];
@@ -37,7 +32,7 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
   const recursivelyAuthorizedContract = accounts[7];
 
   before(async () => {
-    token = await KeepToken.new();
+    token = await KeepToken.new({from: accounts[0]});
     registry = await Registry.new();
 
     stakingContract = await TokenStaking.new(
