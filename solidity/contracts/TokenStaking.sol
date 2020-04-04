@@ -331,6 +331,31 @@ contract TokenStaking is StakeDelegatable {
         public
         onlyOperatorAuthorizer(_operator)
         onlyApprovedOperatorContract(_operatorContract) {
+        require(
+            ! registry.isPermanentlyApprovedOperatorContract(_operatorContract),
+            "Operator contract must be approved via permanentlyAuthorizeOperatorContract"
+        );
+        authorizations[_operatorContract][_operator] = true;
+    }
+
+    /**
+     * @notice Authorizes a permanently-approved operator contract to access
+     * staked token balance of the provided operator. Note that the operator
+     * contract in question CANNOT be disabled via the registry panic button.
+     * This means that eliminating exposure to this contract will require
+     * undelegating stake completely, presumably then redelegating to a new
+     * staking contract whose registry has not authorized this contract.
+     * @dev Can only be executed by stake operator authorizer.
+     * @param _operator address of stake operator.
+     * @param _operatorContract address of operator contract.
+     */
+    function permanentlyAuthorizeOperatorContract(address _operator, address _operatorContract)
+        public
+        onlyOperatorAuthorizer(_operator) {
+        require(
+            registry.isPermanentlyApprovedOperatorContract(_operatorContract),
+            "Operator contract is not permanently approved"
+        );
         authorizations[_operatorContract][_operator] = true;
     }
 

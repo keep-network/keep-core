@@ -7,7 +7,7 @@ pragma solidity ^0.5.4;
  */
 contract Registry {
 
-    enum ContractStatus { New, Approved, Disabled }
+    enum ContractStatus { New, Approved, PermanentlyApproved, Disabled }
 
     // Governance role is to enable recovery from key compromise by rekeying other roles.
     address internal governance;
@@ -31,6 +31,7 @@ contract Registry {
     mapping(address => ContractStatus) public operatorContracts;
 
     event OperatorContractApproved(address operatorContract);
+    event OperatorContractPermanentlyApproved(address operatorContract);
     event OperatorContractDisabled(address operatorContract);
 
     event GovernanceUpdated();
@@ -89,7 +90,21 @@ contract Registry {
         emit OperatorContractApproved(operatorContract);
     }
 
+    function permanentlyApproveOperatorContract(address operatorContract) public onlyRegistryKeeper {
+        require(
+            isNewOperatorContract(operatorContract),
+            "Only new operator contracts can be permanently approved"
+        );
+
+        operatorContracts[operatorContract] = ContractStatus.PermanentlyApproved;
+        emit OperatorContractPermanentlyApproved(operatorContract);
+    }
+
     function disableOperatorContract(address operatorContract) public onlyPanicButton {
+        require(
+            ! isPermanentlyApprovedOperatorContract(operatorContract),
+            "Permanently approved operator contracts cannot be disabled"
+        );
         require(
             isApprovedOperatorContract(operatorContract),
             "Only approved operator contracts can be disabled"
@@ -104,7 +119,12 @@ contract Registry {
     }
 
     function isApprovedOperatorContract(address operatorContract) public view returns (bool) {
-        return operatorContracts[operatorContract] == ContractStatus.Approved;
+        return operatorContracts[operatorContract] == ContractStatus.Approved ||
+            operatorContracts[operatorContract] == ContractStatus.PermanentlyApproved;
+    }
+
+    function isPermanentlyApprovedOperatorContract(address operatorContract) public view returns (bool) {
+        return operatorContracts[operatorContract] == ContractStatus.PermanentlyApproved;
     }
 
     function operatorContractUpgraderFor(address _serviceContract) public view returns (address) {
