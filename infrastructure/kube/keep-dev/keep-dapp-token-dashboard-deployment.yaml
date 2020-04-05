@@ -6,18 +6,18 @@ metadata:
   labels:
     keel.sh/policy: all
     app: keep-dapp
-    type: keep-token-dashboard
+    type: token-dashboard
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: keep-dapp
-      type: keep-token-dashboard
+      type: token-dashboard
   template:
     metadata:
       labels:
         app: keep-dapp
-        type: keep-token-dashboard
+        type: token-dashboard
     spec:
       containers:
       - name: keep-dapp-token-dashboard
